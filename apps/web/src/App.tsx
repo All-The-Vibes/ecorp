@@ -40,6 +40,8 @@ import { useMissionResultContext } from './useMissionResultContext'
 import { missionResultPresentation } from './missionResultContext'
 import { WorkResultCard } from './WorkResultCard'
 import { PublishedResultCard } from './PublishedResultCard'
+import { RunActivityDetails } from './RunActivityDetails'
+import { presentRunActivity, selectActivityRun } from './runActivity'
 import {
   connectionLabel, connectionRunnerRevision, connectionScope, connectionStatusLabel,
   connectionTarget, connectionsNeedPresenceRefresh,
@@ -1629,6 +1631,11 @@ function FactoryPanel({
   onDownloadDeliverable,
   selectedItemId,
   onSelectItem,
+  events = [],
+  runners = [],
+  connection = 'connecting',
+  snapshotReceivedAt = null,
+  snapshotFailed = false,
 }: {
   items: FactoryWorkItem[]
   missions: Mission[]
@@ -1662,12 +1669,17 @@ function FactoryPanel({
     token: string | undefined,
     idempotencyKey: string,
   ) => Promise<boolean>
-  onOpenMission: (mission: Mission) => void
+  onOpenMission: (mission: Mission, runId?: string) => void
   onDiscussMission: (mission: Mission) => void
   onNewMission: () => void
   onDownloadDeliverable: (deliverable: SourceDeliverable) => Promise<void>
   selectedItemId: string | null
   onSelectItem: (item: FactoryWorkItem) => void
+  events?: DomainEvent[]
+  runners?: RunnerNode[]
+  connection?: string
+  snapshotReceivedAt?: string | null
+  snapshotFailed?: boolean
 }) {
   const [commentBody, setCommentBody] = useState('')
   const [steerText, setSteerText] = useState('')
@@ -1733,6 +1745,13 @@ function FactoryPanel({
     controllers, selected, scope.corpId, selectedItemId,
   )
   const controllerState = factoryControllerState(controller)
+  const activityRun = selectActivityRun(selectedRuns, verificationRequests, actionApprovals)
+  const runActivity = selected && selectedMission ? presentRunActivity({
+    corpId: scope.corpId, mission: selectedMission, run: activityRun, tasks: selectedTasks,
+    agents, runners, actors, leases, events, reviews: verificationRequests,
+    approvals: actionApprovals, connection, snapshotReceivedAt, snapshotFailed,
+    factoryState: selected.state,
+  }) : null
 
   return (
     <section
@@ -1935,7 +1954,7 @@ function FactoryPanel({
                       </small>
                     </div>
                     <span className={`status-chip status-chip-${stateTone(selected.state)}`}>
-                      {statusLabel(selected.state)}
+                      Intake · {statusLabel(selected.state)}
                     </span>
                   </div>
                   <h3>
@@ -1951,25 +1970,30 @@ function FactoryPanel({
                         onRefresh={resultRead.refresh}
                         onDownload={(deliverable) => void onDownloadDeliverable(deliverable)}
                       />
+                      {runActivity ? <RunActivityDetails key={runActivity.runId} view={runActivity} /> : null}
                     </div>
                   ) : (
                     <WorkResultCard
-                      heading={pendingReviews.length || pendingActions.length ? 'This work needs a decision'
+                      heading={runActivity?.heading ?? (pendingReviews.length || pendingActions.length ? 'This work needs a decision'
                         : activeRun ? 'Your team is working'
                           : selected.state === 'verified' ? 'Verified work is ready to review'
-                            : selectedMission ? 'Continue with this work' : 'Waiting for a mission'}
-                      status={statusLabel(selected.state)}
-                      tone={pendingReviews.length || pendingActions.length ? 'attention'
-                        : selected.state === 'verified' ? 'success' : activeRun ? 'working' : 'neutral'}
-                      description={selectedMission
+                            : selectedMission ? 'Continue with this work' : 'Waiting for a mission')}
+                      status={runActivity?.status ?? statusLabel(selected.state)}
+                      tone={runActivity?.tone ?? (pendingReviews.length || pendingActions.length ? 'attention'
+                        : selected.state === 'verified' ? 'success' : activeRun ? 'working' : 'neutral')}
+                      description={runActivity?.summary ?? (selectedMission
                         ? 'Open the same mission for its task owners, exact-run evidence and any required decisions. No pull request is recorded yet.'
-                        : 'Intake and its existing controller determine when a mission can start. This screen does not create a second execution path.'}
+                        : 'Intake and its existing controller determine when a mission can start. This screen does not create a second execution path.')}
                       actions={selectedMission ? (
-                        <button type="button" className="button button-primary" onClick={() => onOpenMission(selectedMission)}>
-                          {pendingReviews.length || pendingActions.length ? 'Review this work' : 'Open mission and results'}
+                        <button type="button" className="button button-primary" onClick={() => onOpenMission(selectedMission, runActivity?.runId ?? undefined)}>
+                          {runActivity?.runId
+                            ? pendingReviewForRun(activityRun, verificationRequests) || pendingActions.some((approval) => approval.run_id === activityRun?.id) ? 'Review this run' : 'Open run and results'
+                            : 'Open mission and results'}
                         </button>
                       ) : undefined}
-                    />
+                    >
+                      {runActivity ? <RunActivityDetails key={runActivity.runId} view={runActivity} /> : null}
+                    </WorkResultCard>
                   )}
                   {selectedMission ? (
                     <nav className="work-context-actions" aria-label="This work item">
@@ -4767,6 +4791,7 @@ function App() {
   const [connectionAttempt, setConnectionAttempt] = useState(0)
   const [snapshotLoad, setSnapshotLoad] = useState<{
     corpId: string; actorId: string; response: SnapshotResponse
+    receivedAt: string; refreshFailed: boolean
   } | null>(null)
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null)
   const data = snapshotLoad && snapshotLoad.corpId === bootstrap?.corp_id &&
@@ -4988,19 +5013,27 @@ function App() {
   const lastEventSeq = useRef<Record<string, number>>({})
 
   const refresh = useCallback(async (corpId: string, actorId: string, signal?: AbortSignal) => {
-    const snapshot = await api<SnapshotResponse>(
-      `/api/corps/${corpId}/snapshot?actor_id=${actorId}`,
-      { signal },
-    )
-    if (signal?.aborted) throw new DOMException('Obsolete snapshot scope', 'AbortError')
-    if (snapshot.snapshot.corp.id !== corpId) throw new Error('Snapshot Corp does not match the requested Corp.')
-    if (currentViewer.current?.corpId !== corpId || currentViewer.current.actorId !== actorId) {
+    try {
+      const snapshot = await api<SnapshotResponse>(
+        `/api/corps/${corpId}/snapshot?actor_id=${actorId}`,
+        { signal },
+      )
+      if (signal?.aborted) throw new DOMException('Obsolete snapshot scope', 'AbortError')
+      if (snapshot.snapshot.corp.id !== corpId) throw new Error('Snapshot Corp does not match the requested Corp.')
+      if (currentViewer.current?.corpId !== corpId || currentViewer.current.actorId !== actorId) {
+        return snapshot
+      }
+      const newest = snapshot.snapshot.events.at(-1)?.seq ?? 0
+      lastEventSeq.current[actorId] = Math.max(lastEventSeq.current[actorId] ?? 0, newest)
+      setSnapshotLoad({ corpId, actorId, response: snapshot, receivedAt: new Date().toISOString(), refreshFailed: false })
       return snapshot
+    } catch (caught) {
+      if (!signal?.aborted && currentViewer.current?.corpId === corpId && currentViewer.current.actorId === actorId) {
+        setSnapshotLoad((previous) => previous?.corpId === corpId && previous.actorId === actorId
+          ? { ...previous, refreshFailed: true } : previous)
+      }
+      throw caught
     }
-    const newest = snapshot.snapshot.events.at(-1)?.seq ?? 0
-    lastEventSeq.current[actorId] = Math.max(lastEventSeq.current[actorId] ?? 0, newest)
-    setSnapshotLoad({ corpId, actorId, response: snapshot })
-    return snapshot
   }, [])
 
   useEffect(() => {
@@ -6467,6 +6500,11 @@ function App() {
           messages={data.snapshot.room_messages}
           actors={data.snapshot.actors}
           agents={data.snapshot.agents}
+          events={data.snapshot.events}
+          runners={data.runners}
+          connection={connection}
+          snapshotReceivedAt={snapshotLoad?.receivedAt ?? null}
+          snapshotFailed={snapshotLoad?.refreshFailed ?? true}
           leases={data.snapshot.leases}
           leaseTokens={leaseTokens}
           selectedActor={selectedActor}
@@ -6488,7 +6526,7 @@ function App() {
               selectDiscussionMission(item.mission_id)
             }
           }}
-          onOpenMission={(mission) => navigateToWorkspaceEntity('mission', mission.id)}
+          onOpenMission={(mission, runId) => navigateToWorkspaceEntity(runId ? 'run' : 'mission', runId ?? mission.id)}
           onDiscussMission={(mission) => {
             selectDiscussionMission(mission.id)
             activateWorkspaceView('room')
