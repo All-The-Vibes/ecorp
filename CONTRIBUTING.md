@@ -212,8 +212,10 @@ gate, not a conclusion from unit tests.
 
 ### Coordinate independent factories
 
-Personal factory hosts do not create personal backlogs. Every contributor must use the same Project
-#3 issue, status, revision, dependency, and `factory:ready` contract:
+Personal factory hosts do not create personal backlogs. For new work, contributors use the Project
+#5 issue, status, revision, dependency, and `factory:ready` contract. Existing Project #3 claims,
+missions, recoveries, and publications retain their recorded authority and identities; do not
+retarget them during new-work intake. For new work:
 
 - run only open `Todo` issues that are explicitly labeled `factory:ready`;
 - let the controller claim and revalidate the Project item before dispatch;
