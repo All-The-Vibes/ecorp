@@ -588,6 +588,8 @@ pub struct FactoryWorkItemResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigureFactoryControllerRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub claim_authority_id: Option<Uuid>,
     pub actor_id: Uuid,
     pub controller_id: Uuid,
     pub source_project_owner: String,
