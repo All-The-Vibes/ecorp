@@ -36,6 +36,14 @@ struct Args {
 #[derive(Debug, Subcommand)]
 enum Command {
     Health,
+    /// Read the Corp's non-secret claim authority before configuring shared intake.
+    FactoryAuthority {
+        corp_id: Uuid,
+        actor_id: Uuid,
+        /// Compare with an independently approved ledger without creating work.
+        #[arg(long)]
+        claim_authority_id: Option<Uuid>,
+    },
     Bootstrap,
     Snapshot {
         corp_id: Uuid,
@@ -190,8 +198,28 @@ async fn main() -> Result<()> {
                 .context("access token cannot be encoded as an HTTP header")?,
         );
     }
-    let client = Client::builder().default_headers(headers).build()?;
+    // An authenticated control-plane URL is not permission to follow a redirect
+    // to another authority, particularly after an authority pin was checked.
+    let client = Client::builder()
+        .default_headers(headers)
+        .redirect(reqwest::redirect::Policy::none())
+        .build()?;
     let response = match args.command {
+        Command::FactoryAuthority {
+            corp_id,
+            actor_id,
+            claim_authority_id,
+        } => {
+            factory::authority::inspect(
+                &client,
+                &args.server,
+                corp_id,
+                actor_id,
+                claim_authority_id,
+                false,
+            )
+            .await?
+        }
         Command::Health => {
             request(
                 &client,

@@ -7,6 +7,8 @@ mod workspace_connections;
 pub use workspace_connections::*;
 mod factory_connection;
 pub use factory_connection::factory_workspace_connection_id;
+mod factory_authority;
+pub use factory_authority::{FactoryAuthority, factory_claim_authority_id};
 mod planned_attempts;
 pub use planned_attempts::{MAX_TASK_ATTEMPTS, factory_max_task_attempts};
 mod retained_provider_receipt;
@@ -246,6 +248,9 @@ impl PullRequestPublicationState {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Corp {
     pub id: Uuid,
+    /// Non-secret ledger identity. None identifies an older server projection.
+    #[serde(default)]
+    pub claim_authority_id: Option<Uuid>,
     pub slug: String,
     pub name: String,
     pub created_at: DateTime<Utc>,
