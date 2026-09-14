@@ -13,6 +13,11 @@ const refusal = 'QA process ownership changed or is unverifiable; refusing serve
 const manualPorts = new Set(['5432', '54329', '8791', '8793', '5187', '5291', '15191', '15193'])
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms))
 
+function nativeCreationTicks(value) {
+  return typeof value === 'string' && /^[1-9][0-9]{0,18}$/u.test(value) &&
+    BigInt(value) <= 3155378975999999999n
+}
+
 export function assertTestEndpoint(server) {
   const endpoint = new URL(server)
   if (endpoint.protocol !== 'http:' ||
@@ -58,6 +63,14 @@ export function assertOwnedRestart(manifest, identity, { root, server, binary, p
       throw new Error(refusal)
     }
   }
+  if (platform === 'win32' && manifest.server_identity !== undefined) {
+    // New receipts bind the exact 100 ns native identity, not Date.parse's
+    // millisecond precision or CIM's truncated microsecond timestamp. Keep
+    // ISO-only legacy manifests compatible, but never downgrade a new receipt.
+    const recorded = manifest.server_identity?.native_creation_ticks
+    if (!nativeCreationTicks(recorded) || !nativeCreationTicks(identity.native_creation_ticks) ||
+      recorded !== identity.native_creation_ticks) throw new Error(refusal)
+  }
 }
 
 async function linuxProcess(request) {
@@ -82,11 +95,16 @@ async function serverIdentity(pid, context) {
     "$ErrorActionPreference = 'Stop'",
     '$processId = [int]$env:ECORP_QA_PROCESS_ID',
     '$port = [int]$env:ECORP_QA_PROCESS_PORT',
-    '$process = Get-CimInstance Win32_Process -Filter "ProcessId = $processId" -Property ProcessId,ExecutablePath,CreationDate',
-    "if (!$process) { throw 'Recorded QA server is absent' }",
+    '$process = Get-Process -Id $processId -ErrorAction Stop',
+    'try {',
+    '[void]$process.Handle',
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }",
     '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)',
-    "@{ platform='win32'; pid=$processId; executable=$process.ExecutablePath; creation=$process.CreationDate.ToUniversalTime().ToString('o');",
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }",
+    '$creation = $process.StartTime.ToUniversalTime()',
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();",
     'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress',
+    '} finally { $process.Dispose() }',
   ].join('\n')
   const { stdout } = await execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
     windowsHide: true, timeout: 20_000,
@@ -188,24 +206,27 @@ async function stopVerified(context, manifest, identity) {
       root: context.root, server: context.server, binary: context.binary })
     return
   }
+  if (!nativeCreationTicks(identity.native_creation_ticks)) throw new Error(refusal)
   const script = [
     "$ErrorActionPreference = 'Stop'",
     '$processId = [int]$env:ECORP_QA_PROCESS_ID',
     '$process = Get-Process -Id $processId -ErrorAction Stop',
+    'try {',
     '[void]$process.Handle',
     "if ($process.HasExited) { throw 'Owned server already exited during verification' }",
     '$currentPath = [IO.Path]::GetFullPath($process.Path)',
     '$expectedPath = [IO.Path]::GetFullPath($env:ECORP_QA_PROCESS_EXE)',
     '$currentTicks = $process.StartTime.ToUniversalTime().Ticks',
-    '$expectedTicks = ([DateTimeOffset]$env:ECORP_QA_PROCESS_CREATION).UtcTicks',
+    '$expectedTicks = [long]$env:ECORP_QA_PROCESS_CREATION_TICKS',
     "if (!([string]::Equals($currentPath, $expectedPath, [StringComparison]::OrdinalIgnoreCase)) -or $currentTicks -ne $expectedTicks) { throw 'QA process ownership changed or is unverifiable; refusing server restart.' }",
     '$process.Kill()',
     "if (!$process.WaitForExit(30000)) { throw 'Owned server did not exit; no replacement or force-stop was attempted.' }",
+    '} finally { $process.Dispose() }',
   ].join('\n')
   await execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
     windowsHide: true, timeout: 40_000,
     env: { ...process.env, ECORP_QA_PROCESS_ID: String(manifest.server),
-      ECORP_QA_PROCESS_EXE: identity.executable, ECORP_QA_PROCESS_CREATION: identity.creation },
+      ECORP_QA_PROCESS_EXE: identity.executable, ECORP_QA_PROCESS_CREATION_TICKS: identity.native_creation_ticks },
   })
 }
 

@@ -309,6 +309,24 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       # Keep every test and the native 10-second private-ACL deadline. Avoid
       # unrelated test-process contention on the hosted Windows worker.
+      - name: Warm Windows PowerShell before bounded native setup tests
+        if: runner.os == 'Windows'
+        timeout-minutes: 1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Pay hosted-image first-start cost before the production deadline.
+          # Initialize the same ACL types in memory; do not change any ACLs.
+          $acl = [System.Security.AccessControl.DirectorySecurity]::new()
+          $owner = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+          $acl.SetOwner($owner)
+          $acl.SetAccessRuleProtection($true, $false)
+          foreach ($sid in @($owner, [System.Security.Principal.SecurityIdentifier]::new('S-1-5-18'))) {
+            $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
+              $sid, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
+            $acl.AddAccessRule($rule)
+          }
+          Write-Output 'Windows PowerShell ACL dependencies initialized; native setup deadline remains 10 seconds.'
       - name: Run Windows runner tests serially
         if: runner.os == 'Windows'
         run: cargo test -p crony-runner -- --test-threads=1

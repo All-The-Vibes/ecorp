@@ -65,6 +65,25 @@ test('manual, remote, stale, or non-owned manifests never authorize restart', ()
   }
 })
 
+test('Windows native receipts preserve sub-millisecond creation identity without numeric rounding', () => {
+  // CIM truncates the seventh fractional digit, while Date.parse discards four.
+  // Neither representation is an exact Windows process creation identity.
+  const precise = { ...identity, creation: '2026-09-06T22:00:00.0000003Z',
+    native_creation_ticks: '639243288000000003' }
+  const record = { ...manifest, server_creation: precise.creation, server_identity: precise }
+  assert.doesNotThrow(() => assertOwnedRestart(record, precise, context))
+  for (const ticks of ['639243288000000004', undefined, null, '', 'invalid',
+    639243288000000003, '0639243288000000003', '3155378976000000000']) {
+    assert.throws(() => assertOwnedRestart(record, { ...precise, native_creation_ticks: ticks }, context), /refusing/u)
+    assert.throws(() => assertOwnedRestart({ ...record,
+      server_identity: { ...precise, native_creation_ticks: ticks } }, precise, context), /refusing/u)
+  }
+  // Legacy ISO-only manifests retain their existing admission rules. A new
+  // native receipt must never silently downgrade to that compatibility path.
+  assert.doesNotThrow(() => assertOwnedRestart(manifest, precise, context))
+  assert.throws(() => assertOwnedRestart({ ...record, server_identity: {} }, precise, context), /refusing/u)
+})
+
 test('owned endpoints reject every reserved/manual port and non-origin URL', () => {
   for (const address of [
     ...[5432, 54329, 8791, 8793, 5187, 5291, 15191, 15193].map(port => `http://127.0.0.1:${port}`),
@@ -139,6 +158,19 @@ test('native owned child startup, two restarts, refusal of database drift and id
     assert.equal(initial.server_state, 'running')
     assert.equal(initial.test_owned, true)
     assert.equal(initial.server_identity.port_owned, true)
+    if (process.platform === 'win32') {
+      assert.match(initial.server_identity.native_creation_ticks, /^[1-9][0-9]{0,18}$/u)
+      const changed = { ...initial, server_identity: { ...initial.server_identity,
+        native_creation_ticks: (BigInt(initial.server_identity.native_creation_ticks) + 1n).toString() } }
+      writeFileSync(manifestPath, JSON.stringify(changed))
+      await assert.rejects(restartOwnedTestServer(settings), /refusing/u)
+      await assert.rejects(stopOwnedTestServer(settings), /refusing/u)
+      assert.deepEqual(JSON.parse(readFileSync(manifestPath, 'utf8')), changed)
+      assert.equal((await fetch(`${endpoint}/health`, {
+        redirect: 'error', signal: AbortSignal.timeout(3000),
+      })).ok, true)
+      writeFileSync(manifestPath, JSON.stringify(initial))
+    }
     assert.equal(readFileSync(manifestPath, 'utf8').includes('sentinel'), false)
     await assert.rejects(startOwnedTestServer(settings), /already exists/u)
     await assert.rejects(restartOwnedTestServer({ ...settings,
