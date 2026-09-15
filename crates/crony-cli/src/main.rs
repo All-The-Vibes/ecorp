@@ -1,3 +1,5 @@
+mod base_audit;
+mod base_verify;
 mod factory;
 mod publish;
 
@@ -35,6 +37,16 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Verify a complete V1 archive against separately pinned Base trust, without RPC.
+    BaseAuditVerify {
+        #[command(flatten)]
+        args: base_verify::BaseVerifyArgs,
+    },
+    /// Administer optional Base anchoring independently from V1/GitHub publication.
+    BaseAudit {
+        #[command(flatten)]
+        args: base_audit::BaseAuditArgs,
+    },
     /// Verify exported history using a trusted raw key or trusted JSON key history.
     AuditVerify {
         archive: std::path::PathBuf,
@@ -206,6 +218,8 @@ async fn main() -> Result<()> {
     }
     let client = Client::builder().default_headers(headers).build()?;
     let response = match args.command {
+        Command::BaseAuditVerify { args } => base_verify::run(args)?,
+        Command::BaseAudit { args: base } => base_audit::run(&client, &args.server, base).await?,
         Command::AuditVerify {
             archive,
             trusted_key_file,
@@ -595,6 +609,88 @@ async fn request(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn base_v2_cli_exposes_separate_explicit_admin_operations() {
+        let prefix = [
+            "crony",
+            "base-audit",
+            "00000000-0000-4000-8000-000000000001",
+            "00000000-0000-4000-8000-000000000002",
+        ];
+        for operation in [
+            vec!["status"],
+            vec!["configure", "destination.json"],
+            vec!["validate", "00000000-0000-4000-8000-000000000003"],
+            vec!["preview", "00000000-0000-4000-8000-000000000003"],
+            vec!["history", "00000000-0000-4000-8000-000000000003"],
+            vec![
+                "enable",
+                "00000000-0000-4000-8000-000000000003",
+                "--expected-version",
+                "1",
+            ],
+            vec![
+                "pause",
+                "00000000-0000-4000-8000-000000000003",
+                "--expected-version",
+                "1",
+            ],
+            vec![
+                "request",
+                "00000000-0000-4000-8000-000000000003",
+                "--idempotency-key",
+                "00000000-0000-4000-8000-000000000004",
+            ],
+        ] {
+            assert!(
+                Args::try_parse_from(prefix.into_iter().chain(operation)).is_ok(),
+                "missing explicit Base administration command"
+            );
+        }
+    }
+
+    #[test]
+    fn base_v2_cli_cannot_spend_or_enable_without_explicit_concurrency_identity() {
+        for operation in ["enable", "pause", "request"] {
+            assert!(
+                Args::try_parse_from([
+                    "crony",
+                    "base-audit",
+                    "00000000-0000-4000-8000-000000000001",
+                    "00000000-0000-4000-8000-000000000002",
+                    operation,
+                    "00000000-0000-4000-8000-000000000003",
+                ])
+                .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn base_v2_offline_verify_requires_separate_trust_and_expected_commitments() {
+        let complete = [
+            "crony",
+            "base-audit-verify",
+            "archive.json",
+            "--manifests",
+            "manifests.json",
+            "--trust-pin",
+            "trusted.json",
+            "--expected-manifest-version",
+            "1",
+            "--expected-manifest-digest",
+            "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "--expected-checkpoint",
+            "0x2222222222222222222222222222222222222222222222222222222222222222",
+        ];
+        assert!(Args::try_parse_from(complete).is_ok());
+        for start in [3, 5, 7, 9, 11] {
+            let mut missing = complete.to_vec();
+            missing.drain(start..start + 2);
+            assert!(Args::try_parse_from(missing).is_err());
+        }
+    }
+
     #[test]
     fn issue281_offline_verify_requires_an_external_trusted_key() {
         assert!(

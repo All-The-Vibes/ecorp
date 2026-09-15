@@ -148,6 +148,7 @@ impl Fixture {
         let (event_tx, _) = broadcast::channel(64);
         let state = AppState {
             audit: None,
+            base_audit: base_audit::Runtime::Unconfigured,
             store,
             event_tx,
             runners: Arc::new(DashMap::new()),

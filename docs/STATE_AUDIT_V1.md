@@ -5,6 +5,10 @@ It is **not** the product's source of truth or an event-sourcing migration.
 Existing native authorization, active-run fencing, spending, revision events
 and transactional budget checks remain authoritative.
 
+Optional Base publication is documented in [Base state-audit anchoring](STATE_AUDIT_BASE_V2.md).
+It preserves this V1 protocol and remains disconnected/disabled until explicitly
+configured, validated, and enabled. V1 and GitHub publication do not require Base.
+
 ## Coverage and limits
 
 The first protected aggregate is `mission/<mission UUID>/governance`: mission

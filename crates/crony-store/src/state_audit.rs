@@ -964,7 +964,7 @@ impl PgStore {
         Ok(())
     }
 
-    async fn load_archive(
+    pub(crate) async fn load_archive(
         tx: &mut Transaction<'_, Postgres>,
         corp: Uuid,
         ledger: Uuid,

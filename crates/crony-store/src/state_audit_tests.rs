@@ -1,7 +1,7 @@
 use super::*;
 use crony_domain::MissionContractRevisionAction;
 
-async fn fixture(
+pub(super) async fn fixture(
     pool: PgPool,
 ) -> Result<(
     PgStore,

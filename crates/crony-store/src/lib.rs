@@ -22,6 +22,11 @@ use uuid::Uuid;
 
 use crate::state_audit::native_policy;
 
+pub mod base_ancestry;
+pub mod base_audit;
+#[cfg(test)]
+mod base_audit_tests;
+pub mod base_observations;
 mod budget_checkpoint;
 mod budget_revision;
 mod checkpoint_cancellation;
