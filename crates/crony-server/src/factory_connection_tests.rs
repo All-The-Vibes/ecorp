@@ -147,6 +147,7 @@ impl Fixture {
         )?;
         let (event_tx, _) = broadcast::channel(64);
         let state = AppState {
+            audit: None,
             store,
             event_tx,
             runners: Arc::new(DashMap::new()),

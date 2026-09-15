@@ -1730,6 +1730,7 @@ async fn revalidate_publication_authority_tx(
             ));
         }
     }
+    PgStore::ensure_audit_workflow_gates_tx(tx, publication.corp_id).await?;
     Ok(())
 }
 

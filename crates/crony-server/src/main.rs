@@ -6,6 +6,7 @@ mod factory_connection_tests;
 mod planning;
 mod secrets;
 mod staffing;
+mod state_audit;
 mod workspace_connections;
 
 use std::{
@@ -221,6 +222,7 @@ struct Args {
 
 #[derive(Clone)]
 struct AppState {
+    audit: Option<Arc<state_audit::Service>>,
     store: PgStore,
     event_tx: broadcast::Sender<DomainEvent>,
     runners: Arc<DashMap<String, RunnerConnection>>,
@@ -398,7 +400,12 @@ async fn main() -> anyhow::Result<()> {
             }
         }
     });
+    let audit = state_audit::Service::from_environment()?;
+    if let Some(service) = &audit {
+        service.clone().start(store.clone());
+    }
     let state = AppState {
+        audit,
         store,
         event_tx,
         runners: Arc::new(DashMap::new()),
@@ -510,6 +517,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let protected = Router::new()
+        .route("/api/corps/{corp_id}/state-audit",post(state_audit::handle))
         .merge(workspace_connections::routes())
         .route("/api/corps/{corp_id}/snapshot", get(snapshot))
         .route(

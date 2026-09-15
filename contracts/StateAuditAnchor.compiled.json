@@ -1,0 +1,219 @@
+{
+  "compiler_version": "0.8.30+commit.73712a01.Emscripten.clang",
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  },
+  "contract": {
+    "abi": [
+      {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes16",
+            "name": "ledgerId",
+            "type": "bytes16"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint64",
+            "name": "sequence",
+            "type": "uint64"
+          },
+          {
+            "indexed": false,
+            "internalType": "bytes32",
+            "name": "checkpointDigest",
+            "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "bytes32",
+            "name": "previousAnchorDigest",
+            "type": "bytes32"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "publisher",
+            "type": "address"
+          }
+        ],
+        "name": "Anchored",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes16",
+            "name": "ledgerId",
+            "type": "bytes16"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "publisher",
+            "type": "address"
+          }
+        ],
+        "name": "LedgerRegistered",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes16",
+            "name": "ledgerId",
+            "type": "bytes16"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "publisher",
+            "type": "address"
+          }
+        ],
+        "name": "PublisherRotated",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes16",
+            "name": "ledgerId",
+            "type": "bytes16"
+          },
+          {
+            "internalType": "uint64",
+            "name": "sequence",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "checkpointDigest",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "previousAnchorDigest",
+            "type": "bytes32"
+          }
+        ],
+        "name": "anchor",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes16",
+            "name": "",
+            "type": "bytes16"
+          }
+        ],
+        "name": "ledgers",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "publisher",
+            "type": "address"
+          },
+          {
+            "internalType": "uint64",
+            "name": "sequence",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "checkpointDigest",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "previousAnchorDigest",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes16",
+            "name": "ledgerId",
+            "type": "bytes16"
+          },
+          {
+            "internalType": "address",
+            "name": "publisher",
+            "type": "address"
+          }
+        ],
+        "name": "registerLedger",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "registrationAuthority",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes16",
+            "name": "ledgerId",
+            "type": "bytes16"
+          },
+          {
+            "internalType": "address",
+            "name": "publisher",
+            "type": "address"
+          }
+        ],
+        "name": "rotatePublisher",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "evm": {
+      "bytecode": {
+        "object": "60a0604052348015600e575f5ffd5b50336080526080516108996100315f395f8181605e01526102e101526108995ff3fe608060405234801561000f575f5ffd5b5060043610610055575f3560e01c80631d74c14b1461005957806320fdb0fe1461009d5780635df58c91146100b257806372e41cec146100c557806398c8f05d146100d8575b5f5ffd5b6100807f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b0390911681526020015b60405180910390f35b6100b06100ab3660046107b6565b61016e565b005b6100b06100c03660046107b6565b6102d6565b6100b06100d33660046107f6565b610507565b61012c6100e6366004610843565b5f6020819052908152604090208054600182015460028301546003909301546001600160a01b039283169392821692600160a01b90920467ffffffffffffffff16919085565b604080516001600160a01b03968716815295909416602086015267ffffffffffffffff909216928401929092526060830191909152608082015260a001610094565b6001600160801b031982165f90815260208190526040902080546001600160a01b03166101da5760405162461bcd60e51b81526020600482015260156024820152741b195919d95c881b9bdd081c9959da5cdd195c9959605a1b60448201526064015b60405180910390fd5b80546001600160a01b0316331461022b5760405162461bcd60e51b81526020600482015260156024820152741b195919d95c881bdddb995c881c995c5d5a5c9959605a1b60448201526064016101d1565b6001600160a01b0382166102725760405162461bcd60e51b815260206004820152600e60248201526d3d32b93790383ab13634b9b432b960911b60448201526064016101d1565b6001810180546001600160a01b0319166001600160a01b0384169081179091556040519081526001600160801b03198416907f54a5dd5c562ba8f8f4e58362abb620b673fd9aa648e0ba4ce29207862775614a9060200160405180910390a2505050565b336001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000161461034e5760405162461bcd60e51b815260206004820152601f60248201527f726567697374726174696f6e20617574686f726974792072657175697265640060448201526064016101d1565b6001600160801b031982161580159061036f57506001600160a01b03811615155b6103ab5760405162461bcd60e51b815260206004820152600d60248201526c7a65726f206964656e7469747960981b60448201526064016101d1565b6001600160801b031982165f908152602081905260409020546001600160a01b03161561041a5760405162461bcd60e51b815260206004820152601960248201527f6c656467657220616c726561647920726567697374657265640000000000000060448201526064016101d1565b6040805160a081018252338082526001600160a01b0384811660208085019182525f85870181815260608701828152608088018381526001600160801b03198c168085529484905292899020975188549087166001600160a01b03199091161788559351600188018054925167ffffffffffffffff16600160a01b026001600160e01b031990931691909616171790935590516002850155905160039093019290925591517fc19f1b5e23b7a26f471818e40781598c70e043174719c621d6dd90c4b07ddb5b906104fb9085906001600160a01b0391909116815260200190565b60405180910390a35050565b6001600160801b031984165f90815260208190526040902080546001600160a01b031661056e5760405162461bcd60e51b81526020600482015260156024820152741b195919d95c881b9bdd081c9959da5cdd195c9959605a1b60448201526064016101d1565b60018101546001600160a01b031633146105ca5760405162461bcd60e51b815260206004820152601d60248201527f617574686f72697a6564207075626c697368657220726571756972656400000060448201526064016101d1565b67ffffffffffffffff8416158015906105e257508215155b61061c5760405162461bcd60e51b815260206004820152600b60248201526a3d32b9379030b731b437b960a91b60448201526064016101d1565b600181015467ffffffffffffffff858116600160a01b909204161480156106465750806002015483145b80156106555750806003015482145b156106605750610794565b600181015467ffffffffffffffff600160a01b9091048116908516116106c15760405162461bcd60e51b815260206004820152601660248201527573657175656e6365206d75737420696e63726561736560501b60448201526064016101d1565b806002015482146107085760405162461bcd60e51b81526020600482015260116024820152703bb937b73390383932b232b1b2b9b9b7b960791b60448201526064016101d1565b60018101805467ffffffffffffffff60a01b1916600160a01b67ffffffffffffffff87169081029190911790915560028201849055600382018390556040805191825260208201859052810183905233906001600160801b03198716907f249e33e2e200553f78121abdb959b0eeb7e9eebeae3e2b27f6511a8fcf7d11aa9060600160405180910390a3505b50505050565b80356001600160801b0319811681146107b1575f5ffd5b919050565b5f5f604083850312156107c7575f5ffd5b6107d08361079a565b915060208301356001600160a01b03811681146107eb575f5ffd5b809150509250929050565b5f5f5f5f60808587031215610809575f5ffd5b6108128561079a565b9350602085013567ffffffffffffffff8116811461082e575f5ffd5b93969395505050506040820135916060013590565b5f60208284031215610853575f5ffd5b61085c8261079a565b939250505056fea26469706673582212209811492db65fb26394ed4a5bf70768aceba15ec8aa2aa8ece771a544b1c596f564736f6c634300081e0033"
+      }
+    },
+    "metadata": "{\"compiler\":{\"version\":\"0.8.30+commit.73712a01\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes16\",\"name\":\"ledgerId\",\"type\":\"bytes16\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"sequence\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"checkpointDigest\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"previousAnchorDigest\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"publisher\",\"type\":\"address\"}],\"name\":\"Anchored\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes16\",\"name\":\"ledgerId\",\"type\":\"bytes16\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"publisher\",\"type\":\"address\"}],\"name\":\"LedgerRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes16\",\"name\":\"ledgerId\",\"type\":\"bytes16\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"publisher\",\"type\":\"address\"}],\"name\":\"PublisherRotated\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes16\",\"name\":\"ledgerId\",\"type\":\"bytes16\"},{\"internalType\":\"uint64\",\"name\":\"sequence\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"checkpointDigest\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"previousAnchorDigest\",\"type\":\"bytes32\"}],\"name\":\"anchor\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes16\",\"name\":\"\",\"type\":\"bytes16\"}],\"name\":\"ledgers\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"publisher\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"sequence\",\"type\":\"uint64\"},{\"internalType\":\"bytes32\",\"name\":\"checkpointDigest\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"previousAnchorDigest\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes16\",\"name\":\"ledgerId\",\"type\":\"bytes16\"},{\"internalType\":\"address\",\"name\":\"publisher\",\"type\":\"address\"}],\"name\":\"registerLedger\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"registrationAuthority\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes16\",\"name\":\"ledgerId\",\"type\":\"bytes16\"},{\"internalType\":\"address\",\"name\":\"publisher\",\"type\":\"address\"}],\"name\":\"rotatePublisher\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"StateAuditAnchor.sol\":\"StateAuditAnchor\"},\"evmVersion\":\"prague\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"StateAuditAnchor.sol\":{\"keccak256\":\"0xe01d4a91b1685213b35191c814804a85ec5a114d762158d419559568b652c7d0\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://6fe7faacb71fbbdfa6b0fd88abe69cb718b503ee5284e207094b572ed1821ccc\",\"dweb:/ipfs/Qmbzrm9Cudqp635D6NZrTU13wLufe6ioJ6hxSNZoNd9XYi\"]}},\"version\":1}"
+  }
+}
