@@ -1109,3 +1109,29 @@ ordering and status.
 1. Add stronger OS/container isolation for untrusted child processes.
 2. Add artifact retention sweeping and signing-key rotation.
 3. Add multi-region control-plane and object-store recovery drills.
+
+## State audit
+
+Opt-in mission-governance auditing extends the existing PostgreSQL authority;
+it does not replace it. A covered contract revision, budget proposal/decision,
+or legacy Factory source-commit upgrade holds the Corp audit-head lock and
+commits operational rows, domain events, immutable content/version objects,
+the resource ref, the hash-linked decision and its stable receipt in one
+transaction. Deferred fingerprint triggers reject any other path that changes
+the declared mission-governance projection.
+
+The trusted server periodically creates destination-neutral Ed25519
+checkpoints over the verified ledger prefix. Public-key activation ranges are
+retained so a key rotation does not invalidate earlier checkpoints. GitHub
+publication is a durable additive projection with independent interval or
+monthly UTC scheduling, overdue thresholds and assurance gates. A retained
+witness mismatch or conflicting remote history disables publication until
+explicit authorized reconciliation. PostgreSQL remains necessary for history
+retrieval; external publications authenticate retained evidence but cannot
+reconstruct it.
+
+The V1 delivery also includes `contracts/StateAuditAnchor.sol` and an
+in-process REVM compatibility test using the frozen V1 checkpoint vector.
+Production Ethereum submission, confirmation, replacement, reorganization and
+finality handling remain the V2 transport layer and do not change the
+checkpoint bytes.

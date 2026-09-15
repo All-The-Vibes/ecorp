@@ -14,10 +14,13 @@ use crony_domain::{
     VerificationRequest, VerifierCheck, factory_workspace_connection_id,
     repository_relative_path_is_valid, write_scope_allows_path, write_scope_is_valid,
 };
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
-use sqlx::{PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
+use sqlx::{Acquire, PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
 use uuid::Uuid;
+
+use crate::state_audit::native_policy;
 
 mod budget_checkpoint;
 mod budget_revision;
@@ -25,6 +28,9 @@ mod checkpoint_cancellation;
 mod checkpoint_correction;
 mod checkpoint_publication;
 mod checkpoint_retention;
+pub mod state_audit;
+#[cfg(test)]
+mod state_audit_tests;
 pub use checkpoint_cancellation::ReconcileCheckpointCancellationInput;
 mod contract_revision;
 mod factory_attempt_policy;
@@ -109,7 +115,7 @@ pub struct CreateMissionContractRevisionInput {
     pub verification_policy: VerificationPolicy,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MissionContractRevisionOutcome {
     pub revision: MissionContractRevision,
     pub event: Option<DomainEvent>,
@@ -285,7 +291,7 @@ pub struct CreateFactoryVerificationRecoveryInput {
     pub expected_head_commit: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FactoryWorkItemOutcome {
     pub work_item: FactoryWorkItem,
     pub claim_token: Option<Uuid>,
@@ -3503,6 +3509,56 @@ impl PgStore {
         &self,
         input: UpgradeFactorySourceCommitInput,
     ) -> Result<FactoryWorkItemOutcome> {
+        let mission_id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT mission_id FROM factory_work_items WHERE id = $1 AND corp_id = $2",
+        )
+        .bind(input.work_item_id)
+        .bind(input.corp_id)
+        .fetch_optional(&self.pool)
+        .await?
+        .flatten();
+        let Some(mission_id) = mission_id else {
+            let mut tx = self.pool.begin().await?;
+            let outcome = self
+                .upgrade_factory_source_commit_audit_inner(input, &mut tx)
+                .await?;
+            tx.commit().await?;
+            return Ok(outcome);
+        };
+        let request_id = state_audit::derived_request_id(
+            "factory-source-commit-upgrade",
+            input.corp_id,
+            input.actor_id,
+            &input.idempotency_key,
+        )?;
+        let op = state_audit::Operation {
+            corp: input.corp_id,
+            actor: input.actor_id,
+            mission: mission_id,
+            request_id,
+            name: "source_commit_upgrade",
+            request: json!({
+                "work_item_id": input.work_item_id,
+                "expected_version": input.expected_version,
+                "source_base_commit": input.source_base_commit.trim().to_ascii_lowercase()
+            }),
+        };
+        let store = self.clone();
+        self.audited(op, move |tx| {
+            Box::pin(async move {
+                store
+                    .upgrade_factory_source_commit_audit_inner(input, tx)
+                    .await
+            })
+        })
+        .await
+    }
+
+    async fn upgrade_factory_source_commit_audit_inner(
+        &self,
+        input: UpgradeFactorySourceCommitInput,
+        outer: &mut Transaction<'_, Postgres>,
+    ) -> Result<FactoryWorkItemOutcome> {
         if input.expected_version <= 0 {
             return Err(anyhow!(
                 "expected factory work-item version must be positive"
@@ -3517,7 +3573,7 @@ impl PgStore {
             "source_base_commit": source_base_commit
         });
         let now = Utc::now();
-        let mut tx = self.pool.begin().await?;
+        let mut tx = outer.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
         lock_factory_keys_tx(
             &mut tx,
@@ -3558,6 +3614,17 @@ impl PgStore {
             factory_work_item_tx(&mut tx, input.corp_id, input.work_item_id, true)
                 .await?
                 .context("factory work item not found")?;
+        if !factory_state_is_terminal(current.state)
+            && current.claim_owner_id == input.actor_id
+            && current_token == input.claim_token
+            && current.version != input.expected_version
+        {
+            return Err(native_policy!(
+                "conflict: factory work item version is {}, not {}",
+                current.version,
+                input.expected_version
+            ));
+        }
         ensure_active_factory_control(
             &current,
             current_token,
@@ -3576,7 +3643,7 @@ impl PgStore {
             .and_then(Value::as_str)
             .is_some()
         {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "factory source policy already has an immutable base commit"
             ));
         }
@@ -3585,7 +3652,7 @@ impl PgStore {
             .and_then(Value::as_bool)
             != Some(true)
         {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "factory source policy is not marked for an authorized legacy upgrade"
             ));
         }
@@ -3612,7 +3679,7 @@ impl PgStore {
             .fetch_one(&mut *tx)
             .await?;
             if has_run {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "legacy source commit cannot be freshly pinned after a run exists"
                 ));
             }
@@ -3640,7 +3707,7 @@ impl PgStore {
             .fetch_one(&mut *tx)
             .await?;
             if incompatible_task {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "legacy mission tasks do not preserve the claimed repository and base ref"
                 ));
             }
@@ -14666,7 +14733,7 @@ pub struct DecideMissionBudgetRevisionInput {
     pub decision_key: Uuid,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MissionBudgetRevisionOutcome {
     pub revision: MissionBudgetRevision,
     pub event: Option<DomainEvent>,

@@ -858,3 +858,24 @@ malformed lineage. The same live database then published PR #99 at exact
 runner commit `ada87bd85dafdc62f354c4641c7e9340be5b1ece`; an identical publication replay returned the
 same PR with one attempt and no additional remote effect. See
 `docs/evidence/2026-09-03-recovered-suspend-publication.md`.
+
+## State audit acceptance
+
+The opt-in `issue281_` SQLx family applies all real migrations to disposable
+databases and covers atomic accepted/refused mutations, stable retry receipts,
+cross-Corp denial, stale revisions, rollback after an injected audit failure,
+concurrent writers, actor-demotion locking, immutable ledger identity,
+covered-task reparenting, the covered legacy source-commit upgrade, capacity
+fail-closed behavior, key rotation, complete export/tamper detection,
+independent interval/monthly destination configuration, durable publisher
+retry/catch-up, explicit early publication, assurance projections and
+restore-divergence disable/reconciliation.
+
+`tools/check_state_audit_compatibility.mjs` independently reproduces the frozen
+CBOR bytes, Ed25519 verification and Ethereum static ABI words.
+`cargo test -p crony-audit --test ethereum_local_chain` additionally deploys
+the Solidity 0.8.30 artifact to an in-process REVM chain and executes
+registration, publisher rotation, first/sparse anchors, exact retry and all
+specified conflict/authorization failures using the V1 checkpoint digest.
+These tests establish protocol and local-contract compatibility; they do not
+claim mainnet submission, confirmation or finality.

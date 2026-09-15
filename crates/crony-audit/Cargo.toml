@@ -1,21 +1,23 @@
 [package]
-name = "crony-store"
+name = "crony-audit"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-chrono.workspace = true
-crony-domain = { path = "../crony-domain" }
-crony-audit = { path = "../crony-audit" }
+blake3 = "1"
+ed25519-dalek = "2"
 futures-util.workspace = true
+reqwest.workspace = true
+base64.workspace = true
+
 hex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+
+[dev-dependencies]
+revm = "19"
 sha2.workspace = true
-sqlx.workspace = true
-uuid.workspace = true
-url.workspace = true
+tokio.workspace = true
