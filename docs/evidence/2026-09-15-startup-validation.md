@@ -105,14 +105,25 @@ seeding, all-method request counting, exact secret-value checks and isolated
 CLI/help coverage. The follow-up found no new product-code defect and identified
 the CLI/help isolation gap, which was corrected and retested.
 
+## PR review follow-up: help output
+
+The published review identified that clap still displayed the built-in development
+database URL as a default in help. Added `hide_default_value = true` and expanded
+the actual-binary help assertion to reject both the built-in URL and the supplied
+disposable database URL. The full 58-case rejection suite and positive startup,
+recovery, CLI/help and TLS storage checks passed again. All six repository gates
+listed above passed again on this change. GitHub Copilot `gpt-6-astra`, high effort,
+completed a focused static review with no actionable findings. Runtime behavior
+was independently verified by the local regression suite.
+
 ## Source fingerprints
 
 | File | SHA-256 |
 |---|---|
-| `crates/crony-server/src/main.rs` | `1e7ab1c159c3543a222408297d6f73d20ad75c8675620cdae9b317d3b94986c3` |
+| `crates/crony-server/src/main.rs` | `5d0e5916a4e4771c346e3acc84b21c3263058b34f7eda83f4bd6a6c06884347c` |
 | `crates/crony-server/src/artifacts.rs` | `4310086176d81ca91329a99fa7eac719566d999291d5fcf2150c6146f6a90b95` |
 | `crates/crony-server/src/startup.rs` | `14d68f013a5afb985d3e5c392088e09621bc5a4b366add5707162c6eb80b2177` |
-| `tools/test_startup_validation.py` | `7d5088f722520ac51c662478b6fc5314dd9c500d2f0574deed1712f1237f299a` |
+| `tools/test_startup_validation.py` | `315aa7a8acbed7d6b4bc82e54b11215971452585775c2696552f6699cdb0f94e` |
 | `tools/test_startup_validation_harness.py` | `04f54f57a225737db70756207ab724b15000531c4a57b2db9f3f47a74d417fc4` |
 
 ## Integration boundaries

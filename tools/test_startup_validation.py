@@ -344,7 +344,9 @@ def run(binary, root, postgres, oidc, storage, cert, baseline):
         assert server.process.wait(timeout=5) == 0
         server.log.seek(0)
         help_text = server.log.read(20000)
-        for marker in (b'DO_NOT_LOG', b'42'*32, b'53'*33):
+        for marker in (b'DO_NOT_LOG', b'42'*32, b'53'*33,
+                b'postgres://crony:crony@127.0.0.1:54329/crony',
+                postgres.url(cli_db).encode()):
             assert marker not in help_text, 'help exposed environment values'
         assert not list(server.directory.iterdir()), 'help wrote application files'
     finally:

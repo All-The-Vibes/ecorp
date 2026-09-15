@@ -109,6 +109,7 @@ struct Args {
     #[arg(
         long,
         hide_env_values = true,
+        hide_default_value = true,
         env = "DATABASE_URL",
         default_value = "postgres://crony:crony@127.0.0.1:54329/crony"
     )]
