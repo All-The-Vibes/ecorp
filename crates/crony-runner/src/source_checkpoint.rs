@@ -623,6 +623,7 @@ mod tests {
             });
         } else {
             assignment.verification_policy.checks = vec![crony_domain::VerifierCheck::Command {
+                cache_suppression: None,
                 program: "node".to_owned(),
                 args: vec![
                     "-e".to_owned(),
@@ -830,6 +831,7 @@ mod tests {
                 "require('node:fs').unlinkSync('result.md')".to_owned(),
             ],
             timeout_ms: 10_000,
+            cache_suppression: None,
         }];
         let ready = Arc::new(Notify::new());
         let adapter: Arc<dyn AgentAdapter> = Arc::new(StoppedAdapter {

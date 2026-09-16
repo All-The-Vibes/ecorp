@@ -413,6 +413,7 @@ impl ManagerStrategy for StudioSwarmStrategy {
                         VerifierCheck::File { path: path.clone(), min_bytes: 1 },
                         VerifierCheck::Artifact { min_bytes: 1 },
                         VerifierCheck::Command {
+                            cache_suppression: None,
                             program: "node".to_owned(),
                             args: vec![
                                 "-e".to_owned(),
@@ -555,6 +556,7 @@ impl ManagerStrategy for VerificationMatrixStrategy {
                                 .to_owned(),
                         ],
                         timeout_ms: 5_000,
+                        cache_suppression: None,
                     },
                     VerifierCheck::Test {
                         program: "node".to_owned(),
@@ -564,6 +566,7 @@ impl ManagerStrategy for VerificationMatrixStrategy {
                                 .to_owned(),
                         ],
                         timeout_ms: 5_000,
+                        cache_suppression: None,
                     },
                     VerifierCheck::JsonSchema {
                         path: "schema.json".to_owned(),
@@ -1079,11 +1082,13 @@ fn validate_verification_policy(task_key: &str, policy: &VerificationPolicy) -> 
                 program,
                 args,
                 timeout_ms,
+                ..
             }
             | VerifierCheck::Test {
                 program,
                 args,
                 timeout_ms,
+                ..
             } => {
                 if program.trim().is_empty()
                     || program.len() > 256
@@ -1504,6 +1509,7 @@ mod tests {
                             VerifierCheck::File { path: path.clone(), min_bytes: 1 },
                             VerifierCheck::Artifact { min_bytes: 1 },
                             VerifierCheck::Command {
+                                cache_suppression: None,
                                 program: "node".to_owned(),
                                 args: vec![
                                     "-e".to_owned(),
@@ -2153,6 +2159,7 @@ mod tests {
             program: "node".to_owned(),
             args: Vec::new(),
             timeout_ms: 1,
+            cache_suppression: None,
         };
         assert!(validate_plan(&plan, &agents).is_err());
 

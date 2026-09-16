@@ -966,6 +966,36 @@ unresolved identity is `null`, and missing, non-regular, ambiguous, or unspawnab
 check with a precise diagnostic. Resolution and execution share the declared timeout; stdin remains
 closed, output remains bounded, and dropping a timed-out child still kills it.
 
+## Verifier cache suppression
+
+Command and test checks accept optional `cache_suppression`: `python_interpreter`,
+`python_environment`, or `node_compile_cache`. Omission retains the legacy serialized
+shape. Recognized direct Python entry points (`python`, `python3`, `python3.<minor>`,
+including Windows `.exe` spellings) default to native `-B` plus child-only
+`PYTHONDONTWRITEBYTECODE=1`. The argument protects imports even with `-E` or `-I`.
+Windows `py` launchers use environment-only suppression; author any interpreter flags
+after launcher selectors. Wrapper commands require explicit `python_environment`;
+arguments are never guessed from script contents or reconstructed through a shell.
+
+Other runtimes receive no automatic override. `node_compile_cache` opts into
+`NODE_DISABLE_COMPILE_CACHE=1` (Node 22.8+). This disables Node's native module compile
+cache, not package-manager or application caches. All controls are scoped to the
+verifier child. Provider and arbitrary task execution are unchanged.
+
+Command evidence records the requested effective policy, selection source, environment
+and argument prefix. It does not prove the program honored the setting or wrote zero
+caches: wrappers can discard environment and programs can explicitly write files.
+An unresolved or failed command still fails normally. Existing policy serialization
+and equality include explicit controls; no migration or new approval is needed.
+
+Suppression requires an updated runner. Older readers may ignore the new optional
+field; mixed-version suppression is not guaranteed. This does not grant older or newer
+runners permission to delete ignored files. The existing cleanup gate preserves dirty,
+committed, unknown and unverifiable worktrees. Disposition detail reports independent
+tracked/untracked/ignored counts; ignored ownership remains unattributed. This mechanism
+allocates no cache directories. Provider artifacts remain recorded in their existing
+artifact events, separately from source state and requested verifier controls.
+
 ## Portable source-deliverable boundary
 
 Provider artifacts and application deliverables are separate object roles. After the provider

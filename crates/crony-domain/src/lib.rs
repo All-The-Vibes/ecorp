@@ -716,6 +716,15 @@ impl TaskGraphPlan {
     }
 }
 
+/// Native cache controls for the verifier child only. These do not authorize cleanup.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VerifierCacheSuppression {
+    PythonInterpreter,
+    PythonEnvironment,
+    NodeCompileCache,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum VerifierCheck {
@@ -730,11 +739,15 @@ pub enum VerifierCheck {
         program: String,
         args: Vec<String>,
         timeout_ms: u64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        cache_suppression: Option<VerifierCacheSuppression>,
     },
     Test {
         program: String,
         args: Vec<String>,
         timeout_ms: u64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        cache_suppression: Option<VerifierCacheSuppression>,
     },
     JsonSchema {
         path: String,

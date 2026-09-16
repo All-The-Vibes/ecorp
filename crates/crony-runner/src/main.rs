@@ -4116,6 +4116,7 @@ mod tests {
                         "require('node:assert/strict').deepEqual(require('node:fs').readdirSync('.').sort(), ['sentinel.txt'])".to_owned(),
                     ],
                     timeout_ms: 5_000,
+                cache_suppression: None,
                 },
                 crony_domain::VerifierCheck::File {
                     path: reference.path,
@@ -5041,6 +5042,7 @@ mod tests {
                     "throw Error('cancelled check must not execute')".to_owned(),
                 ],
                 timeout_ms: 5_000,
+                cache_suppression: None,
             }],
             manual_gate: None,
         };
