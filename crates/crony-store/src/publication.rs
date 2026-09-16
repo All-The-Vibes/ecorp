@@ -1730,7 +1730,6 @@ async fn revalidate_publication_authority_tx(
             ));
         }
     }
-    PgStore::ensure_audit_workflow_gates_tx(tx, publication.corp_id).await?;
     Ok(())
 }
 
@@ -1739,6 +1738,9 @@ async fn validate_publication_prerequisites(
     request: &PublicationPrerequisiteRequest<'_>,
     existing: bool,
 ) -> Result<PublicationPrerequisites> {
+    // Covered governance writers take the ledger before the Factory/mission/task
+    // locks. Retain the shared gate lock through this authorization transaction.
+    PgStore::ensure_audit_workflow_gates_tx(tx, request.corp_id).await?;
     let (work_item, _) = factory_work_item_tx(tx, request.corp_id, request.work_item_id, true)
         .await?
         .context("factory work item not found")?;

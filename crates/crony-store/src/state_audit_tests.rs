@@ -48,6 +48,242 @@ async fn fixture(
 
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_coverage_identity_survives_governance_mutations(pool: PgPool) -> Result<()> {
+    let (store, ids, mission, contract, policy) = fixture(pool).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    let fingerprint: String =
+        sqlx::query_scalar("SELECT fingerprint FROM state_audit_coverage WHERE mission_id=$1")
+            .bind(mission.mission_id)
+            .fetch_one(&store.pool)
+            .await?;
+    for statement in [
+        "DELETE FROM state_audit_coverage WHERE mission_id=$1",
+        "UPDATE state_audit_coverage SET mission_id=gen_random_uuid() WHERE mission_id=$1",
+        "UPDATE state_audit_coverage SET corp_id=gen_random_uuid() WHERE mission_id=$1",
+    ] {
+        let mut tx = store.pool.begin().await?;
+        sqlx::query("UPDATE missions SET budget_tokens=budget_tokens+1 WHERE id=$1")
+            .bind(mission.mission_id)
+            .execute(&mut *tx)
+            .await?;
+        let result = sqlx::query(statement)
+            .bind(mission.mission_id)
+            .execute(&mut *tx)
+            .await;
+        tx.rollback().await?;
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("audit coverage identity"),
+            "coverage cannot be removed or reassigned to bypass the deferred guard"
+        );
+    }
+    store
+        .create_mission_contract_revision(CreateMissionContractRevisionInput {
+            corp_id: ids.corp_id,
+            actor_id: ids.alice_actor_id,
+            mission_id: mission.mission_id,
+            task_id: mission.task_ids[0],
+            expected_contract_version: 1,
+            next_action: MissionContractRevisionAction::Redispatch,
+            source_run_id: None,
+            reason: "authorized refresh".into(),
+            idempotency_key: Uuid::new_v4(),
+            description: "Revised covered specification".into(),
+            contract,
+            verification_policy: policy,
+        })
+        .await?;
+    let row = sqlx::query(
+        "SELECT corp_id,fingerprint,state_audit_fingerprint(mission_id) AS actual FROM state_audit_coverage WHERE mission_id=$1",
+    )
+    .bind(mission.mission_id)
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(row.get::<Uuid, _>("corp_id"), ids.corp_id);
+    assert_ne!(row.get::<String, _>("fingerprint"), fingerprint);
+    assert_eq!(
+        row.get::<String, _>("fingerprint"),
+        row.get::<String, _>("actual")
+    );
+    let error = sqlx::query("UPDATE missions SET budget_tokens=budget_tokens+1 WHERE id=$1")
+        .bind(mission.mission_id)
+        .execute(&store.pool)
+        .await
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("without an atomic state audit decision")
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = false)]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_additive_guard_upgrades_existing_foundation(pool: PgPool) -> Result<()> {
+    let source = sqlx::migrate!("../../db/migrations");
+    let previous = sqlx::migrate::Migrator {
+        migrations: std::borrow::Cow::Owned(
+            source.iter().filter(|m| m.version <= 46).cloned().collect(),
+        ),
+        ..sqlx::migrate::Migrator::DEFAULT
+    };
+    let foundation = sqlx::migrate::Migrator {
+        migrations: std::borrow::Cow::Owned(
+            source
+                .iter()
+                .filter(|m| m.version <= 46 || m.version == 50)
+                .cloned()
+                .collect(),
+        ),
+        ..sqlx::migrate::Migrator::DEFAULT
+    };
+    previous.run(&pool).await?;
+    let before: Vec<(i64, Vec<u8>)> =
+        sqlx::query_as("SELECT version,checksum FROM _sqlx_migrations ORDER BY version")
+            .fetch_all(&pool)
+            .await?;
+    assert_eq!(before.len(), 46);
+    foundation.run(&pool).await?;
+    foundation.run(&pool).await?;
+    let after: Vec<(i64, Vec<u8>)> =
+        sqlx::query_as("SELECT version,checksum FROM _sqlx_migrations ORDER BY version")
+            .fetch_all(&pool)
+            .await?;
+    assert_eq!(after.len(), 47);
+    assert_eq!(&after[..46], before.as_slice());
+    assert_eq!(after[46].0, 50);
+    assert!(matches!(
+        previous.run(&pool).await,
+        Err(sqlx::migrate::MigrateError::VersionMissing(50))
+    ));
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_nonmonotonic_budget_refusal_is_audited_and_replayed(pool: PgPool) -> Result<()> {
+    let (store, ids, mission, _, _) = fixture(pool).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    for (tokens, cost) in [(1000, 100000), (999, 100001), (1001, 99999)] {
+        let input = ProposeMissionBudgetRevisionInput {
+            corp_id: ids.corp_id,
+            actor_id: ids.alice_actor_id,
+            mission_id: mission.mission_id,
+            expected_budget_tokens: 1000,
+            expected_budget_cost_microusd: 100000,
+            proposed_budget_tokens: tokens,
+            proposed_budget_cost_microusd: cost,
+            rationale: "  Review this bounded proposal  ".into(),
+            idempotency_key: Uuid::new_v4(),
+            finish_scope: None,
+        };
+        let first = store
+            .propose_mission_budget_revision(input.clone())
+            .await
+            .unwrap_err();
+        let receipt = store
+            .audit_receipt(ids.corp_id, ids.alice_actor_id, input.idempotency_key)
+            .await?
+            .context("structurally valid monotonicity refusal must have a receipt")?;
+        assert_eq!(receipt.decision, "refused");
+        assert!(receipt.resource_results.is_empty());
+        assert!(first.to_string().contains("must increase"));
+        assert!(first.to_string().contains(&receipt.row_hash));
+        let mut retry = input.clone();
+        retry.rationale = retry.rationale.trim().into();
+        assert_eq!(
+            first.to_string(),
+            store
+                .propose_mission_budget_revision(retry)
+                .await
+                .unwrap_err()
+                .to_string()
+        );
+        assert_eq!(
+            Some(receipt),
+            store
+                .audit_receipt(ids.corp_id, ids.alice_actor_id, input.idempotency_key)
+                .await?
+        );
+        let mut changed = input.clone();
+        changed.proposed_budget_tokens += 1;
+        assert!(
+            store
+                .propose_mission_budget_revision(changed)
+                .await
+                .unwrap_err()
+                .to_string()
+                .contains("different semantic inputs")
+        );
+        for invalid in [
+            ProposeMissionBudgetRevisionInput {
+                actor_id: ids.eve_actor_id,
+                ..input.clone()
+            },
+            ProposeMissionBudgetRevisionInput {
+                rationale: String::new(),
+                idempotency_key: Uuid::new_v4(),
+                ..input.clone()
+            },
+        ] {
+            assert!(
+                store
+                    .propose_mission_budget_revision(invalid.clone())
+                    .await
+                    .is_err()
+            );
+            assert_eq!(
+                0,
+                sqlx::query_scalar::<_, i64>(
+                    "SELECT count(*) FROM state_audit_decisions WHERE actor_id=$1 AND request_id=$2",
+                )
+                .bind(invalid.actor_id).bind(invalid.idempotency_key)
+                .fetch_one(&store.pool).await?
+            );
+        }
+    }
+    assert_eq!(
+        4,
+        sqlx::query_scalar::<_, i64>(
+            "SELECT last_sequence FROM state_audit_ledgers WHERE corp_id=$1"
+        )
+        .bind(ids.corp_id)
+        .fetch_one(&store.pool)
+        .await?
+    );
+    assert_eq!(
+        0,
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM mission_budget_revisions")
+            .fetch_one(&store.pool)
+            .await?
+    );
+    assert_eq!(
+        (1000_i64, 100000_i64),
+        sqlx::query_as::<_, (i64, i64)>(
+            "SELECT budget_tokens,budget_cost_microusd FROM missions WHERE id=$1"
+        )
+        .bind(mission.mission_id)
+        .fetch_one(&store.pool)
+        .await?
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
 async fn issue281_atomic_revision_retry_refusal_and_rollback(pool: PgPool) -> Result<()> {
     let (store, ids, mission, contract, policy) = fixture(pool).await?;
     store
@@ -951,6 +1187,7 @@ struct PublicationFixture {
     writes: std::sync::Mutex<usize>,
     fail: std::sync::Mutex<Option<usize>>,
     rewritten: std::sync::Mutex<bool>,
+    rewrite_after_writes: Option<usize>,
 }
 impl crony_audit::PublicationTransport for PublicationFixture {
     fn head(&self) -> futures_util::future::BoxFuture<'_, Result<String>> {
@@ -961,7 +1198,12 @@ impl crony_audit::PublicationTransport for PublicationFixture {
         _old: &'a str,
         _new: &'a str,
     ) -> futures_util::future::BoxFuture<'a, Result<bool>> {
-        Box::pin(async { Ok(!*self.rewritten.lock().unwrap()) })
+        Box::pin(async {
+            Ok(!*self.rewritten.lock().unwrap()
+                && !self
+                    .rewrite_after_writes
+                    .is_some_and(|threshold| *self.writes.lock().unwrap() >= threshold))
+        })
     }
     fn read<'a>(
         &'a self,
@@ -988,6 +1230,76 @@ impl crony_audit::PublicationTransport for PublicationFixture {
             Ok(())
         })
     }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_midpublication_ancestry_rewrite_disables_destination(pool: PgPool) -> Result<()> {
+    let (store, ids, mission, _, _) = fixture(pool).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    let key = crony_audit::SigningKey::from_bytes(&[7; 32]);
+    store
+        .audit_checkpoint(ids.corp_id, "fixture-key", &key)
+        .await?;
+    for threshold in [1, 4] {
+        let destination = state_audit::AuditDestination {
+            id: Uuid::new_v4(),
+            corp_id: ids.corp_id,
+            kind: "github".into(),
+            interval_seconds: 60,
+            calendar_schedule: None,
+            overdue_after_seconds: 3600,
+            workflow_gate: "published".into(),
+            config: json!({"repository":"fixture/audit","branch":"main","path":"audit"}),
+        };
+        store
+            .configure_audit_destination(ids.alice_actor_id, &destination)
+            .await?;
+        let remote = PublicationFixture {
+            rewrite_after_writes: Some(threshold),
+            ..Default::default()
+        };
+        let error = store
+            .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+            .await
+            .unwrap_err();
+        assert!(format!("{error:#}").contains("GitHub branch changed ancestry"));
+        let row = sqlx::query(
+            "SELECT publication_disabled,last_error,reconciliation_error,failures FROM state_audit_destinations WHERE id=$1",
+        ).bind(destination.id).fetch_one(&store.pool).await?;
+        assert!(row.get::<bool, _>("publication_disabled"));
+        assert_eq!(
+            row.get::<String, _>("last_error"),
+            "external_history_divergence"
+        );
+        assert_eq!(
+            row.get::<String, _>("reconciliation_error"),
+            "external_history_divergence"
+        );
+        assert_eq!(row.get::<i64, _>("failures"), 1);
+        store
+            .request_audit_publication(ids.corp_id, ids.alice_actor_id, destination.id)
+            .await?;
+        assert!(
+            !store
+                .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+                .await?
+        );
+        assert_eq!(*remote.writes.lock().unwrap(), threshold);
+        assert!(
+            !store
+                .due_audit_destinations()
+                .await?
+                .iter()
+                .any(|d| d.id == destination.id)
+        );
+    }
+    Ok(())
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]
@@ -1033,6 +1345,7 @@ async fn issue281_durable_publisher_interruption_and_covering_catchup(pool: PgPo
     );
     let status = store.audit_status(ids.corp_id, ids.alice_actor_id).await?;
     assert_eq!(status["destinations"][0]["failures"], 1);
+    assert_eq!(status["destinations"][0]["publication_disabled"], false);
     assert_eq!(status["receipts"][0]["status"], "pending");
     assert_eq!(status["assurance"]["overdue_destinations"], 1);
     let input = CreateMissionContractRevisionInput {

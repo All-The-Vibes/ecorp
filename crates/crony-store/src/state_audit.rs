@@ -741,6 +741,7 @@ impl PgStore {
             Err(error) => {
                 let message = error.to_string();
                 let divergence = message.contains("history rewrite")
+                    || message.contains("GitHub branch changed ancestry")
                     || message.contains("conflicting checkpoint")
                     || message.contains("conflicting existing checkpoint");
                 sqlx::query("UPDATE state_audit_destinations SET failures=failures+1,last_error=$2,last_attempted_publication=now(),next_due=now()+interval '60 seconds',publication_disabled=$3,reconciliation_error=CASE WHEN $3 THEN $2 ELSE reconciliation_error END WHERE id=$1")
