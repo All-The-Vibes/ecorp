@@ -55,6 +55,8 @@ mod factory_recovery_loss_tests;
 #[cfg(test)]
 mod mission_context_tests;
 #[cfg(test)]
+mod steering_lock_tests;
+#[cfg(test)]
 mod workspace_connections_tests;
 
 const DEMO_CORP_ID: &str = "00000000-0000-4000-8000-000000000001";
@@ -10628,7 +10630,32 @@ impl PgStore {
 
         let mut tx = self.pool.begin().await?;
         assert_actor_agent_scope_tx(&mut tx, corp_id, actor_id, agent_id).await?;
+        // Match runner events' run-before-agent order. The command foreign key
+        // would otherwise request a run lock while holding the agent grant lock.
+        let destination = sqlx::query_scalar::<_, Uuid>(
+            "SELECT id FROM runs WHERE agent_id = $1 AND corp_id = $2
+             AND status IN ('starting', 'running', 'waiting_for_input',
+                            'waiting_for_approval', 'verifying')
+             ORDER BY created_at DESC, id DESC LIMIT 1",
+        )
+        .bind(agent_id)
+        .bind(corp_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        if let Some(run_id) = destination {
+            // Lock the exact observed row even if its status changed while waiting.
+            sqlx::query(
+                "SELECT id FROM runs WHERE id = $1 AND corp_id = $2 AND agent_id = $3 FOR UPDATE",
+            )
+            .bind(run_id)
+            .bind(corp_id)
+            .bind(agent_id)
+            .fetch_optional(&mut *tx)
+            .await?
+            .context("conflict: message destination changed; retry the request")?;
+        }
         lock_agent_for_grant_tx(&mut tx, corp_id, agent_id).await?;
+        assert_actor_agent_scope_tx(&mut tx, corp_id, actor_id, agent_id).await?;
         sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
             .bind(format!("control-message:{corp_id}:{idempotency_key}"))
             .execute(&mut *tx)
@@ -10712,13 +10739,22 @@ impl PgStore {
             WHERE run.agent_id = $1 AND run.corp_id = $2
               AND run.status IN ('starting', 'running', 'waiting_for_input',
                                  'waiting_for_approval', 'verifying')
-            ORDER BY run.created_at DESC LIMIT 1
+            ORDER BY run.created_at DESC, run.id DESC LIMIT 1
             "#,
         )
         .bind(agent_id)
         .bind(corp_id)
         .fetch_optional(&mut *tx)
         .await?;
+
+        // Do not lock a newly selected run after taking the agent lock. A
+        // destination change must roll back rather than recreate the inversion
+        // or send this request to work that was never locked.
+        if active_run.as_ref().map(|row| row.get::<Uuid, _>("id")) != destination {
+            return Err(anyhow!(
+                "conflict: message destination changed; retry the request"
+            ));
+        }
 
         let adapter_supports_steer = active_run.as_ref().is_some_and(|row| {
             matches!(
