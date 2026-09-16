@@ -149,3 +149,20 @@ The misindented test field was corrected manually. `cargo fmt --check` had passe
 on the original macro content and passed again; its earlier success did not imply
 that this indentation was correct. Owned fixture databases, logs and retained
 workspaces were preserved, and only those test services were stopped.
+
+
+### Hosted readiness regression follow-up
+
+Hosted integration on `58426c3` failed in `e2e_artifact_staging.mjs`: its native
+reconciliation retry recognizes the existing exact staffing error. The correction
+had changed that response even for policies without explicit cache controls. The
+server now preserves the legacy response in that case and returns the expanded
+cache-control diagnostic only for explicit policies. A regression locks the legacy
+response used by both artifact-staging and identity readiness fixtures.
+
+All six local gates passed after this correction: **523 passed, 0 failed,
+326 ignored** in the default workspace suite. The full artifact-staging restart
+fixture supports Linux/Windows, not macOS; the next hosted run must verify that
+integration path. No new review comments were present; both original threads
+remained resolved. The earlier independent Copilot review applies to the capability
+change; this small diagnostic correction was inspected and tested locally.

@@ -1526,6 +1526,15 @@ impl RunnerDispatchError {
     }
 }
 
+fn runner_staffing_failure_detail(requires_cache_suppression: bool) -> &'static str {
+    if requires_cache_suppression {
+        "no connected runner can staff the selected mission runtime, model, source, and verifier cache controls"
+    } else {
+        // Existing readiness clients recognize this exact retryable response.
+        "no connected runner can staff the selected mission runtime, model, and source"
+    }
+}
+
 fn runner_supports_cache_suppression(capabilities: &[RunnerCapability]) -> bool {
     capabilities.iter().any(|cap| {
         cap.workspace_connection_id.is_none()
@@ -2636,9 +2645,11 @@ async fn plan_mission(
                 .is_some()
             })
             .ok_or_else(|| {
-                ApiError::bad_request(
-                    "no connected runner can staff the selected mission runtime, model, source, and verifier cache controls",
-                )
+                ApiError::bad_request(runner_staffing_failure_detail(
+                    input
+                        .verification_policy
+                        .is_some_and(VerificationPolicy::requires_cache_suppression),
+                ))
             })?;
         staffing::candidates(corp_id, strategy, adapter, &existing_agents)
             .map_err(ApiError::bad_request)?
@@ -9089,6 +9100,18 @@ mod cache_admission_tests {
                 "node_compile_cache".into();
         }
         serde_json::from_value(value).unwrap()
+    }
+
+    #[test]
+    fn issue140_legacy_readiness_diagnostic_remains_retryable() {
+        assert_eq!(
+            runner_staffing_failure_detail(false),
+            "no connected runner can staff the selected mission runtime, model, and source"
+        );
+        assert_ne!(
+            runner_staffing_failure_detail(true),
+            runner_staffing_failure_detail(false)
+        );
     }
 
     #[test]
