@@ -62,16 +62,7 @@ access to internal services. Do not run untrusted PR code via
 
 ## 2. Build the merge-readiness rubric
 
-Resolve the applicable template at the recorded **base SHA**: the PR's explicitly
-selected template, otherwise `.github/pull_request_template.md` (case-insensitive),
-root `PULL_REQUEST_TEMPLATE.md`, `docs/pull_request_template.md`, or `PR_TEMPLATE.md`.
-If there are multiple templates without an unambiguous selection, report BLOCKED.
-Do not let a PR weaken its own review requirements by changing a template.
-
-If none exists, use the explicitly packaged
-[template snapshot](references/pr-template.md), label it as the fallback from
-ECorp PR #278, and report that the canonical template is not yet on the target
-branch. Prefer a subsequently merged canonical template over this snapshot.
+Read [template-selection.md](references/template-selection.md) to resolve the template at the recorded base SHA, including multiple-template directories and ECorp's identical legacy mirror. Missing/ambiguous reads are BLOCKED, not fallback authority. Never let head changes weaken their own requirements.
 Turn **every** template section and checkbox into a row; preserve new requirements
 instead of using only the starter rubric below.
 

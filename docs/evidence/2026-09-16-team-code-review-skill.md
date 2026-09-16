@@ -116,3 +116,50 @@ GitHub entitlement, policy, quota, runner capacity, and supplied tools.
 skill on the new PR, then a second automatic review on a later pushed SHA.
 Independent-subagent remediation and forced Astra selection inside automatic
 review are not established; the latter is unsupported by the product.
+
+## Native draft/non-default-target canary — 22:29 UTC
+
+After the local corrections, two fresh independent reviewers returned PASS for
+tree `48e626d747884da6b2a681df2de6e388b15cb21c`. The committed tree is identical
+at `d66d8079440080e3451e2981aff187c532e980f2`. This was a same-model Santa
+adaptation: a native subagent and a separate Copilot CLI Astra session, not
+cross-model diversity or human merge approval.
+
+[PR #304](https://github.com/All-The-Vibes/ecorp/pull/304) was opened as a draft
+against a task-owned non-default branch at the exact main commit. No manual
+review request was made.
+[Copilot run 35157451279](https://github.com/All-The-Vibes/ecorp/actions/runs/35157451279)
+completed successfully and produced
+[review 5229000192](https://github.com/All-The-Vibes/ecorp/pull/304#pullrequestreview-5229000192)
+at **2026-09-16T22:29:08Z**, for the exact `d66d807...` head.
+
+The bot's summary contained `ECorp code-review`, the correct base/head, rubric
+gates, and 21/21 changed files reviewed. This confirms automatic triggering and
+skill use for that draft/non-default-target case. It does **not** establish that
+every upstream audit or independent Santa reviewers ran inside the hosted bot.
+Its state was `COMMENTED`, not an authorized human/team approval.
+
+It found three actionable gaps:
+
+| Finding | Required correction |
+| --- | --- |
+| [Head-controlled review policy](https://github.com/All-The-Vibes/ecorp/pull/304#discussion_r4031361921) | Require independent owner/base-policy review for reviewer-policy changes; explicitly state instructions are advisory rather than tamper-proof enforcement |
+| [Incomplete template discovery](https://github.com/All-The-Vibes/ecorp/pull/304#discussion_r4031361949) | Enumerate all supported multiple-template directories at the base SHA; never mistake ambiguous selection for absence |
+| [Unmanifested vendor files](https://github.com/All-The-Vibes/ecorp/pull/304#discussion_r4031361983) | Compare the complete vendor file set with manifest entries, excluding only the exact local control files |
+
+These corrections are split among separate workers, with a reproduced
+unmanifested-file regression for the executable check and before/after semantic
+checks for prose. The follow-up also makes Astra mandatory for Copilot fix mode
+unless an operator explicitly chooses a different model; a mismatched session
+must stop instead of claiming that instructions changed the model.
+
+The PR was then retargeted to main, retaining draft state and `auto_merge: null`.
+The unchanged task-owned canary base was removed only after checking its exact
+commit and that no open PR still targeted it. Existing protected human review
+requirements remain effective.
+
+The next-push review must be observed separately at its actual new SHA. Its final
+receipt belongs in the PR/validation report, not retroactively in a commit that
+would change that same SHA. Missing screenshots, independent owner approval,
+full fix-mode execution, and unsupported automatic-model selection are not
+converted into acceptance by this canary.
