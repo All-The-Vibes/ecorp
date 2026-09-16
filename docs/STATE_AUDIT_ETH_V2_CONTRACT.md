@@ -14,6 +14,15 @@ V1 supplies signed checkpoints, destination-neutral durable receipt storage,
 independent interval/monthly schedules, the contract, and local EVM
 compatibility. Mainnet transport and chain lifecycle remain V2 work.
 
+The contract source and artifact use LF checkout bytes on every platform.
+The compiler metadata commits to those exact source bytes; changing line endings
+after compilation invalidates that binding. Regenerate, rather than hand-edit,
+the artifact with `solc-js 0.8.30+commit.73712a01.Emscripten.clang`, source key
+`StateAuditAnchor.sol`, optimizer enabled with 200 runs, and the `prague` EVM
+target. Preserve the `abi`, `evm.bytecode.object`, and `metadata` outputs.
+The `ethereum_local_chain` test checks the source hash and metadata commitment
+in the actual bytecode before executing it.
+
 ## Fixed V1 checkpoint identity
 
 The signed CBOR payload is exactly the six-element array:
