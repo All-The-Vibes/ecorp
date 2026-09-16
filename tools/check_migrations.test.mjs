@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { createHash, randomUUID } from 'node:crypto'
-import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import test from 'node:test'
 
@@ -86,3 +86,37 @@ test('rejects missing or unlisted migration files', async (t) => {
   await writeFile(path.join(f.migrationsRoot, '0003_unlisted.sql'), sql)
   assert.notEqual((await f.check()).status, 0)
 })
+
+for (const autocrlf of ['true', 'false']) {
+  test(`canonical migration checkout passes with core.autocrlf=${autocrlf}`, async (t) => {
+    const repositoryRoot = path.resolve(import.meta.dirname, '..')
+    const root = path.join(repositoryRoot, 'output', `migration-checkout-${randomUUID()}`)
+    const checkout = path.join(root, 'checkout')
+    await mkdir(checkout, { recursive: true })
+    t.after(() => rm(root, { recursive: true }))
+    const env = { ...process.env, GIT_INDEX_FILE: path.join(root, 'index') }
+    const git = (...args) => {
+      const result = spawnSync('git', ['-c', `core.autocrlf=${autocrlf}`, ...args], {
+        cwd: repositoryRoot, env, encoding: 'utf8', timeout: 30_000,
+      })
+      assert.ifError(result.error)
+      assert.equal(result.status, 0, result.stderr)
+      return result.stdout
+    }
+    const paths = ['.gitattributes', 'db/migrations', 'tools/check_migrations.mjs']
+    // Include proposed changes without staging the contributor's real index.
+    git('read-tree', 'HEAD')
+    git('add', '--', ...paths)
+    const files = git('ls-files', '-z', '--', ...paths).split('\0').filter(Boolean)
+    git('checkout-index', `--prefix=${checkout}${path.sep}`, '--', ...files)
+    for (const file of files.filter((file) => file.endsWith('.sql'))) {
+      const bytes = await readFile(path.join(checkout, file))
+      assert.equal(bytes.includes(13), false, `${file} must retain canonical LF bytes`)
+    }
+    const result = spawnSync(process.execPath, [path.join(checkout, 'tools', 'check_migrations.mjs')], {
+      encoding: 'utf8', timeout: 10_000,
+    })
+    assert.ifError(result.error)
+    assert.equal(result.status, 0, result.stderr)
+  })
+}
