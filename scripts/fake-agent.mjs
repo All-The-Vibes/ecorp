@@ -1,7 +1,7 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 
 const args = new Map();
 for (let index = 2; index < process.argv.length; index += 2) {
@@ -39,7 +39,9 @@ const approvalAction =
 const budgetLoop = mission.includes("[budget-loop]");
 const budgetLateCompletion = mission.includes("[budget-late-completion]");
 const healthyConversation = mission.includes("[healthy-conversation]");
-const externalEvidence = cleanWorktree || ignoredWorktree;
+const researchFiles = mission.match(/^EXPECTED OUTPUT: Verified research files: (.+)$/m)?.[1]
+  .split(", ");
+const externalEvidence = cleanWorktree || ignoredWorktree || Boolean(researchFiles);
 const briefingDelay = slowRun ? 4_000 : graphSlowRun ? 1_200 : 700;
 const workDelay = slowRun ? 5_000 : graphSlowRun ? 1_200 : 900;
 
@@ -208,6 +210,34 @@ if (failRun) {
   process.exit(0);
 }
 
+// Deterministic fixture only: provider-side file creation and native child readback.
+const dependencyReadback = [];
+const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
+function fixturePath(name) {
+  const target = resolve(workdir, name);
+  const inside = relative(resolve(workdir), target);
+  if (!inside || inside.startsWith("..") || isAbsolute(inside)) {
+    throw new Error("Fixture file is outside its assigned workspace");
+  }
+  return target;
+}
+if (researchFiles) {
+  if (researchFiles.length !== 2) throw new Error("Expected one note and one probe");
+  const note = `# Research handoff\n\nRun: ${runId}\nNonce: ${randomUUID()}\nExact bytes: \u03bb\n`;
+  for (const name of researchFiles) await mkdir(dirname(fixturePath(name)), { recursive: true });
+  await writeFile(fixturePath(researchFiles[0]), note, "utf8");
+  await writeFile(fixturePath(researchFiles[1]), `${JSON.stringify({
+    observed: true, run_id: runId, note_sha256: digest(Buffer.from(note)),
+  })}\n`, "utf8");
+}
+for (const match of mission.matchAll(/^SOURCE FILE (.+) \/ sha256 ([0-9a-f]{64}) \/ bytes (\d+)$/gm)) {
+  const bytes = await readFile(fixturePath(match[1]));
+  if (digest(bytes) !== match[2] || bytes.length !== Number(match[3])) {
+    throw new Error("Materialized dependency does not match the declared hash and bytes");
+  }
+  dependencyReadback.push({ path: match[1], sha256: digest(bytes), bytes: bytes.length });
+}
+
 if (verificationMatrix) {
   await writeFile(resolve(workdir, "verify.txt"), "VERIFIED\n", "utf8");
   await writeFile(
@@ -258,6 +288,8 @@ const artifact = [
   "- Runner computes and reports the SHA-256 digest.",
   `- Live control messages observed: ${controls.length}.`,
   `- Task-scoped secret available: ${secretProbe ? "yes" : "not requested"}.`,
+  ...(dependencyReadback.length
+    ? [`DEPENDENCY READBACK: ${JSON.stringify(dependencyReadback)}`] : []),
   "",
   "## Result",
   "",

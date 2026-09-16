@@ -178,6 +178,7 @@ mod tests {
             .await
             .unwrap();
         let assignment = Assignment {
+            dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),
             connection_epoch: Uuid::new_v4(),

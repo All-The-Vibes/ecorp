@@ -496,6 +496,7 @@ pub struct LaunchRecord {
 #[derive(Debug, Clone)]
 pub struct SchedulableTask {
     pub task_id: Uuid,
+    pub requires_dependency_files: bool,
     pub required_adapter: String,
     pub required_model: Option<String>,
     pub required_reasoning_effort: Option<String>,
@@ -6095,6 +6096,12 @@ impl PgStore {
         sqlx::query(
             r#"
             SELECT t.id AS task_id,
+                   EXISTS (
+                       SELECT 1 FROM task_dependencies d
+                       JOIN tasks p ON p.id = d.depends_on_task_id
+                       WHERE d.task_id = t.id
+                         AND p.contract #>> '{deliverable,form}' = 'typed_artifact_set'
+                   ) AS requires_dependency_files,
                    COALESCE(t.required_adapter, a.adapter) AS required_adapter,
                    t.contract->>'model' AS required_model,
                    t.contract->>'reasoning_effort' AS required_reasoning_effort,
@@ -6140,6 +6147,7 @@ impl PgStore {
         .map(|row| {
             Ok(SchedulableTask {
                 task_id: row.get("task_id"),
+                requires_dependency_files: row.get("requires_dependency_files"),
                 required_adapter: row.get("required_adapter"),
                 required_model: row.get("required_model"),
                 required_reasoning_effort: row.get("required_reasoning_effort"),
@@ -9392,16 +9400,27 @@ impl PgStore {
         &self,
         runner_id: &str,
     ) -> Result<Vec<PendingRunnerCommand>> {
+        self.pending_runner_commands_excluding_runs(runner_id, &[])
+            .await
+    }
+
+    pub async fn pending_runner_commands_excluding_runs(
+        &self,
+        runner_id: &str,
+        blocked_runs: &[Uuid],
+    ) -> Result<Vec<PendingRunnerCommand>> {
         Ok(sqlx::query(
             r#"
             SELECT id, corp_id, runner_id, run_id, command_kind, payload
             FROM runner_commands
             WHERE runner_id = $1 AND status = 'pending'
+              AND NOT (run_id = ANY($2))
             ORDER BY created_at, id
             LIMIT 100
             "#,
         )
         .bind(runner_id)
+        .bind(blocked_runs)
         .fetch_all(&self.pool)
         .await?
         .into_iter()
@@ -15744,6 +15763,161 @@ mod tests {
         super::PgStore { pool }
     }
 
+    #[sqlx::test(migrations = false)]
+    #[ignore = "requires an explicitly owned PostgreSQL test database"]
+    async fn issue297_dependency_receipt_replay_preserves_active_run_history(pool: sqlx::PgPool) {
+        let store = predispatch_failure_fixture(pool).await;
+        let corp = Uuid::from_u128(1);
+        let run = Uuid::from_u128(4);
+        let digest = "a".repeat(64);
+        let handoffs = vec![json!({"artifact_id": Uuid::new_v4(), "sha256": "verified"})];
+        sqlx::query("UPDATE runs SET status = 'starting' WHERE id = $1")
+            .bind(run)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        let event = store
+            .record_dependency_context(corp, run, &digest, handoffs.clone())
+            .await
+            .unwrap()
+            .unwrap();
+        for status in [
+            "starting",
+            "running",
+            "waiting_for_input",
+            "waiting_for_approval",
+            "verifying",
+        ] {
+            sqlx::query("UPDATE runs SET status = $1 WHERE id = $2")
+                .bind(status)
+                .bind(run)
+                .execute(&store.pool)
+                .await
+                .unwrap();
+            assert!(
+                store
+                    .record_dependency_context(corp, run, &digest, handoffs.clone())
+                    .await
+                    .unwrap()
+                    .is_none(),
+                "{status}"
+            );
+            assert!(
+                store
+                    .record_dependency_context(corp, run, &"b".repeat(64), handoffs.clone())
+                    .await
+                    .is_err(),
+                "{status}: changed content must fail"
+            );
+            assert!(
+                store
+                    .record_dependency_context(
+                        corp,
+                        run,
+                        &digest,
+                        vec![json!({"artifact_id": Uuid::new_v4()})]
+                    )
+                    .await
+                    .is_err(),
+                "{status}: changed authority must fail"
+            );
+        }
+        assert!(
+            store
+                .record_dependency_context(Uuid::new_v4(), run, &digest, handoffs.clone())
+                .await
+                .is_err()
+        );
+        let missing = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO runs (id, corp_id, task_id, status) VALUES ($1, $2, $3, 'running')",
+        )
+        .bind(missing)
+        .bind(corp)
+        .bind(Uuid::from_u128(3))
+        .execute(&store.pool)
+        .await
+        .unwrap();
+        assert!(
+            store
+                .record_dependency_context(corp, missing, &digest, handoffs.clone())
+                .await
+                .is_err()
+        );
+        sqlx::query("UPDATE runs SET status = 'failed' WHERE id = $1")
+            .bind(run)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        assert!(
+            store
+                .record_dependency_context(corp, run, &digest, handoffs)
+                .await
+                .is_err()
+        );
+        let payloads: Vec<serde_json::Value> = sqlx::query_scalar("SELECT payload FROM events")
+            .fetch_all(&store.pool)
+            .await
+            .unwrap();
+        assert_eq!(payloads, vec![event.payload]);
+    }
+
+    #[sqlx::test(migrations = false)]
+    #[ignore = "requires an explicitly owned PostgreSQL test database"]
+    async fn issue297_incompatible_recovery_cannot_hide_other_runs_after_a_full_page(
+        pool: sqlx::PgPool,
+    ) {
+        sqlx::raw_sql(
+            "CREATE TABLE runner_commands (
+                id UUID PRIMARY KEY, corp_id UUID, runner_id TEXT, run_id UUID,
+                command_kind TEXT, payload JSONB, status TEXT, created_at TIMESTAMPTZ);",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        let store = super::PgStore { pool };
+        let blocked = Uuid::new_v4();
+        let ready = Uuid::new_v4();
+        let corp = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO runner_commands
+             SELECT gen_random_uuid(), $1, 'fixture', $2, 'factory_verification_recovery',
+                    '{}'::jsonb, 'pending', '2000-01-01'::timestamptz
+             FROM generate_series(1, 101)",
+        )
+        .bind(corp)
+        .bind(blocked)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO runner_commands VALUES
+             ($1, $2, 'fixture', $3, 'approval_decision', '{}'::jsonb,
+              'pending', '2001-01-01'::timestamptz)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(corp)
+        .bind(ready)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+        let first = store.pending_runner_commands("fixture").await.unwrap();
+        assert_eq!(first.len(), 100);
+        assert!(first.iter().all(|command| command.run_id == blocked));
+        let next = store
+            .pending_runner_commands_excluding_runs("fixture", &[blocked])
+            .await
+            .unwrap();
+        assert_eq!(next.len(), 1);
+        assert_eq!(next[0].run_id, ready);
+        let pending: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM runner_commands WHERE status = 'pending'")
+                .fetch_one(&store.pool)
+                .await
+                .unwrap();
+        assert_eq!(pending, 102, "capability fencing must not consume commands");
+    }
+
     async fn predispatch_fixture_state(store: &super::PgStore) -> serde_json::Value {
         sqlx::query_scalar(
             r#"
@@ -16248,6 +16422,138 @@ mod tests {
             .await
             .unwrap();
         super::PgStore { pool }
+    }
+
+    #[sqlx::test(migrations = false)]
+    #[ignore = "requires an explicitly owned PostgreSQL test database"]
+    async fn issue297_typed_handoffs_never_fall_back_to_provider_receipts(pool: sqlx::PgPool) {
+        let store = dependency_artifact_fixture(pool).await;
+        let corp = Uuid::from_u128(1);
+        let child = Uuid::from_u128(4);
+        let parent = Uuid::from_u128(11);
+        let run = Uuid::from_u128(12);
+        let artifact = Uuid::from_u128(13);
+        sqlx::query(
+            "UPDATE tasks SET contract = jsonb_set(contract, '{deliverable}', $1) WHERE id = $2",
+        )
+        .bind(
+            json!({"form":"typed_artifact_set","commit_after_verification":false,
+                "paths":["handoffs/research.md"]}),
+        )
+        .bind(parent)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+        sqlx::query("UPDATE runs SET deliverable_sha256 = 'digest' WHERE id = $1")
+            .bind(run)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE artifacts SET artifact_role = 'source_deliverable' WHERE id = $1")
+            .bind(artifact)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        // A passing provider receipt is not a substitute for the declared source.
+        assert!(store.dependency_artifacts(corp, child).await.is_err());
+        sqlx::query(
+            "INSERT INTO source_deliverables (run_id, task_id, corp_id, artifact_id, form,
+             base_commit, verification_sha256) VALUES ($1,$2,$3,$4,'typed_artifact_set','base','verification')",
+        )
+        .bind(run).bind(parent).bind(corp).bind(artifact).execute(&store.pool).await.unwrap();
+        assert_eq!(
+            store.dependency_artifacts(corp, child).await.unwrap()[1]
+                .artifact
+                .id,
+            artifact
+        );
+        for (table, key, id, column, value) in [
+            ("tasks", "id", parent, "status", "'cancelled'"),
+            ("tasks", "id", parent, "status", "'failed'"),
+            ("tasks", "id", parent, "verification_status", "'failed'"),
+            ("runs", "id", run, "status", "'cancelled'"),
+            ("runs", "id", run, "verification_status", "'pending'"),
+            ("runs", "id", run, "deliverable_sha256", "'changed'"),
+            (
+                "artifacts",
+                "id",
+                artifact,
+                "run_id",
+                "'00000000-0000-0000-0000-000000000005'",
+            ),
+            (
+                "artifacts",
+                "id",
+                artifact,
+                "corp_id",
+                "'00000000-0000-0000-0000-000000000099'",
+            ),
+            (
+                "artifacts",
+                "id",
+                artifact,
+                "task_id",
+                "'00000000-0000-0000-0000-000000000003'",
+            ),
+            ("artifacts", "id", artifact, "status", "'staged'"),
+            (
+                "artifacts",
+                "id",
+                artifact,
+                "artifact_role",
+                "'provider_evidence'",
+            ),
+            ("source_deliverables", "run_id", run, "artifact_id", "NULL"),
+            (
+                "source_deliverables",
+                "run_id",
+                run,
+                "base_commit",
+                "'wrong-base'",
+            ),
+            (
+                "source_deliverables",
+                "run_id",
+                run,
+                "verification_sha256",
+                "'wrong-verifier'",
+            ),
+            (
+                "source_deliverables",
+                "run_id",
+                run,
+                "task_id",
+                "'00000000-0000-0000-0000-000000000003'",
+            ),
+        ] {
+            let original: String = sqlx::query_scalar(&format!(
+                "SELECT quote_nullable({column}) FROM {table} WHERE {key} = $1"
+            ))
+            .bind(id)
+            .fetch_one(&store.pool)
+            .await
+            .unwrap();
+            sqlx::query(&format!(
+                "UPDATE {table} SET {column} = {value} WHERE {key} = $1"
+            ))
+            .bind(id)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+            let result = store.dependency_artifacts(corp, child).await;
+            sqlx::query(&format!(
+                "UPDATE {table} SET {column} = {original} WHERE {key} = $1"
+            ))
+            .bind(id)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+            assert!(result.is_err(), "{table}.{column}: {value}");
+            assert_eq!(
+                store.dependency_artifacts(corp, child).await.unwrap().len(),
+                2
+            );
+        }
     }
 
     #[sqlx::test(migrations = false)]

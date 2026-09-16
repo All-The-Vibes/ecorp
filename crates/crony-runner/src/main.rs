@@ -1,6 +1,7 @@
 mod adapter;
 mod connections;
 mod deliverable;
+mod dependency_files;
 mod retained_provider_receipt;
 #[cfg(test)]
 mod retained_provider_receipt_tests;
@@ -174,6 +175,7 @@ struct Args {
 
 #[derive(Debug, Clone)]
 struct Assignment {
+    dependency_files: Vec<crony_protocol::dependency_files::VerifiedDependencyFile>,
     corp_id: Uuid,
     connection_epoch: Uuid,
     room_id: Uuid,
@@ -766,6 +768,18 @@ async fn run_connection(
     let setup_capability = workspace_setup_capability(connection_manager.is_some());
     let setup_available = setup_capability.available;
     capabilities.push(setup_capability);
+    capabilities.push(RunnerCapability {
+        workspace_connection_id: None,
+        name: crony_protocol::dependency_files::DEPENDENCY_FILES_CAPABILITY.to_owned(),
+        available: true,
+        detail: Some(
+            "bounded verified dependency files materialized before provider startup".to_owned(),
+        ),
+        models: Vec::new(),
+        source_repository: None,
+        source_base_ref: None,
+        source_base_commit: None,
+    });
     let base_capabilities = Arc::new(capabilities.clone());
     if let Some(manager) = &connection_manager {
         capabilities.extend(manager.capabilities());
@@ -994,6 +1008,7 @@ async fn run_connection(
                 }
             }
             ServerToRunner::StartRun {
+                dependency_files,
                 workspace_connection_id,
                 corp_id,
                 room_id,
@@ -1015,6 +1030,7 @@ async fn run_connection(
                 secrets,
             } => {
                 let assignment = Assignment {
+                    dependency_files,
                     corp_id,
                     connection_epoch,
                     room_id,
@@ -1132,6 +1148,7 @@ async fn run_connection(
                 });
             }
             ServerToRunner::ResumeRun {
+                dependency_files,
                 workspace_connection_id,
                 command_id,
                 corp_id,
@@ -1181,6 +1198,7 @@ async fn run_connection(
                     assignment_token,
                     adapter,
                     mission_title: prompt,
+                    dependency_files,
                     model,
                     reasoning_effort,
                     source_repository,
@@ -1371,6 +1389,7 @@ async fn run_connection(
                     continue;
                 }
                 let assignment = Assignment {
+                    dependency_files: Vec::new(),
                     corp_id,
                     connection_epoch,
                     room_id,
@@ -1532,6 +1551,7 @@ async fn run_connection(
                     continue;
                 }
                 let assignment = Assignment {
+                    dependency_files: Vec::new(),
                     corp_id,
                     connection_epoch,
                     room_id,
@@ -2161,6 +2181,29 @@ async fn execute_assignment(
             &assignment,
             &workspace,
             &format!("quarantined before provider startup: {error:#}"),
+            None,
+            true,
+        );
+        return Ok(());
+    }
+    if let Err(error) = dependency_files::materialize(
+        &workspace.path,
+        &assignment.dependency_files,
+        &assignment.write_scope,
+    ) {
+        send_run_event(
+            &outbound,
+            &runner_id,
+            &assignment,
+            "run.failed",
+            json!({"error": format!("verified dependency materialization failed: {error:#}")}),
+        );
+        send_teardown_workspace_preserved(
+            &outbound,
+            &runner_id,
+            &assignment,
+            &workspace,
+            "dependency materialization failed before provider startup",
             None,
             true,
         );
@@ -3870,6 +3913,7 @@ mod tests {
 
     fn verification_assignment(workspace: &WorkspaceLease, run_id: Uuid) -> Assignment {
         Assignment {
+            dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),
             connection_epoch: Uuid::new_v4(),
@@ -5214,6 +5258,7 @@ mod tests {
     #[test]
     fn teardown_fail_closed_preserves_workspace_without_false_terminal_claim() {
         let assignment = Assignment {
+            dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),
             connection_epoch: Uuid::new_v4(),
@@ -5336,6 +5381,7 @@ mod tests {
         );
         let base_commit = workspaces.base_commit().to_owned();
         let assignment = Assignment {
+            dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),
             connection_epoch: Uuid::new_v4(),
