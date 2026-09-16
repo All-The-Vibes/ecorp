@@ -19,6 +19,7 @@ Please delete options that are not relevant.
 - Describe the tests that you ran to verify your changes.
 - Provide instructions so we can reproduce.
 - List any relevant details for your test configuration.
+- Attach screenshot images in the PR commits for all tests including playwright, agent-browser, or kimi webbridge
 
 **Test Configuration**:
 
