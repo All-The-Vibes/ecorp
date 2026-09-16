@@ -153,8 +153,12 @@ impl Service {
                         Ok(destinations) => {
                             for destination in destinations {
                                 let result = async {
-                                    let witness = self.witnesses.iter().find(|w| w.corp_id == destination.corp_id)
-                                        .context("publication blocked: no independently retained Corp witness")?;
+                                    let Some(witness) = self.witnesses.iter().find(|w| w.corp_id == destination.corp_id) else {
+                                        store
+                                            .disable_audit_destination_for_divergence(destination.id)
+                                            .await?;
+                                        anyhow::bail!("publication disabled: no independently retained Corp witness");
+                                    };
                                     if let Err(error) = store.validate_audit_witness(
                                         destination.corp_id,
                                         witness.ledger_id,
@@ -399,6 +403,106 @@ pub async fn handle(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sqlx::{ConnectOptions, PgPool};
+
+    async fn assert_missing_witness_disables(
+        pool: PgPool,
+        witness_corp: Option<Uuid>,
+    ) -> anyhow::Result<()> {
+        let database = pool.connect_options().to_url_lossy();
+        let store = PgStore::connect(database.as_str()).await?;
+        let (ids, _) = store.bootstrap_demo().await?;
+        let ledger = Uuid::new_v4();
+        store
+            .initialize_state_audit(ids.corp_id, ids.alice_actor_id, ledger)
+            .await?;
+        let destination = AuditDestination {
+            id: Uuid::new_v4(),
+            corp_id: ids.corp_id,
+            kind: "github".into(),
+            interval_seconds: 60,
+            calendar_schedule: None,
+            overdue_after_seconds: 3600,
+            workflow_gate: "published".into(),
+            config: serde_json::json!({
+                "repository": "fixture/audit",
+                "branch": "main",
+                "path": "audit"
+            }),
+        };
+        store
+            .configure_audit_destination(ids.alice_actor_id, &destination)
+            .await?;
+        assert_eq!(store.due_audit_destinations().await?.len(), 1);
+        Arc::new(Service {
+            key: crony_audit::SigningKey::from_bytes(&[7; 32]),
+            key_id: "fixture-key".into(),
+            github_token: Some("test-only-never-sent".into()),
+            checkpoint_seconds: 1,
+            witnesses: witness_corp
+                .map(|corp_id| RetainedWitness {
+                    corp_id,
+                    ledger_id: ledger,
+                    checkpoint_digest: "00".repeat(32),
+                    github_commit: None,
+                })
+                .into_iter()
+                .collect(),
+        })
+        .start(store.clone());
+        tokio::time::timeout(StdDuration::from_secs(5), async {
+            loop {
+                let status = store.audit_status(ids.corp_id, ids.alice_actor_id).await?;
+                if status["destinations"][0]["publication_disabled"] == true {
+                    return Ok::<(), anyhow::Error>(());
+                }
+                tokio::time::sleep(StdDuration::from_millis(10)).await;
+            }
+        })
+        .await
+        .context("publisher did not durably disable the missing-witness destination")??;
+
+        // A second poll and a new store connection must retain the failure, not retry it.
+        tokio::time::sleep(StdDuration::from_millis(1100)).await;
+        let reopened = PgStore::connect(database.as_str()).await?;
+        let status = reopened
+            .audit_status(ids.corp_id, ids.alice_actor_id)
+            .await?;
+        let retained = &status["destinations"][0];
+        assert_eq!(retained["publication_disabled"], true);
+        assert_eq!(
+            retained["reconciliation_error"],
+            "retained_witness_divergence"
+        );
+        assert_eq!(retained["last_error"], "retained_witness_divergence");
+        assert_eq!(retained["failures"], 1);
+        assert!(!retained["last_attempted_publication"].is_null());
+        assert_eq!(status["assurance"]["publication_errors"], 1);
+        assert!(reopened.due_audit_destinations().await?.is_empty());
+        assert!(
+            !reopened
+                .audit_workflow_gate_satisfied(ids.corp_id, destination.id, 1)
+                .await?
+        );
+        Ok(())
+    }
+
+    #[sqlx::test(migrations = "../../db/migrations")]
+    #[ignore = "requires explicitly owned disposable PostgreSQL"]
+    async fn issue281_publisher_missing_witness_is_durably_disabled(
+        pool: PgPool,
+    ) -> anyhow::Result<()> {
+        assert_missing_witness_disables(pool, None).await
+    }
+
+    #[sqlx::test(migrations = "../../db/migrations")]
+    #[ignore = "requires explicitly owned disposable PostgreSQL"]
+    async fn issue281_publisher_other_corp_witness_is_not_authority(
+        pool: PgPool,
+    ) -> anyhow::Result<()> {
+        assert_missing_witness_disables(pool, Some(Uuid::new_v4())).await
+    }
+
     #[test]
     fn issue281_api_rejects_injected_key_token_or_destination_fields() {
         let actor = "00000000-0000-4000-8000-000000000001";
