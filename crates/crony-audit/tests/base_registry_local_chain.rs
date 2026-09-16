@@ -185,9 +185,9 @@ impl Chain {
 
     fn head(&mut self, id: Word) -> Vec<Word> {
         output(&self.call(8, "head(bytes32)", &[id]))
-            .chunks_exact(32)
-            .map(|word| word.try_into().unwrap())
-            .collect()
+            .as_chunks::<32>()
+            .0
+            .to_vec()
     }
 
     fn anchor(&mut self, who: u8, id: Word, seq: u64, digest: Word, prev: Word) -> ExecutionResult {
