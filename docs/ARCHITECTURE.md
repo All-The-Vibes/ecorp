@@ -988,9 +988,15 @@ caches: wrappers can discard environment and programs can explicitly write files
 An unresolved or failed command still fails normally. Existing policy serialization
 and equality include explicit controls; no migration or new approval is needed.
 
-Suppression requires an updated runner. Older readers may ignore the new optional
-field; mixed-version suppression is not guaranteed. This does not grant older or newer
-runners permission to delete ignored files. The existing cleanup gate preserves dirty,
+Explicit controls require the selected runner to advertise the available global
+`verifier-cache-suppression-v1` capability. The server includes this in existing planning compatibility checks,
+scheduling, resume and durable recovery preparation, and again at the current-epoch
+assignment send for StartRun, ResumeRun and VerifyRun. Unsupported assignments fail
+through existing pre-dispatch handling; absent controls remain legacy-compatible.
+Direct plans that support offline creation may still be saved without a compatible
+runner; launch rejects them without creating a run or consuming a task attempt.
+Automatic Python suppression still requires an updated runner. This does not grant
+any runner permission to delete ignored files. The existing cleanup gate preserves dirty,
 committed, unknown and unverifiable worktrees. Disposition detail reports independent
 tracked/untracked/ignored counts; ignored ownership remains unattributed. This mechanism
 allocates no cache directories. Provider artifacts remain recorded in their existing

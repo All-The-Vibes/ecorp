@@ -799,6 +799,24 @@ pub struct VerificationPolicy {
     pub manual_gate: Option<ManualVerificationGate>,
 }
 
+impl VerificationPolicy {
+    /// Explicit controls require a runner that understands their semantics.
+    pub fn requires_cache_suppression(&self) -> bool {
+        self.checks.iter().any(|check| {
+            matches!(
+                check,
+                VerifierCheck::Command {
+                    cache_suppression: Some(_),
+                    ..
+                } | VerifierCheck::Test {
+                    cache_suppression: Some(_),
+                    ..
+                }
+            )
+        })
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
     pub id: Uuid,
@@ -1260,5 +1278,44 @@ mod tests {
         assert!(!write_scope_is_subset("src2/**", "src/**"));
         assert!(!write_scope_is_subset("**", "src/**"));
         assert!(!write_scope_is_subset("src/../private.txt", "**"));
+    }
+}
+
+#[cfg(test)]
+mod cache_policy_admission_tests {
+    use super::*;
+    #[test]
+    fn issue140_explicit_policy_requirement_survives_serialization() {
+        for kind in ["command", "test"] {
+            let base = serde_json::json!({"checks": [{"type": kind, "program": "wrapper", "args": [], "timeout_ms": 1000}], "manual_gate": null});
+            let legacy: VerificationPolicy = serde_json::from_value(base.clone()).unwrap();
+            assert!(!legacy.requires_cache_suppression());
+            let mut null = base.clone();
+            null["checks"][0]["cache_suppression"] = serde_json::Value::Null;
+            assert!(
+                !serde_json::from_value::<VerificationPolicy>(null)
+                    .unwrap()
+                    .requires_cache_suppression()
+            );
+            for mode in [
+                "python_interpreter",
+                "python_environment",
+                "node_compile_cache",
+            ] {
+                let mut explicit = base.clone();
+                explicit["checks"][0]["cache_suppression"] = mode.into();
+                let policy: VerificationPolicy = serde_json::from_value(explicit).unwrap();
+                assert!(policy.requires_cache_suppression());
+                let persisted = serde_json::to_value(&policy).unwrap();
+                assert!(
+                    serde_json::from_value::<VerificationPolicy>(persisted)
+                        .unwrap()
+                        .requires_cache_suppression()
+                );
+            }
+            let mut malformed = base;
+            malformed["checks"][0]["cache_suppression"] = "unsupported".into();
+            assert!(serde_json::from_value::<VerificationPolicy>(malformed).is_err());
+        }
     }
 }

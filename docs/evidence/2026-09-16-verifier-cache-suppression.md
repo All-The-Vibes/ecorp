@@ -26,8 +26,10 @@ harness, general environment map, cache deletion engine or approval is introduce
 - Windows `py` launchers get environment-only suppression. Wrapper flags and
   environment-discarding children need an explicitly authored command; automatic
   launcher argument rewriting is not claimed.
-- Older runners may ignore the optional field. Use an updated runner for suppression;
-  mixed-version enforcement and browser policy-editor controls are not claimed.
+- The updated server requires `verifier-cache-suppression-v1` on the selected runner
+  for any explicit control, including recovery and resume. Omitted controls remain
+  compatible; automatic suppression needs an updated runner. Browser policy-editor
+  controls are not claimed.
 - Existing dirty/committed/unknown workspace preservation remains authoritative.
   Tracked/untracked/ignored counts are separate; ignored ownership is unknown.
   No cache directories are allocated and no file becomes owned by its name.
@@ -106,3 +108,44 @@ rerun successfully. Final workspace and Clippy checks passed after that adjustme
 | `crates/crony-domain/src/lib.rs` | `7f3f5d61d938eea0cf9a7a87fc230d9e4b02083da286ac20efd3da107ba6a795` |
 | `crates/crony-runner/src/verifier.rs` | `05d1501b18017fbd6ef2ccea2375b67d2cb20cc23f8ab9b3ffff72cac388f86e` |
 | `crates/crony-runner/src/workspace.rs` | `c09e83d3f01d4e53efa33da1864e43d961bbf9e3cf6cb0a339858032c27f8c7d` |
+
+
+## PR #294 review correction
+
+The original compatibility limit allowed an older runner to ignore an explicit
+control. The correction advertises global `verifier-cache-suppression-v1` and
+requires it on the selected runner. Persisted scheduling candidates carry the
+policy; matching excludes unsupported runners before allocating an attempt.
+Resume and durable recovery reject unsupported policies before secret resolution
+or artifact hydration, and the current-epoch synchronous send checks StartRun,
+ResumeRun and VerifyRun again. Capability rejection follows existing pre-dispatch
+failure handling; ordinary control commands remain compatible.
+
+Validation after correction:
+
+- All six repository gates above passed again: **522 passed, 0 failed, 326 ignored**
+  in the default workspace suite, plus web build/lint and 41 migration checks.
+- `cargo test -p crony-domain -p crony-server issue140_ --locked --offline`:
+  **3 passed**. Covers omitted/null/all explicit values, malformed persisted policy,
+  missing/unavailable/workspace-scoped/unrelated-runner support, named workspaces,
+  all three assignment variants, legacy policy, control messages, and epoch replacement.
+- The opt-in runner command above passed again: **5 passed, 0 failed, 0 ignored**.
+- Actual updated server/runner with browser-launched clean and ignored-file missions:
+  **2 completed runs, 6 persisted passing checks**. Clean workspace removed; ignored
+  `valuable.log` retained unchanged; Python produced no cache directory.
+- An owned WebSocket fixture registered with the native runner's capabilities except
+  cache suppression. Launch rejected both a previously saved explicit-policy task
+  and a direct plan saved while that legacy fixture was connected. The inspected
+  preexisting task retained **0 attempts and 0 runs**, and the fixture received no
+  assignment. Direct offline plan creation is supported; an initial test assertion
+  expecting creation rejection was corrected to assert the launch boundary.
+- Copilot `gpt-6-astra` / high completed independent proposal and patch review.
+  No confirmed patch defect was found; compilation resolved its conditional input
+  type concern. Source inspection confirmed all assignment constructors use the
+  guarded sender. Full durable recovery/resume lifecycle permutations were not
+  exercised end to end; their common send boundary has regression coverage.
+
+The misindented test field was corrected manually. `cargo fmt --check` had passed
+on the original macro content and passed again; its earlier success did not imply
+that this indentation was correct. Owned fixture databases, logs and retained
+workspaces were preserved, and only those test services were stopped.

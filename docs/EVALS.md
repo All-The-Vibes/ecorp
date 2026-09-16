@@ -871,3 +871,12 @@ wrapper argument preservation, and Node's native compile-cache status.
 See [the scoped evidence](evidence/2026-09-16-verifier-cache-suppression.md). Cache
 suppression is not isolation or authority to delete a file; a successful command is
 not universal proof that its children created no caches.
+
+
+### Explicit verifier cache-control admission
+
+Run `cargo test -p crony-domain -p crony-server issue140_ --locked --offline` for
+persisted explicit policy detection, selected-runner capability matching and final
+StartRun/ResumeRun/VerifyRun admission, including legacy policies and reconnects.
+See `docs/evidence/2026-09-16-verifier-cache-suppression.md` for native runtime and
+legacy-capability launch rejection evidence and coverage limits.
