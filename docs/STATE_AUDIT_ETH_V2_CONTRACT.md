@@ -1,5 +1,12 @@
 # State Audit V2 Ethereum anchor contract specification
 
+This document describes the retained legacy compatibility contract, not the
+Base registry. New Base destinations use `ECorpCheckpointRegistryV1` and random
+owner-namespaced streams; they do not expose ledger UUIDs onchain. See
+[Base state-audit anchoring](STATE_AUDIT_BASE_V2.md) and
+[the Base registry specification](../contracts/BASE_REGISTRY_V1.md).
+The existing `ethereum` destination placeholder remains disabled.
+
 `contracts/StateAuditAnchor.sol` is the executable compatibility contract for
 the V1 checkpoint protocol. `contracts/StateAuditAnchor.compiled.json` is the
 Solidity 0.8.30 optimized artifact exercised by the in-process REVM test.

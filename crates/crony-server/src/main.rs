@@ -1,5 +1,7 @@
 mod artifacts;
 mod auth;
+mod base_audit;
+mod base_worker;
 mod dependency_source;
 #[cfg(test)]
 mod factory_connection_tests;
@@ -223,6 +225,7 @@ struct Args {
 #[derive(Clone)]
 struct AppState {
     audit: Option<Arc<state_audit::Service>>,
+    base_audit: base_audit::Runtime,
     store: PgStore,
     event_tx: broadcast::Sender<DomainEvent>,
     runners: Arc<DashMap<String, RunnerConnection>>,
@@ -406,6 +409,7 @@ async fn main() -> anyhow::Result<()> {
     }
     let state = AppState {
         audit,
+        base_audit: base_audit::Runtime::initialize(&store),
         store,
         event_tx,
         runners: Arc::new(DashMap::new()),
@@ -518,6 +522,7 @@ async fn main() -> anyhow::Result<()> {
 
     let protected = Router::new()
         .route("/api/corps/{corp_id}/state-audit",post(state_audit::handle))
+        .route("/api/corps/{corp_id}/base-audit",post(base_audit::handle))
         .merge(workspace_connections::routes())
         .route("/api/corps/{corp_id}/snapshot", get(snapshot))
         .route(
