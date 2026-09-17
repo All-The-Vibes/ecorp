@@ -238,6 +238,32 @@ boundaries in the architecture and security guides.
 
 ## Validate before publishing
 
+### Reproduce the recommended tools
+
+The recommended whole-repository environment is Node.js 24.19.0 (`.node-version`), Rust 1.98.1
+with rustfmt and Clippy (`rust-toolchain.toml`), and pnpm 11.19.0 (`packageManager`). Repo Steward
+requires Node 24; the web/tool regression command remains compatible with Node 22.23.2.
+Use the native Node/version-manager, Rustup and pnpm setup for your host. For Rustup, install the
+declared version and components explicitly before running Cargo:
+
+```powershell
+rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+node tools/verify_toolchain.mjs
+```
+
+The version doctor reads the declarations and queries native tool versions. It never installs
+tools, downloads a package-manager version, builds code, starts services or prints credentials.
+A passing result establishes selected tool versions only. Missing components or unavailable
+registry/network access still need their own successful setup and validation evidence.
+Editor tasks in `.vscode/tasks.json` invoke the existing contributor commands; `.editorconfig`
+keeps new edits consistent with the repository's formatting conventions.
+
+`tools/start_local.ps1` remains the supported application setup/lifecycle entry point. The
+version doctor is not a second installer or runtime supervisor. Do not treat an editor task or
+toolchain pin as evidence that a stack or Dev Container was exercised.
+
+### Repository gates
+
 Run targeted tests for the changed behavior. For user-visible behavior, exercise the complete
 browser-to-server-to-runner path; unit tests alone are insufficient.
 
@@ -285,6 +311,30 @@ update PRs per configured ecosystem entry. Minor and patch changes are grouped f
 The Copilot SDK is excluded because its pinned CLI must be verified with it as one compatibility
 pair. Every proposed update still needs the applicable checks and human review; scheduling a
 dependency update does not authorize merging it or operating a live Factory/Repo Steward job.
+
+### Optional local hooks and secret scanning
+
+With pre-commit 4.6.2, native Gitleaks 8.30.1, and the recommended Node/Rust tools available,
+run `pre-commit run` after staging your intended changes. The local system hooks scan staged
+changes for secrets, check current documentation contracts, and check Rust formatting when
+Rust files change. They do not install dependencies or replace the full repository gates.
+
+Manual invocation does not install Git hooks. Enable automatic hooks only in an independent
+personal clone; linked worktrees normally share a hooks directory with their source repository.
+Do not install or replace hooks in the shared source checkout or alter global Git settings.
+
+The Secret scan workflow verifies the pinned native scanner download and scans the selected
+commit's complete ancestry with read-only repository access. From a non-shallow checkout, run
+that same scan locally:
+
+```powershell
+gitleaks git . --log-opts=HEAD --redact=100 --no-banner --no-color --ignore-gitleaks-allow --gitleaks-ignore-path .gitleaksignore --timeout 300
+```
+
+`.gitleaksignore` contains only reviewed historical commit/file/rule/line fingerprints with
+rationale. It does not exclude whole fixtures, environment files, or rules. Inspect each new
+finding before adding any exception; newly introduced secrets remain failures. Keep output
+redacted and never publish matched credential values in logs or artifacts.
 
 As of September 3, 2026, GitHub-hosted Actions credits are exhausted for the month. Do not treat an
 unstarted hosted job as a completion gate or remain blocked solely for that reason. Record

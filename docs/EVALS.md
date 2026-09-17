@@ -317,6 +317,25 @@ constant. Mutation fixtures prove changed commands, changed pins, missing/duplic
 and invalid/cyclic aliases fail; updated current documentation restores passing. This is a
 deterministic check for those contracts, not semantic or repository-wide documentation proof.
 
+### Production web-model coverage
+
+`pnpm coverage:web-models` uses native Node 24 coverage for all 16 declared framework-independent
+TypeScript model modules. Every module is preloaded, including uninvoked modules, and the LCOV
+file set must exactly match the declared production scope. New TypeScript files require explicit
+classification before the command can pass. The two React hooks, TSX rendering, Rust and other
+tools are outside this coverage lane; their test results must be reported separately.
+
+Native thresholds are 99% lines, 95% functions and 97% branches for that scope. The command also
+requires passing tests, completed LCOV records and unchanged source/test inputs. Each invocation
+writes a new directory beneath `output/coverage`; existing evidence is never overwritten.
+`run.json`, `coverage.json`, `summary.json`, `lcov.info` and the test log preserve the exact
+runtime, inputs, numerator/denominator and result. Native V8 can reveal additional nested
+functions/branches when previously uncalled code runs, so compare raw counts as well as percentages.
+
+The Repository checks workflow runs this lane separately from the Linux/Windows Node regressions.
+A high model-coverage percentage is not whole-application or repository coverage and does not
+replace browser/server/runner acceptance.
+
 The repository also contains `tools/e2e_smoke.ps1`, which exercises the actual running stack.
 `tools/e2e_demo_lifecycle.mjs` races bootstrap and reset requests to prove the demo lifecycle lock
 prevents transactional deadlocks during browser/server reconnects.

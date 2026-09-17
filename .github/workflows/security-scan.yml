@@ -1,0 +1,90 @@
+name: Secret scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: secret-scan-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          fetch-tags: false
+          persist-credentials: false
+      - name: Fetch only the selected commit's complete ancestry
+        shell: bash
+        env:
+          ECORP_SCAN_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          ECORP_READ_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import os
+          import re
+          import subprocess
+
+          commit = os.environ['ECORP_SCAN_COMMIT']
+          if not re.fullmatch(r'[0-9a-f]{40}', commit):
+              raise SystemExit('Expected an immutable commit identity')
+          actual = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          if actual != commit:
+              raise SystemExit('Checkout does not match the selected commit')
+          environment = os.environ.copy()
+          token = environment.pop('ECORP_READ_TOKEN')
+          for key in list(environment):
+              if key.startswith('GIT_TRACE') or key == 'GIT_CURL_VERBOSE':
+                  del environment[key]
+          # Environment delivery is reduced assurance. This short-lived token has read-only scope.
+          # Credentials remain in this child's environment, never Git config files or arguments.
+          environment.update({
+              'GIT_TERMINAL_PROMPT': '0',
+              'GIT_CONFIG_COUNT': '2',
+              'GIT_CONFIG_KEY_0': 'credential.helper',
+              'GIT_CONFIG_VALUE_0': '',
+              'GIT_CONFIG_KEY_1': 'http.' + os.environ['GITHUB_SERVER_URL'] + '/.extraheader',
+              'GIT_CONFIG_VALUE_1': 'AUTHORIZATION: basic ' + base64.b64encode(('x-access-token:' + token).encode()).decode(),
+          })
+          shallow = subprocess.check_output(['git', 'rev-parse', '--is-shallow-repository'], text=True).strip()
+          if shallow == 'true':
+              result = subprocess.run(['git', 'fetch', '--no-tags', '--unshallow', 'origin', commit],
+                                      env=environment, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+              if result.returncode:
+                  raise SystemExit('Could not fetch the selected ancestry; check repository access and network availability')
+          PY
+      - name: Install the verified native Gitleaks release
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/gitleaks_8.30.1_linux_x64.tar.gz"
+          tool_dir="$RUNNER_TEMP/gitleaks-8.30.1"
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            --output "$archive"
+          printf '%s  %s\n' '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb' "$archive" | sha256sum --check --status
+          mkdir "$tool_dir"
+          tar -xzf "$archive" -C "$tool_dir" gitleaks
+          test "$("$tool_dir/gitleaks" version)" = '8.30.1'
+          printf '%s\n' "$tool_dir" >> "$GITHUB_PATH"
+      - name: Scan the selected commit and its complete ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse --is-shallow-repository)" = 'false'
+          # Explicit HEAD scope does not scan other refs.
+          # Keep native default rules and do not allow inline suppression comments.
+          gitleaks git . --log-opts=HEAD --redact=100 --no-banner --no-color \
+            --ignore-gitleaks-allow --gitleaks-ignore-path .gitleaksignore --timeout 300
+          # No reports containing matched values are uploaded as artifacts.

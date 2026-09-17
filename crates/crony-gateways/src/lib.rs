@@ -9,6 +9,13 @@ pub const MCP_PROTOCOL_VERSION: &str = "2025-06-18";
 pub const ACP_PROTOCOL_VERSION: u32 = 1;
 pub const A2A_PROTOCOL_VERSION: &str = "1.0";
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum McpAccess {
+    #[default]
+    ReadWrite,
+    ReadOnly,
+}
+
 #[derive(Debug, Clone)]
 pub struct GatewayClient {
     pub server: String,
@@ -32,6 +39,39 @@ impl GatewayClient {
             access_token,
             http: Client::new(),
         }
+    }
+
+    /// Inspection stays on the selected origin, including on redirect responses.
+    /// Other integrations retain their existing transport behavior.
+    pub fn with_mcp_access(mut self, access: McpAccess) -> Result<Self> {
+        if access == McpAccess::ReadOnly {
+            let server = reqwest::Url::parse(&self.server)
+                .context("read-only MCP requires an explicit HTTP(S) API origin")?;
+            if !matches!(server.scheme(), "http" | "https")
+                || !server.username().is_empty()
+                || server.password().is_some()
+                || server.query().is_some()
+                || server.fragment().is_some()
+                || server.path() != "/"
+            {
+                return Err(anyhow!(
+                    "read-only MCP requires an HTTP(S) origin without credentials or parameters"
+                ));
+            }
+            if server.scheme() == "http"
+                && !matches!(server.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"))
+            {
+                return Err(anyhow!(
+                    "read-only MCP requires HTTPS outside explicitly configured loopback origins"
+                ));
+            }
+            self.server = server.origin().ascii_serialization();
+            self.http = Client::builder()
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .context("configure read-only MCP transport")?;
+        }
+        Ok(self)
     }
 
     pub async fn request(&self, method: Method, path: &str, body: Option<Value>) -> Result<Value> {
@@ -110,11 +150,16 @@ pub fn mcp_capabilities() -> Value {
 }
 
 pub fn mcp_tools() -> Value {
-    json!({
+    mcp_tools_with_access(McpAccess::ReadWrite)
+}
+
+pub fn mcp_tools_with_access(access: McpAccess) -> Value {
+    let mut tools = json!({
         "tools":[
             {
                 "name":"crony_snapshot",
                 "description":"Read the authenticated actor's Corp-scoped operational snapshot.",
+                "annotations":{"readOnlyHint":true,"destructiveHint":false,"idempotentHint":true},
                 "inputSchema":{"type":"object","properties":{},"additionalProperties":false}
             },
             {
@@ -151,15 +196,34 @@ pub fn mcp_tools() -> Value {
                 }
             }
         ]
-    })
+    });
+    if access == McpAccess::ReadOnly {
+        tools["tools"]
+            .as_array_mut()
+            .expect("static MCP tool catalog is an array")
+            .retain(|tool| tool["name"] == "crony_snapshot");
+    }
+    tools
 }
 
 pub async fn handle_mcp(client: &GatewayClient, request: JsonRpcRequest) -> Value {
+    handle_mcp_with_access(client, request, McpAccess::ReadWrite).await
+}
+
+pub async fn handle_mcp_with_access(
+    client: &GatewayClient,
+    request: JsonRpcRequest,
+    access: McpAccess,
+) -> Value {
     let id = request.id.clone();
+    if request.jsonrpc != "2.0" {
+        return failure(id, -32600, "unsupported JSON-RPC version");
+    }
     let result = match request.method.as_str() {
         "initialize" => Ok(mcp_capabilities()),
-        "tools/list" => Ok(mcp_tools()),
-        "tools/call" => handle_mcp_tool(client, &request.params).await,
+        "ping" => Ok(json!({})),
+        "tools/list" => Ok(mcp_tools_with_access(access)),
+        "tools/call" => handle_mcp_tool_with_access(client, &request.params, access).await,
         "resources/list" => Ok(json!({"resources":[]})),
         _ => return failure(id, -32601, "method not found"),
     };
@@ -169,11 +233,18 @@ pub async fn handle_mcp(client: &GatewayClient, request: JsonRpcRequest) -> Valu
     }
 }
 
-async fn handle_mcp_tool(client: &GatewayClient, params: &Value) -> Result<Value> {
+async fn handle_mcp_tool_with_access(
+    client: &GatewayClient,
+    params: &Value,
+    access: McpAccess,
+) -> Result<Value> {
     let name = params
         .get("name")
         .and_then(Value::as_str)
         .context("tool call omitted name")?;
+    if access == McpAccess::ReadOnly && name != "crony_snapshot" {
+        return Err(anyhow!("tool is unavailable in read-only MCP mode"));
+    }
     let arguments = params
         .get("arguments")
         .cloned()
@@ -299,6 +370,37 @@ mod tests {
     use super::*;
 
     #[test]
+    fn readonly_mcp_transport_requires_an_origin_and_https_outside_loopback() {
+        let client = |server: &str| {
+            GatewayClient::new(
+                server.to_owned(),
+                Uuid::from_u128(1),
+                Uuid::from_u128(2),
+                None,
+            )
+        };
+        for server in [
+            "http://127.0.0.1:8791",
+            "http://LOCALHOST:8791",
+            "http://[::1]:8791",
+            "https://ecorp.example.test",
+        ] {
+            assert!(client(server).with_mcp_access(McpAccess::ReadOnly).is_ok());
+        }
+        for server in [
+            "",
+            "http://ecorp.example.test",
+            "http://127.0.0.2:8791",
+            "http://localhost.example.test",
+            "https://ecorp.example.test/private",
+            "https://user:secret@ecorp.example.test",
+        ] {
+            assert!(client(server).with_mcp_access(McpAccess::ReadOnly).is_err());
+            assert!(client(server).with_mcp_access(McpAccess::ReadWrite).is_ok());
+        }
+    }
+
+    #[test]
     fn protocol_versions_fail_closed() {
         assert_eq!(
             negotiate_version(MCP_PROTOCOL_VERSION, &[MCP_PROTOCOL_VERSION]).expect("version"),
@@ -317,6 +419,65 @@ mod tests {
         let card = a2a_agent_card("https://example.test").to_string();
         assert!(!card.contains("verification_requests"));
         assert!(card.contains("\"streaming\":true"));
+    }
+
+    #[test]
+    fn readonly_mcp_catalog_exposes_only_snapshot_without_changing_default() {
+        assert_eq!(mcp_tools()["tools"].as_array().unwrap().len(), 3);
+        let catalog = mcp_tools_with_access(McpAccess::ReadOnly);
+        let tools = catalog["tools"].as_array().unwrap();
+        assert_eq!(tools.len(), 1);
+        assert_eq!(tools[0]["name"], "crony_snapshot");
+        assert_eq!(tools[0]["annotations"]["readOnlyHint"], true);
+    }
+
+    #[tokio::test]
+    async fn readonly_mcp_rejects_mutations_before_any_api_request() {
+        let client = GatewayClient::new(
+            "invalid-unused-server".to_owned(),
+            Uuid::from_u128(1),
+            Uuid::from_u128(2),
+            None,
+        );
+        for name in ["crony_create_mission", "crony_post_room_message", "unknown"] {
+            let response = handle_mcp_with_access(
+                &client,
+                JsonRpcRequest {
+                    jsonrpc: "2.0".to_owned(),
+                    id: Some(json!(1)),
+                    method: "tools/call".to_owned(),
+                    params: json!({"name": name, "arguments": {}}),
+                },
+                McpAccess::ReadOnly,
+            )
+            .await;
+            assert_eq!(response["error"]["code"], -32000);
+            assert_eq!(
+                response["error"]["message"],
+                "tool is unavailable in read-only MCP mode"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn invalid_mcp_rpc_version_cannot_reach_the_api() {
+        let client = GatewayClient::new(
+            "invalid-unused-server".to_owned(),
+            Uuid::from_u128(1),
+            Uuid::from_u128(2),
+            None,
+        );
+        let response = handle_mcp(
+            &client,
+            JsonRpcRequest {
+                jsonrpc: "1.0".to_owned(),
+                id: Some(json!(1)),
+                method: "tools/call".to_owned(),
+                params: json!({"name": "crony_create_mission", "arguments": {"title": "Denied"}}),
+            },
+        )
+        .await;
+        assert_eq!(response["error"]["code"], -32600);
     }
 
     #[test]
@@ -402,9 +563,10 @@ mod tests {
         );
         for name in ["crony_snapshot", "crony_post_room_message"] {
             for value in [Value::Null, json!(MAX_TASK_ATTEMPTS)] {
-                let error = handle_mcp_tool(
+                let error = handle_mcp_tool_with_access(
                     &client,
                     &json!({"name": name, "arguments": {"max_task_attempts": value}}),
+                    McpAccess::ReadWrite,
                 )
                 .await
                 .unwrap_err();

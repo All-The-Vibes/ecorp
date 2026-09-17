@@ -6,6 +6,9 @@
   "scripts": {
     "check:migrations": "node tools/check_migrations.mjs",
     "check:docs": "node tools/check_documentation.mjs",
+    "doctor:toolchain": "node tools/verify_toolchain.mjs",
+    "probe:mcp": "node tools/probe_mcp.mjs",
+    "coverage:web-models": "node tools/coverage_web_models.mjs",
     "test:unit": "node --test --test-concurrency=2 --test-timeout=180000 \"apps/web/src/**/*.test.mjs\" \"tools/*.test.mjs\"",
     "dev:web": "pnpm --dir apps/web dev",
     "build:web": "pnpm --dir apps/web build",

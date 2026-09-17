@@ -37,6 +37,10 @@ Only credential hashes are stored. Replayed, expired, unknown, and revoked crede
 Secrets are encrypted with ChaCha20-Poly1305 and authenticated associated data. The broker checks
 actor, task, run, runner, tool, resource, and expiry scope before dispatch. Events and snapshots
 contain grant metadata only. Environment injection is labeled reduced assurance.
+Production requires a private 32-byte master key and rejects the public built-in development key,
+including equivalent case and surrounding-whitespace representations, before database or storage
+initialization. Development retains its fixture key for local compatibility; it is not a deployment
+credential. The example environment leaves this setting empty.
 Expired grants are rejected before provider start, and the provider is stopped when the earliest
 active grant expires.
 
