@@ -39,6 +39,26 @@
 //   It cannot steal active work, leave canary scope or skip pending audit input.
 //   check claims forbid begin/retry/publication; save waiting/blocked with actual
 //   live gate evidence. Fork targets remain read-only, never executable.
+// next {owner,feedbackNumber:positiveInteger} -> explicit read-only feedback claim.
+//   Only unchanged base/head/source/branch/target with canonical two-PASS publication
+//   and unchanged trusted rubric; pending feedback only. No audit-round charge.
+//   A completed NICE or the exact blocked publication/readback reconciliation is
+//   required. NAUGHTY, unreviewed code and forks cannot use this route.
+// feedback {owner,number,claimId,base,head,receipt:{reviewerId,model:"gpt-6-astra",
+//   runtime:"native",claimId,snapshot:exactClaimSnapshot,rubricKey:claimRubricKey,
+//   disposition:"NO_ACTIONABLE_FINDINGS"|"ACTIONABLE_FINDINGS"|"BLOCKED",
+//   completedAt,sourceRef,generationSourceRef,
+//   coverage:{feedbackRef,resolvedThreadsRef,templateApplicabilityRef}}}
+//   Dispatch a fresh independent native Astra gatechecker AFTER claiming. It must
+//   actually read ALL current feedback, resolved threads and template applicability;
+//   generationSourceRef retains the exact-generation read, sourceRef its triage.
+//   This validates scope/structure, not native identity or artifact authenticity.
+//   NO_ACTIONABLE_FINDINGS consumes only feedback, retains original Santa reports
+//   and push, and leaves a separate current CI/target check pending. ACTIONABLE_FINDINGS
+//   invalidates NICE and returns to the ORIGINAL bounded audit loop (at cap: blocked).
+//   BLOCKED releases the writer but retains pending feedback and its receipt.
+//   Retry that metadata gate explicitly; it never blocks the other PRs.
+//   No begin/retry/save/published, fixers, code edits or hidden full re-reviews.
 // read-only {owner,number,claimId,base,head,receipt:{reviewerId,model:"gpt-6-astra",
 //   verdict:"PASS"|"FAIL"|"BLOCKED",sourceRef,completedAt}}
 //   Fork/deleted/mismatched sources retain a resumable read-only claim until this
@@ -51,14 +71,18 @@
 //   BEFORE further local correction, not save waiting (which releases the claim).
 //   Keeps claim/snapshot/findings/evidence; charges the next round, refreshes
 //   startedAt for new reviews. Stale/replayed round is rejected, never recharged.
-// resume {owner,number,claimId,base,head,round,
+// resume {owner,number,claimId,base,head,round:positiveInteger|null,
 //   clearance:{sourceRef,verifiedAt}}
-//   Explicit local/credential/tooling recovery only. save blocked retains charged
-//   unfinished work at prs[number].blockedClaim; resume restores that exact claim,
-//   phase, start and budget, without begin or a new round. Clearance must postdate
-//   that block. Driver verifies the actual cause cleared; structure is not truth.
+//   Explicit local/credential/tooling recovery only. save blocked retains audit
+//   work at prs[number].blockedClaim; resume restores that exact claim, phase,
+//   start and budget. round:null recovers an uncharged audit; begin must then charge
+//   once. Charged work resumes without begin. Resume never resets cycle history;
+//   only begin may open a new cycle after a previous-head NICE, per existing policy.
+//   Clearance must postdate that block. Driver verifies the actual cause cleared;
+//   structure is not truth. Gate/read-only claims never gain audit authority.
 //   No automatic retries, competing claim, conflicting revision/source/target,
-//   ordinary CI wait, completed cycle, or exhausted 3-round/2-noProgress stop.
+//   ordinary CI wait, completed charged audit, or exhausted unfinished cycle.
+//   The 3-round/2-noProgress bounds still apply when begin continues the same cycle.
 // published {owner,number,claimId,base,head,snapshot,push,reviewers}
 //   head is the expected OLD remote head; snapshot is actual selected-PR readback
 //   at NEW head. Candidate reviewers predate push. This records, never performs,
@@ -68,7 +92,8 @@
 //   Pre-review reviewKey stays on the claim; readback feedback is not reviewed by
 //   observing a push. A changed reviewKey returns reconcile (including exact ACK
 //   retries): save blocked with that returned claim, then next/begin fresh feedback
-//   work within existing bounds. Canonical publication stays retained; no new push.
+//   work within existing bounds, or explicitly next {feedbackNumber} for read-only
+//   triage. Canonical publication stays retained; no new push or implicit consumption.
 // save {owner,number,claimId,base,head,phase,evidence,findings,technicalVerdict,reason,reviewers?}
 // Phases: auditing/fixing/reviewing/waiting/blocked/complete. Verdict: null/NAUGHTY/NICE.
 // NICE needs reviewers and ends technical work (complete or waiting for external gates).
@@ -78,11 +103,17 @@
 // Reviewer: {reviewerId,model,base,head,verdict:"NICE",completedAt,sourceRef,
 //            criteria:[{id,result:"PASS",sourceRef}]}; exactly two fresh identities.
 // enable {owner,acceptanceProof:{number,base,head,reviewers:[same saved receipts],
-//   ci:{base,head,status:"passed",sourceRef,verifiedAt},
+//   ci:{base,head,gateKey,baseRef,status:"passed",sourceRef,verifiedAt},
 //   push:{repo,branch,before,head,sourceRef,pushedAt},
 //   schedulerWake:{id,at,sourceRef},resumeRef,quietNoopRef,
 //   copilot:{reviewId,head,automatic:true,sourceRef},audits:{atvRef,ponytailRef},
 //   fixers:[{issueId,agentId,model:"gpt-6-astra",sourceRef,redRef,greenRef}]}}
+//   CI must match the current snapshot's gateKey and baseRef (null only when the
+//   legacy snapshot lacks a target), and be verified since prs[number].gateObservedAt
+//   AND the technical round start. sync/published advance gateObservedAt on a changed
+//   snapshot signature, not unchanged reads or publication ACKs. Pre-enable legacy
+//   replay derives it from original event timestamps without rewriting events or metadata.
+//   Human/draft/dependency waits remain separate: blocked phase alone is not CI failure.
 // help: node executor-state.mjs help (or STATE_DIR help), no stdin/state access.
 // Timestamps are ISO UTC; sourceRefs are retained paths/URLs, not verified artifacts.
 // sync accepts a complete empty inventory. Gate-only changes preserve active work;
@@ -92,6 +123,12 @@
 // retry proves an open finding fixed in that round (including newly found issues).
 // Only that verified progress clears consecutive noProgress; rounds never reset.
 // retry stops at the original 3-round/2-noProgress bounds; interrupted rounds stay.
+// Journal envelope v2 appends CLI-stamped {version:2,id,at,command,input} events.
+// Unversioned v1 events remain an unchanged replay-only prefix; versions cannot
+// downgrade. Command inputs cannot select a journal/admission version.
+// After reviewing/NAUGHTY, new correction, review or publication needs retry.
+// The exact retained nonterminal failed-round save is a no-op; waiting/blocked
+// may retain unchanged findings without NICE. Neither clears the retry requirement.
 import { createHash, randomUUID } from 'node:crypto'
 import { closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -114,6 +151,10 @@ const targetCompatible = (recorded, observed) => recorded.baseRef === undefined 
 const auditKey = (p) => digest([p.base, p.head, p.reviewKey, p.sourceRepo?.toLowerCase(), p.branch, p.state, p.readError ?? null])
 const signature = (p) => digest([auditKey(p), p.gateKey, p.draft ?? false, p.url ?? null,
   ...(p.readFailure ? [p.readFailure] : []), ...(p.baseRef === undefined ? [] : [p.baseRef])])
+function observeSnapshot(p, snapshot, at) {
+  if (!p.gateObservedAt || signature(p.snapshot) !== signature(snapshot)) p.gateObservedAt = at
+  p.snapshot = snapshot
+}
 const current = (a, p) => p.present && auditKey(a.snapshot) === auditKey(p.snapshot)
 const cycle = (p) => p.cycles.at(-1)
 function claimOutput(a, p) {
@@ -157,6 +198,9 @@ function validateReviewers(receipts, claim, s, at) {
     check(text(r.reviewerId) && r.reviewerId !== config.owner && r.model === config.model &&
       same(r, claim) && r.verdict === 'NICE' && text(r.sourceRef) &&
       fresh(r.completedAt, claim.startedAt, at) && r.completedAt >= rubric.boundAt, 'malformed or stale reviewer receipt')
+    check(Object.values(s.prs).every((p) => (p.feedbackReviews ?? []).every((f) =>
+      f.receipt.reviewerId !== r.reviewerId && ![f.receipt.sourceRef, f.receipt.generationSourceRef].includes(r.sourceRef))),
+    'feedback gatechecker cannot substitute for independent Santa reviewer')
     check(decisions.every((d) => !d.reviewers?.some((old) =>
       (old.reviewerId === r.reviewerId || old.sourceRef === r.sourceRef) &&
       (digest(old) !== digest(r) || (claim.claimId &&
@@ -171,6 +215,32 @@ function validateReviewers(receipts, claim, s, at) {
     check(digest(r.criteria.map((c) => c.id).sort()) === digest(rubric.binding.criteria.slice().sort()), 'review must cover exact pinned rubric')
   }
   check(receipts[0].sourceRef !== receipts[1].sourceRef, 'reviewers need distinct source references')
+}
+
+function feedbackBasis(s, p, at) {
+  const c = p && cycle(p), publication = p?.publications?.at(-1), snapshot = p?.snapshot
+  check(p?.present && snapshot.state === 'open' && !p.blockedReason &&
+    sameRepo(p.sourceRepo, s.config.repo) && sameRepo(snapshot.sourceRepo, s.config.repo) &&
+    publication && same(publication.snapshot, snapshot) &&
+    sameRepo(publication.snapshot.sourceRepo, snapshot.sourceRepo) &&
+    publication.snapshot.branch === snapshot.branch && publication.snapshot.baseRef === snapshot.baseRef &&
+    c.technicalVerdict !== 'NAUGHTY' && c.findings.every((f) => f.status === 'fixed'),
+  'feedback requires unchanged canonical reviewed code/source/target, never NAUGHTY')
+  let completion = c.technicalVerdict === 'NICE' ? c.completion : null
+  if (!completion) {
+    const b = p.blockedClaim, a = b?.claim
+    const { startedAt, reviewClaim, ...published } = publication
+    check(c.phase === 'blocked' && b?.cycle === p.cycles.length && a?.round === c.rounds &&
+      !a.failureEvidence && a.claimId === publication.claimId &&
+      digest(a.publication) === digest(published),
+    'feedback requires complete NICE or exact blocked canonical publication')
+    completion = { base: a.base, head: a.head, claimId: a.claimId, round: a.round,
+      startedAt: a.startedAt, auditKey: auditKey(a.snapshot), reviewers: publication.reviewers }
+  }
+  check(same(completion, snapshot) && completion.round === c.rounds &&
+    completion.auditKey !== auditKey(snapshot), 'feedback requires pending same-code generation')
+  validateReviewers(completion.reviewers, completion, s, at)
+  return completion
 }
 
 function apply(s, e) {
@@ -224,18 +294,32 @@ function apply(s, e) {
       for (const p of i.prs) {
         s.prs[p.number] ??= { snapshot: p, sourceRepo: p.sourceRepo, present: true, seen: null, seenAudit: null, selected: 0, cycles: [freshCycle()] }
         s.prs[p.number].sourceRepo ??= p.sourceRepo
-        Object.assign(s.prs[p.number], { snapshot: p, present: true })
+        observeSnapshot(s.prs[p.number], p, at)
+        s.prs[p.number].present = true
         s.prs[p.number].blockedReason = p.readError ? 'DETAIL_READ_FAILED: PR detail evidence unavailable' :
           !sameRepo(p.sourceRepo, s.config.repo) ? 'fork or deleted source: privileged execution blocked' :
           !sameRepo(p.sourceRepo, s.prs[p.number].sourceRepo) ? 'source repository mismatch: privileged execution blocked' : null
       }
     }
   } else if (command === 'next') {
-    fields(i, ['owner'], ['gateNumber'])
+    fields(i, ['owner'], ['gateNumber', 'feedbackNumber'])
     check(i.gateNumber === undefined || positive(i.gateNumber), 'invalid gate target')
+    check(i.feedbackNumber === undefined || (positive(i.feedbackNumber) && i.gateNumber === undefined), 'invalid feedback target')
     if (s.active) {
       check(i.gateNumber === undefined || i.gateNumber === s.active.number, 'gate target cannot replace active claim')
+      check(i.feedbackNumber === undefined || (i.feedbackNumber === s.active.number &&
+        s.active.action === 'feedback'), 'feedback target cannot replace active claim')
       return { state: s, output: claimOutput(s.active, s.prs[s.active.number]), changed: false }
+    }
+    if (i.feedbackNumber !== undefined) {
+      const p = s.prs[i.feedbackNumber]
+      check(s.enabled || i.feedbackNumber === s.config.canary, 'feedback target outside canary')
+      const completion = feedbackBasis(s, p, at)
+      s.active = { number: i.feedbackNumber, base: p.snapshot.base, head: p.snapshot.head,
+        action: 'feedback', reason: 'Read-only current feedback triage; no code/fix authority',
+        claimId: id, snapshot: p.snapshot, round: null, startedAt: at,
+        rubricKey: digest(s.rubrics[`${p.snapshot.base}:${p.snapshot.head}`].binding), completion }
+      return { state: s, output: s.active }
     }
     const target = i.gateNumber === undefined ? null : s.prs[i.gateNumber]
     if (i.gateNumber !== undefined) {
@@ -265,11 +349,13 @@ function apply(s, e) {
     fields(i, ['owner', 'number', 'claimId', 'base', 'head', 'round', 'clearance'])
     check(!s.active, 'resume cannot replace an active claim')
     const p = s.prs[i.number], b = p?.blockedClaim, c = p && cycle(p)
-    check(b && positive(i.number) && b.claim.number === i.number &&
+    check(b && b.claim.action === 'audit' && positive(i.number) && b.claim.number === i.number &&
       b.claim.claimId === i.claimId && same(b.claim, i) && b.claim.round === i.round &&
-      b.cycle === p.cycles.length && c.rounds === i.round && c.technicalVerdict !== 'NICE',
+      b.cycle === p.cycles.length && c.rounds === (i.round ?? b.rounds) &&
+      (i.round === null || c.technicalVerdict !== 'NICE'),
     'no matching retained unfinished blocked claim/round')
-    check(c.rounds < 3 && c.noProgress < 2, 'round or no-progress limit exhausted')
+    const renewed = i.round === null && c.technicalVerdict === 'NICE' && c.completion.head !== b.claim.head
+    check(renewed || (c.rounds < 3 && c.noProgress < 2), 'round or no-progress limit exhausted')
     check((s.enabled || i.number === s.config.canary) && current(b.claim, p) &&
       p.snapshot.state === 'open' && targetCompatible(b.claim.snapshot, p.snapshot) &&
       !p.blockedReason && sameRepo(p.sourceRepo, s.config.repo) &&
@@ -295,11 +381,70 @@ function apply(s, e) {
     p.readOnlyReviews.push({ claimId: a.claimId, snapshot: a.snapshot, receipt: r })
     if (current(a, p)) Object.assign(p, { seen: signature(a.snapshot), seenAudit: auditKey(a.snapshot) })
     s.active = null
+  } else if (command === 'feedback') {
+    fields(i, ['owner', 'number', 'claimId', 'base', 'head', 'receipt'])
+    const a = s.active, p = s.prs[i.number], r = i.receipt
+    check(a?.action === 'feedback' && a.number === i.number && a.claimId === i.claimId &&
+      same(a, i), 'feedback requires exact read-only claim')
+    fields(r, ['reviewerId', 'model', 'runtime', 'claimId', 'snapshot', 'rubricKey',
+      'disposition', 'completedAt', 'sourceRef', 'generationSourceRef', 'coverage'])
+    fields(r.coverage, ['feedbackRef', 'resolvedThreadsRef', 'templateApplicabilityRef'])
+    check(text(r.reviewerId) && r.reviewerId !== s.config.owner && r.model === s.config.model &&
+      r.runtime === 'native' && r.claimId === a.claimId && digest(r.snapshot) === digest(a.snapshot) &&
+      r.rubricKey === a.rubricKey && fresh(r.completedAt, a.startedAt, at) &&
+      text(r.sourceRef) && text(r.generationSourceRef) && r.sourceRef !== r.generationSourceRef &&
+      Object.values(r.coverage).every(text) &&
+      ['NO_ACTIONABLE_FINDINGS', 'ACTIONABLE_FINDINGS', 'BLOCKED'].includes(r.disposition),
+    'invalid scoped complete native feedback receipt')
+    const prior = [...s.deployments.flatMap((d) => d.reviewers ?? []),
+      ...Object.values(s.prs).flatMap((pr) => [
+        ...pr.cycles.flatMap((c) => c.completion?.reviewers ?? []),
+        ...(pr.publications ?? []).flatMap((pub) => pub.reviewers),
+        ...(pr.readOnlyReviews ?? []).map((f) => f.receipt),
+        ...(pr.feedbackReviews ?? []).map((f) => f.receipt),
+      ])]
+    check(!s.usedReviewers.includes(r.reviewerId) && prior.every((old) =>
+      old.reviewerId !== r.reviewerId && ![old.sourceRef, old.generationSourceRef]
+        .some((ref) => [r.sourceRef, r.generationSourceRef].includes(ref))),
+    'feedback reviewer and receipt sources must be fresh and independent')
+    const exact = current(a, p) && signature(a.snapshot) === signature(p.snapshot)
+    check(exact || r.disposition === 'BLOCKED', 'stale feedback requires BLOCKED; new generation remains pending')
+    if (exact) check(digest(feedbackBasis(s, p, at)) === digest(a.completion) &&
+      digest(s.rubrics[`${a.base}:${a.head}`].binding) === a.rubricKey, 'feedback reviewed basis changed')
+    p.feedbackReviews ??= []
+    p.feedbackReviews.push({ claim: a, receipt: r })
+    s.usedReviewers.push(r.reviewerId)
+    const c = cycle(p)
+    c.evidence = [...new Set([...c.evidence, r.sourceRef, r.generationSourceRef, ...Object.values(r.coverage)])]
+    if (r.disposition === 'BLOCKED') {
+      c.phase = 'blocked'
+      c.reason = 'Feedback triage blocked; generation remains pending'
+      if (exact) p.seen = signature(a.snapshot)
+      s.active = null
+    } else {
+      if (r.disposition === 'NO_ACTIONABLE_FINDINGS') {
+        c.completion = { ...a.completion, auditKey: auditKey(a.snapshot) }
+        c.technicalVerdict = 'NICE'
+        c.phase = 'waiting'
+        c.reason = 'Feedback triaged; current CI/target gates still pending'
+        p.seenAudit = auditKey(a.snapshot)
+      } else {
+        c.completion = null
+        c.technicalVerdict = 'NAUGHTY'
+        c.phase = 'blocked'
+        c.reason = 'Actionable feedback requires original bounded audit/fix loop'
+        p.seenAudit = null
+      }
+      p.seen = null
+      p.blockedClaim = null
+      s.active = null
+    }
   } else if (command === 'published') {
     fields(i, ['owner', 'number', 'claimId', 'base', 'head', 'snapshot', 'push', 'reviewers'])
     const a = s.active, p = s.prs[i.number]
     check(a && a.action === 'audit' && a.number === i.number && a.claimId === i.claimId && a.round !== null, 'publication requires active charged audit claim')
     if (a.publication && digest(a.publication) === digest(i)) return { state: s, output: claimOutput(a, p), changed: false }
+    check(e.version !== 2 || !a.failureEvidence, 'failed review requires explicit retry before new publication')
     validateSnapshot(i.snapshot)
     fields(i.push, ['repo', 'branch', 'before', 'head', 'sourceRef', 'pushedAt'])
     check(same(a, i) && i.snapshot.number === i.number && i.snapshot.base === a.base &&
@@ -314,7 +459,8 @@ function apply(s, e) {
       i.push.before === a.head && i.push.head === i.snapshot.head && text(i.push.sourceRef) &&
       fresh(i.push.pushedAt, a.startedAt, at) && i.reviewers.every((r) => r.completedAt <= i.push.pushedAt), 'push needs exact old/new head and preceding reviews')
     const reviewedSnapshot = { ...i.snapshot, baseRef: a.snapshot.baseRef, reviewKey: a.snapshot.reviewKey }
-    Object.assign(p, { snapshot: i.snapshot, seen: signature(reviewedSnapshot), seenAudit: auditKey(reviewedSnapshot) })
+    observeSnapshot(p, i.snapshot, at)
+    Object.assign(p, { seen: signature(reviewedSnapshot), seenAudit: auditKey(reviewedSnapshot) })
     p.publications ??= []
     p.publications.push({ ...i, startedAt: a.startedAt, reviewClaim: { claimId: a.claimId, round: a.round } })
     Object.assign(a, { head: i.snapshot.head, snapshot: reviewedSnapshot, publication: i })
@@ -327,6 +473,7 @@ function apply(s, e) {
     const a = s.active, p = s.prs[i.number]
     check(a && positive(i.number) && a.number === i.number && a.claimId === i.claimId && same(a, i), 'stale or missing claim/revision')
     check(a.action !== 'read-only', 'read-only claim forbids execution; record read-only receipt')
+    check(a.action !== 'feedback', 'feedback claim forbids execution/save; record feedback receipt')
     check(current(a, p) || (command === 'save' && i.phase === 'blocked' && i.technicalVerdict !== 'NICE'), 'stale revision; retain claim and save blocked or reconcile publication')
     let c = cycle(p)
     if (command === 'begin' || command === 'retry') {
@@ -342,7 +489,7 @@ function apply(s, e) {
         c = cycle(p)
       }
       check(c.rounds < 3 && c.noProgress < 2, 'round or no-progress limit exhausted')
-      Object.assign(a, { snapshot: p.snapshot, round: ++c.rounds, startedAt: at, baseline: c.findings.filter((f) => f.status === 'open').map((f) => f.id), publication: null, failureEvidence: null })
+      Object.assign(a, { snapshot: p.snapshot, round: ++c.rounds, startedAt: at, baseline: c.findings.filter((f) => f.status === 'open').map((f) => f.id), publication: null, failureEvidence: null, failureReceipt: null })
       c.noProgress++
       c.phase = 'auditing'
       c.technicalVerdict = null
@@ -353,6 +500,11 @@ function apply(s, e) {
       check(refs(i.evidence) && i.evidence.length > 0 && text(i.reason) &&
         [null, 'NAUGHTY', 'NICE'].includes(i.technicalVerdict), 'invalid evidence, reason or verdict')
       check(a.round !== null || ['waiting', 'blocked'].includes(i.phase), 'audit/review requires begin')
+      if (e.version === 2 && a.failureEvidence) {
+        if (digest(a.failureReceipt) === digest(i)) return { state: s, output, changed: false }
+        check(['waiting', 'blocked'].includes(i.phase) && i.technicalVerdict !== 'NICE' &&
+          digest(c.findings) === digest(i.findings), 'failed review requires explicit retry before correction or re-review')
+      }
       check(Array.isArray(i.findings) && new Set(i.findings.map((f) => f.id)).size === i.findings.length, 'invalid findings')
       for (const f of i.findings) {
         fields(f, ['id', 'status', 'evidence'])
@@ -378,8 +530,10 @@ function apply(s, e) {
       if (terminal && a.round !== null && i.findings.some((f) => f.status === 'fixed' && a.baseline.includes(f.id))) c.noProgress = 0
       c.findings = i.findings
       if (i.phase === 'reviewing' && i.technicalVerdict === 'NAUGHTY') a.failureEvidence = i.evidence
-      if (i.phase === 'blocked' && a.round !== null) {
-        p.blockedClaim = { claim: a, cycle: p.cycles.length, phase: c.phase,
+      // Retain legacy within-round saves for exact ACKs, not new live attempts.
+      if (a.failureEvidence && !terminal) a.failureReceipt = i
+      if (i.phase === 'blocked' && a.action === 'audit') {
+        p.blockedClaim = { claim: a, cycle: p.cycles.length, rounds: c.rounds, phase: c.phase,
           technicalVerdict: i.technicalVerdict ?? c.technicalVerdict, reason: c.reason, blockedAt: at }
       }
       Object.assign(c, { evidence: [...new Set([...c.evidence, ...i.evidence])], reason: i.reason, phase: i.phase })
@@ -402,10 +556,12 @@ function apply(s, e) {
       p.seen === signature(p.snapshot), 'canary needs current processed technical NICE and gates')
     validateReviewers(proof.reviewers, c.completion, s, at)
     check(digest(proof.reviewers) === digest(c.completion.reviewers), 'acceptance reviewers differ from saved NICE')
-    fields(proof.ci, ['base', 'head', 'status', 'sourceRef', 'verifiedAt'])
+    fields(proof.ci, ['base', 'head', 'gateKey', 'baseRef', 'status', 'sourceRef', 'verifiedAt'])
     fields(proof.push, ['repo', 'branch', 'before', 'head', 'sourceRef', 'pushedAt'])
     check(same(proof.ci, proof) && proof.ci.status === 'passed' && text(proof.ci.sourceRef) &&
-      fresh(proof.ci.verifiedAt, c.completion.startedAt, at), 'verified current CI receipt required')
+      proof.ci.gateKey === p.snapshot.gateKey && proof.ci.baseRef === (p.snapshot.baseRef ?? null) &&
+      fresh(proof.ci.verifiedAt, c.completion.startedAt, at) &&
+      fresh(proof.ci.verifiedAt, p.gateObservedAt, at), 'verified current CI receipt required')
     const publication = p.publications?.at(-1)
     check(publication && same(publication.snapshot, proof) &&
       publication.snapshot.branch === p.snapshot.branch &&
@@ -422,7 +578,8 @@ function apply(s, e) {
     for (const f of proof.fixers) {
       fields(f, ['issueId', 'agentId', 'model', 'sourceRef', 'redRef', 'greenRef'])
       check(text(f.issueId) && text(f.agentId) && f.agentId !== s.config.owner &&
-        !proof.reviewers.some((r) => r.reviewerId === f.agentId) && f.model === s.config.model &&
+        !proof.reviewers.some((r) => r.reviewerId === f.agentId) &&
+        !(p.feedbackReviews ?? []).some((r) => r.receipt.reviewerId === f.agentId) && f.model === s.config.model &&
         text(f.sourceRef) && text(f.redRef) && text(f.greenRef) && f.redRef !== f.greenRef, 'independent fixer and distinct TDD receipts required')
     }
     check(!s.enabled || digest(s.acceptanceProof) === digest(proof), 'activation proof is immutable')
@@ -447,7 +604,7 @@ function main() {
   const [, , target, command, ...extra] = process.argv
   if (target === 'help' || command === 'help') return { help: readFileSync(new URL(import.meta.url), 'utf8').split('\nimport ')[0] }
   check(target && command && extra.length === 0, 'usage: node executor-state.mjs STATE_DIR COMMAND')
-  check(['init', 'rubric', 'deploy', 'sync', 'next', 'read-only', 'begin', 'retry', 'resume', 'published', 'save', 'enable', 'show'].includes(command), 'unknown command')
+  check(['init', 'rubric', 'deploy', 'sync', 'next', 'read-only', 'feedback', 'begin', 'retry', 'resume', 'published', 'save', 'enable', 'show'].includes(command), 'unknown command')
   const dir = resolve(target), file = join(dir, 'state.json'), lock = join(dir, 'executor.lock')
   outsideGit(dir)
   const input = command === 'show' ? null : JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''))
@@ -467,30 +624,35 @@ function main() {
       check(lstatSync(file).isFile() && !lstatSync(file).isSymbolicLink(), 'invalid state file')
       const stored = JSON.parse(readFileSync(file, 'utf8'))
       fields(stored, ['version', 'events', 'sha256'])
-      check(stored.version === 1 && Array.isArray(stored.events) && stored.events.length > 0 &&
+      check([1, 2].includes(stored.version), 'unsupported journal version')
+      check(Array.isArray(stored.events) && stored.events.length > 0 &&
         stored.sha256 === digest(stored.events), 'corrupt state; preserve and investigate')
       events = stored.events
       const ids = new Set()
+      let version = 1
       // ponytail: replay/rewrite the retained journal; checkpoint only if measured history size needs it.
       for (const e of events) {
-        fields(e, ['id', 'at', 'command', 'input'])
+        fields(e, ['id', 'at', 'command', 'input'], ['version'])
+        check(e.version === undefined ? version === 1 : e.version === 2, 'invalid or downgraded event version')
+        version = e.version ?? 1
         check(text(e.id) && !ids.has(e.id) && timestamp(e.at) && e.at >= previousAt, 'corrupt event metadata')
         ids.add(e.id)
         previousAt = e.at
         state = apply(state, e).state
       }
+      check(stored.version === version, 'journal/event version mismatch')
     }
     if (command === 'show') return { ...state, events: events.length }
     const at = new Date().toISOString()
     check(at >= previousAt, 'clock moved backwards; refusing mutation')
-    const event = { id: token, at, command, input }
+    const event = { version: 2, id: token, at, command, input }
     const result = apply(state, event)
     if (result.changed !== false) {
       events.push(event)
       const temporary = join(dir, `state.${token}.tmp`)
       const out = openSync(temporary, 'wx', 0o600)
       try {
-        writeFileSync(out, JSON.stringify({ version: 1, events, sha256: digest(events) }) + '\n')
+        writeFileSync(out, JSON.stringify({ version: 2, events, sha256: digest(events) }) + '\n')
         fsyncSync(out)
       } finally { closeSync(out) }
       renameSync(temporary, file) // Never delete the old state as a rename fallback.

@@ -128,3 +128,28 @@ changed, and the manual office was not started or modified.
 | Workspace Rust tests | [Cargo tests](assets/astra-review-executor/05-cargo-tests.png) |
 | Web build | [Web build](assets/astra-review-executor/06-web-build.png) |
 | Web lint | [Web lint](assets/astra-review-executor/07-web-lint.png) |
+
+### Third-round local validation — September 17
+
+Both second-round Santa reviews returned FAIL despite 58 passing tests. Their
+three remaining defects were corrected with separate issue-scoped workers:
+current-generation CI binding, strict admission of new review/fix attempts, and
+recovery of a blocked claim before its first round was charged. Legacy journal
+bytes and previously consumed rounds remain intact.
+
+The integrated implementation also has an explicit read-only metadata gate for
+new feedback on already dual-reviewed, unchanged code. A fresh native Astra
+checker must verify the exact feedback generation and template applicability.
+No-actionable feedback retains the original code reviews and push; actual code
+findings return to the original bounded loop. This is not a fourth code-review/
+fix round, does not permit edits or publication, and cannot waive current CI.
+Blocked metadata assessment releases the writer while retaining its pending
+generation and report.
+
+Final local checks passed **86/86 Node tests** and all six baseline commands
+again, including 547 Rust passes and 323 explicitly ignored tests.
+[The latest Node log-summary capture](assets/astra-review-executor/08-package-tests-round-3.png)
+is retained alongside the earlier captures. Red/green regression logs and the
+original failed review reports are preserved outside PR worktrees. These local
+results still do not claim fresh third-round Santa approval or live canary
+acceptance; those receipts must be observed separately.

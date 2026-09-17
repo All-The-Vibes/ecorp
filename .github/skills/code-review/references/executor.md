@@ -73,7 +73,9 @@ sessions, failed tests and original receipts.
    than guessing JSON fields. A failed preflight is not an empty PR queue.
 2. Run the bundled `executor-snapshot.mjs OWNER/REPO`. It paginates open PRs,
    reviews, review comments, discussion, check runs and statuses. Feed its
-   complete JSON result to the state helper's `sync`, then ask `next`.
+   complete JSON result to the state helper's `sync`. Check retained state before
+   choosing the next action: same-code post-publication feedback can use the
+   explicit `next {feedbackNumber}` route below; otherwise ask ordinary `next`.
    Also refresh the selected PR and fully paginate GraphQL review threads:
    resolution state and current branch protections remain separate live reads.
    An incomplete open-PR listing stops synchronization. A PR with `readError`
@@ -135,6 +137,18 @@ sessions, failed tests and original receipts.
    Retain the original publication across later feedback reviews. Never change
    its timestamp or make an unnecessary push to satisfy acceptance. A prior
    NICE cannot enable broad intake while synchronized feedback is unprocessed.
+   After a valid two-reviewer publication, feedback on unchanged code/source/
+   target and the same pinned rubric may be triaged through `next` with
+   `feedbackNumber`. Dispatch a **fresh independent native Astra gatechecker**
+   after that claim to read all current feedback, resolved threads and template
+   applicability. Record its scoped actual receipt with `feedback`.
+   `NO_ACTIONABLE_FINDINGS` updates only the processed feedback generation,
+   preserving the original code reviews, push and round count. It still requires
+   a separate current CI/target check. `ACTIONABLE_FINDINGS` returns to the same
+   bounded audit/fix loop; an exhausted budget stays exhausted. `BLOCKED` retains
+   the unprocessed feedback and report but releases the writer for other PRs.
+   Retry that read-only gate explicitly after the cause clears. This route cannot
+   edit code, dispatch fixers, publish, or disguise another code review/fix round.
 9. Save the actual audit, fixer, red/green, reviewer, push and CI receipts. Keep
    technical Santa NICE separate from the complete merge rubric: human approval,
    drafts, dependencies and other external gates may still block merge. Do not
@@ -157,6 +171,10 @@ changes do not discard active fixes.
 If a transient local/tooling/credential failure blocked unfinished work,
 verify the actual cause cleared and use `resume` with that clearance receipt.
 It restores the retained claim and charge; it is not a new budget or approval.
+An uncharged preparation claim resumes with `round: null`; one later `begin`
+charges its first round. New live correction/re-review submissions after NAUGHTY
+must pass `retry`; only the original legacy journal is replayed under its old
+admission rules. New CLI-stamped version-2 records reject bypasses and downgrades.
 Ordinary CI waits, conflicts, competing claims, forks and exhausted stops cannot
 be reopened through this route.
 
@@ -179,6 +197,9 @@ Before enabling repository-wide execution, retain proof of:
 The helper can validate receipt structure and identities, not authenticity.
 Read the underlying native receipts and GitHub results before accepting the
 canary. Never enable broad intake on a plain `NICE` string or unit tests alone.
+CI evidence must include the current `gateKey` and `baseRef`, and be verified
+after both the technical round start and the latest observed gate generation.
+An old same-head green receipt does not discharge a newer failing check.
 Report separately: implemented, scheduled, canary verified, broad intake enabled.
 If the canary is incomplete, keep executing it; do not replace the executor with
 a read-only observer or claim the deployment is complete.
