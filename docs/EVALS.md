@@ -860,6 +860,54 @@ same PR with one attempt and no additional remote effect. See
 `docs/evidence/2026-09-03-recovered-suspend-publication.md`.
 
 
+## Server startup configuration boundary (#271)
+
+The server prepares CORS, encryption/signing keys and object-store configuration,
+then completes bounded OIDC discovery before database connection, migration,
+artifact-directory creation, recovery or worker activation. Native object-store
+clients are prepared once; local filesystem creation is deferred. Configuration
+errors use bounded messages without input values or underlying error chains,
+including when backtraces are enabled. OIDC discovery performs read-only network
+requests; it is not a claim of zero network effects. Storage availability and
+runtime failures after preparation are not rollback guarantees.
+
+Run the opt-in real-binary regression with Python 3.10+, OpenSSL 3, Docker, and
+an already available `postgres:17-alpine` image:
+
+```sh
+cargo build -p crony-server --locked
+python3 tools/test_startup_validation.py --server-binary target/debug/crony-server --allow-disposable-docker
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools -p test_startup_validation_harness.py -v
+```
+
+Pass the actual binary path when using `CARGO_TARGET_DIR`. Build the standalone
+server target for this TLS fixture: on macOS, a workspace build can unify native
+TLS features from other packages, whose system trust does not use the fixture's
+`SSL_CERT_FILE`. The standalone server's rustls configuration accepts the
+process-local test CA. The harness never changes system trust or disables TLS
+verification. A trust mismatch fails the positive test, not a skipped/passing case.
+
+The harness generates its own loopback-only disposable database container,
+database URLs, isolated child environments, OIDC fixture and TLS object-store
+fixture. It uses no operator database URL, retained runtime or provider account.
+Cleanup verifies the exact container name and ownership label. Do not run Python
+with assertions disabled. The cleanup guards also run independently without Docker.
+
+The 58 rejection cases compare public schema, all table contents (including the
+migration ledger) and sequences on empty and recovery-sensitive populated
+databases. They also check filesystem writes, observed listeners, fixture
+requests and secret-safe diagnostics. CLI/help cases use their own disposable
+database and prove no mutation or fixture request. Positive cases cover migration,
+demo persistence/restart, runner grace recovery, orphan staging cleanup and
+production startup with 32- and 33-byte signing keys against TLS storage.
+Listener sampling is not proof against an arbitrarily brief bind; the source
+ordering and persisted-state checks establish the mutation boundary.
+
+`--baseline` runs only the missing-issuer rejection. It must exit nonzero on the
+unfixed binary when migration changes the database; it does not reclassify the
+baseline failure as a passing test. See
+[the September 15 evidence](evidence/2026-09-15-startup-validation.md).
+
 ## Steering and run-status transaction ordering (issue 223)
 
 The opt-in `issue223_` store tests apply real migrations in SQLx-created databases.
