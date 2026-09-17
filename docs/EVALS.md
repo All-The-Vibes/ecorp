@@ -146,6 +146,16 @@ checks, signed-object validation, and independent outcome review remain required
 
 ## Required chaos cases
 
+The [PR265 run-activity acceptance follow-up](evidence/2026-09-17-pr265-run-activity-acceptance.md)
+records native finished-review preservation across runner reconnect, browser disconnect and
+snapshot-read failures, viewer changes, exact-run evidence navigation, and a confirmed 390px
+viewport. `tools/e2e_factory_run_activity.py` requires its owned Windows supervisor receipt;
+it must never target the manual stack. The `issue265_` SQLx family uses actual migrations in
+owned test databases and checks the narrow ordinary-provider review exception, independent
+decisions, grace expiry, and rejection of incomplete, foreign or unsafe review metadata.
+Checkpoint-review authority is separately covered by the existing `issue148_checkpoint_retention_`
+family. These deterministic fixtures are not real-provider or production-identity evidence.
+
 - duplicate runner event
 - server restart during an active run
 - runner disconnect and reconnect

@@ -45,6 +45,13 @@ transactionally enqueue durable runner commands. Commands remain pending until t
 acknowledges application, command IDs fence duplicate delivery, and expiry automatically rejects
 the action and repairs run/task/mission/agent state.
 
+An ordinary provider's finished outcome-review wait is not a live process claim. Runner-loss
+handling preserves only a matching Corp/run/task/mission review and current gate with a positive,
+same-room/mission termination receipt and no later teardown uncertainty. A pending tool action,
+stop/suspend, quarantine or provider-free mode cannot use that exception. Preservation changes no
+policy, spending, source or review decision and grants no checkpoint/recovery capability. The
+existing human role, membership, requester-exclusion and decision checks remain authoritative.
+
 Dark-factory claims use a separate opaque fencing token plus a monotonic work-item version.
 Claim tokens are returned only to the authorized operator and are omitted from shared snapshots,
 events, prompts, logs, and artifacts. A GitHub label or Project status is never treated as an
