@@ -292,14 +292,30 @@ or real-provider performance.
 
 ### Workspace validation commands
 
+<!-- ecorp:validation-commands -->
 ```powershell
 node tools/check_migrations.mjs
+pnpm check:docs
+pnpm test:unit
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm build:web
 pnpm lint:web
 ```
+<!-- /ecorp:validation-commands -->
+
+`pnpm test:unit` runs the native Node regression suites under `apps/web/src` and the top-level
+`tools/*.test.mjs` files, using Node.js 22.23.2 or newer. The separate Repository checks PR
+workflow runs Linux and Windows jobs and preserves JUnit results even when a test fails.
+Bare `e2e_*.mjs` drivers, output directories, scenario applications, and real-provider probes
+are outside this discovery scope; their acceptance still needs the explicitly owned E2E lanes.
+
+`pnpm check:docs` checks five marked repository-validation sequences against `package.json`
+and two current Copilot-version paragraphs against the Cargo SDK pin and adapter runtime
+constant. Mutation fixtures prove changed commands, changed pins, missing/duplicate markers,
+and invalid/cyclic aliases fail; updated current documentation restores passing. This is a
+deterministic check for those contracts, not semantic or repository-wide documentation proof.
 
 The repository also contains `tools/e2e_smoke.ps1`, which exercises the actual running stack.
 `tools/e2e_demo_lifecycle.mjs` races bootstrap and reset requests to prove the demo lifecycle lock

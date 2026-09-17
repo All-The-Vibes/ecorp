@@ -131,6 +131,7 @@ before terminal session reporting. Unknown and duplicate decisions cannot select
 
 ## Copilot runtime compatibility
 
+<!-- ecorp:copilot-runtime -->
 The checked-in Copilot SDK and its verified CLI are one execution dependency pair. Managed
 local processes receive `--no-auto-update`; catalog discovery, new sessions and resume validate
 the connected runtime version before accepting provider work. The current pair is SDK `1.0.11`
@@ -138,6 +139,7 @@ and CLI `1.0.79`. A runtime override is not permission to silently select an unv
 Version checks do not replace worktree capabilities, permissions, process ownership or verifier
 evidence. The native-read regression validates real relative/absolute view results and exact
 readback bytes through the server and runner.
+<!-- /ecorp:copilot-runtime -->
 
 ## Budgets and circuit breaking
 

@@ -5,9 +5,14 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "check:migrations": "node tools/check_migrations.mjs",
+    "check:docs": "node tools/check_documentation.mjs",
+    "test:unit": "node --test --test-concurrency=2 --test-timeout=180000 \"apps/web/src/**/*.test.mjs\" \"tools/*.test.mjs\"",
     "dev:web": "pnpm --dir apps/web dev",
     "build:web": "pnpm --dir apps/web build",
     "lint:web": "pnpm --dir apps/web lint",
-    "check": "pnpm check:migrations && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace && pnpm build:web && pnpm lint:web"
+    "check": "pnpm check:migrations && pnpm check:docs && pnpm test:unit && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace && pnpm build:web && pnpm lint:web"
+  },
+  "devDependencies": {
+    "ws": "8.21.3"
   }
 }

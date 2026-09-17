@@ -6,7 +6,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      ws:
+        specifier: 8.21.3
+        version: 8.21.3
 
   apps/web:
     dependencies:
@@ -492,6 +496,18 @@ packages:
       yaml:
         optional: true
 
+  ws@8.21.3:
+    resolution: {integrity: sha1-ZgtPrdtqPldchuB4EmkZlh9N5Pw=, tarball: https://registry.npmjs.org/ws/-/ws-8.21.3.tgz}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
 snapshots:
 
   '@oxc-project/types@0.146.0': {}
@@ -762,3 +778,5 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.13.3
       fsevents: 2.3.3
+
+  ws@8.21.3: {}

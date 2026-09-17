@@ -250,17 +250,41 @@ prune unrelated containers, volumes, or worktrees as cleanup.
 
 The repository gate is:
 
+<!-- ecorp:validation-commands -->
 ```powershell
 node tools/check_migrations.mjs
+pnpm check:docs
+pnpm test:unit
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm build:web
 pnpm lint:web
 ```
+<!-- /ecorp:validation-commands -->
 
 `pnpm check` runs the same sequence. Record exact commands, results, commit identity, and any
 unrelated failure truthfully.
+
+Use Node.js 22.23.2 or newer for `pnpm test:unit`. The native Node test runner discovers
+`apps/web/src/**/*.test.mjs` and `tools/*.test.mjs`, including newly added tests, with two
+test files running concurrently and a three-minute per-test timeout. These local regression
+fixtures do not start the complete product stack or replace the separately owned E2E lane.
+The Repository checks workflow runs the same suites on Linux and Windows and retains JUnit
+results on success or failure. Successful jobs establish hosted regression evidence; record
+local runs separately when hosted execution is unavailable.
+
+`pnpm check:docs` compares the marked validation-command blocks in contributor documentation
+with `package.json` and the current Copilot compatibility paragraphs with their Cargo/adapter
+pins. It reads those sources without executing Markdown. Update the relevant current contract
+when an intentional command or supported-version change lands. Historical evidence remains
+historical; this check does not establish semantic, API, or complete documentation coverage.
+
+Dependabot proposes weekly Cargo, pnpm/npm, and Actions updates, capped at three open version
+update PRs per configured ecosystem entry. Minor and patch changes are grouped for review.
+The Copilot SDK is excluded because its pinned CLI must be verified with it as one compatibility
+pair. Every proposed update still needs the applicable checks and human review; scheduling a
+dependency update does not authorize merging it or operating a live Factory/Repo Steward job.
 
 As of September 3, 2026, GitHub-hosted Actions credits are exhausted for the month. Do not treat an
 unstarted hosted job as a completion gate or remain blocked solely for that reason. Record
