@@ -485,6 +485,13 @@ mod tests {
 
     impl Drop for Fixture {
         fn drop(&mut self) {
+            if std::thread::panicking() {
+                eprintln!(
+                    "Preserved failed dependency fixture: {}",
+                    self.root.display()
+                );
+                return;
+            }
             fs::remove_dir_all(&self.root).expect("remove owned dependency fixture");
         }
     }
@@ -534,6 +541,150 @@ mod tests {
                 .modified()
                 .unwrap()
         );
+    }
+
+    #[tokio::test]
+    async fn issue297_synthesis_reads_materialized_files_not_summaries_or_altered_bytes() {
+        use std::{process::Stdio, time::Duration};
+
+        // This source-bound process fixture is not signed-artifact, DB or browser acceptance.
+        async fn synthesize(workspace: &Path, prompt: &str) -> std::process::Output {
+            let script = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("..")
+                .join("..")
+                .join("scripts")
+                .join("fake-agent.mjs");
+            let mut command = tokio::process::Command::new("node");
+            command
+                .arg(script)
+                .arg("--run-id")
+                .arg(uuid::Uuid::new_v4().to_string())
+                .arg("--workdir")
+                .arg(workspace)
+                .arg("--mission")
+                .arg(prompt)
+                .current_dir(workspace)
+                .env_clear()
+                .stdin(Stdio::null())
+                .kill_on_drop(true);
+            for key in ["PATH", "SystemRoot", "WINDIR"] {
+                if let Some(value) = std::env::var_os(key) {
+                    command.env(key, value);
+                }
+            }
+            tokio::time::timeout(Duration::from_secs(10), command.output())
+                .await
+                .expect("bounded synthesis fixture deadline")
+                .expect("run checked-in Node synthesis fixture")
+        }
+
+        fn events(output: &std::process::Output) -> Vec<serde_json::Value> {
+            String::from_utf8(output.stdout.clone())
+                .unwrap()
+                .lines()
+                .map(|line| serde_json::from_str(line).unwrap())
+                .collect()
+        }
+
+        let fixture = Fixture::new();
+        let files: Vec<_> = ["a", "b"]
+            .into_iter()
+            .flat_map(|key| {
+                let note = payload(
+                    &format!("handoffs/specialist-{key}.md"),
+                    &format!("# Research {key}\r\nλ {}\r\n", uuid::Uuid::new_v4()),
+                );
+                let probe = payload(
+                    &format!("handoffs/specialist-{key}-probe.json"),
+                    &format!(
+                        "{{\"observed\":true,\"note_sha256\":\"{}\"}}\n",
+                        note.sha256
+                    ),
+                );
+                [note, probe]
+            })
+            .collect();
+        let prompt = files
+            .iter()
+            .map(|file| {
+                format!(
+                    "SOURCE FILE {} / sha256 {} / bytes {}\nSummary includes full text:\n{}",
+                    file.path,
+                    file.sha256,
+                    file.content.len(),
+                    file.content,
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        let expected: Vec<_> = files
+            .iter()
+            .map(|file| {
+                serde_json::json!({
+                    "path": file.path, "sha256": file.sha256, "bytes": file.content.len(),
+                })
+            })
+            .collect();
+
+        for case in ["summary-only", "materialized", "altered"] {
+            let workspace = fixture.workspace.join(case);
+            fs::create_dir(&workspace).unwrap();
+            if case != "summary-only" {
+                let write_scope = ["handoffs/**".to_owned()];
+                materialize(&workspace, &files, &write_scope).unwrap();
+                materialize(&workspace, &files, &write_scope).unwrap();
+            }
+            if case == "altered" {
+                let altered = files[3].content.replacen("true", "null", 1);
+                assert_eq!(altered.len(), files[3].content.len());
+                fs::write(workspace.join(&files[3].path), altered).unwrap();
+            }
+            let output = synthesize(&workspace, &prompt).await;
+            let events = events(&output);
+            if case == "materialized" {
+                assert!(
+                    output.status.success(),
+                    "{}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+                assert_eq!(
+                    events
+                        .iter()
+                        .filter(|event| event["type"] == "completed")
+                        .count(),
+                    1
+                );
+                let receipt = fs::read_to_string(workspace.join("result.md")).unwrap();
+                let readback: Vec<serde_json::Value> = serde_json::from_str(
+                    receipt
+                        .lines()
+                        .find_map(|line| line.strip_prefix("DEPENDENCY READBACK: "))
+                        .expect("synthesis must report actual filesystem readback"),
+                )
+                .unwrap();
+                assert_eq!(readback, expected);
+                for file in &files {
+                    assert_eq!(
+                        fs::read(workspace.join(&file.path)).unwrap(),
+                        file.content.as_bytes()
+                    );
+                }
+            } else {
+                assert!(!output.status.success(), "{case} must not synthesize");
+                assert!(
+                    events.iter().all(|event| {
+                        event["type"] != "completed" && event["type"] != "artifact"
+                    })
+                );
+                assert!(!workspace.join("result.md").exists());
+                let error = String::from_utf8_lossy(&output.stderr);
+                assert!(error.contains(if case == "summary-only" {
+                    "ENOENT"
+                } else {
+                    "Materialized dependency does not match the declared hash and bytes"
+                }));
+            }
+        }
     }
 
     #[test]

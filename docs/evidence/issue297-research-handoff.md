@@ -45,6 +45,47 @@ certificate bypass or policy bypass is part of this contribution. Web validation
 requires an IT-approved dependency source or an approved validation environment.
 The native executable startup failures remain a separate unresolved observation.
 
+### Bounded acceptance-readiness increment (2026-09-17)
+
+The runner test
+`dependency_files::tests::issue297_synthesis_reads_materialized_files_not_summaries_or_altered_bytes`
+joins the actual materializer to the checked-in Node synthesis fixture. It checks
+four unique note/probe files, exact UTF-8 byte counts and hashes after replay,
+summary-only rejection even when the prompt includes the full file text, and
+rejection of an altered fourth file without an artifact or completion event.
+The subprocess has a ten-second deadline and a minimal inherited environment.
+Fixtures stay under the runner package's `target` directory; failed fixtures are
+preserved, while successful fixtures are removed.
+
+The unchanged candidate `ca15684b84710dbc6450c20b9117f62f89d38887`
+(tree `aeb2811c18a314d73ff6d976b8d83007e0696cf7`) was rebuilt offline
+with the existing Rust 1.94 GNU toolchain and bundled LLD: all 23 materializer
+tests passed. After adding this test, the same build command and focused family
+passed all 24 tests, zero failures or ignored tests, in 10.74 seconds.
+The checked-in fixture ran on Node 26.7.0.
+
+```powershell
+# Existing isolated GNU toolchain environment; no dependency installation.
+. .\.qa-issue-297\environment.ps1
+$lld = Join-Path $env:RUSTUP_HOME 'toolchains\1.94.0-x86_64-pc-windows-gnu\lib\rustlib\x86_64-pc-windows-gnu\bin\rust-lld.exe'
+cargo rustc --locked --offline -p crony-runner --tests --message-format=json -- -C "linker=$lld" -C linker-flavor=ld.lld
+# Run the crony-runner test executable reported by compiler-artifact above.
+& $runnerTestExecutable dependency_files::tests --test-threads=1
+cargo fmt --check
+node --check scripts\fake-agent.mjs
+git diff --check
+```
+
+Formatting, Node syntax and diff whitespace checks passed. Editor test discovery
+found no Rust tests, so the actual rebuilt runner test executable was used.
+No server/workspace suite, SQLx, Clippy or web gate was run in this bounded slice.
+
+This is a source-bound process test, not the required `browser-consumption` or
+`adversarial` interface. It does not authenticate signed artifacts, select parents,
+exercise a database, launch services, grant approval, or establish full-stack
+TF-01/02/03 acceptance. The native owned-QA context/source pins, actual browser
+gates, authority/recovery SQLx cases and real owner/admin decision remain separate.
+
 A local fixture self-test passed three checks:
 
 1. Two specialists each generated a unique note and JSON probe; each probe's
@@ -57,6 +98,99 @@ A local fixture self-test passed three checks:
 That self-test is not native materialization, signed artifact, SQL, browser or
 Factory evidence. Its output is retained locally, not represented as an
 authorized server download.
+
+### Guarded browser interface increment (2026-09-17)
+
+The named interface now accepts:
+
+```powershell
+node tools/e2e_research_handoff.mjs --case browser-consumption --require-owned-qa
+```
+
+This interface was implemented but not run against a browser or services in this
+slice. The no-argument API lane retains its existing behavior. The named lane
+requires an already-seeded, empty owned development fixture. It checks the actual
+candidate source inventory, server/runner bytes and live process receipts before
+creating the held mission and again before dispatch. It does not start or stop
+services, read a database connection string or create another Corp.
+
+The browser opens the real built App, checks served assets against operator pins,
+selects the held mission and clicks `Start mission` once. Its request guard only
+forwards real requests: pinned static assets, scoped reads, at most two existing
+demo handshakes and the exact armed launch. Unexpected scripts, sockets or writes
+fail the case. There is no response fulfillment, page-state injection or storage
+seeding. Existing native API assertions still check signed parent downloads,
+verification, ordering, distinct worktrees and all four synthesis readbacks.
+The App must then download the exact verified synthesis artifact; its bytes and
+digest must match the native download. All three browser assertions and bounded
+browser closure are required before recording browser coverage.
+
+The `adversarial` case exits with an explicit not-implemented diagnostic before
+any effects. It never substitutes the Rust or Node tests for full-stack negative
+artifact/lineage acceptance. The browser case alone also does not prove the
+summary-only full-stack negative control or all TF-02/03 boundaries.
+
+#### Operator QA context contract
+
+`ECORP_ISSUE297_QA_CONTEXT` must point to a bounded, operator-authored JSON file.
+This version-one interface schema is new local code, not a claim of compatibility
+with the private controller's retained context. The operator must bind or adapt
+that context deliberately after qualification; no automatic conversion or
+self-issued ownership receipt is provided.
+
+| Field | Required value |
+| --- | --- |
+| `schema_version`, `issue`, `test_owned`, `state` | `1`, `297`, `true`, `"candidate_ready"` |
+| `head` | Exact candidate Git HEAD |
+| `files_sha256` | SHA-256 of the complete source inventory described below |
+| `source` | Exact `repository`, `base_ref`, `base_commit`; commit equals `head` |
+| `fixture` | Exact `corp_id`, `room_id`, `alice_actor_id` from exported `researchDemo`, already seeded by the operator |
+| `server` | `url`, absolute `binary`, `sha256`, and existing owned-process `manifest` |
+| `runner` | Exact advertised `id`, absolute `binary`, `sha256`, and existing owned-process `manifest` |
+| `web` | `url` and `assets` mapping URL paths to SHA-256 values of qualified built bytes |
+
+Unknown top-level fields, unready contexts and mismatched pins fail closed.
+No database URLs or credentials belong in this schema.
+Both process manifests use the existing `owned_test_stack.mjs` receipt shape.
+For the runner, the receipt's `server` PID slot denotes the runner process; its
+workspace and `server_url` bind the same owned candidate stack. Runner admission
+checks process identity but does not claim the API listener. Server admission
+also verifies listener ownership. Binary paths must resolve inside this checkout.
+
+`files_sha256` hashes UTF-8 `JSON.stringify` of sorted `[Git path, SHA-256]`
+pairs for every tracked and non-ignored untracked file. Each digest uses literal
+working-file bytes; this is distinct from a normalized Git tree ID. The exported
+read-only `candidateSourcePins()` computes `head` and `files_sha256` without
+changing Git objects, refs or the index. The operator still owns proof that the
+qualified binaries and built web assets came from those source bytes.
+
+Build the App with `VITE_CRONY_SERVER_HTTP` set to the qualified API origin.
+Pin `/`, built JavaScript/CSS, and every requested font/image/favicon path.
+A Vite development server is deliberately unsupported. Use existing Playwright
+through `CRONY_PLAYWRIGHT_MODULE` if needed, and an installed browser through
+`CRONY_BROWSER_CHANNEL` (default `chrome`); this interface installs neither.
+Retain `CRONY_RESEARCH_HANDOFF_TEST=1`, exact `CRONY_SERVER_HTTP`, and a fresh
+`CRONY_RESEARCH_HANDOFF_OUTPUT` leaf outside the candidate checkout.
+Failed checkpoints and prior evidence are preserved; only the browser opened
+by this invocation is closed, with a ten-second cleanup bound.
+
+#### Executed interface checks
+
+```powershell
+node --test tools/research_handoff_browser.test.mjs tools/owned_test_stack.test.mjs tools/fixture_source_identity.test.mjs
+node --check tools/research_handoff_browser.mjs
+node --check tools/e2e_research_handoff.mjs
+git diff --check
+```
+
+The focused suite passed 64 tests, zero failures or skips: nine new interface
+contract/source cases and 55 existing ownership/source cases. It includes actual
+CLI rejection of missing QA context, unknown cases and unsupported adversarial
+execution; malformed/unready contexts; an actual checkout-pin mismatch; strict
+request scope; one-shot launch fencing; and source-bound App selectors.
+No browser, services, application database, provider inference or Factory action
+was executed. The earlier 23-test baseline and 24-test materializer increment
+above remain historical evidence, not results rerun for this interface increment.
 
 ## Independent review
 
@@ -82,8 +216,10 @@ evidence or an owner/admin approval.
       against the owned disposable PostgreSQL fixture.
 * [ ] Demonstrate exact child consumption through the candidate native services.
 * [ ] Implement and run the issue's required `browser-consumption` and
-      `adversarial` acceptance interfaces with trusted QA/source pins. The
-      current driver is API-only and deliberately rejects command-line arguments.
+      `adversarial` acceptance interfaces with trusted QA/source pins.
+      The original driver was API-only and rejected arguments; the guarded
+      browser implementation above is contract-tested but not runtime-accepted.
+      The adversarial full-stack interface remains unimplemented.
 * [ ] Complete the required workspace, Clippy and web gates.
 * [ ] Coordinate with the retained native Factory operator and reconcile the
       helper-module/receipt-replay file scope with its controller allowlist.

@@ -9,13 +9,16 @@
 // Downloads only through actor-authorized signed artifact APIs; never reads a runner worktree.
 // Checkpoint every POST before effects and immediately retain response IDs. No reset, SQL, cleanup,
 // repair, resume, or replacement tasks. Existing output directories (even failed ones) STOP.
-// This proves native deterministic content handoff, NOT browser coverage or vendor inference.
+// With --case browser-consumption --require-owned-qa, additionally require the operator's
+// ECORP_ISSUE297_QA_CONTEXT and launch/download through the actual pinned App.
+// No-argument mode retains API-only coverage. Neither mode proves vendor inference.
 // Authority/negative/link cases belong to the separate Rust/SQLx lane, not skipped passes here.
 
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, open, rename } from 'node:fs/promises'
 import path from 'node:path'
+import { loadResearchQa, openResearchBrowser, researchCase, researchDemo } from './research_handoff_browser.mjs'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const SHA = /^[0-9a-f]{64}$/
@@ -49,6 +52,9 @@ let sequence = 0
 let currentCheck = 'explicit fixture configuration'
 let deadline
 let lastState
+let selectedCase
+let ownedQa
+let browser
 
 async function durableWrite(file, value) {
   const handle = await open(file, 'wx', 0o600)
@@ -69,8 +75,9 @@ async function save() {
 }
 
 async function initialize() {
+  selectedCase = researchCase(process.argv.slice(2))
   assert.equal(process.env.CRONY_RESEARCH_HANDOFF_TEST, '1', 'Requires CRONY_RESEARCH_HANDOFF_TEST=1')
-  assert.equal(process.argv.length, 2, 'This acceptance driver takes no arguments')
+  if (selectedCase) ownedQa = await loadResearchQa()
   assert.ok(process.env.CRONY_SERVER_HTTP, 'CRONY_SERVER_HTTP must be explicit')
   const endpoint = new URL(process.env.CRONY_SERVER_HTTP)
   assert.equal(endpoint.protocol, 'http:', 'Use the parent-owned loopback HTTP QA stack')
@@ -107,6 +114,11 @@ async function initialize() {
     source_deliverable_ids: [],
     proof: {},
   }
+  if (ownedQa) checkpoint.candidate_binding = {
+    head: ownedQa.qa.head, files_sha256: ownedQa.qa.files_sha256,
+    server_sha256: ownedQa.qa.server.sha256, runner_sha256: ownedQa.qa.runner.sha256,
+    web_assets: ownedQa.qa.web.assets, case: selectedCase,
+  }
   await durableWrite(checkpointPath, checkpoint)
   ownsCheckpoint = true
   deadline = Date.now() + 180_000
@@ -120,7 +132,8 @@ function inventory(state) {
 async function http(route, method = 'GET', body) {
   const url = new URL(route, server)
   assert.equal(url.origin, server, 'Refusing an off-stack request')
-  assert.ok(url.pathname.startsWith('/api/'), 'Public API paths only')
+  assert.ok(url.pathname.startsWith('/api/') || (ownedQa && method === 'GET' && url.pathname === '/health'),
+    'Public API paths only')
   const remaining = deadline - Date.now()
   assert.ok(remaining > 0, 'Three-minute acceptance bound exhausted; preserve all IDs')
   const key = method === 'POST' ? 'post' : 'get'
@@ -162,7 +175,7 @@ async function jsonBody(response) {
   }
 }
 
-async function post(label, route, body) {
+async function post(label, route, body, browserLaunch = false) {
   currentCheck = label
   assert.ok(route === '/api/demo/bootstrap?seed_crew=false' ||
     (checkpoint.corp_id && route === api('/missions')) ||
@@ -170,6 +183,7 @@ async function post(label, route, body) {
   'Mutation route is outside this one-mission fixture')
   assert.ok(!checkpoint.operations.some((operation) => operation.route === route),
     'Never repeat a possibly accepted POST')
+  if (ownedQa) await ownedQa.check()
   const operation = {
     operation_id: randomUUID(), label, route, request: body, state: 'pending',
     started_at: new Date().toISOString(),
@@ -177,9 +191,9 @@ async function post(label, route, body) {
   }
   checkpoint.operations.push(operation)
   await save()
-  const response = await http(route, 'POST', body)
+  const response = browserLaunch ? await browser.launch() : await http(route, 'POST', body)
   operation.http_status = response.status
-  const parsed = await jsonBody(response)
+  const parsed = browserLaunch ? response.body : await jsonBody(response)
   operation.response_ids = pick(parsed, ['corp_id', 'room_id', 'alice_actor_id',
     'mission_id', 'task_id', 'task_ids', 'run_id', 'run_ids'])
   operation.state = 'response_received'
@@ -211,6 +225,10 @@ function fixtureRunner(state) {
   assert.ok(typeof source.base_ref === 'string' && source.base_ref.length > 0)
   assert.match(source.base_commit, COMMIT)
   source.repository = source.repository.toLowerCase()
+  if (ownedQa) {
+    assert.equal(runner.id, ownedQa.qa.runner.id, 'Runner differs from operator-owned process binding')
+    assert.deepEqual(source, ownedQa.qa.source, 'Runner source differs from operator-qualified candidate')
+  }
   if (checkpoint.runner_id) {
     assert.equal(runner.id, checkpoint.runner_id, 'Owned runner identity changed')
     assert.deepEqual(source, checkpoint.source, 'Selected runner source changed')
@@ -621,7 +639,14 @@ async function verifyOutcome(result) {
 
 try {
   await initialize()
-  const demo = await post('native bootstrap without crew or reset', '/api/demo/bootstrap?seed_crew=false', {})
+  if (ownedQa) {
+    const response = await http('/health')
+    assert.equal(response.status, 200)
+    const health = await jsonBody(response)
+    assert.ok(health.status === 'ok' && health.mode === 'development', 'Requires a healthy owned development server')
+  }
+  const demo = ownedQa ? researchDemo
+    : await post('native bootstrap without crew or reset', '/api/demo/bootstrap?seed_crew=false', {})
   for (const key of ['corp_id', 'room_id', 'alice_actor_id']) assert.match(demo[key], UUID)
   Object.assign(checkpoint, { corp_id: demo.corp_id, room_id: demo.room_id, actor_id: demo.alice_actor_id })
   await save()
@@ -675,8 +700,17 @@ try {
     checkHeld(await snapshot())
   } while (Date.now() < heldUntil)
   checkpoint.proof.held_without_runs = true
+  if (ownedQa) {
+    currentCheck = 'owned pinned App admission before browser launch'
+    browser = await openResearchBrowser(ownedQa.qa, {
+      corpId: checkpoint.corp_id, actorId: checkpoint.actor_id, missionId: checkpoint.mission_id,
+      title: held.mission.title, output,
+    })
+    checkpoint.proof.browser = browser.proof
+    await save()
+  }
   const launched = await post('explicit native launch; no retry',
-    api(`/missions/${checkpoint.mission_id}/launch`), { requested_by: checkpoint.actor_id })
+    api(`/missions/${checkpoint.mission_id}/launch`), { requested_by: checkpoint.actor_id }, Boolean(browser))
   checkpoint.initial_run_ids = launched.run_ids
   await save()
   assert.ok(Array.isArray(launched.run_ids) && launched.run_ids.length === 2,
@@ -685,11 +719,22 @@ try {
   assert.equal(new Set(launched.run_ids).size, 2)
   currentCheck = 'native parallel roots, dependency release and verification'
   await verifyOutcome(await waitForMission())
+  if (browser) {
+    currentCheck = 'actual App download of verified synthesis readback'
+    await browser.verify(checkpoint.proof.synthesis)
+    await ownedQa.check()
+    await browser.close()
+    assert.equal(browser.proof.assertions.length, 3, 'Browser case requires all three actual assertions')
+    assert.equal(browser.proof.closed, true, 'Owned browser must close before success')
+    checkpoint.browser_coverage = true
+  }
   checkpoint.phase = 'passed'
   checkpoint.finished_at = new Date().toISOString()
   await save()
   console.log(JSON.stringify({
-    phase: 'passed', scenario: 'TF01', evidence: 'native deterministic fixture, not browser/vendor proof',
+    phase: 'passed', scenario: 'TF01',
+    evidence: browser ? 'native deterministic handoff with actual App launch/download; not vendor or complete TF01 acceptance'
+      : 'native deterministic fixture, not browser/vendor proof',
     checkpoint: checkpointPath, mission_id: checkpoint.mission_id,
     runner_id: checkpoint.runner_id, source: checkpoint.source, run_ids: checkpoint.run_ids,
     source_deliverable_ids: checkpoint.source_deliverable_ids,
@@ -710,4 +755,14 @@ try {
     next_action: 'Parent inspects retained IDs/evidence; no resets, cleanup or automatic reruns.',
   }))
   process.exitCode = 1
+} finally {
+  if (browser && !browser.proof.closed) {
+    try {
+      await browser.close()
+      await save()
+    } catch {
+      console.error('Owned browser cleanup/checkpoint failed; preserve evidence for operator inspection.')
+      process.exitCode = 1
+    }
+  }
 }

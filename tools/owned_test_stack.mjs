@@ -240,6 +240,18 @@ function effectContext({ root, server, binary }) {
   return context
 }
 
+// Read-only admission for an already-running QA process. No manifest write or signal.
+// Outbound runners use the same process receipt, without claiming the server's listener.
+export async function verifyOwnedTestProcess({ root, server, binary, manifest, requireListener = true }) {
+  const context = effectContext({ root, server, binary })
+  assertManifest(manifest, context)
+  const observed = await serverIdentity(manifest.server, context.endpoint.port, context)
+  const identity = context.platform === 'win32'
+    ? { platform: 'win32', pid: manifest.server, ...observed } : observed
+  if (requireListener) assertOwnedRestart(manifest, identity, context)
+  else assertProcessIdentity(manifest, identity, context)
+}
+
 function manifestFor(identity, context, previous = {}) {
   return {
     ...previous,
