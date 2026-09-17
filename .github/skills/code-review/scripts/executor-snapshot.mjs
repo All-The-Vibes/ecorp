@@ -8,6 +8,30 @@ const branchRef = (ref) => typeof ref === 'string' && ref !== '@' && ref !== 'HE
   !/[\x00-\x20\x7f~^:?*[\\]|\.\.|@\{|^-|\.$/.test(ref) &&
   ref.split('/').every((part) => part.length > 0 && !part.startsWith('.') && !part.endsWith('.lock'))
 
+function validDetail(row, operation) {
+  if (!Number.isSafeInteger(row.id) || row.id < 1) return false
+  const text = (value) => typeof value === 'string' && value.length > 0
+  // Validate only fingerprint inputs, not GitHub's full response schema.
+  switch (operation) {
+    case 'reviews':
+      return (row.commit_id === null || text(row.commit_id)) && text(row.state) &&
+        typeof row.body === 'string' && (row.submitted_at == null || text(row.submitted_at))
+    case 'review_comments':
+      return text(row.commit_id) && text(row.path) && typeof row.body === 'string' && text(row.updated_at)
+    case 'discussion':
+      // GitHub's issue-comment body is optional (e.g. alternate media representations).
+      return (row.body === undefined || typeof row.body === 'string') && text(row.updated_at)
+    case 'check_runs':
+      return text(row.head_sha) && text(row.name) && text(row.status) &&
+        (row.conclusion === null || text(row.conclusion))
+    case 'statuses':
+      // The commit-status list schema does not require or normally include sha.
+      return (row.sha === undefined || text(row.sha)) && text(row.context) && text(row.state)
+    default:
+      throw new Error('Unknown detail operation')
+  }
+}
+
 class ReadFailure extends Error {
   constructor(operation, kind, message, error) {
     super(message)
@@ -44,7 +68,8 @@ export function snapshot(repo, invoke = (args) => execFileSync('gh', args, {
     }
     return result.flatMap((page) => {
       const rows = collection ? page?.[collection] : page
-      if (!Array.isArray(rows) || rows.some((row) => row === null || typeof row !== 'object' || Array.isArray(row))) {
+      if (!Array.isArray(rows) || rows.some((row) => row === null || typeof row !== 'object' || Array.isArray(row) ||
+          (operation !== 'inventory' && !validDetail(row, operation)))) {
         throw new ReadFailure(operation, 'INVALID_RESPONSE', `Incomplete page: ${endpoint}`)
       }
       return rows

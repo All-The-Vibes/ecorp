@@ -72,6 +72,8 @@ sessions, failed tests and original receipts.
    authentication and retained state. Read the helper's command help rather
    than guessing JSON fields. A failed preflight is not an empty PR queue.
    Record the operator's ongoing execution request once with `autonomy`.
+   Keep its real approval time even if the request predates journal creation;
+   the driver verifies that it still applies, and recording time stays separate.
    At each actual native task turn or scheduler wake, record its identity and
    retained runtime receipt with `wake`. Never invent another wake to replenish
    a batch. Replayed wake IDs cannot reset their consumed rounds.
@@ -192,6 +194,10 @@ Under recorded ongoing autonomy, the same scope-preserving resume also continues
 an old per-PR round-limit block or a batch-capacity wait after a genuine new wake.
 Use the actual authority/wake receipt as clearance. Do not resume a no-progress,
 ownership, security or unresolved revision conflict merely because time passed.
+An old round-limit rejection that never created a claim instead returns through
+ordinary `next` and `begin`. Its unprocessed generation must not be consumed by
+a gate check, including after a target change. The new audit uses current
+eligible scope; it neither invents a retained claim nor reuses old reviews.
 An uncharged preparation claim resumes with `round: null`; one later `begin`
 charges its first round. New live correction/re-review submissions after NAUGHTY
 must pass `retry`; only the original legacy journal is replayed under its old
@@ -200,6 +206,11 @@ For a proven version-1 post-failure `fixing` or `auditing` checkpoint, the same
 explicit `retry` may consume the next permitted round directly. Its original
 events remain unchanged; it does not authorize a new uncharged legacy attempt
 or extend either stopping bound.
+Legacy claims may lack the original target identity. Their first authoritative
+target observation becomes a forward-only fence; a later known retarget must
+reconcile even though the original historical snapshot still lacks that field.
+New live snapshot input must include its actual target. Preserve old events
+rather than filling historical omissions with invented values.
 Ordinary CI waits, conflicts, competing claims, forks and exhausted stops cannot
 be reopened through this route.
 

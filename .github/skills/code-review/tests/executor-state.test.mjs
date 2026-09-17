@@ -18,7 +18,7 @@ const init = { owner, repo, model: 'gpt-6-astra', policySha: sha(99), canary: 1 
 const criteria = ['CORRECTNESS', 'DURABILITY', 'SECURITY', 'TEMPLATE', 'VERIFICATION', 'COMPLETENESS', 'SIMPLICITY', 'TRUTHFULNESS']
 const pr = (number = 1, extra = {}) => ({
   number, base: sha(10), head: sha(11), reviewKey: key(1), gateKey: key(1),
-  sourceRepo: repo, branch: `fix-${number}`, state: 'open', draft: false,
+  sourceRepo: repo, branch: `fix-${number}`, state: 'open', baseRef: 'main', draft: false,
   url: `https://github.com/${repo}/pull/${number}`, ...extra,
 })
 const fixture = () => join(mkdtempSync(join(tmpdir(), 'executor-state-test-')), 'state')
@@ -808,6 +808,157 @@ const writeJournal = (dir, events, version = 2) => {
   writeFileSync(join(dir, 'state.json'), JSON.stringify({ version, events, sha256 }) + '\n')
 }
 
+// Explicit synthetic historical inputs, never missing-target live CLI submissions.
+const historicalSetup = (prs = [pr(1, { baseRef: undefined })], version = 1) => {
+  const dir = fixture(), at = '2026-09-01T00:00:00.000Z'
+  writeJournal(dir, [
+    { id: 'historical-init', at, command: 'init', input: init },
+    { id: 'historical-sync', at, command: 'sync', input: { owner, complete: true, prs } },
+  ].map((e) => version === 2 ? { ...e, version } : e), version)
+  return dir
+}
+const historicalClaim = (version = 1, charged = true) => {
+  const dir = historicalSetup(undefined, version)
+  const events = JSON.parse(readFileSync(join(dir, 'state.json'))).events
+  const at = events[0].at
+  events.push({ id: 'historical-claim', at, command: 'next', input: { owner } })
+  if (charged) events.push({ id: 'historical-begin', at, command: 'begin',
+    input: { owner, number: 1, claimId: 'historical-claim', base: sha(10), head: sha(11) } })
+  writeJournal(dir, events.map((e) => version === 2 ? { ...e, version } : e), version)
+  return { dir, claim: run(dir, 'show').active }
+}
+
+for (const autonomous of [false, true]) {
+  for (const command of ['begin', 'retry', 'save', 'published', 'resume', 'ACK']) {
+    test(`EX-LEGACY-TARGET-FENCE: first main then release fences ${command}, autonomy=${autonomous}`, () => {
+      const { dir, claim } = historicalClaim(1, command !== 'begin')
+      const original = JSON.parse(readFileSync(join(dir, 'state.json'))).events
+      assert.equal(claim.snapshot.baseRef, undefined)
+      if (autonomous) {
+        run(dir, 'autonomy', autonomyInput())
+        run(dir, 'wake', wakeInput('target-fence'))
+      }
+      if (command === 'resume') run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+      const main = { ...claim.snapshot, baseRef: 'main' }
+      run(dir, 'sync', { owner, complete: true, prs: [main] })
+      if (command === 'resume') {
+        // Prove first observation supports exact recovery, then retain it blocked again.
+        assert.equal(run(dir, 'resume', resumeInput(claim)).claimId, claim.claimId)
+        run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+      } else {
+        assert.equal(next(dir).action, 'audit')
+        if (command !== 'begin') run(dir, 'save', saveInput(claim, { phase: 'fixing' }))
+      }
+      if (command === 'retry') failedReview(dir, claim)
+      const candidate = { ...main, head: sha(12) }
+      bindRubric(dir, candidate)
+      const publication = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+        snapshot: candidate, reviewers: reviewers({ ...claim, head: candidate.head }),
+        push: { repo, branch: candidate.branch, before: claim.head, head: candidate.head,
+          sourceRef: 'synthetic-target-push.json', pushedAt: new Date().toISOString() } }
+      let active = claim
+      if (command === 'ACK') {
+        active = run(dir, 'published', publication)
+        assert.equal(active.snapshot.baseRef, undefined, 'original unknown target is not rewritten')
+        const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+        assert.equal(run(dir, 'published', publication).action, 'audit')
+        run(dir, 'sync', { owner, complete: true, prs: [candidate] })
+        assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes, 'unchanged read and exact ACK are no-ops')
+      }
+      const before = run(dir, 'show')
+      run(dir, 'sync', { owner, complete: true,
+        prs: [{ ...(command === 'ACK' ? candidate : main), baseRef: 'release' }] })
+      const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+      const input = command === 'begin' ? {
+        owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+      } : command === 'retry' ? retryInput(claim)
+        : command === 'save' ? saveInput(claim, { phase: 'fixing' })
+          : command === 'resume' ? resumeInput(claim)
+            : command === 'ACK' ? publication
+              : { ...publication, snapshot: { ...candidate, baseRef: 'release' } }
+      assert.match(run(dir, command === 'ACK' ? 'published' : command, input, false).error, /target conflicts|readback conflicts/)
+      assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+      if (command !== 'resume') {
+        assert.equal(next(dir).action, 'reconcile')
+        run(dir, 'save', saveInput(active, { phase: 'blocked' }))
+      }
+      const after = run(dir, 'show')
+      assert.equal(after.prs['1'].blockedClaim.claim.snapshot.baseRef, undefined)
+      assert.equal(after.prs['1'].cycles[0].rounds, before.prs['1'].cycles[0].rounds)
+      assert.equal(after.prs['1'].cycles[0].noProgress, before.prs['1'].cycles[0].noProgress)
+      assert.deepEqual(after.wakes, before.wakes)
+      assert.deepEqual(after.prs['1'].publications, before.prs['1'].publications)
+      assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'))).events.slice(0, original.length), original)
+    })
+  }
+}
+
+for (const version of [1, 2]) test(`EX-LEGACY-TARGET-FENCE: missing live targets rejected; historical v${version} replays unchanged`, () => {
+  const { dir, claim } = historicalClaim(version)
+  const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.equal(run(dir, 'show').active.snapshot.baseRef, undefined)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  assert.match(run(dir, 'sync', { owner, complete: true, prs: [claim.snapshot] }, false).error, /baseRef/)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  const candidate = { ...claim.snapshot, head: sha(12) }
+  bindRubric(dir, candidate)
+  const before = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.match(run(dir, 'published', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+    snapshot: candidate, reviewers: reviewers({ ...claim, head: candidate.head }),
+    push: { repo, branch: candidate.branch, before: claim.head, head: candidate.head,
+      sourceRef: 'synthetic-unknown-push.json', pushedAt: new Date().toISOString() } }, false).error, /baseRef/)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), before)
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, baseRef: 'main' }] })
+  assert.equal(next(dir).action, 'audit')
+  assert.equal(run(dir, 'show').active.snapshot.baseRef, undefined)
+})
+
+for (const outcome of ['fixing', 'published', 'resumed']) {
+  test(`EX-LEGACY-TARGET-REPLAY: old accepted ${outcome} stays readable without admitting new effects`, () => {
+    const { dir, claim } = historicalClaim()
+    run(dir, 'autonomy', autonomyInput())
+    run(dir, 'wake', wakeInput('old-policy'))
+    if (outcome === 'resumed') run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+    const main = { ...claim.snapshot, baseRef: 'main' }
+    run(dir, 'sync', { owner, complete: true, prs: [main] })
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...main, baseRef: 'release' }] })
+    const candidate = { ...main, baseRef: 'release', head: sha(12) }
+    bindRubric(dir, candidate)
+    const publication = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+      snapshot: candidate, reviewers: reviewers({ ...claim, head: candidate.head }),
+      push: { repo, branch: candidate.branch, before: claim.head, head: candidate.head,
+        sourceRef: 'synthetic-old-policy-push.json', pushedAt: new Date().toISOString() } }
+    // Historical admissions accepted by 7498b4b, not new live submissions.
+    const command = outcome === 'published' ? 'published' : outcome === 'resumed' ? 'resume' : 'save'
+    const input = outcome === 'published' ? publication : outcome === 'resumed' ? resumeInput(claim)
+      : saveInput(claim, { phase: 'fixing', evidence: ['retained-old-correction.json'] })
+    const events = JSON.parse(readFileSync(join(dir, 'state.json'))).events
+    events.push({ version: 2, id: 'old-accepted-retarget', at: new Date().toISOString(), command, input })
+    writeJournal(dir, events)
+    const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+    const state = run(dir, 'show')
+    assert.equal(state.active.claimId, claim.claimId)
+    assert.equal(state.active.snapshot.baseRef, undefined)
+    assert.equal(state.active.effectiveBaseRef, 'main')
+    assert.equal(state.prs['1'].cycles[0].rounds, 1)
+    assert.equal(state.prs['1'].cycles[0].noProgress, 1)
+    if (outcome === 'published') assert.equal(state.prs['1'].publications[0].snapshot.baseRef, 'release')
+    else if (outcome === 'fixing') assert.ok(state.prs['1'].cycles[0].evidence.includes('retained-old-correction.json'))
+    const active = next(dir)
+    assert.equal(active.action, 'reconcile')
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+    run(dir, 'save', saveInput(active, { phase: 'fixing' }), false)
+    run(dir, 'save', saveInput(active, { phase: 'complete', technicalVerdict: 'NICE',
+      reviewers: outcome === 'published' ? publication.reviewers : reviewers(active) }), false)
+    run(dir, 'published', publication, false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes, 'new effects and exact unsafe ACK stay fenced')
+    run(dir, 'save', saveInput(active, { phase: 'blocked' }))
+    run(dir, 'resume', resumeInput(active), false)
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'))).events.slice(0, events.length), events)
+    assert.equal(run(dir, 'show').prs['1'].blockedClaim.claim.claimId, claim.claimId)
+  })
+}
+
 test('A02: CLI stamps v2; replay rejects new bad saves even with a valid checksum', () => {
   const dir = setup(), claim = start(dir)
   failedReview(dir, claim)
@@ -1527,7 +1678,7 @@ test('B03: gate targeting cannot steal a live claim, leave canary scope, bypass 
 })
 
 for (const readbackRace of [false, true]) test(`bootstrap: legacy failure -> retry/recover -> reviewed deploy/publication -> ${readbackRace ? 'readback race' : 'later feedback'} -> enable`, () => {
-  const dir = setup([pr(1, { head: init.policySha })])
+  const dir = historicalSetup([pr(1, { head: init.policySha, baseRef: undefined })])
   const selected = next(dir)
   const legacy = run(dir, 'begin', { owner, number: 1, claimId: selected.claimId, base: selected.base, head: selected.head })
   const open = { id: 'E1', status: 'open', evidence: ['evidence/actual-E1-red.log'] }
@@ -1631,7 +1782,7 @@ const progressFailure = (dir, claim, findings = []) => {
   return fixed
 }
 const blockedThirdRound = (extra = { baseRef: 'main' }) => {
-  const dir = setup([pr(1, extra)])
+  const dir = extra.baseRef === undefined ? historicalSetup([pr(1, extra)]) : setup([pr(1, extra)])
   let claim = start(dir), findings = []
   for (let round = 1; round <= 3; round++) {
     findings = progressFailure(dir, claim, findings)
@@ -1700,6 +1851,51 @@ test('EX-AUTONOMY: retained third round continues in bounded native wakes withou
   assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'))).events.slice(0, original.length), original)
 })
 
+test('EX-PREINIT-AUTHORITY: original request predates init and survives autonomy, native wake and begin', () => {
+  const dir = fixture()
+  const input = { ...autonomyInput(), sourceRef: join(dir, '..', 'original-user-request.json') }
+  // Synthetic source receipts exercise chronology, not actual user/native authenticity.
+  writeFileSync(input.sourceRef, JSON.stringify(input))
+  const sourceBytes = readFileSync(input.sourceRef, 'utf8')
+  run(dir, 'init', init)
+  const initialized = JSON.parse(readFileSync(join(dir, 'state.json'))).events
+  assert.ok(input.approvedAt < initialized[0].at)
+  const grant = run(dir, 'autonomy', input)
+  assert.deepEqual(grant.input, input)
+  assert.equal(grant.repo, repo)
+  assert.ok(grant.recordedAt >= initialized[0].at)
+  assert.ok(grant.recordedAt > input.approvedAt)
+  const granted = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.equal(JSON.parse(granted).events.at(-1).at, grant.recordedAt)
+  assert.deepEqual(run(dir, 'autonomy', input), grant)
+  assert.equal(next(dir).action, 'wait')
+  for (const startedAt of [input.approvedAt, initialized[0].at]) {
+    assert.match(run(dir, 'wake', { ...wakeInput('pre-admission'), startedAt }, false).error, /stale/)
+  }
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), granted)
+
+  const wake = { ...wakeInput('preinit-native-turn'), sourceRef: join(dir, 'native-wake.json') }
+  writeFileSync(wake.sourceRef, JSON.stringify(wake))
+  const wakeBytes = readFileSync(wake.sourceRef, 'utf8')
+  run(dir, 'wake', wake)
+  run(dir, 'sync', { owner, complete: true, prs: [pr()] })
+  const claim = start(dir)
+  assert.equal(claim.round, 1)
+  const beforeAck = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.deepEqual(run(dir, 'autonomy', input), grant)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), beforeAck)
+  const state = run(dir, 'show')
+  assert.deepEqual(state.autonomy, grant)
+  assert.deepEqual(state.config, init)
+  assert.equal(state.enabled, false)
+  assert.equal(state.wakes[0].chargedRounds, 1)
+  assert.deepEqual(state.wakes[0].input, wake)
+  assert.equal(state.prs['1'].cycles[0].noProgress, 1)
+  assert.deepEqual(JSON.parse(beforeAck).events.slice(0, initialized.length), initialized)
+  assert.equal(readFileSync(input.sourceRef, 'utf8'), sourceBytes)
+  assert.equal(readFileSync(wake.sourceRef, 'utf8'), wakeBytes)
+})
+
 test('EX-AUTONOMY: grant is immutable and owner/repo-bound; missing wakes cannot charge prepared work', () => {
   const dir = setup([pr(), pr(2)]), claim = next(dir), input = autonomyInput()
   const before = readFileSync(join(dir, 'state.json'), 'utf8')
@@ -1708,7 +1904,9 @@ test('EX-AUTONOMY: grant is immutable and owner/repo-bound; missing wakes cannot
     { ...input, owner: 'other' }, { ...input, repo: 'other/ecorp' }, { ...input, reset: true },
     { ...input, sourceRef: '' }, { ...input, sourceRef: ' padded ' },
     { ...input, approvedAt: undefined }, { ...input, approvedAt: 'not-a-time' },
-    { ...input, approvedAt: '2000-01-01T00:00:00.000Z' },
+    { ...input, approvedAt: null }, { ...input, approvedAt: 0 },
+    { ...input, approvedAt: '2026-02-30T00:00:00.000Z' },
+    { ...input, approvedAt: '2026-01-01T00:00:00Z' },
     { ...input, approvedAt: '9999-01-01T00:00:00.000Z' },
   ]) {
     run(dir, 'autonomy', bad, false)
@@ -1987,7 +2185,11 @@ test('EX-AUTONOMY: direct source/target guards survive publication', () => {
   ]) {
     const dir = fixture()
     writeJournal(dir, history)
-    run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, ...change }] })
+    if (Object.hasOwn(change, 'baseRef') && change.baseRef === undefined) {
+      writeJournal(dir, [...history, { version: 2, id: 'historical-missing-target',
+        at: new Date().toISOString(), command: 'sync',
+        input: { owner, complete: true, prs: [{ ...claim.snapshot, ...change }] } }])
+    } else run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, ...change }] })
     const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
     run(dir, 'save', saveInput(fourth, { phase: 'fixing', findings }), false)
     run(dir, 'save', saveInput(fourth, { phase: 'complete', findings,
@@ -2022,7 +2224,7 @@ test('EX-AUTONOMY: legacy first-observed target permits original recovery and pu
   run(dir, 'save', saveInput(fourth, { phase: 'fixing', findings }), false)
   assert.equal(next(dir).action, 'reconcile')
   // A legacy already-charged claim may also publish after its first target observation.
-  const legacy = setup(), original = start(legacy)
+  const legacy = historicalSetup(), original = start(legacy)
   run(legacy, 'autonomy', autonomyInput())
   const candidate = { ...original.snapshot, head: sha(12), baseRef: 'main' }
   run(legacy, 'sync', { owner, complete: true, prs: [{ ...original.snapshot, baseRef: 'main' }] })
@@ -2093,7 +2295,7 @@ test('EX-PRESTART-RESUME: first-ever preparation block recovers the exact unchar
 })
 
 test('EX-PRESTART-RESUME: gates cannot replace audit recovery; conflicts and read-only claims stay fenced', () => {
-  const dir = setup(), claim = next(dir)
+  const dir = historicalSetup(), claim = next(dir)
   run(dir, 'save', saveInput(claim, { phase: 'blocked', reason: 'Preparation unavailable' }))
   const retained = run(dir, 'show').prs['1'].blockedClaim
   const gate = run(dir, 'next', { owner, gateNumber: 1 })
@@ -2316,7 +2518,7 @@ test('E1 recovery: exhausted stops cannot be reopened by local clearance or an u
 })
 
 test('legacy target: first observed baseRef permits same-round recovery/publication but still requires gate acknowledgment', () => {
-  const dir = setup(), claim = start(dir)
+  const dir = historicalSetup(), claim = start(dir)
   run(dir, 'save', saveInput(claim, { phase: 'blocked', reason: 'Local tool unavailable' }))
   run(dir, 'sync', { owner, complete: true, prs: [pr(1, { baseRef: 'main' })] })
   const resumed = run(dir, 'resume', resumeInput(claim))
@@ -2343,4 +2545,157 @@ test('legacy target: first observed baseRef permits same-round recovery/publicat
   run(known, 'save', saveInput(original, { phase: 'blocked', reason: 'Local tool unavailable' }))
   run(known, 'sync', { owner, complete: true, prs: [pr(1, { baseRef: 'release' })] })
   assert.match(run(known, 'resume', resumeInput(original), false).error, /target conflicts/)
+})
+
+// Synthetic original-ceiling stops: no blocked audit claim ever existed.
+const unclaimedRoundStop = ({ enabled = false, stalled = false } = {}) => {
+  const dir = setup()
+  if (enabled) {
+    const published = publishComplete(dir)
+    run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+    run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: sha(20), baseRef: 'main' })] })
+  }
+  let findings = []
+  for (let n = 0; n < 3; n++) {
+    const claim = start(dir)
+    if (!stalled || n === 0) {
+      const finding = { id: `stop-${n}`, status: 'open', evidence: [`red-${n}.log`] }
+      run(dir, 'save', saveInput(claim, { phase: 'fixing', findings: [...findings, finding] }))
+      findings.push({ ...finding, status: 'fixed', evidence: [...finding.evidence, `green-${n}.log`] })
+    }
+    run(dir, 'save', saveInput(claim, { findings }))
+    run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: sha(21 + n), baseRef: 'main' })] })
+  }
+  const stopped = next(dir)
+  assert.equal(stopped.action, 'blocked')
+  assert.equal(stopped.reason, 'round limit exhausted')
+  assert.equal(stopped.claimId, null)
+  return { dir, findings, snapshot: pr(1, { head: sha(23), baseRef: 'main' }) }
+}
+
+test('EX-UNCLAIMED-ROUND-STOP: unchanged generation re-enters next/begin only with autonomy and wake capacity', () => {
+  const { dir, findings } = unclaimedRoundStop()
+  const before = run(dir, 'show'), original = JSON.parse(readFileSync(join(dir, 'state.json'))).events
+  assert.equal(before.active, null)
+  assert.equal(before.prs['1'].blockedClaim, undefined)
+  assert.equal(next(dir).action, 'none', 'interactive ceiling remains quiet and unchanged')
+  run(dir, 'autonomy', autonomyInput())
+  const waiting = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.equal(next(dir).action, 'wait')
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), waiting)
+  run(dir, 'wake', wakeInput('unclaimed'))
+  const claim = next(dir)
+  assert.equal(claim.action, 'audit')
+  assert.equal(claim.head, sha(23))
+  assert.equal(claim.round, null)
+  assert.equal(run(dir, 'show').wakes[0].chargedRounds, 0)
+  assert.equal(next(dir).claimId, claim.claimId)
+  const charged = start(dir)
+  assert.equal(charged.round, 4)
+  const chargedState = run(dir, 'show')
+  assert.equal(chargedState.prs['1'].cycles.length, 1)
+  assert.equal(chargedState.prs['1'].cycles[0].noProgress, 1)
+  assert.equal(chargedState.wakes[0].chargedRounds, 1)
+  assert.deepEqual(chargedState.prs['1'].cycles[0].findings, findings)
+  assert.equal(chargedState.prs['1'].seenAudit, before.prs['1'].seenAudit)
+  run(dir, 'save', saveInput(charged, { phase: 'complete', findings, technicalVerdict: 'NICE', reviewers: reviewers(charged) }))
+  run(dir, 'wake', wakeInput('after-completion'))
+  assert.equal(next(dir).action, 'none', 'completed generation must not requeue')
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'))).events.slice(0, original.length), original)
+})
+
+test('EX-UNCLAIMED-ROUND-STOP: actionable feedback at cap cannot be consumed by a gate check', () => {
+  const { dir, findings } = roundThreePublication()
+  const feedback = feedbackClaim(dir)
+  run(dir, 'feedback', feedbackInput(feedback, { disposition: 'ACTIONABLE_FINDINGS' }))
+  assert.equal(next(dir).reason, 'round limit exhausted')
+  const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit/)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('actionable-stop'))
+  const claim = start(dir)
+  assert.equal(claim.round, 4)
+  failedReview(dir, claim, findings)
+  run(dir, 'save', saveInput(claim, { phase: 'fixing', findings }), false)
+  assert.equal(run(dir, 'show').prs['1'].cycles[0].technicalVerdict, 'NAUGHTY')
+})
+
+for (const version of [1, 2]) test(`EX-UNCLAIMED-ROUND-STOP: v${version} stopped generation and later gate saves replay unchanged`, () => {
+  const { dir, findings, snapshot } = unclaimedRoundStop()
+  // Reproduce the OLD admitted gate after the ceiling stop, not a new executable claim.
+  const history = JSON.parse(readFileSync(join(dir, 'state.json'))).events.map(({ admission, ...e }) => {
+    if (version === 1) delete e.version
+    return e
+  })
+  const gate = { number: 1, claimId: 'historical-gate', base: snapshot.base, head: snapshot.head }
+  const at = new Date().toISOString(), envelope = version === 2 ? { version: 2 } : {}
+  history.push({ ...envelope, id: gate.claimId, at, command: 'next', input: { owner, gateNumber: 1 } },
+    { ...envelope, id: 'historical-gate-save', at, command: 'save',
+      input: saveInput(gate, { findings, evidence: ['historical-gate.json'] }) })
+  writeJournal(dir, history, version)
+  const bytes = readFileSync(join(dir, 'state.json'), 'utf8'), before = run(dir, 'show')
+  assert.equal(before.active, null)
+  assert.equal(before.prs['1'].blockedClaim, undefined)
+  assert.equal(before.prs['1'].cycles[0].rounds, 3)
+  assert.ok(before.prs['1'].cycles[0].evidence.includes('historical-gate.json'))
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput(`legacy-stop-${version}`))
+  assert.equal(next(dir).action, 'audit')
+  assert.equal(start(dir).round, 4)
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'))).events.slice(0, history.length), history)
+  assert.equal(run(dir, 'show').wakes[0].chargedRounds, 1, 'new admission must also replay exactly')
+})
+
+test('EX-UNCLAIMED-ROUND-STOP: current source/target, changed generations and canary fences still govern admission', () => {
+  const { dir: seed, snapshot } = unclaimedRoundStop()
+  const history = JSON.parse(readFileSync(join(seed, 'state.json'))).events
+  for (const [change, expected] of [
+    [{ head: sha(88) }, 'audit'], [{ reviewKey: key(88) }, 'audit'],
+    [{ sourceRepo: 'fork/ecorp' }, 'read-only'], [{ sourceRepo: null }, 'read-only'],
+    [{ readError: 'DETAIL_READ_FAILED' }, 'blocked'], [{ state: 'closed' }, 'none'],
+    [{ baseRef: 'release' }, 'audit'], [{ gateKey: key(88) }, 'audit'],
+  ]) {
+    const dir = fixture()
+    writeJournal(dir, history)
+    run(dir, 'autonomy', autonomyInput())
+    run(dir, 'wake', wakeInput('scope-stop'))
+    run(dir, 'sync', { owner, complete: true, prs: [pr(2), { ...snapshot, ...change }] })
+    if (change.baseRef) assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit input/)
+    const claim = next(dir)
+    assert.equal(claim.action, expected, JSON.stringify(change))
+    if (expected === 'audit') {
+      assert.deepEqual(claim.snapshot, { ...snapshot, ...change }, 'claim current input, never stale stopped snapshot')
+      assert.equal(claim.round, null, 'unclaimed pending work needs a fresh charge')
+      assert.equal(start(dir).round, 4)
+      assert.equal(run(dir, 'show').prs['1'].cycles.at(-1).completion, null, 'old reviews cannot complete the new audit')
+    } else if (claim.claimId) {
+      run(dir, 'begin', { owner, number: claim.number, claimId: claim.claimId, base: claim.base, head: claim.head }, false)
+    }
+  }
+  const dir = fixture()
+  writeJournal(dir, history)
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('absent-stop'))
+  run(dir, 'sync', { owner, complete: true, prs: [pr(2)] })
+  assert.equal(next(dir).action, 'none', 'absent stopped PR never grants broad intake')
+})
+
+test('EX-UNCLAIMED-ROUND-STOP: no-progress stays hard and stopped work does not starve other PRs', () => {
+  for (const stalled of [false, true]) {
+    const { dir, snapshot } = unclaimedRoundStop({ enabled: true, stalled })
+    run(dir, 'autonomy', autonomyInput())
+    run(dir, 'wake', wakeInput('fair-stop'))
+    run(dir, 'sync', { owner, complete: true, prs: [snapshot, pr(2)] })
+    const other = start(dir)
+    assert.equal(other.number, 2, 'least-selected eligible work still goes first')
+    run(dir, 'save', saveInput(other))
+    const nextClaim = next(dir)
+    assert.equal(nextClaim.action, stalled ? 'none' : 'audit')
+    const state = run(dir, 'show')
+    assert.equal(state.prs['1'].cycles.at(-1).rounds, 3)
+    assert.equal(state.prs['1'].cycles.at(-1).noProgress, stalled ? 2 : 0)
+    assert.equal(state.wakes[0].chargedRounds, 1)
+  }
 })

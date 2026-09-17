@@ -205,3 +205,31 @@ tests validate this skill's frontmatter, references and pinned dependencies.
 This continuation is not a claim of independent PASS, publication, live CI,
 automatic Copilot review or repository-wide activation. Those results must be
 recorded from actual execution after the corrected candidate is reviewed.
+
+### Autonomous correction after independent review
+
+Both fourth-round Santa reviewers rejected `7498b4b` on two concrete startup/
+recovery gaps: a previously unclaimed round-limit stop could hide pending work,
+and an authentic ongoing request predating journal creation was rejected.
+The actual ATV audit additionally found an unfenced second target observation
+for legacy claims and malformed detail rows accepted as ordinary fingerprints.
+Its separate whole-repository findings remain base debt, not silent expansion
+of this contributor-workflow PR.
+
+The executor retained these failures and automatically charged round five under
+the existing ongoing request, without another operator approval. Separate
+issue-scoped Astra fixers reproduced each defect before correcting it. Unclaimed
+pending work must receive a fresh current-scope audit, authentic request times
+remain unchanged, the first known legacy target fences later operations, and
+invalid detail payloads block only their PR using typed diagnostics.
+Historical journal events remain retained; stricter live admission is not
+permission to rewrite earlier attempts or claim that they passed.
+
+The integrated correction passes **136/136 Node tests** and all six baseline
+checks (547 Rust passes, 323 ignored). An actual read-only snapshot of ten open
+PRs passed the stricter detail validation without hiding any per-PR errors.
+The final helper read the live 30-event journal without changing its bytes,
+retaining round five and two native-wake charges.
+[The integrated capture](assets/astra-review-executor/11-autonomous-corrections.png)
+again shows local logs, not hosted CI, independent approval or canary acceptance.
+Those live gates remain pending for the new exact candidate.

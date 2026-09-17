@@ -8,6 +8,22 @@ const pr = (number) => ({
   base: { sha: 'b'.repeat(40), ref: 'main', repo: { full_name: 'team/repo' } }, state: 'open', draft: false,
 })
 
+// GitHub response fields used by the fingerprints; unrelated response fields are omitted.
+const details = {
+  reviews: { id: 7, commit_id: 'a'.repeat(40), state: 'APPROVED', body: '',
+    submitted_at: '2026-09-17T00:00:00Z' },
+  review_comments: { id: 8, commit_id: 'a'.repeat(40), path: 'README.md', body: 'feedback',
+    updated_at: '2026-09-17T00:00:00Z' },
+  discussion: { id: 9, body: 'feedback', updated_at: '2026-09-17T00:00:00Z' },
+  check_runs: { id: 10, head_sha: 'a'.repeat(40), name: 'test', status: 'completed', conclusion: 'success' },
+  statuses: { id: 11, context: 'ci/test', state: 'success' },
+}
+const detailOperation = (endpoint) => endpoint.includes('/reviews?') ? 'reviews' :
+  endpoint.includes('/issues/') ? 'discussion' : endpoint.includes('/comments?') ? 'review_comments' :
+    endpoint.includes('/check-runs?') ? 'check_runs' : 'statuses'
+const detailPages = (operation, pages) => JSON.stringify(operation === 'check_runs' ?
+  pages.map((check_runs) => ({ check_runs })) : pages)
+
 test('same-SHA target retarget changes only gate freshness and target identity, including blocked PRs', () => {
   for (const blocked of [false, true]) {
     let baseRef = 'main'
@@ -78,7 +94,7 @@ test('complete paginated inventory tracks heads, feedback and checks; read failu
     const endpoint = args.at(-1)
     if (endpoint.includes('/pulls?')) return JSON.stringify([[pr(1)], [pr(2)]])
     if (endpoint.includes('/check-runs?')) return JSON.stringify([{ check_runs: [] }])
-    if (endpoint.includes('/issues/')) return JSON.stringify([[{ id: 7, body: comment }]])
+    if (endpoint.includes('/issues/')) return JSON.stringify([[{ ...details.discussion, body: comment }]])
     return '[[]]'
   }
   const first = snapshot('team/repo', invoke)
@@ -110,7 +126,8 @@ test('one PR detail failure retains both PRs with stable safe fingerprints and n
     if (endpoint.includes('/check-runs?')) return JSON.stringify([{ check_runs: [
       { id: 8, head_sha: pulls[1].head.sha, name: 'test', status: 'completed', conclusion: 'success' },
     ] }])
-    return JSON.stringify([[{ id: 7, body: 'feedback', state: 'APPROVED' }]])
+    const operation = detailOperation(endpoint)
+    return detailPages(operation, [[details[operation]]])
   }
   const healthy = snapshot('team/repo', invoke)
   let previousKeys
@@ -193,8 +210,11 @@ test('reviews command failure and statuses invalid response retain distinct safe
 })
 
 test('unexpected internal errors escape rather than becoming API unavailability', (t) => {
-  const invoke = (args) => args.at(-1).includes('/pulls?') ? JSON.stringify([[pr(1)]]) :
-    args.at(-1).includes('/check-runs?') ? '[{"check_runs":[]}]' : '[[{"id":1},{"id":2}]]'
+  const invoke = (args) => {
+    if (args.at(-1).includes('/pulls?')) return JSON.stringify([[pr(1)]])
+    const operation = detailOperation(args.at(-1))
+    return detailPages(operation, [[details[operation], { ...details[operation], id: 12 }]])
+  }
   for (const error of [new Error('internal'), new TypeError('internal'), new SyntaxError('internal')]) {
     assert.throws(() => snapshot('team/repo', (args) => {
       if (args.at(-1).includes('/reviews?')) throw error
@@ -291,4 +311,76 @@ test('missing pages are rejected while a confirmed empty repository is complete'
   assert.equal(result.complete, true)
   assert.equal(Object.hasOwn(result.prs[0], 'readError'), false, 'empty detail collections are complete')
   assert.equal(Object.hasOwn(result.prs[0], 'readFailure'), false)
+})
+
+for (const operation of Object.keys(details)) {
+  test(`EX-MALFORMED-DETAILS: ${operation} rejects missing or mistyped core fields per PR`, () => {
+    const pulls = [pr(1), { ...pr(2), head: { ...pr(2).head, sha: 'c'.repeat(40) } }]
+    const collect = (row) => snapshot('team/repo', (args) => {
+      const endpoint = args.at(-1)
+      if (endpoint.includes('/pulls?')) return JSON.stringify(pulls.map((pull) => [pull]))
+      const current = detailOperation(endpoint)
+      const firstPR = endpoint.includes('/1/') || endpoint.includes(pulls[0].head.sha)
+      // A valid first page must not hide an invalid later page or discard another PR.
+      return detailPages(current, [[details[current]],
+        [firstPR && current === operation ? row : details[current]]])
+    })
+    const healthy = collect(details[operation])
+    assert.ok(healthy.prs.every((pull) => !Object.hasOwn(pull, 'readError')))
+    const fields = { ...details[operation], ...(operation === 'statuses' ? { sha: 'a'.repeat(40) } : {}) }
+    const malformed = [['empty object', {}]]
+    for (const field of Object.keys(fields)) {
+      const optional = (operation === 'reviews' && field === 'submitted_at') ||
+        (operation === 'discussion' && field === 'body') || (operation === 'statuses' && field === 'sha')
+      const nullable = (operation === 'reviews' && ['commit_id', 'submitted_at'].includes(field)) ||
+        (operation === 'check_runs' && field === 'conclusion')
+      const invalid = field === 'id' ? [undefined, null, false, '7', 0, -1, 1.5, 2 ** 53, {}, []] :
+        [false, 7, {}, [], ...(!optional ? [undefined] : []), ...(!nullable ? [null] : []),
+          ...(field !== 'body' ? [''] : [])]
+      for (const value of invalid) malformed.push([`${field}=${JSON.stringify(value)}`, { ...fields, [field]: value }])
+    }
+    for (const [label, row] of malformed) {
+      const result = collect({ ...row, unused: 'synthetic-secret-untrusted-payload' })
+      assert.equal(result.complete, true, label)
+      assert.deepEqual(result.prs.map(({ number }) => number), [1, 2], label)
+      assert.equal(result.prs[0].readError, 'DETAIL_READ_FAILED', label)
+      assert.deepEqual(result.prs[0].readFailure,
+        { operation, kind: 'INVALID_RESPONSE', exitCode: null, signal: null }, label)
+      const { reviewKey, gateKey, ...identity } = healthy.prs[0]
+      assert.deepEqual(result.prs[0], { ...identity, readError: 'DETAIL_READ_FAILED',
+        readFailure: result.prs[0].readFailure, reviewKey: result.prs[0].reviewKey, gateKey: result.prs[0].gateKey }, label)
+      assert.notEqual(result.prs[0].reviewKey, reviewKey, label)
+      assert.notEqual(result.prs[0].gateKey, gateKey, label)
+      assert.deepEqual(result.prs[1], healthy.prs[1], label)
+      assert.doesNotMatch(JSON.stringify(result), /synthetic-secret/, label)
+    }
+  })
+}
+
+test('EX-MALFORMED-DETAILS: valid optional and nullable GitHub fields remain usable and fingerprinted', () => {
+  const collect = (operation, row) => snapshot('team/repo', (args) => {
+    if (args.at(-1).includes('/pulls?')) return JSON.stringify([[pr(1)]])
+    const current = detailOperation(args.at(-1))
+    return detailPages(current, [[current === operation ? row : details[current]]])
+  }).prs[0]
+  for (const [operation, variants] of [
+    ['reviews', [{ body: '' }, { commit_id: null },
+      { state: 'PENDING', submitted_at: null }, { state: 'PENDING', submitted_at: undefined }]],
+    ['review_comments', [{ body: '' }]],
+    ['discussion', [{ body: '' }, { body: undefined }]],
+    ['check_runs', [{ status: 'queued', conclusion: null }, { status: 'in_progress', conclusion: null }]],
+    ['statuses', [{ sha: undefined }, { sha: 'a'.repeat(40) }]],
+  ]) {
+    const original = collect(operation, details[operation])
+    for (const variant of variants) {
+      const row = { ...details[operation], ...variant }
+      const result = collect(operation, row)
+      assert.equal(Object.hasOwn(result, 'readError'), false, `${operation}: ${JSON.stringify(variant)}`)
+      assert.equal(Object.hasOwn(result, 'readFailure'), false)
+      assert.deepEqual(collect(operation, row), result, 'valid payload is stable')
+      const changed = JSON.stringify(row) !== JSON.stringify(details[operation])
+      if (changed) assert.notEqual(result[operation === 'check_runs' || operation === 'statuses' ? 'gateKey' : 'reviewKey'],
+        original[operation === 'check_runs' || operation === 'statuses' ? 'gateKey' : 'reviewKey'])
+    }
+  }
 })
