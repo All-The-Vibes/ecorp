@@ -76,3 +76,55 @@ history to imply that later evidence existed at this commit.
 GitHub's built-in Copilot reviewer retains its own model selection. The separate
 executor uses Astra; neither its technical Santa verdict nor a bot comment
 supplies required human/team approval, marks a draft ready, merges or deploys.
+
+## First independent review and correction
+
+The first candidate, `1346f57385807f6122b8fc7322bc315237cf17c8`, passed
+25 package tests but failed the actual ATV audit and both independent Astra
+Santa reviews. It was not pushed or accepted for broad intake.
+
+Seven distinct findings were retained after deduplication: same-revision retry/
+recovery, safe diagnostics, incomplete reviewer rubrics, publication lineage,
+unprocessed-feedback activation, external gate refresh, and resumable fork
+read-only review. Separate workers corrected the intake and state paths, with
+red/green regressions and serialized changes for shared state code.
+
+The corrected package suite passed **57/57 tests**, including the full synthetic
+bootstrap → retry → reviewed policy update → push receipt → feedback → acceptance
+sequence, transient-block recovery, and feedback arriving during push readback.
+These are executable regression tests, **not live push, scheduler or CI receipts**.
+A copy of the real retained journal also replayed without changing its original
+bytes, active claim, round count or unresolved findings. No state reset or new
+budget was used.
+
+Original failures and subsequent results remain in the executor's receipt
+directory. The corrected exact commit still needs fresh independent reviews,
+real publication and the live canary evidence before broad activation.
+
+### Integrated validation — September 17
+
+Three additional legacy-target regressions initially failed: older claims lack
+`baseRef`, so recovery/publication rejected its first observed value. The repair
+preserves that unknown historical target, requires a gate acknowledgment for the
+new observation, and still rejects changing a previously known target. A new
+charged round binds the fresh inventory rather than retaining an obsolete one.
+
+The integrated suite then passed **58/58 tests**, and all six baseline repository
+commands passed again. Workspace Rust results remain 547 passed, 323 ignored,
+0 failed. Earlier failed outputs are retained.
+
+The following images were captured from a real browser rendering summaries of
+those actual local command logs. Each includes its source-log SHA-256 and
+observed exit code. They are **log-summary screenshots, not application UI,
+hosted CI, or live scheduler acceptance evidence**. No application behavior
+changed, and the manual office was not started or modified.
+
+| Check | Screenshot |
+|---|---|
+| Review package, 58 tests | [Package tests](assets/astra-review-executor/01-package-tests.png) |
+| Migration validation | [Migrations](assets/astra-review-executor/02-migrations.png) |
+| Rust formatting | [Rustfmt](assets/astra-review-executor/03-rustfmt.png) |
+| Clippy | [Clippy](assets/astra-review-executor/04-clippy.png) |
+| Workspace Rust tests | [Cargo tests](assets/astra-review-executor/05-cargo-tests.png) |
+| Web build | [Web build](assets/astra-review-executor/06-web-build.png) |
+| Web lint | [Web lint](assets/astra-review-executor/07-web-lint.png) |

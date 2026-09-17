@@ -1,10 +1,73 @@
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
 import test from 'node:test'
 import { snapshot } from '../scripts/executor-snapshot.mjs'
 
 const pr = (number) => ({
   number, head: { sha: 'a'.repeat(40), ref: 'feature', repo: { full_name: 'team/repo' } },
-  base: { sha: 'b'.repeat(40), repo: { full_name: 'team/repo' } }, state: 'open', draft: false,
+  base: { sha: 'b'.repeat(40), ref: 'main', repo: { full_name: 'team/repo' } }, state: 'open', draft: false,
+})
+
+test('same-SHA target retarget changes only gate freshness and target identity, including blocked PRs', () => {
+  for (const blocked of [false, true]) {
+    let baseRef = 'main'
+    const calls = []
+    const invoke = (args) => {
+      calls.push(args)
+      const endpoint = args.at(-1)
+      if (endpoint.includes('/pulls?')) {
+        const pull = pr(1)
+        pull.base.ref = baseRef
+        pull.base.extra = 'synthetic-secret-unused-field'
+        return JSON.stringify([[pull]])
+      }
+      if (blocked && endpoint.includes('/reviews?')) {
+        throw Object.assign(new Error('synthetic-secret-auth'), { status: 4, signal: null })
+      }
+      return endpoint.includes('/check-runs?') ? '[{"check_runs":[]}]' : '[[]]'
+    }
+    const main = snapshot('team/repo', invoke).prs[0]
+    const originalCalls = calls.splice(0)
+    baseRef = 'release'
+    const release = snapshot('team/repo', invoke).prs[0]
+    assert.deepEqual(calls, originalCalls, 'retargeting needs no extra GitHub reads')
+    assert.equal(main.baseRef, 'main')
+    assert.equal(release.baseRef, 'release')
+    assert.equal(release.base, main.base)
+    assert.equal(release.head, main.head)
+    assert.equal(release.reviewKey, main.reviewKey, 'retarget alone is not a new code audit')
+    assert.notEqual(release.gateKey, main.gateKey, 'target-specific gates must be reevaluated')
+    const { baseRef: beforeRef, gateKey: beforeGate, ...before } = main
+    const { baseRef: afterRef, gateKey: afterGate, ...after } = release
+    assert.deepEqual(after, before)
+    assert.deepEqual(snapshot('team/repo', invoke).prs[0], release, 'unchanged target stays quiet')
+    assert.doesNotMatch(JSON.stringify([main, release]), /synthetic-secret/)
+  }
+})
+
+test('real GitHub inventory requires a valid base.ref and preserves valid branch names exactly', () => {
+  for (const baseRef of [
+    undefined, null, false, 1, [], {}, '', ' ', ' main', 'main ', 'main\n', 'main\u0000',
+    '-main', '/main', 'main/', 'main//release', '.main', 'release/.main', 'main..release',
+    'main.lock', 'main.lock/release', 'main.', 'main@{1}', '@', 'HEAD',
+    'main~1', 'main^', 'main:release', 'main?', 'main*', 'main[1]', 'main\\release',
+  ]) {
+    const pull = pr(1)
+    pull.base.ref = baseRef
+    let calls = 0
+    assert.throws(() => snapshot('team/repo', () => {
+      calls++
+      return JSON.stringify([[pull]])
+    }), /Invalid or out-of-scope PR/)
+    assert.equal(calls, 1, 'invalid target identity is fatal before detail reads')
+  }
+  for (const baseRef of ['main', 'release/2026.09', 'Stack/Feature_1', 'rélease/修正']) {
+    const pull = pr(1)
+    pull.base.ref = baseRef
+    const result = snapshot('team/repo', (args) => args.at(-1).includes('/pulls?') ?
+      JSON.stringify([[pull]]) : args.at(-1).includes('/check-runs?') ? '[{"check_runs":[]}]' : '[[]]')
+    assert.equal(result.prs[0].baseRef, baseRef)
+  }
 })
 
 test('complete paginated inventory tracks heads, feedback and checks; read failures are not empty success', () => {
@@ -50,26 +113,42 @@ test('one PR detail failure retains both PRs with stable safe fingerprints and n
     return JSON.stringify([[{ id: 7, body: 'feedback', state: 'APPROVED' }]])
   }
   const healthy = snapshot('team/repo', invoke)
-  for (const endpoint of [
-    '/pulls/1/reviews?', '/pulls/1/comments?', '/issues/1/comments?',
-    `/commits/${pulls[0].head.sha}/check-runs?`, `/commits/${pulls[0].head.sha}/statuses?`,
+  let previousKeys
+  for (const [operation, endpoint] of [
+    ['reviews', '/pulls/1/reviews?'], ['review_comments', '/pulls/1/comments?'],
+    ['discussion', '/issues/1/comments?'],
+    ['check_runs', `/commits/${pulls[0].head.sha}/check-runs?`],
+    ['statuses', `/commits/${pulls[0].head.sha}/statuses?`],
   ]) {
-    let previous
-    for (const response of [
-      new Error('HTTP 401: synthetic-secret-one at 2026-09-16T00:00:00Z'),
-      new Error('HTTP 404: synthetic-secret-two at 2026-09-17T00:00:00Z'),
-      '[]', '{}', '[{}]', 'invalid JSON',
+    for (const [response, kind, exitCode = null, signal = null] of [
+      [Object.assign(new Error('HTTP 401: synthetic-secret-one at 2026-09-16T00:00:00Z'),
+        { status: 4, signal: null, stderr: 'synthetic-secret-stderr', stdout: 'synthetic-secret-body',
+          headers: { authorization: 'synthetic-secret-header' } }), 'COMMAND_FAILED', 4],
+      [Object.assign(new Error('HTTP 404: synthetic-secret-two at 2026-09-17T00:00:00Z'),
+        { status: 4, signal: null }), 'COMMAND_FAILED', 4],
+      ...['SIGTERM', 'SIGKILL', 'SIGINT'].map((signal) =>
+        [Object.assign(new Error('synthetic-secret-timeout'), { status: null, signal }),
+          'COMMAND_FAILED', null, signal]),
+      [Object.assign(new Error('synthetic-secret-signal'),
+        { status: 1, signal: 'synthetic-secret-signal' }), 'COMMAND_FAILED', 1],
+      [Object.assign(new Error('synthetic-secret-spawn'),
+        { status: null, signal: null, code: 'ENOENT' }), 'COMMAND_FAILED'],
+      ...['[]', '{}', '[{}]', '[null]', '[[null]]', '[[1]]', '[["synthetic-secret-row"]]',
+        '[[[]]]', '[{"check_runs":[null]}]'].map((response) => [response, 'INVALID_RESPONSE']),
+      ['invalid JSON synthetic-secret-body', 'INVALID_JSON'],
     ]) {
-      const result = snapshot('team/repo', (args) => {
+      const fail = (args) => {
         if (!args.at(-1).includes(endpoint)) return invoke(args)
         if (response instanceof Error) throw response
         return response
-      })
+      }
+      const result = snapshot('team/repo', fail)
       assert.equal(result.complete, true, 'complete describes the open PR inventory')
       assert.deepEqual(result.prs.map(({ number }) => number), [1, 2])
-      const { readError, reviewKey, gateKey, ...identity } = result.prs[0]
+      const { readError, readFailure, reviewKey, gateKey, ...identity } = result.prs[0]
       const { reviewKey: healthyReview, gateKey: healthyGate, ...healthyIdentity } = healthy.prs[0]
       assert.equal(readError, 'DETAIL_READ_FAILED')
+      assert.deepEqual(readFailure, { operation, kind, exitCode, signal })
       assert.deepEqual(identity, healthyIdentity)
       assert.match(reviewKey, /^[a-f0-9]{64}$/)
       assert.match(gateKey, /^[a-f0-9]{64}$/)
@@ -77,9 +156,12 @@ test('one PR detail failure retains both PRs with stable safe fingerprints and n
       assert.notEqual(gateKey, healthyGate)
       assert.deepEqual(result.prs[1], healthy.prs[1])
       assert.equal(Object.hasOwn(result.prs[1], 'readError'), false)
+      assert.equal(Object.hasOwn(result.prs[1], 'readFailure'), false)
       assert.doesNotMatch(JSON.stringify(result), /synthetic-secret|2026-09-1[67]T/)
-      if (previous) assert.deepEqual(result, previous, 'error text and time cannot change fingerprints')
-      previous = result
+      assert.deepEqual(snapshot('team/repo', fail), result, 'unchanged fault is stable')
+      if (previousKeys) assert.deepEqual({ reviewKey, gateKey }, previousKeys,
+        'diagnostic variations cannot change review or gate fingerprints')
+      previousKeys = { reviewKey, gateKey }
     }
   }
   assert.throws(() => snapshot('team/repo', () => { throw new Error('API denied') }), /API denied/)
@@ -87,7 +169,126 @@ test('one PR detail failure retains both PRs with stable safe fingerprints and n
     args.at(-1).includes('/pulls?') ? JSON.stringify([[pulls[0]], {}]) : invoke(args)), /Incomplete page/)
 })
 
+test('reviews command failure and statuses invalid response retain distinct safe diagnostics', () => {
+  const collect = (failedOperation) => snapshot('team/repo', (args) => {
+    const endpoint = args.at(-1)
+    if (endpoint.includes('/pulls?')) return JSON.stringify([[pr(1)]])
+    if (endpoint.includes(`/${failedOperation}?`)) {
+      if (failedOperation === 'reviews') {
+        throw Object.assign(new Error('synthetic-secret-auth'), { status: 4, signal: null })
+      }
+      return '{"synthetic-secret-body":true}'
+    }
+    return endpoint.includes('/check-runs?') ? '[{"check_runs":[]}]' : '[[]]'
+  }).prs[0]
+  const auth = collect('reviews'), shape = collect('statuses')
+  assert.deepEqual(auth.readFailure,
+    { operation: 'reviews', kind: 'COMMAND_FAILED', exitCode: 4, signal: null })
+  assert.deepEqual(shape.readFailure,
+    { operation: 'statuses', kind: 'INVALID_RESPONSE', exitCode: null, signal: null })
+  assert.notDeepEqual(auth.readFailure, shape.readFailure)
+  assert.equal(auth.reviewKey, shape.reviewKey)
+  assert.equal(auth.gateKey, shape.gateKey)
+  assert.doesNotMatch(JSON.stringify([auth, shape]), /synthetic-secret/)
+})
+
+test('unexpected internal errors escape rather than becoming API unavailability', (t) => {
+  const invoke = (args) => args.at(-1).includes('/pulls?') ? JSON.stringify([[pr(1)]]) :
+    args.at(-1).includes('/check-runs?') ? '[{"check_runs":[]}]' : '[[{"id":1},{"id":2}]]'
+  for (const error of [new Error('internal'), new TypeError('internal'), new SyntaxError('internal')]) {
+    assert.throws(() => snapshot('team/repo', (args) => {
+      if (args.at(-1).includes('/reviews?')) throw error
+      return invoke(args)
+    }), (caught) => caught === error)
+  }
+  const error = new TypeError('fingerprint bug')
+  t.mock.method(String.prototype, 'localeCompare', () => { throw error })
+  try {
+    assert.throws(() => snapshot('team/repo', invoke), (caught) => caught === error)
+  } finally {
+    t.mock.restoreAll()
+  }
+})
+
+test('CLI captures native command failures without leaking stderr; inventory and internal failures stay fatal', () => {
+  const helper = new URL('../scripts/executor-snapshot.mjs', import.meta.url).href
+  for (const [failure, expected] of [
+    ['detail', null],
+    ['inventory', { operation: 'inventory', kind: 'COMMAND_FAILED', status: 4, signal: null }],
+    ['json', { operation: 'inventory', kind: 'INVALID_JSON', status: null, signal: null }],
+    ...['shape', 'absent', 'identity', 'duplicate'].map((failure) =>
+      [failure, { operation: 'inventory', kind: 'INVALID_RESPONSE', status: null, signal: null }]),
+    ['signal', { operation: 'inventory', kind: 'COMMAND_FAILED', status: null, signal: 'SIGTERM' }],
+    ['unsafe-signal', { operation: 'inventory', kind: 'COMMAND_FAILED', status: null, signal: null }],
+    ...['Error', 'EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError',
+      'AggregateError'].map((errorType) => [errorType,
+      { operation: 'snapshot', kind: 'INTERNAL', status: null, signal: null, errorType }]),
+    ['non-error', { operation: 'snapshot', kind: 'INTERNAL', status: null, signal: null, errorType: null }],
+  ]) {
+    // Exercise the real CLI and native failure shape without invoking gh or accessing credentials.
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import cp from 'node:child_process'
+      import { syncBuiltinESMExports } from 'node:module'
+      import { fileURLToPath } from 'node:url'
+      const nativeExec = cp.execFileSync
+      const failure = ${JSON.stringify(failure)}
+      cp.execFileSync = (command, args, options) => {
+        if (failure === 'json') return 'synthetic-secret-invalid-json'
+        if (failure === 'shape') return '[{"synthetic-secret-body":true}]'
+        if (failure === 'absent') return '[]'
+        if (failure === 'identity') return '[[{"number":0,"body":"synthetic-secret-body"}]]'
+        if (failure === 'duplicate') return ${JSON.stringify(JSON.stringify([[pr(1), pr(1)]]))}
+        if (failure === 'signal' || failure === 'unsafe-signal') {
+          throw Object.assign(new Error('synthetic-secret-command'), {
+            status: null, signal: failure === 'signal' ? 'SIGTERM' : 'synthetic-secret-signal',
+            stderr: 'synthetic-secret-stderr', stdout: 'synthetic-secret-stdout'
+          })
+        }
+        if (failure !== 'inventory' && args.at(-1).includes('/pulls?')) {
+          return ${JSON.stringify(JSON.stringify([[pr(1)]]))}
+        }
+        if (failure.endsWith('Error')) {
+          const error = failure === 'AggregateError' ? new AggregateError([], 'synthetic-secret-internal') :
+            new globalThis[failure]('synthetic-secret-internal')
+          error.name = 'synthetic-secret-name'
+          error.stack = 'synthetic-secret-stack'
+          throw error
+        }
+        if (failure === 'non-error') throw { name: 'synthetic-secret-name', message: 'synthetic-secret-message' }
+        return nativeExec(process.execPath, ['-e',
+          "process.stdout.write('synthetic-secret-body'); process.stderr.write('synthetic-secret-stderr'); process.exit(4)"
+        ], options)
+      }
+      syncBuiltinESMExports()
+      process.argv = [process.execPath, fileURLToPath(${JSON.stringify(helper)}), 'team/repo']
+      await import(${JSON.stringify(helper)})
+    `], { encoding: 'utf8', timeout: 10_000 })
+    assert.ifError(result.error)
+    assert.equal(result.signal, null)
+    assert.doesNotMatch(result.stdout + result.stderr, /synthetic-secret/)
+    assert.equal(result.status, failure === 'detail' ? 0 : 1)
+    if (failure === 'detail') {
+      assert.equal(result.stderr, '')
+      const item = JSON.parse(result.stdout).prs[0]
+      assert.equal(item.readError, 'DETAIL_READ_FAILED')
+      assert.deepEqual(item.readFailure,
+        { operation: 'reviews', kind: 'COMMAND_FAILED', exitCode: 4, signal: null })
+    } else {
+      assert.equal(result.stdout, '', 'fatal failures cannot emit a complete inventory')
+      assert.deepEqual(JSON.parse(result.stderr), expected, failure)
+    }
+  }
+})
+
 test('missing pages are rejected while a confirmed empty repository is complete', () => {
   assert.deepEqual(snapshot('team/repo', () => '[[]]'), { complete: true, prs: [] })
   assert.throws(() => snapshot('team/repo', () => '[]'), /Incomplete response: .*\/pulls\?/)
+  for (const response of ['{}', '[null]', '[[null]]', 'invalid JSON synthetic-secret-body']) {
+    assert.throws(() => snapshot('team/repo', () => response))
+  }
+  const result = snapshot('team/repo', (args) => args.at(-1).includes('/pulls?') ?
+    JSON.stringify([[pr(1)]]) : args.at(-1).includes('/check-runs?') ? '[{"check_runs":[]}]' : '[[]]')
+  assert.equal(result.complete, true)
+  assert.equal(Object.hasOwn(result.prs[0], 'readError'), false, 'empty detail collections are complete')
+  assert.equal(Object.hasOwn(result.prs[0], 'readFailure'), false)
 })

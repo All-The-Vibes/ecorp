@@ -38,10 +38,20 @@ Keep authentication in the host credential stores. Never put a token into an
 automation prompt, command argument, transcript or repository file.
 
 Use a separate, clean checkout of a reviewed, immutable policy commit containing
-this package. Record that commit in state and verify it before every wake.
+this package. Record that commit in state and verify the latest recorded
+deployment before every wake.
 Do not execute the scripts or load policy from a PR's modifiable head. Changing
 the deployed policy requires independent exact-diff review and a new recorded
 deployment; an incoming PR cannot update its own executor.
+
+For a necessary bootstrap correction before broad activation, use `deploy`
+only after reading the actual independent reviews and validation for the new
+policy SHA. Its expected previous SHA must match the retained deployment.
+Prepare a new clean pinned checkout; never overwrite the old one. Preserve the
+original configuration, journal, worktrees, failures and consumed rounds, then
+update the saved automation's pin. Do not reinitialize state or invent receipts
+to repair a rejected candidate. `deploy` records evidence; it does not itself
+review code, change files, or authorize application deployment.
 
 State and receipts belong in a persistent directory **outside every PR
 worktree**, not in tracked application files. Initialize the bundled
@@ -69,12 +79,16 @@ sessions, failed tests and original receipts.
    An incomplete open-PR listing stops synchronization. A PR with `readError`
    is individually BLOCKED; other PRs still proceed. Unresolved pagination or
    inaccessible evidence is never a clean result.
+   Diagnose failures using the bounded `readFailure` metadata, not raw secret-
+   bearing errors. The snapshot includes the target `baseRef`, not just its SHA.
 3. Resume the retained active PR worktree/session when one exists. Otherwise
    claim the next changed eligible PR. Inventory drafts, forks and stacked PRs,
    too; one waiting or blocked PR must not stall the queue. Fork/deleted-source
-   PRs get read-only review and a visible execution/branch-ownership block, not
-   privileged execution on a trusted host. Never grant fork code credentials
-   or access to internal services.
+   PRs retain a resumable `read-only` claim. Perform safe static assessment and
+   save the actual report with the helper's `read-only` command before consuming
+   that revision. A read-only PASS is not technical NICE or execution authority.
+   Do not call `begin`, run their tests/hooks, dispatch fixers or publish from
+   those claims. Never grant fork code credentials or internal-service access.
 4. Before a new audit/fix round, persist its consumption with `begin`. Follow
    the main skill: resolve the exact-base template, build every rubric row,
    actually load and run ATV security and the whole-repository Ponytail audit,
@@ -91,6 +105,15 @@ sessions, failed tests and original receipts.
    receipts. Neither sees the other review or the fixer's reasoning. Validate
    both actual structured receipts. FAIL remains NAUGHTY; unavailable or stale
    evidence remains BLOCKED. Never manufacture a red test or a NICE verdict.
+   Before dispatch, use `rubric` to pin the trusted rubric source/digest and
+   complete expected criterion IDs for the exact base/candidate. Both reports
+   must cover that set, not merely the same partial subset. Preserve every
+   template-derived requirement and report full merge gates separately.
+   If a local candidate fails, save `reviewing`/`NAUGHTY` with its real report,
+   then call `retry` with the expected current round **before** further fixes.
+   This charges another bounded round without requiring an unreviewed push.
+   Do not use `waiting` as a substitute for retry or repeat reviews under one
+   charge. Replayed/stale retries must not consume another round.
 7. For a technically NICE candidate, re-read remote base/head and branch
    ownership immediately before a normal, explicitly targeted push. Stop on
    concurrent changes. Never force-push, write the base branch, merge, enable
@@ -100,16 +123,28 @@ sessions, failed tests and original receipts.
    verified new head; do not reset state or charge a second round just because
    this executor pushed its candidate. An uncertain push must be reconciled
    using the original claim and actual remote state, never guessed.
+   Feedback already present in the post-push readback was not necessarily seen
+   by the pre-push reviewers. If `published` returns `reconcile`, retain that
+   publication, record the block, and process the new feedback within the
+   existing bounds. Observing a push does not consume unseen review comments.
 8. Persist `waiting` with CI/review handles instead of keeping an agent idle.
    On subsequent wakes, inspect the **new exact SHA's** checks and automatic
    Copilot review. New actionable feedback returns to the same bounded cycle;
    pending CI waits quietly. Reconcile an interrupted push with GitHub before
    trying again. Preserve original attempts and receipts.
+   Retain the original publication across later feedback reviews. Never change
+   its timestamp or make an unnecessary push to satisfy acceptance. A prior
+   NICE cannot enable broad intake while synchronized feedback is unprocessed.
 9. Save the actual audit, fixer, red/green, reviewer, push and CI receipts. Keep
    technical Santa NICE separate from the complete merge rubric: human approval,
    drafts, dependencies and other external gates may still block merge. Do not
    fabricate missing evidence or mark a draft ready. Continue other PRs while
    external gates wait.
+   Once per wake, also perform one bounded live gate check for each waiting or
+   blocked PR using `next` with its `gateNumber`. Refresh dependencies, review-
+   thread resolution and current target protections even when REST fingerprints
+   are unchanged. Save the actual gate evidence; these checks do not consume
+   audit/fix rounds. Do not repeatedly recheck the same PR within a wake.
 
 The default 3 rounds/PR, 2 concurrent fixers and 2 no-progress rounds remain in
 force across wakes, head changes and handoffs. No scheduler wake grants more
@@ -119,6 +154,11 @@ Use `show` to recover retained evidence/session references. If `next` returns
 `reconcile`, preserve the original claim and worktree, then reconcile the
 publication or save an explicit block before choosing other work. Gate-only
 changes do not discard active fixes.
+If a transient local/tooling/credential failure blocked unfinished work,
+verify the actual cause cleared and use `resume` with that clearance receipt.
+It restores the retained claim and charge; it is not a new budget or approval.
+Ordinary CI waits, conflicts, competing claims, forks and exhausted stops cannot
+be reopened through this route.
 
 ## Canary and activation
 
