@@ -132,8 +132,10 @@ do not delete them or relabel them merely to obtain NICE.
 
 Read [remediation.md](references/remediation.md). Use one native subagent per
 issue, serialize overlapping writes, prove red-before/green-after, and verify
-the integrated result independently. Default bounds are 3 rounds per PR,
+the integrated result independently. Interactive defaults are 3 rounds per PR,
 2 concurrent fixers, and 2 no-progress rounds; smaller existing budgets win.
+An explicitly authorized persistent executor instead uses bounded native-wake
+batches under [executor.md](references/executor.md), without per-run approval.
 No automatic review may enter this phase.
 
 ## 5. Repeat and report

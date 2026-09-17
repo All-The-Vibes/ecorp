@@ -1618,6 +1618,425 @@ const resumeInput = (claim) => ({
   clearance: { sourceRef: 'evidence/verified-local-clearance.json', verifiedAt: new Date().toISOString() },
 })
 
+// Synthetic receipts prove structure/accounting, not direct-user or native-wake authenticity.
+const autonomyInput = () => ({ owner, sourceRef: 'receipts/direct-user-autonomy.json', approvedAt: new Date().toISOString() })
+const wakeInput = (id) => ({ owner, id, sourceRef: `receipts/native-wake-${id}.json`, startedAt: new Date().toISOString() })
+const progressFailure = (dir, claim, findings = []) => {
+  const finding = { id: `bug-${claim.round}`, status: 'open', evidence: [`red-${claim.round}.log`] }
+  run(dir, 'save', saveInput(claim, { phase: 'fixing', findings: [...findings, finding] }))
+  const fixed = [...findings, finding].map((f) => ({
+    ...f, status: 'fixed', evidence: [...f.evidence, `green-${claim.round}.log`],
+  }))
+  failedReview(dir, claim, fixed)
+  return fixed
+}
+const blockedThirdRound = (extra = { baseRef: 'main' }) => {
+  const dir = setup([pr(1, extra)])
+  let claim = start(dir), findings = []
+  for (let round = 1; round <= 3; round++) {
+    findings = progressFailure(dir, claim, findings)
+    if (round < 3) claim = run(dir, 'retry', retryInput(claim))
+  }
+  run(dir, 'save', saveInput(claim, { phase: 'blocked', findings, technicalVerdict: 'NAUGHTY',
+    reason: 'Original three rounds exhausted', evidence: ['round-three-block.json'] }))
+  return { dir, claim, findings }
+}
+
+test('EX-AUTONOMY: retained third round continues in bounded native wakes without another approval', () => {
+  const fixture = blockedThirdRound(), { dir } = fixture
+  let { claim, findings } = fixture
+  const before = run(dir, 'show'), original = JSON.parse(readFileSync(join(dir, 'state.json'))).events
+  run(dir, 'resume', resumeInput(claim), false)
+  const grant = autonomyInput()
+  run(dir, 'autonomy', grant)
+  const granted = run(dir, 'show')
+  assert.deepEqual(granted.config, before.config)
+  assert.deepEqual(granted.prs, before.prs)
+  assert.equal(granted.enabled, false)
+  const unready = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.equal(next(dir).action, 'wait')
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), unready)
+  const firstWake = wakeInput('turn-1')
+  run(dir, 'wake', firstWake)
+  const resumed = run(dir, 'resume', resumeInput(claim))
+  assert.equal(resumed.claimId, claim.claimId)
+  assert.equal(resumed.startedAt, claim.startedAt)
+  assert.equal(resumed.round, 3)
+  assert.deepEqual(resumed.failureReceipt, before.prs['1'].blockedClaim.claim.failureReceipt)
+  run(dir, 'save', saveInput(resumed, { phase: 'fixing', findings }), false)
+  for (let round = 4; round <= 6; round++) {
+    const previous = claim
+    claim = run(dir, 'retry', retryInput(previous))
+    assert.equal(claim.round, round)
+    assert.equal(claim.claimId, previous.claimId)
+    const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+    run(dir, 'retry', retryInput(previous), false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+    findings = progressFailure(dir, claim, findings)
+  }
+  assert.match(run(dir, 'retry', retryInput(claim), false).error, /wake/)
+  assert.equal(next(dir).claimId, claim.claimId, 'already charged work remains recoverable')
+  run(dir, 'save', saveInput(claim, { phase: 'blocked', findings, technicalVerdict: 'NAUGHTY',
+    reason: 'Native wake batch exhausted' }))
+  const exhausted = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.equal(next(dir).action, 'wait')
+  run(dir, 'autonomy', grant)
+  run(dir, 'wake', firstWake)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), exhausted)
+  assert.equal(run(dir, 'show').wakes[0].chargedRounds, 3)
+  run(dir, 'wake', wakeInput('turn-2'))
+  const beforeAck = readFileSync(join(dir, 'state.json'), 'utf8')
+  run(dir, 'wake', firstWake)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), beforeAck, 'old ACK must not restore/reset an earlier wake')
+  run(dir, 'resume', resumeInput(claim))
+  claim = run(dir, 'retry', retryInput(claim))
+  assert.equal(claim.round, 7)
+  const state = run(dir, 'show')
+  assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [3, 1])
+  assert.equal(state.prs['1'].cycles.length, 1)
+  assert.equal(state.prs['1'].cycles[0].rounds, 7)
+  assert.equal(state.prs['1'].cycles[0].noProgress, 1)
+  assert.deepEqual(state.config, before.config)
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'))).events.slice(0, original.length), original)
+})
+
+test('EX-AUTONOMY: grant is immutable and owner/repo-bound; missing wakes cannot charge prepared work', () => {
+  const dir = setup([pr(), pr(2)]), claim = next(dir), input = autonomyInput()
+  const before = readFileSync(join(dir, 'state.json'), 'utf8')
+  run(dir, 'wake', wakeInput('ungranted'), false)
+  for (const bad of [
+    { ...input, owner: 'other' }, { ...input, repo: 'other/ecorp' }, { ...input, reset: true },
+    { ...input, sourceRef: '' }, { ...input, sourceRef: ' padded ' },
+    { ...input, approvedAt: undefined }, { ...input, approvedAt: 'not-a-time' },
+    { ...input, approvedAt: '2000-01-01T00:00:00.000Z' },
+    { ...input, approvedAt: '9999-01-01T00:00:00.000Z' },
+  ]) {
+    run(dir, 'autonomy', bad, false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), before)
+  }
+  const grant = run(dir, 'autonomy', input)
+  assert.deepEqual(grant.input, input)
+  assert.equal(grant.repo, repo)
+  const granted = readFileSync(join(dir, 'state.json'), 'utf8')
+  for (const change of [{ sourceRef: 'different-message.json' }, { approvedAt: new Date().toISOString() }]) {
+    assert.match(run(dir, 'autonomy', { ...input, ...change }, false).error, /immutable/)
+  }
+  const begin = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head }
+  assert.match(run(dir, 'begin', begin, false).error, /wake/)
+  assert.deepEqual(run(dir, 'autonomy', input), grant)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), granted)
+  run(dir, 'wake', wakeInput('prepared-turn'))
+  const started = run(dir, 'begin', begin)
+  run(dir, 'begin', begin, false)
+  assert.equal(started.round, 1)
+  run(dir, 'save', saveInput(started, { phase: 'blocked' }))
+  assert.equal(next(dir).action, 'none', 'autonomy alone never enables broad intake')
+  const state = run(dir, 'show')
+  assert.equal(state.enabled, false)
+  assert.deepEqual(state.config, init)
+  assert.equal(state.wakes[0].chargedRounds, 1)
+  assert.equal(state.prs['2'].selected, 0)
+  run(dir, 'extend', { owner }, false)
+})
+
+test('EX-AUTONOMY: wake identity/source/freshness are fenced, including a truthful mid-turn batch admission', () => {
+  const dir = setup(), nativeStartedAt = run(dir, 'show').deployments[0].deployedAt
+  const input = autonomyInput(), grant = run(dir, 'autonomy', input)
+  const sourceRef = join(dir, 'native-turn-receipt.json')
+  const native = { id: 'actual-native-turn', nativeStartedAt, observedAt: new Date().toISOString() }
+  writeFileSync(sourceRef, JSON.stringify(native))
+  const first = { ...wakeInput(native.id), sourceRef }
+  assert.ok(nativeStartedAt < grant.recordedAt, 'turn actually began before this mid-turn grant')
+  assert.ok(first.startedAt >= grant.recordedAt, 'batch starts after recorded authority')
+  run(dir, 'wake', first)
+  assert.deepEqual(JSON.parse(readFileSync(sourceRef)), native, 'never retimestamp the source receipt')
+  const baseline = readFileSync(join(dir, 'state.json'), 'utf8')
+  for (const bad of [
+    { ...wakeInput('new'), owner: 'other' }, { ...wakeInput('new'), extra: true },
+    { ...wakeInput('new'), id: '' }, { ...wakeInput('new'), id: ' padded ' },
+    { ...wakeInput('new'), sourceRef: '' }, { ...wakeInput('new'), sourceRef: ' padded ' },
+    { ...wakeInput('new'), sourceRef: input.sourceRef },
+    { ...wakeInput('new'), startedAt: undefined }, { ...wakeInput('new'), startedAt: 'bad' },
+    { ...wakeInput('new'), startedAt: nativeStartedAt },
+    { ...wakeInput('new'), startedAt: first.startedAt },
+    { ...wakeInput('new'), startedAt: '9999-01-01T00:00:00.000Z' },
+    { ...first, id: 'different-id' }, { ...first, sourceRef: 'different-source.json' },
+    { ...first, startedAt: new Date().toISOString() },
+  ]) {
+    run(dir, 'wake', bad, false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), baseline)
+  }
+  const second = wakeInput('next-native-turn')
+  run(dir, 'wake', second)
+  const latest = readFileSync(join(dir, 'state.json'), 'utf8')
+  run(dir, 'wake', first)
+  run(dir, 'wake', second)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), latest)
+  assert.equal(run(dir, 'show').wakes.at(-1).input.id, second.id)
+})
+
+test('EX-AUTONOMY: three charges are global, and wait preserves the pending queue for the next native wake', () => {
+  const dir = setup([pr(), pr(2), pr(3), pr(4), pr(5)]), published = publishComplete(dir)
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('batch-1'))
+  for (const number of [2, 3, 4]) {
+    const claim = start(dir)
+    assert.equal(claim.number, number)
+    run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  }
+  const state = run(dir, 'show'), bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.equal(state.wakes[0].chargedRounds, 3)
+  for (let n = 0; n < 3; n++) assert.equal(next(dir).action, 'wait')
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  assert.equal(state.prs['5'].selected, 0)
+  assert.equal(state.prs['5'].seen, null)
+  const gate = run(dir, 'next', { owner, gateNumber: 2 })
+  assert.equal(gate.action, 'check', 'explicit gates do not require another work batch')
+  run(dir, 'save', saveInput(gate))
+  assert.equal(run(dir, 'show').wakes[0].chargedRounds, 3)
+  run(dir, 'wake', wakeInput('batch-2'))
+  const nextClaim = start(dir)
+  assert.equal(nextClaim.number, 5)
+  assert.deepEqual(run(dir, 'show').wakes.map((w) => w.chargedRounds), [3, 1])
+  assert.equal(run(dir, 'show').prs['2'].cycles[0].noProgress, 1)
+})
+
+test('EX-AUTONOMY: a new wake cannot clear a PR no-progress circuit breaker', () => {
+  const dir = setup()
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('stall-1'))
+  const first = start(dir)
+  failedReview(dir, first)
+  const second = run(dir, 'retry', retryInput(first))
+  failedReview(dir, second)
+  const before = run(dir, 'show').prs['1'].cycles[0]
+  assert.equal(before.noProgress, 2)
+  run(dir, 'wake', wakeInput('stall-2'))
+  const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.match(run(dir, 'retry', retryInput(second), false).error, /no-progress/)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  run(dir, 'save', saveInput(second, { phase: 'blocked' }))
+  run(dir, 'resume', resumeInput(second), false)
+  run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: sha(12) })] })
+  assert.match(next(dir).reason, /no-progress/)
+  const state = run(dir, 'show')
+  assert.equal(state.prs['1'].cycles[0].rounds, 2)
+  assert.equal(state.prs['1'].cycles[0].noProgress, 2)
+  assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [2, 0])
+})
+
+test('EX-AUTONOMY: unchanged fork claims remain resumable read-only work, never audit authority', () => {
+  for (const sourceRepo of ['fork/ecorp', null]) {
+    const dir = setup([pr(1, { sourceRepo })])
+    run(dir, 'autonomy', autonomyInput())
+    run(dir, 'wake', wakeInput('fork-turn'))
+    const claim = next(dir)
+    assert.equal(claim.action, 'read-only')
+    assert.equal(next(dir).action, 'read-only')
+    const begin = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head }
+    run(dir, 'begin', begin, false)
+    run(dir, 'save', saveInput(claim, { phase: 'blocked' }), false)
+    run(dir, 'read-only', readOnlyInput(claim))
+    assert.equal(run(dir, 'show').wakes[0].chargedRounds, 0)
+    assert.equal(run(dir, 'show').prs['1'].cycles[0].technicalVerdict, null)
+  }
+})
+
+test('EX-AUTONOMY: completed cycles retain total PR charges and cannot reset a native wake batch', () => {
+  const dir = setup()
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('cycle-batch-1'))
+  for (let n = 0; n < 3; n++) {
+    run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: sha(11 + n) })] })
+    complete(dir)
+  }
+  const cycles = run(dir, 'show').prs['1'].cycles
+  assert.deepEqual(cycles.map((c) => c.rounds), [1, 1, 1])
+  run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: sha(14) })] })
+  const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.equal(next(dir).action, 'wait')
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  run(dir, 'wake', wakeInput('cycle-batch-2'))
+  start(dir)
+  const state = run(dir, 'show')
+  assert.deepEqual(state.prs['1'].cycles.slice(0, 3), cycles)
+  assert.equal(state.prs['1'].cycles.reduce((total, c) => total + c.rounds, 0), 4)
+  assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [3, 1])
+})
+
+test('EX-AUTONOMY: original blocked recovery remains exact, unfinished, eligible and non-competing', () => {
+  const { dir, claim, findings } = blockedThirdRound()
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('recovery'))
+  const input = resumeInput(claim), bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  for (const bad of [
+    { ...input, owner: 'other' }, { ...input, number: 2 }, { ...input, claimId: 'other' },
+    { ...input, base: sha(99) }, { ...input, head: sha(99) }, { ...input, round: null },
+    { ...input, round: 4 }, { ...input, round: '3' }, { ...input, clearance: undefined },
+    { ...input, clearance: { sourceRef: 'old', verifiedAt: claim.startedAt } },
+    { ...input, reset: true },
+  ]) {
+    run(dir, 'resume', bad, false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  }
+  const gate = run(dir, 'next', { owner, gateNumber: 1 })
+  assert.match(run(dir, 'resume', input, false).error, /active claim/)
+  run(dir, 'save', saveInput(gate, { phase: 'blocked', findings }))
+  for (const change of [
+    { head: sha(12) }, { base: sha(12) }, { reviewKey: key(2) }, { branch: 'other' },
+    { baseRef: 'release' }, { sourceRepo: 'fork/ecorp' }, { sourceRepo: null },
+    { state: 'closed' }, { readError: 'DETAIL_READ_FAILED' }, null,
+  ]) {
+    run(dir, 'sync', { owner, complete: true, prs: change ? [{ ...claim.snapshot, ...change }] : [] })
+    const prior = readFileSync(join(dir, 'state.json'), 'utf8')
+    run(dir, 'resume', resumeInput(claim), false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), prior)
+  }
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, gateKey: key(2) }] })
+  assert.equal(run(dir, 'resume', resumeInput(claim)).round, 3)
+  assert.equal(run(dir, 'show').wakes[0].chargedRounds, 0, 'recovery itself is not another attempt')
+})
+
+test('EX-AUTONOMY: legacy journals retain original events, charges and failed-review provenance', () => {
+  const dir = fixture()
+  mkdirSync(dir)
+  writeFileSync(join(dir, 'state.json'), legacyJournal)
+  const original = JSON.parse(legacyJournal), state = run(dir, 'show')
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), legacyJournal)
+  const invoke = (command, input) => run(dir, command, { ...input, owner: state.config.owner })
+  invoke('autonomy', autonomyInput())
+  invoke('wake', wakeInput('legacy-continuation'))
+  let claim = state.active, findings = state.prs['304'].cycles[0].findings
+  for (let round = 2; round <= 4; round++) {
+    claim = invoke('retry', retryInput(claim, claim.failureEvidence[0]))
+    assert.equal(claim.round, round)
+    const open = { id: `new-${round}`, status: 'open', evidence: [`red-${round}.log`] }
+    invoke('save', saveInput(claim, { phase: 'fixing', findings: [...findings, open] }))
+    findings = [...findings, { ...open, status: 'fixed', evidence: [...open.evidence, `green-${round}.log`] }]
+    invoke('save', saveInput(claim, { phase: 'reviewing', technicalVerdict: 'NAUGHTY',
+      evidence: [`failed-round-${round}.json`], findings }))
+    claim = run(dir, 'show').active
+  }
+  const after = run(dir, 'show'), journal = JSON.parse(readFileSync(join(dir, 'state.json'))).events
+  assert.equal(after.wakes[0].chargedRounds, 3)
+  assert.equal(after.prs['304'].cycles[0].rounds, 4)
+  assert.equal(claim.claimId, state.active.claimId)
+  assert.deepEqual(after.config, state.config)
+  assert.deepEqual(journal.slice(0, original.events.length), original.events)
+  assert.ok(journal.slice(original.events.length).every((e) => e.version === 2))
+})
+
+test('EX-AUTONOMY: publication, feedback and activation work at the wake limit without more charges', () => {
+  const fixture = blockedThirdRound(), { dir } = fixture
+  let { claim, findings } = fixture
+  const grant = autonomyInput()
+  run(dir, 'autonomy', grant)
+  run(dir, 'wake', wakeInput('publication'))
+  run(dir, 'resume', resumeInput(claim))
+  for (let round = 4; round <= 6; round++) {
+    claim = run(dir, 'retry', retryInput(claim))
+    if (round < 6) findings = progressFailure(dir, claim, findings)
+  }
+  run(dir, 'save', saveInput(claim, { phase: 'reviewing', findings }))
+  const candidate = { ...claim.snapshot, head: sha(12), reviewKey: key(2), gateKey: key(2) }
+  bindRubric(dir, candidate)
+  const receipts = reviewers({ ...claim, head: candidate.head })
+  const push = { repo, branch: candidate.branch, before: claim.head, head: candidate.head,
+    sourceRef: 'batch-push.json', pushedAt: new Date().toISOString() }
+  const publication = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+    snapshot: candidate, push, reviewers: receipts }
+  const rebound = run(dir, 'published', publication)
+  assert.equal(rebound.action, 'reconcile', 'fast feedback is not silently consumed')
+  const publishedBytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.deepEqual(run(dir, 'published', publication), rebound)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), publishedBytes)
+  run(dir, 'save', saveInput(rebound, { phase: 'blocked', findings, reason: 'Read-only feedback triage needed' }))
+  assert.equal(next(dir).action, 'wait')
+  run(dir, 'feedback', feedbackInput(feedbackClaim(dir)))
+  const gate = run(dir, 'next', { owner, gateNumber: 1 })
+  run(dir, 'save', saveInput(gate, { findings, evidence: ['current-gates.json'] }))
+  run(dir, 'enable', { owner, acceptanceProof: proof(rebound, receipts, candidate) })
+  run(dir, 'autonomy', grant)
+  const state = run(dir, 'show')
+  assert.equal(state.enabled, true)
+  assert.equal(state.prs['1'].cycles[0].rounds, 6)
+  assert.equal(state.prs['1'].cycles[0].technicalVerdict, 'NICE')
+  assert.equal(state.wakes[0].chargedRounds, 3)
+  assert.deepEqual(state.prs['1'].publications[0].push, push)
+  assert.deepEqual(state.prs['1'].cycles[0].completion.reviewers, receipts)
+})
+
+test('EX-AUTONOMY: direct source/target guards survive publication', () => {
+  const baseRef = 'main'
+  const { dir: seed, claim, findings } = blockedThirdRound({ baseRef })
+  run(seed, 'autonomy', autonomyInput())
+  run(seed, 'wake', wakeInput('scope'))
+  run(seed, 'resume', resumeInput(claim))
+  const fourth = run(seed, 'retry', retryInput(claim)), candidate = { ...claim.snapshot, head: sha(12) }
+  bindRubric(seed, candidate)
+  const receipts = reviewers({ ...fourth, head: candidate.head }), currentReceipts = reviewers(fourth)
+  const publication = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+    snapshot: candidate, reviewers: receipts,
+    push: { repo, branch: candidate.branch, before: claim.head, head: candidate.head,
+      sourceRef: 'scope-push.json', pushedAt: new Date().toISOString() } }
+  const history = JSON.parse(readFileSync(join(seed, 'state.json'))).events
+  for (const change of [
+    { baseRef: 'release' }, { baseRef: baseRef === undefined ? 'main' : undefined },
+    { sourceRepo: 'fork/ecorp' }, { sourceRepo: null }, { branch: 'other' }, { base: sha(90) },
+  ]) {
+    const dir = fixture()
+    writeJournal(dir, history)
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, ...change }] })
+    const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+    run(dir, 'save', saveInput(fourth, { phase: 'fixing', findings }), false)
+    run(dir, 'save', saveInput(fourth, { phase: 'complete', findings,
+      technicalVerdict: 'NICE', reviewers: currentReceipts }), false)
+    run(dir, 'published', { ...publication, snapshot: { ...candidate, ...change } }, false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+    assert.equal(next(dir).action, 'reconcile')
+    run(dir, 'save', saveInput(fourth, { phase: 'blocked', findings }))
+    assert.equal(run(dir, 'show').prs['1'].blockedClaim.claim.claimId, claim.claimId)
+  }
+  const rebound = run(seed, 'published', publication)
+  assert.equal(rebound.action, 'audit')
+  run(seed, 'sync', { owner, complete: true, prs: [{ ...candidate, baseRef: 'release' }] })
+  run(seed, 'published', publication, false)
+  run(seed, 'save', saveInput(rebound, { phase: 'complete', findings,
+    technicalVerdict: 'NICE', reviewers: receipts }), false)
+  run(seed, 'sync', { owner, complete: true, prs: [candidate] })
+  run(seed, 'save', saveInput(rebound, { phase: 'complete', findings,
+    technicalVerdict: 'NICE', reviewers: receipts }))
+  assert.equal(run(seed, 'show').prs['1'].cycles[0].technicalVerdict, 'NICE')
+})
+
+test('EX-AUTONOMY: legacy first-observed target permits original recovery and publication, not a known retarget', () => {
+  const { dir, claim, findings } = blockedThirdRound({ baseRef: undefined })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('legacy-target'))
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, baseRef: 'main' }] })
+  assert.equal(run(dir, 'resume', resumeInput(claim)).claimId, claim.claimId)
+  const fourth = run(dir, 'retry', retryInput(claim))
+  assert.equal(fourth.snapshot.baseRef, 'main', 'ordinary new charge binds the observed target')
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...fourth.snapshot, baseRef: 'release' }] })
+  run(dir, 'save', saveInput(fourth, { phase: 'fixing', findings }), false)
+  assert.equal(next(dir).action, 'reconcile')
+  // A legacy already-charged claim may also publish after its first target observation.
+  const legacy = setup(), original = start(legacy)
+  run(legacy, 'autonomy', autonomyInput())
+  const candidate = { ...original.snapshot, head: sha(12), baseRef: 'main' }
+  run(legacy, 'sync', { owner, complete: true, prs: [{ ...original.snapshot, baseRef: 'main' }] })
+  bindRubric(legacy, candidate)
+  const receipts = reviewers({ ...original, head: candidate.head })
+  const rebound = run(legacy, 'published', { owner, number: 1, claimId: original.claimId,
+    base: original.base, head: original.head, snapshot: candidate, reviewers: receipts,
+    push: { repo, branch: candidate.branch, before: original.head, head: candidate.head,
+      sourceRef: 'legacy-push.json', pushedAt: new Date().toISOString() } })
+  assert.equal(rebound.snapshot.baseRef, undefined, 'do not invent a historical target')
+  run(legacy, 'save', saveInput(rebound, { phase: 'waiting', technicalVerdict: 'NICE', reviewers: receipts }))
+  assert.equal(run(legacy, 'next', { owner, gateNumber: 1 }).snapshot.baseRef, 'main')
+})
+
 test('EX-PRESTART-RESUME: first-ever preparation block recovers the exact uncharged audit and begins once', () => {
   const dir = setup(), claim = next(dir)
   const begin = { owner, number: claim.number, claimId: claim.claimId, base: claim.base, head: claim.head }

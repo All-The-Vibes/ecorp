@@ -2,6 +2,23 @@
 // stale-lock recovery, or proof authenticity claims. Keep STATE_DIR outside Git.
 // CLI: node executor-state.mjs STATE_DIR COMMAND; JSON stdin except show; JSON stdout.
 // init {owner,repo,model:"gpt-6-astra",policySha:40hex,canary:positiveInteger}
+// autonomy {owner,sourceRef,approvedAt}
+//   Immutable ongoing review/fix/re-review authority for config.repo/config.owner.
+//   Operator verifies the actual direct user message; this records structure only.
+//   Exact ACK is a no-op. No reset, broad-intake enablement, merge, credential or
+//   isolation waiver. Without autonomy the original 3-round/PR limit remains.
+// wake {owner,id,sourceRef,startedAt}
+//   Requires autonomy and an actual native task-turn/wake receipt, verified by the
+//   driver. startedAt is actual batch admission after the grant, not native turn
+//   start (which may predate a mid-turn grant and stays in the source receipt).
+//   New batches need new native turn IDs/sources and admission after the previous
+//   wake's recording; no future timestamps. Exact historical ACK never resets it.
+//   Retains wakes[] {input,recordedAt,chargedRounds}. Only begin/retry charge:
+//   at most THREE new rounds globally per wake, not three per PR. Total PR rounds
+//   remain retained/monotonic; noProgress 2 still stops genuinely stalled work.
+//   Missing/exhausted wake: untargeted idle next returns wait without consuming
+//   queue state. Existing claims and explicit read-only feedback/gates remain
+//   available; the next actual native wake supplies another bounded batch.
 // rubric {owner,base:40hex,head:40hex,sourceRef,sha256:64hex,criteria:[criterionIds]}
 //   Bind the trusted rubric source and exact set BEFORE dispatch at that base/head
 //   (also required for policy deploy reviews). Immutable; exact repeats are no-ops.
@@ -75,16 +92,20 @@
 //   startedAt for new reviews. Stale/replayed round is rejected, never recharged.
 // resume {owner,number,claimId,base,head,round:positiveInteger|null,
 //   clearance:{sourceRef,verifiedAt}}
-//   Explicit local/credential/tooling recovery only. save blocked retains audit
+//   Local/credential/tooling recovery, or automatic scope-preserving continuation
+//   of an original round-limit block / next-wake batch under recorded autonomy.
+//   save blocked retains audit
 //   work at prs[number].blockedClaim; resume restores that exact claim, phase,
 //   start and budget. round:null recovers an uncharged audit; begin must then charge
 //   once. Charged work resumes without begin. Resume never resets cycle history;
 //   only begin may open a new cycle after a previous-head NICE, per existing policy.
 //   Clearance must postdate that block. Driver verifies the actual cause cleared;
 //   structure is not truth. Gate/read-only claims never gain audit authority.
-//   No automatic retries, competing claim, conflicting revision/source/target,
-//   ordinary CI wait, completed charged audit, or exhausted unfinished cycle.
-//   The 3-round/2-noProgress bounds still apply when begin continues the same cycle.
+//   No implicit new round, competing claim, conflicting revision/source/target,
+//   ordinary CI wait or completed charged audit. Original 3-round/noProgress-2
+//   bounds apply without autonomy; autonomy removes only the PR round ceiling.
+//   Resume never resets noProgress or spends a wake round; begin/retry require
+//   current wake capacity. Driver verifies actual clearance, not another approval.
 // published {owner,number,claimId,base,head,snapshot,push,reviewers}
 //   head is the expected OLD remote head; snapshot is actual selected-PR readback
 //   at NEW head. Candidate reviewers predate push. This records, never performs,
@@ -124,7 +145,8 @@
 // A charged round pessimistically counts as no progress until a terminal save or
 // retry proves an open finding fixed in that round (including newly found issues).
 // Only that verified progress clears consecutive noProgress; rounds never reset.
-// retry stops at the original 3-round/2-noProgress bounds; interrupted rounds stay.
+// retry keeps the original noProgress-2 bound; autonomy replaces the 3-round/PR
+// ceiling with three new charges per native wake. Interrupted charges stay spent.
 // Journal envelope v2 appends CLI-stamped {version:2,id,at,command,input} events.
 // Unversioned v1 events remain an unchanged replay-only prefix; versions cannot
 // downgrade. Command inputs cannot select a journal/admission version.
@@ -159,8 +181,14 @@ function observeSnapshot(p, snapshot, at) {
 }
 const current = (a, p) => p.present && auditKey(a.snapshot) === auditKey(p.snapshot)
 const cycle = (p) => p.cycles.at(-1)
-function claimOutput(a, p) {
-  const stale = !current(a, p), c = cycle(p)
+const roundLimit = (s) => s.autonomy ? Infinity : 3
+const wakeAvailable = (s) => !s.autonomy || s.wakes?.at(-1)?.chargedRounds < 3
+// Publication may rebind a correction head, never the claimed source/target.
+const scopeCurrent = (a, p) => p.present && !p.blockedReason && p.snapshot.state === 'open' &&
+  sameRepo(p.snapshot.sourceRepo, a.snapshot.sourceRepo) && p.snapshot.base === a.base &&
+  p.snapshot.branch === a.snapshot.branch && targetCompatible(a.snapshot, p.snapshot)
+function claimOutput(a, p, s) {
+  const stale = !current(a, p) || (s.autonomy && a.action === 'audit' && !scopeCurrent(a, p)), c = cycle(p)
   return { ...a, evidence: c.evidence, findings: c.findings, action: stale ? 'reconcile' : a.action,
     reason: stale ? 'active revision changed; preserve and reconcile' : a.reason ?? c.reason }
 }
@@ -256,8 +284,37 @@ function apply(s, e) {
       enabled: false, acceptanceProof: null, prs: {}, active: null, sequence: 0, usedReviewers: [] }, output: { initialized: true } }
   }
   check(s && i.owner === s.config.owner, 'owner mismatch or missing initialization')
+  if (s.autonomy && s.active?.action === 'audit' && ['begin', 'retry', 'save', 'published'].includes(command)) {
+    check(scopeCurrent(s.active, s.prs[s.active.number]) ||
+      (command === 'save' && i.phase === 'blocked' && i.technicalVerdict !== 'NICE'),
+    'autonomous claim source/target conflicts; preserve work and save blocked')
+  }
   let output = { ok: true }, changed = true
-  if (command === 'rubric') {
+  if (command === 'autonomy') {
+    fields(i, ['owner', 'sourceRef', 'approvedAt'])
+    check(text(i.sourceRef) && i.sourceRef === i.sourceRef.trim() &&
+      fresh(i.approvedAt, s.deployments[0].deployedAt, at), 'fresh direct-user autonomy receipt required')
+    check(!s.autonomy || digest(s.autonomy.input) === digest(i), 'autonomy receipt is immutable')
+    changed = !s.autonomy
+    if (changed) s.autonomy = { input: i, repo: s.config.repo, recordedAt: at }
+    output = s.autonomy
+  } else if (command === 'wake') {
+    fields(i, ['owner', 'id', 'sourceRef', 'startedAt'])
+    check(s.autonomy && text(i.id) && i.id === i.id.trim() &&
+      text(i.sourceRef) && i.sourceRef === i.sourceRef.trim() &&
+      i.sourceRef !== s.autonomy.input.sourceRef && timestamp(i.startedAt), 'valid native wake receipt under autonomy required')
+    const old = s.wakes?.find((w) => w.input.id === i.id || w.input.sourceRef === i.sourceRef)
+    if (old) {
+      check(digest(old.input) === digest(i), 'wake identity/source is immutable and cannot be reused')
+      return { state: s, output: old, changed: false }
+    }
+    const previous = s.wakes?.at(-1)
+    check(fresh(i.startedAt, previous?.recordedAt ?? s.autonomy.recordedAt, at) &&
+      (!previous || i.startedAt > previous.input.startedAt), 'stale or future native wake')
+    s.wakes ??= []
+    output = { input: i, recordedAt: at, chargedRounds: 0 }
+    s.wakes.push(output)
+  } else if (command === 'rubric') {
     fields(i, ['owner', 'base', 'head', 'sourceRef', 'sha256', 'criteria'])
     check(hex(i.base) && hex(i.head) && text(i.sourceRef) && hex(i.sha256, 64) &&
       refs(i.criteria) && new Set(i.criteria).size === i.criteria.length &&
@@ -311,7 +368,10 @@ function apply(s, e) {
       check(i.gateNumber === undefined || i.gateNumber === s.active.number, 'gate target cannot replace active claim')
       check(i.feedbackNumber === undefined || (i.feedbackNumber === s.active.number &&
         s.active.action === 'feedback'), 'feedback target cannot replace active claim')
-      return { state: s, output: claimOutput(s.active, s.prs[s.active.number]), changed: false }
+      return { state: s, output: claimOutput(s.active, s.prs[s.active.number], s), changed: false }
+    }
+    if (i.gateNumber === undefined && i.feedbackNumber === undefined && !wakeAvailable(s)) {
+      return { state: s, output: { action: 'wait', reason: 'native wake round capacity missing or exhausted' }, changed: false }
     }
     if (i.feedbackNumber !== undefined) {
       const p = s.prs[i.feedbackNumber]
@@ -339,7 +399,7 @@ function apply(s, e) {
     const action = target || p.seenAudit === auditKey(snapshot) ? 'check' : 'audit'
     const renewed = c.technicalVerdict === 'NICE' && c.completion.head !== snapshot.head
     const reason = p.blockedReason ?? (
-      !renewed && action === 'audit' && c.rounds >= 3 ? 'round limit exhausted' :
+      !renewed && action === 'audit' && c.rounds >= roundLimit(s) ? 'round limit exhausted' :
       !renewed && action === 'audit' && c.noProgress >= 2 ? 'no-progress limit exhausted' : null)
     p.selected = ++s.sequence
     if (!readOnly) Object.assign(p, { seen: signature(snapshot), seenAudit: auditKey(snapshot) })
@@ -357,9 +417,10 @@ function apply(s, e) {
       (i.round === null || c.technicalVerdict !== 'NICE'),
     'no matching retained unfinished blocked claim/round')
     const renewed = i.round === null && c.technicalVerdict === 'NICE' && c.completion.head !== b.claim.head
-    check(renewed || (c.rounds < 3 && c.noProgress < 2), 'round or no-progress limit exhausted')
+    check(renewed || (c.rounds < roundLimit(s) && c.noProgress < 2), 'round or no-progress limit exhausted')
     check((s.enabled || i.number === s.config.canary) && current(b.claim, p) &&
       p.snapshot.state === 'open' && targetCompatible(b.claim.snapshot, p.snapshot) &&
+      (!s.autonomy || scopeCurrent(b.claim, p)) &&
       !p.blockedReason && sameRepo(p.sourceRepo, s.config.repo) &&
       sameRepo(p.snapshot.sourceRepo, s.config.repo), 'blocked claim revision/source/target conflicts')
     fields(i.clearance, ['sourceRef', 'verifiedAt'])
@@ -445,7 +506,7 @@ function apply(s, e) {
     fields(i, ['owner', 'number', 'claimId', 'base', 'head', 'snapshot', 'push', 'reviewers'])
     const a = s.active, p = s.prs[i.number]
     check(a && a.action === 'audit' && a.number === i.number && a.claimId === i.claimId && a.round !== null, 'publication requires active charged audit claim')
-    if (a.publication && digest(a.publication) === digest(i)) return { state: s, output: claimOutput(a, p), changed: false }
+    if (a.publication && digest(a.publication) === digest(i)) return { state: s, output: claimOutput(a, p, s), changed: false }
     check(e.version !== 2 || !a.failureEvidence, 'failed review requires explicit retry before new publication')
     validateSnapshot(i.snapshot)
     fields(i.push, ['repo', 'branch', 'before', 'head', 'sourceRef', 'pushedAt'])
@@ -466,7 +527,7 @@ function apply(s, e) {
     p.publications ??= []
     p.publications.push({ ...i, startedAt: a.startedAt, reviewClaim: { claimId: a.claimId, round: a.round } })
     Object.assign(a, { head: i.snapshot.head, snapshot: reviewedSnapshot, publication: i })
-    output = claimOutput(a, p)
+    output = claimOutput(a, p, s)
   } else if (command === 'begin' || command === 'retry' || command === 'save') {
     fields(i, ['owner', 'number', 'claimId', 'base', 'head',
       ...(command === 'retry' ? ['round', 'reviewRef'] : []),
@@ -480,6 +541,7 @@ function apply(s, e) {
     let c = cycle(p)
     if (command === 'begin' || command === 'retry') {
       check(a.action === 'audit', 'gate checks cannot spend audit rounds')
+      check(wakeAvailable(s), 'native wake round capacity missing or exhausted; wait for next wake')
       if (command === 'retry') {
         const legacyPostFailure = a.failureReceiptVersion === 1 &&
           ['fixing', 'auditing'].includes(c.phase) && a.failureReceipt?.phase === c.phase
@@ -493,7 +555,8 @@ function apply(s, e) {
         p.cycles.push(freshCycle())
         c = cycle(p)
       }
-      check(c.rounds < 3 && c.noProgress < 2, 'round or no-progress limit exhausted')
+      check(c.rounds < roundLimit(s) && c.noProgress < 2, 'round or no-progress limit exhausted')
+      if (s.autonomy) s.wakes.at(-1).chargedRounds++
       Object.assign(a, { snapshot: p.snapshot, round: ++c.rounds, startedAt: at, baseline: c.findings.filter((f) => f.status === 'open').map((f) => f.id), publication: null, failureEvidence: null, failureReceipt: null, failureReceiptVersion: null })
       c.noProgress++
       c.phase = 'auditing'
@@ -611,7 +674,7 @@ function main() {
   const [, , target, command, ...extra] = process.argv
   if (target === 'help' || command === 'help') return { help: readFileSync(new URL(import.meta.url), 'utf8').split('\nimport ')[0] }
   check(target && command && extra.length === 0, 'usage: node executor-state.mjs STATE_DIR COMMAND')
-  check(['init', 'rubric', 'deploy', 'sync', 'next', 'read-only', 'feedback', 'begin', 'retry', 'resume', 'published', 'save', 'enable', 'show'].includes(command), 'unknown command')
+  check(['init', 'autonomy', 'wake', 'rubric', 'deploy', 'sync', 'next', 'read-only', 'feedback', 'begin', 'retry', 'resume', 'published', 'save', 'enable', 'show'].includes(command), 'unknown command')
   const dir = resolve(target), file = join(dir, 'state.json'), lock = join(dir, 'executor.lock')
   outsideGit(dir)
   const input = command === 'show' ? null : JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''))

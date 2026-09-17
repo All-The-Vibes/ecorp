@@ -1,10 +1,13 @@
 # TDD remediation (explicit fix mode only)
 
 Before work, record the authorized PRs, branch-write scope, runtime-confirmed
-model, remaining budget, and stopping bounds. Default to at most **3 review/fix
-rounds per PR**, **2 concurrent fixers**, and stop after **2 rounds with no
-verified progress**. Use a smaller host/user budget when present. Bounds survive
-handoff/resume; do not reset them or silently increase spending. Review every
+model, remaining budget, and stopping bounds. Interactive fix mode defaults to
+**3 review/fix rounds per PR**, **2 concurrent fixers**, and **2 rounds with no
+verified progress**. For the explicitly authorized persistent executor,
+[executor.md](executor.md) replaces per-PR round approval with **3 new rounds
+per native wake** under the ongoing request. It never asks permission for each
+routine review/fix cycle. Cumulative history and the no-progress breaker survive
+wakes and handoffs. Smaller host/user budgets still apply. Review every
 inventoried PR even if one PR's remediation is blocked.
 
 Use native subagents, one independent issue per fixer with a non-overlapping
@@ -34,7 +37,8 @@ Publishing fixes is not authority to merge, auto-merge, deploy, or resolve a
 human's approval on their behalf.
 
 After integration repeat rubric → security/Ponytail/Santa audit → TDD correction
-at the new head, within the original bounds. Preserve the finding ledger and all
-review/test receipts. On a denied capability, exhausted budget, unresolved
-conflict, or bound, return remaining findings with BLOCKED rather than silently
-substituting serial self-review, a model fallback, or fabricated NICE.
+at the new head, within the applicable bounds. Preserve the finding ledger and
+all review/test receipts. Exhausted native-wake capacity is WAITING for automatic
+continuation, not a new permission request. A denied capability, exhausted
+host/user budget, unresolved conflict or no-progress stop is BLOCKED; never
+substitute serial self-review, a model fallback, or fabricated NICE.

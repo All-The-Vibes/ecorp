@@ -71,6 +71,10 @@ sessions, failed tests and original receipts.
 1. Verify the trusted policy checkout, current Astra model, owning task, GitHub
    authentication and retained state. Read the helper's command help rather
    than guessing JSON fields. A failed preflight is not an empty PR queue.
+   Record the operator's ongoing execution request once with `autonomy`.
+   At each actual native task turn or scheduler wake, record its identity and
+   retained runtime receipt with `wake`. Never invent another wake to replenish
+   a batch. Replayed wake IDs cannot reset their consumed rounds.
 2. Run the bundled `executor-snapshot.mjs OWNER/REPO`. It paginates open PRs,
    reviews, review comments, discussion, check runs and statuses. Feed its
    complete JSON result to the state helper's `sync`. Check retained state before
@@ -85,7 +89,9 @@ sessions, failed tests and original receipts.
    bearing errors. The snapshot includes the target `baseRef`, not just its SHA.
 3. Resume the retained active PR worktree/session when one exists. Otherwise
    claim the next changed eligible PR. Inventory drafts, forks and stacked PRs,
-   too; one waiting or blocked PR must not stall the queue. Fork/deleted-source
+   too; one waiting or blocked PR must not stall the queue. A `wait` action for
+   exhausted batch capacity checkpoints work until the next actual native wake;
+   it does not request operator permission. Fork/deleted-source
    PRs retain a resumable `read-only` claim. Perform safe static assessment and
    save the actual report with the helper's `read-only` command before consuming
    that revision. A read-only PASS is not technical NICE or execution authority.
@@ -160,10 +166,21 @@ sessions, failed tests and original receipts.
    are unchanged. Save the actual gate evidence; these checks do not consume
    audit/fix rounds. Do not repeatedly recheck the same PR within a wake.
 
-The default 3 rounds/PR, 2 concurrent fixers and 2 no-progress rounds remain in
-force across wakes, head changes and handoffs. No scheduler wake grants more
-budget. A completed technical cycle may be followed by a new changed-revision
-cycle with retained history; an exhausted or interrupted cycle may not.
+The ongoing execution request authorizes routine audits, fixes, pushes to the
+authorized PR branches and re-reviews without per-run permission. Its bounded
+execution policy is **3 new audit/fix rounds per native wake**, **2 concurrent
+fixers**, and **2 consecutive no-progress rounds per PR**. Total PR rounds,
+findings and failed receipts remain monotonic across wakes and handoffs.
+Batch capacity renews on the next genuine wake under the same ongoing authority;
+it is not a new human decision. A wake never resets the no-progress breaker,
+account limits, branch scope, credentials, or any security/ownership boundary.
+Without recorded ongoing autonomy, the interactive fix default remains 3
+rounds per PR. Do not silently reinterpret an interactive request as ongoing
+authority. The owner verifies the actual user request; a receipt path, PR
+comment or structurally valid JSON cannot grant authority by itself.
+When genuine non-convergence trips the no-progress breaker, preserve the failed
+PR and report the concrete issue rather than asking permission for another run.
+Continue other eligible PRs; never repeatedly reset the stalled PR's breaker.
 Use `show` to recover retained evidence/session references. If `next` returns
 `reconcile`, preserve the original claim and worktree, then reconcile the
 publication or save an explicit block before choosing other work. Gate-only
@@ -171,6 +188,10 @@ changes do not discard active fixes.
 If a transient local/tooling/credential failure blocked unfinished work,
 verify the actual cause cleared and use `resume` with that clearance receipt.
 It restores the retained claim and charge; it is not a new budget or approval.
+Under recorded ongoing autonomy, the same scope-preserving resume also continues
+an old per-PR round-limit block or a batch-capacity wait after a genuine new wake.
+Use the actual authority/wake receipt as clearance. Do not resume a no-progress,
+ownership, security or unresolved revision conflict merely because time passed.
 An uncharged preparation claim resumes with `round: null`; one later `begin`
 charges its first round. New live correction/re-review submissions after NAUGHTY
 must pass `retry`; only the original legacy journal is replayed under its old

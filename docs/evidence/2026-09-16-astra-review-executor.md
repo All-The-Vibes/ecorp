@@ -177,3 +177,31 @@ is a log-summary screenshot, not an additional review or live acceptance.
 
 No additional canary review, new limit, policy adoption or push is claimed.
 Operator authorization for one more bounded canary round remains pending.
+
+### Autonomous continuation — September 17
+
+The operator clarified that the executor must run autonomously without asking
+permission for ordinary audits, fixes and re-reviews. The per-three-round manual
+approval gate was an implementation mistake, not a GitHub or Codex requirement.
+The original three failed rounds and their evidence remain retained. The native
+goal was resumed without resetting its accumulated history.
+
+The journal records the ongoing authority once. Each genuine native wake can
+charge three new rounds; a later wake continues automatically while cumulative
+PR rounds remain intact. Replaying a wake cannot replenish its batch, and wakes
+cannot reset the two-no-progress breaker. Genuine stalled work remains visible
+while other eligible PRs proceed. No merge, credential, account-limit or
+security-boundary changes are implied.
+
+The corrected suite passes **106/106 Node tests**, including all original 94,
+and all six repository checks pass. The actual retained journal also continues
+on a copy without rewriting its original events or changing the live journal.
+[The current browser capture](assets/astra-review-executor/10-autonomous-continuation.png)
+shows the actual local log summaries and hashes; it is not application UI,
+hosted CI or scheduler acceptance. The optional skill-creator Python validator
+could not start because the host lacks PyYAML; the repository's native package
+tests validate this skill's frontmatter, references and pinned dependencies.
+
+This continuation is not a claim of independent PASS, publication, live CI,
+automatic Copilot review or repository-wide activation. Those results must be
+recorded from actual execution after the corrected candidate is reviewed.
