@@ -52,6 +52,13 @@ of those boundaries.
   re-verify after the parent lands.
 - Do not put long-lived secrets in prompts, logs, command arguments, or agent-readable files.
 
+Migration versions must be unique, positive, and increasing; gaps may reserve versions already
+allocated to stacked work. Preserve existing SQL bytes, filenames, versions, and manifest checksums
+when reconciling branches rather than renumbering historical migrations. SQLx requires every
+already-applied migration to remain present in the source; do not run a foundation-only source
+against a database that has newer stacked migrations. Check migration tooling with
+`node --test tools/check_migrations.test.mjs` and `node tools/check_migrations.mjs`.
+
 For a normal human contribution:
 
 ```powershell

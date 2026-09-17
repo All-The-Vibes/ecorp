@@ -16,15 +16,18 @@ assert.equal(manifest.migrations.length, files.length)
 assert.deepEqual(
   manifest.migrations.map((migration) => migration.file),
   files,
-  'migration files must be append-only and listed in version order',
+  'migration files must match the manifest and be listed in version order',
 )
 
 for (const [index, migration] of manifest.migrations.entries()) {
-  const expectedVersion = index + 1
-  assert.equal(migration.version, expectedVersion)
+  const previousVersion = manifest.migrations[index - 1]?.version ?? 0
+  assert.ok(
+    Number.isSafeInteger(migration.version) && migration.version > previousVersion,
+    'migration versions must be positive integers in strictly increasing order',
+  )
   assert.equal(
     Number(migration.file.slice(0, 4)),
-    expectedVersion,
+    migration.version,
     `migration ${migration.file} has an unexpected version prefix`,
   )
   const bytes = await readFile(path.join(migrationsRoot, migration.file))

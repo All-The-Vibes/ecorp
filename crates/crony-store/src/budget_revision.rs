@@ -87,6 +87,7 @@ impl PgStore {
         .await?;
         assert_mission_room_membership_tx(&mut tx, input.corp_id, input.mission_id, input.actor_id)
             .await?;
+        validate_proposal_policy(&input)?;
 
         if let Some(row) = sqlx::query(
             r#"
@@ -702,15 +703,6 @@ fn normalize_proposal(input: ProposeMissionBudgetRevisionInput) -> Result<Normal
             return Err(native_policy!("{field} is out of range"));
         }
     }
-    if input.proposed_budget_tokens < input.expected_budget_tokens
-        || input.proposed_budget_cost_microusd < input.expected_budget_cost_microusd
-        || (input.proposed_budget_tokens == input.expected_budget_tokens
-            && input.proposed_budget_cost_microusd == input.expected_budget_cost_microusd)
-    {
-        return Err(native_policy!(
-            "mission budget revision must increase at least one current limit without reducing another"
-        ));
-    }
     let finish_scope = input.finish_scope.map(normalize_finish_scope).transpose()?;
     Ok(NormalizedProposal {
         corp_id: input.corp_id,
@@ -724,6 +716,19 @@ fn normalize_proposal(input: ProposeMissionBudgetRevisionInput) -> Result<Normal
         idempotency_key: input.idempotency_key,
         finish_scope,
     })
+}
+
+fn validate_proposal_policy(input: &NormalizedProposal) -> Result<()> {
+    if input.proposed_budget_tokens < input.expected_budget_tokens
+        || input.proposed_budget_cost_microusd < input.expected_budget_cost_microusd
+        || (input.proposed_budget_tokens == input.expected_budget_tokens
+            && input.proposed_budget_cost_microusd == input.expected_budget_cost_microusd)
+    {
+        return Err(native_policy!(
+            "mission budget revision must increase at least one current limit without reducing another"
+        ));
+    }
+    Ok(())
 }
 
 fn normalize_finish_scope(input: MissionFinishScopeInput) -> Result<MissionFinishScopeInput> {
@@ -1047,7 +1052,7 @@ mod tests {
     }
 
     #[test]
-    fn proposal_normalization_requires_a_monotonic_bounded_increase() {
+    fn normalized_proposal_policy_requires_a_monotonic_bounded_increase() {
         let normalized = normalize_proposal(ProposeMissionBudgetRevisionInput {
             corp_id: Uuid::new_v4(),
             mission_id: Uuid::new_v4(),
@@ -1062,6 +1067,7 @@ mod tests {
         })
         .expect("valid budget revision");
         assert_eq!(normalized.proposed_budget_tokens, 750_000);
+        validate_proposal_policy(&normalized).expect("monotonic budget revision");
 
         let invalid = ProposeMissionBudgetRevisionInput {
             proposed_budget_tokens: 500_000,
@@ -1079,10 +1085,12 @@ mod tests {
             }
         };
         assert!(
-            normalize_proposal(invalid)
-                .unwrap_err()
-                .to_string()
-                .contains("increase")
+            validate_proposal_policy(
+                &normalize_proposal(invalid).expect("structurally valid request")
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("increase")
         );
     }
 
