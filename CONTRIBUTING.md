@@ -262,6 +262,22 @@ keeps new edits consistent with the repository's formatting conventions.
 version doctor is not a second installer or runtime supervisor. Do not treat an editor task or
 toolchain pin as evidence that a stack or Dev Container was exercised.
 
+### Linux Dev Container
+
+`.devcontainer/devcontainer.json` provides Linux/amd64 contributor tools from pinned official
+Rust 1.98.1 and Node 24.19.0 images, with pnpm 11.19.0. Open an independent clone through a Dev
+Containers client on a Linux filesystem. A linked worktree can refer to Git metadata outside the
+workspace mount, so it is not a supported shortcut for this configuration. The container
+runs as the `developer` user (UID/GID 1000), so the selected workspace must be writable by that
+user. Creation runs the canonical frozen dependency install and the version doctor.
+
+The image provides build/test tools only. It starts no ECorp server, runner, database, or provider;
+it mounts no Docker socket or host credentials and requires no privileged mode. The SDK's optional
+Copilot CLI download is disabled; provider runtime provisioning and browser/server/runner acceptance
+remain separate, explicitly owned operations. Native Linux external-CLI containment limitations
+in `docs/SECURITY.md` still apply. Run the repository gates below inside the container; a successful
+development build is not production runner-isolation evidence.
+
 ### Repository gates
 
 Run targeted tests for the changed behavior. For user-visible behavior, exercise the complete
