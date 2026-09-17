@@ -121,6 +121,11 @@ No `--allow-all-tools`, credential bypass, or unbounded autopilot is needed.
 Copilot CLI 1.0.83-5 accepted this model in the implementation availability probe;
 that probe alone does not prove the entire fix/subagent workflow.
 
+For ongoing authorized remediation, use the separate native Codex
+[persistent executor](executor.md). Its scheduler, worktrees, durable bounded
+state and native Astra agents complete the fix-and-re-review loop; it does not
+change GitHub's automatic-review model.
+
 Automatic Copilot review can perform available audit analysis, but a skill does
 not give it branch-write or independent-subagent capabilities it lacks. Such
 steps must report BLOCKED and hand off to an authorized agent session. Do not
@@ -159,8 +164,9 @@ Deleting this warning cannot remove the need for externally protected gates.
 
 ## Automatic review setup and acceptance
 
-Use GitHub's native [automatic-review rulesets](https://docs.github.com/en/copilot/how-tos/copilot-on-github/set-up-copilot/configure-code-review),
-not a privileged Actions workflow or a custom polling bot:
+Use GitHub's native [automatic-review rulesets](https://docs.github.com/en/copilot/how-tos/copilot-on-github/set-up-copilot/configure-code-review)
+for the built-in reviewer, not a privileged Actions workflow. The separately
+authorized executor polls for actionable work; it does not replace these rules:
 
 1. Enable automatic Copilot review for **all target branches**, drafts, and new
    pushes. Preserve existing approval, security, update, and branch protections.
@@ -179,7 +185,7 @@ not a privileged Actions workflow or a custom polling bot:
 Run the bundled integrity test with:
 
 ```sh
-node --test .github/skills/code-review/tests/package.test.mjs
+node --test .github/skills/code-review/tests/*.test.mjs
 ```
 
 This checks packaging, not semantic execution. Use

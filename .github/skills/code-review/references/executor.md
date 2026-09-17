@@ -1,0 +1,144 @@
+# Persistent Astra executor
+
+Use the existing Codex task scheduler and native agents, not a new server.
+GitHub's automatic Copilot reviewer remains enabled and supplies feedback.
+The separate executor does the work that that reviewer cannot do.
+
+## Deployment contract
+
+One designated Codex host/task owns execution for a repository. Attach an active
+heartbeat to that task; every wake continues the procedure below. Use the app's
+automation API, not a hand-written scheduler file. Poll every 15 minutes, and
+continue actionable work during a wake without waiting for the next interval.
+Keep unchanged waits quiet; notify on completion, failure or required action.
+
+The scheduler depends on that host, its authenticated accounts, available quota
+and the Codex runtime being available. This is not an always-on GitHub-hosted
+service or a guarantee that every intermediate push is reviewed before another
+push arrives. It coalesces to the latest revision and processes new feedback.
+Host availability must be part of the deployment acceptance test.
+
+Use the selected **GPT-6 Astra** runtime and native issue-fixer/reviewer agents.
+Verify model selection from runtime metadata, not the model's self-description.
+Record native agent/session IDs and their actual models. If the host does not
+expose model metadata or cannot select Astra, stop with MODEL_UNAVAILABLE.
+Do not silently use another model. Two fresh independent Astra reviewers are
+the same-model Santa adaptation, not cross-model diversity.
+
+Record the actual sandbox policy, too. A full-access desktop task is not an
+OS-isolated runner, and worktrees do not make it one. Inspect same-repository
+changes before executing them; uncertain trust, new credential-bearing hooks,
+or an isolation requirement the host cannot meet blocks execution. Never run
+fork code on this host as a shortcut to completing the queue.
+
+This needs no new API credential when the existing Codex host already provides
+the selected model and GitHub access. A standalone CLI/provider is a different
+deployment: test its actual account/model pairing before claiming support.
+Keep authentication in the host credential stores. Never put a token into an
+automation prompt, command argument, transcript or repository file.
+
+Use a separate, clean checkout of a reviewed, immutable policy commit containing
+this package. Record that commit in state and verify it before every wake.
+Do not execute the scripts or load policy from a PR's modifiable head. Changing
+the deployed policy requires independent exact-diff review and a new recorded
+deployment; an incoming PR cannot update its own executor.
+
+State and receipts belong in a persistent directory **outside every PR
+worktree**, not in tracked application files. Initialize the bundled
+`executor-state.mjs` helper there once with the repository, owning task, Astra
+model, trusted policy commit and canary PR. The helper serializes local state
+changes and preserves attempts across restarts; it is not a sandbox or an
+independent source of review truth.
+
+<!-- ponytail: one designated host per repository; use a real distributed claim
+     service only if multiple executor hosts become a requirement. -->
+Do not deploy a second writer on another host. Do not break locks, steal work,
+or reset exhausted bounds automatically. Retain all interrupted worktrees,
+sessions, failed tests and original receipts.
+
+## Each wake performs work
+
+1. Verify the trusted policy checkout, current Astra model, owning task, GitHub
+   authentication and retained state. Read the helper's command help rather
+   than guessing JSON fields. A failed preflight is not an empty PR queue.
+2. Run the bundled `executor-snapshot.mjs OWNER/REPO`. It paginates open PRs,
+   reviews, review comments, discussion, check runs and statuses. Feed its
+   complete JSON result to the state helper's `sync`, then ask `next`.
+   Also refresh the selected PR and fully paginate GraphQL review threads:
+   resolution state and current branch protections remain separate live reads.
+   An incomplete open-PR listing stops synchronization. A PR with `readError`
+   is individually BLOCKED; other PRs still proceed. Unresolved pagination or
+   inaccessible evidence is never a clean result.
+3. Resume the retained active PR worktree/session when one exists. Otherwise
+   claim the next changed eligible PR. Inventory drafts, forks and stacked PRs,
+   too; one waiting or blocked PR must not stall the queue. Fork/deleted-source
+   PRs get read-only review and a visible execution/branch-ownership block, not
+   privileged execution on a trusted host. Never grant fork code credentials
+   or access to internal services.
+4. Before a new audit/fix round, persist its consumption with `begin`. Follow
+   the main skill: resolve the exact-base template, build every rubric row,
+   actually load and run ATV security and the whole-repository Ponytail audit,
+   and produce the finding ledger. Keep unrelated base debt separate.
+5. Dispatch one **native Astra fixer per independent issue**, at most two at
+   once, with disjoint paths or serialized overlapping work. Fix only authorized
+   in-scope issues in native Git worktrees. Follow `remediation.md`: retain a
+   real regression failure, the minimal fix and green verification. No tests,
+   edits or shell execution in the source checkout. Read-only review does not
+   grant permission to run unfamiliar code with credentials.
+6. Integrate fixes, run the applicable full repository checks, then create the
+   local candidate commit. Dispatch **two fresh independent Astra reviewers**
+   with identical rubric, exact base/candidate SHA, complete diff and test
+   receipts. Neither sees the other review or the fixer's reasoning. Validate
+   both actual structured receipts. FAIL remains NAUGHTY; unavailable or stale
+   evidence remains BLOCKED. Never manufacture a red test or a NICE verdict.
+7. For a technically NICE candidate, re-read remote base/head and branch
+   ownership immediately before a normal, explicitly targeted push. Stop on
+   concurrent changes. Never force-push, write the base branch, merge, enable
+   auto-merge, deploy or impersonate an approver. Retain the expected old SHA,
+   pushed SHA, command result and remote readback before recording publication.
+   Use the helper's `published` command to bind the same charged round to the
+   verified new head; do not reset state or charge a second round just because
+   this executor pushed its candidate. An uncertain push must be reconciled
+   using the original claim and actual remote state, never guessed.
+8. Persist `waiting` with CI/review handles instead of keeping an agent idle.
+   On subsequent wakes, inspect the **new exact SHA's** checks and automatic
+   Copilot review. New actionable feedback returns to the same bounded cycle;
+   pending CI waits quietly. Reconcile an interrupted push with GitHub before
+   trying again. Preserve original attempts and receipts.
+9. Save the actual audit, fixer, red/green, reviewer, push and CI receipts. Keep
+   technical Santa NICE separate from the complete merge rubric: human approval,
+   drafts, dependencies and other external gates may still block merge. Do not
+   fabricate missing evidence or mark a draft ready. Continue other PRs while
+   external gates wait.
+
+The default 3 rounds/PR, 2 concurrent fixers and 2 no-progress rounds remain in
+force across wakes, head changes and handoffs. No scheduler wake grants more
+budget. A completed technical cycle may be followed by a new changed-revision
+cycle with retained history; an exhausted or interrupted cycle may not.
+Use `show` to recover retained evidence/session references. If `next` returns
+`reconcile`, preserve the original claim and worktree, then reconcile the
+publication or save an explicit block before choosing other work. Gate-only
+changes do not discard active fixes.
+
+## Canary and activation
+
+Start with one authorized same-repository PR while inventorying the entire
+queue. Use a real finding; do not plant a bug in somebody's PR or create a
+token test whose green result substitutes for the workflow.
+
+Before enabling repository-wide execution, retain proof of:
+
+- actual Astra runtime and issue-scoped fixer execution;
+- real red/green evidence (or a documented non-executable prose exception);
+- actual ATV/Ponytail audit outputs and both fresh Santa receipts;
+- a normal push to the canary PR and exact-SHA remote readback;
+- CI and a newly completed **automatic** Copilot review for that SHA;
+- persisted resume after a wait, and a quiet unchanged follow-up;
+- an actual scheduler wake, not just a saved automation configuration.
+
+The helper can validate receipt structure and identities, not authenticity.
+Read the underlying native receipts and GitHub results before accepting the
+canary. Never enable broad intake on a plain `NICE` string or unit tests alone.
+Report separately: implemented, scheduled, canary verified, broad intake enabled.
+If the canary is incomplete, keep executing it; do not replace the executor with
+a read-only observer or claim the deployment is complete.
