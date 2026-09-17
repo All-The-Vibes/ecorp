@@ -52,6 +52,16 @@ EIO marker and exit 1; invalid policy diagnostics are not substituted.
 
 ## Reproduction
 
+The committed screenshots below are from the actual native Edge fixture run,
+not mockups or ECorp application acceptance. Desktop SHA-256:
+`e043497e0bb06b27fe2da0e3b7955ee6444e1d1861f8a490a2b4ec14160aff72`;
+mobile SHA-256:
+`981c8792077fa428e34f89683add58281313eedcb25502e3b3ffb8dcc537a034`.
+
+![Desktop verifier fixture](assets/issue136/desktop.png)
+
+![Mobile verifier fixture](assets/issue136/mobile.png)
+
 Use the explicit opt-in environment described in
 [the operator guide](../VERIFIER_BROWSER.md#validation-and-boundaries), then run:
 
