@@ -907,3 +907,26 @@ ordering and persisted-state checks establish the mutation boundary.
 unfixed binary when migration changes the database; it does not reclassify the
 baseline failure as a passing test. See
 [the September 15 evidence](evidence/2026-09-15-startup-validation.md).
+
+## Steering and run-status transaction ordering (issue 223)
+
+The opt-in `issue223_` store tests apply real migrations in SQLx-created databases.
+Use only an explicitly owned maintenance database:
+
+```sh
+DATABASE_URL="$OWNED_QA_DATABASE_URL" cargo test -p crony-store issue223_ --locked --offline -- --ignored --test-threads=1 --nocapture
+```
+
+The contention test gates the actual message operation on its existing advisory
+lock, observes the native runner-event wait via `pg_blocking_pids`, then releases
+the gate and requires both operations to complete. The baseline fails with a
+deadlock. Additional tests cover destination changes, retirement, revocation,
+replay, rollback, and accounting. Negative assertions reject deadlock errors as
+false positives. Ordinary workspace tests intentionally ignore these cases.
+
+For the server/runner overlap, explicitly select the synthetic Codex app-server
+fixture and use a mission containing `[steering-contention]`. It emits native
+status frames for at most 60 seconds while the owned test drives steering through
+the existing HTTP API; no provider inference is involved. The actual browser
+steering and completion evidence, exact base and limitations are in
+[evidence/2026-09-15-steering-lock-order.md](evidence/2026-09-15-steering-lock-order.md).

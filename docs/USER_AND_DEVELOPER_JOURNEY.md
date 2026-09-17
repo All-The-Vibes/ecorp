@@ -160,7 +160,7 @@ ECorp preserves the identity and resumable session metadata without leaving an o
 process alive. Unpinned mission workers retire after terminal missions only when there is no active
 run, control lease, queued message, approval, durable command, or teardown uncertainty. An
 authorized resume can reactivate the preserved worker. Dedicated Pin/Unpin, Clear crew, and manual
-Retire controls remain tracked in [#48](https://github.com/shyamsridhar123/ecorp/issues/48).
+Retire controls remain tracked in [#48](https://github.com/All-The-Vibes/ecorp/issues/48).
 
 Risky commands create durable approval records. After verification passes, the mission card exposes
 provider evidence, verification evidence, the signed source deliverable, and integration state as
