@@ -36,7 +36,7 @@ harness, general environment map, cache deletion engine or approval is introduce
 - Provider artifacts retain their own artifact records. Suppression evidence is
   a requested control, never proof of zero writes or permission to remove caches.
 
-## Local checks
+## Original local checks (00ea448)
 
 All six repository gates passed:
 
@@ -72,7 +72,7 @@ The mixed-path regression separately checks tracked, untracked, ignored and rena
 accounting including newline-containing paths. No baseline application race or
 real-provider execution is claimed by these checks.
 
-## Full-stack acceptance
+## Original full-stack acceptance (00ea448)
 
 An owned disposable PostgreSQL fixture, actual candidate server and runner, existing
 fake-process adapter, and web UI ran against a separate minimal committed source repo.
@@ -101,7 +101,13 @@ The independent review found no production-code defect; it flagged the Node test
 22.8+ runtime dependency. External-runtime cases were made explicit and all five were
 rerun successfully. Final workspace and Clippy checks passed after that adjustment.
 
-## Source fingerprints
+## Historical source fingerprints
+
+These SHA-256 values identify the original feature revision
+`00ea44818ad31ea2fed11f5f8625343ed72816ee`, whose local and full-stack checks are
+reported above. They are not fingerprints of the latest PR head. Reproduce them
+with `git show <revision>:<file> | shasum -a 256`. Later revisions and their
+validation are recorded separately below.
 
 | File | SHA-256 |
 |---|---|
@@ -121,7 +127,7 @@ or artifact hydration, and the current-epoch synchronous send checks StartRun,
 ResumeRun and VerifyRun again. Capability rejection follows existing pre-dispatch
 failure handling; ordinary control commands remain compatible.
 
-Validation after correction:
+Validation after correction at `58426c302b2999c7bd232958b1f940ddd429e36b`:
 
 - All six repository gates above passed again: **522 passed, 0 failed, 326 ignored**
   in the default workspace suite, plus web build/lint and 41 migration checks.
@@ -160,7 +166,8 @@ server now preserves the legacy response in that case and returns the expanded
 cache-control diagnostic only for explicit policies. A regression locks the legacy
 response used by both artifact-staging and identity readiness fixtures.
 
-All six local gates passed after this correction: **523 passed, 0 failed,
+All six local gates passed after this correction at
+`32e072ed1b84659a78bd5388147c1104ca1b3df3`: **523 passed, 0 failed,
 326 ignored** in the default workspace suite. The full artifact-staging restart
 fixture supports Linux/Windows, not macOS; the next hosted run must verify that
 integration path. No new review comments were present; both original threads
@@ -170,7 +177,10 @@ change; this small diagnostic correction was inspected and tested locally.
 
 ## Direct admission regressions (September 17 review)
 
-The follow-up on base `43e4c35fe6410c2b12a99c2b3f1f079df1864bb1` adds tests and CI coverage; it does not change production admission behavior.
+The test follow-up is commit `debbc2138c27b7e7cc6e9c212719be3072421c15`,
+built on base `43e4c35fe6410c2b12a99c2b3f1f079df1864bb1`. It adds tests and CI
+coverage without changing production admission behavior. The base is not the
+revision containing these new tests.
 
 - Windows-only assertions cover `py`, `py.exe`, `PY.EXE`, mixed-case Python names and versioned `.exe` names. They check the automatic policy, exact argument prefix and environment, plus rejected lookalikes. The existing Windows runner CI job runs this test; macOS execution does not validate the Windows-gated branch.
 - Five opt-in server tests use actual migrations in SQLx-owned PostgreSQL databases. They invoke the recovery decoder, durable command dispatcher and resume handler with real store transitions. Unsupported explicit controls produce no assignment or secret grant, preserve the source run and settle the replacement before dispatch. A second recovery sweep does not duplicate the failure event.
@@ -185,3 +195,25 @@ DATABASE_URL="$OWNED_QA_DATABASE_URL" cargo test -p crony-server cache_admission
 
 On Windows, the ordinary `cargo test -p crony-runner` suite includes
 `issue140_windows_launcher_policy_preserves_launcher_arguments` without needing an installed Python launcher.
+
+
+### Validation pinned to the test follow-up
+
+At `debbc2138c27b7e7cc6e9c212719be3072421c15`, all six local gates passed:
+**523 default Rust tests passed, 341 ignored**, plus **5 explicitly run SQL
+regressions passed**. All six [hosted checks](https://github.com/All-The-Vibes/ecorp/actions/runs/35246166597)
+also passed, including the new SQL step and native Windows launcher regression
+(**216 runner tests passed, 4 ignored** on Windows). These results do not rebind
+the earlier browser/runtime experiments to this revision.
+
+The following fingerprints identify this tested implementation revision, not a
+future documentation-only commit or moving PR head:
+
+| File | SHA-256 at `debbc2138c27b7e7cc6e9c212719be3072421c15` |
+|---|---|
+| `crates/crony-domain/src/lib.rs` | `a3045ea118fba1c25528a14c5193f9b92f6a9a66bad473cb22bc8e15d9a143c3` |
+| `crates/crony-runner/src/verifier.rs` | `b318cd84ee4ddba10f00a04e7d99c577eb37524950eb501cd05364f6acaa2f5c` |
+| `crates/crony-runner/src/workspace.rs` | `c09e83d3f01d4e53efa33da1864e43d961bbf9e3cf6cb0a339858032c27f8c7d` |
+| `crates/crony-server/src/main.rs` | `315f72c0daa0b91ea0d8f876e2bcf63abecf0a6b5b0c461ed529de53e9e520bc` |
+| `crates/crony-server/src/cache_admission_tests.rs` | `1df88ddbeb891ad2883c42b1c4f7ebf6bc3555e381a821a54aeada49dd4cde4c` |
+| `.github/workflows/ci.yml` | `a0a467b133ba20565281771c38379192e5b1f9330e5b1655c3221e978ac1c0f2` |
