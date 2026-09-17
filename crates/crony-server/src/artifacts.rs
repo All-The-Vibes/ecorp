@@ -755,6 +755,8 @@ mod tests {
     use object_store::{GetResultPayload, ObjectMeta, memory::InMemory};
     use serde_json::json;
 
+    include!("issue297_native_fixture.rs");
+
     fn identity() -> ArtifactIdentity<'static> {
         ArtifactIdentity {
             id: Uuid::new_v4(),

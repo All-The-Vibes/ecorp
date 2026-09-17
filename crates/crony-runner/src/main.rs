@@ -2,6 +2,8 @@ mod adapter;
 mod connections;
 mod deliverable;
 mod dependency_files;
+#[cfg(test)]
+mod issue297_native_fixtures;
 mod retained_provider_receipt;
 #[cfg(test)]
 mod retained_provider_receipt_tests;

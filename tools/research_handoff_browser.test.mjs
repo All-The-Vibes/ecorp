@@ -46,8 +46,7 @@ test('named case is strict, opted in, and never falls back to the API/unit lane'
     ['--case', 'browser-consumption', '--require-owned-qa', '--case', 'browser-consumption'],
     ['browser-consumption'],
   ]) assert.throws(() => researchCase(args))
-  assert.throws(() => researchCase(['--case', 'adversarial', '--require-owned-qa']),
-    /not implemented.*no unit-test fallback/)
+  assert.equal(researchCase(['--case', 'adversarial', '--require-owned-qa']), 'adversarial')
 })
 
 test('only canonical credential-free owned QA high ports are admitted', () => {
@@ -157,7 +156,7 @@ test('real CLI fails without owned context and does not create output or start b
     .filter(key => process.env[key]).map(key => [key, process.env[key]]))
   for (const [name, reason] of [
     ['browser-consumption', /ECORP_ISSUE297_QA_CONTEXT/],
-    ['adversarial', /not implemented/], ['unknown', /Unknown research handoff case/],
+    ['adversarial', /adversarial nonce/], ['unknown', /Unknown research handoff case/],
   ]) {
     const child = spawnSync(process.execPath, [script, '--case', name, '--require-owned-qa'], {
       env: { ...environment, CRONY_RESEARCH_HANDOFF_TEST: '1' },

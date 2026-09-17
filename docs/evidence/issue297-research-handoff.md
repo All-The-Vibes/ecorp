@@ -192,6 +192,247 @@ No browser, services, application database, provider inference or Factory action
 was executed. The earlier 23-test baseline and 24-test materializer increment
 above remain historical evidence, not results rerun for this interface increment.
 
+### Guarded adversarial interface increment
+
+This continuation starts at parent-committed
+`c97b5e04b4f791e3ccf40d2d6fb4ed923a11e795` on the same branch. The earlier
+unsupported-adversarial result remains historical. The named entrypoint now
+routes to [the guarded adversarial driver](../../tools/research_handoff_adversarial.mjs),
+without falling through to the positive API or browser lane:
+
+```powershell
+node tools/e2e_research_handoff.mjs --case adversarial --require-owned-qa
+```
+
+No native services, browser, application database, inference, Factory action or
+cloud operation was run for this increment. All runtime scenarios below remain
+unexecuted. Offline contract and native verifier results are not ledger entries
+for native full-stack acceptance.
+
+#### Runtime admission and evidence contract
+
+The driver reuses the version-one operator QA context and source/process
+qualification above. Additionally, the operator must provision the same UUID
+in `CRONY_ISSUE297_ADVERSARIAL_NONCE` for the dedicated runner and this client.
+The checked-in fake adapter inherits that environment. The driver never changes
+the runner environment or starts, stops or resets anything. The nonce is fixture
+selection, not authentication or ownership proof.
+
+Use a freshly pre-seeded owned fixture with no prior missions, tasks, runs,
+source deliverables, verification history or Factory items. A browser-consumption
+fixture that already executed is not fresh. Retain all source, binary and web
+context pins; this lane does not open the browser or certify web assets. Candidate
+source and the fake script must contain this increment before runtime execution.
+Commit/source qualification remains the parent's or operator's responsibility.
+
+Only four held mission creations and their exact one-shot launches are permitted.
+Each uses the existing native source-bound parallel-specialists plan, fake-process
+adapter, declared note/probe paths, one attempt and native bounded file/JSON
+verifiers. The title selects a deterministic fault in
+[the fake-only constructor](../../scripts/research-negative-fixture.mjs).
+Both roots construct the fault in their own freshly generated declared files.
+The constructor accepts the native prompt's repeated mission title, rejects
+conflicting/malformed markers, and requires the nonce and exact research contract.
+It introduces no production signer, filesystem fault hook or provider hook.
+
+After construction the driver requires native failure, both original failed
+preserved root runs, unchanged persisted authority, and no synthesis attempt/run.
+For bad-file cases it requires every exact verifier index and status, native
+readback matching fixture hashes, and an actual Node exit code of one.
+Missing executables, timeout, cancellation, unrelated failed checks, lost
+construction output, or incomplete snapshots cannot count as rejection.
+Construction output alone is not cryptographic proof or native rejection.
+
+The authorization control downloads an actual retained signed provider receipt
+as the authorized actor before requiring native denial for a known nonmember.
+It does not re-sign anything and does not count as cross-Corp or lineage testing.
+No client response replacement is used.
+
+After QA admission, HTTP observation has a 50-second budget, five-second request
+bounds, 160-request cap, bounded bodies and no redirects. A fresh exclusive
+output leaf outside the candidate checkout retains mutation IDs before checks,
+per-case native snapshots, and an atomic coverage receipt. No uncertain mutation
+is retried. Failures preserve original runs/workspaces; there is no automatic
+cleanup/recovery of native resources.
+
+The complete ledger always contains these 23 named cases. Zero, duplicate,
+omitted or incomplete assertions fail. Only five have executors; even if all
+five later observe native rejection, the overall receipt remains
+`accepted: false`, `phase: incomplete`, and the command exits nonzero.
+
+| Required case | Current executor and coverage boundary |
+| --- | --- |
+| `missing-file` | Implemented: remove the declared parent note, require native file rejection and no child |
+| `altered-content` | Not implemented: signed-object digest tamper plus real dependency resolution |
+| `undeclared-file` | Not implemented: typed manifest/declaration mismatch before dispatch |
+| `cross-corp` | Not implemented: valid signature with wrong Corp and actual selector |
+| `cross-task` | Not implemented: valid signature with wrong task and actual selector |
+| `cross-run` | Not implemented: valid signature with wrong run and actual selector |
+| `cross-recovery` | Not implemented: real retained lineage, no stale fallback or synthetic URI substitution |
+| `cross-room` | Not implemented: persisted room/source authority mismatch |
+| `traversal` | Not implemented: actual source/assignment path rejection |
+| `destination-symlink` | Not implemented: pre-provider child destination link, host-qualified |
+| `destination-reparse` | Not implemented: pre-provider Windows child junction/reparse fixture |
+| `file-count-limit` | Not implemented: over-eight-file native transport rejection |
+| `oversized-file` | Implemented: exactly 6145 parent note bytes, native 6144-byte policy rejection |
+| `wire-file-byte-limit` | Not implemented: native per-file 12-KiB transport boundary |
+| `aggregate-byte-limit` | Not implemented: native 64-KiB aggregate boundary including JSON framing |
+| `prompt-byte-limit` | Not implemented: bounded dependency prompt overflow, no truncation |
+| `envelope-byte-limit` | Not implemented: serialized command envelope overflow, no truncation |
+| `exact-limit-control` | Not implemented: valid content exactly on each supported native limit |
+| `parent-tree-isolation` | Not implemented: actual OS denial, not absence of driver reads |
+| `invalid-probe` | Implemented: exact malformed JSON, native parser rejection and no child |
+| `failed-parent` | Implemented: explicit fake failure before completion, native failure and no child |
+| `cancelled-parent` | Not implemented: controlled native cancellation and no dependency release |
+| `unauthorized-artifact` | Implemented: authorized signed download control followed by nonmember denial |
+
+The missing-file and oversized-file executors test the parent verifier boundary;
+they do not separately certify missing/tampered child materialization. The
+native materializer unit suite below supplies narrower offline evidence only.
+
+#### Test-only construction for remaining native boundaries
+
+There is no identified missing external contract that prevents writing further
+fixtures. These are remaining implementation mechanisms, not missing-QA excuses.
+
+* The server's [artifact store tests](../../crates/crony-server/src/artifacts.rs)
+  already use `object_store::memory::InMemory`, a synthetic signing key,
+  `#[cfg(test)] ingest`, and real `read_verified`. A combined test-only server
+  fixture can create validly signed objects under intentionally wrong Corp,
+  task or run identities and first prove those bytes/signatures verify.
+  It must then associate references with the selected parent through a
+  disposable SQLx fixture and call the actual dependency selector/resolver,
+  requiring rejection before dispatch. No signing key belongs in the QA
+  context or a production fault endpoint.
+* Existing [store lineage fixtures](../../crates/crony-store/src/lib.rs),
+  `issue297_typed_handoffs_never_fall_back_to_provider_receipts` and
+  `dependency_artifacts_bind_recovered_parent_and_reject_invalid_metadata`,
+  exercise the real selector against test-built relational tables. Their
+  digests/signatures are placeholders. The separate artifact signature tests
+  and metadata-only SQLx fixtures are not combined signed-lineage evidence.
+  The next bounded implementation is a `cfg(test)` combined server fixture
+  using those relational rows and real signed in-memory bytes, including an
+  authentic recovery chain. It requires a separately owned disposable SQLx
+  database to execute, never the application database.
+* The [runner materializer tests](../../crates/crony-runner/src/dependency_files.rs)
+  already create owned Unix symlinks, Windows junctions, hard links and race
+  fixtures. The runner calls materialization after workspace preparation but
+  before constructing the adapter request. Fake-agent code therefore runs too
+  late to construct a child destination link at that boundary. The combined
+  test-only harness should construct the link in a freshly owned or valid
+  retained child worktree before the actual assignment execution, with the
+  correct checkpoint/fingerprint where required. Its target is an owned
+  sibling sentinel beneath the fixture root, not another user's directory.
+  Assert native failure and preservation, unchanged target, and no adapter
+  session/output. Use separate Unix-link and Windows-reparse host receipts;
+  absent privilege or platform is a setup failure, not skipped acceptance.
+* Actual denial of access to parent trees needs the supported OS isolation
+  boundary. A driver that never reads those trees does not prove isolation.
+  Neither unit junction tests nor a private ownership manifest establishes it.
+
+#### Executed adversarial increment checks
+
+The focused offline suite passed 77 tests with zero failures or skips: 13
+adversarial observer/constructor cases plus the 64 prior interface/source cases.
+It executes the real fake-agent subprocess for all four constructed faults.
+Synthetic native-shaped state is used only for observer contract tests.
+A native-prompt repetition defect found during source tracing was reproduced,
+retained in a private failure log, and fixed; conflicting markers still fail.
+
+The source-bound runner test
+`issue297_negative_fake_outputs_are_rejected_by_native_verifier` executes that
+same checked-in fake process for an unchanged positive control and three bad-file
+cases, then calls the real native verifier. The native verifier family passed
+9/9, and the materializer family passed 24/24, including this Windows host's
+junction cases. These 33 native unit tests are not server/store/browser evidence.
+
+```powershell
+node --test tools/research_handoff_adversarial.test.mjs tools/research_handoff_browser.test.mjs tools/owned_test_stack.test.mjs tools/fixture_source_identity.test.mjs
+cargo rustc --locked --offline -p crony-runner --tests --message-format=json -- -C "linker=$lld" -C linker-flavor=ld.lld
+& $exactBuiltRunner dependency_files::tests --test-threads=1
+& $exactBuiltRunner verifier::tests --test-threads=1
+```
+
+The build uses the pre-existing isolated Rust/LLD toolchain, not an installation.
+Syntax, formatter, whitespace and evidence metadata/anchor checks are recorded
+with the exact final tree and literal source inventory in the private
+`C:\Repos\ecorp\docs\temp\issue297-adversarial-interface-20260917` receipts.
+Earlier receipts remain intact. No source ref or index update is part of this
+increment.
+
+## Resumed offline native fixtures
+
+The September 17 resumed increment adds
+[`research_handoff_native.mjs`](../../tools/research_handoff_native.mjs) and
+an explicit [23-case executor catalog](../../tools/research_handoff_native_catalog.mjs).
+This is a separate offline lane. It does not convert the earlier browser
+contracts or five live-stack executors into runtime acceptance.
+
+The driver requires a source fingerprint, exact binary hashes and successful
+Cargo test-artifact receipts. It checks that each ignored entrypoint exists
+before execution. It creates a fresh PostgreSQL cluster in the caller's new
+evidence directory, selects an ephemeral loopback port, verifies the spawned
+PID and data directory, and owns a nonce-named database. It never uses
+`DATABASE_URL`, the retained journey stack, a fixture endpoint or a provider.
+Shutdown targets only its verified child process. Failed worktrees, database
+files, command output and earlier attempts remain available for diagnosis.
+
+Native mappings are separated by boundary:
+
+* Thirteen signed server/store cases use real in-memory artifact signing and
+  verified reads, the persisted dependency selector, the native resolver,
+  and room-scoped download selection. Wrong Corp/task/run artifacts are
+  validly signed before lineage rejection. Recovery uses distinct provider
+  and verifier runs. Positive controls, exact native errors, unchanged
+  dependency receipts and idempotent restored replay are required.
+* Seven assignment/materializer cases enter actual workspace preparation
+  and checkpoint admission before materialization. Successful controls start
+  the shipped fake-process adapter and read exact bytes with native file
+  operations. Link failures must originate in materialization, prevent
+  adapter entry, preserve the workspace and leave the target unchanged.
+* Three file-output cases execute the checked-in deterministic fake process
+  and native verifier. They cover a missing file, a 6,145-byte note and an
+  invalid JSON probe. The unchanged and exact 6,144-byte controls pass the
+  same four-check policy. These are verifier results, not scheduling evidence.
+
+Numeric controls exercise equality and plus one, not approximate sizes:
+8 wire files, 12,288 UTF-8 bytes per wire file, and 65,536 serialized wire
+bytes; the signed decoder separately tests its exact envelope and parent
+prompt limits and the resolver's combined 65,536-byte prompt limit.
+The exact-limit case supplements, rather than replaces, each negative check.
+
+All new Rust fixture entrypoints and helper APIs are compiled only under
+`cfg(test)`. The runner module is conditionally declared; the server and
+shared relational fixture are included inside test modules. Signing reuses
+the existing test-only `ArtifactStore::ingest`. No runtime feature,
+production fault switch, public route or weakened signature/authorization
+check is introduced.
+
+The offline driver always returns `accepted: false` and exits nonzero.
+Missing executables, setup errors, timeouts, absent or duplicate receipts,
+wrong nonces, zero tests, ignored tests, missing assertions and partial
+ledgers cannot receive native coverage. Driver contract specimens remain
+synthetic and are never reported as native observations.
+
+Two observed host/product limitations remain explicit:
+
+* Native Windows file-symlink creation returned error 1314, missing privilege.
+  The plain-file control succeeded; no symlink rejection was claimed.
+  Windows junction/reparse materialization is a separate executable case.
+* The actual fake-process child read the owned sibling-parent sentinel with
+  matching bytes. The parent checkpoint and sentinel were unchanged, but
+  that is not read isolation. [Security](../SECURITY.md) explicitly documents
+  same-user fake-process permissions. Qualifying this case needs a separately
+  authorized OS identity/ACL or sandbox design, not fixture-only permission
+  changes, a simulated denial or a new unreviewed production execution layer.
+
+The new evidence bundle is
+`C:\Repos\ecorp\temp\evidence\issue297-resumed-adversarial-20260917`.
+Its machine-readable result records the final tree, every changed-file hash,
+build protocols, exact commands, complete case ledger and retained failures.
+Earlier checkpoint paths and receipts below remain historical, not fingerprints
+of this resumed tree.
+
 ## Independent review
 
 A separate read-only code-review agent examined the candidate's artifact,
@@ -211,7 +452,8 @@ evidence or an owner/admin approval.
 ## Remaining acceptance gates
 
 * [ ] Run the server planner, decoder and capability tests.
-* [ ] Run the native runner materialization tests, including link and replay cases.
+* [x] Run the local native runner materialization tests, including this host's
+      junction and replay cases; cross-platform/full-stack execution remains open.
 * [ ] Run the SQLx dependency selection, receipt replay and recovery regressions
       against the owned disposable PostgreSQL fixture.
 * [ ] Demonstrate exact child consumption through the candidate native services.
@@ -219,7 +461,10 @@ evidence or an owner/admin approval.
       `adversarial` acceptance interfaces with trusted QA/source pins.
       The original driver was API-only and rejected arguments; the guarded
       browser implementation above is contract-tested but not runtime-accepted.
-      The adversarial full-stack interface remains unimplemented.
+      The live adversarial entrypoint has five guarded executors, unexecuted
+      against native services. All 23 cases now have separate offline native
+      mappings, with scope and failures retained in the resumed bundle.
+      Offline observations cannot produce accepted live TF02/03 output.
 * [ ] Complete the required workspace, Clippy and web gates.
 * [ ] Coordinate with the retained native Factory operator and reconcile the
       helper-module/receipt-replay file scope with its controller allowlist.

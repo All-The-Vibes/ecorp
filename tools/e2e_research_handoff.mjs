@@ -19,6 +19,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, open, rename } from 'node:fs/promises'
 import path from 'node:path'
 import { loadResearchQa, openResearchBrowser, researchCase, researchDemo } from './research_handoff_browser.mjs'
+import { runResearchAdversarial } from './research_handoff_adversarial.mjs'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const SHA = /^[0-9a-f]{64}$/
@@ -638,6 +639,10 @@ async function verifyOutcome(result) {
 }
 
 try {
+  if (researchCase(process.argv.slice(2)) === 'adversarial') {
+    await runResearchAdversarial()
+    throw new Error('Adversarial executor returned without accepted complete coverage')
+  }
   await initialize()
   if (ownedQa) {
     const response = await http('/health')

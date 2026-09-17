@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { applyNegativeResearchFixture, negativeFixtureSelection } from "./research-negative-fixture.mjs";
 
 const args = new Map();
 for (let index = 2; index < process.argv.length; index += 2) {
@@ -16,6 +17,7 @@ if (!runId || !workdir || !mission) {
   console.error("missing --run-id, --workdir, or --mission");
   process.exit(2);
 }
+const researchNegative = negativeFixtureSelection(mission);
 
 const emit = (event) => {
   process.stdout.write(`${JSON.stringify(event)}\n`);
@@ -41,6 +43,7 @@ const budgetLateCompletion = mission.includes("[budget-late-completion]");
 const healthyConversation = mission.includes("[healthy-conversation]");
 const researchFiles = mission.match(/^EXPECTED OUTPUT: Verified research files: (.+)$/m)?.[1]
   .split(", ");
+if (researchNegative && !researchFiles) throw new Error("Negative fixture requires a native research-file contract");
 const externalEvidence = cleanWorktree || ignoredWorktree || Boolean(researchFiles);
 const briefingDelay = slowRun ? 4_000 : graphSlowRun ? 1_200 : 700;
 const workDelay = slowRun ? 5_000 : graphSlowRun ? 1_200 : 900;
@@ -229,6 +232,17 @@ if (researchFiles) {
   await writeFile(fixturePath(researchFiles[1]), `${JSON.stringify({
     observed: true, run_id: runId, note_sha256: digest(Buffer.from(note)),
   })}\n`, "utf8");
+  if (researchNegative) {
+    const constructed = await applyNegativeResearchFixture({
+      selection: researchNegative, files: researchFiles, workspace: workdir, runId,
+    });
+    emit({ type: "output", stream: "stdout", text: `ISSUE297 NEGATIVE FIXTURE: ${JSON.stringify(constructed)}` });
+    if (researchNegative.case_id === "failed-parent") {
+      emit({ type: "failed", error: "Issue297 explicitly constructed failed parent." });
+      input.close();
+      process.exit(0);
+    }
+  }
 }
 for (const match of mission.matchAll(/^SOURCE FILE (.+) \/ sha256 ([0-9a-f]{64}) \/ bytes (\d+)$/gm)) {
   const bytes = await readFile(fixturePath(match[1]));

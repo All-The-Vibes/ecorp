@@ -34,8 +34,6 @@ export function researchCase(args) {
   assert.equal(args.length, 3, 'Exactly --case <name> --require-owned-qa is required')
   assert.equal(values['require-owned-qa'], true, 'Owned QA is mandatory for named cases')
   assert.ok(['browser-consumption', 'adversarial'].includes(values.case), 'Unknown research handoff case')
-  assert.notEqual(values.case, 'adversarial',
-    'Adversarial E2E is not implemented: operator-owned negative artifact/lineage fixtures are required; no unit-test fallback')
   return values.case
 }
 

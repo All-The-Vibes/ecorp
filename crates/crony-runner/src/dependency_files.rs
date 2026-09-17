@@ -463,7 +463,32 @@ fn file_options(create: bool) -> OpenOptions {
 }
 
 #[cfg(test)]
+pub(crate) mod fixture_support {
+    use super::*;
+
+    pub(crate) fn payload(path: &str, content: &str) -> VerifiedDependencyFile {
+        VerifiedDependencyFile {
+            path: path.to_owned(),
+            sha256: hex::encode(Sha256::digest(content.as_bytes())),
+            content: content.to_owned(),
+        }
+    }
+
+    #[cfg(windows)]
+    pub(crate) fn junction_command(target: &Path, link: &Path) -> std::process::Command {
+        let mut command = std::process::Command::new("powershell.exe");
+        command
+            .args(["-NoProfile", "-NonInteractive", "-Command"])
+            .arg("New-Item -ItemType Junction -Path $env:CRONY_TEST_LINK -Target $env:CRONY_TEST_TARGET -ErrorAction Stop | Out-Null")
+            .env("CRONY_TEST_LINK", link)
+            .env("CRONY_TEST_TARGET", target);
+        command
+    }
+}
+
+#[cfg(test)]
 mod tests {
+    use super::fixture_support::payload;
     use super::*;
     use std::fs;
 
@@ -493,14 +518,6 @@ mod tests {
                 return;
             }
             fs::remove_dir_all(&self.root).expect("remove owned dependency fixture");
-        }
-    }
-
-    fn payload(path: &str, content: &str) -> VerifiedDependencyFile {
-        VerifiedDependencyFile {
-            path: path.to_owned(),
-            sha256: hex::encode(Sha256::digest(content.as_bytes())),
-            content: content.to_owned(),
         }
     }
 
@@ -1147,11 +1164,7 @@ mod tests {
 
     #[cfg(windows)]
     fn junction(target: &Path, link: &Path) {
-        let status = std::process::Command::new("powershell.exe")
-            .args(["-NoProfile", "-NonInteractive", "-Command"])
-            .arg("New-Item -ItemType Junction -Path $env:CRONY_TEST_LINK -Target $env:CRONY_TEST_TARGET -ErrorAction Stop | Out-Null")
-            .env("CRONY_TEST_LINK", link)
-            .env("CRONY_TEST_TARGET", target)
+        let status = fixture_support::junction_command(target, link)
             .status()
             .expect("execute junction fixture creation");
         assert!(
