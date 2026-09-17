@@ -456,6 +456,26 @@ acceptance. Windows symlink capability, OS parent-tree isolation, native
 browser/full-stack/R4 and owner approval remain explicit gates; a merge or
 passing unit suite cannot satisfy them.
 
+## Pinned run-activity integration follow-up
+
+The next bounded candidate merges only
+`30ec3fab6acd566cc1fc1e574c8a6343d0ce0596` into local merge
+`18c68f48517881cf2e0373c7a95a7cb8d5812f14`. The incoming PR265
+changes add selected-run activity and exact evidence navigation, plus the
+narrow finished-provider review exception during reconnect and grace expiry.
+The store auto-merge has no textual conflicts. Handoff lineage, cost admission,
+checkpoint-review provenance and independent review authorization remain
+separate boundaries; this follow-up does not merge PR294 or begin issue 48.
+
+Fresh web tests/build/lint, actual-migration review and handoff regressions,
+and rebuilt offline fixture receipts belong to
+`C:\Repos\ecorp\temp\evidence\issue297-main-30ec3fa-integration-20260917`.
+That bundle records the exact staged tree, dependency setup and any validation
+failures. Earlier source and browser receipts remain historical, not evidence
+for the new candidate. Neither a read-only activity projection nor a preserved
+review wait grants completion, execution, recovery or owner acceptance.
+The symlink-privilege and actual parent-tree isolation gates remain explicit.
+
 ## Independent review
 
 A separate read-only code-review agent examined the candidate's artifact,

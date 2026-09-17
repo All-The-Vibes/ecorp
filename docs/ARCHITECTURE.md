@@ -417,6 +417,15 @@ or discard events.
 Server startup recovery is explicitly single-owner. Secondary replicas and production-auth probes
 disable it so they cannot place another server's healthy runners into grace.
 
+A finished ordinary provider awaiting a durable outcome review no longer has a live process
+claim. Reconnect and grace-expiry loss handling preserve that wait only when the run, task,
+mission and pending review agree, the review gate matches the task policy, and the latest
+same-scope termination/uncertainty receipt positively confirms provider termination. Pending
+tool actions, later teardown uncertainty, protected stops, quarantine and provider-free modes
+receive no ordinary-provider exception. The existing checkpoint-review provenance check stays
+separate. This preserves review state, not decision or recovery authority; the normal reviewer
+role, room and requester-exclusion checks still apply.
+
 ## Worktree lifecycle
 
 Every initial run receives a linked Git worktree under the configured runner workspace and a

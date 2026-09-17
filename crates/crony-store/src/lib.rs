@@ -47,6 +47,8 @@ mod budget_checkpoint_tests;
 #[cfg(test)]
 mod factory_recovery_loss_tests;
 #[cfg(test)]
+mod finished_review_tests;
+#[cfg(test)]
 mod mission_context_tests;
 #[cfg(test)]
 mod steering_lock_tests;
@@ -11497,7 +11499,9 @@ async fn mark_runner_runs_lost_tx(
     for row in rows {
         let run_id: Uuid = row.get("run_id");
         let corp_id: Uuid = row.get("corp_id");
-        if checkpoint_retention::review_ready_tx(tx, corp_id, run_id).await? {
+        if finished_provider_review_tx(tx, corp_id, run_id).await?
+            || checkpoint_retention::review_ready_tx(tx, corp_id, run_id).await?
+        {
             // The verifier finished. Its durable human review does not require
             // an active provider claim and must survive runner/server reconnect.
             continue;
@@ -11581,6 +11585,56 @@ async fn mark_runner_runs_lost_tx(
         }
     }
     Ok(events)
+}
+
+/// A finished provider awaiting its durable outcome review has no live process
+/// claim to reconcile. This only preserves state; it grants neither a decision
+/// nor checkpoint/recovery authority. The loss caller holds run/task/mission
+/// locks, and the existing decision path still enforces current authorization.
+async fn finished_provider_review_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    corp_id: Uuid,
+    run_id: Uuid,
+) -> Result<bool> {
+    sqlx::query_scalar(
+        r#"
+        SELECT EXISTS (
+          SELECT 1 FROM runs run
+          JOIN tasks task ON task.id=run.task_id AND task.corp_id=run.corp_id
+          JOIN missions mission ON mission.id=task.mission_id AND mission.corp_id=run.corp_id
+          JOIN verification_requests request
+            ON request.run_id=run.id AND request.corp_id=run.corp_id AND request.task_id=task.id
+          JOIN LATERAL (
+            SELECT event.type, event.payload, event.room_id, event.correlation_id
+            FROM events event
+            WHERE event.corp_id=run.corp_id AND event.aggregate_type='run'
+              AND event.aggregate_id=run.id
+              AND event.type IN ('run.session_terminated','run.teardown_uncertain')
+            ORDER BY event.seq DESC LIMIT 1
+          ) termination ON true
+          WHERE run.id=$1 AND run.corp_id=$2 AND run.execution_mode='provider'
+            AND run.status='waiting_for_approval' AND run.verification_status='waiting_for_approval'
+            AND task.status='awaiting_approval' AND task.verification_status='waiting_for_approval'
+            AND mission.status='running' AND request.status='pending'
+            AND request.gate=task.verification_policy->'manual_gate'
+            AND request.gate_type=task.verification_policy#>>'{manual_gate,type}'
+            AND run.breaker_stage NOT IN ('suspend','stop')
+            AND run.workspace_disposition IS DISTINCT FROM 'quarantined'
+            AND termination.type='run.session_terminated'
+            AND termination.payload->'provider_process_alive'='false'::jsonb
+            AND termination.room_id=mission.room_id AND termination.correlation_id=mission.id
+            AND NOT EXISTS (
+              SELECT 1 FROM action_approvals action
+              WHERE action.corp_id=run.corp_id AND action.run_id=run.id AND action.status='pending'
+            )
+        )
+        "#,
+    )
+    .bind(run_id)
+    .bind(corp_id)
+    .fetch_one(&mut **tx)
+    .await
+    .context("check finished provider outcome review before runner loss")
 }
 
 async fn mission_creation_admission_tx(
