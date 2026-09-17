@@ -459,6 +459,49 @@ Replaying the same request after a lost response or controller restart should re
 work item and mission. Do not create a replacement issue or second mission merely because the
 controller's response was lost.
 
+### Cost admission and legacy claims
+
+Cost budgets are **micro-US dollars**, not tokens. The existing ceiling is 10,000,000
+microusd ($10) per task and 50,000,000 ($50) per graph. A larger graph ceiling does not
+authorize a larger task. `single` and the four deterministic verification strategies assign the
+entire budget to one task: `--strategy single --budget-cost-microusd 20000000` is rejected
+before any GitHub quota query, Project discovery, claim, or mutation, in both dry-run and execution.
+
+Allocation is shared by the CLI, planner, and authoritative claim admission:
+
+| Strategy | Exact existing allocation | Valid explicit aggregate cost (microusd) |
+| --- | --- | --- |
+| `single`, `verification-matrix`, `verification-failure`, `human-approval`, `independent-review` | One task receives the total | 1–10,000,000 |
+| `parallel-specialists` | Each of two specialists receives `max(1, floor(total * 2 / 7))`; synthesis receives the remainder, minimum 1 | 3–23,333,332 |
+| `studio-swarm` | Each of three specialists receives `max(1, floor(total * 3 / 20))`; integration receives the remainder | 4–18,181,816 |
+
+Every allowed strategy in a new claim policy must support its recorded cost. Unknown strategies,
+non-integer costs, unfundable splits and per-task overflow are rejected, not clamped or silently
+redistributed. Small explicit budgets, defaults, token limits, attempts, and loop breakers are
+unchanged. The full existing preflight still checks staffing, source, verifier, room and other
+authority before normal intake; cost admission does not replace it.
+
+Historical policies remain readable and immutable. Broad polling skips an impossible **claimed
+or blocked item with no mission** with an actionable diagnostic. To reconcile one, use the normal
+Factory invocation with valid current options and the exact `--issue N --dry-run`. Retain the
+original `--workspace-connection-id` choice (including omission) and `--source-base-ref`; mismatches
+are rejected before either preview or reconciliation and checked again after refresh. The preview
+reports the invalid persisted policy and proposes terminal failure, not a new plan. Removing
+`--dry-run` for that exact issue asks the existing claim boundary to record `failed` through the
+existing `factory.state_changed` audit and `factory_operations` journal, atomically releasing its
+lease without granting a token or creating a mission. This path does not resolve/pin a legacy
+source commit, change budgets, or mutate GitHub. It preserves the exact source and policy, and
+requires the current owner or an expired lease plus current operator/connection authorization.
+Changed source or policy is rejected. Replays do not duplicate the audit; ordinary polling cannot
+reopen the terminal item.
+
+Other clients get the same terminal/no-token reconciliation result when reclaiming that exact
+legacy policy with a fresh idempotency key. Replaying an old, still-unmaterialized invalid claim
+does not return execution authority: it requests a fresh reconciliation key. Already-materialized
+and terminal historical work is not retroactively subjected to prospective cost admission.
+Preserve the failed item for operator review; do not edit its policy rows, reset its state, or
+create replacement work just to bypass the failure.
+
 ### Supply an explicit verifier policy
 
 A verification policy is authority-bearing. Store it outside agent-readable secret locations and
