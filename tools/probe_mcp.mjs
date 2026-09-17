@@ -166,7 +166,9 @@ export function snapshotCounts(payload, corpId) {
   return counts
 }
 
-export async function probeMcp({ env = process.env, timeoutMs = 15_000 } = {}) {
+// Internal consumers may project the authorized payload, but the probe CLI and
+// probeMcp API expose only the fixed metadata report below.
+export async function readMcpSnapshot({ env = process.env, timeoutMs = 15_000 } = {}) {
   const config = probeConfiguration(env, timeoutMs)
   const client = stdioClient(config)
   const started = performance.now()
@@ -188,7 +190,8 @@ export async function probeMcp({ env = process.env, timeoutMs = 15_000 } = {}) {
     }
     const result = await client.call('tools/call', { name: 'crony_snapshot', arguments: {} })
     if (result?.isError) throw new Error('Native MCP snapshot tool reported a failure')
-    return {
+    const payload = result?.structuredContent
+    const report = {
       schema_version: 1,
       checked_at: new Date().toISOString(),
       protocol_version: MCP_PROTOCOL_VERSION,
@@ -197,14 +200,19 @@ export async function probeMcp({ env = process.env, timeoutMs = 15_000 } = {}) {
       corp_scope_verified: true,
       access_token_supplied: Boolean(config.childEnv.CRONY_ACCESS_TOKEN),
       counts_scope: 'returned_snapshot_collection_lengths',
-      counts: snapshotCounts(result?.structuredContent, config.corpId),
+      counts: snapshotCounts(payload, config.corpId),
       response_bytes: client.responseBytes(),
       duration_ms: Math.round(performance.now() - started),
       scope: 'native-stdio-to-existing-api-read; no provider execution or production-auth claim',
     }
+    return { payload, report }
   } finally {
     await client.close()
   }
+}
+
+export async function probeMcp(options = {}) {
+  return (await readMcpSnapshot(options)).report
 }
 
 async function main() {

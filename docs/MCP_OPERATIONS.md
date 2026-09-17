@@ -3,6 +3,9 @@
 ECorp ships `crony-mcp` in `crates/crony-gateways`. It is a stdio adapter over the existing
 Corp-scoped server APIs, with no independent task store or execution loop. The root `.mcp.json`
 configures its read-only mode for clients that support this configuration format.
+Codex uses the project-scoped `.codex/config.toml` instead. It forwards the four explicit host
+connection variables and exposes only `crony_snapshot`, with native startup/tool timeouts.
+Both configurations start the same reviewed gateway; they do not contain identities or credentials.
 
 Build the trusted checkout with the repository's pinned Rust toolchain:
 
@@ -15,6 +18,15 @@ directory using Cargo's native `install --locked --path crates/crony-gateways --
 and `--root` option. Do not resolve an unknown executable from the current directory. Rebuild
 when the gateway contract changes; an old binary that rejects `--read-only` is not a reason to
 remove the mode. Client approval of an MCP server remains distinct from ECorp tenant authority.
+
+Codex loads project configuration only from trusted projects. After installing the native binary
+and setting the routing variables, inspect registration with `codex mcp get ecorp --json` and
+connection status through Codex's `/mcp` view. Project trust and a registered server are not proof
+of an authorized API read; use the explicit probe below to establish that path. See the
+[official Codex MCP configuration reference](https://developers.openai.com/codex/mcp/).
+For linked Git worktrees, Codex may request trust for the underlying repository root. Follow the
+exact project named by Codex's disabled-layer diagnostic; trusting only the linked path may leave
+its project configuration disabled. Do not copy another operator's identities or user configuration.
 
 ## Connection authority
 
@@ -55,6 +67,9 @@ Use `tools/probe_mcp.mjs` with its explicit binary and routing options to verify
 the read-only tool list, and an authorized snapshot. The probe is bounded, reads only the selected
 server, and emits whitelisted metadata/counts instead of the private snapshot. A successful probe
 proves that stdio-to-API path for the supplied identity, not a provider run or completed mission.
+Read-only native HTTP bodies are capped at 16 MiB before JSON decoding; the probe separately caps
+serialized stdio output. An oversized Corp snapshot fails inspection rather than returning a
+truncated projection or treating omitted objects as absent.
 
 Set `CRONY_MCP_BINARY` to the absolute path of the built gateway, alongside the routing variables
 above, then run:
@@ -72,3 +87,8 @@ For operational interpretation, the
 [ecorp-operations skill](../.github/skills/ecorp-operations/SKILL.md) describes how to correlate
 mission, runner, budget, approval and verifier state without substituting an agent completion
 claim for accepted evidence.
+
+For a selected run and downloaded artifact checks, use the
+[operation observation exporter and online consumer](OPERATION_OBSERVATIONS.md). They reuse this
+native read-only snapshot and the server's exact context/download endpoints, while keeping
+bounded history, persisted acceptance and future action authority explicit.

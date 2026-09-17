@@ -37,6 +37,9 @@ Distinguish these states in the answer:
 When source or artifact evidence is needed, use the existing authorized download/verification
 path documented in [Architecture](../../../docs/ARCHITECTURE.md). Do not infer successful tests
 from an artifact name or substitute a historical receipt for the current run's verifier policy.
+For a run-specific observation, follow [operation observations](../../../docs/OPERATION_OBSERVATIONS.md).
+Recheck a received observation against fresh native state before using its outcome. An input-file
+hash is not a signature, and an accepted run with incomplete check history is not full check evidence.
 
 ## When the user requests a change
 

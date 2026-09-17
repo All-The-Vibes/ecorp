@@ -8,6 +8,10 @@ use uuid::Uuid;
 pub const MCP_PROTOCOL_VERSION: &str = "2025-06-18";
 pub const ACP_PROTOCOL_VERSION: u32 = 1;
 pub const A2A_PROTOCOL_VERSION: &str = "1.0";
+/// Read-only MCP caps each raw HTTP response at 16 MiB before JSON decoding,
+/// including unsuccessful responses. The probe separately bounds stdio output.
+pub const MCP_READ_ONLY_MAX_RESPONSE_BYTES: usize = 16 * 1024 * 1024;
+const READ_ONLY_RESPONSE_TOO_LARGE: &str = "read-only MCP response exceeded the 16 MiB body limit";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum McpAccess {
@@ -23,6 +27,7 @@ pub struct GatewayClient {
     pub actor_id: Uuid,
     pub access_token: Option<String>,
     http: Client,
+    response_byte_limit: Option<usize>,
 }
 
 impl GatewayClient {
@@ -38,6 +43,7 @@ impl GatewayClient {
             actor_id,
             access_token,
             http: Client::new(),
+            response_byte_limit: None,
         }
     }
 
@@ -70,6 +76,7 @@ impl GatewayClient {
                 .redirect(reqwest::redirect::Policy::none())
                 .build()
                 .context("configure read-only MCP transport")?;
+            self.response_byte_limit = Some(MCP_READ_ONLY_MAX_RESPONSE_BYTES);
         }
         Ok(self)
     }
@@ -87,10 +94,14 @@ impl GatewayClient {
         }
         let response = request.send().await.context("send ECorp API request")?;
         let status = response.status();
-        let value = response
-            .json::<Value>()
-            .await
-            .context("decode ECorp API response")?;
+        let value = if let Some(limit) = self.response_byte_limit {
+            bounded_response_json(response, limit).await?
+        } else {
+            response
+                .json::<Value>()
+                .await
+                .context("decode ECorp API response")?
+        };
         if !status.is_success() {
             return Err(anyhow!("ECorp API returned {status}: {value}"));
         }
@@ -151,6 +162,23 @@ pub fn mcp_capabilities() -> Value {
 
 pub fn mcp_tools() -> Value {
     mcp_tools_with_access(McpAccess::ReadWrite)
+}
+
+async fn bounded_response_json(mut response: reqwest::Response, limit: usize) -> Result<Value> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > limit as u64)
+    {
+        return Err(anyhow!(READ_ONLY_RESPONSE_TOO_LARGE));
+    }
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response.chunk().await.context("read ECorp API response")? {
+        if chunk.len() > limit - bytes.len() {
+            return Err(anyhow!(READ_ONLY_RESPONSE_TOO_LARGE));
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    serde_json::from_slice(&bytes).context("decode ECorp API response")
 }
 
 pub fn mcp_tools_with_access(access: McpAccess) -> Value {

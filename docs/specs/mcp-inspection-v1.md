@@ -36,6 +36,12 @@ The client probe validates the negotiated protocol and the exact read-only catal
 requesting a snapshot. A successful transport without an authorized snapshot is not a passing
 inspection probe.
 
+The read-only native transport accepts at most 16 MiB of HTTP body bytes before decoding JSON.
+It rejects oversized declared lengths immediately and counts streamed/chunked bytes as they arrive,
+including non-success responses. A response at the limit can still exceed the probe's separately
+bounded serialized stdio envelope. This limit narrows inspection only; unrestricted integrations
+retain their existing transport behavior.
+
 ## Probe boundary
 
 The probe requires an absolute, trusted binary path and explicit server/Corp/actor routing.
@@ -57,6 +63,8 @@ OS isolation, a provider run, or accepted mission completion.
 5. Authentication/API failures disclose no private response content in probe output.
 6. A stalled peer triggers the bounded timeout and owned-process shutdown path.
 7. A probe of an existing real ECorp server preserves state and records its actual assurance scope.
+8. Oversized declared and streamed HTTP bodies are rejected before JSON decoding, with no raw
+   response content in diagnostics; the exact native byte limit and unrestricted compatibility pass.
 8. A redirect cannot reach a second origin or produce a successful probe; unrestricted transport
    compatibility remains intact.
 9. Missing read-only routing fails at startup without HTTP; the legacy unrestricted server

@@ -80,7 +80,7 @@ jobs:
       - name: Verify native read-only MCP protocol and probe
         env:
           CRONY_MCP_TEST_BINARY: ${{ github.workspace }}/target/debug/crony-mcp
-        run: node --test tools/probe_mcp.test.mjs
+        run: node --test tools/probe_mcp.test.mjs tools/operation_receipt.test.mjs tools/consume_operation_receipt.test.mjs
       - name: Start control and execution planes
         shell: bash
         run: |

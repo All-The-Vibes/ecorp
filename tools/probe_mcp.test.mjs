@@ -10,6 +10,9 @@ const ACTOR_ID = '00000000-0000-4000-8000-000000000011'
 const binary = process.env.CRONY_MCP_TEST_BINARY
 const nativeOptions = { skip: !binary && 'Set CRONY_MCP_TEST_BINARY to the compiled native MCP gateway' }
 const PRIVATE_MARKER = 'fixture-private-content-not-for-the-probe-report'
+const READ_ONLY_HTTP_BODY_LIMIT = 16 * 1024 * 1024
+const READ_ONLY_HTTP_BODY_ERROR = 'read-only MCP response exceeded the 16 MiB body limit'
+const SNAPSHOT_FRAME = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'crony_snapshot', arguments: {} } }
 
 function configuration(server = 'http://127.0.0.1:8791') {
   return {
@@ -228,4 +231,71 @@ test('compiled read-only startup requires every routing variable before serving 
   const compatible = await nativeFrames(configuration(api.origin), initialize, false, ['CRONY_SERVER_HTTP'])
   assert.equal(compatible[0].result.protocolVersion, '2025-06-18')
   assert.equal(api.requests.length, 0)
+})
+
+for (const statusCode of [200, 403]) {
+  test(`compiled native read-only HTTP body rejects oversized declared length before end (${statusCode})`, nativeOptions, async (t) => {
+    const api = await fixture(t, (_request, response) => {
+      response.writeHead(statusCode, { 'content-type': 'application/json', 'content-length': String(READ_ONLY_HTTP_BODY_LIMIT + 1) })
+      response.flushHeaders()
+      // Keep the body open: a post-decode or timeout-only bound cannot pass.
+    })
+    const started = performance.now()
+    const replies = await nativeFrames(configuration(api.origin), [SNAPSHOT_FRAME])
+    assert.deepEqual(replies, [{ jsonrpc: '2.0', id: 1, error: { code: -32000, message: READ_ONLY_HTTP_BODY_ERROR } }])
+    assert.ok(performance.now() - started < 3000, 'declared oversize must fail before the fixture timeout')
+    assert.equal(api.requests.length, 1)
+  })
+
+  test(`compiled native read-only HTTP body rejects streamed overflow before end (${statusCode})`, nativeOptions, async (t) => {
+    const api = await fixture(t, (_request, response) => {
+      response.writeHead(statusCode, { 'content-type': 'application/json', 'transfer-encoding': 'chunked' })
+      response.write(`{"private":"${PRIVATE_MARKER}","padding":"`)
+      const chunk = Buffer.alloc(64 * 1024, 'x')
+      for (let sent = 0; sent < READ_ONLY_HTTP_BODY_LIMIT; sent += chunk.length) response.write(chunk)
+      // No Content-Length and no JSON/body terminator. The limit must be
+      // enforced while streaming, including for an unsuccessful HTTP status.
+    })
+    const started = performance.now()
+    const replies = await nativeFrames(configuration(api.origin), [SNAPSHOT_FRAME])
+    assert.deepEqual(replies, [{ jsonrpc: '2.0', id: 1, error: { code: -32000, message: READ_ONLY_HTTP_BODY_ERROR } }])
+    assert.ok(performance.now() - started < 3000, 'streamed overflow must fail before the fixture timeout')
+    assert.equal(JSON.stringify(replies).includes(PRIVATE_MARKER), false)
+    assert.equal(api.requests.length, 1)
+  })
+}
+
+test('compiled native HTTP body accepts the inclusive read-only limit and preserves unrestricted transport', nativeOptions, async (t) => {
+  const compact = JSON.stringify(snapshot())
+  for (const [readOnly, length] of [[true, READ_ONLY_HTTP_BODY_LIMIT], [false, READ_ONLY_HTTP_BODY_LIMIT + 1]]) {
+    const api = await fixture(t, (_request, response) => {
+      response.setHeader('content-type', 'application/json')
+      // Whitespace keeps the raw body large and the decoded/native output small.
+      response.end(' '.repeat(length - Buffer.byteLength(compact)) + compact)
+    })
+    const replies = await nativeFrames(configuration(api.origin), [SNAPSHOT_FRAME], readOnly)
+    assert.deepEqual(replies[0].result.structuredContent, snapshot())
+    assert.equal(api.requests.length, 1)
+  }
+})
+
+test('compiled native HTTP body preserves small successful and error response behavior', nativeOptions, async (t) => {
+  for (const readOnly of [true, false]) {
+    for (const statusCode of [200, 403]) {
+      const body = statusCode === 200 ? snapshot() : { error: PRIVATE_MARKER }
+      const api = await fixture(t, (_request, response) => {
+        response.writeHead(statusCode, { 'content-type': 'application/json' })
+        response.end(JSON.stringify(body))
+      })
+      const replies = await nativeFrames(configuration(api.origin), [SNAPSHOT_FRAME], readOnly)
+      if (statusCode === 200) assert.deepEqual(replies[0].result.structuredContent, body)
+      else {
+        assert.equal(replies[0].error.code, -32000)
+        assert.match(replies[0].error.message, /ECorp API returned 403/u)
+        const error = await probeMcp({ env: configuration(api.origin) }).then(() => null, value => value)
+        assert.ok(error instanceof Error)
+        assert.equal(error.message.includes(PRIVATE_MARKER), false)
+      }
+    }
+  }
 })
