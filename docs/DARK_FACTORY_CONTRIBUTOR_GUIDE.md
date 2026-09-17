@@ -58,8 +58,11 @@ review pull request
 
 The following boundaries are non-negotiable:
 
-- **GitHub Project #3 is planning authority.** The Project and linked issues hold current priority,
-  status, sequencing, ownership, dependencies, and release gates.
+- **GitHub Project #5 is the destination for new work.** [ECorp Build](https://github.com/orgs/All-The-Vibes/projects/5)
+  and linked issues hold new-work priority, status, sequencing, ownership, dependencies, and release
+  gates. Personal [Project #3](https://github.com/users/shyamsridhar123/projects/3) preserves existing
+  execution lineage. Claims, missions, recoveries, and publications retain their recorded authority
+  and identities. Project metadata does not authorize dispatch or provide shared claim authority.
 - **`docs/BACKLOG.md` is historical.** It seeded early milestones. It is not an active parallel
   backlog and must not receive new work items or status updates.
 - **The server is authoritative.** A browser, desktop client, controller process, or provider
@@ -81,7 +84,7 @@ same Corp, and the same claim namespace**: canonical GitHub Project owner, Proje
 Project item identity. Enroll separate runners into that shared Corp. Separate Corps on one server
 and co-located databases still have independent claim authority; reading the same GitHub Project
 does not give them a shared lock. Until the enforcement
-and multi-host acceptance in [#161](https://github.com/shyamsridhar123/ecorp/issues/161) are complete,
+and multi-host acceptance in [#161](https://github.com/All-The-Vibes/ecorp/issues/161) are complete,
 use that shared authority or explicitly disjoint eligible issue sets; do not rely on a Project
 status change as an atomic cross-machine fence.
 
@@ -271,20 +274,25 @@ Start succeed.
 
 ## Curate the live backlog
 
+The commands below target new work in organization Project #5. Before intake, verify the operator's
+configured repository and Project routing; these explicit examples do not change runtime defaults.
+Recover existing Project #3 work using its recorded authority and identities rather than retargeting
+an existing controller or claim.
+
 Inspect the live Project and issues before creating work:
 
 ```powershell
-gh project view 3 --owner shyamsridhar123 --format json
-gh project item-list 3 --owner shyamsridhar123 --limit 200 --format json
-gh issue list --state all --limit 200
-gh issue list --state all --search 'dark factory contributor'
+gh project view 5 --owner All-The-Vibes --format json
+gh project item-list 5 --owner All-The-Vibes --limit 200 --format json
+gh issue list --repo All-The-Vibes/ecorp --state all --limit 200
+gh issue list --repo All-The-Vibes/ecorp --state all --search 'dark factory contributor'
 ```
 
 For a new issue:
 
 1. Search for an existing issue with the same outcome or failure.
 2. Prefer one issue per independently verifiable outcome.
-3. Add the issue to Project #3; do not create a `BACKLOG.md` row.
+3. Add the issue to Project #5; do not create a `BACKLOG.md` row.
 4. Set the Project status to `Todo` while it is curated and not executing.
 5. Record explicit dependencies.
 6. Apply `factory:ready` only when the issue is genuinely dispatchable.
@@ -292,8 +300,8 @@ For a new issue:
 Add an existing issue to the Project:
 
 ```powershell
-$IssueUrl = 'https://github.com/shyamsridhar123/ecorp/issues/123'
-gh project item-add 3 --owner shyamsridhar123 --url $IssueUrl
+$IssueUrl = 'https://github.com/All-The-Vibes/ecorp/issues/123'
+gh project item-add 5 --owner All-The-Vibes --url $IssueUrl
 ```
 
 Use Project statuses consistently:
@@ -361,9 +369,9 @@ factory policy. Write scope, adapter/model selection, budgets, and verifier poli
 through the controller inputs described below. Other task-contract fields are materialized by the
 selected planning strategy and must be reviewed in the dry-run output.
 
-Before applying `factory:ready`, verify:
+Before applying `factory:ready` to new work in Project #5, verify:
 
-- the issue is open and present in Project #3 as `Todo`;
+- the issue is open and present in Project #5 as `Todo`;
 - the outcome and acceptance checklist are complete;
 - all explicit blockers are closed;
 - the repository and symbolic source base are correct;
@@ -379,7 +387,7 @@ Before applying `factory:ready`, verify:
 Apply the label only after curation:
 
 ```powershell
-gh issue edit 123 --add-label factory:ready
+gh issue edit 123 --repo All-The-Vibes/ecorp --add-label factory:ready
 ```
 
 A label and Project status are eligibility signals, not an execution lock. ECorp's durable claim,
@@ -420,9 +428,9 @@ $IssueNumber = 123
 cargo run -p crony-cli -- --server $ServerUrl factory `
   $CorpId `
   $ActorId `
-  --owner shyamsridhar123 `
-  --project-number 3 `
-  --repository shyamsridhar123/ecorp `
+  --owner All-The-Vibes `
+  --project-number 5 `
+  --repository All-The-Vibes/ecorp `
   --source-repository-path . `
   --source-base-ref HEAD `
   --publication-base-ref main `
@@ -525,9 +533,9 @@ pass it explicitly:
 cargo run -p crony-cli -- --server $ServerUrl factory `
   $CorpId `
   $ActorId `
-  --owner shyamsridhar123 `
-  --project-number 3 `
-  --repository shyamsridhar123/ecorp `
+  --owner All-The-Vibes `
+  --project-number 5 `
+  --repository All-The-Vibes/ecorp `
   --source-repository-path . `
   --source-base-ref HEAD `
   --publication-base-ref main `
@@ -740,7 +748,7 @@ tab, or provider transcript.
 
 ### Recovery after verifier or review failure
 
-[Issue #50](https://github.com/shyamsridhar123/ecorp/issues/50) remains a reminder that a durable
+[Issue #50](https://github.com/All-The-Vibes/ecorp/issues/50) remains a reminder that a durable
 API is not proof of an operable recovery path. Issue #113 adds the dedicated factory verification
 recovery flow and executable evidence for both supported modes.
 

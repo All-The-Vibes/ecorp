@@ -17,13 +17,19 @@ Before a non-trivial change, read:
 
 ## Planning source of truth
 
-[ECorp Build GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) is the live
-system for priorities, status, sequencing, ownership, dependencies, and release gates.
+[ECorp Build GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) is the
+source for new-work priorities, status, sequencing, ownership, dependencies, and release gates.
+Personal [Project #3](https://github.com/users/shyamsridhar123/projects/3) preserves existing
+claims, missions, recoveries, and publication history under their recorded authority and identities.
 [`docs/BACKLOG.md`](docs/BACKLOG.md) is historical seed material only. Do not add or maintain an
 active work item in `BACKLOG.md`.
 
-Search the Project and repository issues before creating work. Add every live issue to Project #3,
-record explicit dependencies, and use one independently verifiable outcome per issue.
+Search Project #5 and `All-The-Vibes/ecorp` issues before creating work. Add every new live issue
+to Project #5, record explicit dependencies, and use one independently verifiable outcome per issue.
+Before new intake, verify the operator's configured repository and Project routing. Project metadata
+does not authorize dispatch or unify claim authority across independent control planes; follow the
+[coordination requirements](#coordinate-independent-factories) below. Preserve existing execution
+lineage during recovery.
 
 ## Reuse the harness before building
 
@@ -75,14 +81,14 @@ Database co-location, separate Corps on one server, or a shared GitHub Project a
 claim authority.
 
 Prerequisites are Git, PowerShell 7.4+ on Windows, Rust 1.94 or newer, Node.js, pnpm 11.19.0, Docker with
-Compose, GitHub CLI authenticated for the repository and Project #3, and any provider entitlement
+Compose, GitHub CLI authenticated for `All-The-Vibes/ecorp` and Project #5, and any provider entitlement
 required for real-agent work.
 
 Clone ECorp and give the runner an execution root that is separate from the configured source
 checkout:
 
 ```powershell
-git clone https://github.com/shyamsridhar123/ecorp.git
+git clone https://github.com/All-The-Vibes/ecorp.git
 Set-Location ecorp
 
 $env:CRONY_SOURCE_REPOSITORY = (Get-Location).Path
@@ -173,7 +179,7 @@ Never place the token value in a prompt, command argument, log, issue, worktree,
 Do not share one contributor's Copilot identity with another contributor or with a producing agent.
 
 GitHub Copilot is the recommended real-provider path for contributor factory work. External CLI
-providers can have different isolation and process-lifecycle assurance; check current Project #3
+providers can have different isolation and process-lifecycle assurance; check current Project #5
 issues before treating them as equivalent.
 
 ### Choose attempts when planning new work
@@ -206,8 +212,10 @@ gate, not a conclusion from unit tests.
 
 ### Coordinate independent factories
 
-Personal factory hosts do not create personal backlogs. Every contributor must use the same Project
-#3 issue, status, revision, dependency, and `factory:ready` contract:
+Personal factory hosts do not create personal backlogs. For new work, contributors use the Project
+#5 issue, status, revision, dependency, and `factory:ready` contract. Existing Project #3 claims,
+missions, recoveries, and publications retain their recorded authority and identities; do not
+retarget them during new-work intake. For new work:
 
 - run only open `Todo` issues that are explicitly labeled `factory:ready`;
 - let the controller claim and revalidate the Project item before dispatch;
@@ -221,7 +229,7 @@ GitHub status and labels are not an atomic execution lock. Do not run unattended
 same backlog against independent ECorp databases. Use the same server/control plane, same Corp,
 and same claim namespace with separately enrolled runners, or explicitly partition the eligible
 issue sets. Merely placing databases on one host is not coordination. Automatic enforcement and multi-host
-acceptance remain tracked in [#161](https://github.com/shyamsridhar123/ecorp/issues/161); this guidance
+acceptance remain tracked in [#161](https://github.com/All-The-Vibes/ecorp/issues/161); this guidance
 does not claim that the gap is fixed.
 
 For a shared remote ECorp deployment instead of independent local factories, configure production
