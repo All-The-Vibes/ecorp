@@ -1,5 +1,8 @@
 # Repository readiness checks and measured CodeBlend results
 
+This is the first-phase report. See the [subsequent hardening and fresh assessment](2026-09-17-codeblend-hardening.md)
+for the latest implementation, runtime acceptance and measured scores.
+
 This contribution addresses [#317](https://github.com/All-The-Vibes/ecorp/issues/317).
 Its validated implementation is commit `f379f2577dcfb545efa253ea9d9e106e29359005`, based on
 `7eecd39e43720851512225844bf5d8158e8a944f`. The associated Git tree is
