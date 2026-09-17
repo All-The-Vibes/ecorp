@@ -6,8 +6,11 @@
 **Research snapshot:** August 29, 2026  
 **Architecture decision:** ECorp is a greenfield modular monolith; neither reviewed source project
 is the primary base.
-**Operational planning:** [ECorp Build GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3)
-and its linked issues are the current source of priorities, dependencies, and status.
+**Operational planning:** [ECorp Build GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5)
+and its linked issues are the current source of new-work priorities, dependencies, and status.
+Personal [Project #3](https://github.com/users/shyamsridhar123/projects/3) retains existing execution
+lineage and its recorded authority and identities. Operators must verify configured routing and
+coordinate through shared claim authority or disjoint eligible issue sets before new intake.
 `docs/BACKLOG.md` is historical seed material only.
 
 The sections below preserve the product contract and original sequencing. Future-tense language
@@ -31,7 +34,7 @@ plan into a claim that every planned surface has shipped.
 - Source-selected missions can now create mission-owned workers atomically with the accepted task
   graph. Unpinned workers retire after terminal missions only when their operational obligations
   are settled, while historical attribution remains. Dedicated crew-management controls remain
-  tracked in [#48](https://github.com/shyamsridhar123/ecorp/issues/48).
+  tracked in [#48](https://github.com/All-The-Vibes/ecorp/issues/48).
 - `studio-swarm` uses three real GitHub Copilot workers for visual, gameplay, and quality handoffs,
   then a fourth task for integration by the gameplay worker. Integration consumes exact signed,
   verified parent artifacts. The [studio report](evidence/2026-09-06-mission-staffing.md) separates
@@ -1162,7 +1165,7 @@ ecorp/
 Assumption: one primary developer using coding agents, with periodic design and security review.
 
 This section preserves the initial sequencing baseline. It is not the live implementation queue;
-use the implementation checkpoint and ECorp Build Project #3 issues for current status.
+use the implementation checkpoint and ECorp Build Project #5 issues for current status.
 
 ## Phase 0: foundation decisions — week 1
 
@@ -1471,9 +1474,12 @@ This scenario proves implementation, multiplayer delivery, agent coordination, h
 
 # 23. Operational planning
 
-ECorp Build GitHub Project #3 and its linked issues are the operational source of truth for current
-priorities, dependencies, and status. This document records the durable product and technical
-contract plus dated implementation checkpoints; it is not a live work queue.
+[ECorp Build GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) and its linked issues
+are the operational source of truth for new-work priorities, dependencies, and status. Existing
+Project #3 claims, missions, recoveries, and publications retain their recorded authority and identities.
+The planning destination does not itself authorize dispatch or provide shared claim authority.
+This document records the durable product and technical contract plus dated implementation
+checkpoints; it is not a live work queue.
 
 `docs/BACKLOG.md` remains historical seed material only. When an older checklist conflicts with a
 linked issue or current repository evidence, verify the implementation and update the Project or

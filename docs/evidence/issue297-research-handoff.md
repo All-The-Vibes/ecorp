@@ -433,6 +433,29 @@ build protocols, exact commands, complete case ledger and retained failures.
 Earlier checkpoint paths and receipts below remain historical, not fingerprints
 of this resumed tree.
 
+## Main integration candidate on September 17
+
+The source integration starts at published #297 commit
+`5c83b654f0657c199932dac127f036da91cd8861` and merges main
+`e4ea04d4fd4e55d6d8af1690cc0c1cc5a5873a7f`, including merged PR #307
+(#79 cost preflight and reconciliation). It does not merge draft PR #294.
+
+The sole text conflict placed two independent planner test families at the
+same insertion point. Both are retained. A combined planner regression now
+checks that exact research-file contracts retain #79 cost allocation and
+reject impossible or overflowing budgets. Startup validation and activation
+ordering, audited legacy reconciliation, steering lock order and the
+#297 signature/lineage/materialization boundaries remain separate.
+No migration, budget ceiling, authorization or isolation policy is changed.
+
+Fresh source-bound binary builds, tests and offline fixture receipts belong
+to `C:\Repos\ecorp\temp\evidence\issue297-main-integration-20260917`.
+Earlier receipts describe their original trees and remain unchanged.
+The new report distinguishes staged source verification from live product
+acceptance. Windows symlink capability, OS parent-tree isolation, native
+browser/full-stack/R4 and owner approval remain explicit gates; a merge or
+passing unit suite cannot satisfy them.
+
 ## Independent review
 
 A separate read-only code-review agent examined the candidate's artifact,
