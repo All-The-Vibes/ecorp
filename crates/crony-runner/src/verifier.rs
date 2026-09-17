@@ -1114,6 +1114,74 @@ mod tests {
         }
     }
 
+    #[cfg(windows)]
+    #[test]
+    fn issue140_windows_launcher_policy_preserves_launcher_arguments() {
+        use std::ffi::OsStr;
+
+        for (program, expected_policy, expected_args) in [
+            (
+                "py",
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                vec![OsStr::new("original")],
+            ),
+            (
+                "py.exe",
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                vec![OsStr::new("original")],
+            ),
+            (
+                "PY.EXE",
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                vec![OsStr::new("original")],
+            ),
+            (
+                "Python",
+                Some(VerifierCacheSuppression::PythonInterpreter),
+                vec![OsStr::new("-B"), OsStr::new("original")],
+            ),
+            (
+                "PYTHON3.EXE",
+                Some(VerifierCacheSuppression::PythonInterpreter),
+                vec![OsStr::new("-B"), OsStr::new("original")],
+            ),
+            (
+                "Python3.12.ExE",
+                Some(VerifierCacheSuppression::PythonInterpreter),
+                vec![OsStr::new("-B"), OsStr::new("original")],
+            ),
+            ("pytest.exe", None, vec![OsStr::new("original")]),
+            ("python-wrapper.exe", None, vec![OsStr::new("original")]),
+            ("python3.bad.exe", None, vec![OsStr::new("original")]),
+            ("python3..exe", None, vec![OsStr::new("original")]),
+            ("python3.12x.exe", None, vec![OsStr::new("original")]),
+        ] {
+            assert_eq!(automatic_cache_suppression(program), expected_policy);
+
+            let mut command = Command::new(program);
+            apply_cache_suppression(&mut command, expected_policy);
+            command.arg("original");
+
+            assert_eq!(
+                command.as_std().get_args().collect::<Vec<_>>(),
+                expected_args
+            );
+
+            let env = command.as_std().get_envs().collect::<Vec<_>>();
+            match expected_policy {
+                Some(VerifierCacheSuppression::PythonInterpreter)
+                | Some(VerifierCacheSuppression::PythonEnvironment) => {
+                    assert_eq!(
+                        env,
+                        vec![(OsStr::new("PYTHONDONTWRITEBYTECODE"), Some(OsStr::new("1")))]
+                    );
+                }
+                None => assert!(env.is_empty()),
+                _ => unreachable!(),
+            }
+        }
+    }
+
     #[tokio::test]
     #[ignore = "requires Node.js 22.8+; run explicitly"]
     async fn issue140_node_compile_cache_opt_in_uses_native_control() {

@@ -166,3 +166,22 @@ fixture supports Linux/Windows, not macOS; the next hosted run must verify that
 integration path. No new review comments were present; both original threads
 remained resolved. The earlier independent Copilot review applies to the capability
 change; this small diagnostic correction was inspected and tested locally.
+
+
+## Direct admission regressions (September 17 review)
+
+The follow-up on base `43e4c35fe6410c2b12a99c2b3f1f079df1864bb1` adds tests and CI coverage; it does not change production admission behavior.
+
+- Windows-only assertions cover `py`, `py.exe`, `PY.EXE`, mixed-case Python names and versioned `.exe` names. They check the automatic policy, exact argument prefix and environment, plus rejected lookalikes. The existing Windows runner CI job runs this test; macOS execution does not validate the Windows-gated branch.
+- Five opt-in server tests use actual migrations in SQLx-owned PostgreSQL databases. They invoke the recovery decoder, durable command dispatcher and resume handler with real store transitions. Unsupported explicit controls produce no assignment or secret grant, preserve the source run and settle the replacement before dispatch. A second recovery sweep does not duplicate the failure event.
+- Capable recovery controls reach deliberately invalid secret/artifact preparation inputs; capable resume controls reach dependency and secret failures. These controls prevent an unrelated earlier rejection from satisfying the legacy-runner assertions. The tests verify preparation ordering, not successful provider execution, artifact transfer, or HTTP transport.
+- The CI integration job explicitly runs these otherwise ignored tests against its owned PostgreSQL service. Locally, all five passed with PostgreSQL 17 on macOS.
+
+Reproduction with an explicitly owned SQLx maintenance database:
+
+```sh
+DATABASE_URL="$OWNED_QA_DATABASE_URL" cargo test -p crony-server cache_admission_lifecycle_tests --locked --offline -- --ignored --test-threads=1
+```
+
+On Windows, the ordinary `cargo test -p crony-runner` suite includes
+`issue140_windows_launcher_policy_preserves_launcher_arguments` without needing an installed Python launcher.

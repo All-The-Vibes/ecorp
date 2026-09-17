@@ -1,5 +1,8 @@
 mod artifacts;
 mod auth;
+#[cfg(test)]
+#[path = "cache_admission_tests.rs"]
+mod cache_admission_lifecycle_tests;
 mod dependency_source;
 #[cfg(test)]
 mod factory_connection_tests;
