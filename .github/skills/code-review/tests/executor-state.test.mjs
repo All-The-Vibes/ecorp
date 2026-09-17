@@ -271,6 +271,126 @@ test('EX-SAMECODE-FEEDBACK: code/base/source/branch/target changes cannot claim 
   run(dir, 'feedback', feedbackInput(freshGate, { reviewerId: `${gate.claimId}-gatechecker` }), false)
 })
 
+// Full synthetic old-policy lineage, including its accepted conflicting publication.
+// Historical events replay unchanged; only new admissions use the current fence.
+const oldTargetPublication = (baseRef) => {
+  const { dir, claim } = historicalClaim()
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('feedback-target'))
+  for (const target of new Set(['main', baseRef])) {
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, baseRef: target }] })
+  }
+  const snapshot = { ...claim.snapshot, baseRef, head: sha(12) }
+  bindRubric(dir, snapshot)
+  const publication = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+    snapshot, reviewers: reviewers({ ...claim, head: snapshot.head }),
+    push: { repo, branch: snapshot.branch, before: claim.head, head: snapshot.head,
+      sourceRef: 'synthetic-old-policy-push.json', pushedAt: new Date().toISOString() } }
+  appendHistorical(dir, 'published', publication)
+  const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  const active = run(dir, 'show').active
+  assert.equal(active.snapshot.baseRef, undefined)
+  assert.equal(active.effectiveBaseRef, 'main')
+  assert.equal(next(dir).action, baseRef === 'main' ? 'audit' : 'reconcile')
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  run(dir, 'save', saveInput(active, { phase: 'blocked',
+    evidence: ['retained-target-conflict.json'], reason: 'Retain publication for reconciliation' }))
+  const feedbackSnapshot = { ...snapshot, reviewKey: key(2) }
+  run(dir, 'sync', { owner, complete: true, prs: [feedbackSnapshot] })
+  return { dir, claim: active, receipts: publication.reviewers, snapshot: feedbackSnapshot }
+}
+const appendHistorical = (dir, command, input) => {
+  const events = JSON.parse(readFileSync(join(dir, 'state.json'), 'utf8')).events
+  events.push({ version: 2, id: `old-accepted-${command}-${events.length}`,
+    at: new Date().toISOString(), command, input,
+    ...(command === 'next' ? { admission: 'unclaimed-round' } : {}) })
+  writeJournal(dir, events)
+}
+
+for (const baseRef of ['release', 'main']) {
+  test(`EX-TARGET-FEEDBACK-BASIS: old publication on ${baseRef} cannot launder a retained target conflict`, () => {
+    const { dir, claim, receipts, snapshot } = oldTargetPublication(baseRef)
+    const before = run(dir, 'show'), bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+    if (baseRef === 'release') {
+      assert.match(run(dir, 'next', { owner, feedbackNumber: 1 }, false).error, /publication.*source\/target/)
+      run(dir, 'next', { owner, gateNumber: 1 }, false)
+      run(dir, 'enable', { owner, acceptanceProof: proof(claim, receipts, snapshot) }, false)
+      assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+      assert.deepEqual(run(dir, 'show'), before, 'retain conflict, evidence, counters and original history')
+      return
+    }
+    const gate = feedbackClaim(dir)
+    run(dir, 'feedback', feedbackInput(gate))
+    const ciGate = run(dir, 'next', { owner, gateNumber: 1 })
+    run(dir, 'save', saveInput(ciGate, { evidence: ['current-CI-target-gates.json'] }))
+    run(dir, 'enable', { owner, acceptanceProof: proof(claim, receipts, snapshot) })
+    const state = run(dir, 'show')
+    assert.equal(state.enabled, true)
+    assert.equal(state.prs['1'].blockedClaim, null)
+    assert.equal(state.prs['1'].cycles[0].rounds, before.prs['1'].cycles[0].rounds)
+    assert.equal(state.prs['1'].cycles[0].noProgress, before.prs['1'].cycles[0].noProgress)
+    assert.deepEqual(state.wakes, before.wakes)
+    assert.deepEqual(state.prs['1'].publications, before.prs['1'].publications)
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'))).events.slice(0, before.events),
+      JSON.parse(bytes).events)
+  })
+}
+
+for (const stale of [false, true]) {
+  test(`EX-TARGET-FEEDBACK-BASIS: retained unsafe feedback claim stays readable, stale=${stale}, but cannot complete`, () => {
+    const { dir, snapshot } = oldTargetPublication('release')
+    appendHistorical(dir, 'next', { owner, feedbackNumber: 1 })
+    const gate = run(dir, 'show').active
+    assert.equal(gate.action, 'feedback', 'old admitted claim remains readable')
+    if (stale) run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(3) }] })
+    const before = run(dir, 'show'), bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+    for (const disposition of ['NO_ACTIONABLE_FINDINGS', 'ACTIONABLE_FINDINGS']) {
+      assert.match(run(dir, 'feedback', feedbackInput(gate, { disposition }), false).error,
+        /publication.*source\/target|stale feedback/)
+      assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+    }
+    run(dir, 'feedback', feedbackInput(gate, { disposition: 'BLOCKED' }))
+    const state = run(dir, 'show'), p = state.prs['1'], old = before.prs['1']
+    assert.equal(state.active, null, 'read-only blocked receipt still releases the writer')
+    assert.equal(p.cycles[0].completion, null)
+    assert.equal(p.cycles[0].technicalVerdict, null)
+    assert.deepEqual(p.blockedClaim, old.blockedClaim)
+    assert.deepEqual(p.publications, old.publications)
+    assert.equal(p.cycles[0].rounds, old.cycles[0].rounds)
+    assert.equal(p.cycles[0].noProgress, old.cycles[0].noProgress)
+    assert.ok(p.cycles[0].evidence.includes('retained-target-conflict.json'))
+    assert.deepEqual(state.wakes, before.wakes)
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'))).events.slice(0, before.events),
+      JSON.parse(bytes).events)
+  })
+}
+
+test('EX-TARGET-FEEDBACK-BASIS: old accepted unsafe completion and enable replay but grant no new authority', () => {
+  const { dir, claim, receipts, snapshot } = oldTargetPublication('release')
+  appendHistorical(dir, 'next', { owner, feedbackNumber: 1 })
+  const gate = run(dir, 'show').active
+  appendHistorical(dir, 'feedback', feedbackInput(gate))
+  const ciGate = run(dir, 'next', { owner, gateNumber: 1 })
+  run(dir, 'save', saveInput(ciGate, { evidence: ['current-CI-target-gates.json'] }))
+  const good = proof(claim, receipts, snapshot)
+  const before = run(dir, 'show'), bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  assert.equal(before.prs['1'].cycles[0].technicalVerdict, 'NICE', 'do not reinterpret historical completion')
+  assert.equal(before.prs['1'].blockedClaim, null, 'even old histories that cleared the claim stay fenced')
+  assert.match(run(dir, 'enable', { owner, acceptanceProof: good }, false).error, /publication.*source\/target/)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  const later = fixture()
+  writeJournal(later, JSON.parse(bytes).events)
+  run(later, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(3) }] })
+  assert.match(run(later, 'next', { owner, feedbackNumber: 1 }, false).error, /publication.*source\/target/)
+
+  appendHistorical(dir, 'enable', { owner, acceptanceProof: good })
+  const enabledBytes = readFileSync(join(dir, 'state.json'), 'utf8'), enabled = run(dir, 'show')
+  assert.equal(enabled.enabled, true, 'historical enable is retained, not a fresh approval')
+  assert.match(run(dir, 'enable', { owner, acceptanceProof: good }, false).error, /publication.*source\/target/)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), enabledBytes)
+  assert.deepEqual(run(dir, 'show'), enabled)
+})
+
 test('EX-SAMECODE-FEEDBACK: unreviewed and NAUGHTY candidates cannot use the metadata route', () => {
   const dir = setup()
   run(dir, 'next', { owner, feedbackNumber: 1 }, false)
@@ -2699,3 +2819,140 @@ test('EX-UNCLAIMED-ROUND-STOP: no-progress stays hard and stopped work does not 
     assert.equal(state.wakes[0].chargedRounds, 1)
   }
 })
+
+const detailFailure = (snapshot, operation = 'reviews') => ({
+  ...snapshot, readError: 'DETAIL_READ_FAILED', reviewKey: key(900), gateKey: key(901),
+  readFailure: { operation, kind: 'COMMAND_FAILED', exitCode: 1, signal: null },
+})
+
+for (const explicit of [false, true]) test(`EX-DETAIL-RECOVERY: identical published NICE recovers by ${explicit ? 'explicit' : 'ordinary'} uncharged gates, then actionable feedback audits`, () => {
+  const dir = setup()
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('detail-recovery'))
+  const published = publishComplete(dir), before = run(dir, 'show')
+  assert.equal(before.prs['1'].cycles[0].noProgress, 1, 'retain the original pessimistic charge')
+  for (let n = 0; n < 3; n++) {
+    run(dir, 'sync', { owner, complete: true, prs: [detailFailure(published.snapshot)] })
+    const blocked = next(dir), unavailable = run(dir, 'show')
+    assert.equal(blocked.action, 'blocked')
+    assert.equal(blocked.claimId, null)
+    assert.match(blocked.reason, /DETAIL_READ_FAILED/)
+    assert.equal(unavailable.active, null)
+    assert.equal(unavailable.prs['1'].blockedClaim, undefined)
+    assert.equal(unavailable.prs['1'].seenAudit, before.prs['1'].seenAudit, 'a failed read is not a processed audit')
+    assert.notEqual(unavailable.prs['1'].seen, before.prs['1'].seen, 'record failure separately for quietness')
+    const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+    assert.equal(next(dir).action, 'none')
+    run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) }, false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes, 'unknown evidence never enables intake')
+    run(dir, 'sync', { owner, complete: true, prs: [published.snapshot] })
+    const gate = explicit ? run(dir, 'next', { owner, gateNumber: 1 }) : next(dir)
+    assert.equal(gate.action, 'check')
+    assert.equal(gate.round, null)
+    run(dir, 'begin', { owner, number: 1, claimId: gate.claimId, base: gate.base, head: gate.head }, false)
+    run(dir, 'save', saveInput(gate, { evidence: [`evidence/recovered-gate-${n}.json`] }))
+    const recovered = run(dir, 'show')
+    assert.equal(recovered.prs['1'].cycles[0].rounds, 1)
+    assert.equal(recovered.prs['1'].cycles[0].noProgress, 1)
+    assert.deepEqual(recovered.prs['1'].cycles[0].completion, before.prs['1'].cycles[0].completion)
+    assert.deepEqual(recovered.prs['1'].publications, before.prs['1'].publications)
+    assert.deepEqual(recovered.wakes, before.wakes)
+    assert.equal(next(dir).action, 'none')
+  }
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...published.snapshot, reviewKey: key(2) }] })
+  const triage = feedbackClaim(dir)
+  run(dir, 'feedback', feedbackInput(triage, { disposition: 'ACTIONABLE_FINDINGS' }))
+  const audit = start(dir)
+  assert.equal(audit.action, 'audit')
+  assert.equal(audit.round, 2, 'only the actual new actionable generation spends another round')
+  const state = run(dir, 'show')
+  assert.equal(state.wakes[0].chargedRounds, 2)
+  assert.equal(state.prs['1'].cycles[0].noProgress, 2)
+  assert.equal(state.prs['1'].cycles[0].completion, null)
+})
+
+for (const change of [null, { head: sha(20) }, { base: sha(20) }, { reviewKey: key(20) }]) {
+  test(`EX-DETAIL-RECOVERY: ${change ? JSON.stringify(change) : 'first-ever read'} errors leave the healthy generation unaudited`, () => {
+    const dir = setup()
+    const healthy = change ? { ...publishComplete(dir).snapshot, ...change } : pr()
+    const before = run(dir, 'show')
+    for (const operation of ['reviews', 'check_runs']) {
+      run(dir, 'sync', { owner, complete: true, prs: [detailFailure(healthy, operation)] })
+      assert.equal(next(dir).action, 'blocked')
+      assert.equal(run(dir, 'show').prs['1'].seenAudit, before.prs['1'].seenAudit)
+      assert.equal(next(dir).action, 'none')
+    }
+    run(dir, 'sync', { owner, complete: true, prs: [healthy] })
+    run(dir, 'next', { owner, gateNumber: 1 }, false)
+    const audit = start(dir)
+    assert.equal(audit.action, 'audit')
+    assert.deepEqual(audit.snapshot, healthy)
+    assert.equal(audit.round, !change || change.head ? 1 : 2)
+    assert.equal(run(dir, 'show').prs['1'].cycles.at(-1).completion, null)
+  })
+}
+
+for (const charged of [false, true]) test(`EX-DETAIL-RECOVERY: interrupted ${charged ? 'charged' : 'uncharged'} active work retains its exact claim and resumes`, () => {
+  const dir = setup(), claim = charged ? start(dir) : next(dir), before = run(dir, 'show')
+  run(dir, 'sync', { owner, complete: true, prs: [detailFailure(pr())] })
+  assert.equal(next(dir).action, 'reconcile')
+  assert.equal(next(dir).claimId, claim.claimId)
+  assert.equal(run(dir, 'show').prs['1'].seenAudit, before.prs['1'].seenAudit)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked', reason: 'Details unavailable' }))
+  assert.equal(next(dir).action, 'blocked')
+  assert.equal(run(dir, 'show').prs['1'].seenAudit, before.prs['1'].seenAudit)
+  run(dir, 'sync', { owner, complete: true, prs: [pr()] })
+  const resumed = run(dir, 'resume', resumeInput(claim))
+  assert.equal(resumed.claimId, claim.claimId)
+  assert.equal(resumed.round, claim.round)
+  assert.equal(resumed.startedAt, claim.startedAt)
+  assert.equal(run(dir, 'show').prs['1'].cycles[0].rounds, charged ? 1 : 0)
+  assert.equal(run(dir, 'show').prs['1'].cycles[0].noProgress, charged ? 1 : 0)
+  if (!charged) assert.equal(start(dir).round, 1)
+})
+
+test('EX-DETAIL-RECOVERY: unreadable published PR remains quiet without starving other eligible PRs', () => {
+  const dir = setup(), published = publishComplete(dir)
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+  const before = run(dir, 'show')
+  run(dir, 'sync', { owner, complete: true, prs: [detailFailure(published.snapshot)] })
+  assert.equal(next(dir).action, 'blocked')
+  assert.equal(run(dir, 'show').prs['1'].seenAudit, before.prs['1'].seenAudit)
+  run(dir, 'sync', { owner, complete: true, prs: [detailFailure(published.snapshot), pr(2)] })
+  const other = start(dir)
+  assert.equal(other.number, 2)
+  run(dir, 'save', saveInput(other))
+  assert.equal(next(dir).action, 'none')
+  run(dir, 'sync', { owner, complete: true, prs: [published.snapshot, pr(2)] })
+  const recovered = next(dir)
+  assert.equal(recovered.number, 1)
+  assert.equal(recovered.action, 'check')
+})
+
+// Frozen before the fix using bfc0573's CLI: the old recovery admitted a second
+// audit/begin/NICE, then hit noProgress=2. Later accepted events depend on that
+// historical claim decision; neither its spent rounds nor its events may change.
+const detailRecoveryOldPolicy = JSON.parse(gunzipSync(Buffer.from(
+  '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', 'base64')).toString('utf8'))
+
+for (const admission of [undefined, 'unclaimed-round']) {
+  for (const version of admission ? [2] : [1, 2]) test(
+    `EX-DETAIL-RECOVERY: old accepted v${version}/${admission ?? 'untagged'} recovery history replays byte-for-byte`, () => {
+      const dir = fixture()
+      const events = detailRecoveryOldPolicy.journal.events.map((event) => {
+        const e = structuredClone(event)
+        if (version === 1) delete e.version
+        if (e.command === 'next' && admission) e.admission = admission
+        else delete e.admission
+        return e
+      })
+      writeJournal(dir, events, version)
+      const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+      const state = run(dir, 'show')
+      assert.deepEqual(state, detailRecoveryOldPolicy.state, 'old claim decisions and all counters stay unchanged')
+      assert.equal(state.prs['1'].cycles[0].rounds, 2)
+      assert.equal(state.prs['1'].cycles[0].noProgress, 2)
+      assert.equal(next(dir).action, 'none', 'no default reset or invented recovery for exhausted history')
+      assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+    })
+}

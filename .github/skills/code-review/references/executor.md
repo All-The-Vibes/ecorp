@@ -89,6 +89,10 @@ sessions, failed tests and original receipts.
    inaccessible evidence is never a clean result.
    Diagnose failures using the bounded `readFailure` metadata, not raw secret-
    bearing errors. The snapshot includes the target `baseRef`, not just its SHA.
+   A failed detail read records an unavailable observation, not a processed audit
+   generation. Identical healthy recovery uses an uncharged gate recheck; new
+   or never-audited content still needs an audit. Do not manufacture progress
+   or spend another review round merely because an API read recovered.
 3. Resume the retained active PR worktree/session when one exists. Otherwise
    claim the next changed eligible PR. Inventory drafts, forks and stacked PRs,
    too; one waiting or blocked PR must not stall the queue. A `wait` action for
@@ -211,6 +215,9 @@ target observation becomes a forward-only fence; a later known retarget must
 reconcile even though the original historical snapshot still lacks that field.
 New live snapshot input must include its actual target. Preserve old events
 rather than filling historical omissions with invented values.
+Conflicting historical publications remain readable evidence of prior attempts,
+not a basis for fresh feedback completion or activation. A no-actionable
+metadata review cannot clear a known source/target conflict or restore its NICE.
 Ordinary CI waits, conflicts, competing claims, forks and exhausted stops cannot
 be reopened through this route.
 

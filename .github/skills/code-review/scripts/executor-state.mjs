@@ -153,9 +153,10 @@
 // retry keeps the original noProgress-2 bound; autonomy replaces the 3-round/PR
 // ceiling with three new charges per native wake. Interrupted charges stay spent.
 // Journal envelope v2 appends CLI-stamped {version:2,id,at,command,input} events.
-// New next envelopes stamp admission:"unclaimed-round". Untagged historical next
-// events keep their original claim/gate decisions; replay derives pendingRoundLimit
-// without rewriting seen/seenAudit. Only eligible ongoing next can recover it.
+// New next envelopes stamp admission:"detail-read-observation": failed reads update
+// seen for quietness, not seenAudit. Historical next events (including the earlier
+// "unclaimed-round" admission) retain their original claim/gate decisions. Both
+// markers recover pendingRoundLimit only through eligible ongoing next.
 // Unversioned v1 events remain an unchanged replay-only prefix; versions cannot
 // downgrade. Command inputs cannot select a journal/admission version.
 // After reviewing/NAUGHTY, new correction, review or publication needs retry.
@@ -380,7 +381,7 @@ function apply(s, e) {
     }
   } else if (command === 'next') {
     fields(i, ['owner'], ['gateNumber', 'feedbackNumber'])
-    const recoverPending = e.admission === 'unclaimed-round'
+    const recoverPending = ['unclaimed-round', 'detail-read-observation'].includes(e.admission)
     check(i.gateNumber === undefined || positive(i.gateNumber), 'invalid gate target')
     check(i.feedbackNumber === undefined || (positive(i.feedbackNumber) && i.gateNumber === undefined), 'invalid feedback target')
     if (s.active) {
@@ -425,7 +426,10 @@ function apply(s, e) {
       !renewed && action === 'audit' && c.rounds >= roundLimit(s) ? 'round limit exhausted' :
       !renewed && action === 'audit' && c.noProgress >= 2 ? 'no-progress limit exhausted' : null)
     p.selected = ++s.sequence
-    if (!readOnly) Object.assign(p, { seen: signature(snapshot), seenAudit: auditKey(snapshot) })
+    if (!readOnly) {
+      p.seen = signature(snapshot)
+      if (e.admission !== 'detail-read-observation' || !snapshot.readError) p.seenAudit = auditKey(snapshot)
+    }
     output = { number: snapshot.number, base: snapshot.base, head: snapshot.head,
       action: readOnly ? 'read-only' : reason ? 'blocked' : action, reason, claimId: readOnly || !reason ? id : null }
     if (readOnly || !reason) s.active = { ...output, snapshot, round: null, startedAt: readOnly ? at : null, baseline: [], publication: null }
@@ -717,6 +721,7 @@ function main() {
     writeFileSync(fd, token)
     fsyncSync(fd)
     let events = [], state = null, previousAt = ''
+    const conflictingPublications = new Set()
     if (command !== 'init') {
       check(lstatSync(file).isFile() && !lstatSync(file).isSymbolicLink(), 'invalid state file')
       const stored = JSON.parse(readFileSync(file, 'utf8'))
@@ -731,17 +736,30 @@ function main() {
       for (const e of events) {
         fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission'])
         check(e.admission === undefined || (e.version === 2 && e.command === 'next' &&
-          e.admission === 'unclaimed-round'), 'invalid admission marker')
+          ['unclaimed-round', 'detail-read-observation'].includes(e.admission)), 'invalid admission marker')
         check(e.version === undefined ? version === 1 : e.version === 2, 'invalid or downgraded event version')
         version = e.version ?? 1
         check(text(e.id) && !ids.has(e.id) && timestamp(e.at) && e.at >= previousAt, 'corrupt event metadata')
         ids.add(e.id)
         previousAt = e.at
+        // Capture scope before publication rebinds the claim or later feedback clears it.
+        // Old accepted events still replay; their conflicting basis grants no new authority.
+        const publication = e.command === 'published' && state?.prs[e.input.number]?.publications?.at(-1)
+        const conflict = e.command === 'published' && state?.active &&
+          !scopeCurrent(state.active, { present: true, snapshot: e.input.snapshot }, state.active.effectiveBaseRef)
         state = apply(state, e).state
+        if (conflict && state.prs[e.input.number].publications.at(-1) !== publication) {
+          conflictingPublications.add(state.prs[e.input.number].publications.at(-1))
+        }
       }
       check(stored.version === version, 'journal/event version mismatch')
     }
     if (command === 'show') return { ...state, events: events.length }
+    const basisNumber = command === 'enable' ? input.acceptanceProof?.number :
+      command === 'feedback' && input.receipt?.disposition !== 'BLOCKED' ? input.number :
+        command === 'next' ? input.feedbackNumber : undefined
+    check(!conflictingPublications.has(state?.prs[basisNumber]?.publications?.at(-1)),
+      'publication source/target conflicts with retained claim; preserve blocked evidence')
     // Live admission only: retained v1/v2 snapshot events keep their replay contract.
     if (command === 'sync' || command === 'published') {
       const snapshots = command === 'sync' ? input.prs : [input.snapshot]
@@ -759,7 +777,7 @@ function main() {
     const at = new Date().toISOString()
     check(at >= previousAt, 'clock moved backwards; refusing mutation')
     const event = { version: 2, id: token, at, command, input,
-      ...(command === 'next' ? { admission: 'unclaimed-round' } : {}) }
+      ...(command === 'next' ? { admission: 'detail-read-observation' } : {}) }
     const result = apply(state, event)
     if (result.changed !== false) {
       events.push(event)

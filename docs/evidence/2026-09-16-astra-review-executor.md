@@ -233,3 +233,25 @@ retaining round five and two native-wake charges.
 [The integrated capture](assets/astra-review-executor/11-autonomous-corrections.png)
 again shows local logs, not hosted CI, independent approval or canary acceptance.
 Those live gates remain pending for the new exact candidate.
+
+### Sixth-round corrections
+
+Both fifth-round Santa reviewers rejected `bfc0573`, despite the passing
+136-test suite. One reproduced unnecessary audit charges after a transient
+detail-read failure; the other reproduced feedback triage restoring acceptance
+from a conflicting legacy publication. The actual ATV/Ponytail audit reported
+no introduced blockers at that revision; the independent Santa findings still
+prevented publication.
+
+The executor automatically charged the next permitted round and assigned
+separate native Astra fixers. Failed reads now retain the prior processed audit
+generation, and conflicting historical publications cannot supply new feedback
+completion or activation authority. Historical accepted events remain readable
+and unchanged; new admission rules do not rewrite their past outcomes.
+
+The integrated result passes **153/153 Node tests** and all six baseline
+commands, with 547 Rust passes and 323 ignored tests. Read-only replay of the
+real 34-event journal retains round six and all three current-wake charges
+without changing its bytes. [The local-check capture](assets/astra-review-executor/12-feedback-recovery-corrections.png)
+is evidence of those command results, not an independent verdict or live canary
+acceptance. Fresh exact-candidate reviews still precede publication.
