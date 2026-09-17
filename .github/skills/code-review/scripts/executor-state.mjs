@@ -69,6 +69,8 @@
 // retry {owner,number,claimId,base,head,round:expectedCurrentRound,reviewRef}
 //   Requires active reviewing/NAUGHTY and reviewRef in its latest saved evidence. Call
 //   BEFORE further local correction, not save waiting (which releases the claim).
+//   A proven v1 post-failure fixing/auditing checkpoint may also reach this charge;
+//   that does not permit new v2 correction/re-review before retry.
 //   Keeps claim/snapshot/findings/evidence; charges the next round, refreshes
 //   startedAt for new reviews. Stale/replayed round is rejected, never recharged.
 // resume {owner,number,claimId,base,head,round:positiveInteger|null,
@@ -479,8 +481,11 @@ function apply(s, e) {
     if (command === 'begin' || command === 'retry') {
       check(a.action === 'audit', 'gate checks cannot spend audit rounds')
       if (command === 'retry') {
-        check(positive(i.round) && a.round === i.round && c.phase === 'reviewing' &&
-          c.technicalVerdict === 'NAUGHTY' && text(i.reviewRef) && a.failureEvidence?.includes(i.reviewRef),
+        const legacyPostFailure = a.failureReceiptVersion === 1 &&
+          ['fixing', 'auditing'].includes(c.phase) && a.failureReceipt?.phase === c.phase
+        check(positive(i.round) && a.round === i.round &&
+          ((c.phase === 'reviewing' && c.technicalVerdict === 'NAUGHTY') || legacyPostFailure) &&
+          text(i.reviewRef) && a.failureEvidence?.includes(i.reviewRef),
         'retry requires exact charged round and retained failed-review phase/evidence')
         if (c.findings.some((f) => f.status === 'fixed' && a.baseline.includes(f.id))) c.noProgress = 0
       } else check(a.round === null, 'round already begun; resume with next')
@@ -489,7 +494,7 @@ function apply(s, e) {
         c = cycle(p)
       }
       check(c.rounds < 3 && c.noProgress < 2, 'round or no-progress limit exhausted')
-      Object.assign(a, { snapshot: p.snapshot, round: ++c.rounds, startedAt: at, baseline: c.findings.filter((f) => f.status === 'open').map((f) => f.id), publication: null, failureEvidence: null, failureReceipt: null })
+      Object.assign(a, { snapshot: p.snapshot, round: ++c.rounds, startedAt: at, baseline: c.findings.filter((f) => f.status === 'open').map((f) => f.id), publication: null, failureEvidence: null, failureReceipt: null, failureReceiptVersion: null })
       c.noProgress++
       c.phase = 'auditing'
       c.technicalVerdict = null
@@ -531,7 +536,9 @@ function apply(s, e) {
       c.findings = i.findings
       if (i.phase === 'reviewing' && i.technicalVerdict === 'NAUGHTY') a.failureEvidence = i.evidence
       // Retain legacy within-round saves for exact ACKs, not new live attempts.
-      if (a.failureEvidence && !terminal) a.failureReceipt = i
+      if (a.failureEvidence && !terminal) Object.assign(a, {
+        failureReceipt: i, failureReceiptVersion: e.version ?? 1,
+      })
       if (i.phase === 'blocked' && a.action === 'audit') {
         p.blockedClaim = { claim: a, cycle: p.cycles.length, rounds: c.rounds, phase: c.phase,
           technicalVerdict: i.technicalVerdict ?? c.technicalVerdict, reason: c.reason, blockedAt: at }

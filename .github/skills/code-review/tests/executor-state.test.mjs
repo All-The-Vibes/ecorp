@@ -831,7 +831,7 @@ test('A02: callers cannot select legacy admission and v2 journals cannot downgra
   const dir = setup(), claim = start(dir)
   failedReview(dir, claim)
   const bytes = readFileSync(join(dir, 'state.json'), 'utf8'), stored = JSON.parse(bytes)
-  for (const extra of [{ version: 1 }, { legacy: true }, { eventVersion: 1 }]) {
+  for (const extra of [{ version: 1 }, { legacy: true }, { eventVersion: 1 }, { failureReceiptVersion: 1 }]) {
     assert.match(run(dir, 'save', saveInput(claim, { phase: 'fixing', ...extra }), false).error, /fields/)
   }
   assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
@@ -950,6 +950,45 @@ test('A02: actual legacy failed-review prefix can explicitly retry without rewri
   const events = JSON.parse(readFileSync(join(dir, 'state.json'))).events
   assert.equal(events.at(-1).version, 2)
   assert.deepEqual(events.slice(0, 5), stored.events.slice(0, 5))
+})
+
+for (const phase of ['fixing', 'auditing']) for (const verdict of ['NAUGHTY', null]) for (const recover of [false, true])
+test(`full legacy checkpoint reaches charged retry (${phase}/${verdict ?? 'pending'})${recover ? ' after block/resume' : ' directly'}`, () => {
+  const dir = fixture(), original = JSON.parse(legacyJournal)
+  const history = original.events.slice()
+  if (verdict === null || phase !== 'fixing') history.push({
+    id: 'legacy-pending-correction', at: new Date().toISOString(), command: 'save',
+    input: { ...history.at(-1).input, phase, technicalVerdict: verdict },
+  })
+  writeJournal(dir, history, 1)
+  let state = run(dir, 'show'), claim = state.active
+  const prior = structuredClone(state.prs['304'].cycles[0])
+  assert.equal(state.events, history.length)
+  assert.equal(prior.phase, phase)
+  assert.equal(prior.technicalVerdict, verdict)
+  assert.equal(claim.failureReceiptVersion, 1)
+  if (recover) {
+    run(dir, 'save', { ...history.at(-1).input, phase: 'blocked', reason: 'Verified temporary tool failure' })
+    run(dir, 'resume', { ...resumeInput(claim), owner: state.config.owner })
+    state = run(dir, 'show')
+    claim = state.active
+    assert.equal(state.prs['304'].cycles[0].phase, phase)
+  }
+  const request = { ...retryInput(claim, claim.failureEvidence[0]), owner: state.config.owner }
+  for (const bad of [{ ...request, owner: 'other' }, { ...request, round: 2 },
+    { ...request, reviewRef: 'unrelated-report' }]) run(dir, 'retry', bad, false)
+  const retried = run(dir, 'retry', request)
+  assert.equal(retried.claimId, claim.claimId)
+  assert.equal(retried.round, 2, 'legacy work must consume a real new charge')
+  assert.equal(retried.failureEvidence, null)
+  assert.equal(retried.failureReceiptVersion, null)
+  assert.deepEqual(run(dir, 'show').prs['304'].cycles[0].findings, prior.findings)
+  const events = JSON.parse(readFileSync(join(dir, 'state.json'))).events
+  assert.deepEqual(events.slice(0, 7), original.events, 'no truncation or rewrite of the actual checkpoint')
+  assert.deepEqual(events.slice(0, history.length), history)
+  assert.equal(events.at(-1).version, 2)
+  assert.equal(events.at(-1).command, 'retry')
+  run(dir, 'retry', request, false)
 })
 
 test('E1: unchanged-remote retry stops after two no-progress rounds without discarding the claim', () => {

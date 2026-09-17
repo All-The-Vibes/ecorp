@@ -175,6 +175,10 @@ An uncharged preparation claim resumes with `round: null`; one later `begin`
 charges its first round. New live correction/re-review submissions after NAUGHTY
 must pass `retry`; only the original legacy journal is replayed under its old
 admission rules. New CLI-stamped version-2 records reject bypasses and downgrades.
+For a proven version-1 post-failure `fixing` or `auditing` checkpoint, the same
+explicit `retry` may consume the next permitted round directly. Its original
+events remain unchanged; it does not authorize a new uncharged legacy attempt
+or extend either stopping bound.
 Ordinary CI waits, conflicts, competing claims, forks and exhausted stops cannot
 be reopened through this route.
 

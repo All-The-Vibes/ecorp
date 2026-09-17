@@ -153,3 +153,27 @@ is retained alongside the earlier captures. Red/green regression logs and the
 original failed review reports are preserved outside PR worktrees. These local
 results still do not claim fresh third-round Santa approval or live canary
 acceptance; those receipts must be observed separately.
+
+### Local legacy repair — canary still blocked
+
+Both third-round Santa reviewers and the audit reproduced one remaining
+legacy-retry deadlock on the complete seven-event checkpoint. The recorded
+canary stopped at its original three-round limit; it was not published,
+accepted or reset.
+
+The implementation was subsequently repaired locally. The retry guard now
+recognizes a post-failure `fixing`/`auditing` receipt whose version is derived
+from validated version-1 history. It still requires the original failed-review
+evidence, owner, claim and round, and consumes a real permitted next round.
+New version-2 corrections cannot manufacture that provenance or bypass retry.
+
+The complete original checkpoint, pending-verdict variants, and block/resume
+paths pass their regression tests without truncating any original event.
+The full local suite passes **94/94 tests**, and all six baseline checks pass
+again. A copied-state diagnostic confirms the repaired helper still refuses
+the exhausted live canary's fourth round; the real journal remains unchanged.
+[The local repair capture](assets/astra-review-executor/09-legacy-local-repair.png)
+is a log-summary screenshot, not an additional review or live acceptance.
+
+No additional canary review, new limit, policy adoption or push is claimed.
+Operator authorization for one more bounded canary round remains pending.
