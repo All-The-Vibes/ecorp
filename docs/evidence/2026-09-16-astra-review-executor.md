@@ -272,3 +272,24 @@ spending, failed evidence or historical activation was reset.
 [The current local-check capture](assets/astra-review-executor/13-native-continuation-corrections.png)
 records those results, not scheduled-wake, hosted CI or canary acceptance.
 Independent current-candidate reviews still gate publication.
+
+### Unchanged-canary recovery correction
+
+Seventh-round Santa results disagreed: one PASS and one reproduced failure in
+the unchanged-canary recovery path. The AND gate remained NAUGHTY. The actual
+security/complexity audit found no introduced blocker at that revision; its
+separate base-debt findings were preserved.
+
+The executor automatically charged round eight and assigned a native Astra
+fixer. Invalid activation now admits bounded corrective work for the unchanged
+eligible canary without an unrelated remote edit. The corrective claim is tied
+to that activation; interruptions and repeated wakes cannot create free audits,
+reset no-progress history, or bypass full new acceptance.
+
+Integrated verification passes **194/194 Node tests** and all six repository
+checks (547 Rust passed, 323 ignored). The final helper replayed the real
+46-event journal without changing its bytes, retaining round eight and two
+charges in the current native wake.
+[The current capture](assets/astra-review-executor/14-unchanged-canary-recovery.png)
+shows local command results only. Fresh independent reviews and live canary
+acceptance remain separate.

@@ -231,6 +231,11 @@ retained claims; only unchanged blocked evidence may be recorded for them.
 Correct the canary under its existing scope and supply the full new acceptance
 proof to `enable`. A later clean publication or wake alone does not repair
 activation. The previous activation events and proofs remain retained.
+Invalid activation is itself pending corrective work: the unchanged eligible
+canary may enter one bounded current-scope audit without a manufactured remote
+change. Its claim is bound to that activation, not to each wake. Resume/retry
+interrupted work normally; gates cannot consume unfinished correction, and a
+new technical NICE waits for full acceptance rather than spawning more audits.
 Ordinary CI waits, conflicts, competing claims, forks and exhausted stops cannot
 be reopened through this route.
 

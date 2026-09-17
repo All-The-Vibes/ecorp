@@ -413,16 +413,16 @@ for (const baseRef of ['release', 'main']) {
     const { dir, acceptanceProof } = historicalActivation(baseRef)
     const bytes = journalBytes(dir), before = run(dir, 'show'), valid = baseRef === 'main'
     const selected = next(dir)
-    assert.equal(selected.action, valid ? 'audit' : 'none', 'historical enabled alone cannot admit PR2')
+    assert.equal(selected.action, 'audit')
+    assert.equal(selected.number, valid ? 2 : 1, 'invalid activation admits only its corrective canary')
     assert.equal(before.enabled, true, 'the historical outcome remains true')
     assert.deepEqual(before.acceptanceProof, acceptanceProof)
     assert.equal(before.activation.valid, valid)
     if (!valid) {
       assert.match(before.activation.reason, /publication.*source\/target/)
-      assert.equal(journalBytes(dir), bytes, 'show and denied idle admission are byte-preserving')
       run(dir, 'wake', wakeInput('different-native-wake'))
       const afterWake = journalBytes(dir)
-      assert.equal(next(dir).action, 'none')
+      assert.equal(next(dir).claimId, selected.claimId)
       for (const input of [{ owner, gateNumber: 2 }, { owner, feedbackNumber: 2 }]) {
         run(dir, 'next', input, false)
         assert.equal(journalBytes(dir), afterWake)
@@ -539,20 +539,26 @@ test('EX-HISTORICAL-ACTIVATION-FENCE: retained PR2 gates and feedback cannot lau
   assertHistoryPrefix(dir, bytes)
 })
 
-test('EX-HISTORICAL-ACTIVATION-FENCE: canary correction needs genuinely new full acceptance and retains invalid proof', () => {
+test('EX-UNCHANGED-CANARY-RECOVERY: correction needs genuinely new full acceptance and retains invalid proof', () => {
   const { dir, snapshot, acceptanceProof } = historicalActivation()
   const old = run(dir, 'show'), bytes = journalBytes(dir)
-  // New canary audit input under the original authority, not a fabricated reset.
-  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(3) }, pr(2)] })
+  // Identical remote input: the invalid activation itself is the pending work.
+  run(dir, 'sync', { owner, complete: true, prs: [snapshot, pr(2)] })
+  assert.equal(journalBytes(dir), bytes)
+  assert.equal(next(dir).action, 'audit')
   const corrected = publishComplete(dir)
   assert.equal(corrected.claim.number, 1)
   assert.equal(corrected.claim.round, 2)
   const admission = JSON.parse(journalBytes(dir)).events.find((e) => e.id === corrected.claim.claimId)
   assert.equal(admission.activationFence, true, 'new canary-only selection is pinned for exact replay')
+  assert.equal(admission.canaryRecovery, true)
   let state = run(dir, 'show')
   assert.equal(state.activation.valid, false, 'a later clean publication cannot silently replace the old activation basis')
   assert.deepEqual(state.acceptanceProof, acceptanceProof)
   assert.equal(next(dir).action, 'none', 'broad intake still needs full acceptance')
+  const quiet = journalBytes(dir)
+  assert.equal(next(dir).action, 'none', 'NICE cannot trigger another free audit before enable')
+  assert.equal(journalBytes(dir), quiet)
   run(dir, 'next', { owner, activationFence: false }, false)
   const good = proof(corrected.claim, corrected.receipts)
   for (const change of [
@@ -572,6 +578,8 @@ test('EX-HISTORICAL-ACTIVATION-FENCE: canary correction needs genuinely new full
   assert.deepEqual(state.autonomy, old.autonomy)
   assert.equal(state.prs['1'].cycles.length, 1)
   assert.equal(state.prs['1'].cycles[0].rounds, 2)
+  assert.equal(state.prs['1'].cycles[0].noProgress, old.prs['1'].cycles[0].noProgress + 1,
+    'new NICE alone is not verified finding progress')
   assert.equal(state.wakes[0].chargedRounds, old.wakes[0].chargedRounds + 1)
   assertHistoryPrefix(dir, bytes)
   const accepted = journalBytes(dir)
@@ -581,6 +589,233 @@ test('EX-HISTORICAL-ACTIVATION-FENCE: canary correction needs genuinely new full
   const other = next(dir)
   assert.equal(other.number, 2)
   assert.equal(run(dir, 'begin', { owner, number: 2, claimId: other.claimId, base: other.base, head: other.head }).round, 1)
+})
+
+test('EX-UNCHANGED-CANARY-RECOVERY: consumed signature is pending audit, never an explicit gate or old approval', () => {
+  const { dir, snapshot, acceptanceProof } = historicalActivation('release')
+  const old = run(dir, 'show'), bytes = journalBytes(dir), c = old.prs['1'].cycles[0]
+  assert.equal(old.activation.valid, false)
+  assert.equal(old.active, null)
+  assert.equal(old.prs['1'].blockedClaim, null)
+  assert.equal(c.rounds, 1)
+  assert.equal(c.noProgress, 1)
+  assert.ok(old.wakes.at(-1).chargedRounds < 3)
+  assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit/)
+  run(dir, 'next', { owner, feedbackNumber: 1 }, false)
+  run(dir, 'enable', { owner, acceptanceProof }, false)
+  run(dir, 'next', { owner: 'other' }, false)
+  run(dir, 'next', { owner, canaryRecovery: true }, false)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'wake', wakeInput('unchanged-recovery'))
+  run(dir, 'sync', { owner, complete: true, prs: [snapshot, pr(2)] })
+  const claim = next(dir), admitted = run(dir, 'show')
+  assert.equal(claim.action, 'audit', 'unchanged invalid activation must be independently re-audited')
+  assert.equal(claim.number, 1)
+  assert.deepEqual(claim.snapshot, snapshot, 'current target is used, not the conflicting old main claim')
+  assert.equal(claim.round, null)
+  assert.deepEqual(admitted.prs['1'].cycles, old.prs['1'].cycles)
+  assert.deepEqual(admitted.prs['1'].publications, old.prs['1'].publications)
+  assert.deepEqual(admitted.autonomy, old.autonomy)
+  assert.equal(admitted.wakes.at(-1).chargedRounds, 0)
+  const started = run(dir, 'begin', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head })
+  run(dir, 'save', saveInput(started, { technicalVerdict: 'NICE', reviewers: acceptanceProof.reviewers }), false)
+  const charged = run(dir, 'show')
+  assert.equal(started.round, 2)
+  assert.equal(charged.prs['1'].cycles[0].noProgress, 2)
+  assert.equal(charged.wakes.at(-1).chargedRounds, 1)
+  assert.deepEqual(charged.wakes.slice(0, -1), old.wakes)
+  assertHistoryPrefix(dir, bytes)
+})
+
+for (const charged of [false, true]) {
+  test(`EX-UNCHANGED-CANARY-RECOVERY: ${charged ? 'charged' : 'preparation'} interruption resumes exactly without duplicate admission`, () => {
+    const { dir } = historicalActivation()
+    let claim = next(dir)
+    assert.equal(claim.action, 'audit')
+    if (charged) claim = start(dir)
+    const before = run(dir, 'show'), bytes = journalBytes(dir)
+    for (let n = 0; n < 2; n++) {
+      assert.equal(next(dir).claimId, claim.claimId)
+      assert.equal(run(dir, 'next', { owner, gateNumber: 1 }).action, 'audit', 'explicit gate cannot steal active audit')
+    }
+    assert.equal(journalBytes(dir), bytes)
+    for (let n = 0; n < 2; n++) {
+      run(dir, 'save', saveInput(claim, { phase: 'blocked', reason: 'Interrupted local preparation/tooling' }))
+      const blocked = journalBytes(dir)
+      assert.equal(next(dir).action, 'none', 'retained work needs resume, not a replacement free audit')
+      assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit/)
+      assert.equal(journalBytes(dir), blocked)
+      run(dir, 'wake', wakeInput(`interruption-${n}`))
+      assert.equal(next(dir).action, 'none')
+      const resumed = run(dir, 'resume', resumeInput(claim))
+      assert.equal(resumed.claimId, claim.claimId)
+      assert.equal(resumed.round, claim.round)
+      assert.equal(resumed.startedAt, claim.startedAt)
+    }
+    const after = run(dir, 'show')
+    assert.equal(after.sequence, before.sequence)
+    assert.equal(after.prs['1'].cycles[0].rounds, before.prs['1'].cycles[0].rounds)
+    assert.equal(after.prs['1'].cycles[0].noProgress, before.prs['1'].cycles[0].noProgress)
+    assert.deepEqual(after.wakes.slice(0, before.wakes.length), before.wakes)
+    assert.ok(after.wakes.slice(before.wakes.length).every((w) => w.chargedRounds === 0))
+    assertHistoryPrefix(dir, bytes)
+  })
+}
+
+test('EX-UNCHANGED-CANARY-RECOVERY: correction cannot reopen an exhausted no-progress stop on a new wake', () => {
+  const { dir } = historicalActivation()
+  assert.equal(next(dir).action, 'audit')
+  const claim = start(dir)
+  failedReview(dir, claim)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  run(dir, 'wake', wakeInput('not-a-progress-reset'))
+  const stopped = journalBytes(dir)
+  assert.equal(next(dir).action, 'none')
+  run(dir, 'next', { owner, gateNumber: 1 }, false)
+  run(dir, 'resume', resumeInput(claim), false)
+  run(dir, 'retry', retryInput(claim), false)
+  assert.equal(journalBytes(dir), stopped)
+  const after = run(dir, 'show')
+  assert.deepEqual(after.prs['1'], before.prs['1'])
+  assert.equal(after.prs['1'].cycles[0].noProgress, 2)
+  assert.equal(after.wakes.at(-1).chargedRounds, 0)
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('EX-UNCHANGED-CANARY-RECOVERY: current eligibility and stale source/template/target fences survive admission', () => {
+  const { dir, snapshot } = historicalActivation()
+  const prefix = JSON.parse(journalBytes(dir)).events
+  for (const change of [
+    { sourceRepo: 'foreign/ecorp' }, { sourceRepo: null }, { state: 'closed' },
+    { readError: 'DETAIL_READ_FAILED' },
+  ]) {
+    const guarded = fixture()
+    writeJournal(guarded, prefix)
+    run(guarded, 'sync', { owner, complete: true, prs: [{ ...snapshot, ...change }, pr(2)] })
+    const selected = next(guarded)
+    assert.notEqual(selected.action, 'audit')
+    assert.notEqual(selected.number, 2)
+    assert.equal(run(guarded, 'show').wakes.at(-1).chargedRounds, 0)
+    assertHistoryPrefix(guarded, JSON.stringify({ events: prefix }))
+  }
+  const claim = next(dir)
+  assert.equal(claim.action, 'audit')
+  const claimed = JSON.parse(journalBytes(dir)).events
+  for (const change of [
+    { sourceRepo: 'foreign/ecorp' }, { sourceRepo: null }, { state: 'closed' },
+    { readError: 'DETAIL_READ_FAILED' }, { baseRef: 'main' }, { branch: 'other' },
+    { base: sha(88) }, { head: sha(88) }, { reviewKey: key(88) },
+  ]) {
+    const stale = fixture()
+    writeJournal(stale, claimed)
+    run(stale, 'sync', { owner, complete: true, prs: [{ ...snapshot, ...change }, pr(2)] })
+    assert.equal(next(stale).action, 'reconcile')
+    const bytes = journalBytes(stale)
+    run(stale, 'begin', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head }, false)
+    run(stale, 'save', saveInput(claim, { technicalVerdict: 'NICE', reviewers: reviewers(claim) }), false)
+    assert.equal(journalBytes(stale), bytes)
+    run(stale, 'save', saveInput(claim, { phase: 'blocked' }))
+    run(stale, 'resume', resumeInput(claim), false)
+  }
+})
+
+test('EX-UNCHANGED-CANARY-RECOVERY: historical marked gate and unmarked audit decisions replay exactly', () => {
+  const { dir } = historicalActivation()
+  const events = JSON.parse(journalBytes(dir)).events
+  const gateId = 'old-fenced-gate'
+  events.push({ version: 2, id: gateId, at: new Date().toISOString(), command: 'next',
+    input: { owner, gateNumber: 1 }, admission: 'detail-read-recovery', activationFence: true })
+  writeJournal(dir, events)
+  const gate = run(dir, 'show').active
+  assert.equal(gate.action, 'check', 'old activationFence alone cannot acquire new admission semantics')
+  assert.equal(gate.claimId, gateId)
+  appendHistorical(dir, 'save', saveInput(gate, { phase: 'blocked' }))
+  appendHistorical(dir, 'next', { owner })
+  const bytes = journalBytes(dir), before = run(dir, 'show')
+  assert.equal(before.active.number, 2, 'old unmarked selection is still its original PR2 audit')
+  assert.equal(before.active.action, 'audit')
+  assert.equal(next(dir).action, 'reconcile')
+  assert.deepEqual(run(dir, 'show'), before)
+  assert.equal(journalBytes(dir), bytes)
+})
+
+test('EX-UNCHANGED-CANARY-RECOVERY: admission needs ongoing authority and actual wake capacity', () => {
+  const { dir, snapshot } = historicalActivation()
+  const original = JSON.parse(journalBytes(dir)).events
+  for (const authority of [false, true]) {
+    const missing = fixture()
+    // Synthetic historical variant with no native wake, optionally no autonomy.
+    writeJournal(missing, original.filter((e) => e.command !== 'wake' && (authority || e.command !== 'autonomy')))
+    const bytes = journalBytes(missing), before = run(missing, 'show')
+    assert.equal(next(missing).action, authority ? 'wait' : 'none')
+    run(missing, 'next', { owner, gateNumber: 1 }, false)
+    assert.equal(journalBytes(missing), bytes)
+    if (!authority) run(missing, 'autonomy', autonomyInput())
+    run(missing, 'wake', wakeInput('first-real-capacity'))
+    assert.equal(next(missing).action, 'audit')
+    assert.deepEqual(run(missing, 'show').prs['1'].cycles, before.prs['1'].cycles)
+    assertHistoryPrefix(missing, bytes)
+  }
+  // Old accepted non-canary charges share the wake; invalidation never refunds them.
+  run(dir, 'sync', { owner, complete: true, prs: [snapshot, pr(2), pr(3), pr(4)] })
+  for (const number of [2, 3, 4]) {
+    appendHistorical(dir, 'next', { owner })
+    const claim = run(dir, 'show').active
+    assert.equal(claim.number, number)
+    appendHistorical(dir, 'begin', { owner, number, claimId: claim.claimId, base: claim.base, head: claim.head })
+    appendHistorical(dir, 'save', saveInput(claim))
+  }
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  assert.equal(before.wakes.at(-1).chargedRounds, 3)
+  assert.equal(next(dir).action, 'wait')
+  run(dir, 'next', { owner, gateNumber: 1 }, false)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'wake', wakeInput('new-capacity-not-new-authority'))
+  const claim = start(dir), after = run(dir, 'show')
+  assert.equal(claim.number, 1)
+  assert.equal(claim.round, 2)
+  assert.deepEqual(after.wakes.slice(0, -1), before.wakes)
+  assert.equal(after.wakes.at(-1).chargedRounds, 1)
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('EX-UNCHANGED-CANARY-RECOVERY: already exhausted historical correction stays stopped without a marker', () => {
+  const { dir, snapshot } = historicalActivation()
+  // Retained pre-upgrade history already spent its last no-progress attempt.
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(3) }] })
+  appendHistorical(dir, 'next', { owner })
+  const claim = run(dir, 'show').active
+  appendHistorical(dir, 'begin', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head })
+  appendHistorical(dir, 'save', saveInput(claim, { phase: 'blocked', technicalVerdict: 'NAUGHTY' }))
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  assert.equal(before.prs['1'].correctiveAudit, undefined)
+  assert.equal(before.prs['1'].cycles[0].noProgress, 2)
+  for (const id of ['still-stopped', 'still-stopped-again']) {
+    run(dir, 'wake', wakeInput(id))
+    const stopped = journalBytes(dir)
+    assert.equal(next(dir).action, 'none')
+    run(dir, 'next', { owner, gateNumber: 1 }, false)
+    run(dir, 'resume', resumeInput({ ...claim, round: 2 }), false)
+    assert.equal(journalBytes(dir), stopped)
+    assert.deepEqual(run(dir, 'show').prs['1'], before.prs['1'])
+  }
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('EX-UNCHANGED-CANARY-RECOVERY: a newer remote head cannot renew a cycle from conflicted NICE', () => {
+  const { dir, snapshot } = historicalActivation()
+  const old = run(dir, 'show'), bytes = journalBytes(dir)
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, head: sha(88), baseRef: 'current-target' }, pr(2)] })
+  const claim = start(dir), state = run(dir, 'show')
+  assert.equal(claim.number, 1)
+  assert.equal(claim.head, sha(88))
+  assert.equal(claim.snapshot.baseRef, 'current-target')
+  assert.equal(claim.round, 2, 'invalid old NICE cannot authorize a fresh cycle')
+  assert.equal(state.prs['1'].cycles.length, 1)
+  assert.equal(state.prs['1'].cycles[0].noProgress, old.prs['1'].cycles[0].noProgress + 1)
+  assert.equal(state.prs['1'].cycles[0].completion, null)
+  assertHistoryPrefix(dir, bytes)
 })
 
 test('EX-SAMECODE-FEEDBACK: unreviewed and NAUGHTY candidates cannot use the metadata route', () => {

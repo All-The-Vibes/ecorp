@@ -156,6 +156,11 @@
 //   valid proof remains immutable. Old activation events and receipts remain retained.
 // New next under invalid activation stamps activationFence:true so canary-only
 //   selection replays exactly; unmarked historical admissions keep their decisions.
+//   canaryRecovery:true additionally pins current corrective admission: under ongoing
+//   authority an unchanged invalid activation needs one current-scope audit claim.
+//   correctiveAudit binds that claim to the invalid activation, not to a wake.
+//   Interrupted work uses resume/retry; gates cannot consume unfinished correction.
+//   No historical NICE resets its cycle, and new NICE still needs full enable proof.
 // help: node executor-state.mjs help (or STATE_DIR help), no stdin/state access.
 // Timestamps are ISO UTC; sourceRefs are retained paths/URLs, not verified artifacts.
 // sync accepts a complete empty inventory. Gate-only changes preserve active work;
@@ -411,8 +416,11 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     fields(i, ['owner'], ['gateNumber', 'feedbackNumber'])
     const recoverPending = ['unclaimed-round', 'detail-read-observation', 'detail-read-recovery'].includes(e.admission)
     const preserveUnavailable = ['detail-read-observation', 'detail-read-recovery'].includes(e.admission)
+    const corrective = (p) => e.canaryRecovery && invalidActivation && p.snapshot.number === s.config.canary
+    const pendingCorrection = (p) => corrective(p) && p.correctiveAudit?.activationId !== activation.eventId
     const processedAudit = (p) => {
       const c = cycle(p), snapshot = p.snapshot, publication = p.publications?.at(-1)
+      if (corrective(p) && (pendingCorrection(p) || c.completion?.claimId !== p.correctiveAudit.claimId)) return false
       // Completion pins feedback/source/revision; canonical publication supplies
       // the target fence missing from auditKey. A healthy read alone proves neither.
       return p.seenAudit === auditKey(snapshot) || (e.admission === 'detail-read-recovery' &&
@@ -457,7 +465,8 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     }
     const p = target ?? Object.values(s.prs).filter((p) => p.present && p.snapshot.state === 'open' &&
       (enabled || p.snapshot.number === s.config.canary) &&
-      (p.seen !== signature(p.snapshot) || (recoverPending && s.autonomy && pendingRound(p) &&
+      (p.seen !== signature(p.snapshot) || (s.autonomy &&
+        ((recoverPending && pendingRound(p)) || pendingCorrection(p)) &&
         !p.blockedReason && cycle(p).noProgress < 2 &&
         sameRepo(p.sourceRepo, s.config.repo) && sameRepo(p.snapshot.sourceRepo, s.config.repo))))
       .sort((a, b) => a.selected - b.selected || a.snapshot.number - b.snapshot.number)[0]
@@ -465,7 +474,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     const c = cycle(p), snapshot = p.snapshot
     const readOnly = !sameRepo(snapshot.sourceRepo, s.config.repo) || !sameRepo(p.sourceRepo, s.config.repo)
     const action = target || (processedAudit(p) && !(recoverPending && pendingRound(p))) ? 'check' : 'audit'
-    const renewed = c.technicalVerdict === 'NICE' && c.completion.head !== snapshot.head
+    const renewed = !corrective(p) && c.technicalVerdict === 'NICE' && c.completion.head !== snapshot.head
     const reason = p.blockedReason ?? (
       !renewed && action === 'audit' && c.rounds >= roundLimit(s) ? 'round limit exhausted' :
       !renewed && action === 'audit' && c.noProgress >= 2 ? 'no-progress limit exhausted' : null)
@@ -477,6 +486,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     output = { number: snapshot.number, base: snapshot.base, head: snapshot.head,
       action: readOnly ? 'read-only' : reason ? 'blocked' : action, reason, claimId: readOnly || !reason ? id : null }
     if (readOnly || !reason) s.active = { ...output, snapshot, round: null, startedAt: readOnly ? at : null, baseline: [], publication: null }
+    if (s.active?.action === 'audit' && corrective(p)) p.correctiveAudit = { activationId: activation.eventId, claimId: id }
     if (!readOnly && reason === 'round limit exhausted') {
       p.pendingRoundLimit = { auditKey: auditKey(snapshot), baseRef: snapshot.baseRef }
     } else if (s.active?.action === 'audit') delete p.pendingRoundLimit
@@ -490,7 +500,8 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       b.cycle === p.cycles.length && c.rounds === (i.round ?? b.rounds) &&
       (i.round === null || c.technicalVerdict !== 'NICE'),
     'no matching retained unfinished blocked claim/round')
-    const renewed = i.round === null && c.technicalVerdict === 'NICE' && c.completion.head !== b.claim.head
+    const renewed = p.correctiveAudit?.claimId !== b.claim.claimId &&
+      i.round === null && c.technicalVerdict === 'NICE' && c.completion.head !== b.claim.head
     const unfinished = positive(b.claim.round) && timestamp(b.claim.startedAt) &&
       !b.claim.failureEvidence && ['auditing', 'fixing', 'reviewing'].includes(b.phase) &&
       b.technicalVerdict === null && c.phase === 'blocked' && c.technicalVerdict === null && c.completion === null
@@ -631,7 +642,8 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
         'retry requires exact charged round and retained failed-review phase/evidence')
         if (c.findings.some((f) => f.status === 'fixed' && a.baseline.includes(f.id))) c.noProgress = 0
       } else check(a.round === null, 'round already begun; resume with next')
-      if (command === 'begin' && c.technicalVerdict === 'NICE' && c.completion.head !== a.head) {
+      if (command === 'begin' && p.correctiveAudit?.claimId !== a.claimId &&
+        c.technicalVerdict === 'NICE' && c.completion.head !== a.head) {
         p.cycles.push(freshCycle())
         c = cycle(p)
       }
@@ -785,9 +797,11 @@ function main() {
       let version = 1
       // ponytail: replay/rewrite the retained journal; checkpoint only if measured history size needs it.
       for (const e of events) {
-        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence'])
+        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery'])
         check(e.activationFence === undefined || (e.version === 2 && e.command === 'next' &&
           e.activationFence === true), 'invalid activation fence marker')
+        check(e.canaryRecovery === undefined || (e.activationFence === true && e.canaryRecovery === true),
+          'invalid canary recovery marker')
         check(e.admission === undefined || (e.version === 2 && e.command === 'next' &&
           ['unclaimed-round', 'detail-read-observation', 'detail-read-recovery'].includes(e.admission)), 'invalid admission marker')
         check(e.version === undefined ? version === 1 : e.version === 2, 'invalid or downgraded event version')
@@ -838,7 +852,7 @@ function main() {
     check(at >= previousAt, 'clock moved backwards; refusing mutation')
     const event = { version: 2, id: token, at, command, input,
       ...(command === 'next' ? { admission: 'detail-read-recovery',
-        ...(state.enabled && !activation.valid ? { activationFence: true } : {}) } : {}) }
+        ...(state.enabled && !activation.valid ? { activationFence: true, canaryRecovery: true } : {}) } : {}) }
     const result = apply(state, event, conflictingPublications, { activation, live: true })
     if (result.changed !== false) {
       events.push(event)
