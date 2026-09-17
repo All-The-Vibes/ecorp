@@ -5,9 +5,11 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "check:migrations": "node tools/check_migrations.mjs",
+    "check:state-audit-compatibility": "node tools/check_state_audit_compatibility.mjs",
+    "check:state-audit-evm": "cargo test -p crony-audit --test ethereum_local_chain",
     "dev:web": "pnpm --dir apps/web dev",
     "build:web": "pnpm --dir apps/web build",
     "lint:web": "pnpm --dir apps/web lint",
-    "check": "pnpm check:migrations && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace && pnpm build:web && pnpm lint:web"
+    "check": "pnpm check:migrations && pnpm check:state-audit-compatibility && pnpm check:state-audit-evm && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace && pnpm build:web && pnpm lint:web"
   }
 }

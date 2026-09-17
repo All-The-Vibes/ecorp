@@ -35,6 +35,20 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Verify exported history using a trusted raw key or trusted JSON key history.
+    AuditVerify {
+        archive: std::path::PathBuf,
+        #[arg(long)]
+        trusted_key_file: std::path::PathBuf,
+        #[arg(long)]
+        expected_checkpoint: Option<String>,
+    },
+    /// Submit a typed audit operation JSON file through the authenticated native API.
+    AuditRequest {
+        corp_id: Uuid,
+        actor_id: Uuid,
+        operation: std::path::PathBuf,
+    },
     Health,
     Bootstrap,
     Snapshot {
@@ -192,6 +206,65 @@ async fn main() -> Result<()> {
     }
     let client = Client::builder().default_headers(headers).build()?;
     let response = match args.command {
+        Command::AuditVerify {
+            archive,
+            trusted_key_file,
+            expected_checkpoint,
+        } => {
+            use std::io::Read;
+            let mut bytes = Vec::new();
+            std::fs::File::open(archive)?
+                .take(crony_audit::MAX_ARCHIVE_BYTES + 1)
+                .read_to_end(&mut bytes)?;
+            anyhow::ensure!(
+                bytes.len() <= crony_audit::MAX_ARCHIVE_BYTES as usize,
+                "audit archive exceeds bound"
+            );
+            let archive: crony_audit::Archive = crony_audit::parse_json(&bytes)?;
+            let mut trusted = Vec::new();
+            std::fs::File::open(trusted_key_file)?
+                .take(crony_audit::MAX_RECORD_BYTES as u64 + 1)
+                .read_to_end(&mut trusted)?;
+            anyhow::ensure!(
+                trusted.len() <= crony_audit::MAX_RECORD_BYTES,
+                "trusted audit key history exceeds bound"
+            );
+            if trusted.len() == 32 {
+                let key_bytes: [u8; 32] = trusted
+                    .try_into()
+                    .map_err(|_| anyhow::anyhow!("trusted public key must be exactly 32 bytes"))?;
+                let key = crony_audit::VerifyingKey::from_bytes(&key_bytes)?;
+                archive.verify(&key, expected_checkpoint.as_deref())?;
+            } else {
+                let keys: Vec<crony_audit::TrustedSigningKey> =
+                    crony_audit::parse_json(&trusted)
+                        .context("trusted key file must be raw 32-byte Ed25519 or JSON history")?;
+                archive.verify_with_key_history(&keys, expected_checkpoint.as_deref())?;
+            }
+            serde_json::json!({"verified":true,"ledger_id":archive.ledger_id,"last_sequence":archive.rows.last().map(|r|r.decision.sequence),
+                "checkpoint_digest":archive.checkpoints.last().map(|c|&c.digest),"prior_to_baseline":"not attested",
+                "external_witness_checked":expected_checkpoint.is_some(),"signing_key_count":archive.signing_keys.len()})
+        }
+        Command::AuditRequest {
+            corp_id,
+            actor_id,
+            operation,
+        } => {
+            use std::io::Read;
+            let mut bytes = Vec::new();
+            std::fs::File::open(operation)?
+                .take(262145)
+                .read_to_end(&mut bytes)?;
+            anyhow::ensure!(bytes.len() <= 262144, "audit operation exceeds bound");
+            let command: Value = crony_audit::parse_json(&bytes)?;
+            request(
+                &client,
+                Method::POST,
+                format!("{}/api/corps/{corp_id}/state-audit", args.server),
+                Some(serde_json::json!({"actor_id":actor_id,"command":command})),
+            )
+            .await?
+        }
         Command::Health => {
             request(
                 &client,
@@ -522,6 +595,32 @@ async fn request(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn issue281_offline_verify_requires_an_external_trusted_key() {
+        assert!(
+            super::Args::try_parse_from([
+                "crony",
+                "audit-verify",
+                "history.json",
+                "--trusted-key-file",
+                "trusted.pub",
+                "--expected-checkpoint",
+                &"11".repeat(32)
+            ])
+            .is_ok()
+        );
+        assert!(super::Args::try_parse_from(["crony", "audit-verify", "history.json"]).is_err());
+        assert!(
+            super::Args::try_parse_from([
+                "crony",
+                "audit-request",
+                "00000000-0000-4000-8000-000000000001",
+                "00000000-0000-4000-8000-000000000002",
+                "operation.json"
+            ])
+            .is_ok()
+        );
+    }
     use std::path::PathBuf;
 
     use clap::Parser;

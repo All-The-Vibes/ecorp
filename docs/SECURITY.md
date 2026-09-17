@@ -525,6 +525,31 @@ process—not an agent session or a general stdin/shell endpoint.
 - Every runner event must match both the current connection epoch and the stored assignment token.
 - A stale runner cannot turn a `lost` run back into an active or cancelled run.
 
+## State-audit security boundary
+
+State audit reuses native command authorization and row-locks the authorizing
+actor record so a concurrent role demotion cannot race an accepted covered
+mutation. Audit snapshots are explicit DTOs: they include identifiers,
+revisions, ceilings, allowed tools/write scope and domain-separated digests,
+but exclude claim tokens, credentials, raw provider inputs and unnecessary
+contract prose. Private replay results remain in a separate immutable table
+that is never part of a public checkpoint export.
+
+Checkpoint private keys and GitHub credentials are file-backed trusted-service
+inputs and are never accepted through API, CLI arguments, runner messages or
+agent-visible state. Public signing-key activation history is immutable except
+for one-way retirement. Offline verification requires a separately retained
+raw public key or exact trusted key-history file; archive-contained keys are
+not treated as trust roots.
+
+External publication detects branch ancestry rewrites, conflicting bytes and
+different checkpoint digests at the same ledger sequence. Such divergence, or
+a restored database missing a retained witness, disables the destination.
+Only an authorized explicit reconciliation against the retained ledger ID and
+checkpoint digest re-enables it. This detects rollback relative to the
+retained witness but does not make PostgreSQL resistant to a privileged
+administrator, prove the truth of recorded claims, or replace backups.
+
 ## Reporting
 
 Until private vulnerability reporting is enabled on the GitHub repository, report security issues

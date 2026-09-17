@@ -1,4 +1,6 @@
+use super::state_audit::native_policy;
 use super::*;
+use sqlx::Acquire;
 
 const MAX_MISSION_BUDGET_TOKENS: i64 = 20_000_000;
 const MAX_MISSION_BUDGET_COST_MICROUSD: i64 = 100_000_000;
@@ -39,9 +41,34 @@ impl PgStore {
         &self,
         input: ProposeMissionBudgetRevisionInput,
     ) -> Result<MissionBudgetRevisionOutcome> {
+        let normalized = normalize_proposal(input.clone())?;
+        let op = state_audit::Operation {
+            corp: input.corp_id,
+            actor: input.actor_id,
+            mission: input.mission_id,
+            request_id: input.idempotency_key,
+            name: "budget_proposal",
+            request: proposal_request(&normalized)?,
+        };
+        let store = self.clone();
+        self.audited(op, move |tx| {
+            Box::pin(async move {
+                store
+                    .propose_mission_budget_revision_audit_inner(input, tx)
+                    .await
+            })
+        })
+        .await
+    }
+
+    async fn propose_mission_budget_revision_audit_inner(
+        &self,
+        input: ProposeMissionBudgetRevisionInput,
+        outer: &mut Transaction<'_, Postgres>,
+    ) -> Result<MissionBudgetRevisionOutcome> {
         let input = normalize_proposal(input)?;
         let request = proposal_request(&input)?;
-        let mut tx = self.pool.begin().await?;
+        let mut tx = outer.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
         ensure_budget_manager_tx(&mut tx, input.corp_id, input.actor_id).await?;
         lock_factory_keys_tx(
@@ -60,6 +87,7 @@ impl PgStore {
         .await?;
         assert_mission_room_membership_tx(&mut tx, input.corp_id, input.mission_id, input.actor_id)
             .await?;
+        validate_proposal_policy(&input)?;
 
         if let Some(row) = sqlx::query(
             r#"
@@ -78,7 +106,7 @@ impl PgStore {
                 || row.get::<Uuid, _>("proposed_by") != input.actor_id
                 || row.get::<Value, _>("proposal_request") != request
             {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "mission budget proposal idempotency key was reused with a different request"
                 ));
             }
@@ -110,7 +138,7 @@ impl PgStore {
         let room_id: Uuid = mission.get("room_id");
         let mission_status: String = mission.get("status");
         if mission_status == "completed" {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "mission budget cannot be revised after the mission is {mission_status}"
             ));
         }
@@ -119,7 +147,7 @@ impl PgStore {
         if current_budget_tokens != input.expected_budget_tokens
             || current_budget_cost_microusd != input.expected_budget_cost_microusd
         {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "mission budget changed: current token/cost limits are {current_budget_tokens}/{current_budget_cost_microusd}"
             ));
         }
@@ -141,18 +169,20 @@ impl PgStore {
         .fetch_one(&mut *tx)
         .await?
         {
-            return Err(anyhow!("mission already has a pending budget revision"));
+            return Err(native_policy!(
+                "mission already has a pending budget revision"
+            ));
         }
 
         let (consumed_tokens, consumed_cost_microusd) =
             mission_usage_tx(&mut tx, input.corp_id, input.mission_id).await?;
         if input.proposed_budget_tokens <= consumed_tokens {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "proposed mission token budget must exceed the {consumed_tokens} tokens already consumed"
             ));
         }
         if input.proposed_budget_cost_microusd <= consumed_cost_microusd {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "proposed mission cost budget must exceed the {consumed_cost_microusd} microusd already consumed"
             ));
         }
@@ -178,10 +208,10 @@ impl PgStore {
             .bind(input.corp_id)
             .fetch_optional(&mut *tx)
             .await?
-            .context("finish-scope task does not belong to the mission")?;
+            .ok_or_else(|| native_policy!("finish-scope task does not belong to the mission"))?;
             let task_status: String = row.get("status");
             if task_status == "completed" {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "finish-scope task cannot be revised from status {task_status}"
                 ));
             }
@@ -194,7 +224,7 @@ impl PgStore {
                 serde_json::from_value(previous_policy_value.clone())
                     .context("decode verifier policy for budget revision")?;
             if scope.verification_policy != previous_policy {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "budget finish scope cannot widen or replace the verifier policy; use a separately authorized contract revision"
                 ));
             }
@@ -204,14 +234,14 @@ impl PgStore {
             if scope.budget_tokens > remaining_tokens
                 || scope.budget_cost_microusd > remaining_cost_microusd
             {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "finish-scope budget exceeds the budget remaining after already consumed usage"
                 ));
             }
             if scope.budget_tokens > previous_contract.budget_tokens
                 || scope.budget_cost_microusd > previous_contract.budget_cost_microusd
             {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "finish scope may reduce but cannot increase the task budget"
                 ));
             }
@@ -221,7 +251,9 @@ impl PgStore {
                     .iter()
                     .any(|authorized| write_scope_contains(authorized, candidate))
             }) {
-                return Err(anyhow!("finish scope cannot widen the task write boundary"));
+                return Err(native_policy!(
+                    "finish scope cannot widen the task write boundary"
+                ));
             }
             let mut replacement = previous_contract.clone();
             replacement.objective = scope.objective.clone();
@@ -324,8 +356,41 @@ impl PgStore {
         &self,
         input: DecideMissionBudgetRevisionInput,
     ) -> Result<MissionBudgetRevisionOutcome> {
+        anyhow::ensure!(
+            input.expected_version > 0,
+            "expected budget revision version must be positive"
+        );
+        let note = normalize_text(&input.note, "budget revision decision note", 4_000)?;
+        let op = state_audit::Operation {
+            corp: input.corp_id,
+            actor: input.actor_id,
+            mission: input.mission_id,
+            request_id: input.decision_key,
+            name: "budget_decision",
+            request: json!({
+                "revision_id":input.revision_id,"expected_version":input.expected_version,"approved":input.approved,"note":note
+            }),
+        };
+        let store = self.clone();
+        self.audited(op, move |tx| {
+            Box::pin(async move {
+                store
+                    .decide_mission_budget_revision_audit_inner(input, tx)
+                    .await
+            })
+        })
+        .await
+    }
+
+    async fn decide_mission_budget_revision_audit_inner(
+        &self,
+        input: DecideMissionBudgetRevisionInput,
+        outer: &mut Transaction<'_, Postgres>,
+    ) -> Result<MissionBudgetRevisionOutcome> {
         if input.expected_version <= 0 {
-            return Err(anyhow!("expected budget revision version must be positive"));
+            return Err(native_policy!(
+                "expected budget revision version must be positive"
+            ));
         }
         let note = normalize_text(&input.note, "budget revision decision note", 4_000)?;
         let request = json!({
@@ -334,7 +399,7 @@ impl PgStore {
             "approved": input.approved,
             "note": note,
         });
-        let mut tx = self.pool.begin().await?;
+        let mut tx = outer.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
         ensure_budget_manager_tx(&mut tx, input.corp_id, input.actor_id).await?;
         lock_factory_keys_tx(
@@ -372,7 +437,7 @@ impl PgStore {
                 || row.get::<Option<Uuid>, _>("decided_by") != Some(input.actor_id)
                 || row.get::<Option<Value>, _>("decision_request") != Some(request.clone())
             {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "mission budget decision key was reused with a different request"
                 ));
             }
@@ -409,21 +474,23 @@ impl PgStore {
         .bind(input.mission_id)
         .fetch_optional(&mut *tx)
         .await?
-        .context("mission budget revision not found")?;
+        .ok_or_else(|| native_policy!("mission budget revision not found"))?;
         let status: String = row.get("status");
         if status != "pending" {
-            return Err(anyhow!("mission budget revision was already {status}"));
+            return Err(native_policy!(
+                "mission budget revision was already {status}"
+            ));
         }
         let version: i64 = row.get("version");
         if version != input.expected_version {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "mission budget revision version is {version}, not {}",
                 input.expected_version
             ));
         }
         let mission_status: String = row.get("mission_status");
         if mission_status == "completed" {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "mission budget cannot be decided after the mission is {mission_status}"
             ));
         }
@@ -434,7 +501,7 @@ impl PgStore {
             if row.get::<i64, _>("budget_tokens") != current_budget_tokens
                 || row.get::<i64, _>("budget_cost_microusd") != current_budget_cost_microusd
             {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "mission budget changed after the revision was proposed"
                 ));
             }
@@ -452,7 +519,7 @@ impl PgStore {
             if proposed_budget_tokens <= consumed_tokens
                 || proposed_budget_cost_microusd <= consumed_cost_microusd
             {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "mission consumed budget beyond the proposed revision before approval"
                 ));
             }
@@ -497,10 +564,12 @@ impl PgStore {
                 .bind(input.corp_id)
                 .fetch_optional(&mut *tx)
                 .await?
-                .context("finish-scope task no longer belongs to the mission")?;
+                .ok_or_else(|| {
+                    native_policy!("finish-scope task no longer belongs to the mission")
+                })?;
                 let current_task_status: String = current_task.get("status");
                 if current_task_status == "completed" {
-                    return Err(anyhow!(
+                    return Err(native_policy!(
                         "finish-scope task cannot be approved from status {current_task_status}"
                     ));
                 }
@@ -508,7 +577,7 @@ impl PgStore {
                     || current_task.get::<Value, _>("verification_policy")
                         != expected_verification_policy
                 {
-                    return Err(anyhow!(
+                    return Err(native_policy!(
                         "conflict: finish-scope task contract or verifier policy changed after proposal"
                     ));
                 }
@@ -631,17 +700,8 @@ fn normalize_proposal(input: ProposeMissionBudgetRevisionInput) -> Result<Normal
         ),
     ] {
         if !(1..=maximum).contains(&value) {
-            return Err(anyhow!("{field} is out of range"));
+            return Err(native_policy!("{field} is out of range"));
         }
-    }
-    if input.proposed_budget_tokens < input.expected_budget_tokens
-        || input.proposed_budget_cost_microusd < input.expected_budget_cost_microusd
-        || (input.proposed_budget_tokens == input.expected_budget_tokens
-            && input.proposed_budget_cost_microusd == input.expected_budget_cost_microusd)
-    {
-        return Err(anyhow!(
-            "mission budget revision must increase at least one current limit without reducing another"
-        ));
     }
     let finish_scope = input.finish_scope.map(normalize_finish_scope).transpose()?;
     Ok(NormalizedProposal {
@@ -658,20 +718,33 @@ fn normalize_proposal(input: ProposeMissionBudgetRevisionInput) -> Result<Normal
     })
 }
 
+fn validate_proposal_policy(input: &NormalizedProposal) -> Result<()> {
+    if input.proposed_budget_tokens < input.expected_budget_tokens
+        || input.proposed_budget_cost_microusd < input.expected_budget_cost_microusd
+        || (input.proposed_budget_tokens == input.expected_budget_tokens
+            && input.proposed_budget_cost_microusd == input.expected_budget_cost_microusd)
+    {
+        return Err(native_policy!(
+            "mission budget revision must increase at least one current limit without reducing another"
+        ));
+    }
+    Ok(())
+}
+
 fn normalize_finish_scope(input: MissionFinishScopeInput) -> Result<MissionFinishScopeInput> {
     if !(1..=MAX_TASK_BUDGET_TOKENS).contains(&input.budget_tokens) {
-        return Err(anyhow!("finish-scope token budget is out of range"));
+        return Err(native_policy!("finish-scope token budget is out of range"));
     }
     if !(1..=MAX_TASK_BUDGET_COST_MICROUSD).contains(&input.budget_cost_microusd) {
-        return Err(anyhow!("finish-scope cost budget is out of range"));
+        return Err(native_policy!("finish-scope cost budget is out of range"));
     }
     if input.acceptance_tests.is_empty() || input.acceptance_tests.len() > 64 {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "finish scope must contain between 1 and 64 acceptance tests"
         ));
     }
     if input.write_scope.is_empty() || input.write_scope.len() > 64 {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "finish scope must contain between 1 and 64 write-scope entries"
         ));
     }
@@ -708,13 +781,13 @@ fn normalize_finish_scope(input: MissionFinishScopeInput) -> Result<MissionFinis
 fn normalize_text(value: &str, field: &str, max_len: usize) -> Result<String> {
     let value = value.trim();
     if value.is_empty() {
-        return Err(anyhow!("{field} cannot be empty"));
+        return Err(native_policy!("{field} cannot be empty"));
     }
     if value.len() > max_len {
-        return Err(anyhow!("{field} cannot exceed {max_len} bytes"));
+        return Err(native_policy!("{field} cannot exceed {max_len} bytes"));
     }
     if value.chars().any(char::is_control) {
-        return Err(anyhow!("{field} cannot contain control characters"));
+        return Err(native_policy!("{field} cannot contain control characters"));
     }
     Ok(value.to_owned())
 }
@@ -730,7 +803,7 @@ fn normalize_write_scope(value: String) -> Result<String> {
         || value.contains(':')
         || value.contains("//")
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "finish-scope write scope must be a normalized relative path"
         ));
     }
@@ -741,7 +814,7 @@ fn normalize_write_scope(value: String) -> Result<String> {
             .split('/')
             .any(|component| component.is_empty() || matches!(component, "." | ".."))
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "finish-scope write scope must be an exact relative path or end in /**"
         ));
     }
@@ -753,7 +826,7 @@ fn ensure_finish_scope_targets_suspension(
     suspended_task_id: Uuid,
 ) -> Result<()> {
     if finish_task_id != suspended_task_id {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "finish scope must target the task from the latest budget suspension"
         ));
     }
@@ -818,19 +891,19 @@ async fn revision_by_id_tx(
         .transpose()
 }
 
-async fn ensure_budget_manager_tx(
+pub(super) async fn ensure_budget_manager_tx(
     tx: &mut Transaction<'_, Postgres>,
     corp_id: Uuid,
     actor_id: Uuid,
 ) -> Result<()> {
     let role: Option<String> =
-        sqlx::query_scalar("SELECT role FROM actors WHERE id = $1 AND corp_id = $2")
+        sqlx::query_scalar("SELECT role FROM actors WHERE id = $1 AND corp_id = $2 FOR SHARE")
             .bind(actor_id)
             .bind(corp_id)
             .fetch_optional(&mut **tx)
             .await?;
     if !matches!(role.as_deref(), Some("owner" | "admin")) {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "mission budget revisions require an owner or admin"
         ));
     }
@@ -878,7 +951,7 @@ async fn ensure_no_active_mission_run_tx(
     .fetch_one(&mut **tx)
     .await?;
     if active {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "mission budget cannot be revised while a run is active"
         ));
     }
@@ -906,7 +979,7 @@ async fn ensure_latest_run_is_resumable_suspension_tx(
     .bind(mission_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("mission has no run to recover")?;
+    .ok_or_else(|| native_policy!("mission has no run to recover"))?;
     let breaker_stage: String = row.get("breaker_stage");
     let disposition: Option<String> = row.get("workspace_disposition");
     let session_id: Option<String> = row.get("provider_session_id");
@@ -916,7 +989,7 @@ async fn ensure_latest_run_is_resumable_suspension_tx(
         || session_id.is_none()
         || !matches!(status.as_str(), "failed" | "cancelled")
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "latest mission run is not a terminated, preserved budget suspension"
         ));
     }
@@ -979,7 +1052,7 @@ mod tests {
     }
 
     #[test]
-    fn proposal_normalization_requires_a_monotonic_bounded_increase() {
+    fn normalized_proposal_policy_requires_a_monotonic_bounded_increase() {
         let normalized = normalize_proposal(ProposeMissionBudgetRevisionInput {
             corp_id: Uuid::new_v4(),
             mission_id: Uuid::new_v4(),
@@ -994,6 +1067,7 @@ mod tests {
         })
         .expect("valid budget revision");
         assert_eq!(normalized.proposed_budget_tokens, 750_000);
+        validate_proposal_policy(&normalized).expect("monotonic budget revision");
 
         let invalid = ProposeMissionBudgetRevisionInput {
             proposed_budget_tokens: 500_000,
@@ -1011,10 +1085,12 @@ mod tests {
             }
         };
         assert!(
-            normalize_proposal(invalid)
-                .unwrap_err()
-                .to_string()
-                .contains("increase")
+            validate_proposal_policy(
+                &normalize_proposal(invalid).expect("structurally valid request")
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("increase")
         );
     }
 
