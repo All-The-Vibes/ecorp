@@ -2964,15 +2964,20 @@ test('EX-PRESTART-RESUME: uncharged recovery within unfinished history keeps bou
   assert.equal(cycles[0].noProgress, 2)
 })
 
-for (const autonomous of [false, true]) for (const round of [2, 3]) {
-  test(`EX-FINAL-CHARGE-RESUME: ${autonomous ? 'ongoing' : 'interactive'} unfinished round ${round} survives repeated detail outages without charges`, () => {
+for (const gateWait of [false, true]) for (const autonomous of [false, true]) for (const round of [2, 3]) {
+  test(`${gateWait ? 'EX-GATE-WAIT-RESUME' : 'EX-FINAL-CHARGE-RESUME'}: ${autonomous ? 'ongoing' : 'interactive'} unfinished round ${round} survives repeated ${gateWait ? 'gate waits' : 'detail outages'} without charges`, () => {
     const dir = setup()
     if (autonomous) {
       run(dir, 'autonomy', autonomyInput())
       run(dir, 'wake', wakeInput('final-charge'))
     }
     let claim, snapshot, findings = []
-    if (round === 2) {
+    if (round === 2 && gateWait) {
+      const first = start(dir)
+      failedReview(dir, first)
+      claim = run(dir, 'retry', retryInput(first))
+      snapshot = claim.snapshot
+    } else if (round === 2) {
       const published = publishComplete(dir)
       snapshot = { ...published.snapshot, reviewKey: key(2) }
       run(dir, 'sync', { owner, complete: true, prs: [snapshot] })
@@ -3001,6 +3006,25 @@ for (const autonomous of [false, true]) for (const round of [2, 3]) {
       run(dir, 'save', saveInput(claim, { phase: 'blocked', findings,
         evidence: [`detail-outage-${interruption}.json`], reason: 'Transient detail read unavailable' }))
       run(dir, 'sync', { owner, complete: true, prs: [snapshot] })
+      if (gateWait) {
+        const retained = JSON.stringify(run(dir, 'show').prs['1'].blockedClaim)
+        for (const phase of ['waiting', 'blocked', 'waiting']) {
+          const gate = run(dir, 'next', { owner, gateNumber: 1 })
+          assert.equal(gate.action, 'check')
+          assert.equal(gate.round, null)
+          const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+          assert.match(run(dir, 'resume', resumeInput(claim), false).error, /active claim/)
+          assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+          run(dir, 'save', saveInput(gate, { phase, findings,
+            evidence: [`current-ci-${interruption}-${phase}.json`] }))
+          const checked = run(dir, 'show')
+          assert.equal(checked.prs['1'].cycles[0].phase, phase)
+          assert.equal(JSON.stringify(checked.prs['1'].blockedClaim), retained)
+          assert.equal(checked.prs['1'].cycles[0].rounds, admittedCycle.rounds)
+          assert.equal(checked.prs['1'].cycles[0].noProgress, admittedCycle.noProgress)
+          assert.deepEqual(checked.wakes, admitted.wakes)
+        }
+      }
       const blocked = run(dir, 'show'), before = JSON.parse(readFileSync(join(dir, 'state.json'))).events
       const input = resumeInput(claim)
       for (const bad of [
@@ -3022,7 +3046,7 @@ for (const autonomous of [false, true]) for (const round of [2, 3]) {
       assert.equal(resumed.startedAt, claim.startedAt)
       assert.deepEqual(restored.active, blocked.prs['1'].blockedClaim.claim)
       assert.deepEqual(restored.wakes, admitted.wakes)
-      assert.equal(restored.sequence, admitted.sequence)
+      assert.equal(restored.sequence, blocked.sequence)
       const c = restored.prs['1'].cycles[0]
       assert.equal(c.rounds, admittedCycle.rounds)
       assert.equal(c.noProgress, admittedCycle.noProgress)
@@ -3045,6 +3069,10 @@ for (const autonomous of [false, true]) for (const round of [2, 3]) {
     const failure = run(failed, 'show').active
     run(failed, 'retry', retryInput(claim), false)
     run(failed, 'save', saveInput(claim, { phase: 'blocked', findings }))
+    if (gateWait) {
+      const gate = run(failed, 'next', { owner, gateNumber: 1 })
+      run(failed, 'save', saveInput(gate, { findings }))
+    }
     const stopped = readFileSync(join(failed, 'state.json'), 'utf8')
     if (round === 2 || !autonomous) {
       assert.match(run(failed, 'resume', resumeInput(claim), false).error, /exhausted/)
@@ -3105,7 +3133,7 @@ for (const phase of ['auditing', 'reviewing']) {
     run(dir, 'sync', { owner, complete: true, prs: [snapshot] })
     const gate = run(dir, 'next', { owner, gateNumber: 1 })
     assert.match(run(dir, 'resume', resumeInput(claim), false).error, /active claim/)
-    run(dir, 'save', saveInput(gate, { phase: 'blocked' }))
+    run(dir, 'save', saveInput(gate, { phase: 'waiting' }))
     const recovered = run(dir, 'resume', resumeInput(claim)), state = run(dir, 'show')
     assert.equal(recovered.claimId, claim.claimId)
     assert.equal(recovered.snapshot.baseRef, claim.snapshot.baseRef)
@@ -3675,4 +3703,182 @@ test('EX-LEGACY-DETAIL-RECOVERY: pending round-limit input never becomes an unch
   run(dir, 'wake', wakeInput('pending-after-old-read'))
   run(dir, 'next', { owner, gateNumber: 1 }, false)
   assert.equal(start(dir).round, 4)
+})
+
+for (const stage of ['preparation', 'charged-progress', 'charged-no-progress']) {
+  test(`EX-CORRECTIVE-CLAIM-RETENTION: gate-only changes retain ${stage} through wakes and verified resume`, () => {
+    const { dir, snapshot, acceptanceProof } = historicalActivation()
+    const claim = stage === 'preparation' ? next(dir) : start(dir)
+    let findings = []
+    if (stage === 'charged-progress') {
+      findings = [{ id: 'retention-fix', status: 'open', evidence: ['retention-red.log'] }]
+      run(dir, 'save', saveInput(claim, { phase: 'fixing', findings }))
+      findings = [{ ...findings[0], status: 'fixed', evidence: ['retention-red.log', 'retention-green.log'] }]
+    }
+    run(dir, 'save', saveInput(claim, { phase: 'blocked', findings, reason: 'Local validation interrupted' }))
+    const before = run(dir, 'show'), prefix = journalBytes(dir), p = before.prs['1']
+    assert.equal(p.cycles[0].noProgress, stage === 'charged-progress' ? 0 : stage === 'preparation' ? 1 : 2)
+    for (let n = 1; n <= 2; n++) {
+      run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey: key(900 + n) }, pr(2)] })
+      run(dir, 'wake', wakeInput(`retention-${stage}-${n}`))
+      const bytes = journalBytes(dir)
+      for (let repeat = 0; repeat < 2; repeat++) {
+        const selected = next(dir)
+        assert.equal(selected.action, 'blocked', 'gate metadata must not allocate a replacement audit')
+        assert.equal(selected.claimId, claim.claimId)
+        assert.equal(selected.round, claim.round)
+        assert.match(selected.reason, /resume/)
+      }
+      run(dir, 'next', { owner, gateNumber: 1 }, false)
+      run(dir, 'next', { owner, feedbackNumber: 1 }, false)
+      run(dir, 'enable', { owner, acceptanceProof }, false)
+      run(dir, 'begin', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head }, false)
+      const clearance = resumeInput(claim)
+      run(dir, 'resume', { ...clearance, clearance: { ...clearance.clearance, verifiedAt: '2000-01-01T00:00:00.000Z' } }, false)
+      assert.equal(journalBytes(dir), bytes, 'observation and rejected recovery cannot consume pending work')
+      const state = run(dir, 'show'), retained = state.prs['1']
+      for (const field of ['blockedClaim', 'correctiveAudit', 'cycles', 'seen', 'seenAudit', 'selected', 'publications']) {
+        assert.deepEqual(retained[field], p[field], field)
+      }
+      assert.equal(state.active, null)
+      assert.equal(state.sequence, before.sequence)
+      assert.deepEqual(state.activation, before.activation)
+      assert.deepEqual(state.wakes.slice(0, before.wakes.length), before.wakes)
+      assert.ok(state.wakes.slice(before.wakes.length).every((w) => w.chargedRounds === 0))
+    }
+    const resumed = run(dir, 'resume', resumeInput(claim))
+    assert.equal(resumed.claimId, claim.claimId)
+    assert.equal(resumed.round, claim.round)
+    assert.equal(resumed.startedAt, claim.startedAt)
+    assert.deepEqual(resumed.snapshot, claim.snapshot, 'gate observations do not rebind the retained claim')
+    assert.deepEqual(run(dir, 'show').prs['1'].correctiveAudit, p.correctiveAudit)
+    const begin = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head }
+    if (stage === 'preparation') {
+      assert.equal(run(dir, 'begin', begin).round, p.cycles[0].rounds + 1)
+      assert.equal(run(dir, 'show').wakes.at(-1).chargedRounds, 1)
+    } else {
+      run(dir, 'begin', begin, false)
+      assert.equal(run(dir, 'show').prs['1'].cycles[0].rounds, claim.round)
+      assert.equal(run(dir, 'show').wakes.at(-1).chargedRounds, 0)
+    }
+    assertHistoryPrefix(dir, prefix)
+  })
+}
+
+test('EX-CORRECTIVE-CLAIM-RETENTION: failed review stays stopped across gate changes and wakes', () => {
+  const { dir, snapshot } = historicalActivation(), claim = start(dir)
+  failedReview(dir, claim)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  const before = run(dir, 'show')
+  assert.ok(before.prs['1'].blockedClaim.claim.failureEvidence)
+  assert.equal(before.prs['1'].cycles[0].noProgress, 2)
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey: key(910) }, pr(2)] })
+  run(dir, 'wake', wakeInput('retention-failed-review'))
+  const bytes = journalBytes(dir)
+  assert.equal(next(dir).claimId, claim.claimId)
+  assert.match(run(dir, 'resume', resumeInput(claim), false).error, /exhausted/)
+  run(dir, 'retry', retryInput(claim), false)
+  run(dir, 'next', { owner, gateNumber: 1 }, false)
+  assert.equal(journalBytes(dir), bytes)
+  const after = run(dir, 'show')
+  assert.deepEqual(after.prs['1'].blockedClaim, before.prs['1'].blockedClaim)
+  assert.deepEqual(after.prs['1'].correctiveAudit, before.prs['1'].correctiveAudit)
+  assert.deepEqual(after.prs['1'].cycles, before.prs['1'].cycles)
+  assert.equal(after.wakes.at(-1).chargedRounds, 0)
+})
+
+test('EX-CORRECTIVE-CLAIM-RETENTION: retained failed review below bounds still requires a charged retry', () => {
+  const { dir, snapshot } = historicalActivation(), claim = start(dir)
+  const findings = progressFailure(dir, claim)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked', findings }))
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey: key(911) }, pr(2)] })
+  const before = run(dir, 'show')
+  assert.equal(next(dir).claimId, claim.claimId)
+  run(dir, 'resume', resumeInput(claim))
+  assert.match(run(dir, 'save', saveInput(claim, { phase: 'fixing', findings }), false).error, /retry/)
+  const retry = run(dir, 'retry', retryInput(claim)), after = run(dir, 'show')
+  assert.equal(retry.claimId, claim.claimId)
+  assert.equal(retry.round, claim.round + 1)
+  assert.equal(after.wakes.at(-1).chargedRounds, before.wakes.at(-1).chargedRounds + 1)
+  assert.deepEqual(after.prs['1'].correctiveAudit, before.prs['1'].correctiveAudit)
+  run(dir, 'retry', retryInput(claim), false)
+})
+
+test('EX-CORRECTIVE-CLAIM-RETENTION: changed code, feedback and scope cannot resume the retained correction', () => {
+  const { dir, snapshot } = historicalActivation(), claim = next(dir)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  const prefix = journalBytes(dir), before = run(dir, 'show')
+  for (const change of [
+    { head: sha(920) }, { base: sha(920) }, { reviewKey: key(920) },
+    { branch: 'different-source' }, { baseRef: 'different-target' },
+    { sourceRepo: 'fork/ecorp' }, { sourceRepo: null }, { readError: 'DETAIL_READ_FAILED' }, { state: 'closed' },
+  ]) {
+    const isolated = fixture()
+    writeJournal(isolated, JSON.parse(prefix).events)
+    run(isolated, 'sync', { owner, complete: true, prs: [{ ...snapshot, ...change }, pr(2)] })
+    run(isolated, 'resume', resumeInput(claim), false)
+    const selected = next(isolated), state = run(isolated, 'show')
+    assert.notEqual(selected.claimId, claim.claimId, 'conflicting input is not eligible for exact recovery')
+    assert.deepEqual(state.prs['1'].blockedClaim, before.prs['1'].blockedClaim)
+    assert.deepEqual(state.prs['1'].cycles, before.prs['1'].cycles)
+    assert.deepEqual(state.wakes, before.wakes)
+    if (change.head || change.base || change.reviewKey || change.branch || change.baseRef) {
+      assert.equal(selected.action, 'audit', 'genuinely changed input still gets bounded current-scope work')
+      assert.deepEqual(selected.snapshot, { ...snapshot, ...change })
+    } else assert.notEqual(selected.action, 'audit')
+    assertHistoryPrefix(isolated, prefix)
+  }
+})
+
+for (const activated of [false, true]) {
+  test(`EX-CORRECTIVE-CLAIM-RETENTION: ordinary blocked claim keeps gate checks, valid activation=${activated}`, () => {
+    const dir = setup()
+    if (activated) {
+      const published = publishComplete(dir)
+      run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+      run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: published.snapshot.head, reviewKey: key(2) })] })
+    }
+    const claim = start(dir)
+    run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+    const before = run(dir, 'show')
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, gateKey: key(930) }] })
+    const gate = next(dir)
+    assert.equal(gate.action, 'check')
+    run(dir, 'save', saveInput(gate, { phase: 'blocked' }))
+    const state = run(dir, 'show')
+    assert.deepEqual(state.prs['1'].blockedClaim, before.prs['1'].blockedClaim)
+    assert.equal(state.prs['1'].cycles[0].rounds, before.prs['1'].cycles[0].rounds)
+    assert.equal(state.prs['1'].cycles[0].noProgress, before.prs['1'].cycles[0].noProgress)
+    assert.equal(run(dir, 'resume', resumeInput(claim)).claimId, claim.claimId)
+  })
+}
+
+test('EX-CORRECTIVE-CLAIM-RETENTION: old canaryRecovery replacement and dependent charge replay unchanged', () => {
+  const { dir, snapshot } = historicalActivation(), claim = start(dir)
+  const findings = [{ id: 'historical-retention-fix', status: 'open', evidence: ['red.log'] }]
+  run(dir, 'save', saveInput(claim, { phase: 'fixing', findings }))
+  const fixed = [{ ...findings[0], status: 'fixed', evidence: ['red.log', 'green.log'] }]
+  run(dir, 'save', saveInput(claim, { phase: 'blocked', findings: fixed }))
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey: key(940) }, pr(2)] })
+  const events = JSON.parse(journalBytes(dir)).events
+  const id = 'historical-corrective-replacement'
+  events.push({ version: 2, id, at: new Date().toISOString(), command: 'next',
+    input: { owner }, admission: 'detail-read-recovery', activationFence: true, canaryRecovery: true })
+  writeJournal(dir, events)
+  const replacement = run(dir, 'show').active
+  assert.equal(replacement.claimId, id)
+  assert.equal(replacement.action, 'audit')
+  appendHistorical(dir, 'begin', { owner, number: 1, claimId: id, base: replacement.base, head: replacement.head })
+  appendHistorical(dir, 'save', saveInput(replacement, { phase: 'blocked', findings: fixed }))
+  const bytes = journalBytes(dir), before = run(dir, 'show')
+  assert.equal(before.prs['1'].cycles[0].rounds, claim.round + 1)
+  assert.equal(before.prs['1'].correctiveAudit.claimId, id)
+  assert.equal(before.prs['1'].blockedClaim.claim.claimId, id)
+  assert.equal(before.wakes.at(-1).chargedRounds, 2, 'historical duplicate charges are never refunded')
+  assert.deepEqual(run(dir, 'show'), before)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey: key(941) }, pr(2)] })
+  assert.equal(next(dir).claimId, id, 'only new admission is guarded; retain the historically current claim')
+  assert.equal(run(dir, 'resume', resumeInput({ ...replacement, round: claim.round + 1 })).claimId, id)
+  assertHistoryPrefix(dir, bytes)
 })

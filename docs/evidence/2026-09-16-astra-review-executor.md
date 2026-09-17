@@ -293,3 +293,24 @@ charges in the current native wake.
 [The current capture](assets/astra-review-executor/14-unchanged-canary-recovery.png)
 shows local command results only. Fresh independent reviews and live canary
 acceptance remain separate.
+
+### Gate updates preserve unfinished audit work
+
+The eighth-round independent reviews found two remaining recovery defects:
+gate-only changes could replace a blocked corrective claim, and a waiting
+read-only gate could strand an already-charged final attempt. Their actual
+failures remained NAUGHTY despite the passing local suite; the audit separately
+reported no introduced security/complexity blocker.
+
+The executor automatically charged round nine and dispatched two issue-scoped
+Astra fixers. Matching blocked correction claims now survive gate-only updates,
+and final-charge recovery uses retained audit provenance rather than the
+read-only gate's presentation phase. Neither correction creates another
+attempt, refunds counters, changes earlier events, or supplies missing approval.
+
+The integrated suite passes **207/207 Node tests** and all six repository checks
+(547 Rust passes, 323 ignored). Read-only replay retains the actual 50-event
+journal, cumulative round nine and all three current-wake charges without
+changing its bytes. [The current capture](assets/astra-review-executor/15-gate-retention-corrections.png)
+is local command evidence; independent approval, publication and live canary
+acceptance are still separate gates.

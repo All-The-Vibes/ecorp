@@ -236,6 +236,10 @@ canary may enter one bounded current-scope audit without a manufactured remote
 change. Its claim is bound to that activation, not to each wake. Resume/retry
 interrupted work normally; gates cannot consume unfinished correction, and a
 new technical NICE waits for full acceptance rather than spawning more audits.
+Gate-only updates cannot replace a matching blocked corrective claim or spend
+its charge again. Resume that original claim after verified clearance. A
+read-only gate saved as waiting does not change the retained unfinished audit's
+eligibility; completed failures and exhausted new-attempt bounds still apply.
 Ordinary CI waits, conflicts, competing claims, forks and exhausted stops cannot
 be reopened through this route.
 

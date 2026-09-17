@@ -111,6 +111,8 @@
 //   no failed-review evidence or technical decision can resume AT the original
 //   3-round/noProgress-2 bounds, not spend beyond them. Otherwise the original
 //   new-attempt bounds apply; autonomy removes only the PR round ceiling.
+//   Uncharged gate waiting/blocked saves do not change that retained audit
+//   checkpoint's eligibility; current round and decision provenance must still match.
 //   Resume never resets noProgress or spends a wake round; begin/retry require
 //   current wake capacity. Driver verifies actual clearance, not another approval.
 // published {owner,number,claimId,base,head,snapshot,push,reviewers}
@@ -472,6 +474,17 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       .sort((a, b) => a.selected - b.selected || a.snapshot.number - b.snapshot.number)[0]
     if (!p) return { state: s, output: { action: 'none' }, changed: false }
     const c = cycle(p), snapshot = p.snapshot
+    const b = p.blockedClaim
+    // Live-only, mutation-free refusal: old canaryRecovery events may have
+    // admitted replacements with dependent charges; their replay stays unchanged.
+    if (live && corrective(p) && b?.claim.action === 'audit' &&
+      p.correctiveAudit?.activationId === activation.eventId && p.correctiveAudit.claimId === b.claim.claimId &&
+      b.cycle === p.cycles.length && b.rounds === c.rounds &&
+      (b.claim.round === null || b.claim.round === c.rounds) && c.completion?.claimId !== b.claim.claimId &&
+      current(b.claim, p) && scopeCurrent(b.claim, p, b.claim.effectiveBaseRef)) {
+      return { state: s, output: { ...claimOutput(b.claim, p, s), action: 'blocked',
+        reason: 'retained corrective audit requires verified resume within existing bounds' }, changed: false }
+    }
     const readOnly = !sameRepo(snapshot.sourceRepo, s.config.repo) || !sameRepo(p.sourceRepo, s.config.repo)
     const action = target || (processedAudit(p) && !(recoverPending && pendingRound(p))) ? 'check' : 'audit'
     const renewed = !corrective(p) && c.technicalVerdict === 'NICE' && c.completion.head !== snapshot.head
@@ -504,7 +517,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       i.round === null && c.technicalVerdict === 'NICE' && c.completion.head !== b.claim.head
     const unfinished = positive(b.claim.round) && timestamp(b.claim.startedAt) &&
       !b.claim.failureEvidence && ['auditing', 'fixing', 'reviewing'].includes(b.phase) &&
-      b.technicalVerdict === null && c.phase === 'blocked' && c.technicalVerdict === null && c.completion === null
+      b.technicalVerdict === null && c.technicalVerdict === null && c.completion === null
     check(renewed || (unfinished
       ? c.rounds <= roundLimit(s) && c.noProgress <= 2
       : c.rounds < roundLimit(s) && c.noProgress < 2), 'round or no-progress limit exhausted')
