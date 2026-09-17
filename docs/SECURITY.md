@@ -60,6 +60,17 @@ The persisted factory policy is enforced again during mission materialization. A
 cannot widen its repository, adapter, strategy, model, reasoning effort, tools, secrets, required
 prohibitions, write scope, token budget, or cost budget. Factory `verified` state requires
 authoritative completed mission and passing task-verification records.
+New claim cost admission uses the same strategy allocation as planning and rejects incompatible
+per-task costs before durable intake. Legacy cost-invalid claimed/blocked records with no mission
+can only reconcile to terminal failure through an exact source/policy reclaim by the current owner
+or, after expiry, another authorized operator. Connection authorization still applies.
+The CLI also checks the requested connection binding and source ref against the persisted policy
+before a legacy preview or reconciliation, repeating the checks after refresh without reading a
+checkout or pinning a source commit. Substituting or omitting a bound connection cannot authorize
+terminal reconciliation under the original connection. The transaction records the existing
+state-change audit and operation, releases the lease, and returns
+no execution token; historical policies, materialized graphs, spend, attempts and source pins are
+not rewritten. This is request-driven reconciliation, not a new sweeper or execution authority.
 An explicit `max_task_attempts` is also prospective, immutable Factory policy.
 The shared ceiling remains three; omitted legacy policy cannot newly authorize
 a third planned attempt. Preflight/materialization requests must preserve the

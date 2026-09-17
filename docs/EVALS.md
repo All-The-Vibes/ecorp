@@ -722,6 +722,25 @@ Planning unit tests prove strategy replacement, deterministic adapter matching, 
 depth bounds, retry bounds, per-task budgets, and total mission budgets. See
 `docs/evidence/2026-08-29-task-graph-validation.md`.
 
+### Factory cost admission
+
+The `issue79` domain/planning regressions compare every registered strategy's actual allocation
+with shared cost admission, including small explicit budgets, integer rounding, the existing
+per-task/graph ceilings and overflow. Native CLI tests exercise rejection before GitHub or HTTP
+access in both dry-run and execution. Real SQLx tests cover unchanged claim/graph/event/operation
+ledgers on denial, accepted budget/attempt preservation, fenced legacy reconciliation, transaction
+rollback, concurrent replay, and already-materialized historical policy compatibility.
+
+`tools/e2e_factory_cost_preflight.mjs` additionally runs the actual CLI and HTTP claim boundary
+against an explicitly owned server/PostgreSQL fixture and the existing local fake GitHub CLI.
+It requires `ECORP_ISSUE79_OWNED_DATABASE=1`, `CRONY_SERVER_HTTP`, `CRONY_CLI_BINARY`,
+`ECORP_PSQL_BINARY`, `PGHOST`/`PGPORT`/`PGUSER`/`PGDATABASE`, an empty fixture Corp through
+`ECORP_TEST_CORP_ID`/`ECORP_TEST_ACTOR_ID`, and a worktree-contained `ECORP_TEST_OUTPUT`.
+It does not bootstrap/reset a database, contact real GitHub, install dependencies, create a source
+checkout, or launch a provider. Its one direct SQL policy edit is an explicitly owned historical
+fixture, not a supported recovery operation. See
+`docs/evidence/2026-09-16-factory-cost-preflight.md` for the executed Windows evidence and gate limits.
+
 Runner verifier tests cover valid and missing files, artifact hashes, commands, tests, JSON
 required-key schemas, screenshot signatures, path traversal, exact executable lookup on Linux and
 macOS, and fail-closed explicit-path validation. Windows coverage deterministically exercises
