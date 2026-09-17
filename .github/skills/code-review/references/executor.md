@@ -93,6 +93,9 @@ sessions, failed tests and original receipts.
    generation. Identical healthy recovery uses an uncharged gate recheck; new
    or never-audited content still needs an audit. Do not manufacture progress
    or spend another review round merely because an API read recovered.
+   This also applies when the failed read was recorded before a policy upgrade:
+   reuse only an exact retained NICE generation and unconflicted canonical
+   publication, not a healthy read alone. Historical charges are never refunded.
 3. Resume the retained active PR worktree/session when one exists. Otherwise
    claim the next changed eligible PR. Inventory drafts, forks and stacked PRs,
    too; one waiting or blocked PR must not stall the queue. A `wait` action for
@@ -194,6 +197,9 @@ changes do not discard active fixes.
 If a transient local/tooling/credential failure blocked unfinished work,
 verify the actual cause cleared and use `resume` with that clearance receipt.
 It restores the retained claim and charge; it is not a new budget or approval.
+An already-charged, unfinished attempt can finish after verified transient
+clearance even at its final permitted charge. Resume spends no round; it cannot
+reopen a completed failed review or grant another retry past the breaker.
 Under recorded ongoing autonomy, the same scope-preserving resume also continues
 an old per-PR round-limit block or a batch-capacity wait after a genuine new wake.
 Use the actual authority/wake receipt as clearance. Do not resume a no-progress,
@@ -218,6 +224,13 @@ rather than filling historical omissions with invented values.
 Conflicting historical publications remain readable evidence of prior attempts,
 not a basis for fresh feedback completion or activation. A no-actionable
 metadata review cannot clear a known source/target conflict or restore its NICE.
+After any recorded activation, inspect `show.activation.valid` and its reason:
+`enabled` alone is a historical outcome, not current authority. Invalid
+activation blocks new non-canary admissions and continuations, including
+retained claims; only unchanged blocked evidence may be recorded for them.
+Correct the canary under its existing scope and supply the full new acceptance
+proof to `enable`. A later clean publication or wake alone does not repair
+activation. The previous activation events and proofs remain retained.
 Ordinary CI waits, conflicts, competing claims, forks and exhausted stops cannot
 be reopened through this route.
 

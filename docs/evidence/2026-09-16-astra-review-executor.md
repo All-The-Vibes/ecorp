@@ -255,3 +255,20 @@ real 34-event journal retains round six and all three current-wake charges
 without changing its bytes. [The local-check capture](assets/astra-review-executor/12-feedback-recovery-corrections.png)
 is evidence of those command results, not an independent verdict or live canary
 acceptance. Fresh exact-candidate reviews still precede publication.
+
+### Continued automatically on the next native turn
+
+The actual next native goal turn supplied a new recorded wake identity; the
+original claim resumed and charged round seven without another user decision.
+Three independent issue fixers addressed the sixth-round findings: recovery
+from an old-policy failed-read checkpoint, fresh execution relying on invalid
+historical activation, and continuation of an already-charged unfinished
+attempt at its final permitted charge.
+
+The integrated result passes **185/185 Node tests** and all six baseline checks
+(547 Rust passes, 323 ignored). A read-only replay preserved the live 42-event
+journal, cumulative round seven and one charge in the new wake; no earlier
+spending, failed evidence or historical activation was reset.
+[The current local-check capture](assets/astra-review-executor/13-native-continuation-corrections.png)
+records those results, not scheduled-wake, hosted CI or canary acceptance.
+Independent current-candidate reviews still gate publication.
