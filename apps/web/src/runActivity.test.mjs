@@ -225,15 +225,17 @@ new Function('require', 'exports', compiled.outputText)((name) => {
 }, exports)
 
 test('actual React detail component reuses current classes, native disclosure and escaped text', () => {
-  const view = activity.presentRunActivity(fixture({ tasks: [{ ...fixture().tasks[0], title: '<script>not executable</script>' }] }))
-  const html = renderToStaticMarkup(jsxRuntime.jsx(exports.RunActivityDetails, { view }))
-  assert.match(html, /work-result-facts/)
-  assert.match(html, /class="work-result-details"/)
-  assert.doesNotMatch(html, /<details[^>]*\bopen/)
-  assert.match(html, /&lt;script&gt;/)
-  assert.doesNotMatch(html, /<script>/)
-  assert.match(html, /not its complete history/)
-  assert.match(html, /data-run-id="run-a"/)
+  for (const title of ['<script>not executable</script>', '<SCRIPT>not executable</SCRIPT>', '<ScRiPt src="untrusted">not executable</ScRiPt>']) {
+    const view = activity.presentRunActivity(fixture({ tasks: [{ ...fixture().tasks[0], title }] }))
+    const html = renderToStaticMarkup(jsxRuntime.jsx(exports.RunActivityDetails, { view }))
+    assert.match(html, /work-result-facts/)
+    assert.match(html, /class="work-result-details"/)
+    assert.doesNotMatch(html, /<details[^>]*\bopen/)
+    assert.match(html, /&lt;script\b/i)
+    assert.doesNotMatch(html, /<script\b/i)
+    assert.match(html, /not its complete history/)
+    assert.match(html, /data-run-id="run-a"/)
+  }
   assert.doesNotMatch(source, /\b(fetch|setInterval|WebSocket)\s*\(/)
 })
 
