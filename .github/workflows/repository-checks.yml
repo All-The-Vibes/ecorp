@@ -87,3 +87,71 @@ jobs:
           path: output/coverage/web-models-ci/
           if-no-files-found: warn
           retention-days: 14
+
+  # Native Windows/MSVC unit baseline: 45.8057% lines; the 45.0% floor allows modest
+  # platform variation. Ignored database coverage is measured in a separate owned lane.
+  rust-unit-coverage-windows:
+    name: Rust unit coverage (Windows/MSVC)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions: { contents: read }
+    defaults: { run: { shell: pwsh } }
+    env: { CARGO_BUILD_JOBS: '2', CARGO_INCREMENTAL: '0' }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: 22.23.2, package-manager-cache: false }
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with: { toolchain: 1.98.1, components: llvm-tools-preview }
+      - name: Install verified cargo-llvm-cov 0.9.1
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tools = Join-Path $env:RUNNER_TEMP 'cargo-llvm-cov-0.9.1'
+          $reports = Join-Path $env:GITHUB_WORKSPACE 'output/coverage/rust-unit-windows'
+          New-Item -ItemType Directory -Path $tools,$reports | Out-Null
+          $zip = Join-Path $tools 'tool.zip'
+          Invoke-WebRequest 'https://github.com/taiki-e/cargo-llvm-cov/releases/download/v0.9.1/cargo-llvm-cov-x86_64-pc-windows-msvc.zip' -OutFile $zip
+          if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash -ne '656590cfa13bb7478595bbfdd3bc6bc075a4f7f3f0df5a439c1856cb03c5a4d2') { throw 'Coverage ZIP digest mismatch.' }
+          Expand-Archive -LiteralPath $zip -DestinationPath $tools
+          if ((Get-FileHash -LiteralPath (Join-Path $tools 'cargo-llvm-cov.exe') -Algorithm SHA256).Hash -ne 'a854b3d24f49535dc8b3d070035e0f9042b5cac25324e66cb06c639e4e04baeb') { throw 'Coverage executable digest mismatch.' }
+          $tools | Out-File $env:GITHUB_PATH -Append -Encoding utf8
+          $target = Join-Path $env:RUNNER_TEMP 'ecorp-rust-unit-coverage-target'
+          if (Test-Path -LiteralPath $target) { throw 'Coverage target must be new and uncached.' }
+          @("CARGO_TARGET_DIR=$target","CARGO_LLVM_COV_TARGET_DIR=$target","CARGO_LLVM_COV_BUILD_DIR=$(Join-Path $target 'build')") | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          Get-FileHash -LiteralPath $zip,(Join-Path $tools 'cargo-llvm-cov.exe') -Algorithm SHA256 | Select-Object @{n='file';e={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content (Join-Path $reports 'tool-hashes.json')
+      - name: Measure native unit coverage and guard its measured line baseline
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $reports = Join-Path $env:GITHUB_WORKSPACE 'output/coverage/rust-unit-windows'
+          foreach ($name in @('DATABASE_URL','TEST_DATABASE_URL','CRONY_TEST_DATABASE_URL','GH_TOKEN','GITHUB_TOKEN','CRONY_ACCESS_TOKEN','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','SQLX_OFFLINE','RUSTFLAGS','RUSTDOCFLAGS','LLVM_PROFILE_FILE','RUST_TEST_THREADS')) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+          $nodeDirectory = Split-Path (Get-Command node.exe -CommandType Application).Source
+          if ((node --version) -ne 'v22.23.2' -or !(Test-Path -LiteralPath (Get-Command npm.cmd -CommandType Application).Source -PathType Leaf)) { throw 'Pinned Node and real npm.cmd are required.' }
+          $vswhere = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Microsoft Visual Studio/Installer/vswhere.exe'
+          $vs = (& $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath).Trim()
+          Import-Module (Join-Path $vs 'Common7/Tools/Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
+          $env:PATH = $nodeDirectory + [IO.Path]::PathSeparator + $env:PATH
+          $snapshot = 'const f=require("node:fs"),c=require("node:crypto"),g=require("node:child_process");const git=(...a)=>g.execFileSync("git",a).toString();const names=git("ls-files","-z","--","crates","Cargo.toml","Cargo.lock","rust-toolchain.toml").split("\0").filter(x=>/\.rs$|(^|\/)Cargo\.(toml|lock)$|^rust-toolchain\.toml$/.test(x)).sort();if(!names.length)throw new Error("Rust source inventory is empty");f.writeFileSync(process.argv[1],JSON.stringify({commit:git("rev-parse","HEAD").trim(),status:git("status","--porcelain","--","crates","Cargo.toml","Cargo.lock","rust-toolchain.toml"),files:names.map(file=>({file,sha256:c.createHash("sha256").update(f.readFileSync(file)).digest("hex")}))},null,2));'
+          node -e $snapshot (Join-Path $reports 'source-before.json'); if ($LASTEXITCODE) { throw 'Source identity failed.' }
+          @((rustc +1.98.1 --version),(cargo +1.98.1 llvm-cov --version),(node --version),(npm.cmd --version)) | Set-Content (Join-Path $reports 'versions.txt')
+          try {
+            cargo +1.98.1 llvm-cov test --workspace --locked --json --summary-only --output-path (Join-Path $reports 'unit-coverage.json') 2>&1 | Tee-Object (Join-Path $reports 'unit-tests.log')
+            if ($LASTEXITCODE) { throw 'Instrumented tests failed; no passing coverage claim.' }
+            cargo +1.98.1 llvm-cov report --locked --lcov --output-path (Join-Path $reports 'unit-lcov.info') 2>&1 | Tee-Object (Join-Path $reports 'lcov-report.log')
+            if ($LASTEXITCODE) { throw 'LCOV export failed.' }
+            cargo +1.98.1 llvm-cov report --locked --fail-under-lines 45.0 2>&1 | Tee-Object (Join-Path $reports 'line-guard.log')
+            if ($LASTEXITCODE) { throw 'Windows unit coverage fell below the 45.0% line floor.' }
+            'Rust workspace unit coverage: native JSON and LCOV attached; no requested code exclusions. Ignored SQLx/stopped-session prerequisites remain ignored; database integration coverage is separate.' | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          } finally {
+            node -e $snapshot (Join-Path $reports 'source-after.json'); if ($LASTEXITCODE) { throw 'Final source identity failed.' }
+            if ((Get-FileHash (Join-Path $reports 'source-before.json')).Hash -ne (Get-FileHash (Join-Path $reports 'source-after.json')).Hash) { throw 'Rust source changed during coverage.' }
+          }
+      - name: Preserve native unit reports and source identities
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rust-unit-coverage-windows
+          path: output/coverage/rust-unit-windows/
+          if-no-files-found: warn
+          retention-days: 14

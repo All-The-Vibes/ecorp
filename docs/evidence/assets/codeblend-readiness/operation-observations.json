@@ -51,6 +51,10 @@
     {
       "file": "docs/specs/mcp-inspection-v1.md",
       "sha256": "388b80c8d7a693d083e1abef1a5771141f4e174df742966d8d5782a7215cf919"
+    },
+    {
+      "file": ".github/workflows/repository-checks.yml",
+      "sha256": "8049b93fea3b094ef40da1548874fc11ea98a37da435f825928998474027285d"
     }
   ],
   "actual_observations": {
@@ -725,6 +729,66 @@
     {
       "file": "output/operation-receipt-validation/final-retained/cancelled-export.log",
       "sha256": "da5b2e68f912fb9f7936924c6a5213b45d0d39c3e5daf83a2d14c5647b648cd3"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/coverage-summary.json",
+      "sha256": "eceb41e4ec58a656b3c36121441ae4bd2f1973f6678d906a716160908e0fbf7e"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/workspace-coverage.json",
+      "sha256": "1d12f8791f9dd31bfbd98c4e947e8fd50f2265b1ab91f8d2ff9fecc1e21c3ea3"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/workspace-lcov.info",
+      "sha256": "c01c90a07131c59a3cf5d19452d13befeb7152f61576737652155d6939e43948"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/source-before.json",
+      "sha256": "2a322f3acc23cd5f4d1e88353499359988c5106d78d30278ba89e3da45fecf0a"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/source-after.json",
+      "sha256": "2a322f3acc23cd5f4d1e88353499359988c5106d78d30278ba89e3da45fecf0a"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/coverage-tool-install.json",
+      "sha256": "1ed67b092edd2b0e53e9b766ddd19028981861124108432d124331c68684ab42"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/llvm-executable-hashes.json",
+      "sha256": "987c035e051b21f966f6de69168c20c776c43987522dc5abf03077e0e21538b4"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/coverage-summary.json",
+      "sha256": "5d027fc41bf0e04f612a81f4470a079d5356c3d05818fe344d6c92454a908584"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/workspace-coverage.json",
+      "sha256": "41f3f15d991961239905dc897d32e7e693c21d0676c005e82fa9b138ef6daafe"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/workspace-lcov.info",
+      "sha256": "a5aa73d0199f7468b32d083a87d3cff4f178548eb5a993b427386274a61eb23b"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/source-before.json",
+      "sha256": "2a322f3acc23cd5f4d1e88353499359988c5106d78d30278ba89e3da45fecf0a"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/source-after.json",
+      "sha256": "2a322f3acc23cd5f4d1e88353499359988c5106d78d30278ba89e3da45fecf0a"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/postgres-cleanup.json",
+      "sha256": "10fad348a1389817dae7096ed3aa69068209257c55653edb9c9016a68cd73120"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/threshold-checks/summary.json",
+      "sha256": "87e56df3906be16187d535817b6ab204a13a5a0d194785b869638e8bd541d060"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/coverage-ci-proposal/production-validation.json",
+      "sha256": "e5f0c185f8c46de06bd2b45fa4382e8404764eeaa93011b0c9ecc27a0cf31666"
     }
   ],
   "native_codex_registration": {
@@ -906,5 +970,472 @@
     "total_export_executions": 10,
     "total_consumer_executions": 10,
     "distinct_run_ids": 6
+  },
+  "native_rust_unit_coverage": {
+    "scope": "Rust workspace executed tests under native cargo-llvm-cov defaults; ignored SQLx/probe tests not executed; no JavaScript or provider-inference coverage claim",
+    "platform": "x86_64-pc-windows-msvc",
+    "tool": "cargo-llvm-cov 0.9.1",
+    "rust": "1.98.1",
+    "llvm": "22.1.8",
+    "node_for_native_fixtures": "22.23.2",
+    "tests": {
+      "passed": 555,
+      "failed": 0,
+      "ignored": 333,
+      "filtered_out": 0,
+      "suites": 10,
+      "summed_suite_seconds": 479.23
+    },
+    "totals": {
+      "branches": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "functions": {
+        "count": 4542,
+        "covered": 2643,
+        "percent": 58.190224570673706
+      },
+      "instantiations": {
+        "count": 6004,
+        "covered": 2922,
+        "percent": 48.66755496335776
+      },
+      "lines": {
+        "count": 74506,
+        "covered": 34128,
+        "percent": 45.80570692293238
+      },
+      "mcdc": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "regions": {
+        "count": 95345,
+        "covered": 48475,
+        "notcovered": 46870,
+        "percent": 50.841680213959826
+      }
+    },
+    "reported_files": 69,
+    "by_crate": {
+      "crony-cli": {
+        "files": 5,
+        "lines": {
+          "count": 9691,
+          "covered": 5894,
+          "percent": 60.81931689196161
+        },
+        "functions": {
+          "count": 671,
+          "covered": 411,
+          "percent": 61.25186289120715
+        },
+        "regions": {
+          "count": 13886,
+          "covered": 8583,
+          "percent": 61.810456574967596
+        }
+      },
+      "crony-domain": {
+        "files": 5,
+        "lines": {
+          "count": 742,
+          "covered": 602,
+          "percent": 81.13207547169812
+        },
+        "functions": {
+          "count": 77,
+          "covered": 64,
+          "percent": 83.11688311688312
+        },
+        "regions": {
+          "count": 1000,
+          "covered": 859,
+          "percent": 85.9
+        }
+      },
+      "crony-gateways": {
+        "files": 4,
+        "lines": {
+          "count": 948,
+          "covered": 637,
+          "percent": 67.19409282700423
+        },
+        "functions": {
+          "count": 79,
+          "covered": 52,
+          "percent": 65.82278481012658
+        },
+        "regions": {
+          "count": 1300,
+          "covered": 824,
+          "percent": 63.38461538461539
+        }
+      },
+      "crony-protocol": {
+        "files": 1,
+        "lines": {
+          "count": 334,
+          "covered": 284,
+          "percent": 85.02994011976048
+        },
+        "functions": {
+          "count": 24,
+          "covered": 15,
+          "percent": 62.5
+        },
+        "regions": {
+          "count": 476,
+          "covered": 409,
+          "percent": 85.92436974789916
+        }
+      },
+      "crony-runner": {
+        "files": 26,
+        "lines": {
+          "count": 21765,
+          "covered": 17489,
+          "percent": 80.35377900298644
+        },
+        "functions": {
+          "count": 1698,
+          "covered": 1432,
+          "percent": 84.33451118963487
+        },
+        "regions": {
+          "count": 30680,
+          "covered": 24754,
+          "percent": 80.6844850065189
+        }
+      },
+      "crony-server": {
+        "files": 9,
+        "lines": {
+          "count": 12748,
+          "covered": 6512,
+          "percent": 51.082522748666456
+        },
+        "functions": {
+          "count": 877,
+          "covered": 461,
+          "percent": 52.56556442417332
+        },
+        "regions": {
+          "count": 16455,
+          "covered": 9423,
+          "percent": 57.26526891522334
+        }
+      },
+      "crony-store": {
+        "files": 19,
+        "lines": {
+          "count": 28278,
+          "covered": 2710,
+          "percent": 9.583421741282976
+        },
+        "functions": {
+          "count": 1116,
+          "covered": 208,
+          "percent": 18.63799283154122
+        },
+        "regions": {
+          "count": 31548,
+          "covered": 3623,
+          "percent": 11.484087739317864
+        }
+      }
+    },
+    "duration_seconds": 500.1790127,
+    "source_unchanged": true,
+    "code_exclusions_requested": false,
+    "stable_doctest_coverage_claimed": false,
+    "database_ignored_tests_executed": false,
+    "command": "cargo +1.98.1 llvm-cov test --workspace --locked --json --summary-only --output-path <report>; cargo +1.98.1 llvm-cov report --lcov --output-path <report>",
+    "json_sha256": "1d12f8791f9dd31bfbd98c4e947e8fd50f2265b1ab91f8d2ff9fecc1e21c3ea3",
+    "lcov_sha256": "c01c90a07131c59a3cf5d19452d13befeb7152f61576737652155d6939e43948",
+    "tool_hashes": {
+      "coverage_zip_sha256": "656590cfa13bb7478595bbfdd3bc6bc075a4f7f3f0df5a439c1856cb03c5a4d2",
+      "coverage_executable_sha256": "a854b3d24f49535dc8b3d070035e0f9042b5cac25324e66cb06c639e4e04baeb",
+      "llvm_cov_sha256": "4f292df08bb53f17a3eefa6752a521963ddc29c3c62a0c2d55d17ef6db1b1403",
+      "llvm_profdata_sha256": "6fab9cf53239feebc13142330ae120ad736f7b29c00ea8143a61476038f0b432"
+    },
+    "ci": {
+      "workflow": ".github/workflows/repository-checks.yml",
+      "job": "rust-unit-coverage-windows",
+      "line_floor": 45,
+      "baseline_line_percent": 45.80570692293238,
+      "baseline_headroom_percentage_points": 0.8057069229323801,
+      "function_floor": null,
+      "timeout_minutes": 45,
+      "hosted_run_claimed": false,
+      "coverage_scope": "Whole workspace native unit tests only; database integration coverage is separate",
+      "native_report_locked_supported": true,
+      "static_validation": "passed native actionlint1.7.12 and PowerShell AST",
+      "source_snapshot_validation": {
+        "actual_files": 99,
+        "expected_files": 99,
+        "name_differences": 0,
+        "digest_mismatches": 0,
+        "empty_repository_exit": 1,
+        "empty_manifest_created": false
+      },
+      "actionlint_version": "1.7.12",
+      "actionlint_exit_code": 0
+    }
+  },
+  "native_rust_combined_database_coverage": {
+    "scope": "Rust workspace executed tests plus 332 audited native SQLx tests, accumulated with native cargo-llvm-cov defaults; stopped-session probe remains unexecuted; no JavaScript or provider-inference coverage claim",
+    "tool": "cargo-llvm-cov 0.9.1",
+    "rust": "1.98.1",
+    "llvm": "22.1.8",
+    "node_for_native_fixtures": "22.23.2",
+    "database_stage_tests": {
+      "passed": 332,
+      "failed": 0,
+      "ignored": 0,
+      "filtered_out": 186,
+      "suites": 2,
+      "summed_suite_seconds": 1189.1499999999999
+    },
+    "database_stage_retries": 0,
+    "database_stage_duration_seconds": 1490.66304,
+    "baseline_passed_tests": 555,
+    "combined_passed_tests": 887,
+    "remaining_opt_in_probe_tests": 1,
+    "reported_files": 69,
+    "totals": {
+      "branches": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "functions": {
+        "count": 4542,
+        "covered": 3412,
+        "percent": 75.12109202994276
+      },
+      "instantiations": {
+        "count": 9191,
+        "covered": 4065,
+        "percent": 44.228049178544225
+      },
+      "lines": {
+        "count": 74506,
+        "covered": 53837,
+        "percent": 72.25861004482861
+      },
+      "mcdc": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "regions": {
+        "count": 95345,
+        "covered": 69050,
+        "notcovered": 26295,
+        "percent": 72.4212071949237
+      }
+    },
+    "by_crate": {
+      "crony-cli": {
+        "files": 5,
+        "lines": {
+          "count": 9691,
+          "covered": 5894,
+          "percent": 60.81931689196161
+        },
+        "functions": {
+          "count": 671,
+          "covered": 411,
+          "percent": 61.25186289120715
+        },
+        "regions": {
+          "count": 13886,
+          "covered": 8583,
+          "percent": 61.810456574967596
+        }
+      },
+      "crony-domain": {
+        "files": 5,
+        "lines": {
+          "count": 742,
+          "covered": 667,
+          "percent": 89.8921832884097
+        },
+        "functions": {
+          "count": 77,
+          "covered": 71,
+          "percent": 92.20779220779221
+        },
+        "regions": {
+          "count": 1000,
+          "covered": 919,
+          "percent": 91.9
+        }
+      },
+      "crony-gateways": {
+        "files": 4,
+        "lines": {
+          "count": 948,
+          "covered": 637,
+          "percent": 67.19409282700423
+        },
+        "functions": {
+          "count": 79,
+          "covered": 52,
+          "percent": 65.82278481012658
+        },
+        "regions": {
+          "count": 1300,
+          "covered": 824,
+          "percent": 63.38461538461539
+        }
+      },
+      "crony-protocol": {
+        "files": 1,
+        "lines": {
+          "count": 334,
+          "covered": 284,
+          "percent": 85.02994011976048
+        },
+        "functions": {
+          "count": 24,
+          "covered": 15,
+          "percent": 62.5
+        },
+        "regions": {
+          "count": 476,
+          "covered": 409,
+          "percent": 85.92436974789916
+        }
+      },
+      "crony-runner": {
+        "files": 26,
+        "lines": {
+          "count": 21765,
+          "covered": 17489,
+          "percent": 80.35377900298644
+        },
+        "functions": {
+          "count": 1698,
+          "covered": 1432,
+          "percent": 84.33451118963487
+        },
+        "regions": {
+          "count": 30680,
+          "covered": 24754,
+          "percent": 80.6844850065189
+        }
+      },
+      "crony-server": {
+        "files": 9,
+        "lines": {
+          "count": 12748,
+          "covered": 7097,
+          "percent": 55.67147787888296
+        },
+        "functions": {
+          "count": 877,
+          "covered": 503,
+          "percent": 57.35461801596351
+        },
+        "regions": {
+          "count": 16455,
+          "covered": 10093,
+          "percent": 61.33697964144637
+        }
+      },
+      "crony-store": {
+        "files": 19,
+        "lines": {
+          "count": 28278,
+          "covered": 21769,
+          "percent": 76.98210623099229
+        },
+        "functions": {
+          "count": 1116,
+          "covered": 928,
+          "percent": 83.15412186379929
+        },
+        "regions": {
+          "count": 31548,
+          "covered": 23468,
+          "percent": 74.38823380245974
+        }
+      }
+    },
+    "denominator_changed": {
+      "lines": false,
+      "functions": false,
+      "regions": false
+    },
+    "source_unchanged": true,
+    "code_exclusions_requested": false,
+    "json_sha256": "41f3f15d991961239905dc897d32e7e693c21d0676c005e82fa9b138ef6daafe",
+    "lcov_sha256": "a5aa73d0199f7468b32d083a87d3cff4f178548eb5a993b427386274a61eb23b",
+    "unit_only_ci_claim": false,
+    "provider_inference_claim": false,
+    "threshold_checks": {
+      "kind": "native-rust-coverage-threshold-checks",
+      "checked_at": "2026-09-17T21:28:05.0988915Z",
+      "scope": "Native report-only thresholds on the combined555unit+332SQLx profiles; no tests or DB calls, not unit-only or hosted CI proof",
+      "results": [
+        {
+          "floor": "45.0",
+          "command": [
+            "cargo",
+            "+1.98.1",
+            "llvm-cov",
+            "report",
+            "--locked",
+            "--fail-under-lines",
+            "45.0"
+          ],
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "passed": true,
+          "duration_ms": 2965.7213
+        },
+        {
+          "floor": "100",
+          "command": [
+            "cargo",
+            "+1.98.1",
+            "llvm-cov",
+            "report",
+            "--locked",
+            "--fail-under-lines",
+            "100"
+          ],
+          "exit_code": 1,
+          "expected_exit_code": 1,
+          "passed": true,
+          "duration_ms": 3248.4546
+        }
+      ],
+      "raw_profiles_unchanged": true,
+      "source_unchanged": true,
+      "profile_count": 12,
+      "cleanup_safe": true
+    },
+    "cleanup": {
+      "checked_at": "2026-09-17T21:28:15.5597140Z",
+      "role": "coverage-postgres",
+      "process_id": 43308,
+      "process_identity_verified": true,
+      "directory_identity_verified": true,
+      "native_stop_exit": 0,
+      "process_absent": true,
+      "listener_absent": true,
+      "database_files_preserved": true,
+      "other_stacks_untouched": true
+    }
   }
 }

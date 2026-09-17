@@ -54,6 +54,16 @@ Four regression cases kept oversized bodies open: declared length and chunked ov
 
 The fixed native MCP SHA-256 is `d62a24612fbb0c1e9cd208a5011bd2ddbf3dd1828754d339c24cb295748e8781`. The complete compiled probe suite passed 14/14 in 3.678 seconds. Gateway package tests passed 14/14, with formatting and Clippy clean.
 
+## Native Rust unit coverage baseline
+
+The instrumented Windows/MSVC workspace run measured **45.8057% line coverage** (34,128/74,506) and **58.1902% function coverage** (2,643/4,542), using cargo-llvm-cov 0.9.1, Rust 1.98.1/LLVM 22.1.8 and Node 22.23.2. It passed 555 tests with 333 ignored prerequisites in 500.179 seconds, with source hashes unchanged. Native JSON and LCOV reports cover 69 reported files under the tool's default semantics; no code exclusions were requested. The machine evidence retains their byte hashes and selected native tool hashes.
+
+The Windows job in [Repository checks](../../.github/workflows/repository-checks.yml) preserves future native JSON, LCOV, test logs and Rust/Cargo source identities. Its initial 45.0% line floor allows 0.8057 percentage points below this measured baseline for platform and test-branch variation; function counts remain visible without another floor. This is unit-only coverage: the 332 opt-in database cases and explicit stopped-session probe remain ignored. Native actionlint 1.7.12 and both PowerShell blocks passed validation. Executing the exact workflow snapshot captured all 99 expected Rust/Cargo files with matching hashes; an empty repository was rejected without creating a manifest. No hosted execution is claimed.
+
+The separate owned-database stage passed all **332/332 SQLx cases**, without retries, in 1,490.663 seconds and accumulated their native profiles with the preserved unit baseline. Combined coverage is **72.2586% of lines** (53,837/74,506), **75.1211% of functions** (3,412/4,542) and **72.4212% of regions** (69,050/95,345). The 69 reported files and line/function/region denominators are unchanged; no exclusions were requested and source hashes remained unchanged. This represents 887 passed tests across both stages, with only the explicit stopped-session probe unexecuted. It is separate from the unit-only CI job and establishes no provider-inference coverage.
+
+Native report-only threshold checks on those combined profiles returned exit 0 for a 45.0% line floor and exit 1 for 100%, preserving all 12 raw profiles and source hashes. The owned PostgreSQL process was stopped through verified native shutdown at `2026-09-17T21:28:15.5597140Z`; its process and listener were absent, database files were preserved, and other stacks were untouched. Native report and cleanup hashes are retained in the machine evidence.
+
 ## Final validation and cleanup
 
 With Node 22.23.2 and the fixed native MCP binary configured through `CRONY_MCP_TEST_BINARY`:
