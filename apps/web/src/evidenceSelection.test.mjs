@@ -95,5 +95,5 @@ test('MissionCard scopes remounts, pins initial evidence and fails closed when p
   assert.match(card, /const pendingRun = selectedEvidenceRunId !== null && pendingRequest \? evidenceRun : undefined/)
   assert.match(card, /onChange=\{\(event\) => rememberEvidenceRun\(event\.target\.value\)\}/)
   assert.match(card, /Choose a run to inspect/)
-  assert.match(app, /key=\{`\$\{bootstrap\.corp_id\}:\$\{selectedActor\.id\}:\$\{selectedMission\.id\}`\}/)
+  assert.match(app, /key=\{`\$\{bootstrap\.corp_id\}:\$\{selectedActor\.id\}:\$\{selectedMission\.id\}:\$\{evidenceNavigationVersion\}`\}/)
 })

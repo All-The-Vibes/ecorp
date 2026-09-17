@@ -690,9 +690,9 @@ function workspaceViewFromHash(hash: string): WorkspaceView {
 }
 
 function revealEntityTarget(kind: EntityLink['kind'] | 'room', id: string): boolean {
-  const target = document.querySelector<HTMLElement>(
+  const target = Array.from(document.querySelectorAll<HTMLElement>(
     `[data-${kind}-id="${CSS.escape(id)}"]`,
-  )
+  )).find((candidate) => !candidate.closest('[hidden]'))
   if (!target) return false
 
   if (target instanceof HTMLDetailsElement) target.open = true
@@ -1713,12 +1713,12 @@ function FactoryPanel({
     activeLease?.actor_id === selectedActor.id
   const leaseHeldBySelectedActor =
     leaseAttributedToSelectedActor && Boolean(activeLeaseToken)
-  const selectedRunIds = new Set(selectedRuns.map((run) => run.id))
   const pendingActions = actionApprovals.filter(
-    (approval) => selectedRunIds.has(approval.run_id) && approval.status === 'pending',
+    (approval) => approval.status === 'pending' && selectedRuns.some((run) =>
+      run.id === approval.run_id && !terminalRun(run.status)),
   )
   const pendingReviews = verificationRequests.filter(
-    (request) => selectedRunIds.has(request.run_id) && request.status === 'pending',
+    (request) => selectedRuns.some((run) => pendingReviewForRun(run, [request])),
   )
   const contextualMessages = selectedMission
     ? roomDiscussionMessages(messages, room?.id, selectedMission.id,
@@ -2114,7 +2114,7 @@ function FactoryPanel({
                         })}
                         {!pendingActions.length && !pendingReviews.length ? (
                           <p className="factory-cockpit-empty">
-                            No policy exception or review decision is waiting.
+                            No actionable policy exception or outcome review is available for these runs.
                           </p>
                         ) : null}
                       </section>
@@ -4839,6 +4839,7 @@ function App() {
   const [showRegisteredCrew, setShowRegisteredCrew] = useState(false)
   const [floorInspectorOpen, setFloorInspectorOpen] = useState(false)
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null)
+  const [evidenceNavigationVersion, setEvidenceNavigationVersion] = useState(0)
   const [roomMissionId, setRoomMissionId] = useState<string | null>(null)
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [selectedFactoryItemId, setSelectedFactoryItemId] = useState<string | null>(null)
@@ -4956,6 +4957,20 @@ function App() {
         setError('The linked mission is unavailable in the current view.')
         return
       }
+      if (linkedRun) {
+        const viewer = currentViewer.current
+        if (!viewer || viewer.corpId !== data.snapshot.corp.id || viewer.actorId !== selectedActorId ||
+          !rememberEvidenceSelection(() => window.sessionStorage, evidenceSelectionKey({
+            server: API_URL, corpId: viewer.corpId, actorId: viewer.actorId, missionId,
+          }), linkedRun.id)) {
+          setError('The requested evidence selection could not be saved. No different run has been opened.')
+          return
+        }
+        // Explicit run/artifact navigation is a deliberate evidence choice, not
+        // just a scroll target. Remount even within the same mission so its
+        // initializer reads this exact viewer-scoped choice before any decision.
+        setEvidenceNavigationVersion((version) => version + 1)
+      }
       if (missionId) {
         setSelectedMissionId(missionId)
         setMissionComposerCollapsed(true)
@@ -4970,7 +4985,7 @@ function App() {
         if (missionId) revealEntityTarget('mission', missionId)
       }, 80)
     },
-    [data],
+    [data, selectedActorId],
   )
 
   useEffect(() => {
@@ -7370,7 +7385,7 @@ function App() {
             <div className="mission-list">
               {selectedMission ? (
                 <MissionCard
-                  key={`${bootstrap.corp_id}:${selectedActor.id}:${selectedMission.id}`}
+                  key={`${bootstrap.corp_id}:${selectedActor.id}:${selectedMission.id}:${evidenceNavigationVersion}`}
                   corpId={bootstrap.corp_id}
                   mission={selectedMission}
                   tasks={selectedMissionTasks}

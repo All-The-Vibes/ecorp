@@ -51,6 +51,20 @@ test('selection ignores terminal, denied and foreign tool approvals without inve
   assert.equal(activity.selectActivityRun([], [], approvals), undefined)
 })
 
+test('terminal runs cannot become reviewable or active from dangling pending decision records', () => {
+  for (const status of ['lost', 'cancelled', 'failed', 'completed']) {
+    const input = fixture({
+      run: { ...fixture().run, status },
+      reviews: [{ run_id: 'run-a', task_id: 'task-a', status: 'pending' }],
+      approvals: [{ run_id: 'run-a', status: 'pending' }],
+    })
+    const view = activity.presentRunActivity(input)
+    assert.doesNotMatch(view.status, /Awaiting review|Awaiting decision|Executing/)
+    assert.doesNotMatch(view.heading, /needs review|needs a decision/)
+    assert.doesNotMatch(fact(view, 'Provider execution').value, /reported active/)
+  }
+})
+
 test('live task, agent, control, timestamps and safe activity come from one scope without mutation', () => {
   const input = fixture(), before = structuredClone(input)
   const view = activity.presentRunActivity(input)

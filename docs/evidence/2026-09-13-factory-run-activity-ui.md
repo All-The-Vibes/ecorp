@@ -66,14 +66,24 @@ product-site files, global theme or Executive-mode behavior are changed.
 
 ## Remaining acceptance and limits
 
+**September 17 follow-up:** the source-matched isolated browser/server/PostgreSQL/runner
+fixture has now run. It reproduced and corrected exact-run navigation, confirmed a
+390px viewport, and exposed a native runner-reconnect review-loss defect. The
+authorized follow-up fixed that defect, and a fresh complete acceptance run **passed**.
+See the [PR265 acceptance follow-up](2026-09-17-pr265-run-activity-acceptance.md)
+for the final matrix, local fixes, retained failure history and source proof. This
+is local deterministic acceptance, not human PR approval or production readiness.
+
+The following paragraph records the original September 13 prerequisite failure:
+
 Docker's Linux engine pipe was unavailable, `DATABASE_URL` was not available to
 the task, and no native PostgreSQL command or installation was found in the
 targeted prerequisite checks. No private database, retained runner identity or
 other contribution stack was borrowed or reset. The canonical local checkout and
 services remain untouched.
 
-The full, explicitly owned browser/server/runner fixture has therefore **not run**.
-Before accepted completion, exercise the actual Factory integration against a
+At that initial checkpoint the full, explicitly owned browser/server/runner fixture
+had **not run**. The required acceptance scope was the actual Factory integration against a
 matching-source isolated stack, including reconnect/read failure, role/room changes,
 pending review versus a newer worker, exact-run navigation, and source retention.
 Actual native provider activity content beyond the safe fixed labels is not claimed.

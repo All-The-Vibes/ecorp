@@ -139,9 +139,13 @@ export function presentRunActivity(input: RunActivityInput): RunActivityPresenta
   view.runId = run.id
   const runner = input.runners.find((node) => node.id === run.runner_id && node.corp_id === input.corpId)
   const agent = input.agents.find((candidate) => candidate.id === run.agent_id)
-  const pendingReview = input.reviews.some((review) =>
-    review.run_id === run.id && review.task_id === run.task_id && review.status === 'pending')
-  const pendingAction = input.approvals.some((approval) => approval.run_id === run.id && approval.status === 'pending')
+  const pendingReview = Boolean(pendingReviewForRun(run, input.reviews))
+  const pendingAction = !terminal.has(run.status) && input.approvals.some((approval) =>
+    approval.run_id === run.id && approval.status === 'pending')
+  if (terminal.has(run.status) && input.reviews.some((review) =>
+    review.run_id === run.id && review.task_id === run.task_id && review.status === 'pending')) {
+    view.notices.push('A pending review record remains for this ended run. It is not an actionable outcome review; inspect the recorded failure and recovery context.')
+  }
   const events = input.events.filter((event) => event.aggregate_type === 'run' && event.aggregate_id === run.id &&
     (!event.corp_id || event.corp_id === input.corpId) && (!event.room_id || event.room_id === mission.room_id) &&
     Number.isSafeInteger(event.seq) && event.seq >= 0 && validTime(event.created_at) !== null)
