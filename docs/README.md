@@ -53,8 +53,11 @@ evidence scopes.
 
 ## Planning without competing backlogs
 
-[ECorp Build, GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) and its linked
-issues are the operational source for priorities, ownership, dependencies, and status.
+[ECorp Build, GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) and its linked
+issues are the operational source for new-work priorities, ownership, dependencies, and status.
+Personal [Project #3](https://github.com/users/shyamsridhar123/projects/3) retains existing execution
+lineage and recorded authority. Operators must verify configured routing and follow the
+[shared-authority requirements](DARK_FACTORY_CONTRIBUTOR_GUIDE.md#operating-model) before intake.
 [BACKLOG.md](BACKLOG.md) is historical seed material. The product plan preserves original design
 intent alongside dated implementation checkpoints; future-tense sections are not shipped-feature
 claims.
