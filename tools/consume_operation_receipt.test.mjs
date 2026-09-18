@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import fs, { appendFileSync, mkdtempSync, truncateSync, writeFileSync } from 'node:fs'
+import { syncBuiltinESMExports } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
@@ -11,6 +12,20 @@ const hash = value => createHash('sha256').update(value).digest('hex')
 const time = '2026-09-17T12:00:00.000Z'
 const runId = id(6)
 const clone = value => structuredClone(value)
+
+function withShortReads(t, afterRead, operation) {
+  const original = fs.readSync
+  let calls = 0
+  const mocked = t.mock.method(fs, 'readSync', (descriptor, buffer, offset, length, position) => {
+    assert.ok(buffer.length <= 1024 * 1024 + 1)
+    const count = original(descriptor, buffer, offset, Math.min(length, 7), position)
+    afterRead?.(++calls, count)
+    return count
+  })
+  syncBuiltinESMExports()
+  try { operation() } finally { mocked.mock.restore(); syncBuiltinESMExports() }
+  return calls
+}
 
 function receipt() {
   return {
@@ -107,4 +122,27 @@ test('file consumption requires the exact expected byte hash and a bounded valid
   assert.throws(() => readOperationReceipt(file, hash('PRIVATE_BODY_SENTINEL')), error => error.code === 'invalid_receipt' && !error.message.includes('PRIVATE_BODY_SENTINEL'))
   writeFileSync(file, Buffer.alloc(1024 * 1024 + 1))
   assert.throws(() => readOperationReceipt(file, 'f'.repeat(64)), { code: 'receipt_unreadable_or_unbounded' })
+})
+
+test('receipt file reads accumulate short native reads before validating bytes', t => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'ecorp-receipt-short-read-'))
+  const file = path.join(directory, 'receipt.json'), input = Buffer.from(JSON.stringify(receipt()))
+  writeFileSync(file, input)
+  const calls = withShortReads(t, () => {}, () => {
+    assert.deepEqual(readOperationReceipt(file, hash(input)), receipt())
+    assert.throws(() => readOperationReceipt(file, 'e'.repeat(64)), { code: 'receipt_integrity_mismatch' })
+  })
+  assert.ok(calls > 2)
+})
+
+for (const change of ['truncate', 'grow']) test(`receipt file ${change} during short reads fails before parsing`, t => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'ecorp-receipt-changing-read-'))
+  const file = path.join(directory, 'receipt.json'), input = Buffer.from(JSON.stringify(receipt()))
+  writeFileSync(file, input)
+  withShortReads(t, (calls, count) => {
+    if (calls === 1) {
+      if (change === 'truncate') truncateSync(file, count)
+      else appendFileSync(file, ' ')
+    }
+  }, () => assert.throws(() => readOperationReceipt(file, hash(input)), { code: 'receipt_unreadable_or_unbounded' }))
 })

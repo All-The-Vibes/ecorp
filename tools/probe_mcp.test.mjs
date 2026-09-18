@@ -189,6 +189,35 @@ test('compiled MCP ignores notifications and denies mutating calls before HTTP w
   assert.equal(api.requests.length, 0)
 })
 
+for (const readOnly of [true, false]) {
+  test(`compiled MCP keeps malformed omitted-ID objects silent and effect-free (${readOnly ? 'read-only' : 'unrestricted'})`, nativeOptions, async (t) => {
+    const api = await fixture(t, (_request, response) => response.end('{}'))
+    const mutation = { name: 'crony_create_mission', arguments: { title: 'Notification must not create work' } }
+    const replies = await nativeFrames(configuration(api.origin), [
+      {},
+      { jsonrpc: '2.0' },
+      { method: 'tools/call', params: mutation },
+      { jsonrpc: 2, method: 'tools/call', params: mutation },
+      { jsonrpc: '2.0', method: null, params: mutation },
+      { jsonrpc: '2.0', method: 'tools/call', params: mutation },
+      { jsonrpc: '2.0', id: null, method: 17 },
+      true,
+      [],
+      { jsonrpc: '1.0', id: 9, method: 'ping' },
+      { jsonrpc: '2.0', id: null, method: 'ping' },
+      { jsonrpc: '2.0', id: 10, method: 'ping' },
+    ], readOnly)
+    const invalid = { jsonrpc: '2.0', id: null, error: { code: -32600, message: 'invalid JSON-RPC request' } }
+    assert.deepEqual(replies, [
+      invalid, invalid, invalid,
+      { jsonrpc: '2.0', id: 9, error: { code: -32600, message: 'unsupported JSON-RPC version' } },
+      { jsonrpc: '2.0', id: null, result: {} },
+      { jsonrpc: '2.0', id: 10, result: {} },
+    ])
+    assert.equal(api.requests.length, 0)
+  })
+}
+
 test('compiled probe withholds API error content and enforces its whole-probe timeout', nativeOptions, async (t) => {
   const denied = await fixture(t, (_request, response) => {
     response.writeHead(403, { 'content-type': 'application/json' })

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import fs, { appendFileSync, mkdtempSync, readFileSync, truncateSync, writeFileSync } from 'node:fs'
+import { syncBuiltinESMExports } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -19,6 +20,20 @@ const clone = value => structuredClone(value)
 const now = new Date('2026-09-18T12:00:00.000Z'), time = now.toISOString()
 const origin = 'http://127.0.0.1:19871'
 const env = { CRONY_MCP_BINARY: process.execPath, CRONY_SERVER_HTTP: origin, CRONY_CORP_ID: id(1), CRONY_ACTOR_ID: id(2) }
+
+function withShortReads(t, afterRead, operation) {
+  const original = fs.readSync
+  let calls = 0
+  const mocked = t.mock.method(fs, 'readSync', (descriptor, buffer, offset, length, position) => {
+    assert.ok(buffer.length <= 1024 * 1024 + 1)
+    const count = original(descriptor, buffer, offset, Math.min(length, 7), position)
+    afterRead?.(++calls, count)
+    return count
+  })
+  syncBuiltinESMExports()
+  try { operation() } finally { mocked.mock.restore(); syncBuiltinESMExports() }
+  return calls
+}
 
 function fixture({ guidance = 'Inspect the evidence before proposing a label.', expiresAt = '2026-09-19T12:00:00.000Z' } = {}) {
   const snapshot = fixtureSnapshot(now)
@@ -616,6 +631,29 @@ test('file input requires selected exact bytes and fails closed on an oversized 
   assert.throws(() => readFeedbackFile(file), { code: 'unbounded_input' })
   assert.throws(() => readFeedbackFile('relative.json'), { code: 'absolute_input_path_required' })
   assert.equal(readFileSync(file).length, 1024 * 1024 + 1, 'failed input remains available')
+})
+
+test('feedback file reads accumulate short native reads before validating bytes', t => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'ecorp-feedback-short-read-'))
+  const file = path.join(directory, 'proposal.json'), input = bytes({ selected: true })
+  writeFileSync(file, input)
+  const calls = withShortReads(t, () => {}, () => {
+    assert.deepEqual(readFeedbackFile(file, hash(input)), input)
+    assert.throws(() => readFeedbackFile(file, 'f'.repeat(64)), { code: 'input_byte_hash_mismatch' })
+  })
+  assert.ok(calls > 2)
+})
+
+for (const change of ['truncate', 'grow']) test(`feedback file ${change} during short reads fails without a hash pin`, t => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'ecorp-feedback-changing-read-'))
+  const file = path.join(directory, 'proposal.json'), input = bytes({ selected: true })
+  writeFileSync(file, input)
+  withShortReads(t, (calls, count) => {
+    if (calls === 1) {
+      if (change === 'truncate') truncateSync(file, count)
+      else appendFileSync(file, ' ')
+    }
+  }, () => assert.throws(() => readFeedbackFile(file), { code: 'input_changed_during_read' }))
 })
 
 test('CLI preparation writes new review artifacts and an existing apply receipt refuses before network or effects', async () => {

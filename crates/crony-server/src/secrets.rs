@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow};
 use chacha20poly1305::{
     ChaCha20Poly1305, Key, KeyInit, Nonce,
     aead::{Aead, Payload},
@@ -10,32 +10,41 @@ use crate::auth::ServerMode;
 const DEVELOPMENT_KEY_HEX: &str =
     "a5c3f1458279dfb241239378dbefa6b8d2ab32703cba1768343712fd37ac1f04";
 
+// Configuration errors retain only fixed diagnostics, never input values or
+// decoder error chains. Startup can propagate them without losing the reason.
+#[derive(Debug, thiserror::Error)]
+pub enum SecretKeyError {
+    #[error("CRONY_SECRET_MASTER_KEY_HEX is required in production mode")]
+    Missing,
+    #[error("invalid CRONY_SECRET_MASTER_KEY_HEX: expected a 32-byte hexadecimal key")]
+    Invalid,
+    #[error("CRONY_SECRET_MASTER_KEY_HEX must use a deployment-specific key in production mode")]
+    DevelopmentKey,
+}
+
 #[derive(Clone)]
 pub struct SecretCipher {
     cipher: ChaCha20Poly1305,
 }
 
 impl SecretCipher {
-    pub fn initialize(mode: ServerMode, configured_key_hex: Option<&str>) -> Result<Self> {
+    pub fn initialize(
+        mode: ServerMode,
+        configured_key_hex: Option<&str>,
+    ) -> Result<Self, SecretKeyError> {
         let key_hex = match (mode, configured_key_hex) {
             (_, Some(value)) if !value.trim().is_empty() => value.trim(),
             (ServerMode::Development, _) => DEVELOPMENT_KEY_HEX,
             (ServerMode::Production, _) => {
-                return Err(anyhow!(
-                    "CRONY_SECRET_MASTER_KEY_HEX is required in production mode"
-                ));
+                return Err(SecretKeyError::Missing);
             }
         };
-        let key = hex::decode(key_hex).context("decode CRONY_SECRET_MASTER_KEY_HEX")?;
+        let key = hex::decode(key_hex).map_err(|_| SecretKeyError::Invalid)?;
         if key.len() != 32 {
-            return Err(anyhow!(
-                "CRONY_SECRET_MASTER_KEY_HEX must decode to exactly 32 bytes"
-            ));
+            return Err(SecretKeyError::Invalid);
         }
         if mode == ServerMode::Production && key_hex.eq_ignore_ascii_case(DEVELOPMENT_KEY_HEX) {
-            return Err(anyhow!(
-                "CRONY_SECRET_MASTER_KEY_HEX must use a deployment-specific key in production mode"
-            ));
+            return Err(SecretKeyError::DevelopmentKey);
         }
         Ok(Self {
             cipher: ChaCha20Poly1305::new(Key::from_slice(&key)),
