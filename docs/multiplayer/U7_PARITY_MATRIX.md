@@ -16,14 +16,33 @@ Reviewed on September 17, 2026:
 
 | Source | What this map can claim |
 | --- | --- |
-| Integrated main at `7eecd39e43720851512225844bf5d8158e8a944f` | The consumer inventory and baseline contract observations below were checked against this source. It includes the startup-validation and steering-lock-order changes. |
-| Separate draft PR #306 at `e421377a49a6f1d3fbf3a3f71d00e20eba5e3f82`, tracked by [#313][foundation-task] | The collaboration foundation is not part of the integrated baseline above. Its projection/draft tests and screenshots belong to that candidate. |
-| [PR #306's recorded local evidence][foundation-evidence] and [CI run][foundation-ci] | 273 frontend tests, 547 passed/323 ignored Rust tests and six successful CI checks were reported for the foundation candidate. The local fixture used a synthetic provider and development actors, not independent production identities. |
+| Integrated main at `30ec3fab6acd566cc1fc1e574c8a6343d0ce0596` | The consumer inventory and baseline contract observations below were checked against this source. It includes the landed activity/freshness, cost-preflight, startup-validation and steering-lock-order changes. |
+| PR #306 review candidate at `9df9f072467040e16561db9073908108d880c801`, tracked by [#313][foundation-task] | Merges the exact main baseline above without rewriting the published foundation history. This collaboration code is still separate from main, not a merged or complete U7 feature. |
+| [Fresh integrated-source local evidence][integration-evidence] | 310 frontend tests, 554 passed/343 ignored Rust tests, six repository gates and a native browser/server/runner rehearsal passed at the stated synthetic-fixture scope. Includes snapshot failure/recovery, actual WebSocket disconnect, scoped drafts, exact-run navigation, independent development-actor review, artifact denial and desktop/390px captures. |
+| Historical [foundation evidence][foundation-evidence] and [CI run][foundation-ci] at `e421377a49a6f1d3fbf3a3f71d00e20eba5e3f82` | Earlier 273 frontend tests, 547 passed/323 ignored Rust tests and six successful CI checks apply only to that old source. Neither old nor new local fixtures establish independent production identities or cross-owner acceptance. |
 
 This documentation adds no runtime behavior and performs no new multiplayer
 end-to-end rehearsal. Passing existing checkout regression gates is not a new
 acceptance verdict for this matrix. A later UI/backend combination needs its own
 source pins and applicable tests; never carry an older pass forward implicitly.
+
+The reviewed collaboration candidate retains #265's ISO snapshot receipts,
+refresh-failure metadata and exact-run navigation. Its expired synthetic QA runner
+credential was recovered through native same-ID re-enrollment only after explicit
+operator approval; the initial blocked checkpoint remains recorded in its report.
+The original office, retained work, source and artifact history were preserved.
+The final source also corrects the start guide's stale runner-connectivity label.
+This main-based documentation branch separately passed 279 frontend tests and
+554 Rust tests (343 ignored) plus the six repository gates. Its regression passes
+do not execute or accept the future matrix. Hosted results must be checked against
+the actual published PR heads; historical CI is not a pass for these new commits.
+
+The integrated baseline now includes #265's run-activity/exact-run navigation,
+snapshot-read failure and finished-review reconnect behavior, #307's Factory
+planning cost preflight/admission, #290's steering lock-order fix, #288's startup
+validation, #278's PR template and #275's Project #5 guidance. #251's read-only
+Repo Steward is not runtime authority or an alternative multiplayer control plane.
+These landed slices are reused; this map does not take ownership of them.
 
 AC1-AC6 below identify the original six acceptance bullets of #246, in order.
 They do not replace or invent identifiers for the retained R1-R14/M01-M37
@@ -52,7 +71,8 @@ infer grants from runner liveness, or treat a UI affordance as implementation of
 | Web mission preview/creation/launch | [App][app], [missionPreview][preview], [missionRuntime][runtime], [workspaceConnections][connections] | Their existing *.test.mjs suites and missionComposer.test.mjs; preserve exact serialized source/connection binding and separate preview, saved plan and explicit launch. |
 | Collaboration foundation, not integrated main | [missionCollaboration.ts][collaboration], [MissionCollaborationPanel.tsx][collaboration-panel] | [missionCollaboration.test.mjs][collaboration-tests] on the foundation candidate; exact run/actor scope, missing selection, disconnect and late draft generations. |
 | Human CLI | [crony-cli/src/main.rs][cli] | Existing CLI unit tests and source-routing fixture; no implicit bypass or guessed queue field. |
-| Factory | [crony-cli/src/factory.rs][factory], [factory_connection_tests.rs][factory-tests] | Existing saved-connection, claim/policy and cockpit checks; reuse #204, not another intake queue. |
+| Factory | [crony-cli/src/factory.rs][factory], [factory_connection_tests.rs][factory-tests] | Existing saved-connection, claim/policy, planning cost preflight/admission (#307) and cockpit checks; reuse #204, not another intake queue. Cost policy does not supply the pending owner/grant/capacity contract. |
+| Run activity and exact evidence navigation, integrated main | [runActivity.ts][run-activity], [evidenceNavigation.test.mjs][evidence-navigation] | #265's activity/freshness, exact older-run selection and finished-review reconnect regressions. The collaboration integration must retain ISO snapshot receipts and refresh-failure metadata; a live transport alone is insufficient freshness. |
 | MCP | [crony-mcp.rs][mcp], [handle_mcp / mcp_mission_request][gateway-lib] | Native gateway unit tests and e2e_gateways.mjs; inventory exposed operations before declaring a launch path supported. |
 | ACP | [crony-acp.rs / acp_mission_request][acp] | Native gateway tests; retain session/mission/source context and explicit native launch semantics. |
 | A2A | [crony-a2a.rs / a2a_mission_request][a2a] | Native gateway tests; verify authentication and admission, not just successful protocol negotiation. |
@@ -66,6 +86,9 @@ full-stack drivers are candidates for the corresponding matrix rows:
 - [Repository routing](../../tools/e2e_mission_repository_routing.mjs),
   [gateway behavior](../../tools/e2e_gateways.mjs), [artifact authorization](../../tools/e2e_artifacts.mjs)
   and [cockpit reconnect](../../tools/e2e_factory_cockpit_reconnect.mjs).
+- [Run activity](../../tools/e2e_factory_run_activity.py) and
+  [cost preflight](../../tools/e2e_factory_cost_preflight.mjs), with each driver's
+  own fixture ownership and retained-state restrictions.
 
 A listed driver is not proof that it covers every new U7 row. Read its setup,
 assertions and cleanup boundaries before adapting or executing it. Do not run a
@@ -124,7 +147,8 @@ applicable #239 requirements. Use live issues for subsequent status changes.
 
 - #145: contextual operating lane, notifications, control requests and decision load.
 - #257/#258/#259/#260/#261/#262: console history, activity, source review, budgets
-  and recovery forms. PR #265 remains a separate activity slice.
+  and recovery forms. PR #265's activity slice is landed in the pinned baseline;
+  preserve its exact-run and freshness semantics during collaboration integration.
 - #266/#263/#264: design system, themes and presentation modes.
 - #253: authenticated ephemeral human presence and its privacy lifecycle.
 - #254: internal browser/server/runner compatibility, not external gateway design.
@@ -172,18 +196,21 @@ supplies a verification contract, not completed test evidence or release approva
 [release]: https://github.com/All-The-Vibes/ecorp/issues/249
 [foundation-evidence]: https://github.com/All-The-Vibes/ecorp/blob/e421377a49a6f1d3fbf3a3f71d00e20eba5e3f82/docs/evidence/2026-09-16-multiplayer-ui-first-slice.md
 [foundation-ci]: https://github.com/All-The-Vibes/ecorp/actions/runs/35165488545
-[app]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/apps/web/src/App.tsx
-[preview]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/apps/web/src/missionPreview.ts
-[runtime]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/apps/web/src/missionRuntime.ts
-[connections]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/apps/web/src/workspaceConnections.ts
-[collaboration]: https://github.com/All-The-Vibes/ecorp/blob/e421377a49a6f1d3fbf3a3f71d00e20eba5e3f82/apps/web/src/missionCollaboration.ts
-[collaboration-panel]: https://github.com/All-The-Vibes/ecorp/blob/e421377a49a6f1d3fbf3a3f71d00e20eba5e3f82/apps/web/src/MissionCollaborationPanel.tsx
-[collaboration-tests]: https://github.com/All-The-Vibes/ecorp/blob/e421377a49a6f1d3fbf3a3f71d00e20eba5e3f82/apps/web/src/missionCollaboration.test.mjs
-[cli]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/crates/crony-cli/src/main.rs
-[factory]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/crates/crony-cli/src/factory.rs
-[factory-tests]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/crates/crony-server/src/factory_connection_tests.rs
-[mcp]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/crates/crony-gateways/src/bin/crony-mcp.rs
-[gateway-lib]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/crates/crony-gateways/src/lib.rs
-[acp]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/crates/crony-gateways/src/bin/crony-acp.rs
-[a2a]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/crates/crony-gateways/src/bin/crony-a2a.rs
-[protocol]: https://github.com/All-The-Vibes/ecorp/blob/7eecd39e43720851512225844bf5d8158e8a944f/crates/crony-protocol/src/lib.rs
+[integration-evidence]: https://github.com/All-The-Vibes/ecorp/blob/9df9f072467040e16561db9073908108d880c801/docs/evidence/2026-09-17-multiplayer-ui-integration.md
+[app]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/apps/web/src/App.tsx
+[preview]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/apps/web/src/missionPreview.ts
+[runtime]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/apps/web/src/missionRuntime.ts
+[connections]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/apps/web/src/workspaceConnections.ts
+[collaboration]: https://github.com/All-The-Vibes/ecorp/blob/9df9f072467040e16561db9073908108d880c801/apps/web/src/missionCollaboration.ts
+[collaboration-panel]: https://github.com/All-The-Vibes/ecorp/blob/9df9f072467040e16561db9073908108d880c801/apps/web/src/MissionCollaborationPanel.tsx
+[collaboration-tests]: https://github.com/All-The-Vibes/ecorp/blob/9df9f072467040e16561db9073908108d880c801/apps/web/src/missionCollaboration.test.mjs
+[cli]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/crates/crony-cli/src/main.rs
+[factory]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/crates/crony-cli/src/factory.rs
+[factory-tests]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/crates/crony-server/src/factory_connection_tests.rs
+[mcp]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/crates/crony-gateways/src/bin/crony-mcp.rs
+[gateway-lib]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/crates/crony-gateways/src/lib.rs
+[acp]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/crates/crony-gateways/src/bin/crony-acp.rs
+[a2a]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/crates/crony-gateways/src/bin/crony-a2a.rs
+[protocol]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/crates/crony-protocol/src/lib.rs
+[run-activity]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/apps/web/src/runActivity.ts
+[evidence-navigation]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/apps/web/src/evidenceNavigation.test.mjs
