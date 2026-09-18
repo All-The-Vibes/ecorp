@@ -143,6 +143,13 @@ impl RunStatus {
     }
 }
 
+/// A terminal execution failure that must not discard its source through a fresh retry.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RunFailureKind {
+    DeliverableExport,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FactoryWorkItemState {

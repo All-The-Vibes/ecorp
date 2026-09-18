@@ -1,0 +1,127 @@
+Issue 89: bounded deliverable-export recovery contribution
+
+This is NOT a complete fix for issue 89. It prevents automatic fresh-worktree
+retry after a typed native post-verification export failure, retaining the
+existing failed/blocked projections, source lineage, attempts, budgets, evidence
+and authorization boundaries. Ordinary untyped execution failures still retry.
+Older runner binaries that omit the new failure kind retain their old behavior.
+
+Unmet acceptance, deliberately demonstrated rather than hidden:
+- Invalid evidence-only contract narrowing is still accepted (version 1 -> 2).
+- Resume still invokes the provider (one invocation -> two), not zero.
+- Pre-acceptance contract/state rejection and pre-provider export validation are
+  not implemented. Frozen checkpoints lack authoritative deliverable path
+  inventories; ResumeRun also lacks prior provider-artifact exclusions.
+- Neither contract revisions nor finish-scope revisions received an unsafe
+  guessed-manifest check. No blanket narrowing ban, silent scope expansion,
+  source deletion, attempt reset or parent/delta composition was introduced.
+
+Native browser -> server -> runner validation (2026-09-18, owned disposable data):
+1. Bootstrap/enroll through normal native APIs with fresh loopback SCRAM PG.
+2. Use a deterministic Codex app-server fixture; no vendor inference. The
+   initial turn writes a complete scenario: modified tracked.txt, staged
+   .gitignore and staged.txt, nonignored-untracked application.js, ignored log.
+   Missing EVIDENCE.md causes a real file-verifier failure and source retention.
+3. From the actual browser origin, submit a contract revision narrowing to
+   EVIDENCE.md, then native Resume. The fixture changes only EVIDENCE.md.
+   The verifier passes; real commit/branch export rejects .gitignore.
+4. Observe the actual app's failed mission and precise retained-source recovery
+   summary. After 362 seconds: two same-worktree runs, two provider invocations,
+   zero fresh retries, attempts 1/3, task failed, worktree preserved. Every parent
+   file, HEAD and index remains byte-identical; only EVIDENCE.md was added.
+5. In a separate new mission, legally narrow ** to scenarios/scope-89/** and
+   resume with the same evidence-only correction. Native commit/branch export
+   succeeds. The browser reads the public artifact bytes: 5,281 bytes, five
+   complete scenario paths, 1,441-byte nonempty patch. Native git bundle verify
+   succeeds. Source main remains unchanged; export HEAD is a new commit.
+6. Screenshot the real app in both states. API mutations were browser-origin
+   fetches, not claimed to be click-only UI coverage. UI evidence selection and
+   live WebSocket rendering were also exercised.
+
+Public identities, source/export hashes and screenshot hashes:
+  2026-09-18-issue89-native.json
+Screenshots:
+  2026-09-18-issue89-export-recovery.png
+  2026-09-18-issue89-legal-scope-completed.png
+
+Focused reproducible tests:
+  cargo test -p crony-runner issue89_complete_scenario_export_failure_is_typed_and_preserves_source
+    1 passed; 0 failed; 0 ignored.
+  cargo test -p crony-store issue89_deliverable_export_failure_never_retries_in_a_fresh_workspace
+    1 passed; 0 failed; 0 ignored.
+    The later broad issue89 filter also listed 3 ignored SQL tests; those same
+    tests were then explicitly executed successfully in the owned SQL lane.
+  With DATABASE_URL pointing ONLY to an owned disposable PostgreSQL:
+  cargo test -p crony-store --lib deliverable_failure_tests -- --ignored --test-threads=1
+    3 passed; 0 failed; 0 ignored. Actual migrations and normal public bootstrap,
+    enrollment, mission, assignment and runner-event methods. No forged checkpoint
+    or credential rows. Wrong assignment and malformed kind reject unchanged;
+    duplicate terminal events retain existing rejection/no-mutation semantics.
+  cargo test -p crony-store --lib
+    62 passed; 0 failed; 340 ignored (database/integration lanes require ownership).
+
+Six contributor gates (all attempted, no suppression):
+  node tools/check_migrations.mjs: passed
+  cargo fmt --check: passed
+  cargo clippy --workspace --all-targets -- -D warnings: FAILED
+    Existing Rust 1.94 nonminimal_bool at retained_provider_receipt.rs:50 (#327).
+    That file is untouched; the separately owned fix is not imported.
+  cargo test --workspace: FAILED
+    CLI 119, domain 19, gateways 6, A2A 2, ACP 2, protocol 10 tests passed.
+    Runner: 208 passed, 6 failed, 1 ignored; new native scenario regression passed.
+    Workspace stopped at runner; this gate did not establish server/store results.
+    Failed runner tests:
+      adapter::copilot::tests::typed_directory_tool_rejects_relative_and_absolute_symlink_paths
+      adapter::copilot_fs::tests::dangling_symlinks_cannot_create_external_files
+      adapter::copilot_fs::tests::all_operations_reject_linked_paths_and_protect_roots
+        Windows privilege 1314 creating symlinks (no elevation attempted).
+      adapter::external::tests::external_interrupt_removes_stubborn_process_tree
+        PID-file deadline.
+      source_checkpoint::tests::issue190_cleanup_commit_rejects_a_late_retention_acknowledgment
+      source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal
+        Checkpoint fixture deadlines. No timeout changes or retry-until-green.
+  pnpm build:web: passed after missing-dependency transport restoration.
+  pnpm lint:web: passed.
+  cargo build -p crony-server -p crony-runner: passed.
+
+Toolchain and build identity:
+  Windows, rustc 1.94.0 (4a4ef493e 2026-03-02), GNU/LLD, two Cargo jobs.
+  pnpm 11.19.0. Canonical manifests, versions, integrity and lockfiles unchanged.
+  Approved feed used a private transport-only lock derived from this checkout.
+  Source: C:\Repos\ecorp-issue-89
+  Base: 0b1ad59da398e3dbd6a696d0264bcb6ebd620219
+  Compiled source tree: e3be64b0ddacc9942482bbf0a5c3a7caaa3ec4be
+  Final commit additionally contains this evidence and screenshots, not source
+  changes after compilation.
+  Own target: C:\Repos\ecorp\temp\runtime\issue89-native-target
+  crony-server.exe SHA256:
+    0598FBC4B69C5E361A0CB347E91B07516F657F3DD21E5016202F4184144D5F1E
+  crony-runner.exe SHA256:
+    CB8923B5C4E56617D3875019A3B54C82993D263E78F397A50A72C146D084EFC8
+
+Preserved failed experiments:
+- Initial SQL regression expected terminal duplicate-event acceptance; native
+  behavior rejects it. Corrected the test to assert rejection without mutation.
+- Initial file comparison used unstable serialized hashtable order; corrected
+  evidence assertions to sorted path/length/hash tuples.
+- Final event assertion initially used run_id instead of native aggregate_id;
+  corrected only the evidence reader, not the captured service behavior.
+- Initial pnpm TLS/feed metadata attempts failed; private exact-version approved
+  feed restoration succeeded without changing canonical manifests or integrity.
+- Browser click stability and download-event waits timed out. DOM dispatch and
+  browser public artifact fetch verified the actual UI/data; no fake screenshot.
+
+Cleanup:
+  Owned runner/server/web and PostgreSQL stopped after PID, creation-time, image,
+  exact command-line/postmaster identity checks. Ports 58870-58879 are free.
+  No remaining process matched the owned fixture or target. Failure evidence and
+  restricted disposable database/source fixtures are retained, not force-deleted.
+  No historical #88 mission, retained runtime, live Factory, GitHub side effect,
+  token replacement or another worktree was operated.
+
+Private raw logs, scripts, source captures, native bundle, process manifests,
+gate exits and per-source-file hashes were retained for the coordinating owner:
+  C:\Repos\ecorp\temp\evidence\issue89-preserved-scope-20260918
+  source-binary-manifest.json; gates.json; scope-blocker.txt;
+  final-native-assertions-corrected.txt; stack-cleanup.json;
+  postgres-cleanup.json; prepared-pr-body.txt.
