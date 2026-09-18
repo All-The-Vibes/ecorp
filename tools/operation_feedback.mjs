@@ -458,7 +458,10 @@ export function readFeedbackFile(file, expectedSha256) {
     descriptor = openSync(file, 'r')
     const stat = fstatSync(descriptor)
     requireThat(stat.isFile() && stat.size > 0 && stat.size <= FEEDBACK_ADMISSION_LIMITS.bytes, 'unbounded_input')
-    const buffer = Buffer.alloc(stat.size + 1), length = readSync(descriptor, buffer, 0, buffer.length, 0)
+    const buffer = Buffer.alloc(stat.size + 1)
+    let length = 0, count
+    // Regular-file reads can be short; the extra byte still detects growth.
+    while (length < buffer.length && (count = readSync(descriptor, buffer, length, buffer.length - length, null)) > 0) length += count
     requireThat(length === stat.size, 'input_changed_during_read')
     const bytes = buffer.subarray(0, length)
     if (expectedSha256 !== undefined) requireThat(isHash(expectedSha256) && sha(bytes) === expectedSha256, 'input_byte_hash_mismatch')
