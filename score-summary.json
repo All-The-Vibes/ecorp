@@ -265,7 +265,7 @@
     "real_server_scope": "Historical full-stack acceptance is attributed separately to its original frozen producer. This summary alone makes no fresh server/browser/provider/benchmark claim.",
     "head": "5ae41f65415fbcbe8aad48221a49389ef5c7a7d5"
   },
-  "progress_updated_at": "2026-09-18T23:39:01.517Z",
+  "progress_updated_at": "2026-09-18T23:54:48.118Z",
   "next_evidence": [
     "Sustained hosted handoffs and governed correction/recovery outcomes",
     "Actual authorized review and production-native identity evidence",
@@ -674,5 +674,69 @@
     "pr_merged": false,
     "score_changed": false,
     "publication_verification_sha256": "27517bfdfcce0ffc0e80275ac574abb644354b16976e7509d29f12397c173f0e"
+  },
+  "pr352_windows_hosted_failure": {
+    "assessed": false,
+    "diagnosed_at": "2026-09-18T23:46:54.655Z",
+    "head": "f6b266e198af4068354505d9f9aee481f1bd9a02",
+    "run_id": 35406221041,
+    "job_id": 105796420597,
+    "attempt": 1,
+    "url": "https://github.com/All-The-Vibes/ecorp/actions/runs/35406221041/job/105796420597",
+    "job_conclusion": "failure",
+    "serial_command_rendered_and_ran": true,
+    "command": "cargo test --locked -p crony-runner -- --test-threads=1",
+    "failed_step_number": 6,
+    "platform_contract_step": "skipped",
+    "artifact_upload_step": "skipped",
+    "counts": {
+      "passed": 211,
+      "failed": 1,
+      "ignored": 1,
+      "filtered": 0,
+      "total": 213
+    },
+    "native_seconds": 219.21,
+    "compile_seconds": 48.28,
+    "failed_step_metadata_seconds": 268,
+    "job_metadata_seconds": 379,
+    "failed_test": "connections::integration_tests::native_fixture_personal_github_profiles_and_login_replay_survive_restart",
+    "other_previously_failed_test": {
+      "name": "connections::integration_tests::native_fixture_ready_ack_refresh_rejection_and_old_run_pins_survive_restart",
+      "result": "passed"
+    },
+    "panic": {
+      "file": "crates/crony-runner/src/connection_setup/integration_tests.rs",
+      "line": 143,
+      "column": 10,
+      "helper": "Fixture::manager",
+      "message": "open the real manager with owned native fixture executables: native setup operation timed out",
+      "boundary": "PrivateRoot ACL setup via WindowsPowerShell5.1 and run_owned",
+      "production_deadline_seconds": 10,
+      "first_open_or_reopen_invocation": "not distinguished by captured log"
+    },
+    "windows_coverage": {
+      "job_id": 105796421604,
+      "run_id": 35406220967,
+      "head": "f6b266e198af4068354505d9f9aee481f1bd9a02",
+      "conclusion": "success",
+      "url": "https://github.com/All-The-Vibes/ecorp/actions/runs/35406220967/job/105796421604",
+      "metadata_only": true,
+      "log_or_test_count_not_read": true
+    },
+    "source_delta_from_03464be": [
+      ".github/workflows/ci.yml"
+    ],
+    "conclusion": "The Windows serial argument did execute. Serialization alone did not eliminate the hosted ACL-setup timeout. The failure did not move to platform-contract; that step never ran. The prior local212/0/1 result remains valid as a separate retained-binary execution.",
+    "cause_not_established": "No per-process ACL/startup timing or caller backtrace was captured. The first-open versus reopen invocation, exact cold-start mechanism and infrastructure contribution remain unresolved.",
+    "local_validation_regraded": false,
+    "prior_failures_overwritten": false,
+    "new_logs_reads": 1,
+    "workflow_rerun": false,
+    "source_edits": false,
+    "deadline_changes": false,
+    "further_change_proposed": false,
+    "report_sha256": "22b0836f0760a3d4d34a39ffa8c1ca8548e20938ef4b8534fc76d52ff161a5a3",
+    "scope": "Additive completed-hosted-result snapshot. Earlier pending snapshot and local retained-binary pass remain historical; neither is regraded. No new benchmark or provider run."
   }
 }
