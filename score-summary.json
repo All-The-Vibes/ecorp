@@ -180,12 +180,86 @@
     "prior_pr_checks_succeeded": 17,
     "assessed_local_changes_committed": false,
     "subsequent_mcp_recovery_feature_assessed": false,
-    "native_factory_publication_claimed": false
+    "native_factory_publication_claimed": false,
+    "ci_maintenance_pr": "https://github.com/All-The-Vibes/ecorp/pull/342",
+    "ci_maintenance_head": "69895ab42076e9f6e3e123affd0d0346960e24ff",
+    "ci_maintenance_status": "open; all 17 hosted checks passed; default-branch activation not verified",
+    "mcp_recovery_pr": "https://github.com/All-The-Vibes/ecorp/pull/351",
+    "mcp_recovery_head": "5ae41f65415fbcbe8aad48221a49389ef5c7a7d5",
+    "mcp_recovery_status": "open; locally qualified; separate from the scored source"
   },
   "auxiliary": {
     "cleanup_score": 70,
     "cleanup_rating": "Enrollment unverified",
     "cleanup_read_errors": 4,
     "documentation_drift_coverage": "partial"
-  }
+  },
+  "subsequent_mcp_qualification": {
+    "base": "9710df2de9b96edfafed521975d0a6dcf9c51eae",
+    "source_files": 730,
+    "source_unchanged": true,
+    "gates_passed": 9,
+    "node_passed": 1166,
+    "node_failed": 0,
+    "node_skipped": 0,
+    "steward_passed": 227,
+    "steward_failed": 0,
+    "steward_skipped": 0,
+    "rust_passed": 565,
+    "rust_failed": 0,
+    "rust_ignored": 343,
+    "native_gateway_sha256": "24c87c55685bc2b90504218b4c3ff2575cb3d44c8d5c79c0f07242b4cca04857",
+    "toolchain": {
+      "node": "24.19.0",
+      "rust": "1.98.1",
+      "pnpm": "11.19.0"
+    },
+    "gates": [
+      {
+        "name": "migrations",
+        "seconds": 0.17213369999999986
+      },
+      {
+        "name": "docs",
+        "seconds": 9.435100700000001
+      },
+      {
+        "name": "fmt",
+        "seconds": 5.989956599999999
+      },
+      {
+        "name": "clippy",
+        "seconds": 252.7095806
+      },
+      {
+        "name": "rust-tests",
+        "seconds": 324.64499960000006
+      },
+      {
+        "name": "node-unit",
+        "seconds": 43.3444974
+      },
+      {
+        "name": "steward",
+        "seconds": 43.2173815
+      },
+      {
+        "name": "web-build",
+        "seconds": 16.409106
+      },
+      {
+        "name": "web-lint",
+        "seconds": 3.6602806
+      }
+    ],
+    "native_test_scope": "Full unit suite executed with CRONY_MCP_TEST_BINARY set to the newly built gateway; compiled mock-API/probe/receipt/consumer/feedback cases executed without skips.",
+    "failed_attempt_scope": "Initial offline dependency resolution failed because current locked versions were absent from caches. The first executable Rust run then failed on one Windows sharing violation during checkpoint fixture cleanup after its behavioral assertions: 374 passed, 1 failed, 1 ignored before Cargo stopped. The exact unchanged compiled test passed its bounded diagnostic, followed by one complete successful workspace repeat. The initial Node gate recorded 1131 passes and five missing-pwsh.exe PATH failures; the corrected full unit gate restores the existing PowerShell7 path. All failed outputs are retained; no source, assertion, security setting or fixture-cleanup policy was changed.",
+    "real_server_scope": "Historical full-stack acceptance is attributed separately to its original frozen producer. This summary alone makes no fresh server/browser/provider/benchmark claim."
+  },
+  "progress_updated_at": "2026-09-18T21:50:59.495Z",
+  "next_evidence": [
+    "Accepted reviewed contributions and default-branch CI handoff",
+    "Governed bounded correction and recovery outcomes",
+    "Authenticated exact-corpus, rule and adoption-intent review"
+  ]
 }
