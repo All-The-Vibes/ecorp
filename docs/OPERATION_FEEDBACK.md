@@ -120,3 +120,56 @@ verification path; that execution and any behavioral improvement need their own
 evidence. Focused tests are `tools/operation_feedback.test.mjs`; the owned-stack
 driver is `tools/e2e_operation_feedback.mjs` and requires explicit setup/input/output
 paths. Test fixtures and real-provider observations remain separate.
+
+## Retain historical behavioral findings
+
+`tools/import_operation_behavior.mjs` imports a selected historical append-check
+failure as a **candidate** in the existing advisory corpus. It reads a hash-pinned
+manifest and regular files beneath an explicit trusted evidence directory. The
+manifest selects the native run, Corp, room, task, connection, original repository
+and commit, resume event, and target path. The importer checks those identities
+against the retained terminal snapshot and resume request, binds the contract and
+persisted verifier, and recomputes a fixed byte comparison. A supplied checker
+file is hashed as historical evidence; its code is never executed.
+
+Native verification and the external byte check remain separate outcomes. A run
+can have passed its persisted functional checks while an external transformation
+check rejected its output. The importer preserves the exact resume instruction;
+it does not infer an instruction violation from a checker mismatch. In particular,
+an ambiguous append instruction and one that explicitly forbids a separator are
+different observations. Instruction/checker alignment remains `not-reviewed`.
+
+Reimporting the same native execution under a different path, timestamp or checker
+does not produce another independent observation. Historical records preserve
+their original source identities, even when those identities differ from the
+current checkout. They are retained local data, with no authenticated review or
+execution authority. The existing local review command **cannot activate** this
+evidence kind; rejection remains available. Directly changing a corpus to mark
+these records active also fails validation.
+
+This path does not export a fresh `current-run` receipt or make historical data
+eligible for native adoption. The reference-only bridge still requires a current
+accepted artifact, matching repository and exact source commit, eligible active
+guidance, and current native authority. A future authenticated promotion path and
+a prospective later-run comparison are needed to establish learned improvement.
+
+The CLI takes a hash-pinned request file containing `schema_version: 1`, an
+existing `corpus: {path, sha256}`, one to eight `manifests: [{path, sha256}]`,
+`guidance: {text, route}`, and `expires_at`. Input references use forward-slash
+paths relative to the evidence root; the root and CLI input/output paths are
+absolute. Each manifest pins the terminal snapshot, resume intent, before/after
+attestations and target bytes, external failure record and historical checker.
+The manifest's fixed check is `exact-append-v1`; no command or checker plugin is
+accepted. The importer test fixture documents the exact manifest schema.
+
+```powershell
+$requestFile = 'C:\ecorp-operations\retained\request.json'
+$requestHash = (Get-FileHash -LiteralPath $requestFile).Hash.ToLowerInvariant()
+node tools/import_operation_behavior.mjs --input $requestFile --sha256 $requestHash `
+  --evidence-root 'C:\ecorp-operations\retained' `
+  --out 'C:\ecorp-operations\retained\corpus-candidate.json'
+```
+
+The output parent must already exist. A successful command writes a new candidate
+corpus and prints its record/digest metadata; existing files are never overwritten.
+Retain the request, selected manifests and original files for inspection.

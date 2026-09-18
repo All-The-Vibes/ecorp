@@ -4,10 +4,11 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { readJson, requireThat, StewardError } from './lib/common.mjs';
 import { collectSnapshot } from './lib/github.mjs';
 import { runAuditCycle, readAuditState, setAuditControl } from './lib/recurring-audit.mjs';
+import { collectorBinding, collectorPolicy } from './lib/collector-profile.mjs';
 
 const commands = new Set(['once', 'watch', 'status', 'pause', 'resume', 'stop']);
 const sourceFlags = ['snapshot', 'live'];
-const valueFlags = new Set(['state-dir', 'source-commit', 'snapshot', 'corpus', 'cycles', 'interval-ms', 'duration-ms', 'reason']);
+const valueFlags = new Set(['state-dir', 'source-commit', 'snapshot', 'corpus', 'cycles', 'interval-ms', 'duration-ms', 'reason', 'collector-profile', 'collector-profile-sha256']);
 const integerArg = (value, min, max, label) => {
   requireThat(typeof value === 'string' && /^[1-9][0-9]*$/.test(value), 'ARGUMENT', `${label} must be a positive integer.`);
   const number = Number(value);
@@ -21,7 +22,7 @@ export function parseArgs(argv) {
   const args = { command }, seen = new Set();
   for (let i = 0; i < rest.length; i++) {
     const flag = rest[i];
-    requireThat(/^--[a-z-]+$/.test(flag) && !seen.has(flag), 'ARGUMENT', 'Unknown or duplicate option.');
+    requireThat(/^--[a-z][a-z0-9-]*$/.test(flag) && !seen.has(flag), 'ARGUMENT', 'Unknown or duplicate option.');
     seen.add(flag);
     const key = flag.slice(2);
     if (key === 'live') { args.live = true; continue; }
@@ -34,6 +35,12 @@ export function parseArgs(argv) {
   args.stateDirectory = path.resolve(args['state-dir']);
   const executes = command === 'once' || command === 'watch';
   const controls = ['pause', 'resume', 'stop'].includes(command);
+  requireThat(Boolean(args['collector-profile']) === Boolean(args['collector-profile-sha256']), 'ARGUMENT', 'Collector profile path and SHA-256 must be supplied together.');
+  if (args['collector-profile']) {
+    requireThat(/^[a-f0-9]{64}$/.test(args['collector-profile-sha256']), 'ARGUMENT', 'Collector profile SHA-256 must be lowercase hexadecimal.');
+    requireThat(!executes || args.live && !args.snapshot, 'ARGUMENT', 'A collector profile cannot relabel supplied snapshots as live.');
+    args.collectorProfile = { path: path.resolve(args['collector-profile']), sha256: args['collector-profile-sha256'] };
+  }
   if (executes || controls) requireThat(/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(args['source-commit'] || ''), 'ARGUMENT', 'An exact lowercase --source-commit is required.');
   if (executes) requireThat(sourceFlags.filter(key => args[key]).length === 1, 'ARGUMENT', 'Select exactly one input: --snapshot PATH or --live.');
   else requireThat(!sourceFlags.some(key => args[key]) && !args.corpus, 'ARGUMENT', 'State and control commands cannot collect snapshots or load feedback.');
@@ -71,13 +78,16 @@ export async function main(argv = process.argv.slice(2), dependencies = {}) {
   const { collect = collectSnapshot, cycle = runAuditCycle, state = readAuditState, control = setAuditControl,
     load = readJson, now = () => new Date(), sleep = delay, signal } = dependencies;
   const sourceCommit = args['source-commit'];
-  const base = { mode: 'audit-only', remote_mutations: 0, state_directory: args.stateDirectory };
+  const collectorProfile = args.collectorProfile ?? null;
+  const policy = collectorPolicy(collectorProfile);
+  const base = { mode: 'audit-only', remote_mutations: 0, state_directory: args.stateDirectory,
+    ...(collectorProfile ? { collector: collectorBinding(policy) } : {}) };
   if (args.command === 'status') {
-    const current = await state({ stateDirectory: args.stateDirectory });
+    const current = await state({ stateDirectory: args.stateDirectory, collectorProfile });
     return { ...base, ...(current ? summary(current) : { status: 'not-initialized' }) };
   }
   if (['pause', 'resume', 'stop'].includes(args.command)) {
-    const result = await control({ stateDirectory: args.stateDirectory, sourceCommit, action: args.command, reason: args.reason, now: now() });
+    const result = await control({ stateDirectory: args.stateDirectory, sourceCommit, action: args.command, reason: args.reason, now: now(), collectorProfile });
     return { ...base, ...summary(result, sourceCommit) };
   }
   const started = now().getTime(), results = [];
@@ -85,18 +95,18 @@ export async function main(argv = process.argv.slice(2), dependencies = {}) {
   for (let index = 0; index < args.cycles; index++) {
     if (signal?.aborted) { exitReason = 'interrupted'; break; }
     if (now().getTime() - started >= args.durationMs) { exitReason = 'duration-limit'; break; }
-    const current = await state({ stateDirectory: args.stateDirectory });
+    const current = await state({ stateDirectory: args.stateDirectory, collectorProfile });
     if (current) {
       requireThat(current.sourceCommit === sourceCommit, 'SOURCE_DRIFT', 'State belongs to a different source revision.');
       if (current.status === 'paused' || current.status === 'stopped') { exitReason = current.status; break; }
     }
     // Reload inputs for every admitted cycle. A stale input is never made fresh here.
-    const snapshot = args.live ? await collect() : load(path.resolve(args.snapshot));
+    const snapshot = args.live ? await collect({ collectorProfile }) : load(path.resolve(args.snapshot));
     const corpus = args.corpus ? load(path.resolve(args.corpus), 1048576) : null;
     if (signal?.aborted) { exitReason = 'interrupted'; break; }
     if (now().getTime() - started >= args.durationMs) { exitReason = 'duration-limit'; break; }
     const result = await cycle({ stateDirectory: args.stateDirectory, snapshot, sourceCommit,
-      source: args.live ? 'live-github-two-pass' : 'provided-snapshot', now: now(), corpus });
+      source: args.live ? 'live-github-two-pass' : 'provided-snapshot', now: now(), corpus, collectorProfile });
     results.push(summary(result, sourceCommit));
     if (result.status === 'paused' || result.status === 'stopped') { exitReason = result.status; break; }
     if (index + 1 < args.cycles) {

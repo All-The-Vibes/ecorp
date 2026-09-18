@@ -176,6 +176,43 @@ identity and scope. A live recurring interval must be at least 60 seconds. The
 tool does not switch accounts. Supplied snapshot mode does not certify live
 collection, even if the file was originally collected elsewhere.
 
+For local reads under another already-authenticated account, explicitly pin a
+private collector profile. The hosted pilot and its `Bakar404` default stay fixed.
+Create an ordinary JSON file with these exact fields, replacing `your-login` with
+the expected current GitHub login:
+
+```json
+{
+  "schema_version": 1,
+  "kind": "repo-steward-readonly-collector-profile",
+  "collector_login": "your-login",
+  "repository": "All-The-Vibes/ecorp",
+  "repository_id": "R_kgDOUIQ-ng",
+  "project_owner": "All-The-Vibes",
+  "project_number": 5,
+  "project_id": "PVT_kwDODYQm6s4BjN3y"
+}
+```
+
+Pass the explicit file and SHA-256 to `once` or `watch` with `--live`, and to every
+later status/control command for that state directory:
+
+```powershell
+$profile = 'C:\ecorp-audits\collector.json'
+$profileHash = (Get-FileHash -LiteralPath $profile).Hash.ToLowerInvariant()
+node maintenance.mjs watch --live --collector-profile $profile --collector-profile-sha256 $profileHash --state-dir $auditState --source-commit $sourceCommit --cycles 3 --interval-ms 60000 --duration-ms 900000
+node maintenance.mjs status --collector-profile $profile --collector-profile-sha256 $profileHash --state-dir $auditState
+```
+
+Use the exact current default-branch commit for live collection. The profile
+selects the expected read principal; it cannot change credentials, permissions,
+repository, Project or query scope. The collector checks the active identity
+before and after its two bounded reads. Receipts and checkpoints bind both that
+identity and the profile hash. Different/missing profile bytes, source drift or
+account drift refuse reuse. Profile options are rejected with supplied-snapshot
+mode. This remains a finite foreground audit, with no installed schedule or
+native task launch.
+
 `feedback.mjs` creates and versions advisory guidance. It always writes a **new**
 output file. Parent directories must already exist; previous corpus files remain
 unchanged. The lifecycle commands are:
@@ -203,6 +240,12 @@ The CLI computes the review file's SHA-256 itself. A retirement input contains
 the record ID and exact record digest; use those values and retain the candidate
 version while reviewing it. Names and hashes do not authenticate the
 reviewer or establish independent/human approval. These are local advisory data.
+
+The [historical behavior importer](../../docs/OPERATION_FEEDBACK.md#retain-historical-behavioral-findings)
+can also retain a native execution and its external byte-check rejection as a
+separate evidence kind. These records stay candidates and cannot be activated by
+the local review command. They preserve original run/source identities and both
+outcomes; they do not establish learned behavior or fresh native acceptance.
 
 Pass an active corpus to a later audit with `--corpus PATH`. It adds bounded
 guidance while preserving every original finding and severity. Expired, rejected

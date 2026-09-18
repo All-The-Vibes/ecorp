@@ -11,6 +11,7 @@ const DIGEST = /^[a-f0-9]{64}$/;
 const SOURCE_COMMIT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 const RULE = /^[A-Z][A-Z0-9_]{0,63}$/;
 const RECORD_ID = /^FB-[a-f0-9]{64}$/;
+const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const ROUTES = new Set(['inspect-evidence', 'clarify-requirements', 'manual-review']);
 const DAY = 86400000;
 const fail = (test, suffix, message) => requireThat(test, `FEEDBACK_${suffix}`, message);
@@ -70,9 +71,64 @@ function guidanceOf(value) {
   return clone(value);
 }
 function evidenceIdentity(value) {
+  if (value.kind === 'native-behavior') {
+    // Another capture, checker build or interpretation of the same run is not
+    // another behavioral observation. None of these identities is authority.
+    return `FE-${feedbackDigest({ scope: value.scope, rule: value.rule,
+      server_origin_sha256: value.native.server_origin_sha256, corp_id: value.native.corp_id,
+      run_id: value.native.run_id, check: value.behavior.check })}`;
+  }
   return `FE-${feedbackDigest({ scope: value.scope, source_commit: value.source_commit, finding_id: value.finding_id, rule: value.rule, finding_revision: value.finding_revision })}`;
 }
+const BEHAVIOR_FILES = ['terminal', 'resume_intent', 'before_attestation', 'after_attestation',
+  'before_target', 'after_target', 'external_failure', 'external_checker'];
+function exactKeys(value, names) {
+  keys(value, names, 'EVIDENCE');
+  fail(Object.keys(value).length === names.length, 'EVIDENCE', 'Behavioral evidence fields are missing.');
+}
+function checkBehaviorEvidence(value, scope, rule) {
+  exactKeys(value, ['schema_version', 'kind', 'evidence_id', 'scope', 'source_commit', 'rule', 'captured_at',
+    'native', 'behavior', 'files_sha256', 'provenance', 'authority', 'identity_verification',
+    'independent_review_verified', 'human_approval_verified', 'evidence_sha256']);
+  fail(value.schema_version === 2 && value.kind === 'native-behavior' && same(scopeOf(value.scope), scope)
+    && same(value.scope, scope) && value.rule === rule && RULE.test(rule), 'EVIDENCE', 'Behavioral evidence scope or rule differs.');
+  instant(value.captured_at);
+  const n = value.native, b = value.behavior;
+  exactKeys(n, ['server_origin_sha256', 'corp_id', 'room_id', 'mission_id', 'task_id', 'run_id', 'connection_id',
+    'repository', 'base_ref', 'base_commit', 'target', 'resume_event_id', 'resumed_from_run_id', 'actor_id', 'agent_id', 'runner_id',
+    'contract_version', 'contract_sha256', 'verification_policy_sha256', 'resume_prompt_sha256',
+    'verification_sha256', 'deliverable_sha256', 'native_check_count']);
+  for (const key of ['corp_id', 'room_id', 'mission_id', 'task_id', 'run_id', 'connection_id', 'resume_event_id', 'resumed_from_run_id', 'actor_id', 'agent_id'])
+    fail(typeof n[key] === 'string' && UUID.test(n[key]), 'EVIDENCE', 'Native behavioral identity is invalid.');
+  for (const key of ['server_origin_sha256', 'contract_sha256', 'verification_policy_sha256', 'resume_prompt_sha256', 'verification_sha256', 'deliverable_sha256'])
+    fail(typeof n[key] === 'string' && DIGEST.test(n[key]), 'EVIDENCE', 'Native behavioral digest is invalid.');
+  fail(typeof n.base_commit === 'string' && SOURCE_COMMIT.test(n.base_commit) && value.source_commit === n.base_commit,
+    'EVIDENCE', 'Original native source commit must be retained.');
+  plain(n.repository, 240, 'EVIDENCE'); plain(n.base_ref, 240, 'EVIDENCE'); plain(n.runner_id, 128, 'EVIDENCE');
+  fail(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(n.repository) && typeof n.target === 'string'
+    && n.target.length <= 500 && n.target.split('/').every(part => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(part) && !part.endsWith('.')),
+  'EVIDENCE', 'Native repository or relative target is invalid.');
+  fail(Number.isSafeInteger(n.contract_version) && n.contract_version > 0 && Number.isSafeInteger(n.native_check_count)
+    && n.native_check_count > 0 && n.native_check_count <= 16, 'EVIDENCE', 'Native contract or check count is invalid.');
+  exactKeys(b, ['check', 'manifest_sha256', 'expected_sha256', 'native_outcome', 'native_verification', 'external_outcome',
+    'instruction_alignment', 'native_test_target_binding', 'before_git_blob', 'after_git_blob', 'worktree_registration_sha256']);
+  fail(b.check === 'exact-append-v1' && b.native_outcome === 'completed' && b.native_verification === 'passed'
+    && b.external_outcome === 'rejected' && b.instruction_alignment === 'not-reviewed'
+    && ['sha256', 'retained-workspace-only'].includes(b.native_test_target_binding), 'EVIDENCE', 'Behavioral outcomes or limitations changed.');
+  for (const key of ['manifest_sha256', 'expected_sha256']) fail(typeof b[key] === 'string' && DIGEST.test(b[key]), 'EVIDENCE', 'Behavioral digest is invalid.');
+  for (const key of ['before_git_blob', 'after_git_blob']) fail(typeof b[key] === 'string' && SOURCE_COMMIT.test(b[key]), 'EVIDENCE', 'Retained Git identity is invalid.');
+  fail(typeof b.worktree_registration_sha256 === 'string' && DIGEST.test(b.worktree_registration_sha256), 'EVIDENCE', 'Retained worktree identity is invalid.');
+  exactKeys(value.files_sha256, BEHAVIOR_FILES);
+  for (const key of BEHAVIOR_FILES) fail(typeof value.files_sha256[key] === 'string' && DIGEST.test(value.files_sha256[key]), 'EVIDENCE', 'Retained file digest is invalid.');
+  fail(value.files_sha256.after_target !== b.expected_sha256, 'EVIDENCE', 'A passing append is not rejected behavioral evidence.');
+  fail(value.provenance === 'retained-native-artifacts' && value.authority === 'none' && value.identity_verification === 'not-performed'
+    && value.independent_review_verified === false && value.human_approval_verified === false,
+  'EVIDENCE', 'Retained artifacts do not authenticate review or grant authority.');
+  const { evidence_sha256, ...body } = value;
+  fail(value.evidence_id === evidenceIdentity(value) && evidence_sha256 === feedbackDigest(body), 'EVIDENCE', 'Behavioral identity or content changed.');
+}
 function checkEvidence(value, scope, rule) {
+  if (value?.kind === 'native-behavior' || value?.schema_version === 2) return checkBehaviorEvidence(value, scope, rule);
   keys(value, ['schema_version', 'evidence_id', 'scope', 'source_commit', 'snapshot_sha256', 'audit_sha256', 'finding_id', 'rule', 'finding_revision', 'finding_sha256', 'captured_at', 'source', 'provenance', 'authority', 'evidence_sha256']);
   fail(value.schema_version === 1 && same(scopeOf(value.scope), scope) && same(value.scope, scope), 'EVIDENCE', 'Evidence scope differs.');
   fail(typeof value.source_commit === 'string' && SOURCE_COMMIT.test(value.source_commit) && /^F-[a-f0-9]{16}$/.test(value.finding_id || '') && RULE.test(value.rule || '') && value.rule === rule,
@@ -82,6 +138,19 @@ function checkEvidence(value, scope, rule) {
   fail(['provided-snapshot', 'synthetic-fixture'].includes(value.source) && value.provenance === 'caller-supplied-data' && value.authority === 'none', 'EVIDENCE', 'Supplied evidence is not authenticated authority.');
   const { evidence_sha256, ...body } = value;
   fail(value.evidence_id === evidenceIdentity(value) && evidence_sha256 === feedbackDigest(body), 'EVIDENCE', 'Evidence identity or content changed.');
+}
+
+// The importer checks retained file bindings before calling this constructor.
+// This data type deliberately has no authenticated or activatable variant.
+export function createNativeBehaviorEvidence({ scope, rule, capturedAt, native, behavior, filesSha256 }) {
+  const body = { schema_version: 2, kind: 'native-behavior', scope: scopeOf(scope), source_commit: native?.base_commit,
+    rule, captured_at: instant(capturedAt), native: clone(native), behavior: clone(behavior), files_sha256: clone(filesSha256),
+    provenance: 'retained-native-artifacts', authority: 'none', identity_verification: 'not-performed',
+    independent_review_verified: false, human_approval_verified: false };
+  body.evidence_id = evidenceIdentity(body);
+  const value = { ...body, evidence_sha256: feedbackDigest(body) };
+  checkBehaviorEvidence(value, body.scope, rule);
+  return value;
 }
 
 export function createFeedbackEvidence({ snapshot, findingId, now = new Date(), source = 'provided-snapshot' }) {
@@ -133,6 +202,8 @@ function checkCorpus(corpus) {
     guidanceOf(record.guidance);
     fail(Array.isArray(record.evidence) && record.evidence.length >= 1 && record.evidence.length <= FEEDBACK_LIMITS.maxEvidence, 'EVIDENCE', 'Evidence count is outside its bounds.');
     for (const item of record.evidence) checkEvidence(item, corpus.scope, record.rule);
+    fail(!record.evidence.some(item => item.kind === 'native-behavior') || record.review?.decision !== 'activate',
+      'REVIEW_AUTHORITY', 'Retained native behavioral evidence cannot be activated by local review.');
     fail(new Set(record.evidence.map(item => item.evidence_id)).size === record.evidence.length, 'EVIDENCE', 'Repeated captures of the same finding revision are one evidence identity.');
     const made = Date.parse(instant(record.created_at)), expires = Date.parse(instant(record.expires_at));
     fail(made >= created && made <= updated && expires > made && expires <= made + FEEDBACK_LIMITS.maxLifetimeDays * DAY, 'TIME', 'Feedback lifetime exceeds its prospective bound.');
@@ -200,6 +271,8 @@ export function reviewFeedback({ corpus, candidateId, expectedCandidateDigest, d
   const at = changeTime(corpus, now), current = corpus.records.find(item => item.id === candidateId);
   fail(current?.status === 'candidate' && DIGEST.test(expectedCandidateDigest || '') && feedbackDigest(current) === expectedCandidateDigest, 'STALE', 'Review must bind the exact undecided candidate.');
   fail(['activate', 'reject'].includes(decision), 'REVIEW', 'An explicit activate or reject decision is required.');
+  fail(decision !== 'activate' || !current.evidence.some(item => item.kind === 'native-behavior'),
+    'REVIEW_AUTHORITY', 'Retained native behavioral evidence requires separate authenticated promotion authority.');
   keys(reviewEvidence, ['sha256', 'reason', 'operatorLabel'], 'REVIEW');
   fail(DIGEST.test(reviewEvidence.sha256 || ''), 'REVIEW', 'A content-bound local review record is required.');
   plain(reviewEvidence.reason, 1600); if (reviewEvidence.operatorLabel !== undefined) plain(reviewEvidence.operatorLabel, 120);

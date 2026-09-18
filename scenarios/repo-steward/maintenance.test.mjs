@@ -7,6 +7,16 @@ const once = ['once', '--state-dir', 'state', '--source-commit', commit, '--snap
 const watch = ['watch', ...once.slice(1), '--cycles', '3', '--interval-ms', '1000'];
 const at = new Date('2026-09-18T06:00:00Z');
 
+test('explicit collector profile requires a hash and cannot relabel a supplied snapshot', () => {
+  const live = ['once', '--state-dir', 'state', '--source-commit', commit, '--live'];
+  const profile = ['--collector-profile', 'profile.json', '--collector-profile-sha256', 'c'.repeat(64)];
+  for (const args of [[...live, '--collector-profile', 'profile.json'], [...live, '--collector-profile-sha256', 'c'.repeat(64)],
+    [...once, ...profile], [...live, ...profile.slice(0, -1), 'invalid']]) assert.throws(() => parseArgs(args), { code: 'ARGUMENT' });
+  assert.equal(parseArgs([...live, ...profile]).collectorProfile.sha256, 'c'.repeat(64));
+  assert.equal(parseArgs(['status', '--state-dir', 'state', ...profile]).collectorProfile.sha256, 'c'.repeat(64));
+  assert.equal(parseArgs(['stop', '--state-dir', 'state', '--source-commit', commit, '--reason', 'End scope', ...profile]).collectorProfile.sha256, 'c'.repeat(64));
+});
+
 test('recurrence requires finite explicit bounds before reading any input', () => {
   for (const args of [[], ['watch', ...once.slice(1)], [...watch, '--cycles', '4'],
     [...once, '--live'], [...once, '--cycles', '3'], [...watch, '--duration-ms', '0'],

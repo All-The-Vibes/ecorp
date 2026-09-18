@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { audit } from './lib/steward.mjs';
 import { fixtureSnapshot } from './fixtures/demo.mjs';
 import { FEEDBACK_LIMITS, feedbackDigest, createFeedbackEvidence, createFeedbackCorpus,
-  proposeFeedback, reviewFeedback, retireFeedback, observeFeedback, validateFeedbackCorpus } from './lib/feedback.mjs';
+  proposeFeedback, reviewFeedback, retireFeedback, observeFeedback, validateFeedbackCorpus, createNativeBehaviorEvidence } from './lib/feedback.mjs';
 
 const now = new Date('2026-09-18T12:00:00Z');
 const later = minutes => new Date(now.getTime() + minutes * 60000);
@@ -37,6 +37,60 @@ function freeze(value) {
   if (value && typeof value === 'object') { for (const child of Object.values(value)) freeze(child); Object.freeze(value); }
   return value;
 }
+
+function nativeBehavior(run = 1) {
+  const uuid = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+  return createNativeBehaviorEvidence({ scope: corpus().scope, rule: 'WORKSTREAM_UNTAGGED', capturedAt: now,
+    native: { server_origin_sha256: 'a'.repeat(64), corp_id: uuid(10), room_id: uuid(11), mission_id: uuid(12), task_id: uuid(13),
+      run_id: uuid(run), connection_id: uuid(14), repository: 'local/original-native-case', base_ref: 'HEAD', base_commit: 'b'.repeat(40),
+      target: 'src/module.mjs', resume_event_id: uuid(15), resumed_from_run_id: uuid(16), actor_id: uuid(17), agent_id: uuid(18), runner_id: 'native-fixture',
+      contract_version: 2, contract_sha256: 'c'.repeat(64), verification_policy_sha256: 'd'.repeat(64), resume_prompt_sha256: 'e'.repeat(64),
+      verification_sha256: 'f'.repeat(64), deliverable_sha256: '1'.repeat(64), native_check_count: 3 },
+    behavior: { check: 'exact-append-v1', manifest_sha256: '2'.repeat(64), expected_sha256: '3'.repeat(64), native_outcome: 'completed',
+      native_verification: 'passed', external_outcome: 'rejected', instruction_alignment: 'not-reviewed', native_test_target_binding: 'retained-workspace-only',
+      before_git_blob: '4'.repeat(40), after_git_blob: '5'.repeat(40), worktree_registration_sha256: '6'.repeat(64) },
+    filesSha256: Object.fromEntries(['terminal', 'resume_intent', 'before_attestation', 'after_attestation', 'before_target', 'after_target', 'external_failure', 'external_checker'].map(key => [key, '7'.repeat(64)])) });
+}
+
+test('native behavioral evidence remains candidate with original local source and no finding impersonation', () => {
+  const support = [nativeBehavior(1), nativeBehavior(2)], proposed = propose(corpus(), { evidence: support });
+  assert.equal(proposed.record.status, 'candidate'); validateFeedbackCorpus(proposed.corpus);
+  assert.equal(support[0].native.repository, 'local/original-native-case'); assert.equal(support[0].source_commit, 'b'.repeat(40));
+  assert.equal(Object.hasOwn(support[0], 'finding_id'), false); assert.equal(support[0].identity_verification, 'not-performed');
+  assert.deepEqual(observe(proposed.corpus).annotations, []);
+  assert.throws(() => activate(proposed), { code: 'FEEDBACK_REVIEW_AUTHORITY' });
+});
+
+test('native behavioral activation is denied for mixed support and forged active or retired history', () => {
+  const mixed = propose(corpus(), { evidence: [nativeBehavior(), evidence()[0]] });
+  assert.throws(() => activate(mixed), { code: 'FEEDBACK_REVIEW_AUTHORITY' });
+  const forged = structuredClone(mixed.corpus), record = forged.records[0];
+  record.status = 'active'; record.review = { decision: 'activate', at: now.toISOString(), evidence_sha256: reviewEvidence.sha256,
+    reason: 'Local hashes do not authorize activation.', operator_label: null, identity_verification: 'not-performed', independent_review_verified: false, human_approval_verified: false };
+  assert.throws(() => validateFeedbackCorpus(forged), { code: 'FEEDBACK_REVIEW_AUTHORITY' });
+  assert.throws(() => observe(forged), { code: 'FEEDBACK_REVIEW_AUTHORITY' });
+  record.status = 'retired'; record.retirement = { at: now.toISOString(), reason: 'Cannot launder prior activation.', disposition: 'operator-retired', superseded_by: null };
+  assert.throws(() => validateFeedbackCorpus(forged), { code: 'FEEDBACK_REVIEW_AUTHORITY' });
+});
+
+test('native behavioral candidates can be rejected without widening legacy review authority', () => {
+  const proposed = propose(corpus(), { evidence: [nativeBehavior()] });
+  const rejected = reviewFeedback({ corpus: proposed.corpus, candidateId: proposed.record.id, expectedCandidateDigest: proposed.recordDigest,
+    decision: 'reject', reviewEvidence, now });
+  assert.equal(rejected.record.status, 'retired'); assert.equal(rejected.record.retirement.disposition, 'rejected');
+  validateFeedbackCorpus(rejected.corpus); assert.deepEqual(observe(rejected.corpus).annotations, []);
+  assert.equal(activate(propose()).record.status, 'active');
+});
+
+test('native behavioral bytes, identity claims, source and repeated runs remain validated', () => {
+  assert.throws(() => propose(corpus(), { evidence: [nativeBehavior(), nativeBehavior()] }), { code: 'FEEDBACK_EVIDENCE' });
+  for (const mutate of [e => { e.human_approval_verified = true; }, e => { e.source_commit = 'c'.repeat(40); },
+    e => { e.behavior.instruction_alignment = 'authenticated'; }, e => { e.files_sha256.after_target = e.behavior.expected_sha256; }]) {
+    const e = nativeBehavior(); mutate(e);
+    const { evidence_sha256: _old, ...body } = e; e.evidence_sha256 = feedbackDigest(body);
+    assert.throws(() => propose(corpus(), { evidence: [e] }), { code: 'FEEDBACK_EVIDENCE' });
+  }
+});
 
 test('evidence binds actual audit finding and supplied snapshot without certifying collection or identity', () => {
   const { snapshot, report } = fixture();

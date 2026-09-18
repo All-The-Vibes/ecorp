@@ -6,11 +6,11 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
-import { applyOperationFeedback, buildFeedbackProposal, feedbackCommandExitCode, main, prepareOperationFeedback, projectFeedbackTarget,
+import { applyOperationFeedback, bindFeedbackCorpusArtifact, buildFeedbackProposal, feedbackCommandExitCode, main, prepareOperationFeedback, projectFeedbackTarget,
   readFeedbackFile, renderFeedbackProposal } from './operation_feedback.mjs'
 import { audit } from '../scenarios/repo-steward/lib/steward.mjs'
 import { fixtureSnapshot } from '../scenarios/repo-steward/fixtures/demo.mjs'
-import { createFeedbackCorpus, createFeedbackEvidence, proposeFeedback, reviewFeedback, validateFeedbackCorpus } from '../scenarios/repo-steward/lib/feedback.mjs'
+import { createFeedbackCorpus, createFeedbackEvidence, createNativeBehaviorEvidence, proposeFeedback, reviewFeedback, validateFeedbackCorpus } from '../scenarios/repo-steward/lib/feedback.mjs'
 
 const id = value => `00000000-0000-4000-8000-${String(value).padStart(12, '0')}`
 const hash = bytes => createHash('sha256').update(bytes).digest('hex')
@@ -684,3 +684,64 @@ test('CLI typed prepare explicitly selects the native file and apply has no path
   assert.equal(h.calls.posts.length, 0)
   await assert.rejects(main(['apply', '--artifact-path', 'different.json'], h.native), { code: 'invalid_arguments' })
 })
+
+for (const [name, typed, activate, mixed] of [
+  ['retained native candidate', false, false, false],
+  ['forged locally activated native evidence', false, true, false],
+  ['native evidence mixed into an activated typed artifact', true, true, true],
+]) {
+  test(`${name} cannot become saved-task guidance or a native revision`, async () => {
+    const h = harness({ typed }), original = JSON.parse(h.options.corpusBytes)
+    const rule = original.records[0].rule
+    const nativeEvidence = [81, 82].map(runNumber => createNativeBehaviorEvidence({
+      scope: original.scope, rule, capturedAt: time,
+      native: { server_origin_sha256: hash(origin), corp_id: id(1), room_id: id(3), mission_id: id(4), task_id: id(5),
+        run_id: id(runNumber), connection_id: id(30), repository: h.receipt.source.repository, base_ref: 'main',
+        base_commit: h.receipt.source.base_commit, target: 'result.md', resume_event_id: id(runNumber + 10),
+        resumed_from_run_id: id(runNumber + 20), actor_id: id(2), agent_id: id(7), runner_id: 'fixture-retained-runner', contract_version: 1,
+        contract_sha256: 'b'.repeat(64), verification_policy_sha256: 'b'.repeat(64), resume_prompt_sha256: 'b'.repeat(64),
+        verification_sha256: 'b'.repeat(64), deliverable_sha256: 'c'.repeat(64), native_check_count: 1 },
+      behavior: { check: 'exact-append-v1', manifest_sha256: 'b'.repeat(64), expected_sha256: 'e'.repeat(64),
+        native_outcome: 'completed', native_verification: 'passed', external_outcome: 'rejected',
+        instruction_alignment: 'not-reviewed', native_test_target_binding: 'sha256', before_git_blob: 'a'.repeat(40),
+        after_git_blob: 'b'.repeat(40), worktree_registration_sha256: 'c'.repeat(64) },
+      filesSha256: Object.fromEntries(['terminal', 'resume_intent', 'before_attestation', 'after_attestation',
+        'before_target', 'after_target', 'external_failure', 'external_checker'].map(key => [key, 'd'.repeat(64)])),
+    }))
+    const proposed = proposeFeedback({ corpus: createFeedbackCorpus({ scope: original.scope, now }), rule,
+      guidance: original.records[0].guidance, evidence: mixed ? [nativeEvidence[0], original.records[0].evidence[0]] : nativeEvidence,
+      expiresAt: original.records[0].expires_at, now })
+    assert.throws(() => reviewFeedback({ corpus: proposed.corpus, candidateId: proposed.record.id,
+      expectedCandidateDigest: proposed.recordDigest, decision: 'activate',
+      reviewEvidence: { sha256: hash(h.options.reviewBytes), reason: 'A digest is not authenticated promotion authority.' }, now }),
+    { code: 'FEEDBACK_REVIEW_AUTHORITY' })
+    if (activate) Object.assign(proposed.corpus.records[0], { status: 'active', review: clone(original.records[0].review) })
+    h.options.corpusBytes = bytes(proposed.corpus)
+    h.options.selectedRuleIds = [proposed.record.id]
+    if (typed) {
+      Object.assign(h.document.changes[0], { sha256: hash(h.options.corpusBytes), bytes: h.options.corpusBytes.length,
+        content_base64: h.options.corpusBytes.toString('base64') })
+      h.refresh()
+    } else {
+      Object.assign(h.receipt.artifacts[0], { sha256: hash(h.options.corpusBytes), bytes: h.options.corpusBytes.length })
+      Object.assign(h.options, { receiptBytes: bytes(h.receipt), sourceArtifactBytes: h.options.corpusBytes })
+    }
+    h.changeSource(source => Object.assign(source, clone(h.receipt)))
+    h.changeArtifact(() => h.options.sourceArtifactBytes)
+    assert.equal(bindFeedbackCorpusArtifact({ receipt: h.receipt, artifactId: id(9), artifactPath: h.options.artifactPath ?? null,
+      artifactBytes: h.options.sourceArtifactBytes, corpusBytes: h.options.corpusBytes }).content_sha256, hash(h.options.corpusBytes))
+    const prepared = await prepareOperationFeedback(h.options, h.native)
+    assert.equal(prepared.state, 'candidate')
+    assert.equal(prepared.request, null)
+    assert.deepEqual(prepared.reasons, [activate ? 'invalid_feedback_corpus' : 'rule_not_active'])
+    const forged = clone(h.proposal)
+    Object.assign(forged.inputs, prepared.inputs)
+    const result = await h.apply({ proposalBytes: bytes(forged), expectedSha256: hash(bytes(forged)),
+      corpusBytes: h.options.corpusBytes, receiptBytes: h.options.receiptBytes })
+    assert.equal(result.status, 'refused-before-effect')
+    assert.equal(result.error, 'proposal_contents_changed')
+    assert.equal(result.mutation_requests, 0)
+    assert.equal(h.calls.posts.length, 0)
+    assert.equal(h.calls.revisions.length, 0)
+  })
+}

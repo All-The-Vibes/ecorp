@@ -21,5 +21,10 @@ selected proposal bytes/hash and current native authority. It never launches wor
 An unknown result may already have committed; preserve the exact request/key and
 reconcile instead of creating a new request. See `docs/OPERATION_FEEDBACK.md`.
 
+`import_operation_behavior.mjs` reads explicitly pinned retained files and writes
+a new advisory candidate corpus. It never executes a supplied historical checker,
+calls native APIs or promotes historical evidence. Local review cannot activate
+this evidence kind. Keep native verification and external checker outcomes distinct.
+
 Keep exact commands, exit statuses, source identity and evidence scope in reports. Fixture
 success, real-provider inference, hosted checks and production authentication are distinct.

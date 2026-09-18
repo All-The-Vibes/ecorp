@@ -14,6 +14,15 @@ An audit admits only a complete bounded snapshot within the existing freshness
 window. A supplied snapshot retains that provenance. The existing live collector
 retains its pinned account, repository and Project checks.
 
+Local maintenance may explicitly select a hash-pinned read-only collector profile.
+Only its expected account can differ; repository and Project identities remain
+fixed. The hosted pilot's default account is unchanged. The live collector checks
+the active account before and after collection, and the coordinator binds the
+effective account and profile hash into durable state. State reads and controls
+require the same profile. Profile bytes are rechecked, account/source drift fails,
+and no profile is accepted for supplied-snapshot mode. A profile neither grants
+GitHub permission nor changes authentication or installs a schedule.
+
 Private content-addressed artifacts contain the original report, non-executable
 handoff, cycle receipt and checkpoint. New, changed and resolved findings have
 explicit identities. Capture timestamps and transport counters alone do not
@@ -72,6 +81,17 @@ The feedback CLI writes a new file for every transition, refuses overwrite and
 never replaces its inputs. Historical versions remain available for review.
 The local file boundary is not a multi-user authenticated organizational memory
 store.
+
+Historical native behavioral evidence is a separate, candidate-only evidence kind.
+The bounded importer hashes explicitly selected local files, cross-checks native
+identities and the exact resume request, and recomputes its supported append-byte
+comparison without executing supplied code. It retains both native verification
+and external rejection. Local byte integrity is not authenticated historical
+provenance or proof that the checker matched the instruction. Deduplication binds
+the native execution, so recapture or another checker cannot inflate repetition.
+Such a candidate can be rejected but cannot be activated by a local review hash,
+including when mixed with ordinary audit evidence. Corpus validation also rejects
+a forged active record. See [historical behavioral findings](../OPERATION_FEEDBACK.md#retain-historical-behavioral-findings).
 
 ## Acceptance
 

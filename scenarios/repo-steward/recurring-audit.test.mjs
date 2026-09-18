@@ -10,6 +10,7 @@ import path from 'node:path';
 import { fixtureSnapshot } from './fixtures/demo.mjs';
 import { runAuditCycle, runAuditCycles, readAuditState, setAuditControl } from './lib/recurring-audit.mjs';
 import { audit } from './lib/steward.mjs';
+import { SCOPE } from './lib/common.mjs';
 import { createFeedbackCorpus, createFeedbackEvidence, feedbackDigest, proposeFeedback, reviewFeedback, retireFeedback } from './lib/feedback.mjs';
 
 const sourceCommit = 'a'.repeat(40);
@@ -45,7 +46,7 @@ test('one audit writes source-bound immutable private reports and an advisory ha
   assert.ok(handoff.new_findings.every(f => !f.proposal || f.proposal.executable === false));
   const state = readAuditState({ stateDirectory }); assert.equal(state.status, 'running'); assert.equal(state.attempts, 1);
   const checkpoint = read(stateDirectory, state.checkpoint);
-  assert.deepEqual(Object.keys(checkpoint.implementation_digests).sort(), ['../policy.json', 'common.mjs', 'feedback.mjs', 'recurring-audit.mjs', 'steward.mjs']);
+  assert.deepEqual(Object.keys(checkpoint.implementation_digests).sort(), ['../policy.json', 'collector-profile.mjs', 'common.mjs', 'feedback.mjs', 'github.mjs', 'recurring-audit.mjs', 'steward.mjs']);
   assert.equal(existsSync(path.join(stateDirectory, 'audit.lock')), false);
   if (process.platform !== 'win32') assert.equal(lstatSync(path.join(stateDirectory, result.handoff.file)).mode & 0o777, 0o600);
 });
@@ -63,6 +64,52 @@ test('fresh capture timestamps and transport metrics alone produce no new report
   assert.deepEqual(receipt.report, original.report); assert.deepEqual(receipt.handoff, original.handoff);
   assert.equal(receipt.evidence_digest, original.evidence_digest); assert.notEqual(receipt.snapshot_digest, original.snapshot_digest);
   assert.equal(readAuditState({ stateDirectory }).attempts, 2);
+});
+
+test('live state binds the exact selected principal and profile through restart and controls', async t => {
+  const { root, options, stateDirectory } = fixture(t);
+  const profile = { schema_version: 1, kind: 'repo-steward-readonly-collector-profile', ...SCOPE, collector_login: 'rajesh-ms' };
+  const bytes = Buffer.from(JSON.stringify(profile));
+  const collectorProfile = { path: path.join(root, 'collector.json'), sha256: sha(bytes) };
+  writeFileSync(collectorProfile.path, bytes, { flag: 'wx' });
+  const snapshot = fixtureSnapshot(now);
+  snapshot.collection = { authenticated_login: 'rajesh-ms', collector_profile_sha256: collectorProfile.sha256, writes: 0 };
+  const live = { ...options, source: 'live-github-two-pass', collectorProfile, snapshot };
+  const first = await runAuditCycle(live);
+  const binding = { collector_login: 'rajesh-ms', profile_sha256: collectorProfile.sha256 };
+  assert.deepEqual(read(stateDirectory, first.receipt).collector, binding);
+  assert.deepEqual(readAuditState({ stateDirectory, collectorProfile }).collector, binding);
+  assert.equal((await runAuditCycle(live)).status, 'no-op');
+  const names = readdirSync(stateDirectory).sort();
+  assert.throws(() => readAuditState({ stateDirectory }), { code: 'IMPLEMENTATION_DRIFT' });
+  await assert.rejects(setAuditControl({ ...options, action: 'pause', reason: 'Wrong profile omitted' }), { code: 'IMPLEMENTATION_DRIFT' });
+  const alternateBytes = Buffer.from(JSON.stringify({ ...profile, collector_login: 'Bakar404' }));
+  const alternate = { path: path.join(root, 'alternate.json'), sha256: sha(alternateBytes) };
+  writeFileSync(alternate.path, alternateBytes, { flag: 'wx' });
+  await assert.rejects(runAuditCycle({ ...live, collectorProfile: alternate }), { code: 'IMPLEMENTATION_DRIFT' });
+  assert.deepEqual(readdirSync(stateDirectory).sort(), names);
+  assert.equal((await setAuditControl({ ...options, collectorProfile, action: 'pause', reason: 'Inspect actual findings' })).status, 'paused');
+  assert.equal((await runAuditCycle(live)).status, 'paused');
+  assert.equal((await setAuditControl({ ...options, collectorProfile, action: 'resume', reason: 'Continue same read scope' })).status, 'running');
+  assert.equal((await runAuditCycle(live)).status, 'no-op');
+  assert.equal((await setAuditControl({ ...options, collectorProfile, action: 'stop', reason: 'Finite cadence complete' })).status, 'stopped');
+  writeFileSync(collectorProfile.path, '{}');
+  assert.throws(() => readAuditState({ stateDirectory, collectorProfile }), { code: 'COLLECTOR_PROFILE_CHANGED' });
+});
+
+test('profile metadata cannot convert supplied evidence or a different live principal into accepted observations', async t => {
+  const { root, options, stateDirectory } = fixture(t);
+  const bytes = Buffer.from(JSON.stringify({ schema_version: 1, kind: 'repo-steward-readonly-collector-profile', ...SCOPE, collector_login: 'rajesh-ms' }));
+  const collectorProfile = { path: path.join(root, 'collector.json'), sha256: sha(bytes) };
+  writeFileSync(collectorProfile.path, bytes, { flag: 'wx' });
+  const snapshot = fixtureSnapshot(now);
+  await assert.rejects(runAuditCycle({ ...options, collectorProfile, snapshot }), { code: 'COLLECTOR_PROFILE_SOURCE' });
+  assert.equal(existsSync(stateDirectory), false);
+  snapshot.collection = { authenticated_login: 'Bakar404', collector_profile_sha256: collectorProfile.sha256, writes: 0 };
+  await assert.rejects(runAuditCycle({ ...options, source: 'live-github-two-pass', collectorProfile, snapshot }), { code: 'SOURCE' });
+  const state = readAuditState({ stateDirectory, collectorProfile });
+  assert.equal(state.attempts, 1);
+  assert.equal(read(stateDirectory, read(stateDirectory, state.checkpoint).receipt).kind, 'audit-cycle-failure');
 });
 
 test('changed scoped content produces a new receipt while retaining stable finding dedupe', async t => {

@@ -6,9 +6,10 @@ import {
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setImmediate } from 'node:timers/promises';
-import { loadPolicy, requireThat, safeText, StewardError, validateSnapshot } from './common.mjs';
+import { requireThat, safeText, StewardError, validateSnapshot } from './common.mjs';
 import { audit } from './steward.mjs';
 import { feedbackDigest, observeFeedback } from './feedback.mjs';
+import { collectorBinding, collectorPolicy } from './collector-profile.mjs';
 
 const MAX_ATTEMPTS = 100;
 const MAX_TRANSITIONS = 200;
@@ -39,7 +40,7 @@ const checkedTime = value => {
 const pinSource = value => requireThat(typeof value === 'string' && /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(value), 'SOURCE_PIN', 'An exact 40- or 64-character source commit is required.');
 
 function implementation() {
-  return Object.fromEntries(['recurring-audit.mjs', 'common.mjs', 'steward.mjs', 'feedback.mjs', '../policy.json'].map(name => {
+  return Object.fromEntries(['recurring-audit.mjs', 'common.mjs', 'steward.mjs', 'feedback.mjs', 'github.mjs', 'collector-profile.mjs', '../policy.json'].map(name => {
     const file = fileURLToPath(new URL(name, import.meta.url));
     return [name, sha(readFileSync(file))];
   }));
@@ -140,6 +141,7 @@ function load(context, policy) {
     pinSource(current.sourceCommit);
     requireThat(SOURCES.includes(current.source) && Number.isSafeInteger(current.attempts) && current.attempts >= 0 && current.attempts <= MAX_ATTEMPTS && Number.isSafeInteger(current.version) && current.version >= 0 && current.version <= MAX_TRANSITIONS, 'STATE_INTEGRITY', 'Invalid checkpoint bounds.');
     requireThat(current.policy_digest === policyDigest && canonical(current.implementation_digests) === implementationDigest, 'IMPLEMENTATION_DRIFT', 'Audit implementation or policy changed; start a separately reviewed state directory.');
+    requireThat(canonical(current.collector ?? null) === canonical(current.source === 'live-github-two-pass' ? collectorBinding(policy) : null), 'COLLECTOR_DRIFT', 'Audit collector identity or profile changed.');
     requireThat(current.sourceCommit === state.sourceCommit && current.source === state.source, 'STATE_INTEGRITY', 'Checkpoint source history changed.');
     if (current.latest) {
       checked(current.latest.report);
@@ -207,7 +209,7 @@ async function locked(stateDirectory, operation) {
 
 function initialize(context, { sourceCommit, source, policy, now }) {
   requireThat(readdirSync(context.directory).every(name => name === 'audit.lock'), 'STATE_AMBIGUOUS', 'Partial audit state exists without a checkpoint; preserve it for reconciliation.');
-  return checkpoint(context, { schema_version: 1, sourceCommit, source, policy_digest: digest(policy), implementation_digests: implementation(), attempts: 0, version: 0, control: { status: 'running', reason: 'Initialized bounded audit-only state.', updated_at: now.toISOString() }, latest: null, receipt: null });
+  return checkpoint(context, { schema_version: 1, sourceCommit, source, collector: source === 'live-github-two-pass' ? collectorBinding(policy) : null, policy_digest: digest(policy), implementation_digests: implementation(), attempts: 0, version: 0, control: { status: 'running', reason: 'Initialized bounded audit-only state.', updated_at: now.toISOString() }, latest: null, receipt: null });
 }
 
 function sourceMatches(state, sourceCommit, source) {
@@ -222,24 +224,25 @@ function semanticSnapshot(snapshot) {
   return content;
 }
 
-export function readAuditState({ stateDirectory }) {
+export function readAuditState({ stateDirectory, collectorProfile = null }) {
+  const policy = collectorPolicy(collectorProfile);
   if (!existsSync(stateDirectory)) return null;
   const context = directoryChain(stateDirectory);
   requireThat(!existsSync(path.join(context.directory, 'audit.lock')), 'LOCKED', 'An audit operation is active or needs lock reconciliation.');
-  const loaded = load(context, loadPolicy());
+  const loaded = load(context, policy);
   if (!loaded) {
     requireThat(readdirSync(context.directory).length === 0, 'STATE_AMBIGUOUS', 'Audit state is incomplete; preserve it for reconciliation.');
     return null;
   }
-  return { status: loaded.state.control.status, sourceCommit: loaded.state.sourceCommit, attempts: loaded.state.attempts, checkpoint: loaded.checkpoint, control: loaded.state.control };
+  return { status: loaded.state.control.status, sourceCommit: loaded.state.sourceCommit, collector: loaded.state.collector, attempts: loaded.state.attempts, checkpoint: loaded.checkpoint, control: loaded.state.control };
 }
 
-export async function setAuditControl({ stateDirectory, sourceCommit, action, reason, now }) {
-  pinSource(sourceCommit); const at = checkedTime(now);
+export async function setAuditControl({ stateDirectory, sourceCommit, action, reason, now, collectorProfile = null }) {
+  pinSource(sourceCommit); const at = checkedTime(now), policy = collectorPolicy(collectorProfile);
   requireThat(['pause', 'resume', 'stop'].includes(action) && typeof reason === 'string' && reason.trim() && reason.length <= 1000, 'CONTROL', 'A bounded pause, resume or stop reason is required.');
   requireThat(existsSync(stateDirectory), 'STATE_MISSING', 'Initialize an audit cycle before changing controls.');
   return locked(stateDirectory, context => {
-    const loaded = load(context, loadPolicy()); requireThat(loaded, 'STATE_MISSING', 'Audit state is missing.');
+    const loaded = load(context, policy); requireThat(loaded, 'STATE_MISSING', 'Audit state is missing.');
     sourceMatches(loaded.state, sourceCommit);
     const status = { pause: 'paused', resume: 'running', stop: 'stopped' }[action];
     requireThat(loaded.state.control.status !== 'stopped' || status === 'stopped', 'STOPPED', 'Stopped audit state cannot be resumed.');
@@ -255,9 +258,10 @@ export async function setAuditControl({ stateDirectory, sourceCommit, action, re
   });
 }
 
-export async function runAuditCycle({ stateDirectory, snapshot, sourceCommit, source = 'provided-snapshot', now, corpus = null }) {
+export async function runAuditCycle({ stateDirectory, snapshot, sourceCommit, source = 'provided-snapshot', now, corpus = null, collectorProfile = null }) {
   pinSource(sourceCommit); requireThat(SOURCES.includes(source), 'SOURCE', 'Invalid audit source label.');
-  const at = checkedTime(now), policy = loadPolicy();
+  requireThat(collectorProfile === null || source === 'live-github-two-pass', 'COLLECTOR_PROFILE_SOURCE', 'Collector profiles apply only to actual live collection.');
+  const at = checkedTime(now), policy = collectorPolicy(collectorProfile);
   return locked(stateDirectory, context => {
     let loaded = load(context, policy) || initialize(context, { sourceCommit, source, policy, now: at });
     sourceMatches(loaded.state, sourceCommit, source);
@@ -274,7 +278,8 @@ export async function runAuditCycle({ stateDirectory, snapshot, sourceCommit, so
       requireThat(snapshot.scope.source_commit === sourceCommit, 'SOURCE_DRIFT', 'Snapshot no longer matches the pinned repository source.');
       const age = at.getTime() - Date.parse(snapshot.captured_at);
       requireThat(age >= -300000 && age <= policy.max_snapshot_age_minutes * 60000, 'STALE_SNAPSHOT', 'A stale or future snapshot cannot be used by a recurring audit.');
-      if (source === 'live-github-two-pass') requireThat(snapshot.collection?.authenticated_login === policy.collector_login && snapshot.collection?.writes === 0, 'SOURCE', 'Live source metadata must retain the existing read-only collector identity.');
+      if (source === 'live-github-two-pass') requireThat(snapshot.collection?.authenticated_login === policy.collector_login && snapshot.collection?.writes === 0
+        && (snapshot.collection?.collector_profile_sha256 ?? null) === (policy.collector_profile_sha256 ?? null), 'SOURCE', 'Live source metadata must retain the selected read-only collector identity and profile.');
       const evidenceDigest = digest(semanticSnapshot(snapshot)), snapshotDigest = digest(snapshot), corpusDigest = corpus === null ? null : feedbackDigest(corpus);
       const previous = loaded.state.latest;
       let noOp = previous?.evidence_digest === evidenceDigest && previous?.corpus_digest === corpusDigest;
@@ -300,7 +305,8 @@ export async function runAuditCycle({ stateDirectory, snapshot, sourceCommit, so
         latest = { evidence_digest: evidenceDigest, corpus_digest: corpusDigest, report: reportRef, handoff, feedback, finding_revisions: findingRevisions };
       }
       const status = noOp ? 'no-op' : 'recorded';
-      const receipt = artifact(context, { schema_version: 1, kind: 'audit-cycle', status, attempt, sourceCommit, source, at: at.toISOString(), captured_at: snapshot.captured_at, snapshot_digest: snapshotDigest, evidence_digest: evidenceDigest, corpus_digest: corpusDigest, intent, report: latest.report, handoff: latest.handoff, feedback: latest.feedback, new_finding_count: newFindings.length, resolved_finding_count: resolvedFindingIds.length, github_mutations: 0, executed_actions: [], execution_authority: 'none' });
+      collectorPolicy(collectorProfile); // Do not checkpoint an observation after profile-byte drift.
+      const receipt = artifact(context, { schema_version: 1, kind: 'audit-cycle', status, attempt, sourceCommit, source, collector: source === 'live-github-two-pass' ? collectorBinding(policy) : null, at: at.toISOString(), captured_at: snapshot.captured_at, snapshot_digest: snapshotDigest, evidence_digest: evidenceDigest, corpus_digest: corpusDigest, intent, report: latest.report, handoff: latest.handoff, feedback: latest.feedback, new_finding_count: newFindings.length, resolved_finding_count: resolvedFindingIds.length, github_mutations: 0, executed_actions: [], execution_authority: 'none' });
       checkpointAttempted = true;
       loaded = checkpoint(context, { ...loaded.state, attempts: attempt, version: loaded.state.version + 1, latest, receipt }, loaded.checkpoint);
       return { status, sourceCommit, attempts: loaded.state.attempts, receipt, checkpoint: loaded.checkpoint, newFindings, resolvedFindingIds, handoff };
