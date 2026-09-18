@@ -6,6 +6,21 @@ and two-runner runtime acceptance. Earlier failed attempts remain retained.
 
 ## Evidence rule
 
+The bounded #89 export-failure regression uses a nonempty native Git scenario
+delta: `.gitignore`, modified tracked source, staged source, nonignored untracked
+source, and an evidence-only correction. The runner test checks unchanged source,
+HEAD and index after export rejection, then verifies a real commit/branch bundle
+with a legal whole-scenario scope. The `deliverable_failure_tests::issue89_` SQLx
+family uses real migrations, public bootstrap/enrollment/mission/run methods and
+authenticated runner events to check no automatic retry, unchanged attempt/budget/
+contract/evidence history, idempotency, invalid-input rollback and ordinary retries.
+
+This is an increment, not full #89 acceptance. Current preserved checkpoints have
+fingerprints and policy hashes but no complete changed-path inventory, and the
+resume command does not carry prior provider-artifact exclusions. Pre-acceptance
+contract/finish-scope rejection and pre-provider exportability revalidation remain
+unimplemented. A passing exporter regression does not prove those boundaries.
+
 An implementation claim needs evidence at the same scope:
 
 - code compiles

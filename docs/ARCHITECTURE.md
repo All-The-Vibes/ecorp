@@ -44,6 +44,16 @@ Runner daemons:
 
 The server never executes an agent shell command.
 
+A native post-verification deliverable export failure is reported as typed
+`run.failed` metadata (`failure_kind: deliverable_export`). It retains the ordinary
+failed-run/failed-task and Factory blocked projections, but is not eligible for an
+automatic fresh-worktree retry. Its operator summary requires inspection of the
+complete preserved source and accepted write/deliverable scope before the existing
+authorized preserved-session Resume action; an excluded source delta needs a new
+separately authorized full-scope mission, not source deletion or an attempt reset.
+This marker grants no recovery, source, connection or publication authority.
+Older untyped execution failures keep their existing retry policy.
+
 ## Artifact storage and provenance
 
 The runner reads the adapter artifact from its isolated worktree and sends a bounded base64 upload

@@ -9,9 +9,9 @@ use crony_domain::{
     FactoryWorkItem, FactoryWorkItemState, ManualVerificationGate, Mission, MissionBudgetRevision,
     MissionContractRevision, MissionContractRevisionAction, MissionStatus, NewEvent,
     PullRequestPublication, PullRequestPublicationAttempt, PullRequestPublicationState,
-    QueuedMessage, Room, RoomMessage, Run, RunStatus, SourceDeliverable, Task, TaskContract,
-    TaskGraphPlan, TaskSecretReference, TaskStatus, VerificationEvidence, VerificationPolicy,
-    VerificationRequest, VerifierCheck, factory_workspace_connection_id,
+    QueuedMessage, Room, RoomMessage, Run, RunFailureKind, RunStatus, SourceDeliverable, Task,
+    TaskContract, TaskGraphPlan, TaskSecretReference, TaskStatus, VerificationEvidence,
+    VerificationPolicy, VerificationRequest, VerifierCheck, factory_workspace_connection_id,
     repository_relative_path_is_valid, write_scope_allows_path, write_scope_is_valid,
 };
 use serde_json::{Value, json};
@@ -44,6 +44,8 @@ pub use workspace_connections::{
 
 #[cfg(test)]
 mod budget_checkpoint_tests;
+#[cfg(test)]
+mod deliverable_failure_tests;
 #[cfg(test)]
 mod factory_recovery_loss_tests;
 #[cfg(test)]
@@ -9008,6 +9010,11 @@ impl PgStore {
                 .await?;
             }
             "run.failed" => {
+                let failure_kind = payload
+                    .get("failure_kind")
+                    .map(|value| serde_json::from_value::<RunFailureKind>(value.clone()))
+                    .transpose()
+                    .context("invalid runner failure kind")?;
                 let summary = payload
                     .get("error")
                     .and_then(Value::as_str)
@@ -9049,8 +9056,12 @@ impl PgStore {
                     .bind(run_id)
                     .execute(&mut *tx)
                     .await?;
-                    let retry =
-                        should_retry_runner_failure(&breaker_stage, attempt_count, max_attempts);
+                    let retry = should_retry_runner_failure(
+                        &breaker_stage,
+                        attempt_count,
+                        max_attempts,
+                        failure_kind,
+                    );
                     sqlx::query("UPDATE tasks SET status = $1, updated_at = now() WHERE id = $2")
                         .bind(if retry { "ready" } else { "failed" })
                         .bind(task_id)
@@ -15550,8 +15561,13 @@ fn mission_allows_dispatch(status: &str, explicit_dispatch: bool) -> bool {
     status == "running" || (explicit_dispatch && status == "ready")
 }
 
-fn should_retry_runner_failure(stage: &str, attempt_count: i32, max_attempts: i32) -> bool {
-    attempt_count < max_attempts && !breaker_is_hard(stage)
+fn should_retry_runner_failure(
+    stage: &str,
+    attempt_count: i32,
+    max_attempts: i32,
+    failure_kind: Option<RunFailureKind>,
+) -> bool {
+    failure_kind.is_none() && attempt_count < max_attempts && !breaker_is_hard(stage)
 }
 
 fn ensure_breaker_allows_human_progress(stage: &str, action: &str) -> Result<()> {
@@ -16875,11 +16891,11 @@ mod tests {
     #[test]
     fn hard_breakers_block_retries_and_human_completion_paths() {
         for stage in ["suspend", "stop"] {
-            assert!(!should_retry_runner_failure(stage, 1, 3));
+            assert!(!should_retry_runner_failure(stage, 1, 3, None));
             assert!(ensure_breaker_allows_human_progress(stage, "decision").is_err());
         }
-        assert!(should_retry_runner_failure("healthy", 1, 3));
-        assert!(!should_retry_runner_failure("healthy", 3, 3));
+        assert!(should_retry_runner_failure("healthy", 1, 3, None));
+        assert!(!should_retry_runner_failure("healthy", 3, 3, None));
         assert!(ensure_breaker_allows_human_progress("constrain", "decision").is_ok());
         assert!(lineage_run_is_pre_dispatch_failure(
             "failed",
@@ -16899,6 +16915,24 @@ mod tests {
             Some("preserved"),
             Some("dispatch_not_started")
         ));
+    }
+
+    #[test]
+    fn issue89_deliverable_export_failure_never_retries_in_a_fresh_workspace() {
+        for stage in ["healthy", "steer", "constrain", "suspend", "stop"] {
+            for attempt in 1..=3 {
+                assert!(!should_retry_runner_failure(
+                    stage,
+                    attempt,
+                    3,
+                    Some(crony_domain::RunFailureKind::DeliverableExport),
+                ));
+                assert_eq!(
+                    should_retry_runner_failure(stage, attempt, 3, None),
+                    attempt < 3 && !matches!(stage, "suspend" | "stop"),
+                );
+            }
+        }
     }
 
     #[test]
