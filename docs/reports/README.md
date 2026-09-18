@@ -1,5 +1,10 @@
 # ECorp readiness reports
 
+[View the team report on GitHub Pages](https://all-the-vibes.github.io/ecorp/).
+The report-only `gh-pages` branch contains the HTML, its public score summary and
+the `.nojekyll` marker. Source changes are reviewed separately in
+[PR #326](https://github.com/All-The-Vibes/ecorp/pull/326).
+
 [Download the standalone HTML team report](https://raw.githubusercontent.com/All-The-Vibes/ecorp/codex/codeblend-readiness/docs/reports/ecorp-codeblend-readiness-2026-09-18.html)
 and open the saved file in a browser. Its content and styling work offline; source
 links open the corresponding GitHub evidence. The report also supports printing.
