@@ -28,6 +28,7 @@ use sha2::{Digest, Sha256};
 use url::Url;
 use uuid::Uuid;
 
+pub(crate) mod authority;
 mod project;
 mod quota;
 
@@ -39,6 +40,10 @@ const RECOVERY_SOURCE_REFERENCE_PREFIX: &str = "urn:ecorp:factory-reviewed-sourc
 pub struct FactoryArgs {
     pub corp_id: Uuid,
     pub actor_id: Uuid,
+
+    /// Confirm the independently approved shared Corp/ledger identity.
+    #[arg(long, env = "ECORP_FACTORY_CLAIM_AUTHORITY_ID")]
+    pub claim_authority_id: Option<Uuid>,
 
     #[arg(
         long,
@@ -383,6 +388,15 @@ impl EvaluatedItem {
 pub async fn run(client: &Client, server: &str, mut args: FactoryArgs) -> Result<Value> {
     normalize_args(&mut args)?;
     validate_args(&args)?;
+    let claim_authority = authority::inspect(
+        client,
+        server,
+        args.corp_id,
+        args.actor_id,
+        args.claim_authority_id,
+        !args.dry_run,
+    )
+    .await?;
     args.github_budget.check(Utc::now())?;
     if args
         .github_budget
@@ -454,6 +468,12 @@ pub async fn run(client: &Client, server: &str, mut args: FactoryArgs) -> Result
     });
     let selected_index = evaluated.iter().position(EvaluatedItem::eligible);
     if let Some(index) = selected_index {
+        if evaluated[index].recovery {
+            let recorded = existing
+                .get(&evaluated[index].project_item.id)
+                .context("recoverable factory item disappeared")?;
+            authority::validate_recovery(&args, &recorded.policy)?;
+        }
         args.active_issue
             .store(evaluated[index].issue.number, Ordering::Relaxed);
     }
@@ -597,6 +617,7 @@ pub async fn run(client: &Client, server: &str, mut args: FactoryArgs) -> Result
         };
         return Ok(json!({
             "mode": "dry_run",
+            "claim_authority": claim_authority,
             "source_of_truth": "github_project",
             "project_owner": args.owner,
             "project_number": args.project_number,
@@ -1219,6 +1240,7 @@ pub async fn run(client: &Client, server: &str, mut args: FactoryArgs) -> Result
     }
     Ok(json!({
         "mode": "executed",
+        "claim_authority": claim_authority,
         "github_polling": args.github_budget.snapshot(),
         "source_of_truth": "github_project",
         "project_owner": args.owner,
@@ -1258,6 +1280,15 @@ pub async fn watch(client: &Client, server: &str, mut args: FactoryWatchArgs) ->
     if !(5..=3600).contains(&args.interval_seconds) {
         bail!("factory watch interval must be between 5 and 3600 seconds");
     }
+    authority::inspect(
+        client,
+        server,
+        args.factory.corp_id,
+        args.factory.actor_id,
+        args.factory.claim_authority_id,
+        true,
+    )
+    .await?;
     let (repository_owner, repository_name) = repository_parts(&args.factory.repository)?;
     let connection_epoch = Uuid::new_v4();
     let controller_url = format!(
@@ -1270,6 +1301,7 @@ pub async fn watch(client: &Client, server: &str, mut args: FactoryWatchArgs) ->
         controller_url,
         Some(json!({
             "actor_id": args.factory.actor_id,
+            "claim_authority_id": args.factory.claim_authority_id,
             "controller_id": args.controller_id,
             "source_project_owner": args.factory.owner,
             "source_project_number": args.factory.project_number,
@@ -1519,6 +1551,9 @@ fn new_factory_policy(
     // do not change merely because the CLI was upgraded.
     if let Some(connection_id) = args.workspace_connection_id {
         policy["workspace_connection_id"] = json!(connection_id);
+    }
+    if let Some(authority_id) = args.claim_authority_id {
+        policy["claim_authority_id"] = json!(authority_id);
     }
     if let Some(max_task_attempts) = args.max_task_attempts {
         policy["max_task_attempts"] = json!(max_task_attempts);
@@ -4764,6 +4799,7 @@ mod tests {
     impl RecoveryFixture {
         fn new() -> Self {
             let args = FactoryArgs {
+                claim_authority_id: None,
                 corp_id: Uuid::from_u128(1),
                 actor_id: Uuid::from_u128(2),
                 owner: "owner".to_owned(),
@@ -5169,6 +5205,106 @@ mod tests {
                 .collect(),
         )
         .await
+    }
+
+    #[test]
+    fn issue161_new_policy_pins_authority_and_recovery_cannot_rebind_it() {
+        let mut f = RecoveryFixture::new();
+        let legacy = new_factory_policy(
+            &f.args,
+            &f.selected,
+            &"a".repeat(40),
+            "main",
+            None,
+            &["github-copilot".to_owned()],
+        );
+        assert!(legacy.get("claim_authority_id").is_none());
+        let pin = Uuid::new_v4();
+        f.args.claim_authority_id = Some(pin);
+        let bound = new_factory_policy(
+            &f.args,
+            &f.selected,
+            &"a".repeat(40),
+            "main",
+            None,
+            &["github-copilot".to_owned()],
+        );
+        assert_eq!(bound["claim_authority_id"], json!(pin));
+        assert!(super::authority::validate_recovery(&f.args, &bound).is_ok());
+        // Checking an old lineage against an endpoint does not rewrite its policy.
+        let original = legacy.clone();
+        assert!(super::authority::validate_recovery(&f.args, &legacy).is_ok());
+        assert_eq!(legacy, original);
+        f.args.claim_authority_id = None;
+        assert!(super::authority::validate_recovery(&f.args, &bound).is_err());
+        f.args.claim_authority_id = Some(Uuid::new_v4());
+        assert!(super::authority::validate_recovery(&f.args, &bound).is_err());
+    }
+
+    #[tokio::test]
+    async fn issue161_mismatch_stops_public_controller_before_github_or_claims() {
+        let mut f = RecoveryFixture::new();
+        f.args.claim_authority_id = Some(Uuid::new_v4());
+        let (server, requests) = issue206_http_fixture(vec![json!({
+            "authority": {"corp_id": f.args.corp_id, "claim_authority_id": Uuid::new_v4()},
+            "mode": "development", "new_claim_pin_required": false,
+        })])
+        .await;
+        let client = reqwest::Client::builder().no_proxy().build().unwrap();
+        // The existing fixture's GitHub executable is deliberately nonexistent.
+        // The authority error therefore proves the controller stopped before it.
+        let error = super::run(&client, &server, f.args).await.unwrap_err();
+        assert!(
+            error.to_string().contains("authority mismatch"),
+            "{error:#}"
+        );
+        let requests = requests.await.unwrap();
+        assert_eq!(requests.len(), 1);
+        assert!(requests[0].0.starts_with("GET "));
+        assert!(requests[0].0.contains("/factory/authority?actor_id="));
+    }
+
+    #[tokio::test]
+    async fn issue161_authority_reader_rejects_bad_scope_status_and_oversized_reports() {
+        let corp = Uuid::new_v4();
+        let actor = Uuid::new_v4();
+        let pin = Uuid::new_v4();
+        let valid = json!({
+            "authority": {"corp_id": corp, "claim_authority_id": pin},
+            "mode": "production", "new_claim_pin_required": true,
+        });
+        let mut foreign = valid.clone();
+        foreign["authority"]["corp_id"] = json!(Uuid::new_v4());
+        let mut oversized = valid.clone();
+        oversized["notice"] = json!("x".repeat(16_385));
+        for (status, value) in [
+            (reqwest::StatusCode::OK, foreign),
+            (reqwest::StatusCode::OK, json!({})),
+            (reqwest::StatusCode::OK, oversized),
+            (reqwest::StatusCode::FOUND, valid.clone()),
+            (reqwest::StatusCode::NOT_FOUND, valid.clone()),
+        ] {
+            let (server, requests) = factory_http_fixture_with_status(vec![(status, value)]).await;
+            let client = reqwest::Client::builder()
+                .no_proxy()
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .unwrap();
+            assert!(
+                super::authority::inspect(&client, &server, corp, actor, Some(pin), false)
+                    .await
+                    .is_err()
+            );
+            assert_eq!(requests.await.unwrap().len(), 1);
+        }
+        let (server, requests) = issue206_http_fixture(vec![valid]).await;
+        let client = reqwest::Client::builder().no_proxy().build().unwrap();
+        let report = super::authority::inspect(&client, &server, corp, actor, Some(pin), true)
+            .await
+            .unwrap();
+        assert_eq!(report["pin_verified"], true);
+        assert_eq!(report["authority"]["claim_authority_id"], json!(pin));
+        assert_eq!(requests.await.unwrap().len(), 1);
     }
 
     async fn factory_http_fixture_with_status(
@@ -6685,6 +6821,7 @@ Blocked by #999 outside the section.
     #[test]
     fn publication_base_defaults_to_the_selected_source_ref() {
         let mut args = FactoryArgs {
+            claim_authority_id: None,
             corp_id: Uuid::new_v4(),
             actor_id: Uuid::new_v4(),
             owner: "owner".to_owned(),
@@ -6748,6 +6885,7 @@ Blocked by #999 outside the section.
         let mut args = FactoryArgs {
             corp_id: Uuid::new_v4(),
             actor_id: item.claim_owner_id,
+            claim_authority_id: None,
             owner: "owner".to_owned(),
             project_number: 1,
             repository: "owner/repo".to_owned(),

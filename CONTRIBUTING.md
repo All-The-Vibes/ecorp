@@ -80,6 +80,10 @@ the **same authenticated server/control plane, the same Corp, and the same claim
 Database co-location, separate Corps on one server, or a shared GitHub Project alone do not unify
 claim authority.
 
+The [claim-authority setup](docs/FACTORY_CLAIM_AUTHORITY.md) explains the non-secret
+Corp ledger ID, read-only inspection, independently approved controller pin, and
+legacy/development diagnostics. It does not close #161 or claim multi-host acceptance.
+
 Prerequisites are Git, PowerShell 7.4+ on Windows, Rust 1.94 or newer, Node.js, pnpm 11.19.0, Docker with
 Compose, GitHub CLI authenticated for `All-The-Vibes/ecorp` and Project #5, and any provider entitlement
 required for real-agent work.

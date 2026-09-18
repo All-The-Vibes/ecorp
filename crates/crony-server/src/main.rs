@@ -1,6 +1,7 @@
 mod artifacts;
 mod auth;
 mod dependency_source;
+mod factory_authority;
 #[cfg(test)]
 mod factory_connection_tests;
 mod planning;
@@ -584,6 +585,7 @@ async fn run_server() -> anyhow::Result<()> {
     let protected = Router::new()
         .merge(workspace_connections::routes())
         .route("/api/corps/{corp_id}/snapshot", get(snapshot))
+        .route("/api/corps/{corp_id}/factory/authority", get(factory_authority::inspect))
         .route(
             "/api/corps/{corp_id}/artifacts/{artifact_id}",
             get(download_artifact),
@@ -3064,25 +3066,28 @@ async fn claim_factory_work_item(
     .await?;
     let outcome = state
         .store
-        .claim_factory_work_item(ClaimFactoryWorkItemInput {
-            corp_id,
-            actor_id,
-            source: FactorySourceInput {
-                project_owner: request.source_project_owner,
-                project_number: request.source_project_number,
-                project_item_id: request.source_project_item_id,
-                repository_owner: request.source_repository_owner,
-                repository_name: request.source_repository_name,
-                issue_number: request.source_issue_number,
-                issue_node_id: request.source_issue_node_id,
-                issue_url: request.source_issue_url,
-                title: request.source_title,
-                revision: request.source_revision,
+        .claim_factory_work_item_with_authority(
+            ClaimFactoryWorkItemInput {
+                corp_id,
+                actor_id,
+                source: FactorySourceInput {
+                    project_owner: request.source_project_owner,
+                    project_number: request.source_project_number,
+                    project_item_id: request.source_project_item_id,
+                    repository_owner: request.source_repository_owner,
+                    repository_name: request.source_repository_name,
+                    issue_number: request.source_issue_number,
+                    issue_node_id: request.source_issue_node_id,
+                    issue_url: request.source_issue_url,
+                    title: request.source_title,
+                    revision: request.source_revision,
+                },
+                idempotency_key: request.idempotency_key,
+                lease_seconds: request.lease_seconds,
+                policy: request.policy,
             },
-            idempotency_key: request.idempotency_key,
-            lease_seconds: request.lease_seconds,
-            policy: request.policy,
-        })
+            state.auth.mode() == ServerMode::Production,
+        )
         .await
         .map_err(map_store_error)?;
     if let Some(event) = outcome.event {
@@ -3138,6 +3143,8 @@ async fn configure_factory_controller(
         Permission::Manage,
     )
     .await?;
+    factory_authority::validate_controller(&state, corp_id, actor_id, request.claim_authority_id)
+        .await?;
     let outcome = state
         .store
         .configure_factory_controller(ConfigureFactoryControllerInput {

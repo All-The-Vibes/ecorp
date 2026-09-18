@@ -6,6 +6,31 @@ and two-runner runtime acceptance. Earlier failed attempts remain retained.
 
 ## Evidence rule
 
+### Claim-authority contribution (#161)
+
+The [claim-authority contract](FACTORY_CLAIM_AUTHORITY.md) and September 13, 2026
+[runtime verdict](evidence/issue161/runtime-acceptance.md) separate recorded local
+acceptance from physical multi-host and production-identity acceptance. The earlier
+[QA handoff](evidence/issue161/qa-handoff.md) is retained as the pre-runtime checkpoint.
+
+The approved owned Windows fixture executed six actual-migration store tests and
+three actual-handler database tests, native concurrent controllers, independent-ledger
+pin rejection, API/runner reconnect, browser-created verified work, and downloaded
+artifact/source-bundle integrity checks. The `issue161_` SQLx cases reuse existing
+fixtures and remain ignored in ordinary workspace tests; their separate recorded
+execution does not turn other ignored tests into passes.
+
+Source-drift preflight accepted the deterministic plan; dispatch then rejected
+the unmatched commit, retaining one blocked item/mission and zero runs. Do not
+claim rejection before claim/materialization. Multiple native processes on one
+host are not physical multi-host or independent production-human proof.
+PR #237 owns the shared QA supervisor; the exact native-timestamp patch and its
+seven passing helper tests are recorded in the runtime verdict. Coordinate its
+integration rather than duplicate that contribution. No new runtime execution
+is implied by these documentation updates.
+
+### Scope of evidence
+
 An implementation claim needs evidence at the same scope:
 
 - code compiles

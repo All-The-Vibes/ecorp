@@ -28,6 +28,7 @@ mod checkpoint_retention;
 pub use checkpoint_cancellation::ReconcileCheckpointCancellationInput;
 mod contract_revision;
 mod factory_attempt_policy;
+mod factory_authority;
 mod factory_controller;
 mod factory_run_failure;
 mod mission_context;
@@ -1486,11 +1487,13 @@ impl PgStore {
             .execute(&mut *tx)
             .await?;
         let corp = map_corp(
-            sqlx::query("SELECT id, slug, name, created_at FROM corps WHERE id = $1")
-                .bind(corp_id)
-                .fetch_one(&mut *tx)
-                .await
-                .context("corp not found")?,
+            sqlx::query(
+                "SELECT id, slug, name, claim_authority_id, created_at FROM corps WHERE id = $1",
+            )
+            .bind(corp_id)
+            .fetch_one(&mut *tx)
+            .await
+            .context("corp not found")?,
         );
 
         let actors = sqlx::query(
@@ -3011,6 +3014,7 @@ impl PgStore {
         normalize_mission_description(&input.description)?;
         let operation_request = normalize_factory_operation_request(input.request)?;
         factory_attempt_policy::validate_request(&input.policy, &operation_request)?;
+        let authority_policy = input.policy.clone();
         let constrained_plan = preflight_factory_plan(
             &input.source_repository_owner,
             &input.source_repository_name,
@@ -3020,6 +3024,7 @@ impl PgStore {
 
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
+        factory_authority::validate_tx(&mut tx, input.corp_id, &authority_policy).await?;
         if workspace_connections::plan_room_tx(
             &mut tx,
             input.corp_id,
@@ -3039,10 +3044,22 @@ impl PgStore {
         &self,
         input: ClaimFactoryWorkItemInput,
     ) -> Result<FactoryWorkItemOutcome> {
+        self.claim_factory_work_item_with_authority(input, false)
+            .await
+    }
+
+    /// Production admission requires a pin for new items; existing lineage is retained.
+    pub async fn claim_factory_work_item_with_authority(
+        &self,
+        input: ClaimFactoryWorkItemInput,
+        require_new_pin: bool,
+    ) -> Result<FactoryWorkItemOutcome> {
         let source = normalize_factory_source(input.source)?;
         let idempotency_key = normalize_factory_idempotency_key(&input.idempotency_key)?;
         let lease_seconds = validate_factory_lease_seconds(input.lease_seconds)?;
         let policy = normalize_factory_policy(input.policy)?;
+        let claim_authority_id =
+            crony_domain::factory_claim_authority_id(&policy).map_err(anyhow::Error::msg)?;
         let workspace_connection_id =
             factory_workspace_connection_id(&policy).map_err(anyhow::Error::msg)?;
         let operation_request = json!({
@@ -3064,6 +3081,7 @@ impl PgStore {
 
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
+        factory_authority::validate_tx(&mut tx, input.corp_id, &policy).await?;
         lock_factory_keys_tx(
             &mut tx,
             &[
@@ -3341,6 +3359,11 @@ impl PgStore {
             (map_factory_work_item(row)?, "factory.work_item_reclaimed")
         } else {
             ensure_new_factory_policy_is_pinned(&policy)?;
+            if require_new_pin && claim_authority_id.is_none() {
+                return Err(anyhow!(
+                    "factory claim_authority_id is required for new production claims; inspect and pin the approved shared authority"
+                ));
+            }
             crony_domain::validate_factory_cost_policy(&policy).map_err(anyhow::Error::msg)?;
             let work_item_id = Uuid::new_v4();
             let row = sqlx::query(
@@ -12433,6 +12456,8 @@ fn normalize_factory_policy(policy: Value) -> Result<Value> {
         _ => return Err(anyhow!("factory policy snapshot must be a JSON object")),
     };
     let connection_id = factory_workspace_connection_id(&policy).map_err(anyhow::Error::msg)?;
+    let claim_authority_id =
+        crony_domain::factory_claim_authority_id(&policy).map_err(anyhow::Error::msg)?;
     crony_domain::factory_max_task_attempts(&policy).map_err(anyhow::Error::msg)?;
     let policy_object = policy
         .as_object_mut()
@@ -12441,6 +12466,12 @@ fn normalize_factory_policy(policy: Value) -> Result<Value> {
         policy_object.insert(
             "workspace_connection_id".to_owned(),
             Value::String(connection_id.to_string()),
+        );
+    }
+    if let Some(authority_id) = claim_authority_id {
+        policy_object.insert(
+            "claim_authority_id".to_owned(),
+            Value::String(authority_id.to_string()),
         );
     }
     let source_base_ref = factory_policy_required_string(policy_object, "source_base_ref", 240)?;
@@ -12725,11 +12756,13 @@ async fn factory_work_item_tx(
         .bind(corp_id)
         .fetch_optional(&mut **tx)
         .await?;
-    row.map(|row| {
-        let claim_token = row.get("claim_token");
-        Ok((map_factory_work_item(row)?, claim_token))
-    })
-    .transpose()
+    let Some(row) = row else {
+        return Ok(None);
+    };
+    let claim_token = row.get("claim_token");
+    let item = map_factory_work_item(row)?;
+    factory_authority::validate_tx(tx, corp_id, &item.policy).await?;
+    Ok(Some((item, claim_token)))
 }
 
 async fn workspace_lineage_tx(
@@ -14744,6 +14777,7 @@ fn parse_id(value: &str) -> Result<Uuid> {
 fn map_corp(row: sqlx::postgres::PgRow) -> Corp {
     Corp {
         id: row.get("id"),
+        claim_authority_id: Some(row.get("claim_authority_id")),
         slug: row.get("slug"),
         name: row.get("name"),
         created_at: row.get("created_at"),

@@ -9,6 +9,8 @@ import './OperationsUx.css'
 import { OfficeFloor, OfficePortrait } from './OfficeFloor'
 import { OfficeInspector } from './OfficeInspector'
 import { FactoryPollingNotice } from './FactoryPollingNotice'
+import { FactoryAuthorityNotice } from './FactoryAuthorityNotice'
+import type { ClaimAuthorityCorp } from './factoryAuthority'
 import { factoryControllerState } from './factoryPolling'
 import { selectFactoryController } from './factoryControllerSelection'
 import type { FactoryPolling } from './factoryPolling'
@@ -561,7 +563,7 @@ type WorkspaceView = 'floor' | 'factory' | 'missions' | 'room' | 'activity'
 
 type SnapshotResponse = {
   snapshot: {
-    corp: { id: string; name: string }
+    corp: ClaimAuthorityCorp & { name: string }
     actors: Actor[]
     rooms: { id: string; name: string; purpose: string }[]
     agents: Agent[]
@@ -1151,6 +1153,8 @@ function ContractRevisionPanel({
 }
 
 function FactoryPanel({
+  authorityCorp,
+  serverMode,
   items,
   missions,
   publications,
@@ -1187,6 +1191,8 @@ function FactoryPanel({
   snapshotReceivedAt = null,
   snapshotFailed = false,
 }: {
+  authorityCorp: ClaimAuthorityCorp
+  serverMode: string
   items: FactoryWorkItem[]
   missions: Mission[]
   publications: PullRequestPublication[]
@@ -1325,6 +1331,11 @@ function FactoryPanel({
           <span>auto-merge off</span>
         </div>
       </div>
+      <FactoryAuthorityNotice corp={authorityCorp} endpoint={API_URL} mode={serverMode}
+        hasWorkItem={Boolean(selected)}
+        pin={selected?.policy?.claim_authority_id}
+        namespace={controller ? `${controller.source_project_owner}/${controller.source_project_number}`
+          : selected ? `${selected.source_project_owner}/${selected.source_project_number}` : 'No Project selected'} />
       <section
         className={`factory-controller-strip factory-controller-${controllerState}`}
         aria-label="Factory controller status"
@@ -4416,6 +4427,7 @@ function App() {
   const [commitDeliverable, setCommitDeliverable] = useState(false)
   const [pauseAfterPlanning, setPauseAfterPlanning] = useState(false)
   const [developerMode, setDeveloperMode] = useState(false)
+  const [serverMode, setServerMode] = useState('unknown')
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [showRegisteredCrew, setShowRegisteredCrew] = useState(false)
   const [floorInspectorOpen, setFloorInspectorOpen] = useState(false)
@@ -4647,6 +4659,7 @@ function App() {
         response.json() as Promise<HealthResponse>,
       )
       if (health.mode === 'production') {
+        if (!cancelled) setServerMode('production')
         const corpId = window.sessionStorage.getItem('ecorp_corp_id')
         const actorId = window.sessionStorage.getItem('ecorp_actor_id')
         if (!corpId || !actorId || !storedAccessToken()) {
@@ -6095,6 +6108,8 @@ function App() {
 
       <div className="workspace-surface" hidden={activeWorkspaceView !== 'factory'}>
         <FactoryPanel
+          authorityCorp={data.snapshot.corp}
+          serverMode={serverMode}
           key={`factory:${discussionScopeKey(factoryScope)}:${factorySelection?.id ?? ''}`}
           items={data.snapshot.factory_work_items}
           missions={data.snapshot.missions}
