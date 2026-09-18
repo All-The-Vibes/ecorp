@@ -265,7 +265,7 @@
     "real_server_scope": "Historical full-stack acceptance is attributed separately to its original frozen producer. This summary alone makes no fresh server/browser/provider/benchmark claim.",
     "head": "5ae41f65415fbcbe8aad48221a49389ef5c7a7d5"
   },
-  "progress_updated_at": "2026-09-18T22:57:01.918Z",
+  "progress_updated_at": "2026-09-18T23:10:02.940Z",
   "next_evidence": [
     "Sustained hosted handoffs and governed correction/recovery outcomes",
     "Actual authorized review and production-native identity evidence",
@@ -498,5 +498,116 @@
       "contributor-gates/native-ci/RESULT.json": "28ee6b930a3b2a580441604815fa4b35f8680f08bee43899e11b2fb0a4633908",
       "qualification-review/RESULT.json": "11d582c3dbd929d413c579c180597948daaebf0cddc6994df5a97ad71d937251"
     }
+  },
+  "repository_status_after_pr351_merge": {
+    "assessed": false,
+    "checked_at": "2026-09-18T23:10:02.940Z",
+    "mcp": {
+      "pr": "https://github.com/All-The-Vibes/ecorp/pull/351",
+      "state": "MERGED",
+      "approved_head": "8e84f33dd0509a469da15ae48a6e4ff2aec24171",
+      "approval": "https://github.com/All-The-Vibes/ecorp/pull/351#pullrequestreview-5253325659",
+      "approved_by": "shyamsridhar123",
+      "approved_at": "2026-09-18T22:59:30Z",
+      "merged_by": "shyamsridhar123",
+      "merged_at": "2026-09-18T22:59:41Z",
+      "merge_commit": "6da302631e437aa6171d4d7b57fd80c231fb35b0",
+      "merge_performed_by_this_agent": false
+    },
+    "native_feedback": {
+      "pr": "https://github.com/All-The-Vibes/ecorp/pull/352",
+      "state": "OPEN",
+      "head": "03464be11fdeab441d9f2075ae24a107f731748b",
+      "parents": [
+        "c45c7ad7d7c1dcdebd73c1156b910001455d7e59",
+        "6da302631e437aa6171d4d7b57fd80c231fb35b0"
+      ],
+      "feedback_files_unchanged_from": "c45c7ad7d7c1dcdebd73c1156b910001455d7e59",
+      "other_changed_paths": [
+        ".codex/config.toml",
+        ".github/skills/ecorp-operations/SKILL.md",
+        ".github/workflows/ci-maintenance.yml",
+        "crates/crony-gateways/src/bin/crony-mcp.rs",
+        "crates/crony-gateways/src/lib.rs",
+        "docs/CI_MAINTENANCE.md",
+        "docs/MCP_OPERATIONS.md",
+        "docs/specs/mcp-inspection-v1.md",
+        "docs/specs/mcp-inspection-v2.md",
+        "tools/ci_maintenance.mjs",
+        "tools/ci_maintenance.test.mjs",
+        "tools/e2e_gateways.mjs",
+        "tools/probe_mcp.mjs",
+        "tools/probe_mcp.test.mjs"
+      ],
+      "full_local_qualification_and_synthetic_qa_producer": "f4b7ae5ad6636b7e96769cf869ac6767e8e8fc66",
+      "merged_source_locally_requalified": false,
+      "checks": {
+        "total": 17,
+        "passed": 10,
+        "neutral": 1,
+        "pending": 6,
+        "failed": 0,
+        "skipped": 0
+      },
+      "checks_url": "https://github.com/All-The-Vibes/ecorp/pull/352/checks"
+    },
+    "scope": "Maintainer repository activity after the earlier timestamped snapshots. No new benchmark, score, local merged-source qualification or agent-performed merge."
+  },
+  "pr304_later_redacted_secret_diagnostic": {
+    "assessed": false,
+    "checked_at": "2026-09-18T23:08:04.768Z",
+    "head": "776a7a465ea3b54e60f9767db245ecd6f84ce7a2",
+    "existing_hosted_run": "https://github.com/All-The-Vibes/ecorp/actions/runs/35398601348",
+    "existing_hosted_status": "failed",
+    "local_scan": {
+      "tool": "Gitleaks8.30.1",
+      "platform": "windows-x64",
+      "preexisting_verified_binary": true,
+      "scan_count": 1,
+      "exit_code": 1,
+      "elapsed_ms": 1417.5793000000003,
+      "complete_ancestry": true,
+      "reachable_git_commits": 352,
+      "native_scanner_commits": 260,
+      "findings": [
+        {
+          "rule_id": "generic-api-key",
+          "file": "docs/evidence/2026-09-08-room-context-browser.json",
+          "start_line": 87,
+          "commit": "36fbd55301457cbf18810202c40515387862b389",
+          "fingerprint": "36fbd55301457cbf18810202c40515387862b389:docs/evidence/2026-09-08-room-context-browser.json:generic-api-key:87",
+          "exact_main_reviewed_match": true,
+          "source_kind": "Historical persisted browser-evidence idempotency identifier; main review says not an authentication key."
+        },
+        {
+          "rule_id": "generic-api-key",
+          "file": "docs/evidence/assets/predispatch-failure/runtime.json",
+          "start_line": 4,
+          "commit": "a2d2b532ffd506878f7f47fc2f7d6fb1f31340a3",
+          "fingerprint": "a2d2b532ffd506878f7f47fc2f7d6fb1f31340a3:docs/evidence/assets/predispatch-failure/runtime.json:generic-api-key:4",
+          "exact_main_reviewed_match": true,
+          "source_kind": "Historical synthetic identity in owned predispatch-failure fixture evidence."
+        },
+        {
+          "rule_id": "generic-api-key",
+          "file": ".env.example",
+          "start_line": 16,
+          "commit": "95ee1eb3499b6e6f020600fab554727638c5f5ea",
+          "fingerprint": "95ee1eb3499b6e6f020600fab554727638c5f5ea:.env.example:generic-api-key:16",
+          "exact_main_reviewed_match": true,
+          "source_kind": "Historical published development-only master-key example; current main removed the template value."
+        }
+      ],
+      "unclassified_findings": 0
+    },
+    "classification_main": "6da302631e437aa6171d4d7b57fd80c231fb35b0",
+    "main_ignore_sha256": "a352731694a26843c866bdd9d8264e49189314277c7e497493c7043f60c8a980",
+    "selected_head_has_ignore_file": false,
+    "main_ignore_applied_to_scan": false,
+    "source_or_ignore_edits": false,
+    "matched_values_retained_in_reports": false,
+    "report_sha256": "b1227857ed365c84bbae4690dd230fecd7bc162218e693fa7c26238692a9f605",
+    "result_sha256": "0e16a78a4ea37f86cddd0fe2c2b2c4875e568a63280ebed274076c1b1593a8b7",
+    "scope": "One independent local reproduction found three exact historical fingerprints already reviewed on main. The hosted log exposed only count3, so direct hosted per-fingerprint comparison is unavailable. Its failure remains unchanged; the unpublished correction and pending Rust approval remain separate."
   }
 }
