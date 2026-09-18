@@ -194,13 +194,23 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $reports = Join-Path $env:GITHUB_WORKSPACE 'output/coverage/rust-unit-windows'
           foreach ($name in @('DATABASE_URL','TEST_DATABASE_URL','CRONY_TEST_DATABASE_URL','GH_TOKEN','GITHUB_TOKEN','CRONY_ACCESS_TOKEN','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','SQLX_OFFLINE','RUSTFLAGS','RUSTDOCFLAGS','LLVM_PROFILE_FILE','RUST_TEST_THREADS')) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
-          $nodeDirectory = Split-Path (Get-Command node.exe -CommandType Application).Source
+          $nodeDirectory = Split-Path (Get-Command node.exe -CommandType Application | Select-Object -First 1).Source
           if ((node --version) -ne 'v22.23.2' -or !(Test-Path -LiteralPath (Get-Command npm.cmd -CommandType Application).Source -PathType Leaf)) { throw 'Pinned Node and real npm.cmd are required.' }
           $vswhere = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Microsoft Visual Studio/Installer/vswhere.exe'
           $vs = (& $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath).Trim()
           Import-Module (Join-Path $vs 'Common7/Tools/Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
-          $env:PATH = $nodeDirectory + [IO.Path]::PathSeparator + $env:PATH
+          # DevShell can retain Git's usr/bin ahead of MSVC on hosted runners.
+          # Pin native x64 tools first and fail before building if resolution differs.
+          if (!$env:VCToolsInstallDir) { throw 'Visual Studio did not select MSVC tools.' }
+          $msvcBin = [IO.Path]::GetFullPath((Join-Path $env:VCToolsInstallDir 'bin/Hostx64/x64'))
+          $vsRoot = [IO.Path]::GetFullPath($vs).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+          $expectedLinker = Join-Path $msvcBin 'link.exe'
+          if (!$msvcBin.StartsWith($vsRoot, [StringComparison]::OrdinalIgnoreCase) -or !(Test-Path -LiteralPath $expectedLinker -PathType Leaf)) { throw 'Selected Visual Studio x64 linker is unavailable.' }
+          $env:PATH = $msvcBin + [IO.Path]::PathSeparator + $nodeDirectory + [IO.Path]::PathSeparator + $env:PATH
+          $resolvedLinker = (Get-Command link.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          if (![IO.Path]::GetFullPath($resolvedLinker).Equals($expectedLinker, [StringComparison]::OrdinalIgnoreCase)) { throw 'link.exe did not resolve to the selected Visual Studio x64 linker.' }
+          $resolvedLinker | Set-Content (Join-Path $reports 'linker-path.txt')
           $snapshot = 'const f=require("node:fs"),c=require("node:crypto"),g=require("node:child_process");const git=(...a)=>g.execFileSync("git",a).toString();const names=git("ls-files","-z","--","crates","Cargo.toml","Cargo.lock","rust-toolchain.toml").split("\0").filter(x=>/\.rs$|(^|\/)Cargo\.(toml|lock)$|^rust-toolchain\.toml$/.test(x)).sort();if(!names.length)throw new Error("Rust source inventory is empty");f.writeFileSync(process.argv[1],JSON.stringify({commit:git("rev-parse","HEAD").trim(),status:git("status","--porcelain","--","crates","Cargo.toml","Cargo.lock","rust-toolchain.toml"),files:names.map(file=>({file,sha256:c.createHash("sha256").update(f.readFileSync(file)).digest("hex")}))},null,2));'
           node -e $snapshot (Join-Path $reports 'source-before.json'); if ($LASTEXITCODE) { throw 'Source identity failed.' }
           @((rustc +1.98.1 --version),(cargo +1.98.1 llvm-cov --version),(node --version),(npm.cmd --version)) | Set-Content (Join-Path $reports 'versions.txt')

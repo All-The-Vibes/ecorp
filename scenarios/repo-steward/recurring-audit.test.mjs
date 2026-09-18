@@ -220,6 +220,14 @@ test('an unexpected output file is retained, not overwritten or removed', async 
   assert.equal(readFileSync(unknown, 'utf8'), 'retained');
 });
 
+test('status rejects unexpected files in initialized state before accepting its control projection', async t => {
+  const { options, stateDirectory } = fixture(t);
+  await runAuditCycle({ ...options, snapshot: fixtureSnapshot(now) });
+  const unknown = path.join(stateDirectory, 'operator-notes.txt'); writeFileSync(unknown, 'retained');
+  assert.throws(() => readAuditState({ stateDirectory }), code('STATE_AMBIGUOUS'));
+  assert.equal(readFileSync(unknown, 'utf8'), 'retained');
+});
+
 test('missing, traversal-style and incomplete control requests do not create authority', async t => {
   const { options, stateDirectory } = fixture(t);
   await assert.rejects(setAuditControl({ ...options, action: 'pause', reason: 'No state yet' }), code('STATE_MISSING'));

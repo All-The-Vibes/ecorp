@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { main, parseArgs } from './maintenance.mjs';
+import { MAX_ATTEMPTS } from './lib/recurring-audit.mjs';
 
 const commit = 'a'.repeat(40);
 const once = ['once', '--state-dir', 'state', '--source-commit', commit, '--snapshot', 'input.json'];
@@ -58,6 +59,29 @@ test('paused and stopped records prevent collection and input reads', async () =
     assert.equal(result.completed_cycles, 0);
     assert.equal(result.exit_reason, status);
   }
+});
+
+test('exhausted persisted attempts reject before snapshot, feedback or live collection', async () => {
+  const live = ['watch', '--state-dir', 'state', '--source-commit', commit, '--live', '--cycles', '2', '--interval-ms', '60000'];
+  for (const args of [[...once, '--corpus', 'feedback.json'], live]) {
+    let reads = 0, cycles = 0;
+    await assert.rejects(main(args, {
+      now: () => at, state: () => ({ status: 'running', sourceCommit: commit, attempts: MAX_ATTEMPTS }),
+      load: () => { reads++; return {}; }, collect: () => { reads++; return {}; },
+      cycle: () => { cycles++; return { status: 'recorded' }; }, sleep: async () => {},
+    }), { code: 'ATTEMPT_BOUND' });
+    assert.equal(reads, 0); assert.equal(cycles, 0);
+  }
+});
+
+test('watch admits the final allowed attempt and then stops before collecting another snapshot', async () => {
+  let attempts = MAX_ATTEMPTS - 1, reads = 0, cycles = 0;
+  await assert.rejects(main(watch, {
+    now: () => at, state: () => ({ status: 'running', sourceCommit: commit, attempts }),
+    load: () => { reads++; return {}; },
+    cycle: () => { attempts++; cycles++; return { status: 'recorded' }; }, sleep: async () => {},
+  }), { code: 'ATTEMPT_BOUND' });
+  assert.equal(attempts, MAX_ATTEMPTS); assert.equal(reads, 1); assert.equal(cycles, 1);
 });
 
 test('source mismatch refuses before reading snapshot or feedback', async () => {

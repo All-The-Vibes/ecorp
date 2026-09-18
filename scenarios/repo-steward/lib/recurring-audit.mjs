@@ -11,7 +11,7 @@ import { audit } from './steward.mjs';
 import { feedbackDigest, observeFeedback } from './feedback.mjs';
 import { collectorBinding, collectorPolicy } from './collector-profile.mjs';
 
-const MAX_ATTEMPTS = 100;
+export const MAX_ATTEMPTS = 100;
 const MAX_TRANSITIONS = 200;
 const MAX_FINDINGS = 1000;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
@@ -229,6 +229,7 @@ export function readAuditState({ stateDirectory, collectorProfile = null }) {
   if (!existsSync(stateDirectory)) return null;
   const context = directoryChain(stateDirectory);
   requireThat(!existsSync(path.join(context.directory, 'audit.lock')), 'LOCKED', 'An audit operation is active or needs lock reconciliation.');
+  storedBytes(context);
   const loaded = load(context, policy);
   if (!loaded) {
     requireThat(readdirSync(context.directory).length === 0, 'STATE_AMBIGUOUS', 'Audit state is incomplete; preserve it for reconciliation.');

@@ -397,11 +397,12 @@ GitHub Actions success.
 
 ### Production web-model coverage
 
-`pnpm coverage:web-models` uses native Node 24 coverage for all 16 declared framework-independent
-TypeScript model modules. Every module is preloaded, including uninvoked modules, and the LCOV
-file set must exactly match the declared production scope. New TypeScript files require explicit
-classification before the command can pass. The two React hooks, TSX rendering, Rust and other
-tools are outside this coverage lane; their test results must be reported separately.
+`pnpm coverage:web-models` uses native Node 24 coverage for all 18 declared framework-independent
+TypeScript model modules, including run activity and mission collaboration. Every module is
+preloaded, including uninvoked modules, and the LCOV file set must exactly match the declared
+production scope. New TypeScript files require explicit classification before the command can
+pass. The two React hooks, TSX rendering, Rust and other tools are outside this coverage lane;
+their test results must be reported separately.
 
 Native thresholds are 99% lines, 95% functions and 97% branches for that scope. The command also
 requires passing tests, completed LCOV records and unchanged source/test inputs. Each invocation

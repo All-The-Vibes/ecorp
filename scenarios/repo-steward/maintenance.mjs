@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { readJson, requireThat, StewardError } from './lib/common.mjs';
 import { collectSnapshot } from './lib/github.mjs';
-import { runAuditCycle, readAuditState, setAuditControl } from './lib/recurring-audit.mjs';
+import { MAX_ATTEMPTS, runAuditCycle, readAuditState, setAuditControl } from './lib/recurring-audit.mjs';
 import { collectorBinding, collectorPolicy } from './lib/collector-profile.mjs';
 
 const commands = new Set(['once', 'watch', 'status', 'pause', 'resume', 'stop']);
@@ -48,7 +48,7 @@ export function parseArgs(argv) {
   else requireThat(args.reason === undefined, 'ARGUMENT', '--reason is only supported for control changes.');
   if (command === 'status') requireThat(args['source-commit'] === undefined, 'ARGUMENT', 'status reads the recorded source binding.');
   if (command === 'watch') {
-    args.cycles = integerArg(args.cycles, 1, 100, '--cycles');
+    args.cycles = integerArg(args.cycles, 1, MAX_ATTEMPTS, '--cycles');
     args.intervalMs = integerArg(args['interval-ms'], args.live ? 60000 : 1000, 3600000, '--interval-ms');
     args.durationMs = integerArg(args['duration-ms'] || '3600000', 1000, 3600000, '--duration-ms');
   } else {
@@ -99,6 +99,7 @@ export async function main(argv = process.argv.slice(2), dependencies = {}) {
     if (current) {
       requireThat(current.sourceCommit === sourceCommit, 'SOURCE_DRIFT', 'State belongs to a different source revision.');
       if (current.status === 'paused' || current.status === 'stopped') { exitReason = current.status; break; }
+      requireThat(current.attempts < MAX_ATTEMPTS, 'ATTEMPT_BOUND', 'The audit attempt bound is exhausted; no further input is collected.');
     }
     // Reload inputs for every admitted cycle. A stale input is never made fresh here.
     const snapshot = args.live ? await collect({ collectorProfile }) : load(path.resolve(args.snapshot));

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
+import { randomBytes } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
@@ -407,13 +408,12 @@ try {
       '--oidc-issuer',
       issuer,
       '--allow-insecure-oidc',
-      '--secret-master-key-hex',
-      'a5c3f1458279dfb241239378dbefa6b8d2ab32703cba1768343712fd37ac1f04',
     ],
     {
       cwd: root,
       env: {
         ...process.env,
+        CRONY_SECRET_MASTER_KEY_HEX: randomBytes(32).toString('hex'),
         CRONY_OBJECT_STORE_BACKEND: 's3',
         CRONY_OBJECT_STORE_ENDPOINT: 'https://s3.invalid',
         CRONY_OBJECT_STORE_BUCKET: 'crony-identity-test',
