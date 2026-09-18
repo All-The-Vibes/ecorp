@@ -608,3 +608,34 @@ sources remain unchanged. Exact tested source bytes and canonical Git blobs
 were retained. [Screenshot 23](assets/astra-review-executor/23-recovery-queue-fairness.png)
 records the actual local log summaries. Independent acceptance and live
 current-head CI, Copilot and scheduler qualification remain separate.
+
+### CI integration with the accepted target
+
+The four independent reviews of `a769adc32053f2ca6d1da9c8de6c2afe0c99020a`
+passed. Its normal push completed at `2026-09-18T20:35:43.765Z`.
+Automatic Copilot run `35392324060` completed with zero new inline findings,
+but a real workflow conflict against target `9710df2` prevented hosted CI.
+Independent feedback reconciliation identified that conflict and inconsistent
+pending/completed wording in the current PR description. The metadata was
+corrected without changing historical revision or receipt identities.
+
+The bounded correction aligns action pins, explicit Rust `1.98.1`, Node
+`24.19.0`, and checkout credential hardening with the accepted target. It keeps
+all jobs and checks. A real temporary-commit merge-tree now exits zero; its
+integrated CI is exactly the target workflow plus the package check. This is
+local integration evidence, not a GitHub merge or hosted test result.
+The Rust action's generated-history retention caveat remains disclosed.
+
+The original literal-`stable` assertion failed against the explicit release.
+The corrected package passed **4/4 tests**, including rejection of missing or
+other-channel inputs. All six repository baseline checks passed again; Rust
+reported **547 passed, 323 ignored, zero failed**. The 421 unchanged helper tests
+retain their round-seventeen passing evidence: both helpers and both complete
+test files have identical raw bytes and canonical Git blobs. Together these
+cover 425 distinct tests, **not a fresh 425-test run**. Local Node remains
+`24.16.0`; the new hosted `24.19.0` selection still needs actual CI validation.
+
+[Screenshot 24](assets/astra-review-executor/24-ci-integration.png) is a real
+browser capture of these local log summaries and their limitations. Fresh
+independent acceptance, corrected-head hosted checks and automatic feedback,
+and genuine scheduled wake/resume/quiet qualification remain separate.

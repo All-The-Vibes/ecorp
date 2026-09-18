@@ -47,7 +47,19 @@ test('the entrypoint and maintained references resolve inside the package', () =
   assert.match(entrypoint, /^---\r?\nname: code-review\r?\ndescription: [^\r\n]+\r?\n---/)
 })
 
-test('CI remote actions use full commit SHAs and preserve the stable Rust toolchain', () => {
+const stableRustInput = /^        with:\r?\n          toolchain: (?:stable|1\.98\.1)\r?$/m
+
+test('Rust input accepts stable or the accepted exact release, not implicit or other channels', () => {
+  for (const toolchain of ['stable', '1.98.1']) {
+    assert.match(`        with:\n          toolchain: ${toolchain}\n`, stableRustInput)
+  }
+  for (const toolchain of ['', 'nightly', 'beta', '1.98', '1.98.1-beta', '1x98x1']) {
+    assert.doesNotMatch(`        with:\n          toolchain: ${toolchain}\n`, stableRustInput)
+  }
+  assert.doesNotMatch('        with:\n          components: rustfmt, clippy\n', stableRustInput)
+})
+
+test('CI remote actions use full commit SHAs and an explicit stable Rust channel or accepted release', () => {
   const workflow = readFileSync(resolve(root, '../../workflows/ci.yml'), 'utf8')
   const uses = [...workflow.matchAll(/^[ \t]*(?:-[ \t]+)?uses:[ \t]+([^\s#]+)/gm)]
     .map(([, action]) => action)
@@ -59,6 +71,6 @@ test('CI remote actions use full commit SHAs and preserve the stable Rust toolch
   const rustSteps = workflow.split(/^      - /m).filter((step) => /^uses: dtolnay\/rust-toolchain@/.test(step))
   assert.ok(rustSteps.length > 0, 'CI Rust toolchain steps must be checked')
   for (const step of rustSteps) {
-    assert.match(step, /^        with:\r?\n          toolchain: stable\r?$/m, 'SHA-pinned Rust action requires explicit stable input')
+    assert.match(step, stableRustInput, 'SHA-pinned Rust action requires explicit stable or accepted 1.98.1 input')
   }
 })

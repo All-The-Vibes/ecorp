@@ -199,10 +199,15 @@ Record actual successes and limitations; do not generalize a canary into proof
 that every PR, provider account, or remediation loop has completed.
 
 The CI workflow pins its remote actions to full commit SHAs. Preserve those
-pins rather than weakening repository policy. The Rust action uses a verified
-commit from its master history and explicit `toolchain: stable` inputs, as
+pins rather than weakening repository policy. The Rust action matches main's
+accepted generated stable-history commit
+`6bed0761d98439e5a578e2877258200ad565ba87`, not a master-history commit.
+Its action definition supports explicit `toolchain: 1.98.1` inputs, used here;
+the package check also permits the `stable` channel. As
 [upstream recommends](https://github.com/dtolnay/rust-toolchain/blob/d1031067263f94b142dd6c0ce24c5eb9d02d52a0/README.md)
-for SHA pinning; generated toolchain-branch commits can be
-garbage-collected. Verify upstream provenance and effective action inputs when
+for SHA pinning, master-history commits avoid the risk that generated
+toolchain-branch commits can be garbage-collected. That retention caveat remains
+existing main debt; matching the accepted pin does not resolve it.
+Verify upstream provenance and effective action inputs when
 updating pins, then run the package checks and actual hosted CI. No additional
 global plugin is required.
