@@ -128,6 +128,57 @@ checks, signed-object validation, and independent outcome review remain required
 
 ## First vertical-slice scenario
 
+### U1 fresh-fixture preparation (issue #240)
+
+`tools/qa_multiplayer_preflight.ps1` is a read-only Windows prerequisite check, not
+a launcher, sandbox qualification, runtime-readiness receipt or U1 acceptance.
+It reuses the repository's Git/toolchain and native Windows listener inventory;
+it does not replace `local_stack.psm1` process ownership or the existing E2E drivers.
+The original R1-R14/M01-M37 handoff is unavailable. The proposed
+[replacement multiplayer contract](MULTIPLAYER_ACCEPTANCE_V1.md) defines new
+requirements/test families and separates development entry from runtime acceptance.
+Recover and reconcile the original handoff **or adopt a reviewed replacement**
+before claiming U1 acceptance; the historical document is not a prerequisite for
+drafting contracts or building isolated tests.
+
+Select a **new** `qa\u1-*` root outside the product and every retained office/source
+root. Supply all protected roots and any additional occupied-office port assignments,
+including currently stopped offices; the command cannot discover an offline office.
+It rejects existing fixture directories rather than resetting or adopting them.
+Use the organization-approved registry, not an arbitrary registry chosen to pass:
+
+```powershell
+pwsh -NoProfile -File .\tools\qa_multiplayer_preflight.ps1 `
+  -QaRoot C:\ecorp-qa\qa\u1-rehearsal-01 `
+  -ProtectedRoot C:\ecorp-office `
+  -ServerPort 18870 -WebPort 15870 -DatabasePort 15470 `
+  -ApprovedNpmRegistry https://your-approved-registry.example/npm/
+```
+
+The JSON report exits **2** for any blocker and **0** only when preparation checks
+pass. It checks clean Git source (including untracked files), disjoint literal
+paths without reparse ancestors, distinct high ports, command presence, Node,
+the effective npm registry, and Docker connectivity. Rust and pnpm shims are not
+executed because they can download toolchains; their required versions are recorded,
+not verified. Registry values and command stderr are never included in diagnostics.
+No directories, containers, credentials, databases, services or packages are created;
+no provider runs, GitHub mutations, database connections or shutdowns are performed.
+
+A free-port observation is not a reservation. Recheck source, paths, ports, exact
+runtime/security configuration and ownership immediately before any later launch.
+Planned artifact/browser directories do not establish private storage or independent
+identity. OIDC/JWKS, six verifier kinds, artifact bytes, replay, nonmember denial,
+source preservation, M34 hostile boundaries and exact owned shutdown remain unrun
+until separately exercised with the reviewed original or replacement fixture.
+Never use a preparation pass to enable cross-owner execution.
+
+Run the dependency-free focused regression with
+`pwsh -NoProfile -File .\tools\qa_multiplayer_preflight.test.ps1`.
+It uses owned synthetic directories and stubbed prerequisite observations, retains
+failed fixtures, and runs in the Windows CI runner lane. It is not full-stack proof.
+
+### First vertical-slice steps
+
 1. Start Postgres, server, runner, and web client.
 2. Bootstrap the demo Corp.
 3. Open Alice and Bob in separate browser tabs.
