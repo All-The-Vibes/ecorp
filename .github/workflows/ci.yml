@@ -272,6 +272,10 @@ jobs:
         with:
           node-version: 22
       - uses: Swatinem/rust-cache@v2
+      - name: Verify read-only U1 fixture preflight guards
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/qa_multiplayer_preflight.test.ps1
       - run: cargo test -p crony-runner
       - run: node tools/platform_runner_contract.mjs
       - uses: actions/upload-artifact@v4
