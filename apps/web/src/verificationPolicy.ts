@@ -34,18 +34,18 @@ export function defaultVerifierCheck(type: VerifierCheck['type'] = 'artifact'): 
 
 export function verifierCheckSummary(check: VerifierCheck): string {
   if (check.type === 'artifact') {
-    return `Provider artifact · at least ${check.min_bytes.toLocaleString()} bytes`
+    return `Provider artifact · at least ${check.min_bytes.toLocaleString()} ${check.min_bytes === 1 ? 'byte' : 'bytes'}`
   }
   if (check.type === 'file') {
-    return `File ${check.path} · at least ${check.min_bytes.toLocaleString()} bytes`
+    return `File ${check.path} · at least ${check.min_bytes.toLocaleString()} ${check.min_bytes === 1 ? 'byte' : 'bytes'}`
   }
   if (check.type === 'screenshot') {
-    return `Screenshot ${check.path} · at least ${check.min_bytes.toLocaleString()} bytes`
+    return `Screenshot ${check.path} · at least ${check.min_bytes.toLocaleString()} ${check.min_bytes === 1 ? 'byte' : 'bytes'}`
   }
   if (check.type === 'json_schema') {
-    return `JSON ${check.path} · keys: ${check.required_keys.join(', ')}`
+    return `JSON ${check.path} · keys: ${JSON.stringify(check.required_keys)}`
   }
-  return `${check.type === 'test' ? 'Test' : 'Command'} · ${[check.program, ...check.args].join(' ')} · ${Math.round(check.timeout_ms / 1_000)}s`
+  return `${check.type === 'test' ? 'Test' : 'Command'} · ${JSON.stringify([check.program, ...check.args])} · ${Math.round(check.timeout_ms / 1_000)}s`
 }
 
 export function verificationPolicyErrors(policy: VerificationPolicy): string[] {

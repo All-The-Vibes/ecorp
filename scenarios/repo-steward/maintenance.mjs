@@ -102,12 +102,15 @@ export async function main(argv = process.argv.slice(2), dependencies = {}) {
       requireThat(current.attempts < MAX_ATTEMPTS, 'ATTEMPT_BOUND', 'The audit attempt bound is exhausted; no further input is collected.');
     }
     // Reload inputs for every admitted cycle. A stale input is never made fresh here.
-    const snapshot = args.live ? await collect({ collectorProfile }) : load(path.resolve(args.snapshot));
-    const corpus = args.corpus ? load(path.resolve(args.corpus), 1048576) : null;
+    let snapshot, corpus, inputAcquisitionFailed = false;
+    try {
+      snapshot = args.live ? await collect({ collectorProfile }) : load(path.resolve(args.snapshot));
+      corpus = args.corpus ? load(path.resolve(args.corpus), 1048576) : null;
+    } catch { inputAcquisitionFailed = true; }
     if (signal?.aborted) { exitReason = 'interrupted'; break; }
     if (now().getTime() - started >= args.durationMs) { exitReason = 'duration-limit'; break; }
     const result = await cycle({ stateDirectory: args.stateDirectory, snapshot, sourceCommit,
-      source: args.live ? 'live-github-two-pass' : 'provided-snapshot', now: now(), corpus, collectorProfile });
+      source: args.live ? 'live-github-two-pass' : 'provided-snapshot', now: now(), corpus, collectorProfile, inputAcquisitionFailed });
     results.push(summary(result, sourceCommit));
     if (result.status === 'paused' || result.status === 'stopped') { exitReason = result.status; break; }
     if (index + 1 < args.cycles) {
