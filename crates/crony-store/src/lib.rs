@@ -507,6 +507,8 @@ pub struct SchedulableTask {
     pub required_source_base_ref: Option<String>,
     pub required_source_base_commit: Option<String>,
     pub workspace_connection_id: Option<Uuid>,
+    // Decode per candidate so one invalid policy cannot abort a mission sweep.
+    pub verification_policy: serde_json::Value,
 }
 
 #[derive(Debug, Clone)]
@@ -6128,7 +6130,8 @@ impl PgStore {
                    t.contract->>'source_repository' AS required_source_repository,
                    t.contract->>'source_base_ref' AS required_source_base_ref,
                    t.contract->>'source_base_commit' AS required_source_base_commit,
-                   (t.contract->>'workspace_connection_id')::uuid AS workspace_connection_id
+                   (t.contract->>'workspace_connection_id')::uuid AS workspace_connection_id,
+                   t.verification_policy
             FROM tasks t
             JOIN missions m ON m.id = t.mission_id
             JOIN agents a ON a.id = t.assigned_agent_id
@@ -6167,6 +6170,7 @@ impl PgStore {
         .map(|row| {
             Ok(SchedulableTask {
                 task_id: row.get("task_id"),
+                verification_policy: row.get("verification_policy"),
                 required_adapter: row.get("required_adapter"),
                 required_model: row.get("required_model"),
                 required_reasoning_effort: row.get("required_reasoning_effort"),

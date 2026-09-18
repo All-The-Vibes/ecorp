@@ -825,11 +825,13 @@ pub(super) fn validate_mission_verification_policy(
                 program,
                 args,
                 timeout_ms,
+                ..
             }
             | VerifierCheck::Test {
                 program,
                 args,
                 timeout_ms,
+                ..
             } => {
                 if program.trim().is_empty()
                     || program.len() > 256

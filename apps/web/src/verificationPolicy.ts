@@ -1,8 +1,10 @@
+export type VerifierCacheSuppression = 'python_interpreter' | 'python_environment' | 'node_compile_cache'
+
 export type VerifierCheck =
   | { type: 'artifact'; min_bytes: number }
   | { type: 'file'; path: string; min_bytes: number }
-  | { type: 'command'; program: string; args: string[]; timeout_ms: number }
-  | { type: 'test'; program: string; args: string[]; timeout_ms: number }
+  | { type: 'command'; program: string; args: string[]; timeout_ms: number; cache_suppression?: VerifierCacheSuppression | null }
+  | { type: 'test'; program: string; args: string[]; timeout_ms: number; cache_suppression?: VerifierCacheSuppression | null }
   | { type: 'json_schema'; path: string; required_keys: string[] }
   | { type: 'screenshot'; path: string; min_bytes: number }
 

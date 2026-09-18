@@ -52,6 +52,7 @@ impl ReceiptFixture {
                     program: "node".to_owned(),
                     args: vec!["--test".to_owned(), "receipt-check.test.mjs".to_owned()],
                     timeout_ms: 10_000,
+                    cache_suppression: None,
                 },
             ],
             manual_gate: None,

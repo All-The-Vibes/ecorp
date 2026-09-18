@@ -992,6 +992,27 @@ runner commit `ada87bd85dafdc62f354c4641c7e9340be5b1ece`; an identical publicati
 same PR with one attempt and no additional remote effect. See
 `docs/evidence/2026-09-03-recovered-suspend-publication.md`.
 
+## Verifier cache suppression (#140)
+
+`cargo test -p crony-runner issue140_ -- --include-ignored` runs the complete focused
+matrix. Three cases are explicitly opt-in because they require Python 3 and Node 22.8+;
+the default Rust suite does not silently require those host runtimes. They exercise
+real imports with ordinary, `-E`, `-I` and combined flags, clean linked-worktree removal,
+byte-preserving ignored-file retention, typed serialization, child-only overrides,
+wrapper argument preservation, and Node's native compile-cache status.
+
+See [the scoped evidence](evidence/2026-09-16-verifier-cache-suppression.md). Cache
+suppression is not isolation or authority to delete a file; a successful command is
+not universal proof that its children created no caches.
+
+
+### Explicit verifier cache-control admission
+
+Run `cargo test -p crony-domain -p crony-server issue140_ --locked --offline` for
+persisted explicit policy detection, selected-runner capability matching and final
+StartRun/ResumeRun/VerifyRun admission, including legacy policies and reconnects.
+See `docs/evidence/2026-09-16-verifier-cache-suppression.md` for native runtime and
+legacy-capability launch rejection evidence and coverage limits.
 
 ## Server startup configuration boundary (#271)
 

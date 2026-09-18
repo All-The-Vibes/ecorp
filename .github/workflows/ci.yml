@@ -178,6 +178,10 @@ jobs:
         run: node tools/e2e_leases.mjs
       - name: Verify room threads and membership isolation
         run: node tools/e2e_rooms.mjs
+      - name: Verify cache-policy recovery and resume admission with real SQL
+        env:
+          DATABASE_URL: postgres://crony:crony@127.0.0.1:54329/crony
+        run: cargo test -p crony-server cache_admission_lifecycle_tests -- --ignored --test-threads=1
       - name: Verify runner grace and reconciliation
         run: node tools/e2e_runner_reconnect.mjs
       - name: Verify duplicate runner delivery is idempotent

@@ -1,5 +1,8 @@
 mod artifacts;
 mod auth;
+#[cfg(test)]
+#[path = "cache_admission_tests.rs"]
+mod cache_admission_lifecycle_tests;
 mod dependency_source;
 #[cfg(test)]
 mod factory_connection_tests;
@@ -1553,19 +1556,80 @@ async fn schedule_after_runner_commands(
     Ok(true)
 }
 
+#[derive(Debug, PartialEq, Eq)]
+enum RunnerDispatchError {
+    Unavailable,
+    UnsupportedVerifierPolicy,
+}
+
+impl RunnerDispatchError {
+    fn detail(&self) -> &'static str {
+        match self {
+            Self::Unavailable => {
+                "runner disconnected, changed epoch, or is not ready before accepting assignment"
+            }
+            Self::UnsupportedVerifierPolicy => {
+                "runner requires verifier-cache-suppression-v1 to accept explicit verifier cache controls"
+            }
+        }
+    }
+}
+
+fn runner_staffing_failure_detail(requires_cache_suppression: bool) -> &'static str {
+    if requires_cache_suppression {
+        "no connected runner can staff the selected mission runtime, model, source, and verifier cache controls"
+    } else {
+        // Existing readiness clients recognize this exact retryable response.
+        "no connected runner can staff the selected mission runtime, model, and source"
+    }
+}
+
+fn runner_supports_cache_suppression(capabilities: &[RunnerCapability]) -> bool {
+    capabilities.iter().any(|cap| {
+        cap.workspace_connection_id.is_none()
+            && cap.name == "verifier-cache-suppression-v1"
+            && cap.available
+    })
+}
+
 fn send_command_to_current_runner(
     runners: &DashMap<String, RunnerConnection>,
     runner_id: &str,
     connection_epoch: Uuid,
     command: ServerToRunner,
-) -> bool {
-    // Keep the map guard through the synchronous send: a replaced socket must not
-    // receive or acknowledge a command fetched by an older dispatch invocation.
-    runners.get(runner_id).is_some_and(|connection| {
-        connection.connection_epoch == connection_epoch
-            && connection.dispatch_ready
-            && connection.tx.send(command).is_ok()
-    })
+) -> Result<(), RunnerDispatchError> {
+    // Keep the map guard through synchronous admission and send. A replaced
+    // socket cannot receive work prepared for the previous connection epoch.
+    let connection = runners
+        .get(runner_id)
+        .ok_or(RunnerDispatchError::Unavailable)?;
+    if connection.connection_epoch != connection_epoch || !connection.dispatch_ready {
+        return Err(RunnerDispatchError::Unavailable);
+    }
+    let policy = match &command {
+        ServerToRunner::StartRun {
+            verification_policy,
+            ..
+        }
+        | ServerToRunner::ResumeRun {
+            verification_policy,
+            ..
+        }
+        | ServerToRunner::VerifyRun {
+            verification_policy,
+            ..
+        } => Some(verification_policy),
+        _ => None,
+    };
+    if policy.is_some_and(VerificationPolicy::requires_cache_suppression)
+        && !runner_supports_cache_suppression(&connection.capabilities)
+    {
+        return Err(RunnerDispatchError::UnsupportedVerifierPolicy);
+    }
+    connection
+        .tx
+        .send(command)
+        .map_err(|_| RunnerDispatchError::Unavailable)
 }
 
 fn reconnect_preserved_run_ids(accepted: &[Uuid], pending_recoveries: Vec<Uuid>) -> Vec<Uuid> {
@@ -1705,12 +1769,26 @@ async fn dispatch_pending_runner_commands_for_epoch(
                 }
                 Err(error) => return Err(error),
             };
-            if !send_command_to_current_runner(
+            if let Err(dispatch_error) = send_command_to_current_runner(
                 &state.runners,
                 runner_id,
                 connection_epoch,
                 outgoing,
             ) {
+                if dispatch_error == RunnerDispatchError::UnsupportedVerifierPolicy {
+                    for event in state
+                        .store
+                        .fail_factory_recovery_before_dispatch(
+                            command.corp_id,
+                            command.run_id,
+                            dispatch_error.detail(),
+                        )
+                        .await?
+                    {
+                        publish(state, event);
+                    }
+                    continue;
+                }
                 return Ok(());
             }
             if command.command_kind == "control_message"
@@ -1803,6 +1881,15 @@ async fn decode_recovery_runner_command(
                 return Err(anyhow::anyhow!(
                     "factory recovery runner command identity mismatch"
                 ));
+            }
+            if payload.verification_policy.requires_cache_suppression()
+                && !state.runners.get(&command.runner_id).is_some_and(|runner| {
+                    runner.corp_id == command.corp_id
+                        && runner.dispatch_ready
+                        && runner_supports_cache_suppression(&runner.capabilities)
+                })
+            {
+                anyhow::bail!(RunnerDispatchError::UnsupportedVerifierPolicy.detail());
             }
             validate_retained_provider_receipt_command(command, &payload)?;
             match payload.mode {
@@ -2599,14 +2686,19 @@ async fn plan_mission(
                             .as_ref()
                             .map(|source| source.base_commit.as_str()),
                         workspace_connection_id: input.workspace_connection_id,
+                        requires_cache_suppression: input
+                            .verification_policy
+                            .is_some_and(VerificationPolicy::requires_cache_suppression),
                     },
                 )
                 .is_some()
             })
             .ok_or_else(|| {
-                ApiError::bad_request(
-                    "no connected runner can staff the selected mission runtime, model, and source",
-                )
+                ApiError::bad_request(runner_staffing_failure_detail(
+                    input
+                        .verification_policy
+                        .is_some_and(VerificationPolicy::requires_cache_suppression),
+                ))
             })?;
         staffing::candidates(corp_id, strategy, adapter, &existing_agents)
             .map_err(ApiError::bad_request)?
@@ -2766,6 +2858,7 @@ fn validate_plan_runner_compatibility(
             source_base_ref: task.contract.source_base_ref.as_deref(),
             source_base_commit: task.contract.source_base_commit.as_deref(),
             workspace_connection_id: task.contract.workspace_connection_id,
+            requires_cache_suppression: task.verification_policy.requires_cache_suppression(),
         };
         if select_runner(state, corp_id, &requirements).is_none() {
             return Err(ApiError::bad_request(format!(
@@ -2779,7 +2872,11 @@ fn validate_plan_runner_compatibility(
                     task.contract.source_repository.as_deref(),
                     task.contract.source_base_ref.as_deref(),
                     task.contract.source_base_commit.as_deref(),
-                )
+                ) + if requirements.requires_cache_suppression {
+                    "; the selected runner must also advertise verifier-cache-suppression-v1"
+                } else {
+                    ""
+                }
             )));
         }
     }
@@ -4550,6 +4647,17 @@ async fn schedule_ready_tasks(
         ..ScheduleOutcome::default()
     };
     for candidate in candidates {
+        let verification_policy: VerificationPolicy =
+            match serde_json::from_value(candidate.verification_policy) {
+                Ok(policy) => policy,
+                Err(_) => {
+                    outcome.failures.push(format!(
+                        "task {} has an invalid or unsupported verifier policy",
+                        candidate.task_id
+                    ));
+                    continue;
+                }
+            };
         let requirements = RunnerRequirements {
             adapter: &candidate.required_adapter,
             model: candidate.required_model.as_deref(),
@@ -4558,6 +4666,7 @@ async fn schedule_ready_tasks(
             source_base_ref: candidate.required_source_base_ref.as_deref(),
             source_base_commit: candidate.required_source_base_commit.as_deref(),
             workspace_connection_id: candidate.workspace_connection_id,
+            requires_cache_suppression: verification_policy.requires_cache_suppression(),
         };
         let Some((runner_id, connection_epoch)) = select_runner(state, corp_id, &requirements)
         else {
@@ -4572,7 +4681,11 @@ async fn schedule_ready_tasks(
                     candidate.required_source_repository.as_deref(),
                     candidate.required_source_base_ref.as_deref(),
                     candidate.required_source_base_commit.as_deref(),
-                )
+                ) + if requirements.requires_cache_suppression {
+                    "; the selected runner must also advertise verifier-cache-suppression-v1"
+                } else {
+                    ""
+                }
             ));
             continue;
         };
@@ -4645,7 +4758,7 @@ async fn schedule_ready_tasks(
                 continue;
             }
         };
-        if !send_command_to_current_runner(
+        if let Err(dispatch_error) = send_command_to_current_runner(
             &state.runners,
             &runner_id,
             connection_epoch,
@@ -4671,7 +4784,7 @@ async fn schedule_ready_tasks(
                 secrets,
             },
         ) {
-            let reason = "runner disconnected or changed epoch before accepting the run";
+            let reason = dispatch_error.detail();
             if let Ok(events) = state
                 .store
                 .fail_run_before_dispatch(corp_id, record.run_id, reason)
@@ -5026,6 +5139,7 @@ struct RunnerRequirements<'a> {
     source_base_ref: Option<&'a str>,
     source_base_commit: Option<&'a str>,
     workspace_connection_id: Option<Uuid>,
+    requires_cache_suppression: bool,
 }
 
 fn select_runner(
@@ -5052,6 +5166,8 @@ fn select_ready_runner(
                 .collect::<Vec<_>>();
             entry.dispatch_ready
                 && entry.corp_id == corp_id
+                && (!requirements.requires_cache_suppression
+                    || runner_supports_cache_suppression(&entry.capabilities))
                 && runner_workspace_satisfies_requirement(
                     &capabilities,
                     requirements.source_repository,
@@ -5217,6 +5333,21 @@ async fn resume_run(
             "source run's runner is enrolled to a different Corp",
         ));
     }
+    if record.verification_policy.requires_cache_suppression()
+        && !runner_supports_cache_suppression(&runner.capabilities)
+    {
+        drop(runner);
+        let detail = RunnerDispatchError::UnsupportedVerifierPolicy.detail();
+        for event in state
+            .store
+            .fail_run_before_dispatch(corp_id, record.run_id, detail)
+            .await
+            .map_err(ApiError::internal)?
+        {
+            publish(&state, event);
+        }
+        return Err(ApiError::conflict(detail));
+    }
     let source_available = if let Some(connection_id) = record.workspace_connection_id {
         // Existing runs keep their original commit. The native connection
         // manager checks its accepted historical source snapshot on resume.
@@ -5339,7 +5470,7 @@ async fn resume_run(
             ));
         }
     };
-    if !send_command_to_current_runner(
+    if let Err(dispatch_error) = send_command_to_current_runner(
         &state.runners,
         &record.runner_id,
         connection_epoch,
@@ -5373,19 +5504,13 @@ async fn resume_run(
     ) {
         let failure = state
             .store
-            .fail_run_before_dispatch(
-                corp_id,
-                record.run_id,
-                "runner disconnected or changed epoch before accepting resume",
-            )
+            .fail_run_before_dispatch(corp_id, record.run_id, dispatch_error.detail())
             .await
             .map_err(ApiError::internal)?;
         for event in failure {
             publish(&state, event);
         }
-        return Err(ApiError::conflict(
-            "runner disconnected or changed epoch before accepting resume",
-        ));
+        return Err(ApiError::conflict(dispatch_error.detail()));
     }
     publish(&state, event);
     Ok(Json(ResumeRunResponse {
@@ -8251,6 +8376,7 @@ mod tests {
         let corp_id = connection.corp_id;
         runners.insert("runner".to_owned(), connection);
         let requirements = RunnerRequirements {
+            requires_cache_suppression: false,
             workspace_connection_id: None,
             adapter: "fake-process",
             model: None,
@@ -8273,12 +8399,15 @@ mod tests {
         // An authorization arriving after capture stays queued; neither direct
         // scheduling nor durable delivery may start it during the loss sweep.
         assert_eq!(select_ready_runner(&runners, corp_id, &requirements), None);
-        assert!(!send_command_to_current_runner(
-            &runners,
-            "runner",
-            epoch,
-            reconnect_test_command(after_capture_run),
-        ));
+        assert!(
+            !send_command_to_current_runner(
+                &runners,
+                "runner",
+                epoch,
+                reconnect_test_command(after_capture_run),
+            )
+            .is_ok()
+        );
         assert!(received.try_recv().is_err());
         finish_tx.send(Ok(())).unwrap();
         assert!(finalizer.await.unwrap().unwrap());
@@ -8286,12 +8415,15 @@ mod tests {
             select_ready_runner(&runners, corp_id, &requirements),
             Some(("runner".to_owned(), epoch)),
         );
-        assert!(send_command_to_current_runner(
-            &runners,
-            "runner",
-            epoch,
-            reconnect_test_command(after_capture_run),
-        ));
+        assert!(
+            send_command_to_current_runner(
+                &runners,
+                "runner",
+                epoch,
+                reconnect_test_command(after_capture_run),
+            )
+            .is_ok()
+        );
         assert!(received.try_recv().is_ok());
     }
 
@@ -8333,22 +8465,28 @@ mod tests {
         let (connection, mut received) = reconnect_test_connection(epoch);
         runners.insert("runner".to_owned(), connection);
 
-        assert!(!send_command_to_current_runner(
-            &runners,
-            "runner",
-            epoch,
-            reconnect_test_command(recovery_run),
-        ));
+        assert!(
+            !send_command_to_current_runner(
+                &runners,
+                "runner",
+                epoch,
+                reconnect_test_command(recovery_run),
+            )
+            .is_ok()
+        );
         assert!(received.try_recv().is_err());
 
         let preserved = reconnect_preserved_run_ids(&accepted, pending.clone());
         assert!(enable_runner_dispatch(&runners, "runner", epoch));
-        assert!(send_command_to_current_runner(
-            &runners,
-            "runner",
-            epoch,
-            reconnect_test_command(recovery_run),
-        ));
+        assert!(
+            send_command_to_current_runner(
+                &runners,
+                "runner",
+                epoch,
+                reconnect_test_command(recovery_run),
+            )
+            .is_ok()
+        );
         assert!(matches!(received.try_recv().unwrap(),
             ServerToRunner::StopRun { run_id, .. } if run_id == recovery_run));
 
@@ -8374,25 +8512,34 @@ mod tests {
 
         assert!(!enable_runner_dispatch(&runners, "runner", old_epoch));
         assert!(!runners.get("runner").unwrap().dispatch_ready);
-        assert!(!send_command_to_current_runner(
-            &runners,
-            "runner",
-            old_epoch,
-            reconnect_test_command(run_id),
-        ));
+        assert!(
+            !send_command_to_current_runner(
+                &runners,
+                "runner",
+                old_epoch,
+                reconnect_test_command(run_id),
+            )
+            .is_ok()
+        );
         assert!(enable_runner_dispatch(&runners, "runner", new_epoch));
-        assert!(!send_command_to_current_runner(
-            &runners,
-            "runner",
-            old_epoch,
-            reconnect_test_command(run_id),
-        ));
-        assert!(send_command_to_current_runner(
-            &runners,
-            "runner",
-            new_epoch,
-            reconnect_test_command(run_id),
-        ));
+        assert!(
+            !send_command_to_current_runner(
+                &runners,
+                "runner",
+                old_epoch,
+                reconnect_test_command(run_id),
+            )
+            .is_ok()
+        );
+        assert!(
+            send_command_to_current_runner(
+                &runners,
+                "runner",
+                new_epoch,
+                reconnect_test_command(run_id),
+            )
+            .is_ok()
+        );
         assert!(old_received.try_recv().is_err());
         assert!(new_received.try_recv().is_ok());
         assert!(!enable_runner_dispatch(&runners, "missing", new_epoch));
@@ -8420,12 +8567,15 @@ mod tests {
         let preserved = reconnect_preserved_run_ids(&[], vec![run_id]);
         assert!(enable_runner_dispatch(&runners, "runner", epoch));
         drop(received);
-        assert!(!send_command_to_current_runner(
-            &runners,
-            "runner",
-            epoch,
-            reconnect_test_command(run_id),
-        ));
+        assert!(
+            !send_command_to_current_runner(
+                &runners,
+                "runner",
+                epoch,
+                reconnect_test_command(run_id),
+            )
+            .is_ok()
+        );
         assert!(preserved.contains(&run_id));
     }
 
@@ -8940,5 +9090,201 @@ mod tests {
             value.to_str().expect("header text"),
             "attachment; filename=\"safe.txt___filename__payload.html\"; filename*=UTF-8''safe.txt%22%3B%20filename%3D%22payload.html"
         );
+    }
+}
+
+#[cfg(test)]
+mod cache_admission_tests {
+    use super::*;
+
+    fn capability(name: &str) -> RunnerCapability {
+        RunnerCapability {
+            name: name.to_owned(),
+            available: true,
+            workspace_connection_id: None,
+            detail: None,
+            models: Vec::new(),
+            source_repository: None,
+            source_base_ref: None,
+            source_base_commit: None,
+        }
+    }
+
+    fn connection(
+        epoch: Uuid,
+        capabilities: Vec<RunnerCapability>,
+    ) -> (RunnerConnection, mpsc::UnboundedReceiver<ServerToRunner>) {
+        let (tx, rx) = mpsc::unbounded_channel();
+        (
+            RunnerConnection {
+                corp_id: Uuid::nil(),
+                connection_epoch: epoch,
+                dispatch_ready: true,
+                tx,
+                capabilities,
+            },
+            rx,
+        )
+    }
+
+    fn command(kind: &str, explicit: bool) -> ServerToRunner {
+        let mut value = serde_json::json!({
+            "type": kind, "corp_id": Uuid::nil(), "room_id": Uuid::nil(),
+            "mission_id": Uuid::nil(), "task_id": Uuid::nil(), "run_id": Uuid::nil(),
+            "agent_id": Uuid::nil(), "assignment_token": Uuid::nil(),
+            "verification_policy": {"checks": [{"type": "command", "program": "node", "args": [], "timeout_ms": 1000}], "manual_gate": null}
+        });
+        match kind {
+            "start_run" => {
+                value["adapter"] = "fake-process".into();
+                value["mission_title"] = "cache admission".into();
+                value["secrets"] = serde_json::json!([]);
+            }
+            "resume_run" => {
+                value["adapter"] = "fake-process".into();
+                value["provider_session_id"] = "fixture".into();
+                value["prompt"] = "cache admission".into();
+                value["workspace_run_id"] = serde_json::json!(Uuid::nil());
+                value["secrets"] = serde_json::json!([]);
+            }
+            "verify_run" => {
+                value["workspace_run_id"] = serde_json::json!(Uuid::nil());
+                value["command_id"] = serde_json::json!(Uuid::nil());
+                value["workspace_base_commit"] = "fixture".into();
+                value["expected_workspace_fingerprint"] = "fixture".into();
+            }
+            _ => panic!("unsupported test command"),
+        }
+        if explicit {
+            value["verification_policy"]["checks"][0]["cache_suppression"] =
+                "node_compile_cache".into();
+        }
+        serde_json::from_value(value).unwrap()
+    }
+
+    #[test]
+    fn issue140_legacy_readiness_diagnostic_remains_retryable() {
+        assert_eq!(
+            runner_staffing_failure_detail(false),
+            "no connected runner can staff the selected mission runtime, model, and source"
+        );
+        assert_ne!(
+            runner_staffing_failure_detail(true),
+            runner_staffing_failure_detail(false)
+        );
+    }
+
+    #[test]
+    fn issue140_explicit_controls_gate_every_assignment_at_send() {
+        for kind in ["start_run", "resume_run", "verify_run"] {
+            let runners = DashMap::new();
+            let epoch = Uuid::new_v4();
+            let (runner, mut rx) = connection(epoch, Vec::new());
+            runners.insert("runner".to_owned(), runner);
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, command(kind, true)),
+                Err(RunnerDispatchError::UnsupportedVerifierPolicy)
+            );
+            assert!(rx.try_recv().is_err());
+            assert!(
+                send_command_to_current_runner(&runners, "runner", epoch, command(kind, false))
+                    .is_ok()
+            );
+            assert!(rx.try_recv().is_ok());
+            runners
+                .get_mut("runner")
+                .unwrap()
+                .capabilities
+                .push(capability("verifier-cache-suppression-v1"));
+            assert!(
+                send_command_to_current_runner(&runners, "runner", epoch, command(kind, true))
+                    .is_ok()
+            );
+            assert!(rx.try_recv().is_ok());
+            // Preparation for a capable epoch cannot dispatch to its replacement.
+            let replacement = Uuid::new_v4();
+            let (runner, mut replacement_rx) = connection(replacement, Vec::new());
+            runners.insert("runner".to_owned(), runner);
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, command(kind, true)),
+                Err(RunnerDispatchError::Unavailable)
+            );
+            assert_eq!(
+                send_command_to_current_runner(
+                    &runners,
+                    "runner",
+                    replacement,
+                    command(kind, true)
+                ),
+                Err(RunnerDispatchError::UnsupportedVerifierPolicy)
+            );
+            assert!(replacement_rx.try_recv().is_err());
+            assert!(
+                send_command_to_current_runner(
+                    &runners,
+                    "runner",
+                    replacement,
+                    ServerToRunner::StopRun {
+                        run_id: Uuid::nil(),
+                        reason: "stop remains compatible".into()
+                    }
+                )
+                .is_ok()
+            );
+            assert!(replacement_rx.try_recv().is_ok());
+        }
+    }
+
+    #[test]
+    fn issue140_matching_requires_available_global_support_on_selected_runner() {
+        let runners = DashMap::new();
+        let epoch = Uuid::new_v4();
+        let (runner, _rx) = connection(epoch, vec![capability("fake-process")]);
+        runners.insert("runner".to_owned(), runner);
+        let mut requirements = RunnerRequirements {
+            adapter: "fake-process",
+            model: None,
+            reasoning_effort: None,
+            source_repository: None,
+            source_base_ref: None,
+            source_base_commit: None,
+            workspace_connection_id: None,
+            requires_cache_suppression: true,
+        };
+        let select = |requirements: &RunnerRequirements<'_>| {
+            select_ready_runner(&runners, Uuid::nil(), requirements)
+        };
+        assert!(select(&requirements).is_none());
+        let (unrelated, _rx2) = connection(
+            Uuid::new_v4(),
+            vec![capability("verifier-cache-suppression-v1")],
+        );
+        runners.insert("unrelated".to_owned(), unrelated);
+        assert!(select(&requirements).is_none());
+        let mut support = capability("verifier-cache-suppression-v1");
+        support.available = false;
+        runners
+            .get_mut("runner")
+            .unwrap()
+            .capabilities
+            .push(support);
+        assert!(select(&requirements).is_none());
+        {
+            let mut runner = runners.get_mut("runner").unwrap();
+            runner.capabilities[1].available = true;
+            runner.capabilities[1].workspace_connection_id = Some(Uuid::new_v4());
+        }
+        assert!(select(&requirements).is_none());
+        requirements.requires_cache_suppression = false;
+        assert_eq!(select(&requirements), Some(("runner".to_owned(), epoch)));
+        requirements.requires_cache_suppression = true;
+        runners.get_mut("runner").unwrap().capabilities[1].workspace_connection_id = None;
+        assert_eq!(select(&requirements), Some(("runner".to_owned(), epoch)));
+        // Global support still applies when the adapter belongs to a named workspace.
+        let workspace = Uuid::new_v4();
+        runners.get_mut("runner").unwrap().capabilities[0].workspace_connection_id =
+            Some(workspace);
+        requirements.workspace_connection_id = Some(workspace);
+        assert_eq!(select(&requirements), Some(("runner".to_owned(), epoch)));
     }
 }
