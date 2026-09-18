@@ -151,3 +151,10 @@ publication-validation summary SHA-256 is
 `9b6b0d4c708ca64938fc89bcfc8d8fe1ae5fabde4f826e402b2da3636cfcbf76`.
 No further provider inference or full benchmark is implied by these gates; the
 last qualified score remains bound to `69598e0`.
+
+The staged native Gitleaks scan passed. Complete-history scanning then identified
+one additional original-main fixture idempotency prefix at commit `7bcaef49`.
+Independent source review verified that it is combined with a runtime UUID and
+is separate from the server-issued authorization token. Only its exact historical
+commit/path/rule/line fingerprint was added to the existing exceptions; no file
+or rule-wide exclusion was introduced.
