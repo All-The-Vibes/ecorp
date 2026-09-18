@@ -5,6 +5,7 @@ import readline from 'node:readline'
 import { pathToFileURL } from 'node:url'
 
 export const MCP_PROTOCOL_VERSION = '2025-06-18'
+export const READ_ONLY_MCP_TOOLS = Object.freeze(['crony_snapshot', 'crony_factory_recovery_context'])
 const MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu
 const COUNT_FIELDS = [
@@ -166,9 +167,39 @@ export function snapshotCounts(payload, corpId) {
   return counts
 }
 
-// Internal consumers may project the authorized payload, but the probe CLI and
-// probeMcp API expose only the fixed metadata report below.
-export async function readMcpSnapshot({ env = process.env, timeoutMs = 15_000 } = {}) {
+export function recoveryContextMetadata(payload, corpId, workItemId) {
+  const item = payload?.work_item
+  if (typeof item?.id !== 'string' || item.id.toLowerCase() !== workItemId.toLowerCase()
+    || typeof item.corp_id !== 'string' || item.corp_id.toLowerCase() !== corpId.toLowerCase()) {
+    throw new Error('MCP recovery context did not match the requested Corp and work item')
+  }
+  if (!Number.isSafeInteger(item.version) || item.version < 0 || !Array.isArray(payload.recoveries)) {
+    throw new Error('MCP recovery context returned invalid version or history metadata')
+  }
+  const metadata = { work_item_id: workItemId.toLowerCase(), work_item_version: item.version }
+  for (const field of ['mission_id', 'task_id', 'source_run_id']) {
+    if (!UUID.test(payload[field] ?? '')) throw new Error('MCP recovery context returned invalid native IDs')
+    metadata[field] = payload[field].toLowerCase()
+  }
+  if (typeof item.mission_id !== 'string' || item.mission_id.toLowerCase() !== metadata.mission_id) {
+    throw new Error('MCP recovery context returned inconsistent mission identity')
+  }
+  for (const field of ['remaining_attempts', 'remaining_mission_tokens', 'remaining_mission_cost_microusd']) {
+    if (!Number.isSafeInteger(payload[field])) throw new Error('MCP recovery context returned invalid remaining authority')
+    metadata[field] = payload[field]
+  }
+  for (const field of ['checkpoint_verification', 'checkpoint_source_correction', 'checkpoint_verification_available']) {
+    if (payload[field] !== undefined && typeof payload[field] !== 'boolean') {
+      throw new Error('MCP recovery context returned invalid native capability metadata')
+    }
+    // Absence stays unknown. Inspection never invents an eligible recovery mode.
+    metadata[field] = payload[field] ?? null
+  }
+  metadata.recovery_count = payload.recoveries.length
+  return metadata
+}
+
+async function readMcpInspection({ env = process.env, timeoutMs = 15_000 }, name, arguments_, summarize) {
   const config = probeConfiguration(env, timeoutMs)
   const client = stdioClient(config)
   const started = performance.now()
@@ -184,23 +215,23 @@ export async function readMcpSnapshot({ env = process.env, timeoutMs = 15_000 } 
     }
     client.initialized()
     const catalog = await client.call('tools/list', {})
-    if (!Array.isArray(catalog?.tools) || catalog.tools.length !== 1
-      || catalog.tools[0]?.name !== 'crony_snapshot') {
-      throw new Error('Native MCP gateway did not expose exactly the read-only snapshot tool')
+    if (!Array.isArray(catalog?.tools) || catalog.tools.length !== READ_ONLY_MCP_TOOLS.length
+      || JSON.stringify(catalog.tools.map(tool => tool?.name).sort()) !== JSON.stringify([...READ_ONLY_MCP_TOOLS].sort())
+      || catalog.tools.some(tool => tool.annotations?.readOnlyHint !== true)) {
+      throw new Error('Native MCP gateway did not expose exactly the supported read-only inspection tools')
     }
-    const result = await client.call('tools/call', { name: 'crony_snapshot', arguments: {} })
-    if (result?.isError) throw new Error('Native MCP snapshot tool reported a failure')
+    const result = await client.call('tools/call', { name, arguments: arguments_ })
+    if (result?.isError) throw new Error('Native MCP inspection tool reported a failure')
     const payload = result?.structuredContent
     const report = {
       schema_version: 1,
       checked_at: new Date().toISOString(),
       protocol_version: MCP_PROTOCOL_VERSION,
       read_only: true,
-      tool_names: ['crony_snapshot'],
+      tool_names: [...READ_ONLY_MCP_TOOLS],
       corp_scope_verified: true,
       access_token_supplied: Boolean(config.childEnv.CRONY_ACCESS_TOKEN),
-      counts_scope: 'returned_snapshot_collection_lengths',
-      counts: snapshotCounts(payload, config.corpId),
+      ...summarize(payload, config),
       response_bytes: client.responseBytes(),
       duration_ms: Math.round(performance.now() - started),
       scope: 'native-stdio-to-existing-api-read; no provider execution or production-auth claim',
@@ -211,20 +242,41 @@ export async function readMcpSnapshot({ env = process.env, timeoutMs = 15_000 } 
   }
 }
 
+// Internal consumers may project authorized payloads. The CLI and probeMcp API
+// expose only whitelisted metadata, never policies, source paths or raw failures.
+export async function readMcpSnapshot(options = {}) {
+  return readMcpInspection(options, 'crony_snapshot', {}, (payload, config) => ({
+    counts_scope: 'returned_snapshot_collection_lengths',
+    counts: snapshotCounts(payload, config.corpId),
+  }))
+}
+
+export async function readMcpRecoveryContext({ workItemId, ...options } = {}) {
+  if (!UUID.test(workItemId ?? '')) throw new Error('workItemId must be an explicit hyphenated UUID')
+  return readMcpInspection(options, 'crony_factory_recovery_context', { work_item_id: workItemId }, (payload, config) => ({
+    inspection: 'factory_recovery_context',
+    recovery_scope: 'returned_native_context_not_authorization_to_recover',
+    recovery: recoveryContextMetadata(payload, config.corpId, workItemId),
+  }))
+}
+
 export async function probeMcp(options = {}) {
+  if (options.workItemId !== undefined) return (await readMcpRecoveryContext(options)).report
   return (await readMcpSnapshot(options)).report
 }
 
 async function main() {
   let output
   let timeoutMs = 15_000
+  let workItemId
   const args = process.argv.slice(2)
   for (let index = 0; index < args.length; index += 1) {
     if (args[index] === '--output' && args[index + 1]) output = args[++index]
     else if (args[index] === '--timeout-ms' && args[index + 1]) timeoutMs = Number(args[++index])
-    else throw new Error('Usage: node tools/probe_mcp.mjs [--timeout-ms 15000] [--output NEW_FILE]')
+    else if (args[index] === '--work-item-id' && args[index + 1]) workItemId = args[++index]
+    else throw new Error('Usage: node tools/probe_mcp.mjs [--timeout-ms 15000] [--work-item-id UUID] [--output NEW_FILE]')
   }
-  const report = await probeMcp({ timeoutMs })
+  const report = await probeMcp({ timeoutMs, workItemId })
   const serialized = `${JSON.stringify(report, null, 2)}\n`
   if (output) {
     try { await writeFile(output, serialized, { flag: 'wx' }) } catch {

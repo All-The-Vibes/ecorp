@@ -20,7 +20,7 @@ struct Args {
     actor_id: Uuid,
     #[arg(long, env = "CRONY_ACCESS_TOKEN", hide_env_values = true)]
     access_token: Option<String>,
-    /// Expose only snapshot reads; reject every other tool before making API calls.
+    /// Expose only snapshot and recovery-context reads; reject write tools before API calls.
     #[arg(long, env = "CRONY_MCP_READ_ONLY", default_value_t = false)]
     read_only: bool,
 }

@@ -1,6 +1,7 @@
 # MCP inspection contract v1
 
-Status: implemented in the native `crony-mcp` gateway; validation scope is recorded separately.
+Status: prior snapshot-only contract. The current additive inspection surface is specified in
+[v2](mcp-inspection-v2.md); this version retains the original boundary and acceptance description.
 Wire protocol: MCP `2025-06-18` over newline-delimited JSON-RPC 2.0 on stdio.
 
 ## Authority and capability
