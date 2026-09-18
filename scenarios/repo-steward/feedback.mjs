@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { lstatSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { closeSync, constants, fstatSync, lstatSync, openSync, readSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { readJson, requireThat, StewardError, validateSnapshot } from './lib/common.mjs';
@@ -48,12 +48,28 @@ export function saveNew(filename, value) {
   return absolute;
 }
 
-function readReview(filename) {
-  const stat = lstatSync(filename);
-  requireThat(stat.isFile() && !stat.isSymbolicLink() && stat.size > 0 && stat.size <= 65536, 'REVIEW_BOUND', 'Review evidence must be a bounded nonempty regular file.');
-  const bytes = readFileSync(filename);
-  requireThat(bytes.length === stat.size, 'REVIEW_CHANGED', 'Review evidence changed while being read.');
-  return createHash('sha256').update(bytes).digest('hex');
+export function readReview(filename) {
+  const before = lstatSync(filename, { bigint: true });
+  requireThat(before.isFile() && !before.isSymbolicLink() && before.size > 0n && before.size <= 65536n, 'REVIEW_BOUND', 'Review evidence must be a bounded nonempty regular file.');
+  const unchanged = current => current.isFile() && !current.isSymbolicLink() &&
+    ['dev', 'ino', 'size', 'birthtimeNs', 'mtimeNs', 'ctimeNs'].every(key => current[key] === before[key]);
+  // NOFOLLOW protects the leaf where supported; identity checks also fence
+  // replacement and redirected ancestors on hosts without that open flag.
+  const fd = openSync(filename, constants.O_RDONLY | (constants.O_NOFOLLOW || 0) | (constants.O_NONBLOCK || 0));
+  try {
+    requireThat(unchanged(fstatSync(fd, { bigint: true })), 'REVIEW_CHANGED', 'Review evidence changed before opening.');
+    // One extra byte detects growth without an unbounded read from the handle.
+    const bytes = Buffer.alloc(Number(before.size) + 1);
+    let length = 0;
+    while (length < bytes.length) {
+      const count = readSync(fd, bytes, length, bytes.length - length, length);
+      if (count === 0) break;
+      length += count;
+    }
+    requireThat(length === Number(before.size) && unchanged(fstatSync(fd, { bigint: true })) &&
+      unchanged(lstatSync(filename, { bigint: true })), 'REVIEW_CHANGED', 'Review evidence changed while being read.');
+    return createHash('sha256').update(bytes.subarray(0, length)).digest('hex');
+  } finally { closeSync(fd); }
 }
 
 export function main(argv = process.argv.slice(2), { now = new Date() } = {}) {
