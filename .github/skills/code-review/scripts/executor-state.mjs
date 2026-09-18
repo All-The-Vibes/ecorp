@@ -159,6 +159,8 @@
 //   match a registered wake's id/sourceRef/startedAt exactly (at = startedAt).
 //   Historical unbound enables remain readable but grant no live authority;
 //   later autonomy/wake records alone cannot repair their original binding.
+//   Each represented fixer issueId must name a retained fixed canary finding.
+//   Shared integrated evidence is allowed; the driver verifies actual coverage.
 //   CI must match the current snapshot's gateKey and baseRef (null only when the
 //   legacy snapshot lacks a target), and be verified since prs[number].gateObservedAt
 //   AND the technical round start. sync/published advance gateObservedAt on a changed
@@ -381,7 +383,7 @@ function correctivePublication(s, conflictingPublications) {
   return conflictingPublications.has(publication) ? digest(publication) : p?.correctiveAudit?.publicationKey
 }
 
-function activationAuthorityError(s, proof) {
+function activationBindingError(s, proof) {
   if (!s.autonomy || s.autonomy.repo !== s.config.repo || s.autonomy.input.owner !== s.config.owner) {
     return 'activation requires retained scoped ongoing authority'
   }
@@ -389,6 +391,11 @@ function activationAuthorityError(s, proof) {
   if (!s.wakes?.some(({ input }) => input.owner === s.config.owner &&
     input.id === wake.id && input.sourceRef === wake.sourceRef && input.startedAt === wake.at)) {
     return 'activation requires matching registered native wake identity/source/time'
+  }
+  const findings = cycle(s.prs[proof.number]).findings
+  if (Array.isArray(proof.fixers) && proof.fixers.some((f) =>
+    !findings.some((finding) => finding.id === f?.issueId && finding.status === 'fixed'))) {
+    return 'activation fixer issueId must name a retained fixed canary finding'
   }
   return null
 }
@@ -929,7 +936,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     check(text(proof.schedulerWake.id) && fresh(proof.schedulerWake.at, c.completion.startedAt, at) &&
       text(proof.schedulerWake.sourceRef) && text(proof.resumeRef) && text(proof.quietNoopRef), 'native wake/resume/quiet evidence required')
     if (live) {
-      const error = activationAuthorityError(s, proof) ?? failedReviewBasisError(c.completion, failedReviews)
+      const error = activationBindingError(s, proof) ?? failedReviewBasisError(c.completion, failedReviews)
       check(!error, error)
     }
     check(positive(proof.copilot.reviewId) && proof.copilot.head === proof.head &&
@@ -1080,7 +1087,7 @@ function main() {
             positive(completion.round) && correctiveAcceptance.round === completion.round && completion.round === c.rounds
           const reason = conflictingPublications.has(state.prs[e.input.acceptanceProof.number].publications.at(-1))
             ? 'activation publication source/target conflicts with retained claim; preserve work and correct canary'
-            : activationAuthorityError(state, e.input.acceptanceProof) ??
+            : activationBindingError(state, e.input.acceptanceProof) ??
             failedReviewBasisError(completion, failedReviews) ??
             (wasEnabled && !activation.valid && !replacementAccepted
               ? 'activation replacement lacks charged corrective code acceptance; preserve history and correct canary' : null)

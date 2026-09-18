@@ -639,3 +639,46 @@ cover 425 distinct tests, **not a fresh 425-test run**. Local Node remains
 browser capture of these local log summaries and their limitations. Fresh
 independent acceptance, corrected-head hosted checks and automatic feedback,
 and genuine scheduled wake/resume/quiet qualification remain separate.
+
+### Fixer-to-finding binding and existing secret-scan baseline
+
+The normal publication of `776a7a465ea3b54e60f9767db245ecd6f84ce7a2`
+completed at `2026-09-18T21:48:32.934Z`. CI run `35398601459` passed all six
+jobs, including a fresh **425/425** package/helper run on Node `24.19.0`.
+Automatic Copilot run `35398608878` invoked the `code-review` skill and produced
+review `5253017263`. Those results belong to that revision, not a later correction.
+
+Independent feedback reconciliation confirmed that activation did not bind
+represented fixer issue IDs to retained fixed canary findings. The correction
+uses the existing shared live/replay binding path. Historical invalid proofs
+remain readable but cannot grant current authority; legitimate integrated
+evidence can still be shared. It does not require a separate actor or log for
+every historical or related finding label.
+
+The unchanged helper produced seven genuine regression failures and one passing
+control. Corrected Windows regression/replay checks passed **13/13**. All five
+compressed fixture blocks remain unchanged; positive composed controls are
+explicitly synthetic, not rewritten historical receipts.
+
+The separate secret scan failed on three historical fingerprints already
+reviewed in the target's `.gitleaksignore`; this branch lacked that file.
+Restoring its exact Git blob `5937106d044b24ddb46462716384cda3de6001ee`
+changed the native scan from three findings/exit 1 to zero findings/exit 0.
+No new exclusion, scanner-rule change or vendored-byte edit was made. Matched
+values were not retained. The vendor attribution did not match the actual scan;
+the nullable-review-body claim also lacked support in the current official
+response schema. Neither unsupported claim changed source behavior.
+
+The integrated local suite passed **433/433 tests, zero skipped**, in an owned
+Node `24.19.0` Linux container with no network, read-only source/root filesystem,
+an unprivileged user and bounded resources. The container was removed after its
+verified exit. Windows-focused checks passed **13/13**, and all six Windows
+repository checks passed again: Rust **547 passed, 323 ignored, zero failed**.
+Exact source bindings and a byte-preserving 141-event real-journal copy replay
+were retained. These are local checks, not corrected-head hosted acceptance.
+
+[Screenshot 25](assets/astra-review-executor/25-fixer-binding-and-secret-baseline.png)
+records the actual local summaries and their scope. Fresh independent policy
+transition and PR reviews, corrected-head hosted checks/feedback, and genuine
+scheduled qualification remain required. The live policy was not replaced
+merely because these local checks passed.

@@ -299,6 +299,13 @@ Before enabling repository-wide execution, retain proof of:
 - an actual scheduler wake, not just a saved automation configuration.
 
 The helper can validate receipt structure and identities, not authenticity.
+Each represented fixer `issueId` must name a retained `fixed` finding in the
+canary's current cycle. This is not a bijection with every historical or related
+ledger label: genuine integrated source/red/green evidence may be shared.
+The driver still verifies actual independent-issue coverage and authenticity.
+Historical accepted proofs lacking that relationship remain readable, but their
+activation is invalid; replay or an ACK cannot grant current authority. Correct
+them through the existing charged canary correction, not another user approval.
 Read the underlying native receipts and GitHub results before accepting the
 canary. Never enable broad intake on a plain `NICE` string or unit tests alone.
 Activation also requires the retained ongoing authority for this owner and
