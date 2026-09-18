@@ -16,14 +16,18 @@ export function MissionCollaborationPanel({
     <section className="mission-collaboration" aria-label="Mission collaboration" data-testid="mission-collaboration">
       <header className="collaboration-heading">
         <div><span className="section-code">Shared mission</span><h4>One outcome. Clear responsibilities.</h4></div>
-        <span className="collaboration-connection">{input.connection === 'live' ? 'Receiving shared updates'
-          : input.connection === 'connecting' ? 'Reconnecting to shared updates' : 'Shared updates disconnected'}</span>
+        <span className="collaboration-connection">{input.connection === 'connecting' ? 'Reconnecting to shared updates'
+          : input.connection === 'offline' ? 'Shared updates disconnected'
+            : input.snapshotFailed ? 'Last snapshot refresh failed'
+              : !team.snapshotCurrent ? 'Snapshot freshness unavailable' : 'Receiving shared updates'}</span>
       </header>
       <p className="collaboration-context">Requested by <strong>{team.requester}</strong>
         <span>Viewing as <strong>{input.actor.name}</strong> · {input.actor.role}</span></p>
       <p className="collaboration-boundary">People discuss and decide. Agents execute on runners. Live control never transfers review or publication authority.</p>
-      {input.connection !== 'live' ? <p className="collaboration-warning" role="status">
-        Showing recorded state. A disconnected browser does not mean the runner stopped. Reconnect before opening live controls.
+      {!team.snapshotCurrent ? <p className="collaboration-warning" role="status">
+        Showing recorded state. {input.connection !== 'live'
+          ? 'A disconnected browser does not mean the runner stopped. Reconnect before opening live controls.'
+          : 'Runner state is unconfirmed until a successful snapshot refresh. Live controls are unavailable.'}
       </p> : null}
       <nav className="collaboration-navigation" aria-label="Shared mission sections">
         <button type="button" onClick={() => onSection('brief')}>01 · Brief &amp; scope</button>

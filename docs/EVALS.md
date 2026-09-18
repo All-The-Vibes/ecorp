@@ -146,6 +146,16 @@ checks, signed-object validation, and independent outcome review remain required
 
 ## Required chaos cases
 
+The [PR265 run-activity acceptance follow-up](evidence/2026-09-17-pr265-run-activity-acceptance.md)
+records native finished-review preservation across runner reconnect, browser disconnect and
+snapshot-read failures, viewer changes, exact-run evidence navigation, and a confirmed 390px
+viewport. `tools/e2e_factory_run_activity.py` requires its owned Windows supervisor receipt;
+it must never target the manual stack. The `issue265_` SQLx family uses actual migrations in
+owned test databases and checks the narrow ordinary-provider review exception, independent
+decisions, grace expiry, and rejection of incomplete, foreign or unsafe review metadata.
+Checkpoint-review authority is separately covered by the existing `issue148_checkpoint_retention_`
+family. These deterministic fixtures are not real-provider or production-identity evidence.
+
 - duplicate runner event
 - server restart during an active run
 - runner disconnect and reconnect
@@ -722,6 +732,25 @@ Planning unit tests prove strategy replacement, deterministic adapter matching, 
 depth bounds, retry bounds, per-task budgets, and total mission budgets. See
 `docs/evidence/2026-08-29-task-graph-validation.md`.
 
+### Factory cost admission
+
+The `issue79` domain/planning regressions compare every registered strategy's actual allocation
+with shared cost admission, including small explicit budgets, integer rounding, the existing
+per-task/graph ceilings and overflow. Native CLI tests exercise rejection before GitHub or HTTP
+access in both dry-run and execution. Real SQLx tests cover unchanged claim/graph/event/operation
+ledgers on denial, accepted budget/attempt preservation, fenced legacy reconciliation, transaction
+rollback, concurrent replay, and already-materialized historical policy compatibility.
+
+`tools/e2e_factory_cost_preflight.mjs` additionally runs the actual CLI and HTTP claim boundary
+against an explicitly owned server/PostgreSQL fixture and the existing local fake GitHub CLI.
+It requires `ECORP_ISSUE79_OWNED_DATABASE=1`, `CRONY_SERVER_HTTP`, `CRONY_CLI_BINARY`,
+`ECORP_PSQL_BINARY`, `PGHOST`/`PGPORT`/`PGUSER`/`PGDATABASE`, an empty fixture Corp through
+`ECORP_TEST_CORP_ID`/`ECORP_TEST_ACTOR_ID`, and a worktree-contained `ECORP_TEST_OUTPUT`.
+It does not bootstrap/reset a database, contact real GitHub, install dependencies, create a source
+checkout, or launch a provider. Its one direct SQL policy edit is an explicitly owned historical
+fixture, not a supported recovery operation. See
+`docs/evidence/2026-09-16-factory-cost-preflight.md` for the executed Windows evidence and gate limits.
+
 Runner verifier tests cover valid and missing files, artifact hashes, commands, tests, JSON
 required-key schemas, screenshot signatures, path traversal, exact executable lookup on Linux and
 macOS, and fail-closed explicit-path validation. Windows coverage deterministically exercises
@@ -858,3 +887,75 @@ malformed lineage. The same live database then published PR #99 at exact
 runner commit `ada87bd85dafdc62f354c4641c7e9340be5b1ece`; an identical publication replay returned the
 same PR with one attempt and no additional remote effect. See
 `docs/evidence/2026-09-03-recovered-suspend-publication.md`.
+
+
+## Server startup configuration boundary (#271)
+
+The server prepares CORS, encryption/signing keys and object-store configuration,
+then completes bounded OIDC discovery before database connection, migration,
+artifact-directory creation, recovery or worker activation. Native object-store
+clients are prepared once; local filesystem creation is deferred. Configuration
+errors use bounded messages without input values or underlying error chains,
+including when backtraces are enabled. OIDC discovery performs read-only network
+requests; it is not a claim of zero network effects. Storage availability and
+runtime failures after preparation are not rollback guarantees.
+
+Run the opt-in real-binary regression with Python 3.10+, OpenSSL 3, Docker, and
+an already available `postgres:17-alpine` image:
+
+```sh
+cargo build -p crony-server --locked
+python3 tools/test_startup_validation.py --server-binary target/debug/crony-server --allow-disposable-docker
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools -p test_startup_validation_harness.py -v
+```
+
+Pass the actual binary path when using `CARGO_TARGET_DIR`. Build the standalone
+server target for this TLS fixture: on macOS, a workspace build can unify native
+TLS features from other packages, whose system trust does not use the fixture's
+`SSL_CERT_FILE`. The standalone server's rustls configuration accepts the
+process-local test CA. The harness never changes system trust or disables TLS
+verification. A trust mismatch fails the positive test, not a skipped/passing case.
+
+The harness generates its own loopback-only disposable database container,
+database URLs, isolated child environments, OIDC fixture and TLS object-store
+fixture. It uses no operator database URL, retained runtime or provider account.
+Cleanup verifies the exact container name and ownership label. Do not run Python
+with assertions disabled. The cleanup guards also run independently without Docker.
+
+The 58 rejection cases compare public schema, all table contents (including the
+migration ledger) and sequences on empty and recovery-sensitive populated
+databases. They also check filesystem writes, observed listeners, fixture
+requests and secret-safe diagnostics. CLI/help cases use their own disposable
+database and prove no mutation or fixture request. Positive cases cover migration,
+demo persistence/restart, runner grace recovery, orphan staging cleanup and
+production startup with 32- and 33-byte signing keys against TLS storage.
+Listener sampling is not proof against an arbitrarily brief bind; the source
+ordering and persisted-state checks establish the mutation boundary.
+
+`--baseline` runs only the missing-issuer rejection. It must exit nonzero on the
+unfixed binary when migration changes the database; it does not reclassify the
+baseline failure as a passing test. See
+[the September 15 evidence](evidence/2026-09-15-startup-validation.md).
+
+## Steering and run-status transaction ordering (issue 223)
+
+The opt-in `issue223_` store tests apply real migrations in SQLx-created databases.
+Use only an explicitly owned maintenance database:
+
+```sh
+DATABASE_URL="$OWNED_QA_DATABASE_URL" cargo test -p crony-store issue223_ --locked --offline -- --ignored --test-threads=1 --nocapture
+```
+
+The contention test gates the actual message operation on its existing advisory
+lock, observes the native runner-event wait via `pg_blocking_pids`, then releases
+the gate and requires both operations to complete. The baseline fails with a
+deadlock. Additional tests cover destination changes, retirement, revocation,
+replay, rollback, and accounting. Negative assertions reject deadlock errors as
+false positives. Ordinary workspace tests intentionally ignore these cases.
+
+For the server/runner overlap, explicitly select the synthetic Codex app-server
+fixture and use a mission containing `[steering-contention]`. It emits native
+status frames for at most 60 seconds while the owned test drives steering through
+the existing HTTP API; no provider inference is involved. The actual browser
+steering and completion evidence, exact base and limitations are in
+[evidence/2026-09-15-steering-lock-order.md](evidence/2026-09-15-steering-lock-order.md).

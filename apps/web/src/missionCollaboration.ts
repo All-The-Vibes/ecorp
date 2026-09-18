@@ -24,7 +24,12 @@ export type CollaborationInput = {
   leases: readonly Lease[]
   reviews: readonly Review[]
   connection: 'live' | 'connecting' | 'offline'
+  snapshotFailed: boolean
   now: number
+}
+
+export function collaborationSnapshotIsCurrent(input: Pick<CollaborationInput, 'connection' | 'snapshotFailed' | 'now'>) {
+  return input.connection === 'live' && !input.snapshotFailed && Number.isFinite(input.now) && input.now > 0
 }
 
 export function selectCollaborationMission<T extends { id: string }>(
@@ -39,6 +44,7 @@ export function selectCollaborationMission<T extends { id: string }>(
 // presence, assignment or permission authority. Snapshot runs are newest-first.
 export function missionCollaboration(input: CollaborationInput) {
   const { mission, actor, actors, connection } = input
+  const snapshotCurrent = collaborationSnapshotIsCurrent(input)
   const person = (id: string) => actors.find((entry) => entry.id === id && entry.kind === 'human')
   const requester = person(mission.requested_by)
   const rows = input.tasks.filter((task) => task.mission_id === mission.id).map((task) => {
@@ -47,13 +53,14 @@ export function missionCollaboration(input: CollaborationInput) {
     const runner = run && input.runners.find((entry) => entry.id === run.runner_id && entry.corp_id === input.corpId)
     const review = pendingReviewForRun(run, input.reviews)
     const providerRun = Boolean(run && isProviderLiveRun(run, input.reviews))
-    const controlsAvailable = Boolean(connection === 'live' && providerRun && agent?.current_run_id === run?.id && task.assigned_agent_id === agent?.id &&
+    const controlsAvailable = Boolean(snapshotCurrent && providerRun && agent?.current_run_id === run?.id && task.assigned_agent_id === agent?.id &&
       runner?.connected && runner.status === 'connected')
     const lease = controlsAvailable && input.leases.find((entry) => entry.agent_id === agent?.id &&
       Number.isFinite(Date.parse(entry.expires_at)) && Date.parse(entry.expires_at) > input.now)
     const controller = lease ? person(lease.actor_id) : undefined
     const runnerState = !run ? 'Not assigned to a runner yet'
       : connection !== 'live' ? 'Runner state unconfirmed while disconnected'
+        : !snapshotCurrent ? 'Runner state unconfirmed until the snapshot refreshes'
         : !runner ? 'Runner unavailable in this view'
           : runner.status === 'grace' ? 'Runner reconnecting'
             : runner.connected && runner.status === 'connected' ? 'Runner connected'
@@ -73,7 +80,7 @@ export function missionCollaboration(input: CollaborationInput) {
       } : null,
     }
   })
-  return { requester: requester?.name ?? 'Requester unavailable', rows }
+  return { requester: requester?.name ?? 'Requester unavailable', rows, snapshotCurrent }
 }
 
 export type DiscussionDraft = { body: string; replyToId: string | null; linkValue: string }

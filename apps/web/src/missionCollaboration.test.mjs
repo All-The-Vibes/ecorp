@@ -13,7 +13,7 @@ const bob = { id: 'bob', name: 'Bob', kind: 'human', role: 'member' }
 function fixture() {
   return {
     corpId: 'corp', mission: { id: 'mission', room_id: 'room', requested_by: 'alice' },
-    actor: alice, actors: [alice, bob], connection: 'live', now: Date.parse('2026-09-16T12:00:00Z'),
+    actor: alice, actors: [alice, bob], connection: 'live', snapshotFailed: false, now: Date.parse('2026-09-16T12:00:00Z'),
     tasks: [{ id: 'task', title: 'Build onboarding', mission_id: 'mission', assigned_agent_id: 'agent', status: 'running' }],
     runs: [{ id: 'run', task_id: 'task', agent_id: 'agent', runner_id: 'runner', status: 'running', execution_mode: 'provider' }],
     agents: [{ id: 'agent', name: 'Builder', adapter: 'codex', current_run_id: 'run' }],
@@ -43,6 +43,21 @@ test('foreign tasks and same-ID foreign-Corp runners cannot supply collaboration
 
 for (const connection of ['offline', 'connecting']) test(`${connection} retains work without advertising live control or termination`, () => {
   const input = fixture(); input.connection = connection
+  assert.equal(row(input).controlsAvailable, false)
+  assert.equal(row(input).runId, 'run')
+  assert.match(row(input).runnerState, /unconfirmed/)
+})
+
+test('a failed snapshot refresh retains exact work without advertising live controls', () => {
+  const input = fixture(); input.snapshotFailed = true
+  assert.equal(row(input).controlsAvailable, false)
+  assert.equal(row(input).runId, 'run')
+  assert.match(row(input).runnerState, /unconfirmed/)
+  assert.doesNotMatch(row(input).control, /Control at snapshot: Bob/)
+})
+
+for (const now of [NaN, Infinity, 0, -1]) test(`invalid snapshot receipt ${now} cannot advertise live controls`, () => {
+  const input = fixture(); input.now = now
   assert.equal(row(input).controlsAvailable, false)
   assert.equal(row(input).runId, 'run')
   assert.match(row(input).runnerState, /unconfirmed/)
@@ -142,6 +157,37 @@ test('actual disconnected component retains readable evidence with an explicit w
   assert.match(markup, /&lt;script&gt;unsafe/)
   assert.doesNotMatch(markup, /Open Builder controls/)
   assert.match(markup, /Inspect this run/)
+})
+
+test('actual failed-refresh component distinguishes stale data from a disconnected transport', () => {
+  const input = fixture(); input.snapshotFailed = true
+  const markup = renderToStaticMarkup(exports.MissionCollaborationPanel({ input, onSection() {}, onInspectRun() {}, onViewAgent() {} }))
+  assert.match(markup, /Last snapshot refresh failed/)
+  assert.match(markup, /Showing recorded state/)
+  assert.doesNotMatch(markup, /Receiving shared updates|Shared updates disconnected|Open Builder controls/)
+  assert.match(markup, /Inspect this run/)
+})
+
+test('actual component rejects missing receipt freshness and restores controls after a successful refresh', () => {
+  const input = fixture(); input.now = NaN
+  const render = () => renderToStaticMarkup(exports.MissionCollaborationPanel({ input, onSection() {}, onInspectRun() {}, onViewAgent() {} }))
+  assert.match(render(), /Snapshot freshness unavailable/)
+  assert.doesNotMatch(render(), /Receiving shared updates|Open Builder controls/)
+  input.now = Date.parse('2026-09-16T12:00:00Z'); input.snapshotFailed = false
+  assert.match(render(), /Receiving shared updates/)
+  assert.match(render(), /Open Builder controls/)
+})
+
+test('App preserves main snapshot metadata and exact-run navigation while passing numeric receipt freshness', async () => {
+  const app = await readFile(new URL('./App.tsx', import.meta.url), 'utf8')
+  assert.ok(/receivedAt: string; refreshFailed: boolean/.test(app), 'Keep main snapshot metadata')
+  assert.ok(/receivedAt: new Date\(\)\.toISOString\(\), refreshFailed: false/.test(app), 'Keep ISO snapshot receipt')
+  assert.ok(/now: Date\.parse\(snapshotLoad\?\.receivedAt \?\? ''\)/.test(app), 'Convert snapshot receipt at projection boundary')
+  assert.ok(/snapshotFailed: snapshotLoad\?\.refreshFailed \?\? true/.test(app), 'Fail closed without a snapshot')
+  assert.ok(/\$\{selectedMission\.id\}:\$\{evidenceNavigationVersion\}/.test(app), 'Keep exact-run remount')
+  assert.ok(/runner-indicator \$\{snapshotCurrent && connectedRunners\.length/.test(app), 'Gate global runner status on snapshot freshness')
+  assert.ok(/className=\{snapshotCurrent && connectedRunners\.length \? 'journey-complete'/.test(app), 'Start guide must not confirm stale runner connectivity')
+  assert.ok(/\{!snapshotCurrent \? 'Runner state unconfirmed until the snapshot refreshes\.'/.test(app), 'Start guide explains unconfirmed state without suggesting reenrollment')
 })
 
 test('App embeds existing scoped discussion and pins evidence before exact-run navigation', async () => {

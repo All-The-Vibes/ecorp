@@ -40,13 +40,15 @@ import { useMissionResultContext } from './useMissionResultContext'
 import { missionResultPresentation } from './missionResultContext'
 import { WorkResultCard } from './WorkResultCard'
 import { PublishedResultCard } from './PublishedResultCard'
+import { RunActivityDetails } from './RunActivityDetails'
+import { presentRunActivity, selectActivityRun } from './runActivity'
 import {
   connectionLabel, connectionRunnerRevision, connectionScope, connectionStatusLabel,
   connectionTarget, connectionsNeedPresenceRefresh,
 } from './workspaceConnections'
 import type { WorkspaceConnection, WorkspaceConnections } from './workspaceConnections'
 import { MissionCollaborationPanel } from './MissionCollaborationPanel'
-import { createDiscussionDraftStore, selectCollaborationMission } from './missionCollaboration'
+import { collaborationSnapshotIsCurrent, createDiscussionDraftStore, selectCollaborationMission } from './missionCollaboration'
 import type { CollaborationInput, DiscussionDraft } from './missionCollaboration'
 
 type Actor = {
@@ -691,9 +693,9 @@ function workspaceViewFromHash(hash: string): WorkspaceView {
 }
 
 function revealEntityTarget(kind: EntityLink['kind'] | 'room', id: string): boolean {
-  const target = document.querySelector<HTMLElement>(
+  const target = Array.from(document.querySelectorAll<HTMLElement>(
     `[data-${kind}-id="${CSS.escape(id)}"]`,
-  )
+  )).find((candidate) => !candidate.closest('[hidden]'))
   if (!target) return false
 
   if (target instanceof HTMLDetailsElement) target.open = true
@@ -1635,6 +1637,11 @@ function FactoryPanel({
   onDownloadDeliverable,
   selectedItemId,
   onSelectItem,
+  events = [],
+  runners = [],
+  connection = 'connecting',
+  snapshotReceivedAt = null,
+  snapshotFailed = false,
 }: {
   items: FactoryWorkItem[]
   missions: Mission[]
@@ -1668,12 +1675,17 @@ function FactoryPanel({
     token: string | undefined,
     idempotencyKey: string,
   ) => Promise<boolean>
-  onOpenMission: (mission: Mission) => void
+  onOpenMission: (mission: Mission, runId?: string) => void
   onDiscussMission: (mission: Mission) => void
   onNewMission: () => void
   onDownloadDeliverable: (deliverable: SourceDeliverable) => Promise<void>
   selectedItemId: string | null
   onSelectItem: (item: FactoryWorkItem) => void
+  events?: DomainEvent[]
+  runners?: RunnerNode[]
+  connection?: string
+  snapshotReceivedAt?: string | null
+  snapshotFailed?: boolean
 }) {
   const [commentBody, setCommentBody] = useState('')
   const [steerText, setSteerText] = useState('')
@@ -1707,12 +1719,12 @@ function FactoryPanel({
     activeLease?.actor_id === selectedActor.id
   const leaseHeldBySelectedActor =
     leaseAttributedToSelectedActor && Boolean(activeLeaseToken)
-  const selectedRunIds = new Set(selectedRuns.map((run) => run.id))
   const pendingActions = actionApprovals.filter(
-    (approval) => selectedRunIds.has(approval.run_id) && approval.status === 'pending',
+    (approval) => approval.status === 'pending' && selectedRuns.some((run) =>
+      run.id === approval.run_id && !terminalRun(run.status)),
   )
   const pendingReviews = verificationRequests.filter(
-    (request) => selectedRunIds.has(request.run_id) && request.status === 'pending',
+    (request) => selectedRuns.some((run) => pendingReviewForRun(run, [request])),
   )
   const contextualMessages = selectedMission
     ? roomDiscussionMessages(messages, room?.id, selectedMission.id,
@@ -1739,6 +1751,13 @@ function FactoryPanel({
     controllers, selected, scope.corpId, selectedItemId,
   )
   const controllerState = factoryControllerState(controller)
+  const activityRun = selectActivityRun(selectedRuns, verificationRequests, actionApprovals)
+  const runActivity = selected && selectedMission ? presentRunActivity({
+    corpId: scope.corpId, mission: selectedMission, run: activityRun, tasks: selectedTasks,
+    agents, runners, actors, leases, events, reviews: verificationRequests,
+    approvals: actionApprovals, connection, snapshotReceivedAt, snapshotFailed,
+    factoryState: selected.state,
+  }) : null
 
   return (
     <section
@@ -1941,7 +1960,7 @@ function FactoryPanel({
                       </small>
                     </div>
                     <span className={`status-chip status-chip-${stateTone(selected.state)}`}>
-                      {statusLabel(selected.state)}
+                      Intake · {statusLabel(selected.state)}
                     </span>
                   </div>
                   <h3>
@@ -1957,25 +1976,30 @@ function FactoryPanel({
                         onRefresh={resultRead.refresh}
                         onDownload={(deliverable) => void onDownloadDeliverable(deliverable)}
                       />
+                      {runActivity ? <RunActivityDetails key={runActivity.runId} view={runActivity} /> : null}
                     </div>
                   ) : (
                     <WorkResultCard
-                      heading={pendingReviews.length || pendingActions.length ? 'This work needs a decision'
+                      heading={runActivity?.heading ?? (pendingReviews.length || pendingActions.length ? 'This work needs a decision'
                         : activeRun ? 'Your team is working'
                           : selected.state === 'verified' ? 'Verified work is ready to review'
-                            : selectedMission ? 'Continue with this work' : 'Waiting for a mission'}
-                      status={statusLabel(selected.state)}
-                      tone={pendingReviews.length || pendingActions.length ? 'attention'
-                        : selected.state === 'verified' ? 'success' : activeRun ? 'working' : 'neutral'}
-                      description={selectedMission
+                            : selectedMission ? 'Continue with this work' : 'Waiting for a mission')}
+                      status={runActivity?.status ?? statusLabel(selected.state)}
+                      tone={runActivity?.tone ?? (pendingReviews.length || pendingActions.length ? 'attention'
+                        : selected.state === 'verified' ? 'success' : activeRun ? 'working' : 'neutral')}
+                      description={runActivity?.summary ?? (selectedMission
                         ? 'Open the same mission for its task owners, exact-run evidence and any required decisions. No pull request is recorded yet.'
-                        : 'Intake and its existing controller determine when a mission can start. This screen does not create a second execution path.'}
+                        : 'Intake and its existing controller determine when a mission can start. This screen does not create a second execution path.')}
                       actions={selectedMission ? (
-                        <button type="button" className="button button-primary" onClick={() => onOpenMission(selectedMission)}>
-                          {pendingReviews.length || pendingActions.length ? 'Review this work' : 'Open mission and results'}
+                        <button type="button" className="button button-primary" onClick={() => onOpenMission(selectedMission, runActivity?.runId ?? undefined)}>
+                          {runActivity?.runId
+                            ? pendingReviewForRun(activityRun, verificationRequests) || pendingActions.some((approval) => approval.run_id === activityRun?.id) ? 'Review this run' : 'Open run and results'
+                            : 'Open mission and results'}
                         </button>
                       ) : undefined}
-                    />
+                    >
+                      {runActivity ? <RunActivityDetails key={runActivity.runId} view={runActivity} /> : null}
+                    </WorkResultCard>
                   )}
                   {selectedMission ? (
                     <nav className="work-context-actions" aria-label="This work item">
@@ -2096,7 +2120,7 @@ function FactoryPanel({
                         })}
                         {!pendingActions.length && !pendingReviews.length ? (
                           <p className="factory-cockpit-empty">
-                            No policy exception or review decision is waiting.
+                            No actionable policy exception or outcome review is available for these runs.
                           </p>
                         ) : null}
                       </section>
@@ -4803,7 +4827,8 @@ function App() {
   const [bootstrap, setBootstrap] = useState<BootstrapResponse | null>(null)
   const [connectionAttempt, setConnectionAttempt] = useState(0)
   const [snapshotLoad, setSnapshotLoad] = useState<{
-    corpId: string; actorId: string; response: SnapshotResponse; receivedAt: number
+    corpId: string; actorId: string; response: SnapshotResponse
+    receivedAt: string; refreshFailed: boolean
   } | null>(null)
   const [selectedActorId, setSelectedActorId] = useState<string | null>(null)
   const data = snapshotLoad && snapshotLoad.corpId === bootstrap?.corp_id &&
@@ -4851,6 +4876,7 @@ function App() {
   const [showRegisteredCrew, setShowRegisteredCrew] = useState(false)
   const [floorInspectorOpen, setFloorInspectorOpen] = useState(false)
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null)
+  const [evidenceNavigationVersion, setEvidenceNavigationVersion] = useState(0)
   const [roomMissionId, setRoomMissionId] = useState<string | null>(null)
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [selectedFactoryItemId, setSelectedFactoryItemId] = useState<string | null>(null)
@@ -4970,6 +4996,20 @@ function App() {
         setError('The linked mission is unavailable in the current view.')
         return
       }
+      if (linkedRun) {
+        const viewer = currentViewer.current
+        if (!viewer || viewer.corpId !== data.snapshot.corp.id || viewer.actorId !== selectedActorId ||
+          !rememberEvidenceSelection(() => window.sessionStorage, evidenceSelectionKey({
+            server: API_URL, corpId: viewer.corpId, actorId: viewer.actorId, missionId,
+          }), linkedRun.id)) {
+          setError('The requested evidence selection could not be saved. No different run has been opened.')
+          return
+        }
+        // Explicit run/artifact navigation is a deliberate evidence choice, not
+        // just a scroll target. Remount even within the same mission so its
+        // initializer reads this exact viewer-scoped choice before any decision.
+        setEvidenceNavigationVersion((version) => version + 1)
+      }
       if (missionId) {
         setSelectedMissionId(missionId)
         setMissionComposerCollapsed(true)
@@ -4984,7 +5024,7 @@ function App() {
         if (missionId) revealEntityTarget('mission', missionId)
       }, 80)
     },
-    [data],
+    [data, selectedActorId],
   )
 
   useEffect(() => {
@@ -5027,19 +5067,27 @@ function App() {
   const lastEventSeq = useRef<Record<string, number>>({})
 
   const refresh = useCallback(async (corpId: string, actorId: string, signal?: AbortSignal) => {
-    const snapshot = await api<SnapshotResponse>(
-      `/api/corps/${corpId}/snapshot?actor_id=${actorId}`,
-      { signal },
-    )
-    if (signal?.aborted) throw new DOMException('Obsolete snapshot scope', 'AbortError')
-    if (snapshot.snapshot.corp.id !== corpId) throw new Error('Snapshot Corp does not match the requested Corp.')
-    if (currentViewer.current?.corpId !== corpId || currentViewer.current.actorId !== actorId) {
+    try {
+      const snapshot = await api<SnapshotResponse>(
+        `/api/corps/${corpId}/snapshot?actor_id=${actorId}`,
+        { signal },
+      )
+      if (signal?.aborted) throw new DOMException('Obsolete snapshot scope', 'AbortError')
+      if (snapshot.snapshot.corp.id !== corpId) throw new Error('Snapshot Corp does not match the requested Corp.')
+      if (currentViewer.current?.corpId !== corpId || currentViewer.current.actorId !== actorId) {
+        return snapshot
+      }
+      const newest = snapshot.snapshot.events.at(-1)?.seq ?? 0
+      lastEventSeq.current[actorId] = Math.max(lastEventSeq.current[actorId] ?? 0, newest)
+      setSnapshotLoad({ corpId, actorId, response: snapshot, receivedAt: new Date().toISOString(), refreshFailed: false })
       return snapshot
+    } catch (caught) {
+      if (!signal?.aborted && currentViewer.current?.corpId === corpId && currentViewer.current.actorId === actorId) {
+        setSnapshotLoad((previous) => previous?.corpId === corpId && previous.actorId === actorId
+          ? { ...previous, refreshFailed: true } : previous)
+      }
+      throw caught
     }
-    const newest = snapshot.snapshot.events.at(-1)?.seq ?? 0
-    lastEventSeq.current[actorId] = Math.max(lastEventSeq.current[actorId] ?? 0, newest)
-    setSnapshotLoad({ corpId, actorId, response: snapshot, receivedAt: Date.now() })
-    return snapshot
   }, [])
 
   useEffect(() => {
@@ -6145,7 +6193,11 @@ function App() {
   const latestMissions = data.snapshot.missions.slice(0, 8)
   const latestEvents = data.snapshot.events.toReversed().slice(0, 28)
   const connectedRunners = data.runners.filter((runner) => runner.connected)
-  const runnerLabel = connection !== 'live' ? 'Runner state unconfirmed' : connectedRunners.length
+  const snapshotCurrent = collaborationSnapshotIsCurrent({
+    connection, now: Date.parse(snapshotLoad?.receivedAt ?? ''),
+    snapshotFailed: snapshotLoad?.refreshFailed ?? true,
+  })
+  const runnerLabel = !snapshotCurrent ? 'Runner state unconfirmed' : connectedRunners.length
     ? `${connectedRunners.length} runner${connectedRunners.length === 1 ? '' : 's'} online`
     : data.runners.some((runner) => runner.status === 'grace')
       ? 'Runner reconnecting'
@@ -6250,7 +6302,7 @@ function App() {
             <span />
             {connection}
           </div>
-          <div className={`runner-indicator ${connection === 'live' && connectedRunners.length ? 'runner-online' : ''}`}>
+          <div className={`runner-indicator ${snapshotCurrent && connectedRunners.length ? 'runner-online' : ''}`}>
             {runnerLabel}
           </div>
           <div className="operations-identity">
@@ -6377,12 +6429,12 @@ function App() {
         {journeyOpen ? (
           <>
             <ol className="journey-steps">
-              <li className={connectedRunners.length ? 'journey-complete' : 'journey-current'}>
+              <li className={snapshotCurrent && connectedRunners.length ? 'journey-complete' : 'journey-current'}>
                 <span>1</span>
                 <div>
                   <strong>Connect a runner</strong>
                   <small>
-                    {connectedRunners.length
+                    {!snapshotCurrent ? 'Runner state unconfirmed until the snapshot refreshes.' : connectedRunners.length
                       ? `${connectedRunners.length} runner connected to ${sourceBase}`
                       : 'Start the local stack or enroll a remote runner.'}
                   </small>
@@ -6435,7 +6487,7 @@ function App() {
               <div className="setup-grid">
                 <div className="setup-health">
                   <div><span className={`setup-dot setup-${connection}`} />Control plane<strong>{connection}</strong></div>
-                  <div><span className={`setup-dot ${connection === 'live' && connectedRunners.length ? 'setup-live' : 'setup-offline'}`} />Runner<strong>{runnerLabel}</strong></div>
+                  <div><span className={`setup-dot ${snapshotCurrent && connectedRunners.length ? 'setup-live' : 'setup-offline'}`} />Runner<strong>{runnerLabel}</strong></div>
                   <div><span className={`setup-dot ${realAdapters.length ? 'setup-live' : 'setup-offline'}`} />AI runtimes<strong>{realAdapters.length || 'none'}</strong></div>
                 </div>
                 <div className="setup-path">
@@ -6511,6 +6563,11 @@ function App() {
           messages={data.snapshot.room_messages}
           actors={data.snapshot.actors}
           agents={data.snapshot.agents}
+          events={data.snapshot.events}
+          runners={data.runners}
+          connection={connection}
+          snapshotReceivedAt={snapshotLoad?.receivedAt ?? null}
+          snapshotFailed={snapshotLoad?.refreshFailed ?? true}
           leases={data.snapshot.leases}
           leaseTokens={leaseTokens}
           selectedActor={selectedActor}
@@ -6532,7 +6589,7 @@ function App() {
               selectDiscussionMission(item.mission_id)
             }
           }}
-          onOpenMission={(mission) => navigateToWorkspaceEntity('mission', mission.id)}
+          onOpenMission={(mission, runId) => navigateToWorkspaceEntity(runId ? 'run' : 'mission', runId ?? mission.id)}
           onDiscussMission={(mission) => {
             selectDiscussionMission(mission.id)
             activateWorkspaceView('room')
@@ -7376,7 +7433,7 @@ function App() {
             <div className="mission-list">
               {selectedMission ? (
                 <MissionCard
-                  key={`${bootstrap.corp_id}:${selectedActor.id}:${selectedMission.id}`}
+                  key={`${bootstrap.corp_id}:${selectedActor.id}:${selectedMission.id}:${evidenceNavigationVersion}`}
                   corpId={bootstrap.corp_id}
                   mission={selectedMission}
                   tasks={selectedMissionTasks}
@@ -7420,7 +7477,8 @@ function App() {
                     corpId: bootstrap.corp_id, mission: selectedMission, actor: selectedActor,
                     actors: data.snapshot.actors, tasks: selectedMissionTasks, runs: selectedMissionRuns,
                     agents: data.snapshot.agents, runners: data.runners, leases: data.snapshot.leases,
-                    reviews: data.snapshot.verification_requests, connection, now: snapshotLoad?.receivedAt ?? 0,
+                    reviews: data.snapshot.verification_requests, connection, now: Date.parse(snapshotLoad?.receivedAt ?? ''),
+                    snapshotFailed: snapshotLoad?.refreshFailed ?? true,
                   }}
                   onViewAgent={(agentId) => {
                     if (!currentAgents.some((agent) => agent.id === agentId)) return
