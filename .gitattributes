@@ -1,3 +1,7 @@
 db/migrations/*.sql text eol=lf
 tools/coverage_rust_sqlx.sh text eol=lf
 
+# Issue #225 pins literal CRLF Git bytes, not just a CRLF working copy.
+/scenarios/factory-live-canary/status.mjs -text whitespace=cr-at-eol
+/scenarios/factory-live-canary/README.md -text whitespace=cr-at-eol
+
