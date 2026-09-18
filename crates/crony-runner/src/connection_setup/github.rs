@@ -82,6 +82,25 @@ pub(super) struct Repository {
     pub source: WorkspaceSourceIdentity,
 }
 
+pub(super) fn disabled_hooks_config(root: &Path) -> Result<OsString> {
+    // Empty core.hooksPath values are rejected by newer Git. Keep hooks outside
+    // the checkout in the runner-owned namespace, and fail closed if populated.
+    let hooks = root.join("empty-hooks");
+    super::storage::reject_links(&hooks)?;
+    match std::fs::create_dir(&hooks) {
+        Ok(()) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
+        Err(error) => return Err(error.into()),
+    }
+    let hooks = super::storage::canonical_directory(&hooks)?;
+    if std::fs::read_dir(&hooks)?.next().is_some() {
+        return Err(anyhow!("disabled Git hooks directory is not empty"));
+    }
+    let mut config = OsString::from("core.hooksPath=");
+    config.push(hooks);
+    Ok(config)
+}
+
 pub(super) fn validate_repository(value: &str) -> Result<()> {
     let parts = value.split('/').collect::<Vec<_>>();
     if parts.len() != 2
@@ -405,7 +424,7 @@ impl NativeGitHub {
             OsString::from("-c"),
             OsString::from(format!("credential.https://github.com.helper={helper}")),
             OsString::from("-c"),
-            OsString::from("core.hooksPath="),
+            disabled_hooks_config(&self.cwd)?,
             OsString::from("-c"),
             OsString::from("protocol.ext.allow=never"),
         ];

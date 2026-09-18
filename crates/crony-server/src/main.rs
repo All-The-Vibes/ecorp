@@ -1,5 +1,7 @@
 mod artifacts;
 mod auth;
+mod delegated;
+mod delegated_provider;
 mod dependency_source;
 #[cfg(test)]
 mod factory_connection_tests;
@@ -279,6 +281,7 @@ struct AppState {
     artifacts: ArtifactStore,
     artifact_retention_days: i64,
     workspace_sign_in: Arc<DashMap<Uuid, workspace_connections::PendingSignIn>>,
+    delegated: Option<Arc<delegated::Broker>>,
 }
 
 #[derive(Clone)]
@@ -484,6 +487,7 @@ async fn run_server() -> anyhow::Result<()> {
         artifacts,
         artifact_retention_days: args.artifact_retention_days.clamp(1, 3_650),
         workspace_sign_in: Arc::new(DashMap::new()),
+        delegated: delegated::Broker::from_env(args.mode).await?,
     };
     let retirement_state = state.clone();
     tokio::spawn(async move {
@@ -583,6 +587,7 @@ async fn run_server() -> anyhow::Result<()> {
 
     let protected = Router::new()
         .merge(workspace_connections::routes())
+        .merge(delegated::routes())
         .route("/api/corps/{corp_id}/snapshot", get(snapshot))
         .route(
             "/api/corps/{corp_id}/artifacts/{artifact_id}",
@@ -762,6 +767,7 @@ async fn run_server() -> anyhow::Result<()> {
         .route("/ws/corps/{corp_id}", get(browser_websocket))
         .route("/ws/runner", get(runner_websocket))
         .layer(TraceLayer::new_for_http());
+    app = app.merge(delegated::private_routes());
 
     if args.mode == ServerMode::Development {
         app = app

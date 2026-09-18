@@ -416,12 +416,42 @@ struct OutboundBus {
 
 #[derive(Default)]
 struct OutboundState {
+    delegated_origin: Option<(Uuid, url::Url)>,
     connection: Option<mpsc::UnboundedSender<RunnerToServer>>,
     connection_epoch: Option<Uuid>,
     pending: VecDeque<RunnerToServer>,
 }
 
 impl OutboundBus {
+    fn delegated_assignment(
+        &self,
+        assignment: &Assignment,
+        runner_id: &str,
+    ) -> Result<adapter::delegated::TrustedAssignment> {
+        let state = self
+            .state
+            .lock()
+            .map_err(|_| anyhow!("runner transport unavailable"))?;
+        let (epoch, url) = state
+            .delegated_origin
+            .as_ref()
+            .context("missing delegated server origin")?;
+        anyhow::ensure!(
+            *epoch == assignment.connection_epoch
+                && state.connection_epoch == Some(*epoch)
+                && state.connection.is_some(),
+            "delegated assignment connection is no longer current"
+        );
+        Ok(adapter::delegated::TrustedAssignment {
+            run_id: assignment.run_id,
+            task_id: assignment.task_id,
+            runner_id: runner_id.to_owned(),
+            connection_epoch: assignment.connection_epoch,
+            assignment_token: assignment.assignment_token,
+            server_http_url: url.clone(),
+        })
+    }
+
     fn send_live(&self, mut message: RunnerToServer) -> bool {
         let Ok(state) = self.state.lock() else {
             return false;
@@ -479,6 +509,26 @@ impl OutboundBus {
             );
         }
         state.pending.push_back(message);
+    }
+}
+
+#[derive(Default)]
+struct DelegatedConnectionGuard(Vec<mpsc::UnboundedSender<AdapterControl>>);
+
+impl DelegatedConnectionGuard {
+    fn track(&mut self, control: mpsc::UnboundedSender<AdapterControl>) {
+        self.0.retain(|existing| !existing.is_closed());
+        self.0.push(control);
+    }
+}
+
+impl Drop for DelegatedConnectionGuard {
+    fn drop(&mut self) {
+        for control in &self.0 {
+            let _ = control.send(AdapterControl::Stop {
+                reason: "Original delegated runner connection ended.".to_owned(),
+            });
+        }
     }
 }
 
@@ -614,6 +664,13 @@ async fn run_connection(
     let (mut socket_tx, mut socket_rx) = socket.split();
     let (out_tx, mut out_rx) = mpsc::unbounded_channel::<RunnerToServer>();
     let connection_epoch = Uuid::new_v4();
+    let mut delegated_connection = DelegatedConnectionGuard::default();
+    let delegated_origin = adapter::delegated::server_http_url(&args.server_ws)?;
+    outbound
+        .state
+        .lock()
+        .map_err(|_| anyhow!("runner transport unavailable"))?
+        .delegated_origin = Some((connection_epoch, delegated_origin));
 
     let writer = tokio::spawn(async move {
         while let Some(message) = out_rx.recv().await {
@@ -1087,6 +1144,9 @@ async fn run_connection(
                     continue;
                 };
                 let (control_tx, control_rx) = mpsc::unbounded_channel::<AdapterControl>();
+                if assignment.adapter == "delegated-resource" {
+                    delegated_connection.track(control_tx.clone());
+                }
                 let (artifact_ack_tx, artifact_ack_rx) = mpsc::unbounded_channel::<ArtifactAck>();
                 schedule_secret_expiry(secret_ttl, control_tx.clone());
                 active_runs.insert(
@@ -2167,6 +2227,11 @@ async fn execute_assignment(
         return Ok(());
     }
     let request = AdapterRunRequest {
+        trusted_assignment: if assignment.adapter == "delegated-resource" {
+            Some(outbound.delegated_assignment(&assignment, &runner_id)?)
+        } else {
+            None
+        },
         run_id: assignment.run_id,
         mission_id: assignment.mission_id,
         task_id: assignment.task_id,
@@ -3903,6 +3968,43 @@ mod tests {
             checkpoint_verification: false,
             hard_boundary_checkpoint: Arc::default(),
         }
+    }
+
+    #[test]
+    fn delegated_context_is_bound_to_the_original_live_transport() {
+        let workspace = WorkspaceLease {
+            path: PathBuf::from("unused-delegated-context-test"),
+            branch: "test".to_owned(),
+            base_ref: "HEAD".to_owned(),
+            base_commit: "0".repeat(40),
+        };
+        let assignment = verification_assignment(&workspace, Uuid::new_v4());
+        let bus = OutboundBus::default();
+        assert!(bus.delegated_assignment(&assignment, "runner").is_err());
+        let origin = adapter::delegated::server_http_url("ws://127.0.0.1:8791/ws/runner").unwrap();
+        bus.state.lock().unwrap().delegated_origin =
+            Some((assignment.connection_epoch, origin.clone()));
+        let (tx, _rx) = mpsc::unbounded_channel();
+        bus.attach(tx.clone(), assignment.connection_epoch);
+        let context = bus.delegated_assignment(&assignment, "runner").unwrap();
+        assert_eq!(context.run_id, assignment.run_id);
+        assert_eq!(context.task_id, assignment.task_id);
+        assert_eq!(context.assignment_token, assignment.assignment_token);
+        assert_eq!(context.connection_epoch, assignment.connection_epoch);
+        assert_eq!(context.server_http_url, origin);
+        bus.detach();
+        assert!(bus.delegated_assignment(&assignment, "runner").is_err());
+        bus.attach(tx, Uuid::new_v4());
+        assert!(bus.delegated_assignment(&assignment, "runner").is_err());
+    }
+
+    #[test]
+    fn delegated_connection_drop_cancels_the_live_worker() {
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        let mut connection = DelegatedConnectionGuard::default();
+        connection.track(tx);
+        drop(connection);
+        assert!(matches!(rx.try_recv(), Ok(AdapterControl::Stop { .. })));
     }
 
     pub(super) async fn prepared_verification_fixture()

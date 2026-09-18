@@ -1,0 +1,21 @@
+{
+  "name": "local-obo-proof",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": { "node": ">=22.14.0" },
+  "scripts": {
+    "test": "node --test test/security.test.mjs",
+    "setup": "node setup.mjs",
+    "start": "node server.mjs",
+    "test:live": "node --test --test-concurrency=4 test/live.test.mjs",
+    "login": "node login.mjs"
+  },
+  "dependencies": {
+    "jose": "6.2.12",
+    "openid-client": "6.8.8"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

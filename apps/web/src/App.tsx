@@ -34,6 +34,7 @@ import type { DiscussionScope } from './missionProjection'
 import { createSnapshotRefresher } from './snapshotRefresh'
 import { evidenceSelectionKey, readEvidenceSelection, rememberEvidenceSelection } from './evidenceSelection'
 import { ConnectionsPanel } from './ConnectionsPanel'
+import { DelegatedPanel } from './DelegatedPanel'
 import { MissionOriginText } from './MissionOriginDetails'
 import { useMissionOriginContext } from './useMissionOriginContext'
 import { useMissionResultContext } from './useMissionResultContext'
@@ -7463,6 +7464,11 @@ function App() {
           ))}
         </ol>
       </section>
+      {bootstrap && selectedActor && connectionRoom && (
+        <DelegatedPanel corpId={bootstrap.corp_id} roomId={connectionRoom.id}
+          actorId={selectedActor.id} api={api} serverUrl={API_URL}
+          onRefresh={() => { void refresh(bootstrap.corp_id, selectedActor.id) }} />
+      )}
       {connectionsOpen && bootstrap && selectedActor && connectionRoom && (
         <ConnectionsPanel
           key={savedConnectionScope}

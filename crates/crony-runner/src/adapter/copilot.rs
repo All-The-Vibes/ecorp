@@ -1834,6 +1834,7 @@ mod tests {
             fixture: true,
         });
         let request = AdapterRunRequest {
+            trusted_assignment: None,
             run_id,
             mission_id: Uuid::new_v4(),
             task_id: Uuid::new_v4(),

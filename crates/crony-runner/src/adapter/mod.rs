@@ -2,6 +2,7 @@ mod codex;
 pub(crate) mod connection;
 mod copilot;
 mod copilot_fs;
+pub(crate) mod delegated;
 mod external;
 mod fake;
 mod permission;
@@ -89,6 +90,7 @@ impl AdapterCapabilities {
 
 #[derive(Clone)]
 pub struct AdapterRunRequest {
+    pub trusted_assignment: Option<delegated::TrustedAssignment>,
     pub run_id: Uuid,
     pub mission_id: Uuid,
     pub task_id: Uuid,
@@ -349,12 +351,14 @@ impl AdapterRegistry {
             config.opencode_prefix_args,
         ));
         let copilot: Arc<dyn AgentAdapter> = Arc::new(CopilotSdkAdapter::new(config.copilot));
+        let delegated: Arc<dyn AgentAdapter> = Arc::new(delegated::DelegatedResourceAdapter);
         let mut adapters = HashMap::new();
         adapters.insert(fake.id().to_owned(), fake);
         adapters.insert(codex.id().to_owned(), codex);
         adapters.insert(claude.id().to_owned(), claude);
         adapters.insert(opencode.id().to_owned(), opencode);
         adapters.insert(copilot.id().to_owned(), copilot);
+        adapters.insert(delegated.id().to_owned(), delegated);
         Self {
             adapters: Arc::new(adapters),
         }
@@ -398,6 +402,7 @@ mod tests {
     fn test_request(title: &str) -> AdapterRunRequest {
         let run_id = Uuid::new_v4();
         AdapterRunRequest {
+            trusted_assignment: None,
             run_id,
             mission_id: Uuid::new_v4(),
             task_id: Uuid::new_v4(),
