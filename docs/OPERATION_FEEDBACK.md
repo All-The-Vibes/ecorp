@@ -145,7 +145,8 @@ node tools/operation_feedback.mjs prepare-review `
   --out 'C:\ecorp-operations\intent-001.json'
 ```
 
-Omit `--artifact-path` only for a directly selected raw corpus artifact, as above.
+The example selects `corpus.json` from a typed artifact. Omit `--artifact-path` only
+when the selected artifact is the raw corpus itself.
 This command only reads native state and writes new local review files. The JSON intent
 and adjacent Markdown show the selected guidance, target, expiry and exact reviewer note.
 They distinguish the **canonical intent digest used in that note** from the **raw file
