@@ -307,6 +307,7 @@ or real-provider performance.
 node tools/check_migrations.mjs
 pnpm check:docs
 pnpm test:unit
+pnpm test:steward
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
@@ -318,6 +319,21 @@ pnpm lint:web
 `pnpm test:unit` runs the native Node regression suites under `apps/web/src` and the top-level
 `tools/*.test.mjs` files, using Node.js 22.23.2 or newer. The separate Repository checks PR
 workflow runs Linux and Windows jobs and preserves JUnit results even when a test fails.
+
+`pnpm test:steward` adds the dependency-free Repo Steward auditor, local recurrence,
+advisory feedback and CLI regressions to the same contributor gate. It uses no live
+GitHub credential, provider inference, Teams connection or native mission. Run the
+separate process acceptance against a new owned directory:
+
+```powershell
+node tools/e2e_steward_maintenance.mjs --output C:\ecorp-qa\steward-new-run
+```
+
+The parent directory must exist and the result directory must be new. The driver
+starts real CLI processes with explicit synthetic snapshots, checks persisted
+receipt/review bindings and retains failure evidence. It does not install a
+scheduler or prove live/production operational cadence. See the
+[versioned local contract](specs/recurring-audit-v1.md).
 Bare `e2e_*.mjs` drivers, output directories, scenario applications, and real-provider probes
 are outside this discovery scope; their acceptance still needs the explicitly owned E2E lanes.
 

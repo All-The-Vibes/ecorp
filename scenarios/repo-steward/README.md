@@ -142,7 +142,80 @@ References:
 - [GitHub deployment environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
 - [GitHub Actions job summaries](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#adding-a-job-summary)
 
-## What it checks
+## Local recurring audits and feedback
+
+`maintenance.mjs` provides one-cycle and finite recurring audits with private,
+durable checkpoints. It reuses the existing auditor and collector. It has no
+GitHub mutation or ECorp dispatch operation. The hosted manual pilot above keeps
+its existing triggers, account and approval boundaries.
+
+From this directory, supply a complete snapshot and its exact source revision:
+
+```powershell
+$snapshotFile = 'C:\ecorp-audits\snapshot.json'
+$sourceCommit = (Get-Content -LiteralPath $snapshotFile -Raw | ConvertFrom-Json).scope.source_commit
+$auditState = 'C:\ecorp-audits\run-001'
+node maintenance.mjs once --state-dir $auditState --source-commit $sourceCommit --snapshot $snapshotFile
+node maintenance.mjs watch --state-dir $auditState --source-commit $sourceCommit --snapshot $snapshotFile --cycles 3 --interval-ms 1000 --duration-ms 10000
+node maintenance.mjs status --state-dir $auditState
+node maintenance.mjs pause --state-dir $auditState --source-commit $sourceCommit --reason 'Inspect the findings'
+node maintenance.mjs resume --state-dir $auditState --source-commit $sourceCommit --reason 'Continue this scope'
+node maintenance.mjs stop --state-dir $auditState --source-commit $sourceCommit --reason 'Audit scope finished'
+```
+
+Use a new state directory for a new source or implementation version. `stop` is
+terminal. Each cycle reloads the snapshot, rejects stale/incomplete input and
+preserves failure receipts. Repeated unchanged data produces a no-op receipt;
+changed or resolved findings produce a new private handoff. No-op attempts still
+count against the 100-attempt directory limit. Handoffs are advisory, not tasks.
+Command output includes the content-addressed receipt, checkpoint and new handoff
+references so they can be inspected in the selected state directory.
+
+`--live` replaces `--snapshot` only when using the existing approved collector
+identity and scope. A live recurring interval must be at least 60 seconds. The
+tool does not switch accounts. Supplied snapshot mode does not certify live
+collection, even if the file was originally collected elsewhere.
+
+`feedback.mjs` creates and versions advisory guidance. It always writes a **new**
+output file. Parent directories must already exist; previous corpus files remain
+unchanged. The lifecycle commands are:
+
+```powershell
+node feedback.mjs init --snapshot $snapshotFile --out 'C:\ecorp-audits\corpus-0.json'
+node feedback.mjs evidence --snapshot $snapshotFile --finding F-0123456789abcdef --out 'C:\ecorp-audits\evidence-1.json'
+node feedback.mjs propose --corpus 'C:\ecorp-audits\corpus-0.json' --input 'C:\ecorp-audits\proposal.json' --out 'C:\ecorp-audits\corpus-1.json'
+node feedback.mjs review --corpus 'C:\ecorp-audits\corpus-1.json' --input 'C:\ecorp-audits\decision.json' --review-file 'C:\ecorp-audits\review.md' --out 'C:\ecorp-audits\corpus-2.json'
+node feedback.mjs retire --corpus 'C:\ecorp-audits\corpus-2.json' --input 'C:\ecorp-audits\retirement.json' --out 'C:\ecorp-audits\corpus-3.json'
+```
+
+Replace the example finding ID with an actual ID from the supplied audit. A
+proposal contains `rule`, `guidance: {text, route}`, an `evidence` array of the
+evidence command's records, `expiresAt`, and optional `supersedes`. Routes are
+`inspect-evidence`, `clarify-requirements` and `manual-review`. Activation needs
+two distinct source/finding evidence identities; changing only a capture timestamp
+does not satisfy that condition. Rules expire within 30 days and the default
+active cap is eight.
+
+A review input contains `candidateId`, `expectedCandidateDigest`,
+`decision` (`activate` or `reject`) and `reviewEvidence: {reason, operatorLabel?}`.
+The CLI computes the review file's SHA-256 itself. A retirement input contains
+`ruleId`, `expectedRuleDigest` and `reason`. The proposal and review commands print
+the record ID and exact record digest; use those values and retain the candidate
+version while reviewing it. Names and hashes do not authenticate the
+reviewer or establish independent/human approval. These are local advisory data.
+
+Pass an active corpus to a later audit with `--corpus PATH`. It adds bounded
+guidance while preserving every original finding and severity. Expired, rejected
+or retired guidance is excluded. Receipts bind the corpus and applied rule hashes.
+Advisory output is admitted only when it fits 512 annotations and one MiB of
+compact JSON; larger results fail explicitly without dropping findings.
+
+Run `pnpm test:steward` from the repository root, or `npm run test:core` here, for
+the dependency-free audit, feedback and command tests. See the
+[versioned contract](../../docs/specs/recurring-audit-v1.md) for bounds and evidence
+scope. This local path does not install a scheduler or start a Factory controller.
+
+## Audit rules
 
 - Topic workstream candidates, without assigning people or applying labels.
 - Explicit `## Dependencies` / `Blocked by #...` declarations versus native links.

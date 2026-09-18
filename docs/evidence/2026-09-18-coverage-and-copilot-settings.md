@@ -105,3 +105,8 @@ The [machine-readable summary](assets/codeblend-readiness/coverage-and-copilot-c
 records native totals, source/tool/report hashes, local checks, original/full-score
 scope and the separate structural diagnostic. See [EVALS](../EVALS.md) for the
 reproducible coverage lane and [SECURITY](../SECURITY.md) for the corrected boundary.
+
+Subsequent evidence: [the completed V3 assessment](2026-09-18-codeblend-v3.md)
+records acceptance of the changed runner and successful judging on `9a6ebace`,
+with 92.0 structure / 68.25 operations / 79.2 composite. This dated report's earlier
+attempts, source-bound coverage and pending-at-the-time statements remain historical.

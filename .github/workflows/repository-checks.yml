@@ -51,12 +51,21 @@ jobs:
           --test-reporter=spec --test-reporter-destination=stdout
           --test-reporter=junit --test-reporter-destination=output/repository-checks/unit.xml
           "apps/web/src/**/*.test.mjs" "tools/*.test.mjs"
+      - name: Run local maintenance and feedback regressions
+        if: ${{ !cancelled() && steps.reports.outcome == 'success' }}
+        run: >-
+          node --test --test-concurrency=2 --test-timeout=180000
+          --test-reporter=spec --test-reporter-destination=stdout
+          --test-reporter=junit --test-reporter-destination=output/repository-checks/steward.xml
+          scenarios/repo-steward/steward.test.mjs scenarios/repo-steward/actions.test.mjs
+          scenarios/repo-steward/recurring-audit.test.mjs scenarios/repo-steward/feedback.test.mjs
+          scenarios/repo-steward/maintenance.test.mjs scenarios/repo-steward/feedback-cli.test.mjs
       - name: Upload regression results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: repository-checks-${{ matrix.os }}
-          path: output/repository-checks/unit.xml
+          path: output/repository-checks/*.xml
           if-no-files-found: error
           retention-days: 14
 
