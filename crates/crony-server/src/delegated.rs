@@ -136,7 +136,7 @@ fn broker(state: &AppState) -> Result<&Broker, ApiError> {
 fn hash(value: &str) -> String {
     hex::encode(Sha256::digest(value.as_bytes()))
 }
-fn random() -> String {
+pub(super) fn random() -> String {
     format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple())
 }
 fn credential_allowed(status: &str, expiry: i64, now: i64) -> bool {
@@ -394,7 +394,8 @@ async fn authorize(
         .await
         .map_err(db)?;
     let ticket = random();
-    let oauth_state = random();
+    // High-entropy CSRF state, not a human password; SHA-256 is its lookup digest.
+    let csrf_state = random();
     let verifier = random();
     let nonce = random();
     let transaction = Uuid::new_v4();
@@ -405,14 +406,14 @@ async fn authorize(
             corp,
             transaction,
             "delegated-pkce",
-            json!({"verifier":verifier,"state":oauth_state})
+            json!({"verifier":verifier,"state":csrf_state})
                 .to_string()
                 .as_bytes(),
         )
         .map_err(provider_error)?;
     sqlx::query("INSERT INTO delegated_auth_transactions(id,operation_id,ticket_hash,state_hash,pkce_ciphertext,pkce_nonce,oidc_nonce,expires_at)
         VALUES($1,$2,$3,$4,$5,$6,$7,now()+interval '10 minutes')")
-        .bind(transaction).bind(id).bind(hash(&ticket)).bind(hash(&oauth_state)).bind(encrypted).bind(iv).bind(nonce)
+        .bind(transaction).bind(id).bind(hash(&ticket)).bind(hash(&csrf_state)).bind(encrypted).bind(iv).bind(nonce)
         .execute(&mut *tx).await.map_err(db)?;
     sqlx::query("UPDATE delegated_operations SET status='authenticating' WHERE id=$1")
         .bind(id)

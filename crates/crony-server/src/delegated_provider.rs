@@ -842,8 +842,6 @@ mod tests {
     const INTERACTIVE: &str = "33333333-3333-4333-8333-333333333333";
     const BROKER: &str = "44444444-4444-4444-8444-444444444444";
     const DOWNSTREAM: &str = "55555555-5555-4555-8555-555555555555";
-    const NONCE: &str = "nonce-abcdefghijklmnopqrstuvwxyz-012345";
-    const VERIFIER: &str = "verifier-abcdefghijklmnopqrstuvwxyz-0123456789012345";
 
     fn signing_material() -> &'static (jsonwebtoken::EncodingKey, Value) {
         static KEY: OnceLock<(jsonwebtoken::EncodingKey, Value)> = OnceLock::new();
@@ -885,11 +883,11 @@ mod tests {
         }
     }
 
-    fn claims(config: &ProviderConfig, aud: &str, party: &str) -> Value {
+    fn claims(config: &ProviderConfig, aud: &str, party: &str, nonce: &str) -> Value {
         json!({
             "iss":config.issuer,"sub":"pairwise-human", "oid":HUMAN, "tid":TENANT,
             "aud":aud, "exp":now().unwrap()+300, "iat":now().unwrap()-10,
-            "nonce":NONCE, "azp":party, "ver":"2.0", "scp":"access_as_user"
+            "nonce":nonce, "azp":party, "ver":"2.0", "scp":"access_as_user"
         })
     }
 
@@ -905,6 +903,8 @@ mod tests {
         provider: DelegatedProvider,
         state: Arc<MockState>,
         task: tokio::task::JoinHandle<()>,
+        nonce: String,
+        verifier: String,
     }
 
     impl Drop for Fixture {
@@ -1001,6 +1001,8 @@ mod tests {
                 provider,
                 state,
                 task,
+                nonce: super::super::delegated::random(),
+                verifier: super::super::delegated::random(),
             }
         }
 
@@ -1023,11 +1025,13 @@ mod tests {
                     config,
                     &config.interactive_client_id,
                     &config.interactive_client_id,
+                    &self.nonce,
                 ),
                 claims(
                     config,
                     &config.broker_client_id,
                     &config.interactive_client_id,
+                    &self.nonce,
                 ),
             )
         }
@@ -1044,7 +1048,12 @@ mod tests {
 
         async fn redeem(&self) -> Result<InitialGrant, ProviderError> {
             self.provider
-                .redeem_code("synthetic-code", VERIFIER, NONCE, &self.expected())
+                .redeem_code(
+                    "synthetic-code",
+                    &self.verifier,
+                    &self.nonce,
+                    &self.expected(),
+                )
                 .await
         }
 
@@ -1053,6 +1062,7 @@ mod tests {
                 &self.provider.config,
                 &self.provider.config.downstream_audience,
                 &self.provider.config.broker_client_id,
+                &self.nonce,
             )
         }
 
@@ -1111,30 +1121,46 @@ mod tests {
     async fn authorization_request_is_pkce_state_nonce_bound_without_credentials() {
         let fixture = Fixture::new(ProviderKind::Entra).await;
         let challenge = "A".repeat(43);
+        let csrf_state = super::super::delegated::random();
         let url = fixture
             .provider
-            .authorization_url(NONCE, &challenge, NONCE)
+            .authorization_url(&csrf_state, &challenge, &fixture.nonce)
             .unwrap();
         let url = Url::parse(&url).unwrap();
         let params: std::collections::HashMap<_, _> = url.query_pairs().into_owned().collect();
         assert_eq!(params["response_type"], "code");
         assert_eq!(params["code_challenge_method"], "S256");
         assert_eq!(params["code_challenge"], challenge);
-        assert_eq!(params["state"], NONCE);
-        assert_eq!(params["nonce"], NONCE);
+        assert_eq!(params["state"], csrf_state);
+        assert_eq!(params["nonce"], fixture.nonce);
         assert!(!params.contains_key("client_secret"));
         assert!(
             fixture
                 .provider
-                .authorization_url("", &challenge, NONCE)
+                .authorization_url("", &challenge, &fixture.nonce)
                 .is_err()
         );
         assert!(
             fixture
                 .provider
-                .authorization_url(NONCE, "short", NONCE)
+                .authorization_url(&csrf_state, "short", &fixture.nonce)
                 .is_err()
         );
+    }
+
+    #[tokio::test]
+    async fn nonce_from_another_transaction_is_rejected() {
+        let first = Fixture::new(ProviderKind::Entra).await;
+        let second = Fixture::new(ProviderKind::Entra).await;
+        assert_ne!(first.nonce, second.nonce);
+        assert_ne!(first.verifier, second.verifier);
+        let (mut id, assertion) = second.initial_claims();
+        id["nonce"] = json!(first.nonce);
+        second.initial_reply(&id, &assertion);
+        assert!(matches!(
+            second.redeem().await,
+            Err(ProviderError::Identity)
+        ));
     }
 
     #[tokio::test]
@@ -1154,7 +1180,7 @@ mod tests {
         let requests = fixture.state.requests.lock().unwrap();
         let first = &requests[0].1;
         assert_eq!(first["grant_type"], "authorization_code");
-        assert_eq!(first["code_verifier"], VERIFIER);
+        assert_eq!(first["code_verifier"], fixture.verifier);
         assert_eq!(first["client_id"], INTERACTIVE);
         assert!(!first.contains_key("client_secret"));
         let second = &requests[1].1;
@@ -1255,7 +1281,7 @@ mod tests {
         assert!(matches!(
             fixture
                 .provider
-                .redeem_code("code", VERIFIER, NONCE, &expected)
+                .redeem_code("code", &fixture.verifier, &fixture.nonce, &expected)
                 .await,
             Err(ProviderError::Identity)
         ));

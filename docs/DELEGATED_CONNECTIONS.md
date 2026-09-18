@@ -141,6 +141,14 @@ mission text, tool arguments or logs.
 
 ## Validation and remaining qualification
 
+Migration checksums cover exact bytes. Keep SQL files LF-only as required by
+`.gitattributes`, including newly created files on Windows, before recording
+manifest hashes or running SQLx. The manifest for migrations 42/43 uses their
+committed LF bytes; earlier local CRLF hashes were not portable to CI. Do not
+rewrite an existing database's SQLx history to compensate. A disposable local
+fixture initialized with CRLF migration bytes needs a separately owned fresh
+database for LF-source validation; preserve the original demo and its evidence.
+
 ```powershell
 cargo test -p crony-server
 cargo test -p crony-runner delegated
