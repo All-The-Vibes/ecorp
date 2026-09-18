@@ -10,6 +10,7 @@ use serde_json::Value;
 use uuid::Uuid;
 
 pub use crony_domain::RunnerModel;
+pub mod dependency_files;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunnerCapability {
@@ -123,6 +124,8 @@ pub enum ServerToRunner {
         sha256: String,
     },
     StartRun {
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        dependency_files: Vec<dependency_files::VerifiedDependencyFile>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         workspace_connection_id: Option<Uuid>,
         corp_id: Uuid,
@@ -146,6 +149,8 @@ pub enum ServerToRunner {
         secrets: Vec<ResolvedSecret>,
     },
     ResumeRun {
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        dependency_files: Vec<dependency_files::VerifiedDependencyFile>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         workspace_connection_id: Option<Uuid>,
         #[serde(default)]

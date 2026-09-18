@@ -970,7 +970,7 @@ fn normalize_path(path: PathBuf) -> PathBuf {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     fn empty_environment() -> ResolutionEnvironment {
@@ -986,6 +986,159 @@ mod tests {
             sha256: hex::encode(Sha256::digest(bytes)),
             bytes: bytes.len(),
             media_type: "text/plain".to_owned(),
+        }
+    }
+
+    #[tokio::test]
+    async fn issue297_negative_fake_outputs_are_rejected_by_native_verifier() {
+        let root = std::env::temp_dir().join(format!(
+            "issue297-negative-verifier-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let nonce = uuid::Uuid::new_v4().to_string();
+        for case in [
+            "control",
+            "exact-limit-control",
+            "missing-file",
+            "oversized-file",
+            "invalid-probe",
+        ] {
+            issue297_verify_case(&root, case, &nonce).await;
+        }
+        tokio::fs::remove_dir_all(root).await.unwrap();
+    }
+
+    pub(crate) async fn issue297_verify_case(root: &Path, case: &str, nonce: &str) -> Value {
+        use std::process::Stdio;
+        assert!(
+            [
+                "control",
+                "exact-limit-control",
+                "missing-file",
+                "oversized-file",
+                "invalid-probe"
+            ]
+            .contains(&case)
+        );
+        let paths = [
+            "handoffs/specialist-a.md",
+            "handoffs/specialist-a-probe.json",
+        ];
+        let policy = VerificationPolicy {
+            checks: vec![
+                VerifierCheck::Artifact { min_bytes: 1 },
+                VerifierCheck::File { path: paths[0].to_owned(), min_bytes: 1 },
+                VerifierCheck::File { path: paths[1].to_owned(), min_bytes: 1 },
+                VerifierCheck::Command {
+                    program: "node".to_owned(),
+                    args: vec![
+                        "-e".to_owned(),
+                        "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}".to_owned(),
+                        paths[0].to_owned(), paths[1].to_owned(),
+                    ],
+                    timeout_ms: 5_000,
+                },
+            ],
+            manual_gate: None,
+        };
+        // This invokes the native verifier, not a server/store/full-stack acceptance gate.
+        // On any panic the owned root is deliberately retained for diagnosis.
+        {
+            let workspace = root
+                .join(case)
+                .join("workspaces")
+                .join("runs")
+                .join("child");
+            tokio::fs::create_dir_all(&workspace).await.unwrap();
+            let marker = if matches!(case, "control" | "exact-limit-control") {
+                String::new()
+            } else {
+                format!("[issue297-adversarial:{case}:{nonce}]")
+            };
+            let mut command = tokio::process::Command::new("node");
+            command
+                .arg(
+                    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                        .join("..")
+                        .join("..")
+                        .join("scripts")
+                        .join("fake-agent.mjs"),
+                )
+                .args(["--run-id", &uuid::Uuid::new_v4().to_string(), "--workdir"])
+                .arg(&workspace)
+                .arg("--mission")
+                .arg(format!(
+                    "MISSION: {marker}\nOBJECTIVE: {marker}\nEXPECTED OUTPUT: Verified research files: {}",
+                    paths.join(", ")
+                ))
+                .env_clear()
+                .env("CRONY_ISSUE297_ADVERSARIAL_NONCE", nonce)
+                .stdin(Stdio::null())
+                .kill_on_drop(true);
+            for key in ["PATH", "SystemRoot", "WINDIR"] {
+                if let Some(value) = std::env::var_os(key) {
+                    command.env(key, value);
+                }
+            }
+            let output = tokio::time::timeout(Duration::from_secs(10), command.output())
+                .await
+                .unwrap()
+                .unwrap();
+            tokio::fs::write(root.join(case).join("child.stdout.txt"), &output.stdout)
+                .await
+                .unwrap();
+            tokio::fs::write(root.join(case).join("child.stderr.txt"), &output.stderr)
+                .await
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{case}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            let events: Vec<Value> = String::from_utf8(output.stdout)
+                .unwrap()
+                .lines()
+                .map(|line| serde_json::from_str(line).unwrap())
+                .collect();
+            let receipts: Vec<_> = events
+                .iter()
+                .filter(|event| event["type"] == "artifact")
+                .collect();
+            assert_eq!(receipts.len(), 1);
+            let receipt = PathBuf::from(receipts[0]["path"].as_str().unwrap());
+            assert!(
+                receipt.starts_with(root),
+                "Fixture artifact must stay inside owned root"
+            );
+            let bytes = tokio::fs::read(&receipt).await.unwrap();
+            if case == "exact-limit-control" {
+                tokio::fs::write(workspace.join(paths[0]), vec![b'x'; 6144])
+                    .await
+                    .unwrap();
+            }
+            let report = verify(&policy, &workspace, &[artifact(receipt, &bytes)]).await;
+            assert_eq!(report.checks.len(), 4);
+            assert!(
+                report.checks[0].passed,
+                "Reject content, not a missing provider artifact"
+            );
+            let control = matches!(case, "control" | "exact-limit-control");
+            assert_eq!(report.passed, control, "{case}: {report:?}");
+            if !control {
+                let index = if case == "missing-file" { 1 } else { 3 };
+                assert!(
+                    !report.checks[index].passed,
+                    "Exact native check must reject {case}"
+                );
+            }
+            let evidence = serde_json::to_value(&report).unwrap();
+            tokio::fs::write(
+                root.join(case).join("native-verifier.json"),
+                serde_json::to_vec(&evidence).unwrap(),
+            )
+            .await
+            .unwrap();
+            evidence
         }
     }
 

@@ -215,7 +215,7 @@ impl ManagerStrategy for ParallelSpecialistsStrategy {
             "task:specialist-a".to_owned(),
             "task:specialist-b".to_owned(),
         ];
-        Ok(TaskGraphPlan {
+        let mut plan = TaskGraphPlan {
             strategy: self.id().to_owned(),
             max_nodes: 3,
             max_depth: 1,
@@ -283,8 +283,68 @@ impl ManagerStrategy for ParallelSpecialistsStrategy {
                     verification_policy: artifact_policy(),
                 },
             ],
-        })
+        };
+        if let Some(root) = request.handoff_root {
+            for task in plan
+                .tasks
+                .iter_mut()
+                .filter(|task| task.depends_on.is_empty())
+            {
+                declare_research_handoff(task, root)?;
+            }
+            let synthesis = plan.tasks.last_mut().expect("synthesis task exists");
+            synthesis.contract.objective.push_str(
+                "\nRead every verified research note and probe from the declared paths in your own \
+                 workspace. Missing or unusable content is a failed handoff: escalate, never infer \
+                 contents from summaries, filenames, or a sibling worktree.",
+            );
+        }
+        Ok(plan)
     }
+}
+
+fn declare_research_handoff(task: &mut PlannedTask, root: &str) -> Result<()> {
+    let note = studio_handoff_path(root, &task.key)?;
+    let probe = format!("{root}/{}-probe.json", task.key);
+    let paths = vec![note, probe];
+    crate::dependency_source::validate_typed_source_paths(&paths)?;
+    task.contract.objective.push_str(&format!(
+        "\nProduce only a bounded research handoff, not the final implementation. Write a \
+         nonempty UTF-8 Markdown note at {} and a nonempty JSON probe report at {}. Each file \
+         must be at most 6144 bytes. The note must state concrete findings, interfaces and \
+         constraints. The probe report must distinguish actual observations from proposed checks. \
+         Do not claim an unexecuted probe passed. Change only these two files; do not commit. \
+         Synthesis receives their exact verified bytes in its own isolated workspace, not access \
+         to your private directory.",
+        paths[0], paths[1],
+    ));
+    task.contract.expected_output = format!("Verified research files: {}", paths.join(", "));
+    task.contract.write_scope = paths.clone();
+    task.contract.deliverable = Some(DeliverableSpec {
+        form: DeliverableForm::TypedArtifactSet,
+        commit_after_verification: false,
+        paths: paths.clone(),
+    });
+    task.contract.acceptance_tests.push(
+        "Both declared research files are nonempty, within their byte limits and exported as \
+         exact verified contents; summaries and file hashes alone are not a handoff."
+            .to_owned(),
+    );
+    task.verification_policy.checks.extend([
+        VerifierCheck::File { path: paths[0].clone(), min_bytes: 1 },
+        VerifierCheck::File { path: paths[1].clone(), min_bytes: 1 },
+        VerifierCheck::Command {
+            program: "node".to_owned(),
+            args: vec![
+                "-e".to_owned(),
+                "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}".to_owned(),
+                paths[0].clone(),
+                paths[1].clone(),
+            ],
+            timeout_ms: 5_000,
+        },
+    ]);
+    Ok(())
 }
 
 struct StudioSwarmStrategy;
@@ -1224,6 +1284,70 @@ mod tests {
     }
 
     #[test]
+    fn issue297_research_roots_declare_exact_verified_notes_and_probes() {
+        let registry = StrategyRegistry::new();
+        let request = PlanningRequest {
+            handoff_root: Some("docs/handoffs"),
+            ..studio_request()
+        };
+        let plan = registry
+            .plan("parallel-specialists", &request, &agents())
+            .unwrap();
+        for task in &plan.tasks[..2] {
+            let expected = vec![
+                format!("docs/handoffs/{}.md", task.key),
+                format!("docs/handoffs/{}-probe.json", task.key),
+            ];
+            let spec = task.contract.deliverable.as_ref().unwrap();
+            assert_eq!(spec.form, DeliverableForm::TypedArtifactSet);
+            assert!(!spec.commit_after_verification);
+            assert_eq!(spec.paths, expected);
+            assert_eq!(task.contract.write_scope, expected);
+            assert!(task.contract.objective.contains("6144"));
+            assert!(task.verification_policy.manual_gate.is_none());
+            assert_eq!(task.verification_policy.checks.len(), 4);
+            for path in &expected {
+                assert!(task.verification_policy.checks.iter().any(|check| {
+                    matches!(check, VerifierCheck::File { path: checked, min_bytes: 1 } if checked == path)
+                }));
+            }
+        }
+        assert_eq!(plan.tasks[2].depends_on, ["specialist-a", "specialist-b"]);
+        assert!(plan.tasks[2].contract.objective.contains("own workspace"));
+        assert!(plan.tasks[2].contract.deliverable.is_none());
+    }
+
+    #[test]
+    fn issue297_research_paths_fail_closed_and_legacy_plans_remain_unchanged() {
+        let registry = StrategyRegistry::new();
+        for root in ["../outside", ".git", "handoffs/NUL", "secrets", "one\\two"] {
+            let request = PlanningRequest {
+                handoff_root: Some(root),
+                ..studio_request()
+            };
+            assert!(
+                registry
+                    .plan("parallel-specialists", &request, &agents())
+                    .is_err(),
+                "{root}"
+            );
+        }
+        let plan = registry
+            .plan("parallel-specialists", &studio_request(), &agents())
+            .unwrap();
+        assert!(
+            plan.tasks
+                .iter()
+                .all(|task| task.contract.deliverable.is_none())
+        );
+        assert!(
+            plan.tasks
+                .iter()
+                .all(|task| task.verification_policy.checks.len() == 1)
+        );
+    }
+
+    #[test]
     fn issue79_every_registered_strategy_uses_shared_cost_allocation() {
         let registry = StrategyRegistry::new();
         let mut roster = agents();
@@ -1266,6 +1390,51 @@ mod tests {
                     }
                     Err(_) => assert!(actual.is_err(), "{strategy}/{total}"),
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn issue297_research_handoffs_preserve_issue79_cost_admission() {
+        let registry = StrategyRegistry::new();
+        for total in [
+            2,
+            3,
+            3_000_000,
+            20_000_000,
+            23_333_332,
+            23_333_333,
+            i64::MAX,
+        ] {
+            let request = PlanningRequest {
+                handoff_root: Some("handoffs"),
+                budget_cost_microusd: Some(total),
+                ..studio_request()
+            };
+            let actual = registry.plan("parallel-specialists", &request, &agents());
+            match strategy_cost_budgets("parallel-specialists", total) {
+                Ok(expected) => {
+                    let plan = actual.unwrap();
+                    assert_eq!(plan.budget_cost_microusd, total);
+                    assert_eq!(
+                        plan.tasks
+                            .iter()
+                            .map(|task| task.contract.budget_cost_microusd)
+                            .collect::<Vec<_>>(),
+                        expected
+                    );
+                    for task in &plan.tasks[..2] {
+                        let spec = task.contract.deliverable.as_ref().unwrap();
+                        assert_eq!(spec.form, DeliverableForm::TypedArtifactSet);
+                        assert_eq!(spec.paths.len(), 2);
+                        assert_eq!(spec.paths, task.contract.write_scope);
+                        assert_eq!(task.verification_policy.checks.len(), 4);
+                        assert!(task.verification_policy.manual_gate.is_none());
+                        assert!(task.contract.objective.contains("6144"));
+                    }
+                    assert_eq!(plan.tasks[2].depends_on, ["specialist-a", "specialist-b"]);
+                }
+                Err(_) => assert!(actual.is_err(), "research cost {total} must fail admission"),
             }
         }
     }
