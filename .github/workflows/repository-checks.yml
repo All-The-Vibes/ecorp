@@ -215,7 +215,9 @@ jobs:
           node -e $snapshot (Join-Path $reports 'source-before.json'); if ($LASTEXITCODE) { throw 'Source identity failed.' }
           @((rustc +1.98.1 --version),(cargo +1.98.1 llvm-cov --version),(node --version),(npm.cmd --version)) | Set-Content (Join-Path $reports 'versions.txt')
           try {
-            cargo +1.98.1 llvm-cov test --workspace --locked --json --summary-only --output-path (Join-Path $reports 'unit-coverage.json') 2>&1 | Tee-Object (Join-Path $reports 'unit-tests.log')
+            # Match the measured serial baseline; concurrent native ACL helpers can
+            # exhaust their unchanged startup deadline under Windows instrumentation.
+            cargo +1.98.1 llvm-cov test --workspace --locked --json --summary-only --output-path (Join-Path $reports 'unit-coverage.json') -- --test-threads=1 2>&1 | Tee-Object (Join-Path $reports 'unit-tests.log')
             if ($LASTEXITCODE) { throw 'Instrumented tests failed; no passing coverage claim.' }
             cargo +1.98.1 llvm-cov report --locked --lcov --output-path (Join-Path $reports 'unit-lcov.info') 2>&1 | Tee-Object (Join-Path $reports 'lcov-report.log')
             if ($LASTEXITCODE) { throw 'LCOV export failed.' }
