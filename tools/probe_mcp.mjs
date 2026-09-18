@@ -173,7 +173,7 @@ export function recoveryContextMetadata(payload, corpId, workItemId) {
     || typeof item.corp_id !== 'string' || item.corp_id.toLowerCase() !== corpId.toLowerCase()) {
     throw new Error('MCP recovery context did not match the requested Corp and work item')
   }
-  if (!Number.isSafeInteger(item.version) || item.version < 0 || !Array.isArray(payload.recoveries)) {
+  if (!Number.isSafeInteger(item.version) || item.version <= 0 || !Array.isArray(payload.recoveries)) {
     throw new Error('MCP recovery context returned invalid version or history metadata')
   }
   const metadata = { work_item_id: workItemId.toLowerCase(), work_item_version: item.version }
@@ -185,7 +185,7 @@ export function recoveryContextMetadata(payload, corpId, workItemId) {
     throw new Error('MCP recovery context returned inconsistent mission identity')
   }
   for (const field of ['remaining_attempts', 'remaining_mission_tokens', 'remaining_mission_cost_microusd']) {
-    if (!Number.isSafeInteger(payload[field])) throw new Error('MCP recovery context returned invalid remaining authority')
+    if (!Number.isSafeInteger(payload[field]) || payload[field] < 0) throw new Error('MCP recovery context returned invalid remaining authority')
     metadata[field] = payload[field]
   }
   for (const field of ['checkpoint_verification', 'checkpoint_source_correction', 'checkpoint_verification_available']) {

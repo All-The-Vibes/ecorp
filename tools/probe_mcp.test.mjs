@@ -190,6 +190,31 @@ test('recovery probe rejects malformed work-item IDs before spawning any gateway
   }
 })
 
+test('compiled recovery probe rejects impossible native numeric metadata and preserves exhausted authority', nativeOptions, async (t) => {
+  let context = recoveryContext()
+  const api = await fixture(t, (_request, response) => response.end(JSON.stringify(context)))
+  for (const [field, value] of [
+    ['version', 0], ['version', -1], ['version', 1.5],
+    ['remaining_attempts', -1], ['remaining_mission_tokens', -1], ['remaining_mission_cost_microusd', -1],
+  ]) {
+    context = recoveryContext()
+    if (field === 'version') context.work_item.version = value
+    else context[field] = value
+    await assert.rejects(probeMcp({ env: configuration(api.origin), workItemId: WORK_ITEM_ID }),
+      /MCP recovery context returned invalid (version or history metadata|remaining authority)/u)
+  }
+  context = recoveryContext()
+  context.work_item.version = 1
+  for (const field of ['remaining_attempts', 'remaining_mission_tokens', 'remaining_mission_cost_microusd']) context[field] = 0
+  const report = await probeMcp({ env: configuration(api.origin), workItemId: WORK_ITEM_ID })
+  assert.equal(report.recovery.work_item_version, 1)
+  assert.equal(report.recovery.remaining_attempts, 0)
+  assert.equal(report.recovery.remaining_mission_tokens, 0)
+  assert.equal(report.recovery.remaining_mission_cost_microusd, 0)
+  assert.equal(api.requests.length, 7)
+  assert.ok(api.requests.every(request => request.method === 'GET'))
+})
+
 test('compiled recovery tool makes exactly the selected authorized GET in both modes', nativeOptions, async (t) => {
   const api = await fixture(t, (_request, response) => {
     response.setHeader('content-type', 'application/json')

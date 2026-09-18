@@ -38,6 +38,8 @@ The report includes only the selected native IDs/version, recovery count, remain
 and budgets, and returned checkpoint capability flags. Missing flags are unknown. It excludes
 policy contents, workspace/source paths, fingerprints, failure details and credentials. Native
 IDs and the selected Corp/item/mission relationship are validated before producing the report.
+Work-item versions are positive safe integers. Remaining attempts and budgets are nonnegative
+safe integers; zero remains valid for exhausted authority, consistent with the native context.
 Raw API/gateway error bodies remain withheld. Output files remain create-only.
 
 ## Acceptance
