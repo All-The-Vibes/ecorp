@@ -45,8 +45,46 @@ Repo Steward is not runtime authority or an alternative multiplayer control plan
 These landed slices are reused; this map does not take ownership of them.
 
 AC1-AC6 below identify the original six acceptance bullets of #246, in order.
-They do not replace or invent identifiers for the retained R1-R14/M01-M37
-contracts. If the issue's acceptance changes, reconcile that change explicitly.
+They preserve those published issue bullets, not the unavailable original
+R1-R14/M01-M37 document. If the issue's acceptance changes, reconcile it explicitly.
+
+## Proposed replacement contract and development gates
+
+Adam's September 17 planning handoff on #253/#254/#313-#316 points to
+[G0 milestone #318][development-entry] and [draft PR #319][replacement-pr],
+head `6fe6668479417a2df43dbe1f7e471b4dec21457a`. Its
+[Multiplayer acceptance v1][replacement-spec] defines **new** MP1-R01-R14
+requirements and MP1-T01-T37 test families. These do not recover the original
+plan's numbering, content or approval history. At this source-bound review,
+the replacement is proposed: review, integration and explicit adoption are pending.
+Linking it here does not adopt it or change any runtime authorization.
+
+After adoption, **G0** permits bounded contract implementation and isolated
+preparatory work without waiting for complete U1 qualification. **G1** requires
+the actual owned baseline, **G2** requires qualified shared-execution admission,
+and **G3** is the separate release gate. Preserve #240's runtime obligations,
+#249's release dependencies and the independent #242 browser-auth review decision.
+Neither UI readiness nor a preflight report enables cross-owner effects.
+
+Proposed crosswalk (planning traceability only; every listed MP1 family remains
+**not run as an accepted MP1 family** until its individual cases and evidence are
+reconciled against the adopted version):
+
+| Existing U7 requirement | Relevant proposed test families | Owner and boundary |
+| --- | --- | --- |
+| AC1: shared selection/readiness | MP1-T13, MP1-T14, MP1-T17-MP1-T20, MP1-T25 | #314 consumes actual #241/#243/#244/#245 contracts; no inferred grants or capacity. |
+| AC2: independent members and denied actor | MP1-T04, MP1-T08, MP1-T12, MP1-T36 | #316 needs independent authentication and negative cases, not demo actor selectors alone. |
+| AC3: control, decisions, budgets, recovery and artifacts | MP1-T07, MP1-T22-MP1-T24 | #313 supplies a bounded UI foundation; #316 still verifies persisted authority and complete case coverage. |
+| AC4: launch-consumer parity | MP1-T26, MP1-T30 | #315 and #254 retain explicit supported/unsupported semantics and rejection before effects. |
+| AC5: bounded snapshots, revocation and replay | MP1-T08, MP1-T09, MP1-T21, MP1-T29, MP1-T30, MP1-T36 | #316 reuses current coalescing/replay. #253 owns ephemeral presence (MP1-T29); #254 owns internal compatibility (MP1-T30). |
+| AC6: full-stack and single-user acceptance | MP1-T01-MP1-T10, MP1-T34-MP1-T37 | #316 feeds #246/#249; isolation cells, independent devices, load and real-provider verdicts stay separate. |
+
+Existing #306 local evidence retains its original scope and is not automatically
+an MP1 pass. The proposed per-case record requires exact source, binaries,
+configuration and security-profile provenance; dirty-working-source runs are
+exploratory under that proposal. Reconcile each old assertion and missing case,
+then repeat applicable acceptance on the pinned candidate. Do not relabel the
+earlier integration rehearsal or silently replace the original issue criteria.
 
 ## Traceability
 
@@ -130,6 +168,8 @@ applicable #239 requirements. Use live issues for subsequent status changes.
 1. Read the relevant UI and backend issues/PRs plus current repository guidance.
    Record actual commits, contract fields, nullability, ordering, scope/error
    semantics and landing order. Separate hard blockers from coordination links.
+   Include the proposed #318/#319 version above; confirm adoption before using
+   its G0 entry rule and never equate development entry with runtime qualification.
 2. Treat #244/#245 as prerequisites for #314/#315 implementation, not for writing
    this verification map. Refresh those contracts before proposing consumer edits;
    an issue description or mock payload is not a shipped API.
@@ -214,3 +254,6 @@ supplies a verification contract, not completed test evidence or release approva
 [protocol]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/crates/crony-protocol/src/lib.rs
 [run-activity]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/apps/web/src/runActivity.ts
 [evidence-navigation]: https://github.com/All-The-Vibes/ecorp/blob/30ec3fab6acd566cc1fc1e574c8a6343d0ce0596/apps/web/src/evidenceNavigation.test.mjs
+[development-entry]: https://github.com/All-The-Vibes/ecorp/issues/318
+[replacement-pr]: https://github.com/All-The-Vibes/ecorp/pull/319
+[replacement-spec]: https://github.com/All-The-Vibes/ecorp/blob/6fe6668479417a2df43dbe1f7e471b4dec21457a/docs/MULTIPLAYER_ACCEPTANCE_V1.md
