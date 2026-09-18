@@ -215,10 +215,89 @@ jobs:
           node -e $snapshot (Join-Path $reports 'source-before.json'); if ($LASTEXITCODE) { throw 'Source identity failed.' }
           @((rustc +1.98.1 --version),(cargo +1.98.1 llvm-cov --version),(node --version),(npm.cmd --version)) | Set-Content (Join-Path $reports 'versions.txt')
           try {
-            # Match the measured serial baseline; concurrent native ACL helpers can
-            # exhaust their unchanged startup deadline under Windows instrumentation.
-            cargo +1.98.1 llvm-cov test --workspace --locked --json --summary-only --output-path (Join-Path $reports 'unit-coverage.json') -- --test-threads=1 2>&1 | Tee-Object (Join-Path $reports 'unit-tests.log')
+            # Use the pinned tool's native instrumentation environment for both
+            # compilation and execution, with host readiness immediately between them.
+            $coverageEnvironment = cargo +1.98.1 llvm-cov show-env --pwsh
+            if ($LASTEXITCODE) { throw 'Native coverage environment setup failed.' }
+            $coverageEnvironment | Out-String | Invoke-Expression
+            cargo +1.98.1 test --workspace --locked --tests --no-run 2>&1 | Tee-Object (Join-Path $reports 'unit-build.log')
+            if ($LASTEXITCODE) { throw 'Instrumented test build failed.' }
+            # The runner uses Windows PowerShell 5.1, not this step's PowerShell 7.
+            # Exercise its first-use ACL startup without changing the runner's 10s deadline.
+            $readinessDirectory = Join-Path $env:RUNNER_TEMP ('ecorp-acl-readiness-' + [Guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $readinessDirectory | Out-Null
+            $nativeHost = Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
+            $readinessScript = @'
+          $ErrorActionPreference='Stop'
+          $acl=[System.Security.AccessControl.DirectorySecurity]::new()
+          $owner=[System.Security.Principal.WindowsIdentity]::GetCurrent().User
+          $acl.SetOwner($owner)
+          $acl.SetAccessRuleProtection($true,$false)
+          foreach($sid in @($owner,[System.Security.Principal.SecurityIdentifier]::new('S-1-5-18'))) {
+            $rule=[System.Security.AccessControl.FileSystemAccessRule]::new(
+              $sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow')
+            $acl.AddAccessRule($rule)
+          }
+          [System.IO.Directory]::SetAccessControl($env:ECORP_CONNECTION_ACL_TARGET,$acl)
+          $actual=[System.IO.Directory]::GetAccessControl($env:ECORP_CONNECTION_ACL_TARGET)
+          if (!$actual.AreAccessRulesProtected -or $actual.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $owner.Value) { throw 'ACL owner or inheritance verification failed.' }
+          $rules=@($actual.GetAccessRules($true,$true,[System.Security.Principal.SecurityIdentifier]))
+          $expectedSids=@($owner.Value,'S-1-5-18' | Sort-Object -Unique)
+          $actualSids=@($rules | ForEach-Object { $_.IdentityReference.Value } | Sort-Object)
+          if ($rules.Count -ne $expectedSids.Count -or ($actualSids -join ',') -ne ($expectedSids -join ',')) { throw 'ACL principal verification failed.' }
+          foreach($rule in $rules) {
+            if ($rule.IsInherited -or $rule.AccessControlType -ne [System.Security.AccessControl.AccessControlType]::Allow -or $rule.FileSystemRights -ne [System.Security.AccessControl.FileSystemRights]::FullControl -or $rule.InheritanceFlags -ne ([System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit) -or $rule.PropagationFlags -ne [System.Security.AccessControl.PropagationFlags]::None) { throw 'ACL permission verification failed.' }
+          }
+          @{ host_version=$PSVersionTable.PSVersion.ToString(); verified=$true } | ConvertTo-Json -Compress
+          '@
+            $readinessInfo = [Diagnostics.ProcessStartInfo]::new()
+            $readinessInfo.FileName = $nativeHost
+            $readinessInfo.WorkingDirectory = $readinessDirectory
+            $readinessInfo.UseShellExecute = $false
+            $readinessInfo.CreateNoWindow = $true
+            $readinessInfo.RedirectStandardOutput = $true
+            $readinessInfo.RedirectStandardError = $true
+            foreach ($argument in @('-NoLogo','-NoProfile','-NonInteractive','-Command',$readinessScript)) { $readinessInfo.ArgumentList.Add($argument) }
+            $readinessInfo.Environment['ECORP_CONNECTION_ACL_TARGET'] = $readinessDirectory
+            $readinessProcess = [Diagnostics.Process]::new()
+            $readinessProcess.StartInfo = $readinessInfo
+            $readinessClock = [Diagnostics.Stopwatch]::StartNew()
+            $readinessReceipt = @{ host_version=$null; verified=$false; timed_out=$false; duration_ms=0 }
+            $readinessStarted = $false
+            $readinessStdout = $null
+            $readinessStderr = $null
+            try {
+              $readinessStarted = $readinessProcess.Start()
+              if (!$readinessStarted) { throw 'Native ACL readiness host did not start.' }
+              $readinessStdout = $readinessProcess.StandardOutput.ReadToEndAsync()
+              $readinessStderr = $readinessProcess.StandardError.ReadToEndAsync()
+              if (!$readinessProcess.WaitForExit(60000)) { $readinessReceipt.timed_out=$true; throw 'Native ACL readiness exceeded 60 seconds.' }
+              if (![Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($readinessStdout,$readinessStderr),5000)) { throw 'Native ACL readiness output did not close.' }
+              if ($readinessProcess.ExitCode -ne 0) { throw 'Native ACL readiness failed.' }
+              $readinessResult = $readinessStdout.Result | ConvertFrom-Json
+              if ($readinessResult.verified -ne $true -or $readinessResult.host_version -notmatch '^5\.1\.') { throw 'Native Windows PowerShell ACL readiness was not verified.' }
+              $readinessReceipt.host_version = $readinessResult.host_version
+              $readinessReceipt.verified = $true
+            } finally {
+              $readinessCleanupFailed = $false
+              if ($readinessStarted -and !$readinessProcess.HasExited) {
+                try { $readinessProcess.Kill($true); $readinessCleanupFailed = !$readinessProcess.WaitForExit(5000) } catch { $readinessCleanupFailed=$true }
+              }
+              if ($readinessStdout -and $readinessStderr) {
+                try { [void][Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($readinessStdout,$readinessStderr),5000) } catch { $readinessCleanupFailed=$true }
+                if ($readinessStdout.IsCompletedSuccessfully) { $readinessStdout.Result | Set-Content (Join-Path $reports 'acl-readiness.stdout.log') }
+                if ($readinessStderr.IsCompletedSuccessfully) { $readinessStderr.Result | Set-Content (Join-Path $reports 'acl-readiness.stderr.log') }
+              }
+              $readinessClock.Stop()
+              $readinessReceipt.duration_ms = $readinessClock.ElapsedMilliseconds
+              $readinessReceipt | ConvertTo-Json | Set-Content (Join-Path $reports 'acl-readiness.json')
+              $readinessProcess.Dispose()
+              if ($readinessCleanupFailed) { throw 'Owned ACL readiness process cleanup failed.' }
+            }
+            cargo +1.98.1 test --workspace --locked --tests -- --test-threads=1 2>&1 | Tee-Object (Join-Path $reports 'unit-tests.log')
             if ($LASTEXITCODE) { throw 'Instrumented tests failed; no passing coverage claim.' }
+            cargo +1.98.1 llvm-cov report --locked --json --summary-only --output-path (Join-Path $reports 'unit-coverage.json') 2>&1 | Tee-Object (Join-Path $reports 'json-report.log')
+            if ($LASTEXITCODE) { throw 'Native JSON coverage export failed.' }
             cargo +1.98.1 llvm-cov report --locked --lcov --output-path (Join-Path $reports 'unit-lcov.info') 2>&1 | Tee-Object (Join-Path $reports 'lcov-report.log')
             if ($LASTEXITCODE) { throw 'LCOV export failed.' }
             cargo +1.98.1 llvm-cov report --locked --fail-under-lines 45.0 2>&1 | Tee-Object (Join-Path $reports 'line-guard.log')
