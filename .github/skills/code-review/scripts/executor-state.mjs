@@ -55,9 +55,13 @@
 //    kind:"COMMAND_FAILED"|"INVALID_JSON"|"INVALID_RESPONSE",exitCode:integer|null,
 //    signal:"SIGTERM"|"SIGKILL"|"SIGINT"|null}. No raw diagnostics.
 // next {owner,gateNumber?:positiveInteger} -> durable audit/check/read-only claim,
-//   blocked, or none. gateNumber explicitly rechecks ONE waiting/blocked PR's
-//   live dependencies/threads/protections even with unchanged snapshots. Driver
-//   calls at most once per waiting PR per wake; there is no implicit retry scan.
+//   blocked, or none.
+//   Failed waiting work returns blocked/recovery:"resume"/retryRequired:true
+//   with its original claim once capacity is available. Resume, then retry before
+//   correction; this routing response neither claims new work nor spends a round.
+//   gateNumber explicitly rechecks ONE waiting/blocked PR's live dependencies/
+//   threads/protections even with unchanged snapshots. Driver calls at most once
+//   per waiting PR per wake; there is no implicit gate polling or retry charge.
 //   It cannot steal active work, leave canary scope or skip pending audit input.
 //   check claims forbid begin/retry/publication; save waiting/blocked with actual
 //   live gate evidence. Fork targets remain read-only, never executable.
@@ -90,7 +94,8 @@
 // begin {owner,number,claimId,base,head} -> same claim with charged round.
 // retry {owner,number,claimId,base,head,round:expectedCurrentRound,reviewRef}
 //   Requires active reviewing/NAUGHTY and reviewRef in its latest saved evidence. Call
-//   BEFORE further local correction, not save waiting (which releases the claim).
+//   BEFORE further local correction. Waiting only checkpoints for resume/retry;
+//   it releases active work and cannot substitute for this charge.
 //   A proven v1 post-failure fixing/auditing checkpoint may also reach this charge;
 //   that does not permit new v2 correction/re-review before retry.
 //   Old first NAUGHTY saves in other phases retain journal-derived retry proof.
@@ -101,7 +106,7 @@
 //   clearance:{sourceRef,verifiedAt}}
 //   Local/credential/tooling recovery, or automatic scope-preserving continuation
 //   of an original round-limit block / next-wake batch under recorded autonomy.
-//   save blocked retains audit
+//   save blocked, or waiting with retained failed-review proof, retains audit
 //   work at prs[number].blockedClaim; resume restores that exact claim, phase,
 //   start and budget. round:null recovers an uncharged audit; begin must then charge
 //   once. Charged work resumes without begin. Resume never resets cycle history;
@@ -117,6 +122,10 @@
 //   checkpoint's eligibility; current round and decision provenance must still match.
 //   Resume never resets noProgress or spends a wake round; begin/retry require
 //   current wake capacity. Driver verifies actual clearance, not another approval.
+//   Failed waits are retryOnly checkpoints, including replay-derived old waits.
+//   Old events/decisions stay unchanged; a later audit supersedes the old checkpoint.
+//   After resume/restart, next exposes retryRequired and journal-derived failureEvidence.
+//   NICE CI-only waits never retain executable work.
 // published {owner,number,claimId,base,head,snapshot,push,reviewers}
 //   head is the expected OLD remote head; snapshot is actual selected-PR readback
 //   at NEW head. Candidate reviewers predate push. This records, never performs,
@@ -128,7 +137,10 @@
 //   retries): save blocked with that returned claim, then next/begin fresh feedback
 //   work within existing bounds, or explicitly next {feedbackNumber} for read-only
 //   triage. Canonical publication stays retained; no new push or implicit consumption.
-// save {owner,number,claimId,base,head,phase,evidence,findings,technicalVerdict,reason,reviewers?}
+// save {owner,number,claimId,base,head,round:positiveInteger|null,phase,evidence,findings,technicalVerdict,reason,reviewers?}
+//   Every live save must supply the dispatched attempt's exact active round.
+//   Uncharged/gate claims require explicit null; never infer a fresh round for a
+//   delayed save. Missing/prior rounds are replay-only historical compatibility.
 // Phases: auditing/fixing/reviewing/waiting/blocked/complete. Verdict: null/NAUGHTY/NICE.
 // NICE needs reviewers and ends technical work (complete or waiting for external gates).
 // Completion pins the processed audit/feedback generation; enable also requires
@@ -211,9 +223,9 @@ const targetCompatible = (recorded, observed, effectiveBaseRef = recorded.baseRe
 const auditKey = (p) => digest([p.base, p.head, p.reviewKey, p.sourceRepo?.toLowerCase(), p.branch, p.state, p.readError ?? null])
 const signature = (p) => digest([auditKey(p), p.gateKey, p.draft ?? false, p.url ?? null,
   ...(p.readFailure ? [p.readFailure] : []), ...(p.baseRef === undefined ? [] : [p.baseRef])])
-function observeSnapshot(p, snapshot, at, active) {
+function observeSnapshot(p, snapshot, at, active, waiting) {
   if (!p.gateObservedAt || signature(p.snapshot) !== signature(snapshot)) p.gateObservedAt = at
-  for (const a of [active, p.blockedClaim?.claim]) {
+  for (const a of [active, p.blockedClaim?.claim, waiting]) {
     if (a?.number === snapshot.number && a.snapshot.baseRef === undefined && snapshot.baseRef !== undefined) {
       a.effectiveBaseRef ??= snapshot.baseRef
     }
@@ -224,17 +236,23 @@ const current = (a, p) => p.present && auditKey(a.snapshot) === auditKey(p.snaps
 // No claim was made: retargeting cannot discharge the still-pending audit.
 const pendingRound = (p) => p.pendingRoundLimit?.auditKey === auditKey(p.snapshot)
 const cycle = (p) => p.cycles.at(-1)
+const failedWaiting = (p, waits) => {
+  const b = p && waits.get(p.snapshot.number), c = p && cycle(p)
+  return b && b.cycle === p.cycles.length && b.rounds === c.rounds &&
+    b.claim.round === c.rounds && c.technicalVerdict !== 'NICE' && !c.completion ? b : null
+}
 const roundLimit = (s) => s.autonomy ? Infinity : 3
 const wakeAvailable = (s) => !s.autonomy || s.wakes?.at(-1)?.chargedRounds < 3
 // Publication may rebind a correction head, never the claimed source/target.
 const scopeCurrent = (a, p, effectiveBaseRef = a.snapshot.baseRef) => p.present && !p.blockedReason && p.snapshot.state === 'open' &&
   sameRepo(p.snapshot.sourceRepo, a.snapshot.sourceRepo) && p.snapshot.base === a.base &&
   p.snapshot.branch === a.snapshot.branch && targetCompatible(a.snapshot, p.snapshot, effectiveBaseRef)
-function claimOutput(a, p, s) {
+function claimOutput(a, p, s, failure) {
   const stale = !current(a, p) ||
     ((s.autonomy || a.effectiveBaseRef !== undefined) && a.action === 'audit' &&
       !scopeCurrent(a, p, a.effectiveBaseRef)), c = cycle(p)
-  return { ...a, evidence: c.evidence, findings: c.findings, action: stale ? 'reconcile' : a.action,
+  return { ...a, ...(failure ? { retryRequired: true, failureEvidence: a.failureEvidence ?? failure.evidence } : {}),
+    evidence: c.evidence, findings: c.findings, action: stale ? 'reconcile' : a.action,
     reason: stale ? 'active revision changed; preserve and reconcile' : a.reason ?? c.reason }
 }
 const freshCycle = () => ({ rounds: 0, noProgress: 0, findings: [], evidence: [], reason: null, phase: 'pending', technicalVerdict: null, completion: null })
@@ -318,7 +336,7 @@ function feedbackBasis(s, p, at) {
   return completion
 }
 
-function apply(s, e, conflictingPublications = new Set(), { activation, live = false, failedReviews = new Map() } = {}) {
+function apply(s, e, conflictingPublications = new Set(), { activation, live = false, failedReviews = new Map(), failedWaits = new Map() } = {}) {
   const { command, input: i, at, id } = e
   if (command === 'init') {
     check(s === null, 'already initialized; immutable configuration')
@@ -329,7 +347,8 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       enabled: false, acceptanceProof: null, prs: {}, active: null, sequence: 0, usedReviewers: [] }, output: { initialized: true } }
   }
   check(s && i.owner === s.config.owner, 'owner mismatch or missing initialization')
-  const failureClaim = command === 'resume' ? s.prs[i.number]?.blockedClaim?.claim : s.active
+  const recovery = command === 'resume' ? failedWaiting(s.prs[i.number], failedWaits) ?? s.prs[i.number]?.blockedClaim : null
+  const failureClaim = command === 'resume' ? recovery?.claim : s.active
   const retainedFailure = failureClaim && failedReviews.get(`${failureClaim.claimId}:${failureClaim.round}`)
   const invalidActivation = (live || e.activationFence) && s.enabled && activation?.valid === false
   const enabled = s.enabled && !invalidActivation
@@ -413,7 +432,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       for (const p of i.prs) {
         s.prs[p.number] ??= { snapshot: p, sourceRepo: p.sourceRepo, present: true, seen: null, seenAudit: null, selected: 0, cycles: [freshCycle()] }
         s.prs[p.number].sourceRepo ??= p.sourceRepo
-        observeSnapshot(s.prs[p.number], p, at, s.active)
+        observeSnapshot(s.prs[p.number], p, at, s.active, failedWaits.get(p.number)?.claim)
         s.prs[p.number].present = true
         s.prs[p.number].blockedReason = p.readError ? 'DETAIL_READ_FAILED: PR detail evidence unavailable' :
           !sameRepo(p.sourceRepo, s.config.repo) ? 'fork or deleted source: privileged execution blocked' :
@@ -426,6 +445,12 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     const preserveUnavailable = ['detail-read-observation', 'detail-read-recovery'].includes(e.admission)
     const corrective = (p) => e.canaryRecovery && invalidActivation && p.snapshot.number === s.config.canary
     const pendingCorrection = (p) => corrective(p) && p.correctiveAudit?.activationId !== activation.eventId
+    // Route only new calls; old next events must keep their original claim IDs.
+    const waitingRecovery = (p) => {
+      const b = live && failedWaiting(p, failedWaits)
+      return b && current(b.claim, p) && scopeCurrent(b.claim, p, b.claim.effectiveBaseRef) &&
+        sameRepo(p.sourceRepo, s.config.repo) && sameRepo(p.snapshot.sourceRepo, s.config.repo)
+    }
     const processedAudit = (p) => {
       const c = cycle(p), snapshot = p.snapshot, publication = p.publications?.at(-1)
       if (corrective(p) && (pendingCorrection(p) || c.completion?.claimId !== p.correctiveAudit.claimId)) return false
@@ -445,10 +470,10 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       check(i.feedbackNumber === undefined || (i.feedbackNumber === s.active.number &&
         s.active.action === 'feedback'), 'feedback target cannot replace active claim')
       if (invalidActivation && s.active.number !== s.config.canary) {
-        return { state: s, output: { ...claimOutput(s.active, s.prs[s.active.number], s),
+        return { state: s, output: { ...claimOutput(s.active, s.prs[s.active.number], s, retainedFailure),
           action: 'reconcile', reason: activation.reason }, changed: false }
       }
-      return { state: s, output: claimOutput(s.active, s.prs[s.active.number], s), changed: false }
+      return { state: s, output: claimOutput(s.active, s.prs[s.active.number], s, retainedFailure), changed: false }
     }
     if (i.gateNumber === undefined && i.feedbackNumber === undefined && !wakeAvailable(s)) {
       return { state: s, output: { action: 'wait', reason: 'native wake round capacity missing or exhausted' }, changed: false }
@@ -473,13 +498,24 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     }
     const p = target ?? Object.values(s.prs).filter((p) => p.present && p.snapshot.state === 'open' &&
       (enabled || p.snapshot.number === s.config.canary) &&
-      (p.seen !== signature(p.snapshot) || (s.autonomy &&
+      (p.seen !== signature(p.snapshot) || waitingRecovery(p) || (s.autonomy &&
         ((recoverPending && pendingRound(p)) || pendingCorrection(p)) &&
         !p.blockedReason && cycle(p).noProgress < 2 &&
         sameRepo(p.sourceRepo, s.config.repo) && sameRepo(p.snapshot.sourceRepo, s.config.repo))))
-      .sort((a, b) => a.selected - b.selected || a.snapshot.number - b.snapshot.number)[0]
+      // Recovery notices do not advance selected; never pin them ahead of pending work.
+      .sort((a, b) => Number(Boolean(waitingRecovery(a))) - Number(Boolean(waitingRecovery(b))) ||
+        a.selected - b.selected || a.snapshot.number - b.snapshot.number)[0]
     if (!p) return { state: s, output: { action: 'none' }, changed: false }
     const c = cycle(p), snapshot = p.snapshot
+    if (!target && waitingRecovery(p)) {
+      const b = failedWaiting(p, failedWaits)
+      const reason = c.rounds >= roundLimit(s) ? 'round limit exhausted' :
+        c.noProgress >= 2 ? 'no-progress limit exhausted' : null
+      return { state: s, output: { ...claimOutput(b.claim, p, s, failedReviews.get(`${b.claim.claimId}:${b.claim.round}`)),
+        action: 'blocked', retryRequired: true,
+        ...(reason ? {} : { recovery: 'resume' }),
+        reason: reason ?? 'retained failed waiting audit requires resume, then charged retry' }, changed: false }
+    }
     const b = p.blockedClaim
     // Live-only, mutation-free refusal: old canaryRecovery events may have
     // admitted replacements with dependent charges; their replay stays unchanged.
@@ -509,11 +545,12 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     if (!readOnly && reason === 'round limit exhausted') {
       p.pendingRoundLimit = { auditKey: auditKey(snapshot), baseRef: snapshot.baseRef }
     } else if (s.active?.action === 'audit') delete p.pendingRoundLimit
+    if (s.active?.action === 'audit') failedWaits.delete(snapshot.number)
     output = s.active ?? output
   } else if (command === 'resume') {
     fields(i, ['owner', 'number', 'claimId', 'base', 'head', 'round', 'clearance'])
     check(!s.active, 'resume cannot replace an active claim')
-    const p = s.prs[i.number], b = p?.blockedClaim, c = p && cycle(p)
+    const p = s.prs[i.number], b = recovery, c = p && cycle(p)
     check(b && b.claim.action === 'audit' && positive(i.number) && b.claim.number === i.number &&
       b.claim.claimId === i.claimId && same(b.claim, i) && b.claim.round === i.round &&
       b.cycle === p.cycles.length && c.rounds === (i.round ?? b.rounds) &&
@@ -538,7 +575,9 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     Object.assign(c, { phase: b.phase, technicalVerdict: b.technicalVerdict, reason: b.reason,
       evidence: [...new Set([...c.evidence, i.clearance.sourceRef])] })
     p.blockedClaim = null
-    output = { ...s.active, evidence: c.evidence, findings: c.findings }
+    failedWaits.delete(i.number)
+    output = { ...s.active, evidence: c.evidence, findings: c.findings,
+      ...(b.retryOnly ? { retryRequired: true } : {}) }
   } else if (command === 'read-only') {
     fields(i, ['owner', 'number', 'claimId', 'base', 'head', 'receipt'])
     const a = s.active, p = s.prs[i.number], r = i.receipt
@@ -643,9 +682,12 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     fields(i, ['owner', 'number', 'claimId', 'base', 'head',
       ...(command === 'retry' ? ['round', 'reviewRef'] : []),
       ...(command === 'save' ? ['phase', 'evidence', 'findings', 'technicalVerdict', 'reason'] : [])],
-    command === 'save' ? ['reviewers'] : [])
+    command === 'save' ? ['reviewers', 'round'] : [])
     const a = s.active, p = s.prs[i.number]
     check(a && positive(i.number) && a.number === i.number && a.claimId === i.claimId && same(a, i), 'stale or missing claim/revision')
+    // Live admission only: old accepted saves retain their original replay semantics.
+    if (live && command === 'save') check((i.round === null || positive(i.round)) && i.round === a.round,
+      'save requires exact active round (positive integer or explicit null for uncharged claims)')
     check(a.action !== 'read-only', 'read-only claim forbids execution; record read-only receipt')
     check(a.action !== 'feedback', 'feedback claim forbids execution/save; record feedback receipt')
     check(current(a, p) || (command === 'save' && i.phase === 'blocked' && i.technicalVerdict !== 'NICE'), 'stale revision; retain claim and save blocked or reconcile publication')
@@ -723,9 +765,18 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       if (a.failureEvidence && !terminal) Object.assign(a, {
         failureReceipt: i, failureReceiptVersion: e.version ?? 1,
       })
-      if (i.phase === 'blocked' && a.action === 'audit') {
-        p.blockedClaim = { claim: a, cycle: p.cycles.length, rounds: c.rounds, phase: c.phase,
+      const failedWait = i.phase === 'waiting' && a.round !== null &&
+        i.technicalVerdict !== 'NICE' && failedReviews.has(`${a.claimId}:${a.round}`)
+      if (a.action === 'audit' && (i.phase === 'blocked' || failedWait)) {
+        const checkpoint = { claim: a, cycle: p.cycles.length, rounds: c.rounds, phase: c.phase,
           technicalVerdict: i.technicalVerdict ?? c.technicalVerdict, reason: c.reason, blockedAt: at }
+        // Separate replay index: never change an old next/resume admission merely
+        // because an earlier waiting event now has a recoverable checkpoint.
+        if (failedWait) failedWaits.set(i.number, { ...checkpoint, retryOnly: true })
+        else {
+          p.blockedClaim = checkpoint
+          failedWaits.delete(i.number)
+        }
       }
       Object.assign(c, { evidence: [...new Set([...c.evidence, ...i.evidence])], reason: i.reason, phase: i.phase })
       // Gate-only saves preserve the previous technical result and completion receipt.
@@ -813,6 +864,7 @@ function main() {
     let events = [], state = null, previousAt = ''
     const conflictingPublications = new Set()
     const failedReviews = new Map()
+    const failedWaits = new Map()
     const activations = []
     let activation = { eventId: null, valid: false, reason: 'canary acceptance not recorded' }
     if (command !== 'init') {
@@ -844,7 +896,7 @@ function main() {
         const publication = e.command === 'published' && state?.prs[e.input.number]?.publications?.at(-1)
         const conflict = e.command === 'published' && state?.active &&
           !scopeCurrent(state.active, { present: true, snapshot: e.input.snapshot }, state.active.effectiveBaseRef)
-        const result = apply(state, e, conflictingPublications, { activation, failedReviews })
+        const result = apply(state, e, conflictingPublications, { activation, failedReviews, failedWaits })
         state = result.state
         if (conflict && state.prs[e.input.number].publications.at(-1) !== publication) {
           conflictingPublications.add(state.prs[e.input.number].publications.at(-1))
@@ -857,6 +909,11 @@ function main() {
         }
       }
       check(stored.version === version, 'journal/event version mismatch')
+    }
+    // Expose current recovery only after historical decisions have replayed.
+    for (const p of Object.values(state?.prs ?? {})) {
+      const b = failedWaiting(p, failedWaits)
+      if (b) p.blockedClaim = b
     }
     if (command === 'show') return { ...state, ...(state.enabled ? { activation, activations } : {}), events: events.length }
     const basisNumber = command === 'enable' ? input.acceptanceProof?.number :
@@ -884,7 +941,7 @@ function main() {
       ...(command === 'begin' && state.enabled && !activation.valid ? { activationFence: true } : {}),
       ...(command === 'next' ? { admission: 'detail-read-recovery',
         ...(state.enabled && !activation.valid ? { activationFence: true, canaryRecovery: true } : {}) } : {}) }
-    const result = apply(state, event, conflictingPublications, { activation, live: true, failedReviews })
+    const result = apply(state, event, conflictingPublications, { activation, live: true, failedReviews, failedWaits })
     if (result.changed !== false) {
       events.push(event)
       const temporary = join(dir, `state.${token}.tmp`)

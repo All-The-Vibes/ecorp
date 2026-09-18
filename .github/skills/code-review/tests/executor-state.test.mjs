@@ -48,6 +48,7 @@ const start = (dir) => {
 }
 const saveInput = (claim, extra = {}) => ({
   owner, number: claim.number, claimId: claim.claimId, base: claim.base, head: claim.head,
+  round: claim.round,
   phase: 'waiting', evidence: ['evidence/attempt.json'], findings: [],
   technicalVerdict: null, reason: 'Waiting for CI', ...extra,
 })
@@ -300,6 +301,8 @@ const oldTargetPublication = (baseRef) => {
   return { dir, claim: active, receipts: publication.reviewers, snapshot: feedbackSnapshot }
 }
 const appendHistorical = (dir, command, input) => {
+  // These fixtures model the older save schema, before live attempt fencing.
+  if (command === 'save') { const { round, ...legacy } = input; input = legacy }
   const events = JSON.parse(readFileSync(join(dir, 'state.json'), 'utf8')).events
   events.push({ version: 2, id: `old-accepted-${command}-${events.length}`,
     at: new Date().toISOString(), command, input,
@@ -1759,14 +1762,14 @@ test('A02: actual retained v1 journal replays unchanged, but its live continuati
   assert.deepEqual(state.rubrics, {})
   assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), legacyJournal)
   const last = stored.events.at(-1).input
-  run(dir, 'save', last)
-  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), legacyJournal, 'exact legacy receipt ACK is not a new correction')
-  assert.match(run(dir, 'save', { ...last, reason: 'New uncharged correction' }, false).error, /explicit retry/)
-  assert.match(run(dir, 'save', { ...last, phase: 'reviewing',
+  assert.match(run(dir, 'save', last, false).error, /round/, 'missing-round legacy receipt is replay-only, not a live ACK')
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), legacyJournal)
+  assert.match(run(dir, 'save', { ...last, round: state.active.round, reason: 'New uncharged correction' }, false).error, /explicit retry/)
+  assert.match(run(dir, 'save', { ...last, round: state.active.round, phase: 'reviewing',
     evidence: ['new-failed-review.json'] }, false).error, /explicit retry/)
   assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), legacyJournal)
   // A permitted terminal block appends v2 without changing any historical event bytes.
-  run(dir, 'save', { ...last, phase: 'blocked', reason: 'Preserve legacy unfinished work' })
+  run(dir, 'save', { ...last, round: state.active.round, phase: 'blocked', reason: 'Preserve legacy unfinished work' })
   const updated = JSON.parse(readFileSync(join(dir, 'state.json')))
   assert.equal(updated.version, 2)
   assert.equal(updated.events.at(-1).version, 2)
@@ -1808,7 +1811,7 @@ test(`full legacy checkpoint reaches charged retry (${phase}/${verdict ?? 'pendi
   assert.equal(prior.technicalVerdict, verdict)
   assert.equal(claim.failureReceiptVersion, 1)
   if (recover) {
-    run(dir, 'save', { ...history.at(-1).input, phase: 'blocked', reason: 'Verified temporary tool failure' })
+    run(dir, 'save', { ...history.at(-1).input, round: claim.round, phase: 'blocked', reason: 'Verified temporary tool failure' })
     run(dir, 'resume', { ...resumeInput(claim), owner: state.config.owner })
     state = run(dir, 'show')
     claim = state.active
@@ -3360,6 +3363,275 @@ test('E1 recovery: exact owner, retained round/revision, fresh clearance and no 
   run(fork, 'resume', resumeInput({ ...read, round: 1 }), false)
 })
 
+const failedWaitingThirdRound = ({ legacy = false, nullable = false, canonical = true, dir = setup(), snapshot = pr() } = {}) => {
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('failed-wait-first'))
+  run(dir, 'sync', { owner, complete: true, prs: [snapshot] })
+  let claim = start(dir), findings = []
+  for (let round = 1; round <= 3; round++) {
+    const open = { id: `wait-${round}`, status: 'open', evidence: [`red-${round}.log`] }
+    run(dir, 'save', saveInput(claim, { phase: 'fixing', findings: [...findings, open] }))
+    findings = [...findings, { ...open, status: 'fixed', evidence: [...open.evidence, `green-${round}.log`] },
+      { id: `remaining-${round}`, status: 'open', evidence: [`review-${round}.json`] }]
+    const failure = saveInput(claim, { phase: 'reviewing', technicalVerdict: 'NAUGHTY',
+      findings, evidence: ['evidence/failed-review.json'], reason: 'Genuine progress; another finding remains' })
+    if (round < 3 || canonical) run(dir, 'save', failure)
+    else appendHistorical(dir, 'save', { ...failure, phase: 'fixing' })
+    if (round < 3) claim = run(dir, 'retry', retryInput(claim))
+  }
+  const waiting = saveInput(claim, { phase: 'waiting', findings, technicalVerdict: nullable ? null : 'NAUGHTY',
+    evidence: ['next-native-wake.json'], reason: 'Native wake capacity exhausted; retain failed work' })
+  if (legacy) appendHistorical(dir, 'save', waiting)
+  else run(dir, 'save', waiting)
+  return { dir, claim, findings }
+}
+
+for (const legacy of [false, true]) for (const nullable of [false, true]) {
+  test(`EX-FAILED-WAIT-RECOVERY: ${legacy ? 'old prefix' : 'live'} third-charge ${nullable ? 'null projection' : 'NAUGHTY'} wait recovers exact claim before charged round four`, () => {
+    const { dir, claim, findings } = failedWaitingThirdRound({ legacy, nullable })
+    const prefix = journalBytes(dir), waiting = run(dir, 'show'), p = waiting.prs['1']
+    assert.equal(waiting.active, null)
+    assert.equal(p.cycles[0].phase, 'waiting')
+    assert.equal(p.cycles[0].technicalVerdict, nullable ? null : 'NAUGHTY')
+    assert.equal(p.cycles[0].rounds, 3)
+    assert.equal(p.cycles[0].noProgress, 0)
+    assert.equal(p.blockedClaim?.claim.claimId, claim.claimId)
+    assert.equal(p.blockedClaim.retryOnly, true)
+    assert.equal(p.blockedClaim.claim.startedAt, claim.startedAt)
+    assert.equal(next(dir).action, 'wait')
+    assert.equal(journalBytes(dir), prefix, 'reads and exhausted next do not rewrite the accepted prefix')
+    run(dir, 'retry', retryInput(claim), false)
+    run(dir, 'wake', wakeInput('failed-wait-second'))
+    const beforeRoute = journalBytes(dir), route = next(dir)
+    assert.equal(route.action, 'blocked')
+    assert.equal(route.recovery, 'resume')
+    assert.equal(route.retryRequired, true)
+    assert.equal(route.claimId, claim.claimId)
+    assert.equal(route.round, 3)
+    assert.equal(journalBytes(dir), beforeRoute, 'routing cannot create another audit or charge')
+    const resumed = run(dir, 'resume', resumeInput(claim))
+    assert.equal(resumed.claimId, claim.claimId)
+    assert.equal(resumed.startedAt, claim.startedAt)
+    assert.deepEqual(resumed.snapshot, claim.snapshot)
+    assert.equal(resumed.retryRequired, true)
+    assert.deepEqual(run(dir, 'show').active, p.blockedClaim.claim, 'resume restores the exact retained claim')
+    assert.deepEqual(run(dir, 'show').wakes.map((w) => w.chargedRounds), [3, 0])
+    const beforeRetry = journalBytes(dir)
+    for (const phase of ['auditing', 'fixing', 'reviewing']) {
+      assert.match(run(dir, 'save', saveInput(resumed, { phase, findings }), false).error, /explicit retry/)
+    }
+    run(dir, 'save', saveInput(resumed, { phase: 'complete', findings, technicalVerdict: 'NICE',
+      reviewers: reviewers(resumed) }), false)
+    assert.match(run(dir, 'published', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+      snapshot: { ...claim.snapshot, head: sha(12) }, push: {}, reviewers: [] }, false).error, /explicit retry/)
+    run(dir, 'retry', retryInput(resumed, 'not-failed-proof.json'), false)
+    assert.equal(journalBytes(dir), beforeRetry)
+    const fourth = run(dir, 'retry', retryInput(resumed))
+    assert.equal(next(dir).retryRequired, undefined, 'only a new failed review can require another retry')
+    assert.equal(fourth.claimId, claim.claimId)
+    assert.equal(fourth.round, 4)
+    assert.ok(fourth.startedAt > claim.startedAt)
+    assert.equal(fourth.head, claim.head)
+    assert.equal(fourth.snapshot.reviewKey, claim.snapshot.reviewKey)
+    const state = run(dir, 'show'), c = state.prs['1'].cycles[0]
+    assert.equal(state.prs['1'].cycles.length, 1)
+    assert.equal(c.rounds, 4)
+    assert.equal(c.noProgress, 1)
+    assert.deepEqual(c.findings, findings)
+    assert.ok(c.evidence.includes('next-native-wake.json'))
+    assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [3, 1])
+    assert.deepEqual(state.autonomy, waiting.autonomy)
+    assertHistoryPrefix(dir, prefix)
+    run(dir, 'retry', retryInput(resumed), false)
+    run(dir, 'save', saveInput(fourth, { phase: 'fixing', findings }))
+  })
+}
+
+for (const version of [1, 2]) test(`EX-FAILED-WAIT-RECOVERY: old v${version} first terminal failure and nullable hidden proof remain retry-only`, () => {
+  for (const nullable of [false, true]) {
+    const dir = setup(), claim = start(dir)
+    const findings = [{ id: 'old-open', status: 'open', evidence: ['old-red.log'] }]
+    appendHistorical(dir, 'save', saveInput(claim, { phase: 'waiting', findings, technicalVerdict: 'NAUGHTY' }))
+    if (nullable) {
+      // A second old noncanonical projection may hide the verdict, never the proof.
+      const old = JSON.parse(journalBytes(dir)).events
+      const terminal = old.pop()
+      old.push({ ...terminal, input: { ...terminal.input, phase: 'fixing' } },
+        { ...terminal, id: `${terminal.id}-wait`, input: { ...terminal.input, technicalVerdict: null } })
+      writeJournal(dir, old)
+    }
+    if (version === 1) writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, ...e }) => e), 1)
+    const prefix = journalBytes(dir), before = run(dir, 'show')
+    assert.equal(before.prs['1'].cycles[0].technicalVerdict, nullable ? null : 'NAUGHTY')
+    assert.equal(before.prs['1'].blockedClaim?.retryOnly, true)
+    assert.equal(journalBytes(dir), prefix)
+    const resumed = run(dir, 'resume', resumeInput(claim))
+    const restarted = next(dir)
+    assert.equal(restarted.retryRequired, true, 'restart after resume must still expose the charged-retry route')
+    assert.deepEqual(restarted.failureEvidence, ['evidence/attempt.json'], 'surface only journal-derived failed proof')
+    run(dir, 'save', saveInput(resumed, { phase: 'fixing', findings }), false)
+    const retried = run(dir, 'retry', retryInput(resumed, 'evidence/attempt.json'))
+    assert.equal(retried.round, 2)
+    assert.equal(run(dir, 'show').prs['1'].cycles[0].noProgress, 2)
+    assertHistoryPrefix(dir, prefix)
+  }
+})
+
+test('EX-FAILED-WAIT-RECOVERY: current owner, exact checkpoint, scope and clearance fence recovery', () => {
+  const { dir, claim } = failedWaitingThirdRound({ legacy: true, nullable: true, canonical: false })
+  run(dir, 'wake', wakeInput('failed-wait-scope'))
+  const resume = resumeInput(claim), prefix = journalBytes(dir)
+  for (const bad of [{ owner: 'other' }, { number: 2 }, { claimId: 'other' }, { head: sha(19) },
+    { base: sha(19) }, { round: null }, { round: 2 },
+    { clearance: { sourceRef: 'old.json', verifiedAt: '2000-01-01T00:00:00.000Z' } }]) {
+    run(dir, 'resume', { ...resume, ...bad }, false)
+    assert.equal(journalBytes(dir), prefix)
+  }
+  for (const change of [{ head: sha(12) }, { base: sha(12) }, { reviewKey: key(2) },
+    { branch: 'other' }, { baseRef: 'release' }, { sourceRepo: 'fork/ecorp' }, { sourceRepo: null },
+    { readError: 'DETAIL_READ_FAILED' }, { state: 'closed' }, null]) {
+    const isolated = fixture()
+    writeJournal(isolated, JSON.parse(prefix).events)
+    run(isolated, 'sync', { owner, complete: true, prs: change ? [{ ...claim.snapshot, ...change }] : [] })
+    const stale = journalBytes(isolated)
+    run(isolated, 'resume', resumeInput(claim), false)
+    assert.equal(journalBytes(isolated), stale)
+    assert.notEqual(next(isolated).recovery, 'resume')
+  }
+  const resumed = run(dir, 'resume', resume)
+  assert.equal(run(dir, 'retry', retryInput(resumed)).round, 4)
+  assertHistoryPrefix(dir, prefix)
+})
+
+test('EX-FAILED-WAIT-RECOVERY: legacy target first observation fences a later same-SHA retarget', () => {
+  const { dir, claim } = failedWaitingThirdRound({ legacy: true })
+  const events = JSON.parse(journalBytes(dir)).events
+  for (const e of events) if (e.command === 'sync') for (const p of e.input.prs) delete p.baseRef
+  writeJournal(dir, events)
+  run(dir, 'wake', wakeInput('failed-wait-target'))
+  run(dir, 'sync', { owner, complete: true, prs: [pr()] })
+  assert.equal(run(dir, 'show').prs['1'].blockedClaim?.claim.effectiveBaseRef, 'main')
+  run(dir, 'sync', { owner, complete: true, prs: [pr(1, { baseRef: 'release' })] })
+  run(dir, 'resume', resumeInput(claim), false)
+  assert.notEqual(next(dir).recovery, 'resume')
+})
+
+test('EX-FAILED-WAIT-RECOVERY: absent authority or wake never funds another attempt', () => {
+  const { dir, claim } = failedWaitingThirdRound({ legacy: true })
+  const events = JSON.parse(journalBytes(dir)).events
+  for (const authority of [false, true]) {
+    const isolated = fixture()
+    writeJournal(isolated, events.filter((e) => !['wake', 'autonomy'].includes(e.command)))
+    if (authority) run(isolated, 'autonomy', autonomyInput())
+    const prefix = journalBytes(isolated)
+    if (!authority) {
+      run(isolated, 'resume', resumeInput(claim), false)
+      assert.equal(journalBytes(isolated), prefix)
+    } else {
+      assert.equal(next(isolated).action, 'wait')
+      const resumed = run(isolated, 'resume', resumeInput(claim))
+      const uncharged = journalBytes(isolated)
+      assert.match(run(isolated, 'retry', retryInput(resumed), false).error, /wake/)
+      run(isolated, 'save', saveInput(resumed, { phase: 'fixing',
+        findings: run(isolated, 'show').prs['1'].cycles[0].findings }), false)
+      assert.equal(journalBytes(isolated), uncharged)
+    }
+  }
+})
+
+test('EX-FAILED-WAIT-RECOVERY: genuine no-progress two stays stopped through new wakes and gate waits', () => {
+  const dir = setup()
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('failed-wait-stalled'))
+  const first = start(dir)
+  failedReview(dir, first)
+  const second = run(dir, 'retry', retryInput(first))
+  failedReview(dir, second)
+  run(dir, 'save', saveInput(second, { technicalVerdict: 'NAUGHTY' }))
+  run(dir, 'wake', wakeInput('failed-wait-still-stalled'))
+  const gate = run(dir, 'next', { owner, gateNumber: 1 })
+  run(dir, 'save', saveInput(gate))
+  const prefix = journalBytes(dir)
+  assert.match(run(dir, 'resume', resumeInput(second), false).error, /exhausted/)
+  const route = next(dir)
+  assert.equal(route.action, 'blocked')
+  assert.match(route.reason, /no-progress/)
+  assert.notEqual(route.recovery, 'resume')
+  assert.equal(journalBytes(dir), prefix)
+  const state = run(dir, 'show')
+  assert.equal(state.prs['1'].cycles[0].noProgress, 2)
+  assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [2, 0])
+})
+
+test('EX-FAILED-WAIT-RECOVERY: another PR proceeds while exact failed wait and gate-only evidence are retained', () => {
+  const dir = setup(), published = publishComplete(dir)
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+  const { claim, findings } = failedWaitingThirdRound({ dir, snapshot: { ...published.snapshot, head: sha(14) } })
+  run(dir, 'wake', wakeInput('failed-wait-fairness'))
+  const retained = run(dir, 'show').prs['1'].blockedClaim
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, gateKey: key(2) }, pr(2)] })
+  const other = next(dir)
+  assert.equal(other.number, 2)
+  run(dir, 'resume', resumeInput(claim), false)
+  run(dir, 'save', saveInput(other, { phase: 'blocked' }))
+  const gate = run(dir, 'next', { owner, gateNumber: 1 })
+  run(dir, 'save', saveInput(gate, { findings }))
+  assert.deepEqual(run(dir, 'show').prs['1'].blockedClaim, retained)
+  assert.equal(next(dir).recovery, 'resume')
+  assert.equal(run(dir, 'resume', resumeInput(claim)).claimId, claim.claimId)
+})
+
+test('EX-FAILED-WAIT-RECOVERY: old later audit admissions keep their identities, charges and outcomes', () => {
+  const { dir, claim, findings } = failedWaitingThirdRound({ legacy: true })
+  appendHistorical(dir, 'wake', wakeInput('old-later-wake'))
+  appendHistorical(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, reviewKey: key(2) }] })
+  appendHistorical(dir, 'next', { owner })
+  const events = JSON.parse(journalBytes(dir)).events, id = events.at(-1).id
+  const later = { ...claim, claimId: id, round: 4 }
+  appendHistorical(dir, 'begin', { owner, number: 1, claimId: id, base: claim.base, head: claim.head })
+  appendHistorical(dir, 'save', saveInput(later, { phase: 'fixing', findings }))
+  const prefix = journalBytes(dir), state = run(dir, 'show')
+  assert.equal(state.active.claimId, id)
+  assert.equal(state.active.round, 4)
+  assert.equal(state.prs['1'].cycles[0].phase, 'fixing')
+  assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [3, 1])
+  assert.equal(state.prs['1'].blockedClaim, undefined)
+  assert.equal(journalBytes(dir), prefix)
+  assert.equal(next(dir).claimId, id)
+  assertHistoryPrefix(dir, prefix)
+})
+
+test('EX-FAILED-WAIT-RECOVERY: recovery notice cannot starve a previously selected PR with new pending input', () => {
+  const dir = setup(), published = publishComplete(dir)
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+  const { claim } = failedWaitingThirdRound({ dir, snapshot: { ...published.snapshot, head: sha(14) } })
+  run(dir, 'wake', wakeInput('failed-wait-reselection'))
+  run(dir, 'sync', { owner, complete: true, prs: [claim.snapshot, pr(2)] })
+  const other = next(dir)
+  assert.equal(other.number, 2)
+  run(dir, 'save', saveInput(other, { phase: 'blocked' }))
+  run(dir, 'sync', { owner, complete: true, prs: [claim.snapshot, pr(2, { reviewKey: key(2) })] })
+  const pending = next(dir)
+  assert.equal(pending.number, 2, 'a mutation-free recovery notice must not pin the queue ahead of pending work')
+  assert.equal(pending.action, 'audit')
+  run(dir, 'save', saveInput(pending, { phase: 'blocked' }))
+  assert.equal(next(dir).recovery, 'resume')
+  assert.equal(run(dir, 'show').prs['1'].blockedClaim.claim.claimId, claim.claimId)
+})
+
+test('EX-FAILED-WAIT-RECOVERY: completed NICE CI-only waits never become executable checkpoints', () => {
+  const dir = setup(), claim = start(dir)
+  run(dir, 'save', saveInput(claim, { technicalVerdict: 'NICE', reviewers: reviewers(claim) }))
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('nice-ci-only'))
+  const prefix = journalBytes(dir)
+  assert.equal(run(dir, 'show').prs['1'].blockedClaim, undefined)
+  assert.equal(next(dir).action, 'none')
+  run(dir, 'resume', resumeInput(claim), false)
+  run(dir, 'retry', retryInput(claim), false)
+  assert.equal(journalBytes(dir), prefix)
+})
+
 test('E1 recovery: exhausted stops cannot be reopened by local clearance or an uncharged gate check', () => {
   for (const limit of [2, 3]) {
     const dir = setup()
@@ -3496,13 +3768,15 @@ for (const version of [1, 2]) test(`EX-UNCLAIMED-ROUND-STOP: v${version} stopped
   // Reproduce the OLD admitted gate after the ceiling stop, not a new executable claim.
   const history = JSON.parse(readFileSync(join(dir, 'state.json'))).events.map(({ admission, ...e }) => {
     if (version === 1) delete e.version
+    if (e.command === 'save') { const { round, ...legacy } = e.input; e.input = legacy }
     return e
   })
   const gate = { number: 1, claimId: 'historical-gate', base: snapshot.base, head: snapshot.head }
+  const { round, ...legacyGateSave } = saveInput(gate, { findings, evidence: ['historical-gate.json'] })
   const at = new Date().toISOString(), envelope = version === 2 ? { version: 2 } : {}
   history.push({ ...envelope, id: gate.claimId, at, command: 'next', input: { owner, gateNumber: 1 } },
     { ...envelope, id: 'historical-gate-save', at, command: 'save',
-      input: saveInput(gate, { findings, evidence: ['historical-gate.json'] }) })
+      input: legacyGateSave })
   writeJournal(dir, history, version)
   const bytes = readFileSync(join(dir, 'state.json'), 'utf8'), before = run(dir, 'show')
   assert.equal(before.active, null)
@@ -4225,3 +4499,131 @@ test('EX-TERMINAL-FAILURE: old terminal failure retry honors batch capacity with
   assert.equal(state.prs['1'].cycles.length, 1)
   assertHistoryPrefix(dir, prefix)
 })
+
+for (const autonomous of [false, true]) {
+  test(`EX-SAVE-ATTEMPT-FENCE: byte-identical F1 after same-head retry cannot poison round 2, autonomy=${autonomous}`, () => {
+    const dir = setup()
+    if (autonomous) {
+      run(dir, 'autonomy', autonomyInput())
+      run(dir, 'wake', wakeInput('save-attempt'))
+    }
+    const first = start(dir), open = { id: 'SA10-01', status: 'open', evidence: ['round-1-red.log'] }
+    const failure = saveInput(first, { phase: 'reviewing', technicalVerdict: 'NAUGHTY',
+      findings: [open], evidence: ['round-1-failed-review.json'], reason: 'Round 1 independent reviewer failed' })
+    const f1 = JSON.stringify(failure)
+    run(dir, 'save', JSON.parse(f1))
+    const ack = journalBytes(dir)
+    run(dir, 'save', JSON.parse(f1))
+    assert.equal(journalBytes(dir), ack, 'same-attempt canonical failure ACK is still a no-op')
+    const second = run(dir, 'retry', retryInput(first, failure.evidence[0]))
+    for (const field of ['claimId', 'base', 'head']) assert.equal(second[field], first[field])
+    assert.equal(second.round, 2)
+    const before = run(dir, 'show'), bytes = journalBytes(dir)
+    assert.equal(before.active.failureEvidence, null)
+    assert.equal(before.prs['1'].cycles[0].noProgress, 2)
+    assert.match(run(dir, 'save', JSON.parse(f1), false).error, /round/)
+    assert.equal(journalBytes(dir), bytes, 'stale failure cannot append or change the current charge')
+    assert.deepEqual(run(dir, 'show'), before, 'failure receipt, findings, noProgress and wake charges stay exact')
+
+    const fixed = { ...open, status: 'fixed', evidence: [...open.evidence, 'round-2-green.log'] }
+    run(dir, 'save', saveInput(second, { phase: 'fixing', findings: [fixed], evidence: ['round-2-green.log'] }))
+    run(dir, 'save', saveInput(second, { phase: 'reviewing', findings: [fixed], evidence: ['round-2-review.json'] }))
+    run(dir, 'save', saveInput(second, { phase: 'complete', findings: [fixed],
+      technicalVerdict: 'NICE', reviewers: reviewers(second) }))
+    const after = run(dir, 'show'), c = after.prs['1'].cycles[0]
+    assert.equal(c.technicalVerdict, 'NICE', 'old failure cannot trip the breaker before real round-2 correction/review')
+    assert.equal(c.rounds, 2)
+    assert.equal(c.noProgress, 0, 'only verified round-2 progress clears the pessimistic counter')
+    assert.deepEqual(after.wakes, before.wakes)
+    assertHistoryPrefix(dir, bytes)
+  })
+}
+
+test('EX-SAVE-ATTEMPT-FENCE: every delayed phase including NICE is fenced before any mutation', () => {
+  const dir = setup(), first = start(dir)
+  failedReview(dir, first)
+  const second = run(dir, 'retry', retryInput(first))
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  for (const [phase, technicalVerdict] of [
+    ['auditing', null], ['fixing', null], ['reviewing', null],
+    ['waiting', null], ['blocked', null], ['waiting', 'NICE'], ['complete', 'NICE'],
+  ]) {
+    const input = saveInput(first, { phase, technicalVerdict,
+      ...(technicalVerdict === 'NICE' ? { reviewers: reviewers(second) } : {}) })
+    assert.match(run(dir, 'save', input, false).error, /round/, `${phase}/${technicalVerdict}`)
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before)
+    // Identical payload with the actual dispatched round is otherwise admissible.
+    const current = fixture()
+    writeJournal(current, JSON.parse(bytes).events)
+    run(current, 'save', { ...input, round: second.round })
+    assert.equal(run(current, 'show').prs['1'].cycles[0].phase, phase)
+  }
+})
+
+test('EX-SAVE-ATTEMPT-FENCE: missing and malformed rounds cannot enter live saves or borrow legacy admission', () => {
+  const dir = setup(), claim = start(dir), before = run(dir, 'show'), bytes = journalBytes(dir)
+  for (const round of [undefined, null, 0, -1, 1.5, '1', false, {}, [], Number.MAX_SAFE_INTEGER + 1, 2]) {
+    assert.match(run(dir, 'save', saveInput(claim, { phase: 'fixing', round }), false).error, /round/)
+    assert.equal(journalBytes(dir), bytes)
+  }
+  for (const extra of [{ live: false }, { legacy: true }, { version: 1 }, { eventVersion: 1 }]) {
+    assert.match(run(dir, 'save', saveInput(claim, { phase: 'fixing', round: undefined, ...extra }), false).error, /fields/)
+    assert.equal(journalBytes(dir), bytes)
+  }
+  assert.deepEqual(run(dir, 'show'), before)
+  run(dir, 'save', saveInput(claim, { phase: 'fixing' }))
+  assert.equal(run(dir, 'show').active.round, 1)
+})
+
+test('EX-SAVE-ATTEMPT-FENCE: explicit null gates preserve charges; stale prebegin null cannot save a charged attempt', () => {
+  const dir = setup(), uncharged = next(dir), pending = saveInput(uncharged, { phase: 'blocked' })
+  assert.equal(pending.round, null)
+  const claim = run(dir, 'begin', beginInput(uncharged)), bytes = journalBytes(dir)
+  assert.match(run(dir, 'save', pending, false).error, /round/)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'save', saveInput(claim))
+  for (const phase of ['waiting', 'blocked']) {
+    const gate = run(dir, 'next', { owner, gateNumber: 1 }), before = run(dir, 'show'), bytes = journalBytes(dir)
+    assert.equal(gate.round, null)
+    for (const round of [undefined, 0, 1, 'null']) {
+      assert.match(run(dir, 'save', saveInput(gate, { phase, round }), false).error, /round/)
+      assert.equal(journalBytes(dir), bytes)
+    }
+    run(dir, 'save', saveInput(gate, { phase, round: null }))
+    const after = run(dir, 'show')
+    assert.equal(after.active, null)
+    assert.deepEqual(after.prs['1'].cycles, before.prs['1'].cycles.map((c) => ({ ...c, phase })))
+  }
+})
+
+for (const version of [1, 2]) {
+  test(`EX-SAVE-ATTEMPT-FENCE: old accepted v${version} stale failure replays deeply unchanged and missing round stays replay-only`, () => {
+    const dir = setup(), first = start(dir)
+    const { round, ...failure } = saveInput(first, { phase: 'reviewing', technicalVerdict: 'NAUGHTY',
+      evidence: ['old-F1.json'], reason: 'Old accepted round-1 failure' })
+    appendHistorical(dir, 'save', failure)
+    const second = run(dir, 'retry', retryInput(first, failure.evidence[0]))
+    const before = run(dir, 'show')
+    appendHistorical(dir, 'save', failure) // Historically admitted stale F1; never a new live call.
+    if (version === 1) {
+      writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, ...e }) => e), 1)
+    }
+    const bytes = journalBytes(dir), p = before.prs['1']
+    const expected = { ...before, events: before.events + 1,
+      active: { ...before.active, failureEvidence: failure.evidence, failureReceipt: failure, failureReceiptVersion: version },
+      prs: { ...before.prs, '1': { ...p, cycles: p.cycles.map((c) => ({
+        ...c, phase: failure.phase, technicalVerdict: failure.technicalVerdict, reason: failure.reason,
+      })) } },
+    }
+    assert.equal(expected.active.round, second.round)
+    assert.equal(expected.prs['1'].cycles[0].noProgress, 2, 'old accepted accounting is not repaired or refunded')
+    for (let read = 0; read < 2; read++) {
+      assert.deepEqual(run(dir, 'show'), expected)
+      assert.equal(journalBytes(dir), bytes)
+    }
+    assert.match(run(dir, 'save', failure, false).error, /round/, 'old input cannot select replay compatibility live')
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), expected)
+  })
+}

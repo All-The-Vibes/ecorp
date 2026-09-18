@@ -110,6 +110,10 @@ sessions, failed tests and original receipts.
    the main skill: resolve the exact-base template, build every rubric row,
    actually load and run ATV security and the whole-repository Ponytail audit,
    and produce the finding ledger. Keep unrelated base debt separate.
+   Every live `save` includes the dispatched attempt's expected `round`;
+   uncharged or gate claims use explicit `null`. Keep that captured value with
+   the work item. Never replace a delayed worker's old round with the current
+   one merely to make its checkpoint accepted.
 5. Dispatch one **native Astra fixer per independent issue**, at most two at
    once, with disjoint paths or serialized overlapping work. Fix only authorized
    in-scope issues in native Git worktrees. Follow `remediation.md`: retain a
@@ -201,6 +205,12 @@ changes do not discard active fixes.
 If a transient local/tooling/credential failure blocked unfinished work,
 verify the actual cause cleared and use `resume` with that clearance receipt.
 It restores the retained claim and charge; it is not a new budget or approval.
+Failed work saved as waiting retains a retry-only checkpoint, including
+replay-derived older waits. When `next` returns `recovery: resume` and
+`retryRequired: true`, verify clearance, resume the exact claim and then charge
+the ordinary retry before correcting or reviewing again. This routing response
+does not itself claim work or spend a round. Completed NICE/CI-only waits stay
+non-executable, and other pending PRs are not held behind a recovery notice.
 An already-charged, unfinished attempt can finish after verified transient
 clearance even at its final permitted charge. Resume spends no round; it cannot
 reopen a completed failed review or grant another retry past the breaker.

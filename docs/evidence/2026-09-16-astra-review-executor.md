@@ -339,3 +339,28 @@ Integrated checks pass **234/234 Node tests** and all six repository commands
 journal, cumulative round ten, one current-wake charge, the current feedback
 claim and its prior blocked claim. [The current capture](assets/astra-review-executor/16-failure-provenance-corrections.png)
 shows those local results, not a current independent approval or live canary.
+
+### Attempt fencing and failed-wait recovery
+
+The tenth-round independent reviewers reproduced stale prior-attempt saves
+poisoning a later retry and failed waiting checkpoints losing their resumable
+claim. The executor retained both findings and automatically charged the next
+bounded correction round. Native issue fixers added explicit live save-round
+fencing and retry-only recovery for failed waits, without granting a fresh
+attempt or changing completed CI waits.
+
+The audit also identified an exact-byte provenance gap in the earlier
+precommit helper replay receipt. That receipt and screenshot remain historical,
+not proof of pinned-byte identity. A separate pinned replay was retained, and
+subsequent checks retain the actual tested source bytes, their byte hashes and
+canonical Git blobs, plus an independent post-commit pinned-helper replay.
+No old receipt was rewritten to imply later evidence existed earlier.
+
+The final integrated run passes **255/255 Node tests** and all six repository
+checks (547 Rust passed, 323 ignored). The initial integration run's two
+historical-fixture serialization failures are preserved; the fixture now
+represents the actual older save schema without an undefined new round field.
+Exact tested script/test bytes and canonical Git-blob bindings are retained.
+[The current local capture](assets/astra-review-executor/17-attempt-and-wait-recovery.png)
+shows these results and source binding, not independent approval or live
+acceptance.
