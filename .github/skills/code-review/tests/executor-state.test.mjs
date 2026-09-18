@@ -5298,3 +5298,149 @@ test('F2-BASE-ONLY-CYCLE-RENEWAL: live base/head decisions get a separate valida
   assert.equal(journalBytes(dir), bytes)
   assert.deepEqual(run(dir, 'show'), before)
 })
+
+const oldRejectedBaseRenewal = (autonomous = true, rounds = 2) => {
+  const history = baseRenewalNiceHistory(rounds, autonomous), { dir, claim } = history
+  const events = JSON.parse(journalBytes(dir)).events
+  events.at(-1).input.phase = 'waiting'
+  writeJournal(dir, events)
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, base: sha(20) }] })
+  appendHistorical(dir, 'next', { owner })
+  const rejected = JSON.parse(journalBytes(dir)).events
+  rejected.at(-1).admission = 'detail-read-recovery' // Exact 6d2779b next semantics, without renewal markers.
+  writeJournal(dir, rejected)
+  const before = run(dir, 'show'), c = before.prs['1'].cycles[0]
+  assert.equal(before.active, null)
+  assert.deepEqual([c.rounds, c.noProgress, c.technicalVerdict], [rounds, 2, 'NICE'])
+  assert.notEqual(before.prs['1'].seenAudit, c.completion.auditKey)
+  if (rounds === 2) assert.equal(before.prs['1'].pendingRoundLimit, undefined)
+  return { ...history, before, bytes: journalBytes(dir) }
+}
+
+for (const autonomous of [false, true]) {
+  test(`POLICY-B13-01: old rejected-next renews once through begin/resume, autonomy=${autonomous}`, () => {
+    const { dir, before, bytes } = oldRejectedBaseRenewal(autonomous)
+    assert.deepEqual(run(dir, 'show'), before, 'old rejection replays without projection changes')
+    assert.equal(journalBytes(dir), bytes)
+    const selected = next(dir)
+    assert.equal(selected.action, 'audit', 'consumed seen/seenAudit is not proof of an audit')
+    assert.equal(selected.base, sha(20))
+    assert.equal(selected.round, null)
+    assert.deepEqual(run(dir, 'show').prs['1'].cycles, before.prs['1'].cycles)
+    assert.equal(next(dir).claimId, selected.claimId)
+    run(dir, 'save', saveInput(selected, { phase: 'blocked', reason: 'Synthetic preparation unavailable' }))
+    assert.equal(next(dir).action, 'none', 'an admitted preparation claim needs resume, not replacement')
+    const recovered = run(dir, 'resume', resumeInput(selected)), resumed = run(dir, 'show')
+    assert.equal(recovered.claimId, selected.claimId)
+    assert.equal(recovered.round, null)
+    assert.deepEqual(resumed.wakes, before.wakes, 'claim and resume spend no wake capacity')
+    const started = run(dir, 'begin', beginInput(recovered)), after = run(dir, 'show')
+    assert.equal(started.round, 1)
+    assert.deepEqual(after.prs['1'].cycles[0], resumed.prs['1'].cycles[0])
+    assert.deepEqual(after.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[2, 2], [1, 1]])
+    if (autonomous) assert.equal(after.wakes[0].chargedRounds, 3)
+    run(dir, 'begin', beginInput(recovered), false)
+    assert.deepEqual(run(dir, 'show'), after)
+    assertHistoryPrefix(dir, bytes)
+    bindRubric(dir, started)
+    run(dir, 'save', saveInput(started, { technicalVerdict: 'NICE', reviewers: reviewers(started) }))
+    if (autonomous) run(dir, 'wake', wakeInput('after-retained-renewal'))
+    assert.equal(next(dir).action, 'none', 'completed renewal cannot be recovered twice')
+  })
+}
+
+test('POLICY-B13-01: explicit gate cannot consume the old unclaimed renewal, even after an old gate save', () => {
+  const { dir } = oldRejectedBaseRenewal()
+  // Keep a genuinely accepted old gate and its terminal save unchanged on replay.
+  appendHistorical(dir, 'next', { owner, gateNumber: 1 })
+  const events = JSON.parse(journalBytes(dir)).events
+  Object.assign(events.at(-1), { admission: 'detail-read-recovery', baseHeadRenewal: true })
+  writeJournal(dir, events) // 3ac25bd already stamped this older gate-only decision.
+  const gate = run(dir, 'show').active
+  assert.equal(gate.action, 'check')
+  appendHistorical(dir, 'save', saveInput(gate))
+  const bytes = journalBytes(dir), before = run(dir, 'show')
+  assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit/)
+  assert.equal(journalBytes(dir), bytes)
+  assert.deepEqual(run(dir, 'show'), before)
+  assert.equal(next(dir).action, 'audit')
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('POLICY-B13-01: a new wake recovers the old rejection without refunding its successful cycle', () => {
+  const { dir, before, bytes } = oldRejectedBaseRenewal()
+  run(dir, 'wake', wakeInput('retained-base-renewal'))
+  const selected = next(dir)
+  assert.equal(selected.action, 'audit')
+  assert.deepEqual(run(dir, 'show').wakes.map((w) => w.chargedRounds), [2, 0])
+  run(dir, 'begin', beginInput(selected))
+  const after = run(dir, 'show')
+  assert.deepEqual(after.prs['1'].cycles[0], before.prs['1'].cycles[0])
+  assert.deepEqual(after.wakes.map((w) => w.chargedRounds), [2, 1])
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('POLICY-B13-01: retained round-limit renewal still waits for actual wake capacity', () => {
+  const { dir } = oldRejectedBaseRenewal(false, 3)
+  run(dir, 'autonomy', autonomyInput())
+  const bytes = journalBytes(dir)
+  assert.equal(next(dir).action, 'wait')
+  assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit/)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'wake', wakeInput('retained-round-limit-renewal'))
+  const selected = next(dir)
+  assert.equal(selected.action, 'audit')
+  assert.equal(run(dir, 'begin', beginInput(selected)).round, 1)
+  assert.deepEqual(run(dir, 'show').prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[3, 2], [1, 1]])
+})
+
+test('POLICY-B13-01: recovery marker is replay-only and old base/head markers keep their decisions', () => {
+  const { dir, bytes } = oldRejectedBaseRenewal()
+  assert.match(run(dir, 'next', { owner, retainedBaseRenewal: true }, false).error, /fields/)
+  assert.equal(journalBytes(dir), bytes)
+  const selected = next(dir), events = JSON.parse(journalBytes(dir)).events
+  assert.equal(events.at(-1).retainedBaseRenewal, true)
+  assert.equal(events.at(-1).baseHeadRenewal, true)
+  assert.equal(run(dir, 'show').active.claimId, selected.claimId)
+  // Older baseHeadRenewal alone never repaired eligibility on an identical read.
+  const old = fixture(), unmarked = structuredClone(events)
+  delete unmarked.at(-1).retainedBaseRenewal
+  writeJournal(old, unmarked)
+  assert.equal(run(old, 'show').active, null)
+  for (const change of [{ retainedBaseRenewal: false }, { retainedBaseRenewal: 'true' },
+    { command: 'begin' }, { version: 1 }]) {
+    const broken = fixture(), history = structuredClone(events)
+    Object.assign(history.at(-1), change)
+    writeJournal(broken, history)
+    assert.match(run(broken, 'show', undefined, false).error, /retained base renewal marker/)
+  }
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('POLICY-B13-01: retained failed and unavailable scopes cannot use successful renewal recovery', () => {
+  const { dir, before, bytes } = oldRejectedBaseRenewal(), events = JSON.parse(bytes).events
+  for (const verdict of [null, 'NAUGHTY']) {
+    const failed = fixture(), history = structuredClone(events)
+    const save = history.findLast((e) => e.command === 'save')
+    save.input.technicalVerdict = verdict
+    delete save.input.reviewers
+    writeJournal(failed, history)
+    run(failed, 'wake', wakeInput(`failed-retained-${verdict}`))
+    const stopped = journalBytes(failed), state = run(failed, 'show')
+    assert.equal(state.prs['1'].cycles[0].technicalVerdict, verdict)
+    assert.equal(next(failed).action, 'none')
+    assert.equal(journalBytes(failed), stopped)
+    assert.deepEqual(state.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[2, 2]])
+  }
+  for (const change of [{ sourceRepo: 'foreign/ecorp' }, { sourceRepo: null },
+    { readError: 'DETAIL_READ_FAILED' }, { state: 'closed' }]) {
+    const guarded = fixture()
+    writeJournal(guarded, events)
+    run(guarded, 'sync', { owner, complete: true, prs: [{ ...before.prs['1'].snapshot, ...change }] })
+    assert.notEqual(next(guarded).action, 'audit')
+    const state = run(guarded, 'show')
+    assert.deepEqual(state.prs['1'].cycles, before.prs['1'].cycles)
+    assert.deepEqual(state.wakes, before.wakes)
+  }
+  assert.equal(journalBytes(dir), bytes)
+})

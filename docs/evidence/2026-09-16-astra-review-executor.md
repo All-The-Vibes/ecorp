@@ -435,3 +435,41 @@ Exact final tested bytes and canonical Git blobs were retained.
 [The current capture](assets/astra-review-executor/19-policy-and-base-renewal.png)
 shows these actual local log summaries, not independent review, corrected-head
 hosted checks, or live executor acceptance. Those gates remain separate.
+
+### Further independent review
+
+All four fresh reviews of `3ac25bd` returned FAIL. The two policy-transition
+reviews used the actual deployed `6d2779b` base; the two PR reviews used the
+actual PR base. Their reports remain separate and were not relabelled.
+
+One reviewer reproduced a retained-upgrade case: an old base-only rejection
+after completed NICE had consumed the unaudited generation before the new
+renewal guard could run. All four also caught a false attribution in an
+**unpublished** proposed PR body: a global SHA replacement had attached old
+review and hosted-run identities to the new candidate. That draft was never
+published, and `3ac25bd` was neither adopted nor pushed.
+
+The metadata correction preserves the old SHA, identities and timestamps in a
+historical section and isolates the pending successor. Its assertion check
+failed against the original draft, passed against the corrected draft, and
+rejected six negative controls. Originals and hashes remain retained. Routine
+correction continued under the existing authority, without another permission
+request; green local tests did not override the independent failures.
+
+The retained-generation correction reproduced five expected failures, then
+passed seven focused regressions, 131 related renewal/recovery/correction
+checks and the two package checks. It derives the exact rejected generation
+without rewriting historical decisions, prevents gate-only consumption, and
+leaves the existing `begin` operation responsible for renewal and charging.
+Failed, corrective and security stops remain fenced. Read-only integration
+replay preserved the actual 86-event journal, original claim and round fourteen;
+the already charged work continued across a genuine native goal turn without
+another charge or permission request.
+
+The combined package suite passed **310/310 tests**. All six repository checks
+passed again; application sources were unchanged. Rust retained **547 passed,
+323 ignored, zero failed**. Exact tested source bytes and canonical Git blobs
+were captured before commit.
+[Screenshot 20](assets/astra-review-executor/20-retained-renewal-and-metadata.png)
+is the actual local log-summary capture. Independent review and live
+corrected-head qualification still require their own receipts.

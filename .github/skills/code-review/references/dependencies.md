@@ -94,7 +94,7 @@ contributor workflow.
 
 ## Copilot and GPT-6 Astra
 
-Verified against official documentation on **September 16, 2026**:
+Verified against official documentation on **September 18, 2026**:
 
 - [Agent skills for code review](https://docs.github.com/en/copilot/concepts/agents/code-review#agent-skills):
   automatic review supports repository skills and reads instructions/skills from

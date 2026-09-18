@@ -165,6 +165,10 @@ sessions, failed tests and original receipts.
    Retain the original publication across later feedback reviews. Never change
    its timestamp or make an unnecessary push to satisfy acceptance. A prior
    NICE cannot enable broad intake while synchronized feedback is unprocessed.
+   When updating PR metadata, keep historical review, push and CI identities
+   attached to their original SHA. Update a separate current-candidate section;
+   never globally replace revision strings or transfer old evidence to a new head.
+   Check unpublished drafts for these same provenance errors before publication.
    After a valid two-reviewer publication, feedback on unchanged code/source/
    target and the same pinned rubric may be triaged through `next` with
    `feedbackNumber`. Dispatch a **fresh independent native Astra gatechecker**
@@ -296,6 +300,9 @@ Normal completed NICE cycles renew when either base or head changes; a new
 diff must not inherit an exhausted prior successful cycle. Same-revision
 feedback, unfinished/failed work and invalid policy/publication correction
 retain their existing bounds.
+An old unclaimed bound rejection may have incorrectly consumed a base-only
+generation after completed NICE. Recover that exact retained successful basis
+as an audit, not a gate-only check; preserve all old events and counts.
 Report separately: implemented, scheduled, canary verified, broad intake enabled.
 If the canary is incomplete, keep executing it; do not replace the executor with
 a read-only observer or claim the deployment is complete.

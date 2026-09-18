@@ -203,6 +203,9 @@
 // New next/begin/resume decisions comparing a completed NICE to a changed base
 // stamp baseHeadRenewal:true. Unmarked historical events retain head-only renewal
 // and their original cycle/round counts; correction fences still apply.
+// retainedBaseRenewal:true on new next decisions recovers an exact old unclaimed
+// bound rejection after normal NICE. Its replay index never changes old decisions;
+// gates cannot consume it, and only begin renews the cycle and charges the wake.
 // Unversioned v1 events remain an unchanged replay-only prefix; versions cannot
 // downgrade. Command inputs cannot select a journal/admission version.
 // After reviewing/NAUGHTY, new correction, review or publication needs retry.
@@ -357,7 +360,7 @@ function correctivePublication(s, conflictingPublications) {
   return conflictingPublications.has(publication) ? digest(publication) : p?.correctiveAudit?.publicationKey
 }
 
-function apply(s, e, conflictingPublications = new Set(), { activation, live = false, failedReviews = new Map(), failedWaits = new Map() } = {}) {
+function apply(s, e, conflictingPublications = new Set(), { activation, live = false, failedReviews = new Map(), failedWaits = new Map(), pendingRenewals = new Map() } = {}) {
   const { command, input: i, at, id } = e
   if (command === 'init') {
     check(s === null, 'already initialized; immutable configuration')
@@ -474,6 +477,13 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     const preserveUnavailable = ['detail-read-observation', 'detail-read-recovery'].includes(e.admission)
     const corrective = (p) => (e.canaryRecovery || e.publicationRecovery) && correctionId && p.snapshot.number === s.config.canary
     const pendingCorrection = (p) => corrective(p) && p.correctiveAudit?.[correctionField] !== correctionId
+    const pendingRenewal = (p) => {
+      const pending = pendingRenewals.get(p.snapshot.number), c = cycle(p)
+      return (live || e.retainedBaseRenewal) && !corrective(p) && !p.blockedReason &&
+        sameRepo(p.sourceRepo, s.config.repo) && sameRepo(p.snapshot.sourceRepo, s.config.repo) &&
+        pending?.auditKey === auditKey(p.snapshot) && pending.completion === c.completion &&
+        c.technicalVerdict === 'NICE' && c.completion.round === c.rounds
+    }
     // Route only new calls; old next events must keep their original claim IDs.
     const waitingRecovery = (p) => {
       const b = live && failedWaiting(p, failedWaits)
@@ -482,6 +492,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     }
     const processedAudit = (p) => {
       const c = cycle(p), snapshot = p.snapshot, publication = p.publications?.at(-1)
+      if (pendingRenewal(p)) return false
       if (corrective(p) && (pendingCorrection(p) || c.completion?.claimId !== p.correctiveAudit.claimId)) return false
       // Completion pins feedback/source/revision; canonical publication supplies
       // the target fence missing from auditKey. A healthy read alone proves neither.
@@ -528,7 +539,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     const p = target ?? Object.values(s.prs).filter((p) => p.present && p.snapshot.state === 'open' &&
       (enabled || p.snapshot.number === s.config.canary) &&
       (!publicationKey || s.autonomy) &&
-      (p.seen !== signature(p.snapshot) || waitingRecovery(p) || (s.autonomy &&
+      (p.seen !== signature(p.snapshot) || waitingRecovery(p) || pendingRenewal(p) || (s.autonomy &&
         ((recoverPending && pendingRound(p)) || pendingCorrection(p)) &&
         !p.blockedReason && cycle(p).noProgress < 2 &&
         sameRepo(p.sourceRepo, s.config.repo) && sameRepo(p.snapshot.sourceRepo, s.config.repo))))
@@ -559,6 +570,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     }
     const readOnly = !sameRepo(snapshot.sourceRepo, s.config.repo) || !sameRepo(p.sourceRepo, s.config.repo)
     const action = target || (processedAudit(p) && !(recoverPending && pendingRound(p))) ? 'check' : 'audit'
+    if (live && pendingRenewal(p)) e.retainedBaseRenewal = true
     const renewed = !corrective(p) && completedRevisionChanged(c, snapshot, e, live)
     const reason = p.blockedReason ?? (
       !renewed && action === 'audit' && c.rounds >= roundLimit(s) ? 'round limit exhausted' :
@@ -575,7 +587,16 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     if (!readOnly && reason === 'round limit exhausted') {
       p.pendingRoundLimit = { auditKey: auditKey(snapshot), baseRef: snapshot.baseRef }
     } else if (s.active?.action === 'audit') delete p.pendingRoundLimit
-    if (s.active?.action === 'audit') failedWaits.delete(snapshot.number)
+    // Derive the exact rejected generation separately from historical projections.
+    // A real failed cycle or security block supplies no successful renewal basis.
+    if (['round limit exhausted', 'no-progress limit exhausted'].includes(reason) &&
+      c.technicalVerdict === 'NICE' && c.completion.base !== snapshot.base) {
+      pendingRenewals.set(snapshot.number, { auditKey: auditKey(snapshot), completion: c.completion })
+    }
+    if (s.active?.action === 'audit') {
+      failedWaits.delete(snapshot.number)
+      pendingRenewals.delete(snapshot.number)
+    }
     output = s.active ?? output
   } else if (command === 'resume') {
     fields(i, ['owner', 'number', 'claimId', 'base', 'head', 'round', 'clearance'])
@@ -896,6 +917,7 @@ function main() {
     const conflictingPublications = new Set()
     const failedReviews = new Map()
     const failedWaits = new Map()
+    const pendingRenewals = new Map()
     const activations = []
     let activation = { eventId: null, valid: false, reason: 'canary acceptance not recorded' }
     if (command !== 'init') {
@@ -910,7 +932,9 @@ function main() {
       let version = 1
       // ponytail: replay/rewrite the retained journal; checkpoint only if measured history size needs it.
       for (const e of events) {
-        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery', 'baseHeadRenewal'])
+        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery', 'baseHeadRenewal', 'retainedBaseRenewal'])
+        check(e.retainedBaseRenewal === undefined || (e.version === 2 && e.command === 'next' &&
+          e.retainedBaseRenewal === true), 'invalid retained base renewal marker')
         check(e.baseHeadRenewal === undefined || (e.version === 2 && ['next', 'begin', 'resume'].includes(e.command) &&
           e.baseHeadRenewal === true), 'invalid base/head renewal marker')
         check(e.publicationRecovery === undefined || (e.version === 2 && ['next', 'begin'].includes(e.command) &&
@@ -931,7 +955,7 @@ function main() {
         const publication = e.command === 'published' && state?.prs[e.input.number]?.publications?.at(-1)
         const conflict = e.command === 'published' && state?.active &&
           !scopeCurrent(state.active, { present: true, snapshot: e.input.snapshot }, state.active.effectiveBaseRef)
-        const result = apply(state, e, conflictingPublications, { activation, failedReviews, failedWaits })
+        const result = apply(state, e, conflictingPublications, { activation, failedReviews, failedWaits, pendingRenewals })
         state = result.state
         if (conflict && state.prs[e.input.number].publications.at(-1) !== publication) {
           conflictingPublications.add(state.prs[e.input.number].publications.at(-1))
@@ -977,7 +1001,7 @@ function main() {
       ...(command === 'begin' && state.enabled && !activation.valid ? { activationFence: true } : {}),
       ...(command === 'next' ? { admission: 'detail-read-recovery',
         ...(state.enabled && !activation.valid ? { activationFence: true, canaryRecovery: true } : {}) } : {}) }
-    const result = apply(state, event, conflictingPublications, { activation, live: true, failedReviews, failedWaits })
+    const result = apply(state, event, conflictingPublications, { activation, live: true, failedReviews, failedWaits, pendingRenewals })
     if (result.changed !== false) {
       events.push(event)
       const temporary = join(dir, `state.${token}.tmp`)
