@@ -818,6 +818,148 @@ test('EX-UNCHANGED-CANARY-RECOVERY: a newer remote head cannot renew a cycle fro
   assertHistoryPrefix(dir, bytes)
 })
 
+const legacyCorrectionHistory = (exhausted = false, baseRef = 'release') => {
+  const history = historicalActivation(baseRef), { dir, snapshot } = history
+  if (exhausted) {
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(3) }] })
+    appendHistorical(dir, 'next', { owner })
+    const claim = run(dir, 'show').active
+    appendHistorical(dir, 'begin', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head })
+    const charged = run(dir, 'show').active
+    appendHistorical(dir, 'save', saveInput(charged, {
+      phase: 'complete', technicalVerdict: 'NICE', reviewers: reviewers(charged),
+    }))
+  }
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, head: sha(88) }] })
+  return history
+}
+const legacyCorrectionClaim = (dir) => {
+  // Retained 6ca8ddc next envelope: activationFence, but no canaryRecovery marker.
+  // This synthetic fixture stays runnable without Git history or operator state.
+  const events = JSON.parse(journalBytes(dir)).events
+  events.push({ version: 2, id: 'legacy-correction-claim', at: new Date().toISOString(),
+    command: 'next', input: { owner }, admission: 'detail-read-recovery', activationFence: true })
+  writeJournal(dir, events)
+  const state = run(dir, 'show')
+  assert.equal(state.prs['1'].correctiveAudit, undefined)
+  assert.equal(state.active.action, 'audit')
+  assert.equal(state.active.round, null)
+  return state.active
+}
+const beginInput = (claim) => ({
+  owner, number: claim.number, claimId: claim.claimId, base: claim.base, head: claim.head,
+})
+
+for (const blocked of [false, true]) {
+  test(`EX-LEGACY-CORRECTION-BOUNDS: exhausted unmarked ${blocked ? 'resume' : 'begin'} cannot renew invalid NICE`, () => {
+    const { dir } = legacyCorrectionHistory(true), claim = legacyCorrectionClaim(dir)
+    if (blocked) run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+    const before = run(dir, 'show'), bytes = journalBytes(dir)
+    assert.equal(before.activation.valid, false)
+    assert.equal(before.prs['1'].cycles[0].rounds, 2)
+    assert.equal(before.prs['1'].cycles[0].noProgress, 2)
+    assert.match(run(dir, blocked ? 'resume' : 'begin',
+      blocked ? resumeInput(claim) : beginInput(claim), false).error, /no-progress limit exhausted/)
+    assert.equal(journalBytes(dir), bytes, 'denial appends no event or charge')
+    assert.deepEqual(run(dir, 'show'), before)
+  })
+
+  test(`EX-LEGACY-CORRECTION-BOUNDS: under-bound unmarked ${blocked ? 'resume then begin' : 'begin'} replays without a new cycle`, () => {
+    const { dir, acceptanceProof } = legacyCorrectionHistory(), claim = legacyCorrectionClaim(dir)
+    if (blocked) {
+      run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+      const before = run(dir, 'show')
+      assert.equal(run(dir, 'resume', resumeInput(claim)).round, null)
+      const resumed = run(dir, 'show')
+      assert.deepEqual(resumed.wakes, before.wakes)
+      assert.equal(resumed.prs['1'].cycles.length, 1)
+    }
+    const before = run(dir, 'show'), bytes = journalBytes(dir)
+    const charged = run(dir, 'begin', beginInput(claim)), after = run(dir, 'show')
+    assert.equal(charged.round, 2)
+    assert.deepEqual(after.active, charged, 'restart must replay the same charged round')
+    assert.equal(after.prs['1'].cycles.length, 1)
+    assert.equal(after.prs['1'].cycles[0].rounds, 2)
+    assert.equal(after.prs['1'].cycles[0].noProgress, 2)
+    assert.equal(after.wakes.at(-1).chargedRounds, before.wakes.at(-1).chargedRounds + 1)
+    assert.deepEqual(after.autonomy, before.autonomy)
+    assert.deepEqual(after.activation, before.activation)
+    assertHistoryPrefix(dir, bytes)
+    // Fresh independent review/publication and the complete enable proof remain mandatory.
+    bindRubric(dir, charged)
+    const candidate = { ...charged.snapshot, head: sha(89) }
+    bindRubric(dir, candidate)
+    const receipts = reviewers({ ...charged, head: candidate.head })
+    const rebound = run(dir, 'published', { ...beginInput(charged), snapshot: candidate, reviewers: receipts,
+      push: { repo, branch: candidate.branch, before: charged.head, head: candidate.head,
+        sourceRef: 'synthetic-legacy-correction-push.json', pushedAt: new Date().toISOString() } })
+    run(dir, 'save', saveInput(rebound, { phase: 'complete', technicalVerdict: 'NICE', reviewers: receipts }))
+    assert.equal(run(dir, 'show').activation.valid, false)
+    run(dir, 'enable', { owner, acceptanceProof }, false)
+    const good = proof(rebound, receipts)
+    run(dir, 'enable', { owner, acceptanceProof: { ...good, fixers: [] } }, false)
+    run(dir, 'enable', { owner, acceptanceProof: good })
+    const enabled = run(dir, 'show')
+    assert.equal(enabled.activation.valid, true)
+    assert.deepEqual(enabled.activations.map((a) => a.valid), [false, true])
+    assert.deepEqual(enabled.activations[0].acceptanceProof, acceptanceProof)
+    assert.equal(enabled.prs['1'].cycles.length, 1)
+    assert.equal(enabled.prs['1'].cycles[0].noProgress, 2)
+    assert.deepEqual(enabled.wakes, after.wakes)
+    assertHistoryPrefix(dir, bytes)
+  })
+}
+
+test('EX-LEGACY-CORRECTION-BOUNDS: exact charged unfinished legacy correction resumes at the breaker', () => {
+  const { dir, snapshot } = historicalActivation()
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(3) }] })
+  const claim = legacyCorrectionClaim(dir)
+  appendHistorical(dir, 'begin', beginInput(claim))
+  const charged = run(dir, 'show').active
+  assert.equal(charged.round, 2)
+  run(dir, 'save', saveInput(charged, { phase: 'blocked' }))
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  const resumed = run(dir, 'resume', resumeInput(charged)), after = run(dir, 'show')
+  for (const field of ['claimId', 'round', 'startedAt']) assert.equal(resumed[field], charged[field])
+  assert.equal(after.active.round, 2)
+  assert.equal(after.prs['1'].cycles.length, 1)
+  assert.equal(after.prs['1'].cycles[0].noProgress, 2)
+  assert.deepEqual(after.wakes, before.wakes)
+  assert.deepEqual(after.activation, before.activation)
+  run(dir, 'begin', beginInput(charged), false)
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('EX-LEGACY-CORRECTION-BOUNDS: valid activation still renews changed-head work past the old cycle bound', () => {
+  const { dir } = legacyCorrectionHistory(true, 'main'), claim = next(dir)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  const before = run(dir, 'show')
+  assert.equal(before.activation.valid, true)
+  assert.equal(before.prs['1'].cycles[0].noProgress, 2)
+  run(dir, 'resume', resumeInput(claim))
+  const resumed = run(dir, 'show')
+  assert.equal(run(dir, 'begin', beginInput(claim)).round, 1)
+  const after = run(dir, 'show')
+  assert.equal(after.prs['1'].cycles.length, 2)
+  assert.deepEqual(after.prs['1'].cycles[0], resumed.prs['1'].cycles[0])
+  assert.equal(after.prs['1'].cycles[1].noProgress, 1)
+  assert.equal(after.wakes.at(-1).chargedRounds, before.wakes.at(-1).chargedRounds + 1)
+})
+
+test('EX-LEGACY-CORRECTION-BOUNDS: old already-accepted resume and renewed charge replay unchanged', () => {
+  const { dir } = legacyCorrectionHistory(true), claim = legacyCorrectionClaim(dir)
+  appendHistorical(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  appendHistorical(dir, 'resume', resumeInput(claim))
+  appendHistorical(dir, 'begin', beginInput(claim))
+  const bytes = journalBytes(dir), before = run(dir, 'show')
+  assert.equal(before.activation.valid, false)
+  assert.equal(before.active.round, 1)
+  assert.deepEqual(before.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[2, 2], [1, 1]])
+  assert.equal(next(dir).claimId, before.active.claimId)
+  assert.deepEqual(run(dir, 'show'), before)
+  assert.equal(journalBytes(dir), bytes)
+})
+
 test('EX-SAMECODE-FEEDBACK: unreviewed and NAUGHTY candidates cannot use the metadata route', () => {
   const dir = setup()
   run(dir, 'next', { owner, feedbackNumber: 1 }, false)
@@ -1241,7 +1383,7 @@ test('E1: retry requires retained failed-review phase/evidence and exact owner, 
   const dir = setup(), claim = start(dir)
   const input = retryInput(claim)
   run(dir, 'retry', input, false)
-  run(dir, 'save', saveInput(claim, { phase: 'fixing', technicalVerdict: 'NAUGHTY' }))
+  run(dir, 'save', saveInput(claim, { phase: 'fixing', technicalVerdict: 'NAUGHTY' }), false)
   run(dir, 'retry', input, false)
   failedReview(dir, claim)
   for (const bad of [
@@ -3110,7 +3252,7 @@ for (const phase of ['auditing', 'reviewing']) {
     // A retained technical decision is not an unfinished charge, even without failureEvidence.
     const decided = fixture()
     writeJournal(decided, prefix)
-    run(decided, 'save', saveInput(claim, { phase: 'blocked', technicalVerdict: 'NAUGHTY' }))
+    appendHistorical(decided, 'save', saveInput(claim, { phase: 'blocked', technicalVerdict: 'NAUGHTY' }))
     const stopped = readFileSync(join(decided, 'state.json'), 'utf8')
     assert.equal(run(decided, 'show').prs['1'].blockedClaim.claim.failureEvidence, null)
     assert.match(run(decided, 'resume', resumeInput(claim), false).error, /exhausted/)
@@ -3881,4 +4023,205 @@ test('EX-CORRECTIVE-CLAIM-RETENTION: old canaryRecovery replacement and dependen
   assert.equal(next(dir).claimId, id, 'only new admission is guarded; retain the historically current claim')
   assert.equal(run(dir, 'resume', resumeInput({ ...replacement, round: claim.round + 1 })).claimId, id)
   assertHistoryPrefix(dir, bytes)
+})
+
+for (const phase of ['auditing', 'fixing', 'waiting', 'blocked', 'complete']) {
+  test(`EX-TERMINAL-FAILURE: first ${phase}/NAUGHTY requires canonical admission before persistence`, () => {
+    const dir = setup(), claim = start(dir)
+    run(dir, 'save', saveInput(claim, { phase: 'reviewing', reason: 'Review dispatched' }))
+    const bytes = journalBytes(dir)
+    run(dir, 'save', saveInput(claim, { phase, technicalVerdict: 'NAUGHTY',
+      evidence: ['first-failed-review.json'], reason: 'Reviewer A failed; reviewer B unavailable' }), false)
+    assert.equal(journalBytes(dir), bytes)
+    assert.equal(run(dir, 'show').active.startedAt, claim.startedAt)
+  })
+}
+
+test('EX-TERMINAL-FAILURE: canonical failure plus unavailable second reviewer resumes only to charged retry', () => {
+  const dir = setup()
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('terminal-failure'))
+  const claim = start(dir), findings = [{ id: 'still-open', status: 'open', evidence: ['red.log'] }]
+  const receipt = saveInput(claim, { phase: 'reviewing', technicalVerdict: 'NAUGHTY',
+    findings, evidence: ['first-failed-review.json'], reason: 'Reviewer A failed' })
+  run(dir, 'save', receipt)
+  const ack = journalBytes(dir)
+  run(dir, 'save', receipt)
+  assert.equal(journalBytes(dir), ack, 'canonical failed receipt ACK stays a no-op')
+  run(dir, 'save', saveInput(claim, { phase: 'blocked', technicalVerdict: 'NAUGHTY',
+    findings, evidence: ['reviewer-b-unavailable.json'], reason: 'Reviewer B unavailable; A remains failed' }))
+  const blocked = run(dir, 'show'), prefix = journalBytes(dir)
+  assert.equal(blocked.prs['1'].cycles[0].phase, 'blocked')
+  assert.equal(blocked.prs['1'].cycles[0].technicalVerdict, 'NAUGHTY')
+  assert.deepEqual(blocked.prs['1'].blockedClaim.claim.failureEvidence, receipt.evidence)
+  const resumed = run(dir, 'resume', resumeInput(claim))
+  assert.equal(resumed.round, 1)
+  assert.equal(resumed.startedAt, claim.startedAt)
+  for (const phase of ['auditing', 'fixing', 'reviewing']) {
+    assert.match(run(dir, 'save', saveInput(claim, { phase, findings }), false).error, /explicit retry/)
+  }
+  const candidate = { ...claim.snapshot, head: sha(12) }
+  bindRubric(dir, candidate)
+  const stale = reviewers({ ...claim, head: candidate.head })
+  const publication = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+    snapshot: candidate, reviewers: stale, push: { repo, branch: candidate.branch,
+      before: claim.head, head: candidate.head, sourceRef: 'push.json', pushedAt: new Date().toISOString() } }
+  const unchanged = journalBytes(dir)
+  assert.match(run(dir, 'published', publication, false).error, /explicit retry/)
+  assert.equal(journalBytes(dir), unchanged)
+  const retried = run(dir, 'retry', retryInput(claim, receipt.evidence[0]))
+  assert.equal(retried.round, 2)
+  assert.ok(retried.startedAt > claim.startedAt)
+  assert.equal(run(dir, 'show').wakes[0].chargedRounds, 2)
+  run(dir, 'retry', retryInput(claim, receipt.evidence[0]), false)
+  run(dir, 'published', publication, false)
+  const fixed = findings.map((f) => ({ ...f, status: 'fixed', evidence: [...f.evidence, 'green.log'] }))
+  run(dir, 'save', saveInput(retried, { phase: 'fixing', findings: fixed }))
+  const freshReviews = reviewers({ ...retried, head: candidate.head })
+  const published = run(dir, 'published', { ...publication, reviewers: freshReviews,
+    push: { ...publication.push, pushedAt: new Date().toISOString() } })
+  run(dir, 'save', saveInput(published, { phase: 'complete', technicalVerdict: 'NICE',
+    findings: fixed, reviewers: freshReviews }))
+  assertHistoryPrefix(dir, prefix)
+})
+
+for (const version of [1, 2]) for (const phase of ['auditing', 'fixing', 'reviewing', 'waiting', 'blocked']) {
+  test(`EX-TERMINAL-FAILURE: old v${version} first ${phase}/NAUGHTY remains readable but needs a new charge`, () => {
+    const dir = setup(), claim = start(dir)
+    const findings = [{ id: 'historical-open', status: 'open', evidence: ['historical-red.log'] }]
+    const failure = saveInput(claim, { phase, technicalVerdict: 'NAUGHTY', findings,
+      evidence: ['historical-failed-review.json'], reason: 'Old accepted first failed review' })
+    appendHistorical(dir, 'save', failure)
+    const old = JSON.parse(journalBytes(dir)).events
+    if (version === 1) writeJournal(dir, old.map(({ version, admission, ...e }) => e), 1)
+    const prefix = journalBytes(dir), before = run(dir, 'show')
+    assert.equal(journalBytes(dir), prefix, 'read never rewrites original accepted history')
+    assert.equal(before.prs['1'].cycles[0].phase, phase)
+    assert.equal(before.prs['1'].cycles[0].technicalVerdict, 'NAUGHTY')
+    if (phase === 'waiting') {
+      const gate = run(dir, 'next', { owner, gateNumber: 1 })
+      run(dir, 'begin', { owner, number: 1, claimId: gate.claimId, base: gate.base, head: gate.head }, false)
+      run(dir, 'save', saveInput(gate, { phase: 'fixing', findings }), false)
+      run(dir, 'save', saveInput(gate, { findings }))
+      run(dir, 'sync', { owner, complete: true, prs: [pr(1, { reviewKey: key(2) })] })
+      assert.equal(start(dir).round, 2, 'new audit input charges rather than resuming terminal waiting')
+    } else {
+      if (phase === 'blocked') run(dir, 'resume', resumeInput(claim))
+      const active = next(dir)
+      assert.equal(active.startedAt, claim.startedAt)
+      const bytes = journalBytes(dir)
+      for (const nextPhase of ['auditing', 'fixing', 'reviewing']) {
+        assert.match(run(dir, 'save', saveInput(active, { phase: nextPhase, findings }), false).error, /explicit retry/)
+      }
+      assert.equal(journalBytes(dir), bytes)
+      const retry = retryInput(active, failure.evidence[0])
+      run(dir, 'retry', { ...retry, reviewRef: 'not-the-failure.json' }, false)
+      const retried = run(dir, 'retry', retry)
+      assert.equal(retried.round, 2)
+      assert.ok(retried.startedAt > claim.startedAt)
+      assert.equal(run(dir, 'show').prs['1'].cycles[0].noProgress, 2)
+      run(dir, 'save', saveInput(retried, { phase: 'fixing', findings }))
+      failedReview(dir, retried, findings)
+      run(dir, 'save', saveInput(retried, { phase: 'blocked', findings, technicalVerdict: 'NAUGHTY' }))
+      assert.match(run(dir, 'resume', resumeInput(retried), false).error, /exhausted/)
+    }
+    assertHistoryPrefix(dir, prefix)
+  })
+}
+
+test('EX-TERMINAL-FAILURE: five old accepted bypass cycles retain history but cannot admit a sixth', () => {
+  const dir = setup()
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'wake', wakeInput('old-terminal-bypass'))
+  const claim = start(dir), findings = [{ id: 'unfixed', status: 'open', evidence: ['red.log'] }]
+  for (let n = 1; n <= 5; n++) {
+    appendHistorical(dir, 'save', saveInput(claim, { phase: 'reviewing', findings }))
+    appendHistorical(dir, 'save', saveInput(claim, { phase: 'blocked', technicalVerdict: 'NAUGHTY',
+      findings, evidence: [`old-failure-${n}.json`] }))
+    appendHistorical(dir, 'resume', resumeInput(claim))
+    appendHistorical(dir, 'save', saveInput(claim, { phase: 'fixing', findings }))
+  }
+  const prefix = journalBytes(dir), before = run(dir, 'show')
+  assert.equal(before.active.startedAt, claim.startedAt)
+  assert.equal(before.prs['1'].cycles[0].phase, 'fixing')
+  assert.equal(before.prs['1'].cycles[0].technicalVerdict, null)
+  assert.equal(before.prs['1'].cycles[0].rounds, 1)
+  assert.equal(before.wakes[0].chargedRounds, 1)
+  assert.equal(journalBytes(dir), prefix)
+  for (const phase of ['fixing', 'auditing', 'reviewing']) {
+    assert.match(run(dir, 'save', saveInput(claim, { phase, findings }), false).error, /explicit retry/)
+  }
+  const candidate = { ...claim.snapshot, head: sha(12) }
+  assert.match(run(dir, 'published', { owner, number: 1, claimId: claim.claimId,
+    base: claim.base, head: claim.head, snapshot: candidate, reviewers: reviewers(candidate),
+    push: { repo, branch: candidate.branch, before: claim.head, head: candidate.head,
+      sourceRef: 'new-push.json', pushedAt: new Date().toISOString() } }, false).error, /explicit retry/)
+  assert.equal(journalBytes(dir), prefix)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked', findings }))
+  const resumed = run(dir, 'resume', resumeInput(claim))
+  assert.equal(resumed.startedAt, claim.startedAt)
+  const retried = run(dir, 'retry', retryInput(claim, 'old-failure-1.json'))
+  assert.equal(retried.round, 2)
+  assert.equal(run(dir, 'show').wakes[0].chargedRounds, 2)
+  assert.equal(run(dir, 'show').prs['1'].cycles[0].noProgress, 2)
+  assertHistoryPrefix(dir, prefix)
+})
+
+test('EX-TERMINAL-FAILURE: technical-null tool/prose blocks resume the existing charge, caller fields grant no provenance', () => {
+  const dir = setup(), claim = start(dir)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked',
+    reason: 'NAUGHTY appears in tool output, not a technical decision' }))
+  const resumed = run(dir, 'resume', resumeInput(claim))
+  assert.equal(resumed.round, 1)
+  assert.equal(resumed.startedAt, claim.startedAt)
+  run(dir, 'save', saveInput(resumed, { phase: 'fixing' }))
+  for (const extra of [{ failureReceiptVersion: 1 }, { failureEvidence: ['fake.json'] },
+    { failureReceipt: {} }, { failedReviews: {} }, { legacy: true }]) {
+    assert.match(run(dir, 'save', saveInput(resumed, { phase: 'fixing', ...extra }), false).error, /fields/)
+  }
+  run(dir, 'retry', retryInput(resumed), false)
+  assert.equal(run(dir, 'show').prs['1'].cycles[0].rounds, 1)
+})
+
+test('EX-TERMINAL-FAILURE: old failure hidden by null checkpoints cannot use unfinished-charge bounds', () => {
+  const dir = setup(), first = start(dir)
+  failedReview(dir, first)
+  const claim = run(dir, 'retry', retryInput(first))
+  appendHistorical(dir, 'save', saveInput(claim, { phase: 'fixing', technicalVerdict: 'NAUGHTY',
+    evidence: ['old-terminal-failure.json'] }))
+  appendHistorical(dir, 'save', saveInput(claim, { phase: 'fixing' }))
+  appendHistorical(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  const prefix = journalBytes(dir), state = run(dir, 'show')
+  assert.equal(state.prs['1'].cycles[0].noProgress, 2)
+  assert.equal(state.prs['1'].cycles[0].technicalVerdict, null, 'accepted old projection stays unchanged')
+  assert.equal(state.prs['1'].blockedClaim.claim.failureEvidence, null)
+  assert.match(run(dir, 'resume', resumeInput(claim), false).error, /exhausted/)
+  assert.equal(journalBytes(dir), prefix)
+})
+
+test('EX-TERMINAL-FAILURE: old terminal failure retry honors batch capacity without another permission', () => {
+  const dir = setup()
+  const authority = autonomyInput()
+  run(dir, 'autonomy', authority)
+  run(dir, 'wake', wakeInput('first-terminal-batch'))
+  let claim = start(dir), findings = []
+  for (let round = 1; round < 3; round++) {
+    findings = progressFailure(dir, claim, findings)
+    claim = run(dir, 'retry', retryInput(claim))
+  }
+  appendHistorical(dir, 'save', saveInput(claim, { phase: 'blocked', technicalVerdict: 'NAUGHTY',
+    findings, evidence: ['old-first-terminal-failure.json'] }))
+  const prefix = journalBytes(dir)
+  const resumed = run(dir, 'resume', resumeInput(claim))
+  assert.equal(resumed.startedAt, claim.startedAt)
+  const retry = retryInput(claim, 'old-first-terminal-failure.json')
+  assert.match(run(dir, 'retry', retry, false).error, /wake/)
+  run(dir, 'save', saveInput(claim, { phase: 'fixing', findings }), false)
+  run(dir, 'wake', wakeInput('second-terminal-batch'))
+  assert.equal(run(dir, 'retry', retry).round, 4)
+  const state = run(dir, 'show')
+  assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [3, 1])
+  assert.deepEqual(state.autonomy.input, authority)
+  assert.equal(state.prs['1'].cycles.length, 1)
+  assertHistoryPrefix(dir, prefix)
 })

@@ -93,6 +93,8 @@
 //   BEFORE further local correction, not save waiting (which releases the claim).
 //   A proven v1 post-failure fixing/auditing checkpoint may also reach this charge;
 //   that does not permit new v2 correction/re-review before retry.
+//   Old first NAUGHTY saves in other phases retain journal-derived retry proof.
+//   New first failures must be saved as reviewing/NAUGHTY before waiting/blocking.
 //   Keeps claim/snapshot/findings/evidence; charges the next round, refreshes
 //   startedAt for new reviews. Stale/replayed round is rejected, never recharged.
 // resume {owner,number,claimId,base,head,round:positiveInteger|null,
@@ -158,6 +160,8 @@
 //   valid proof remains immutable. Old activation events and receipts remain retained.
 // New next under invalid activation stamps activationFence:true so canary-only
 //   selection replays exactly; unmarked historical admissions keep their decisions.
+//   New begin also stamps that fence: retained unmarked claims spend their original
+//   cycle on replay, while old already-accepted renewed cycles remain unchanged.
 //   canaryRecovery:true additionally pins current corrective admission: under ongoing
 //   authority an unchanged invalid activation needs one current-scope audit claim.
 //   correctiveAudit binds that claim to the invalid activation, not to a wake.
@@ -314,7 +318,7 @@ function feedbackBasis(s, p, at) {
   return completion
 }
 
-function apply(s, e, conflictingPublications = new Set(), { activation, live = false } = {}) {
+function apply(s, e, conflictingPublications = new Set(), { activation, live = false, failedReviews = new Map() } = {}) {
   const { command, input: i, at, id } = e
   if (command === 'init') {
     check(s === null, 'already initialized; immutable configuration')
@@ -325,6 +329,8 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       enabled: false, acceptanceProof: null, prs: {}, active: null, sequence: 0, usedReviewers: [] }, output: { initialized: true } }
   }
   check(s && i.owner === s.config.owner, 'owner mismatch or missing initialization')
+  const failureClaim = command === 'resume' ? s.prs[i.number]?.blockedClaim?.claim : s.active
+  const retainedFailure = failureClaim && failedReviews.get(`${failureClaim.claimId}:${failureClaim.round}`)
   const invalidActivation = (live || e.activationFence) && s.enabled && activation?.valid === false
   const enabled = s.enabled && !invalidActivation
   if (invalidActivation) {
@@ -513,10 +519,10 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       b.cycle === p.cycles.length && c.rounds === (i.round ?? b.rounds) &&
       (i.round === null || c.technicalVerdict !== 'NICE'),
     'no matching retained unfinished blocked claim/round')
-    const renewed = p.correctiveAudit?.claimId !== b.claim.claimId &&
+    const renewed = !invalidActivation && p.correctiveAudit?.claimId !== b.claim.claimId &&
       i.round === null && c.technicalVerdict === 'NICE' && c.completion.head !== b.claim.head
     const unfinished = positive(b.claim.round) && timestamp(b.claim.startedAt) &&
-      !b.claim.failureEvidence && ['auditing', 'fixing', 'reviewing'].includes(b.phase) &&
+      !b.claim.failureEvidence && !(live && retainedFailure) && ['auditing', 'fixing', 'reviewing'].includes(b.phase) &&
       b.technicalVerdict === null && c.technicalVerdict === null && c.completion === null
     check(renewed || (unfinished
       ? c.rounds <= roundLimit(s) && c.noProgress <= 2
@@ -611,7 +617,8 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     const a = s.active, p = s.prs[i.number]
     check(a && a.action === 'audit' && a.number === i.number && a.claimId === i.claimId && a.round !== null, 'publication requires active charged audit claim')
     if (a.publication && digest(a.publication) === digest(i)) return { state: s, output: claimOutput(a, p, s), changed: false }
-    check(e.version !== 2 || !a.failureEvidence, 'failed review requires explicit retry before new publication')
+    check((e.version !== 2 || !a.failureEvidence) && !(live && retainedFailure),
+      'failed review requires explicit retry before new publication')
     validateSnapshot(i.snapshot)
     fields(i.push, ['repo', 'branch', 'before', 'head', 'sourceRef', 'pushedAt'])
     check(same(a, i) && i.snapshot.number === i.number && i.snapshot.base === a.base &&
@@ -650,12 +657,13 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
         const legacyPostFailure = a.failureReceiptVersion === 1 &&
           ['fixing', 'auditing'].includes(c.phase) && a.failureReceipt?.phase === c.phase
         check(positive(i.round) && a.round === i.round &&
-          ((c.phase === 'reviewing' && c.technicalVerdict === 'NAUGHTY') || legacyPostFailure) &&
-          text(i.reviewRef) && a.failureEvidence?.includes(i.reviewRef),
+          ((c.phase === 'reviewing' && c.technicalVerdict === 'NAUGHTY') || legacyPostFailure ||
+            (!a.failureEvidence && retainedFailure)) &&
+          text(i.reviewRef) && (a.failureEvidence ?? retainedFailure?.evidence)?.includes(i.reviewRef),
         'retry requires exact charged round and retained failed-review phase/evidence')
         if (c.findings.some((f) => f.status === 'fixed' && a.baseline.includes(f.id))) c.noProgress = 0
       } else check(a.round === null, 'round already begun; resume with next')
-      if (command === 'begin' && p.correctiveAudit?.claimId !== a.claimId &&
+      if (command === 'begin' && !invalidActivation && p.correctiveAudit?.claimId !== a.claimId &&
         c.technicalVerdict === 'NICE' && c.completion.head !== a.head) {
         p.cycles.push(freshCycle())
         c = cycle(p)
@@ -673,7 +681,10 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       check(refs(i.evidence) && i.evidence.length > 0 && text(i.reason) &&
         [null, 'NAUGHTY', 'NICE'].includes(i.technicalVerdict), 'invalid evidence, reason or verdict')
       check(a.round !== null || ['waiting', 'blocked'].includes(i.phase), 'audit/review requires begin')
-      if (e.version === 2 && a.failureEvidence) {
+      if (live && i.technicalVerdict === 'NAUGHTY' && !a.failureEvidence && !retainedFailure) {
+        check(i.phase === 'reviewing', 'first failed review must be saved as reviewing/NAUGHTY before waiting or blocking')
+      }
+      if (e.version === 2 && (a.failureEvidence || (live && retainedFailure))) {
         if (digest(a.failureReceipt) === digest(i)) return { state: s, output, changed: false }
         check(['waiting', 'blocked'].includes(i.phase) && i.technicalVerdict !== 'NICE' &&
           digest(c.findings) === digest(i.findings), 'failed review requires explicit retry before correction or re-review')
@@ -702,6 +713,11 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       if (a.round !== null) a.baseline = [...new Set([...a.baseline, ...i.findings.filter((f) => f.status === 'open').map((f) => f.id)])]
       if (terminal && a.round !== null && i.findings.some((f) => f.status === 'fixed' && a.baseline.includes(f.id))) c.noProgress = 0
       c.findings = i.findings
+      // Derive old noncanonical proof without changing its accepted replay state.
+      // Only live continuations are fenced; an explicit retry consumes a new charge.
+      if (a.round !== null && i.technicalVerdict === 'NAUGHTY' && !retainedFailure) {
+        failedReviews.set(`${a.claimId}:${a.round}`, i)
+      }
       if (i.phase === 'reviewing' && i.technicalVerdict === 'NAUGHTY') a.failureEvidence = i.evidence
       // Retain legacy within-round saves for exact ACKs, not new live attempts.
       if (a.failureEvidence && !terminal) Object.assign(a, {
@@ -796,6 +812,7 @@ function main() {
     fsyncSync(fd)
     let events = [], state = null, previousAt = ''
     const conflictingPublications = new Set()
+    const failedReviews = new Map()
     const activations = []
     let activation = { eventId: null, valid: false, reason: 'canary acceptance not recorded' }
     if (command !== 'init') {
@@ -811,9 +828,9 @@ function main() {
       // ponytail: replay/rewrite the retained journal; checkpoint only if measured history size needs it.
       for (const e of events) {
         fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery'])
-        check(e.activationFence === undefined || (e.version === 2 && e.command === 'next' &&
+        check(e.activationFence === undefined || (e.version === 2 && ['next', 'begin'].includes(e.command) &&
           e.activationFence === true), 'invalid activation fence marker')
-        check(e.canaryRecovery === undefined || (e.activationFence === true && e.canaryRecovery === true),
+        check(e.canaryRecovery === undefined || (e.command === 'next' && e.activationFence === true && e.canaryRecovery === true),
           'invalid canary recovery marker')
         check(e.admission === undefined || (e.version === 2 && e.command === 'next' &&
           ['unclaimed-round', 'detail-read-observation', 'detail-read-recovery'].includes(e.admission)), 'invalid admission marker')
@@ -827,7 +844,7 @@ function main() {
         const publication = e.command === 'published' && state?.prs[e.input.number]?.publications?.at(-1)
         const conflict = e.command === 'published' && state?.active &&
           !scopeCurrent(state.active, { present: true, snapshot: e.input.snapshot }, state.active.effectiveBaseRef)
-        const result = apply(state, e, conflictingPublications, { activation })
+        const result = apply(state, e, conflictingPublications, { activation, failedReviews })
         state = result.state
         if (conflict && state.prs[e.input.number].publications.at(-1) !== publication) {
           conflictingPublications.add(state.prs[e.input.number].publications.at(-1))
@@ -864,9 +881,10 @@ function main() {
     const at = new Date().toISOString()
     check(at >= previousAt, 'clock moved backwards; refusing mutation')
     const event = { version: 2, id: token, at, command, input,
+      ...(command === 'begin' && state.enabled && !activation.valid ? { activationFence: true } : {}),
       ...(command === 'next' ? { admission: 'detail-read-recovery',
         ...(state.enabled && !activation.valid ? { activationFence: true, canaryRecovery: true } : {}) } : {}) }
-    const result = apply(state, event, conflictingPublications, { activation, live: true })
+    const result = apply(state, event, conflictingPublications, { activation, live: true, failedReviews })
     if (result.changed !== false) {
       events.push(event)
       const temporary = join(dir, `state.${token}.tmp`)

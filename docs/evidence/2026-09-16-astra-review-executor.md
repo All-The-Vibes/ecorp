@@ -314,3 +314,28 @@ journal, cumulative round nine and all three current-wake charges without
 changing its bytes. [The current capture](assets/astra-review-executor/15-gate-retention-corrections.png)
 is local command evidence; independent approval, publication and live canary
 acceptance are still separate gates.
+
+### Failure provenance and legacy correction bounds
+
+Ninth-round reviews found two retry-accounting defects: a first failure saved
+directly as blocked could lose its retry-required provenance, and an old
+unmarked correction claim could renew a cycle from invalid historical NICE.
+The next native turn continued automatically with issue-scoped TDD corrections.
+
+A new scoped human package/CI comment arrived on the unchanged remote PR head.
+It reported no actionable finding and explicitly was not whole-PR approval.
+The executor retained that new feedback and the prior blocked claim, then
+charged the next audit in the same cumulative cycle; it did not pretend the
+old feedback fingerprint was unchanged or treat the comment as Copilot proof.
+
+New first failures must use the canonical reviewing/NAUGHTY admission. Earlier
+noncanonical failures remain readable but fence new attempts until a charged
+retry. Invalid activation also constrains older unmarked begin/resume paths,
+without resetting their original history or preventing legitimate continuation
+of an already-charged unfinished attempt.
+
+Integrated checks pass **234/234 Node tests** and all six repository commands
+(547 Rust passed, 323 ignored). Read-only replay preserves the real 58-event
+journal, cumulative round ten, one current-wake charge, the current feedback
+claim and its prior blocked claim. [The current capture](assets/astra-review-executor/16-failure-provenance-corrections.png)
+shows those local results, not a current independent approval or live canary.

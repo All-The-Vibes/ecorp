@@ -128,6 +128,10 @@ sessions, failed tests and original receipts.
    template-derived requirement and report full merge gates separately.
    If a local candidate fails, save `reviewing`/`NAUGHTY` with its real report,
    then call `retry` with the expected current round **before** further fixes.
+   Record that first failure canonically even when another reviewer or tool is
+   unavailable; only then save the overall block. Other first-NAUGHTY phase
+   combinations are rejected. An old noncanonical failure also requires a
+   charged retry before new corrections, reviews or publication.
    This charges another bounded round without requiring an unreviewed push.
    Do not use `waiting` as a substitute for retry or repeat reviews under one
    charge. Replayed/stale retries must not consume another round.
@@ -240,6 +244,10 @@ Gate-only updates cannot replace a matching blocked corrective claim or spend
 its charge again. Resume that original claim after verified clearance. A
 read-only gate saved as waiting does not change the retained unfinished audit's
 eligibility; completed failures and exhausted new-attempt bounds still apply.
+These correction bounds also govern retained claims created by older policies
+without the corrective marker. Their historical NICE cannot renew a cycle or
+reset the no-progress breaker; genuinely unfinished charged work still resumes
+within its existing charge.
 Ordinary CI waits, conflicts, competing claims, forks and exhausted stops cannot
 be reopened through this route.
 
