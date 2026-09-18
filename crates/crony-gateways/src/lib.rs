@@ -164,6 +164,10 @@ pub fn mcp_tools() -> Value {
     mcp_tools_with_access(McpAccess::ReadWrite)
 }
 
+fn is_read_only_mcp_tool(name: &str) -> bool {
+    matches!(name, "crony_snapshot" | "crony_factory_recovery_context")
+}
+
 async fn bounded_response_json(mut response: reqwest::Response, limit: usize) -> Result<Value> {
     if response
         .content_length()
@@ -189,6 +193,17 @@ pub fn mcp_tools_with_access(access: McpAccess) -> Value {
                 "description":"Read the authenticated actor's Corp-scoped operational snapshot.",
                 "annotations":{"readOnlyHint":true,"destructiveHint":false,"idempotentHint":true},
                 "inputSchema":{"type":"object","properties":{},"additionalProperties":false}
+            },
+            {
+                "name":"crony_factory_recovery_context",
+                "description":"Inspect one Factory work item's native recovery context, remaining authority and checkpoint capabilities. This does not authorize or start recovery; the server's existing operator and room permissions apply.",
+                "annotations":{"readOnlyHint":true,"destructiveHint":false,"idempotentHint":true},
+                "inputSchema":{
+                    "type":"object",
+                    "required":["work_item_id"],
+                    "properties":{"work_item_id":{"type":"string","format":"uuid"}},
+                    "additionalProperties":false
+                }
             },
             {
                 "name":"crony_create_mission",
@@ -229,7 +244,7 @@ pub fn mcp_tools_with_access(access: McpAccess) -> Value {
         tools["tools"]
             .as_array_mut()
             .expect("static MCP tool catalog is an array")
-            .retain(|tool| tool["name"] == "crony_snapshot");
+            .retain(|tool| tool["name"].as_str().is_some_and(is_read_only_mcp_tool));
     }
     tools
 }
@@ -270,7 +285,7 @@ async fn handle_mcp_tool_with_access(
         .get("name")
         .and_then(Value::as_str)
         .context("tool call omitted name")?;
-    if access == McpAccess::ReadOnly && name != "crony_snapshot" {
+    if access == McpAccess::ReadOnly && !is_read_only_mcp_tool(name) {
         return Err(anyhow!("tool is unavailable in read-only MCP mode"));
     }
     let arguments = params
@@ -292,6 +307,36 @@ async fn handle_mcp_tool_with_access(
                     None,
                 )
                 .await?
+        }
+        "crony_factory_recovery_context" => {
+            let work_item_id = recovery_work_item_id(&arguments)?;
+            // This new inspection is bounded and never follows redirects, even
+            // when an existing integration also enables the legacy write tools.
+            let inspection = client.clone().with_mcp_access(McpAccess::ReadOnly)?;
+            let value = inspection
+                .request(
+                    Method::GET,
+                    &format!(
+                        "/api/corps/{}/factory/work-items/{work_item_id}/verification-recoveries?actor_id={}",
+                        client.corp_id, client.actor_id
+                    ),
+                    None,
+                )
+                .await?;
+            let returned_id = |field| {
+                value
+                    .pointer(field)
+                    .and_then(Value::as_str)
+                    .and_then(|id| Uuid::parse_str(id).ok())
+            };
+            if returned_id("/work_item/id") != Some(work_item_id)
+                || returned_id("/work_item/corp_id") != Some(client.corp_id)
+            {
+                return Err(anyhow!(
+                    "native recovery context did not match the requested scope"
+                ));
+            }
+            value
         }
         "crony_create_mission" => {
             client
@@ -328,6 +373,23 @@ async fn handle_mcp_tool_with_access(
         _ => return Err(anyhow!("unknown ECorp MCP tool {name}")),
     };
     Ok(json!({"content":[{"type":"text","text":value.to_string()}],"structuredContent":value}))
+}
+
+fn recovery_work_item_id(arguments: &Value) -> Result<Uuid> {
+    let fields = arguments
+        .as_object()
+        .context("recovery inspection arguments must be an object")?;
+    if fields.len() != 1 || !fields.contains_key("work_item_id") {
+        return Err(anyhow!("recovery inspection requires exactly work_item_id"));
+    }
+    let raw = fields["work_item_id"]
+        .as_str()
+        .context("work_item_id must be a hyphenated UUID")?;
+    let id = Uuid::parse_str(raw).map_err(|_| anyhow!("work_item_id must be a hyphenated UUID"))?;
+    if raw.len() != 36 || !raw.eq_ignore_ascii_case(&id.hyphenated().to_string()) {
+        return Err(anyhow!("work_item_id must be a hyphenated UUID"));
+    }
+    Ok(id)
 }
 
 fn mcp_mission_request(actor_id: Uuid, arguments: &Value) -> Result<Value> {
@@ -450,13 +512,54 @@ mod tests {
     }
 
     #[test]
-    fn readonly_mcp_catalog_exposes_only_snapshot_without_changing_default() {
-        assert_eq!(mcp_tools()["tools"].as_array().unwrap().len(), 3);
+    fn readonly_mcp_catalog_exposes_only_inspection_tools() {
+        assert_eq!(mcp_tools()["tools"].as_array().unwrap().len(), 4);
         let catalog = mcp_tools_with_access(McpAccess::ReadOnly);
         let tools = catalog["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 1);
+        assert_eq!(tools.len(), 2);
         assert_eq!(tools[0]["name"], "crony_snapshot");
-        assert_eq!(tools[0]["annotations"]["readOnlyHint"], true);
+        assert_eq!(tools[1]["name"], "crony_factory_recovery_context");
+        assert!(
+            tools
+                .iter()
+                .all(|tool| tool["annotations"]["readOnlyHint"] == true)
+        );
+    }
+
+    #[tokio::test]
+    async fn recovery_inspection_rejects_invalid_or_extra_arguments_before_http() {
+        let client = GatewayClient::new(
+            "invalid-unused-server".to_owned(),
+            Uuid::from_u128(1),
+            Uuid::from_u128(2),
+            None,
+        );
+        for arguments in [
+            Value::Null,
+            json!([]),
+            json!({}),
+            json!({"work_item_id": null}),
+            json!({"work_item_id": "00000000000040008000000000000001"}),
+            json!({"work_item_id": "urn:uuid:00000000-0000-4000-8000-000000000001"}),
+            json!({"work_item_id": "../other?actor_id=other"}),
+            json!({"work_item_id": "00000000-0000-4000-8000-000000000001", "mode": "source_correction"}),
+            json!({"work_item_id": "00000000-0000-4000-8000-000000000001", "actor_id": "other"}),
+        ] {
+            let error = handle_mcp_tool_with_access(
+                &client,
+                &json!({"name":"crony_factory_recovery_context", "arguments":arguments}),
+                McpAccess::ReadOnly,
+            )
+            .await
+            .unwrap_err()
+            .to_string();
+            assert!(error.starts_with("recovery inspection") || error.starts_with("work_item_id"));
+        }
+        assert_eq!(
+            recovery_work_item_id(&json!({"work_item_id":"01234567-89AB-4CDE-8FAB-0123456789AB"}))
+                .unwrap(),
+            Uuid::parse_str("01234567-89ab-4cde-8fab-0123456789ab").unwrap()
+        );
     }
 
     #[tokio::test]

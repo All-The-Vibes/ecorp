@@ -4,7 +4,8 @@ ECorp ships `crony-mcp` in `crates/crony-gateways`. It is a stdio adapter over t
 Corp-scoped server APIs, with no independent task store or execution loop. The root `.mcp.json`
 configures its read-only mode for clients that support this configuration format.
 Codex uses the project-scoped `.codex/config.toml` instead. It forwards the four explicit host
-connection variables and exposes only `crony_snapshot`, with native startup/tool timeouts.
+connection variables and enables `crony_snapshot` and `crony_factory_recovery_context`, with
+native startup/tool timeouts.
 Both configurations start the same reviewed gateway; they do not contain identities or credentials.
 
 Build the trusted checkout with the repository's pinned Rust toolchain:
@@ -58,7 +59,7 @@ Both the read-only gateway and probe require HTTPS except for normalized `localh
 
 ## Read-only behavior
 
-`crony-mcp --read-only` exposes `crony_snapshot` and rejects mission-creation and room-message
+`crony-mcp --read-only` exposes snapshot and Factory recovery-context inspection, and rejects mission-creation and room-message
 tools before any HTTP request. The unrestricted CLI behavior remains available for existing
 explicitly authorized integrations; the repository inspection configuration does not select it.
 Protocol startup and tool listing do not launch agent work.
@@ -66,8 +67,8 @@ Read-only API requests reject every redirect, including same-origin redirects, s
 cannot silently move to a different endpoint. Configure the canonical API origin when a proxy
 redirects a request. Existing unrestricted integrations retain their prior transport behavior.
 
-Use `tools/probe_mcp.mjs` with its explicit binary and routing options to verify initialization,
-the read-only tool list, and an authorized snapshot. The probe is bounded, reads only the selected
+Use `tools/probe_mcp.mjs` with its explicit binary and routing configuration to verify initialization,
+the read-only tool list, and an authorized snapshot or selected recovery context. The probe is bounded, reads only the selected
 server, and emits whitelisted metadata/counts instead of the private snapshot. A successful probe
 proves that stdio-to-API path for the supplied identity, not a provider run or completed mission.
 Read-only native HTTP bodies are capped at 16 MiB before JSON decoding; the probe separately caps
@@ -81,10 +82,41 @@ above, then run:
 node tools/probe_mcp.mjs --timeout-ms 15000 --output output/mcp-inspection.json
 ```
 
-The output destination must be new. Existing evidence is not overwritten. The probe sends only
+The output destination must be new. Existing evidence is not overwritten. By default the probe sends
 initialization, the initialized notification, tool discovery and `crony_snapshot`; it does not
 bootstrap, reset or write to the server. The versioned behavior and acceptance cases are in
-[MCP inspection contract v1](specs/mcp-inspection-v1.md).
+[MCP inspection contract v2](specs/mcp-inspection-v2.md).
+
+## Inspect one Factory recovery
+
+Call `crony_factory_recovery_context` with exactly one argument, `work_item_id`, using the
+hyphenated UUID of the selected Factory work item. It sends one GET to the existing native
+verification-recovery context endpoint. Other arguments, including actor, Corp, recovery mode,
+attempt limits and authorization claims, are rejected locally.
+
+The context reports the native work-item version, source run, remaining attempts and mission
+budget, retained recovery records, expected workspace/head and checkpoint capabilities. It is
+an observation, not authority to recover. The server still requires its existing `Operate`
+permission and human-role/room/Corp visibility checks. An unauthorized or hidden item remains
+an error; the gateway does not select another identity or treat denial as an unavailable capability.
+
+The tool never checkpoints, revises budgets, reopens a stopped run, resumes a provider or starts
+a recovery. Use the existing separately authorized native workflow if a change is requested.
+This inspection retains the bounded, no-redirect transport even in an unrestricted gateway;
+the three existing tools retain their prior unrestricted behavior.
+
+To probe this path without reading the broad Corp snapshot, provide the selected UUID explicitly:
+
+```powershell
+node tools/probe_mcp.mjs --work-item-id $env:CRONY_FACTORY_WORK_ITEM_ID --timeout-ms 15000 --output output/mcp-recovery-inspection.json
+```
+
+The environment variable in this example must be set by the operator to that existing work-item
+UUID. The probe has no work-item default. Its report contains only IDs, version, counts, remaining
+authority and native capability flags; it withholds policies, source paths, fingerprints and raw
+failure details. Missing capability fields remain unknown and are never promoted to eligibility.
+A successful probe establishes the inspection path only. It does not prove a recovery or provider
+run, and mock HTTP tests do not establish real server authorization.
 
 For operational interpretation, the
 [ecorp-operations skill](../.github/skills/ecorp-operations/SKILL.md) describes how to correlate
