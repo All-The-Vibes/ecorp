@@ -364,3 +364,19 @@ Exact tested script/test bytes and canonical Git-blob bindings are retained.
 [The current local capture](assets/astra-review-executor/17-attempt-and-wait-recovery.png)
 shows these results and source binding, not independent approval or live
 acceptance.
+
+### Pre-activation correction — September 18
+
+Eleventh-round Santa results were one PASS and one reproduced pre-activation
+recovery failure. The failed AND gate prevented publication. A native TDD fixer
+extended the existing bounded correction path to a conflicting retained
+publication before the first enable event, without manufacturing remote changes
+or accepting the historical conflict. Existing after-activation correction,
+claim retention, retry accounting and full fresh acceptance remain required.
+
+Integrated verification passes **268/268 Node tests** and all six repository
+checks (547 Rust passes, 323 ignored). Exact tested source bytes and canonical
+Git blobs are retained, together with read-only replay preserving the real
+66-event journal, round twelve and all three current-wake charges.
+[The current local capture](assets/astra-review-executor/18-preactivation-recovery.png)
+does not substitute for independent source approval or live acceptance.

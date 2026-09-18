@@ -179,6 +179,10 @@
 //   correctiveAudit binds that claim to the invalid activation, not to a wake.
 //   Interrupted work uses resume/retry; gates cannot consume unfinished correction.
 //   No historical NICE resets its cycle, and new NICE still needs full enable proof.
+// Before first enable, a retained conflicting canonical publication is the same
+// pending correction under ongoing authority. New next/begin envelopes stamp
+// publicationRecovery:true; correctiveAudit.publicationKey pins that basis across
+// wakes, gates and a corrective publication. Unmarked old admissions replay unchanged.
 // help: node executor-state.mjs help (or STATE_DIR help), no stdin/state access.
 // Timestamps are ISO UTC; sourceRefs are retained paths/URLs, not verified artifacts.
 // sync accepts a complete empty inventory. Gate-only changes preserve active work;
@@ -336,6 +340,13 @@ function feedbackBasis(s, p, at) {
   return completion
 }
 
+function correctivePublication(s, conflictingPublications) {
+  if (s.enabled) return null
+  const p = s.prs[s.config.canary], publication = p?.publications?.at(-1)
+  // A clean replacement publication still belongs to the unfinished correction.
+  return conflictingPublications.has(publication) ? digest(publication) : p?.correctiveAudit?.publicationKey
+}
+
 function apply(s, e, conflictingPublications = new Set(), { activation, live = false, failedReviews = new Map(), failedWaits = new Map() } = {}) {
   const { command, input: i, at, id } = e
   if (command === 'init') {
@@ -351,7 +362,13 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
   const failureClaim = command === 'resume' ? recovery?.claim : s.active
   const retainedFailure = failureClaim && failedReviews.get(`${failureClaim.claimId}:${failureClaim.round}`)
   const invalidActivation = (live || e.activationFence) && s.enabled && activation?.valid === false
+  const publicationKey = (live || e.publicationRecovery) && correctivePublication(s, conflictingPublications)
+  const correctionField = invalidActivation ? 'activationId' : 'publicationKey'
+  const correctionId = invalidActivation ? activation.eventId : publicationKey
   const enabled = s.enabled && !invalidActivation
+  if (publicationKey && ['begin', 'retry', 'resume'].includes(command)) {
+    check(s.autonomy, 'conflicting publication correction requires ongoing authority')
+  }
   if (invalidActivation) {
     const number = command === 'next' ? i.gateNumber ?? i.feedbackNumber : i.number
     if (number !== undefined && number !== s.config.canary &&
@@ -443,8 +460,8 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     fields(i, ['owner'], ['gateNumber', 'feedbackNumber'])
     const recoverPending = ['unclaimed-round', 'detail-read-observation', 'detail-read-recovery'].includes(e.admission)
     const preserveUnavailable = ['detail-read-observation', 'detail-read-recovery'].includes(e.admission)
-    const corrective = (p) => e.canaryRecovery && invalidActivation && p.snapshot.number === s.config.canary
-    const pendingCorrection = (p) => corrective(p) && p.correctiveAudit?.activationId !== activation.eventId
+    const corrective = (p) => (e.canaryRecovery || e.publicationRecovery) && correctionId && p.snapshot.number === s.config.canary
+    const pendingCorrection = (p) => corrective(p) && p.correctiveAudit?.[correctionField] !== correctionId
     // Route only new calls; old next events must keep their original claim IDs.
     const waitingRecovery = (p) => {
       const b = live && failedWaiting(p, failedWaits)
@@ -498,6 +515,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     }
     const p = target ?? Object.values(s.prs).filter((p) => p.present && p.snapshot.state === 'open' &&
       (enabled || p.snapshot.number === s.config.canary) &&
+      (!publicationKey || s.autonomy) &&
       (p.seen !== signature(p.snapshot) || waitingRecovery(p) || (s.autonomy &&
         ((recoverPending && pendingRound(p)) || pendingCorrection(p)) &&
         !p.blockedReason && cycle(p).noProgress < 2 &&
@@ -520,7 +538,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     // Live-only, mutation-free refusal: old canaryRecovery events may have
     // admitted replacements with dependent charges; their replay stays unchanged.
     if (live && corrective(p) && b?.claim.action === 'audit' &&
-      p.correctiveAudit?.activationId === activation.eventId && p.correctiveAudit.claimId === b.claim.claimId &&
+      (publicationKey || (p.correctiveAudit?.activationId === activation.eventId && p.correctiveAudit.claimId === b.claim.claimId)) &&
       b.cycle === p.cycles.length && b.rounds === c.rounds &&
       (b.claim.round === null || b.claim.round === c.rounds) && c.completion?.claimId !== b.claim.claimId &&
       current(b.claim, p) && scopeCurrent(b.claim, p, b.claim.effectiveBaseRef)) {
@@ -541,7 +559,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     output = { number: snapshot.number, base: snapshot.base, head: snapshot.head,
       action: readOnly ? 'read-only' : reason ? 'blocked' : action, reason, claimId: readOnly || !reason ? id : null }
     if (readOnly || !reason) s.active = { ...output, snapshot, round: null, startedAt: readOnly ? at : null, baseline: [], publication: null }
-    if (s.active?.action === 'audit' && corrective(p)) p.correctiveAudit = { activationId: activation.eventId, claimId: id }
+    if (s.active?.action === 'audit' && corrective(p)) p.correctiveAudit = { [correctionField]: correctionId, claimId: id }
     if (!readOnly && reason === 'round limit exhausted') {
       p.pendingRoundLimit = { auditKey: auditKey(snapshot), baseRef: snapshot.baseRef }
     } else if (s.active?.action === 'audit') delete p.pendingRoundLimit
@@ -556,7 +574,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       b.cycle === p.cycles.length && c.rounds === (i.round ?? b.rounds) &&
       (i.round === null || c.technicalVerdict !== 'NICE'),
     'no matching retained unfinished blocked claim/round')
-    const renewed = !invalidActivation && p.correctiveAudit?.claimId !== b.claim.claimId &&
+    const renewed = !correctionId && p.correctiveAudit?.claimId !== b.claim.claimId &&
       i.round === null && c.technicalVerdict === 'NICE' && c.completion.head !== b.claim.head
     const unfinished = positive(b.claim.round) && timestamp(b.claim.startedAt) &&
       !b.claim.failureEvidence && !(live && retainedFailure) && ['auditing', 'fixing', 'reviewing'].includes(b.phase) &&
@@ -705,12 +723,13 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
         'retry requires exact charged round and retained failed-review phase/evidence')
         if (c.findings.some((f) => f.status === 'fixed' && a.baseline.includes(f.id))) c.noProgress = 0
       } else check(a.round === null, 'round already begun; resume with next')
-      if (command === 'begin' && !invalidActivation && p.correctiveAudit?.claimId !== a.claimId &&
+      if (command === 'begin' && !correctionId && p.correctiveAudit?.claimId !== a.claimId &&
         c.technicalVerdict === 'NICE' && c.completion.head !== a.head) {
         p.cycles.push(freshCycle())
         c = cycle(p)
       }
       check(c.rounds < roundLimit(s) && c.noProgress < 2, 'round or no-progress limit exhausted')
+      if (publicationKey && command === 'begin') p.correctiveAudit = { publicationKey, claimId: a.claimId }
       if (s.autonomy) s.wakes.at(-1).chargedRounds++
       Object.assign(a, { snapshot: p.snapshot, round: ++c.rounds, startedAt: at, baseline: c.findings.filter((f) => f.status === 'open').map((f) => f.id), publication: null, failureEvidence: null, failureReceipt: null, failureReceiptVersion: null })
       c.noProgress++
@@ -879,7 +898,9 @@ function main() {
       let version = 1
       // ponytail: replay/rewrite the retained journal; checkpoint only if measured history size needs it.
       for (const e of events) {
-        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery'])
+        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery'])
+        check(e.publicationRecovery === undefined || (e.version === 2 && ['next', 'begin'].includes(e.command) &&
+          e.publicationRecovery === true), 'invalid publication recovery marker')
         check(e.activationFence === undefined || (e.version === 2 && ['next', 'begin'].includes(e.command) &&
           e.activationFence === true), 'invalid activation fence marker')
         check(e.canaryRecovery === undefined || (e.command === 'next' && e.activationFence === true && e.canaryRecovery === true),
@@ -938,6 +959,7 @@ function main() {
     const at = new Date().toISOString()
     check(at >= previousAt, 'clock moved backwards; refusing mutation')
     const event = { version: 2, id: token, at, command, input,
+      ...(['next', 'begin'].includes(command) && correctivePublication(state, conflictingPublications) ? { publicationRecovery: true } : {}),
       ...(command === 'begin' && state.enabled && !activation.valid ? { activationFence: true } : {}),
       ...(command === 'next' ? { admission: 'detail-read-recovery',
         ...(state.enabled && !activation.valid ? { activationFence: true, canaryRecovery: true } : {}) } : {}) }

@@ -373,7 +373,8 @@ test('EX-TARGET-FEEDBACK-BASIS: old accepted unsafe completion and enable replay
   appendHistorical(dir, 'next', { owner, feedbackNumber: 1 })
   const gate = run(dir, 'show').active
   appendHistorical(dir, 'feedback', feedbackInput(gate))
-  const ciGate = run(dir, 'next', { owner, gateNumber: 1 })
+  appendHistorical(dir, 'next', { owner, gateNumber: 1 })
+  const ciGate = run(dir, 'show').active
   run(dir, 'save', saveInput(ciGate, { evidence: ['current-CI-target-gates.json'] }))
   const good = proof(claim, receipts, snapshot)
   const before = run(dir, 'show'), bytes = readFileSync(join(dir, 'state.json'), 'utf8')
@@ -394,12 +395,24 @@ test('EX-TARGET-FEEDBACK-BASIS: old accepted unsafe completion and enable replay
   assert.deepEqual(run(dir, 'show'), enabled)
 })
 
-const historicalActivation = (baseRef = 'release') => {
+const historicalPreactivation = (baseRef = 'release', feedback = true) => {
   const history = oldTargetPublication(baseRef), { dir, claim, receipts, snapshot } = history
-  appendHistorical(dir, 'next', { owner, feedbackNumber: 1 })
-  appendHistorical(dir, 'feedback', feedbackInput(run(dir, 'show').active))
-  run(dir, 'save', saveInput(run(dir, 'next', { owner, gateNumber: 1 })))
-  const acceptanceProof = proof(claim, receipts, snapshot)
+  if (feedback) {
+    appendHistorical(dir, 'next', { owner, feedbackNumber: 1 })
+    appendHistorical(dir, 'feedback', feedbackInput(run(dir, 'show').active))
+    appendHistorical(dir, 'next', { owner, gateNumber: 1 })
+    run(dir, 'save', saveInput(run(dir, 'show').active))
+  } else {
+    // Accepted direct NICE, interrupted before enable and before any feedback.
+    const events = JSON.parse(journalBytes(dir)).events
+    writeJournal(dir, events.slice(0, events.findLastIndex((e) => e.command === 'published') + 1))
+    appendHistorical(dir, 'save', saveInput(claim, { technicalVerdict: 'NICE', reviewers: receipts }))
+    history.snapshot = claim.publication.snapshot
+  }
+  return { ...history, acceptanceProof: proof(claim, receipts, feedback ? snapshot : history.snapshot) }
+}
+const historicalActivation = (baseRef = 'release') => {
+  const history = historicalPreactivation(baseRef), { dir, snapshot, acceptanceProof } = history
   appendHistorical(dir, 'enable', { owner, acceptanceProof })
   run(dir, 'sync', { owner, complete: true, prs: [snapshot, pr(2)] })
   return { ...history, acceptanceProof }
@@ -410,6 +423,335 @@ const assertHistoryPrefix = (dir, bytes) => {
   assert.equal(JSON.stringify(events.slice(0, old.length)), JSON.stringify(old),
     'every original event, input and receipt stays byte-identical')
 }
+
+for (const feedback of [true, false]) {
+  test(`EX-PREACTIVATION-CANARY-RECOVERY: accepted prefix STOP before enable, old feedback=${feedback}`, (t) => {
+    const { dir, snapshot, acceptanceProof } = historicalPreactivation('release', feedback)
+    const old = run(dir, 'show'), prefix = journalBytes(dir), p = old.prs['1']
+    t.diagnostic(`SA11-01 synthetic accepted prefix STOP before enable: ${join(dir, 'state.json')}`)
+    assert.equal(old.enabled, false)
+    assert.equal(old.active, null)
+    assert.equal(p.blockedClaim ?? null, null)
+    assert.equal(p.cycles[0].technicalVerdict, 'NICE')
+    assert.deepEqual([p.cycles[0].rounds, p.cycles[0].noProgress, old.wakes.at(-1).chargedRounds], [1, 1, 0])
+    run(dir, 'sync', { owner, complete: true, prs: [snapshot] })
+    assert.equal(journalBytes(dir), prefix, 'identical remote input is a no-op')
+    run(dir, 'wake', wakeInput('preactivation-fresh-wake'))
+    const beforeAdmission = journalBytes(dir)
+    const claim = next(dir)
+    assert.equal(claim.action, 'audit', 'retained conflicting publication is pending before first activation')
+    assert.equal(claim.number, 1)
+    assert.deepEqual(claim.snapshot, snapshot)
+    assert.equal(claim.round, null)
+    assert.deepEqual(run(dir, 'show').prs['1'].cycles, p.cycles)
+    assert.equal(next(dir).claimId, claim.claimId)
+    const admitted = journalBytes(dir)
+    for (const input of [{ owner, feedbackNumber: 1 }, { owner, gateNumber: 2 }]) run(dir, 'next', input, false)
+    run(dir, 'enable', { owner, acceptanceProof }, false)
+    assert.equal(journalBytes(dir), admitted)
+    assert.equal(run(dir, 'next', { owner, gateNumber: 1 }).action, 'audit')
+    const charged = run(dir, 'begin', beginInput(claim))
+    assert.equal(charged.round, 2)
+    const state = run(dir, 'show')
+    assert.equal(state.prs['1'].cycles.length, 1)
+    assert.equal(state.prs['1'].cycles[0].noProgress, 2)
+    assert.equal(state.wakes.at(-1).chargedRounds, 1)
+    assert.deepEqual(state.wakes.slice(0, -1), old.wakes)
+    assert.deepEqual(state.prs['1'].publications, p.publications)
+    assert.deepEqual(state.prs['1'].feedbackReviews, p.feedbackReviews)
+    assertHistoryPrefix(dir, beforeAdmission)
+  })
+}
+
+test('EX-PREACTIVATION-CANARY-RECOVERY: gates cannot consume correction and fresh NICE needs a new publication and full proof', () => {
+  const { dir, snapshot, acceptanceProof } = historicalPreactivation()
+  const old = run(dir, 'show'), prefix = journalBytes(dir)
+  for (const gateKey of [snapshot.gateKey, key(900)]) {
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey }, pr(2)] })
+    const bytes = journalBytes(dir)
+    assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit/)
+    run(dir, 'next', { owner, feedbackNumber: 1 }, false)
+    run(dir, 'enable', { owner, acceptanceProof }, false)
+    run(dir, 'next', { owner, publicationRecovery: true }, false)
+    assert.equal(journalBytes(dir), bytes)
+  }
+  const claimedPrefix = JSON.parse(journalBytes(dir)).events
+  const unpublished = fixture()
+  writeJournal(unpublished, claimedPrefix)
+  const audit = start(unpublished)
+  run(unpublished, 'save', saveInput(audit, { technicalVerdict: 'NICE', reviewers: reviewers(audit) }))
+  const nice = run(unpublished, 'show'), bytes = journalBytes(unpublished)
+  assert.match(run(unpublished, 'enable', { owner, acceptanceProof: proof(audit, nice.prs['1'].cycles[0].completion.reviewers) }, false).error,
+    /publication.*source\/target/)
+  assert.equal(next(unpublished).action, 'none', 'NICE does not authorize another free correction')
+  assert.equal(journalBytes(unpublished), bytes)
+  assert.equal(nice.enabled, false)
+
+  const corrected = publishComplete(dir)
+  assert.equal(corrected.claim.round, 2)
+  assert.equal(next(dir).action, 'none', 'PR2 still lacks activation authority')
+  const good = proof(corrected.claim, corrected.receipts)
+  for (const change of [
+    { reviewers: acceptanceProof.reviewers }, { push: acceptanceProof.push },
+    { ci: acceptanceProof.ci }, { copilot: acceptanceProof.copilot },
+    { schedulerWake: { ...good.schedulerWake, at: '2000-01-01T00:00:00.000Z' } },
+    { fixers: [] }, { audits: {} }, { quietNoopRef: '' }, { resumeRef: '' },
+  ]) {
+    const bytes = journalBytes(dir)
+    run(dir, 'enable', { owner, acceptanceProof: { ...good, ...change } }, false)
+    assert.equal(journalBytes(dir), bytes)
+  }
+  run(dir, 'enable', { owner, acceptanceProof: good })
+  const state = run(dir, 'show')
+  assert.equal(state.activation.valid, true)
+  assert.equal(state.activations.length, 1)
+  assert.equal(state.prs['1'].cycles.length, 1)
+  assert.equal(state.prs['1'].cycles[0].noProgress, 2)
+  assert.equal(state.wakes.at(-1).chargedRounds, old.wakes.at(-1).chargedRounds + 1)
+  assert.deepEqual(state.prs['1'].publications[0], old.prs['1'].publications[0])
+  assertHistoryPrefix(dir, prefix)
+  const accepted = journalBytes(dir)
+  run(dir, 'enable', { owner, acceptanceProof: good })
+  assert.equal(journalBytes(dir), accepted)
+  assert.equal(next(dir).number, 2)
+})
+
+for (const stage of ['uncharged', 'charged', 'published']) {
+  test(`EX-PREACTIVATION-CANARY-RECOVERY: retained ${stage} correction survives gate changes and resumes once`, () => {
+    const history = historicalPreactivation(), { dir } = history
+    let snapshot = history.snapshot, claim = stage === 'uncharged' ? next(dir) : start(dir)
+    if (stage === 'published') {
+      snapshot = { ...snapshot, head: sha(13) }
+      bindRubric(dir, snapshot)
+      claim = run(dir, 'published', { ...beginInput(claim), snapshot, reviewers: reviewers({ ...claim, head: snapshot.head }),
+        push: { repo, branch: snapshot.branch, before: claim.head, head: snapshot.head,
+          sourceRef: 'corrective-publication.json', pushedAt: new Date().toISOString() } })
+    }
+    const before = run(dir, 'show')
+    assert.ok(before.prs['1'].correctiveAudit.publicationKey)
+    for (let n = 1; n <= 2; n++) {
+      run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey: key(910 + n) }] })
+      assert.equal(next(dir).claimId, claim.claimId, 'active work survives gates')
+      run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+      run(dir, 'wake', wakeInput(`preactivation-interrupted-${n}`))
+      const bytes = journalBytes(dir), blocked = run(dir, 'show')
+      assert.equal(next(dir).claimId, claim.claimId, 'gate changes must not replace blocked correction')
+      assert.equal(next(dir).action, 'blocked')
+      run(dir, 'next', { owner, gateNumber: 1 }, false)
+      run(dir, 'begin', beginInput(claim), false)
+      assert.equal(journalBytes(dir), bytes)
+      const resumed = run(dir, 'resume', resumeInput(claim))
+      for (const field of ['claimId', 'round', 'startedAt', 'snapshot']) assert.deepEqual(resumed[field], claim[field])
+      assert.deepEqual(run(dir, 'show').prs['1'].correctiveAudit, blocked.prs['1'].correctiveAudit)
+    }
+    const state = run(dir, 'show')
+    assert.equal(state.sequence, before.sequence)
+    assert.equal(state.prs['1'].cycles[0].rounds, before.prs['1'].cycles[0].rounds)
+    assert.equal(state.prs['1'].cycles[0].noProgress, before.prs['1'].cycles[0].noProgress)
+    assert.ok(state.wakes.slice(before.wakes.length).every((w) => w.chargedRounds === 0))
+    if (stage !== 'uncharged') run(dir, 'begin', beginInput(claim), false)
+    else assert.equal(run(dir, 'begin', beginInput(claim)).round, 2)
+  })
+}
+
+test('EX-PREACTIVATION-CANARY-RECOVERY: retry retains the original claim, spends actual wake capacity and never refunds', () => {
+  const { dir, snapshot } = historicalPreactivation()
+  let claim = start(dir), findings = []
+  for (let n = 1; n <= 3; n++) {
+    findings = progressFailure(dir, claim, findings)
+    run(dir, 'save', saveInput(claim, { phase: 'blocked', findings }))
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey: key(920 + n) }] })
+    if (n === 3) {
+      const bytes = journalBytes(dir)
+      assert.equal(next(dir).action, 'wait')
+      assert.equal(journalBytes(dir), bytes)
+    } else assert.equal(next(dir).claimId, claim.claimId)
+    assert.equal(run(dir, 'resume', resumeInput(claim)).claimId, claim.claimId)
+    run(dir, 'save', saveInput(claim, { phase: 'fixing', findings }), false)
+    if (n === 3) {
+      const before = run(dir, 'show'), bytes = journalBytes(dir)
+      assert.match(run(dir, 'retry', retryInput(claim), false).error, /wake round capacity/)
+      assert.equal(journalBytes(dir), bytes)
+      run(dir, 'wake', wakeInput('preactivation-next-capacity'))
+      assert.deepEqual(run(dir, 'show').wakes.slice(0, -1), before.wakes)
+    }
+    const retried = run(dir, 'retry', retryInput(claim))
+    assert.equal(retried.claimId, claim.claimId)
+    assert.equal(retried.round, claim.round + 1)
+    run(dir, 'retry', retryInput(claim), false)
+    claim = retried
+  }
+  const state = run(dir, 'show')
+  assert.equal(state.prs['1'].cycles.length, 1)
+  assert.equal(claim.round, 5)
+  assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [3, 1])
+})
+
+test('EX-PREACTIVATION-CANARY-RECOVERY: no-progress stop survives new wakes and historical NICE cannot renew a cycle', () => {
+  const { dir, snapshot } = historicalPreactivation()
+  const claim = start(dir)
+  failedReview(dir, claim)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  const before = run(dir, 'show')
+  run(dir, 'wake', wakeInput('preactivation-no-reset'))
+  const bytes = journalBytes(dir)
+  assert.equal(next(dir).action, 'none')
+  run(dir, 'next', { owner, gateNumber: 1 }, false)
+  run(dir, 'resume', resumeInput(claim), false)
+  assert.equal(journalBytes(dir), bytes)
+  assert.deepEqual(run(dir, 'show').prs['1'], before.prs['1'])
+  assert.equal(before.prs['1'].cycles[0].noProgress, 2)
+
+  const history = historicalPreactivation(), old = run(history.dir, 'show')
+  run(history.dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, head: sha(88) }] })
+  appendHistorical(history.dir, 'next', { owner })
+  const retained = run(history.dir, 'show').active
+  const prefix = journalBytes(history.dir)
+  for (const blocked of [false, true]) {
+    const isolated = fixture()
+    writeJournal(isolated, JSON.parse(prefix).events)
+    if (blocked) {
+      run(isolated, 'save', saveInput(retained, { phase: 'blocked' }))
+      assert.equal(next(isolated).claimId, retained.claimId, 'retain even an old unmarked correction')
+      run(isolated, 'resume', resumeInput(retained))
+    }
+    const started = run(isolated, 'begin', beginInput(retained)), state = run(isolated, 'show')
+    assert.equal(started.round, 2)
+    assert.equal(state.prs['1'].cycles.length, 1)
+    assert.equal(state.prs['1'].cycles[0].noProgress, old.prs['1'].cycles[0].noProgress + 1)
+    assertHistoryPrefix(isolated, prefix)
+  }
+  // The same accepted old begin really DID renew: historical decisions stay readable.
+  appendHistorical(history.dir, 'begin', beginInput(retained))
+  const accepted = journalBytes(history.dir)
+  assert.deepEqual(run(history.dir, 'show').prs['1'].cycles.map((c) => c.rounds), [1, 1])
+  assert.equal(journalBytes(history.dir), accepted)
+})
+
+test('EX-PREACTIVATION-CANARY-RECOVERY: ongoing authority and native capacity are required, not another approval', () => {
+  const { dir, snapshot } = historicalPreactivation()
+  const original = JSON.parse(journalBytes(dir)).events
+  for (const authority of [false, true]) {
+    const isolated = fixture()
+    writeJournal(isolated, original.filter((e) => e.command !== 'wake' && (authority || e.command !== 'autonomy')))
+    for (const gateKey of [snapshot.gateKey, key(930)]) {
+      run(isolated, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey }] })
+      const bytes = journalBytes(isolated)
+      assert.equal(next(isolated).action, authority ? 'wait' : 'none')
+      run(isolated, 'next', { owner, gateNumber: 1 }, false)
+      assert.equal(journalBytes(isolated), bytes)
+    }
+    if (!authority) run(isolated, 'autonomy', autonomyInput())
+    run(isolated, 'wake', wakeInput('preactivation-first-capacity'))
+    assert.equal(start(isolated).round, 2)
+  }
+})
+
+test('EX-PREACTIVATION-CANARY-RECOVERY: current eligibility, stale scope and same-head target rollback stay fenced', () => {
+  const { dir, snapshot, acceptanceProof } = historicalPreactivation()
+  const prefix = journalBytes(dir)
+  for (const change of [{ sourceRepo: 'fork/ecorp' }, { sourceRepo: null }, { state: 'closed' }, { readError: 'DETAIL_READ_FAILED' }]) {
+    const isolated = fixture()
+    writeJournal(isolated, JSON.parse(prefix).events)
+    run(isolated, 'sync', { owner, complete: true, prs: [{ ...snapshot, ...change }, pr(2)] })
+    const selected = next(isolated)
+    assert.notEqual(selected.action, 'audit')
+    assert.notEqual(selected.number, 2)
+    assert.equal(run(isolated, 'show').wakes.at(-1).chargedRounds, 0)
+  }
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, baseRef: 'main' }] })
+  run(dir, 'enable', { owner, acceptanceProof }, false)
+  run(dir, 'next', { owner, feedbackNumber: 1 }, false)
+  const claim = next(dir)
+  assert.equal(claim.action, 'audit', 'rollback cannot launder the conflicting publication')
+  const claimed = journalBytes(dir)
+  for (const change of [
+    { sourceRepo: 'fork/ecorp' }, { sourceRepo: null }, { state: 'closed' }, { readError: 'DETAIL_READ_FAILED' },
+    { base: sha(88) }, { head: sha(88) }, { branch: 'different-source' }, { baseRef: 'release' }, { reviewKey: key(88) },
+  ]) {
+    const isolated = fixture()
+    writeJournal(isolated, JSON.parse(claimed).events)
+    run(isolated, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, ...change }] })
+    assert.equal(next(isolated).action, 'reconcile')
+    const bytes = journalBytes(isolated)
+    run(isolated, 'begin', beginInput(claim), false)
+    assert.equal(journalBytes(isolated), bytes)
+    run(isolated, 'save', saveInput(claim, { phase: 'blocked' }))
+    run(isolated, 'resume', resumeInput(claim), false)
+  }
+})
+
+test('EX-PREACTIVATION-CANARY-RECOVERY: healthy bootstrap needs no corrective claim or extra charge', () => {
+  const { dir, snapshot, acceptanceProof } = historicalPreactivation('main')
+  const before = run(dir, 'show'), prefix = journalBytes(dir)
+  run(dir, 'wake', wakeInput('healthy-bootstrap'))
+  run(dir, 'sync', { owner, complete: true, prs: [snapshot, pr(2)] })
+  assert.equal(next(dir).action, 'none')
+  const gate = run(dir, 'next', { owner, gateNumber: 1 })
+  assert.equal(gate.action, 'check')
+  run(dir, 'begin', beginInput(gate), false)
+  run(dir, 'save', saveInput(gate))
+  run(dir, 'enable', { owner, acceptanceProof })
+  const after = run(dir, 'show')
+  assert.equal(after.activation.valid, true)
+  assert.equal(after.prs['1'].correctiveAudit, undefined)
+  assert.deepEqual(after.prs['1'].cycles[0].completion, before.prs['1'].cycles[0].completion)
+  assert.equal(after.prs['1'].cycles[0].rounds, 1)
+  assert.equal(after.prs['1'].cycles[0].noProgress, 1)
+  assert.ok(after.wakes.every((w) => w.chargedRounds === 0))
+  assert.equal(next(dir).number, 2)
+  assertHistoryPrefix(dir, prefix)
+})
+
+test('EX-PREACTIVATION-CANARY-RECOVERY: old admitted gate remains read-only and cannot discharge pending correction', () => {
+  const { dir } = historicalPreactivation()
+  appendHistorical(dir, 'next', { owner, gateNumber: 1 })
+  const before = run(dir, 'show'), gate = before.active, bytes = journalBytes(dir)
+  assert.equal(gate.action, 'check')
+  assert.equal(next(dir).claimId, gate.claimId)
+  run(dir, 'begin', beginInput(gate), false)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'save', saveInput(gate))
+  const claim = next(dir), state = run(dir, 'show')
+  assert.equal(claim.action, 'audit')
+  assert.equal(claim.round, null)
+  assert.deepEqual(state.prs['1'].cycles[0].completion, before.prs['1'].cycles[0].completion)
+  assert.equal(state.prs['1'].cycles[0].rounds, before.prs['1'].cycles[0].rounds)
+  assert.deepEqual(state.wakes, before.wakes)
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('EX-PREACTIVATION-CANARY-RECOVERY: exhausted historical NICE cannot fund changed-head begin or resume', () => {
+  const { dir, snapshot } = historicalPreactivation()
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(3) }] })
+  appendHistorical(dir, 'next', { owner })
+  let claim = run(dir, 'show').active
+  appendHistorical(dir, 'begin', beginInput(claim))
+  claim = run(dir, 'show').active
+  appendHistorical(dir, 'save', saveInput(claim, { technicalVerdict: 'NICE', reviewers: reviewers(claim) }))
+  assert.equal(run(dir, 'show').prs['1'].cycles[0].noProgress, 2)
+  run(dir, 'wake', wakeInput('historical-nice-is-not-progress'))
+  const stopped = journalBytes(dir)
+  assert.equal(next(dir).action, 'none')
+  run(dir, 'next', { owner, gateNumber: 1 }, false)
+  assert.equal(journalBytes(dir), stopped)
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, head: sha(88) }] })
+  appendHistorical(dir, 'next', { owner })
+  claim = run(dir, 'show').active
+  const prefix = journalBytes(dir)
+  for (const blocked of [false, true]) {
+    const isolated = fixture()
+    writeJournal(isolated, JSON.parse(prefix).events)
+    if (blocked) run(isolated, 'save', saveInput(claim, { phase: 'blocked' }))
+    const before = run(isolated, 'show'), bytes = journalBytes(isolated)
+    assert.match(run(isolated, blocked ? 'resume' : 'begin', blocked ? resumeInput(claim) : beginInput(claim), false).error,
+      /no-progress limit exhausted/)
+    assert.equal(journalBytes(isolated), bytes)
+    assert.deepEqual(run(isolated, 'show'), before)
+    assert.equal(before.prs['1'].cycles.length, 1)
+    assert.equal(before.prs['1'].cycles[0].rounds, 2)
+  }
+})
 
 for (const baseRef of ['release', 'main']) {
   test(`EX-HISTORICAL-ACTIVATION-FENCE: ${baseRef} historical enable has explicit current validity and fences fresh PR2`, () => {

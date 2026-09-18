@@ -250,6 +250,10 @@ canary may enter one bounded current-scope audit without a manufactured remote
 change. Its claim is bound to that activation, not to each wake. Resume/retry
 interrupted work normally; gates cannot consume unfinished correction, and a
 new technical NICE waits for full acceptance rather than spawning more audits.
+Before the first activation, a conflicting retained canonical publication is
+the same kind of pending canary correction under ongoing authority. Its
+publication-bound claim survives waits and a replacement publication; fresh
+reviews, current gates and the full acceptance proof remain mandatory.
 Gate-only updates cannot replace a matching blocked corrective claim or spend
 its charge again. Resume that original claim after verified clearance. A
 read-only gate saved as waiting does not change the retained unfinished audit's
