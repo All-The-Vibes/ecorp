@@ -53,23 +53,25 @@ async function fixture(t, handler) {
   return { origin: `http://127.0.0.1:${server.address().port}`, requests }
 }
 
-function nativeFrames(env, frames, readOnly = true, omittedVariables = []) {
+function nativeInvocation(env, frames, args, omittedVariables = [], extraEnv = {}) {
   const config = probeConfiguration(env)
   for (const name of omittedVariables) delete config.childEnv[name]
   return new Promise((resolve, reject) => {
-    const child = spawn(config.binary, readOnly ? ['--read-only'] : [], {
-      env: config.childEnv,
+    const child = spawn(config.binary, args, {
+      env: { ...config.childEnv, ...extraEnv },
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
     })
     let output = ''
+    let diagnostics = ''
     const timer = setTimeout(() => {
       child.kill()
       reject(new Error('native fixture timeout'))
     }, 5000)
     child.stdout.setEncoding('utf8')
     child.stdout.on('data', (chunk) => { output += chunk })
-    child.stderr.resume()
+    child.stderr.setEncoding('utf8')
+    child.stderr.on('data', (chunk) => { diagnostics += chunk })
     child.stdin.on('error', () => {}) // Startup-denial cases may close stdin before consuming it.
     child.once('error', () => {
       clearTimeout(timer)
@@ -77,13 +79,18 @@ function nativeFrames(env, frames, readOnly = true, omittedVariables = []) {
     })
     child.once('close', (code) => {
       clearTimeout(timer)
-      if (code !== 0) return reject(new Error('native fixture exited unsuccessfully'))
-      try { resolve(output.trim().split('\n').filter(Boolean).map((line) => JSON.parse(line))) } catch {
-        reject(new Error('native fixture emitted invalid JSON'))
-      }
+      resolve({ code, output, diagnostics })
     })
     child.stdin.end(frames.map((frame) => JSON.stringify(frame)).join('\n') + '\n')
   })
+}
+
+async function nativeFrames(env, frames, readOnly = true, omittedVariables = []) {
+  const result = await nativeInvocation(env, frames, readOnly ? ['--read-only'] : [], omittedVariables)
+  if (result.code !== 0) throw new Error('native fixture exited unsuccessfully')
+  try { return result.output.trim().split('\n').filter(Boolean).map((line) => JSON.parse(line)) } catch {
+    throw new Error('native fixture emitted invalid JSON')
+  }
 }
 
 test('probe requires explicit scope and forwards only its scoped credential environment', () => {
@@ -232,6 +239,69 @@ test('compiled read-only startup requires every routing variable before serving 
   assert.equal(compatible[0].result.protocolVersion, '2025-06-18')
   assert.equal(api.requests.length, 0)
 })
+
+const readOnlyModes = [
+  { name: 'flag', args: ['--read-only'], env: { CRONY_MCP_READ_ONLY: 'false' } },
+  { name: 'environment', args: [], env: { CRONY_MCP_READ_ONLY: 'true' } },
+]
+const CLI_TOKEN = 'synthetic-command-line-fixture-token'
+const ENV_TOKEN = 'synthetic-environment-fixture-token'
+const tokenForms = [
+  { name: 'split option', args: ['--access-token', CLI_TOKEN] },
+  { name: 'equals option', args: [`--access-token=${CLI_TOKEN}`] },
+]
+
+for (const mode of readOnlyModes) {
+  for (const form of tokenForms) {
+    for (const environmentToken of [undefined, ENV_TOKEN]) {
+      test(`compiled read-only ${mode.name} rejects command-line tokens (${form.name}, ${environmentToken ? 'CLI plus environment' : 'CLI only'})`, nativeOptions, async (t) => {
+        const api = await fixture(t, (_request, response) => response.end(JSON.stringify(snapshot())))
+        const result = await nativeInvocation({ ...configuration(api.origin), CRONY_ACCESS_TOKEN: environmentToken }, [
+          { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18' } },
+          SNAPSHOT_FRAME,
+        ], [...mode.args, ...form.args], [], mode.env)
+        assert.equal(result.code, 1)
+        assert.equal(result.output, '')
+        assert.match(result.diagnostics, /read-only MCP requires access tokens through CRONY_ACCESS_TOKEN; --access-token is unavailable/u)
+        assert.equal(result.diagnostics.includes(CLI_TOKEN), false)
+        assert.equal(result.diagnostics.includes(ENV_TOKEN), false)
+        assert.equal(api.requests.length, 0)
+      })
+    }
+  }
+
+  test(`compiled read-only ${mode.name} accepts only the environment token and exposes the restricted catalog`, nativeOptions, async (t) => {
+    const api = await fixture(t, (_request, response) => response.end(JSON.stringify(snapshot())))
+    const result = await nativeInvocation({ ...configuration(api.origin), CRONY_ACCESS_TOKEN: ENV_TOKEN }, [
+      { jsonrpc: '2.0', id: 2, method: 'tools/list' }, SNAPSHOT_FRAME,
+    ], mode.args, [], mode.env)
+    assert.equal(result.code, 0)
+    const replies = result.output.trim().split('\n').map((line) => JSON.parse(line))
+    assert.deepEqual(replies[0].result.tools.map((tool) => tool.name), ['crony_snapshot'])
+    assert.deepEqual(replies[1].result.structuredContent, snapshot())
+    assert.equal(api.requests.length, 1)
+    assert.equal(api.requests[0].authorization, `Bearer ${ENV_TOKEN}`)
+    assert.equal(result.output.includes(ENV_TOKEN), false)
+    assert.equal(result.diagnostics.includes(ENV_TOKEN), false)
+  })
+}
+
+for (const form of tokenForms) {
+  test(`compiled unrestricted MCP preserves legacy CLI token precedence (${form.name})`, nativeOptions, async (t) => {
+    const api = await fixture(t, (_request, response) => response.end(JSON.stringify(snapshot())))
+    for (const environmentToken of [undefined, ENV_TOKEN]) {
+      const result = await nativeInvocation({ ...configuration(api.origin), CRONY_ACCESS_TOKEN: environmentToken }, [
+        { jsonrpc: '2.0', id: 2, method: 'tools/list' }, SNAPSHOT_FRAME,
+      ], form.args, [], { CRONY_MCP_READ_ONLY: 'false' })
+      assert.equal(result.code, 0)
+      const replies = result.output.trim().split('\n').map((line) => JSON.parse(line))
+      assert.equal(replies[0].result.tools.length, 3)
+      assert.deepEqual(replies[1].result.structuredContent, snapshot())
+      assert.equal(api.requests.at(-1).authorization, `Bearer ${CLI_TOKEN}`)
+    }
+    assert.equal(api.requests.length, 2)
+  })
+}
 
 for (const statusCode of [200, 403]) {
   test(`compiled native read-only HTTP body rejects oversized declared length before end (${statusCode})`, nativeOptions, async (t) => {

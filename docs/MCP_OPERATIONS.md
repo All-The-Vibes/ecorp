@@ -45,6 +45,9 @@ does not establish operating-system isolation. The server still validates identi
 roles and object visibility. Development authentication is only appropriate for an explicitly
 owned local fixture and is not evidence of production authentication.
 
+Read-only startup rejects `--access-token`, including when `CRONY_ACCESS_TOKEN` is also
+supplied. Unrestricted integrations retain their existing command-line compatibility.
+
 The MCP process inherits the environment supplied by its trusted client. It does not discover
 credentials, enroll a runner, bootstrap/reset a database, or select a replacement identity.
 Read-only startup requires all three routing values explicitly, through these variables or

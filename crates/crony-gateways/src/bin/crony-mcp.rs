@@ -1,7 +1,7 @@
 use std::io::Write;
 
 use anyhow::{Result, anyhow};
-use clap::Parser;
+use clap::{CommandFactory, FromArgMatches, Parser, parser::ValueSource};
 use crony_gateways::{GatewayClient, JsonRpcRequest, McpAccess, handle_mcp_with_access};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use uuid::Uuid;
@@ -27,7 +27,13 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let args = Args::parse();
+    let matches = Args::command().get_matches();
+    let args = Args::from_arg_matches(&matches)?;
+    if args.read_only && matches.value_source("access_token") == Some(ValueSource::CommandLine) {
+        return Err(anyhow!(
+            "read-only MCP requires access tokens through CRONY_ACCESS_TOKEN; --access-token is unavailable"
+        ));
+    }
     let access = if args.read_only {
         McpAccess::ReadOnly
     } else {
