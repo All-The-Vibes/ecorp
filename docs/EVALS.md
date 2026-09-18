@@ -345,7 +345,23 @@ tool versions/hashes, before/after source hashes and Git blobs, and `run.json`
 retain the actual platform, test counts, measured source-file set, totals and
 outcome. The receipt also binds the invocation script and workflow. CI uploads
 these artifacts for 14 days, including incomplete runs. The native line floor
-is enforced separately from test success, and source changes fail the lane.
+is 67.0%, enforced separately from test success, and source changes fail the lane.
+
+The September 18, 2026 isolated Linux run at
+`38507abc96b9282689a810e0e3c074fe0a8c8de5` passed 524 workspace unit tests,
+328 store SQLx tests, and four server SQLx tests: 856 passed, zero failed.
+Native JSON and LCOV agreed on 49,407 covered lines out of 72,899 (67.7746%)
+across 69 compiled source files. All 99 tracked Rust source and manifest
+identities matched before and after the run. The unit stage listed 333 ignored
+tests; the two SQLx stages executed 332 of those, leaving the runner's explicit
+stopped-session probe unexecuted.
+
+That measurement used a provisional 60.0% floor. Separate native report-only
+checks against its preserved profiles passed at 67.0% and failed at 100%, with
+no test rerun or changes to the profiles, binaries, source, or original reports.
+The checked-in 67.0% floor is a policy follow-up to that measurement, approximately
+0.775 percentage points below the observed Linux baseline. It does not relabel
+the original invocation or extend its measured scope.
 
 This is coverage of the native Rust workspace under the compiled Linux
 configuration. It is not whole-repository coverage, web coverage, provider

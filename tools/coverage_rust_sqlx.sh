@@ -54,7 +54,9 @@ export CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 COPILOT_SKIP_CLI_DOWNLOAD=1
 export CARGO_LLVM_COV_TARGET_DIR="$CARGO_TARGET_DIR"
 export CARGO_LLVM_COV_BUILD_DIR="$CARGO_TARGET_DIR/build"
 reports=coverage
-readonly line_floor=60.0 # Finalize against the observed Linux baseline before integration.
+# Measured Linux baseline at 38507abc: 49,407/72,899 lines (67.7746%).
+# Other platforms and coverage scopes retain their own baselines.
+readonly line_floor=67.0
 mkdir "$reports" # Never replace or reuse earlier reports/profiles.
 printf '%s\n' 'fresh: no _sqlx_test schema or _sqlx_test_* database existed before this invocation' > "$reports/database-preflight.txt"
 
