@@ -17,7 +17,8 @@ use chrono::{DateTime, Utc};
 use clap::{Args, ValueEnum};
 use crony_domain::{
     FactoryVerificationRecoveryMode, MAX_TASK_ATTEMPTS, TaskContract, VerificationPolicy,
-    factory_max_task_attempts, write_scope_is_valid,
+    factory_max_task_attempts, strategy_cost_budgets, validate_factory_cost_policy,
+    write_scope_is_valid,
 };
 use crony_protocol::FactoryVerificationRecoveryContextResponse;
 use reqwest::{Client, Method, StatusCode};
@@ -471,6 +472,33 @@ pub async fn run(client: &Client, server: &str, mut args: FactoryArgs) -> Result
         })
         .transpose()?
         .flatten();
+    if let Some(index) = selected_index
+        && let Some(item) = existing.get(&evaluated[index].project_item.id)
+        && let Some(reason) = legacy_cost_policy_rejection(item)
+    {
+        ensure_recovery_selectors_match(&args, &item.policy)?;
+        if args.dry_run {
+            return Ok(json!({
+                "mode": "dry_run",
+                "selected": evaluated[index].as_json(),
+                "legacy_cost_policy_rejection": reason,
+                "next_action": "Run with this exact --issue and without --dry-run to record terminal failure; the immutable policy is not rewritten.",
+                "mutations": [],
+            }));
+        }
+        let (refreshed, persisted) =
+            refresh_selected(client, server, &args, &evaluated[index]).await?;
+        return reconcile_legacy_cost_policy(
+            client,
+            server,
+            &args,
+            &refreshed,
+            persisted
+                .as_ref()
+                .context("legacy factory item disappeared")?,
+        )
+        .await;
+    }
     let selected_source_base_commit = if let Some(index) = selected_index {
         Some(if evaluated[index].recovery {
             resolve_recovery_source_base_commit(&args, &evaluated[index], &existing)?
@@ -1624,6 +1652,10 @@ async fn preflight_factory_mission(
 
 fn validate_args(args: &FactoryArgs) -> Result<()> {
     repository_parts(&args.repository)?;
+    if args.budget_tokens <= 0 || args.budget_cost_microusd <= 0 {
+        bail!("factory token and cost budgets must be positive");
+    }
+    strategy_cost_budgets(&args.strategy, args.budget_cost_microusd).map_err(anyhow::Error::msg)?;
     if args
         .max_task_attempts
         .is_some_and(|value| !(1..=MAX_TASK_ATTEMPTS).contains(&value))
@@ -1645,9 +1677,6 @@ fn validate_args(args: &FactoryArgs) -> Result<()> {
         bail!("factory adapter and strategy are required");
     }
     factory_adapter_allowlist(args)?;
-    if args.budget_tokens <= 0 || args.budget_cost_microusd <= 0 {
-        bail!("factory token and cost budgets must be positive");
-    }
     if !(30..=3_600).contains(&args.lease_seconds) {
         bail!("factory lease must be between 30 and 3600 seconds");
     }
@@ -1895,23 +1924,8 @@ fn resolve_recovery_source_base_commit_from_item(
     args: &FactoryArgs,
     item: &ExistingFactoryItem,
 ) -> Result<ResolvedSourceCommit> {
-    ensure_recovery_connection_matches(args, &item.policy)?;
-    let policy = item
-        .policy
-        .as_object()
-        .context("persisted factory policy is not a JSON object")?;
-    let source_base_ref = policy
-        .get("source_base_ref")
-        .and_then(Value::as_str)
-        .filter(|value| !value.is_empty())
-        .context("persisted factory policy has no source_base_ref")?;
-    validate_source_base_ref(source_base_ref)?;
-    if source_base_ref != args.source_base_ref {
-        bail!(
-            "factory recovery source base ref mismatch: persisted policy requires {source_base_ref}, controller requested {}",
-            args.source_base_ref
-        );
-    }
+    let source_base_ref = ensure_recovery_selectors_match(args, &item.policy)?;
+    let policy = &item.policy;
     if let Some(commit) = policy.get("source_base_commit").and_then(Value::as_str) {
         let commit = commit.to_ascii_lowercase();
         validate_source_base_commit(&commit)?;
@@ -1931,6 +1945,26 @@ fn resolve_recovery_source_base_commit_from_item(
         commit: resolve_source_base_commit_at_ref(args, source_base_ref)?,
         legacy_upgrade_required: true,
     })
+}
+
+fn ensure_recovery_selectors_match<'a>(args: &FactoryArgs, policy: &'a Value) -> Result<&'a str> {
+    ensure_recovery_connection_matches(args, policy)?;
+    let policy = policy
+        .as_object()
+        .context("persisted factory policy is not a JSON object")?;
+    let source_base_ref = policy
+        .get("source_base_ref")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .context("persisted factory policy has no source_base_ref")?;
+    validate_source_base_ref(source_base_ref)?;
+    if source_base_ref != args.source_base_ref {
+        bail!(
+            "factory recovery source base ref mismatch: persisted policy requires {source_base_ref}, controller requested {}",
+            args.source_base_ref
+        );
+    }
+    Ok(source_base_ref)
 }
 
 fn ensure_recovery_connection_matches(args: &FactoryArgs, policy: &Value) -> Result<()> {
@@ -2599,6 +2633,81 @@ async fn reconcile_checkpoint_cancellation(
     }))
 }
 
+fn legacy_cost_policy_rejection(item: &ExistingFactoryItem) -> Option<String> {
+    if item.mission_id.is_none() && matches!(item.state.as_str(), "claimed" | "blocked") {
+        validate_factory_cost_policy(&item.policy).err()
+    } else {
+        None
+    }
+}
+
+async fn reconcile_legacy_cost_policy(
+    client: &Client,
+    server: &str,
+    args: &FactoryArgs,
+    selected: &EvaluatedItem,
+    item: &ExistingFactoryItem,
+) -> Result<Value> {
+    resolve_recovery_max_task_attempts(args, item)?;
+    ensure_recovery_selectors_match(args, &item.policy)?;
+    if args.dry_run
+        || args.issue != Some(item.source_issue_number)
+        || legacy_cost_policy_rejection(item).is_none()
+        || !factory_recovery_source_matches(args, &selected.project_item, &selected.issue, item)
+        || selected.issue.updated_at != item.source_revision
+    {
+        bail!(
+            "legacy cost reconciliation requires the exact unchanged issue and impossible pre-materialization policy"
+        );
+    }
+    let response = server_json(
+        client,
+        Method::POST,
+        format!(
+            "{server}/api/corps/{}/factory/work-items/claim",
+            args.corp_id
+        ),
+        Some(json!({
+            "actor_id": args.actor_id,
+            "source_project_owner": item.source_project_owner,
+            "source_project_number": item.source_project_number,
+            "source_project_item_id": item.source_project_item_id,
+            "source_repository_owner": item.source_repository_owner,
+            "source_repository_name": item.source_repository_name,
+            "source_issue_number": item.source_issue_number,
+            "source_issue_node_id": item.source_issue_node_id,
+            "source_issue_url": item.source_issue_url,
+            "source_title": item.source_title,
+            "source_revision": item.source_revision,
+            "lease_seconds": args.lease_seconds,
+            "policy": item.policy,
+            "idempotency_key": format!(
+                "factory:{}:invalid-cost:{}:{}:lease:{}",
+                item.id, item.version, args.actor_id, args.lease_seconds
+            ),
+        })),
+    )
+    .await?;
+    if value_uuid(&response, "/work_item/id")? != item.id
+        || value_uuid(&response, "/work_item/corp_id")? != args.corp_id
+        || value_string(&response, "/work_item/state")? != "failed"
+        || value_optional_uuid(&response, "/work_item/mission_id")?.is_some()
+        || response.pointer("/work_item/policy") != Some(&item.policy)
+        || value_string(&response, "/work_item/source_revision")? != item.source_revision
+        || response
+            .get("claim_token")
+            .is_some_and(|token| !token.is_null())
+    {
+        bail!("server did not reconcile the legacy cost policy; no external effect was attempted");
+    }
+    Ok(json!({
+        "mode": "legacy_cost_policy_reconciled",
+        "work_item": response["work_item"],
+        "replayed": response["replayed"],
+        "github_mutations": [],
+    }))
+}
+
 fn evaluate_items(
     args: &FactoryArgs,
     items: Vec<ProjectItem>,
@@ -2631,6 +2740,14 @@ fn evaluate_items(
             reasons.push("Project item content is stale relative to the issue".to_owned());
         }
         if let Some(factory_item) = existing.get(&item.id) {
+            if legacy_cost_policy_rejection(factory_item).is_some()
+                && args.issue != Some(issue.number)
+            {
+                reasons.push(format!(
+                    "legacy pre-materialization cost policy is incompatible; use --issue {} --dry-run to inspect explicit terminal reconciliation",
+                    issue.number
+                ));
+            }
             let recoverable_state = factory_state_is_recoverable(&factory_item.state);
             let explicit_verified_replay = args.verification_recovery.is_none()
                 && args.issue == Some(issue.number)
@@ -4476,6 +4593,164 @@ mod tests {
         reviewed_recovery_source, sanitize_failure_detail, selected_publication_base_ref,
         truncate_utf8, validate_args, validate_source_base_commit,
     };
+
+    #[tokio::test]
+    async fn issue79_run_rejects_cost_before_github_or_server_in_both_modes() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let server = format!("http://{}", listener.local_addr().unwrap());
+        let client = reqwest::Client::builder().no_proxy().build().unwrap();
+        for dry_run in [false, true] {
+            for (strategy, cost) in [
+                ("single", 20_000_000),
+                ("single", 10_000_001),
+                ("parallel-specialists", 23_333_333),
+                ("parallel-specialists", 2),
+                ("studio-swarm", 18_181_817),
+                ("studio-swarm", 3),
+                ("single", i64::MAX),
+            ] {
+                let mut args = RecoveryFixture::new().args;
+                args.verification_recovery = None;
+                args.verification_recovery_reason = None;
+                args.strategy = strategy.to_owned();
+                args.budget_cost_microusd = cost;
+                args.source_repository_path = "issue79-must-not-access-checkout".into();
+                args.dry_run = dry_run;
+                let error = super::run(&client, &server, args).await.unwrap_err();
+                assert!(error.to_string().contains("cost budget"), "{error:#}");
+                assert!(!error.to_string().contains("must-not-run-github"));
+            }
+        }
+        assert!(
+            tokio::time::timeout(std::time::Duration::from_millis(25), listener.accept())
+                .await
+                .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn issue79_legacy_cost_requires_exact_intake_and_only_audited_server_reconciliation() {
+        let f = RecoveryFixture::new();
+        let mut args = f.args.clone();
+        args.verification_recovery = None;
+        args.verification_recovery_reason = None;
+        args.workspace_connection_id = Some(Uuid::from_u128(79));
+        args.source_repository_path = "issue79-must-not-access-checkout".into();
+        let mut item = f.persisted_item();
+        item.state = "claimed".to_owned();
+        item.mission_id = None;
+        item.source_revision = f.selected.issue.updated_at.clone();
+        item.policy["strategy_allowlist"] = json!(["single"]);
+        item.policy["budget_cost_microusd"] = json!(20_000_000);
+        item.policy["source_base_ref"] = json!(args.source_base_ref);
+        item.policy["workspace_connection_id"] = json!(args.workspace_connection_id);
+        item.policy["source_commit_upgrade_required"] = json!(true);
+        let original = item.policy.clone();
+        let mut cache = HashMap::from([(f.selected.issue.number, f.selected.issue.clone())]);
+        let existing = HashMap::from([(item.source_project_item_id.clone(), item.clone())]);
+        for exact in [false, true] {
+            args.issue = exact.then_some(item.source_issue_number);
+            let evaluated = evaluate_items(
+                &args,
+                vec![f.selected.project_item.clone()],
+                &existing,
+                &mut cache,
+            )
+            .unwrap();
+            assert_eq!(evaluated[0].eligible(), exact, "{:?}", evaluated[0].reasons);
+        }
+        let (server, requests) = issue206_http_fixture(vec![json!({
+            "work_item": {
+                "id": item.id, "corp_id": args.corp_id, "state": "failed",
+                "mission_id": null, "policy": item.policy, "source_revision": item.source_revision,
+            },
+            "claim_token": null, "replayed": false,
+        })])
+        .await;
+        let response = super::reconcile_legacy_cost_policy(
+            &reqwest::Client::builder().no_proxy().build().unwrap(),
+            &server,
+            &args,
+            &f.selected,
+            &item,
+        )
+        .await
+        .unwrap();
+        assert_eq!(response["mode"], "legacy_cost_policy_reconciled");
+        let requests = requests.await.unwrap();
+        assert_eq!(requests.len(), 1);
+        assert!(requests[0].0.starts_with(&format!(
+            "POST /api/corps/{}/factory/work-items/claim",
+            args.corp_id
+        )));
+        assert_eq!(requests[0].1["policy"], original);
+        assert_eq!(requests[0].1["source_revision"], item.source_revision);
+        item.mission_id = Some(f.mission_id);
+        assert!(super::legacy_cost_policy_rejection(&item).is_none());
+        item.mission_id = None;
+        item.state = "failed".to_owned();
+        assert!(super::legacy_cost_policy_rejection(&item).is_none());
+    }
+
+    #[tokio::test]
+    async fn issue79_legacy_cost_selector_mismatches_never_post_or_pin_source() {
+        let f = RecoveryFixture::new();
+        let connection = Uuid::from_u128(79);
+        let mut item = f.persisted_item();
+        item.state = "claimed".to_owned();
+        item.mission_id = None;
+        item.source_revision = f.selected.issue.updated_at.clone();
+        item.policy = json!({
+            "strategy_allowlist": ["single"],
+            "budget_cost_microusd": 20_000_000,
+            "source_base_ref": "main",
+            "workspace_connection_id": connection,
+            "source_commit_upgrade_required": true,
+        });
+        let original = item.policy.clone();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let server = format!("http://{}", listener.local_addr().unwrap());
+        let client = reqwest::Client::builder()
+            .no_proxy()
+            .timeout(std::time::Duration::from_millis(250))
+            .build()
+            .unwrap();
+        for dry_run in [false, true] {
+            for (requested_connection, source_ref, expected_error) in [
+                (None, "main", "workspace connection differs"),
+                (
+                    Some(Uuid::from_u128(80)),
+                    "main",
+                    "workspace connection differs",
+                ),
+                (Some(connection), "release", "source base ref mismatch"),
+            ] {
+                let mut args = f.args.clone();
+                args.verification_recovery = None;
+                args.verification_recovery_reason = None;
+                args.source_repository_path = "issue79-must-not-access-checkout".into();
+                args.workspace_connection_id = requested_connection;
+                args.source_base_ref = source_ref.to_owned();
+                args.dry_run = dry_run;
+                let error = super::reconcile_legacy_cost_policy(
+                    &client,
+                    &server,
+                    &args,
+                    &f.selected,
+                    &item,
+                )
+                .await
+                .unwrap_err();
+                assert!(error.to_string().contains(expected_error), "{error:#}");
+                assert_eq!(item.policy, original);
+            }
+        }
+        assert!(
+            tokio::time::timeout(std::time::Duration::from_millis(25), listener.accept())
+                .await
+                .is_err()
+        );
+    }
 
     struct RecoveryFixture {
         args: FactoryArgs,
