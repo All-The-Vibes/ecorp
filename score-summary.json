@@ -185,8 +185,8 @@
     "ci_maintenance_head": "69895ab42076e9f6e3e123affd0d0346960e24ff",
     "ci_maintenance_status": "open; all 17 hosted checks passed; default-branch activation not verified",
     "mcp_recovery_pr": "https://github.com/All-The-Vibes/ecorp/pull/351",
-    "mcp_recovery_head": "5ae41f65415fbcbe8aad48221a49389ef5c7a7d5",
-    "mcp_recovery_status": "open; locally qualified; separate from the scored source"
+    "mcp_recovery_head": "d599b28c523a544627528b5d54fa2664a0349651",
+    "mcp_recovery_status": "open; numeric-boundary review fix qualified locally; latest hosted checks separate"
   },
   "auxiliary": {
     "cleanup_score": 70,
@@ -212,7 +212,8 @@
     "toolchain": {
       "node": "24.19.0",
       "rust": "1.98.1",
-      "pnpm": "11.19.0"
+      "pnpm": "11.19.0",
+      "auxiliary_npm": "10.9.8 through adjacent Node22.23.2"
     },
     "gates": [
       {
@@ -254,12 +255,32 @@
     ],
     "native_test_scope": "Full unit suite executed with CRONY_MCP_TEST_BINARY set to the newly built gateway; compiled mock-API/probe/receipt/consumer/feedback cases executed without skips.",
     "failed_attempt_scope": "Initial offline dependency resolution failed because current locked versions were absent from caches. The first executable Rust run then failed on one Windows sharing violation during checkpoint fixture cleanup after its behavioral assertions: 374 passed, 1 failed, 1 ignored before Cargo stopped. The exact unchanged compiled test passed its bounded diagnostic, followed by one complete successful workspace repeat. The initial Node gate recorded 1131 passes and five missing-pwsh.exe PATH failures; the corrected full unit gate restores the existing PowerShell7 path. All failed outputs are retained; no source, assertion, security setting or fixture-cleanup policy was changed.",
-    "real_server_scope": "Historical full-stack acceptance is attributed separately to its original frozen producer. This summary alone makes no fresh server/browser/provider/benchmark claim."
+    "real_server_scope": "Historical full-stack acceptance is attributed separately to its original frozen producer. This summary alone makes no fresh server/browser/provider/benchmark claim.",
+    "head": "5ae41f65415fbcbe8aad48221a49389ef5c7a7d5"
   },
-  "progress_updated_at": "2026-09-18T21:50:59.495Z",
+  "progress_updated_at": "2026-09-18T22:13:36.573Z",
   "next_evidence": [
     "Accepted reviewed contributions and default-branch CI handoff",
     "Governed bounded correction and recovery outcomes",
     "Authenticated exact-corpus, rule and adoption-intent review"
-  ]
+  ],
+  "mcp_review_followup": {
+    "head": "d599b28c523a544627528b5d54fa2664a0349651",
+    "parent": "5ae41f65415fbcbe8aad48221a49389ef5c7a7d5",
+    "files": [
+      "docs/specs/mcp-inspection-v2.md",
+      "tools/probe_mcp.mjs",
+      "tools/probe_mcp.test.mjs"
+    ],
+    "node_passed": 1167,
+    "steward_passed": 227,
+    "failed": 0,
+    "skipped": 0,
+    "expected_old_validator_failure": true,
+    "unchanged_source_files": 727,
+    "native_gateway_unchanged": true,
+    "original_rust_receipts_reused_for_identical_inputs": true,
+    "new_real_server_run_claimed": false,
+    "benchmark_score_changed": false
+  }
 }
