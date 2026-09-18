@@ -78,13 +78,94 @@ jobs:
           tar -xzf "$archive" -C "$tool_dir" gitleaks
           test "$("$tool_dir/gitleaks" version)" = '8.30.1'
           printf '%s\n' "$tool_dir" >> "$GITHUB_PATH"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.19.0
+          package-manager-cache: false
       - name: Scan the selected commit and its complete ancestry
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse --is-shallow-repository)" = 'false'
+          diagnostic_dir="$(mktemp -d "$RUNNER_TEMP/ecorp-secret-scan.XXXXXX")"
+          trap 'rm -f -- "$diagnostic_dir/report.json" "$diagnostic_dir/scan.log"; rmdir -- "$diagnostic_dir"' EXIT
+          scan_status=0
           # Explicit HEAD scope does not scan other refs.
           # Keep native default rules and do not allow inline suppression comments.
           gitleaks git . --log-opts=HEAD --redact=100 --no-banner --no-color \
-            --ignore-gitleaks-allow --gitleaks-ignore-path .gitleaksignore --timeout 300
-          # No reports containing matched values are uploaded as artifacts.
+            --ignore-gitleaks-allow --gitleaks-ignore-path .gitleaksignore --timeout 300 \
+            --report-format=json --report-path="$diagnostic_dir/report.json" \
+            >"$diagnostic_dir/scan.log" 2>&1 || scan_status=$?
+          # Keep the reporter inline: selected heads can predate its support files.
+          # Metadata only; see docs/SECRET_SCAN.md. Never upload the raw report/log.
+          node --input-type=module - "$diagnostic_dir/report.json" "$scan_status" <<'ECORP_SCAN_REPORT'
+          import { openSync, closeSync, fstatSync, lstatSync, readSync } from 'node:fs'
+
+          const maxBytes = 4 * 1024 * 1024
+          const maxFindings = 1000
+          const displayLimit = 50
+          const [file, statusText, ...extra] = process.argv.slice(2)
+          const status = /^(0|[1-9][0-9]{0,2})$/.test(statusText ?? '') && Number(statusText) <= 255
+            ? Number(statusText) : null
+          class DiagnosticError extends Error {}
+          const fail = (code) => { throw new DiagnosticError(code) }
+          // Neutralize both current and legacy workflow-command delimiters inside JSON strings.
+          const serialize = value => JSON.stringify(value, null, 2)
+            .replaceAll('::', '\\u003a\\u003a').replaceAll('#', '\\u0023')
+          const text = (value, limit) => typeof value === 'string' && value.length > 0
+            && value.length <= limit && !/[\p{Cc}\p{Cf}]/u.test(value)
+          function metadata(finding) {
+            if (!finding || typeof finding !== 'object' || Array.isArray(finding)) fail('invalid_finding')
+            const { Commit, File, RuleID, StartLine, EndLine } = finding
+            if (typeof Commit !== 'string' || !/^[a-f0-9]{40}$/.test(Commit)) fail('invalid_commit')
+            if (!text(File, 1024) || /^[\\/]|^[a-z]:/i.test(File)
+              || File.split(/[\\/]/).some(part => !part || part === '.' || part === '..')) fail('invalid_file')
+            if (typeof RuleID !== 'string' || !/^[a-z0-9][a-z0-9._-]{0,127}$/i.test(RuleID)) fail('invalid_rule')
+            if (!Number.isSafeInteger(StartLine) || StartLine < 1
+              || !Number.isSafeInteger(EndLine) || EndLine < StartLine) fail('invalid_lines')
+            return { commit: Commit, file: File, start_line: StartLine, end_line: EndLine,
+              rule_id: RuleID, fingerprint: `${Commit}:${File}:${RuleID}:${StartLine}` }
+          }
+          try {
+            if (!file || extra.length || status === null) fail('invalid_arguments')
+            let descriptor
+            let bytes
+            try {
+              if (!lstatSync(file).isFile()) fail('report_not_regular')
+              descriptor = openSync(file, 'r')
+              const before = fstatSync(descriptor)
+              if (!before.isFile() || before.size < 1 || before.size > maxBytes) fail('report_size')
+              const buffer = Buffer.alloc(maxBytes + 1)
+              let length = 0
+              while (length < buffer.length) {
+                const count = readSync(descriptor, buffer, length, buffer.length - length, null)
+                if (!count) break
+                length += count
+              }
+              if (length > maxBytes) fail('report_size')
+              const after = fstatSync(descriptor)
+              if (length !== before.size || before.size !== after.size || before.mtimeMs !== after.mtimeMs
+                || before.ctimeMs !== after.ctimeMs) fail('report_changed')
+              bytes = buffer.subarray(0, length)
+            } catch (error) {
+              if (error instanceof DiagnosticError) throw error
+              fail('report_unreadable')
+            } finally {
+              if (descriptor !== undefined) closeSync(descriptor)
+            }
+            let findings
+            try { findings = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) }
+            catch { fail('invalid_report_json') }
+            if (!Array.isArray(findings) || findings.length > maxFindings) fail('invalid_report_shape')
+            const rows = findings.map(metadata)
+            if (status === 0 && rows.length !== 0) fail('inconsistent_scan_result')
+            console.log(serialize({ schema_version: 1, status: status === 0 ? 'clean' : 'failed',
+              scan_exit_code: status, finding_count: rows.length, displayed: Math.min(rows.length, displayLimit),
+              omitted: Math.max(0, rows.length - displayLimit), findings: rows.slice(0, displayLimit) }))
+            process.exitCode = status
+          } catch (error) {
+            console.error(serialize({ schema_version: 1, status: 'diagnostics_failed', scan_exit_code: status,
+              error_code: error instanceof DiagnosticError ? error.message : 'report_processing_failed' }))
+            process.exitCode = status || 2
+          }
+          ECORP_SCAN_REPORT
