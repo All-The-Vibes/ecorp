@@ -86,8 +86,10 @@ required for real-agent work.
 
 Clone ECorp and give the runner an execution root that is separate from the configured source
 checkout. Before the startup commands below, complete separate authorized database/identity setup
-and supply the existing `DATABASE_URL`, Corp/actor/runner IDs and current runner credential as
-described in the [startup guide](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#start-reuse-or-explicitly-restart):
+and supply the existing `DATABASE_URL`, Corp/actor/runner IDs and current runner credential.
+For a fresh development stack, use the executable
+[first-time setup procedure](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#first-time-local-development-setup);
+for retained stacks, use the [startup guide](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#start-reuse-or-explicitly-restart):
 
 ```powershell
 git clone https://github.com/All-The-Vibes/ecorp.git
@@ -118,8 +120,8 @@ ownership. Startup does not provision or take ownership of a database listener.
 
 ### Local startup and recovery
 
-After separate authorized database/identity setup, validate without changing runtime state,
-then start:
+After [explicit first-time setup](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#first-time-local-development-setup)
+or restoration of an existing authorized identity, validate without changing runtime state, then start:
 
 ```powershell
 pwsh -NoProfile -File ./tools/start_local.ps1 -Preflight
