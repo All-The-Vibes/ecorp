@@ -759,6 +759,14 @@ classifier or treat requested sandbox configuration as proof of OS enforcement. 
 runner-owned verifier commands execute after the provider has terminated, without duplicating
 routine tests as model-session approval requests.
 
+**September 18, 2026 correction:** the adapter does not write task-specific sandbox policy into
+the account-wide Copilot settings store. A zero-inference probe with the production filesystem
+provider and session configuration found command sandboxing disabled in SDK `1.0.11` / CLI
+`1.0.79`, despite restrictive account settings and the existing launch flags. Removing those
+global writes preserves native home, authentication, history, and the existing ECorp filesystem
+and approval boundaries. No native OS sandbox assurance is claimed for this path; see
+[the security correction](SECURITY.md). Historical execution evidence remains unchanged.
+
 Deterministic app-server fixtures and authenticated real-provider probes cover start, structured
 streaming, steering, interruption, emergency stop, resume, usage, artifacts, and failure behavior.
 

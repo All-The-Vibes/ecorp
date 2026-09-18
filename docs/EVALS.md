@@ -317,6 +317,42 @@ constant. Mutation fixtures prove changed commands, changed pins, missing/duplic
 and invalid/cyclic aliases fail; updated current documentation restores passing. This is a
 deterministic check for those contracts, not semantic or repository-wide documentation proof.
 
+### Native Rust unit and SQLx coverage on Linux
+
+The `rust-sqlx-coverage-ubuntu` job in `.github/workflows/repository-checks.yml`
+uses its own pinned PostgreSQL 17 service and the existing SQLx test harness.
+`tools/coverage_rust_sqlx.sh` first runs native workspace unit tests, then all
+existing ignored tests in `crony-store` and `crony-server`, accumulating profiles
+with cargo-llvm-cov 0.9.1 and Rust 1.98.1. It requests no code exclusions. Other
+ignored tests, including the runner's stopped-session probe, remain unexecuted.
+The existing Windows unit-only coverage job remains a separate platform lane.
+
+Local execution requires Linux x86_64, Node 22.23.2 with npm, the pinned Rust and
+coverage tools, `psql`, a valid Git checkout, and an explicitly owned disposable
+PostgreSQL service. `DATABASE_URL` and the matching `PGHOST`, `PGPORT`, `PGUSER`,
+`PGPASSWORD`, and `PGDATABASE` must select the `ecorp_coverage` role/database on
+loopback or the isolated `postgres` service. The caller declares ownership with
+`ECORP_COVERAGE_OWNED_DATABASE=1`. A read-only preflight rejects an existing
+`_sqlx_test` schema or any `_sqlx_test_*` child database before SQLx can clean or
+reuse its deterministic names. Use a fresh service after an incomplete run;
+preserve the old database and evidence for inspection.
+
+From that prepared checkout, set `CARGO_TARGET_DIR` to a new absolute directory
+and run `bash tools/coverage_rust_sqlx.sh`. The script refuses an existing target
+or `coverage/` directory. The native reporter writes `coverage/lcov.info`
+directly; no older report is copied or renamed. `native-summary.json`, test logs,
+tool versions/hashes, before/after source hashes and Git blobs, and `run.json`
+retain the actual platform, test counts, measured source-file set, totals and
+outcome. The receipt also binds the invocation script and workflow. CI uploads
+these artifacts for 14 days, including incomplete runs. The native line floor
+is enforced separately from test success, and source changes fail the lane.
+
+This is coverage of the native Rust workspace under the compiled Linux
+configuration. It is not whole-repository coverage, web coverage, provider
+inference, or browser/server/runner acceptance. Those lanes retain their own
+tests, source scopes and evidence. Local execution does not establish hosted
+GitHub Actions success.
+
 ### Production web-model coverage
 
 `pnpm coverage:web-models` uses native Node 24 coverage for all 16 declared framework-independent

@@ -88,6 +88,66 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  rust-sqlx-coverage-ubuntu:
+    name: Rust unit and SQLx coverage (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions: { contents: read }
+    defaults: { run: { shell: bash } }
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
+        env:
+          POSTGRES_USER: ecorp_coverage
+          POSTGRES_PASSWORD: ecorp_coverage
+          POSTGRES_DB: ecorp_coverage
+        ports: ['54329:5432']
+        options: >-
+          --health-cmd "pg_isready -U ecorp_coverage -d ecorp_coverage"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://ecorp_coverage:ecorp_coverage@127.0.0.1:54329/ecorp_coverage
+      PGHOST: 127.0.0.1
+      PGPORT: '54329'
+      PGUSER: ecorp_coverage
+      PGPASSWORD: ecorp_coverage
+      PGDATABASE: ecorp_coverage
+      ECORP_COVERAGE_OWNED_DATABASE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: 22.23.2, package-manager-cache: false }
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with: { toolchain: 1.98.1, components: llvm-tools-preview }
+      - name: Install native PostgreSQL client and build prerequisites
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends postgresql-client pkg-config libssl-dev
+      - name: Install verified cargo-llvm-cov 0.9.1
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/cargo-llvm-cov-0.9.1-linux"
+          mkdir "$tools"
+          curl --fail --show-error --location \
+            https://github.com/taiki-e/cargo-llvm-cov/releases/download/v0.9.1/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz \
+            --output "$tools/tool.tar.gz"
+          printf '%s  %s\n' b3f68e625481fed9b16444174f3fa5ebcdbde4a1878803a35eabe2dcefcdc41a "$tools/tool.tar.gz" | sha256sum --check
+          tar --extract --gzip --file "$tools/tool.tar.gz" --directory "$tools"
+          printf '%s\n' "$tools" >> "$GITHUB_PATH"
+      - name: Execute native workspace and owned SQLx coverage
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/ecorp-rust-sqlx-coverage-target
+        run: bash tools/coverage_rust_sqlx.sh
+      - name: Preserve native reports, source identities and scope
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rust-sqlx-coverage-linux
+          path: coverage/
+          if-no-files-found: warn
+          retention-days: 14
+
   # Native Windows/MSVC unit baseline: 45.8057% lines; the 45.0% floor allows modest
   # platform variation. Ignored database coverage is measured in a separate owned lane.
   rust-unit-coverage-windows:
