@@ -156,6 +156,20 @@ async fn issue161_new_production_claim_requires_valid_matching_pin_without_side_
         "claim_authority_id is required",
     );
     assert_eq!(ledger(&f).await?, original);
+    // Integrating planning-cost admission must not let a matching authority pin
+    // bypass cost limits, or consume the idempotency key on a rejected claim.
+    let mut invalid_cost = accepted_policy.clone();
+    invalid_cost["budget_cost_microusd"] = json!(0);
+    assert!(
+        f.store
+            .claim_factory_work_item_with_authority(
+                claim_input(&f, invalid_cost, "issue161-missing"),
+                true,
+            )
+            .await
+            .is_err()
+    );
+    assert_eq!(ledger(&f).await?, original);
     let input = claim_input(&f, accepted_policy, "issue161-missing");
     let claimed = f
         .store

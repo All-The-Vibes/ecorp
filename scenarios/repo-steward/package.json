@@ -1,0 +1,22 @@
+{
+  "name": "ecorp-repo-steward",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only repository steward with a manual GitHub audit workflow and an optional disabled Teams adapter",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test steward.test.mjs actions.test.mjs teams-host.test.mjs",
+    "test:core": "node --test steward.test.mjs actions.test.mjs",
+    "preview:live": "node steward.mjs audit --live --dry-run",
+    "audit:live": "node steward.mjs audit --live --format markdown",
+    "actions:preview": "node actions.mjs --dry-run",
+    "actions:fixture": "node actions.mjs --fixture",
+    "preview": "node steward.mjs --dry-run",
+    "audit:fixture": "node steward.mjs audit --fixture --format markdown",
+    "teams:preview": "node teams-host.mjs --dry-run"
+  },
+  "dependencies": {
+    "@microsoft/teams.apps": "2.0.16"
+  }
+}

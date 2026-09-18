@@ -48,7 +48,11 @@ mod budget_checkpoint_tests;
 #[cfg(test)]
 mod factory_recovery_loss_tests;
 #[cfg(test)]
+mod finished_review_tests;
+#[cfg(test)]
 mod mission_context_tests;
+#[cfg(test)]
+mod steering_lock_tests;
 #[cfg(test)]
 mod workspace_connections_tests;
 
@@ -3113,6 +3117,14 @@ impl PgStore {
                     "factory idempotency key was reused with a different policy snapshot"
                 ));
             }
+            if work_item.mission_id.is_none()
+                && !factory_state_is_terminal(work_item.state)
+                && crony_domain::validate_factory_cost_policy(&work_item.policy).is_err()
+            {
+                return Err(anyhow!(
+                    "legacy factory cost policy requires audited reconciliation with a fresh claim idempotency key"
+                ));
+            }
             if let Some(connection_id) = workspace_connection_id {
                 workspace_connections::assert_connection_operator_tx(
                     &mut tx,
@@ -3166,6 +3178,73 @@ impl PgStore {
                     current.id,
                     current.state.as_str()
                 ));
+            }
+            if current.mission_id.is_none()
+                && let Err(reason) = crony_domain::validate_factory_cost_policy(&current.policy)
+            {
+                if !matches!(
+                    current.state,
+                    FactoryWorkItemState::Claimed | FactoryWorkItemState::Blocked
+                ) {
+                    return Err(anyhow!(
+                        "conflict: legacy cost reconciliation requires claimed or blocked work"
+                    ));
+                }
+                ensure_factory_source_matches(&current, &source)?;
+                if current.policy != policy {
+                    return Err(anyhow!(
+                        "factory recovery policy does not match the persisted policy snapshot"
+                    ));
+                }
+                if current.lease_expires_at > now && current.claim_owner_id != input.actor_id {
+                    return Err(anyhow!(
+                        "conflict: legacy factory claim is held by another operator"
+                    ));
+                }
+                if let Some(connection_id) = workspace_connection_id {
+                    workspace_connections::assert_connection_operator_tx(
+                        &mut tx,
+                        input.corp_id,
+                        input.actor_id,
+                        connection_id,
+                    )
+                    .await?;
+                }
+                let failure_detail = normalize_bounded_failure_reason(
+                    &format!(
+                        "Legacy pre-materialization cost policy rejected: {reason}. Policy and source retained; no mission created."
+                    ),
+                    "Legacy pre-materialization cost policy rejected",
+                );
+                let (work_item, event) = persist_factory_state_tx(
+                    &mut tx,
+                    &current,
+                    input.actor_id,
+                    FactoryWorkItemState::Failed,
+                    Some(&failure_detail),
+                )
+                .await?;
+                record_factory_operation_tx(
+                    &mut tx,
+                    NewFactoryOperation {
+                        corp_id: input.corp_id,
+                        idempotency_key: &idempotency_key,
+                        work_item_id: work_item.id,
+                        actor_id: input.actor_id,
+                        operation: "claim",
+                        resulting_version: work_item.version,
+                        claim_token: None,
+                        request: &operation_request,
+                    },
+                )
+                .await?;
+                tx.commit().await?;
+                return Ok(FactoryWorkItemOutcome {
+                    work_item,
+                    claim_token: None,
+                    event: Some(event),
+                    replayed: false,
+                });
             }
             if current.lease_expires_at > now {
                 if current.claim_owner_id == input.actor_id {
@@ -3285,6 +3364,7 @@ impl PgStore {
                     "factory claim_authority_id is required for new production claims; inspect and pin the approved shared authority"
                 ));
             }
+            crony_domain::validate_factory_cost_policy(&policy).map_err(anyhow::Error::msg)?;
             let work_item_id = Uuid::new_v4();
             let row = sqlx::query(
                 r#"
@@ -4178,7 +4258,6 @@ impl PgStore {
             "failure_detail": &failure_detail
         });
         let now = Utc::now();
-        let released_lease_at = now - Duration::seconds(1);
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
         lock_factory_keys_tx(
@@ -4254,35 +4333,14 @@ impl PgStore {
                 .context("factory work item has no linked mission")?;
             ensure_factory_mission_verified_tx(&mut tx, input.corp_id, mission_id).await?;
         }
-        let row = sqlx::query(
-            r#"
-            UPDATE factory_work_items
-            SET state = $1,
-                version = version + 1,
-                failure_detail = $2,
-                lease_expires_at = CASE
-                    WHEN mission_id IS NULL AND $1 = 'blocked' THEN $3
-                    ELSE lease_expires_at
-                END,
-                updated_at = now()
-            WHERE id = $4 AND corp_id = $5
-            RETURNING id, corp_id, source_kind, source_project_owner,
-                      source_project_number, source_project_item_id,
-                      source_repository_owner, source_repository_name,
-                      source_issue_number, source_issue_node_id, source_issue_url,
-                      source_title, source_revision, state, version, claim_owner_id,
-                      lease_expires_at, policy, mission_id, failure_detail,
-                      created_at, updated_at
-            "#,
+        let (work_item, event) = persist_factory_state_tx(
+            &mut tx,
+            &current,
+            input.actor_id,
+            input.state,
+            failure_detail.as_deref(),
         )
-        .bind(input.state.as_str())
-        .bind(&failure_detail)
-        .bind(released_lease_at)
-        .bind(input.work_item_id)
-        .bind(input.corp_id)
-        .fetch_one(&mut *tx)
         .await?;
-        let work_item = map_factory_work_item(row)?;
         record_factory_operation_tx(
             &mut tx,
             NewFactoryOperation {
@@ -4297,37 +4355,6 @@ impl PgStore {
             },
         )
         .await?;
-        let event_room_id =
-            factory_event_room_id_tx(&mut tx, input.corp_id, work_item.mission_id).await?;
-        let event = append_event_tx(
-            &mut tx,
-            NewEvent {
-                room_id: event_room_id,
-                aggregate_version: work_item.version,
-                correlation_id: work_item.mission_id,
-                ..NewEvent::new(
-                    input.corp_id,
-                    Some(input.actor_id),
-                    "factory.state_changed",
-                    "factory_work_item",
-                    work_item.id,
-                    format!(
-                        "factory:{}:state:{}:{}",
-                        work_item.id,
-                        work_item.state.as_str(),
-                        work_item.version
-                    ),
-                    json!({
-                        "previous_state": current.state.as_str(),
-                        "state": work_item.state.as_str(),
-                        "mission_id": work_item.mission_id,
-                        "failure_detail": &work_item.failure_detail
-                    }),
-                )
-            },
-        )
-        .await?
-        .context("factory state-change event unexpectedly existed")?;
         tx.commit().await?;
         Ok(FactoryWorkItemOutcome {
             work_item,
@@ -10584,7 +10611,32 @@ impl PgStore {
 
         let mut tx = self.pool.begin().await?;
         assert_actor_agent_scope_tx(&mut tx, corp_id, actor_id, agent_id).await?;
+        // Match runner events' run-before-agent order. The command foreign key
+        // would otherwise request a run lock while holding the agent grant lock.
+        let destination = sqlx::query_scalar::<_, Uuid>(
+            "SELECT id FROM runs WHERE agent_id = $1 AND corp_id = $2
+             AND status IN ('starting', 'running', 'waiting_for_input',
+                            'waiting_for_approval', 'verifying')
+             ORDER BY created_at DESC, id DESC LIMIT 1",
+        )
+        .bind(agent_id)
+        .bind(corp_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        if let Some(run_id) = destination {
+            // Lock the exact observed row even if its status changed while waiting.
+            sqlx::query(
+                "SELECT id FROM runs WHERE id = $1 AND corp_id = $2 AND agent_id = $3 FOR UPDATE",
+            )
+            .bind(run_id)
+            .bind(corp_id)
+            .bind(agent_id)
+            .fetch_optional(&mut *tx)
+            .await?
+            .context("conflict: message destination changed; retry the request")?;
+        }
         lock_agent_for_grant_tx(&mut tx, corp_id, agent_id).await?;
+        assert_actor_agent_scope_tx(&mut tx, corp_id, actor_id, agent_id).await?;
         sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
             .bind(format!("control-message:{corp_id}:{idempotency_key}"))
             .execute(&mut *tx)
@@ -10668,13 +10720,22 @@ impl PgStore {
             WHERE run.agent_id = $1 AND run.corp_id = $2
               AND run.status IN ('starting', 'running', 'waiting_for_input',
                                  'waiting_for_approval', 'verifying')
-            ORDER BY run.created_at DESC LIMIT 1
+            ORDER BY run.created_at DESC, run.id DESC LIMIT 1
             "#,
         )
         .bind(agent_id)
         .bind(corp_id)
         .fetch_optional(&mut *tx)
         .await?;
+
+        // Do not lock a newly selected run after taking the agent lock. A
+        // destination change must roll back rather than recreate the inversion
+        // or send this request to work that was never locked.
+        if active_run.as_ref().map(|row| row.get::<Uuid, _>("id")) != destination {
+            return Err(anyhow!(
+                "conflict: message destination changed; retry the request"
+            ));
+        }
 
         let adapter_supports_steer = active_run.as_ref().is_some_and(|row| {
             matches!(
@@ -11442,7 +11503,9 @@ async fn mark_runner_runs_lost_tx(
     for row in rows {
         let run_id: Uuid = row.get("run_id");
         let corp_id: Uuid = row.get("corp_id");
-        if checkpoint_retention::review_ready_tx(tx, corp_id, run_id).await? {
+        if finished_provider_review_tx(tx, corp_id, run_id).await?
+            || checkpoint_retention::review_ready_tx(tx, corp_id, run_id).await?
+        {
             // The verifier finished. Its durable human review does not require
             // an active provider claim and must survive runner/server reconnect.
             continue;
@@ -11526,6 +11589,56 @@ async fn mark_runner_runs_lost_tx(
         }
     }
     Ok(events)
+}
+
+/// A finished provider awaiting its durable outcome review has no live process
+/// claim to reconcile. This only preserves state; it grants neither a decision
+/// nor checkpoint/recovery authority. The loss caller holds run/task/mission
+/// locks, and the existing decision path still enforces current authorization.
+async fn finished_provider_review_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    corp_id: Uuid,
+    run_id: Uuid,
+) -> Result<bool> {
+    sqlx::query_scalar(
+        r#"
+        SELECT EXISTS (
+          SELECT 1 FROM runs run
+          JOIN tasks task ON task.id=run.task_id AND task.corp_id=run.corp_id
+          JOIN missions mission ON mission.id=task.mission_id AND mission.corp_id=run.corp_id
+          JOIN verification_requests request
+            ON request.run_id=run.id AND request.corp_id=run.corp_id AND request.task_id=task.id
+          JOIN LATERAL (
+            SELECT event.type, event.payload, event.room_id, event.correlation_id
+            FROM events event
+            WHERE event.corp_id=run.corp_id AND event.aggregate_type='run'
+              AND event.aggregate_id=run.id
+              AND event.type IN ('run.session_terminated','run.teardown_uncertain')
+            ORDER BY event.seq DESC LIMIT 1
+          ) termination ON true
+          WHERE run.id=$1 AND run.corp_id=$2 AND run.execution_mode='provider'
+            AND run.status='waiting_for_approval' AND run.verification_status='waiting_for_approval'
+            AND task.status='awaiting_approval' AND task.verification_status='waiting_for_approval'
+            AND mission.status='running' AND request.status='pending'
+            AND request.gate=task.verification_policy->'manual_gate'
+            AND request.gate_type=task.verification_policy#>>'{manual_gate,type}'
+            AND run.breaker_stage NOT IN ('suspend','stop')
+            AND run.workspace_disposition IS DISTINCT FROM 'quarantined'
+            AND termination.type='run.session_terminated'
+            AND termination.payload->'provider_process_alive'='false'::jsonb
+            AND termination.room_id=mission.room_id AND termination.correlation_id=mission.id
+            AND NOT EXISTS (
+              SELECT 1 FROM action_approvals action
+              WHERE action.corp_id=run.corp_id AND action.run_id=run.id AND action.status='pending'
+            )
+        )
+        "#,
+    )
+    .bind(run_id)
+    .bind(corp_id)
+    .fetch_one(&mut **tx)
+    .await
+    .context("check finished provider outcome review before runner loss")
 }
 
 async fn mission_creation_admission_tx(
@@ -11879,6 +11992,7 @@ fn validate_factory_plan_against_policy_parts(
     policy: &Value,
     plan: &TaskGraphPlan,
 ) -> Result<()> {
+    crony_domain::validate_factory_cost_policy(policy).map_err(anyhow::Error::msg)?;
     factory_attempt_policy::validate_plan(policy, plan)?;
     let connection_id = factory_workspace_connection_id(policy).map_err(anyhow::Error::msg)?;
     if let Some(task) = plan
@@ -12547,6 +12661,76 @@ async fn record_factory_operation_tx(
     .execute(&mut **tx)
     .await?;
     Ok(())
+}
+
+/// Callers must first establish current transition/claim authority under the row lock.
+async fn persist_factory_state_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    current: &FactoryWorkItem,
+    actor_id: Uuid,
+    state: FactoryWorkItemState,
+    failure_detail: Option<&str>,
+) -> Result<(FactoryWorkItem, DomainEvent)> {
+    let row = sqlx::query(
+        r#"
+        UPDATE factory_work_items
+        SET state = $1,
+            version = version + 1,
+            failure_detail = $2,
+            lease_expires_at = CASE
+                WHEN mission_id IS NULL AND $1 IN ('blocked', 'failed') THEN $3
+                ELSE lease_expires_at
+            END,
+            updated_at = now()
+        WHERE id = $4 AND corp_id = $5
+        RETURNING id, corp_id, source_kind, source_project_owner,
+                  source_project_number, source_project_item_id,
+                  source_repository_owner, source_repository_name,
+                  source_issue_number, source_issue_node_id, source_issue_url,
+                  source_title, source_revision, state, version, claim_owner_id,
+                  lease_expires_at, policy, mission_id, failure_detail,
+                  created_at, updated_at
+        "#,
+    )
+    .bind(state.as_str())
+    .bind(failure_detail)
+    .bind(Utc::now() - Duration::seconds(1))
+    .bind(current.id)
+    .bind(current.corp_id)
+    .fetch_one(&mut **tx)
+    .await?;
+    let work_item = map_factory_work_item(row)?;
+    let event_room_id = factory_event_room_id_tx(tx, current.corp_id, work_item.mission_id).await?;
+    let event = append_event_tx(
+        tx,
+        NewEvent {
+            room_id: event_room_id,
+            aggregate_version: work_item.version,
+            correlation_id: work_item.mission_id,
+            ..NewEvent::new(
+                current.corp_id,
+                Some(actor_id),
+                "factory.state_changed",
+                "factory_work_item",
+                work_item.id,
+                format!(
+                    "factory:{}:state:{}:{}",
+                    work_item.id,
+                    work_item.state.as_str(),
+                    work_item.version
+                ),
+                json!({
+                    "previous_state": current.state.as_str(),
+                    "state": work_item.state.as_str(),
+                    "mission_id": work_item.mission_id,
+                    "failure_detail": &work_item.failure_detail
+                }),
+            )
+        },
+    )
+    .await?
+    .context("factory state-change event unexpectedly existed")?;
+    Ok((work_item, event))
 }
 
 async fn factory_work_item_tx(

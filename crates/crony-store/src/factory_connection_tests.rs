@@ -839,3 +839,6 @@ mod attempt_policy;
 
 #[path = "issue161_authority_tests.rs"]
 mod claim_authority;
+
+#[path = "factory_cost_policy_tests.rs"]
+mod cost_policy;

@@ -1,0 +1,76 @@
+name: Repo Steward (manual, read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Preview, synthetic fixture, or approved live audit
+        type: choice
+        default: preview
+        options:
+          - preview
+          - fixture
+          - live
+      publish_summary:
+        description: Approve publishing the limited LIVE finding index in this PUBLIC repository's job summary
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repo-steward-manual
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: scenarios/repo-steward
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.19.0
+          package-manager-cache: false
+      - name: Test the audit core and hosted boundary without external access
+        run: node --test steward.test.mjs actions.test.mjs
+      - name: Preview the fixed read-only scope
+        env:
+          ECORP_STEWARD_REQUESTED_MODE: ${{ inputs.mode }}
+        run: node actions.mjs --dry-run
+      - name: Exercise the synthetic fixture
+        if: ${{ inputs.mode == 'fixture' }}
+        run: node actions.mjs --fixture
+
+  live:
+    needs: validate
+    if: ${{ inputs.mode == 'live' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    environment: repo-steward-readonly
+    defaults:
+      run:
+        working-directory: scenarios/repo-steward
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.19.0
+          package-manager-cache: false
+      - name: Run the explicitly approved scoped audit
+        env:
+          GH_TOKEN: ${{ secrets.ECORP_STEWARD_READ_TOKEN }}
+          ECORP_STEWARD_ACTIONS_ENABLED: ${{ vars.ECORP_STEWARD_ACTIONS_ENABLED }}
+          ECORP_STEWARD_PUBLIC_SUMMARY: ${{ inputs.publish_summary }}
+          ECORP_STEWARD_ALLOW_WRITES: 'false'
+        run: node actions.mjs --live
