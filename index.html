@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="ECorp readiness results, delivered improvements, validation scope and remaining operating-evidence gaps. September 18, 2026.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+  <title>ECorp · Readiness &amp; operating evidence · 18 September 2026</title>
+  <style>
+    :root { --ink:#182c43; --muted:#54667b; --line:#dce4eb; --paper:#f3f6f9; --navy:#10283e; --teal:#00766f; --teal-soft:#e7f5f1; --amber:#8a5400; --amber-soft:#fff3dc; --blue:#355db1; --blue-soft:#edf2ff; --radius:16px; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.55 "Segoe UI", Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+    a { color:#2855a2; text-underline-offset:3px; }
+    a:hover { color:#173a75; }
+    a:focus-visible, button:focus-visible { outline:3px solid #8aaafb; outline-offset:4px; }
+    button { font:inherit; }
+    code { font:0.88em/1.4 Consolas, "Courier New", monospace; overflow-wrap:anywhere; }
+    h1,h2,h3,p { margin:0; }
+    h1 { font-size:clamp(32px,4.3vw,50px); line-height:1.08; letter-spacing:-1.5px; font-weight:650; }
+    h2 { font-size:25px; line-height:1.25; letter-spacing:-0.5px; font-weight:650; }
+    h3 { font-size:17px; line-height:1.35; font-weight:650; }
+    p + p { margin-top:12px; }
+    .wrap { width:min(1120px,calc(100% - 48px)); margin:0 auto; }
+    .topbar { background:#fff; border-bottom:1px solid var(--line); }
+    .topbar .wrap { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 0; }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:0.2px; }
+    .brand-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:9px; background:var(--navy); color:white; font-size:21px; font-weight:700; }
+    .brand-sub { display:block; color:var(--muted); font-size:11px; font-weight:500; letter-spacing:1.2px; text-transform:uppercase; }
+    .actions { display:flex; align-items:center; gap:18px; font-size:13px; }
+    .actions a { text-decoration:none; font-weight:600; }
+    .print-button { background:#fff; color:var(--ink); border:1px solid #b8c6d2; border-radius:8px; padding:8px 12px; cursor:pointer; }
+    .print-button:hover { background:var(--paper); }
+    .hero { background:var(--navy); color:#fff; padding:44px 0 34px; }
+    .eyebrow { font-size:11px; text-transform:uppercase; letter-spacing:1.8px; font-weight:700; }
+    .hero .eyebrow { color:#a7c5da; margin-bottom:13px; }
+    .hero-title { display:flex; justify-content:space-between; align-items:flex-start; gap:25px; }
+    .hero-copy { margin-top:14px; color:#cbd9e5; max-width:665px; font-size:16px; }
+    .date { flex-shrink:0; color:#cbd9e5; font-size:13px; padding-top:6px; }
+    .scores { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:30px; }
+    .score-card { border:1px solid #426077; background:#19364e; border-radius:14px; padding:21px 23px 18px; }
+    .score-card.operations { background:#2a3741; border-color:#81725b; }
+    .score-label { font-weight:600; color:#d5e2ec; font-size:13px; }
+    .score-value { display:block; margin:8px 0 5px; font-size:58px; font-weight:650; letter-spacing:-2.5px; line-height:1.05; font-variant-numeric:tabular-nums; }
+    .score-value small { font-size:17px; letter-spacing:0; font-weight:400; color:#b7cbdc; }
+    .operations .score-value { color:#ffd595; }
+    .score-note { font-size:12px; color:#c6d7e3; }
+    .hero-meta { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-top:21px; }
+    .hero-tag { font-size:11px; font-weight:600; padding:4px 9px; border:1px solid #537085; border-radius:5px; color:#e0eaf1; }
+    .hero-tag.alert { background:#ffe2b0; color:#654000; border-color:#ffe2b0; }
+    .source-line { margin-top:15px; font-size:11px; color:#b3c8d9; overflow-wrap:anywhere; }
+    .source-line a { color:#d5e7ff; }
+    main { padding:26px 0 38px; }
+    .recency { display:grid; grid-template-columns:4px 1fr; gap:18px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px 22px 18px 0; box-shadow:0 3px 10px #12304a06; }
+    .recency::before { content:""; background:var(--blue); border-radius:4px; }
+    .recency h2 { font-size:16px; letter-spacing:0; margin-bottom:5px; }
+    .recency p { color:var(--muted); font-size:13px; }
+    section { margin-top:36px; }
+    .section-heading { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+    .section-heading .sub { font-size:12px; color:var(--muted); }
+    .two-col { display:grid; grid-template-columns:1.1fr 1fr; gap:18px; }
+    .panel { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:24px; }
+    .panel h3 { margin-bottom:12px; }
+    .panel p { color:var(--muted); font-size:13px; }
+    .plain-list { list-style:none; margin:0; padding:0; }
+    .plain-list li { display:flex; align-items:flex-start; gap:12px; margin-top:13px; font-size:13px; color:var(--muted); }
+    .plain-list li:first-child { margin-top:0; }
+    .list-number { flex:0 0 22px; display:grid; place-items:center; height:22px; background:var(--blue-soft); color:var(--blue); border-radius:50%; font-size:11px; font-weight:700; }
+    .plain-list strong { color:var(--ink); }
+    .math-box { border-left:3px solid #d5a858; padding-left:14px; margin-top:18px; }
+    .math-box strong { color:var(--ink); }
+    .mini-label { display:inline-block; font-size:10px; font-weight:700; line-height:1.3; letter-spacing:0.5px; text-transform:uppercase; padding:4px 7px; border-radius:4px; background:var(--teal-soft); color:#00675e; }
+    .mini-label.later { color:#315293; background:var(--blue-soft); }
+    .mini-label.history { color:#5f6170; background:#eff0f4; }
+    .dimension-panel { background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+    table { border-collapse:collapse; width:100%; }
+    caption { text-align:left; padding:17px 20px; font-size:12px; color:var(--muted); }
+    th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.9px; color:var(--muted); background:#f8fafc; }
+    th,td { padding:12px 20px; border-bottom:1px solid #e8edf1; vertical-align:middle; }
+    tbody tr:last-child td { border-bottom:0; }
+    .dimension { width:32%; font-size:13px; font-weight:600; }
+    .dimension span { color:#718093; font-size:10px; margin-right:8px; font-weight:600; }
+    .score-cell { width:20%; min-width:140px; }
+    .bar-row { display:flex; align-items:center; gap:10px; }
+    .bar { flex:1; height:7px; background:#e8edf3; border-radius:8px; overflow:hidden; }
+    .bar i { display:block; height:100%; background:#5c7abb; border-radius:8px; }
+    .bar.low i { background:#b5863e; }
+    .bar.full i { background:var(--teal); }
+    .raw-score { width:25px; font:600 12px/1.4 Consolas,monospace; white-space:nowrap; }
+    .weight { width:8%; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+    .basis { font-size:12px; color:var(--muted); line-height:1.45; }
+    .table-note { padding:14px 20px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); background:#f8fafc; }
+    .delivery-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; }
+    .delivery-card { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:23px; }
+    .delivery-card h3 { margin:11px 0 10px; }
+    .delivery-card p { font-size:13px; color:var(--muted); }
+    .delivery-card ul { margin:12px 0 0; padding-left:17px; font-size:12px; color:var(--muted); }
+    .delivery-card li + li { margin-top:6px; }
+    .latest-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:15px; }
+    .latest-grid .delivery-card { border-top:3px solid #6888c2; }
+    .evidence-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .stat-line { display:flex; align-items:baseline; flex-wrap:wrap; gap:9px; margin:14px 0 9px; }
+    .stat-line strong { font-size:32px; letter-spacing:-1px; font-weight:650; font-variant-numeric:tabular-nums; }
+    .stat-line span { color:var(--muted); font-size:12px; }
+    .evidence-list { margin:13px 0 0; padding:0; list-style:none; font-size:12px; color:var(--muted); }
+    .evidence-list li { padding:8px 0; border-top:1px solid #e8edf1; }
+    .evidence-list b { color:var(--ink); }
+    .cadence { margin-top:18px; padding:21px 24px; background:var(--teal-soft); border:1px solid #c7e3d9; border-radius:var(--radius); }
+    .cadence h3 { font-size:16px; }
+    .cadence-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:17px; }
+    .cadence-step { border-left:1px solid #b8d8cc; padding-left:15px; }
+    .cadence-step:first-child { border-left:0; padding-left:0; }
+    .cadence-step time { display:block; font-size:11px; color:#466e63; }
+    .cadence-step strong { display:block; margin:4px 0 1px; font-size:22px; font-weight:650; letter-spacing:-0.6px; }
+    .cadence-step span { font-size:11px; color:#426c60; }
+    .cadence-note { font-size:11px; color:#426c60; margin-top:15px; }
+    .historical { margin-top:18px; padding:20px 24px; border:1px solid var(--line); background:#fff; border-radius:var(--radius); }
+    .historical h3 { font-size:15px; margin-bottom:12px; }
+    .historical-grid { display:grid; grid-template-columns:1fr 1fr; gap:25px; }
+    .historical p { font-size:12px; color:var(--muted); }
+    .historical strong { color:var(--ink); }
+    .retained { margin-top:17px; color:var(--muted); font-size:12px; line-height:1.55; }
+    .auxiliary { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .auxiliary .panel { padding:20px 23px; }
+    .auxiliary h3 { font-size:15px; }
+    .next { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:24px; }
+    .next-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:35px; }
+    .next p { font-size:13px; color:var(--muted); }
+    .issue-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:15px; }
+    .issue-links a { display:inline-block; font-size:11px; font-weight:600; text-decoration:none; padding:6px 9px; border:1px solid #cad5e2; border-radius:6px; }
+    .publication { border-left:3px solid #bdcce0; padding-left:17px; }
+    .publication h3 { font-size:15px; margin-bottom:8px; }
+    .sources { margin-top:32px; border-top:1px solid #cfd9e2; padding-top:21px; }
+    .sources h2 { font-size:16px; letter-spacing:0; margin-bottom:11px; }
+    .source-links { display:flex; flex-wrap:wrap; gap:8px 20px; font-size:12px; }
+    .sources p { color:var(--muted); font-size:11px; margin-top:14px; }
+    .footer { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:11px; color:#637489; margin-top:24px; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    @media (max-width:850px) {
+      .hero-title { display:block; }
+      .date { margin-top:15px; }
+      .score-value { font-size:48px; }
+      .score-card { padding:19px; }
+      .two-col,.next-grid { grid-template-columns:1fr; }
+      .delivery-grid { grid-template-columns:1fr; }
+      .delivery-card { padding:20px; }
+      .basis { display:none; }
+      .dimension { width:55%; }
+      .score-cell { width:30%; }
+      .weight { width:15%; }
+      th,td { padding:13px 16px; }
+    }
+    @media (max-width:600px) {
+      .wrap { width:calc(100% - 30px); }
+      .topbar .wrap { padding:13px 0; }
+      .actions { gap:9px; }
+      .actions .branch-link { display:none; }
+      .print-button { font-size:11px; padding:7px 9px; }
+      .hero { padding:30px 0 25px; }
+      .hero-copy { font-size:14px; }
+      .scores { grid-template-columns:1fr; gap:10px; margin-top:23px; }
+      .score-card { display:grid; grid-template-columns:1fr auto; column-gap:12px; padding:14px 17px; align-items:center; }
+      .score-label { grid-column:1; }
+      .score-value { grid-column:2; grid-row:1 / span 2; font-size:39px; letter-spacing:-1.5px; margin:0; }
+      .score-value small { font-size:12px; }
+      .score-note { grid-column:1; font-size:11px; }
+      h2 { font-size:22px; }
+      section { margin-top:28px; }
+      .panel { padding:20px; }
+      .latest-grid,.evidence-grid,.historical-grid,.auxiliary { grid-template-columns:1fr; }
+      .dimension { font-size:12px; }
+      .dimension span { display:block; margin:0 0 3px; }
+      .score-cell { min-width:96px; }
+      .bar-row { gap:6px; }
+      th,td { padding:11px 12px; }
+      .cadence { padding:20px; }
+      .cadence-grid { grid-template-columns:1fr 1fr; row-gap:20px; }
+      .cadence-step:nth-child(3) { border-left:0; padding-left:0; }
+      .historical-grid { gap:13px; }
+      .next { padding:21px; }
+    }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    @media print {
+      @page { size:A4; margin:13mm 14mm; }
+      body { background:#fff; font-size:10px; line-height:1.45; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .wrap { width:100%; }
+      .topbar { border:0; }
+      .topbar .wrap { padding:0 0 10px; }
+      .brand-mark { width:25px; height:25px; border-radius:6px; font-size:17px; }
+      .brand-sub { font-size:8px; }
+      .actions { display:none; }
+      .hero { padding:23px; border-radius:10px; }
+      h1 { font-size:31px; letter-spacing:-0.8px; }
+      h2 { font-size:19px; }
+      h3 { font-size:13px; }
+      .hero-copy { font-size:12px; }
+      .date { font-size:10px; }
+      .scores { gap:10px; margin-top:20px; grid-template-columns:repeat(3,1fr); }
+      .score-card { padding:13px; }
+      .score-value { font-size:39px; }
+      .score-value small { font-size:12px; }
+      .score-label,.score-note,.hero-tag,.source-line { font-size:9px; }
+      main { padding-top:15px; }
+      section { margin-top:24px; }
+      .recency { padding:13px 15px 13px 0; }
+      .recency h2 { font-size:13px; }
+      .recency p,.panel p,.plain-list li,.delivery-card p,.delivery-card ul,.next p { font-size:10px; }
+      .panel,.delivery-card,.next { padding:17px; }
+      .two-col,.evidence-grid,.historical-grid,.auxiliary { grid-template-columns:1fr 1fr; gap:13px; }
+      .delivery-grid { grid-template-columns:repeat(3,1fr); gap:12px; }
+      .latest-grid { grid-template-columns:1fr 1fr; }
+      .basis { display:table-cell; font-size:9px; }
+      .dimension { width:32%; font-size:10px; }
+      .score-cell { width:20%; min-width:90px; }
+      .weight { width:8%; font-size:10px; }
+      th,td { padding:9px 11px; }
+      th,caption,.table-note,.evidence-list,.historical p,.retained,.cadence-note,.issue-links a,.source-links { font-size:9px; }
+      .stat-line strong { font-size:27px; }
+      .stat-line span { font-size:10px; }
+      .cadence { padding:16px 20px; }
+      .cadence-grid { grid-template-columns:repeat(4,1fr); }
+      .cadence-step strong { font-size:18px; }
+      .cadence-step time,.cadence-step span { font-size:9px; }
+      .next-grid { grid-template-columns:1.2fr 1fr; gap:20px; }
+      .section-heading,h2,h3 { break-after:avoid; }
+      .score-card,.panel,.delivery-card,.cadence,.historical,.next,tr { break-inside:avoid; }
+      .dimension-panel { overflow:visible; }
+      thead { display:table-header-group; }
+      .hero,.recency { break-inside:avoid; }
+      a { color:inherit; }
+      .footer { margin-top:15px; font-size:9px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">E</span><span>ECorp<span class="brand-sub">Engineering evidence</span></span></div>
+      <div class="actions">
+        <a class="branch-link" href="https://github.com/All-The-Vibes/ecorp/tree/codex/codeblend-readiness">Review branch ↗</a>
+        <button class="print-button" id="print-report" type="button">Print / save PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="wrap">
+      <div class="hero-title">
+        <div>
+          <p class="eyebrow">Latest qualified benchmark · CodeBlend V4b</p>
+          <h1>Repository readiness.<br>Operating evidence.</h1>
+          <p class="hero-copy">Strong repository foundations, verified local execution, and a clear remaining gap to sustained governed operation.</p>
+        </div>
+        <time class="date" datetime="2026-09-18">18 September 2026 · UTC</time>
+      </div>
+      <div class="scores" aria-label="Latest qualified scores, each out of 100">
+        <div class="score-card">
+          <div class="score-label">Structure</div>
+          <strong class="score-value">92.0 <small>/ 100</small></strong>
+          <div class="score-note">Above the 90-point target</div>
+        </div>
+        <div class="score-card operations">
+          <div class="score-label">Operations</div>
+          <strong class="score-value">68.25 <small>/ 100</small></strong>
+          <div class="score-note">21.75 points below the target</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">Composite</div>
+          <strong class="score-value">79.2 <small>/ 100</small></strong>
+          <div class="score-note">Geometric mean of both axes</div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <span class="hero-tag alert">90 / 90 target not met</span>
+        <span class="hero-tag">AI-ready: no</span>
+        <span class="hero-tag">Q2 · Verifiable-but-manual</span>
+        <span class="hero-tag">R4 · Delegable</span>
+        <span class="hero-tag">Verified · evaluator-observed-local</span>
+      </div>
+      <p class="source-line">Assessed source <a href="https://github.com/All-The-Vibes/ecorp/commit/69598e095c78611b3b487c67854d4146b4561fbd"><code>69598e0</code></a> · Run <code>20260918-161135+0800</code> · Full uncached assessment · Three successful judges, one round</p>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <aside class="recency" aria-label="Benchmark scope and recency">
+      <div>
+        <h2>The latest additions have not been rescored.</h2>
+        <p>The account-profile cadence and retained-behavior importer were added after this benchmark. Their tests and live audit are new evidence; the qualified scores above still apply to <code>69598e0</code>. Scores are unchanged from the previous completed V3 assessment.</p>
+      </div>
+    </aside>
+
+    <section aria-labelledby="gap-title">
+      <div class="section-heading"><h2 id="gap-title">Why operations is still below 90</h2><span class="sub">Capabilities need operating evidence</span></div>
+      <div class="two-col">
+        <div class="panel">
+          <h3>Three outcomes remain under-evidenced</h3>
+          <ol class="plain-list">
+            <li><span class="list-number">1</span><span><strong>Governed recurring delivery.</strong> Repeatable tools and a short local cadence do not yet establish sustained, coordinated maintenance delivery.</span></li>
+            <li><span class="list-number">2</span><span><strong>Learning that improves later behavior.</strong> Candidates, advisory references and repair tests do not prove authenticated rule promotion or better later decisions.</span></li>
+            <li><span class="list-number">3</span><span><strong>Accepted agent contributions.</strong> The API evidence window classified none of 90 merged PRs as agent-authored; four of 269 commits carried agent co-authorship.</span></li>
+          </ol>
+        </div>
+        <div class="panel">
+          <h3>Read the limits precisely</h3>
+          <p>Local restoration was verified. Yet all judges kept self-healing at <strong>3/4</strong>, citing the pack’s static <code>hasRollbackPath:false</code> signal alongside its observed <code>automaticRollbackVerified:true</code>. This is an evidence-model tension, not proof that native restoration is absent.</p>
+          <div class="math-box">
+            <p>Raising automation and improvement loops alone to <strong>4/4</strong> would yield <strong>81.25</strong> operations. If D3 remains 3 and D9 remains 2, every other dimension must reach 4 to yield <strong>90.5</strong>.</p>
+            <p>These are arithmetic bounds, not predicted scores. No scoring rules or authorship history were changed.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="dimensions-title">
+      <div class="section-heading"><h2 id="dimensions-title">The operations scorecard</h2><span class="sub">Final rubric values · 0–4 scale</span></div>
+      <div class="dimension-panel">
+        <table>
+          <caption>Weighted score = sum of each raw score ÷ 4 × its weight = <strong>68.25 / 100</strong>.</caption>
+          <thead><tr><th scope="col">Dimension</th><th scope="col">Score</th><th scope="col">Weight</th><th scope="col" class="basis">Evaluator basis</th></tr></thead>
+          <tbody>
+            <tr><td class="dimension"><span>D1</span>Agent interface &amp; operability</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">9%</td><td class="basis">Integrated guidance and validation; accepted agent PRs not demonstrated.</td></tr>
+            <tr><td class="dimension"><span>D2</span>Routine maintenance automation</td><td class="score-cell"><div class="bar-row"><span class="bar low" aria-hidden="true"><i style="width:50%"></i></span><span class="raw-score">2/4</span></div></td><td class="weight">13%</td><td class="basis">Repeatable triggers; sustained scheduled delivery and chaining not established.</td></tr>
+            <tr><td class="dimension"><span>D3</span>Self-healing CI/CD</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">18%</td><td class="basis">Local repair/recovery verified; judges retain the static rollback-path limitation.</td></tr>
+            <tr><td class="dimension"><span>D4</span>Continuous improvement loops</td><td class="score-cell"><div class="bar-row"><span class="bar low" aria-hidden="true"><i style="width:50%"></i></span><span class="raw-score">2/4</span></div></td><td class="weight">13%</td><td class="basis">Repair evidence does not establish governed learning and later behavioral gains.</td></tr>
+            <tr><td class="dimension"><span>D5</span>Agent execution surfaces</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">9%</td><td class="basis">Machine-operable surfaces earn a floor of 3; MCP inventory recognition is incomplete.</td></tr>
+            <tr><td class="dimension"><span>D6</span>Policy &amp; change guardrails</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">10%</td><td class="basis">Review rules, checks and execution bounds; full autonomous safety closure unproven.</td></tr>
+            <tr><td class="dimension"><span>D7</span>Observability of agentic work</td><td class="score-cell"><div class="bar-row"><span class="bar full" aria-hidden="true"><i style="width:100%"></i></span><span class="raw-score">4/4</span></div></td><td class="weight">9%</td><td class="basis">Verified origin, lifecycle, completion, consumption and recovery traceability.</td></tr>
+            <tr><td class="dimension"><span>D8</span>Human-on-the-loop integration</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">9%</td><td class="basis">Review and escalation support supervision; full exception-to-shipping path unproven.</td></tr>
+            <tr><td class="dimension"><span>D9</span>Agentic change throughput</td><td class="score-cell"><div class="bar-row"><span class="bar low" aria-hidden="true"><i style="width:50%"></i></span><span class="raw-score">2/4</span></div></td><td class="weight">10%</td><td class="basis">Metadata-only attribution is floored and capped at 2 without API-confirmed agent merges.</td></tr>
+          </tbody>
+        </table>
+        <p class="table-note">D2 judge votes: 2 / 3 / 2. D4 votes: 3 / 2 / 2. Both medians stayed 2. Final values include deterministic adjustments; a missing detected signal is not evidence that corresponding product code is absent.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="delivered-title">
+      <div class="section-heading"><h2 id="delivered-title">What this branch adds</h2><span class="sub">Existing ECorp primitives, with explicit boundaries</span></div>
+      <div class="delivery-grid">
+        <article class="delivery-card">
+          <span class="mini-label">Included before benchmark</span><h3>Repository foundations</h3>
+          <p>More complete regression discovery and reproducible contributor tooling.</p>
+          <ul><li>Linux/Windows Node gates, documentation contracts and bounded dependency updates.</li><li>Scoped web-model and native Rust coverage.</li><li>Portable setup, pinned tooling, secret scanning and production-key rejection.</li></ul>
+        </article>
+        <article class="delivery-card">
+          <span class="mini-label">Included before benchmark</span><h3>Native operations evidence</h3>
+          <p>Inspectable runs and verifier-controlled completion through the native runner.</p>
+          <ul><li>Read-only MCP inspection and bounded observation export/consumption.</li><li>Verification-policy UI/model extraction with browser acceptance.</li><li>Removed per-run writes to shared Copilot account settings.</li></ul>
+        </article>
+        <article class="delivery-card">
+          <span class="mini-label">Included before benchmark</span><h3>Advisory feedback</h3>
+          <p>Finite local audits, durable deduplication and candidate/active/retired guidance.</p>
+          <ul><li>Source-bound checkpoints, pause/resume and terminal stop.</li><li>Exact raw/typed artifact binding and reference-only native contract revisions.</li><li>Launch stays separate; uncertain writes retain their reconciliation evidence.</li></ul>
+        </article>
+      </div>
+      <div class="latest-grid">
+        <article class="delivery-card">
+          <span class="mini-label later">New · not rescored</span><h3>Explicit collector profiles</h3>
+          <p>A hash-pinned local profile selects the expected read principal while preserving the existing pilot default and fixed repository/Project scope. Identity and profile drift refuse reuse. No credentials, permissions or scheduler installation change.</p>
+        </article>
+        <article class="delivery-card">
+          <span class="mini-label later">New · not rescored</span><h3>Honest historical evidence admission</h3>
+          <p>The importer retains native and external checker outcomes as bounded corpus candidates. Duplicate imports cannot manufacture repetition. Historical records cannot be activated by a local review hash or forged activation history; explicit rejection remains available.</p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="validation-title">
+      <div class="section-heading"><h2 id="validation-title">Validation, at its actual scope</h2><span class="sub">Fresh checks are separate from historical evidence</span></div>
+      <div class="evidence-grid">
+        <article class="panel">
+          <span class="mini-label later">Latest continuation</span>
+          <div class="stat-line"><strong>1,346</strong><span>tests passed · 0 failed · 0 skipped</span></div>
+          <p>1,135 web/tool tests plus 211 Steward tests, run concurrently on byte-pinned inputs. All nine contributor gates passed before publication preparation; these two test receipts were reused against identical executable-source hashes.</p>
+          <ul class="evidence-list"><li><b>Profile boundaries:</b> defaults, principal mismatch, scope/hash drift and retained state.</li><li><b>Importer boundaries:</b> real retained files, exact provenance bindings, refusal to activate historical candidates.</li><li><b>Scope:</b> Node tools and documentation. These are not fresh Rust coverage or new provider acceptance results.</li></ul>
+        </article>
+        <article class="panel">
+          <span class="mini-label">Qualified V4b · real provider</span>
+          <div class="stat-line"><strong>9</strong><span>native invocations · 909,114 reported tokens</span></div>
+          <p>All three bounded case pipelines fulfilled their contracts. Recurrence repair passed 18/18 and expiry repair 22/22 in native, physical and exported verification.</p>
+          <ul class="evidence-list"><li><b>Controls:</b> duplicate/no-op handling, stale refusal and exact restoration. Interrupted runs claim no oracle result.</li><li><b>Audit:</b> 1,509 assertions, 367 files hashed; prior history preserved.</li><li><b>Scope:</b> real inference on controlled local defects, not production autonomy. Reported cost is not billing proof.</li></ul>
+        </article>
+      </div>
+      <div class="cadence">
+        <h3>Actual live GitHub cadence · three bounded read-only cycles</h3>
+        <div class="cadence-grid">
+          <div class="cadence-step"><time datetime="2026-09-18T08:46:07.002Z">08:46:07 UTC</time><strong>157 findings</strong><span>Initial advisory report + handoff</span></div>
+          <div class="cadence-step"><time datetime="2026-09-18T08:47:44.827Z">08:47:44 UTC</time><strong>No-op</strong><span>Fresh capture, same evidence</span></div>
+          <div class="cadence-step"><time datetime="2026-09-18T08:49:22.279Z">08:49:22 UTC</time><strong>No-op</strong><span>No duplicate handoff</span></div>
+          <div class="cadence-step"><time datetime="2026-09-18T08:49:23.060Z">08:49:23 UTC</time><strong>Stopped</strong><span>Durable stop · three attempts</span></div>
+        </div>
+        <p class="cadence-note">Three genuine two-pass collections at the pinned current <code>main</code> source. Profile and implementation pins stayed unchanged. Zero GitHub mutations, native missions or provider runs. This was a finite foreground cadence, not an enrolled hosted schedule.</p>
+      </div>
+      <div class="historical">
+        <h3><span class="mini-label history">Separate evidence scopes</span> Rust and deterministic integration</h3>
+        <div class="historical-grid">
+          <p><strong>Fresh Windows Rust gate:</strong> 561 passed, 0 failed, <strong>343 ignored</strong>. Formatting, Clippy, web build/lint, migrations and documentation checks also passed. Ignored cases are not passes.<br><strong>Retained Linux Rust coverage:</strong> 873 passed; <strong>68.15% line coverage</strong> (50,109 / 73,525 lines across 70 compiled files), bound to unchanged Rust inputs. This excludes web/provider execution and the unexecuted stopped-session probe.</p>
+          <p><strong>Native feedback fixture:</strong> 15/15 assertions and 9/9 persisted checks across three native runs, with browser follow-up. Inputs were synthetic and the provider was <code>fake-process</code>. This proves transport, adoption and consumption; it does not measure provider decision quality.</p>
+        </div>
+      </div>
+      <p class="retained"><strong>Failures remain part of the record.</strong> Two V4 profile attempts stopped before inference. Original V4 remained incomplete after an extra separator CRLF violated its strict append contract. A V4b source setup was refused outside the existing allowlist. Fresh V4b used a prospectively declared append variant and lower cost caps; the earlier failure was not regraded.</p>
+    </section>
+
+    <section aria-labelledby="auxiliary-title">
+      <div class="section-heading"><h2 id="auxiliary-title">Other evaluator findings</h2><span class="sub">Reported detection scope, not blanket absence claims</span></div>
+      <div class="auxiliary">
+        <div class="panel"><h3>Cleanup · 70/100, enrollment unverified</h3><p>The score-neutral analysis detected a cleanup capability and repeatable driver, but no concrete scheduler enrollment. It reported three read errors. This is separate from the verified shutdown of owned QA processes.</p></div>
+        <div class="panel"><h3>Documentation drift · partial</h3><p>The evaluator reported targeted advisory controls without repository-wide enforceability. Existing command/version checks have tested failure behavior; broader semantic documentation coverage remains unproven.</p></div>
+      </div>
+    </section>
+
+    <section class="next" aria-labelledby="next-title">
+      <div class="next-grid">
+        <div>
+          <h2 id="next-title">Review the change. Keep the claims bounded.</h2>
+          <p style="margin-top:12px">The next evidence needs authenticated promotion, validated later behavior, and sustained governed delivery. Coordinate with existing native review/autonomy work rather than creating another engine or relabeling historical contributions.</p>
+          <div class="issue-links"><a href="https://github.com/All-The-Vibes/ecorp/issues/317">Readiness · #317</a><a href="https://github.com/All-The-Vibes/ecorp/issues/280">Factory autonomy · #280</a><a href="https://github.com/All-The-Vibes/ecorp/issues/95">Governed revisions · #95</a><a href="https://github.com/All-The-Vibes/ecorp/issues/269">PR remediation · #269</a><a href="https://github.com/All-The-Vibes/ecorp/pull/323">Related draft · #323</a></div>
+        </div>
+        <div class="publication">
+          <h3>Publication scope</h3>
+          <p>Published for ordinary code review in <a href="https://github.com/All-The-Vibes/ecorp/pull/326">PR #326</a> from <a href="https://github.com/All-The-Vibes/ecorp/tree/codex/codeblend-readiness"><code>codex/codeblend-readiness</code></a>. Code review and merge remain separate. Native Dark Factory publication provenance is not claimed.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="sources">
+      <h2>Source reports</h2>
+      <nav class="source-links" aria-label="Detailed evidence sources">
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/codex/codeblend-readiness/docs/evidence/2026-09-18-codeblend-v4b.md">Qualified V4b benchmark</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/codex/codeblend-readiness/docs/evidence/2026-09-18-local-operations-continuation.md">Latest local operations</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/codex/codeblend-readiness/docs/evidence/2026-09-18-native-feedback.md">Native feedback acceptance</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/codex/codeblend-readiness/docs/evidence/2026-09-18-recurring-audit.md">Recurrence &amp; Linux coverage</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/codex/codeblend-readiness/docs/evidence/2026-09-17-codeblend-hardening.md">Repository hardening</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/codex/codeblend-readiness/docs/evidence/assets/codeblend-readiness/codeblend-v4b.json">Benchmark evidence JSON</a>
+      </nav>
+      <p><strong>Method:</strong> CodeBlend revision <code>0a9accccd36446c381c118b783e2e9f623643efa</code>; mandatory API evidence; no added scan exclusions. Judges: Claude Opus 5, GPT-6 Astra and Grok 4.6. Total benchmark time: 554.891 s. Native cases used the pinned Copilot SDK 1.0.11 / CLI 1.0.79. Agent review is not authenticated human approval.</p>
+      <p><strong>Limits:</strong> controlled local development identity and evidence. Production isolation, learned decision quality, unattended hosted operation and sustained agent-attributable merged throughput are not established. Private paths, account identities and credentials are omitted.</p>
+      <div class="footer"><span>ECorp · Team review report · 18 September 2026</span><span>Self-contained offline HTML · source links open GitHub</span></div>
+    </footer>
+  </main>
+  <script>
+    document.getElementById('print-report').addEventListener('click', function () { window.print(); });
+  </script>
+</body>
+</html>
