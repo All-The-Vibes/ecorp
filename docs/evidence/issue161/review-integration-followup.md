@@ -65,3 +65,15 @@ identity, real-provider or browser/server/runner rehearsal. The earlier runtime
 report remains historical evidence at its stated source. No wider acceptance is
 inferred from this integration. Three original untracked draft/patch files remain
 excluded from the commit.
+
+## Final main refresh
+
+During validation, the team merged PR #306 as main
+`aa2ef457d86d727232ae353f53a13c8c9f149bf6`. That UI/evidence-only change was then
+merged without conflicts. It did not change this candidate's Rust, migrations,
+Cargo manifests or lockfile; the15 targeted database results above therefore
+exercise the same final backend bytes. All six repository gates were rerun:
+**312 frontend tests passed**, **561 Rust passed /352 ignored**, migration42,
+format, Clippy, web build and lint passed. The existing authority notice and landed
+collaboration/exact-run/freshness paths are both retained. The enclosing final
+commit identifies the final source; a fresh reviewer must assess that head.

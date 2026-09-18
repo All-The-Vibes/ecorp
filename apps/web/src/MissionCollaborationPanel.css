@@ -1,0 +1,39 @@
+.mission-collaboration {
+  margin-block: 16px 22px; padding: 20px; color: var(--ink); background: var(--paper-light);
+  border: 1px solid var(--line); border-top: 3px solid var(--cobalt); border-radius: 4px;
+  min-width: 0; overflow-wrap: anywhere;
+}
+.mission-collaboration .collaboration-heading,
+.mission-collaboration .collaboration-crew-heading,
+.mission-collaboration .collaboration-task-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.mission-collaboration h4 { margin: 4px 0 8px; font: 650 18px/1.4 var(--sans); color: var(--ink); }
+.mission-collaboration p { margin: 6px 0; font: 14px/1.5 var(--sans); }
+.mission-collaboration .collaboration-context { display: flex; flex-wrap: wrap; gap: 4px; }
+.mission-collaboration .collaboration-context > span { margin-inline-start: auto; }
+.mission-collaboration :is(.collaboration-boundary, .collaboration-footnote, .collaboration-run) { color: var(--ink-soft); }
+.mission-collaboration .collaboration-connection { font-size: 13px; padding: 5px 8px; background: var(--paper); border: 1px solid var(--line); border-radius: 3px; }
+.mission-collaboration .collaboration-navigation { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0; border: 1px solid var(--line); border-radius: 3px; }
+.mission-collaboration .collaboration-navigation button { min-width: 0; min-height: 48px; padding: 10px; border: 0; border-radius: 0; color: var(--cobalt-dark); background: var(--paper); font: 600 14px/1.4 var(--sans); text-align: left; cursor: pointer; }
+.mission-collaboration .collaboration-navigation button + button { border-left: 1px solid var(--line); }
+.mission-collaboration .collaboration-navigation button:hover { background: var(--surface-selected); }
+.mission-collaboration .collaboration-navigation button:disabled { color: var(--ink-soft); cursor: not-allowed; background: var(--paper-deep); }
+.mission-collaboration .collaboration-crew { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; list-style: none; margin: 10px 0; padding: 0; }
+.mission-collaboration .collaboration-crew > li { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); }
+.mission-collaboration .collaboration-task-heading > span { font-size: 12px; color: var(--ink-soft); }
+.mission-collaboration .collaboration-task-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.mission-collaboration .collaboration-task-actions button { min-width: 0; min-height: 44px; white-space: normal; }
+.mission-collaboration :is(.collaboration-warning, .collaboration-review) { margin-block: 12px; padding: 12px; border: 1px solid var(--line); border-left: 3px solid var(--warning); background: var(--paper-light); }
+.mission-collaboration .collaboration-footnote { font-size: 12px; margin-top: 14px; }
+.mission-collaboration button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+.mission-conversation { margin-block: 22px; border-top: 1px solid var(--line); padding-top: 16px; }
+.mission-conversation > summary { min-height: 44px; padding: 12px 0; font: 650 18px/1.4 var(--sans); cursor: pointer; }
+.mission-conversation .room-panel { margin: 0; box-shadow: none; }
+@media (max-width: 800px) {
+  .mission-collaboration .collaboration-navigation { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mission-collaboration .collaboration-navigation button { border: 1px solid var(--line); }
+  .mission-collaboration .collaboration-context > span { margin-inline-start: 0; flex-basis: 100%; }
+}
+@media (max-width: 480px) {
+  .mission-collaboration { padding: 12px; }
+  .mission-collaboration .collaboration-navigation { grid-template-columns: minmax(0, 1fr); }
+}
