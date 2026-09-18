@@ -787,6 +787,14 @@ receives durable storage acknowledgment before a clean worktree is reclaimed. Br
 checks that provider evidence, verification evidence, source deliverables, and integration state
 are visibly distinct. See `docs/evidence/2026-09-02-portable-deliverables.md`.
 
+The dependency-free [deliverable diff command](DELIVERABLE_DIFF_CHECK.md) checks the same
+base-seeded, literal-path Git candidate, including non-ignored untracked source, without altering
+the real index or worktree. `node --test --test-concurrency=1 tools/check_deliverable_diff.test.mjs`
+reproduces the old `git diff --check` false pass and compares candidate tree IDs against the native
+export recipe. This command-level evidence does not replace the real-stack export checks above
+or retroactively update any persisted verifier policy. See the
+[Windows red/green report](evidence/2026-09-18-deliverable-diff-check.md).
+
 `tools/e2e_factory_publication.mjs` uses a real server, runner, isolated worktrees, portable Git
 bundle, bare Git remote, and deterministic fake GitHub API. It proves policy, role, Corp, budget,
 and breaker rejection; manage-only publisher enrollment; independent publisher workload
