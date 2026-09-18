@@ -1,0 +1,22 @@
+# Optional local feedback. CI executes the same checks without relying on hook installation.
+repos:
+  - repo: local
+    hooks:
+      - id: documentation-contract
+        name: Check documented validation contract
+        entry: node tools/check_docs.mjs
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: rust-format
+        name: Check Rust formatting without editing files
+        entry: cargo fmt --check
+        language: system
+        pass_filenames: false
+        types: [rust]
+      - id: readiness-tool-tests
+        name: Check validation and evidence tooling
+        entry: node --test tools/readiness_contract.test.mjs
+        language: system
+        pass_filenames: false
+        files: '^(tools/(run_checks|check_docs|readiness_contract\.test)\.mjs|test\.config\.json)$'

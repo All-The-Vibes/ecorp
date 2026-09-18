@@ -1,0 +1,22 @@
+title = "ECorp source secret detection"
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated dependencies, build output, Git metadata and local evidence are not repository source"
+paths = ['''(^|[\\/])(node_modules|target|target-audit|\.git|output)[\\/]''']
+
+# These exact historical fixture fields identify replay operations, not credentials.
+# Do not ignore entire evidence directories or API-key-shaped values elsewhere.
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+description = "Non-secret fixture/replay identifiers in three reviewed test artifacts"
+condition = "AND"
+paths = [
+  '''^docs/evidence/2026-09-08-room-context-browser\.json$''',
+  '''^docs/evidence/assets/predispatch-failure/runtime\.json$''',
+  '''^tools/e2e_factory_run_activity\.py$''',
+]
+regexTarget = "match"
+regexes = ['''(idempotency_key|fixture_key)["']?\s*:\s*["']''']

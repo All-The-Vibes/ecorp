@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 1,
+  "kind": "local-validation-report",
+  "scope": "Local readiness iteration 2 after CLI hardening; later report/ledger additions are documentation-only. Not hosted CI, browser or production evidence.",
+  "producer": "Codex desktop task 01a0a0da-9366-7503-8c71-51034a99d053",
+  "startedAt": "2026-09-18T04:54:51.203Z",
+  "finishedAt": "2026-09-18T04:56:55.935Z",
+  "source": {
+    "commit": "0b1ad59da398e3dbd6a696d0264bcb6ebd620219",
+    "branch": "codex/ai-readiness-improvements",
+    "dirty": true,
+    "trackedDiffSha256": "ac16db3b92909eb959f296be8d39c8493e345b7918b2663c238c725919f88994",
+    "untrackedDigests": [
+      [
+        ".github/CODEOWNERS",
+        "998da9337ab183df57c3f61c890f31fea86371ac07729438e52bf795b684425c"
+      ],
+      [
+        ".github/dependabot.yml",
+        "75e5ec094bc6c2f2ffe5c2ec1a1a39ff1cbd4208a2cc3de55af47650c66b9e0a"
+      ],
+      [
+        ".github/skills/readiness-improvement/SKILL.md",
+        "deb98846d1e517a6a06cae3727c03bf654fe26fd5e794c592f7c8c8743553d74"
+      ],
+      [
+        ".github/workflows/security.yml",
+        "cd6aa86c40946cb38a9361a6b455566c2ae5687394996aa2034778ffb7aa4278"
+      ],
+      [
+        ".gitleaks.toml",
+        "3badf9b810f9cd9b40a971a7b8895ed426bb9743d57f2447a9b67679f8bbccfa"
+      ],
+      [
+        ".node-version",
+        "7e8a2fa94951112b894a3dbe3d05efef5e9263741fa49125f0a70f40fedab4cc"
+      ],
+      [
+        ".pre-commit-config.yaml",
+        "3d39bdaf0a12141d7fcd6cc44c551caec378e5c9cf2a2c6c8e9201fd8f60da31"
+      ],
+      [
+        "apps/web/AGENTS.md",
+        "ea3eb78555a1aa841f134cf319f992441f269411ac2cb01e6bd5ce93b18daa18"
+      ],
+      [
+        "crates/AGENTS.md",
+        "e0e99ca55a4bffbecf1f7e098c52c4d28293d97e5f4e35b83c45d278339d3e4f"
+      ],
+      [
+        "docs/AI_READINESS.md",
+        "07698bde9623930a2146117d2574d801549cb4723614fa19933cd5aba079632b"
+      ],
+      [
+        "docs/VALIDATION.md",
+        "c4ff483a1ff521a97daba5ef46e91d308e552e63d0758b63e1c413a2a789968d"
+      ],
+      [
+        "docs/reports/ai-readiness-validation-iteration-1.json",
+        "e1255a08439e4ab0c7252cb6f7dfb039bd7dcc6a244ece4e549286e823d83aa7"
+      ],
+      [
+        "rust-toolchain.toml",
+        "887f9be066a15585a2c583578e84b0fcb541126d81546276bad3d2ff00d61167"
+      ],
+      [
+        "test.config.json",
+        "aa9e6194c9a1cb5620c8cdd3e447ac339863e865eabb737ee41c98d66daa4d95"
+      ],
+      [
+        "tests/readiness/cli.test.js",
+        "737f4e5af63bd120ca938a8e59897967f54b2a6b6af62a2dcff773d1365c56ff"
+      ],
+      [
+        "tools/check_docs.mjs",
+        "7c0660e9a13d9eeae285162eeb0cfa7b20d8ea9d413d3639f23ad9e3c8d17392"
+      ],
+      [
+        "tools/readiness_contract.test.mjs",
+        "9ae16a5453ba4b0445673631a7d86580790f2d54ff808064283f61dbac975312"
+      ],
+      [
+        "tools/run_checks.mjs",
+        "8785936fe89dd0fae2fbde15644bd4bb37b57ec1703544deaf124c0b3b359297"
+      ],
+      [
+        "tools/security_canary.mjs",
+        "abb3a7047225ecf9136cd7a4af35f32afa509bfd3a6d2b8dcd183c8a11bfbcf1"
+      ]
+    ]
+  },
+  "sourceChangedDuringValidation": false,
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "argv": [
+        "node",
+        "tools/check_migrations.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 153,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "docs",
+      "argv": [
+        "node",
+        "tools/check_docs.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 110,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "node-tests",
+      "argv": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/evidenceSelection.test.mjs",
+        "apps/web/src/factoryCheckpointRecovery.test.mjs",
+        "apps/web/src/factoryControllerSelection.test.mjs",
+        "apps/web/src/factoryPolling.test.mjs",
+        "apps/web/src/missionCollaboration.test.mjs",
+        "apps/web/src/missionComposer.test.mjs",
+        "apps/web/src/missionOriginContext.test.mjs",
+        "apps/web/src/missionPreview.test.mjs",
+        "apps/web/src/missionProjection.test.mjs",
+        "apps/web/src/missionResultContext.test.mjs",
+        "apps/web/src/missionRuntime.test.mjs",
+        "apps/web/src/office/officeModel.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "apps/web/src/workflowContext.test.mjs",
+        "apps/web/src/workspaceConnections.test.mjs",
+        "scenarios/repo-steward/actions.test.mjs",
+        "scenarios/repo-steward/steward.test.mjs",
+        "scenarios/repo-steward/teams-host.test.mjs",
+        "tests/readiness/cli.test.js",
+        "tools/checkpoint_application_fixture.test.mjs",
+        "tools/copilot_fs_wire_observer.test.mjs",
+        "tools/copilot_fs_wire_process.test.mjs",
+        "tools/copilot_probe_boundaries.test.mjs",
+        "tools/copilot_probe_environment.test.mjs",
+        "tools/copilot_probe_native_read.test.mjs",
+        "tools/copilot_probe_process.test.mjs",
+        "tools/e2e_checkpoint_verification.test.mjs",
+        "tools/e2e_evidence_selection.test.mjs",
+        "tools/e2e_external_adapters.test.mjs",
+        "tools/e2e_late_termination.test.mjs",
+        "tools/e2e_stopped_source_checkpoint.test.mjs",
+        "tools/fake_codex_budget_stream.test.mjs",
+        "tools/fake_github_quota.test.mjs",
+        "tools/fixture_source_identity.test.mjs",
+        "tools/local_stack_lifecycle.test.mjs",
+        "tools/local_stack_operation.test.mjs",
+        "tools/office_model.test.mjs",
+        "tools/owned_test_stack.test.mjs",
+        "tools/readiness_contract.test.mjs",
+        "tools/runner_ack_fault_relay.test.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 54838,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 1035,
+          "passed": 1035,
+          "failed": 0,
+          "skipped": 0,
+          "todo": 0,
+          "cancelled": 0
+        }
+      },
+      "errorCode": null
+    },
+    {
+      "name": "format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 1311,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 923,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "rust-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 57414,
+      "counts": {
+        "rust": {
+          "passed": 554,
+          "failed": 0,
+          "ignored": 343,
+          "summaries": 14
+        },
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "pnpm",
+        "build:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 8045,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "web-lint",
+      "argv": [
+        "pnpm",
+        "lint:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 1788,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    }
+  ],
+  "notRun": []
+}

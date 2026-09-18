@@ -5,9 +5,19 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "check:migrations": "node tools/check_migrations.mjs",
+    "test": "node tools/run_checks.mjs --group test",
+    "test:js": "node tools/run_checks.mjs --group node",
+    "check:fast": "node tools/run_checks.mjs --group fast",
+    "check:preview": "node tools/run_checks.mjs --group full --dry-run",
+    "check:docs": "node tools/check_docs.mjs",
+    "check:docs:preview": "node tools/check_docs.mjs --dry-run",
+    "check:docs:write": "node tools/check_docs.mjs --write",
     "dev:web": "pnpm --dir apps/web dev",
     "build:web": "pnpm --dir apps/web build",
     "lint:web": "pnpm --dir apps/web lint",
-    "check": "pnpm check:migrations && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace && pnpm build:web && pnpm lint:web"
+    "check": "node tools/run_checks.mjs --group full"
+  },
+  "devDependencies": {
+    "ws": "8.18.3"
   }
 }
