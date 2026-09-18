@@ -9,6 +9,11 @@ mod factory_connection;
 pub use factory_connection::factory_workspace_connection_id;
 mod planned_attempts;
 pub use planned_attempts::{MAX_TASK_ATTEMPTS, factory_max_task_attempts};
+mod planning_cost;
+pub use planning_cost::{
+    MAX_GRAPH_BUDGET_COST_MICROUSD, MAX_TASK_BUDGET_COST_MICROUSD, strategy_cost_budgets,
+    validate_factory_cost_policy,
+};
 mod retained_provider_receipt;
 pub use retained_provider_receipt::{
     MAX_RETAINED_PROVIDER_RECEIPT_BYTES, RETAINED_COPILOT_RECEIPT_FILE,

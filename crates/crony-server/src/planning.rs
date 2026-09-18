@@ -6,9 +6,10 @@ use std::{
 use anyhow::{Context, Result, anyhow};
 pub use crony_domain::MAX_TASK_ATTEMPTS;
 use crony_domain::{
-    Agent, AgentStatus, DeliverableForm, DeliverableSpec, ManualVerificationGate, PlannedTask,
-    TaskContract, TaskGraphPlan, TaskSecretReference, VerificationPolicy, VerifierCheck,
-    repository_relative_path_is_valid, write_scope_is_valid,
+    Agent, AgentStatus, DeliverableForm, DeliverableSpec, MAX_GRAPH_BUDGET_COST_MICROUSD,
+    MAX_TASK_BUDGET_COST_MICROUSD, ManualVerificationGate, PlannedTask, TaskContract,
+    TaskGraphPlan, TaskSecretReference, VerificationPolicy, VerifierCheck,
+    repository_relative_path_is_valid, strategy_cost_budgets, write_scope_is_valid,
 };
 
 pub const MAX_GRAPH_NODES: usize = 8;
@@ -117,6 +118,7 @@ impl ManagerStrategy for SingleTaskStrategy {
             .budget_tokens
             .unwrap_or(DEFAULT_SINGLE_TASK_BUDGET_TOKENS);
         let budget_cost_microusd = request.budget_cost_microusd.unwrap_or(1_000_000);
+        strategy_cost_budgets(self.id(), budget_cost_microusd).map_err(anyhow::Error::msg)?;
         let mut task_contract = contract(
             format!("Complete the mission outcome: {}", request.mission_title),
             "A source-backed, verified mission artifact",
@@ -191,8 +193,10 @@ impl ManagerStrategy for ParallelSpecialistsStrategy {
         let total_cost_budget = request.budget_cost_microusd.unwrap_or(3_000_000);
         let specialist_budget = (total_budget * 2 / 7).max(1);
         let synthesis_budget = (total_budget - specialist_budget * 2).max(1);
-        let specialist_cost_budget = (total_cost_budget * 2 / 7).max(1);
-        let synthesis_cost_budget = (total_cost_budget - specialist_cost_budget * 2).max(1);
+        let costs =
+            strategy_cost_budgets(self.id(), total_cost_budget).map_err(anyhow::Error::msg)?;
+        let specialist_cost_budget = costs[0];
+        let synthesis_cost_budget = costs[2];
         let mut synthesis_contract = contract(
             format!(
                 "Produce the final bounded outcome for this mission after both specialist tasks finish: {}",
@@ -349,8 +353,10 @@ impl ManagerStrategy for StudioSwarmStrategy {
         let total_budget = request.budget_tokens.unwrap_or(2_000_000);
         let total_cost_budget = request.budget_cost_microusd.unwrap_or(6_000_000);
         let (specialist_budget, integration_budget) = studio_budget_split(total_budget)?;
-        let (specialist_cost_budget, integration_cost_budget) =
-            studio_budget_split(total_cost_budget)?;
+        let costs =
+            strategy_cost_budgets(self.id(), total_cost_budget).map_err(anyhow::Error::msg)?;
+        let specialist_cost_budget = costs[0];
+        let integration_cost_budget = costs[3];
         let mut tasks = Vec::with_capacity(4);
         for ((key, focus, expected_output, acceptance), agent) in roles.into_iter().zip(&workers) {
             let path = studio_handoff_path(handoff_root, key)?;
@@ -670,6 +676,7 @@ fn verification_plan(
         .context("verification strategy requires a fake-process worker")?;
     let budget_tokens = request.budget_tokens.unwrap_or(50_000);
     let budget_cost_microusd = request.budget_cost_microusd.unwrap_or(500_000);
+    strategy_cost_budgets(strategy, budget_cost_microusd).map_err(anyhow::Error::msg)?;
     let mut task_contract = contract(
         format!("{instruction}\nMission: {}", request.mission_title),
         "An artifact and every file required by the verifier policy",
@@ -783,7 +790,7 @@ pub fn validate_plan(plan: &TaskGraphPlan, agents: &[Agent]) -> Result<()> {
     if !(1..=MAX_GRAPH_BUDGET_TOKENS).contains(&plan.budget_tokens) {
         return Err(anyhow!("task graph budget is invalid"));
     }
-    if !(1..=50_000_000).contains(&plan.budget_cost_microusd) {
+    if !(1..=MAX_GRAPH_BUDGET_COST_MICROUSD).contains(&plan.budget_cost_microusd) {
         return Err(anyhow!("task graph cost budget is invalid"));
     }
 
@@ -895,7 +902,7 @@ fn validate_contract(task_key: &str, contract: &TaskContract) -> Result<()> {
     if !(1..=MAX_TASK_BUDGET_TOKENS).contains(&contract.budget_tokens) {
         return Err(anyhow!("task {task_key} budget is invalid"));
     }
-    if !(1..=10_000_000).contains(&contract.budget_cost_microusd) {
+    if !(1..=MAX_TASK_BUDGET_COST_MICROUSD).contains(&contract.budget_cost_microusd) {
         return Err(anyhow!("task {task_key} cost budget is invalid"));
     }
     validate_source_requirement(
@@ -1218,6 +1225,53 @@ mod tests {
             max_task_attempts: None,
             deliverable: None,
             handoff_root: None,
+        }
+    }
+
+    #[test]
+    fn issue79_every_registered_strategy_uses_shared_cost_allocation() {
+        let registry = StrategyRegistry::new();
+        let mut roster = agents();
+        roster.extend(copilot_workers());
+        for strategy in registry.ids() {
+            for total in [
+                1,
+                2,
+                3,
+                4,
+                1_000_003,
+                10_000_000,
+                10_000_001,
+                18_181_816,
+                18_181_817,
+                20_000_000,
+                23_333_332,
+                23_333_333,
+                50_000_000,
+                i64::MAX,
+            ] {
+                let request = PlanningRequest {
+                    budget_cost_microusd: Some(total),
+                    ..studio_request()
+                };
+                let expected = strategy_cost_budgets(&strategy, total);
+                let actual = registry.plan(&strategy, &request, &roster);
+                match expected {
+                    Ok(costs) => {
+                        let plan =
+                            actual.unwrap_or_else(|error| panic!("{strategy}/{total}: {error}"));
+                        assert_eq!(plan.budget_cost_microusd, total);
+                        assert_eq!(
+                            plan.tasks
+                                .iter()
+                                .map(|task| task.contract.budget_cost_microusd)
+                                .collect::<Vec<_>>(),
+                            costs
+                        );
+                    }
+                    Err(_) => assert!(actual.is_err(), "{strategy}/{total}"),
+                }
+            }
         }
     }
 

@@ -1,0 +1,10 @@
+# Project-scoped Codex integration. Loaded only after the operator trusts this
+# checkout. Install the reviewed native gateway in an operator-owned PATH first;
+# routing and credentials come from the host, never repository defaults.
+[mcp_servers.ecorp]
+command = "crony-mcp"
+args = ["--read-only"]
+env_vars = ["CRONY_SERVER_HTTP", "CRONY_CORP_ID", "CRONY_ACTOR_ID", "CRONY_ACCESS_TOKEN"]
+enabled_tools = ["crony_snapshot"]
+startup_timeout_sec = 10
+tool_timeout_sec = 30

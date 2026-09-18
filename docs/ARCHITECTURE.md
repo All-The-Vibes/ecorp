@@ -131,6 +131,7 @@ before terminal session reporting. Unknown and duplicate decisions cannot select
 
 ## Copilot runtime compatibility
 
+<!-- ecorp:copilot-runtime -->
 The checked-in Copilot SDK and its verified CLI are one execution dependency pair. Managed
 local processes receive `--no-auto-update`; catalog discovery, new sessions and resume validate
 the connected runtime version before accepting provider work. The current pair is SDK `1.0.11`
@@ -138,6 +139,7 @@ and CLI `1.0.79`. A runtime override is not permission to silently select an unv
 Version checks do not replace worktree capabilities, permissions, process ownership or verifier
 evidence. The native-read regression validates real relative/absolute view results and exact
 readback bytes through the server and runner.
+<!-- /ecorp:copilot-runtime -->
 
 ## Budgets and circuit breaking
 
@@ -416,6 +418,15 @@ or discard events.
 
 Server startup recovery is explicitly single-owner. Secondary replicas and production-auth probes
 disable it so they cannot place another server's healthy runners into grace.
+
+A finished ordinary provider awaiting a durable outcome review no longer has a live process
+claim. Reconnect and grace-expiry loss handling preserve that wait only when the run, task,
+mission and pending review agree, the review gate matches the task policy, and the latest
+same-scope termination/uncertainty receipt positively confirms provider termination. Pending
+tool actions, later teardown uncertainty, protected stops, quarantine and provider-free modes
+receive no ordinary-provider exception. The existing checkpoint-review provenance check stays
+separate. This preserves review state, not decision or recovery authority; the normal reviewer
+role, room and requester-exclusion checks still apply.
 
 ## Worktree lifecycle
 
@@ -757,6 +768,14 @@ classifier or treat requested sandbox configuration as proof of OS enforcement. 
 runner-owned verifier commands execute after the provider has terminated, without duplicating
 routine tests as model-session approval requests.
 
+**September 18, 2026 correction:** the adapter does not write task-specific sandbox policy into
+the account-wide Copilot settings store. A zero-inference probe with the production filesystem
+provider and session configuration found command sandboxing disabled in SDK `1.0.11` / CLI
+`1.0.79`, despite restrictive account settings and the existing launch flags. Removing those
+global writes preserves native home, authentication, history, and the existing ECorp filesystem
+and approval boundaries. No native OS sandbox assurance is claimed for this path; see
+[the security correction](SECURITY.md). Historical execution evidence remains unchanged.
+
 Deterministic app-server fixtures and authenticated real-provider probes cover start, structured
 streaming, steering, interruption, emergency stop, resume, usage, artifacts, and failure behavior.
 
@@ -776,13 +795,23 @@ fencing, lease, and recoverable lifecycle fields can change.
 GitHub owner and repository identities are normalized to lowercase before locking and uniqueness
 checks, preventing case variants from creating duplicate work items.
 
-Before a new claim or an unmaterialized reclaim, the controller sends the exact issue-derived
+Before normal new intake or a materializable unmaterialized reclaim, the controller sends the exact issue-derived
 materialization payload and final policy snapshot to a mutation-free factory preflight endpoint.
 Dry run and execution use this same boundary. The server repeats model and reasoning selection,
 task-graph and budget validation, verifier-policy validation, deliverable and write-scope checks,
 policy narrowing, mission title and description normalization, the 65,536-byte operation-snapshot
 limit, and destination-room authorization. A rejected preflight leaves the GitHub Project item in
 `Todo` and creates no factory item, mission, task, or run.
+
+Pure strategy/cost admission also runs in the CLI before GitHub quota/Project discovery and at
+the store's authoritative new-claim boundary. The shared domain allocator retains existing
+strategy distributions and $10/task, $50/graph limits; it does not widen token or financial
+authority. Historical JSON normalization deliberately stays separate from prospective admission.
+An exact invalid legacy pre-materialization reclaim records terminal `failed`, with the existing
+state-change event and claim-operation journal in one transaction, returns no token and preserves
+source/policy. Broad CLI intake skips these items; an exact issue dry-run explains the explicit
+reconciliation. Materialized historical work and completed operation replays are preserved.
+See [cost admission and legacy claims](DARK_FACTORY_CONTRIBUTOR_GUIDE.md#cost-admission-and-legacy-claims).
 
 Mission and task creation is atomic with the `claimed -> mission_created` transition. Mission
 placement selects the oldest room in the Corp that actually contains the requesting actor rather

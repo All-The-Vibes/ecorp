@@ -32,6 +32,11 @@ impl SecretCipher {
                 "CRONY_SECRET_MASTER_KEY_HEX must decode to exactly 32 bytes"
             ));
         }
+        if mode == ServerMode::Production && key_hex.eq_ignore_ascii_case(DEVELOPMENT_KEY_HEX) {
+            return Err(anyhow!(
+                "CRONY_SECRET_MASTER_KEY_HEX must use a deployment-specific key in production mode"
+            ));
+        }
         Ok(Self {
             cipher: ChaCha20Poly1305::new(Key::from_slice(&key)),
         })
@@ -92,6 +97,88 @@ fn associated_data(corp_id: Uuid, secret_id: Uuid, name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn development_key_variants() -> Vec<String> {
+        vec![
+            DEVELOPMENT_KEY_HEX.to_owned(),
+            DEVELOPMENT_KEY_HEX.to_ascii_uppercase(),
+            format!(" \t{DEVELOPMENT_KEY_HEX}\r\n"),
+            format!("\n {} \t", DEVELOPMENT_KEY_HEX.to_ascii_uppercase()),
+            format!("\u{00a0}{DEVELOPMENT_KEY_HEX}\u{2003}"),
+            DEVELOPMENT_KEY_HEX
+                .chars()
+                .enumerate()
+                .map(|(index, letter)| {
+                    if index % 2 == 0 {
+                        letter.to_ascii_uppercase()
+                    } else {
+                        letter
+                    }
+                })
+                .collect(),
+        ]
+    }
+
+    #[test]
+    fn production_rejects_public_development_key_variants_without_disclosure() {
+        for configured in development_key_variants() {
+            let error = SecretCipher::initialize(ServerMode::Production, Some(&configured))
+                .err()
+                .expect("production must reject the public development fixture key");
+            assert!(error.to_string().contains("production"));
+            assert!(!format!("{error:#}").contains(DEVELOPMENT_KEY_HEX));
+            assert!(!format!("{error:#}").contains(&DEVELOPMENT_KEY_HEX.to_ascii_uppercase()));
+        }
+    }
+
+    #[test]
+    fn development_keeps_default_and_explicit_fixture_key_compatibility() {
+        let default = SecretCipher::initialize(ServerMode::Development, None)
+            .expect("default development cipher");
+        let corp_id = Uuid::new_v4();
+        let secret_id = Uuid::new_v4();
+        let (ciphertext, nonce) = default
+            .encrypt(corp_id, secret_id, "fixture", b"fixture plaintext")
+            .expect("encrypt development fixture");
+        for configured in development_key_variants() {
+            let explicit = SecretCipher::initialize(ServerMode::Development, Some(&configured))
+                .expect("explicit development fixture remains supported");
+            assert_eq!(
+                explicit
+                    .decrypt(corp_id, secret_id, "fixture", &ciphertext, &nonce)
+                    .expect("read an existing development fixture"),
+                b"fixture plaintext"
+            );
+        }
+    }
+
+    #[test]
+    fn production_keeps_other_valid_keys_and_normalization() {
+        let configured = hex::encode([0x5a; 32]);
+        let writer = SecretCipher::initialize(ServerMode::Production, Some(&configured))
+            .expect("valid production key");
+        let normalized = format!(" \t{}\r\n", configured.to_ascii_uppercase());
+        let reader = SecretCipher::initialize(ServerMode::Production, Some(&normalized))
+            .expect("valid normalized production key");
+        let corp_id = Uuid::new_v4();
+        let secret_id = Uuid::new_v4();
+        let (ciphertext, nonce) = writer
+            .encrypt(corp_id, secret_id, "fixture", b"fixture plaintext")
+            .expect("encrypt production fixture");
+        assert_eq!(
+            reader
+                .decrypt(corp_id, secret_id, "fixture", &ciphertext, &nonce)
+                .expect("read with the same normalized deployment key"),
+            b"fixture plaintext"
+        );
+    }
+
+    #[test]
+    fn production_still_requires_a_well_formed_32_byte_key() {
+        for configured in [None, Some(""), Some(" \t\r\n"), Some("not-hex"), Some("ab")] {
+            assert!(SecretCipher::initialize(ServerMode::Production, configured).is_err());
+        }
+    }
 
     #[test]
     fn ciphertext_is_bound_to_corp_secret_and_name() {

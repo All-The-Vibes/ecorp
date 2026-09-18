@@ -217,3 +217,38 @@ future documentation-only commit or moving PR head:
 | `crates/crony-server/src/main.rs` | `315f72c0daa0b91ea0d8f876e2bcf63abecf0a6b5b0c461ed529de53e9e520bc` |
 | `crates/crony-server/src/cache_admission_tests.rs` | `1df88ddbeb891ad2883c42b1c4f7ebf6bc3555e381a821a54aeada49dd4cde4c` |
 | `.github/workflows/ci.yml` | `a0a467b133ba20565281771c38379192e5b1f9330e5b1655c3221e978ac1c0f2` |
+
+
+## Main reconciliation (September 18)
+
+Reconciled feature head `63006e57ae0808f125978037b6fe492bb7c53d7e` with
+main `b641497c6877438675e7a5480983d4648b89cfb1`. Main extracted verifier types
+from `App.tsx` into `verificationPolicy.ts`; the cache-policy type and optional
+command/test fields now live in that canonical module. `App.tsx` matches this main
+revision. No new editor controls or production admission behavior were added.
+A focused policy-helper regression preserves explicit values, null and omission
+through draft edits and wire serialization without mutating the original policy.
+
+Validation of the reconciled candidate used Node 24.19.0, pnpm 11.19.0 and Rust
+1.98.1, with debug information and incremental compilation disabled. The current
+nine contributor gates in `AGENTS.md` passed, including documentation contracts,
+**1,079 Node unit tests passed / 39 skipped**, **214 Repo Steward tests passed**,
+and **537 default Rust tests passed / 351 ignored**, formatting, strict all-target
+Clippy and web build/lint. The five real-PostgreSQL admission regressions and five
+opt-in native cache tests also passed using the commands above. The toolchain
+doctor passed. No complete browser/server/runner replay or new Windows run is
+claimed for this reconciliation; the historical runtime evidence remains pinned.
+
+The first Node gate run failed in temporary-file fixtures on macOS. Re-running
+with `TMPDIR=/private/tmp` passed all 65 targeted diagnostic tests and then the
+complete gates; no source workaround or weaker validation was introduced.
+Use this canonical temporary path when reproducing these macOS checks.
+
+Copilot `gpt-5.6-sol` / high completed the resolution review; its field-preservation
+coverage suggestion was implemented and tested. A separate Copilot
+`claude-sonnet-5` / high review of the final frontend diff found no type/editor
+defect. Its suggestion to add frontend runtime rejection of unsupported values
+was not adopted: this reconciliation preserves the existing server-authoritative
+contract and does not expand the frontend validator. All logs, including the
+initial failures, were retained locally. Hosted results for the resulting merge
+commit are recorded separately in the PR description.
