@@ -3,6 +3,7 @@ mod auth;
 mod dependency_source;
 #[cfg(test)]
 mod factory_connection_tests;
+mod factory_readiness;
 mod planning;
 mod secrets;
 mod staffing;
@@ -3756,8 +3757,17 @@ async fn preflight_factory_mission(
         .await
         .map_err(map_store_error)?;
     let preview = mission_preview_response(&constrained_plan);
+    let dispatch_readiness = factory_readiness::observe(&state, corp_id, &constrained_plan);
+    if request.require_dispatch_ready
+        && let crony_protocol::FactoryDispatchReadiness::NotReady { reason } = &dispatch_readiness
+    {
+        return Err(ApiError::conflict(format!(
+            "factory plan is valid but dispatch is not ready: {reason}"
+        )));
+    }
     Ok(Json(PreflightFactoryMissionResponse {
         valid: true,
+        dispatch_readiness: Some(dispatch_readiness),
         strategy: preview.strategy,
         task_count: preview.tasks.len(),
         budget_tokens: preview.budget_tokens,

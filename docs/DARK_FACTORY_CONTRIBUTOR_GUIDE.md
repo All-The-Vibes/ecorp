@@ -463,6 +463,39 @@ Remove `--dry-run` only after the preview matches the issue contract. The contro
 item, persists the policy, atomically materializes one mission, updates Project status after durable
 state exists, and dispatches only to a matching runner.
 
+### Plan validity and current dispatch readiness
+
+`POST /api/corps/{corp_id}/factory/preflight` and the CLI's `preflight` preview
+separate two facts:
+
+- `valid: true` retains its legacy meaning: the plan passed policy, graph,
+  budget, contract and authorization validation. It is **not** a runner reservation
+  or proof that execution can start. An unbound deterministic `fake-process` plan
+  can remain valid offline, including when its pinned source has no matching runner.
+- `dispatch_readiness` is either `{"status":"ready"}` or
+  `{"status":"not_ready","reason":"..."}`. This observes every constrained task
+  through the native runner selector after authorized preflight. Corp, actor/room,
+  optional saved connection, repository/ref/immutable commit, adapter/model and
+  reconciliation boundaries still apply. No alternate commit or account is selected.
+  Existing provider/staffing and saved-connection admission checks are not relaxed.
+
+Omitting `require_dispatch_ready` (or setting it to `false`) preserves plan-only
+preflight. `true` rejects a valid but currently unready plan with HTTP 409 and a
+diagnostic, without writing a claim, mission, task, run or journal entry.
+The CLI and its controller worker use that execution mode before a new claim or
+an unmaterialized reclaim, then require a typed `ready` result. Old responses
+omitting readiness remain readable for dry runs but cannot authorize execution
+with the updated CLI; upgrade the server rather than interpreting `valid` as ready.
+The claim endpoint remains a fencing/lineage operation, not an execution-readiness
+certificate. Direct API execution clients must use the execution preflight too.
+
+Readiness is point-in-time, **not a reservation**. The existing materialization and
+native dispatch rechecks remain authoritative if a runner disconnects or source,
+account, authorization or capabilities change afterward. A race can still leave a
+durable claim and mission in the existing blocked/recovery flow. Do not promise
+mutation-free rejection for every race, rewrite old lineage, or replace same-ledger
+claim concurrency with a second lock.
+
 Replaying the same request after a lost response or controller restart should recover the durable
 work item and mission. Do not create a replacement issue or second mission merely because the
 controller's response was lost.

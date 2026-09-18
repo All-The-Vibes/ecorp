@@ -1630,6 +1630,9 @@ fn factory_preflight_body(
         Value::String(source_repository_name.to_owned()),
     );
     fields.insert("policy".to_owned(), policy);
+    if !args.dry_run {
+        fields.insert("require_dispatch_ready".to_owned(), Value::Bool(true));
+    }
     Ok(mission_body)
 }
 
@@ -1639,15 +1642,38 @@ async fn preflight_factory_mission(
     args: &FactoryArgs,
     policy: Value,
     mission_body: Value,
-) -> Result<Value> {
-    server_json(
+) -> Result<crony_protocol::PreflightFactoryMissionResponse> {
+    let response = server_json(
         client,
         Method::POST,
         format!("{server}/api/corps/{}/factory/preflight", args.corp_id),
         Some(factory_preflight_body(args, policy, mission_body)?),
     )
     .await
-    .context("factory plan preflight rejected before claim")
+    .context("factory plan preflight rejected before claim")?;
+    let response: crony_protocol::PreflightFactoryMissionResponse =
+        serde_json::from_value(response).context("invalid factory preflight response")?;
+    if !args.dry_run {
+        require_factory_dispatch_ready(&response)?;
+    }
+    Ok(response)
+}
+
+fn require_factory_dispatch_ready(
+    response: &crony_protocol::PreflightFactoryMissionResponse,
+) -> Result<()> {
+    if !response.valid {
+        bail!("factory plan preflight rejected before claim: plan is not valid");
+    }
+    match &response.dispatch_readiness {
+        Some(crony_protocol::FactoryDispatchReadiness::Ready) => Ok(()),
+        Some(crony_protocol::FactoryDispatchReadiness::NotReady { reason }) => {
+            bail!("factory dispatch is not ready before claim: {reason}")
+        }
+        None => bail!(
+            "factory dispatch readiness was not reported; upgrade the server before execution (valid is plan-only)"
+        ),
+    }
 }
 
 fn validate_args(args: &FactoryArgs) -> Result<()> {
@@ -4578,6 +4604,54 @@ mod tests {
     use chrono::{Duration, Utc};
     use serde_json::{Value, json};
     use uuid::Uuid;
+
+    #[tokio::test]
+    async fn issue256_preflight_modes_and_legacy_response_fail_closed_for_execution() {
+        let mut f = RecoveryFixture::new();
+        let legacy = json!({
+            "valid": true, "strategy": "single", "task_count": 1,
+            "budget_tokens": 1000, "budget_cost_microusd": 1000000,
+        });
+        for dry_run in [true, false] {
+            f.args.dry_run = dry_run;
+            for readiness in [
+                None,
+                Some(json!({"status": "not_ready", "reason": "immutable checkout unavailable"})),
+                Some(json!({"status": "ready"})),
+            ] {
+                let mut response = legacy.clone();
+                if let Some(value) = &readiness {
+                    response["dispatch_readiness"] = value.clone();
+                }
+                let (server, requests) = issue206_http_fixture(vec![response]).await;
+                let result = super::preflight_factory_mission(
+                    &reqwest::Client::builder().no_proxy().build().unwrap(),
+                    &server,
+                    &f.args,
+                    json!({}),
+                    json!({}),
+                )
+                .await;
+                let ready = readiness
+                    .as_ref()
+                    .is_some_and(|value| value["status"] == "ready");
+                assert_eq!(result.is_ok(), dry_run || ready);
+                let requests = requests.await.unwrap();
+                assert_eq!(requests.len(), 1);
+                assert!(requests[0].0.contains("/factory/preflight"));
+                assert_eq!(
+                    requests[0].1.get("require_dispatch_ready").cloned(),
+                    (!dry_run).then_some(json!(true)),
+                );
+                assert!(requests[0].1.get("workspace_connection_id").is_none());
+            }
+        }
+        let mut invalid: crony_protocol::PreflightFactoryMissionResponse =
+            serde_json::from_value(legacy).unwrap();
+        invalid.valid = false;
+        invalid.dispatch_readiness = Some(crony_protocol::FactoryDispatchReadiness::Ready);
+        assert!(super::require_factory_dispatch_ready(&invalid).is_err());
+    }
 
     use super::{
         EvaluatedItem, ExistingFactoryItem, FactoryArgs, FactoryRecoverySnapshot,
