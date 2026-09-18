@@ -6,7 +6,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      ws:
+        specifier: 8.18.3
+        version: 8.18.3
 
   apps/web:
     dependencies:
@@ -492,6 +496,9 @@ packages:
       yaml:
         optional: true
 
+  ws@8.18.3:
+    resolution: {integrity: sha1-tWuIq//eYnkcY5FwQAyT3LDJVHI=}
+
 snapshots:
 
   '@oxc-project/types@0.146.0': {}
@@ -762,3 +769,5 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.13.3
       fsevents: 2.3.3
+
+  ws@8.18.3: {}

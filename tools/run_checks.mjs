@@ -1,0 +1,155 @@
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const config = JSON.parse(readFileSync(new URL('../test.config.json', import.meta.url), 'utf8'))
+
+export function selectNodeTests(files, settings = config) {
+  if (settings.schemaVersion !== 1 || !Array.isArray(settings.nodeTestSuffixes) || !settings.nodeTestSuffixes.length ||
+      settings.nodeTestSuffixes.some(suffix => !['.test.mjs', '.test.js'].includes(suffix)) ||
+      !Array.isArray(settings.nodeTestRoots) || !settings.nodeTestRoots.length ||
+      settings.nodeTestRoots.some(root => !/^[.\w/-]+\/$/u.test(root) || root.includes('..'))) {
+    throw new Error('Unsupported test configuration')
+  }
+  return [...new Set(files)].filter(file => !file.startsWith('-') && !file.includes('..') &&
+    settings.nodeTestSuffixes.some(suffix => file.endsWith(suffix)) && settings.nodeTestRoots.some(root => file.startsWith(root))).sort()
+}
+
+export function invocationFor(command, argv, platform = process.platform, pnpmPath = process.env.npm_execpath) {
+  if (command === 'node') return { program: process.execPath, args: argv }
+  if (command !== 'pnpm' || platform !== 'win32') return { program: command, args: argv }
+  if (!pnpmPath || !path.win32.isAbsolute(pnpmPath) || !/\.([cm]?js|exe)$/iu.test(pnpmPath)) {
+    throw new Error('Run the full Windows gate through pnpm check so its native CLI path is available')
+  }
+  return /\.exe$/iu.test(pnpmPath) ? { program: pnpmPath, args: argv } : { program: process.execPath, args: [pnpmPath, ...argv] }
+}
+
+export function checkPlan(group, files) {
+  const tests = selectNodeTests(files)
+  if (!tests.length) throw new Error('No Node test files discovered; refusing a false-green suite')
+  if (JSON.stringify(config.rustCommand) !== JSON.stringify(['cargo', 'test', '--workspace', '--locked'])) {
+    throw new Error('Rust test command differs from the reviewed workspace gate')
+  }
+  const checks = {
+    migrations: ['node', 'tools/check_migrations.mjs'],
+    docs: ['node', 'tools/check_docs.mjs'],
+    'node-tests': ['node', '--test', '--test-concurrency=1', '--test-reporter=tap', ...tests],
+    format: ['cargo', 'fmt', '--check'],
+    clippy: ['cargo', 'clippy', '--workspace', '--all-targets', '--locked', '--', '-D', 'warnings'],
+    'rust-tests': config.rustCommand,
+    'web-build': ['pnpm', 'build:web'],
+    'web-lint': ['pnpm', 'lint:web'],
+  }
+  const groups = {
+    fast: ['migrations', 'docs', 'format'],
+    docs: ['docs'],
+    node: ['node-tests'],
+    test: ['node-tests', 'rust-tests'],
+    full: Object.keys(checks),
+  }
+  if (!Object.hasOwn(groups, group)) throw new Error('Unknown check group')
+  return groups[group].map(name => ({ name, argv: checks[name] }))
+}
+
+export function summarizeTests(stdout) {
+  const rust = [...stdout.matchAll(/test result: \w+\. (\d+) passed; (\d+) failed; (\d+) ignored;/gu)]
+  const sum = index => rust.reduce((total, match) => total + Number(match[index]), 0)
+  const nodeValue = label => {
+    const match = stdout.match(new RegExp(`^# ${label} (\\d+)$`, 'm'))
+    return match ? Number(match[1]) : null
+  }
+  return {
+    rust: rust.length ? { passed: sum(1), failed: sum(2), ignored: sum(3), summaries: rust.length } : null,
+    node: nodeValue('tests') === null ? null : {
+      tests: nodeValue('tests'), passed: nodeValue('pass'), failed: nodeValue('fail'),
+      skipped: nodeValue('skipped'), todo: nodeValue('todo'), cancelled: nodeValue('cancelled'),
+    },
+  }
+}
+
+function git(args) {
+  const result = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })
+  if (result.status !== 0) throw new Error(`Git evidence unavailable: ${args[0]}`)
+  return result.stdout
+}
+
+export function main(args = process.argv.slice(2)) {
+  if (args.some(arg => !['--group', 'fast', 'docs', 'node', 'test', 'full', '--dry-run'].includes(arg)) ||
+      args.filter(arg => arg === '--group').length !== 1 || args.indexOf('--group') !== 0 ||
+      args.length < 2 || args.length > 3 || (args.length === 3 && args[2] !== '--dry-run')) {
+    throw new Error('Usage: node tools/run_checks.mjs --group fast|docs|node|test|full [--dry-run]')
+  }
+  const files = git(['ls-files', '-z', '--cached', '--others', '--exclude-standard']).split('\0').filter(Boolean)
+  const plan = checkPlan(args[1], files)
+  if (args.includes('--dry-run')) {
+    console.log(JSON.stringify({ dry_run: true, writes: [], checks: plan }, null, 2))
+    return 0
+  }
+  const status = git(['status', '--porcelain=v1'])
+  const changes = git(['diff', '--binary', 'HEAD'])
+  const untracked = git(['ls-files', '-z', '--others', '--exclude-standard']).split('\0').filter(Boolean)
+  const untrackedDigests = untracked.map(file => [file, createHash('sha256').update(readFileSync(path.join(ROOT, file))).digest('hex')])
+  const started = new Date().toISOString()
+  const report = {
+    schemaVersion: 1, group: args[1], startedAt: started,
+    source: { commit: git(['rev-parse', 'HEAD']).trim(), branch: git(['branch', '--show-current']).trim(),
+      dirty: status.length > 0, trackedDiffSha256: createHash('sha256').update(changes).digest('hex'), untrackedDigests },
+    node: process.versions.node, checks: [], status: 'running',
+    assurance: 'Local validation only. Ignored tests are not passes. No hosted CI, browser, provider or production claim.',
+  }
+  const out = path.join(ROOT, 'output', 'readiness')
+  mkdirSync(out, { recursive: true })
+  const reportPath = path.join(out, `${started.replaceAll(/[:.]/gu, '-')}-${args[1]}.json`)
+  for (const check of plan) {
+    const begin = Date.now()
+    console.log(`Running ${check.name}`)
+    const [command, ...argv] = check.argv
+    // Use the package manager's own native entry point, not shell-concatenated arguments.
+    let result
+    try {
+      const invocation = invocationFor(command, argv)
+      result = spawnSync(invocation.program, invocation.args, {
+        cwd: ROOT, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, shell: false,
+        env: { ...process.env, ECORP_FACTORY_WATCH: '0' },
+      })
+    } catch (error) {
+      result = { status: null, error: { code: 'TOOL_RESOLUTION_ERROR' }, stdout: '', stderr: error.message + '\n' }
+    }
+    const stdout = result.stdout ?? '', stderr = result.stderr ?? ''
+    if (check.name === 'node-tests') {
+      // Hundreds of passing TAP records obscure actionable failures in agent context.
+      const failures = [...stdout.matchAll(/^\s*not ok .*$(?:\n[\s\S]*?^\s*\.\.\.)?/gmu)].map(match => match[0])
+      const summary = stdout.split('\n').filter(line => /^# (tests|pass|fail|cancelled|skipped|todo|duration_ms) /u.test(line))
+      console.log([...failures.map(value => value.slice(0, 2400)), ...summary].join('\n'))
+    } else if (check.name === 'rust-tests' && result.status === 0) {
+      console.log(stdout.split('\n').filter(line => line.startsWith('test result:')).join('\n'))
+    } else process.stdout.write(stdout)
+    process.stderr.write(stderr.slice(0, 16000))
+    const counts = summarizeTests(stdout)
+    const testEvidence = check.name === 'node-tests' ? counts.node?.tests > 0 :
+      check.name === 'rust-tests' ? counts.rust?.summaries > 0 : true
+    const passed = result.status === 0 && !result.error && testEvidence
+    report.checks.push({ name: check.name, argv: check.argv, exitCode: result.status,
+      passed, durationMs: Date.now() - begin, counts,
+      errorCode: result.error?.code ?? (testEvidence ? null : 'NO_TEST_SUMMARY') })
+    if (!passed) { report.status = 'failed'; break }
+  }
+  if (report.status === 'running') report.status = 'passed'
+  report.finishedAt = new Date().toISOString()
+  report.sourceChangedDuringValidation = git(['rev-parse', 'HEAD']).trim() !== report.source.commit ||
+    createHash('sha256').update(git(['diff', '--binary', 'HEAD'])).digest('hex') !== report.source.trackedDiffSha256 ||
+    JSON.stringify(git(['ls-files', '-z', '--others', '--exclude-standard']).split('\0').filter(Boolean)
+      .map(file => [file, createHash('sha256').update(readFileSync(path.join(ROOT, file))).digest('hex')])) !== JSON.stringify(untrackedDigests)
+  if (report.sourceChangedDuringValidation && report.status === 'passed') report.status = 'source_changed'
+  report.notRun = plan.slice(report.checks.length).map(check => check.name)
+  writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' })
+  console.log(`Validation report: ${reportPath}`)
+  return report.status === 'passed' ? 0 : 1
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  try { process.exitCode = main() } catch (error) { console.error(error.message); process.exitCode = 1 }
+}

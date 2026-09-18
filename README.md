@@ -206,6 +206,11 @@ pnpm check
 
 This runs migration checks, Rust formatting, Clippy, the workspace test suite, and the web build and lint.
 
+It also runs the native Node regression suites and the documentation-contract drift gate.
+Use `pnpm check:preview` to inspect the exact commands without executing them, or
+`pnpm check:fast` for quick feedback. See [reproducible validation](docs/VALIDATION.md)
+for pinned toolchains, test discovery, evidence receipts, and ignored-test boundaries.
+
 ## Run a GitHub issue through the factory
 
 [ECorp Build, organization GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) is
