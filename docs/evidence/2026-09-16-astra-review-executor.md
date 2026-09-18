@@ -535,3 +535,43 @@ bytes and canonical Git blobs include the modified workflow as well as the
 helper and tests. [Screenshot 21](assets/astra-review-executor/21-authority-and-ci-pins.png)
 captures those local results. Fresh independent review, new-head hosted CI,
 automatic Copilot and real scheduler qualification remain separate gates.
+
+### Corrective-completion integration
+
+All four fresh reviews of `896f082` returned FAIL despite the local 326-test
+pass. Three found that a reordered or metadata-only replacement proof could
+restore an invalid activation without completed corrective work. The fourth
+reproduced read-only feedback restoring an old failed attempt's NICE and
+activation. The original activation finding was reopened; these failures were
+not converted into approvals. `896f082` was neither adopted nor published as
+the PR head.
+
+Two issue-scoped native fixers supplied changes to corrective completion and
+failed-review provenance. Parent integration preserved both activation hooks,
+both private replay fences, and semantic acknowledgement equality without
+changing historical journal digests. Existing legacy positive cases required
+forward-only binding when valid retained work resumes or receives its charge.
+
+Additional synthetic integration probes exposed two related paths: an old
+metadata-only replacement already accepted before upgrade, and a failed NICE
+projection resetting its cycle on new input. The integrated correction retains
+those histories but withholds new authority or a fresh budget. Genuine marked
+and unmarked corrective acceptance remains usable with the canonical old push.
+The five old-replacement cases produced three genuine baseline failures and
+five corrected passes; the retained old PR2 claim is reconciled, not silently
+deleted or mistaken for a new admission.
+
+The first combined focused run passed 81 of 82 checks. The remaining assertion
+expected the later generic corrective-completion error; the integrated earlier
+failure-provenance guard correctly rejected it instead. The assertion now names
+that actual rejection and still verifies unchanged journal bytes. Its focused
+rerun passed; the original diagnostic remains retained. No live journal or
+repository security setting was changed by these synthetic probes.
+
+The final integrated suite passed **393/393 Node tests** and all six repository
+checks; Rust reported **547 passed, 323 ignored, zero failed**. Exact tested
+source bytes and canonical Git blobs were retained. The actual 106-event
+journal copy replayed unchanged at round sixteen.
+[Screenshot 22](assets/astra-review-executor/22-corrective-acceptance-and-provenance.png)
+shows these local results only. Independent source acceptance, current-head
+hosted execution and genuine scheduler qualification are not inferred from it.

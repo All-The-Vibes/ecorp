@@ -181,6 +181,10 @@ sessions, failed tests and original receipts.
    the unprocessed feedback and report but releases the writer for other PRs.
    Retry that read-only gate explicitly after the cause clears. This route cannot
    edit code, dispatch fixers, publish, or disguise another code review/fix round.
+   Retained failed-review provenance belongs to the original audit claim/round.
+   A nullable checkpoint or old metadata-derived NICE cannot erase it. Feedback
+   cannot restore that completion or activation; a BLOCKED receipt may only
+   retain evidence and release the writer for permitted recovery or other PRs.
 9. Save the actual audit, fixer, red/green, reviewer, push and CI receipts. Keep
    technical Santa NICE separate from the complete merge rubric: human approval,
    drafts, dependencies and other external gates may still block merge. Do not
@@ -301,6 +305,12 @@ or turn a goal-triggered turn into scheduler evidence. An old activation missing
 its original authority/wake binding remains readable but cannot authorize new
 non-canary work. Recording a grant or wake later does not retroactively repair
 that activation; full supported re-acceptance is still required.
+Replacement acceptance must belong to the current charged corrective audit and
+its fresh independent code acceptance. Reordered acknowledgements or changed
+receipt metadata cannot substitute. Older unmarked genuine corrections are
+recognized from their accepted charge and code-review/publication events, not
+invented markers. The canonical old push may remain when the source is unchanged;
+do not manufacture a push merely to requalify it.
 CI evidence must include the current `gateKey` and `baseRef`, and be verified
 after both the technical round start and the latest observed gate generation.
 An old same-head green receipt does not discharge a newer failing check.
@@ -308,6 +318,10 @@ Normal completed NICE cycles renew when either base or head changes; a new
 diff must not inherit an exhausted prior successful cycle. Same-revision
 feedback, unfinished/failed work and invalid policy/publication correction
 retain their existing bounds.
+An old NICE projection with unresolved failed-review provenance is not a
+successful cycle. Under-bound pending work must use a charged audit in its
+existing cycle; head/base changes cannot reset its failed bounds. Exhausted
+stops remain stops, without consuming or repeatedly replacing retained work.
 An old unclaimed bound rejection may have incorrectly consumed a base-only
 generation after completed NICE. Recover that exact retained successful basis
 as an audit, not a gate-only check; preserve all old events and counts.

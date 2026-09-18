@@ -269,6 +269,173 @@ test('PR304-ENABLE-AUTHORITY: registering the exact missing wake later cannot re
   assertHistoryPrefix(dir, prefix)
 })
 
+const unboundActivation = (missing = 'wake') => {
+  const dir = setup([pr(), pr(2)]), published = publishComplete(dir)
+  if (missing === 'wake') run(dir, 'autonomy', autonomyInput())
+  const wake = wakeInput('synthetic-late-reacceptance')
+  const acceptanceProof = proof(published.claim, published.receipts, undefined, wakeProof(wake))
+  appendHistorical(dir, 'enable', { owner, acceptanceProof })
+  const old = run(dir, 'show'), prefix = journalBytes(dir)
+  assert.equal(old.activation.valid, false)
+  if (missing === 'authority') run(dir, 'autonomy', autonomyInput())
+  const schedulerWake = missing === 'wake'
+    ? (run(dir, 'wake', wake), wakeProof(wake))
+    : registeredWakeProof(dir, 'synthetic-new-reacceptance')
+  assert.deepEqual(run(dir, 'show').activation, old.activation)
+  return { dir, published, acceptanceProof, schedulerWake, old, prefix }
+}
+
+for (const mutation of ['key-order', 'resumeRef', 'quietNoopRef', 'audits', 'fixers']) {
+  test(`PR304-CORRECTIVE-REACCEPTANCE: late exact wake cannot repair activation through ${mutation}`, () => {
+    const { dir, acceptanceProof, prefix } = unboundActivation()
+    const before = run(dir, 'show'), bytes = journalBytes(dir)
+    run(dir, 'enable', { owner, acceptanceProof })
+    const changed = structuredClone(acceptanceProof)
+    if (mutation === 'key-order') {
+      delete changed.number
+      changed.number = acceptanceProof.number
+      assert.deepEqual(changed, acceptanceProof)
+      run(dir, 'enable', { owner, acceptanceProof: changed })
+    } else {
+      if (mutation === 'audits') changed.audits.atvRef = 'synthetic-alias-atv.json'
+      else if (mutation === 'fixers') changed.fixers[0].sourceRef = 'synthetic-alias-fixer.json'
+      else changed[mutation] = `synthetic-alias-${mutation}.json`
+      assert.match(run(dir, 'enable', { owner, acceptanceProof: changed }, false).error, /corrective.*completion/)
+    }
+    assert.equal(journalBytes(dir), bytes, 'ACK or rejection cannot append an enable, alter receipts or spend')
+    assert.deepEqual(run(dir, 'show'), before)
+    assertHistoryPrefix(dir, prefix)
+    assert.equal(next(dir).number, 1, 'only the corrective canary may be admitted')
+  })
+}
+
+for (const missing of ['wake', 'authority']) {
+  test(`PR304-CORRECTIVE-REACCEPTANCE: late ${missing} and new wake cannot reuse old completion`, () => {
+    const { dir, acceptanceProof } = unboundActivation(missing)
+    const changed = { ...acceptanceProof, schedulerWake: registeredWakeProof(dir, 'synthetic-another-wake') }
+    const before = run(dir, 'show'), bytes = journalBytes(dir)
+    assert.equal(before.prs['1'].correctiveAudit, undefined)
+    assert.match(run(dir, 'enable', { owner, acceptanceProof: changed }, false).error, /corrective.*completion/)
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before)
+  })
+
+  test(`PR304-CORRECTIVE-REACCEPTANCE: fresh corrective completion after late ${missing} retains canonical old push`, () => {
+    const { dir, published, acceptanceProof, old, prefix } = unboundActivation(missing)
+    const claim = start(dir), charged = run(dir, 'show')
+    assert.equal(claim.number, 1)
+    assert.equal(claim.round, 2)
+    assert.deepEqual(charged.prs['1'].correctiveAudit, { activationId: old.activation.eventId, claimId: claim.claimId })
+    assert.deepEqual(claim.snapshot, published.snapshot, 'no manufactured source or feedback change')
+    const badSave = journalBytes(dir)
+    run(dir, 'save', saveInput(claim, { technicalVerdict: 'NICE', reviewers: acceptanceProof.reviewers }), false)
+    assert.equal(journalBytes(dir), badSave, 'the old reviewers cannot complete the new charged claim')
+    const receipts = reviewers(claim)
+    run(dir, 'save', saveInput(claim, { phase: 'complete', technicalVerdict: 'NICE', reviewers: receipts }))
+    const good = { ...proof(claim, receipts, undefined, registeredWakeProof(dir, 'synthetic-fresh-correction')),
+      push: published.push }
+    const completed = run(dir, 'show'), bytes = journalBytes(dir)
+    assert.equal(completed.prs['1'].cycles[0].completion.claimId, claim.claimId)
+    assert.equal(completed.prs['1'].cycles[0].completion.round, completed.prs['1'].cycles[0].rounds)
+    assert.equal(completed.activation.valid, false, 'fresh NICE alone is not activation')
+    for (const change of [
+      { reviewers: acceptanceProof.reviewers }, { ci: acceptanceProof.ci },
+      { push: { ...published.push, sourceRef: 'synthetic-noncanonical-push.json' } },
+      { schedulerWake: acceptanceProof.schedulerWake }, { copilot: { ...good.copilot, automatic: false } },
+      { fixers: [] }, { audits: {} }, { quietNoopRef: '' }, { resumeRef: '' },
+    ]) {
+      run(dir, 'enable', { owner, acceptanceProof: { ...good, ...change } }, false)
+      assert.equal(journalBytes(dir), bytes, 'all normal full-acceptance gates remain required')
+    }
+    run(dir, 'enable', { owner, acceptanceProof: good })
+    const after = run(dir, 'show'), enabled = journalBytes(dir)
+    assert.deepEqual(after.activations.map((a) => a.valid), [false, true])
+    assert.deepEqual(after.activations[0].acceptanceProof, acceptanceProof)
+    assert.deepEqual(after.prs['1'], completed.prs['1'], 'enable cannot change counters, claim, reviews or publication')
+    assert.deepEqual(after.prs['1'].publications, old.prs['1'].publications)
+    assert.deepEqual(after.usedReviewers, [...old.usedReviewers, ...receipts.map((r) => r.reviewerId)])
+    assert.deepEqual(after.wakes, completed.wakes)
+    assert.deepEqual(after.autonomy, charged.autonomy, 'no second authority grant')
+    assert.equal(after.prs['1'].cycles.length, 1)
+    assert.equal(after.prs['1'].cycles[0].noProgress, 2, 'acceptance never resets the breaker')
+    const { number, ...rest } = good
+    run(dir, 'enable', { owner, acceptanceProof: { ...rest, number } })
+    assert.equal(journalBytes(dir), enabled, 'semantic ACK of valid replacement is also a no-op')
+    run(dir, 'enable', { owner, acceptanceProof: { ...good, resumeRef: 'different.json' } }, false)
+    assert.equal(journalBytes(dir), enabled, 'genuine disagreement still fails')
+    assertHistoryPrefix(dir, prefix)
+    assert.equal(next(dir).number, 2)
+  })
+}
+
+test('PR304-CORRECTIVE-REACCEPTANCE: charged retry completes at its current round without another push', () => {
+  const { dir, published, old } = unboundActivation()
+  const first = start(dir), finding = { id: 'corrective-finding', status: 'open', evidence: ['synthetic-red.log'] }
+  run(dir, 'save', saveInput(first, { phase: 'fixing', findings: [finding] }))
+  const findings = [{ ...finding, status: 'fixed', evidence: [...finding.evidence, 'synthetic-green.log'] }]
+  failedReview(dir, first, findings)
+  const claim = run(dir, 'retry', retryInput(first))
+  assert.equal(claim.claimId, first.claimId)
+  assert.equal(claim.round, 3)
+  const receipts = reviewers(claim)
+  run(dir, 'save', saveInput(claim, { phase: 'complete', findings, technicalVerdict: 'NICE', reviewers: receipts }))
+  const acceptanceProof = { ...proof(claim, receipts, undefined, registeredWakeProof(dir, 'synthetic-retried-completion')),
+    push: published.push }
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  run(dir, 'enable', { owner, acceptanceProof })
+  const after = run(dir, 'show')
+  assert.equal(after.activation.valid, true, 'the failed earlier round cannot poison a fresh charged completion')
+  assert.equal(after.prs['1'].cycles[0].completion.round, 3)
+  assert.deepEqual(after.prs['1'], before.prs['1'])
+  assert.deepEqual(after.prs['1'].publications, old.prs['1'].publications)
+  assert.deepEqual(after.wakes, before.wakes)
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('PR304-CORRECTIVE-REACCEPTANCE: completion for an earlier invalid activation cannot replace the current one', () => {
+  const { dir, published } = unboundActivation()
+  const { claim, receipts } = complete(dir)
+  const wake = wakeInput('synthetic-second-unbound-activation')
+  const acceptanceProof = { ...proof(claim, receipts, undefined, wakeProof(wake)), push: published.push }
+  appendHistorical(dir, 'enable', { owner, acceptanceProof })
+  run(dir, 'wake', wake)
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  assert.equal(before.activation.valid, false)
+  assert.notEqual(before.prs['1'].correctiveAudit.activationId, before.activation.eventId)
+  assert.equal(before.prs['1'].correctiveAudit.claimId, before.prs['1'].cycles[0].completion.claimId)
+  assert.match(run(dir, 'enable', { owner,
+    acceptanceProof: { ...acceptanceProof, resumeRef: 'synthetic-alias-resume.json' } }, false).error, /corrective.*completion/)
+  assert.equal(journalBytes(dir), bytes)
+  assert.deepEqual(run(dir, 'show'), before)
+})
+
+test('PR304-CORRECTIVE-REACCEPTANCE: historical failed-round feedback NICE cannot complete the corrective audit', () => {
+  const { dir } = unboundActivation()
+  const claim = start(dir), snapshot = { ...claim.snapshot, head: sha(13) }
+  bindRubric(dir, snapshot)
+  const receipts = reviewers({ ...claim, head: snapshot.head })
+  const rebound = run(dir, 'published', { ...beginInput(claim), snapshot, reviewers: receipts,
+    push: { repo, branch: snapshot.branch, before: claim.head, head: snapshot.head,
+      sourceRef: 'synthetic-reviewed-push.json', pushedAt: new Date().toISOString() } })
+  // Retain the old accepted feedback projection; the feedback worker owns new
+  // admission there. This test exercises only its downstream enable boundary.
+  appendHistorical(dir, 'save', saveInput(rebound, { phase: 'fixing', technicalVerdict: 'NAUGHTY' }))
+  appendHistorical(dir, 'save', saveInput(rebound, { phase: 'blocked' }))
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(2) }, pr(2)] })
+  appendHistorical(dir, 'next', { owner, feedbackNumber: 1 })
+  appendHistorical(dir, 'feedback', feedbackInput(run(dir, 'show').active))
+  appendHistorical(dir, 'next', { owner, gateNumber: 1 })
+  run(dir, 'save', saveInput(run(dir, 'show').active))
+  const acceptanceProof = proof(rebound, receipts, snapshot, registeredWakeProof(dir, 'synthetic-failed-replacement'))
+  const before = run(dir, 'show'), bytes = journalBytes(dir), p = before.prs['1'], c = p.cycles[0]
+  assert.equal(c.technicalVerdict, 'NICE', 'old accepted projection stays readable, not trusted')
+  assert.equal(c.completion.claimId, p.correctiveAudit.claimId)
+  assert.equal(c.completion.round, c.rounds)
+  assert.match(run(dir, 'enable', { owner, acceptanceProof }, false).error, /retained failed review.*retry/)
+  assert.equal(journalBytes(dir), bytes)
+  assert.deepEqual(run(dir, 'show'), before)
+})
+
 const feedbackClaim = (dir) => run(dir, 'next', { owner, feedbackNumber: 1 })
 const feedbackInput = (a, extra = {}) => ({
   owner, number: a.number, claimId: a.claimId, base: a.base, head: a.head,
@@ -281,6 +448,368 @@ const feedbackInput = (a, extra = {}) => ({
     ...extra,
   },
 })
+// Actual bfc0573e435ea5716f84ade9ab7313c77f6eddf0 CLI journals, frozen before this fix.
+// Synthetic receipts only. Each stage is an unchanged prefix, not fabricated events.
+const failedFeedbackPrefixes = JSON.parse(gunzipSync(Buffer.from(
+  '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',
+  'base64')).toString())
+const failedFeedbackFixture = (name, stage = 'pending') => {
+  const dir = fixture(), { events, stages } = failedFeedbackPrefixes[name]
+  writeJournal(dir, events.slice(0, stages[stage]))
+  return dir
+}
+
+for (const name of ['direct1', 'nullable1', 'direct2', 'nullable2']) {
+  test(`PR304-FULL-B15-01: ${name} journal failure cannot enter read-only feedback`, () => {
+    const dir = failedFeedbackFixture(name), bytes = journalBytes(dir), before = run(dir, 'show')
+    const p = before.prs['1'], claim = p.blockedClaim.claim
+    assert.equal(p.cycles[0].technicalVerdict, null)
+    assert.equal(claim.failureEvidence, null, 'only the journal retains this old noncanonical failure')
+    assert.match(run(dir, 'next', { owner, feedbackNumber: 1 }, false).error, /failed review.*retry/)
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before)
+
+    // The ordinary original-scope route still requires a charge, or preserves the stop.
+    const recovery = failedFeedbackFixture(name, 'blocked'), old = journalBytes(recovery)
+    if (claim.round === 2) {
+      assert.match(run(recovery, 'resume', resumeInput(claim), false).error, /no-progress limit exhausted/)
+      assert.equal(journalBytes(recovery), old)
+    } else {
+      run(recovery, 'resume', resumeInput(claim))
+      const active = next(recovery)
+      assert.equal(active.retryRequired, true)
+      assert.deepEqual(active.failureEvidence, ['failed-review.json'])
+      assert.match(run(recovery, 'save', saveInput(active, { phase: 'fixing' }), false).error, /explicit retry/)
+      assert.equal(run(recovery, 'show').prs['1'].cycles[0].rounds, 1)
+      assertHistoryPrefix(recovery, old)
+    }
+  })
+
+  test(`PR304-FULL-B15-01: ${name} retained feedback cannot complete but BLOCKED releases its writer`, () => {
+    const dir = failedFeedbackFixture(name, 'claimed'), bytes = journalBytes(dir), before = run(dir, 'show')
+    const gate = next(dir), original = before.prs['1'].blockedClaim
+    assert.equal(gate.action, 'feedback')
+    assert.notEqual(gate.claimId, original.claim.claimId)
+    assert.equal(gate.completion.claimId, original.claim.claimId)
+    assert.equal(gate.completion.round, original.claim.round)
+    for (const disposition of ['NO_ACTIONABLE_FINDINGS', 'ACTIONABLE_FINDINGS']) {
+      assert.match(run(dir, 'feedback', feedbackInput(gate, { disposition }), false).error, /failed review.*retry/)
+      assert.equal(journalBytes(dir), bytes, 'denied receipt cannot clear failure or spend a charge')
+    }
+    const receipt = feedbackInput(gate, { disposition: 'BLOCKED' })
+    run(dir, 'feedback', receipt)
+    const after = run(dir, 'show'), p = after.prs['1'], c = p.cycles[0]
+    assert.equal(after.active, null)
+    assert.deepEqual(p.feedbackReviews.at(-1).receipt, receipt.receipt)
+    assert.deepEqual(p.blockedClaim, original)
+    assert.deepEqual(p.publications, before.prs['1'].publications)
+    assert.equal(p.seenAudit, before.prs['1'].seenAudit, 'blocked metadata cannot consume the pending audit')
+    assert.equal(c.technicalVerdict, null)
+    assert.equal(c.completion, null)
+    assert.equal(c.rounds, original.claim.round)
+    assert.equal(c.noProgress, before.prs['1'].cycles[0].noProgress)
+    assert.ok(c.evidence.includes('failed-review.json'))
+    assert.match(run(dir, 'next', { owner, feedbackNumber: 1 }, false).error, /failed review.*retry/)
+    assertHistoryPrefix(dir, bytes)
+  })
+}
+
+test('PR304-FULL-B15-01: old laundered NICE cannot supply another feedback basis', () => {
+  const dir = failedFeedbackFixture('nullable2', 'laundered'), before = run(dir, 'show')
+  const p = before.prs['1'], bytes = journalBytes(dir)
+  assert.equal(p.cycles[0].technicalVerdict, 'NICE', 'historical acceptance is replayed, not rewritten')
+  assert.equal(p.blockedClaim, null)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...p.snapshot, reviewKey: key(100) }] })
+  const pending = journalBytes(dir)
+  assert.match(run(dir, 'next', { owner, feedbackNumber: 1 }, false).error, /failed review.*retry/)
+  assert.equal(journalBytes(dir), pending)
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('PR304-FULL-B15-01: failed PR2 legacy feedback BLOCKED does not starve PR3 under valid canary authority', () => {
+  const dir = failedFeedbackFixture('otherPr', 'claimed'), before = run(dir, 'show'), gate = before.active
+  assert.equal(before.activation.valid, true)
+  assert.equal(gate.number, 2)
+  run(dir, 'sync', { owner, complete: true, prs: [before.prs['1'].snapshot, before.prs['2'].snapshot, pr(3)] })
+  const bytes = journalBytes(dir)
+  assert.match(run(dir, 'feedback', feedbackInput(gate), false).error, /failed review.*retry/)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'feedback', feedbackInput(gate, { disposition: 'BLOCKED' }))
+  const other = start(dir)
+  assert.equal(other.number, 3)
+  const after = run(dir, 'show')
+  assert.equal(after.activation.valid, true, 'an unrelated failed claim cannot poison valid canary acceptance')
+  assert.deepEqual(after.prs['2'].blockedClaim, before.prs['2'].blockedClaim)
+  assert.equal(after.prs['2'].cycles[0].technicalVerdict, null)
+  assert.equal(after.prs['2'].cycles[0].rounds, 1)
+  assert.equal(after.wakes.at(-1).chargedRounds, before.wakes.at(-1).chargedRounds + 1)
+  assertHistoryPrefix(dir, bytes)
+})
+
+for (const stage of ['pending', 'claimed']) {
+  test(`PR304-FULL-B15-01: no-failure legacy fast readback ${stage} still completes without charges`, () => {
+    const dir = failedFeedbackFixture('noFailure', stage), bytes = journalBytes(dir), before = run(dir, 'show')
+    const gate = feedbackClaim(dir)
+    run(dir, 'feedback', feedbackInput(gate))
+    const p = run(dir, 'show').prs['1']
+    assert.equal(p.cycles[0].technicalVerdict, 'NICE')
+    assert.equal(p.blockedClaim, null)
+    assert.equal(p.cycles[0].rounds, 1)
+    assert.equal(p.cycles[0].noProgress, 1)
+    assert.deepEqual(p.publications, before.prs['1'].publications)
+    assert.deepEqual(p.cycles[0].completion.reviewers, p.publications[0].reviewers)
+    assertHistoryPrefix(dir, bytes)
+  })
+}
+
+test('PR304-FULL-B15-01: permitted original-claim retry supersedes only its failed round and allows feedback', () => {
+  const dir = failedFeedbackFixture('nullable1', 'blocked'), bytes = journalBytes(dir), before = run(dir, 'show')
+  const original = before.prs['1'].blockedClaim.claim
+  run(dir, 'resume', resumeInput(original))
+  const retried = run(dir, 'retry', retryInput(original, 'failed-review.json'))
+  assert.equal(retried.claimId, original.claimId)
+  assert.equal(retried.round, 2)
+  const finding = { id: 'correction', status: 'open', evidence: ['correction-red.log'] }
+  run(dir, 'save', saveInput(retried, { phase: 'fixing', findings: [finding] }))
+  const findings = [{ ...finding, status: 'fixed', evidence: [...finding.evidence, 'correction-green.log'] }]
+  run(dir, 'save', saveInput(retried, { phase: 'reviewing', findings }))
+  const snapshot = { ...retried.snapshot, head: sha(13), reviewKey: key(101) }
+  bindRubric(dir, snapshot)
+  const receipts = reviewers({ ...retried, head: snapshot.head })
+  const push = { repo, branch: snapshot.branch, before: retried.head, head: snapshot.head,
+    sourceRef: 'retried-push.json', pushedAt: new Date().toISOString() }
+  const rebound = run(dir, 'published', { owner, number: 1, claimId: retried.claimId,
+    base: retried.base, head: retried.head, snapshot, push, reviewers: receipts })
+  assert.equal(rebound.action, 'reconcile')
+  run(dir, 'save', saveInput(rebound, { phase: 'blocked', findings }))
+  run(dir, 'feedback', feedbackInput(feedbackClaim(dir)))
+  run(dir, 'save', saveInput(next(dir), { findings }))
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(rebound, receipts, snapshot,
+    registeredWakeProof(dir, 'synthetic-post-retry-feedback')) })
+  const after = run(dir, 'show'), c = after.prs['1'].cycles[0]
+  assert.equal(after.activation.valid, true)
+  assert.equal(c.technicalVerdict, 'NICE')
+  assert.equal(c.rounds, 2)
+  assert.equal(c.noProgress, 0)
+  assert.equal(c.completion.claimId, original.claimId)
+  assert.equal(c.completion.round, 2)
+  assert.ok(c.evidence.includes('failed-review.json'))
+  assert.deepEqual(after.prs['1'].publications.slice(0, 1), before.prs['1'].publications)
+  assertHistoryPrefix(dir, bytes)
+  const added = JSON.parse(journalBytes(dir)).events.slice(JSON.parse(bytes).events.length)
+  assert.deepEqual(added.filter((e) => ['begin', 'retry'].includes(e.command)).map((e) => e.command), ['retry'])
+})
+
+// Accepted with the previous leaf CLI before the completion-admission fence.
+const failedCompletionContinuations = JSON.parse(gunzipSync(Buffer.from(
+  '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',
+  'base64')).toString())
+const failedCompletionContinuation = (name, stage) => {
+  const dir = fixture(), old = failedCompletionContinuations[name]
+  writeJournal(dir, stage === 'begun' ? old.events :
+    [...old.events.slice(0, old.admitted), ...(stage === 'blocked' ? [old.blocked] : [])])
+  return dir
+}
+
+for (const name of ['direct1', 'nullable1', 'direct2', 'nullable2']) {
+  for (const change of ['unchanged', 'head', 'base']) {
+    test(`PR304-FAILED-COMPLETION: ${name} ${change} admission retains the failed cycle and bounds`, () => {
+      const dir = failedFeedbackFixture(name, 'laundered')
+      run(dir, 'wake', wakeInput(`failed-completion-${name}-${change}`))
+      const old = run(dir, 'show'), snapshot = old.prs['1'].snapshot
+      if (change !== 'unchanged') run(dir, 'sync', { owner, complete: true,
+        prs: [{ ...snapshot, [change]: sha(123) }] })
+      const bytes = journalBytes(dir), before = run(dir, 'show'), c = before.prs['1'].cycles[0]
+      assert.equal(c.technicalVerdict, 'NICE', 'old projection remains readable, not silently repaired')
+      assert.equal(before.prs['1'].blockedClaim, null)
+      const claim = next(dir)
+      if (c.noProgress === 2) {
+        assert.equal(claim.action, 'blocked')
+        assert.match(claim.reason, /no-progress limit exhausted/)
+        assert.equal(journalBytes(dir), bytes, 'exhausted notice is mutation-free, even on unchanged reads')
+        assert.deepEqual(next(dir), claim)
+        assert.equal(journalBytes(dir), bytes)
+        assert.deepEqual(run(dir, 'show'), before)
+      } else {
+        assert.equal(claim.action, 'audit', 'pending failed completion needs no manufactured remote change')
+        assert.equal(next(dir).claimId, claim.claimId, 'new admission replays to the same claim')
+        const charged = run(dir, 'begin', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head })
+        const after = run(dir, 'show'), current = after.prs['1'].cycles[0]
+        assert.equal(charged.round, 2)
+        assert.equal(after.prs['1'].cycles.length, 1, 'failed NICE cannot fund a new cycle')
+        assert.equal(current.noProgress, 2)
+        assert.equal(current.completion, null, 'only the new charged admission replaces the old projection')
+        assert.equal(after.wakes.at(-1).chargedRounds, 1)
+        assert.ok(current.evidence.includes('failed-review.json'))
+        assert.deepEqual(after.prs['1'].publications, before.prs['1'].publications)
+        const added = JSON.parse(journalBytes(dir)).events.slice(before.events)
+        assert.deepEqual(added.map((e) => e.command), ['next', 'begin'])
+        assert.ok(added.every((e) => e.failedCompletionFence === true))
+      }
+      assertHistoryPrefix(dir, bytes)
+    })
+  }
+}
+
+for (const change of ['unchanged', 'head', 'base']) {
+  test(`PR304-FAILED-COMPLETION: genuine NICE ${change} preserves ordinary success renewal`, () => {
+    const dir = failedFeedbackFixture('noFailure', 'laundered')
+    run(dir, 'wake', wakeInput(`genuine-completion-${change}`))
+    const before = run(dir, 'show'), snapshot = before.prs['1'].snapshot
+    if (change !== 'unchanged') run(dir, 'sync', { owner, complete: true,
+      prs: [{ ...snapshot, [change]: sha(123) }] })
+    const bytes = journalBytes(dir), claim = next(dir)
+    if (change === 'unchanged') {
+      assert.equal(claim.action, 'none')
+      assert.equal(journalBytes(dir), bytes)
+    } else {
+      const charged = run(dir, 'begin', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head })
+      assert.equal(charged.round, 1)
+      const after = run(dir, 'show')
+      assert.equal(after.prs['1'].cycles.length, 2)
+      assert.deepEqual(after.prs['1'].cycles[0], before.prs['1'].cycles[0])
+      assert.equal(after.wakes.at(-1).chargedRounds, 1)
+    }
+    assertHistoryPrefix(dir, bytes)
+  })
+}
+
+for (const name of ['direct1', 'direct2']) for (const change of ['head', 'base']) {
+  for (const stage of ['admitted', 'blocked']) {
+    test(`PR304-FAILED-COMPLETION: old ${name} ${change} ${stage} cannot renew failed NICE on continuation`, () => {
+      const dir = failedCompletionContinuation(`${name}-${change}`, stage)
+      const before = run(dir, 'show'), bytes = journalBytes(dir)
+      const claim = before.active ?? before.prs['1'].blockedClaim.claim
+      if (name === 'direct2') {
+        assert.match(run(dir, stage === 'blocked' ? 'resume' : 'begin',
+          stage === 'blocked' ? resumeInput(claim) :
+            { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head }, false).error, /no-progress limit exhausted/)
+        assert.equal(journalBytes(dir), bytes)
+      } else {
+        if (stage === 'blocked') run(dir, 'resume', resumeInput(claim))
+        const resumed = next(dir)
+        assert.equal(resumed.claimId, claim.claimId)
+        assert.equal(run(dir, 'begin', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head }).round, 2)
+        const after = run(dir, 'show')
+        assert.equal(after.prs['1'].cycles.length, 1)
+        assert.equal(after.prs['1'].cycles[0].noProgress, 2)
+        assert.equal(after.wakes.at(-1).chargedRounds, 1)
+      }
+      assertHistoryPrefix(dir, bytes)
+    })
+  }
+  test(`PR304-FAILED-COMPLETION: already accepted ${name} ${change} renewal keeps original replay/charges`, () => {
+    const dir = failedCompletionContinuation(`${name}-${change}`, 'begun'), bytes = journalBytes(dir)
+    const before = run(dir, 'show')
+    assert.equal(before.prs['1'].cycles.length, 2)
+    assert.equal(before.active.round, 1)
+    assert.equal(before.wakes.at(-1).chargedRounds, 1)
+    assert.equal(next(dir).claimId, before.active.claimId)
+    assert.deepEqual(run(dir, 'show'), before)
+    assert.equal(journalBytes(dir), bytes)
+  })
+}
+
+test('PR304-FAILED-COMPLETION: same-code bounded re-audit can succeed and earn genuine later renewal', () => {
+  const dir = failedFeedbackFixture('direct1', 'laundered')
+  run(dir, 'wake', wakeInput('bounded-reaudit'))
+  const original = journalBytes(dir), selected = next(dir)
+  const claim = run(dir, 'begin', { owner, number: 1, claimId: selected.claimId, base: selected.base, head: selected.head })
+  assert.equal(claim.round, 2)
+  const open = { id: 'reaudit-fix', status: 'open', evidence: ['reaudit-red.log'] }
+  run(dir, 'save', saveInput(claim, { phase: 'fixing', findings: [open] }))
+  const fixed = { ...open, status: 'fixed', evidence: [...open.evidence, 'reaudit-green.log'] }
+  const receipts = reviewers(claim)
+  run(dir, 'save', saveInput(claim, { phase: 'complete', technicalVerdict: 'NICE', findings: [fixed], reviewers: receipts }))
+  const completed = run(dir, 'show')
+  assert.equal(completed.prs['1'].cycles[0].noProgress, 0)
+  assert.equal(completed.prs['1'].cycles[0].completion.claimId, claim.claimId)
+  assert.equal(next(dir).action, 'none')
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, head: sha(125) }] })
+  assert.equal(start(dir).round, 1, 'fresh successful attempt, not failed historical NICE, earns renewal')
+  const after = run(dir, 'show')
+  assert.equal(after.prs['1'].cycles.length, 2)
+  assert.deepEqual(after.prs['1'].cycles[0], completed.prs['1'].cycles[0])
+  assert.equal(after.wakes.at(-1).chargedRounds, 2)
+  assertHistoryPrefix(dir, original)
+})
+
+test('PR304-FAILED-COMPLETION: caller cannot select the private admission fence', () => {
+  const dir = failedFeedbackFixture('direct1', 'laundered')
+  run(dir, 'wake', wakeInput('private-completion-fence'))
+  const bytes = journalBytes(dir)
+  for (const failedCompletionFence of [true, false, null]) {
+    assert.match(run(dir, 'next', { owner, failedCompletionFence }, false).error, /fields/)
+    assert.equal(journalBytes(dir), bytes)
+  }
+  const claim = next(dir)
+  run(dir, 'begin', { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+    failedCompletionFence: false }, false)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  const blocked = journalBytes(dir)
+  assert.equal(next(dir).claimId, claim.claimId, 'interrupted admitted work needs its original resume, not replacement')
+  assert.equal(journalBytes(dir), blocked)
+  assert.equal(run(dir, 'show').prs['1'].blockedClaim.claim.claimId, claim.claimId)
+  run(dir, 'resume', { ...resumeInput(claim), failedCompletionFence: false }, false)
+  run(dir, 'resume', resumeInput(claim))
+  const events = JSON.parse(journalBytes(dir)).events
+  assert.ok(events.filter((e) => ['next', 'resume'].includes(e.command)).at(-1).failedCompletionFence)
+  for (const change of [{ failedCompletionFence: false }, { failedCompletionFence: 'true' }, { command: 'sync' }, { version: 1 }]) {
+    const isolated = fixture(), history = structuredClone(events)
+    Object.assign(history.at(-1), change)
+    writeJournal(isolated, history)
+    assert.match(run(isolated, 'show', undefined, false).error, /invalid.*(fence|version)/)
+  }
+})
+
+test('PR304-FAILED-COMPLETION: gates cannot consume failed completion or keep other PRs waiting', () => {
+  const dir = failedFeedbackFixture('otherPr', 'laundered'), before = run(dir, 'show')
+  assert.equal(before.activation.valid, true)
+  const bytes = journalBytes(dir)
+  assert.match(run(dir, 'next', { owner, gateNumber: 2 }, false).error, /pending audit/)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'sync', { owner, complete: true, prs: [before.prs['1'].snapshot, before.prs['2'].snapshot, pr(3)] })
+  const other = start(dir)
+  assert.equal(other.number, 3, 'pending failure recovery never outranks untouched work')
+  run(dir, 'save', saveInput(other))
+  const pending = next(dir)
+  assert.equal(pending.number, 2)
+  assert.equal(pending.action, 'audit')
+  assert.equal(run(dir, 'begin', { owner, number: 2, claimId: pending.claimId, base: pending.base, head: pending.head }).round, 2)
+  const after = run(dir, 'show')
+  assert.equal(after.prs['2'].cycles.length, 1)
+  assert.equal(after.prs['2'].cycles[0].noProgress, 2)
+  assert.equal(after.wakes.at(-1).chargedRounds, 3)
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('PR304-FAILED-COMPLETION: interrupted admission survives gate changes and does not starve other work', () => {
+  const dir = failedFeedbackFixture('otherPr', 'laundered'), claim = next(dir)
+  assert.equal(claim.number, 2)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked', reason: 'Retain uncharged preparation' }))
+  const state = run(dir, 'show'), changed = { ...state.prs['2'].snapshot, gateKey: key(122) }
+  run(dir, 'sync', { owner, complete: true, prs: [state.prs['1'].snapshot, changed] })
+  const bytes = journalBytes(dir), blocked = next(dir)
+  assert.equal(blocked.action, 'blocked')
+  assert.equal(blocked.claimId, claim.claimId)
+  assert.equal(blocked.recovery, 'resume')
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'sync', { owner, complete: true, prs: [state.prs['1'].snapshot, changed, pr(3)] })
+  const other = next(dir)
+  assert.equal(other.number, 3)
+  run(dir, 'save', saveInput(other, { phase: 'blocked' }))
+  assert.equal(next(dir).claimId, claim.claimId)
+  run(dir, 'resume', resumeInput(claim))
+  assert.equal(next(dir).claimId, claim.claimId)
+  assert.equal(run(dir, 'begin', { owner, number: 2, claimId: claim.claimId, base: claim.base, head: claim.head }).round, 2)
+  const after = run(dir, 'show')
+  assert.equal(after.prs['2'].cycles.length, 1)
+  assert.equal(after.wakes.at(-1).chargedRounds, 2)
+  assertHistoryPrefix(dir, bytes)
+})
+
 const roundThreePublication = (fast = false) => {
   const dir = setup([pr(1, { baseRef: 'main' })])
   let claim = start(dir), findings = []
@@ -1378,6 +1907,150 @@ const legacyCorrectionClaim = (dir) => {
 }
 const beginInput = (claim) => ({
   owner, number: claim.number, claimId: claim.claimId, base: claim.base, head: claim.head,
+})
+
+const unmarkedUnboundCorrection = () => {
+  const history = unboundActivation(), { dir, published } = history
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...published.snapshot, reviewKey: key(8) }, pr(2)] })
+  return { ...history, claim: legacyCorrectionClaim(dir) }
+}
+
+for (const command of ['begin', 'retry', 'resume']) {
+  test(`PR304-CORRECTIVE-BINDING: successful ${command} binds only the admitted legacy continuation`, () => {
+    const { dir, claim: prepared, old } = unmarkedUnboundCorrection()
+    let claim = prepared, findings = []
+    if (command !== 'begin') {
+      appendHistorical(dir, 'begin', beginInput(claim))
+      claim = run(dir, 'show').active
+      assert.equal(claim.round, 2)
+      if (command === 'retry') {
+        const finding = { id: 'bounded-fix', status: 'open', evidence: ['red.log'] }
+        run(dir, 'save', saveInput(claim, { phase: 'fixing', findings: [finding] }))
+        findings = [{ ...finding, status: 'fixed', evidence: ['red.log', 'green.log'] }]
+        failedReview(dir, claim, findings)
+      } else run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+    }
+    const input = command === 'begin' ? beginInput(claim) : command === 'retry' ? retryInput(claim) : resumeInput(claim)
+    const before = run(dir, 'show'), bytes = journalBytes(dir)
+    assert.equal(before.prs['1'].correctiveAudit, undefined, 'old unmarked events cannot acquire a binding')
+    for (const bad of [
+      { ...input, correctiveBinding: true }, { ...input, correctiveBinding: false },
+      { ...input, activationId: old.activation.eventId }, { ...input, owner: 'other' },
+      { ...input, claimId: 'other' }, { ...input, head: sha(999) },
+      ...(command === 'resume' ? [{ ...input, round: 1 }, { ...input, clearance: { sourceRef: '', verifiedAt: input.clearance.verifiedAt } }] : []),
+      ...(command === 'retry' ? [{ ...input, round: 1 }, { ...input, reviewRef: 'unretained.json' }] : []),
+    ]) {
+      run(dir, command, bad, false)
+      assert.equal(journalBytes(dir), bytes, 'a rejected admission cannot append a marker or change charges')
+    }
+    const admitted = run(dir, command, input), after = run(dir, 'show')
+    assert.deepEqual(after.prs['1'].correctiveAudit, { activationId: old.activation.eventId, claimId: claim.claimId })
+    assert.equal(JSON.parse(journalBytes(dir)).events.at(-1).correctiveBinding, true)
+    assert.equal(admitted.claimId, claim.claimId)
+    assert.equal(admitted.round, command === 'retry' ? 3 : 2)
+    assert.equal(after.prs['1'].cycles.length, 1)
+    assert.deepEqual(after.activation, before.activation)
+    assert.deepEqual(after.prs['1'].publications, before.prs['1'].publications)
+    assert.deepEqual(after.autonomy, before.autonomy)
+    assertHistoryPrefix(dir, bytes)
+    if (command === 'resume') {
+      assert.equal(after.prs['1'].cycles[0].noProgress, 2, 'final unfinished charge remains resumable, not reset')
+      assert.deepEqual(after.wakes, before.wakes)
+      assert.equal(admitted.startedAt, claim.startedAt)
+    } else assert.equal(after.wakes.at(-1).chargedRounds, before.wakes.at(-1).chargedRounds + 1)
+    // Restart retains the original charge and binding; no implicit begin/retry.
+    const stable = journalBytes(dir)
+    assert.equal(next(dir).claimId, claim.claimId)
+    assert.equal(journalBytes(dir), stable)
+  })
+}
+
+test('PR304-CORRECTIVE-BINDING: failed legacy resume remains retry-only and fresh completion uses the actual retry round', () => {
+  const { dir, claim: prepared, published, old } = unmarkedUnboundCorrection()
+  appendHistorical(dir, 'begin', beginInput(prepared))
+  const claim = run(dir, 'show').active
+  const finding = { id: 'resumed-fix', status: 'open', evidence: ['red.log'] }
+  run(dir, 'save', saveInput(claim, { phase: 'fixing', findings: [finding] }))
+  const findings = [{ ...finding, status: 'fixed', evidence: ['red.log', 'green.log'] }]
+  failedReview(dir, claim, findings)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked', findings }))
+  const before = run(dir, 'show'), prefix = journalBytes(dir)
+  assert.equal(before.prs['1'].correctiveAudit, undefined)
+  run(dir, 'resume', resumeInput(claim))
+  const resumed = run(dir, 'show'), bytes = journalBytes(dir)
+  assert.deepEqual(resumed.wakes, before.wakes)
+  assert.deepEqual(resumed.prs['1'].correctiveAudit, { activationId: old.activation.eventId, claimId: claim.claimId })
+  assert.equal(next(dir).retryRequired, true)
+  run(dir, 'save', saveInput(claim, { phase: 'fixing', findings }), false)
+  run(dir, 'save', saveInput(claim, { phase: 'complete', findings, technicalVerdict: 'NICE', reviewers: reviewers(claim) }), false)
+  run(dir, 'begin', beginInput(claim), false)
+  assert.equal(journalBytes(dir), bytes, 'binding cannot launder a failed round')
+  const retried = run(dir, 'retry', retryInput(claim)), receipts = reviewers(retried)
+  assert.equal(retried.round, 3)
+  run(dir, 'save', saveInput(retried, { phase: 'complete', findings, technicalVerdict: 'NICE', reviewers: receipts }))
+  run(dir, 'enable', { owner, acceptanceProof: {
+    ...proof(retried, receipts, undefined, registeredWakeProof(dir, 'synthetic-bound-retry')), push: published.push,
+  } })
+  const after = run(dir, 'show')
+  assert.equal(after.activation.valid, true)
+  assert.equal(after.prs['1'].cycles[0].completion.round, 3)
+  assert.deepEqual(after.prs['1'].publications, old.prs['1'].publications)
+  assertHistoryPrefix(dir, prefix)
+})
+
+test('PR304-CORRECTIVE-BINDING: exhausted global wake cannot charge or replace resumed legacy work', () => {
+  const { dir, claim, published } = unmarkedUnboundCorrection()
+  run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...published.snapshot, reviewKey: key(8) }, pr(2), pr(3), pr(4)] })
+  for (const number of [2, 3, 4]) {
+    appendHistorical(dir, 'next', { owner })
+    const claim = run(dir, 'show').active
+    assert.equal(claim.number, number)
+    appendHistorical(dir, 'begin', beginInput(claim))
+    appendHistorical(dir, 'save', saveInput(run(dir, 'show').active))
+  }
+  const exhausted = run(dir, 'show')
+  run(dir, 'resume', resumeInput(claim))
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  assert.equal(before.prs['1'].correctiveAudit?.claimId, claim.claimId)
+  assert.deepEqual(before.wakes, exhausted.wakes, 'uncharged resume cannot fund another begin')
+  assert.equal(before.wakes.at(-1).chargedRounds, 3)
+  assert.match(run(dir, 'begin', beginInput(claim), false).error, /wake round capacity/)
+  assert.equal(journalBytes(dir), bytes)
+  assert.deepEqual(run(dir, 'show'), before)
+  run(dir, 'wake', wakeInput('synthetic-bound-next-capacity'))
+  const charged = run(dir, 'begin', beginInput(claim)), after = run(dir, 'show')
+  assert.equal(charged.round, 2)
+  assert.equal(after.prs['1'].correctiveAudit.claimId, claim.claimId)
+  assert.deepEqual(after.wakes.map((w) => w.chargedRounds), [3, 1])
+  assert.deepEqual(after.autonomy, before.autonomy)
+  assertHistoryPrefix(dir, bytes)
+})
+
+test('PR304-CORRECTIVE-BINDING: envelope marker rejects bad values, commands and activation context', () => {
+  const { dir, claim } = unmarkedUnboundCorrection()
+  run(dir, 'begin', beginInput(claim))
+  const events = JSON.parse(journalBytes(dir)).events
+  assert.equal(events.at(-1).correctiveBinding, true)
+  for (const value of [false, null, 'true', 1]) {
+    const isolated = fixture(), malformed = structuredClone(events)
+    malformed.at(-1).correctiveBinding = value
+    writeJournal(isolated, malformed)
+    const bytes = journalBytes(isolated)
+    assert.match(run(isolated, 'show', undefined, false).error, /corrective binding marker/)
+    assert.equal(journalBytes(isolated), bytes)
+  }
+  const wrongCommand = fixture(), malformed = structuredClone(events)
+  malformed[0].correctiveBinding = true
+  writeJournal(wrongCommand, malformed)
+  assert.match(run(wrongCommand, 'show', undefined, false).error, /corrective binding marker/)
+  const ordinary = setup(), ordinaryClaim = start(ordinary)
+  const unbound = JSON.parse(journalBytes(ordinary)).events
+  assert.equal(unbound.at(-1).correctiveBinding, undefined, 'ordinary work never gets corrective authority')
+  unbound.at(-1).correctiveBinding = true
+  writeJournal(ordinary, unbound)
+  assert.match(run(ordinary, 'show', undefined, false).error, /corrective binding context/)
+  assert.equal(ordinaryClaim.round, 1)
 })
 
 for (const blocked of [false, true]) {
@@ -4110,7 +4783,7 @@ for (const version of [1, 2]) test(`EX-FAILED-WAIT-RECOVERY: old v${version} fir
         { ...terminal, id: `${terminal.id}-wait`, input: { ...terminal.input, technicalVerdict: null } })
       writeJournal(dir, old)
     }
-    if (version === 1) writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, ...e }) => e), 1)
+    if (version === 1) writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, failedCompletionFence, correctiveBinding, ...e }) => e), 1)
     const prefix = journalBytes(dir), before = run(dir, 'show')
     assert.equal(before.prs['1'].cycles[0].technicalVerdict, nullable ? null : 'NAUGHTY')
     assert.equal(before.prs['1'].blockedClaim?.retryOnly, true)
@@ -4429,7 +5102,7 @@ test('EX-UNCLAIMED-ROUND-STOP: actionable feedback at cap cannot be consumed by 
 for (const version of [1, 2]) test(`EX-UNCLAIMED-ROUND-STOP: v${version} stopped generation and later gate saves replay unchanged`, () => {
   const { dir, findings, snapshot } = unclaimedRoundStop()
   // Reproduce the OLD admitted gate after the ceiling stop, not a new executable claim.
-  const history = JSON.parse(readFileSync(join(dir, 'state.json'))).events.map(({ admission, ...e }) => {
+  const history = JSON.parse(readFileSync(join(dir, 'state.json'))).events.map(({ admission, failedCompletionFence, correctiveBinding, ...e }) => {
     if (version === 1) delete e.version
     if (e.command === 'save') { const { round, ...legacy } = e.input; e.input = legacy }
     return e
@@ -5036,7 +5709,7 @@ for (const version of [1, 2]) for (const phase of ['auditing', 'fixing', 'review
       evidence: ['historical-failed-review.json'], reason: 'Old accepted first failed review' })
     appendHistorical(dir, 'save', failure)
     const old = JSON.parse(journalBytes(dir)).events
-    if (version === 1) writeJournal(dir, old.map(({ version, admission, ...e }) => e), 1)
+    if (version === 1) writeJournal(dir, old.map(({ version, admission, failedCompletionFence, correctiveBinding, ...e }) => e), 1)
     const prefix = journalBytes(dir), before = run(dir, 'show')
     assert.equal(journalBytes(dir), prefix, 'read never rewrites original accepted history')
     assert.equal(before.prs['1'].cycles[0].phase, phase)
@@ -5276,7 +5949,7 @@ for (const version of [1, 2]) {
     const before = run(dir, 'show')
     appendHistorical(dir, 'save', failure) // Historically admitted stale F1; never a new live call.
     if (version === 1) {
-      writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, ...e }) => e), 1)
+      writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, failedCompletionFence, correctiveBinding, ...e }) => e), 1)
     }
     const bytes = journalBytes(dir), p = before.prs['1']
     const expected = { ...before, events: before.events + 1,
@@ -5468,7 +6141,7 @@ for (const [version, admission] of [[1, undefined], [2, undefined], [2, 'unclaim
         }))
       } else if (stage === 'blocked') appendHistorical(dir, 'save', saveInput(selected, { phase: 'blocked' }))
       if (version === 1) {
-        writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, ...e }) => e), 1)
+        writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, failedCompletionFence, correctiveBinding, ...e }) => e), 1)
       }
       const bytes = journalBytes(dir), before = run(dir, 'show')
       assert.equal(before.prs['1'].cycles.length, 1)
@@ -5665,3 +6338,46 @@ test('POLICY-B13-01: retained failed and unavailable scopes cannot use successfu
   }
   assert.equal(journalBytes(dir), bytes)
 })
+
+// Exact synthetic old-896 CLI replacements; the genuine unmarked control models
+// its retained older admission. Never native approval or a live journal fixture.
+const round16ReplacementHistories = JSON.parse(gunzipSync(Buffer.from(
+  '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', 'base64')).toString('utf8'))
+for (const [variant, journal] of Object.entries(round16ReplacementHistories)) {
+  test(`R16-PARENT-CLASSIFICATION: old ${variant} preserves history and classifies current authority`, () => {
+    const dir = fixture()
+    mkdirSync(dir)
+    const bytes = JSON.stringify(journal) + '\n'
+    writeFileSync(join(dir, 'state.json'), bytes)
+    const before = run(dir, 'show'), genuine = variant.startsWith('fresh-')
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+    assert.equal(before.enabled, true, 'historical enable remains recorded')
+    assert.equal(before.activation.valid, genuine, 'metadata does not substitute for corrective code acceptance')
+    const originalPush = journal.events.find(e => e.command === 'published').input.push
+    assert.deepEqual(before.prs['1'].publications.at(-1).push, originalPush)
+    const claim = run(dir, 'next', { owner: before.config.owner })
+    // These exact journals retain the old helper's already-admitted PR2 claim.
+    // Preserve it, but never confuse a reconcile notice with new execution.
+    const identity = { owner: before.config.owner, number: claim.number,
+      claimId: claim.claimId, base: claim.base, head: claim.head }
+    assert.equal(claim.number, 2)
+    if (genuine) {
+      assert.equal(claim.action, 'audit')
+      assert.equal(run(dir, 'begin', identity).round, 1)
+    } else {
+      assert.equal(claim.action, 'reconcile')
+      const retained = readFileSync(join(dir, 'state.json'), 'utf8')
+      run(dir, 'begin', identity, false)
+      assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), retained)
+      run(dir, 'save', { ...identity, round: null, phase: 'blocked', technicalVerdict: null,
+        findings: before.prs['2'].cycles.at(-1).findings, evidence: ['synthetic-retained-claim.json'],
+        reason: 'Retain the uncharged old claim without granting new effects' })
+      assert.equal(run(dir, 'next', { owner: before.config.owner }).number, 1)
+    }
+    const after = run(dir, 'show')
+    assert.equal(after.prs['1'].cycles[0].rounds, genuine ? 2 : 1)
+    if (genuine) assert.equal(after.wakes.at(-1).chargedRounds, before.wakes.at(-1).chargedRounds + 1)
+    else assert.deepEqual(after.wakes, before.wakes, 'classification/claim spends no round')
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'))).events.slice(0, journal.events.length), journal.events)
+  })
+}
