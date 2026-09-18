@@ -47,6 +47,11 @@ deployment; an incoming PR cannot update its own executor.
 For a necessary bootstrap correction before broad activation, use `deploy`
 only after reading the actual independent reviews and validation for the new
 policy SHA. Its expected previous SHA must match the retained deployment.
+Both deployment reviewers and their pinned rubric must cover that exact previous
+policy SHA → new policy SHA transition. An unrelated base or empty reviewed diff
+cannot substitute. If the PR's actual base differs, obtain separate fresh
+policy-transition and PR-review pairs; never relabel or reuse one decision as
+covering a different range. Historical accepted receipts remain unchanged.
 Prepare a new clean pinned checkout; never overwrite the old one. Preserve the
 original configuration, journal, worktrees, failures and consumed rounds, then
 update the saved automation's pin. Do not reinitialize state or invent receipts
@@ -287,6 +292,10 @@ canary. Never enable broad intake on a plain `NICE` string or unit tests alone.
 CI evidence must include the current `gateKey` and `baseRef`, and be verified
 after both the technical round start and the latest observed gate generation.
 An old same-head green receipt does not discharge a newer failing check.
+Normal completed NICE cycles renew when either base or head changes; a new
+diff must not inherit an exhausted prior successful cycle. Same-revision
+feedback, unfinished/failed work and invalid policy/publication correction
+retain their existing bounds.
 Report separately: implemented, scheduled, canary verified, broad intake enabled.
 If the canary is incomplete, keep executing it; do not replace the executor with
 a read-only observer or claim the deployment is complete.

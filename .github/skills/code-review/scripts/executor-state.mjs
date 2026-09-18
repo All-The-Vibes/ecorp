@@ -31,15 +31,16 @@
 // deploy {owner,previousPolicySha:40hex,policySha:different40hex,reviewers:[Reviewer,Reviewer],
 //   validation:{policySha,status:"passed",sourceRef,verifiedAt}}
 //   Bootstrap only BEFORE enable. previousPolicySha must equal deployments[-1].policySha.
-//   Reviewers retain their actual common reviewed base and head=policySha; bind
-//   that exact base/head rubric first. Both reviews and validation
+//   Reviewers and their bound rubric must cover previousPolicySha -> policySha;
+//   bind that exact base/head rubric first, never relabel broader PR-base reviews.
+//   Historical accepted deployments replay unchanged. Both reviews and validation
 //   must be fresh since the last deployment. Distinct unused Astra IDs/sourceRefs,
 //   structured NICE/PASS criteria required. Original config and journal stay intact;
 //   deployments appends {previousPolicySha,policySha,reviewers,validation,deployedAt}.
 //   Outer owner must read actual independent reviews and authorize adoption;
 //   this validates structure only, never deploys files or trusts incoming PR content.
 //   Deployment records, but does not consume, that exact review decision. The same
-//   unchanged pair may support published/save for the same candidate and round;
+//   unchanged pair may support published/save for the same exact base/head and round;
 //   IDs/sourceRefs cannot be rewritten or reused for a new revision/round.
 //   reviewClaim captures the matching active {claimId,round}, or null for policy-only
 //   reviews. A policy-only decision cannot later substitute for a new PR round.
@@ -110,7 +111,7 @@
 //   work at prs[number].blockedClaim; resume restores that exact claim, phase,
 //   start and budget. round:null recovers an uncharged audit; begin must then charge
 //   once. Charged work resumes without begin. Resume never resets cycle history;
-//   only begin may open a new cycle after a previous-head NICE, per existing policy.
+//   only begin may open a new normal cycle after NICE on a different base/head.
 //   Clearance must postdate that block. Driver verifies the actual cause cleared;
 //   structure is not truth. Gate/read-only claims never gain audit authority.
 //   No implicit new round, competing claim, conflicting revision/source/target,
@@ -199,6 +200,9 @@
 // audit generation. Historical "unclaimed-round" and "detail-read-observation"
 // decisions stay unchanged. All three recover pendingRoundLimit only through
 // eligible ongoing next.
+// New next/begin/resume decisions comparing a completed NICE to a changed base
+// stamp baseHeadRenewal:true. Unmarked historical events retain head-only renewal
+// and their original cycle/round counts; correction fences still apply.
 // Unversioned v1 events remain an unchanged replay-only prefix; versions cannot
 // downgrade. Command inputs cannot select a journal/admission version.
 // After reviewing/NAUGHTY, new correction, review or publication needs retry.
@@ -220,6 +224,12 @@ function fields(o, required, optional = []) {
 const digest = (o) => createHash('sha256').update(JSON.stringify(o)).digest('hex')
 const refs = (a) => Array.isArray(a) && a.every(text)
 const same = (a, b) => a.base === b.base && a.head === b.head
+function completedRevisionChanged(c, snapshot, e, live) {
+  if (c.technicalVerdict !== 'NICE') return false
+  // Stamp only the new decision; never reinterpret an already-accepted event.
+  if (live && c.completion.base !== snapshot.base) e.baseHeadRenewal = true
+  return e.baseHeadRenewal ? !same(c.completion, snapshot) : c.completion.head !== snapshot.head
+}
 // Legacy journals did not record a target. Do not invent one retroactively;
 // a first observation still needs a gate check, unlike a known-target conflict.
 const targetCompatible = (recorded, observed, effectiveBaseRef = recorded.baseRef) =>
@@ -426,7 +436,9 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     const previous = s.deployments.at(-1)
     check(!s.enabled && i.previousPolicySha === previous.policySha &&
       hex(i.policySha) && i.policySha !== i.previousPolicySha, 'deployment requires pre-activation and exact previous/different new policy SHA')
-    validateReviewers(i.reviewers, { base: i.reviewers?.[0]?.base, head: i.policySha, startedAt: previous.deployedAt }, s, at)
+    // Enforce the transition on live admission, not by rewriting accepted history.
+    validateReviewers(i.reviewers, { base: live ? previous.policySha : i.reviewers?.[0]?.base,
+      head: i.policySha, startedAt: previous.deployedAt }, s, at)
     check(i.reviewers.every((r) => !s.usedReviewers.includes(r.reviewerId) &&
       !s.deployments.some((d) => d.reviewers?.some((old) => old.sourceRef === r.sourceRef))), 'deployment reviewers and sources must be fresh')
     fields(i.validation, ['policySha', 'status', 'sourceRef', 'verifiedAt'])
@@ -547,7 +559,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     }
     const readOnly = !sameRepo(snapshot.sourceRepo, s.config.repo) || !sameRepo(p.sourceRepo, s.config.repo)
     const action = target || (processedAudit(p) && !(recoverPending && pendingRound(p))) ? 'check' : 'audit'
-    const renewed = !corrective(p) && c.technicalVerdict === 'NICE' && c.completion.head !== snapshot.head
+    const renewed = !corrective(p) && completedRevisionChanged(c, snapshot, e, live)
     const reason = p.blockedReason ?? (
       !renewed && action === 'audit' && c.rounds >= roundLimit(s) ? 'round limit exhausted' :
       !renewed && action === 'audit' && c.noProgress >= 2 ? 'no-progress limit exhausted' : null)
@@ -575,7 +587,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       (i.round === null || c.technicalVerdict !== 'NICE'),
     'no matching retained unfinished blocked claim/round')
     const renewed = !correctionId && p.correctiveAudit?.claimId !== b.claim.claimId &&
-      i.round === null && c.technicalVerdict === 'NICE' && c.completion.head !== b.claim.head
+      i.round === null && completedRevisionChanged(c, b.claim, e, live)
     const unfinished = positive(b.claim.round) && timestamp(b.claim.startedAt) &&
       !b.claim.failureEvidence && !(live && retainedFailure) && ['auditing', 'fixing', 'reviewing'].includes(b.phase) &&
       b.technicalVerdict === null && c.technicalVerdict === null && c.completion === null
@@ -724,7 +736,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
         if (c.findings.some((f) => f.status === 'fixed' && a.baseline.includes(f.id))) c.noProgress = 0
       } else check(a.round === null, 'round already begun; resume with next')
       if (command === 'begin' && !correctionId && p.correctiveAudit?.claimId !== a.claimId &&
-        c.technicalVerdict === 'NICE' && c.completion.head !== a.head) {
+        completedRevisionChanged(c, a, e, live)) {
         p.cycles.push(freshCycle())
         c = cycle(p)
       }
@@ -898,7 +910,9 @@ function main() {
       let version = 1
       // ponytail: replay/rewrite the retained journal; checkpoint only if measured history size needs it.
       for (const e of events) {
-        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery'])
+        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery', 'baseHeadRenewal'])
+        check(e.baseHeadRenewal === undefined || (e.version === 2 && ['next', 'begin', 'resume'].includes(e.command) &&
+          e.baseHeadRenewal === true), 'invalid base/head renewal marker')
         check(e.publicationRecovery === undefined || (e.version === 2 && ['next', 'begin'].includes(e.command) &&
           e.publicationRecovery === true), 'invalid publication recovery marker')
         check(e.activationFence === undefined || (e.version === 2 && ['next', 'begin'].includes(e.command) &&

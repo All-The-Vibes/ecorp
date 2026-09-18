@@ -380,3 +380,58 @@ Git blobs are retained, together with read-only replay preserving the real
 66-event journal, round twelve and all three current-wake charges.
 [The current local capture](assets/astra-review-executor/18-preactivation-recovery.png)
 does not substitute for independent source approval or live acceptance.
+
+### Actual publication and hosted feedback — September 18
+
+Both independent native Astra reviewers passed all 13 criteria for `6d2779b`;
+the actual ATV/Ponytail audits found no introduced blocker. The reviewed policy
+was adopted without rewriting earlier attempts, then pushed normally to PR #304.
+An initially stale REST head was reconciled against the actual branch and a
+refreshed PR read; the push was not repeated.
+
+All six jobs in hosted CI run `35346879600` passed on that exact head.
+Automatic Copilot run `35346887232` completed and produced bot review
+`5248014419`. Its actual log records the `code-review` skill invocation at
+`2026-09-18T12:51:56.4488836Z`. The standard summary lacked the advisory label;
+the trace proves loading, not full upstream execution or Astra inside Copilot.
+
+Copilot reported two code findings, independently reproduced by a fresh native
+Astra feedback checker: deployment review scope accepted an unrelated base,
+and base-only revision changes reused completed-cycle counters. The metadata
+request was addressed by the updated title and description. The executor
+recorded ACTIONABLE_FINDINGS and continued with two issue-scoped TDD fixers.
+The earlier source PASS and hosted green checks remain evidence, not waivers of
+this new feedback. Repository-wide activation is still held for corrected-head
+qualification and genuine scheduler/resume/quiet-follow-up evidence.
+
+### Automatic feedback corrections
+
+Two native Astra fixers corrected the confirmed findings in isolated worktrees:
+
+- New policy deployments require both reviewers and the prebound rubric to
+  cover the retained deployed policy SHA through the candidate SHA. Historical
+  accepted deployments remain readable, without inventing missing coverage.
+  Genuine red execution failed five cases; the focused corrected suite passed
+  18. Different policy and PR bases require separate fresh reviewer pairs.
+- A normal completed NICE cycle renews when either base or head changes.
+  Admission, begin and uncharged resume share the comparison; new decisions
+  carry a replay marker, preserving old accepted cycle counts. Failed,
+  unfinished and corrective work still retains its original limits.
+  Genuine red runs failed 18 and four cases; all 30 focused cases and 70 sibling
+  regressions passed.
+
+The integrated helper read the actual 79-event journal and an unchanged copy,
+preserving claim, round thirteen, the one current-wake charge, prior deployment
+and all historical receipts. This is read-only replay evidence, not fabricated
+provider execution or scheduler acceptance.
+
+Integrated verification passed **303/303 Node tests** and all six repository
+checks; Rust reported **547 passed, 323 ignored, zero failed**. The first full
+run's 302/303 result remains retained: an existing detail-recovery test still
+expected the old base-only round counter. Its expectation was aligned with the
+corrected contract, the four affected cases passed, and the entire suite then
+passed. Production code did not change between those two full runs.
+Exact final tested bytes and canonical Git blobs were retained.
+[The current capture](assets/astra-review-executor/19-policy-and-base-renewal.png)
+shows these actual local log summaries, not independent review, corrected-head
+hosted checks, or live executor acceptance. Those gates remain separate.

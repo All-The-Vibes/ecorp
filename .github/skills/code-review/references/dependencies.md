@@ -175,9 +175,14 @@ authorized executor polls for actionable work; it does not replace these rules:
 2. Leave custom instructions enabled in repository Copilot code-review settings.
    Ensure the package is present on the exact head to be tested.
 3. Open a PR, wait for a real `copilot-pull-request-reviewer[bot]` review, and
-   verify the reviewed commit, `ECorp code-review` marker, template/audit report,
-   and any explicitly reported unavailable steps. A requested reviewer or a
-   CI job alone is not evidence of a completed automatic review.
+   verify the reviewed commit and actual package use. Retain the requested
+   `ECorp code-review` marker/template report when emitted. If the host's summary
+   format omits that advisory label, its exact-run skill-invocation trace for
+   `.github/skills/code-review/SKILL.md` is direct evidence that the package was
+   loaded; record the absent label rather than inventing it. Neither a marker nor
+   an invocation proves every upstream phase ran: inspect the actual report and
+   disclose unavailable steps. A requested reviewer or CI job alone is not
+   evidence of a completed automatic review.
 4. Push an authorized small correction and confirm a **new review for the new
    SHA** without manually requesting it. Repeat with a non-default target/draft
    where permitted. Fork/entitlement restrictions need explicit evidence.

@@ -2341,14 +2341,114 @@ test('deploy: unknown, unauthorized, stale and unstructured evidence cannot upda
   }
 })
 
-test('deploy: retains the actual independently reviewed base without retagging it as the previous policy SHA', () => {
-  const dir = setup(), policySha = sha(100), base = sha(10)
+for (const base of [sha(10), sha(100)]) test(`deploy: rejects ${base === sha(100) ? 'empty-diff' : 'unrelated-base'} reviews before persisting`, () => {
+  const dir = setup(), policySha = sha(100)
   bindRubric(dir, { base, head: policySha })
   const input = { owner, previousPolicySha: init.policySha, policySha,
     reviewers: reviewers({ claimId: 'actual-policy-review', base, head: policySha }),
     validation: { policySha, status: 'passed', sourceRef: 'validation.json', verifiedAt: new Date().toISOString() } }
+  for (const exactRubricBound of [false, true]) {
+    if (exactRubricBound) bindRubric(dir, { base: init.policySha, head: policySha })
+    const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+    run(dir, 'deploy', input, false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+    assert.equal(run(dir, 'show').deployments.length, 1)
+  }
+})
+
+test('deploy: exact transition requires its prebound complete 13-row rubric and fresh matching receipts', () => {
+  const dir = setup(), base = init.policySha, head = sha(100)
+  const required = [...criteria, 'LOCAL_TESTS', 'TDD_EVIDENCE', 'DOCUMENTATION', 'DEPENDENCY_INTEGRITY', 'POLICY_PROVENANCE']
+  const input = { owner, previousPolicySha: base, policySha: head,
+    reviewers: reviewers({ claimId: 'full-policy-review', base, head }).map((r) => ({
+      ...r, criteria: required.map((id) => ({ id, result: 'PASS', sourceRef: `evidence/policy-${id}.json` })),
+    })),
+    validation: { policySha: head, status: 'passed', sourceRef: 'validation.json', verifiedAt: new Date().toISOString() } }
+  bindRubric(dir, { base: sha(10), head })
+  let bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  run(dir, 'deploy', input, false)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  const binding = { owner, base, head, sourceRef: 'trusted-policy-rubric.json', sha256: key(501), criteria: required }
+  run(dir, 'rubric', binding)
+  bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  run(dir, 'deploy', input, false) // Receipts predate this exact rubric binding.
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  input.reviewers = input.reviewers.map((r) => ({ ...r, completedAt: new Date().toISOString() }))
+  for (const bad of [
+    { ...input, previousPolicySha: sha(10) },
+    { ...input, reviewers: input.reviewers.map((r) => ({ ...r, criteria: r.criteria.slice(0, -1) })) },
+    ...[{ base: sha(10) }, { head: sha(101) }].map((change) => ({
+      ...input, reviewers: [input.reviewers[0], { ...input.reviewers[1], ...change }],
+    })),
+  ]) {
+    run(dir, 'deploy', bad, false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  }
   run(dir, 'deploy', input)
-  assert.deepEqual(run(dir, 'show').deployments.at(-1).reviewers, input.reviewers)
+  const state = run(dir, 'show')
+  assert.deepEqual(state.rubrics[`${base}:${head}`].binding, binding)
+  assert.deepEqual(state.deployments.at(-1).reviewers, input.reviewers)
+  assert.equal(state.deployments.at(-1).previousPolicySha, base)
+  const help = run(fixture(), 'help').help
+  assert.match(help, /Reviewers and their bound rubric must cover previousPolicySha -> policySha/)
+  assert.match(help, /Historical accepted deployments replay unchanged/)
+})
+
+for (const base of [sha(10), sha(100)]) test(`deploy: historical ${base === sha(100) ? 'empty-diff' : 'unrelated-base'} acceptance replays unchanged and the next transition uses retained policy`, () => {
+  const dir = setup(), policySha = sha(100)
+  bindRubric(dir, { base, head: policySha })
+  const historical = { owner, previousPolicySha: init.policySha, policySha,
+    reviewers: reviewers({ claimId: 'historical-policy-review', base, head: policySha }),
+    validation: { policySha, status: 'passed', sourceRef: 'historical-validation.json', verifiedAt: new Date().toISOString() } }
+  appendHistorical(dir, 'deploy', historical)
+  const bytes = readFileSync(join(dir, 'state.json'), 'utf8'), before = run(dir, 'show')
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  assert.deepEqual(before.deployments.at(-1).reviewers, historical.reviewers)
+  assert.equal(before.rubrics[`${init.policySha}:${policySha}`], undefined, 'never invent missing transition coverage')
+  const originalEvents = JSON.parse(bytes).events
+  const upgrade = deploymentInput(dir, policySha, sha(101))
+  const wrongBase = deploymentInput(dir, init.policySha, upgrade.policySha)
+  const upgradeBytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  for (const bad of [
+    wrongBase,
+    { ...wrongBase, previousPolicySha: policySha },
+    { ...upgrade, reviewers: historical.reviewers },
+    ...['reviewerId', 'sourceRef'].map((field) => ({
+      ...upgrade, reviewers: upgrade.reviewers.map((r, n) => ({ ...r, [field]: historical.reviewers[n][field] })),
+    })),
+  ]) {
+    run(dir, 'deploy', bad, false)
+    assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), upgradeBytes)
+  }
+  run(dir, 'deploy', upgrade)
+  const after = run(dir, 'show')
+  assert.deepEqual(after.deployments.slice(0, 2), before.deployments)
+  assert.deepEqual(after.config, before.config)
+  assert.deepEqual(after.deployments.at(-1).reviewers, upgrade.reviewers)
+  assert.equal(after.deployments.at(-1).previousPolicySha, policySha)
+  assert.deepEqual(JSON.parse(readFileSync(join(dir, 'state.json'), 'utf8')).events.slice(0, originalEvents.length), originalEvents)
+})
+
+test('deploy: unchanged exact-base review pair still supports publication in the same charged round', () => {
+  const dir = setup([pr(1, { base: init.policySha })]), claim = start(dir)
+  const input = deploymentInput(dir)
+  input.reviewers = reviewers({ ...claim, head: input.policySha })
+  run(dir, 'deploy', input)
+  const snapshot = { ...claim.snapshot, head: input.policySha }
+  const publication = { owner, number: 1, claimId: claim.claimId, base: claim.base, head: claim.head,
+    snapshot, reviewers: input.reviewers,
+    push: { repo, branch: snapshot.branch, before: claim.head, head: snapshot.head,
+      sourceRef: 'evidence/same-base-push.json', pushedAt: new Date().toISOString() } }
+  const bytes = readFileSync(join(dir, 'state.json'), 'utf8')
+  const altered = input.reviewers.map((r) => ({ ...r, completedAt: new Date().toISOString() }))
+  assert.match(run(dir, 'published', { ...publication, reviewers: altered }, false).error, /retained review decision/)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), bytes)
+  const published = run(dir, 'published', publication)
+  run(dir, 'save', saveInput(published, { technicalVerdict: 'NICE', reviewers: input.reviewers }))
+  const state = run(dir, 'show')
+  assert.deepEqual(state.deployments.at(-1).reviewers, input.reviewers)
+  assert.deepEqual(state.prs['1'].publications.at(-1).reviewers, input.reviewers)
+  assert.equal(state.prs['1'].cycles[0].rounds, claim.round)
 })
 
 test('A2: two equally partial reports omitting SECURITY cannot authorize NICE', () => {
@@ -2740,21 +2840,27 @@ for (const readbackRace of [false, true]) test(`bootstrap: legacy failure -> ret
   const candidate = pr(1, { head: sha(100), baseRef: 'main' })
   bindRubric(dir, candidate) // BEFORE the actual normalized two-PASS pair.
   const receipts = reviewers({ ...retried, head: candidate.head })
+  const deployment = deploymentInput(dir, init.policySha, candidate.head)
+  assert.notEqual(deployment.reviewers[0].base, receipts[0].base, 'policy and PR reviews cover different actual bases')
   const beforeDeploy = run(dir, 'show')
-  run(dir, 'deploy', { owner, previousPolicySha: init.policySha, policySha: candidate.head, reviewers: receipts,
-    validation: { policySha: candidate.head, status: 'passed', sourceRef: 'evidence/candidate-validation.log', verifiedAt: new Date().toISOString() } })
+  run(dir, 'deploy', deployment)
   assert.deepEqual(run(dir, 'show').active, beforeDeploy.active)
   assert.deepEqual(run(dir, 'show').prs, beforeDeploy.prs)
   const push = { repo, branch: candidate.branch, before: legacy.head, head: candidate.head,
     sourceRef: 'evidence/original-normal-push.json', pushedAt: new Date().toISOString() }
   const publication = { owner, number: 1, claimId: retried.claimId, base: retried.base, head: retried.head,
     snapshot: readbackRace ? { ...candidate, reviewKey: key(2), gateKey: key(2) } : candidate, push, reviewers: receipts }
-  const alteredPair = receipts.map((r) => ({ ...r, completedAt: new Date().toISOString() }))
+  const beforeRejected = readFileSync(join(dir, 'state.json'), 'utf8')
+  run(dir, 'published', { ...publication, reviewers: deployment.reviewers }, false)
+  const alteredPair = deployment.reviewers.map((r) => ({ ...r, base: candidate.base, completedAt: new Date().toISOString() }))
   assert.match(run(dir, 'published', { ...publication, reviewers: alteredPair,
     push: { ...push, pushedAt: new Date().toISOString() } }, false).error, /retained review decision/)
+  assert.equal(readFileSync(join(dir, 'state.json'), 'utf8'), beforeRejected)
   const differentCandidate = { ...candidate, head: sha(101) }
   bindRubric(dir, differentCandidate)
-  const rewrittenPair = receipts.map((r) => ({ ...r, head: differentCandidate.head, completedAt: new Date().toISOString() }))
+  const rewrittenPair = deployment.reviewers.map((r) => ({
+    ...r, base: differentCandidate.base, head: differentCandidate.head, completedAt: new Date().toISOString(),
+  }))
   assert.match(run(dir, 'published', { ...publication, snapshot: differentCandidate,
     push: { ...push, head: differentCandidate.head, pushedAt: new Date().toISOString() },
     reviewers: rewrittenPair }, false).error, /retained review decision/)
@@ -2773,7 +2879,7 @@ for (const readbackRace of [false, true]) test(`bootstrap: legacy failure -> ret
   } else {
     run(dir, 'save', saveInput(rebound, { phase: 'waiting', findings: [fixed], technicalVerdict: 'NICE', reviewers: receipts }))
   }
-  assert.deepEqual(run(dir, 'show').deployments.at(-1).reviewers, receipts)
+  assert.deepEqual(run(dir, 'show').deployments.at(-1).reviewers, deployment.reviewers)
   assert.deepEqual(run(dir, 'show').prs['1'].publications.at(-1).reviewers, receipts)
   run(dir, 'sync', { owner, complete: true, prs: [{ ...candidate, reviewKey: key(2), gateKey: key(2) }] })
   run(dir, 'enable', { owner, acceptanceProof: { ...proof(rebound, receipts), push } }, false)
@@ -4253,7 +4359,7 @@ for (const change of [null, { head: sha(20) }, { base: sha(20) }, { reviewKey: k
     const audit = start(dir)
     assert.equal(audit.action, 'audit')
     assert.deepEqual(audit.snapshot, healthy)
-    assert.equal(audit.round, !change || change.head ? 1 : 2)
+    assert.equal(audit.round, !change || change.head || change.base ? 1 : 2)
     assert.equal(run(dir, 'show').prs['1'].cycles.at(-1).completion, null)
   })
 }
@@ -4969,3 +5075,226 @@ for (const version of [1, 2]) {
     assert.deepEqual(run(dir, 'show'), expected)
   })
 }
+
+// Synthetic owned histories only: these receipts test accounting, not actual reviews.
+const baseRenewalNiceHistory = (rounds = 1, autonomous = false) => {
+  const dir = setup()
+  if (autonomous) {
+    run(dir, 'autonomy', autonomyInput())
+    run(dir, 'wake', wakeInput('base-renewal-initial'))
+  }
+  let claim, findings = []
+  for (let round = 1; round <= rounds; round++) {
+    run(dir, 'sync', { owner, complete: true, prs: [pr(1, { reviewKey: key(round) })] })
+    claim = start(dir)
+    if (rounds === 3 && round === 1) {
+      const open = { id: 'synthetic-progress', status: 'open', evidence: ['synthetic-red.log'] }
+      run(dir, 'save', saveInput(claim, { phase: 'fixing', findings: [open] }))
+      findings = [{ ...open, status: 'fixed', evidence: [...open.evidence, 'synthetic-green.log'] }]
+    }
+    run(dir, 'save', saveInput(claim, { findings, ...(round === rounds
+      ? { phase: 'complete', technicalVerdict: 'NICE', reviewers: reviewers(claim) } : {}) }))
+  }
+  return { dir, claim, findings }
+}
+
+for (const autonomous of [false, true]) {
+  test(`F2-BASE-ONLY-CYCLE-RENEWAL: repeated base-only and mixed revisions renew only after NICE, autonomy=${autonomous}`, () => {
+    const { dir, claim } = baseRenewalNiceHistory(1, autonomous)
+    let previous = run(dir, 'show').prs['1'].cycles
+    for (const change of [{ base: sha(20) }, { base: sha(30) }, { base: sha(30), head: sha(40) },
+      { base: sha(50), head: sha(60) }]) {
+      const snapshot = { ...claim.snapshot, ...change }
+      run(dir, 'sync', { owner, complete: true, prs: [snapshot] })
+      if (autonomous && previous.length === 3) {
+        const bytes = journalBytes(dir)
+        assert.equal(next(dir).action, 'wait', 'a fresh cycle cannot reset the native wake cap')
+        assert.equal(journalBytes(dir), bytes)
+        run(dir, 'wake', wakeInput('base-renewal-next'))
+      }
+      const selected = next(dir)
+      assert.equal(selected.action, 'audit')
+      assert.deepEqual(run(dir, 'show').prs['1'].cycles, previous, 'next never resets counters')
+      bindRubric(dir, selected)
+      const started = run(dir, 'begin', beginInput(selected))
+      assert.equal(started.round, 1)
+      const state = run(dir, 'show'), cycles = state.prs['1'].cycles
+      assert.deepEqual(cycles.slice(0, -1), previous)
+      assert.equal(cycles.at(-1).noProgress, 1)
+      assert.equal(cycles.at(-1).completion, null)
+      assert.equal(cycles.at(-1).technicalVerdict, null)
+      assert.deepEqual([started.base, started.head], [snapshot.base, snapshot.head])
+      run(dir, 'save', saveInput(started, { phase: 'complete', technicalVerdict: 'NICE', reviewers: reviewers(started) }))
+      previous = run(dir, 'show').prs['1'].cycles
+      assert.equal(next(dir).action, autonomous && previous.length === 3 ? 'wait' : 'none')
+    }
+    const state = run(dir, 'show')
+    assert.deepEqual(state.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), Array(5).fill([1, 1]))
+    if (autonomous) assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [3, 2])
+  })
+
+  for (const rounds of [2, 3]) test(`F2-BASE-ONLY-CYCLE-RENEWAL: bounded NICE round ${rounds} admits next and uncharged resume/begin, autonomy=${autonomous}`, () => {
+    const { dir, claim, findings } = baseRenewalNiceHistory(rounds, autonomous)
+    const completed = run(dir, 'show').prs['1'].cycles[0]
+    assert.equal(completed.rounds, rounds)
+    assert.equal(completed.noProgress, 2)
+    if (autonomous && rounds === 3) run(dir, 'wake', wakeInput('base-renewal-at-bound'))
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, base: sha(20) }] })
+    const selected = next(dir)
+    assert.equal(selected.action, 'audit')
+    assert.equal(selected.round, null)
+    assert.deepEqual(run(dir, 'show').prs['1'].cycles, [completed])
+    run(dir, 'save', saveInput(selected, { phase: 'blocked', findings }))
+    const blocked = run(dir, 'show'), bytes = journalBytes(dir)
+    const resumed = run(dir, 'resume', resumeInput(selected)), recovered = run(dir, 'show')
+    assert.equal(resumed.claimId, selected.claimId)
+    assert.equal(resumed.round, null)
+    assert.equal(resumed.startedAt, null)
+    assert.equal(recovered.prs['1'].cycles.length, 1)
+    for (const field of ['rounds', 'noProgress', 'findings', 'completion', 'technicalVerdict', 'phase', 'reason']) {
+      assert.deepEqual(recovered.prs['1'].cycles[0][field], completed[field], field)
+    }
+    assert.deepEqual(recovered.wakes, blocked.wakes, 'resume cannot charge or reset a wake')
+    const started = run(dir, 'begin', beginInput(resumed)), after = run(dir, 'show')
+    assert.equal(started.round, 1)
+    assert.deepEqual(after.prs['1'].cycles[0], recovered.prs['1'].cycles[0])
+    assert.equal(after.prs['1'].cycles[1].noProgress, 1)
+    if (autonomous) assert.equal(after.wakes.at(-1).chargedRounds, blocked.wakes.at(-1).chargedRounds + 1)
+    assertHistoryPrefix(dir, bytes)
+    run(dir, 'begin', beginInput(resumed), false)
+    assert.deepEqual(run(dir, 'show'), after)
+  })
+
+  for (const verdict of ['NAUGHTY', null]) test(`F2-BASE-ONLY-CYCLE-RENEWAL: failed ${verdict} cycles cannot renew, autonomy=${autonomous}`, () => {
+    const dir = setup()
+    if (autonomous) {
+      run(dir, 'autonomy', autonomyInput())
+      run(dir, 'wake', wakeInput('failed-base-renewal'))
+    }
+    const first = start(dir)
+    failedReview(dir, first)
+    run(dir, 'save', saveInput(first, { phase: 'blocked', technicalVerdict: verdict }))
+    for (const base of [sha(20), sha(30)]) {
+      run(dir, 'sync', { owner, complete: true, prs: [pr(1, { base })] })
+      const selected = next(dir)
+      if (base === sha(20)) {
+        const second = run(dir, 'begin', beginInput(selected))
+        assert.equal(second.round, 2)
+        run(dir, 'save', saveInput(second, { phase: 'blocked' }))
+      } else {
+        assert.equal(selected.action, 'blocked')
+        assert.match(selected.reason, /no-progress/)
+      }
+    }
+    const state = run(dir, 'show')
+    assert.deepEqual(state.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[2, 2]])
+    if (autonomous) assert.equal(state.wakes[0].chargedRounds, 2)
+  })
+
+  test(`F2-BASE-ONLY-CYCLE-RENEWAL: same base/head feedback retains the original bound, autonomy=${autonomous}`, () => {
+    const { dir, claim } = baseRenewalNiceHistory(1, autonomous)
+    assert.equal(next(dir).action, 'none')
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, reviewKey: key(2) }] })
+    const second = start(dir)
+    assert.equal(second.round, 2)
+    run(dir, 'save', saveInput(second, { phase: 'complete', technicalVerdict: 'NICE', reviewers: reviewers(second) }))
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, reviewKey: key(3) }] })
+    assert.match(next(dir).reason, /no-progress/)
+    assert.deepEqual(run(dir, 'show').prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[2, 2]])
+  })
+}
+
+for (const activated of [false, true]) {
+  test(`F2-BASE-ONLY-CYCLE-RENEWAL: ${activated ? 'invalid activation' : 'canonical publication correction'} cannot renew a base-only diff`, () => {
+    const { dir, snapshot } = activated ? historicalActivation() : historicalPreactivation()
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, base: sha(20) }] })
+    const selected = next(dir), old = run(dir, 'show')
+    run(dir, 'save', saveInput(selected, { phase: 'blocked' }))
+    const resumed = run(dir, 'resume', resumeInput(selected))
+    const started = run(dir, 'begin', beginInput(resumed))
+    assert.equal(started.round, 2, 'historical conflicted NICE is not normal completed-cycle authority')
+    bindRubric(dir, started)
+    run(dir, 'save', saveInput(started, { phase: 'complete', technicalVerdict: 'NICE', reviewers: reviewers(started) }))
+    const bounded = run(dir, 'show')
+    assert.deepEqual(bounded.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[2, 2]])
+    assert.equal(bounded.wakes.at(-1).chargedRounds, old.wakes.at(-1).chargedRounds + 1)
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, base: sha(30) }] })
+    assert.match(next(dir).reason, /no-progress/)
+    assert.equal(run(dir, 'show').prs['1'].cycles.length, 1)
+  })
+}
+
+for (const [version, admission] of [[1, undefined], [2, undefined], [2, 'unclaimed-round'],
+  [2, 'detail-read-observation'], [2, 'detail-read-recovery']]) {
+  for (const stage of ['accepted', 'claimed', 'blocked']) {
+    test(`F2-BASE-ONLY-CYCLE-RENEWAL: old v${version}/${admission ?? 'untagged'} base-only ${stage} prefix keeps its decisions across upgrade`, () => {
+      const { dir, claim } = baseRenewalNiceHistory()
+      run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, base: sha(20) }] })
+      appendHistorical(dir, 'next', { owner })
+      const events = JSON.parse(journalBytes(dir)).events
+      if (admission) events.at(-1).admission = admission
+      else delete events.at(-1).admission
+      writeJournal(dir, events)
+      const selected = run(dir, 'show').active
+      assert.equal(selected.claimId, events.at(-1).id)
+      bindRubric(dir, selected)
+      if (stage === 'accepted') {
+        appendHistorical(dir, 'begin', beginInput(selected))
+        const charged = run(dir, 'show').active
+        assert.equal(charged.round, 2, 'old accepted base-only begin keeps the original cycle')
+        appendHistorical(dir, 'save', saveInput(charged, {
+          phase: 'complete', technicalVerdict: 'NICE', reviewers: reviewers(charged),
+        }))
+      } else if (stage === 'blocked') appendHistorical(dir, 'save', saveInput(selected, { phase: 'blocked' }))
+      if (version === 1) {
+        writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, ...e }) => e), 1)
+      }
+      const bytes = journalBytes(dir), before = run(dir, 'show')
+      assert.equal(before.prs['1'].cycles.length, 1)
+      assert.equal(before.prs['1'].cycles[0].rounds, stage === 'accepted' ? 2 : 1)
+      assert.deepEqual(run(dir, 'show'), before)
+      assert.equal(journalBytes(dir), bytes)
+      let pending = selected
+      if (stage === 'accepted') {
+        run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, base: sha(30) }] })
+        pending = next(dir)
+        assert.equal(pending.action, 'audit')
+      } else if (stage === 'blocked') pending = run(dir, 'resume', resumeInput(selected))
+      const recovered = run(dir, 'show')
+      const started = run(dir, 'begin', beginInput(pending)), after = run(dir, 'show')
+      assert.equal(started.round, 1, 'new begin, including an old claim, uses the complete revision')
+      assert.equal(after.prs['1'].cycles.length, 2)
+      assert.deepEqual(after.prs['1'].cycles[0], recovered.prs['1'].cycles[0])
+      assert.equal(after.prs['1'].cycles[1].noProgress, 1)
+      assertHistoryPrefix(dir, bytes)
+      assert.deepEqual(run(dir, 'show'), after, 'new admission must also replay with its exact new accounting')
+    })
+  }
+}
+
+test('F2-BASE-ONLY-CYCLE-RENEWAL: live base/head decisions get a separate validated replay marker, never a caller option', () => {
+  const { dir, claim } = baseRenewalNiceHistory()
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, base: sha(20) }] })
+  run(dir, 'next', { owner, baseHeadRenewal: true }, false)
+  const selected = next(dir)
+  run(dir, 'begin', { ...beginInput(selected), baseHeadRenewal: true }, false)
+  run(dir, 'save', saveInput(selected, { phase: 'blocked' }))
+  run(dir, 'resume', { ...resumeInput(selected), baseHeadRenewal: true }, false)
+  run(dir, 'resume', resumeInput(selected))
+  run(dir, 'begin', beginInput(selected))
+  const bytes = journalBytes(dir), events = JSON.parse(bytes).events
+  const marked = events.filter((e) => e.baseHeadRenewal)
+  assert.deepEqual(marked.map((e) => e.command), ['next', 'resume', 'begin'])
+  assert.equal(marked[0].admission, 'detail-read-recovery', 'existing admission decisions keep their meaning')
+  const before = run(dir, 'show')
+  assert.equal(before.active.round, 1)
+  assert.deepEqual(before.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[1, 1], [1, 1]])
+  for (const change of [{ baseHeadRenewal: false }, { baseHeadRenewal: 'true' }, { command: 'sync' }, { version: 1 }]) {
+    const broken = fixture(), history = structuredClone(events)
+    Object.assign(history.find((e) => e.baseHeadRenewal), change)
+    writeJournal(broken, history)
+    assert.match(run(broken, 'show', undefined, false).error, /renewal marker/)
+  }
+  assert.equal(journalBytes(dir), bytes)
+  assert.deepEqual(run(dir, 'show'), before)
+})
