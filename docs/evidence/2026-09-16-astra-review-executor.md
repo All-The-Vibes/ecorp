@@ -473,3 +473,65 @@ were captured before commit.
 [Screenshot 20](assets/astra-review-executor/20-retained-renewal-and-metadata.png)
 is the actual local log-summary capture. Independent review and live
 corrected-head qualification still require their own receipts.
+
+### Published correction and current-head feedback
+
+Candidate `bf0c07df4f0410ea0634d63ecc0fb0e2a6034a30` passed all 13
+criteria in each of four fresh native Astra reviews: two reviewed the actual
+`6d2779b` deployed-policy transition, and two reviewed the actual `b252396`
+PR-base diff. The actual ATV/Ponytail audits found no introduced blocker.
+After policy adoption, a normal targeted push completed at
+**2026-09-18 15:32:51.176 UTC**; branch and PR readback confirmed that head.
+These receipts are retained separately from all previous publications.
+
+The target branch had advanced to `0b1ad59`; its merge base with the candidate
+remained `b252396`, and the three-dot diff exactly matched the reviewed diff.
+The PR was still behind main. Publishing the reviewed changes did not establish
+latest-target integration, resolve the draft, or grant merge approval.
+
+Hosted CI run `35363091209` failed all six jobs during setup, before checkout or
+repository tests. The current repository policy requires full commit-SHA action
+pins, while the workflow retained 21 tagged references across six actions.
+This is a real failed CI gate, not a local-test failure or a billing diagnosis.
+The security policy remains enabled.
+
+Automatic Copilot run `35363101600` completed and submitted review `5249639852`
+for this exact head. Its log records the `code-review` invocation at
+**2026-09-18 15:33:46.6008555 UTC**. A fresh independent native Astra
+gatechecker confirmed two actionable findings: broad activation must bind the
+retained ongoing authority and registered wake, and the workflow must satisfy
+the enforced action-pin policy. It also verified resolved-thread state and
+current metadata without editing code or treating previous PASS as a waiver.
+
+The executor recorded that feedback and began the next bounded correction under
+the same ongoing authority. No extra permission or weaker repository setting
+was introduced. Existing desktop `glib` alert #1 remains separate application
+debt: its lockfile blob is unchanged across the recorded base, candidate and
+observed main tip. Broad intake remains unqualified.
+
+The CI correction pins all 21 action references to verified immutable commits
+and retains the same jobs, permissions, commands and verification gates. The
+Rust action uses the stable branch's verified master-history parent, with
+explicit stable inputs in all four setup steps; primary source comparison
+confirmed identical execution code and the input-default difference.
+The new package regression failed on the original tagged workflow, then all
+three package tests passed. Reverting each of the 21 pins or removing each of
+the four stable inputs was rejected by the retained negative controls.
+These are local checks, not a replacement for a new passing hosted run.
+
+The activation correction uses one shared authority/wake check for live
+acceptance and replay-derived activation validity. A historical unbound
+activation remains evidence but cannot fund new non-canary work; later
+registration does not retroactively repair it. Ten initial red cases and two
+additional old-history red cases reproduced the gap in isolated synthetic
+fixtures. The worker's targeted checks passed 183 distinct cases, including
+15 new regressions. This is not a claim that unauthorized broad execution
+occurred on the live host. Integrated read-only replay preserved the actual
+99-event journal and round fifteen without changing any live bytes.
+
+The integrated suite passed **326/326 Node tests** and all six repository
+checks. Rust reported **547 passed, 323 ignored, zero failed**. Exact source
+bytes and canonical Git blobs include the modified workflow as well as the
+helper and tests. [Screenshot 21](assets/astra-review-executor/21-authority-and-ci-pins.png)
+captures those local results. Fresh independent review, new-head hosted CI,
+automatic Copilot and real scheduler qualification remain separate gates.

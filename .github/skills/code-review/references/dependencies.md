@@ -197,3 +197,12 @@ This checks packaging, not semantic execution. Use
 [behavioral cases](../tests/cases.md) for independent skill forward-testing.
 Record actual successes and limitations; do not generalize a canary into proof
 that every PR, provider account, or remediation loop has completed.
+
+The CI workflow pins its remote actions to full commit SHAs. Preserve those
+pins rather than weakening repository policy. The Rust action uses a verified
+commit from its master history and explicit `toolchain: stable` inputs, as
+[upstream recommends](https://github.com/dtolnay/rust-toolchain/blob/d1031067263f94b142dd6c0ce24c5eb9d02d52a0/README.md)
+for SHA pinning; generated toolchain-branch commits can be
+garbage-collected. Verify upstream provenance and effective action inputs when
+updating pins, then run the package checks and actual hosted CI. No additional
+global plugin is required.

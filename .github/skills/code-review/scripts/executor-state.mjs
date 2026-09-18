@@ -155,6 +155,10 @@
 //   schedulerWake:{id,at,sourceRef},resumeRef,quietNoopRef,
 //   copilot:{reviewId,head,automatic:true,sourceRef},audits:{atvRef,ponytailRef},
 //   fixers:[{issueId,agentId,model:"gpt-6-astra",sourceRef,redRef,greenRef}]}}
+//   Requires retained ongoing autonomy for this owner/repo. schedulerWake must
+//   match a registered wake's id/sourceRef/startedAt exactly (at = startedAt).
+//   Historical unbound enables remain readable but grant no live authority;
+//   later autonomy/wake records alone cannot repair their original binding.
 //   CI must match the current snapshot's gateKey and baseRef (null only when the
 //   legacy snapshot lacks a target), and be verified since prs[number].gateObservedAt
 //   AND the technical round start. sync/published advance gateObservedAt on a changed
@@ -358,6 +362,18 @@ function correctivePublication(s, conflictingPublications) {
   const p = s.prs[s.config.canary], publication = p?.publications?.at(-1)
   // A clean replacement publication still belongs to the unfinished correction.
   return conflictingPublications.has(publication) ? digest(publication) : p?.correctiveAudit?.publicationKey
+}
+
+function activationAuthorityError(s, proof) {
+  if (!s.autonomy || s.autonomy.repo !== s.config.repo || s.autonomy.input.owner !== s.config.owner) {
+    return 'activation requires retained scoped ongoing authority'
+  }
+  const wake = proof.schedulerWake
+  if (!s.wakes?.some(({ input }) => input.owner === s.config.owner &&
+    input.id === wake.id && input.sourceRef === wake.sourceRef && input.startedAt === wake.at)) {
+    return 'activation requires matching registered native wake identity/source/time'
+  }
+  return null
 }
 
 function apply(s, e, conflictingPublications = new Set(), { activation, live = false, failedReviews = new Map(), failedWaits = new Map(), pendingRenewals = new Map() } = {}) {
@@ -865,6 +881,10 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     fields(proof.audits, ['atvRef', 'ponytailRef'])
     check(text(proof.schedulerWake.id) && fresh(proof.schedulerWake.at, c.completion.startedAt, at) &&
       text(proof.schedulerWake.sourceRef) && text(proof.resumeRef) && text(proof.quietNoopRef), 'native wake/resume/quiet evidence required')
+    if (live) {
+      const error = activationAuthorityError(s, proof)
+      check(!error, error)
+    }
     check(positive(proof.copilot.reviewId) && proof.copilot.head === proof.head &&
       proof.copilot.automatic === true && text(proof.copilot.sourceRef), 'automatic current-head Copilot review required')
     check(text(proof.audits.atvRef) && text(proof.audits.ponytailRef) &&
@@ -961,9 +981,10 @@ function main() {
           conflictingPublications.add(state.prs[e.input.number].publications.at(-1))
         }
         if (e.command === 'enable' && result.changed !== false) {
-          const valid = !conflictingPublications.has(state.prs[e.input.acceptanceProof.number].publications.at(-1))
-          activation = { eventId: e.id, valid, reason: valid ? null :
-            'activation publication source/target conflicts with retained claim; preserve work and correct canary' }
+          const reason = conflictingPublications.has(state.prs[e.input.acceptanceProof.number].publications.at(-1))
+            ? 'activation publication source/target conflicts with retained claim; preserve work and correct canary'
+            : activationAuthorityError(state, e.input.acceptanceProof)
+          activation = { eventId: e.id, valid: reason === null, reason }
           activations.push({ ...activation, acceptanceProof: e.input.acceptanceProof })
         }
       }

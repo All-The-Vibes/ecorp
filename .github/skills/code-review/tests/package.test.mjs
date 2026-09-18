@@ -46,3 +46,19 @@ test('the entrypoint and maintained references resolve inside the package', () =
   const entrypoint = readFileSync(resolve(root, 'SKILL.md'), 'utf8')
   assert.match(entrypoint, /^---\r?\nname: code-review\r?\ndescription: [^\r\n]+\r?\n---/)
 })
+
+test('CI remote actions use full commit SHAs and preserve the stable Rust toolchain', () => {
+  const workflow = readFileSync(resolve(root, '../../workflows/ci.yml'), 'utf8')
+  const uses = [...workflow.matchAll(/^[ \t]*(?:-[ \t]+)?uses:[ \t]+([^\s#]+)/gm)]
+    .map(([, action]) => action)
+    .filter((action) => !action.startsWith('./') && !action.startsWith('docker://'))
+  assert.ok(uses.length > 0, 'CI remote actions must be checked')
+  for (const action of uses) {
+    assert.match(action, /^[\w.-]+\/[\w./-]+@[a-f0-9]{40}$/, `remote action must use a full commit SHA: ${action}`)
+  }
+  const rustSteps = workflow.split(/^      - /m).filter((step) => /^uses: dtolnay\/rust-toolchain@/.test(step))
+  assert.ok(rustSteps.length > 0, 'CI Rust toolchain steps must be checked')
+  for (const step of rustSteps) {
+    assert.match(step, /^        with:\r?\n          toolchain: stable\r?$/m, 'SHA-pinned Rust action requires explicit stable input')
+  }
+})

@@ -293,6 +293,14 @@ Before enabling repository-wide execution, retain proof of:
 The helper can validate receipt structure and identities, not authenticity.
 Read the underlying native receipts and GitHub results before accepting the
 canary. Never enable broad intake on a plain `NICE` string or unit tests alone.
+Activation also requires the retained ongoing authority for this owner and
+repository. Its `schedulerWake` must match a registered wake's `id` and
+`sourceRef`, with `at` equal to that wake's recorded `startedAt`. Use the actual
+registered scheduled-wake record; matching fields do not prove its authenticity
+or turn a goal-triggered turn into scheduler evidence. An old activation missing
+its original authority/wake binding remains readable but cannot authorize new
+non-canary work. Recording a grant or wake later does not retroactively repair
+that activation; full supported re-acceptance is still required.
 CI evidence must include the current `gateKey` and `baseRef`, and be verified
 after both the technical round start and the latest observed gate generation.
 An old same-head green receipt does not discharge a newer failing check.

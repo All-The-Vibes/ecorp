@@ -76,16 +76,197 @@ const publishComplete = (dir) => {
   run(dir, 'save', saveInput(rebound, { phase: 'waiting', technicalVerdict: 'NICE', reviewers: receipts }))
   return { claim: rebound, receipts, push, snapshot }
 }
-const proof = (claim, receipts, ciSnapshot = claim.snapshot) => ({
+const proof = (claim, receipts, ciSnapshot = claim.snapshot, schedulerWake = {
+  id: 'native-wake-1', at: new Date().toISOString(), sourceRef: 'evidence/native-wake.json',
+}) => ({
   number: claim.number, base: claim.base, head: claim.head, reviewers: receipts,
   ci: { base: claim.base, head: claim.head, gateKey: ciSnapshot.gateKey, baseRef: ciSnapshot.baseRef ?? null,
     status: 'passed', sourceRef: 'https://ci.example/run/1', verifiedAt: new Date().toISOString() },
   push: claim.publication?.push ?? { repo, branch: 'fix-1', before: sha(9), head: claim.head, sourceRef: 'evidence/real-push.json', pushedAt: new Date().toISOString() },
-  schedulerWake: { id: 'native-wake-1', at: new Date().toISOString(), sourceRef: 'evidence/native-wake.json' },
+  schedulerWake,
   resumeRef: 'evidence/resume.json', quietNoopRef: 'evidence/quiet-noop.json',
   copilot: { reviewId: 123, head: claim.head, automatic: true, sourceRef: 'https://github.com/example/ecorp/pull/1#pullrequestreview-123' },
   audits: { atvRef: 'evidence/atv.json', ponytailRef: 'evidence/ponytail.json' },
   fixers: [{ issueId: 'finding-1', agentId: 'fixer-1', model: 'gpt-6-astra', sourceRef: 'evidence/fixer.json', redRef: 'evidence/red.txt', greenRef: 'evidence/green.txt' }],
+})
+
+const wakeProof = ({ id, sourceRef, startedAt }) => ({ id, sourceRef, at: startedAt })
+
+// Synthetic receipts only; no user authority or native runtime authenticity is asserted.
+const registeredWakeProof = (dir, id) => {
+  const wake = wakeInput(id)
+  run(dir, 'wake', wake)
+  return wakeProof(wake)
+}
+
+for (const missing of ['authority', 'wake', 'id', 'source', 'time']) {
+  test(`PR304-ENABLE-AUTHORITY: live enable rejects missing or mismatched ${missing}`, () => {
+    const dir = setup(), published = publishComplete(dir)
+    const acceptanceProof = proof(published.claim, published.receipts)
+    if (missing !== 'authority') run(dir, 'autonomy', autonomyInput())
+    if (!['authority', 'wake'].includes(missing)) {
+      acceptanceProof.schedulerWake = registeredWakeProof(dir, 'synthetic-activation')
+      if (missing === 'id') acceptanceProof.schedulerWake.id = 'synthetic-unregistered'
+      if (missing === 'source') acceptanceProof.schedulerWake.sourceRef = 'synthetic-unregistered.json'
+      if (missing === 'time') acceptanceProof.schedulerWake.at = new Date().toISOString()
+    }
+    const before = journalBytes(dir)
+    assert.match(run(dir, 'enable', { owner, acceptanceProof }, false).error, /ongoing authority|registered native wake/)
+    assert.equal(journalBytes(dir), before, 'rejection cannot alter history or charge a round')
+  })
+}
+
+test('PR304-ENABLE-AUTHORITY: matched activation retains global wake cap and same-grant continuation', () => {
+  const dir = setup([pr(), pr(2), pr(3), pr(4), pr(5)]), published = publishComplete(dir)
+  const grant = autonomyInput()
+  run(dir, 'autonomy', grant)
+  const acceptanceProof = { ...proof(published.claim, published.receipts),
+    schedulerWake: registeredWakeProof(dir, 'synthetic-matched') }
+  run(dir, 'enable', { owner, acceptanceProof })
+  const enabled = journalBytes(dir)
+  run(dir, 'enable', { owner, acceptanceProof })
+  assert.equal(journalBytes(dir), enabled, 'exact enable ACK never creates authority or budget')
+  assert.equal(run(dir, 'show').activation.valid, true)
+  for (const number of [2, 3, 4]) {
+    const claim = start(dir)
+    assert.equal(claim.number, number)
+    run(dir, 'save', saveInput(claim))
+  }
+  const exhausted = journalBytes(dir)
+  assert.equal(next(dir).action, 'wait')
+  run(dir, 'enable', { owner, acceptanceProof })
+  assert.equal(journalBytes(dir), exhausted)
+  run(dir, 'wake', wakeInput('synthetic-next-batch'))
+  const claim = start(dir)
+  assert.equal(claim.number, 5)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  const beforeResume = run(dir, 'show')
+  assert.equal(run(dir, 'resume', resumeInput(claim)).round, claim.round)
+  const state = run(dir, 'show')
+  assert.deepEqual(state.wakes, beforeResume.wakes, 'continuation retains its original charge')
+  assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [3, 1])
+  assert.deepEqual(state.autonomy.input, grant)
+})
+
+test('PR304-ENABLE-AUTHORITY: matched activation preserves no-progress stops without starving other PRs', () => {
+  const dir = setup([pr(), pr(2), pr(3)]), published = publishComplete(dir)
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined,
+    registeredWakeProof(dir, 'synthetic-fairness')) })
+  let stalled = start(dir)
+  assert.equal(stalled.number, 2)
+  failedReview(dir, stalled)
+  stalled = run(dir, 'retry', retryInput(stalled))
+  failedReview(dir, stalled)
+  run(dir, 'save', saveInput(stalled, { phase: 'blocked', technicalVerdict: 'NAUGHTY' }))
+  const before = run(dir, 'show').prs['2']
+  const other = start(dir)
+  assert.equal(other.number, 3)
+  run(dir, 'save', saveInput(other))
+  run(dir, 'wake', wakeInput('synthetic-fairness-next'))
+  run(dir, 'resume', resumeInput(stalled), false)
+  assert.equal(next(dir).action, 'none')
+  const state = run(dir, 'show')
+  assert.deepEqual(state.prs['2'], before)
+  assert.equal(state.prs['2'].cycles[0].noProgress, 2)
+  assert.deepEqual(state.wakes.map((w) => w.chargedRounds), [3, 0])
+})
+
+for (const missing of ['authority', 'wake', 'id', 'source', 'time']) {
+  test(`PR304-ENABLE-AUTHORITY: historical unbound ${missing} activation stays readable but grants no new effects`, () => {
+    const dir = setup([pr(), pr(2)]), published = publishComplete(dir)
+    const acceptanceProof = proof(published.claim, published.receipts)
+    if (missing !== 'authority') run(dir, 'autonomy', autonomyInput())
+    if (!['authority', 'wake'].includes(missing)) {
+      acceptanceProof.schedulerWake = registeredWakeProof(dir, 'synthetic-old-activation')
+      if (missing === 'id') acceptanceProof.schedulerWake.id = 'synthetic-unregistered'
+      if (missing === 'source') acceptanceProof.schedulerWake.sourceRef = 'synthetic-unregistered.json'
+      if (missing === 'time') acceptanceProof.schedulerWake.at = new Date().toISOString()
+    }
+    appendHistorical(dir, 'enable', { owner, acceptanceProof })
+    const enabledBytes = journalBytes(dir), old = run(dir, 'show')
+    assert.equal(journalBytes(dir), enabledBytes, 'read-only replay must not rewrite old acceptance')
+    assert.equal(old.enabled, true)
+    assert.equal(old.activation.valid, false)
+    assert.match(old.activation.reason, /ongoing authority|registered native wake/)
+    assert.deepEqual(old.acceptanceProof, acceptanceProof)
+    // A later authority/wake cannot retroactively bind an old accepted activation.
+    if (missing === 'authority') run(dir, 'autonomy', autonomyInput())
+    run(dir, 'wake', wakeInput('synthetic-later-wake'))
+    const prefix = journalBytes(dir)
+    assert.equal(run(dir, 'show').activation.valid, false)
+    assert.equal(next(dir).number, 1, 'new admission remains canary-only')
+    assertHistoryPrefix(dir, prefix)
+
+    // Model already accepted old non-canary work without asking current admission.
+    const retained = fixture()
+    writeJournal(retained, JSON.parse(prefix).events)
+    appendHistorical(retained, 'next', { owner })
+    let claim = run(retained, 'show').active
+    assert.equal(claim.number, 2, 'historical decisions keep their original selection')
+    const uncharged = journalBytes(retained)
+    assert.equal(next(retained).action, 'reconcile')
+    run(retained, 'begin', beginInput(claim), false)
+    assert.equal(journalBytes(retained), uncharged)
+    appendHistorical(retained, 'begin', beginInput(claim))
+    claim = run(retained, 'show').active
+    const charged = journalBytes(retained), state = run(retained, 'show')
+    for (const [command, input] of [
+      ['retry', retryInput(claim)], ['published', { ...beginInput(claim), snapshot: claim.snapshot }],
+      ['save', saveInput(claim, { phase: 'fixing' })],
+      ['next', { owner, gateNumber: 2 }], ['next', { owner, feedbackNumber: 2 }],
+    ]) assert.match(run(retained, command, input, false).error, /ongoing authority|registered native wake/)
+    assert.equal(journalBytes(retained), charged)
+    run(retained, 'save', saveInput(claim, { phase: 'blocked' }))
+    const blocked = journalBytes(retained)
+    run(retained, 'resume', resumeInput(claim), false)
+    assert.equal(journalBytes(retained), blocked)
+    assert.deepEqual(run(retained, 'show').wakes, state.wakes, 'old charges are not refunded')
+    assertHistoryPrefix(retained, charged)
+  })
+}
+
+for (const version of [1, 2]) {
+  test(`PR304-ENABLE-AUTHORITY: v${version} unbound history retains every old global charge without funding more`, () => {
+    const dir = setup([1, 2, 3, 4, 5, 6].map((n) => pr(n))), published = publishComplete(dir)
+    appendHistorical(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+    for (const number of [2, 3, 4, 5]) {
+      appendHistorical(dir, 'next', { owner })
+      const claim = run(dir, 'show').active
+      assert.equal(claim.number, number)
+      appendHistorical(dir, 'begin', beginInput(claim))
+      appendHistorical(dir, 'save', saveInput(run(dir, 'show').active))
+    }
+    if (version === 1) {
+      const events = JSON.parse(journalBytes(dir)).events.map(({ id, at, command, input }) => ({ id, at, command, input }))
+      writeJournal(dir, events, 1)
+    }
+    const bytes = journalBytes(dir), before = run(dir, 'show')
+    assert.equal(before.autonomy, undefined)
+    assert.equal(before.wakes, undefined)
+    assert.deepEqual([1, 2, 3, 4, 5, 6].map((n) => before.prs[n].cycles[0].rounds), [1, 1, 1, 1, 1, 0])
+    assert.equal(next(dir).action, 'none', 'unbound enable cannot admit PR6 through the no-autonomy wake bypass')
+    assert.equal(before.activation.valid, false)
+    run(dir, 'next', { owner, gateNumber: 2 }, false)
+    assert.deepEqual(run(dir, 'show'), before)
+    assert.equal(journalBytes(dir), bytes)
+  })
+}
+
+test('PR304-ENABLE-AUTHORITY: registering the exact missing wake later cannot retroactively bind acceptance', () => {
+  const dir = setup([pr(), pr(2)]), published = publishComplete(dir)
+  run(dir, 'autonomy', autonomyInput())
+  const wake = wakeInput('synthetic-late-registration')
+  const acceptanceProof = proof(published.claim, published.receipts, undefined, wakeProof(wake))
+  appendHistorical(dir, 'enable', { owner, acceptanceProof })
+  const before = run(dir, 'show'), prefix = journalBytes(dir)
+  run(dir, 'wake', wake)
+  const registered = journalBytes(dir)
+  assert.deepEqual(run(dir, 'show').activation, before.activation)
+  run(dir, 'enable', { owner, acceptanceProof })
+  assert.equal(journalBytes(dir), registered, 'an identical proof ACK cannot rewrite its original acceptance')
+  assert.equal(run(dir, 'show').activation.valid, false)
+  assertHistoryPrefix(dir, prefix)
 })
 
 const feedbackClaim = (dir) => run(dir, 'next', { owner, feedbackNumber: 1 })
@@ -131,7 +312,8 @@ const roundThreePublication = (fast = false) => {
 test('blocked feedback releases the writer without consuming feedback or hiding another PR', () => {
   const dir = setup([pr(), pr(2)])
   const published = publishComplete(dir)
-  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')) })
   run(dir, 'sync', { owner, complete: true, prs: [{ ...published.snapshot, reviewKey: key(2) }, pr(2)] })
   const before = run(dir, 'show').prs['1'].cycles[0].completion
   const gate = feedbackClaim(dir)
@@ -177,7 +359,8 @@ for (const fast of [false, true]) test(`EX-SAMECODE-FEEDBACK: round-three ${fast
   const ciGate = next(dir)
   assert.equal(ciGate.action, 'check')
   run(dir, 'save', saveInput(ciGate, { findings, evidence: ['current-CI-target-gates.json'] }))
-  const good = proof(claim, receipts, snapshot)
+  run(dir, 'autonomy', autonomyInput())
+  const good = proof(claim, receipts, snapshot, registeredWakeProof(dir, 'synthetic-acceptance'))
   run(dir, 'enable', { owner, acceptanceProof: { ...good,
     fixers: [{ ...good.fixers[0], agentId: `${gate.claimId}-gatechecker` }] } }, false)
   for (const ci of [
@@ -326,7 +509,7 @@ for (const baseRef of ['release', 'main']) {
     run(dir, 'feedback', feedbackInput(gate))
     const ciGate = run(dir, 'next', { owner, gateNumber: 1 })
     run(dir, 'save', saveInput(ciGate, { evidence: ['current-CI-target-gates.json'] }))
-    run(dir, 'enable', { owner, acceptanceProof: proof(claim, receipts, snapshot) })
+    run(dir, 'enable', { owner, acceptanceProof: proof(claim, receipts, snapshot, wakeProof(run(dir, 'show').wakes.at(-1).input)) })
     const state = run(dir, 'show')
     assert.equal(state.enabled, true)
     assert.equal(state.prs['1'].blockedClaim, null)
@@ -409,7 +592,8 @@ const historicalPreactivation = (baseRef = 'release', feedback = true) => {
     appendHistorical(dir, 'save', saveInput(claim, { technicalVerdict: 'NICE', reviewers: receipts }))
     history.snapshot = claim.publication.snapshot
   }
-  return { ...history, acceptanceProof: proof(claim, receipts, feedback ? snapshot : history.snapshot) }
+  return { ...history, acceptanceProof: proof(claim, receipts, feedback ? snapshot : history.snapshot,
+    wakeProof(run(dir, 'show').wakes.at(-1).input)) }
 }
 const historicalActivation = (baseRef = 'release') => {
   const history = historicalPreactivation(baseRef), { dir, snapshot, acceptanceProof } = history
@@ -490,7 +674,7 @@ test('EX-PREACTIVATION-CANARY-RECOVERY: gates cannot consume correction and fres
   const corrected = publishComplete(dir)
   assert.equal(corrected.claim.round, 2)
   assert.equal(next(dir).action, 'none', 'PR2 still lacks activation authority')
-  const good = proof(corrected.claim, corrected.receipts)
+  const good = proof(corrected.claim, corrected.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance'))
   for (const change of [
     { reviewers: acceptanceProof.reviewers }, { push: acceptanceProof.push },
     { ci: acceptanceProof.ci }, { copilot: acceptanceProof.copilot },
@@ -507,7 +691,8 @@ test('EX-PREACTIVATION-CANARY-RECOVERY: gates cannot consume correction and fres
   assert.equal(state.activations.length, 1)
   assert.equal(state.prs['1'].cycles.length, 1)
   assert.equal(state.prs['1'].cycles[0].noProgress, 2)
-  assert.equal(state.wakes.at(-1).chargedRounds, old.wakes.at(-1).chargedRounds + 1)
+  assert.equal(state.wakes[0].chargedRounds, old.wakes[0].chargedRounds + 1)
+  assert.equal(state.wakes.at(-1).chargedRounds, 0, 'acceptance wake cannot refund prior correction')
   assert.deepEqual(state.prs['1'].publications[0], old.prs['1'].publications[0])
   assertHistoryPrefix(dir, prefix)
   const accepted = journalBytes(dir)
@@ -905,7 +1090,7 @@ test('EX-UNCHANGED-CANARY-RECOVERY: correction needs genuinely new full acceptan
   assert.equal(next(dir).action, 'none', 'NICE cannot trigger another free audit before enable')
   assert.equal(journalBytes(dir), quiet)
   run(dir, 'next', { owner, activationFence: false }, false)
-  const good = proof(corrected.claim, corrected.receipts)
+  const good = proof(corrected.claim, corrected.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance'))
   for (const change of [
     { reviewers: acceptanceProof.reviewers }, { push: acceptanceProof.push },
     { ci: acceptanceProof.ci }, { copilot: acceptanceProof.copilot },
@@ -1241,7 +1426,7 @@ for (const blocked of [false, true]) {
     run(dir, 'save', saveInput(rebound, { phase: 'complete', technicalVerdict: 'NICE', reviewers: receipts }))
     assert.equal(run(dir, 'show').activation.valid, false)
     run(dir, 'enable', { owner, acceptanceProof }, false)
-    const good = proof(rebound, receipts)
+    const good = proof(rebound, receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance'))
     run(dir, 'enable', { owner, acceptanceProof: { ...good, fixers: [] } }, false)
     run(dir, 'enable', { owner, acceptanceProof: good })
     const enabled = run(dir, 'show')
@@ -1250,7 +1435,8 @@ for (const blocked of [false, true]) {
     assert.deepEqual(enabled.activations[0].acceptanceProof, acceptanceProof)
     assert.equal(enabled.prs['1'].cycles.length, 1)
     assert.equal(enabled.prs['1'].cycles[0].noProgress, 2)
-    assert.deepEqual(enabled.wakes, after.wakes)
+    assert.deepEqual(enabled.wakes.slice(0, -1), after.wakes)
+    assert.equal(enabled.wakes.at(-1).chargedRounds, 0)
     assertHistoryPrefix(dir, bytes)
   })
 }
@@ -1334,7 +1520,8 @@ test('EX-SAMECODE-FEEDBACK: later approval/feedback needs its own generation rec
   run(dir, 'feedback', feedbackInput(second))
   run(dir, 'save', saveInput(next(dir)))
   run(dir, 'enable', { owner, acceptanceProof: good }, false)
-  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, second.snapshot) })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, second.snapshot, registeredWakeProof(dir, 'synthetic-acceptance')) })
   assert.equal(run(dir, 'show').prs['1'].cycles[0].rounds, 1)
 })
 
@@ -1464,7 +1651,8 @@ test('waiting PR does not hide other PRs; fork execution stays blocked with read
   assert.equal(next(dir).action, 'none', 'canary restricts scheduling until enable')
   run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: sha(12) }), ...others] })
   const { claim, receipts } = publishComplete(dir)
-  run(dir, 'enable', { owner, acceptanceProof: proof(claim, receipts) })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(claim, receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')) })
   const second = next(dir)
   assert.equal(second.number, 2)
   run(dir, 'save', saveInput(second, { phase: 'blocked' }))
@@ -1546,7 +1734,8 @@ test('enable requires explicit complete acceptance at current revision, includin
   const noPush = setup(), unpublished = complete(noPush)
   run(noPush, 'enable', { owner, acceptanceProof: proof(unpublished.claim, unpublished.receipts) }, false)
   const { claim, receipts } = publishComplete(dir)
-  const good = proof(claim, receipts)
+  run(dir, 'autonomy', autonomyInput())
+  const good = proof(claim, receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance'))
   for (const bad of [
     'NICE', { ...good, ci: undefined }, { ...good, push: undefined },
     { ...good, reviewers: [] }, { ...good, ci: { ...good.ci, status: 'pending' } },
@@ -1566,7 +1755,8 @@ test('enable requires explicit complete acceptance at current revision, includin
 test('manual canary alone cannot activate without native wake, resume, quiet, automatic review and fixer receipts', () => {
   const dir = setup()
   const { claim, receipts } = publishComplete(dir)
-  const good = proof(claim, receipts)
+  run(dir, 'autonomy', autonomyInput())
+  const good = proof(claim, receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance'))
   for (const field of ['schedulerWake', 'resumeRef', 'quietNoopRef', 'copilot', 'audits', 'fixers']) {
     const bad = { ...good }
     delete bad[field]
@@ -2333,7 +2523,8 @@ test('deploy: unknown, unauthorized, stale and unstructured evidence cannot upda
     })) }, false)
   }
   const { claim, receipts } = publishComplete(dir)
-  run(dir, 'enable', { owner, acceptanceProof: proof(claim, receipts) })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(claim, receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')) })
   run(dir, 'deploy', second, false)
   const help = run(fixture(), 'help').help
   for (const field of ['retry', 'round', 'reviewRef', 'deploy', 'previousPolicySha', 'validation', 'readFailure']) {
@@ -2490,7 +2681,8 @@ test('B01: honest post-push feedback review enables with the original canonical 
   const claim = start(dir), receipts = reviewers(claim)
   assert.ok(published.push.pushedAt < claim.startedAt)
   run(dir, 'save', saveInput(claim, { phase: 'waiting', technicalVerdict: 'NICE', reviewers: receipts }))
-  const acceptanceProof = { ...proof(claim, receipts), push: published.push }
+  run(dir, 'autonomy', autonomyInput())
+  const acceptanceProof = { ...proof(claim, receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')), push: published.push }
   for (const change of [{ pushedAt: new Date().toISOString() }, { sourceRef: 'invented-push' }, { before: sha(8) }]) {
     run(dir, 'enable', { owner, acceptanceProof: { ...acceptanceProof, push: { ...published.push, ...change } } }, false)
   }
@@ -2512,7 +2704,8 @@ test('A3/B02: unprocessed same-head feedback fences enable; actual fresh review 
   assert.deepEqual(run(dir, 'show').prs['1'].cycles[0].completion, originalCompletion)
   const claim = start(dir), receipts = reviewers(claim)
   run(dir, 'save', saveInput(claim, { phase: 'waiting', technicalVerdict: 'NICE', reviewers: receipts }))
-  run(dir, 'enable', { owner, acceptanceProof: { ...proof(claim, receipts), push: published.push } })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: { ...proof(claim, receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')), push: published.push } })
   assert.equal(run(dir, 'show').enabled, true)
   assert.deepEqual(run(dir, 'show').prs['1'].publications[0].reviewers, published.receipts)
 })
@@ -2524,7 +2717,8 @@ test('A3/B02: changed required CI waits for an uncharged gate check, not another
   const gate = next(dir)
   assert.equal(gate.action, 'check')
   run(dir, 'save', saveInput(gate, { evidence: ['evidence/new-required-CI.json'] }))
-  const acceptanceProof = proof(published.claim, published.receipts, gate.snapshot)
+  run(dir, 'autonomy', autonomyInput())
+  const acceptanceProof = proof(published.claim, published.receipts, gate.snapshot, registeredWakeProof(dir, 'synthetic-acceptance'))
   run(dir, 'enable', { owner, acceptanceProof: { ...acceptanceProof, ci: { ...acceptanceProof.ci, status: 'pending' } } }, false)
   run(dir, 'enable', { owner, acceptanceProof })
   assert.equal(run(dir, 'show').prs['1'].cycles[0].rounds, 1)
@@ -2565,7 +2759,8 @@ test('EX-CI-GENERATION: old same-head green cannot enable after a changed failed
     phase: 'blocked', evidence: ['evidence/current-required-CI-passed.json', 'evidence/human-approval-pending.json'],
     reason: 'All required CI passed; human approval still pending',
   }))
-  const currentProof = proof(published.claim, published.receipts, passed)
+  run(dir, 'autonomy', autonomyInput())
+  const currentProof = proof(published.claim, published.receipts, passed, registeredWakeProof(dir, 'synthetic-acceptance'))
   currentProof.ci.sourceRef = 'evidence/current-required-CI-passed.json'
   run(dir, 'enable', { owner, acceptanceProof: currentProof })
   const enabled = run(dir, 'show')
@@ -2589,7 +2784,8 @@ test('EX-CI-GENERATION: target round trips fence old receipts even when SHAs and
     const freshWrongTarget = { ...oldGreen, ci: { ...oldGreen.ci, baseRef: 'wrong-target', verifiedAt: new Date().toISOString() } }
     assert.match(run(dir, 'enable', { owner, acceptanceProof: freshWrongTarget }, false).error, /current CI/)
   }
-  const good = proof(published.claim, published.receipts)
+  run(dir, 'autonomy', autonomyInput())
+  const good = proof(published.claim, published.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance'))
   for (const change of [
     { base: sha(99) }, { head: sha(99) }, { gateKey: key(99) }, { baseRef: null },
     { verifiedAt: 'not-a-date' }, { verifiedAt: '9999-01-01T00:00:00.000Z' },
@@ -2601,7 +2797,8 @@ test('EX-CI-GENERATION: target round trips fence old receipts even when SHAs and
 
 test('EX-CI-GENERATION: current CI permits draft and dependency waits without changing their metadata', () => {
   const dir = setup([pr(1, { baseRef: 'main', draft: true })]), published = publishComplete(dir)
-  const good = proof(published.claim, published.receipts)
+  run(dir, 'autonomy', autonomyInput())
+  const good = proof(published.claim, published.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance'))
   const gate = run(dir, 'next', { owner, gateNumber: 1 })
   run(dir, 'save', saveInput(gate, {
     phase: 'blocked', evidence: ['evidence/dependency-pending.json'], reason: 'Draft with an unmerged dependency; required CI passed',
@@ -2666,7 +2863,8 @@ test('B02 publication race: readback feedback cannot be attributed to pre-push r
     /review decision/, 'publication decision is not reusable in another round even before NICE consumed its IDs')
   const freshReceipts = reviewers(feedback)
   run(dir, 'save', saveInput(feedback, { phase: 'waiting', technicalVerdict: 'NICE', reviewers: freshReceipts }))
-  run(dir, 'enable', { owner, acceptanceProof: { ...proof(feedback, freshReceipts), push } })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: { ...proof(feedback, freshReceipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')), push } })
   const state = run(dir, 'show')
   assert.equal(state.enabled, true)
   assert.equal(state.prs['1'].publications.length, 1)
@@ -2786,7 +2984,8 @@ test('B03: explicit bounded live gate recheck handles unchanged dependency/threa
     assert.deepEqual(c.completion, original.completion)
     assert.ok(c.evidence.includes(evidence))
   }
-  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')) })
 })
 
 test('B03: gate targeting cannot steal a live claim, leave canary scope, bypass feedback, or authorize fork execution', () => {
@@ -2889,7 +3088,8 @@ for (const readbackRace of [false, true]) test(`bootstrap: legacy failure -> ret
   run(dir, 'save', saveInput(feedback, { phase: 'waiting', findings: [fixed], technicalVerdict: 'NICE', reviewers: refreshedOldPair }), false)
   const freshReceipts = reviewers(feedback)
   run(dir, 'save', saveInput(feedback, { phase: 'waiting', findings: [fixed], technicalVerdict: 'NICE', reviewers: freshReceipts }))
-  run(dir, 'enable', { owner, acceptanceProof: { ...proof(feedback, freshReceipts), push } })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: { ...proof(feedback, freshReceipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')), push } })
   const state = run(dir, 'show')
   assert.equal(state.enabled, true)
   assert.deepEqual(state.config, init)
@@ -3115,9 +3315,9 @@ test('EX-AUTONOMY: wake identity/source/freshness are fenced, including a truthf
 
 test('EX-AUTONOMY: three charges are global, and wait preserves the pending queue for the next native wake', () => {
   const dir = setup([pr(), pr(2), pr(3), pr(4), pr(5)]), published = publishComplete(dir)
-  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
   run(dir, 'autonomy', autonomyInput())
-  run(dir, 'wake', wakeInput('batch-1'))
+  const schedulerWake = registeredWakeProof(dir, 'batch-1')
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined, schedulerWake) })
   for (const number of [2, 3, 4]) {
     const claim = start(dir)
     assert.equal(claim.number, number)
@@ -3294,13 +3494,14 @@ test('EX-AUTONOMY: publication, feedback and activation work at the wake limit w
   run(dir, 'feedback', feedbackInput(feedbackClaim(dir)))
   const gate = run(dir, 'next', { owner, gateNumber: 1 })
   run(dir, 'save', saveInput(gate, { findings, evidence: ['current-gates.json'] }))
-  run(dir, 'enable', { owner, acceptanceProof: proof(rebound, receipts, candidate) })
+  run(dir, 'enable', { owner, acceptanceProof: proof(rebound, receipts, candidate, registeredWakeProof(dir, 'synthetic-acceptance')) })
   run(dir, 'autonomy', grant)
   const state = run(dir, 'show')
   assert.equal(state.enabled, true)
   assert.equal(state.prs['1'].cycles[0].rounds, 6)
   assert.equal(state.prs['1'].cycles[0].technicalVerdict, 'NICE')
   assert.equal(state.wakes[0].chargedRounds, 3)
+  assert.equal(state.wakes.at(-1).chargedRounds, 0, 'actual acceptance wake does not refund the exhausted publication wake')
   assert.deepEqual(state.prs['1'].publications[0].push, push)
   assert.deepEqual(state.prs['1'].cycles[0].completion.reviewers, receipts)
 })
@@ -3474,7 +3675,8 @@ test('EX-PRESTART-RESUME: gates cannot replace audit recovery; conflicts and rea
 
 test('EX-PRESTART-RESUME: blocked preparation leaves other PRs schedulable without stealing active work', () => {
   const dir = setup([pr(), pr(2), pr(3)]), published = publishComplete(dir)
-  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')) })
   const claim = next(dir)
   assert.equal(claim.number, 2)
   run(dir, 'save', saveInput(claim, { phase: 'blocked', reason: 'Preparation unavailable' }))
@@ -3811,8 +4013,8 @@ test('E1 recovery: exact owner, retained round/revision, fresh clearance and no 
   run(fork, 'resume', resumeInput({ ...read, round: 1 }), false)
 })
 
-const failedWaitingThirdRound = ({ legacy = false, nullable = false, canonical = true, dir = setup(), snapshot = pr() } = {}) => {
-  run(dir, 'autonomy', autonomyInput())
+const failedWaitingThirdRound = ({ legacy = false, nullable = false, canonical = true, dir = setup(), snapshot = pr(), authority = autonomyInput() } = {}) => {
+  run(dir, 'autonomy', authority)
   run(dir, 'wake', wakeInput('failed-wait-first'))
   run(dir, 'sync', { owner, complete: true, prs: [snapshot] })
   let claim = start(dir), findings = []
@@ -4013,8 +4215,10 @@ test('EX-FAILED-WAIT-RECOVERY: genuine no-progress two stays stopped through new
 
 test('EX-FAILED-WAIT-RECOVERY: another PR proceeds while exact failed wait and gate-only evidence are retained', () => {
   const dir = setup(), published = publishComplete(dir)
-  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
-  const { claim, findings } = failedWaitingThirdRound({ dir, snapshot: { ...published.snapshot, head: sha(14) } })
+  const authority = autonomyInput()
+  run(dir, 'autonomy', authority)
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')) })
+  const { claim, findings } = failedWaitingThirdRound({ dir, authority, snapshot: { ...published.snapshot, head: sha(14) } })
   run(dir, 'wake', wakeInput('failed-wait-fairness'))
   const retained = run(dir, 'show').prs['1'].blockedClaim
   run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, gateKey: key(2) }, pr(2)] })
@@ -4051,8 +4255,10 @@ test('EX-FAILED-WAIT-RECOVERY: old later audit admissions keep their identities,
 
 test('EX-FAILED-WAIT-RECOVERY: recovery notice cannot starve a previously selected PR with new pending input', () => {
   const dir = setup(), published = publishComplete(dir)
-  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
-  const { claim } = failedWaitingThirdRound({ dir, snapshot: { ...published.snapshot, head: sha(14) } })
+  const authority = autonomyInput()
+  run(dir, 'autonomy', authority)
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')) })
+  const { claim } = failedWaitingThirdRound({ dir, authority, snapshot: { ...published.snapshot, head: sha(14) } })
   run(dir, 'wake', wakeInput('failed-wait-reselection'))
   run(dir, 'sync', { owner, complete: true, prs: [claim.snapshot, pr(2)] })
   const other = next(dir)
@@ -4129,7 +4335,8 @@ test('legacy target: first observed baseRef permits same-round recovery/publicat
   assert.equal(gate.action, 'check')
   assert.equal(gate.snapshot.baseRef, 'main')
   run(dir, 'save', saveInput(gate, { evidence: ['actual-main-protection-read.json'] }))
-  run(dir, 'enable', { owner, acceptanceProof: proof(rebound, receipts, gate.snapshot) })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(rebound, receipts, gate.snapshot, registeredWakeProof(dir, 'synthetic-acceptance')) })
   assert.equal(run(dir, 'show').prs['1'].cycles[0].rounds, 1)
   const known = setup([pr(1, { baseRef: 'main' })]), original = start(known)
   run(known, 'save', saveInput(original, { phase: 'blocked', reason: 'Local tool unavailable' }))
@@ -4142,12 +4349,20 @@ const unclaimedRoundStop = ({ enabled = false, stalled = false } = {}) => {
   const dir = setup()
   if (enabled) {
     const published = publishComplete(dir)
-    run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+    // Synthetic pre-authority policy history, not legitimate new broad activation.
+    appendHistorical(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
     run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: sha(20), baseRef: 'main' })] })
   }
   let findings = []
   for (let n = 0; n < 3; n++) {
-    const claim = start(dir)
+    let claim
+    if (enabled) {
+      appendHistorical(dir, 'next', { owner })
+      claim = run(dir, 'show').active
+      bindRubric(dir, claim)
+      appendHistorical(dir, 'begin', beginInput(claim))
+      claim = run(dir, 'show').active
+    } else claim = start(dir)
     if (!stalled || n === 0) {
       const finding = { id: `stop-${n}`, status: 'open', evidence: [`red-${n}.log`] }
       run(dir, 'save', saveInput(claim, { phase: 'fixing', findings: [...findings, finding] }))
@@ -4274,21 +4489,25 @@ test('EX-UNCLAIMED-ROUND-STOP: current source/target, changed generations and ca
   assert.equal(next(dir).action, 'none', 'absent stopped PR never grants broad intake')
 })
 
-test('EX-UNCLAIMED-ROUND-STOP: no-progress stays hard and stopped work does not starve other PRs', () => {
+test('EX-UNCLAIMED-ROUND-STOP: no-progress stays hard and legacy unbound activation cannot authorize other PRs', () => {
   for (const stalled of [false, true]) {
     const { dir, snapshot } = unclaimedRoundStop({ enabled: true, stalled })
     run(dir, 'autonomy', autonomyInput())
     run(dir, 'wake', wakeInput('fair-stop'))
     run(dir, 'sync', { owner, complete: true, prs: [snapshot, pr(2)] })
-    const other = start(dir)
-    assert.equal(other.number, 2, 'least-selected eligible work still goes first')
-    run(dir, 'save', saveInput(other))
     const nextClaim = next(dir)
     assert.equal(nextClaim.action, stalled ? 'none' : 'audit')
+    if (!stalled) {
+      assert.equal(nextClaim.number, 1, 'only canary correction retains admission')
+      assert.equal(run(dir, 'begin', beginInput(nextClaim)).round, 4)
+    }
+    run(dir, 'next', { owner, gateNumber: 2 }, false)
     const state = run(dir, 'show')
-    assert.equal(state.prs['1'].cycles.at(-1).rounds, 3)
-    assert.equal(state.prs['1'].cycles.at(-1).noProgress, stalled ? 2 : 0)
-    assert.equal(state.wakes[0].chargedRounds, 1)
+    assert.equal(state.prs['1'].cycles.at(-1).rounds, stalled ? 3 : 4)
+    assert.equal(state.prs['1'].cycles.at(-1).noProgress, stalled ? 2 : 1)
+    assert.equal(state.wakes[0].chargedRounds, stalled ? 0 : 1)
+    assert.equal(state.prs['2'].cycles[0].rounds, 0)
+    assert.equal(state.activation.valid, false)
   }
 })
 
@@ -4385,7 +4604,8 @@ for (const charged of [false, true]) test(`EX-DETAIL-RECOVERY: interrupted ${cha
 
 test('EX-DETAIL-RECOVERY: unreadable published PR remains quiet without starving other eligible PRs', () => {
   const dir = setup(), published = publishComplete(dir)
-  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')) })
   const before = run(dir, 'show')
   run(dir, 'sync', { owner, complete: true, prs: [detailFailure(published.snapshot)] })
   assert.equal(next(dir).action, 'blocked')
@@ -4699,7 +4919,8 @@ for (const activated of [false, true]) {
     const dir = setup()
     if (activated) {
       const published = publishComplete(dir)
-      run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts) })
+      run(dir, 'autonomy', autonomyInput())
+      run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined, registeredWakeProof(dir, 'synthetic-acceptance')) })
       run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: published.snapshot.head, reviewKey: key(2) })] })
     }
     const claim = start(dir)
