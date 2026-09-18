@@ -30,13 +30,31 @@ while ($walkPath.Length -ge $qaPath.Length) {
 $file = Join-Path $workspacePath 'README.md'
 $item = Get-Item -LiteralPath $file -Force
 if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Refuse redirected QA file.' }
+$marker = Join-Path $workspacePath '.qa-checkpoint-lock-ready'
+$markerBytes = 'Synthetic QA lock ready'
+$markerCreated = $false
 $handle = [IO.File]::Open($file, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::None)
 try {
-    [IO.File]::WriteAllText((Join-Path $workspacePath '.qa-checkpoint-lock-ready'), 'Synthetic QA lock ready')
+    # CreateNew preserves any unknown pre-existing file; never overwrite it.
+    $markerStream = [IO.File]::Open($marker, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+    $markerCreated = $true
+    try {
+        $markerBuffer = [Text.Encoding]::UTF8.GetBytes($markerBytes)
+        $markerStream.Write($markerBuffer, 0, $markerBuffer.Length)
+    }
+    finally { $markerStream.Dispose() }
     $deadline = [DateTime]::UtcNow.AddSeconds(30)
     while (!(Test-Path -LiteralPath $ReleaseSignal) -and [DateTime]::UtcNow -lt $deadline) {
         Start-Sleep -Milliseconds 100
     }
 } finally {
     $handle.Dispose()
+    if ($markerCreated -and (Test-Path -LiteralPath $marker)) {
+        $markerItem = Get-Item -LiteralPath $marker -Force
+        if (($markerItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+            !(Test-Path -LiteralPath $workspacePath -PathType Container) -or
+            !([IO.Path]::GetFullPath($marker)).StartsWith($workspacePath + '\', [StringComparison]::OrdinalIgnoreCase) -or
+            [IO.File]::ReadAllText($marker) -cne $markerBytes) { throw 'Changed lock marker preserved; cleanup is unverified.' }
+        Remove-Item -LiteralPath $marker -ErrorAction Stop
+    }
 }

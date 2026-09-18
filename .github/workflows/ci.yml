@@ -28,7 +28,7 @@ jobs:
       - name: Test platform-specific CI fixture contracts
         env:
           ECORP_OWNED_PROCESS_TEST: '1'
-        run: node --test tools/e2e_external_adapters.test.mjs tools/e2e_external_adapters_http.test.mjs tools/task_graph_fixture.test.mjs tools/controlled_runner_fixture.test.mjs tools/ci_factory_repository.test.mjs tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/identity_fixture.test.mjs tools/ci_runner_tests.test.mjs tools/fixture_source_identity.test.mjs tools/budget_fixture.test.mjs
+        run: node --test tools/e2e_external_adapters.test.mjs tools/e2e_external_adapters_http.test.mjs tools/task_graph_fixture.test.mjs tools/controlled_runner_fixture.test.mjs tools/ci_factory_repository.test.mjs tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/identity_fixture.test.mjs tools/ci_runner_tests.test.mjs tools/fixture_source_identity.test.mjs tools/budget_fixture.test.mjs tools/factory_budget_fixture_config.test.mjs tools/fake_codex_budget_stream.test.mjs tools/factory_budget_process.test.mjs
       - name: Test native Linux process ownership
         run: python3 -B tools/owned_test_process_linux_test.py -v
       - run: node tools/check_migrations.mjs
@@ -277,13 +277,33 @@ jobs:
       - name: Verify Windows owned-server receipts and restart
         env:
           ECORP_OWNED_PROCESS_TEST: '1'
-        run: node --test tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs
+        run: node --test tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/factory_budget_process.test.mjs
+      - name: Validate PostgreSQL tools
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $candidates = @($env:PGBIN, (Join-Path $env:ProgramFiles 'PostgreSQL\17\bin')) | Where-Object { $_ } | Select-Object -Unique
+          $verifiedPgBin = $null
+          foreach ($candidate in $candidates) {
+            if (![IO.Path]::IsPathFullyQualified($candidate)) { continue }
+            $missing = @('initdb.exe', 'postgres.exe', 'psql.exe', 'pg_ctl.exe') | Where-Object {
+              !(Test-Path -LiteralPath (Join-Path $candidate $_) -PathType Leaf)
+            }
+            if ($missing) { continue }
+            $version = & (Join-Path $candidate 'postgres.exe') --version
+            if ($LASTEXITCODE -eq 0 -and $version -match '^postgres \(PostgreSQL\) 17\.') {
+              $verifiedPgBin = (Resolve-Path -LiteralPath $candidate).Path
+              break
+            }
+          }
+          if (!$verifiedPgBin -or $verifiedPgBin -match '[\r\n]') { throw 'A validated PostgreSQL 17 toolchain is required; no fixture was started.' }
+          "ECORP_QA_PG_BIN=$verifiedPgBin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Preview isolated external-adapter fixture
         shell: pwsh
-        run: ./tools/ci_external_adapters_windows.ps1 -FixtureRoot (Join-Path $env:RUNNER_TEMP 'ecorp-external-adapters-ci') -PgBin $env:PGBIN -DryRun
+        run: ./tools/ci_external_adapters_windows.ps1 -FixtureRoot (Join-Path $env:RUNNER_TEMP 'ecorp-external-adapters-ci') -PgBin $env:ECORP_QA_PG_BIN -DryRun
       - name: Verify external-adapter lifecycle and cross-provider graph
         shell: pwsh
-        run: ./tools/ci_external_adapters_windows.ps1 -FixtureRoot (Join-Path $env:RUNNER_TEMP 'ecorp-external-adapters-ci') -PgBin $env:PGBIN -Execute
+        run: ./tools/ci_external_adapters_windows.ps1 -FixtureRoot (Join-Path $env:RUNNER_TEMP 'ecorp-external-adapters-ci') -PgBin $env:ECORP_QA_PG_BIN -Execute
       - name: Upload external-adapter fixture evidence
         if: always()
         uses: actions/upload-artifact@v4

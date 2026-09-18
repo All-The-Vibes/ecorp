@@ -6,6 +6,7 @@ import { openSync, closeSync } from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import { fixtureMode, referenceSnapshotUrl } from './factory_budget_fixture_config.mjs'
+import { factoryBudgetProcessIdentity, stopFactoryBudgetProcess } from './factory_budget_process.mjs'
 
 // Operator-owned, synthetic-only Windows fixture. No retained-stack defaults.
 const execFile = promisify(execFileCallback)
@@ -51,10 +52,7 @@ async function ports() {
   return stdout.trim() ? [].concat(JSON.parse(stdout)) : []
 }
 async function identity(pid) {
-  assert.ok(Number.isInteger(pid) && pid > 0)
-  const { stdout } = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-    `$p = Get-CimInstance Win32_Process -Filter 'ProcessId = ${pid}'; if ($p) { @{pid=$p.ProcessId;executable=$p.ExecutablePath;creation=$p.CreationDate.ToUniversalTime().ToString('o')} | ConvertTo-Json -Compress }`])
-  return stdout.trim() ? JSON.parse(stdout) : null
+  return factoryBudgetProcessIdentity(pid, { workspace: qa, environment: env })
 }
 async function start(name, program, args, extraEnv = {}) {
   const out = openSync(path.join(attempt, `${name}.stdout.log`), 'a')
@@ -72,26 +70,7 @@ async function start(name, program, args, extraEnv = {}) {
   return child
 }
 async function stopVerifiedChild(owned) {
-  const script = [
-    "$ErrorActionPreference = 'Stop'",
-    '$pid = [int]$env:ECORP_QA_PID',
-    '$process = Get-Process -Id $pid -ErrorAction Stop',
-    '[void]$process.Handle',
-    "if ($process.HasExited) { throw 'Recorded QA process already exited' }",
-    '$currentPath = [IO.Path]::GetFullPath($process.Path)',
-    '$expectedPath = [IO.Path]::GetFullPath($env:ECORP_QA_EXE)',
-    '$currentTicks = $process.StartTime.ToUniversalTime().Ticks',
-    '$expectedTicks = ([DateTimeOffset]$env:ECORP_QA_CREATION).UtcTicks',
-    "if (!([string]::Equals($currentPath, $expectedPath, [StringComparison]::OrdinalIgnoreCase)) -or $currentTicks -ne $expectedTicks) { throw 'Process identity changed; preserve unknown process' }",
-    '$process.Kill()',
-    "if (!$process.WaitForExit(30000)) { throw 'Verified QA process did not exit' }",
-  ].join('\n')
-  await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { env: {
-    ...env,
-    ECORP_QA_PID: String(owned.child.pid),
-    ECORP_QA_EXE: owned.receipt.executable,
-    ECORP_QA_CREATION: owned.receipt.creation,
-  } })
+  await stopFactoryBudgetProcess(owned.receipt, { workspace: qa, environment: env })
 }
 async function until(label, check, ms = 60000) {
   const deadline = Date.now() + ms
@@ -145,6 +124,10 @@ if (!execute) {
   process.exit(0)
 }
 let demo
+let lockedWorkspace
+let lockedFileBytes
+let lockProcess
+const releaseSignal=path.join(attempt,'release-checkpoint-read-lock')
 try {
   const ownerFile = path.join(qa, 'ownership.json')
   if (await exists(qa)) {
@@ -258,10 +241,6 @@ try {
   console.log('QA factory dry-run passed; executing the approved synthetic issue.')
   report.initial_controller = await controller()
   assert.ok(report.initial_controller.ok,JSON.stringify(report.initial_controller))
-  let lockedWorkspace
-  let lockedFileBytes
-  let lockProcess
-  const releaseSignal=path.join(attempt,'release-checkpoint-read-lock')
   if(missingCheckpoint) {
     const started=await until('synthetic source file ready',async()=>{
       const s=await snapshot();const r=s.snapshot.runs[0]
@@ -294,6 +273,7 @@ try {
     report.missing_checkpoint_detail=initial.run.workspace_detail
     await writeFile(releaseSignal,'release synthetic QA file handle\n')
     await until('synthetic file handle released',async()=>!(await identity(lockProcess.pid)),10000)
+    assert.equal(await exists(path.join(lockedWorkspace,'.qa-checkpoint-lock-ready')),false,'Lock handshake marker must not contaminate resumed source')
     assert.equal(await readFile(path.join(lockedWorkspace,'base.txt'),'utf8'),'base\n')
     assert.deepEqual(await readFile(path.join(lockedWorkspace,'README.md')),lockedFileBytes)
     report.synthetic_locked_file='README.md'
@@ -403,6 +383,20 @@ try {
   report.error=error.message
   process.exitCode=1
 } finally {
+  // Release the owned fault injector normally even after a failed assertion so
+  // its finally block can remove the marker before any provider resume/reuse.
+  if (lockProcess) {
+    try {
+      if (await identity(lockProcess.pid)) {
+        await writeFile(releaseSignal,'release synthetic QA file handle\n')
+        await until('fault injector cleanup',async()=>!(await identity(lockProcess.pid)),10000)
+      }
+      assert.equal(await exists(path.join(lockedWorkspace,'.qa-checkpoint-lock-ready')),false,'Lock marker cleanup must be verified')
+    } catch (error) {
+      report.cleanup.push({name:'qa-read-lock-marker',status:'unverified_preserved',error:error.message})
+      process.exitCode=1
+    }
+  }
   for (const owned of [...children].reverse()) {
     try {
       const current=await identity(owned.child.pid)

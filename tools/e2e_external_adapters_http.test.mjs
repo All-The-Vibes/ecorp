@@ -29,7 +29,7 @@ async function runFixture(platform, {
     let text = ''
     for await (const chunk of request) text += chunk
     const body = text ? JSON.parse(text) : {}
-    calls.push({ method: request.method, url: request.url })
+    calls.push({ method: request.method, url: request.url, body })
     response.setHeader('content-type', 'application/json')
     if (request.url === '/api/demo/reset') {
       response.end(JSON.stringify({ corp_id: 'fixture', alice_actor_id: 'alice' }))
@@ -37,7 +37,8 @@ async function runFixture(platform, {
       response.end(JSON.stringify({}))
     } else if (request.url === '/api/corps/fixture/missions') {
       const id = body.preferred_adapter
-      tasks.push({ id: `task-${id}`, mission_id: `mission-${id}`, required_adapter: id, status: 'ready' })
+      const contract = body.source ? Object.fromEntries(Object.entries(body.source).map(([key,value]) => ['source_' + key,value])) : {}
+      tasks.push({ id: `task-${id}`, mission_id: `mission-${id}`, required_adapter: id, status: 'ready', contract })
       response.end(JSON.stringify({ mission_id: `mission-${id}` }))
     } else if (request.url.endsWith('/launch')) {
       if (holdLaunch) return
@@ -159,6 +160,10 @@ test('Windows: an unavailable provider remains a failure', async () => {
   assert.notEqual(result.code, 0)
   assert.match(result.stderr, /adapter claude-code.*unavailable/)
   assert.equal(result.report, null)
+  const preview = result.calls.find(call => call.url.endsWith('/missions/preview'))
+  const created = result.calls.find(call => call.url.endsWith('/missions'))
+  assert.deepEqual(created.body, preview.body)
+  assert.deepEqual(created.body.source, {repository:'fixture/source',base_ref:'HEAD',base_commit:'a'.repeat(40)})
 })
 
 test('Unix: accidentally accepting an unsupported provider fails the contract', async () => {

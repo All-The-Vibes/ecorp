@@ -113,7 +113,7 @@ auto-memory. Its supported stream-JSON permission requests are bridged into dura
 Windows external-CLI sessions use owned Job Objects and fail-closed descendant teardown. Those
 adapters currently refuse to start on Unix rather than claim equivalent containment. Provider-home
 isolation and stronger sandboxing remain separate work in
-[#51](https://github.com/shyamsridhar123/ecorp/issues/51); see the
+[#51](https://github.com/All-The-Vibes/ecorp/issues/51); see the
 [process-lifecycle evidence](docs/evidence/2026-09-03-external-provider-fail-closed.md).
 
 ECorp is an independent project. Provider names identify integrations, not ownership, sponsorship,
@@ -138,7 +138,7 @@ pnpm/Vite toolchain, pnpm 11.19.0, Docker with Compose, and PowerShell 7.4+ on W
 are optional for the deterministic harness; real-agent work requires the selected provider's access.
 
 ```powershell
-git clone https://github.com/shyamsridhar123/ecorp.git
+git clone https://github.com/All-The-Vibes/ecorp.git
 cd ecorp
 pnpm install --frozen-lockfile
 pwsh -NoProfile -File ./tools/start_local.ps1
@@ -153,7 +153,9 @@ This is your local ECorp console, not the public product-site tour. Use the
 [five-step mission guide](docs/USER_AND_DEVELOPER_JOURNEY.md) for repository confirmation, staffing,
 verification, and review.
 
-To start the configured trusted GitHub Project watcher with the same stack:
+To start the configured trusted GitHub Project watcher with the same stack, first verify its
+repository and Project routing as described [below](#run-a-github-issue-through-the-factory).
+Preserve the recorded routing of existing work; enabling the watcher does not perform a cutover:
 
 ```powershell
 $env:ECORP_FACTORY_WATCH = '1'
@@ -206,13 +208,26 @@ This runs migration checks, Rust formatting, Clippy, the workspace test suite, a
 
 ## Run a GitHub issue through the factory
 
-[GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) is the live planning and status source for **ECorp Build**. `docs/BACKLOG.md` is historical context, not the execution queue.
+[ECorp Build, organization GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) is
+the destination for new work and its live planning and status source. The personal
+[GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) remains historical execution
+lineage for its recorded claims, missions, recoveries, and publications; do not move those records or
+retarget their configured controller. `docs/BACKLOG.md` is historical context, not the execution queue.
+
+Before new intake, verify the operator's configured repository and Project routing. Project #5
+does not create shared claim authority or authorize dispatch. Coordinate through the same
+authenticated server/Corp claim authority or explicitly disjoint eligible issue sets; a Project
+status change is not an atomic cross-machine lock. These examples set new-work routing explicitly
+and do not change runtime defaults.
 
 An issue is eligible when it is open, in `Todo`, labeled `factory:ready`, and has no open `Blocked by` dependency. Preview the exact intake without mutating GitHub:
 
 ```powershell
 cargo run -p crony-cli -- factory `
   <corp-id> <actor-id> `
+  --owner All-The-Vibes `
+  --project-number 5 `
+  --repository All-The-Vibes/ecorp `
   --adapter codex `
   --budget-tokens 500000 `
   --budget-cost-microusd 1000000 `
@@ -258,11 +273,13 @@ Current boundaries:
 - External CLI adapters have platform and assurance limits. Claude's durable stdio permission
   bridge and fail-closed Windows process-tree teardown are implemented. Isolated provider homes,
   inherited-environment allowlisting, and stronger containment remain in
-  [#51](https://github.com/shyamsridhar123/ecorp/issues/51). Unix external-CLI execution is disabled.
+  [#51](https://github.com/All-The-Vibes/ecorp/issues/51). Unix external-CLI execution is disabled.
 - Production deployments require OIDC, deployment-managed keys, explicit runner enrollment, private S3-compatible artifact storage, and an intentional network policy.
 - The public product is **ECorp**. Existing `crony-*` binaries, `CRONY_` environment variables, and `X-Crony-*` headers remain for compatibility during the transition.
 
-The September 1, 2026 enterprise dogfood report captures the gaps found on that date. Use [GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) and linked issues for current status.
+The September 1, 2026 enterprise dogfood report captures the gaps found on that date. Use
+[ECorp Build, organization GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) and
+linked issues for current status.
 
 ## Documentation
 
@@ -281,7 +298,7 @@ future intent are kept separate.
 | Inspect the evidence standard | [Evaluation strategy](docs/EVALS.md) |
 | Understand product intent and technical direction | [Product and technical plan](docs/PRODUCT_AND_TECHNICAL_PLAN.md) |
 | Reuse the approved hero and brand voice | [Brand and product-site guide](docs/BRAND_AND_PRODUCT_SITE.md) |
-| Follow live work | [ECorp Build, GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) |
+| Follow new work | [ECorp Build, organization GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) |
 | Read historical planning context | [Backlog seed](docs/BACKLOG.md) |
 
 ## License

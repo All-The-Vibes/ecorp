@@ -39,9 +39,9 @@ test('manual, remote, credential-bearing and non-origin endpoints are rejected',
   ]) {
     assert.throws(() => externalAdapterConfig(['--expect-unix'], { ...env, CRONY_SERVER_HTTP: server }))
   }
-  assert.equal(externalAdapterConfig(['--expect-unix'], {
+  assert.throws(() => externalAdapterConfig(['--expect-unix'], {
     ...env, CRONY_SERVER_HTTP: 'http://127.0.0.1:8791', GITHUB_ACTIONS: 'true', CI: 'true',
-  }).server, 'http://127.0.0.1:8791')
+  }), /manual-stack port/)
 })
 
 for (const os of ['linux', 'macos']) {
@@ -105,7 +105,7 @@ test('a platform refusal must prove the exact task, zero allocations and held wo
   }
 })
 
-function mockApi(os, { launchStatus, omitTermination = false, wrongArtifact = false, reconcilingPreviews = 0 } = {}) {
+function mockApi(os, { launchStatus, omitTermination = false, wrongArtifact = false, reconcilingPreviews = 0, omitTaskSource = false, wrongRunSource = false } = {}) {
   const state = { runners: [runner(os)], snapshot: { missions: [], tasks: [], runs: [], events: [] } }
   const calls = []
   return {
@@ -113,7 +113,7 @@ function mockApi(os, { launchStatus, omitTermination = false, wrongArtifact = fa
     wait: async () => {},
     fetchImpl: async (url, init) => {
       const pathname = new URL(url).pathname
-      calls.push({ pathname, method: init.method ?? 'GET' })
+      calls.push({ pathname, method: init.method ?? 'GET', body: init.body ? JSON.parse(init.body) : undefined })
       let status = 200
       let body
       if (pathname === '/api/demo/reset') {
@@ -132,7 +132,8 @@ function mockApi(os, { launchStatus, omitTermination = false, wrongArtifact = fa
         const number = state.snapshot.missions.length + 1
         const missionId = 'mission-' + number
         state.snapshot.missions.push({ id: missionId, status: 'ready' })
-        state.snapshot.tasks.push({ id: 'task-' + number, mission_id: missionId, required_adapter: request.preferred_adapter, status: 'ready' })
+        const contract = request.source && !omitTaskSource ? Object.fromEntries(Object.entries(request.source).map(([key,value]) => ['source_' + key, value])) : {}
+        state.snapshot.tasks.push({ id: 'task-' + number, mission_id: missionId, required_adapter: request.preferred_adapter, status: 'ready', contract })
         status = 201
         body = { mission_id: missionId }
       } else if (pathname.endsWith('/launch')) {
@@ -144,6 +145,7 @@ function mockApi(os, { launchStatus, omitTermination = false, wrongArtifact = fa
             id: 'run-' + task.id, task_id: task.id, runner_id: 'fixture-runner',
             provider_session_id: 'session-' + task.id, status: 'completed', workspace_disposition: 'removed',
             artifact_sha256: 'digest-' + task.id, input_tokens: 100, output_tokens: 40, provider: task.required_adapter,
+            ...task.contract, ...(wrongRunSource ? {source_base_commit:'b'.repeat(40)} : {}),
           }
           state.snapshot.runs.push(run)
           if (!omitTermination) state.snapshot.events.push({
@@ -206,6 +208,19 @@ test('Windows readiness retries only native read-only previews, with one launch 
   )
   assert.deepEqual(report.providers.map(result => result.readiness_previews), [3, 1])
   assert.equal(api.calls.filter(call => call.pathname.endsWith('/launch')).length, 2)
+  const previews = api.calls.filter(call => call.pathname.endsWith('/missions/preview'))
+  const creates = api.calls.filter(call => call.pathname.endsWith('/missions'))
+  for (const create of creates) {
+    assert.deepEqual(create.body.source, { repository:'local/fixture-123',base_ref:'HEAD',base_commit:'a'.repeat(40) })
+    assert.deepEqual(create.body, previews.find(preview => preview.body.preferred_adapter === create.body.preferred_adapter).body)
+  }
+})
+
+test('missing persisted task source rejects before launch and mismatched run source rejects acceptance', async () => {
+  const missing = mockApi('windows', {omitTaskSource:true})
+  await assert.rejects(runExternalAdapterContract({server:env.CRONY_SERVER_HTTP,expectedPlatform:'windows'}, missing), /Persisted task source/)
+  assert.equal(missing.calls.some(call => call.pathname.endsWith('/launch')), false)
+  await assert.rejects(runExternalAdapterContract({server:env.CRONY_SERVER_HTTP,expectedPlatform:'windows'}, mockApi('windows',{wrongRunSource:true})), /Persisted run source/)
 })
 
 test('native readiness has a bound and cannot launch while reconciliation remains incomplete', async () => {
@@ -228,6 +243,8 @@ test('CI wires a Unix refusal and a separate Windows lifecycle fixture without u
   assert.match(windows, /runs-on: windows-latest/)
   assert.match(windows, /ci_external_adapters_windows\.ps1.*-DryRun/)
   assert.match(windows, /ci_external_adapters_windows\.ps1.*-Execute/)
+  assert.match(windows, /Validate PostgreSQL tools/)
+  assert.match(workflow, /node --test[^\n]*factory_budget_fixture_config\.test\.mjs[^\n]*fake_codex_budget_stream\.test\.mjs[^\n]*factory_budget_process\.test\.mjs/)
   assert.match(windows, /path:.*ecorp-external-adapters-ci\/evidence\//)
   assert.doesNotMatch(windows, /continue-on-error|credential\.json|pg-data\/|runner-workspaces\//)
 })

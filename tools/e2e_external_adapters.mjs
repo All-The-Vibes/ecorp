@@ -24,8 +24,7 @@ export function externalAdapterConfig(args, env) {
     endpoint.port && endpoint.pathname === '/' && !endpoint.search && !endpoint.hash &&
     !endpoint.username && !endpoint.password, 'The fixture requires an explicit loopback HTTP origin')
   const manualPorts = new Set(['8791', '8793', '5187', '5291', '15191', '15193'])
-  assert.ok(!manualPorts.has(endpoint.port) || (env.GITHUB_ACTIONS === 'true' && env.CI === 'true'),
-    'Refusing a manual-stack port outside the disposable GitHub Actions job')
+  assert.ok(!manualPorts.has(endpoint.port), 'Refusing a reserved manual-stack port, including in CI')
   return {
     server: endpoint.origin,
     expectedPlatform: modes[0] === '--expect-windows' ? 'windows' : 'unix',
@@ -125,13 +124,14 @@ export async function runExternalAdapterContract({ server, expectedPlatform, exp
         'The Windows fixture needs a checked source identity for native readiness preview')
       const source = { repository: workspace.source_repository, base_ref: workspace.source_base_ref,
         base_commit: workspace.source_base_commit }
+      missionRequest.source = source
       const deadline = now() + 60_000
       let ready = false
       while (now() < deadline) {
         // Registration is visible before native reconnect reconciliation enables dispatch.
         // A source-bound mission preview checks that barrier without creating workers,
         // missions or runs. Never retry an effectful launch to hide startup races.
-        const preview = await request(`${prefix}/missions/preview`, { ...missionRequest, source })
+        const preview = await request(`${prefix}/missions/preview`, missionRequest)
         readinessPreviews++
         if (preview.status === 200) { ready = true; break }
         assert.equal(preview.status, 400, JSON.stringify(preview))
@@ -143,6 +143,13 @@ export async function runExternalAdapterContract({ server, expectedPlatform, exp
     }
     const mission = await ok(`${prefix}/missions`, missionRequest)
     const before = await snapshot()
+    if (missionRequest.source) {
+      const tasks = before.snapshot.tasks.filter(task => task.mission_id === mission.mission_id)
+      assert.ok(tasks.length > 0, 'Source-pinned mission must persist its task contract')
+      for (const task of tasks) for (const [key, value] of Object.entries(missionRequest.source)) {
+        assert.equal(task.contract?.[`source_${key}`], value, `Persisted task source ${key} must match preview`)
+      }
+    }
     const launch = await request(`${prefix}/missions/${mission.mission_id}/launch`,
       { requested_by: demo.alice_actor_id })
     if (expectedPlatform === 'unix') {
@@ -161,6 +168,9 @@ export async function runExternalAdapterContract({ server, expectedPlatform, exp
       const state = await snapshot()
       const run = state.snapshot.runs.find(candidate => candidate.id === launch.body.run_id)
       if (run?.status === 'completed' && ['preserved', 'removed'].includes(run.workspace_disposition)) {
+        for (const [key, value] of Object.entries(missionRequest.source)) {
+          assert.equal(run[`source_${key}`], value, `Persisted run source ${key} must match preview`)
+        }
         const evidence = JSON.parse(await downloadArtifact(server, demo, run))
         assert.equal(evidence.provider, adapter)
         assert.equal(evidence.exit_success, true)

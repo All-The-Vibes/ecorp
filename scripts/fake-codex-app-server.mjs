@@ -20,6 +20,7 @@ let turnId = null
 let workspace = process.cwd()
 let resumed = false
 let completionTimer = null
+let activityTimer = null
 let terminal = false
 let finalMessage = 'Synthetic Codex turn completed.'
 let usageTotal = 0
@@ -76,6 +77,7 @@ function finish(status, error = null) {
   if (terminal) return
   terminal = true
   if (completionTimer) clearTimeout(completionTimer)
+  if (activityTimer) clearInterval(activityTimer)
   if (emitUsageOnFinish) emitUsage()
   if (status === 'completed') {
     const itemId = randomUUID()
@@ -180,6 +182,18 @@ function startTurn(message) {
     // An explicit synthetic finish avoids replaying the original budget marker
     // retained in the native resume contract. Existing stream cases are unchanged.
     completionTimer = setTimeout(() => finish('completed'), 300)
+  } else if (prompt.includes('[steering-contention]')) {
+    // Opt-in protocol fixture: keep actual native status events flowing while
+    // the owned test deliberately holds the server's message admission lock.
+    activityTimer = setInterval(() => {
+      if (!terminal) emit('item/started', {
+        threadId, turnId,
+        item: { type: 'commandExecution', id: randomUUID(),
+          command: 'issue223 status fixture', cwd: workspace,
+          status: 'inProgress', commandActions: [] },
+      })
+    }, 100)
+    completionTimer = setTimeout(() => finish('completed'), 60_000)
   } else if (prompt.includes('[budget-queued-completion]')) {
     // Isolated #193 race candidate: base.txt already exists. Emit both usage
     // frames and completion in THIS turn, before reading another control frame.
