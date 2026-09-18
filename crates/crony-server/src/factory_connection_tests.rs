@@ -11,6 +11,9 @@ use crony_store::{CreateWorkspaceConnectionInput, DemoIds, WorkspaceSetupInput};
 use serde_json::Value;
 use sqlx::{ConnectOptions, PgPool};
 
+#[path = "factory_readiness_tests.rs"]
+mod readiness;
+
 struct Fixture {
     state: AppState,
     ids: DemoIds,

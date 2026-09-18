@@ -792,6 +792,8 @@ pub struct MaterializeFactoryMissionRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PreflightFactoryMissionRequest {
     pub actor_id: Uuid,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub require_dispatch_ready: bool,
     pub source_repository_owner: String,
     pub source_repository_name: String,
     #[serde(default)]
@@ -820,12 +822,21 @@ pub struct PreflightFactoryMissionRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PreflightFactoryMissionResponse {
     pub valid: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dispatch_readiness: Option<FactoryDispatchReadiness>,
     pub strategy: String,
     pub task_count: usize,
     pub budget_tokens: i64,
     pub budget_cost_microusd: i64,
     #[serde(default)]
     pub tasks: Vec<PreviewMissionTask>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum FactoryDispatchReadiness {
+    Ready,
+    NotReady { reason: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1234,6 +1245,40 @@ mod tests {
     }
 
     #[test]
+    fn issue256_readiness_wire_keeps_legacy_omission_and_explicit_modes() {
+        let wire = serde_json::json!({
+            "actor_id": uuid::Uuid::from_u128(1),
+            "source_repository_owner": "fixture",
+            "source_repository_name": "project",
+            "title": "Readiness fixture"
+        });
+        let mut request: super::PreflightFactoryMissionRequest =
+            serde_json::from_value(wire).unwrap();
+        assert!(!request.require_dispatch_ready);
+        assert!(
+            serde_json::to_value(&request)
+                .unwrap()
+                .get("require_dispatch_ready")
+                .is_none()
+        );
+        request.require_dispatch_ready = true;
+        assert_eq!(
+            serde_json::to_value(&request).unwrap()["require_dispatch_ready"],
+            true
+        );
+        for readiness in [
+            super::FactoryDispatchReadiness::Ready,
+            super::FactoryDispatchReadiness::NotReady {
+                reason: "no eligible runner".to_owned(),
+            },
+        ] {
+            let wire = serde_json::to_value(&readiness).unwrap();
+            let decoded: super::FactoryDispatchReadiness = serde_json::from_value(wire).unwrap();
+            assert_eq!(decoded, readiness);
+        }
+    }
+
+    #[test]
     fn issue224_factory_preflight_tasks_preserve_legacy_reads_and_attempt_values() {
         let legacy: super::PreflightFactoryMissionResponse =
             serde_json::from_value(serde_json::json!({
@@ -1245,6 +1290,13 @@ mod tests {
             }))
             .expect("preflight response from an older server");
         assert!(legacy.tasks.is_empty());
+        assert!(legacy.dispatch_readiness.is_none());
+        assert!(
+            serde_json::to_value(&legacy)
+                .unwrap()
+                .get("dispatch_readiness")
+                .is_none()
+        );
         let tasks = vec![super::PreviewMissionTask {
             key: "deliver".to_owned(),
             title: "Produce the mission outcome".to_owned(),
