@@ -347,12 +347,215 @@ function Start-LocalOwnedProcess {
     } finally { $process.Dispose() }
 }
 
+function Assert-LocalStackPath {
+    param([Parameter(Mandatory)][string]$Path, [switch]$Directory, [switch]$Required,
+        [switch]$AllowDependencyLink)
+    if (![IO.Path]::IsPathFullyQualified($Path)) { throw "An absolute local path is required: $Path" }
+    if ($Required -and !(Test-Path -LiteralPath $Path)) { throw "Required startup path is missing: $Path" }
+    if (Test-Path -LiteralPath $Path) {
+        $item = Get-Item -LiteralPath $Path -Force
+        if ($Directory -and !$item.PSIsContainer) { throw "Expected a directory: $Path" }
+        if (!$Directory -and $item.PSIsContainer) { throw "Expected a file: $Path" }
+    }
+    if ($AllowDependencyLink) { return }
+    for ($cursor = $Path; $cursor; $cursor = Split-Path -Parent $cursor) {
+        if ((Test-Path -LiteralPath $cursor) -and
+            ((Get-Item -LiteralPath $cursor -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+            throw "Startup cannot verify redirected path: $cursor"
+        }
+    }
+}
+
+function Get-LocalSourceCommit {
+    param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][string]$Ref)
+    Assert-LocalStackPath -Path $Repository -Directory -Required
+    if ([string]::IsNullOrWhiteSpace($Ref) -or $Ref.StartsWith('-') -or $Ref.Contains("`n") -or $Ref.Contains("`r")) {
+        throw "Invalid source ref for repository: $Repository"
+    }
+    $top = & git -C $Repository rev-parse --show-toplevel 2>$null
+    if ($LASTEXITCODE -ne 0 -or !(Test-LocalPathEqual ([string]$top) $Repository)) {
+        throw "Source must be the exact Git checkout root: $Repository"
+    }
+    $commit = & git -C $Repository rev-parse --verify --end-of-options "$Ref^{commit}" 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]$commit -cnotmatch '^[0-9a-f]{40}$') {
+        throw "Cannot resolve source ref to an immutable commit in: $Repository"
+    }
+    [string]$commit
+}
+
+function Assert-LocalStackProcesses {
+    param([Parameter(Mandatory)][hashtable]$State, [Parameter(Mandatory)][string]$Workspace)
+    foreach ($role in $State.processes.Keys) {
+        $record = $State.processes[$role]
+        if ($role -notin @('server','runner','web','factoryController') -or
+            $record -isnot [hashtable] -or !(Test-LocalRecordShape $record $Workspace) -or
+            !$record.ContainsKey('role') -or $record.role -cne $role) {
+            throw "Invalid retained process record for $role in $Workspace\output\local-pids.json"
+        }
+        $candidate = Get-Process -Id ([int]$record.pid) -ErrorAction SilentlyContinue
+        try {
+            if ($candidate -and !(Test-LocalOwnedProcess -Record $record -Workspace $Workspace)) {
+                throw "Unverifiable $role process ownership in $Workspace\output\local-pids.json; no process was controlled."
+            }
+        } finally { if ($candidate) { $candidate.Dispose() } }
+    }
+}
+
+function Get-LocalDatabaseIdentity {
+    param([AllowEmptyString()][string]$DatabaseUrl)
+    if ([string]::IsNullOrWhiteSpace($DatabaseUrl)) {
+        throw 'Load the existing DATABASE_URL from trusted host configuration. Startup never provisions a database.'
+    }
+    try {
+        $uri = [Uri]$DatabaseUrl
+        if (!$uri.IsAbsoluteUri -or $uri.Scheme -notin @('postgres','postgresql') -or
+            !$uri.Host -or !$uri.AbsolutePath.Trim('/')) { throw 'invalid' }
+        "$($uri.Host.ToLowerInvariant()):$(if($uri.Port -gt 0){$uri.Port}else{5432})$($uri.AbsolutePath)"
+    } catch { throw 'DATABASE_URL must be a valid PostgreSQL connection string. Its value was not printed.' }
+}
+
+function Assert-LocalRunnerIdentity {
+    param([AllowEmptyString()][string]$RunnerId)
+    # Match native enrollment's UTF-8 String::len ceiling without normalizing
+    # a retained identity into a different runner.
+    if ([string]::IsNullOrWhiteSpace($RunnerId) -or
+        [Text.Encoding]::UTF8.GetByteCount($RunnerId) -gt 128 -or $RunnerId -match '[\x00-\x1f]') {
+        throw 'Runner identity must contain 1 to 128 UTF-8 bytes and no control characters.'
+    }
+}
+
+function Get-LocalDatabaseEnvironment {
+    param([Parameter(Mandatory)][string]$DatabaseUrl)
+    $null = Get-LocalDatabaseIdentity -DatabaseUrl $DatabaseUrl
+    $uri = [Uri]$DatabaseUrl
+    $userInfo = $uri.UserInfo.Split(':', 2)
+    # PGDATABASE alone does not expand a URI into host/port/user parameters.
+    # Explicit libpq fields prevent an accidental connection to a default host.
+    $result = @{
+        PGHOST=$uri.DnsSafeHost
+        PGPORT=[string]$(if ($uri.Port -gt 0) { $uri.Port } else { 5432 })
+        PGDATABASE=[Uri]::UnescapeDataString($uri.AbsolutePath.TrimStart('/'))
+        PGCONNECT_TIMEOUT='5'
+        PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=5000'
+    }
+    if ($userInfo[0]) { $result.PGUSER = [Uri]::UnescapeDataString($userInfo[0]) }
+    if ($userInfo.Count -eq 2) { $result.PGPASSWORD = [Uri]::UnescapeDataString($userInfo[1]) }
+    $options = @{
+        sslmode='PGSSLMODE';sslrootcert='PGSSLROOTCERT';sslcert='PGSSLCERT';sslkey='PGSSLKEY'
+        application_name='PGAPPNAME';client_encoding='PGCLIENTENCODING'
+    }
+    $seen = @{}
+    foreach ($part in $uri.Query.TrimStart('?').Split('&', [StringSplitOptions]::RemoveEmptyEntries)) {
+        $pair = $part.Split('=',2)
+        $name = [Uri]::UnescapeDataString($pair[0])
+        if ($pair.Count -ne 2 -or $name -cnotin @($options.Keys) -or $seen.ContainsKey($name)) {
+            throw 'DATABASE_URL has unsupported or repeated options; startup cannot verify equivalent native connection settings.'
+        }
+        $seen[$name] = $true
+        $result[$options[$name]] = [Uri]::UnescapeDataString($pair[1])
+    }
+    $result
+}
+
+function Assert-LocalDatabaseIdentity {
+    param([Parameter(Mandatory)][string]$DatabaseUrl, [Parameter(Mandatory)][guid]$CorpId,
+        [Parameter(Mandatory)][guid]$ActorId, [Parameter(Mandatory)][string]$RunnerId,
+        [Parameter(Mandatory)][string]$CredentialPath)
+    Assert-LocalRunnerIdentity -RunnerId $RunnerId
+    try {
+        $credential = Get-Content -LiteralPath $CredentialPath -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+        $expiry = [DateTimeOffset]::MinValue
+        if ($credential -isnot [hashtable] -or
+            $credential.runner_id -cne $RunnerId -or $credential.corp_id -ne $CorpId.ToString('D') -or
+            ![DateTimeOffset]::TryParse([string]$credential.expires_at, [ref]$expiry) -or
+            $expiry -le [DateTimeOffset]::UtcNow -or [string]::IsNullOrWhiteSpace($credential.credential)) {
+            throw 'invalid'
+        }
+    } catch { throw "Missing, expired or mismatched runner credential metadata: $CredentialPath. Restore authorized identity; do not re-enroll." }
+    $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData(
+        [Text.Encoding]::UTF8.GetBytes($credential.credential))).ToLowerInvariant()
+    $credential = $null
+    $runner = $RunnerId.Replace("'", "''")
+    $query = @"
+BEGIN READ ONLY;
+SET LOCAL statement_timeout = '5s';
+SET LOCAL standard_conforming_strings = on;
+SELECT json_build_object(
+ 'database', current_database(),
+ 'identity_valid', EXISTS (
+   SELECT 1 FROM public.corps c
+   JOIN public.actors a ON a.corp_id = c.id
+   JOIN public.runner_credentials r ON r.corp_id = c.id
+   JOIN public.runner_nodes n ON n.corp_id = c.id AND n.id = r.runner_id
+   WHERE c.id = '$CorpId'::uuid AND a.id = '$ActorId'::uuid AND a.kind = 'human'
+     AND r.runner_id = '$runner' AND r.revoked_at IS NULL
+     AND r.expires_at > now() AND r.token_hash = '$hash'));
+ROLLBACK;
+"@
+    try {
+        $result = Invoke-LocalDatabaseRead -DatabaseUrl $DatabaseUrl -Query $query
+        $database = [Uri]::UnescapeDataString(([Uri]$DatabaseUrl).AbsolutePath.TrimStart('/'))
+        if ($result.database -cne $database -or $result.identity_valid -isnot [bool] -or !$result.identity_valid) {
+            throw 'identity mismatch'
+        }
+    } catch {
+        throw "Authorized read-only database/Corp/actor/runner validation failed for $CredentialPath. Check DATABASE_URL, psql.exe on PATH and matching identity; no database was provisioned."
+    }
+}
+
+function Invoke-LocalDatabaseRead {
+    param([Parameter(Mandatory)][string]$DatabaseUrl, [Parameter(Mandatory)][string]$Query)
+    # libpq receives the connection only in its private environment; -X ignores
+    # psqlrc, -w forbids prompting, and the transaction is explicitly read-only.
+    $psql = Get-Command psql.exe -CommandType Application -ErrorAction Stop
+    $info = [Diagnostics.ProcessStartInfo]::new($psql.Source)
+    $info.UseShellExecute = $false
+    $info.CreateNoWindow = $true
+    $info.RedirectStandardInput = $true
+    $info.RedirectStandardOutput = $true
+    $info.RedirectStandardError = $true
+    foreach ($argument in @('-X','-w','-A','-t','-q','-v','ON_ERROR_STOP=1')) { $info.ArgumentList.Add($argument) }
+    $info.Environment.Clear()
+    foreach ($name in @('SystemRoot','WINDIR','PATH','TEMP','TMP')) {
+        $value = [Environment]::GetEnvironmentVariable($name, 'Process')
+        if ($null -ne $value) { $info.Environment[$name] = $value }
+    }
+    $databaseEnvironment = Get-LocalDatabaseEnvironment -DatabaseUrl $DatabaseUrl
+    foreach ($key in $databaseEnvironment.Keys) { $info.Environment[$key] = $databaseEnvironment[$key] }
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $info
+    $started = $false
+    try {
+        $started = $process.Start()
+        if (!$started) { throw 'client did not start' }
+        [void]$process.Handle
+        $stdout = $process.StandardOutput.ReadToEndAsync()
+        $stderr = $process.StandardError.ReadToEndAsync()
+        $process.StandardInput.WriteLine($Query)
+        $process.StandardInput.Close()
+        if (!$process.WaitForExit(15000)) {
+            $process.Kill()
+            [void]$process.WaitForExit(5000)
+            throw 'read-only check timed out'
+        }
+        if ($process.ExitCode -ne 0) { throw 'read-only check failed' }
+        [void]$stderr.GetAwaiter().GetResult()
+        $stdout.GetAwaiter().GetResult() | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+    } finally {
+        if ($started -and !$process.HasExited) {
+            $process.Kill()
+            [void]$process.WaitForExit(5000)
+        }
+        $process.Dispose()
+    }
+}
+
 function Read-LocalStackState {
     param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Workspace)
     if (!(Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
     try { $state = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop }
-    catch { throw 'The local ownership record cannot be parsed. It was not removed or used for process control.' }
-    if ($state -isnot [hashtable]) { throw 'Invalid local ownership record.' }
+    catch { throw "The local ownership record cannot be parsed: $Path. It was not removed or used for process control." }
+    if ($state -isnot [hashtable]) { throw "Invalid local ownership record: $Path" }
     if (!$state.ContainsKey('schema_version')) {
         # Old numeric-only PIDs are historical data, never stop authority.
         $state.schema_version = 1
@@ -361,7 +564,7 @@ function Read-LocalStackState {
     if ($state.schema_version -ne 2 -or !$state.ContainsKey('workspace') -or
         !(Test-LocalPathEqual $state.workspace $Workspace) -or
         !$state.ContainsKey('processes') -or $state.processes -isnot [hashtable]) {
-        throw 'Local ownership record scope/version mismatch. No process was controlled.'
+        throw "Local ownership record scope/version mismatch: $Path. No process was controlled."
     }
     $state
 }
@@ -415,4 +618,6 @@ function Save-LocalStackState {
 Export-ModuleMember -Function Get-LocalFullPath, Test-LocalPathEqual,
     ConvertTo-LocalProcessArgument, Get-LocalProcessIdentity, Test-LocalOwnedProcess,
     Stop-LocalOwnedProcess, New-LocalProcessEnvironment, Start-LocalOwnedProcess,
-    Read-LocalStackState, Save-LocalStackState
+    Read-LocalStackState, Save-LocalStackState, Assert-LocalStackPath,
+    Get-LocalSourceCommit, Assert-LocalStackProcesses, Get-LocalDatabaseIdentity, Assert-LocalDatabaseIdentity,
+    Assert-LocalRunnerIdentity

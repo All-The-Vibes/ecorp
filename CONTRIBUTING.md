@@ -80,12 +80,14 @@ the **same authenticated server/control plane, the same Corp, and the same claim
 Database co-location, separate Corps on one server, or a shared GitHub Project alone do not unify
 claim authority.
 
-Prerequisites are Git, PowerShell 7.4+ on Windows, Rust 1.94 or newer, Node.js, pnpm 11.19.0, Docker with
-Compose, GitHub CLI authenticated for `All-The-Vibes/ecorp` and Project #5, and any provider entitlement
+Prerequisites are Git, PowerShell 7.4+ on Windows, Rust 1.94 or newer, Node.js, pnpm 11.19.0,
+PostgreSQL's `psql.exe`, GitHub CLI authenticated for `All-The-Vibes/ecorp` and Project #5, and any provider entitlement
 required for real-agent work.
 
 Clone ECorp and give the runner an execution root that is separate from the configured source
-checkout:
+checkout. Before the startup commands below, complete separate authorized database/identity setup
+and supply the existing `DATABASE_URL`, Corp/actor/runner IDs and current runner credential as
+described in the [startup guide](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#start-reuse-or-explicitly-restart):
 
 ```powershell
 git clone https://github.com/All-The-Vibes/ecorp.git
@@ -95,6 +97,7 @@ $env:CRONY_SOURCE_REPOSITORY = (Get-Location).Path
 $env:CRONY_SOURCE_BASE_REF = 'HEAD'
 $env:CRONY_RUNNER_WORKSPACE = Join-Path $env:USERPROFILE '.ecorp\runner-workspaces'
 
+pwsh -NoProfile -File ./tools/start_local.ps1 -Preflight
 pwsh -NoProfile -File ./tools/start_local.ps1
 Invoke-RestMethod http://127.0.0.1:8791/health
 Invoke-WebRequest http://127.0.0.1:5187
@@ -111,13 +114,15 @@ isolated worktrees. Closing a browser or desktop client must not terminate a run
 runner workspace, credential directory, or provider state directory with another contributor.
 Shared deployments expose one authenticated ECorp authority, not shared database credentials.
 Contributors running local tests on the same machine must also coordinate ports and database
-ownership. Worktree-specific Compose project names do not make the default database port private.
+ownership. Startup does not provision or take ownership of a database listener.
 
 ### Local startup and recovery
 
-Use the same command for first setup and an ordinary subsequent start:
+After separate authorized database/identity setup, validate without changing runtime state,
+then start:
 
 ```powershell
+pwsh -NoProfile -File ./tools/start_local.ps1 -Preflight
 pwsh -NoProfile -File ./tools/start_local.ps1
 ```
 
@@ -136,7 +141,11 @@ pwsh -NoProfile -File ./tools/start_local.ps1 -Restart
 pwsh -NoProfile -File ./tools/stop_local.ps1
 ```
 
-An externally supplied `DATABASE_URL` bypasses Compose entirely. Load it and any custom service
+Every start/restart requires the existing `DATABASE_URL` and PostgreSQL `psql.exe` on PATH.
+The shared read-only preflight validates retained scope, source and credential identity before
+process control or writes. Startup never provisions a database, bootstraps an identity or enrolls
+a replacement runner. See the [startup guide](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#start-reuse-or-explicitly-restart).
+Load the connection and any custom service
 keys/provider credentials through trusted host configuration before startup; do not put their
 values in arguments, issues, source files or logs. Secret values are not saved in the process
 ownership record. Environment delivery remains reduced assurance.
@@ -148,8 +157,8 @@ separate operator actions. An explicit `CRONY_RUNNER_STARTUP_RECOVERY=false` is 
 server rather than silently discarded.
 
 Legacy PID-only records and unknown/reused PIDs are not process-control authority. They are
-preserved rather than used to stop arbitrary processes. During a one-time legacy migration,
-provide the original database/source/address configuration; an unverified existing listener is
+preserved rather than used to stop arbitrary processes or automatically upgraded into new
+ownership. Legacy recovery is a separate operator action; an unverified existing listener is
 left untouched. There is no fallback port, database reset, credential wipe or automatic unpause.
 
 ### Use GitHub Copilot

@@ -1,8 +1,10 @@
 #requires -Version 7.4
 [CmdletBinding()]
 param(
-    [ValidateSet('Module', 'Source')][string]$Suite = 'Module',
-    [string]$NodePath
+    [ValidateSet('Module', 'Source', 'Startup')][string]$Suite = 'Module',
+    [string]$NodePath,
+    [string]$FixtureParent = [IO.Path]::GetTempPath(),
+    [switch]$RetainFixtures
 )
 
 $ErrorActionPreference = 'Stop'
@@ -253,7 +255,7 @@ function Invoke-ModuleCases {
     $module = Join-Path $PSScriptRoot 'local_stack.psm1'
     Import-Module -Name $module -Force -DisableNameChecking
     $script:NodeExecutable = (Resolve-Path -LiteralPath $NodePath).Path
-    $temporaryParent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\', '/')
+    $temporaryParent = [IO.Path]::GetFullPath($FixtureParent).TrimEnd('\', '/')
     $script:FixtureRoot = Join-Path $temporaryParent ("ecorp local lifecycle " + [guid]::NewGuid().ToString('N'))
     if ([IO.Directory]::Exists($script:FixtureRoot)) { throw 'Refusing to reuse a temporary test directory.' }
     [IO.Directory]::CreateDirectory($script:FixtureRoot) | Out-Null
@@ -327,6 +329,7 @@ if (mode === 'reader') {
 }
 '@
 
+    if ($Suite -eq 'Startup') { Invoke-StartupCases; return }
     $guard = Start-Fixture (New-FixtureSpec)
     $guardRecord = Get-FixtureRecord $guard
     Invoke-Case 'identity comes from the live process and binds only the explicit workspace' {
@@ -533,17 +536,20 @@ if (mode === 'reader') {
             }, $true)) {
                 Assert-True ($command.GetCommandName() -in @(
                     'Role-Live', 'Select-Object', 'Start-LocalOwnedProcess',
-                    'Save-State', 'Stop-LocalOwnedProcess', 'Write-Warning'
+                    'Save-State', 'Stop-LocalOwnedProcess', 'Write-Warning',
+                    'Assert-LocalStackProcesses', 'Ensure-FreePort'
                 )) 'The extracted Launch function contains an operation outside this synthetic fixture.'
             }
             . ([scriptblock]::Create($definition.Extent.Text))
 
             $root = $script:Workspace
             $logs = $script:LogDirectory
-            $role = 'save-failure-fixture'
+            $role = 'runner'
             $statePath = Join-Path $root "launch $rollbackMode save failure [literal].json"
+            $unrelated = $guardRecord.Clone()
+            $unrelated.role = 'server'
             $state = @{
-                processes = @{ unrelated = $guardRecord }
+                processes = @{ server = $unrelated }
                 previous_processes = @()
             }
             Save-LocalStackState -Path $statePath -Workspace $root -State $state
@@ -775,6 +781,275 @@ if (mode === 'reader') {
             Assert-FixtureAlive $guard
         }
     }
+    Invoke-StartupCases
+}
+
+function Invoke-StartupCases {
+    Invoke-Case 'database URI maps to exact child-only libpq fields without default-host fallback' {
+        $module = Get-Module local_stack
+        $values = & $module { Get-LocalDatabaseEnvironment 'postgresql://fixture:p%40ss@[::1]:57570/fixture%20db?sslmode=require' }
+        Assert-Equal $values.PGHOST '::1' 'IPv6 host must map exactly.'
+        Assert-Equal $values.PGPORT '57570' 'The explicit fixture port must not fall back to 5432.'
+        Assert-Equal $values.PGDATABASE 'fixture db' 'The decoded database name must not be a URI.'
+        Assert-Equal $values.PGUSER 'fixture' 'The configured principal must be explicit.'
+        Assert-Equal $values.PGPASSWORD 'p@ss' 'Escaped authentication data must stay in the private child environment.'
+        Assert-Equal $values.PGSSLMODE 'require' 'Native TLS configuration must be preserved.'
+        Assert-Equal $values.PGOPTIONS '-c default_transaction_read_only=on -c statement_timeout=5000' 'The check must impose read-only execution and its exact statement timeout.'
+        Assert-Equal $values.PGCONNECT_TIMEOUT '5' 'The check must use its bounded native connection timeout.'
+        foreach ($suffix in @('?host=elsewhere','?options=unsafe','?SSLMODE=require','?sslmode=require&sslmode=disable')) {
+            Assert-Throws { & $module {param($suffix) Get-LocalDatabaseEnvironment ("postgresql://fixture@127.0.0.1:57570/fixture$suffix")} $suffix } 'Ambiguous or unsupported connection options must fail before any connection.'
+        }
+    }
+    Invoke-Case 'runner identity uses the exact native 128 UTF-8 byte ceiling' {
+        Assert-LocalRunnerIdentity ('a' * 128)
+        Assert-LocalRunnerIdentity (([string][char]0xE9) * 64)
+        foreach ($invalid in @('', ' ', ('a' * 129), (([string][char]0xE9) * 65), "runner`nother")) {
+            Assert-Throws { Assert-LocalRunnerIdentity $invalid } 'Invalid or oversized runner identity was accepted.'
+        }
+    }
+    $workspace = Join-Path $script:FixtureRoot 'startup'
+    $source = Join-Path $script:FixtureRoot 'source'
+    foreach ($directory in @($workspace,$source,(Join-Path $workspace 'tools'),
+        (Join-Path $workspace 'output\runner'),(Join-Path $workspace 'target\debug'),
+        (Join-Path $workspace 'apps\web\node_modules\vite\bin'))) {
+        [IO.Directory]::CreateDirectory($directory) | Out-Null
+    }
+    $providerTarget = Join-Path $script:FixtureRoot 'provider-target'
+    [IO.Directory]::CreateDirectory($providerTarget) | Out-Null
+    $providerRedirect = Join-Path $workspace 'provider-redirect'
+    New-Item -ItemType Junction -Path $providerRedirect -Target $providerTarget | Out-Null
+    $script:Junctions.Add($providerRedirect)
+    & git -C $source init --quiet
+    if ($LASTEXITCODE) { throw 'Could not initialize disposable source.' }
+    Write-FixtureFile (Join-Path $source 'fixture.txt') 'owned startup fixture'
+    & git -C $source add fixture.txt
+    & git -C $source -c user.name=Fixture -c user.email=fixture@example.invalid commit --quiet -m fixture
+    if ($LASTEXITCODE) { throw 'Could not commit disposable source.' }
+    foreach ($name in @('start_local.ps1','local_stack_start.ps1','local_stack_operation.ps1','local_stack.psm1')) {
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $workspace "tools\$name")
+    }
+    # Replace only the external database transport and child entrypoint in the
+    # disposable copy. Production validation, control flow and ownership remain.
+    $mock = @'
+
+function Invoke-LocalDatabaseRead {
+    param($DatabaseUrl, $Query)
+    if (!$Query.StartsWith("BEGIN READ ONLY;") -or !$Query.TrimEnd().EndsWith('ROLLBACK;') -or
+        $Query -notmatch 'r\.revoked_at IS NULL' -or $Query -notmatch 'r\.expires_at > now\(\)' -or
+        $Query -notmatch 'r\.token_hash = ''[0-9a-f]{64}''' -or
+        $Query -match '(?i)\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b') {
+        throw 'Unsafe database check'
+    }
+    if ($env:ECORP_LOCAL_STACK_TEST_DATABASE_DENIED -eq '1') { throw 'Synthetic denied database' }
+    @{ database='fixture'; identity_valid=$true }
+}
+$script:NativeFixtureStart = ${function:Start-LocalOwnedProcess}
+function Start-LocalOwnedProcess {
+    param($Role,$Workspace,$FilePath,$ArgumentList,$WorkingDirectory,$LogDirectory,$Environment)
+    $fixture = Get-Content -LiteralPath (Join-Path $Workspace 'startup-fixture.json') -Raw | ConvertFrom-Json -AsHashtable
+    $ready = Join-Path $Workspace "$Role-$([guid]::NewGuid().ToString('N'))-ready.json"
+    $record = & $script:NativeFixtureStart -Role $Role -Workspace $Workspace -FilePath $fixture.node `
+        -ArgumentList @($fixture.script,'worker',$fixture.lease,$ready,$fixture.nonce) `
+        -WorkingDirectory $Workspace -LogDirectory $LogDirectory -Environment @{}
+    $record.fixture_ready = $ready
+    $record
+}
+Export-ModuleMember -Function Start-LocalOwnedProcess
+'@
+    $modulePath = Join-Path $workspace 'tools\local_stack.psm1'
+    Write-FixtureFile $modulePath ([IO.File]::ReadAllText($modulePath) + $mock)
+    foreach ($path in @('target\debug\crony-server.exe','target\debug\crony-runner.exe','apps\web\node_modules\vite\bin\vite.js')) {
+        Write-FixtureFile (Join-Path $workspace $path) 'synthetic entrypoint replaced by owned Node fixture'
+    }
+    $corp = '00000000-0000-4000-8000-000000000230'
+    $actor = '00000000-0000-4000-8000-000000000231'
+    $credentialPath = Join-Path $workspace 'output\runner\credential.json'
+    $credential = @{corp_id=$corp;runner_id='fixture-runner';credential='synthetic-credential-not-authority';expires_at=[DateTimeOffset]::UtcNow.AddHours(1).ToString('o')}
+    $script:Sentinels.Add($credential.credential)
+    Write-FixtureFile $credentialPath ($credential | ConvertTo-Json)
+    $nonce = [guid]::NewGuid().ToString('N')
+    Write-FixtureFile (Join-Path $workspace 'startup-fixture.json') (@{
+        node=$script:NodeExecutable;script=$script:FixtureScript;lease=$script:Lease;nonce=$nonce
+    } | ConvertTo-Json)
+    $statePath = Join-Path $workspace 'output\local-pids.json'
+    $baseState = @{
+        schema_version=2; workspace=$workspace; configuration=@{
+            source_repository=$source;source_base_ref='HEAD';source_commit=(Get-LocalSourceCommit $source HEAD)
+            runner_id='fixture-runner';server_port=57578;web_port=57579;database_identity='127.0.0.1:57577/fixture'
+            runner_workspace=(Join-Path $workspace 'output\runner');copilot_home=(Join-Path $workspace 'output\runner\copilot-home')
+        };processes=@{};previous_processes=@();corp_id=$corp;actor_id=$actor;identity_initialized=$true
+    }
+    Write-FixtureFile $statePath ($baseState | ConvertTo-Json -Depth 12)
+    $environment = @{}
+    foreach ($name in [Environment]::GetEnvironmentVariables('Process').Keys) {
+        if ($name -match '^(CRONY_|ECORP_FACTORY_|ECORP_GITHUB_|CARGO_TARGET_DIR$|DATABASE_URL$)') {
+            $environment[$name] = [Environment]::GetEnvironmentVariable($name,'Process')
+            [Environment]::SetEnvironmentVariable($name,$null,'Process')
+        }
+    }
+    $env:DATABASE_URL = 'postgresql://synthetic-secret@127.0.0.1:57577/fixture'
+    $script:Sentinels.Add($env:DATABASE_URL)
+    $starter = Join-Path $workspace 'tools\start_local.ps1'
+    function Get-StartupSnapshot {
+        $items = @(Get-Item -LiteralPath $workspace) + @(Get-ChildItem -LiteralPath $workspace -Recurse -Force)
+        @($items | Sort-Object FullName | ForEach-Object {
+            $acl = (Get-Acl -LiteralPath $_.FullName).Sddl
+            $_.Refresh()
+            [ordered]@{
+                path=$_.FullName;acl=$acl
+                written=$_.LastWriteTimeUtc.Ticks
+                hash=$(if (!$_.PSIsContainer) {
+                    $stream=[IO.File]::Open($_.FullName,[IO.FileMode]::Open,[IO.FileAccess]::Read,
+                        [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete)
+                    try { [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($stream)) }
+                    finally { $stream.Dispose() }
+                })
+            }
+        }) | ConvertTo-Json -Depth 5 -Compress
+    }
+    function Invoke-RestMethod {
+        param($Uri,$TimeoutSec)
+        if ($Uri -like '*/health') { return @{ status='ok';mode='development' } }
+        @{ snapshot=@{corp=@{id=$corp}};runners=@(@{id='fixture-runner';connected=$true}) }
+    }
+    function Invoke-WebRequest { param($Uri,$TimeoutSec) @{StatusCode=200} }
+    function Register-StartupProcesses {
+        $current = Read-LocalStackState -Path $statePath -Workspace $workspace
+        foreach ($role in $current.processes.Keys) {
+            $record = $current.processes[$role]
+            if (@($script:Processes | Where-Object process_id -eq $record.pid).Count) { continue }
+            if (!(Test-LocalOwnedProcess $record $workspace)) { continue }
+            $readyPath = $record.fixture_ready
+            $ready = Wait-FixtureJson $readyPath
+            $spec = @{before=([DateTimeOffset]$record.started_utc).UtcDateTime;ready=$readyPath;nonce=$nonce}
+            $held = Register-FixtureHandle ([Diagnostics.Process]::GetProcessById($record.pid)) $spec
+            Assert-FixtureReady $ready $held $spec
+            $null = Wait-FixtureLog $record.stdout "fixture stdout $nonce"
+            $null = Wait-FixtureLog $record.stderr "fixture stderr $nonce"
+        }
+    }
+    try {
+        Invoke-Case 'read-only startup preflight has exact proof fields and no filesystem or ACL effects' {
+            $before = Get-StartupSnapshot
+            $result = & $starter -Preflight -SkipBuild -SkipInstall -SkipFactoryController
+            Assert-Equal $result.status 'ready' 'Valid retained configuration must pass.'
+            Assert-Equal $result.schema_version 1 'Unexpected preflight report version.'
+            Assert-True $result.read_only 'Preflight must identify its read-only scope.'
+            Assert-Equal $result.source_commit $baseState.configuration.source_commit 'Preflight must prove the exact commit.'
+            Assert-Equal ($result.checks -join ',') 'retained_state,identity,database,source,credential,ownership,ports,dependencies,paths' 'Preflight must report the exact completed checks.'
+            Assert-Equal (($result.PSObject.Properties.Name | Sort-Object) -join ',') 'actor_id,checks,corp_id,read_only,runner_id,schema_version,server_url,source_base_ref,source_commit,source_repository,status,web_url,workspace' 'Report must expose only approved metadata fields.'
+            $after = Get-StartupSnapshot
+            if ($before -cne $after) {
+                Write-FixtureFile (Join-Path $script:FixtureRoot 'preflight-before.json') $before
+                Write-FixtureFile (Join-Path $script:FixtureRoot 'preflight-after.json') $after
+            }
+            Assert-Equal $after $before 'Preflight changed retained bytes, metadata or ACLs.'
+        }
+        Invoke-Case 'normal start and repeat start preserve verified live process identities' {
+            & $starter -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+            Register-StartupProcesses
+            $before = (Read-LocalStackState $statePath $workspace).processes | ConvertTo-Json -Depth 8 -Compress
+            & $starter -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+            Assert-Equal ((Read-LocalStackState $statePath $workspace).processes | ConvertTo-Json -Depth 8 -Compress) $before 'Ordinary start replaced a healthy owned process.'
+        }
+        $expectedErrors = @{
+            'missing database'='Load the existing DATABASE_URL*'
+            'missing source'='Required startup path is missing:*'
+            'actor mismatch'='Retained actor identity mismatch*'
+            'runner mismatch'='Runner identity mismatch*'
+            'source commit mismatch'='Retained source commit no longer matches*'
+            'database mismatch'='Database identity mismatch*'
+            'expired credential'='Missing, expired or mismatched runner credential metadata:*'
+            'credential scope mismatch'='Missing, expired or mismatched runner credential metadata:*'
+            'unverifiable process'='Unverifiable server process ownership*'
+            'database denied'='Authorized read-only database/Corp/actor/runner validation failed*'
+            'missing binary'='Required startup path is missing:*'
+            'redirected provider home'='Startup cannot verify redirected path:*'
+            'missing retained setting'='Retained configuration is missing runner_workspace*'
+            'invalid schema'='Local ownership record scope/version mismatch*'
+            'occupied port'='Port 57578 is occupied without matching server ownership*'
+            'missing credential'='Required startup path is missing:*'
+            'missing source ref'='Cannot resolve source ref to an immutable commit*'
+            'invalid port'='CRONY_SERVER_PORT must be a valid TCP port*'
+        }
+        foreach ($scenario in @('missing database','missing source','actor mismatch','runner mismatch','source commit mismatch','database mismatch','expired credential','credential scope mismatch','unverifiable process','database denied','missing binary','redirected provider home','missing retained setting','invalid schema','occupied port','missing credential','missing source ref','invalid port')) {
+            Invoke-Case "$scenario fails before Start/Restart/preflight effects" {
+                $originalState = [IO.File]::ReadAllText($statePath)
+                $originalCredential = [IO.File]::ReadAllText($credentialPath)
+                $invalid = $originalState | ConvertFrom-Json -AsHashtable
+                $guard = Start-Fixture (New-FixtureSpec)
+                $guardRecord = Get-FixtureRecord $guard
+                $guardRecord.workspace = $workspace
+                $guardRecord.role = 'server'
+                $invalid.processes = @{server=$guardRecord}
+                $changed = @{}
+                $listener = $null
+                switch ($scenario) {
+                    'missing database' { $changed.DATABASE_URL=$null }
+                    'missing source' { $changed.CRONY_SOURCE_REPOSITORY=(Join-Path $workspace 'absent') }
+                    'actor mismatch' { $changed.CRONY_ACTOR_ID='00000000-0000-4000-8000-000000000999' }
+                    'runner mismatch' { $changed.CRONY_RUNNER_ID='other-runner' }
+                    'source commit mismatch' { $invalid.configuration.source_commit='0' * 40 }
+                    'database mismatch' { $changed.DATABASE_URL='postgresql://synthetic-secret@127.0.0.1:57577/other' }
+                    'expired credential' { $bad=$credential.Clone();$bad.expires_at=[DateTimeOffset]::UtcNow.AddSeconds(-1).ToString('o');Write-FixtureFile $credentialPath ($bad|ConvertTo-Json) }
+                    'credential scope mismatch' { $bad=$credential.Clone();$bad.runner_id='other-runner';Write-FixtureFile $credentialPath ($bad|ConvertTo-Json) }
+                    'unverifiable process' { $invalid.processes.server.started_utc=[DateTimeOffset]::UtcNow.AddDays(-1).ToString('o') }
+                    'database denied' { $changed.ECORP_LOCAL_STACK_TEST_DATABASE_DENIED='1' }
+                    'missing binary' { $changed.CARGO_TARGET_DIR=(Join-Path $workspace 'absent-target') }
+                    'redirected provider home' { $changed.CRONY_COPILOT_HOME=$providerRedirect }
+                    'missing retained setting' { $invalid.configuration.Remove('runner_workspace') }
+                    'invalid schema' { $invalid.schema_version=3 }
+                    'missing credential' { Remove-Item -LiteralPath $credentialPath }
+                    'missing source ref' { $changed.CRONY_SOURCE_BASE_REF='refs/heads/no-such-fixture' }
+                    'invalid port' { $changed.CRONY_SERVER_PORT='65536' }
+                    'occupied port' {
+                        $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,57578)
+                        $listener.Start()
+                    }
+                }
+                Write-FixtureFile $statePath ($invalid | ConvertTo-Json -Depth 12)
+                $old = @{}
+                foreach ($key in $changed.Keys) { $old[$key]=[Environment]::GetEnvironmentVariable($key,'Process');[Environment]::SetEnvironmentVariable($key,$changed[$key],'Process') }
+                try {
+                    foreach ($mode in @(@{Preflight=$true},@{},@{Restart=$true})) {
+                        # Missing binaries matter only when that role would launch.
+                        if ($scenario -eq 'missing binary' -and !$mode.ContainsKey('Restart')) { continue }
+                        $before = Get-StartupSnapshot
+                        $failure = $null
+                        try { & $starter @mode -SkipBuild -SkipInstall -SkipFactoryController | Out-Null }
+                        catch { $failure = $_.Exception.Message }
+                        Assert-True ($null -ne $failure -and $failure -like $expectedErrors[$scenario]) "Expected the exact $scenario rejection, not an unrelated failure."
+                        Assert-Equal (Get-StartupSnapshot) $before 'Rejected input changed files, metadata or ACLs.'
+                        Assert-FixtureAlive $guard
+                        if ($listener) { Assert-True $listener.Server.IsBound 'Rejected input changed the unrelated listener.' }
+                    }
+                } finally {
+                    foreach ($key in $old.Keys) { [Environment]::SetEnvironmentVariable($key,$old[$key],'Process') }
+                    Write-FixtureFile $statePath $originalState
+                    Write-FixtureFile $credentialPath $originalCredential
+                    Stop-FixtureHandle $guard.owned
+                    if ($listener) { $listener.Stop() }
+                }
+            }
+        }
+        Invoke-Case 'valid restart replaces only verified owned fixture roots after validation' {
+            & $starter -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+            Register-StartupProcesses
+            $before = (Read-LocalStackState $statePath $workspace).processes
+            & $starter -Restart -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+            Register-StartupProcesses
+            $after = (Read-LocalStackState $statePath $workspace).processes
+            Assert-Equal $after.Count 3 'Restart must launch server, runner and web only.'
+            foreach ($role in @('server','runner','web')) {
+                Assert-False (Test-LocalOwnedProcess $before[$role] $workspace) 'Restart left an old owned process running.'
+                Assert-True (Test-LocalOwnedProcess $after[$role] $workspace) 'Restart failed to create an owned replacement.'
+            }
+        }
+    } finally {
+        Register-StartupProcesses
+        foreach ($name in @('DATABASE_URL','ECORP_LOCAL_STACK_TEST_DATABASE_DENIED')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+        foreach ($name in $environment.Keys) { [Environment]::SetEnvironmentVariable($name,$environment[$name],'Process') }
+    }
 }
 
 function Invoke-SourceCases {
@@ -816,37 +1091,6 @@ function Invoke-SourceCases {
             $expression.Expression.VariablePath.UserPath -eq $Variable -and
             $expression.Member -is [Management.Automation.Language.StringConstantExpressionAst] -and
             $expression.Member.Value -eq $Member
-    }
-    function Test-ManagedCondition {
-        param($Node)
-        $expression = Get-SourceExpression $Node
-        if ($expression -isnot [Management.Automation.Language.BinaryExpressionAst]) { return $false }
-        if ($expression.Operator -eq 'And') {
-            return (Test-ManagedCondition $expression.Left) -or (Test-ManagedCondition $expression.Right)
-        }
-        if ($expression.Operator -eq 'Or') {
-            return (Test-ManagedCondition $expression.Left) -and (Test-ManagedCondition $expression.Right)
-        }
-        if ($expression.Operator -notin @('Ieq', 'Ceq')) { return $false }
-        $left = Get-SourceExpression $expression.Left
-        $right = Get-SourceExpression $expression.Right
-        return $left -is [Management.Automation.Language.VariableExpressionAst] -and
-            $left.VariablePath.UserPath -eq 'dbMode' -and
-            $right -is [Management.Automation.Language.StringConstantExpressionAst] -and
-            $right.Value -ceq 'managed'
-    }
-    function Test-ComposeGuard {
-        param($Command)
-        foreach ($ancestor in @(Get-ConditionalAncestors $Command)) {
-            if ($ancestor -isnot [Management.Automation.Language.IfStatementAst]) { continue }
-            foreach ($clause in $ancestor.Clauses) {
-                # An if's condition does not guard its else branch.
-                if ($Command.Extent.StartOffset -ge $clause.Item2.Extent.StartOffset -and
-                    $Command.Extent.EndOffset -le $clause.Item2.Extent.EndOffset -and
-                    (Test-ManagedCondition $clause.Item1)) { return $true }
-            }
-        }
-        return $false
     }
     Invoke-Case 'starter has no unconditional stop invocation' {
         foreach ($command in $commands | Where-Object { $_.Extent.Text -match 'stop_local\.ps1|^\s*(Stop-LocalOwnedProcess|Stop-Process)\b' }) {
@@ -899,53 +1143,18 @@ function Invoke-SourceCases {
                 $node.Value -eq '--runner-startup-recovery'
         }, $true)).Count) 0 'A hard-coded command argument must not override the caller recovery flag.'
     }
-    Invoke-Case 'persisted runner IDs block automatic reenrollment even when offline' {
-        $lookups = @($start.FindAll({ param($node)
-            $node -is [Management.Automation.Language.AssignmentStatementAst] -and
-                $node.Left -is [Management.Automation.Language.VariableExpressionAst] -and
-                $node.Left.VariablePath.UserPath -eq 'existingRunner'
-        }, $true))
-        Assert-Equal $lookups.Count 1 'Initial enrollment must inspect persisted runner identity, not only a local initialized flag.'
-        $lookup = Get-SourceExpression $lookups[0].Right
-        Assert-True ($lookup -is [Management.Automation.Language.ArrayExpressionAst] -and
-            $lookup.SubExpression.Statements.Count -eq 1) 'The persisted-runner lookup must have a single explicit filter.'
-        $pipeline = $lookup.SubExpression.Statements[0]
-        Assert-True ($pipeline -is [Management.Automation.Language.PipelineAst] -and
-            $pipeline.PipelineElements.Count -eq 2) 'The persisted-runner lookup must not discard offline history through extra filters.'
-        # The native endpoint returns runner_records(corp_id) at top-level
-        # response.runners, including connected, grace and offline identities.
-        Assert-True (Test-SourceMember $pipeline.PipelineElements[0] 'snapshot' 'runners') 'The lookup must consume the native persisted runner summaries.'
-        $filter = $pipeline.PipelineElements[1]
-        Assert-True ($filter -is [Management.Automation.Language.CommandAst] -and
-            $filter.GetCommandName() -eq 'Where-Object' -and $filter.CommandElements.Count -eq 4) 'Identity matching must not be restricted to connected/status-active runners.'
-        Assert-Equal $filter.CommandElements[1].Value 'id' 'The persisted lookup must match runner ID.'
-        Assert-Equal $filter.CommandElements[2].ParameterName 'eq' 'The persisted lookup must require exact ID equality.'
-        Assert-True ($filter.CommandElements[3] -is [Management.Automation.Language.VariableExpressionAst] -and
-            $filter.CommandElements[3].VariablePath.UserPath -eq 'runnerId') 'The lookup must match the requested retained runner ID.'
-        $guards = @($start.FindAll({ param($node)
-            $node -is [Management.Automation.Language.IfStatementAst]
-        }, $true) | Where-Object {
-            $condition = Get-SourceExpression $_.Clauses[0].Item1
-            $condition -is [Management.Automation.Language.BinaryExpressionAst] -and
-                $condition.Operator -eq 'Or' -and
-                (Test-SourceMember $condition.Left 'state' 'identity_initialized') -and
-                (Test-SourceMember $condition.Right 'existingRunner' 'Count')
-        })
-        Assert-Equal $guards.Count 1 'Either established local identity or a persisted runner ID must reject automatic enrollment.'
-        $guard = $guards[0]
-        Assert-True ($guard.Clauses[0].Item2.Statements.Count -eq 1 -and
-            $guard.Clauses[0].Item2.Statements[0] -is [Management.Automation.Language.ThrowStatementAst]) 'Existing identity must fail closed, not fall through into enrollment.'
-        Assert-True ([object]::ReferenceEquals($guard.Parent, $lookups[0].Parent) -and
-            $lookups[0].Extent.EndOffset -lt $guard.Extent.StartOffset) 'The identity lookup and rejection must run together in order.'
+    Invoke-Case 'startup never enrolls or bootstraps even when retained identity is absent' {
         $enrollments = @($commands | Where-Object {
-            $_.GetCommandName() -eq 'Invoke-RestMethod' -and $_.Extent.Text -match '/runners/enroll'
+            $_.GetCommandName() -eq 'Invoke-RestMethod' -and $_.Extent.Text -match '/runners/enroll|/demo/bootstrap|/demo/reset'
         })
-        Assert-Equal $enrollments.Count 1 'The guard must cover the actual enrollment call.'
-        $inside = $false
-        for ($parent = $enrollments[0].Parent; $null -ne $parent; $parent = $parent.Parent) {
-            if ([object]::ReferenceEquals($parent, $guard.Parent)) { $inside = $true; break }
-        }
-        Assert-True ($inside -and $guard.Extent.EndOffset -lt $enrollments[0].Extent.StartOffset) 'Existing identity must be rejected before the enrollment effect.'
+        Assert-Equal $enrollments.Count 0 'Startup is not an enrollment or identity provisioning command.'
+        $fallbacks = @($start.FindAll({param($node)
+            $node -is [Management.Automation.Language.StringConstantExpressionAst] -and
+            $node.Value -in @('--enrollment-token-file','CRONY_RUNNER_ENROLLMENT_TOKEN_FILE')
+        }, $true))
+        Assert-Equal $fallbacks.Count 0 'A credential disappearing after validation must not enable native enrollment fallback.'
+        $checks = @($commands | Where-Object { $_.GetCommandName() -eq 'Assert-LocalDatabaseIdentity' })
+        Assert-Equal $checks.Count 1 'All start modes must share the native identity check.'
     }
     Invoke-Case 'Factory policy paths are canonicalized against the checkout before persistence and launch' {
         $pathAssignments = @($start.FindAll({ param($node)
@@ -1066,59 +1275,23 @@ function Invoke-SourceCases {
             Assert-True ($guards.Count -gt 0) 'Credential/enrollment deletion requires an explicit reset/rotation condition.'
         }
     }
-    Invoke-Case 'Compose operations are guarded by external-database selection' {
-        $assignments = @($start.FindAll({ param($node)
-            $node -is [Management.Automation.Language.AssignmentStatementAst] -and
-                $node.Left -is [Management.Automation.Language.VariableExpressionAst]
-        }, $true))
-        $modeAssignments = @($assignments | Where-Object { $_.Left.VariablePath.UserPath -eq 'dbMode' })
-        Assert-Equal $modeAssignments.Count 1 'Database mode must be selected once, without a later override.'
-        $selection = $modeAssignments[0].Right
-        Assert-True ($selection -is [Management.Automation.Language.IfStatementAst]) 'Database mode must explicitly prioritize an external URL.'
-        $condition = Get-SourceExpression $selection.Clauses[0].Item1
-        $external = Get-SourceExpression $selection.Clauses[0].Item2
-        Assert-True ($condition -is [Management.Automation.Language.VariableExpressionAst] -and
-            $condition.VariablePath.UserPath -eq 'databaseUrl') 'A supplied database URL must control the first mode-selection branch.'
-        Assert-True ($external -is [Management.Automation.Language.StringConstantExpressionAst] -and
-            $external.Value -ceq 'external') 'A supplied URL must choose external, ahead of saved or default database mode.'
-        $urlReads = @($assignments | Where-Object {
-            $_.Left.VariablePath.UserPath -eq 'databaseUrl' -and
-                $_.Extent.EndOffset -lt $modeAssignments[0].Extent.StartOffset
-        } | Sort-Object { $_.Extent.StartOffset })
-        Assert-True ($urlReads.Count -gt 0) 'Mode selection must receive the explicit DATABASE_URL.'
-        $urlRead = Get-SourceExpression $urlReads[-1].Right
-        # Inspect the call as syntax only; never invoke it or read the real URL.
-        Assert-True ($urlRead -is [Management.Automation.Language.InvokeMemberExpressionAst] -and
-            $urlRead.Static -and $urlRead.Expression -is [Management.Automation.Language.TypeExpressionAst] -and
-            $urlRead.Expression.TypeName.FullName -in @('Environment', 'System.Environment') -and
-            $urlRead.Member.Value -eq 'GetEnvironmentVariable' -and $urlRead.Arguments.Count -eq 2 -and
-            $urlRead.Arguments[0] -is [Management.Automation.Language.StringConstantExpressionAst] -and
-            $urlRead.Arguments[0].Value -ceq 'DATABASE_URL' -and
-            $urlRead.Arguments[1] -is [Management.Automation.Language.StringConstantExpressionAst] -and
-            $urlRead.Arguments[1].Value -ceq 'Process') 'The selected URL must come directly from the explicit process DATABASE_URL.'
+    Invoke-Case 'startup has no implicit Compose provisioning and validation precedes restart or writes' {
         $composeCommands = @($commands | Where-Object {
             $_.GetCommandName() -match '^docker(\.exe)?$' -and $_.Extent.Text -match '\bcompose\b'
         })
-        Assert-True ($composeCommands.Count -gt 0) 'The source matcher must find the actual managed-database Compose operations.'
-        foreach ($command in $composeCommands) {
-            Assert-True (Test-ComposeGuard $command) 'Every Compose operation must require dbMode=managed; an external URL must bypass it.'
-        }
-        # Negative parser fixtures prevent a variable-name-only check from
-        # accidentally accepting an OR bypass or the opposite branch.
-        foreach ($unsafeSource in @(
-            'docker compose up -d',
-            'if ($needsServer -or $dbMode -eq ''managed'') { docker compose up -d }',
-            'if ($dbMode -eq ''managed'') { } else { docker compose up -d }',
-            'if ($dbMode -eq ''external'') { docker compose up -d }'
-        )) {
-            $fixtureTokens = $null
-            $fixtureErrors = $null
-            $fixture = [Management.Automation.Language.Parser]::ParseInput($unsafeSource, [ref]$fixtureTokens, [ref]$fixtureErrors)
-            Assert-Equal $fixtureErrors.Count 0 'The negative source fixture must parse.'
-            $command = $fixture.Find({ param($node)
-                $node -is [Management.Automation.Language.CommandAst] -and $node.GetCommandName() -eq 'docker'
-            }, $true)
-            Assert-False (Test-ComposeGuard $command) 'The source guard accepted an external-database Compose bypass.'
+        Assert-Equal $composeCommands.Count 0 'Missing database state must never cause implicit provisioning.'
+        $check = @($commands | Where-Object { $_.GetCommandName() -eq 'Assert-LocalDatabaseIdentity' })
+        Assert-Equal $check.Count 1 'Startup must have one shared database/identity validation.'
+        foreach ($effect in @($commands | Where-Object {
+            $_.GetCommandName() -in @('New-Item','icacls.exe','Save-State','Stop-LocalOwnedProcess','Launch')
+        })) {
+            $inFunction = $false
+            for ($ancestor = $effect.Parent; $ancestor; $ancestor = $ancestor.Parent) {
+                if ($ancestor -is [Management.Automation.Language.FunctionDefinitionAst]) { $inFunction=$true;break }
+            }
+            if (!$inFunction) {
+                Assert-True ($effect.Extent.StartOffset -gt $check[0].Extent.EndOffset) 'A startup effect precedes validation.'
+            }
         }
     }
     Invoke-Case 'stopper does not rediscover or terminate a descendant tree from saved PIDs' {
@@ -1128,7 +1301,7 @@ function Invoke-SourceCases {
 }
 
 try {
-    if ($Suite -eq 'Module') { Invoke-ModuleCases } else { Invoke-SourceCases }
+    if ($Suite -eq 'Source') { Invoke-SourceCases } else { Invoke-ModuleCases }
 } catch {
     $script:Cases.Add(@{ name = 'suite setup and execution'; passed = $false; error = $_.Exception.Message })
 } finally {
@@ -1152,6 +1325,11 @@ try {
                 $full = Assert-InFixture $junction
                 Assert-True ([bool]((Get-Item -LiteralPath $full -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) 'Expected test-created junction changed before cleanup.'
                 Remove-Item -LiteralPath $full -Force # Remove the link, never recurse through it.
+            }
+            if ($RetainFixtures -or @($script:Cases | Where-Object { !$_.passed }).Count) {
+                $script:Cleanup.temp_removed = $false
+                $script:Cleanup.retained_fixture = $script:FixtureRoot
+                return
             }
             $full = Assert-InFixture $script:FixtureRoot
             Assert-True ([IO.Path]::GetFileName($full).StartsWith('ecorp local lifecycle ')) 'Temporary root ownership marker is missing.'
