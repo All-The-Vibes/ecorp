@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { runInNewContext } from 'node:vm'
 import test from 'node:test'
-import * as driver from './e2e_checkpoint_verification.mjs'
+import * as nativeDriver from './e2e_checkpoint_verification.mjs'
 
 const id = (n) => `00000000-0000-4000-8000-${n.toString(16).padStart(12, '0')}`
 const clone = (value) => structuredClone(value)
@@ -16,6 +16,15 @@ const canonical = (value) => JSON.stringify(value, (_, item) =>
     ? Object.fromEntries(Object.keys(item).sort().map((key) => [key, item[key]])) : item)
 const hashJson = (value) => sha(canonical(value))
 const WIN = path.win32
+// The retained runtime fixture is Windows-shaped even when this offline suite runs on Linux.
+// Inject its semantics without changing the native driver's host-default behavior.
+const driver = {
+  ...nativeDriver,
+  assessOriginal: (...args) => nativeDriver.assessOriginal(...args, WIN),
+  assessRecovery: (...args) => nativeDriver.assessRecovery(...args, WIN),
+  executeSuite: (config, report, io, options = {}) =>
+    nativeDriver.executeSuite(config, report, io, { ...options, pathApi: WIN }),
+}
 const SENTINEL = 'SYNTHETIC_PRIVATE_TOKEN_AND_PROVIDER_OUTPUT_DO_NOT_PERSIST'
 const FIXTURE_SHA = 'c'.repeat(64) // Explicit current attestation; no fixture-file read.
 const BASE_SHA = 'f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac'
@@ -262,9 +271,9 @@ for (const [label, mutate] of [
   })
 }
 
-function recoveryFixture(c = config(), { approved = false, exportFailure = false } = {}) {
-  const f = originalFixture(c)
-  const original = exported('assessOriginal')(f.state, f.replay, c, f.plan, f.identity)
+function recoveryFixture(c = config(), { approved = false, exportFailure = false, pathApi = WIN } = {}) {
+  const f = originalFixture(c, id(901), pathApi)
+  const original = nativeDriver.assessOriginal(f.state, f.replay, c, f.plan, f.identity, pathApi)
   const recoveryId = id(109)
   const replacementId = id(110)
   const failed = exportFailure || c.missing_artifact
@@ -880,7 +889,7 @@ test('invokeFactory never retries an uncertain execution or logs raw stdout/stde
   }
 })
 
-function originalFixture(c = config(), driverId = id(901)) {
+function originalFixture(c = config(), driverId = id(901), pathApi = WIN) {
   const plan = exported('buildPlan')(c, driverId)
   const state = emptyState(c)
   const missionId = id(101)
@@ -931,7 +940,7 @@ function originalFixture(c = config(), driverId = id(901)) {
     adapter: 'codex', current_run_id: null, status: 'idle', retired_at: null,
   }
   const branch = `crony/task-${taskId.replaceAll('-', '')}/run-${runId.replaceAll('-', '')}`
-  const workspace = path.join(c.runner_root, 'worktrees', taskId.replaceAll('-', ''), runId.replaceAll('-', ''))
+  const workspace = pathApi.join(c.runner_root, 'worktrees', taskId.replaceAll('-', ''), runId.replaceAll('-', ''))
   const run = {
     id: runId, corp_id: c.corp_id, task_id: taskId, agent_id: agentId, runner_id: c.runner_id,
     execution_mode: 'provider', status, breaker_stage: stage, workspace_disposition: 'preserved',
@@ -986,6 +995,84 @@ function originalFixture(c = config(), driverId = id(901)) {
   return { c, plan, state, item, mission, task, agent, run, proof, incident,
     replay: { events, through: events.at(-1).seq }, identity: driver.newReport(c, driverId).identity }
 }
+
+// Pure assessment fixtures exercise both implementations on every host. They do not
+// authorize a POSIX runtime for the separately pinned Windows acceptance driver.
+for (const [label, pathApi, root, malformed] of [
+  ['Windows', WIN, EXPECTED.runner_root, [
+    ['traversal', 'C:\\owned\\..\\escape', 'unsafe_windows_component'],
+    ['alternate data stream', 'C:\\owned\\file:stream', 'unsafe_windows_path'],
+    ['UNC', '\\\\server\\share\\workspace', 'unsafe_windows_path'],
+    ['POSIX spelling', '/owned/workspace', 'unsafe_windows_path'],
+  ]],
+  ['POSIX', path.posix, '/owned/runner-workspaces', [
+    ['traversal', '/owned/../escape', 'unsafe_posix_path'],
+    ['double root', '//owned/workspace', 'unsafe_posix_path'],
+    ['backslash', '/owned/workspace\\escape', 'unsafe_posix_path'],
+    ['Windows spelling', 'C:\\owned\\workspace', 'unsafe_posix_path'],
+  ]],
+]) {
+  const platformConfig = () => ({ ...config(), runner_root: root })
+  test(`${label} original assessment uses the explicit path implementation`, () => {
+    const f = originalFixture(platformConfig(), id(901), pathApi)
+    const result = nativeDriver.assessOriginal(f.state, f.replay, f.c, f.plan, f.identity, pathApi)
+    assert.equal(result.run_sha256, hashJson(f.run))
+    assert.equal(f.run.workspace_path, pathApi.join(root, 'worktrees',
+      f.task.id.replaceAll('-', ''), f.run.id.replaceAll('-', '')))
+  })
+  for (const approved of [false, true]) {
+    test(`${label} recovery preserves ${approved ? 'accepted' : 'pending'} independent review`, () => {
+      const f = recoveryFixture(platformConfig(), { approved, pathApi })
+      const result = nativeDriver.assessRecovery(f.state, f.replay, f.context,
+        f.c, f.plan, f.original, f.identity, pathApi)
+      assert.equal(result.verified, approved)
+      assert.equal(result.new_provider_sessions, 0)
+    })
+  }
+  for (const [kind, workspace, code] of malformed) {
+    test(`${label} assessment rejects ${kind} without normalizing it into authority`, () => {
+      const f = originalFixture(platformConfig(), id(901), pathApi)
+      f.run.workspace_path = workspace
+      assert.throws(() => nativeDriver.assessOriginal(f.state, f.replay,
+        f.c, f.plan, f.identity, pathApi), { code })
+      const r = recoveryFixture(platformConfig(), { pathApi })
+      r.replacement.workspace_path = workspace
+      assert.throws(() => nativeDriver.assessRecovery(r.state, r.replay, r.context,
+        r.c, r.plan, r.original, r.identity, pathApi), { code })
+    })
+  }
+  test(`${label} assessment rejects a sibling workspace and mismatched native workspace event`, () => {
+    const f = originalFixture(platformConfig(), id(901), pathApi)
+    f.run.workspace_path = pathApi.join(`${root}-sibling`, 'worktrees',
+      f.task.id.replaceAll('-', ''), f.run.id.replaceAll('-', ''))
+    assert.throws(() => nativeDriver.assessOriginal(f.state, f.replay,
+      f.c, f.plan, f.identity, pathApi), { code: 'original_workspace_lineage_mismatch' })
+    const r = recoveryFixture(platformConfig(), { pathApi })
+    const started = r.replay.events.find(entry =>
+      entry.type === 'run.started' && entry.aggregate_id === r.replacement.id)
+    started.payload.workspace = pathApi.join(root, 'other-workspace')
+    assert.throws(() => nativeDriver.assessRecovery(r.state, r.replay, r.context,
+      r.c, r.plan, r.original, r.identity, pathApi), { code: 'native_verify_run_not_observed' })
+  })
+}
+
+test('native assessment retains host-default path semantics when no override is supplied', () => {
+  const c = { ...config(), runner_root: path.sep === '\\' ? EXPECTED.runner_root : '/owned/runner-workspaces' }
+  const f = originalFixture(c, id(901), path)
+  assert.equal(nativeDriver.assessOriginal(f.state, f.replay, c, f.plan, f.identity).run_sha256, hashJson(f.run))
+  const r = recoveryFixture(c, { approved: true, pathApi: path })
+  assert.equal(nativeDriver.assessRecovery(r.state, r.replay, r.context,
+    c, r.plan, r.original, r.identity).verified, true)
+})
+
+test('suite path override rejects incompatible fixture paths before recovery', async () => {
+  const h = memoryHarness()
+  await assert.rejects(nativeDriver.executeSuite(h.c, h.report, h.io, { pathApi: path.posix }),
+    { code: 'unsafe_posix_path' })
+  assert.deepEqual(h.mutations.map(entry => entry.operation), ['create'])
+  assert.equal(h.report.intents.recovery, null)
+  assert.equal(h.downloads.length, 0)
+})
 
 for (const tokens of [5000, 6000]) {
   test(`assessOriginal binds native ${tokens === 5000 ? 'stop' : 'suspend'} from full replay, not snapshot.events`, () => {
@@ -1153,7 +1240,7 @@ function memoryHarness(c = config({ timeoutMs: 15_000, pollMs: 250, settleMs: 20
       reads.base += 1
       assert.deepEqual(identity, { task_id: original.task.id, run_id: original.run.id })
       return {
-        path: path.join(original.run.workspace_path, 'base.txt'), bytes: 5,
+        path: WIN.join(original.run.workspace_path, 'base.txt'), bytes: 5,
         sha256: behavior.badBase ? '0'.repeat(64) : BASE_SHA,
       }
     },

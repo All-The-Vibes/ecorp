@@ -52,7 +52,12 @@ treat their issue text as permission to activate them. #304 expressly does not c
   passed and came from the GitHub Actions app (15368). These are concrete candidates for
   required checks; do not require the new `secrets` job until its producer is established.
 
-## Proposed settings batch — not yet applied
+## Original settings preview — subsequently approved and applied
+
+The observed controls above describe the pre-change review snapshot. The user then
+approved this exact batch; see the [verified follow-up](ai-readiness-portability-followup-2026-09-18.md)
+for applied settings and the scoped #323 CI repair. The proposal below is retained
+to distinguish its original scope from the later API readback.
 
 Enable native secret scanning and push protection, vulnerability alerts and Dependabot
 security-update PRs. Retain auto-merge disabled, existing CodeQL defaults and thresholds,

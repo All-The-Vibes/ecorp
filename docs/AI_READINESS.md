@@ -182,3 +182,9 @@ broad Node invocation at `2026-09-18T05-24-29-620Z-full.json` passed 1035 cases 
 one existing 15-second Teams SDK case; it is not recorded as a green full gate. This known
 intermittent failure, clean-bootstrap limitation and independent review keep publication draft.
 The earlier 67.1 result remains a historical candidate score, not a fresh published-head score.
+
+After the exact settings preview was approved, native GitHub security and main-branch
+controls were enabled and verified. The scoped #323 checkpoint-test portability repair,
+regressions, retained Teams timeout and separate required-gate results are recorded in the
+[September 18 follow-up](reports/ai-readiness-portability-followup-2026-09-18.md).
+This supersedes the earlier not-yet-applied settings status, not the historical benchmark.
