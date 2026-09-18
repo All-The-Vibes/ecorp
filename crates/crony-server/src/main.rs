@@ -4647,6 +4647,17 @@ async fn schedule_ready_tasks(
         ..ScheduleOutcome::default()
     };
     for candidate in candidates {
+        let verification_policy: VerificationPolicy =
+            match serde_json::from_value(candidate.verification_policy) {
+                Ok(policy) => policy,
+                Err(_) => {
+                    outcome.failures.push(format!(
+                        "task {} has an invalid or unsupported verifier policy",
+                        candidate.task_id
+                    ));
+                    continue;
+                }
+            };
         let requirements = RunnerRequirements {
             adapter: &candidate.required_adapter,
             model: candidate.required_model.as_deref(),
@@ -4655,7 +4666,7 @@ async fn schedule_ready_tasks(
             source_base_ref: candidate.required_source_base_ref.as_deref(),
             source_base_commit: candidate.required_source_base_commit.as_deref(),
             workspace_connection_id: candidate.workspace_connection_id,
-            requires_cache_suppression: candidate.verification_policy.requires_cache_suppression(),
+            requires_cache_suppression: verification_policy.requires_cache_suppression(),
         };
         let Some((runner_id, connection_epoch)) = select_runner(state, corp_id, &requirements)
         else {

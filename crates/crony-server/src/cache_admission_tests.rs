@@ -527,3 +527,70 @@ async fn issue140_capable_resume_reaches_secret_canary(pool: PgPool) {
 async fn issue140_capable_resume_reaches_dependency_canary(pool: PgPool) {
     assert_resume_admission(pool, true, true).await;
 }
+
+async fn assert_bad_policy_does_not_starve_sibling(pool: PgPool, bad_policy: Value) {
+    let mut f = fixture(pool, "resume").await;
+    let source_before = f.source().await;
+    let healthy = Uuid::from_u128(101);
+    sqlx::query("UPDATE tasks SET status='ready',verification_policy=$1 WHERE id=$2")
+        .bind(bad_policy)
+        .bind(TASK)
+        .execute(f.state.store.pool())
+        .await
+        .unwrap();
+    sqlx::query(
+        r#"INSERT INTO tasks(id,corp_id,mission_id,title,objective,status,assigned_agent_id,
+          plan_key,contract,verification_policy,attempt_count,max_attempts,required_adapter,created_at)
+         SELECT $1,corp_id,mission_id,'Healthy sibling',objective,'ready',assigned_agent_id,
+          'healthy',jsonb_set(contract,'{secret_refs}','[]'::jsonb),
+          '{"checks":[{"type":"artifact","min_bytes":1}],"manual_gate":null}'::jsonb,
+          0,2,required_adapter,now()+interval '1 second' FROM tasks WHERE id=$2"#,
+    ).bind(healthy).bind(TASK).execute(f.state.store.pool()).await.unwrap();
+    let outcome = schedule_ready_tasks(&f.state, CORP, MISSION, Some(OWNER))
+        .await
+        .unwrap();
+    assert_eq!(outcome.candidate_count, 2);
+    assert_eq!(
+        outcome.failures,
+        vec![format!(
+            "task {TASK} has an invalid or unsupported verifier policy"
+        )]
+    );
+    assert_eq!(outcome.records.len(), 1);
+    assert_eq!(outcome.records[0].0.task_id, healthy);
+    assert!(
+        matches!(f.commands.try_recv().unwrap(), ServerToRunner::StartRun { task_id, .. } if task_id == healthy)
+    );
+    assert!(f.commands.try_recv().is_err());
+    let attempts: i32 = sqlx::query_scalar("SELECT attempt_count FROM tasks WHERE id=$1")
+        .bind(TASK)
+        .fetch_one(f.state.store.pool())
+        .await
+        .unwrap();
+    assert_eq!(attempts, 2);
+    let bad_runs: i64 = sqlx::query_scalar("SELECT count(*) FROM runs WHERE task_id=$1")
+        .bind(TASK)
+        .fetch_one(f.state.store.pool())
+        .await
+        .unwrap();
+    assert_eq!(bad_runs, 1);
+    assert_eq!(f.source().await, source_before);
+    assert_eq!(f.grant_count().await, 0);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an owned PostgreSQL fixture"]
+async fn issue140_malformed_policy_does_not_starve_healthy_sibling(pool: PgPool) {
+    assert_bad_policy_does_not_starve_sibling(pool, json!({"checks":"invalid","manual_gate":null}))
+        .await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires an owned PostgreSQL fixture"]
+async fn issue140_future_policy_does_not_starve_healthy_sibling(pool: PgPool) {
+    assert_bad_policy_does_not_starve_sibling(
+        pool,
+        json!({"checks":[{"type":"future_verifier"}],"manual_gate":null}),
+    )
+    .await;
+}

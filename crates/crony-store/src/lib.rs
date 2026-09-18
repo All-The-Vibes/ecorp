@@ -507,7 +507,8 @@ pub struct SchedulableTask {
     pub required_source_base_ref: Option<String>,
     pub required_source_base_commit: Option<String>,
     pub workspace_connection_id: Option<Uuid>,
-    pub verification_policy: VerificationPolicy,
+    // Decode per candidate so one invalid policy cannot abort a mission sweep.
+    pub verification_policy: serde_json::Value,
 }
 
 #[derive(Debug, Clone)]
@@ -6169,7 +6170,7 @@ impl PgStore {
         .map(|row| {
             Ok(SchedulableTask {
                 task_id: row.get("task_id"),
-                verification_policy: serde_json::from_value(row.get("verification_policy"))?,
+                verification_policy: row.get("verification_policy"),
                 required_adapter: row.get("required_adapter"),
                 required_model: row.get("required_model"),
                 required_reasoning_effort: row.get("required_reasoning_effort"),
