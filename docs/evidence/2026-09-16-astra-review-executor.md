@@ -575,3 +575,36 @@ journal copy replayed unchanged at round sixteen.
 [Screenshot 22](assets/astra-review-executor/22-corrective-acceptance-and-provenance.png)
 shows these local results only. Independent source acceptance, current-head
 hosted execution and genuine scheduler qualification are not inferred from it.
+
+### Recovery queue fairness
+
+The `76d487d` candidate received two PASS and two FAIL reports from the four
+fresh independent reviewers. Both failures independently reproduced the same
+queue problem: an older exhausted recovery notice repeatedly won selection
+over another PR's permitted recovery, without advancing the selection cursor.
+One reproduction used failed-completion histories; the other used waiting
+failed reviews. The two passing reports did not override the failures.
+
+The failed-completion finding was reopened and the next bounded correction
+started under the existing authority. Its scope is shared selection fairness:
+preserve the exhausted PR and every original charge, while choosing work that
+can advance before an exhausted notice. No counter reset, alternate execution
+path, fabricated revision change or additional human permission is appropriate.
+This candidate was not adopted or published as the PR head.
+
+The queue correction uses one shared priority for pending work, permitted
+recovery and exhausted recovery notices. It leaves stopped claims and counters
+unchanged and preserves historical selection through a private journal marker.
+Both exact reviewer reproductions now select the eligible PR; its existing
+cycle receives one charge while the exhausted PR is deeply unchanged.
+The worker retained genuine red cases, 31 passing fairness regressions and
+232 distinct passing focused checks. A read-only integration replay preserved
+the actual 114-event journal at round seventeen. These are local results, not
+hosted or scheduler acceptance.
+
+The final integrated run passed **424/424 Node tests** and all six repository
+checks. Rust reported **547 passed, 323 ignored, zero failed**; application
+sources remain unchanged. Exact tested source bytes and canonical Git blobs
+were retained. [Screenshot 23](assets/astra-review-executor/23-recovery-queue-fairness.png)
+records the actual local log summaries. Independent acceptance and live
+current-head CI, Copilot and scheduler qualification remain separate.

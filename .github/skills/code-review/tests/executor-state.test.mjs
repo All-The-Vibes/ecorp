@@ -453,6 +453,182 @@ const feedbackInput = (a, extra = {}) => ({
 const failedFeedbackPrefixes = JSON.parse(gunzipSync(Buffer.from(
   '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',
   'base64')).toString())
+// Compose disjoint synthetic histories just as the retained round-16 policy proof
+// does. No live state, counter edits, or changed historical selection decisions.
+const fairnessFixture = (entries) => {
+  const events = structuredClone(failedFeedbackPrefixes.otherPr.events.slice(0, 10))
+  const inventory = [structuredClone(failedFeedbackPrefixes.otherPr.events[10].input.prs[0])]
+  for (const { number, family, rounds } of entries) {
+    const at = events.at(-1).at
+    events.push({ version: 2, id: `fairness-wake-${number}`, at, command: 'wake',
+      input: { owner, id: `fairness-wake-${number}`, sourceRef: `synthetic-fairness-wake-${number}`, startedAt: at } })
+    const history = failedFeedbackPrefixes[`direct${rounds}`]
+    const fragment = structuredClone(history.events.slice(1,
+      family === 'waiting' ? history.stages.blocked : history.stages.laundered - 1))
+    if (family === 'waiting') fragment.at(-1).input.phase = 'waiting'
+    const ids = new Map(fragment.map((e) => [e.id, `fairness-${number}-${e.id}`]))
+    const delta = Date.parse(events.at(-1).at) + 1 - Date.parse(fragment[0].at)
+    const move = (value, field) => {
+      if (Array.isArray(value)) return value.map((v) => move(v))
+      if (value && typeof value === 'object') return Object.fromEntries(
+        Object.entries(value).map(([k, v]) => [k, move(v, k)]))
+      if (value === 1 && ['number', 'gateNumber', 'feedbackNumber'].includes(field)) return number
+      if (typeof value !== 'string') return value
+      if (/^2026-\d\d-\d\dT.*Z$/.test(value)) return new Date(Date.parse(value) + delta).toISOString()
+      for (const [old, id] of ids) value = value.replaceAll(old, id)
+      return value.replaceAll('fix-1', `fix-${number}`).replaceAll('/pull/1', `/pull/${number}`)
+    }
+    for (const event of fragment) {
+      const e = move(event)
+      if (e.command === 'sync') e.input.prs = [...structuredClone(inventory), ...e.input.prs]
+      events.push(e)
+    }
+    // Publication, not the previous sync, owns the current head.
+    const dir = fixture()
+    writeJournal(dir, events)
+    inventory.push(run(dir, 'show').prs[number].snapshot)
+  }
+  const dir = fixture()
+  writeJournal(dir, events)
+  run(dir, 'wake', wakeInput('fairness-fresh'))
+  return dir
+}
+
+for (const stoppedFamily of ['completion', 'waiting']) for (const eligibleFamily of ['completion', 'waiting']) {
+  for (const order of ['older-low', 'older-high', 'newer-low']) for (const feedback of [false, true]) {
+    test(`PR304-RECOVERY-FAIRNESS: ${stoppedFamily}/${eligibleFamily} ${order} feedback=${feedback}`, () => {
+      const stopped = { number: order === 'older-high' ? 9 : 2, family: stoppedFamily, rounds: 2 }
+      const eligible = { number: 3, family: eligibleFamily, rounds: 1 }
+      const dir = fairnessFixture(order === 'newer-low' ? [eligible, stopped] : [stopped, eligible])
+      const initial = run(dir, 'show')
+      assert.equal(initial.activation.valid, true)
+      if (feedback) run(dir, 'sync', { owner, complete: true, prs: Object.values(initial.prs).map((p) =>
+        p.snapshot.number === eligible.number ? { ...p.snapshot, reviewKey: key(909) } : p.snapshot) })
+      const before = run(dir, 'show'), prefix = journalBytes(dir), frozen = before.prs[stopped.number]
+      const route = next(dir)
+      assert.equal(route.number, eligible.number, 'exhausted notice must not hide admissible work')
+      const waiting = eligibleFamily === 'waiting' && !feedback
+      assert.equal(route.action, waiting ? 'blocked' : 'audit')
+      if (waiting) {
+        assert.equal(route.recovery, 'resume')
+        assert.equal(route.retryRequired, true)
+        assert.equal(route.claimId, before.prs[eligible.number].blockedClaim.claim.claimId)
+        assert.equal(journalBytes(dir), prefix, 'recovery routing remains mutation-free')
+      }
+      const selected = journalBytes(dir)
+      assert.equal(next(dir).claimId, route.claimId, 'independent CLI restart keeps the selection')
+      assert.equal(journalBytes(dir), selected)
+      run(dir, 'wake', wakeInput('fairness-next-wake'))
+      assert.equal(next(dir).claimId, route.claimId)
+      let charged
+      if (waiting) {
+        const resumed = run(dir, 'resume', resumeInput(route))
+        assert.equal(resumed.claimId, route.claimId)
+        assert.equal(next(dir).retryRequired, true)
+        const unchanged = journalBytes(dir)
+        run(dir, 'save', saveInput(resumed, { phase: 'fixing' }), false)
+        assert.equal(journalBytes(dir), unchanged, 'resume cannot bypass failure provenance')
+        charged = run(dir, 'retry', retryInput(resumed, route.failureEvidence[0]))
+      } else charged = run(dir, 'begin', beginInput(route))
+      assert.equal(charged.round, 2)
+      const after = run(dir, 'show')
+      assert.deepEqual(after.prs[stopped.number], frozen, 'stopped claim/history/counters stay immutable')
+      assert.equal(after.prs[eligible.number].cycles.length, 1)
+      assert.equal(after.prs[eligible.number].cycles[0].noProgress, 2)
+      assert.equal(after.wakes.at(-1).chargedRounds, 1)
+      assert.deepEqual(after.wakes.slice(0, -1), before.wakes)
+      assertHistoryPrefix(dir, prefix)
+      const chargedBytes = journalBytes(dir)
+      assert.equal(next(dir).round, 2)
+      run(dir, waiting ? 'retry' : 'begin', waiting ? retryInput(route, route.failureEvidence[0]) : beginInput(route), false)
+      assert.equal(journalBytes(dir), chargedBytes, 'duplicate delivery cannot charge again')
+      failedReview(dir, charged)
+      run(dir, 'save', saveInput(charged, { technicalVerdict: 'NAUGHTY' }))
+      const exhausted = journalBytes(dir), notice = next(dir)
+      assert.equal(notice.action, 'blocked')
+      assert.equal(notice.recovery, undefined)
+      assert.match(notice.reason, /no-progress limit exhausted/)
+      assert.deepEqual(next(dir), notice)
+      assert.equal(journalBytes(dir), exhausted)
+      run(dir, 'wake', wakeInput('fairness-all-exhausted'))
+      const newWake = journalBytes(dir)
+      assert.deepEqual(next(dir), notice)
+      assert.equal(journalBytes(dir), newWake)
+      assert.deepEqual(run(dir, 'show').prs[stopped.number], frozen)
+    })
+  }
+
+  test(`PR304-RECOVERY-FAIRNESS: all-exhausted ${stoppedFamily}/${eligibleFamily} still yields a quiet notice`, () => {
+    const dir = fairnessFixture([
+      { number: 9, family: stoppedFamily, rounds: 2 }, { number: 2, family: eligibleFamily, rounds: 2 },
+    ])
+    const before = run(dir, 'show'), bytes = journalBytes(dir), notice = next(dir)
+    assert.equal(notice.number, 9, 'selection age still breaks equal-priority ties')
+    assert.equal(notice.action, 'blocked')
+    assert.equal(notice.recovery, undefined)
+    assert.match(notice.reason, /no-progress limit exhausted/)
+    assert.deepEqual(next(dir), notice)
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before)
+  })
+}
+
+for (const family of ['completion', 'waiting']) {
+  test(`PR304-RECOVERY-FAIRNESS: retained uncharged completion survives exhausted ${family} and restart`, () => {
+    const dir = fairnessFixture([
+      { number: 2, family, rounds: 2 }, { number: 3, family: 'completion', rounds: 1 },
+    ])
+    const before = run(dir, 'show'), claim = next(dir)
+    assert.equal(claim.number, 3)
+    run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+    const bytes = journalBytes(dir), route = next(dir)
+    assert.equal(route.recovery, 'resume')
+    assert.equal(route.claimId, claim.claimId)
+    assert.equal(route.round, null)
+    assert.deepEqual(next(dir), route)
+    assert.equal(journalBytes(dir), bytes)
+    run(dir, 'resume', resumeInput(route))
+    assert.equal(run(dir, 'begin', beginInput(route)).round, 2)
+    assert.deepEqual(run(dir, 'show').prs['2'], before.prs['2'])
+    assertHistoryPrefix(dir, bytes)
+  })
+}
+
+test('PR304-RECOVERY-FAIRNESS: new ordering is private, versioned and replay-stable', () => {
+  const dir = fairnessFixture([
+    { number: 2, family: 'waiting', rounds: 2 }, { number: 3, family: 'completion', rounds: 1 },
+  ])
+  const before = run(dir, 'show')
+  // Keep the waiting claim current but make it visible to old non-recovery replay.
+  run(dir, 'sync', { owner, complete: true, prs: Object.values(before.prs).map((p) =>
+    p.snapshot.number === 2 ? { ...p.snapshot, gateKey: key(88) } : p.snapshot) })
+  const prefix = journalBytes(dir)
+  for (const recoveryPriority of [true, false, null, 1]) {
+    assert.match(run(dir, 'next', { owner, recoveryPriority }, false).error, /fields/)
+    assert.equal(journalBytes(dir), prefix)
+  }
+  const claim = next(dir)
+  assert.equal(claim.number, 3)
+  const events = JSON.parse(journalBytes(dir)).events
+  assert.equal(events.at(-1).recoveryPriority, true)
+  assert.equal(events.at(-1).failedCompletionFence, true, 'retain the existing provenance fence')
+  assert.equal(run(dir, 'begin', beginInput(claim)).round, 2)
+  assert.equal(next(dir).claimId, claim.claimId)
+  assertHistoryPrefix(dir, prefix)
+  for (const change of [{ recoveryPriority: false }, { recoveryPriority: 1 },
+    { command: 'sync' }, { version: 1 }]) {
+    const isolated = fixture(), invalid = structuredClone(events)
+    // Isolate the new guard; malformed older markers keep their original errors.
+    delete invalid.at(-1).admission
+    delete invalid.at(-1).failedCompletionFence
+    Object.assign(invalid.at(-1), change)
+    writeJournal(isolated, invalid)
+    const bytes = journalBytes(isolated)
+    assert.match(run(isolated, 'show', undefined, false).error, /invalid.*(priority|version)/)
+    assert.equal(journalBytes(isolated), bytes)
+  }
+})
+
 const failedFeedbackFixture = (name, stage = 'pending') => {
   const dir = fixture(), { events, stages } = failedFeedbackPrefixes[name]
   writeJournal(dir, events.slice(0, stages[stage]))
@@ -4783,7 +4959,7 @@ for (const version of [1, 2]) test(`EX-FAILED-WAIT-RECOVERY: old v${version} fir
         { ...terminal, id: `${terminal.id}-wait`, input: { ...terminal.input, technicalVerdict: null } })
       writeJournal(dir, old)
     }
-    if (version === 1) writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, failedCompletionFence, correctiveBinding, ...e }) => e), 1)
+    if (version === 1) writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, failedCompletionFence, correctiveBinding, recoveryPriority, ...e }) => e), 1)
     const prefix = journalBytes(dir), before = run(dir, 'show')
     assert.equal(before.prs['1'].cycles[0].technicalVerdict, nullable ? null : 'NAUGHTY')
     assert.equal(before.prs['1'].blockedClaim?.retryOnly, true)
@@ -5102,7 +5278,7 @@ test('EX-UNCLAIMED-ROUND-STOP: actionable feedback at cap cannot be consumed by 
 for (const version of [1, 2]) test(`EX-UNCLAIMED-ROUND-STOP: v${version} stopped generation and later gate saves replay unchanged`, () => {
   const { dir, findings, snapshot } = unclaimedRoundStop()
   // Reproduce the OLD admitted gate after the ceiling stop, not a new executable claim.
-  const history = JSON.parse(readFileSync(join(dir, 'state.json'))).events.map(({ admission, failedCompletionFence, correctiveBinding, ...e }) => {
+  const history = JSON.parse(readFileSync(join(dir, 'state.json'))).events.map(({ admission, failedCompletionFence, correctiveBinding, recoveryPriority, ...e }) => {
     if (version === 1) delete e.version
     if (e.command === 'save') { const { round, ...legacy } = e.input; e.input = legacy }
     return e
@@ -5709,7 +5885,7 @@ for (const version of [1, 2]) for (const phase of ['auditing', 'fixing', 'review
       evidence: ['historical-failed-review.json'], reason: 'Old accepted first failed review' })
     appendHistorical(dir, 'save', failure)
     const old = JSON.parse(journalBytes(dir)).events
-    if (version === 1) writeJournal(dir, old.map(({ version, admission, failedCompletionFence, correctiveBinding, ...e }) => e), 1)
+    if (version === 1) writeJournal(dir, old.map(({ version, admission, failedCompletionFence, correctiveBinding, recoveryPriority, ...e }) => e), 1)
     const prefix = journalBytes(dir), before = run(dir, 'show')
     assert.equal(journalBytes(dir), prefix, 'read never rewrites original accepted history')
     assert.equal(before.prs['1'].cycles[0].phase, phase)
@@ -5949,7 +6125,7 @@ for (const version of [1, 2]) {
     const before = run(dir, 'show')
     appendHistorical(dir, 'save', failure) // Historically admitted stale F1; never a new live call.
     if (version === 1) {
-      writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, failedCompletionFence, correctiveBinding, ...e }) => e), 1)
+      writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, failedCompletionFence, correctiveBinding, recoveryPriority, ...e }) => e), 1)
     }
     const bytes = journalBytes(dir), p = before.prs['1']
     const expected = { ...before, events: before.events + 1,
@@ -6141,7 +6317,7 @@ for (const [version, admission] of [[1, undefined], [2, undefined], [2, 'unclaim
         }))
       } else if (stage === 'blocked') appendHistorical(dir, 'save', saveInput(selected, { phase: 'blocked' }))
       if (version === 1) {
-        writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, failedCompletionFence, correctiveBinding, ...e }) => e), 1)
+        writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(({ version, admission, failedCompletionFence, correctiveBinding, recoveryPriority, ...e }) => e), 1)
       }
       const bytes = journalBytes(dir), before = run(dir, 'show')
       assert.equal(before.prs['1'].cycles.length, 1)

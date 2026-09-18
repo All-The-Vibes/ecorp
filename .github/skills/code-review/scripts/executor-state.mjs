@@ -213,6 +213,8 @@
 // retainedBaseRenewal:true on new next decisions recovers an exact old unclaimed
 // bound rejection after normal NICE. Its replay index never changes old decisions;
 // gates cannot consume it, and only begin renews the cycle and charges the wake.
+// New next envelopes stamp recoveryPriority:true: exhausted recovery notices yield
+// to admissible work/recovery. Unmarked historical selection decisions stay unchanged.
 // Unversioned v1 events remain an unchanged replay-only prefix; versions cannot
 // downgrade. Command inputs cannot select a journal/admission version.
 // After reviewing/NAUGHTY, new correction, review or publication needs retry.
@@ -525,11 +527,16 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
         pending?.auditKey === auditKey(p.snapshot) && pending.completion === c.completion &&
         c.technicalVerdict === 'NICE' && c.completion.round === c.rounds
     }
-    // Route only new calls; old next events must keep their original claim IDs.
+    // Replay the new ordering only when stamped; old next keeps its claim IDs.
     const waitingRecovery = (p) => {
-      const b = live && failedWaiting(p, failedWaits)
+      const b = (live || e.recoveryPriority) && failedWaiting(p, failedWaits)
       return b && current(b.claim, p) && scopeCurrent(b.claim, p, b.claim.effectiveBaseRef) &&
         sameRepo(p.sourceRepo, s.config.repo) && sameRepo(p.snapshot.sourceRepo, s.config.repo)
+    }
+    const recoveryPriority = (p) => {
+      if (!waitingRecovery(p) && !pendingFailedCompletion(p)) return 0
+      const c = cycle(p)
+      return (live || e.recoveryPriority) && (c.rounds >= roundLimit(s) || c.noProgress >= 2) ? 2 : 1
     }
     const processedAudit = (p) => {
       const c = cycle(p), snapshot = p.snapshot, publication = p.publications?.at(-1)
@@ -584,9 +591,8 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
         ((recoverPending && pendingRound(p)) || pendingCorrection(p)) &&
         !p.blockedReason && cycle(p).noProgress < 2 &&
         sameRepo(p.sourceRepo, s.config.repo) && sameRepo(p.snapshot.sourceRepo, s.config.repo))))
-      // Recovery notices do not advance selected; never pin them ahead of pending work.
-      .sort((a, b) => Number(Boolean(waitingRecovery(a) || pendingFailedCompletion(a))) -
-        Number(Boolean(waitingRecovery(b) || pendingFailedCompletion(b))) ||
+      // Mutation-free exhausted notices must also yield to permitted recovery.
+      .sort((a, b) => recoveryPriority(a) - recoveryPriority(b) ||
         a.selected - b.selected || a.snapshot.number - b.snapshot.number)[0]
     if (!p) return { state: s, output: { action: 'none' }, changed: false }
     const c = cycle(p), snapshot = p.snapshot
@@ -1011,7 +1017,7 @@ function main() {
       let version = 1
       // ponytail: replay/rewrite the retained journal; checkpoint only if measured history size needs it.
       for (const e of events) {
-        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery', 'baseHeadRenewal', 'retainedBaseRenewal', 'correctiveBinding', 'failedCompletionFence'])
+        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery', 'baseHeadRenewal', 'retainedBaseRenewal', 'correctiveBinding', 'failedCompletionFence', 'recoveryPriority'])
         check(e.correctiveBinding === undefined || (e.version === 2 && ['begin', 'retry', 'resume'].includes(e.command) &&
           e.correctiveBinding === true), 'invalid corrective binding marker')
         check(e.retainedBaseRenewal === undefined || (e.version === 2 && e.command === 'next' &&
@@ -1028,6 +1034,8 @@ function main() {
           ['unclaimed-round', 'detail-read-observation', 'detail-read-recovery'].includes(e.admission)), 'invalid admission marker')
         check(e.failedCompletionFence === undefined || (e.version === 2 &&
           ['next', 'begin', 'resume'].includes(e.command) && e.failedCompletionFence === true), 'invalid failed completion fence')
+        check(e.recoveryPriority === undefined || (e.version === 2 && e.command === 'next' &&
+          e.recoveryPriority === true), 'invalid recovery priority marker')
         check(e.version === undefined ? version === 1 : e.version === 2, 'invalid or downgraded event version')
         version = e.version ?? 1
         check(text(e.id) && !ids.has(e.id) && timestamp(e.at) && e.at >= previousAt, 'corrupt event metadata')
@@ -1113,7 +1121,7 @@ function main() {
       ...(['next', 'begin', 'resume'].includes(command) ? { failedCompletionFence: true } : {}),
       ...(['next', 'begin'].includes(command) && correctivePublication(state, conflictingPublications) ? { publicationRecovery: true } : {}),
       ...(command === 'begin' && state.enabled && !activation.valid ? { activationFence: true } : {}),
-      ...(command === 'next' ? { admission: 'detail-read-recovery',
+      ...(command === 'next' ? { admission: 'detail-read-recovery', recoveryPriority: true,
         ...(state.enabled && !activation.valid ? { activationFence: true, canaryRecovery: true } : {}) } : {}) }
     const result = apply(state, event, conflictingPublications, { activation, live: true, failedReviews, failedWaits, pendingRenewals })
     if (result.changed !== false) {

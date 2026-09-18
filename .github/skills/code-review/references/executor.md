@@ -111,6 +111,10 @@ sessions, failed tests and original receipts.
    that revision. A read-only PASS is not technical NICE or execution authority.
    Do not call `begin`, run their tests/hooks, dispatch fixers or publish from
    those claims. Never grant fork code credentials or internal-service access.
+   Prefer admissible work or permitted recovery over an exhausted recovery
+   notice. The notice does not grant an attempt or reset the stopped PR.
+   New ordering decisions are journal-stamped; old selections retain their
+   original replay semantics.
 4. Before a new audit/fix round, persist its consumption with `begin`. Follow
    the main skill: resolve the exact-base template, build every rubric row,
    actually load and run ATV security and the whole-repository Ponytail audit,
