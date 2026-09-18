@@ -144,6 +144,156 @@ database connection and required keys when starting a missing server. Even `-Res
 retarget its recorded database or runner identity.
 Shared deployments expose authenticated ECorp access, not shared database credentials.
 
+### First-time local development setup
+
+Normal Start cannot create its own prerequisites. The native `crony-cli bootstrap` command also
+uses HTTP; it is not an offline database initializer. For a **new, independently owned development
+database and checkout only**, the procedure below starts a bounded native setup server, applies
+the server's real migrations, calls its development bootstrap API, and lets the native runner
+exchange a short-lived enrollment token for its credential. It stops both setup processes before
+ordinary Preflight/Start. No application or credential rows are inserted by hand.
+
+First provision an empty PostgreSQL database that you own, verify that it contains no existing
+ECorp data, and have trusted host configuration supply its `DATABASE_URL`. Database provisioning
+is a separate explicit operator action, not a launcher fallback. Put `psql.exe` on PATH. Configure
+the source, workspace and provider home [above](#configure-the-source-repository), choose unused
+API/UI ports, and choose a new runner ID:
+
+```powershell
+$env:CRONY_RUNNER_ID = 'my-development-runner'
+$env:CRONY_SERVER_PORT = '8791'
+$env:CRONY_WEB_PORT = '5187'
+pnpm install --frozen-lockfile
+if ($LASTEXITCODE) { throw 'Install failed; do not continue with setup.' }
+cargo build -p crony-server -p crony-runner
+if ($LASTEXITCODE) { throw 'Build failed; do not continue with setup.' }
+```
+
+Do not run this recipe against an existing/shared authority, a retained ownership record, or a
+runner whose credentials are missing. Those are restoration/enrollment decisions for that
+authority's administrator, not first-time setup. Run the following in the same PowerShell 7.4+
+session from the ECorp checkout. The credential directory must not already exist; a partial or
+failed attempt is preserved and must be investigated rather than deleted and replayed.
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$root = (Resolve-Path '.').Path
+Import-Module .\tools\local_stack.psm1 -Force
+$null = Get-LocalDatabaseIdentity -DatabaseUrl $env:DATABASE_URL
+$null = Get-LocalSourceCommit -Repository $env:CRONY_SOURCE_REPOSITORY -Ref $env:CRONY_SOURCE_BASE_REF
+Assert-LocalRunnerIdentity -RunnerId $env:CRONY_RUNNER_ID
+$identity = Join-Path $root 'output\runner'
+$state = Join-Path $root 'output\local-pids.json'
+foreach ($path in @($identity, $state)) {
+    Assert-LocalStackPath -Path $path
+    if (Test-Path -LiteralPath $path) { throw "Existing setup state must be preserved: $path" }
+}
+foreach ($path in @($env:CRONY_RUNNER_WORKSPACE, $env:CRONY_COPILOT_HOME)) {
+    Assert-LocalStackPath -Path $path -Directory
+    if (Test-LocalPathEqual $path $env:CRONY_SOURCE_REPOSITORY) {
+        throw 'Execution/provider paths must not be the source checkout.'
+    }
+}
+if (Test-LocalPathEqual $env:CRONY_RUNNER_WORKSPACE $env:CRONY_COPILOT_HOME) {
+    throw 'Execution workspace and provider home must be distinct.'
+}
+$apiPort = [int]$env:CRONY_SERVER_PORT
+$webPort = [int]$env:CRONY_WEB_PORT
+if ($apiPort -lt 1 -or $apiPort -gt 65535 -or $webPort -lt 1 -or $webPort -gt 65535 -or $apiPort -eq $webPort) {
+    throw 'Choose two distinct valid ports.'
+}
+if (Get-NetTCPConnection -State Listen -ErrorAction Stop |
+    Where-Object LocalPort -in @($apiPort, $webPort)) { throw 'A requested port is occupied.' }
+$target = if ($env:CARGO_TARGET_DIR) {
+    [IO.Path]::GetFullPath($env:CARGO_TARGET_DIR, $root)
+} else { Join-Path $root 'target' }
+$serverExe = Join-Path $target 'debug\crony-server.exe'
+$runnerExe = Join-Path $target 'debug\crony-runner.exe'
+Assert-LocalStackPath -Path $serverExe -Required
+Assert-LocalStackPath -Path $runnerExe -Required
+$url = "http://127.0.0.1:$apiPort"
+$credential = Join-Path $identity 'credential.json'
+$tokenFile = Join-Path $identity 'enrollment.token'
+$logs = Join-Path $identity 'setup-logs'
+$records = @{}
+function Save-SetupRecords {
+    [IO.File]::WriteAllText((Join-Path $identity 'setup-processes.json'),
+        ($records | ConvertTo-Json -Depth 8))
+}
+function Wait-SetupReady($Record, [scriptblock]$Probe) {
+    $deadline = [DateTime]::UtcNow.AddSeconds(60)
+    do {
+        if (!(Test-LocalOwnedProcess $Record $root)) { throw 'Native setup process exited; inspect its unique logs.' }
+        try { if (& $Probe) { return } } catch { }
+        Start-Sleep -Milliseconds 500
+    } while ([DateTime]::UtcNow -lt $deadline)
+    throw 'Native setup was not ready within 60 seconds; preserve its state and logs.'
+}
+New-Item -ItemType Directory -Path $identity | Out-Null
+$principal = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+& icacls.exe $identity /inheritance:r /grant:r "${principal}:(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' *> $null
+if ($LASTEXITCODE) { throw 'Could not protect the new identity directory.' }
+[IO.File]::WriteAllText((Join-Path $identity '.env'), '')
+try {
+    if (Get-NetTCPConnection -State Listen -ErrorAction Stop |
+        Where-Object LocalPort -eq $apiPort) { throw 'API port became occupied; nothing was stopped.' }
+    $records.server = Start-LocalOwnedProcess -Role setup-server -Workspace $root `
+        -FilePath $serverExe -ArgumentList @('--bind', "127.0.0.1:$apiPort") `
+        -WorkingDirectory $identity -LogDirectory $logs `
+        -Environment @{ DATABASE_URL=$env:DATABASE_URL; CRONY_MODE='development' }
+    Save-SetupRecords
+    Wait-SetupReady $records.server { (Invoke-RestMethod "$url/health" -TimeoutSec 3).status -eq 'ok' }
+    $demo = Invoke-RestMethod "$url/api/demo/bootstrap" -Method Post `
+        -ContentType 'application/json' -Body '{"seed_agents":false}' -TimeoutSec 10
+    $env:CRONY_CORP_ID = $demo.corp_id
+    $env:CRONY_ACTOR_ID = $demo.alice_actor_id
+    [IO.File]::WriteAllText((Join-Path $identity 'setup-identity.json'),
+        (@{corp_id=$env:CRONY_CORP_ID;actor_id=$env:CRONY_ACTOR_ID;runner_id=$env:CRONY_RUNNER_ID} | ConvertTo-Json))
+    $enrollment = Invoke-RestMethod "$url/api/corps/$($demo.corp_id)/runners/enroll" -Method Post `
+        -ContentType 'application/json' -TimeoutSec 10 -Body (@{
+            actor_id=$demo.alice_actor_id; runner_id=$env:CRONY_RUNNER_ID; expires_in_seconds=600
+        } | ConvertTo-Json)
+    [IO.File]::WriteAllText($tokenFile, $enrollment.enrollment_token)
+    $enrollment = $null
+    $records.runner = Start-LocalOwnedProcess -Role setup-runner -Workspace $root `
+        -FilePath $runnerExe -WorkingDirectory $identity -LogDirectory $logs `
+        -Environment @{ CRONY_COPILOT_HOME=$env:CRONY_COPILOT_HOME } `
+        -ArgumentList @('--server-ws', "$($url.Replace('http:', 'ws:'))/ws/runner",
+            '--runner-id', $env:CRONY_RUNNER_ID, '--corp-id', $demo.corp_id,
+            '--credential-file', $credential, '--enrollment-token-file', $tokenFile,
+            '--workspace', $env:CRONY_RUNNER_WORKSPACE,
+            '--source-repository', $env:CRONY_SOURCE_REPOSITORY,
+            '--source-base-ref', $env:CRONY_SOURCE_BASE_REF,
+            '--fake-agent-script', (Join-Path $root 'scripts\fake-agent.mjs'))
+    Save-SetupRecords
+    Wait-SetupReady $records.runner {
+        $snapshot = Invoke-RestMethod "$url/api/corps/$($demo.corp_id)/snapshot?actor_id=$($demo.alice_actor_id)" -TimeoutSec 5
+        (Test-Path -LiteralPath $credential) -and
+            @($snapshot.runners | Where-Object { $_.id -ceq $env:CRONY_RUNNER_ID -and $_.connected }).Count -eq 1
+    }
+} finally {
+    foreach ($role in @('runner', 'server')) {
+        if (!$records.ContainsKey($role)) { continue }
+        $record = $records[$role]
+        $stopped = Stop-LocalOwnedProcess -Record $record -Workspace $root
+        if (!$stopped -and (Get-LocalProcessIdentity -ProcessId $record.pid)) {
+            throw 'Setup process identity changed or stopping was unverified; preserve the ownership record.'
+        }
+    }
+}
+.\tools\start_local.ps1 -Preflight -SkipBuild -SkipInstall -SkipFactoryController
+.\tools\start_local.ps1 -SkipBuild -SkipInstall -SkipFactoryController
+```
+
+The native runner, not this recipe, creates and rotates `credential.json`. The enrollment token
+is short-lived and is not forwarded by subsequent Start/Restart. Preserve identity files and
+logs; do not print token/credential contents or put them in arguments. Connection values reach
+the trusted setup server only through its environment (reduced assurance). No Factory controller
+or provider inference is started by setup. If setup succeeds but the shell closes before the first
+Start, restore the non-secret IDs from `output\runner\setup-identity.json` into `CRONY_CORP_ID`,
+`CRONY_ACTOR_ID` and `CRONY_RUNNER_ID`, re-supply the same trusted configuration, then use Preflight.
+Do not replay bootstrap/enrollment to work around a failing preflight.
+
 ### Start, reuse, or explicitly restart
 
 Before managing services, validate the configured, already provisioned stack:
@@ -202,7 +352,8 @@ only missing server, runner, or configured Factory roles. Use `-SkipInstall -Ski
 the dependencies and binaries already match the intended source. `CARGO_TARGET_DIR`, when
 supplied, selects the same debug binaries for validation, build and launch.
 
-- **First setup:** database provisioning, Corp/actor creation and runner enrollment are
+- **First setup:** follow the [explicit development recipe](#first-time-local-development-setup).
+  Database provisioning, Corp/actor creation and runner enrollment are
   separate, explicitly authorized native operations. Supply existing `CRONY_CORP_ID` and
   `CRONY_ACTOR_ID`, the matching `CRONY_RUNNER_ID`, and its current
   `output/runner/credential.json` before Start. Startup does not bootstrap demo identities

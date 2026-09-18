@@ -32,9 +32,14 @@ sheet, and no document-level horizontal overflow.
 A runner is the trusted process that owns provider sessions and Git worktrees. The web UI can be
 closed without stopping it.
 
-For local development:
+For a fresh development stack, complete the explicit
+[first-time setup](DARK_FACTORY_CONTRIBUTOR_GUIDE.md#first-time-local-development-setup) first.
+That procedure provisions identity through the native development API and enrolls the native
+runner before the ordinary launcher is used. For an already configured stack, supply its trusted
+`DATABASE_URL` and run:
 
 ```powershell
+./tools/start_local.ps1 -Preflight
 ./tools/start_local.ps1
 ```
 
@@ -187,12 +192,18 @@ does not merge or deploy.
 
 ### Local process topology
 
-`tools/start_local.ps1` starts:
+After read-only validation of the configured database, source and existing runner identity,
+`tools/start_local.ps1` starts only missing owned services:
 
-1. PostgreSQL through Docker Compose.
-2. `crony-server` on `127.0.0.1:8791`.
-3. `crony-runner`, enrolled through an expiring token and then a rotating credential.
-4. The Vite web client on `127.0.0.1:5187`.
+1. `crony-server` on `127.0.0.1:8791`.
+2. `crony-runner`, using its existing rotating credential.
+3. The Vite web client on `127.0.0.1:5187`.
+
+The database must already be independently provisioned. Normal startup and `-Restart` never
+invoke Compose, bootstrap a Corp, enroll a replacement runner, or delete credentials.
+`-Preflight` performs the same validation without starting services or changing retained state.
+The [one-time development setup](DARK_FACTORY_CONTRIBUTOR_GUIDE.md#first-time-local-development-setup)
+uses temporary, explicitly owned native setup processes, stops them, then hands off to this launcher.
 
 When `ECORP_FACTORY_WATCH=1`, startup also starts the configured trusted GitHub Project watcher.
 Its heartbeat and pause/resume state are independent from individual missions. Without that
