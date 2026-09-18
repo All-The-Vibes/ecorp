@@ -1,719 +1,191 @@
 {
   "schema_version": 2,
-  "kind": "ecorp-codeblend-v4-v4b-public-summary",
-  "status": "completed-assessment-independently-audited",
-  "updated_at": "2026-09-18T08:25:41.380Z",
-  "assessed_repository": "All-The-Vibes/ecorp",
-  "assessed_commit": "69598e095c78611b3b487c67854d4146b4561fbd",
-  "committed_change": {
-    "summary": "Adopt verified advisory feedback through existing native contract revisions, including exact raw/typed artifact binding, reference-only proposals, native authorization/idempotency, and explicit uncertain outcomes after a request.",
-    "acceptance": {
-      "assertions_passed": 15,
-      "assertions_failed": 0,
-      "duration_seconds": 62.38,
-      "native_runs": 3,
-      "persisted_verifier_checks_passed": 9,
-      "persisted_verifier_checks_total": 9,
-      "browser_follow_up": true,
-      "provider": "fake-process",
-      "data": "synthetic feedback and review inputs",
-      "identity": "local development identity",
-      "evidence_source_commit": "c592033c7917409e839bc5e832eae406786007da",
-      "additional_implementation_files_byte_pinned": true,
-      "rust_binary_source_commit_prefix": "d4dad1ba"
-    },
-    "validation": {
-      "web_and_tools": {
-        "passed": 1110,
-        "failed": 0,
-        "skipped": 0
-      },
-      "repo_steward": {
-        "passed": 195,
-        "failed": 0,
-        "skipped": 0
-      },
-      "windows_rust": {
-        "passed": 561,
-        "failed": 0,
-        "ignored": 343
-      },
-      "migrations_docs_fmt_clippy_build_lint": "passed"
-    }
-  },
-  "method": {
-    "evaluator_repository": "gim-home/CodeBlend",
-    "evaluator_revision": "0a9accccd36446c381c118b783e2e9f623643efa",
-    "evaluator_binary_sha256": "4229e93d77dce70e4e3493cab6bc5311c2d02551d024de33319c27ae6a323290",
-    "judge_models_requested": [
-      "claude-opus-5",
-      "gpt-6-astra",
-      "grok-4.6"
-    ],
-    "cache": false,
-    "missing_api_evidence_allowed": false,
-    "scanner_exclusions_modified": false,
-    "native_provider": "GitHub Copilot SDK",
-    "native_model": "gpt-6-astra",
-    "reasoning_effort": "medium",
-    "sdk_version": "1.0.11",
-    "cli_version": "1.0.79",
-    "automatic_runtime_update": false,
-    "case_classes": [
-      "recurring-audit deduplication",
-      "feedback expiry"
-    ],
-    "cases": 3,
-    "case_data": "controlled seeded defects and synthetic data in real product modules",
-    "execution": "real provider invocations through native Direct runner, independent agent proposal reviews and fixed functional oracles",
-    "human_approval_claimed": false,
-    "actual_successful_judges": [
+  "repository": "All-The-Vibes/ecorp",
+  "report_date": "2026-09-18",
+  "assessment": {
+    "run_id": "20260919-012629+0800",
+    "completed_at": "2026-09-18T17:39:20.1588254Z",
+    "status": "succeeded",
+    "verification": "verified",
+    "mode": "evaluator-observed-local",
+    "substrate": 92,
+    "operations": 74.75,
+    "composite": 82.9,
+    "ai_ready": false,
+    "head_commit": "30f80e0323c5020eadbc84db676e21ad0acc4fdc",
+    "working_tree_identity_sha256": "dcd12fe1f5059f3d1ae24fa37e8246e45b513ed5331d67e4447d2cca8a482902",
+    "source_files": 737,
+    "source_bytes": 32924718,
+    "uncommitted_path_count": 17,
+    "pristine_head_claimed": false,
+    "evaluator_sha256": "4229e93d77dce70e4e3493cab6bc5311c2d02551d024de33319c27ae6a323290",
+    "composite_json_sha256": "9a527599c08fca39886dde07a027afffe022dc31b3da873efaaaa5f67dd96c61",
+    "scan_policy_sha256": "3bb02c591009d8557365d3950208a43ef4b8bafda524044725609f1b5fe6015f",
+    "excluded_paths": 0,
+    "models": [
       "claude-opus-5",
       "gpt-6-astra",
       "grok-4.6"
     ],
     "rounds": 1,
-    "consensus_rule": "per-dimension cross-model median + minority-veto, floored, with weighted total and tier recomputed deterministically",
-    "case_pipelines_parallel": true,
-    "judge_calls_parallel": true
+    "all_judges_succeeded": true,
+    "duration_seconds": 770.601
   },
-  "attempts": [
-    {
-      "id": "v4-profile-schema",
-      "assessment_run": "20260918-154644+0800",
-      "status": "pre-inference-failure",
-      "error": "local-loop authorization preflight: json: unknown field \"version\"",
-      "native_provider_invocations": 0,
-      "score": null,
-      "correction": "Use exact path/sha256-only native tool-pin shapes."
-    },
-    {
-      "id": "v4-profile-owner-map",
-      "assessment_run": "20260918-154936+0800",
-      "status": "pre-inference-failure",
-      "error": "local-loop authorization preflight: unsupported local verification profile",
-      "native_provider_invocations": 0,
-      "score": null,
-      "correction": "Use 64 protected owner paths disjoint from two case targets; retain all 114 source bindings independently."
-    },
-    {
-      "id": "v4",
-      "assessment_run": "20260918-155400+0800",
-      "challenge": "94448e4dcf552a7b6768194cefdd86ab104421e7ee3c19affa38267e04381507",
-      "status": "incomplete",
-      "native_provider_invocations": 9,
-      "native_tokens": 856755,
-      "native_reported_cost_microusd": 0,
-      "cost_is_billing_proof": false,
-      "active_runs_at_audit": 0,
-      "score": null,
-      "separate_evidence": {
-        "recurrence_pipeline": "fulfilled",
-        "recurrence_repair": {
-          "native_oracle": "18/18",
-          "physical_oracle": "18/18",
-          "exported_oracle": "18/18"
-        },
-        "expiry_repair": {
-          "native_oracle": "22/22",
-          "physical_oracle": "22/22",
-          "exported_oracle": "22/22"
-        },
-        "positive_duplicate_consumption": "read-only",
-        "completed_launch_replays": "returned original run; no extra run",
-        "recurrence_stale_receipt": "refused; current receipt accepted",
-        "negative_pipeline": "fulfilled",
-        "negative_rejected_candidate": "19/22",
-        "interrupted_oracle_result": null,
-        "negative_restoration": "exact original faulty bytes restored;20/22; retained failed state and escalation evidence"
-      },
-      "failure": {
-        "phase": "expiry stale-source control",
-        "reason": "One extra separator CRLF violated the original exact append contract.",
-        "extra_bytes": 2,
-        "original_prefix_preserved": true,
-        "native_functional_verification": "passed",
-        "expiry_stale_receipt_consumption_observed": false,
-        "old_failure_regraded": false
-      }
-    },
-    {
-      "id": "v4b-source-admission-v1",
-      "status": "setup-failure-preserved",
-      "native_provider_invocations": 0,
-      "reason": "Fresh source clones were outside the existing runner source allowlist.",
-      "resolution": "Create new isolated case children beneath the existing allowed cases root; retain failed setup and clones; no allowlist expansion or runner restart."
-    },
-    {
-      "id": "v4b",
-      "assessment_run": "20260918-161135+0800",
-      "challenge": "61669f06ceba374aa0f512339f87215bda1f4645f51699f87a6b0ed9e0bf83b9",
-      "status": "completed-and-independently-audited",
-      "qualification": "verified evaluator-observed-local",
-      "score": {
-        "structure": 92,
-        "operations": 68.25,
-        "composite": 79.2,
-        "operation_tier": "Agent-Enabled",
-        "quadrant": "Q2",
-        "quadrant_name": "Verifiable-but-manual",
-        "rung": 4,
-        "rung_name": "R4 Delegable",
-        "ai_ready": false,
-        "evidence_mode": "evaluator-observed-local",
-        "verification_status": "verified",
-        "unchanged_from_previous_completed_v3": true,
-        "target_structure_90_operations_90_met": false
-      },
-      "native_provider_invocations": 9,
-      "native_tokens": 909114,
-      "prospective_change": "Exact original source prefix plus exact comment, zero or one separator newline for an already terminated source, and exactly one final newline in the original LF/CRLF convention; optional separator at most 2 bytes. No normalization or other source changes permitted.",
-      "history": {
-        "same_owned_native_database_and_runner": true,
-        "prior_runs_preserved": 9,
-        "prior_native_tokens_preserved": 856755,
-        "database_reset": false,
-        "prior_failure_regraded": false
-      },
-      "bounds": {
-        "missions": 3,
-        "provider_invocations_per_case": 3,
-        "provider_invocations_total": 9,
-        "tokens_per_entire_case_mission": 600000,
-        "cost_microusd_per_entire_case_mission": 3000000,
-        "additional_tokens_total": 1800000,
-        "additional_cost_microusd_total": 9000000,
-        "automatic_retries": false
-      },
-      "preflight": {
-        "case_checks_passed": 3,
-        "case_checks_total": 3,
-        "prospective_independent_checks_passed": 44,
-        "prospective_independent_checks_total": 44,
-        "oracle_artifacts_unchanged": 22,
-        "protected_owner_paths": 64,
-        "full_source_bindings": 114,
-        "native_provider_invocations": 0
-      },
-      "native_reported_cost_microusd": 0,
-      "cost_is_billing_proof": false,
-      "terminal_native_states": {
-        "completed": 4,
-        "failed": 4,
-        "cancelled": 1
-      },
-      "pipeline_outcomes": [
-        {
-          "role": "recurring-audit-dedupe",
-          "status": "fulfilled"
-        },
-        {
-          "role": "feedback-expiry",
-          "status": "fulfilled"
-        },
-        {
-          "role": "negative-control",
-          "status": "fulfilled"
-        }
-      ],
-      "case_tokens": {
-        "recurrence_positive": 278481,
-        "expiry_positive": 243583,
-        "expiry_negative": 387050
-      },
-      "cumulative_v4_v4b_native_tokens": 1765869,
-      "positive_repair_checks": {
-        "recurrence": {
-          "native": "18/18",
-          "physical": "18/18",
-          "exported": "18/18"
-        },
-        "expiry": {
-          "native": "22/22",
-          "physical": "22/22",
-          "exported": "22/22"
-        }
-      },
-      "stale_controls": {
-        "both_exact_prefixes_preserved": true,
-        "both_separator_newlines": 1,
-        "both_separator_bytes": 2,
-        "both_final_newlines": 1,
-        "old_receipts_refused": true,
-        "current_receipts_accepted": true
-      },
-      "repeat_controls": {
-        "duplicate_consumption_read_only": true,
-        "completed_launch_replay_added_no_run": true
-      },
-      "negative_controls": {
-        "run_states": [
-          "failed",
-          "cancelled",
-          "failed"
-        ],
-        "rejected_oracle": "19/22",
-        "interrupted_oracle": null,
-        "restored_oracle": "20/22",
-        "exact_original_faulty_bytes_restored": true,
-        "escalation_evidence_retained": true
-      },
-      "independent_audit": {
-        "status": "passed-independent-final-qualification-audit",
-        "checks_passed": 1509,
-        "files_hashed": 367,
-        "original_protected_rows_unchanged": 47,
-        "provider_oracle_test_reruns": 0,
-        "human_approval": false
-      },
-      "browser_follow_up": {
-        "status": "observed",
-        "positive_latest_verifier_checks": [
-          "3/3",
-          "3/3"
-        ],
-        "negative_restored": "failed; no accepted deliverable shown",
-        "negative_interrupted": "cancelled;0 displayed passed checks,total unknown;no verified completion shown",
-        "scope": "Real GitHub Copilot provider shown by native UI; local development identity."
-      },
-      "shutdown": {
-        "status": "owned-stack-stopped",
-        "stopped_at": "2026-09-18T08:23:43.5190755Z",
-        "owned_listener_count_absent": 3,
-        "evidence_and_worktrees_retained": true,
-        "prior_v3_stack_touched": false
-      }
-    }
-  ],
-  "scope_limits": [
-    "Synthetic fixtures do not establish production operation or provider decision quality.",
-    "Independent agent review is not authenticated human approval.",
-    "Native reported cost and configured caps are not billing evidence.",
-    "No hosted cadence, autonomous learning, publication, merge, deployment, or agent-attributable merged throughput is established.",
-    "The verified local benchmark outcome does not meet the 90-point operations target; the observed score remains 68.25."
-  ],
-  "evidence": [
-    {
-      "artifact": "native-feedback-public-evidence",
-      "sha256": "0a4d0476048a16a8a6c08b846ec1b964e15a561dc36ce22c2051a102bb075992"
-    },
-    {
-      "artifact": "v4-profile-schema-error-log",
-      "sha256": "9ee5aadeac3284a65151c68c66a687126d2226b2a205f7f40bece143e71b8c02"
-    },
-    {
-      "artifact": "v4-profile-owner-map-error-log",
-      "sha256": "08fe21cca86fe11bae9a80b601812ec669efb948d255da3cb10ce80a4894a0a3"
-    },
-    {
-      "artifact": "v4-independent-terminal-audit",
-      "sha256": "3a86e9b8aebbe1cac91c698ab82bb7aec5ff8f4577e36c05c19cc5d09c8c3328"
-    },
-    {
-      "artifact": "v4-rolling-budget-readback",
-      "sha256": "de54eb03d8b641ceb0dc4bd087fed6b94ea912129aa0a6c1e4c6dc6fe7a2396d"
-    },
-    {
-      "artifact": "v4b-outside-allowlist-setup-failure",
-      "sha256": "41c1b84e812574f247d2ae990d0af4f14ec9ac1440fe0b7e187b8fe1a3374efe"
-    },
-    {
-      "artifact": "v4b-prospective-contract",
-      "sha256": "7f2b62da94728d7d704e9771935f410a8497801917033d2dee2a66809905a083"
-    },
-    {
-      "artifact": "v4b-frozen-profile",
-      "sha256": "a5a9b272c8e8e7f9da3d5ecab022529e7070c267c57c59b17837b5cb2dbcc0d8"
-    },
-    {
-      "artifact": "v4b-frozen-inputs",
-      "sha256": "10f62f580077535b51ed5575bd37bf299afbb049ca0f874fcf4257386a97d1fd"
-    },
-    {
-      "artifact": "v4b-oracle-manifest",
-      "sha256": "3d05ecde986282d5e2819283dfcecc7dfde9a74896c5535562187e3411709972"
-    },
-    {
-      "artifact": "v4b-no-inference-preflight",
-      "sha256": "bc5fdd9fca38fd7fae7940fc01703182c19e55d7cd2228c81bbbf4eefe9af1f3"
-    },
-    {
-      "artifact": "v4b-prospective-independent-review",
-      "sha256": "7b219cfc1483df5589efa5b5756788ed4cc649637c29336d3a2a8a28958e79df"
-    },
-    {
-      "artifact": "v4b-assessment-run",
-      "sha256": "3bf2b616bdff584089f644ae380d703a5a7b576132add01a7b91dc5869506f89"
-    },
-    {
-      "artifact": "v4b-composite",
-      "sha256": "fc822d43ca72cf43516af3fe568cb5aeaab9711b184bf93566156db20cc3b695"
-    },
-    {
-      "artifact": "v4b-consensus",
-      "sha256": "2f8c4909e9187ce726663bb7b37e8da692e0477326002d160ed72f5fc4f70ba3"
-    },
-    {
-      "artifact": "v4b-telemetry",
-      "sha256": "54670c692b6623f80f67c87711aa5636fd42b3d5cbd6ca64bdda8b059bdd199e"
-    },
-    {
-      "artifact": "v4b-observed-loop",
-      "sha256": "aec9b4d785aa69b00a0a15a65c66878b3141455e28f08e6be902d703e7a05a74"
-    },
-    {
-      "artifact": "v4b-stage-outcomes",
-      "sha256": "86949f342b6984759a3047c21cc6e03fee4d2f21a8383b8348885043cc1f152d"
-    },
-    {
-      "artifact": "v4b-independent-terminal-audit",
-      "sha256": "cda432cb1a42d9f74d09d76843825de4117c991ca9ec37d2bb60bab29bc80ce8"
-    },
-    {
-      "artifact": "v4b-browser-follow-up",
-      "sha256": "63eb0dff3c96cf9243654ec33dbdba99362abea3ee2bc9914d4821300ebfecc4"
-    },
-    {
-      "artifact": "v4b-owned-stack-shutdown",
-      "sha256": "6133e692dbe811f20cae593f8e2a938482ad8e1a1ddd38c45e8cb826c89bde25"
-    }
-  ],
-  "redaction": {
-    "private_absolute_paths_omitted": true,
-    "account_identifiers_omitted": true,
-    "credentials_omitted": true,
-    "artifact_hashes_refer_to_retained_originals": true
-  },
-  "result": {
-    "structure": 92,
+  "previous_qualified": {
+    "run_id": "20260918-161135+0800",
+    "head_commit": "69598e095c78611b3b487c67854d4146b4561fbd",
     "operations": 68.25,
-    "composite": 79.2,
-    "operation_tier": "Agent-Enabled",
-    "quadrant": "Q2",
-    "quadrant_name": "Verifiable-but-manual",
-    "rung": 4,
-    "rung_name": "R4 Delegable",
-    "ai_ready": false,
-    "evidence_mode": "evaluator-observed-local",
-    "verification_status": "verified",
-    "unchanged_from_previous_completed_v3": true,
-    "target_structure_90_operations_90_met": false
+    "substrate": 92,
+    "composite": 79.2
   },
-  "runtime": {
-    "started_at": "2026-09-18T08:11:35.5624737Z",
-    "finished_at": "2026-09-18T08:20:50.3199701Z",
-    "total_seconds": 554.891,
-    "local_loop_seconds": 447.835,
-    "judge_ensemble_seconds": 94.709
-  },
-  "operations_dimensions": [
+  "measured_operations_delta": 6.5,
+  "target": 90,
+  "remaining_operations_points": 15.25,
+  "target_achieved": false,
+  "dimensions": [
     {
-      "id": 1,
-      "key": "agent-interface-operability",
-      "name": "Agent Interface & Operability",
-      "weight": 9,
-      "score_out_of_4": 3,
-      "panel_median": 3,
-      "weighted_points": 6.75,
-      "model_scores": {
-        "claude-opus-5": 3,
-        "gpt-6-astra": 3,
-        "grok-4.6": 3
-      },
-      "summary": "Agent instructions, development setup and PR-reachable validation support integrated operation; accepted agent-authored PRs were not demonstrated.",
-      "evidence_refs": [
-        "agentSurfaces.agentsMdPaths",
-        "files.devcontainer",
-        "apiEvidence.mergedPRs.agentAuthoredMergedCount",
-        "agentSurfaces.devcontainerPaths",
-        "validationCommands"
-      ]
+      "id": "D1",
+      "name": "Agent interface & operability",
+      "raw_score": 3,
+      "maximum": 4,
+      "weight": 9
     },
     {
-      "id": 2,
-      "key": "automation-coverage",
-      "name": "Automation Coverage for Routine Maintenance",
-      "weight": 13,
-      "score_out_of_4": 2,
-      "panel_median": 2,
-      "weighted_points": 6.5,
-      "model_scores": {
-        "claude-opus-5": 2,
-        "gpt-6-astra": 3,
-        "grok-4.6": 2
-      },
-      "summary": "Maintenance is machine-triggerable and repeatable, but the pack did not establish effective scheduled delivery or workflow chaining; panel median remained 2.",
-      "evidence_refs": [
-        "ci.hasManualDispatch",
-        "ci.hasScheduledWorkflow",
-        "ci.pipelineFiles",
-        "agentSurfaces.machineTriggerable",
-        "executionVerification.observations",
-        "executionVerification.facts.closedHandoffsVerified",
-        "ci.workflowFiles"
-      ]
+      "id": "D2",
+      "name": "Routine maintenance automation",
+      "raw_score": 3,
+      "maximum": 4,
+      "weight": 13
     },
     {
-      "id": 3,
-      "key": "self-healing-cicd",
-      "name": "Self-Healing CI/CD",
-      "weight": 18,
-      "score_out_of_4": 3,
-      "panel_median": 3,
-      "weighted_points": 13.5,
-      "model_scores": {
-        "claude-opus-5": 3,
-        "gpt-6-astra": 3,
-        "grok-4.6": 3
-      },
-      "summary": "Local repairs and recovery were verified. All judges retained 3 while citing selfHealing.hasRollbackPath=false; this field does not negate the observed controlled restoration.",
-      "evidence_refs": [
-        "executionVerification.facts.repairValidationPairsVerified",
-        "executionVerification.observations",
-        "selfHealing.hasRollbackPath",
-        "executionVerification.facts",
-        "executionVerification.recovery",
-        "executionVerification.facts.multipleFailureClassesVerified"
-      ]
+      "id": "D3",
+      "name": "Self-healing CI/CD",
+      "raw_score": 3,
+      "maximum": 4,
+      "weight": 18
     },
     {
-      "id": 4,
-      "key": "continuous-improvement-loops",
-      "name": "Continuous Improvement Loops",
-      "weight": 13,
-      "score_out_of_4": 2,
-      "panel_median": 2,
-      "weighted_points": 6.5,
-      "model_scores": {
-        "claude-opus-5": 3,
-        "gpt-6-astra": 2,
-        "grok-4.6": 2
-      },
-      "summary": "Repair observations and deterministic advisory adoption do not establish repeated-evidence learned-rule promotion and later-run behavior; panel median remained 2.",
-      "evidence_refs": [
-        "executionVerification.observations[0].failureClass",
-        "executionVerification.facts.staleDuplicateHandlingVerified",
-        "observability.reportArtifactPaths",
-        "executionVerification.observations"
-      ]
+      "id": "D4",
+      "name": "Continuous improvement loops",
+      "raw_score": 3,
+      "maximum": 4,
+      "weight": 13
     },
     {
-      "id": 5,
-      "key": "agent-execution-surfaces",
-      "name": "Agent Execution Surfaces",
-      "weight": 9,
-      "score_out_of_4": 3,
-      "panel_median": 2,
-      "weighted_points": 6.75,
-      "model_scores": {
-        "claude-opus-5": 2,
-        "gpt-6-astra": 3,
-        "grok-4.6": 2
-      },
-      "summary": "Machine-triggerable execution surfaces receive a deterministic floor of 3. The pack did not corroborate a shipped repo-specific MCP server or hostile-source sandbox.",
-      "evidence_refs": [
-        "agentSurfaces.mcpServersShipped",
-        "agentSurfaces.skillFiles",
-        "agentSurfaces.machineTriggerable",
-        "executionVerification.limits",
-        "agentSurfaces.mcpConfigPaths"
-      ]
+      "id": "D5",
+      "name": "Agent execution surfaces",
+      "raw_score": 3,
+      "maximum": 4,
+      "weight": 9
     },
     {
-      "id": 6,
-      "key": "policy-safety-guardrails",
-      "name": "Policy, Safety, and Change Guardrails",
-      "weight": 10,
-      "score_out_of_4": 3,
-      "panel_median": 3,
-      "weighted_points": 7.5,
-      "model_scores": {
-        "claude-opus-5": 3,
-        "gpt-6-astra": 3,
-        "grok-4.6": 3
-      },
-      "summary": "Runtime rulesets, review, checks and bounded execution support guardrails; comprehensive autonomous safety closure and ownership coverage were not established.",
-      "evidence_refs": [
-        "apiEvidence.branchProtection.effectiveRules",
-        "governance.actionsPinned",
-        "executionVerification.facts.policyBoundsVerified",
-        "apiEvidence.branchProtection.requiresStatusChecks"
-      ]
+      "id": "D6",
+      "name": "Policy & change guardrails",
+      "raw_score": 3,
+      "maximum": 4,
+      "weight": 10
     },
     {
-      "id": 7,
-      "key": "observability",
-      "name": "Observability of Agentic Work",
-      "weight": 9,
-      "score_out_of_4": 4,
-      "panel_median": 4,
-      "weighted_points": 9,
-      "model_scores": {
-        "claude-opus-5": 4,
-        "gpt-6-astra": 4,
-        "grok-4.6": 4
-      },
-      "summary": "The authorized local observations verified origin correlation, lifecycle traces, machine completion, consumer actions, recovery and stale/duplicate handling; all judges awarded 4.",
-      "evidence_refs": [
-        "executionVerification.facts.machineCompletionSignalsVerified",
-        "executionVerification.facts.consumerActionsVerified",
-        "executionVerification.origin",
-        "executionVerification.producerAuthorization",
-        "executionVerification.facts",
-        "executionVerification.facts.agentOriginCorrelated"
-      ]
+      "id": "D7",
+      "name": "Observability",
+      "raw_score": 4,
+      "maximum": 4,
+      "weight": 9
     },
     {
-      "id": 8,
-      "key": "human-on-the-loop",
-      "name": "Human-on-the-Loop Integration",
-      "weight": 9,
-      "score_out_of_4": 3,
-      "panel_median": 3,
-      "weighted_points": 6.75,
-      "model_scores": {
-        "claude-opus-5": 3,
-        "gpt-6-astra": 3,
-        "grok-4.6": 3
-      },
-      "summary": "Enforced review, routing and inspectable escalation support supervision; a complete human-exception-to-shipping lifecycle was not demonstrated.",
-      "evidence_refs": [
-        "apiEvidence.branchProtection.requiresCodeOwnerReview",
-        "apiEvidence.labels.count",
-        "governance.prTemplatePaths",
-        "apiEvidence.branchProtection.effectiveRules",
-        "apiEvidence.labels.names",
-        "executionVerification.facts.escalationVerified",
-        "apiEvidence.branchProtection.requiredApprovingReviewCount"
-      ]
+      "id": "D8",
+      "name": "Human-on-the-loop integration",
+      "raw_score": 3,
+      "maximum": 4,
+      "weight": 9
     },
     {
-      "id": 9,
-      "key": "agentic-change-throughput",
-      "name": "Agentic Change Throughput & Contributor Mix",
-      "weight": 10,
-      "score_out_of_4": 2,
-      "panel_median": 1,
-      "weighted_points": 5,
-      "model_scores": {
-        "claude-opus-5": 1,
-        "gpt-6-astra": 1,
-        "grok-4.6": 1
-      },
-      "summary": "The 90-day API window found 0 agent-authored merged PRs among 90; 4 of 269 commits had agent co-authorship. Metadata-only attribution is floored and capped at 2.",
-      "evidence_refs": [
-        "apiEvidence.mergedPRs.byAuthorType",
-        "authorship.aiAgentCoauthored",
-        "authorship.shares.human",
-        "authorship.totalCommits",
-        "apiEvidence.mergedPRs",
-        "apiEvidence.mergedPRs.agentAuthoredMergedCount"
-      ]
+      "id": "D9",
+      "name": "Agentic change throughput",
+      "raw_score": 2,
+      "maximum": 4,
+      "weight": 10
     }
   ],
-  "auxiliary_findings": {
-    "cleanup_automation": {
-      "score": 70,
-      "rating": "Enrollment unverified",
-      "score_neutral": true,
-      "details": [
-        "Cleanup capability: detected with 129 executable or configured evidence file(s).",
-        "Bounded repeatable driver: detected with 11 executable or configured evidence file(s).",
-        "Concrete scheduler enrollment: not detected.",
-        "Observed behavior: mutating."
-      ],
-      "metrics": {
-        "advisory_capability_exists": false,
-        "behavior": "mutating",
-        "cleanup_capability_exists": true,
-        "manifest_declaration_count": 0,
-        "mutation_capability_exists": true,
-        "read_error_count": 3,
-        "scheduled_driver_exists": true,
-        "scheduler_enrollment_exists": false,
-        "state_config_count": 3
-      },
-      "qualification": "Static capability/enrollment analysis; mutating behavior classification is not proof of hosted execution."
-    },
-    "documentation_drift": {
-      "coverage": "partial",
-      "controls": [
-        {
-          "kind": "deterministic validation",
-          "scope": "targeted",
-          "trigger": "PR",
-          "effect": "advisory report",
-          "deterministic": true,
-          "failOnStaleMode": false,
-          "tested": false,
-          "enforceable": false
-        },
-        {
-          "kind": "deterministic validation",
-          "scope": "targeted",
-          "trigger": "post-merge",
-          "effect": "advisory report",
-          "deterministic": true,
-          "failOnStaleMode": false,
-          "tested": false,
-          "enforceable": false
-        },
-        {
-          "kind": "deterministic validation",
-          "scope": "targeted",
-          "trigger": "manual",
-          "effect": "advisory report",
-          "deterministic": true,
-          "failOnStaleMode": false,
-          "tested": false,
-          "enforceable": false
-        },
-        {
-          "kind": "deterministic validation",
-          "scope": "targeted",
-          "trigger": "manual",
-          "effect": "advisory report",
-          "deterministic": true,
-          "failOnStaleMode": false,
-          "tested": true,
-          "enforceable": false
-        }
-      ],
-      "prose_claims": 8,
-      "residual_action": "Add checked-diff or fail-on-stale semantics to the existing documentation generation, then wire it into affected PR validation."
-    },
-    "interpretation": "These are current evaluator findings and evidence-recognition limits, not an assertion that corresponding product code is absent."
+  "native_qualification": {
+    "fresh_calls": 9,
+    "fresh_tokens": 959215,
+    "prior_failed_calls": 3,
+    "prior_failed_tokens": 352621,
+    "aggregate_calls": 12,
+    "aggregate_tokens": 1311836,
+    "aggregate_token_ceiling": 1800000,
+    "native_reported_cost_microusd": 0,
+    "cost_is_billing_proof": false,
+    "judge_usage_separate": true,
+    "automatic_retries": false,
+    "recurrence_passed": 18,
+    "recurrence_total": 18,
+    "expiry_passed": 22,
+    "expiry_total": 22,
+    "all_case_pipelines_fulfilled": true,
+    "rejected_candidate_passed": 19,
+    "restored_original_fault_passed": 20,
+    "negative_total": 22,
+    "interrupted_status": "cancelled",
+    "interrupted_verification": "pending",
+    "interrupted_oracle_score": null,
+    "final_negative_status": "failed",
+    "rejected_consumer": "native_acceptance_not_observed",
+    "exact_restoration_verified": true,
+    "stale_and_duplicate_handling_verified": true,
+    "source_supplemental_settings_unchanged": true,
+    "owned_qa_stopped": true,
+    "data_and_evidence_preserved": true,
+    "scope": "Controlled local defects and development identity; no human approval, production autonomy, hosted maintenance activation or general learning-quality claim."
   },
-  "follow_up_boundaries": {
-    "goal_met": false,
-    "related_draft_pr": {
-      "number": 323,
-      "url": "https://github.com/All-The-Vibes/ecorp/pull/323",
-      "branch": "codex/ai-readiness-improvements",
-      "observed_head_prefix": "944dcbe",
-      "scope": [
-        "readiness",
-        "CODEOWNERS",
-        "security CI"
-      ]
-    },
-    "existing_work": {
-      "in_progress_issues": [
-        280,
-        95
-      ],
-      "dependent_issue": 269
-    },
-    "constraints": [
-      "Coordinate with existing work; do not duplicate its CODEOWNERS/readiness/security changes.",
-      "Do not alter the scorer or relabel authorship/history to manufacture credit.",
-      "Runtime features alone do not establish sustained governed shipping or learned decision quality."
-    ]
+  "assessed_source_validation": {
+    "node_passed": 1182,
+    "steward_passed": 217,
+    "rust_passed": 561,
+    "rust_ignored": 343,
+    "contributor_gates_passed": 9,
+    "scope": "Reconciled executable inputs; final workflow/documentation delta separately validated before freeze.",
+    "linux_coverage_lines_percent": 68.1427,
+    "linux_tests_passed": 873,
+    "linux_job_succeeded": true,
+    "linux_parent_workflow_succeeded": false,
+    "equivalent_rust_inputs_verified": true
   },
-  "evidence_model_tension": {
-    "self_healing_static_rollback_path": false,
-    "local_automatic_rollback_verified": true,
-    "all_three_judge_d3_scores": 3,
-    "interpretation": "Judges retained 3 citing the static field despite verified controlled restoration; this does not mean native restoration is missing."
+  "separate_feedback_holdout": {
+    "native_runs": 4,
+    "tokens": 368876,
+    "baseline_factual_passed": 30,
+    "active_factual_passed": 30,
+    "factual_total": 30,
+    "measured_accuracy_gain": 0,
+    "extra_active_tokens": 41621,
+    "visible_in_judge_pack": false
+  },
+  "evidence_limits": {
+    "static_rollback_path_detected": false,
+    "native_rollback_verified": true,
+    "rust_mcp_gateway_exists": true,
+    "shipped_mcp_detector_matches": 0,
+    "api_agent_authored_merged_prs": 0,
+    "all_merged_prs_in_window": 91,
+    "coauthored_commits": 4,
+    "total_commits": 277,
+    "scheduled_workflow_detected": false,
+    "ci_maintenance_hosted_activation_verified": false
+  },
+  "publication": {
+    "prior_pr": "https://github.com/All-The-Vibes/ecorp/pull/326",
+    "prior_pr_merged_at": "2026-09-18T16:38:45Z",
+    "prior_pr_checks_succeeded": 17,
+    "assessed_local_changes_committed": false,
+    "subsequent_mcp_recovery_feature_assessed": false,
+    "native_factory_publication_claimed": false
+  },
+  "auxiliary": {
+    "cleanup_score": 70,
+    "cleanup_rating": "Enrollment unverified",
+    "cleanup_read_errors": 4,
+    "documentation_drift_coverage": "partial"
   }
 }
