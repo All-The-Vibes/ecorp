@@ -414,7 +414,12 @@ async function boundedBody(response, limit) {
   return Buffer.concat(chunks, length)
 }
 
-export async function exportOperationReceipt({ env = process.env, runId, mode = 'current-run', timeoutMs = 30_000 } = {}) {
+// Only trusted local callers explicitly selecting artifact IDs receive bytes.
+// The public receipt exporter and CLI retain their metadata-only output schema.
+export async function exportOperationEvidence({ env = process.env, runId, mode = 'current-run', timeoutMs = 30_000, artifactIds = [] } = {}) {
+  if (!Array.isArray(artifactIds) || artifactIds.length > 8 || artifactIds.some(id => !isUuid(id))
+    || new Set(artifactIds.map(id => id.toLowerCase())).size !== artifactIds.length) fail('Invalid retained artifact selection')
+  const selected = new Set(artifactIds.map(id => id.toLowerCase()))
   runId = uuid(runId)
   if (!['current-run', 'published-result'].includes(mode)) fail('Unsupported receipt mode')
   const config = probeConfiguration(env, timeoutMs)
@@ -449,18 +454,27 @@ export async function exportOperationReceipt({ env = process.env, runId, mode = 
   }
   const before = await capture()
   const artifacts = []
+  const artifactBytes = []
+  if ([...selected].some(id => !before.artifactReferences.some(reference => reference.id === id))) fail('Selected artifact unavailable')
   let bytesRead = 0
   for (const reference of before.artifactReferences) {
     const limit = Math.min(MAX_ARTIFACT_BYTES, MAX_TOTAL_ARTIFACT_BYTES - bytesRead)
     if (limit < 1) fail('Receipt artifact budget is exhausted')
     const response = await request(`${prefix}/artifacts/${uuid(reference.id)}${query}`, limit)
     artifacts.push(verifyArtifactBytes(reference, response.bytes, response.headers))
+    if (selected.has(reference.id)) artifactBytes.push({ id: reference.id, bytes: Buffer.from(response.bytes) })
     bytesRead += response.bytes.length
   }
   const after = await capture()
   same(before.consistency, after.consistency, 'Native operation changed during receipt collection; retry with current authority')
   remaining()
-  return validateOperationReceipt({ ...before.body, artifacts, checked_at: new Date().toISOString(), duration_ms: Date.now() - started })
+  const receipt = validateOperationReceipt({ ...before.body, artifacts, checked_at: new Date().toISOString(), duration_ms: Date.now() - started })
+  return { receipt, artifactBytes }
+}
+
+export async function exportOperationReceipt(options = {}) {
+  const { receipt } = await exportOperationEvidence({ ...options, artifactIds: [] })
+  return receipt
 }
 
 async function main() {

@@ -88,3 +88,9 @@ The caller must use ECorp's existing authority and idempotent operations for any
 The package aliases are `observe:run` and `check:observation`. The direct Node commands require no
 JavaScript package installation; the native MCP binary and access configuration remain prerequisites.
 Focused tests are `tools/operation_receipt.test.mjs` and `tools/consume_operation_receipt.test.mjs`.
+
+For a separately requested reference-only contract revision, see
+[advisory feedback adoption](OPERATION_FEEDBACK.md). That tool adds stricter
+complete-check and exact corpus-artifact requirements, prepares a reviewable
+proposal, and uses the native revision API for the effect. These observation
+commands retain their read-only behavior and metadata-only output.

@@ -15,5 +15,11 @@ trusted native binary, never resets a demo, and emits bounded metadata instead o
 contents. `verify_toolchain.mjs` reports selected native tool versions without installation.
 `check_documentation.mjs` validates only its marked current command/version contracts.
 
+`operation_feedback.mjs prepare` performs reads and writes new local proposal files.
+Its explicit `apply` command makes a native contract revision and requires the
+selected proposal bytes/hash and current native authority. It never launches work.
+An unknown result may already have committed; preserve the exact request/key and
+reconcile instead of creating a new request. See `docs/OPERATION_FEEDBACK.md`.
+
 Keep exact commands, exit statuses, source identity and evidence scope in reports. Fixture
 success, real-provider inference, hosted checks and production authentication are distinct.

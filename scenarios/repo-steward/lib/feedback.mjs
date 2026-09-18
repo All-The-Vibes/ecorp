@@ -166,6 +166,9 @@ function checkCorpus(corpus) {
   feedbackDigest(corpus);
   return corpus;
 }
+// Validation is reusable by trusted consumers; it confers no execution authority.
+export function validateFeedbackCorpus(corpus) { return checkCorpus(corpus); }
+
 function transition(corpus, next, recordId, kind, at) {
   next.revision += 1; next.updated_at = at; checkCorpus(next);
   const record = next.records.find(item => item.id === recordId), corpusDigest = feedbackDigest(next);

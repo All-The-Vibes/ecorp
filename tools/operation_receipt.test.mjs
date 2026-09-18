@@ -6,7 +6,7 @@ import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import { exportOperationReceipt, operationReceiptFingerprint, projectOperationState, validateOperationReceipt, verifyArtifactBytes } from './operation_receipt.mjs'
+import { exportOperationEvidence, exportOperationReceipt, operationReceiptFingerprint, projectOperationState, validateOperationReceipt, verifyArtifactBytes } from './operation_receipt.mjs'
 
 const id = (value) => `00000000-0000-4000-8000-${String(value).padStart(12, '0')}`
 const sha = (value) => createHash('sha256').update(value).digest('hex')
@@ -326,6 +326,54 @@ test('compiled native MCP export performs two captures and downloads only select
   assert.equal(result.scope.server_origin_sha256, sha(api.origin))
   assert.equal(result.artifacts.length, 2)
   assert.equal(JSON.stringify(result).includes(PRIVATE), false)
+})
+
+test('artifact retention selection is bounded before reading host configuration', async () => {
+  const letterId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+  for (const artifactIds of [null, {}, [[id(9)]], [letterId, letterId.toUpperCase()], Array.from({ length: 9 }, (_, index) => id(index)), ['outside']]) {
+    await assert.rejects(exportOperationEvidence({ env: {}, runId: id(6), artifactIds }), /Invalid retained artifact selection/u)
+  }
+})
+
+test('compiled native evidence retains only explicitly selected verified bytes and preserves public receipt schema', nativeOptions, async t => {
+  const api = await apiFixture(t, fixture(true))
+  const options = { env: environment(api.origin), runId: id(6), mode: 'published-result' }
+  const selected = await exportOperationEvidence({ ...options, artifactIds: [id(9)] })
+  assert.equal(selected.receipt.artifacts.length, 2)
+  assert.deepEqual(selected.artifactBytes, [{ id: id(9), bytes: BYTES }])
+  assert.equal(api.snapshots(), 2)
+  const unselected = await exportOperationEvidence(options)
+  assert.deepEqual(unselected.artifactBytes, [])
+  const publicReceipt = await exportOperationReceipt({ ...options, artifactIds: [id(9)] })
+  assert.equal(Object.hasOwn(publicReceipt, 'artifactBytes'), false)
+  assert.equal(operationReceiptFingerprint(publicReceipt), operationReceiptFingerprint(selected.receipt))
+  assert.equal(JSON.stringify(publicReceipt).includes(BYTES.toString()), false)
+  assert.ok(api.requests.every(request => request.method === 'GET'))
+})
+
+test('compiled native evidence rejects an unowned artifact selection before any artifact download', nativeOptions, async t => {
+  const api = await apiFixture(t, fixture())
+  await assert.rejects(exportOperationEvidence({ env: environment(api.origin), runId: id(6), artifactIds: [id(99)] }), /Selected artifact unavailable/u)
+  assert.equal(api.requests.filter(request => request.url.includes('/artifacts/')).length, 0)
+})
+
+test('compiled native evidence never returns retained bytes from a tampered artifact or changed source', nativeOptions, async t => {
+  const tampered = fixture()
+  const badApi = await apiFixture(t, tampered, (request, response) => {
+    if (!request.url.includes('/artifacts/')) return false
+    const reference = project(tampered).artifactReferences[0]
+    headers(reference).forEach((header, name) => response.setHeader(name, header))
+    const bytes = Buffer.from(BYTES); bytes[0] ^= 1
+    response.end(bytes)
+    return true
+  })
+  await assert.rejects(exportOperationEvidence({ env: environment(badApi.origin), runId: id(6), artifactIds: [id(9)] }), /digest/u)
+  const changed = fixture()
+  const driftApi = await apiFixture(t, changed, request => {
+    if (request.url.includes('/artifacts/')) changed.task.contract_version += 1
+    return false
+  })
+  await assert.rejects(exportOperationEvidence({ env: environment(driftApi.origin), runId: id(6), artifactIds: [id(9)] }), /changed during receipt collection/u)
 })
 
 test('compiled native exporter keeps opaque runner/model/ref metadata out of every request route', nativeOptions, async t => {

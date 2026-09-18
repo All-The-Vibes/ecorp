@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { audit } from './lib/steward.mjs';
 import { fixtureSnapshot } from './fixtures/demo.mjs';
 import { FEEDBACK_LIMITS, feedbackDigest, createFeedbackEvidence, createFeedbackCorpus,
-  proposeFeedback, reviewFeedback, retireFeedback, observeFeedback } from './lib/feedback.mjs';
+  proposeFeedback, reviewFeedback, retireFeedback, observeFeedback, validateFeedbackCorpus } from './lib/feedback.mjs';
 
 const now = new Date('2026-09-18T12:00:00Z');
 const later = minutes => new Date(now.getTime() + minutes * 60000);
@@ -302,4 +302,13 @@ test('canonical digests ignore property insertion order but reject executable an
   assert.equal(feedbackDigest({ a: 1, b: [true, null] }), feedbackDigest({ b: [true, null], a: 1 }));
   for (const value of [undefined, NaN, Infinity, () => {}]) assert.throws(() => feedbackDigest(value), { code: 'FEEDBACK_DATA' });
   const cycle = {}; cycle.self = cycle; assert.throws(() => feedbackDigest(cycle), { code: 'FEEDBACK_DATA' });
+});
+
+test('reusable corpus validation preserves input and rejects authority claims or altered guidance', () => {
+  const active = activate(propose()).corpus, before = structuredClone(active);
+  assert.equal(validateFeedbackCorpus(freeze(active)), active);
+  assert.deepEqual(active, before);
+  const changed = structuredClone(before); changed.records[0].guidance.text = 'Changed after review';
+  assert.throws(() => validateFeedbackCorpus(changed), { code: 'FEEDBACK_SCHEMA' });
+  assert.throws(() => validateFeedbackCorpus({ ...before, authorized: true }), { code: 'FEEDBACK_SCHEMA' });
 });
