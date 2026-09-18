@@ -6011,6 +6011,20 @@ impl PgStore {
         Ok(outcome)
     }
 
+    /// Reuses mission admission while allowing a trusted caller to atomically
+    /// persist the additional authority needed before dispatch.
+    pub async fn create_mission_in_transaction(
+        &self,
+        tx: &mut Transaction<'_, Postgres>,
+        corp_id: Uuid,
+        requested_by: Uuid,
+        title: &str,
+        description: &str,
+        plan: &TaskGraphPlan,
+    ) -> Result<(MissionPlanIds, Vec<DomainEvent>)> {
+        create_mission_tx(tx, corp_id, requested_by, title, description, plan).await
+    }
+
     pub async fn mission_launch_runs(
         &self,
         corp_id: Uuid,

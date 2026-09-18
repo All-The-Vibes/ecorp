@@ -48,7 +48,7 @@ function git(argv) {
   for (const key of ["PATH", "SystemRoot", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP"]) {
     if (process.env[key] !== undefined) env[key] = process.env[key];
   }
-  const result = spawnSync(settings.git, ["-c", "core.hooksPath=", ...argv], {
+  const result = spawnSync(settings.git, ["-c", `core.hooksPath=${path.join(root, "empty-hooks")}`, ...argv], {
     cwd: root, env, encoding: "utf8", timeout: 30_000, windowsHide: true,
   });
   assert.equal(result.status, 0, "owned fixture Git command failed");

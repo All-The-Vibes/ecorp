@@ -1,0 +1,165 @@
+.delegated-panel {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+  padding: 16px;
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.delegated-panel[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+
+.delegated-panel .delegated-heading,
+.delegated-panel .delegated-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.delegated-panel .delegated-heading {
+  justify-content: space-between;
+}
+
+.delegated-panel h2,
+.delegated-panel h3,
+.delegated-panel h4 {
+  margin: 0;
+  color: var(--cp-text);
+  font-family: inherit;
+}
+
+.delegated-panel h2 { font-size: 18px; }
+.delegated-panel h3,
+.delegated-panel h4 { font-size: 14px; }
+.delegated-panel p { margin: 12px 0; }
+
+.delegated-panel .delegated-provider,
+.delegated-panel .delegated-status {
+  padding: 4px 8px;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  background: var(--cp-surface-soft);
+  color: var(--cp-text);
+  font-size: 12px;
+}
+
+.delegated-panel .delegated-provider strong {
+  margin-left: 4px;
+  color: var(--cp-text);
+  border-bottom: 2px solid var(--cp-warning);
+}
+
+.delegated-panel .delegated-operations {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.delegated-panel .delegated-operation {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  background: var(--cp-surface);
+}
+
+.delegated-panel dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 12px 0;
+}
+
+.delegated-panel dt { color: var(--cp-text-muted); }
+.delegated-panel dd { margin: 0; }
+.delegated-panel code {
+  font-family: Consolas, "Courier New", Courier, monospace;
+  overflow-wrap: anywhere;
+  color: var(--cp-text);
+}
+
+.delegated-panel .delegated-receipt {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--cp-border);
+  border-radius: 0.625rem;
+  background: var(--cp-bg-elevated);
+}
+
+.delegated-panel .delegated-error { color: var(--cp-danger); }
+.delegated-panel .delegated-released { color: var(--cp-success); }
+.delegated-panel .delegated-status-failed { border-color: var(--cp-danger); }
+.delegated-panel .delegated-status-completed { border-color: var(--cp-success); }
+
+.delegated-panel button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--cp-border-strong);
+  border-radius: 0.625rem;
+  background: var(--cp-surface);
+  color: var(--cp-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.delegated-panel button:hover:not(:disabled) { background: var(--cp-accent-soft); }
+.delegated-panel button.delegated-primary {
+  background: var(--cp-accent);
+  border-color: var(--cp-accent);
+  color: var(--cp-accent-fg);
+}
+.delegated-panel button.delegated-primary:hover:not(:disabled) { background: var(--cp-accent-hover); }
+.delegated-panel button:focus-visible { outline: 2px solid var(--cp-link); outline-offset: 2px; }
+.delegated-panel button:disabled { opacity: 0.6; cursor: not-allowed; }

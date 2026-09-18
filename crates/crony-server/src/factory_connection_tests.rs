@@ -159,6 +159,7 @@ impl Fixture {
             artifacts,
             artifact_retention_days: 1,
             workspace_sign_in: Arc::new(DashMap::new()),
+            delegated: None,
         };
         let (tx, commands) = mpsc::unbounded_channel();
         // There is deliberately no unbound coding capability. Forgetting the

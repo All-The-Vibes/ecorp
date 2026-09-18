@@ -1596,6 +1596,7 @@ mod tests {
     fn request(provider: &str) -> AdapterRunRequest {
         let run_id = uuid::Uuid::new_v4();
         AdapterRunRequest {
+            trusted_assignment: None,
             run_id,
             mission_id: uuid::Uuid::new_v4(),
             task_id: uuid::Uuid::new_v4(),
