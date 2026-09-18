@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import './App.css'
 import './Arcade.css'
 import './Cabinet.css'
@@ -47,6 +47,9 @@ import {
   connectionTarget, connectionsNeedPresenceRefresh,
 } from './workspaceConnections'
 import type { WorkspaceConnection, WorkspaceConnections } from './workspaceConnections'
+import { MissionCollaborationPanel } from './MissionCollaborationPanel'
+import { collaborationSnapshotIsCurrent, createDiscussionDraftStore, selectCollaborationMission } from './missionCollaboration'
+import type { CollaborationInput, DiscussionDraft } from './missionCollaboration'
 
 type Actor = {
   id: string
@@ -553,7 +556,7 @@ type RoomMessage = {
 }
 
 type RoomPostInput = {
-  source: 'room' | 'factory'
+  source: 'room' | 'factory' | 'mission'
   scope: DiscussionScope
   roomId: string
   body: string
@@ -873,8 +876,11 @@ function browserOperationKey(storageKey: string, payload: string): string {
   }
 }
 
-function clearBrowserOperation(storageKey: string) {
-  window.sessionStorage.removeItem(storageKey)
+function clearBrowserOperation(storageKey: string, expectedKey?: string) {
+  try {
+    if (expectedKey && JSON.parse(window.sessionStorage.getItem(storageKey) ?? 'null')?.key !== expectedKey) return
+    window.sessionStorage.removeItem(storageKey)
+  } catch { /* Unverifiable browser storage must not erase another operation. */ }
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -3420,6 +3426,9 @@ function MissionCard({
   onDiscuss,
   onViewAgents,
   onOpenFactory,
+  collaborationInput,
+  discussion,
+  onViewAgent,
   publicationRevision = '',
 }: {
   corpId: string
@@ -3465,6 +3474,9 @@ function MissionCard({
   onDiscuss: (mission: Mission) => void
   onViewAgents: (mission: Mission) => void
   onOpenFactory: () => void
+  collaborationInput?: CollaborationInput
+  discussion?: ReactNode
+  onViewAgent?: (agentId: string) => void
   publicationRevision?: string
 }) {
   const [copiedRecoveryCommand, setCopiedRecoveryCommand] = useState<string | null>(null)
@@ -3718,6 +3730,22 @@ function MissionCard({
         <span className="mission-id">#{shortId(mission.id)}</span>
       </div>
       <h3>{mission.title}</h3>
+      {collaborationInput && onViewAgent ? <MissionCollaborationPanel
+        input={collaborationInput}
+        onViewAgent={onViewAgent}
+        onInspectRun={(runId) => {
+          if (!runs.some((run) => run.id === runId && taskById.has(run.task_id))) return
+          rememberEvidenceRun(runId)
+          window.requestAnimationFrame(() => focusWorkSection(`mission-evidence-panel-${mission.id}`))
+        }}
+        onSection={(section) => {
+          if (section === 'discussion') { onDiscuss(mission); return }
+          const id = section === 'evidence' ? `mission-evidence-panel-${mission.id}` : `mission-${section}-${mission.id}`
+          const target = document.getElementById(id)
+          if (target instanceof HTMLDetailsElement) target.open = true
+          focusWorkSection(id)
+        }}
+      /> : null}
       <div className="mission-result-surface" id={`mission-result-${mission.id}`} tabIndex={-1}>
       {originUnavailable && mission.status === 'completed' && canOperate(actorRole) ? (
         <WorkResultCard
@@ -3805,15 +3833,13 @@ function MissionCard({
           </button> : null}
         </nav>
       </div>
-      {mission.description ? (
-        <details className="mission-dossier mission-briefing">
+      <details className="mission-dossier mission-briefing" id={`mission-brief-${mission.id}`} tabIndex={-1}>
           <summary>
             <span>Mission briefing</span>
             <small>Open full specification</small>
           </summary>
-          <p className="mission-description">{mission.description}</p>
-        </details>
-      ) : null}
+          <p className="mission-description">{mission.description || 'No additional specification is recorded. Open the task contracts for the recorded scope.'}</p>
+      </details>
       <div className="mission-chip-row">
         <div className="strategy-chip">{mission.strategy === STUDIO_STRATEGY ? STUDIO_STRATEGY_LABEL : statusLabel(mission.strategy)}</div>
         <div className="contract-version-chip">Specification v{mission.specification_version}</div>
@@ -3851,7 +3877,7 @@ function MissionCard({
           onDecision={onBudgetRevisionDecision}
         />
       </details>
-      <details className="mission-dossier mission-task-dossier">
+      <details className="mission-dossier mission-task-dossier" id={`mission-tasks-${mission.id}`} tabIndex={-1}>
         <summary>
           <span>Task graph</span>
           <small>{completedTasks}/{tasks.length} complete</small>
@@ -4441,6 +4467,10 @@ function MissionCard({
           })()}
         </div>
       ) : null}
+      {discussion ? <details className="mission-conversation" id={`mission-discussion-${mission.id}`} tabIndex={-1}>
+        <summary>Team conversation</summary>
+        {discussion}
+      </details> : null}
     </article>
   )
 }
@@ -4480,6 +4510,8 @@ function RoomPanel({
   onPost,
   onNavigateLink,
   onContextChange,
+  source = 'room',
+  drafts,
 }: {
   room: { id: string; name: string; purpose: string } | undefined
   scope: DiscussionScope
@@ -4492,10 +4524,18 @@ function RoomPanel({
   onPost: (input: RoomPostInput) => Promise<boolean>
   onNavigateLink: (link: EntityLink) => void
   onContextChange: (missionId: string | null) => void
+  source?: 'room' | 'mission'
+  drafts: ReturnType<typeof createDiscussionDraftStore>
 }) {
-  const [body, setBody] = useState('')
-  const [replyToId, setReplyToId] = useState<string | null>(null)
-  const [linkValue, setLinkValue] = useState('')
+  const draftKey = discussionScopeKey(scope)
+  const draft = useSyncExternalStore(drafts.subscribe, () => drafts.get(draftKey), () => drafts.get(draftKey))
+  const { body, replyToId, linkValue } = draft
+  const changeDraft = (patch: Partial<DiscussionDraft>) => {
+    const next = { ...draft, ...patch }
+    drafts.save(draftKey, next)
+  }
+  const setBody = (value: string) => changeDraft({ body: value })
+  const setReplyToId = (value: string | null) => changeDraft({ replyToId: value })
   const [posting, setPosting] = useState(false)
   const contextMissionId = scope.missionId
   const context = roomWorkContext({ missions, tasks, runs }, room?.id, contextMissionId)
@@ -4513,7 +4553,7 @@ function RoomPanel({
           <option key={mission.id} value={mission.id}>{mission.title}</option>
         ))}
       </select>
-      {room && contextMission ? (
+      {source === 'room' && room && contextMission ? (
         <button type="button" className="button button-secondary"
           onClick={() => onNavigateLink({ kind: 'mission', id: contextMission.id })}>
           Open mission and results
@@ -4583,7 +4623,7 @@ function RoomPanel({
     let saved = false
     try {
       saved = await onPost({
-        source: 'room',
+        source,
         scope,
         roomId: room.id,
         body: body.trim(),
@@ -4596,10 +4636,8 @@ function RoomPanel({
       setPosting(false)
     }
     if (saved) {
-      clearBrowserOperation(operationStorageKey)
-      setBody('')
-      setReplyToId(null)
-      setLinkValue('')
+      clearBrowserOperation(operationStorageKey, idempotencyKey)
+      drafts.complete(draftKey, draft)
     }
   }
 
@@ -4618,7 +4656,7 @@ function RoomPanel({
         </div>
         <div className="room-count">{scopedMessages.length} comments</div>
       </div>
-      {contextSelector}
+      {source === 'room' ? contextSelector : null}
       <div className="room-layout">
         <ol className="room-message-list" data-testid="room-message-list">
           {visibleMessages.length ? (
@@ -4675,7 +4713,7 @@ function RoomPanel({
           {composerError ? (
             <div className="room-denied" role="alert">
               {composerError}
-              <button type="button" onClick={() => { setReplyToId(null); setLinkValue('') }}>
+              <button type="button" onClick={() => changeDraft({ replyToId: null, linkValue: '' })}>
                 Reset reply and related work
               </button>
             </div>
@@ -4702,8 +4740,7 @@ function RoomPanel({
           <select id="room-link" value={effectiveLinkValue} disabled={posting}
             onChange={(event) => {
               const value = event.target.value
-              setLinkValue(value)
-              setReplyToId(null)
+              changeDraft({ linkValue: value, replyToId: null })
             }}>
             <option value="">No linked work item</option>
             {linkedOptions.map((option) => (
@@ -4867,7 +4904,9 @@ function App() {
     snapshot: SnapshotResponse['snapshot']
     room: DiscussionScope
     factory: DiscussionScope
+    mission: DiscussionScope
   } | null>(null)
+  const [discussionDrafts] = useState(createDiscussionDraftStore)
   const composerInitialized = useRef(false)
   const initialWorkspaceHash = useRef(window.location.hash)
   const missionComposerHeading = useRef<HTMLHeadingElement | null>(null)
@@ -5342,9 +5381,16 @@ function App() {
     roomId: factoryRoom?.id ?? null,
     missionId: factorySelection?.mission_id ?? null,
   }), [bootstrap?.corp_id, selectedActorId, factoryRoom?.id, factorySelection?.mission_id])
+  const collaborationMission = selectCollaborationMission(data?.snapshot.missions ?? [], selectedMissionId)
+  const collaborationRoom = data && collaborationMission
+    ? resolveDiscussionRoom(data.snapshot.rooms, data.snapshot.missions, collaborationMission.id) : undefined
+  const missionScope = useMemo<DiscussionScope>(() => ({
+    corpId: bootstrap?.corp_id ?? '', actorId: selectedActorId ?? '',
+    roomId: collaborationRoom?.id ?? null, missionId: collaborationMission?.id ?? null,
+  }), [bootstrap?.corp_id, selectedActorId, collaborationRoom?.id, collaborationMission?.id])
   useLayoutEffect(() => {
     currentComments.current = data && selectedActor
-      ? { snapshot: data.snapshot, room: roomScope, factory: factoryScope }
+      ? { snapshot: data.snapshot, room: roomScope, factory: factoryScope, mission: missionScope }
       : null
     return () => { currentComments.current = null }
   })
@@ -6147,7 +6193,11 @@ function App() {
   const latestMissions = data.snapshot.missions.slice(0, 8)
   const latestEvents = data.snapshot.events.toReversed().slice(0, 28)
   const connectedRunners = data.runners.filter((runner) => runner.connected)
-  const runnerLabel = connectedRunners.length
+  const snapshotCurrent = collaborationSnapshotIsCurrent({
+    connection, now: Date.parse(snapshotLoad?.receivedAt ?? ''),
+    snapshotFailed: snapshotLoad?.refreshFailed ?? true,
+  })
+  const runnerLabel = !snapshotCurrent ? 'Runner state unconfirmed' : connectedRunners.length
     ? `${connectedRunners.length} runner${connectedRunners.length === 1 ? '' : 's'} online`
     : data.runners.some((runner) => runner.status === 'grace')
       ? 'Runner reconnecting'
@@ -6190,9 +6240,7 @@ function App() {
   const currentWorkspaceView =
     WORKSPACE_VIEWS.find((view) => view.id === activeWorkspaceView) ??
     WORKSPACE_VIEWS[0]
-  const selectedMission =
-    data.snapshot.missions.find((mission) => mission.id === selectedMissionId) ??
-    latestMissions[0]
+  const selectedMission = collaborationMission
   // Deep links may select older work outside the recent queue. Both pickers must
   // keep that explicit work item visible without changing its pinned evidence.
   const missionChoices = selectedMission && !latestMissions.some((mission) => mission.id === selectedMission.id)
@@ -6254,7 +6302,7 @@ function App() {
             <span />
             {connection}
           </div>
-          <div className={`runner-indicator ${connectedRunners.length ? 'runner-online' : ''}`}>
+          <div className={`runner-indicator ${snapshotCurrent && connectedRunners.length ? 'runner-online' : ''}`}>
             {runnerLabel}
           </div>
           <div className="operations-identity">
@@ -6381,12 +6429,12 @@ function App() {
         {journeyOpen ? (
           <>
             <ol className="journey-steps">
-              <li className={connectedRunners.length ? 'journey-complete' : 'journey-current'}>
+              <li className={snapshotCurrent && connectedRunners.length ? 'journey-complete' : 'journey-current'}>
                 <span>1</span>
                 <div>
                   <strong>Connect a runner</strong>
                   <small>
-                    {connectedRunners.length
+                    {!snapshotCurrent ? 'Runner state unconfirmed until the snapshot refreshes.' : connectedRunners.length
                       ? `${connectedRunners.length} runner connected to ${sourceBase}`
                       : 'Start the local stack or enroll a remote runner.'}
                   </small>
@@ -6439,7 +6487,7 @@ function App() {
               <div className="setup-grid">
                 <div className="setup-health">
                   <div><span className={`setup-dot setup-${connection}`} />Control plane<strong>{connection}</strong></div>
-                  <div><span className={`setup-dot ${connectedRunners.length ? 'setup-live' : 'setup-offline'}`} />Runner<strong>{runnerLabel}</strong></div>
+                  <div><span className={`setup-dot ${snapshotCurrent && connectedRunners.length ? 'setup-live' : 'setup-offline'}`} />Runner<strong>{runnerLabel}</strong></div>
                   <div><span className={`setup-dot ${realAdapters.length ? 'setup-live' : 'setup-offline'}`} />AI runtimes<strong>{realAdapters.length || 'none'}</strong></div>
                 </div>
                 <div className="setup-path">
@@ -7425,9 +7473,35 @@ function App() {
                   onContractRevision={createContractRevision}
                   onVerificationDecision={decideVerification}
                   onActionApprovalDecision={decideActionApproval}
+                  collaborationInput={{
+                    corpId: bootstrap.corp_id, mission: selectedMission, actor: selectedActor,
+                    actors: data.snapshot.actors, tasks: selectedMissionTasks, runs: selectedMissionRuns,
+                    agents: data.snapshot.agents, runners: data.runners, leases: data.snapshot.leases,
+                    reviews: data.snapshot.verification_requests, connection, now: Date.parse(snapshotLoad?.receivedAt ?? ''),
+                    snapshotFailed: snapshotLoad?.refreshFailed ?? true,
+                  }}
+                  onViewAgent={(agentId) => {
+                    if (!currentAgents.some((agent) => agent.id === agentId)) return
+                    setSelectedAgentId(agentId)
+                    setFloorInspectorOpen(true)
+                    activateWorkspaceView('floor')
+                  }}
+                  discussion={activeWorkspaceView === 'missions' ? <RoomPanel
+                    key={discussionScopeKey(missionScope)}
+                    source="mission" drafts={discussionDrafts}
+                    room={collaborationRoom} scope={missionScope}
+                    messages={data.snapshot.room_messages} actors={data.snapshot.actors}
+                    selectedActor={selectedActor} missions={data.snapshot.missions}
+                    tasks={data.snapshot.tasks} runs={data.snapshot.runs}
+                    onPost={postRoomMessage}
+                    onNavigateLink={(link) => navigateToWorkspaceEntity(link.kind, link.id)}
+                    onContextChange={selectDiscussionMission}
+                  /> : null}
                   onDiscuss={(mission) => {
                     selectDiscussionMission(mission.id)
-                    activateWorkspaceView('room')
+                    const target = document.getElementById(`mission-discussion-${mission.id}`)
+                    if (target instanceof HTMLDetailsElement) target.open = true
+                    focusWorkSection(`mission-discussion-${mission.id}`)
                   }}
                   onViewAgents={() => {
                     const run = selectedMissionRuns.find((candidate) => !terminalRun(candidate.status))
@@ -7449,8 +7523,10 @@ function App() {
                 />
               ) : (
                 <div className="empty-state">
-                  <strong>No missions yet</strong>
-                  <span>Start with a concrete outcome and let ECorp create the task contract.</span>
+                  <strong>{selectedMissionId !== null ? 'Selected mission unavailable' : 'No missions yet'}</strong>
+                  <span>{selectedMissionId !== null
+                    ? 'The selected record is not in your current view. Choose another available mission; its discussion will not be substituted automatically.'
+                    : 'Start with a concrete outcome and let ECorp create the task contract.'}</span>
                 </div>
               )}
             </div>
@@ -7460,8 +7536,10 @@ function App() {
       </section>
 
       <div className="workspace-surface" hidden={activeWorkspaceView !== 'room'}>
+        {activeWorkspaceView === 'room' ? (
         <RoomPanel
           key={discussionScopeKey(roomScope)}
+          drafts={discussionDrafts}
           room={room}
           scope={roomScope}
           messages={data.snapshot.room_messages}
@@ -7474,6 +7552,7 @@ function App() {
           onNavigateLink={(link) => navigateToWorkspaceEntity(link.kind, link.id)}
           onContextChange={selectDiscussionMission}
         />
+        ) : null}
       </div>
 
       <section

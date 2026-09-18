@@ -106,3 +106,26 @@ browser cases are not claimed resolved. #236's auditor-led policy is unchanged.
 Only demonstrated inline findings are eligible for resolution with this evidence.
 The human request-changes review is not dismissed; fresh review of the final head
 is required. No issue closure, merge, auto-merge, cloud change or deployment.
+
+## Final main refresh and verification
+
+The team subsequently merged #306 as main
+`aa2ef457d86d727232ae353f53a13c8c9f149bf6`. It was incorporated without conflicts
+after the first validated integration commit `880f6ab8089efa259880eecdd23fe122234592fe`.
+That refresh changed no Rust, migrations, provider scripts, QA tools, workflow or
+Cargo bytes from the native rehearsals above. All six gates were rerun on the
+final combined content: **310 frontend passed**, **554 Rust passed/343 ignored**,
+migration41, format, Clippy, web build and lint passed.
+
+The related native ownership/CI suite was then rerun with
+`ECORP_OWNED_PROCESS_TEST=1`: **12 passed, zero skipped**, including actual child
+startup, two verified restarts, database-drift refusal and idempotent shutdown.
+This supersedes the earlier skipped native restart case, not the independent
+generic Rust ignored count. The44 focused review tests also passed again.
+
+The exact PostgreSQL-discovery block extracted from the workflow accepted the
+installed PostgreSQL17 binaries and rejected missing tools before fixture startup.
+No workflow dependency was installed or downloaded for that check. All owned QA
+listeners were absent at final verification. The final PR description records
+the full45-file contribution and exact publication head; older11-file/draft/CI
+statements describe historical checkpoints rather than this review candidate.
