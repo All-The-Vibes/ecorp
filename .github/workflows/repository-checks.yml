@@ -1,0 +1,317 @@
+name: Repository checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node-regressions:
+    name: Node regressions (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.23.2
+          package-manager-cache: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Prepare test reports
+        id: reports
+        run: >-
+          node -e "require('node:fs').mkdirSync('output/repository-checks', { recursive: true })"
+      - name: Check documentation contracts
+        run: pnpm check:docs
+      - name: Run web and tool regressions
+        if: ${{ !cancelled() && steps.reports.outcome == 'success' }}
+        # Quote the narrow globs so Node expands them identically on both platforms.
+        # Real-stack e2e_*.mjs drivers and output directories are outside this scope.
+        run: >-
+          node --test --test-concurrency=2 --test-timeout=180000
+          --test-reporter=spec --test-reporter-destination=stdout
+          --test-reporter=junit --test-reporter-destination=output/repository-checks/unit.xml
+          "apps/web/src/**/*.test.mjs" "tools/*.test.mjs"
+      - name: Run local maintenance and feedback regressions
+        if: ${{ !cancelled() && steps.reports.outcome == 'success' }}
+        run: >-
+          node --test --test-concurrency=2 --test-timeout=180000
+          --test-reporter=spec --test-reporter-destination=stdout
+          --test-reporter=junit --test-reporter-destination=output/repository-checks/steward.xml
+          scenarios/repo-steward/steward.test.mjs scenarios/repo-steward/actions.test.mjs
+          scenarios/repo-steward/recurring-audit.test.mjs scenarios/repo-steward/feedback.test.mjs
+          scenarios/repo-steward/maintenance.test.mjs scenarios/repo-steward/feedback-cli.test.mjs
+      - name: Upload regression results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: repository-checks-${{ matrix.os }}
+          path: output/repository-checks/*.xml
+          if-no-files-found: error
+          retention-days: 14
+
+  web-model-coverage:
+    name: Web model coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Measure every declared production web model
+        run: node tools/coverage_web_models.mjs --output output/coverage/web-models-ci
+      - name: Preserve scoped coverage and source identities
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: web-model-coverage
+          path: output/coverage/web-models-ci/
+          if-no-files-found: warn
+          retention-days: 14
+
+  rust-sqlx-coverage-ubuntu:
+    name: Rust unit and SQLx coverage (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions: { contents: read }
+    defaults: { run: { shell: bash } }
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
+        env:
+          POSTGRES_USER: ecorp_coverage
+          POSTGRES_PASSWORD: ecorp_coverage
+          POSTGRES_DB: ecorp_coverage
+        ports: ['54329:5432']
+        options: >-
+          --health-cmd "pg_isready -U ecorp_coverage -d ecorp_coverage"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgres://ecorp_coverage:ecorp_coverage@127.0.0.1:54329/ecorp_coverage
+      PGHOST: 127.0.0.1
+      PGPORT: '54329'
+      PGUSER: ecorp_coverage
+      PGPASSWORD: ecorp_coverage
+      PGDATABASE: ecorp_coverage
+      ECORP_COVERAGE_OWNED_DATABASE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: 22.23.2, package-manager-cache: false }
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with: { toolchain: 1.98.1, components: llvm-tools-preview }
+      - name: Install native PostgreSQL client and build prerequisites
+        run: sudo apt-get update && sudo apt-get install --yes --no-install-recommends postgresql-client pkg-config libssl-dev
+      - name: Install verified cargo-llvm-cov 0.9.1
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/cargo-llvm-cov-0.9.1-linux"
+          mkdir "$tools"
+          curl --fail --show-error --location \
+            https://github.com/taiki-e/cargo-llvm-cov/releases/download/v0.9.1/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz \
+            --output "$tools/tool.tar.gz"
+          printf '%s  %s\n' b3f68e625481fed9b16444174f3fa5ebcdbde4a1878803a35eabe2dcefcdc41a "$tools/tool.tar.gz" | sha256sum --check
+          tar --extract --gzip --file "$tools/tool.tar.gz" --directory "$tools"
+          printf '%s\n' "$tools" >> "$GITHUB_PATH"
+      - name: Execute native workspace and owned SQLx coverage
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/ecorp-rust-sqlx-coverage-target
+        run: bash tools/coverage_rust_sqlx.sh
+      - name: Preserve native reports, source identities and scope
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rust-sqlx-coverage-linux
+          path: coverage/
+          if-no-files-found: warn
+          retention-days: 14
+
+  # Native Windows/MSVC unit baseline: 45.8057% lines; the 45.0% floor allows modest
+  # platform variation. Ignored database coverage is measured in a separate owned lane.
+  rust-unit-coverage-windows:
+    name: Rust unit coverage (Windows/MSVC)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions: { contents: read }
+    defaults: { run: { shell: pwsh } }
+    env: { CARGO_BUILD_JOBS: '2', CARGO_INCREMENTAL: '0' }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: 22.23.2, package-manager-cache: false }
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with: { toolchain: 1.98.1, components: llvm-tools-preview }
+      - name: Install verified cargo-llvm-cov 0.9.1
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tools = Join-Path $env:RUNNER_TEMP 'cargo-llvm-cov-0.9.1'
+          $reports = Join-Path $env:GITHUB_WORKSPACE 'output/coverage/rust-unit-windows'
+          New-Item -ItemType Directory -Path $tools,$reports | Out-Null
+          $zip = Join-Path $tools 'tool.zip'
+          Invoke-WebRequest 'https://github.com/taiki-e/cargo-llvm-cov/releases/download/v0.9.1/cargo-llvm-cov-x86_64-pc-windows-msvc.zip' -OutFile $zip
+          if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash -ne '656590cfa13bb7478595bbfdd3bc6bc075a4f7f3f0df5a439c1856cb03c5a4d2') { throw 'Coverage ZIP digest mismatch.' }
+          Expand-Archive -LiteralPath $zip -DestinationPath $tools
+          if ((Get-FileHash -LiteralPath (Join-Path $tools 'cargo-llvm-cov.exe') -Algorithm SHA256).Hash -ne 'a854b3d24f49535dc8b3d070035e0f9042b5cac25324e66cb06c639e4e04baeb') { throw 'Coverage executable digest mismatch.' }
+          $tools | Out-File $env:GITHUB_PATH -Append -Encoding utf8
+          $target = Join-Path $env:RUNNER_TEMP 'ecorp-rust-unit-coverage-target'
+          if (Test-Path -LiteralPath $target) { throw 'Coverage target must be new and uncached.' }
+          @("CARGO_TARGET_DIR=$target","CARGO_LLVM_COV_TARGET_DIR=$target","CARGO_LLVM_COV_BUILD_DIR=$(Join-Path $target 'build')") | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          Get-FileHash -LiteralPath $zip,(Join-Path $tools 'cargo-llvm-cov.exe') -Algorithm SHA256 | Select-Object @{n='file';e={Split-Path $_.Path -Leaf}},Hash | ConvertTo-Json | Set-Content (Join-Path $reports 'tool-hashes.json')
+      - name: Measure native unit coverage and guard its measured line baseline
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $reports = Join-Path $env:GITHUB_WORKSPACE 'output/coverage/rust-unit-windows'
+          foreach ($name in @('DATABASE_URL','TEST_DATABASE_URL','CRONY_TEST_DATABASE_URL','GH_TOKEN','GITHUB_TOKEN','CRONY_ACCESS_TOKEN','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','SQLX_OFFLINE','RUSTFLAGS','RUSTDOCFLAGS','LLVM_PROFILE_FILE','RUST_TEST_THREADS')) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+          $nodeDirectory = Split-Path (Get-Command node.exe -CommandType Application | Select-Object -First 1).Source
+          if ((node --version) -ne 'v22.23.2' -or !(Test-Path -LiteralPath (Get-Command npm.cmd -CommandType Application).Source -PathType Leaf)) { throw 'Pinned Node and real npm.cmd are required.' }
+          $vswhere = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Microsoft Visual Studio/Installer/vswhere.exe'
+          $vs = (& $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath).Trim()
+          Import-Module (Join-Path $vs 'Common7/Tools/Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
+          # DevShell can retain Git's usr/bin ahead of MSVC on hosted runners.
+          # Pin native x64 tools first and fail before building if resolution differs.
+          if (!$env:VCToolsInstallDir) { throw 'Visual Studio did not select MSVC tools.' }
+          $msvcBin = [IO.Path]::GetFullPath((Join-Path $env:VCToolsInstallDir 'bin/Hostx64/x64'))
+          $vsRoot = [IO.Path]::GetFullPath($vs).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+          $expectedLinker = Join-Path $msvcBin 'link.exe'
+          if (!$msvcBin.StartsWith($vsRoot, [StringComparison]::OrdinalIgnoreCase) -or !(Test-Path -LiteralPath $expectedLinker -PathType Leaf)) { throw 'Selected Visual Studio x64 linker is unavailable.' }
+          $env:PATH = $msvcBin + [IO.Path]::PathSeparator + $nodeDirectory + [IO.Path]::PathSeparator + $env:PATH
+          $resolvedLinker = (Get-Command link.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          if (![IO.Path]::GetFullPath($resolvedLinker).Equals($expectedLinker, [StringComparison]::OrdinalIgnoreCase)) { throw 'link.exe did not resolve to the selected Visual Studio x64 linker.' }
+          $resolvedLinker | Set-Content (Join-Path $reports 'linker-path.txt')
+          $snapshot = 'const f=require("node:fs"),c=require("node:crypto"),g=require("node:child_process");const git=(...a)=>g.execFileSync("git",a).toString();const names=git("ls-files","-z","--","crates","Cargo.toml","Cargo.lock","rust-toolchain.toml").split("\0").filter(x=>/\.rs$|(^|\/)Cargo\.(toml|lock)$|^rust-toolchain\.toml$/.test(x)).sort();if(!names.length)throw new Error("Rust source inventory is empty");f.writeFileSync(process.argv[1],JSON.stringify({commit:git("rev-parse","HEAD").trim(),status:git("status","--porcelain","--","crates","Cargo.toml","Cargo.lock","rust-toolchain.toml"),files:names.map(file=>({file,sha256:c.createHash("sha256").update(f.readFileSync(file)).digest("hex")}))},null,2));'
+          node -e $snapshot (Join-Path $reports 'source-before.json'); if ($LASTEXITCODE) { throw 'Source identity failed.' }
+          @((rustc +1.98.1 --version),(cargo +1.98.1 llvm-cov --version),(node --version),(npm.cmd --version)) | Set-Content (Join-Path $reports 'versions.txt')
+          try {
+            # Use the pinned tool's native instrumentation environment for both
+            # compilation and execution, with host readiness immediately between them.
+            $coverageEnvironment = cargo +1.98.1 llvm-cov show-env --pwsh
+            if ($LASTEXITCODE) { throw 'Native coverage environment setup failed.' }
+            $coverageEnvironment | Out-String | Invoke-Expression
+            cargo +1.98.1 test --workspace --locked --tests --no-run 2>&1 | Tee-Object (Join-Path $reports 'unit-build.log')
+            if ($LASTEXITCODE) { throw 'Instrumented test build failed.' }
+            # The runner uses Windows PowerShell 5.1, not this step's PowerShell 7.
+            # Exercise its first-use ACL startup without changing the runner's 10s deadline.
+            $readinessDirectory = Join-Path $env:RUNNER_TEMP ('ecorp-acl-readiness-' + [Guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $readinessDirectory | Out-Null
+            $nativeHost = Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
+            $readinessScript = @'
+          $ErrorActionPreference='Stop'
+          $acl=[System.Security.AccessControl.DirectorySecurity]::new()
+          $owner=[System.Security.Principal.WindowsIdentity]::GetCurrent().User
+          $acl.SetOwner($owner)
+          $acl.SetAccessRuleProtection($true,$false)
+          foreach($sid in @($owner,[System.Security.Principal.SecurityIdentifier]::new('S-1-5-18'))) {
+            $rule=[System.Security.AccessControl.FileSystemAccessRule]::new(
+              $sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow')
+            $acl.AddAccessRule($rule)
+          }
+          [System.IO.Directory]::SetAccessControl($env:ECORP_CONNECTION_ACL_TARGET,$acl)
+          $actual=[System.IO.Directory]::GetAccessControl($env:ECORP_CONNECTION_ACL_TARGET)
+          if (!$actual.AreAccessRulesProtected -or $actual.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $owner.Value) { throw 'ACL owner or inheritance verification failed.' }
+          $rules=@($actual.GetAccessRules($true,$true,[System.Security.Principal.SecurityIdentifier]))
+          $expectedSids=@($owner.Value,'S-1-5-18' | Sort-Object -Unique)
+          $actualSids=@($rules | ForEach-Object { $_.IdentityReference.Value } | Sort-Object)
+          if ($rules.Count -ne $expectedSids.Count -or ($actualSids -join ',') -ne ($expectedSids -join ',')) { throw 'ACL principal verification failed.' }
+          foreach($rule in $rules) {
+            if ($rule.IsInherited -or $rule.AccessControlType -ne [System.Security.AccessControl.AccessControlType]::Allow -or $rule.FileSystemRights -ne [System.Security.AccessControl.FileSystemRights]::FullControl -or $rule.InheritanceFlags -ne ([System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit) -or $rule.PropagationFlags -ne [System.Security.AccessControl.PropagationFlags]::None) { throw 'ACL permission verification failed.' }
+          }
+          @{ host_version=$PSVersionTable.PSVersion.ToString(); verified=$true } | ConvertTo-Json -Compress
+          '@
+            $readinessInfo = [Diagnostics.ProcessStartInfo]::new()
+            $readinessInfo.FileName = $nativeHost
+            $readinessInfo.WorkingDirectory = $readinessDirectory
+            $readinessInfo.UseShellExecute = $false
+            $readinessInfo.CreateNoWindow = $true
+            $readinessInfo.RedirectStandardOutput = $true
+            $readinessInfo.RedirectStandardError = $true
+            foreach ($argument in @('-NoLogo','-NoProfile','-NonInteractive','-Command',$readinessScript)) { $readinessInfo.ArgumentList.Add($argument) }
+            $readinessInfo.Environment['ECORP_CONNECTION_ACL_TARGET'] = $readinessDirectory
+            $readinessProcess = [Diagnostics.Process]::new()
+            $readinessProcess.StartInfo = $readinessInfo
+            $readinessClock = [Diagnostics.Stopwatch]::StartNew()
+            $readinessReceipt = @{ host_version=$null; verified=$false; timed_out=$false; duration_ms=0 }
+            $readinessStarted = $false
+            $readinessStdout = $null
+            $readinessStderr = $null
+            try {
+              $readinessStarted = $readinessProcess.Start()
+              if (!$readinessStarted) { throw 'Native ACL readiness host did not start.' }
+              $readinessStdout = $readinessProcess.StandardOutput.ReadToEndAsync()
+              $readinessStderr = $readinessProcess.StandardError.ReadToEndAsync()
+              if (!$readinessProcess.WaitForExit(60000)) { $readinessReceipt.timed_out=$true; throw 'Native ACL readiness exceeded 60 seconds.' }
+              if (![Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($readinessStdout,$readinessStderr),5000)) { throw 'Native ACL readiness output did not close.' }
+              if ($readinessProcess.ExitCode -ne 0) { throw 'Native ACL readiness failed.' }
+              $readinessResult = $readinessStdout.Result | ConvertFrom-Json
+              if ($readinessResult.verified -ne $true -or $readinessResult.host_version -notmatch '^5\.1\.') { throw 'Native Windows PowerShell ACL readiness was not verified.' }
+              $readinessReceipt.host_version = $readinessResult.host_version
+              $readinessReceipt.verified = $true
+            } finally {
+              $readinessCleanupFailed = $false
+              if ($readinessStarted -and !$readinessProcess.HasExited) {
+                try { $readinessProcess.Kill($true); $readinessCleanupFailed = !$readinessProcess.WaitForExit(5000) } catch { $readinessCleanupFailed=$true }
+              }
+              if ($readinessStdout -and $readinessStderr) {
+                try { [void][Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($readinessStdout,$readinessStderr),5000) } catch { $readinessCleanupFailed=$true }
+                if ($readinessStdout.IsCompletedSuccessfully) { $readinessStdout.Result | Set-Content (Join-Path $reports 'acl-readiness.stdout.log') }
+                if ($readinessStderr.IsCompletedSuccessfully) { $readinessStderr.Result | Set-Content (Join-Path $reports 'acl-readiness.stderr.log') }
+              }
+              $readinessClock.Stop()
+              $readinessReceipt.duration_ms = $readinessClock.ElapsedMilliseconds
+              $readinessReceipt | ConvertTo-Json | Set-Content (Join-Path $reports 'acl-readiness.json')
+              $readinessProcess.Dispose()
+              if ($readinessCleanupFailed) { throw 'Owned ACL readiness process cleanup failed.' }
+            }
+            cargo +1.98.1 test --workspace --locked --tests -- --test-threads=1 2>&1 | Tee-Object (Join-Path $reports 'unit-tests.log')
+            if ($LASTEXITCODE) { throw 'Instrumented tests failed; no passing coverage claim.' }
+            cargo +1.98.1 llvm-cov report --locked --json --summary-only --output-path (Join-Path $reports 'unit-coverage.json') 2>&1 | Tee-Object (Join-Path $reports 'json-report.log')
+            if ($LASTEXITCODE) { throw 'Native JSON coverage export failed.' }
+            cargo +1.98.1 llvm-cov report --locked --lcov --output-path (Join-Path $reports 'unit-lcov.info') 2>&1 | Tee-Object (Join-Path $reports 'lcov-report.log')
+            if ($LASTEXITCODE) { throw 'LCOV export failed.' }
+            cargo +1.98.1 llvm-cov report --locked --fail-under-lines 45.0 2>&1 | Tee-Object (Join-Path $reports 'line-guard.log')
+            if ($LASTEXITCODE) { throw 'Windows unit coverage fell below the 45.0% line floor.' }
+            'Rust workspace unit coverage: native JSON and LCOV attached; no requested code exclusions. Ignored SQLx/stopped-session prerequisites remain ignored; database integration coverage is separate.' | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          } finally {
+            node -e $snapshot (Join-Path $reports 'source-after.json'); if ($LASTEXITCODE) { throw 'Final source identity failed.' }
+            if ((Get-FileHash (Join-Path $reports 'source-before.json')).Hash -ne (Get-FileHash (Join-Path $reports 'source-after.json')).Hash) { throw 'Rust source changed during coverage.' }
+          }
+      - name: Preserve native unit reports and source identities
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rust-unit-coverage-windows
+          path: output/coverage/rust-unit-windows/
+          if-no-files-found: warn
+          retention-days: 14
