@@ -422,6 +422,13 @@ impl PgStore {
               AND a.current_run_id IS NULL AND a.status = 'idle'
               AND m.status IN ('completed', 'failed', 'cancelled')
               AND NOT EXISTS (
+                SELECT 1 FROM tasks t JOIN missions assigned
+                  ON assigned.id = t.mission_id AND assigned.corp_id = t.corp_id
+                WHERE t.assigned_agent_id = a.id AND t.corp_id = a.corp_id
+                  AND assigned.status IN ('ready', 'running')
+                  AND t.status NOT IN ('completed', 'cancelled')
+              )
+              AND NOT EXISTS (
                 SELECT 1 FROM runs r WHERE r.agent_id = a.id AND r.corp_id = a.corp_id
                   AND r.status IN ('provisioning', 'starting', 'running',
                     'waiting_for_input', 'waiting_for_approval', 'verifying')
@@ -469,6 +476,23 @@ impl PgStore {
             let corp_id: Uuid = row.get("corp_id");
             let mission_id: Uuid = row.get("mission_id");
             let room_id: Uuid = row.get("room_id");
+            // A pinned identity can already belong to a second saved plan when
+            // unpinned. Recheck after the agent lock: plan creation holds SHARE.
+            let assigned: bool = sqlx::query_scalar(
+                "SELECT EXISTS (
+                   SELECT 1 FROM tasks t JOIN missions m
+                     ON m.id = t.mission_id AND m.corp_id = t.corp_id
+                   WHERE t.assigned_agent_id = $1 AND t.corp_id = $2
+                     AND m.status IN ('ready', 'running')
+                     AND t.status NOT IN ('completed', 'cancelled'))",
+            )
+            .bind(agent_id)
+            .bind(corp_id)
+            .fetch_one(&mut *tx)
+            .await?;
+            if assigned {
+                continue;
+            }
             sqlx::query(
                 "UPDATE agents SET retired_at = now(), station = NULL WHERE id = $1 AND corp_id = $2",
             )

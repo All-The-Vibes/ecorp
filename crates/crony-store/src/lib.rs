@@ -19,7 +19,9 @@ use sha2::{Digest, Sha256};
 use sqlx::{PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
 use uuid::Uuid;
 
+mod agent_pinning;
 mod budget_checkpoint;
+pub use agent_pinning::{SetAgentPinInput, SetAgentPinOutcome};
 mod budget_revision;
 mod checkpoint_cancellation;
 mod checkpoint_correction;
@@ -1161,7 +1163,11 @@ impl PgStore {
         sqlx::query(
             r#"
             SELECT id, corp_id, actor_id, name, role, adapter, status, station,
-                   current_run_id, accent, created_at, mission_id, pinned, retired_at
+                   current_run_id, accent, created_at, mission_id, pinned, retired_at,
+                   COALESCE((SELECT MAX(e.aggregate_version) FROM events e
+                     WHERE e.corp_id = agents.corp_id AND e.aggregate_id = agents.id
+                       AND e.aggregate_type = 'agent'
+                       AND e.type IN ('agent.pinned', 'agent.unpinned')), 0) AS pin_version
             FROM agents
             WHERE corp_id = $1
               AND retired_at IS NULL AND (mission_id IS NULL OR pinned)
@@ -1523,7 +1529,11 @@ impl PgStore {
         let agents = sqlx::query(
             r#"
             SELECT a.id, a.corp_id, a.actor_id, a.name, a.role, a.adapter, a.status, a.station,
-                   a.current_run_id, a.accent, a.created_at, a.mission_id, a.pinned, a.retired_at
+                   a.current_run_id, a.accent, a.created_at, a.mission_id, a.pinned, a.retired_at,
+                   COALESCE((SELECT MAX(e.aggregate_version) FROM events e
+                     WHERE e.corp_id = a.corp_id AND e.aggregate_id = a.id
+                       AND e.aggregate_type = 'agent'
+                       AND e.type IN ('agent.pinned', 'agent.unpinned')), 0) AS pin_version
             FROM agents a
             WHERE a.corp_id = $1
               AND (a.mission_id IS NULL OR EXISTS (
@@ -14786,6 +14796,7 @@ fn map_agent(row: sqlx::postgres::PgRow) -> Result<Agent> {
         created_at: row.get("created_at"),
         mission_id: row.get("mission_id"),
         pinned: row.get("pinned"),
+        pin_version: row.get("pin_version"),
         retired_at: row.get("retired_at"),
     })
 }

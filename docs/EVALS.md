@@ -530,6 +530,40 @@ The runner unit suite applies one provider-independent lifecycle conformance har
 `fake-process` adapter. It verifies spawn, stream, steer, artifact, stop, capability reporting, and
 typed errors for unsupported resume and usage operations.
 
+**Bounded identity Pin/Unpin.**
+
+`crony-store`'s opt-in `issue48_` SQLx cases use the actual migrations in an explicitly owned
+authenticated PostgreSQL fixture. They cover human role/room/Corp authority, permission changes
+on replay, key substitutions, stale ABA versions, concurrent operators/duplicates/retirement,
+transaction rollback, active operational row preservation, same-room pinned reuse, second
+saved/running assignment retention, and unchanged recovered activation. `crony-server`'s
+matching opt-in cases invoke the actual handler with development and OIDC principals; those
+mapping tests are not a claim of production identity-provider authentication. Wire/CLI tests
+and `AgentPinControl.test.mjs` cover required version/key and actual production component behavior.
+
+`tools/e2e_agent_pinning.mjs` is a separate native, manually phased acceptance driver, not a
+unit test or an automatic stack owner. It requires `CRONY_PIN_TEST=1`, explicit owned loopback
+server/web ports in 59030–59039, an `issue48_app` (or fresh `issue48_app_<suffix>`) database
+on 59030 with authenticated `PG*`
+environment, and absolute `CRONY_PIN_OUTPUT`, `CRONY_PIN_PRIVATE`, `CRONY_PIN_SOURCE`,
+`CRONY_CLI_BINARY`, and `ECORP_PSQL_BINARY` paths. The external owner must start and verify
+its own binaries, deterministic fake-process runner and fresh empty development Corp.
+The source fixture must have a committed `seed.txt`; the runner ID is
+`runner-issue48-42269426`. The driver never resets a Corp, starts services, calls real providers,
+or overwrites an interrupted initial checkpoint.
+
+Run `--phase prepare`, click Pin as Alice in a **new** actual office browser, then run
+`--phase start`. At the native approval wait, click Unpin as Bob in another new browser and run
+`--phase complete`. The driver compares exact operational rows across that Unpin, then proves
+CLI idempotency, native accepted completion, pinned reuse, second held-plan preservation,
+automatic retirement, rejection of retired Pin and historical replay without resurrection.
+Its checkpoint records intent before mutation and final database counts. Desktop/mobile
+screenshots, browser reload/live projection checks, service ownership/cleanup, source/binary
+hashes and exact gate results must be captured separately; the JSON checkpoint alone does not
+prove browser behavior or a production deployment.
+See the [Pin/Unpin validation report](evidence/2026-09-19-agent-pinning.md) for exact
+counts, retained evidence and the explicitly qualified full-workspace failure.
+
 The Codex adapter suite uses a protocol-faithful fake app-server to verify availability reporting,
 start, streaming, usage de-duplication, live `turn/steer`, graceful `turn/interrupt`, stop, durable
 resume, completed evidence, cancelled evidence, and failed evidence without requiring credentials.
