@@ -4,6 +4,28 @@ The [September 12 scheduler acceptance](evidence/2026-09-12-scheduler-standalone
 records PR #179's main-based source gate separately from the combined recovery
 and two-runner runtime acceptance. Earlier failed attempts remain retained.
 
+## Aggregate hard-budget acceptance
+
+The opt-in `aggregate_breaker_tests::issue56_` store family uses actual migrations in an
+explicitly owned disposable PostgreSQL database. It exercises mission/requester/Corp token
+and cost scopes, suspend-to-stop escalation, run isolation, rolling-window targets, tenant
+isolation, exact replay, transaction rollback, pending decisions, staged artifacts, exhausted
+dispatch, simultaneous accounting, and lock-observed concurrent manual-review and nested
+verifier/recovery-budget races. Pending-assignment enqueue is checked against a concurrent
+fence, including wrong assignment and tenant rejection. The existing exhausted correction-retry cases retain
+pre-atomic historical accounting rows, independently proving that retries cannot reset spend
+even when an older server committed usage without recording a breaker transition.
+Run it with `cargo test -p crony-store issue56_ -- --ignored --test-threads=1`; ignored
+tests in the ordinary workspace gate are not counted as passes.
+
+`tools/e2e_aggregate_budgets.mjs` is a destructive, owned-stack-only driver. It requires an
+explicit loopback endpoint and `ECORP_AGGREGATE_FIXTURE_ROOT`, with the native runner configured
+to use `scripts/fake-aggregate-budget.mjs`. The fixture holds several real child processes at
+a barrier, releases one usage report, and attempts late artifact/completion from every fenced
+child. It checks persisted scope metadata, acknowledgements, preserved workspaces, and absence
+of accepted late effects. This is deterministic native protocol evidence, not vendor inference,
+production identity, or publication. Do not point it at retained services.
+
 ## Evidence rule
 
 An implementation claim needs evidence at the same scope:
@@ -494,7 +516,7 @@ reaches terminal `stop` without artifact or accepted completion. Its review-hard
   retryable pre-dispatch failure cannot displace the preserved source run from its resumable
   provider/workspace lineage. Chromium also proves cancelled+suspended missions retain recovery
   controls and that the same control remains available after a `dispatch_not_started` failure.
-Cross-run fan-out for already active runs remains open in #56. See
+`tools/e2e_aggregate_budgets.mjs` adds #56's active cross-run fan-out coverage described above. See
 `docs/evidence/2026-08-30-approval-and-budget-validation.md` and
 `docs/evidence/2026-09-02-authorized-budget-recovery.md`.
 

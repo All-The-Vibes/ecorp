@@ -1069,7 +1069,7 @@ async fn issue210_correction_provider_usage_consumes_allocation_without_zero_exe
         ))
         .await
         .unwrap();
-    store
+    let usage = store
         .apply_runner_event(event(
             command.run_id,
             token,
@@ -1078,11 +1078,7 @@ async fn issue210_correction_provider_usage_consumes_allocation_without_zero_exe
         ))
         .await
         .expect("a coding-agent continuation must accept and account for model usage");
-    let breaker = store
-        .evaluate_circuit_breaker(CORP, command.run_id)
-        .await
-        .unwrap();
-    assert_eq!(breaker.event.unwrap().payload["stage"], "suspend");
+    assert_eq!(usage.related_events[0].payload["stage"], "suspend");
     assert_correction_dispatch(&store, &command, false).await;
     let after = correction_state(&store).await;
     assert_eq!(after["source"], before["source"]);

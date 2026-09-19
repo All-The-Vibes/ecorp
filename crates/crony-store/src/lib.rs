@@ -19,6 +19,7 @@ use sha2::{Digest, Sha256};
 use sqlx::{PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
 use uuid::Uuid;
 
+mod aggregate_breaker;
 mod budget_checkpoint;
 mod budget_revision;
 mod checkpoint_cancellation;
@@ -42,6 +43,8 @@ pub use workspace_connections::{
     CreateWorkspaceConnectionInput, WorkspaceSetupInput, WorkspaceSetupMutation,
 };
 
+#[cfg(test)]
+mod aggregate_breaker_tests;
 #[cfg(test)]
 mod budget_checkpoint_tests;
 #[cfg(test)]
@@ -331,6 +334,7 @@ pub struct FactoryVerificationRecoveryContext {
 pub struct RunnerEventOutcome {
     pub event: Option<DomainEvent>,
     pub related_events: Vec<DomainEvent>,
+    pub breaker_commands: Vec<PendingRunnerCommand>,
 }
 
 #[derive(Debug, Clone)]
@@ -734,10 +738,10 @@ fn runner_command_dispatch_state(
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct CircuitBreakerOutcome {
-    pub command: Option<PendingRunnerCommand>,
-    pub event: Option<DomainEvent>,
+    pub commands: Vec<PendingRunnerCommand>,
+    pub events: Vec<DomainEvent>,
 }
 
 #[derive(Debug, Clone)]
@@ -6188,12 +6192,14 @@ impl PgStore {
         runner_id: &str,
     ) -> Result<(LaunchRecord, DomainEvent)> {
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         if let Some(actor_id) = requested_by {
             assert_mission_operator_tx(&mut tx, corp_id, actor_id).await?;
         }
         let row = sqlx::query(
             r#"
             SELECT m.room_id, m.title AS mission_title, m.status AS mission_status,
+                   m.requested_by, m.budget_tokens, m.budget_cost_microusd,
                    t.title AS task_title, t.contract, t.verification_policy,
                    t.status AS task_status,
                    t.assigned_agent_id, t.attempt_count, t.max_attempts,
@@ -6298,6 +6304,26 @@ impl PgStore {
             return Err(anyhow!("task exhausted its retry limit"));
         }
         let attempt = attempt_count + 1;
+        let (used_tokens, used_cost) =
+            budget_revision::mission_usage_tx(&mut tx, corp_id, mission_id).await?;
+        if used_tokens >= row.get::<i64, _>("budget_tokens")
+            || used_cost >= row.get::<i64, _>("budget_cost_microusd")
+        {
+            return Err(anyhow!(
+                "mission has no remaining authorized budget for dispatch"
+            ));
+        }
+        let rolling =
+            rolling_budget_remaining_tx(&mut tx, corp_id, row.get("requested_by")).await?;
+        if rolling.actor_tokens <= 0
+            || rolling.actor_cost_microusd <= 0
+            || rolling.corp_tokens <= 0
+            || rolling.corp_cost_microusd <= 0
+        {
+            return Err(anyhow!(
+                "requester or Corp rolling budget has no remaining authority for dispatch"
+            ));
+        }
         let contract: TaskContract =
             serde_json::from_value(row.get("contract")).context("decode task contract")?;
         let verification_policy: VerificationPolicy =
@@ -7222,6 +7248,7 @@ impl PgStore {
         }
 
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, input.corp_id).await?;
         let retained_upload =
             retained_provider_receipt::prepare_tx(&mut tx, &input, &artifact).await?;
         let RunnerEventInput {
@@ -7362,6 +7389,7 @@ impl PgStore {
         artifact_id: Uuid,
     ) -> Result<Option<DomainEvent>> {
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let scope = sqlx::query(
             "SELECT run_id,artifact_role,metadata FROM artifacts WHERE id=$1 AND corp_id=$2",
         )
@@ -7404,7 +7432,7 @@ impl PgStore {
                    artifact.artifact_role, artifact.file_name, artifact.metadata,
                    artifact.provenance_signature, artifact.retention_until,
                    artifact.status, artifact.staging_key,
-                   run.status AS run_status, run.agent_id,
+                   run.status AS run_status, run.agent_id, run.breaker_stage,
                    task.mission_id, mission.room_id
             FROM artifacts artifact
             JOIN runs run ON run.id = artifact.run_id
@@ -7428,6 +7456,7 @@ impl PgStore {
         let agent_id: Uuid = row.get("agent_id");
         let mission_id: Uuid = row.get("mission_id");
         let room_id: Uuid = row.get("room_id");
+        let breaker_stage: String = row.get("breaker_stage");
         let artifact = map_stored_artifact(row);
         let authority = if retained_upload {
             retained_provider_receipt::validate_artifact_tx(&mut tx, &artifact, false).await
@@ -7450,6 +7479,14 @@ impl PgStore {
             tx.commit().await?;
             return Ok(None);
         }
+        ensure_run_not_hard_blocked_tx(
+            &mut tx,
+            corp_id,
+            run_id,
+            &breaker_stage,
+            "artifact finalization",
+        )
+        .await?;
         let ready_event_type = if artifact.artifact_role == "source_deliverable" {
             "run.deliverable"
         } else {
@@ -8011,36 +8048,12 @@ impl PgStore {
             mut payload,
         } = input;
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let factory_scope = if factory_run_failure::event_reconciles_factory(&event_type) {
             Some(factory_run_failure::RunScope::lock_tx(&mut tx, corp_id, run_id).await?)
         } else {
             None
         };
-        if event_type == "run.usage" {
-            let requester: Uuid = sqlx::query_scalar(
-                r#"
-                SELECT mission.requested_by
-                FROM runs run
-                JOIN tasks task ON task.id = run.task_id
-                JOIN missions mission ON mission.id = task.mission_id
-                WHERE run.id = $1 AND run.corp_id = $2 AND run.agent_id = $3
-                  AND run.runner_id = $4 AND run.assignment_token = $5
-                  AND run.status IN (
-                    'provisioning', 'starting', 'running',
-                    'waiting_for_input', 'waiting_for_approval', 'verifying'
-                  )
-                "#,
-            )
-            .bind(run_id)
-            .bind(corp_id)
-            .bind(agent_id)
-            .bind(&runner_id)
-            .bind(assignment_token)
-            .fetch_one(&mut *tx)
-            .await
-            .context("runner usage event does not match an active run")?;
-            lock_factory_keys_tx(&mut tx, &budget_scope_lock_keys(corp_id, requester)).await?;
-        }
         let row = sqlx::query(
             r#"
             SELECT r.task_id, r.verification_status AS run_verification_status,
@@ -8178,6 +8191,7 @@ impl PgStore {
             return Ok(RunnerEventOutcome {
                 event: None,
                 related_events: Vec::new(),
+                breaker_commands: Vec::new(),
             });
         };
         let mut related_events = Vec::new();
@@ -9143,10 +9157,17 @@ impl PgStore {
             _ => {}
         }
 
+        let breaker = if matches!(event_type.as_str(), "run.usage" | "run.tool_activity") {
+            aggregate_breaker::evaluate_tx(&mut tx, corp_id, run_id).await?
+        } else {
+            CircuitBreakerOutcome::default()
+        };
+        related_events.extend(breaker.events);
         tx.commit().await?;
         Ok(RunnerEventOutcome {
             event: Some(event),
             related_events,
+            breaker_commands: breaker.commands,
         })
     }
 
@@ -9167,6 +9188,7 @@ impl PgStore {
             ));
         }
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let row = sqlx::query(
             r#"
             SELECT approval.run_id, approval.room_id, approval.status, approval.expires_at,
@@ -9449,7 +9471,8 @@ impl PgStore {
     ) -> Result<RunnerCommandDispatchState> {
         let row = sqlx::query(
             r#"
-            SELECT command.status AS command_status, run.status AS run_status
+            SELECT command.status AS command_status, run.status AS run_status,
+                   run.breaker_stage
             FROM runner_commands command
             LEFT JOIN runs run
               ON run.id = command.run_id AND run.corp_id = command.corp_id
@@ -9465,6 +9488,18 @@ impl PgStore {
         .fetch_optional(&self.pool)
         .await?;
         Ok(match row {
+            Some(row)
+                if row.get::<String, _>("command_status") == "pending"
+                    && matches!(
+                        command.command_kind.as_str(),
+                        "approval_decision" | "control_message"
+                    )
+                    && row
+                        .get::<Option<String>, _>("breaker_stage")
+                        .is_some_and(|stage| breaker_is_hard(&stage)) =>
+            {
+                RunnerCommandDispatchState::Obsolete
+            }
             Some(row) => runner_command_dispatch_state(
                 &row.get::<String, _>("command_status"),
                 row.get::<Option<String>, _>("run_status").as_deref(),
@@ -9830,247 +9865,10 @@ impl PgStore {
         run_id: Uuid,
     ) -> Result<CircuitBreakerOutcome> {
         let mut tx = self.pool.begin().await?;
-        let row = sqlx::query(
-            r#"
-            SELECT run.task_id, run.runner_id, run.breaker_stage,
-                   run.input_tokens + run.output_tokens AS run_tokens,
-                   run.cost_microusd AS run_cost,
-                   run.budget_tokens_limit AS run_token_limit,
-                   run.budget_cost_microusd_limit AS run_cost_limit,
-                   run.no_progress_events, run.repeated_tool_count,
-                   task.mission_id, mission.room_id, mission.requested_by,
-                   mission.budget_tokens AS mission_token_limit,
-                   mission.budget_cost_microusd AS mission_cost_limit,
-                   COALESCE(policy.actor_tokens_per_24h, 4000000) AS actor_token_limit,
-                   COALESCE(policy.actor_cost_microusd_per_24h, 10000000) AS actor_cost_limit,
-                   COALESCE(policy.corp_tokens_per_24h, 20000000) AS corp_token_limit,
-                   COALESCE(policy.corp_cost_microusd_per_24h, 100000000) AS corp_cost_limit,
-                   COALESCE(policy.no_progress_event_limit, 8) AS no_progress_limit,
-                   COALESCE(policy.repeated_tool_limit, 5) AS repeated_tool_limit
-            FROM runs run
-            JOIN tasks task ON task.id = run.task_id
-            JOIN missions mission ON mission.id = task.mission_id
-            LEFT JOIN corp_budget_policies policy ON policy.corp_id = run.corp_id
-            WHERE run.id = $1 AND run.corp_id = $2
-              AND run.status IN ('starting', 'running', 'waiting_for_input',
-                                 'waiting_for_approval', 'verifying')
-            FOR UPDATE OF run
-            "#,
-        )
-        .bind(run_id)
-        .bind(corp_id)
-        .fetch_optional(&mut *tx)
-        .await?;
-        let Some(row) = row else {
-            tx.commit().await?;
-            return Ok(CircuitBreakerOutcome {
-                command: None,
-                event: None,
-            });
-        };
-        let task_id: Uuid = row.get("task_id");
-        let mission_id: Uuid = row.get("mission_id");
-        let room_id: Uuid = row.get("room_id");
-        let requester: Uuid = row.get("requested_by");
-        let runner_id: String = row.get("runner_id");
-        let current_stage: String = row.get("breaker_stage");
-
-        let mission_usage = sqlx::query(
-            r#"
-            SELECT COALESCE(SUM(run.input_tokens + run.output_tokens), 0)::BIGINT AS tokens,
-                   COALESCE(SUM(run.cost_microusd), 0)::BIGINT AS cost
-            FROM runs run
-            JOIN tasks task ON task.id = run.task_id
-            WHERE task.mission_id = $1
-            "#,
-        )
-        .bind(mission_id)
-        .fetch_one(&mut *tx)
-        .await?;
-        let actor_usage = sqlx::query(
-            r#"
-            SELECT COALESCE(SUM(run.input_tokens + run.output_tokens), 0)::BIGINT AS tokens,
-                   COALESCE(SUM(run.cost_microusd), 0)::BIGINT AS cost
-            FROM runs run
-            JOIN tasks task ON task.id = run.task_id
-            JOIN missions mission ON mission.id = task.mission_id
-            WHERE mission.corp_id = $1 AND mission.requested_by = $2
-              AND run.created_at >= now() - interval '24 hours'
-            "#,
-        )
-        .bind(corp_id)
-        .bind(requester)
-        .fetch_one(&mut *tx)
-        .await?;
-        let corp_usage = sqlx::query(
-            r#"
-            SELECT COALESCE(SUM(input_tokens + output_tokens), 0)::BIGINT AS tokens,
-                   COALESCE(SUM(cost_microusd), 0)::BIGINT AS cost
-            FROM runs
-            WHERE corp_id = $1 AND created_at >= now() - interval '24 hours'
-            "#,
-        )
-        .bind(corp_id)
-        .fetch_one(&mut *tx)
-        .await?;
-
-        let inputs = [
-            (
-                "run_tokens",
-                row.get::<i64, _>("run_tokens"),
-                row.get::<i64, _>("run_token_limit"),
-            ),
-            (
-                "run_cost",
-                row.get::<i64, _>("run_cost"),
-                row.get::<i64, _>("run_cost_limit"),
-            ),
-            (
-                "mission_tokens",
-                mission_usage.get::<i64, _>("tokens"),
-                row.get::<i64, _>("mission_token_limit"),
-            ),
-            (
-                "mission_cost",
-                mission_usage.get::<i64, _>("cost"),
-                row.get::<i64, _>("mission_cost_limit"),
-            ),
-            (
-                "actor_tokens_24h",
-                actor_usage.get::<i64, _>("tokens"),
-                row.get::<i64, _>("actor_token_limit"),
-            ),
-            (
-                "actor_cost_24h",
-                actor_usage.get::<i64, _>("cost"),
-                row.get::<i64, _>("actor_cost_limit"),
-            ),
-            (
-                "corp_tokens_24h",
-                corp_usage.get::<i64, _>("tokens"),
-                row.get::<i64, _>("corp_token_limit"),
-            ),
-            (
-                "corp_cost_24h",
-                corp_usage.get::<i64, _>("cost"),
-                row.get::<i64, _>("corp_cost_limit"),
-            ),
-            (
-                "no_progress",
-                i64::from(row.get::<i32, _>("no_progress_events")),
-                i64::from(row.get::<i32, _>("no_progress_limit")),
-            ),
-            (
-                "repeated_tool",
-                i64::from(row.get::<i32, _>("repeated_tool_count")),
-                i64::from(row.get::<i32, _>("repeated_tool_limit")),
-            ),
-        ];
-        let Some((stage, reason, used, limit)) = strongest_breaker_stage(&inputs) else {
-            tx.commit().await?;
-            return Ok(CircuitBreakerOutcome {
-                command: None,
-                event: None,
-            });
-        };
-        if breaker_rank(stage) <= breaker_rank(&current_stage) {
-            tx.commit().await?;
-            return Ok(CircuitBreakerOutcome {
-                command: None,
-                event: None,
-            });
-        }
-        sqlx::query("UPDATE runs SET breaker_stage = $1, updated_at = now() WHERE id = $2")
-            .bind(stage)
-            .bind(run_id)
-            .execute(&mut *tx)
-            .await?;
-        if stage == "suspend" {
-            sqlx::query(
-                "UPDATE runs SET status = 'waiting_for_input' WHERE id = $1 AND status = 'running'",
-            )
-            .bind(run_id)
-            .execute(&mut *tx)
-            .await?;
-            sqlx::query("UPDATE tasks SET status = 'blocked' WHERE id = $1 AND status = 'running'")
-                .bind(task_id)
-                .execute(&mut *tx)
-                .await?;
-        }
-        let incident_id = Uuid::new_v4();
-        let input = json!({"metric": reason, "used": used, "limit": limit});
-        sqlx::query(
-            r#"
-            INSERT INTO circuit_breaker_incidents
-                (id, corp_id, mission_id, task_id, run_id, stage, reason, input)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            "#,
-        )
-        .bind(incident_id)
-        .bind(corp_id)
-        .bind(mission_id)
-        .bind(task_id)
-        .bind(run_id)
-        .bind(stage)
-        .bind(format!("{reason} reached {used} of {limit}"))
-        .bind(input.clone())
-        .execute(&mut *tx)
-        .await?;
-        let command_id = Uuid::new_v4();
-        let command = PendingRunnerCommand {
-            id: command_id,
-            corp_id,
-            runner_id: runner_id.clone(),
-            run_id,
-            command_kind: "circuit_breaker".to_owned(),
-            payload: json!({
-                "stage": stage,
-                "reason": format!("{reason} reached {used} of {limit}"),
-            }),
-        };
-        sqlx::query(
-            r#"
-            INSERT INTO runner_commands
-                (id, corp_id, runner_id, run_id, command_kind, payload, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(command.id)
-        .bind(corp_id)
-        .bind(&command.runner_id)
-        .bind(run_id)
-        .bind(&command.command_kind)
-        .bind(&command.payload)
-        .bind(format!("breaker:{run_id}:{stage}"))
-        .execute(&mut *tx)
-        .await?;
-        let event = append_event_tx(
-            &mut tx,
-            NewEvent {
-                room_id: Some(room_id),
-                correlation_id: Some(mission_id),
-                ..NewEvent::new(
-                    corp_id,
-                    None,
-                    "run.breaker_transition",
-                    "run",
-                    run_id,
-                    format!("breaker-event:{run_id}:{stage}"),
-                    json!({
-                        "stage": stage,
-                        "reason": format!("{reason} reached {used} of {limit}"),
-                        "input": input,
-                        "command_id": command_id,
-                    }),
-                )
-            },
-        )
-        .await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
+        let outcome = aggregate_breaker::evaluate_tx(&mut tx, corp_id, run_id).await?;
         tx.commit().await?;
-        Ok(CircuitBreakerOutcome {
-            command: Some(command),
-            event,
-        })
+        Ok(outcome)
     }
 
     pub async fn decide_verification(
@@ -10089,6 +9887,7 @@ impl PgStore {
             ));
         }
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let factory_scope =
             factory_run_failure::RunScope::lock_tx(&mut tx, corp_id, run_id).await?;
         let row = sqlx::query(
@@ -15563,11 +15362,10 @@ fn ensure_breaker_allows_human_progress(stage: &str, action: &str) -> Result<()>
     Ok(())
 }
 
-fn budget_scope_lock_keys(corp_id: Uuid, requester: Uuid) -> Vec<String> {
-    vec![
-        format!("budget:actor:{corp_id}:{requester}"),
-        format!("budget:corp:{corp_id}"),
-    ]
+fn budget_scope_lock_keys(corp_id: Uuid, _requester: Uuid) -> Vec<String> {
+    // The Corp gate already serializes requester budgets. A separate actor gate
+    // would invert lock order when verifier ingestion reenters budget authority.
+    vec![format!("budget:corp:{corp_id}")]
 }
 
 fn lineage_run_is_pre_dispatch_failure(

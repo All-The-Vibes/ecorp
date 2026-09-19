@@ -185,9 +185,13 @@ const lateIncidents = late.state.snapshot.circuit_breaker_incidents.filter(
 assert.equal(lateIncidents.length, 1)
 assert.equal(lateIncidents[0].stage, 'stop')
 assert.deepEqual(lateIncidents[0].input, {
+  scope: 'run',
+  scope_id: lateRun.id,
   metric: 'run_tokens',
   used: 6_000,
   limit: 5_000,
+  affected_run_ids: [lateRun.id],
+  evaluated_run_id: lateRun.id,
 })
 const lateEvents = late.state.snapshot.events.filter(
   (event) => event.aggregate_id === lateRun.id,
