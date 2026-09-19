@@ -31,6 +31,28 @@ const canonical = value => Array.isArray(value) ? `[${value.map(canonical).join(
 const digest = value => hash(canonical(value))
 const CONTRACT = digest({ schema: 1, classifier_revision: 3, scope: CI_SCOPE, limits: CI_LIMITS, expected_artifacts: EXPECTED_ARTIFACTS,
   authority: 'read-only metadata; no content verification or downstream effect' })
+const CI_WORKFLOW_SCOPE = Object.freeze({ ...CI_SCOPE, workflow_path: '.github/workflows/ci.yml', workflow_name: 'CI' })
+const CI_EXPECTED_JOBS = Object.freeze({
+  quality: null,
+  integration: 'integration-evidence',
+  'runner-platforms (ubuntu-latest)': 'runner-platform-ubuntu-latest',
+  'runner-platforms (windows-latest)': 'runner-platform-windows-latest',
+  'runner-platforms (macos-latest)': 'runner-platform-macos-latest',
+  'desktop-windows': null,
+})
+// Keep the existing Repository checks receipt/classifier contract unchanged.
+// CI has a separate contract; a required job need not produce an artifact.
+const WORKFLOWS = Object.freeze([
+  Object.freeze({ scope: CI_SCOPE, route: 'actions/workflows/repository-checks.yml', jobs: EXPECTED_ARTIFACTS, contract: CONTRACT }),
+  Object.freeze({ scope: CI_WORKFLOW_SCOPE, route: 'actions/workflows/ci.yml', jobs: CI_EXPECTED_JOBS,
+    contract: digest({ schema: 1, classifier_revision: 4, scope: CI_WORKFLOW_SCOPE, limits: CI_LIMITS,
+      required_jobs: CI_EXPECTED_JOBS, authority: 'read-only metadata; no content verification or downstream effect' }) }),
+])
+function workflowProfile(workflowPath) {
+  const profile = WORKFLOWS.find(candidate => candidate.scope.workflow_path === workflowPath)
+  requireThat(profile, 'workflow_binding_mismatch')
+  return profile
+}
 export class CiMaintenanceError extends Error { constructor(code) { super(code); this.code = code } }
 const requireThat = (condition, code) => { if (!condition) throw new CiMaintenanceError(code) }
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -99,7 +121,11 @@ export function hostedSelection(env, options) {
     && event.workflow_run?.id === options.runId && event.workflow_run.run_attempt === options.attempt
     && event.workflow_run.head_sha === options.headSha && event.workflow_run.head_repository?.id === CI_SCOPE.repository_id
     && event.workflow_run.status === 'completed', 'workflow_event_binding_mismatch')
+  const profile = workflowProfile(event.workflow_run.path)
+  requireThat(positive(event.workflow_run.workflow_id) && event.workflow_run.name === profile.scope.workflow_name,
+    'workflow_event_binding_mismatch')
   return { kind: 'github-actions-context', workflow_source_sha: env.GITHUB_SHA,
+    parent_workflow: { id: event.workflow_run.workflow_id, path: profile.scope.workflow_path, name: profile.scope.workflow_name },
     authenticated_person_claimed: false, environment_is_not_independent_attestation: true }
 }
 
@@ -114,7 +140,7 @@ export function createMetadataReader({ run, clock = () => Date.now(), env = proc
   })
   return {
     async get(route) {
-      requireThat(route === api('actions/workflows/repository-checks.yml')
+      requireThat(WORKFLOWS.some(profile => route === api(profile.route))
         || new RegExp(`^repos/${CI_SCOPE.repository}/actions/runs/[1-9][0-9]*/attempts/[1-9][0-9]*(?:/jobs\\?per_page=100&page=[12])?$`, 'u').test(route)
         || new RegExp(`^repos/${CI_SCOPE.repository}/actions/runs/[1-9][0-9]*/artifacts\\?per_page=20&page=1$`, 'u').test(route), 'route_not_allowed')
       const remaining = CI_LIMITS.duration_ms - (clock() - started)
@@ -134,20 +160,20 @@ export function createMetadataReader({ run, clock = () => Date.now(), env = proc
   }
 }
 
-function runProjection(value, options, workflowId) {
+function runProjection(value, options, workflowId, profile) {
   requireThat(value.id === options.runId && value.run_attempt === options.attempt && value.workflow_id === workflowId
-    && value.path === CI_SCOPE.workflow_path && value.head_sha === options.headSha
+    && value.path === profile.scope.workflow_path && value.head_sha === options.headSha
     && value.repository?.id === CI_SCOPE.repository_id && value.repository.full_name === CI_SCOPE.repository
     && value.head_repository?.id === CI_SCOPE.repository_id, 'run_binding_mismatch')
   requireThat(value.status === 'completed' && CONCLUSIONS.has(value.conclusion), 'run_not_terminal')
   requireThat(['push', 'pull_request', 'workflow_dispatch'].includes(value.event) && time(value.run_started_at) && time(value.updated_at), 'invalid_run_metadata')
   requireThat(typeof value.head_branch === 'string' && value.head_branch.length > 0 && value.head_branch.length <= 256 && !/[\u0000-\u001f\u007f]/u.test(value.head_branch), 'invalid_run_metadata')
   return { id: value.id, attempt: value.run_attempt, head_sha: value.head_sha, head_branch: text(value.head_branch),
-    head_branch_sha256: hash(value.head_branch), workflow_id: workflowId, workflow_path: CI_SCOPE.workflow_path,
+    head_branch_sha256: hash(value.head_branch), workflow_id: workflowId, workflow_path: profile.scope.workflow_path,
     repository_id: CI_SCOPE.repository_id, repository: CI_SCOPE.repository, event: value.event, status: value.status,
     conclusion: value.conclusion, started_at: new Date(value.run_started_at).toISOString(), updated_at: new Date(value.updated_at).toISOString() }
 }
-function jobsProjection(rows, run) {
+function jobsProjection(rows, run, profile) {
   requireThat(rows.length > 0 && rows.length <= CI_LIMITS.jobs, 'invalid_job_bound')
   const identities = new Set(), names = new Set()
   return rows.map(row => {
@@ -164,11 +190,11 @@ function jobsProjection(rows, run) {
       return { number: step.number, name: text(step.name), status: step.status, conclusion: step.conclusion }
     }).sort((a, b) => a.number - b.number)
     return { id: row.id, name, name_sha256: nameHash, status: row.status, conclusion: row.conclusion,
-      expected_artifact: EXPECTED_ARTIFACTS[row.name] ?? null, steps }
+      expected_artifact: Object.hasOwn(profile.jobs, row.name) ? profile.jobs[row.name] : null, steps }
   }).sort((a, b) => a.name_sha256.localeCompare(b.name_sha256))
 }
-function artifactsProjection(rows, run) {
-  const ids = new Set(), known = new Set(Object.values(EXPECTED_ARTIFACTS))
+function artifactsProjection(rows, run, profile) {
+  const ids = new Set(), known = new Set(Object.values(profile.jobs).filter(Boolean))
   return rows.map(row => {
     requireThat(positive(row.id) && !ids.has(row.id) && typeof row.name === 'string' && row.name.length <= 256
       && typeof row.expired === 'boolean' && row.workflow_run?.id === run.id
@@ -181,18 +207,20 @@ function artifactsProjection(rows, run) {
 }
 
 export function deriveFindings(observation) {
+  const profile = workflowProfile(observation.run.workflow_path)
+  const findingDigest = identity => digest(profile.scope === CI_SCOPE ? identity : { ...identity, workflow: profile.scope.workflow_path })
   const findings = []
-  for (const [name, expectedArtifact] of Object.entries(EXPECTED_ARTIFACTS)) {
+  for (const [name, expectedArtifact] of Object.entries(profile.jobs)) {
     const nameHash = hash(name)
     if (observation.jobs.some(job => job.name_sha256 === nameHash)) continue
-    const body = { id: `CI-${digest({ rule: 'EXPECTED_JOB_MISSING', job: nameHash }).slice(0, 24)}`,
+    const body = { id: `CI-${findingDigest({ rule: 'EXPECTED_JOB_MISSING', job: nameHash }).slice(0, 24)}`,
       rule: 'EXPECTED_JOB_MISSING', job_name: name, job_name_sha256: nameHash, artifact_name: expectedArtifact,
-      recommendation: 'Required Repository checks job is absent from complete attempt metadata. Inspect the producer workflow and admission; no passing tests or coverage are inferred.' }
+      recommendation: `Required ${profile.scope.workflow_name} job is absent from complete attempt metadata. Inspect the producer workflow and admission; no passing tests or coverage are inferred.` }
     findings.push({ ...body, revision: digest(body), job_id: null })
   }
   for (const job of observation.jobs) {
     const add = (rule, detail) => {
-      const id = `CI-${digest({ rule, job: job.name_sha256 }).slice(0, 24)}`
+      const id = `CI-${findingDigest({ rule, job: job.name_sha256 }).slice(0, 24)}`
       const body = { id, rule, job_name: job.name, job_name_sha256: job.name_sha256, ...detail }
       findings.push({ ...body, revision: digest(body), job_id: job.id })
     }
@@ -200,9 +228,10 @@ export function deriveFindings(observation) {
       conclusion: job.conclusion, affected_steps: job.steps.filter(step => step.status !== 'completed' || step.conclusion === null || !GOOD.has(step.conclusion)),
       recommendation: job.conclusion === 'cancelled' ? 'Inspect why this attempt was cancelled before choosing any further run.' : 'Inspect the linked job and failed steps; no repair or rerun is authorized by this observation.',
     })
-    if (job.expected_artifact && ['skipped', 'neutral'].includes(job.conclusion)) add('EXPECTED_JOB_NOT_EXECUTED', {
+    if (Object.keys(profile.jobs).some(name => hash(name) === job.name_sha256)
+      && ['skipped', 'neutral'].includes(job.conclusion)) add('EXPECTED_JOB_NOT_EXECUTED', {
       conclusion: job.conclusion,
-      recommendation: 'Required Repository checks job did not report a successful execution. Inspect its admission and conclusion; a run-scoped artifact cannot establish that this attempt executed the gate.',
+      recommendation: `Required ${profile.scope.workflow_name} job did not report a successful execution. Inspect its admission and conclusion; a run-scoped artifact cannot establish that this attempt executed the gate.`,
     })
     if (job.expected_artifact && job.conclusion !== 'skipped') {
       const available = observation.artifacts.filter(row => row.name === job.expected_artifact)
@@ -213,8 +242,8 @@ export function deriveFindings(observation) {
     }
   }
   if (!GOOD.has(observation.run.conclusion) && observation.jobs.every(job => GOOD.has(job.conclusion))) {
-    const body = { id: `CI-${digest({ rule: 'PARENT_CONCLUSION_REVIEW', workflow: CI_SCOPE.workflow_path }).slice(0, 24)}`,
-      rule: 'PARENT_CONCLUSION_REVIEW', job_name: CI_SCOPE.workflow_name, job_name_sha256: hash(CI_SCOPE.workflow_name),
+    const body = { id: `CI-${digest({ rule: 'PARENT_CONCLUSION_REVIEW', workflow: profile.scope.workflow_path }).slice(0, 24)}`,
+      rule: 'PARENT_CONCLUSION_REVIEW', job_name: profile.scope.workflow_name, job_name_sha256: hash(profile.scope.workflow_name),
       conclusion: observation.run.conclusion,
       recommendation: 'The terminal parent conclusion requires review although listed jobs do not explain it. Inspect the native run; no passing outcome is inferred.' }
     findings.push({ ...body, revision: digest(body), job_id: null })
@@ -222,9 +251,10 @@ export function deriveFindings(observation) {
   return findings.sort((a, b) => a.id.localeCompare(b.id))
 }
 function semantics(observation) {
+  const profile = workflowProfile(observation.run.workflow_path)
   return { conclusion: observation.run.conclusion, jobs: observation.jobs.map(job => ({ name_sha256: job.name_sha256,
     status: job.status, conclusion: job.conclusion, steps: job.steps })),
-    artifact_states: [...new Set(Object.values(EXPECTED_ARTIFACTS))].sort().map(name => ({ name,
+    artifact_states: [...new Set(Object.values(profile.jobs).filter(Boolean))].sort().map(name => ({ name,
       state: observation.artifacts.some(row => row.name === name && !row.expired) ? 'listed-run-scope-only'
         : observation.artifacts.some(row => row.name === name) ? 'expired' : 'not-listed' })) }
 }
@@ -232,12 +262,13 @@ const scopeOf = run => ({ repository_id: run.repository_id, workflow_id: run.wor
   head_sha: run.head_sha, head_branch_sha256: run.head_branch_sha256, event: run.event })
 
 export function validatePrevious(bytes, expectedSha256, source) {
+  const profile = workflowProfile(source.workflow_path)
   requireThat(Buffer.isBuffer(bytes) && bytes.length > 0 && bytes.length <= CI_LIMITS.receipt_bytes && HASH.test(expectedSha256)
     && hash(bytes) === expectedSha256, 'previous_bytes_mismatch')
   let previous
   try { previous = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) } catch { throw new CiMaintenanceError('invalid_previous_receipt') }
   requireThat(previous.schema_version === 1 && previous.kind === 'ecorp-ci-maintenance-observation'
-    && previous.contract_sha256 === CONTRACT && previous.github_mutations === 0 && previous.executable === false
+    && previous.contract_sha256 === profile.contract && previous.github_mutations === 0 && previous.executable === false
     && object(previous.observation) && Array.isArray(previous.observation.jobs) && Array.isArray(previous.observation.artifacts)
     && previous.observation.jobs.length > 0 && previous.observation.jobs.length <= CI_LIMITS.jobs
     && previous.observation.jobs.every(job => object(job) && Array.isArray(job.steps) && job.steps.length <= CI_LIMITS.steps_per_job)
@@ -259,10 +290,15 @@ export async function observeCi(options, { reader = createMetadataReader(), now 
   if (options.previous) requireThat(Buffer.isBuffer(previousBytes) && previousBytes.length > 0
     && previousBytes.length <= CI_LIMITS.receipt_bytes && HASH.test(options.previous.sha256 ?? '')
     && hash(previousBytes) === options.previous.sha256, 'previous_bytes_mismatch')
-  const workflow = await reader.get(api('actions/workflows/repository-checks.yml'))
-  requireThat(positive(workflow.id) && workflow.path === CI_SCOPE.workflow_path && workflow.name === CI_SCOPE.workflow_name, 'workflow_binding_mismatch')
   const route = api(`actions/runs/${options.runId}/attempts/${options.attempt}`)
-  const run = runProjection(await reader.get(route), options, workflow.id)
+  const selected = await reader.get(route)
+  const profile = workflowProfile(selected.path)
+  const workflow = await reader.get(api(profile.route))
+  requireThat(positive(workflow.id) && workflow.path === profile.scope.workflow_path
+    && workflow.name === profile.scope.workflow_name, 'workflow_binding_mismatch')
+  const run = runProjection(selected, options, workflow.id, profile)
+  if (executionContext.kind === 'github-actions-context') requireThat(equal(executionContext.parent_workflow,
+    { id: workflow.id, path: profile.scope.workflow_path, name: profile.scope.workflow_name }), 'workflow_event_binding_mismatch')
   const jobs = []; let total = null
   for (let page = 1; page <= 2; page++) {
     const response = await reader.get(`${route}/jobs?per_page=100&page=${page}`)
@@ -278,8 +314,8 @@ export async function observeCi(options, { reader = createMetadataReader(), now 
   requireThat(Number.isSafeInteger(artifactResponse.total_count) && artifactResponse.total_count >= 0
     && artifactResponse.total_count <= CI_LIMITS.artifacts && Array.isArray(artifactResponse.artifacts)
     && artifactResponse.artifacts.length === artifactResponse.total_count, 'incomplete_artifact_pagination')
-  const observation = { run, jobs: jobsProjection(jobs, run), artifacts: artifactsProjection(artifactResponse.artifacts, run) }
-  requireThat(equal(runProjection(await reader.get(route), options, workflow.id), run), 'run_changed_during_observation')
+  const observation = { run, jobs: jobsProjection(jobs, run, profile), artifacts: artifactsProjection(artifactResponse.artifacts, run, profile) }
+  requireThat(equal(runProjection(await reader.get(route), options, workflow.id, profile), run), 'run_changed_during_observation')
   const observedAt = now().toISOString(), findings = deriveFindings(observation), semantic = digest(semantics(observation))
   const previous = options.previous ? validatePrevious(previousBytes, options.previous.sha256, run) : null
   if (previous) requireThat(Date.parse(previous.observed_at) <= Date.parse(observedAt), 'previous_observation_newer')
@@ -288,7 +324,7 @@ export async function observeCi(options, { reader = createMetadataReader(), now 
   const changed = findings.filter(finding => old.get(finding.id) !== finding.revision).map(finding => finding.id)
   const resolved = [...old.keys()].filter(id => !currentIds.has(id)).sort()
   const status = previous ? previous.semantic_sha256 === semantic ? 'no-op' : 'changed' : 'recorded'
-  const body = { schema_version: 1, kind: 'ecorp-ci-maintenance-observation', contract_sha256: CONTRACT,
+  const body = { schema_version: 1, kind: 'ecorp-ci-maintenance-observation', contract_sha256: profile.contract,
     observed_at: observedAt, status, source_url: runUrl(run.id), execution_context: executionContext,
     observation, semantic_sha256: semantic, findings, new_or_changed_finding_ids: changed, no_longer_observed_finding_ids: resolved,
     previous_receipt_sha256: options.previous?.sha256 ?? null,
@@ -303,7 +339,8 @@ export async function observeCi(options, { reader = createMetadataReader(), now 
 
 export function renderHandoff(receipt) {
   const { run } = receipt.observation
-  const lines = ['# Repository checks: review handoff', '', `Status: **${receipt.status}**. Parent conclusion: **${run.conclusion}**.`, '',
+  const profile = workflowProfile(run.workflow_path)
+  const lines = [`# ${profile.scope.workflow_name}: review handoff`, '', `Status: **${receipt.status}**. Parent conclusion: **${run.conclusion}**.`, '',
     `Source: [run ${run.id}, attempt ${run.attempt}](${runUrl(run.id)}) at \`${run.head_sha}\`.`, '',
     `${receipt.findings.length} observed findings; ${receipt.new_or_changed_finding_ids.length} new or changed; ${receipt.no_longer_observed_finding_ids.length} no longer observed.`, '',
     'Metadata-only, read-only observation. Artifact contents, test totals and coverage were not read or verified. Artifact listings are run-scoped, not proof of the selected attempt.', '',
