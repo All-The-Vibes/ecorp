@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 import { applyOperationFeedback, bindFeedbackCorpusArtifact, buildFeedbackProposal, feedbackCommandExitCode, main, prepareOperationFeedback, projectFeedbackTarget,
   readFeedbackFile, renderFeedbackProposal, prepareFeedbackReviewIntent, projectFeedbackNativeReview, feedbackReviewNote,
-  renderFeedbackReviewIntent } from './operation_feedback.mjs'
+  renderFeedbackReviewIntent, buildFeedbackReviewIntent } from './operation_feedback.mjs'
 import { audit } from '../scenarios/repo-steward/lib/steward.mjs'
 import { fixtureSnapshot } from '../scenarios/repo-steward/fixtures/demo.mjs'
 import { createFeedbackCorpus, createFeedbackEvidence, createNativeBehaviorEvidence, proposeFeedback, reviewFeedback, validateFeedbackCorpus } from '../scenarios/repo-steward/lib/feedback.mjs'
@@ -185,6 +185,22 @@ function reviewedHarness() {
     proposalBytes: bytes(proposal), expectedSha256: hash(bytes(proposal)), ...overrides }, { ...h.native, ...dependencies })
   return { ...h, request, policy, payload, sync, approve, intent, prepare, applyReviewed }
 }
+
+test('pending native review distinguishes invalid artifact paths from invalid artifact IDs', () => {
+  const h = reviewedHarness()
+  const review = projectFeedbackNativeReview(h.payload(), h.currentSource())
+  assert.equal(buildFeedbackReviewIntent(h.options, review, h.native).state, 'ready-for-native-review')
+  for (const artifactPath of ['../corpus.json', 'C:/corpus.json', 'dir\\corpus.json', '', '/corpus.json', 'con/corpus.json']) {
+    assert.throws(() => buildFeedbackReviewIntent({ ...h.options, artifactPath }, review, h.native),
+      { code: 'invalid_artifact_path' }, artifactPath)
+  }
+  for (const artifactPath of ['corpus.json', '../corpus.json']) {
+    assert.throws(() => buildFeedbackReviewIntent({ ...h.options, artifactId: 'not-a-uuid', artifactPath }, review, h.native),
+      { code: 'invalid_artifact_selection' })
+  }
+  assert.equal(h.calls.reads, 0)
+  assert.equal(h.calls.posts.length, 0)
+})
 
 test('pending native intent survives acceptance changes and reviewed adoption replays one exact revision', async () => {
   const h = reviewedHarness(), pending = clone(h.currentSource())

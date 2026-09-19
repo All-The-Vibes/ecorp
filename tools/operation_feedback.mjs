@@ -309,7 +309,8 @@ function pendingReviewSourceEligible(receipt, artifactId, artifactPath) {
   requireThat(isHash(receipt.run.verification_sha256) && receipt.lineage.resume_chain_complete, 'source_review_evidence_incomplete')
   requireThat(receipt.verification.manual_gate?.gate_type === 'independent_review'
     && receipt.verification.manual_gate.status === 'pending', 'source_not_pending_independent_review')
-  requireThat(isUuid(artifactId) && (artifactPath === null || safeArtifactPath(artifactPath)), 'invalid_artifact_selection')
+  requireThat(isUuid(artifactId), 'invalid_artifact_selection')
+  requireThat(artifactPath === null || safeArtifactPath(artifactPath), 'invalid_artifact_path')
   const artifact = receipt.artifacts.find(item => item.id === artifactId)
   requireThat(artifact?.byte_hash_verified && artifact.signature_header_matches_record, 'missing_corpus_artifact')
   requireThat(artifactPath === null ? ['application/json', 'text/plain', 'text/markdown'].includes(artifact.media_type)
@@ -386,8 +387,8 @@ function reviewIntentContent(options, review, artifact, createdAt, expiresAt, in
   ]
   const references = [...target.task.contract.references, ...suffix]
   requireThat(references.length <= FEEDBACK_ADMISSION_LIMITS.references && references.every(value => typeof value === 'string'
-    && value.trim().length > 0 && Buffer.byteLength(value) <= FEEDBACK_ADMISSION_LIMITS.referenceBytes)
-    && Buffer.byteLength(suffix.join('\n')) <= FEEDBACK_ADMISSION_LIMITS.guidanceBytes, 'reference_bounds_exceeded')
+    && value.trim().length > 0 && Buffer.byteLength(value) <= FEEDBACK_ADMISSION_LIMITS.referenceBytes), 'reference_bounds_exceeded')
+  requireThat(Buffer.byteLength(suffix.join('\n')) <= FEEDBACK_ADMISSION_LIMITS.guidanceBytes, 'guidance_bounds_exceeded')
   requireThat(!suffix.some(value => target.task.contract.references.includes(value)), 'guidance_already_present')
   return { schema_version: 1, kind: 'ecorp-native-feedback-adoption-intent', state: 'ready-for-native-review',
     intent_id: intentId, created_at: iso(createdAt), expires_at: iso(expiresAt),
