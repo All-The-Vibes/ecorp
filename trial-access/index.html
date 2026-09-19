@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Private access instructions and verified transport evidence for the ECorp operations trial.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <title>ECorp · Private trial access</title>
+  <style>
+    :root{color-scheme:light;--ink:#182c43;--muted:#54667b;--line:#dce4eb;--navy:#10283e;--teal:#006d64}
+    *{box-sizing:border-box}body{margin:0;background:#f3f6f9;color:var(--ink);font:16px/1.6 "Segoe UI",Arial,sans-serif}
+    .wrap{width:min(1000px,calc(100% - 40px));margin:auto}header{background:#fff;border-bottom:1px solid var(--line);padding:20px 0}
+    header .wrap{display:flex;justify-content:space-between;gap:16px;align-items:center}header strong{letter-spacing:.3px}
+    a{color:#2855a2;text-underline-offset:3px}a:focus-visible{outline:3px solid #87acf4;outline-offset:5px}
+    .hero{background:var(--navy);color:#fff;padding:40px 0}.eyebrow{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#b1ccdc}
+    h1{font-size:clamp(32px,5vw,47px);line-height:1.13;letter-spacing:-1px;margin:12px 0 18px}h2{font-size:23px;line-height:1.3;margin:0 0 16px}h3{font-size:17px;margin:0 0 8px}
+    p{margin:0 0 13px}.hero p{max-width:750px;color:#d3e1ec}.status{display:inline-block;background:#d7f3e9;color:#075b4e;padding:6px 11px;border-radius:5px;font-size:13px;font-weight:600}
+    main{padding:28px 0 50px}.panel{padding:26px;background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:22px}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:5px}.summary strong{font-size:20px}
+    .muted,small{color:var(--muted)}.button{display:inline-block;padding:12px 18px;border-radius:7px;background:var(--teal);color:#fff;text-decoration:none;font-weight:600;margin:5px 0 14px}
+    ol{padding-left:23px;margin:0}li{padding-left:5px;margin:0 0 23px}li:last-child{margin-bottom:0}
+    code{font:14px/1.6 Consolas,monospace;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0;background:#edf2f7;border:1px solid var(--line);border-radius:7px;padding:15px}
+    .callout{border-left:4px solid #a97829;padding:10px 15px;background:#fff7e8;margin:18px 0 0}.callout p{margin:0}
+    table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;vertical-align:top;padding:12px 10px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px;text-transform:uppercase}
+    tbody tr:last-child td{border-bottom:0}.pass{color:var(--teal);font-weight:600}.details{display:grid;grid-template-columns:1fr 1fr;gap:24px}footer{font-size:12px;color:var(--muted)}
+    @media(max-width:650px){header .wrap{display:block}.summary,.details{grid-template-columns:1fr}.panel{padding:21px}table{font-size:12px}th,td{padding:9px 6px}.hero{padding:30px 0}}
+    @media print{body{background:white}.hero{background:white;color:var(--ink);padding:20px 0}.hero p,.eyebrow{color:var(--muted)}.panel{break-inside:avoid}a{color:inherit}}
+  </style>
+</head>
+<body>
+  <header><div class="wrap"><strong>ECorp · Operating evidence</strong><a href="../">Readiness report</a></div></header>
+  <div class="hero"><div class="wrap">
+    <div class="eyebrow">19 September 2026 · Private development trial</div>
+    <h1>Connect to the ECorp trial</h1>
+    <p>Rajesh and Shyam have access through a restricted Entra group. The host is running and the owner’s web and API relay checks passed. Shyam’s own connection and independent review are still pending.</p>
+    <span class="status">Transport verified · Reviewer connection pending</span>
+  </div></div>
+  <main class="wrap">
+    <section class="panel summary" aria-label="Trial status">
+      <div><span class="label">Access ends</span><strong>20 Sep · 15:39 UTC</strong><br><small>10:39 AM Central Daylight Time</small></div>
+      <div><span class="label">Operations score</span><strong>74.75 / 100</strong><br><small>Last qualified result; unchanged</small></div>
+      <div><span class="label">Fresh task allocation</span><strong>0 of 3 attempts used</strong><br><small>Reserved; native admission pending</small></div>
+    </section>
+    <section class="panel" aria-labelledby="connect-title">
+      <h2 id="connect-title">Shyam: connect from your Windows computer</h2>
+      <p>Use PowerShell 7.4 or later, the Microsoft Azure CLI MSI, and the Microsoft-signed Dev Tunnels client. The download contains the reviewed connection scripts, this trial’s configuration and test evidence. It contains no credentials or client binary.</p>
+      <a class="button" href="ecorp-reviewer-client.zip" download>Download reviewer kit (.zip)</a>
+      <p class="muted">Extract the kit into a folder you trust. Read <a href="reviewer-client/REVIEWER.md">REVIEWER.md</a> and review the scripts before running them. Use your organization’s normal trusted-script process if execution policy blocks a downloaded file.</p>
+      <ol>
+        <li><h3>Sign in to the selected tenant</h3><p>In a visible PowerShell window, use your own Microsoft account:</p>
+          <pre><code>az login --tenant 16b3c013-d300-468d-ac64-7eda0820b6d3 --allow-no-subscriptions</code></pre>
+          <p class="muted">Use the normal Windows or browser sign-in. Device-code authentication was rejected by tenant policy. The helper checks your tenant and the approved user identity.</p>
+        </li>
+        <li><h3>Get the official connection client</h3><p>Download <a href="https://aka.ms/TunnelsCliDownload/win-x64">Microsoft’s Windows x64 Dev Tunnels client</a> and save it as <code>devtunnel.exe</code>. The helper verifies its Microsoft signature. Do not perform a separate Dev Tunnels login.</p></li>
+        <li><h3>Start the private connection</h3><p>From the extracted kit folder, replace the executable path with where you saved the client:</p>
+          <pre><code>pwsh -NoProfile -File .\Connect-EcorpTrial.ps1 `
+  -ConfigPath .\trial-config.json `
+  -DevTunnelPath C:\Tools\devtunnel.exe</code></pre>
+          <p>Keep that window open. Local ports <strong>5188 and 8791</strong> must both be free. The helper refuses an existing listener; it does not stop your applications.</p>
+        </li>
+        <li><h3>Open ECorp</h3><p>Once connected, open <a href="http://127.0.0.1:5188"><code>http://127.0.0.1:5188</code></a> in your browser. Both ports forward to Rajesh’s running host, so this address works on your computer after the client connects.</p>
+          <p>Check <a href="http://127.0.0.1:8791/health">API health</a> as well. Report connection success or the helper’s fixed refusal code in <a href="https://github.com/All-The-Vibes/ecorp/pull/352#issuecomment-5742904145">the GitHub coordination thread</a>. Do not post credentials or token output.</p>
+        </li>
+      </ol>
+      <div class="callout"><p><strong>No approval is requested yet.</strong> A reviewable native intent and its evidence will follow after the trial’s remaining admission checks. Connecting or replying on GitHub does not record a native approval. Do not select a seeded ECorp actor as proof of your identity.</p></div>
+    </section>
+    <section class="panel" aria-labelledby="proof-title">
+      <h2 id="proof-title">What was verified</h2>
+      <p class="muted">Owner relay probes at 16:03 UTC on 19 September. Each request used a fresh client without cookies or automatic redirects.</p>
+      <table><thead><tr><th>Check</th><th>Observed result</th><th>Status</th></tr></thead><tbody>
+        <tr><td>Authenticated web relay</td><td>HTTP 200; exact SHA-256 match to the retained static index</td><td class="pass">Passed</td></tr>
+        <tr><td>Authenticated API relay</td><td>HTTP 200; crony-server, ok, development mode</td><td class="pass">Passed</td></tr>
+        <tr><td>Web without credentials</td><td>HTTP 302; challenge independently traced to Microsoft OAuth sign-in</td><td class="pass">Passed</td></tr>
+        <tr><td>API without credentials</td><td>HTTP 302; challenge independently traced to Microsoft OAuth sign-in</td><td class="pass">Passed</td></tr>
+        <tr><td>Reviewer connection helper</td><td>36 mocked boundary checks; source review completed</td><td class="pass">Passed</td></tr>
+        <tr><td>Shyam’s sign-in, forwarding and browser session</td><td>Requires Shyam’s own execution</td><td>Pending</td></tr>
+        <tr><td>Genuine provider trial and independent review</td><td>No native task attempt or human decision yet</td><td>Pending</td></tr>
+      </tbody></table>
+      <p class="muted" style="margin-top:15px">These are HTTP transport checks, not reviewer-client, WebSocket or production OIDC acceptance. Setup creates no measured score improvement. <a href="owner-relay-result.json">Read the sanitized relay receipt</a>.</p>
+    </section>
+    <section class="panel details" aria-label="Trial details and remaining work">
+      <div><h2>Trial details</h2>
+        <p><span class="label">Corp</span><code>00000000-0000-4000-8000-000000000001</code><br>ECorp Operations Network</p>
+        <p><span class="label">Room</span><code>00000000-0000-4000-8000-000000000041</code><br>Automation Division</p>
+        <p><span class="label">Private tunnel</span><code>ecorp-owner-20260919-4e1fd07a.usw3</code><br>Web 5188 · API 8791</p>
+        <p class="muted">The group contains exactly Rajesh and Shyam. Its connect grant and the host supervisor share the same deadline. Rajesh’s machine, web service, API and tunnel host must remain running.</p>
+      </div>
+      <div><h2>Remaining work</h2>
+        <p>Confirm Shyam’s access and independent participation; finish collecting consistent trial inputs; bind the runtime and task contracts; persist and verify native budgets and the manual review gate; then execute the baseline, feedback carrier and post-adoption comparison.</p>
+        <p class="muted">ECorp remains in development mode. Entra protects the transport, while native production identity assurance remains outside this setup. The reviewer must make their own eventual approve or reject decision.</p>
+        <p class="muted">An earlier tunnel attempt was never hosted. Its delete request returned 404 while it remained listed; removal is unresolved. It has a restricted, expiring group grant. The working tunnel and group were preserved.</p>
+      </div>
+    </section>
+    <footer>Published evidence is a timestamped snapshot. Access ends at 2026-09-20 15:39:28 UTC and may end earlier if the host disconnects. <a href="../">Return to the readiness report</a>.</footer>
+  </main>
+</body>
+</html>
