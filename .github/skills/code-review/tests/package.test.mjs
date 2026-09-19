@@ -74,3 +74,19 @@ test('CI remote actions use full commit SHAs and an explicit stable Rust channel
     assert.match(step, stableRustInput, 'SHA-pinned Rust action requires explicit stable or accepted 1.98.1 input')
   }
 })
+
+test('Windows runner CI compiles before ACL readiness, runs serially, and preserves readiness receipts', () => {
+  const workflow = readFileSync(resolve(root, '../../workflows/ci.yml'), 'utf8').replaceAll('\r\n', '\n')
+  const runner = workflow.split('  runner-platforms:\n')[1]?.split('\n  desktop-windows:')[0]
+  assert.ok(runner?.includes(`      - name: Compile Windows runner tests before native host readiness
+        if: runner.os == 'Windows'
+        run: cargo test --locked -p crony-runner --no-run
+      - name: Verify Windows PowerShell connection ACL readiness
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/windows_connection_acl_readiness.ps1 -ReportDirectory (Join-Path $env:GITHUB_WORKSPACE 'output/runner-platform-windows-readiness')
+      - run: cargo test --locked -p crony-runner \${{ runner.os == 'Windows' && '-- --test-threads=1' || '' }}
+`), 'Windows compilation and ACL readiness must precede single-thread test execution')
+  assert.match(runner, /      - name: Preserve Windows connection ACL readiness receipts\n        if: always\(\) && runner\.os == 'Windows'\n        uses: actions\/upload-artifact@[a-f0-9]{40}[^\n]*\n        with:\n          name: runner-platform-windows-readiness-\$\{\{ github\.run_attempt \}\}\n          path: output\/runner-platform-windows-readiness\/\n          if-no-files-found: warn\n          retention-days: 14\n/)
+  assert.ok(statSync(resolve(root, '../../../tools/windows_connection_acl_readiness.ps1')).isFile())
+})
