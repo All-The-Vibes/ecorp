@@ -19,6 +19,28 @@ runner, or issue a real approval. Actual work runs through the local or delibera
 ECorp control plane. The [quickstart](../README.md#start-locally) opens the local console on port 5187.
 Changing repository documentation does not redeploy the product site.
 
+### Current capability language
+
+The mission defines the team: specialist roles, dependencies, connected runtime
+capabilities, and policy shape the work. The named solo/specialist/studio plans
+are implementation options, not the product's fixed headcount.
+
+**Run it together** means shared room/mission context, durable discussion, fenced
+control handoffs, explicit review, and reconnect/replay. Preserve the distinction
+between this implemented foundation and the
+[remaining multiplayer acceptance work](multiplayer/U7_PARITY_MATRIX.md).
+
+**Blockchain as fabric** means the built-in weave of covered source changes,
+contributors, evidence, and acceptance rules. It is not a separate product named
+Fabric or a future add-on. Describe its actual primitives—source pins, SHA-256
+fingerprints, signed artifact provenance, checked handoffs, and attributed
+decisions—as documented in [Trust fabric](TRUST_FABRIC.md).
+
+The [architecture assets](assets/architecture/README.md) now include editable
+overview, multiplayer, and woven-trust diagrams while retaining the original
+factory artwork. Video running time is media metadata, never a claim about how
+quickly ECorp builds software.
+
 ### Repository description
 
 > ECorp — your software factory. One mission. An entire AI company at work: Copilot, Codex, Claude Code & OpenCode crews, multiplayer control, isolated worktrees, human approvals, and evidence-backed pull requests.
