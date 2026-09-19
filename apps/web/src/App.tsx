@@ -52,6 +52,7 @@ import { defaultVerifierCheck, verificationPolicyErrors } from './verificationPo
 import type { VerificationPolicy } from './verificationPolicy'
 import { VerificationPolicyEditor, VerificationPolicyPreview } from './VerificationPolicyEditor'
 import { MissionCollaborationPanel } from './MissionCollaborationPanel'
+import { AgentPinControl } from './AgentPinControl'
 import { collaborationSnapshotIsCurrent, createDiscussionDraftStore, selectCollaborationMission } from './missionCollaboration'
 import type { CollaborationInput, DiscussionDraft } from './missionCollaboration'
 
@@ -1900,6 +1901,7 @@ function AgentDesk({
   onInterrupt,
   onEmergencyStop,
   onMessage,
+  onPin,
 }: {
   agent: Agent
   capability: RunnerCapability | undefined
@@ -1919,6 +1921,7 @@ function AgentDesk({
     token: string | undefined,
     idempotencyKey: string,
   ) => Promise<boolean>
+  onPin: (agent: OfficeAgent, pinned: boolean) => Promise<void>
 }) {
   const [text, setText] = useState('')
   const [transferActorId, setTransferActorId] = useState('')
@@ -1997,6 +2000,7 @@ function AgentDesk({
             ? `${agent.name} is off shift. No provider process is running; the identity remains available for future ${adapterLabel(agent.adapter)} missions.`
           : `${agent.name} reports ${agent.status}. No current provider run is reported.`}
       </p>
+      <AgentPinControl agent={agent} canOperate={operator && actor.kind === 'human'} onPin={onPin} />
       <div className="desk-actions">
         {canClaim ? (
           <button type="button" className="button button-secondary" onClick={() => onClaim(agent)}>
@@ -5324,6 +5328,36 @@ function App() {
     }
   }
 
+  const setAgentPin = async (agent: OfficeAgent, pinned: boolean) => {
+    if (!bootstrap || !selectedActor || !Number.isSafeInteger(agent.pin_version)) return
+    const storageKey = `ecorp:agent-pin:${bootstrap.corp_id}:${selectedActor.id}:${agent.id}`
+    const payload = {
+      actor_id: selectedActor.id,
+      pinned,
+      expected_version: agent.pin_version,
+    }
+    const idempotencyKey = browserOperationKey(storageKey, JSON.stringify(payload))
+    setError(null)
+    try {
+      await api(`/api/corps/${bootstrap.corp_id}/agents/${agent.id}/pin`, {
+        method: 'POST',
+        body: JSON.stringify({ ...payload, idempotency_key: idempotencyKey }),
+      })
+      clearBrowserOperation(storageKey, idempotencyKey)
+      await refresh(bootstrap.corp_id, selectedActor.id)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught))
+      if (caught instanceof ApiRequestError && caught.status === 409) {
+        clearBrowserOperation(storageKey, idempotencyKey)
+        try {
+          await refresh(bootstrap.corp_id, selectedActor.id)
+        } catch {
+          setError(`${caught.message} The refresh also failed; reconnect before trying again.`)
+        }
+      }
+    }
+  }
+
   const claimLease = async (agent: Agent) => {
     if (!bootstrap || !selectedActor) return
     setError(null)
@@ -6212,6 +6246,7 @@ function App() {
                     onInterrupt={interruptRun}
                     onEmergencyStop={emergencyStop}
                     onMessage={sendMessage}
+                    onPin={setAgentPin}
                   />
               </OfficeInspector>
             ) : null}

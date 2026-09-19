@@ -158,9 +158,29 @@ When a run becomes completed, failed, or cancelled, its adapter disconnects or s
 the runner removes the run from its active-process map, and the employee identity returns off shift.
 ECorp preserves the identity and resumable session metadata without leaving an operating-system
 process alive. Unpinned mission workers retire after terminal missions only when there is no active
-run, control lease, queued message, approval, durable command, or teardown uncertainty. An
-authorized resume can reactivate the preserved worker. Dedicated Pin/Unpin, Clear crew, and manual
-Retire controls remain tracked in [#48](https://github.com/All-The-Vibes/ecorp/issues/48).
+run, unfinished saved/running assignment, control lease, queued message, approval, durable command,
+or teardown uncertainty. An authorized resume can reactivate the preserved worker.
+
+The agent inspector's **Pin identity** keeps an identity reusable after its mission, without
+keeping a provider process alive. **Unpin identity** restores ordinary automatic retirement,
+but never cancels work or discards its operational obligations. Owner, admin, manager and member
+human operators can use these controls; a mission-owned identity additionally requires current
+membership in its owning room. Retired historical identities cannot be pinned into service.
+If another operator changes the pin version, refresh and review before retrying.
+
+The equivalent CLI commands require the snapshot's `pin_version` and a caller-owned UUID:
+
+```powershell
+crony --server http://127.0.0.1:8791 pin <corp-id> <agent-id> <actor-id> --expected-version 0 --operation-key <uuid>
+crony --server http://127.0.0.1:8791 unpin <corp-id> <agent-id> <actor-id> --expected-version 1 --operation-key <new-uuid>
+```
+
+Keep the same key and exact request when retrying an unknown result. Reusing it for another
+actor, identity, value or expected version is a conflict. Exact replay returns the recorded
+result, not necessarily today's pin state; read a fresh snapshot afterward. The browser retains
+its operation key across uncertain requests and refreshes state after success or conflict.
+Clear crew and manual Retire remain tracked in
+[#48](https://github.com/All-The-Vibes/ecorp/issues/48); Pin/Unpin does not complete that umbrella.
 
 Risky commands create durable approval records. After verification passes, the mission card exposes
 provider evidence, verification evidence, the signed source deliverable, and integration state as

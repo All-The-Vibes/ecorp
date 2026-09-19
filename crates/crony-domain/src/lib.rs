@@ -292,6 +292,9 @@ pub struct Agent {
     pub mission_id: Option<Uuid>,
     #[serde(default)]
     pub pinned: bool,
+    /// Monotonic pin-operation version from the immutable agent journal.
+    #[serde(default)]
+    pub pin_version: i64,
     #[serde(default)]
     pub retired_at: Option<DateTime<Utc>>,
 }

@@ -1070,6 +1070,23 @@ pub struct MissionBudgetRevisionResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SetAgentPinRequest {
+    pub actor_id: Uuid,
+    pub pinned: bool,
+    pub expected_version: i64,
+    pub idempotency_key: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetAgentPinResponse {
+    pub agent_id: Uuid,
+    pub pinned: bool,
+    pub pin_version: i64,
+    pub replayed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClaimLeaseRequest {
     pub actor_id: Uuid,
 }

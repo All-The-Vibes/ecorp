@@ -1190,6 +1190,7 @@ mod tests {
             created_at: Utc::now(),
             mission_id: None,
             pinned: false,
+            pin_version: 0,
             retired_at: None,
         }
     }
@@ -1705,6 +1706,7 @@ mod tests {
             Agent {
                 retired_at: Some(Utc::now()),
                 pinned: true,
+                pin_version: 0,
                 ..workers[2].clone()
             },
             Agent {

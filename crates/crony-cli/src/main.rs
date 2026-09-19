@@ -7,7 +7,8 @@ use crony_domain::{DeliverableForm, DeliverableSpec, EntityLink, MAX_TASK_ATTEMP
 use crony_protocol::{
     ClaimLeaseRequest, CreateMissionRequest, CreateRoomMessageRequest, EmergencyStopRequest,
     InterruptRunRequest, LaunchMissionRequest, MissionSource, QueueMessageRequest,
-    ReleaseLeaseRequest, ResumeRunRequest, TransferLeaseRequest, VerificationDecisionRequest,
+    ReleaseLeaseRequest, ResumeRunRequest, SetAgentPinRequest, TransferLeaseRequest,
+    VerificationDecisionRequest,
 };
 use reqwest::{
     Client, Method,
@@ -114,6 +115,16 @@ enum Command {
         agent_id: Uuid,
         actor_id: Uuid,
     },
+    /// Keep an active identity reusable; never reactivate a retired identity.
+    Pin {
+        #[command(flatten)]
+        args: AgentPinArgs,
+    },
+    /// Remove retention preference without cancelling work or releasing authority.
+    Unpin {
+        #[command(flatten)]
+        args: AgentPinArgs,
+    },
     ReleaseLease {
         corp_id: Uuid,
         agent_id: Uuid,
@@ -156,6 +167,19 @@ enum Command {
         approve: bool,
         note: String,
     },
+}
+
+#[derive(Debug, clap::Args)]
+struct AgentPinArgs {
+    corp_id: Uuid,
+    agent_id: Uuid,
+    actor_id: Uuid,
+    /// The agent's pin_version from an authorized snapshot.
+    #[arg(long, value_parser = clap::value_parser!(i64).range(0..))]
+    expected_version: i64,
+    /// Reuse this UUID and the exact arguments after a lost response.
+    #[arg(long)]
+    operation_key: Uuid,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -347,6 +371,8 @@ async fn main() -> Result<()> {
             )
             .await?
         }
+        Command::Pin { args: pin } => set_agent_pin(&client, &args.server, pin, true).await?,
+        Command::Unpin { args: pin } => set_agent_pin(&client, &args.server, pin, false).await?,
         Command::Lease {
             corp_id,
             agent_id,
@@ -498,6 +524,29 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+async fn set_agent_pin(
+    client: &Client,
+    server: &str,
+    args: AgentPinArgs,
+    pinned: bool,
+) -> Result<Value> {
+    request(
+        client,
+        Method::POST,
+        format!(
+            "{server}/api/corps/{}/agents/{}/pin",
+            args.corp_id, args.agent_id
+        ),
+        Some(serde_json::to_value(SetAgentPinRequest {
+            actor_id: args.actor_id,
+            pinned,
+            expected_version: args.expected_version,
+            idempotency_key: args.operation_key,
+        })?),
+    )
+    .await
+}
+
 async fn request(
     client: &Client,
     method: Method,
@@ -529,6 +578,50 @@ mod tests {
 
     use super::{Args, Command};
     use crate::factory::VerificationRecoveryModeArg;
+
+    #[test]
+    fn issue48_pin_and_unpin_require_explicit_replay_authority() {
+        let id = "00000000-0000-4000-8000-000000000011";
+        for command in ["pin", "unpin"] {
+            assert!(Args::try_parse_from(["crony", command, id, id, id]).is_err());
+            assert!(
+                Args::try_parse_from(["crony", command, id, id, id, "--expected-version", "0",])
+                    .is_err()
+            );
+            let parsed = Args::try_parse_from([
+                "crony",
+                command,
+                id,
+                id,
+                id,
+                "--expected-version",
+                "7",
+                "--operation-key",
+                id,
+            ])
+            .unwrap();
+            let pin = match parsed.command {
+                Command::Pin { args } | Command::Unpin { args } => args,
+                _ => panic!("wrong command"),
+            };
+            assert_eq!(pin.expected_version, 7);
+            assert_eq!(pin.operation_key, Uuid::parse_str(id).unwrap());
+            assert!(
+                Args::try_parse_from([
+                    "crony",
+                    command,
+                    id,
+                    id,
+                    id,
+                    "--expected-version",
+                    "-1",
+                    "--operation-key",
+                    id,
+                ])
+                .is_err()
+            );
+        }
+    }
 
     fn copied_recovery_command(mode: &str) -> Vec<String> {
         [

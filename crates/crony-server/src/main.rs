@@ -1,3 +1,5 @@
+#[cfg(test)]
+mod agent_pinning_tests;
 mod artifacts;
 mod auth;
 mod dependency_source;
@@ -66,10 +68,10 @@ use crony_protocol::{
     ResolvedSecret, ResumeRunRequest, ResumeRunResponse,
     RevokePublicationPublisherCredentialRequest, RevokePublicationPublisherCredentialResponse,
     RevokeRunnerRequest, RevokeRunnerResponse, RevokeSecretRequest, RunnerCapability,
-    RunnerSummary, RunnerToServer, ServerToRunner, SetBudgetPolicyRequest, SnapshotResponse,
-    StartPullRequestPublicationRequest, TransferLeaseRequest, TransitionFactoryWorkItemRequest,
-    UpgradeFactorySourceCommitRequest, VerificationArtifactReference, VerificationDecisionRequest,
-    VerificationDecisionResponse,
+    RunnerSummary, RunnerToServer, ServerToRunner, SetAgentPinRequest, SetAgentPinResponse,
+    SetBudgetPolicyRequest, SnapshotResponse, StartPullRequestPublicationRequest,
+    TransferLeaseRequest, TransitionFactoryWorkItemRequest, UpgradeFactorySourceCommitRequest,
+    VerificationArtifactReference, VerificationDecisionRequest, VerificationDecisionResponse,
 };
 use crony_store::{
     CheckpointFactoryWorkspaceInput, ClaimFactoryWorkItemInput, ConfigureFactoryControllerInput,
@@ -82,7 +84,7 @@ use crony_store::{
     RecordPullRequestPublicationCheckpointInput, RejectFactoryMaterializationInput,
     RenewFactoryWorkItemInput, RenewPullRequestPublicationInput, RunClaim,
     RunnerCommandDispatchState, RunnerConnectInput, RunnerEventInput, RunnerEventOutcome,
-    StartPullRequestPublicationInput, TransitionFactoryWorkItemInput,
+    SetAgentPinInput, StartPullRequestPublicationInput, TransitionFactoryWorkItemInput,
     UpgradeFactorySourceCommitInput,
 };
 use dashmap::DashMap;
@@ -701,6 +703,10 @@ async fn run_server() -> anyhow::Result<()> {
         .route(
             "/api/corps/{corp_id}/runs/{run_id}/verification-decision",
             post(decide_verification),
+        )
+        .route(
+            "/api/corps/{corp_id}/agents/{agent_id}/pin",
+            post(set_agent_pin),
         )
         .route(
             "/api/corps/{corp_id}/agents/{agent_id}/lease",
@@ -5432,6 +5438,43 @@ async fn decide_verification(
     Ok(Json(VerificationDecisionResponse {
         run_id: outcome.run_id,
         status: outcome.status,
+        replayed: outcome.replayed,
+    }))
+}
+
+async fn set_agent_pin(
+    State(state): State<AppState>,
+    Extension(principal): Extension<Principal>,
+    Path((corp_id, agent_id)): Path<(Uuid, Uuid)>,
+    Json(request): Json<SetAgentPinRequest>,
+) -> Result<Json<SetAgentPinResponse>, ApiError> {
+    let actor_id = authorize_actor(
+        &state,
+        &principal,
+        corp_id,
+        Some(request.actor_id),
+        Permission::Operate,
+    )
+    .await?;
+    let outcome = state
+        .store
+        .set_agent_pin(SetAgentPinInput {
+            corp_id,
+            agent_id,
+            actor_id,
+            pinned: request.pinned,
+            expected_version: request.expected_version,
+            idempotency_key: request.idempotency_key,
+        })
+        .await
+        .map_err(map_store_error)?;
+    if let Some(event) = outcome.event {
+        publish(&state, event);
+    }
+    Ok(Json(SetAgentPinResponse {
+        agent_id: outcome.agent_id,
+        pinned: outcome.pinned,
+        pin_version: outcome.pin_version,
         replayed: outcome.replayed,
     }))
 }

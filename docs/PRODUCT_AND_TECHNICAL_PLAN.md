@@ -26,6 +26,18 @@ and linked repository evidence for implemented behavior.
   - Local research checkout: `C:\Users\shyamsridhar\code\_research\buzz3`
   - Reviewed commit: `00e61eafa917d296104006576b7a2ddbfd58bb5a`
 
+### Bounded Pin/Unpin addition - September 19, 2026
+
+The current agent inspector, API and CLI expose authorized versioned Pin/Unpin on the
+existing identity model. Pin retains same-room reusable workers; Unpin preserves active work
+and all retirement obligations, including a second saved assignment. Room-scoped audit,
+current-authority replay and retired-identity rejection are part of the contract. This extends
+the mission-owned staffing and recovered-activation foundations without replacing either.
+Clear crew and manual Retire remain separate #48 work. See
+[identity Pin/Unpin](ARCHITECTURE.md#identity-pinunpin) for the exact concurrency/replay semantics.
+The [bounded validation report](evidence/2026-09-19-agent-pinning.md) separates native
+fixture results, the failed full-workspace gate, and remaining evidence limitations.
+
 ### Implementation checkpoint - September 6, 2026
 
 This checkpoint adds to the September 4 baseline below; it does not turn the original delivery
@@ -42,6 +54,7 @@ plan into a claim that every planned surface has shipped.
   production human authentication.
 - Saved `ready` missions are held until explicit authenticated launch, including across browser
   closure and server restart. See the [launch-admission report](evidence/2026-09-06-mission-launch-admission.md).
+
 - GitHub Copilot native filesystem tools use retained worktree capabilities and persisted write
   scope. The checked-in SDK 1.0.11 / CLI 1.0.79 pair is validated with automatic updates disabled;
   shell and other risky effects still need authority. See the
