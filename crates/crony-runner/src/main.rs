@@ -24,7 +24,9 @@ use anyhow::{Context, Result, anyhow};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chrono::{DateTime, Utc};
 use clap::Parser;
-use crony_domain::{DeliverableSpec, RetainedProviderReceiptGrant, VerificationPolicy};
+use crony_domain::{
+    DeliverableSpec, RetainedProviderReceiptGrant, RunFailureKind, VerificationPolicy,
+};
 use crony_protocol::{
     ActiveRunClaim, MAX_VERIFICATION_ARTIFACT_BYTES, ResolvedSecret, RunnerCapability, RunnerModel,
     RunnerToServer, ServerToRunner, VerificationArtifactReference,
@@ -3311,7 +3313,15 @@ async fn send_verification_events(
                     assignment,
                     "run.failed",
                     json!({
-                        "error": format!("verified deliverable export failed: {error:#}"),
+                        "failure_kind": RunFailureKind::DeliverableExport,
+                        "error": format!(
+                            "Verified deliverable export failed: {error:#}. \
+                             Automatic fresh-worktree retry is disabled. Keep the preserved worktree; \
+                             inspect its complete source delta and the accepted deliverable/write scope. \
+                             Use the existing preserved-session Resume only when that complete delta \
+                             fits the current contract. If scope excludes retained source, a new \
+                             authorized full-scope mission is required; do not delete source or reset attempts."
+                        ),
                     }),
                 );
                 return VerificationRunOutcome::Failed;
@@ -5068,6 +5078,177 @@ mod tests {
             fingerprint
         );
         std::fs::remove_dir_all(root).expect("remove owned cancellation fixture");
+    }
+
+    #[tokio::test]
+    async fn issue89_complete_scenario_export_failure_is_typed_and_preserves_source() {
+        let (root, repository, managed) = teardown_fixture();
+        let relative = "scenarios/scope-89";
+        let source = repository.join(relative);
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(source.join("tracked.txt"), b"original\n").unwrap();
+        git(&repository, &["add", "."]);
+        git(
+            &repository,
+            &[
+                "-c",
+                "user.name=ECorp Test",
+                "-c",
+                "user.email=test@ecorp.invalid",
+                "commit",
+                "-m",
+                "scenario baseline",
+            ],
+        );
+        let workspaces = Arc::new(
+            WorkspaceManager::initialize(managed, repository.clone(), "HEAD".to_owned())
+                .await
+                .unwrap(),
+        );
+        let task_id = Uuid::new_v4();
+        let run_id = Uuid::new_v4();
+        let workspace = workspaces
+            .prepare(task_id, run_id, None, None)
+            .await
+            .unwrap();
+        let scenario = workspace.path.join(relative);
+        std::fs::write(scenario.join(".gitignore"), b"ignored.log\n").unwrap();
+        std::fs::write(scenario.join("staged.txt"), b"staged scenario source\n").unwrap();
+        git(
+            &workspace.path,
+            &[
+                "add",
+                "scenarios/scope-89/.gitignore",
+                "scenarios/scope-89/staged.txt",
+            ],
+        );
+        std::fs::write(scenario.join("tracked.txt"), b"complete scenario change\n").unwrap();
+        std::fs::write(
+            scenario.join("application.js"),
+            b"export const ready = true;\n",
+        )
+        .unwrap();
+        std::fs::write(scenario.join("EVIDENCE.md"), b"evidence-only correction\n").unwrap();
+        std::fs::write(scenario.join("ignored.log"), b"retained but not exported\n").unwrap();
+        let fingerprint = workspaces.fingerprint(&workspace).await.unwrap();
+        let head = git(&workspace.path, &["rev-parse", "HEAD"]);
+        let index_path = git(&workspace.path, &["rev-parse", "--git-path", "index"]);
+        let index = std::fs::read(&index_path).unwrap();
+        let mut assignment = verification_assignment(&workspace, run_id);
+        assignment.task_id = task_id;
+        assignment.workspace_run_id = run_id;
+        assignment.write_scope = vec![format!("{relative}/EVIDENCE.md")];
+        assignment.verification_policy.checks = vec![crony_domain::VerifierCheck::File {
+            path: format!("{relative}/EVIDENCE.md"),
+            min_bytes: 1,
+        }];
+        assignment.deliverable = Some(DeliverableSpec {
+            form: crony_domain::DeliverableForm::CommitBranch,
+            commit_after_verification: true,
+            paths: Vec::new(),
+        });
+        let outbound = OutboundBus::default();
+        let (_ack, mut acks) = mpsc::unbounded_channel();
+        let artifacts = Arc::new(Mutex::new(Vec::new()));
+        let outcome = send_verification_events(
+            &outbound,
+            "issue89-runner",
+            &assignment,
+            &workspace,
+            &workspaces,
+            None,
+            None,
+            None,
+            &artifacts,
+            None,
+            &mut acks,
+            "evidence corrected",
+            None,
+            None,
+            None,
+            None,
+        )
+        .await;
+        assert_eq!(outcome, VerificationRunOutcome::Failed);
+        let events = recorded_run_events(&outbound);
+        assert_eq!(
+            events
+                .iter()
+                .map(|(kind, _)| kind.as_str())
+                .collect::<Vec<_>>(),
+            [
+                "run.verification_started",
+                "run.verification_evidence",
+                "run.failed"
+            ]
+        );
+        assert_eq!(events[1].1["status"], "passed");
+        assert_eq!(events[2].1["failure_kind"], "deliverable_export");
+        let error = events[2].1["error"].as_str().unwrap();
+        assert!(error.contains("outside the task write scope: scenarios/scope-89/.gitignore"));
+        assert!(error.contains("Automatic fresh-worktree retry is disabled"));
+        assert!(error.contains("preserved-session Resume"));
+        assert_eq!(
+            workspaces.fingerprint(&workspace).await.unwrap(),
+            fingerprint
+        );
+        assert_eq!(git(&workspace.path, &["rev-parse", "HEAD"]), head);
+        assert_eq!(std::fs::read(&index_path).unwrap(), index);
+
+        // A narrower-than-** scope is legal when it still covers the complete scenario.
+        let report = verifier::verify(&assignment.verification_policy, &workspace.path, &[]).await;
+        assert!(report.passed);
+        let exported = deliverable::export(
+            Uuid::new_v4(),
+            assignment.deliverable.as_ref().unwrap(),
+            &workspace,
+            &report,
+            &[],
+            &[format!("{relative}/**")],
+            None,
+        )
+        .await
+        .unwrap();
+        assert!(exported.publication_ready);
+        assert_ne!(exported.head_commit.as_deref(), Some(head.as_str()));
+        let document: Value = serde_json::from_slice(&exported.bytes).unwrap();
+        let paths = document["changes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|change| change["path"].as_str().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            paths,
+            [
+                "scenarios/scope-89/.gitignore",
+                "scenarios/scope-89/EVIDENCE.md",
+                "scenarios/scope-89/application.js",
+                "scenarios/scope-89/staged.txt",
+                "scenarios/scope-89/tracked.txt",
+            ]
+        );
+        assert!(
+            !BASE64
+                .decode(document["patch_base64"].as_str().unwrap())
+                .unwrap()
+                .is_empty()
+        );
+        let bundle = root.join("scenario.bundle");
+        std::fs::write(
+            &bundle,
+            BASE64
+                .decode(document["git_bundle_base64"].as_str().unwrap())
+                .unwrap(),
+        )
+        .unwrap();
+        git(&repository, &["bundle", "verify", bundle.to_str().unwrap()]);
+        assert_eq!(git(&repository, &["rev-parse", "HEAD"]), head);
+        assert_eq!(
+            std::fs::read(scenario.join("ignored.log")).unwrap(),
+            b"retained but not exported\n"
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[tokio::test]
