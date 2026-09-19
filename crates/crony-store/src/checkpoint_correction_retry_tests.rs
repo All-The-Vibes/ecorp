@@ -1600,15 +1600,33 @@ async fn retry_exhausted_spend(pool: PgPool, cost: bool) {
     } else {
         retry_profile()
     };
-    let fixture = retry_failed_fixture(
-        pool,
-        profile,
-        RetryFailure::Provider,
-        if cost { 100 } else { 4_700 },
-        if cost { 1_000_000 } else { 1_000 },
-    )
-    .await;
+    let fixture = retry_failed_fixture(pool, profile, RetryFailure::Provider, 100, 1_000).await;
     let store = &fixture.store;
+    // Retain the pre-atomic accounting regression: persisted usage could precede
+    // breaker evaluation. New reports fence atomically (#56), but these historical
+    // healthy-stage rows must still fail the independent remaining-budget guard.
+    let mut legacy = store.pool.begin().await.unwrap();
+    let tokens = if cost { 100_i64 } else { 4_700 };
+    let spent = if cost { 1_000_000_i64 } else { 1_000 };
+    sqlx::query("UPDATE runs SET input_tokens=$1,cost_microusd=$2 WHERE corp_id=$3 AND id=$4")
+        .bind(tokens)
+        .bind(spent)
+        .bind(CORP)
+        .bind(fixture.first.launch.run_id)
+        .execute(&mut *legacy)
+        .await
+        .unwrap();
+    sqlx::query(
+        "UPDATE events SET payload=$1 WHERE corp_id=$2 AND aggregate_id=$3
+        AND aggregate_type='run' AND type='run.usage'",
+    )
+    .bind(json!({"input_tokens":tokens,"output_tokens":0,"cost_microusd":spent}))
+    .bind(CORP)
+    .bind(fixture.first.launch.run_id)
+    .execute(&mut *legacy)
+    .await
+    .unwrap();
+    legacy.commit().await.unwrap();
     let context = retry_context(store).await;
     assert_retry_provider_context(&context, fixture.first.launch.run_id, &"c".repeat(64), 1);
     assert!(!context.checkpoint_source_correction);

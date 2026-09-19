@@ -149,6 +149,23 @@ Monotonic steer, constrain, suspend, and stop transitions create immutable incid
 runner directives. Suspend is a terminal provider checkpoint: the session and worktree are
 preserved for an explicit resume. A hard overrun stops immediately.
 
+Usage accounting and breaker evaluation commit together. A mission, requester rolling-24-hour,
+or Corp rolling-24-hour hard transition fences every active consuming run in that scope,
+including provisioning and older active runs whose own usage has aged out of the rolling window.
+Run limits and loop counters remain run-local. Each run advances only to a stronger stage, with
+one incident and durable command per stage; the server delivers the commands to every affected
+runner. Transition inputs retain the scope identity, metric, used amount, limit, evaluated run,
+and the complete affected-run set. Admission and effect acceptance share the Corp budget lock,
+so they cannot observe accounting without its fence. This gate also serializes requester budgets;
+reentrant verifier/recovery paths do not acquire a separate actor gate after the Corp gate.
+After dependency and secret preparation, ordinary start/resume enqueue revalidates the exact
+pending assignment and its budget under this gate. Enqueue therefore either precedes the
+scope fence or is rejected; a breaker cannot be consumed before its native run is enqueued.
+Exhausted scopes reject new task dispatch
+as well as resume. Staged artifact finalization and queued approval/control commands recheck
+the fence. The existing provenance-validated, zero-provider checkpoint-verification exception
+remains an explicit recovery authority, not a generic verifier exemption.
+
 Mission limits retain immutable original token/cost values plus the current authorized ceiling.
 An exhausted `suspend` can be recovered only through a versioned `mission_budget_revisions`
 aggregate proposed and decided by an owner or admin. The row records current and proposed limits,

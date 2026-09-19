@@ -212,7 +212,7 @@ async fn corrected_publication_fixture(pool: PgPool) -> PublicationFixture {
         ))
         .await
         .unwrap();
-    store
+    let stopped = store
         .apply_runner_event(event(
             corrected_run_id,
             correction_launch.assignment_token,
@@ -221,11 +221,7 @@ async fn corrected_publication_fixture(pool: PgPool) -> PublicationFixture {
         ))
         .await
         .unwrap();
-    let stopped = store
-        .evaluate_circuit_breaker(CORP, corrected_run_id)
-        .await
-        .unwrap();
-    assert_eq!(stopped.event.unwrap().payload["stage"], "stop");
+    assert_eq!(stopped.related_events[0].payload["stage"], "stop");
     let terminated = event(
         corrected_run_id,
         correction_launch.assignment_token,
@@ -2282,7 +2278,7 @@ async fn issue216_ordinary_source_only_predecessor_correction_stop_checkpoint_pu
         json!({"workspace_relative_path":RETAINED_COPILOT_RECEIPT_FILE}),
     );
     ready_fixture_artifact(&store, receipt_input, &receipt).await;
-    store
+    let stopped = store
         .apply_runner_event(event(
             provider.run_id,
             provider.assignment_token,
@@ -2291,11 +2287,7 @@ async fn issue216_ordinary_source_only_predecessor_correction_stop_checkpoint_pu
         ))
         .await
         .unwrap();
-    let stopped = store
-        .evaluate_circuit_breaker(CORP, provider.run_id)
-        .await
-        .unwrap();
-    assert_eq!(stopped.event.unwrap().payload["stage"], "stop");
+    assert_eq!(stopped.related_events[0].payload["stage"], "stop");
     let proof = StoppedSourceCheckpoint {
         schema_version: 1,
         corp_id: CORP,
