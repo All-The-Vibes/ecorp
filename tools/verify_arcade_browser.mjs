@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import { lstat, mkdir, readFile, realpath, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { resolveVerifierBrowser } from './verifier_browser.mjs'
 
 const root = await realpath(process.cwd())
 assert.ok((await lstat(path.join(root, '.git'))).isFile(),
@@ -16,6 +17,12 @@ assert.equal(await realpath(app), app)
 const modulePath = process.env.CRONY_PLAYWRIGHT_MODULE
 assert.ok(modulePath, 'The trusted runner must supply its installed Playwright module path')
 const { chromium } = await import(pathToFileURL(path.join(modulePath, 'index.mjs')).href)
+const selection = process.env.CRONY_VERIFIER_BROWSER_POLICY === undefined ? null :
+  await resolveVerifierBrowser({
+    policyPath: process.env.CRONY_VERIFIER_BROWSER_POLICY,
+    chromiumExecutable: chromium.executablePath(),
+    workspace: root,
+  })
 const evidence = path.join(app, 'evidence')
 await mkdir(evidence, { recursive: true })
 assert.ok(!(await lstat(evidence)).isSymbolicLink(), 'Evidence directory must not be linked')
@@ -33,8 +40,10 @@ async function outputPath(name) {
   return target
 }
 
-const browser = await chromium.launch({ channel: 'chrome', headless: true })
-const report = { verifier: 'ecorp-arcade-browser-v1', passed: false, cases: [], errors: [], screenshots: [] }
+const browser = await chromium.launch(selection?.launchOptions ?? { channel: 'chrome', headless: true })
+const report = { verifier: 'ecorp-arcade-browser-v1', passed: false,
+  browser: { ...(selection?.evidence ?? { selection: 'legacy-chrome-channel' }), browserVersion: browser.version() },
+  cases: [], errors: [], screenshots: [] }
 try {
   for (const [name, width, height, reducedMotion] of [
     ['desktop', 1280, 800, 'no-preference'],
