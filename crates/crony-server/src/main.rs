@@ -4645,36 +4645,51 @@ async fn schedule_ready_tasks(
                 continue;
             }
         };
-        if !send_command_to_current_runner(
-            &state.runners,
-            &runner_id,
-            connection_epoch,
-            ServerToRunner::StartRun {
-                workspace_connection_id: record.workspace_connection_id,
-                corp_id: record.corp_id,
-                room_id: record.room_id,
-                mission_id: record.mission_id,
-                task_id: record.task_id,
-                run_id: record.run_id,
-                agent_id: record.agent_id,
-                assignment_token: record.assignment_token,
-                adapter: record.adapter.clone(),
-                mission_title: record.mission_title.clone(),
-                model: record.model.clone(),
-                reasoning_effort: record.reasoning_effort.clone(),
-                source_repository: record.source_repository.clone(),
-                source_base_ref: record.source_base_ref.clone(),
-                source_base_commit: record.source_base_commit.clone(),
-                verification_policy: record.verification_policy.clone(),
-                write_scope: record.write_scope.clone(),
-                deliverable: record.deliverable.clone(),
-                secrets,
-            },
-        ) {
-            let reason = "runner disconnected or changed epoch before accepting the run";
+        let dispatch = state
+            .store
+            .with_run_budget_dispatch(
+                corp_id,
+                record.run_id,
+                record.assignment_token,
+                &runner_id,
+                || {
+                    send_command_to_current_runner(
+                        &state.runners,
+                        &runner_id,
+                        connection_epoch,
+                        ServerToRunner::StartRun {
+                            workspace_connection_id: record.workspace_connection_id,
+                            corp_id: record.corp_id,
+                            room_id: record.room_id,
+                            mission_id: record.mission_id,
+                            task_id: record.task_id,
+                            run_id: record.run_id,
+                            agent_id: record.agent_id,
+                            assignment_token: record.assignment_token,
+                            adapter: record.adapter.clone(),
+                            mission_title: record.mission_title.clone(),
+                            model: record.model.clone(),
+                            reasoning_effort: record.reasoning_effort.clone(),
+                            source_repository: record.source_repository.clone(),
+                            source_base_ref: record.source_base_ref.clone(),
+                            source_base_commit: record.source_base_commit.clone(),
+                            verification_policy: record.verification_policy.clone(),
+                            write_scope: record.write_scope.clone(),
+                            deliverable: record.deliverable.clone(),
+                            secrets,
+                        },
+                    )
+                },
+            )
+            .await;
+        if !matches!(dispatch, Ok(true)) {
+            let reason = match dispatch {
+                Err(error) => format!("budget authority denied native dispatch: {error}"),
+                _ => "runner disconnected or changed epoch before accepting the run".to_owned(),
+            };
             if let Ok(events) = state
                 .store
-                .fail_run_before_dispatch(corp_id, record.run_id, reason)
+                .fail_run_before_dispatch(corp_id, record.run_id, &reason)
                 .await
             {
                 for event in events {
@@ -5339,53 +5354,63 @@ async fn resume_run(
             ));
         }
     };
-    if !send_command_to_current_runner(
-        &state.runners,
-        &record.runner_id,
-        connection_epoch,
-        ServerToRunner::ResumeRun {
-            workspace_connection_id: record.workspace_connection_id,
-            command_id: None,
-            corp_id: record.corp_id,
-            room_id: record.room_id,
-            mission_id: record.mission_id,
-            task_id: record.task_id,
-            run_id: record.run_id,
-            workspace_run_id: record.workspace_run_id,
-            agent_id: record.agent_id,
-            assignment_token: record.assignment_token,
-            adapter: record.adapter,
-            provider_session_id: record.provider_session_id.clone(),
-            prompt: resume_prompt,
-            model: record.model,
-            reasoning_effort: record.reasoning_effort,
-            source_repository: record.source_repository,
-            source_base_ref: record.source_base_ref,
-            source_base_commit: record.source_base_commit,
-            workspace_base_commit: Some(record.workspace_base_commit),
-            expected_workspace_fingerprint: None,
-            expected_head_commit: None,
-            verification_policy: record.verification_policy,
-            write_scope: record.write_scope,
-            deliverable: record.deliverable,
-            secrets,
-        },
-    ) {
+    let dispatch = state
+        .store
+        .with_run_budget_dispatch(
+            corp_id,
+            record.run_id,
+            record.assignment_token,
+            &record.runner_id,
+            || {
+                send_command_to_current_runner(
+                    &state.runners,
+                    &record.runner_id,
+                    connection_epoch,
+                    ServerToRunner::ResumeRun {
+                        workspace_connection_id: record.workspace_connection_id,
+                        command_id: None,
+                        corp_id: record.corp_id,
+                        room_id: record.room_id,
+                        mission_id: record.mission_id,
+                        task_id: record.task_id,
+                        run_id: record.run_id,
+                        workspace_run_id: record.workspace_run_id,
+                        agent_id: record.agent_id,
+                        assignment_token: record.assignment_token,
+                        adapter: record.adapter,
+                        provider_session_id: record.provider_session_id.clone(),
+                        prompt: resume_prompt,
+                        model: record.model,
+                        reasoning_effort: record.reasoning_effort,
+                        source_repository: record.source_repository,
+                        source_base_ref: record.source_base_ref,
+                        source_base_commit: record.source_base_commit,
+                        workspace_base_commit: Some(record.workspace_base_commit),
+                        expected_workspace_fingerprint: None,
+                        expected_head_commit: None,
+                        verification_policy: record.verification_policy,
+                        write_scope: record.write_scope,
+                        deliverable: record.deliverable,
+                        secrets,
+                    },
+                )
+            },
+        )
+        .await;
+    if !matches!(dispatch, Ok(true)) {
+        let reason = match dispatch {
+            Err(error) => format!("budget authority denied native resume dispatch: {error}"),
+            _ => "runner disconnected or changed epoch before accepting resume".to_owned(),
+        };
         let failure = state
             .store
-            .fail_run_before_dispatch(
-                corp_id,
-                record.run_id,
-                "runner disconnected or changed epoch before accepting resume",
-            )
+            .fail_run_before_dispatch(corp_id, record.run_id, &reason)
             .await
             .map_err(ApiError::internal)?;
         for event in failure {
             publish(&state, event);
         }
-        return Err(ApiError::conflict(
-            "runner disconnected or changed epoch before accepting resume",
-        ));
+        return Err(ApiError::conflict(reason));
     }
     publish(&state, event);
     Ok(Json(ResumeRunResponse {
@@ -6480,6 +6505,7 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                         let RunnerEventOutcome {
                             event,
                             related_events,
+                            breaker_commands,
                         } = outcome;
                         if let Some(event) = event {
                             if (event.event_type == "run.deliverable"
@@ -6563,28 +6589,6 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                                     }
                                 });
                             }
-                            if matches!(
-                                applied_event_type.as_str(),
-                                "run.usage" | "run.tool_activity"
-                            ) {
-                                match state.store.evaluate_circuit_breaker(corp_id, run_id).await {
-                                    Ok(outcome) => {
-                                        if let Some(event) = outcome.event {
-                                            publish(&state, event);
-                                        }
-                                        if outcome.command.is_some()
-                                            && let Err(error) =
-                                                dispatch_pending_runner_commands(&state, &runner_id)
-                                                    .await
-                                        {
-                                            warn!(%error, %runner_id, %run_id, "failed to dispatch circuit-breaker command");
-                                        }
-                                    }
-                                    Err(error) => {
-                                        warn!(%error, %run_id, "circuit-breaker evaluation failed")
-                                    }
-                                }
-                            }
                             if matches!(applied_event_type.as_str(), "run.completed" | "run.failed")
                             {
                                 let schedule_state = state.clone();
@@ -6628,6 +6632,17 @@ async fn runner_socket(socket: WebSocket, state: AppState) {
                         }
                         for related_event in related_events {
                             publish(&state, related_event);
+                        }
+                        let runners: std::collections::HashSet<_> = breaker_commands
+                            .into_iter()
+                            .map(|command| command.runner_id)
+                            .collect();
+                        for runner_id in runners {
+                            if let Err(error) =
+                                dispatch_pending_runner_commands(&state, &runner_id).await
+                            {
+                                warn!(%error, %runner_id, "failed to dispatch circuit-breaker commands");
+                            }
                         }
                     }
                     Err(error) => {
@@ -6744,6 +6759,7 @@ async fn process_runner_event(
             Ok(RunnerEventOutcome {
                 event: None,
                 related_events: Vec::new(),
+                breaker_commands: Vec::new(),
             })
         }
         "rejected" => {
@@ -6806,6 +6822,7 @@ async fn process_runner_event(
             Ok(RunnerEventOutcome {
                 event,
                 related_events: Vec::new(),
+                breaker_commands: Vec::new(),
             })
         }
         status => Err(anyhow::anyhow!("unknown prepared artifact status {status}")),

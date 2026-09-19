@@ -322,7 +322,7 @@ async fn fixture_with_profile(
             .await
             .unwrap();
     }
-    store
+    let usage = store
         .apply_runner_event(event(
             SOURCE,
             TOKEN,
@@ -332,8 +332,7 @@ async fn fixture_with_profile(
         ))
         .await
         .unwrap();
-    let breaker = store.evaluate_circuit_breaker(CORP, SOURCE).await.unwrap();
-    if let Some(event) = breaker.event {
+    if let Some(event) = usage.related_events.first() {
         assert_eq!(event.payload["stage"], profile.expected_stage);
     } else {
         assert_eq!(profile.expected_stage, "healthy");

@@ -316,6 +316,14 @@ provider authority.
 Budget policies constrain run, mission, requester, and Corp usage. Repeated tools and explicit
 no-progress events feed an auditable circuit breaker; ordinary human conversation does not.
 
+Aggregate hard limits are scope-wide authority boundaries. Accounting, all affected run fences,
+incidents, and durable runner commands are one transaction. New dispatch, runner progress,
+artifact staging/finalization, and manual approval/verification decisions serialize with that
+transaction; a previously staged object cannot become accepted evidence after the fence.
+Run-local limits never fence unrelated runs. A stronger existing stage is never weakened or
+reissued, and current hard fences make queued effect-advancing approval/control commands obsolete.
+Rolling usage windows limit accounting, not the set of active assignments that must be fenced.
+
 Mission budget recovery is a dedicated owner/admin operation, not a resume parameter. Original
 limits and consumed usage are never reset. Proposal and decision requests are Corp-scoped,
 role-gated, versioned, and exactly idempotent; approval rechecks the current mission limits and

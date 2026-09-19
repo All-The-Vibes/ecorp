@@ -1032,7 +1032,7 @@ async fn corrected_then_stopped(
         "adapter":"github-copilot","workspace":"fixture-worktree","workspace_branch":"crony/fixture",
         "workspace_base_ref":"main","workspace_base_commit":"a".repeat(40),"execution_mode":"provider"
     }))).await.unwrap();
-    store
+    let stopped = store
         .apply_runner_event(event(
             launch.run_id,
             launch.assignment_token,
@@ -1044,11 +1044,7 @@ async fn corrected_then_stopped(
         ))
         .await
         .unwrap();
-    let stopped = store
-        .evaluate_circuit_breaker(CORP, launch.run_id)
-        .await
-        .unwrap();
-    assert_eq!(stopped.event.unwrap().payload["stage"], "stop");
+    assert_eq!(stopped.related_events[0].payload["stage"], "stop");
     store
         .apply_runner_event(event(
             launch.run_id,
