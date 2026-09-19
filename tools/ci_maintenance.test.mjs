@@ -225,7 +225,8 @@ test('CLI writes new bounded files and refuses output reuse; failures retain no 
 test('hosted context binds default observer branch, event and exact parent; local mode makes no hosted claim', t => {
   const directory = temporary(t), eventPath = path.join(directory, 'event.json')
   const event = { action: 'completed', repository: { id: CI_SCOPE.repository_id }, workflow_run: { id: 123, run_attempt: 1,
-    head_sha: selection.headSha, head_repository: { id: CI_SCOPE.repository_id }, status: 'completed' } }
+    head_sha: selection.headSha, head_repository: { id: CI_SCOPE.repository_id }, status: 'completed',
+    workflow_id: 456, path: CI_SCOPE.workflow_path, name: CI_SCOPE.workflow_name } }
   writeFileSync(eventPath, JSON.stringify(event))
   const env = { GITHUB_ACTIONS: 'true', GITHUB_EVENT_NAME: 'workflow_run', GITHUB_REPOSITORY: CI_SCOPE.repository,
     GITHUB_REF: 'refs/heads/main', GITHUB_SHA: 'b'.repeat(40), GITHUB_EVENT_PATH: eventPath,
@@ -244,4 +245,187 @@ test('CLI accepts only bounded exact selection and a complete prior pin', () => 
     args.map(value => value === '123' ? '1e3' : value), args.map(value => value === selection.headSha ? 'main' : value)]) {
     assert.throws(() => parseArgs(changed))
   }
+})
+
+function ciFixture() {
+  const data = fixture()
+  data.workflow = { id: 654, name: 'CI', path: '.github/workflows/ci.yml' }
+  Object.assign(data.run, { workflow_id: 654, path: data.workflow.path, conclusion: 'success' })
+  const reports = {
+    quality: null, integration: 'integration-evidence',
+    'runner-platforms (ubuntu-latest)': 'runner-platform-ubuntu-latest',
+    'runner-platforms (windows-latest)': 'runner-platform-windows-latest',
+    'runner-platforms (macos-latest)': 'runner-platform-macos-latest',
+    'desktop-windows': null,
+  }
+  data.jobs = Object.keys(reports).map((name, i) => ({ ...data.jobs[0], id: 800 + i, name, conclusion: 'success', steps: [] }))
+  data.artifacts = Object.values(reports).filter(Boolean).map((name, i) => artifact({ id: 900 + i, name }))
+  return data
+}
+function ciReader(data, transform = value => value) {
+  const calls = []
+  const reader = createMetadataReader({ run: async args => {
+    const route = args.at(-1); calls.push(route)
+    const value = route.endsWith('/workflows/ci.yml') ? data.workflow
+      : route.endsWith('/workflows/repository-checks.yml') ? fixture().workflow
+        : /\/jobs\?per_page=100&page=[12]$/u.test(route) ? { total_count: data.jobs.length, jobs: data.jobs.slice((Number(route.at(-1)) - 1) * 100, Number(route.at(-1)) * 100) }
+          : route.endsWith('/artifacts?per_page=20&page=1') ? { total_count: data.artifacts.length, artifacts: data.artifacts }
+            : data.run
+    return JSON.stringify(transform(structuredClone(value), route))
+  } })
+  return { reader, calls }
+}
+
+test('CI workflow: exact Windows runner failure produces a scoped read-only handoff', async () => {
+  const data = ciFixture(); data.run.conclusion = 'failure'
+  const windows = data.jobs.find(job => job.name === 'runner-platforms (windows-latest)')
+  windows.conclusion = 'failure'
+  windows.steps = [{ number: 1, name: 'Run runner tests', status: 'completed', conclusion: 'failure' }]
+  const { reader, calls } = ciReader(data)
+  const receipt = await observeCi(selection, { reader, now })
+  assert.equal(receipt.observation.run.workflow_path, '.github/workflows/ci.yml')
+  assert.deepEqual(receipt.findings.map(finding => [finding.rule, finding.job_id]), [['JOB_REQUIRES_REVIEW', windows.id]])
+  assert.match(renderHandoff(receipt), /^# CI: review handoff/u)
+  assert.ok(calls.includes(`${rootRoute}/workflows/ci.yml`))
+  assert.ok(!calls.includes(`${rootRoute}/workflows/repository-checks.yml`))
+  assert.equal(calls.length, 5)
+  assert.equal(receipt.github_mutations, 0)
+  assert.equal(receipt.assurance.source_repair_claimed, false)
+})
+
+test('CI workflow: complete successful jobs need only their own declared report artifacts', async () => {
+  const receipt = await observeCi(selection, { reader: ciReader(ciFixture()).reader, now })
+  assert.deepEqual(receipt.findings, [])
+  assert.equal(receipt.observation.jobs.length, 6)
+  assert.equal(receipt.observation.artifacts.length, 4)
+  assert.equal(receipt.assurance.artifact_contents_verified, false)
+})
+
+test('CI workflow: required artifact-free jobs remain required and must execute', async () => {
+  const data = ciFixture()
+  data.jobs = data.jobs.filter(job => job.name !== 'quality')
+  data.jobs.find(job => job.name === 'desktop-windows').conclusion = 'skipped'
+  const receipt = await observeCi(selection, { reader: ciReader(data).reader, now })
+  assert.ok(receipt.findings.some(finding => finding.rule === 'EXPECTED_JOB_MISSING' && finding.job_name === 'quality'))
+  assert.ok(receipt.findings.some(finding => finding.rule === 'EXPECTED_JOB_NOT_EXECUTED' && finding.job_name === 'desktop-windows'))
+  assert.ok(!receipt.findings.some(finding => finding.rule.startsWith('EVIDENCE_ARTIFACT_')))
+})
+
+test('Repository checks retains its published contract and previous-receipt no-op semantics', async () => {
+  const receipt = await observeCi(selection, { reader: readerFor().reader, now })
+  assert.equal(receipt.contract_sha256, '9f7e997a220b5ac5c16a32c22a5396137d9a2fe4d9686e82efa18e34548df7e6')
+  const prior = previousOption(receipt)
+  const replay = await observeCi({ ...selection, previous: prior.reference }, { reader: readerFor().reader, now, previousBytes: prior.bytes })
+  assert.equal(replay.status, 'no-op')
+  assert.deepEqual(replay.findings, receipt.findings)
+  assert.equal(replay.semantic_sha256, receipt.semantic_sha256)
+})
+
+for (const conclusion of ['skipped', 'neutral']) {
+  test(`CI completeness refuses ${conclusion} artifact-free required jobs`, async () => {
+    const data = ciFixture()
+    for (const job of data.jobs.filter(job => ['quality', 'desktop-windows'].includes(job.name))) job.conclusion = conclusion
+    const receipt = await observeCi(selection, { reader: ciReader(data).reader, now })
+    assert.deepEqual(receipt.findings.map(finding => [finding.rule, finding.job_name]).sort(), [
+      ['EXPECTED_JOB_NOT_EXECUTED', 'desktop-windows'], ['EXPECTED_JOB_NOT_EXECUTED', 'quality'],
+    ])
+  })
+}
+
+test('CI completeness rejects replacement jobs and requires only CI report metadata', async () => {
+  const data = ciFixture()
+  data.jobs = [{ ...data.jobs[0], name: 'replacement-only' }]
+  const missing = await observeCi(selection, { reader: ciReader(data).reader, now })
+  assert.equal(missing.findings.length, 6)
+  assert.ok(missing.findings.every(finding => finding.rule === 'EXPECTED_JOB_MISSING'))
+  const complete = ciFixture(); complete.artifacts = [artifact()]
+  const reports = await observeCi(selection, { reader: ciReader(complete).reader, now })
+  assert.equal(reports.findings.length, 4)
+  assert.ok(reports.findings.every(finding => finding.rule === 'EVIDENCE_ARTIFACT_MISSING'))
+  assert.equal(reports.observation.artifacts[0].name, null, 'Repository checks artifact does not satisfy CI evidence')
+})
+
+test('CI observation is not a parent-pass claim and does not inspect diagnostic artifacts', async () => {
+  const data = ciFixture(); data.run.conclusion = 'failure'
+  data.artifacts.push(artifact({ id: 999, name: 'runner-platform-windows-readiness-1' }))
+  const { reader, calls } = ciReader(data)
+  const receipt = await observeCi(selection, { reader, now })
+  assert.deepEqual(receipt.findings.map(finding => finding.rule), ['PARENT_CONCLUSION_REVIEW'])
+  assert.equal(receipt.findings[0].job_name, 'CI')
+  assert.ok(calls.every(route => !/\/logs|\/zip|\/download/u.test(route)))
+  assert.equal(receipt.read_evidence.downloaded_artifact_bytes, 0)
+  assert.equal(receipt.assurance.artifact_attempt_binding, 'not-exposed-by-api')
+})
+
+test('workflow profiles cannot reuse each other\'s receipts even at the same source', async () => {
+  const legacy = await observeCi(selection, { reader: readerFor().reader, now })
+  const ci = await observeCi(selection, { reader: ciReader(ciFixture()).reader, now })
+  assert.notEqual(ci.contract_sha256, legacy.contract_sha256)
+  for (const [previous, reader] of [[legacy, ciReader(ciFixture()).reader], [ci, readerFor().reader]]) {
+    const prior = previousOption(previous)
+    await assert.rejects(observeCi({ ...selection, previous: prior.reference }, { reader, now, previousBytes: prior.bytes }), { code: 'invalid_previous_receipt' })
+  }
+  const prior = previousOption(ci)
+  const replay = await observeCi({ ...selection, previous: prior.reference }, { reader: ciReader(ciFixture()).reader, now, previousBytes: prior.bytes })
+  assert.equal(replay.status, 'no-op')
+})
+
+for (const [name, mutate, code] of [
+  ['unknown workflow path', data => { data.run.path = '.github/workflows/arbitrary.yml' }, 'workflow_binding_mismatch'],
+  ['workflow-ID substitution', data => { data.run.workflow_id++ }, 'run_binding_mismatch'],
+  ['workflow-name substitution', data => { data.workflow.name = 'Repository checks' }, 'workflow_binding_mismatch'],
+  ['workflow-path substitution', data => { data.workflow.path = CI_SCOPE.workflow_path }, 'workflow_binding_mismatch'],
+  ['foreign repository', data => { data.run.repository.id++ }, 'run_binding_mismatch'],
+  ['fork head repository', data => { data.run.head_repository.id++ }, 'run_binding_mismatch'],
+  ['wrong source head', data => { data.run.head_sha = 'c'.repeat(40) }, 'run_binding_mismatch'],
+  ['wrong attempt', data => { data.run.run_attempt++ }, 'run_binding_mismatch'],
+  ['active CI parent', data => { data.run.status = 'in_progress'; data.run.conclusion = null }, 'run_not_terminal'],
+]) test(`CI identity refuses ${name}`, async () => {
+  const data = ciFixture(); mutate(data)
+  const { reader, calls } = ciReader(data)
+  await assert.rejects(observeCi(selection, { reader, now }), { code })
+  assert.ok(calls.every(route => !route.includes('arbitrary.yml')))
+})
+
+test('reader allowlist admits exactly the two workflow metadata routes', async () => {
+  let calls = 0
+  const reader = createMetadataReader({ run: async () => { calls++; return '{}' } })
+  for (const file of ['repository-checks.yml', 'ci.yml']) await reader.get(`${rootRoute}/workflows/${file}`)
+  for (const file of ['ci-maintenance.yml', '../ci.yml', 'ci.yml?ref=other', 'other.yml']) {
+    await assert.rejects(reader.get(`${rootRoute}/workflows/${file}`), { code: 'route_not_allowed' })
+  }
+  assert.equal(calls, 2)
+})
+
+test('hosted CI event binds workflow identity to the selected native parent', async t => {
+  const directory = temporary(t), eventPath = path.join(directory, 'event.json'), data = ciFixture()
+  const event = { action: 'completed', repository: { id: CI_SCOPE.repository_id }, workflow_run: {
+    id: selection.runId, run_attempt: selection.attempt, head_sha: selection.headSha,
+    head_repository: { id: CI_SCOPE.repository_id }, status: 'completed', workflow_id: data.workflow.id,
+    path: data.workflow.path, name: data.workflow.name,
+  } }
+  writeFileSync(eventPath, JSON.stringify(event))
+  const env = { GITHUB_ACTIONS: 'true', GITHUB_EVENT_NAME: 'workflow_run', GITHUB_REPOSITORY: CI_SCOPE.repository,
+    GITHUB_REF: 'refs/heads/main', GITHUB_SHA: 'b'.repeat(40), GITHUB_EVENT_PATH: eventPath,
+    GITHUB_WORKFLOW_REF: `${CI_SCOPE.repository}/.github/workflows/ci-maintenance.yml@refs/heads/main` }
+  const context = hostedSelection(env, selection)
+  assert.deepEqual(context.parent_workflow, data.workflow)
+  const receipt = await observeCi(selection, { reader: ciReader(data).reader, now, executionContext: context })
+  assert.equal(receipt.execution_context.workflow_source_sha, env.GITHUB_SHA)
+  await assert.rejects(observeCi(selection, { reader: ciReader(data).reader, now,
+    executionContext: { ...context, parent_workflow: { ...context.parent_workflow, id: 456 } } }), { code: 'workflow_event_binding_mismatch' })
+  for (const change of [{ path: '.github/workflows/unknown.yml' }, { name: 'Repository checks' },
+    { workflow_id: null }, { head_repository: { id: 1234 } }]) {
+    writeFileSync(eventPath, JSON.stringify({ ...event, workflow_run: { ...event.workflow_run, ...change } }))
+    assert.throws(() => hostedSelection(env, selection))
+  }
+})
+
+test('workflow trigger keeps trusted observer checkout and read-only scopes for both producers', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/ci-maintenance.yml', import.meta.url), 'utf8')
+  assert.match(workflow, /workflows: \[Repository checks, CI\]/u)
+  assert.match(workflow, /ref: \$\{\{ github\.sha \}\}/u)
+  assert.match(workflow, /persist-credentials: false/u)
+  assert.match(workflow, /contents: read\s+actions: read/u)
+  assert.doesNotMatch(workflow, /contents: write|actions: write|head_sha.*checkout/u)
 })

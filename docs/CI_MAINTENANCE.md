@@ -1,12 +1,16 @@
 # Read-only CI maintenance handoffs
 
 `tools/ci_maintenance.mjs` observes one exact completed attempt of the existing
-**Repository checks** workflow in `All-The-Vibes/ecorp`. It reads GitHub's workflow,
+**Repository checks** or **CI** workflow in `All-The-Vibes/ecorp`. It reads GitHub's workflow,
 run, job/step and artifact metadata and produces a bounded reviewer handoff. It
 does not read logs or download, extract or execute artifact contents. It cannot
 create issues/comments, change source or labels, rerun workflows, merge or deploy.
 
 The separate `ci-maintenance.yml` workflow consumes `workflow_run: completed`.
+Both workflow names are explicitly selected. The observer reads the selected
+native attempt first, resolves its exact workflow path against this two-entry
+allowlist, then verifies its workflow ID, path and name with native metadata.
+It never constructs a workflow endpoint from an arbitrary supplied path.
 GitHub must first receive the reviewed workflow and tool on the default branch;
 an unmerged workflow is not an activated hosted chain. It checks out the trusted
 default-branch `github.sha`, never the triggering PR or its artifacts. Native
@@ -35,6 +39,21 @@ and output reuse. The fixed limits are 12 GET requests, 120 seconds overall,
 20 seconds per request, two MiB of combined API metadata, 200 jobs, 100 steps per
 job and 20 artifacts. The API errors themselves are withheld. A failed observation
 retains a bounded failure record and is never retried automatically.
+
+## Workflow-specific completeness
+
+Repository checks retains its existing five required jobs and report artifacts.
+CI requires `quality`, `integration`, all three `runner-platforms` matrix jobs
+(`ubuntu-latest`, `windows-latest`, `macos-latest`), and `desktop-windows`.
+The integration report is `integration-evidence`; the platform reports are
+`runner-platform-ubuntu-latest`, `runner-platform-windows-latest` and
+`runner-platform-macos-latest`. The quality and desktop jobs have no required
+artifact, but their absence, skipped result or neutral result still needs review.
+
+Additional diagnostic artifacts, including the newer Windows ACL readiness
+receipt, are not required for historical producer heads that did not emit them.
+Their presence cannot establish that an earlier failed test passed. This
+observer does not select, download or inspect their contents.
 
 On success, `receipt.json` binds the selected source, normalized metadata, request
 digests and findings; `handoff.md` links directly to affected native jobs. The
@@ -66,6 +85,11 @@ observations are refused. Identical semantic facts yield `no-op`. Changed facts
 identify new/changed findings and findings no longer observed. The latter are not
 claims of a verified source repair. A different source requires a fresh scope.
 Hashes prove byte consistency, not authenticated historical approval.
+Repository checks keeps its existing receipt contract and finding identities;
+CI has a separate classifier contract and workflow-scoped finding identities.
+A previous observation from one workflow cannot supply a no-op or resolved
+finding for the other, even at the same source commit. Existing command flags
+are unchanged; native run identity selects the allowed workflow.
 
 The hosted job does not automatically restore prior artifacts or claim durable
 cross-run deduplication. Its concurrency and artifact identity bind the exact
