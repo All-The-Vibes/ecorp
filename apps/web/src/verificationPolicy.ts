@@ -47,7 +47,14 @@ export function verifierCheckSummary(check: VerifierCheck): string {
   if (check.type === 'json_schema') {
     return `JSON ${check.path} · keys: ${JSON.stringify(check.required_keys)}`
   }
-  return `${check.type === 'test' ? 'Test' : 'Command'} · ${JSON.stringify([check.program, ...check.args])} · ${Math.round(check.timeout_ms / 1_000)}s`
+  const summary = `${check.type === 'test' ? 'Test' : 'Command'} · ${JSON.stringify([check.program, ...check.args])} · ${Math.round(check.timeout_ms / 1_000)}s`
+  if (check.cache_suppression == null) return summary
+  const labels: Record<VerifierCacheSuppression, string> = {
+    python_interpreter: 'Python interpreter (-B)',
+    python_environment: 'Python environment',
+    node_compile_cache: 'Node compile cache',
+  }
+  return `${summary} · Requested cache control: ${labels[check.cache_suppression]} (requires a compatible runner)`
 }
 
 export function verificationPolicyErrors(policy: VerificationPolicy): string[] {

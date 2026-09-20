@@ -177,3 +177,22 @@ test('policy edits preserve explicit cache controls and legacy omission on the w
     }
   }
 })
+
+
+test('completion summaries distinguish explicit cache requests and preserve null or omitted policies', () => {
+  const labels = {
+    python_interpreter: 'Python interpreter (-B)',
+    python_environment: 'Python environment',
+    node_compile_cache: 'Node compile cache',
+  }
+  for (const type of ['command', 'test']) {
+    const check = { type, program: 'python3', args: ['one two'], timeout_ms: 1499 }
+    const legacy = `${type === 'test' ? 'Test' : 'Command'} · ["python3","one two"] · 1s`
+    assert.equal(verifierCheckSummary(check), legacy)
+    assert.equal(verifierCheckSummary({ ...check, cache_suppression: null }), legacy)
+    for (const [cache_suppression, label] of Object.entries(labels)) {
+      assert.equal(verifierCheckSummary({ ...check, cache_suppression }),
+        `${legacy} · Requested cache control: ${label} (requires a compatible runner)`)
+    }
+  }
+})

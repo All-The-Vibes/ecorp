@@ -184,7 +184,7 @@ async fn run_check_inner(
         let effective = cache_suppression.or_else(|| automatic_cache_suppression(program));
         outcome.payload["cache_suppression"] = json!({
             "policy": effective,
-            "source": if cache_suppression.is_some() { "explicit" } else { "automatic" },
+            "source": if cache_suppression.is_some() { "explicit" } else if effective.is_some() { "automatic" } else { "none" },
             "scope": "verifier_child",
             "requested_environment": match effective {
                 Some(VerifierCacheSuppression::PythonInterpreter | VerifierCacheSuppression::PythonEnvironment) => json!({"PYTHONDONTWRITEBYTECODE":"1"}),
@@ -1180,6 +1180,74 @@ mod tests {
                 _ => unreachable!(),
             }
         }
+    }
+
+    #[tokio::test]
+    async fn issue140_failed_command_evidence_distinguishes_cache_selection_sources() {
+        let workspace =
+            std::env::temp_dir().join(format!("cache-evidence-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&workspace).unwrap();
+        for (name, explicit, expected_policy, expected_source) in [
+            ("git", None, None, "none"),
+            ("node", None, None, "none"),
+            (
+                "python3",
+                None,
+                Some(VerifierCacheSuppression::PythonInterpreter),
+                "automatic",
+            ),
+            (
+                "python3",
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                "explicit",
+            ),
+            (
+                "node",
+                Some(VerifierCacheSuppression::NodeCompileCache),
+                Some(VerifierCacheSuppression::NodeCompileCache),
+                "explicit",
+            ),
+        ] {
+            let check = VerifierCheck::Command {
+                program: workspace.join(name).to_string_lossy().into_owned(),
+                args: vec![],
+                timeout_ms: 1_000,
+                cache_suppression: explicit,
+            };
+            let result = run_check(0, &check, &workspace, &[]).await;
+            assert!(
+                !result.passed,
+                "the explicit executable must remain missing"
+            );
+            let evidence = &result.payload["cache_suppression"];
+            assert_eq!(evidence["policy"], json!(expected_policy));
+            assert_eq!(evidence["source"], expected_source);
+            assert_eq!(evidence["scope"], "verifier_child");
+            assert_eq!(evidence["zero_cache_writes_verified"], false);
+            assert_eq!(evidence["cleanup_authorized"], false);
+            assert_eq!(
+                evidence["requested_argument_prefix"],
+                if expected_policy == Some(VerifierCacheSuppression::PythonInterpreter) {
+                    json!(["-B"])
+                } else {
+                    json!([])
+                }
+            );
+            assert_eq!(
+                evidence["requested_environment"],
+                match expected_policy {
+                    Some(
+                        VerifierCacheSuppression::PythonInterpreter
+                        | VerifierCacheSuppression::PythonEnvironment,
+                    ) => json!({"PYTHONDONTWRITEBYTECODE":"1"}),
+                    Some(VerifierCacheSuppression::NodeCompileCache) =>
+                        json!({"NODE_DISABLE_COMPILE_CACHE":"1"}),
+                    None => json!({}),
+                }
+            );
+        }
+        std::fs::remove_dir(&workspace).unwrap();
     }
 
     #[tokio::test]
