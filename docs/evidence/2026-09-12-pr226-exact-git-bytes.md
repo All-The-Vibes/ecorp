@@ -183,3 +183,26 @@ New evidence root:
 - `prior-evidence-audit.json`: all nine retained files' hashes and missing-proof matrix.
 - `handoff.json` and `candidate.patch`: final scoped index manifest and patch,
   with no commit or external publication.
+
+## September 20, 2026: nonclosing maintainer contribution
+
+This correction chooses the nonclosing local byte-repair alternative in human
+review `5231152817`; it does not declare issue #225's full Factory goal complete.
+The preceding 185 lines remain dated history. Original `ec1700d` provenance,
+work-item/mission/run/export/publication IDs and the original deliverable digest
+remain historical, not verification of `0f79a5b` or any later documentation head.
+
+The designated repository evidence index is
+[pr226-local-validation/README.md](pr226-local-validation/README.md). Its separate
+validation owner supplies actual logs, source bindings and test images; this
+pointer does not assert that future evidence is already available or committed.
+Retained round-1 receipts report 10/10 local canary checks at `0f79a5b` and six
+same-head hosted successes. Neither establishes a new-head check or full current
+local baseline; earlier baseline counts above remain historical.
+
+Issue #225's eight persisted checks, independent outcome review, exact native
+export/publication and Project binding, replay, and watcher-restart acceptance
+remain open/unproven, not waived or replaced by local tests. Human review,
+threads, draft/branch status, native acceptance and controller authority are
+separate gates requiring their own current evidence; this note asserts none
+satisfied and neither changes original lineage nor activates Factory.

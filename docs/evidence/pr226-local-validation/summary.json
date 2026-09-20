@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-09-20T21:40:25.763Z",
+  "sourceHead": "0f79a5b4dfcc6a9c82a948f207397fdb3b82f431",
+  "manifestSha256": "c9da84fa0bb82470f73538ed4d0ca53a85839000723065ffec9533748f259f9e",
+  "baselineCommands": [
+    {
+      "id": "migrations",
+      "command": [
+        "node",
+        "tools/check_migrations.mjs"
+      ],
+      "exitCode": 0,
+      "result": "PASS",
+      "initialExitCode": 0,
+      "finalRecord": "migrations"
+    },
+    {
+      "id": "rustfmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exitCode": 0,
+      "result": "PASS",
+      "initialExitCode": 0,
+      "finalRecord": "rustfmt"
+    },
+    {
+      "id": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exitCode": 0,
+      "result": "PASS",
+      "initialExitCode": 0,
+      "finalRecord": "clippy"
+    },
+    {
+      "id": "cargo-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--workspace"
+      ],
+      "exitCode": 0,
+      "result": "PASS",
+      "initialExitCode": 0,
+      "finalRecord": "cargo-tests"
+    },
+    {
+      "id": "web-build",
+      "command": [
+        "pnpm",
+        "build:web"
+      ],
+      "exitCode": 0,
+      "result": "PASS",
+      "initialExitCode": 1,
+      "finalRecord": "web-build-retry"
+    },
+    {
+      "id": "web-lint",
+      "command": [
+        "pnpm",
+        "lint:web"
+      ],
+      "exitCode": 0,
+      "result": "PASS",
+      "initialExitCode": 1,
+      "finalRecord": "web-lint-retry"
+    }
+  ],
+  "retainedFailures": [
+    {
+      "id": "web-build",
+      "exitCode": 1
+    },
+    {
+      "id": "web-lint",
+      "exitCode": 1
+    },
+    {
+      "id": "diff-check",
+      "exitCode": 2
+    }
+  ],
+  "migrationCount": 41,
+  "rust": {
+    "passed": 547,
+    "failed": 0,
+    "ignored": 323,
+    "measuredGroups": 14
+  },
+  "canary": {
+    "passed": 10,
+    "failed": 0
+  },
+  "newRed": {
+    "commit": "ec1700db3074ecaf2045314c71ef893434c4d79e",
+    "actualExit": 1,
+    "violatedContracts": 2
+  },
+  "newGreen": {
+    "commit": "0f79a5b4dfcc6a9c82a948f207397fdb3b82f431",
+    "actualExit": 0,
+    "satisfiedContracts": 2
+  },
+  "nativeAcceptance": "UNPROVEN / OPEN. No native records, provider, Factory, publication, replay or watcher-restart operation performed.",
+  "historicalExecution": "Unavailable old RED/GREEN execution logs are not recovered or replaced by claims; this is a newly executed immutable-blob reproduction.",
+  "screenshot": "NOT CAPTURED by this fixer. HTML is a view of actual retained results for the owner to capture through a real browser."
+}

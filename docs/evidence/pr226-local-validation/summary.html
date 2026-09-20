@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PR226 — genuine local validation</title>
+<style>body{font:16px system-ui,sans-serif;max-width:1100px;margin:32px auto;padding:0 24px;color:#172535;background:#f5f7fa}h1{margin-bottom:8px}code{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;background:white}th,td{padding:12px;text-align:left;border-bottom:1px solid #d6dce3}th{background:#e8eef5}.notice{padding:16px;background:#fff0c7;border-left:5px solid #956900;margin:20px 0}.pass{color:#14643c;font-weight:700}small{line-height:1.7}a{color:#164aa5}</style>
+<h1>PR226 · Local byte-repair validation</h1>
+<p>Fresh execution on September 20, 2026 · Nonclosing maintainer repair</p>
+<p><strong>Tested source:</strong> <code>0f79a5b4dfcc6a9c82a948f207397fdb3b82f431</code><br>
+<strong>Input manifest:</strong> <code>c9da84fa0bb82470f73538ed4d0ca53a85839000723065ffec9533748f259f9e</code></p>
+<table><thead><tr><th scope="col">Actual check</th><th scope="col">Exit</th><th scope="col">Result / log</th></tr></thead><tbody>
+<tr><td>Immutable migrations: 41</td><td>0</td><td class="pass">PASS · <a href="logs/migrations.stdout.txt">stdout</a> / <a href="logs/migrations.stderr.txt">stderr</a></td></tr>
+<tr><td>Rust formatting</td><td>0</td><td class="pass">PASS · <a href="logs/rustfmt.stdout.txt">stdout</a> / <a href="logs/rustfmt.stderr.txt">stderr</a></td></tr>
+<tr><td>All-target Clippy (warnings denied)</td><td>0</td><td class="pass">PASS · <a href="logs/clippy.stdout.txt">stdout</a> / <a href="logs/clippy.stderr.txt">stderr</a></td></tr>
+<tr><td>Rust: 547 passed / 323 ignored</td><td>0</td><td class="pass">PASS · <a href="logs/cargo-tests.stdout.txt">stdout</a> / <a href="logs/cargo-tests.stderr.txt">stderr</a></td></tr>
+<tr><td>Web TypeScript + Vite build</td><td>0</td><td class="pass">PASS · <a href="logs/web-build-retry.stdout.txt">stdout</a> / <a href="logs/web-build-retry.stderr.txt">stderr</a> · <a href="logs/web-build.stdout.txt">initial policy failure (exit 1)</a></td></tr>
+<tr><td>Web lint</td><td>0</td><td class="pass">PASS · <a href="logs/web-lint-retry.stdout.txt">stdout</a> / <a href="logs/web-lint-retry.stderr.txt">stderr</a> · <a href="logs/web-lint.stdout.txt">initial policy failure (exit 1)</a></td></tr>
+<tr><td>Canary: 10 passed / 0 failed</td><td>0</td><td class="pass">PASS · <a href="logs/canary.stdout.txt">stdout</a> / <a href="logs/canary.stderr.txt">stderr</a></td></tr>
+<tr><td>NEW RED: 2 real historical blob mismatches</td><td>1</td><td class="pass">Expected RED reproduced · <a href="logs/new-red.stdout.txt">stdout</a> / <a href="logs/new-red.stderr.txt">stderr</a></td></tr>
+<tr><td>NEW GREEN: 2 unchanged byte contracts</td><td>0</td><td class="pass">PASS · <a href="logs/new-green.stdout.txt">stdout</a> / <a href="logs/new-green.stderr.txt">stderr</a></td></tr>
+</tbody></table>
+<div class="notice"><strong>Issue225 native acceptance remains OPEN / UNPROVEN.</strong><br>
+323 ignored Rust tests were not run. No destructive E2E, real-provider, Factory or shared-stack operations.
+Old execution logs remain unavailable. NEW RED reads immutable Git blobs; it does not run historical code.</div>
+<p>Retained diagnostics: initial web build/lint failed dependency URL verification; both passed after the approved frozen-integrity proxy setup.
+Global-config-disabled whitespace checks flagged the other-owned dated report (exit 2); the normal configured checkout check passed.
+The observed difference is core.autocrlf=true in normal configuration. No other-owned file or Git config was changed here.</p>
+<p>RED commit: <code>ec1700db3074ecaf2045314c71ef893434c4d79e</code><br>GREEN commit: <code>0f79a5b4dfcc6a9c82a948f207397fdb3b82f431</code></p>
+<small>Generated from retained command records at 2026-09-20T21:40:25.763Z. This HTML is not a screenshot or native acceptance record.
+The owner must capture the actual browser view. <a href="README.md">Scope and disclosures</a> · <a href="baseline-results.json">Commands, exits, timestamps and hashes</a> · <a href="summary.json">Machine-readable totals</a></small></html>
