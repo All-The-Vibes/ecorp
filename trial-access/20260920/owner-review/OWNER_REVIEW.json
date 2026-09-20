@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "kind": "ecorp-owner-review-packet",
+  "review_packet_id": "1f463a30-73e1-462f-9c4e-95ea7bf3aa82",
+  "state": "awaiting-actual-owner-decision",
+  "created_at": "2026-09-20T21:52:02.001Z",
+  "expires_at": "2026-09-21T17:40:00.000Z",
+  "review_mode": "owner human_approval; not independent review",
+  "actual_owner_approval_received": false,
+  "source": {
+    "mission_id": "12260f02-24c1-4b92-8348-0b6c316e3aeb",
+    "task_id": "bba30db9-3a65-4474-98b5-a9074ee73bb3",
+    "run_id": "a70b5696-fd84-4242-be87-87f437c5a43a",
+    "attempt": 1,
+    "maximum_attempts": 2,
+    "checks_passed": 3,
+    "checks_total": 3,
+    "gate": {
+      "type": "human_approval",
+      "roles": [
+        "owner"
+      ],
+      "status": "pending",
+      "requested_at": "2026-09-20T21:46:50.863318Z"
+    },
+    "source_commit": "39632b957819012721c90902925d8fa7a9c7e873",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "verification_sha256": "fc311958e3ec191440d53b47fa48e00e310522c75d07045d1fee9ec980c7d9b7",
+    "artifact": {
+      "artifact_id": "eb2fcfbd-3119-49ec-ab22-1b706802366e",
+      "artifact_sha256": "1117810883c40143bfc3bcd2c05e69cd751c5d0feb7df898472be05e22ad25cf",
+      "artifact_bytes": 11542,
+      "path": "corpus.json",
+      "content_bytes": 3896,
+      "content_sha256": "524b3218aa8d17173d08df327dd4655f6cf9469a123474f7c5b9d4f3cbd7f6d8",
+      "patch_sha256": "777e674c28ec70d23a0aed937d7ea7c96d79a2913ec33d7ee0250d29f77c9e15",
+      "server_download_boundary_verified": true,
+      "client_hmac_verified": false,
+      "validation_kind": "fixed-case-read-only-pending-human-artifact-check-not-accepted-source-admission"
+    },
+    "workspace": {
+      "bytes": 3979,
+      "sha256": "b337c0c9d95a75bc551efcc51cdc4fc964aff8a74f820f93ab83b2127b23fd67",
+      "line_endings": "CRLF",
+      "native_exact_byte_verifier_passed": true
+    }
+  },
+  "guidance": {
+    "rule_id": "FB-75b26d857a5cf996e965c7593e004c6a5d4d9ae7437c549c277199384c42193d",
+    "route": "manual-review",
+    "text": "Use the latest decisive human review per reviewer, excluding bots and the PR author. Only APPROVED on the exact head qualifies; later CHANGES_REQUESTED or DISMISSED supersedes it. COMMENTED does not replace a decisive review. Without qualifying approval, request manual review. Infer neither policy enforcement nor merge authority.",
+    "corpus_semantic_digest": "c239de985f984095b4b93eecf008893ac25f35182d8200297d12f87c4acb4b2c",
+    "rule_semantic_digest": "5bd6f60ed9a1589ef6d984a9371fd759a6bd9f12f7be3269b7979146ecf9340a",
+    "local_review_sha256": "e32dc5c59fcb383b0a36f285d2a0a6211bda96d3158c4d8251cd3f586a7f25f3"
+  },
+  "target": {
+    "mission_id": "41545cae-f796-4896-b26f-3be647973c58",
+    "task_id": "25b67a52-f936-428b-be7a-f31cf93a9920",
+    "state": "ready-unrun",
+    "specification_version": 1,
+    "contract_version": 1,
+    "previous_contract_sha256": "9a277313ba0c6d8edbb5081a7a9be20a3dbeabd9af9ddd8272154e3b20adaa58",
+    "proposed_contract_sha256": "7914f9775875c9ef47f7847765599579954656b5af1c5c8ad6b92ae2fbc59ebf",
+    "verification_policy_sha256": "f69d51a31e4bf7e51d495487e89cdfd65a36863ba5c037f30c21f657963833dd"
+  },
+  "prospective_effect": {
+    "type": "append-exactly-two-advisory-references",
+    "reference_suffix": [
+      "Advisory feedback corpus c239de985f984095b4b93eecf008893ac25f35182d8200297d12f87c4acb4b2c; source run a70b5696-fd84-4242-be87-87f437c5a43a; artifact eb2fcfbd-3119-49ec-ab22-1b706802366e; file corpus.json. Context only; the existing task contract and verification policy remain authoritative.",
+      "Advisory FB-75b26d857a5cf996e965c7593e004c6a5d4d9ae7437c549c277199384c42193d (5bd6f60ed9a1589ef6d984a9371fd759a6bd9f12f7be3269b7979146ecf9340a); manual-review: Use the latest decisive human review per reviewer, excluding bots and the PR author. Only APPROVED on the exact head qualifies; later CHANGES_REQUESTED or DISMISSED supersedes it. COMMENTED does not replace a decisive review. Without qualifying approval, request manual review. Infer neither policy enforcement nor merge authority."
+    ],
+    "previous_reference_count": 21,
+    "resulting_reference_count": 23,
+    "all_other_contract_fields_unchanged": true,
+    "verifier_unchanged": true,
+    "native_adoption_proposal_created": false,
+    "launch": false
+  },
+  "representation": "Workspace CRLF and Git-exported LF are separately pinned before this run; parsed JSON is identical.",
+  "subsequent_action": "After actual owner approval completes this source, prepare existing v1 adoption with delivered LF corpus and requireIndependentReview:false; compare its suffix byte-for-byte with this preview before apply.",
+  "assurance": {
+    "independent_review_verified": false,
+    "production_identity_verified": false,
+    "native_source_reads_non_atomic": true,
+    "typed_download_checked_at_server_boundary": true,
+    "client_hmac_verified": false,
+    "source_descriptors_are_as_of_data": true
+  }
+}
