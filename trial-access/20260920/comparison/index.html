@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Completed ECorp advisory feedback trial: both baseline and post-adoption runs assessed three of three fixed cases correctly. No measured accuracy improvement; 989 more reported tokens.">
+  <title>ECorp · Completed feedback trial</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b111d;--panel:#111c2a;--line:#29384a;--text:#eef5fc;--muted:#a9b9cc;--teal:#68e2c3;--amber:#ffcd7b}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif}
+    a{color:var(--teal);text-underline-offset:4px}a:hover{color:#b7ffed}
+    a:focus-visible,summary:focus-visible{outline:3px solid var(--teal);outline-offset:6px;border-radius:3px}
+    .wrap{max-width:1120px;margin:auto;padding:0 36px}
+    header{border-bottom:1px solid var(--line)}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-top:24px;padding-bottom:24px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:750;letter-spacing:.025em}
+    .mark{display:grid;place-items:center;width:34px;height:34px;flex:none;background:var(--teal);border-radius:9px;color:#0b211d;font-size:22px;font-weight:850}
+    .topnote{font-size:13px;color:var(--muted);text-align:right}
+    main{padding-top:42px;padding-bottom:46px}
+    .eyebrow{color:var(--teal);font-size:12px;font-weight:750;letter-spacing:.14em;text-transform:uppercase;margin:0 0 13px}
+    .hero-title{display:flex;justify-content:space-between;align-items:flex-start;gap:25px}
+    h1{font-size:clamp(32px,4vw,45px);line-height:1.14;letter-spacing:-.035em;max-width:780px;margin:0}
+    .badge{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;border:1px solid #366555;border-radius:99px;padding:7px 12px;color:var(--teal);background:#132b24;font-size:12px;font-weight:650;margin-top:6px}
+    .dot{width:7px;height:7px;flex:none;background:var(--teal);border-radius:50%}
+    .intro{max-width:840px;color:var(--muted);font-size:18px;line-height:1.65;margin:18px 0 24px}
+    .intro strong{color:var(--text);font-weight:600}
+    .headline-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 28px}
+    .fact{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:17px 20px}
+    .fact strong{display:block;font-size:28px;letter-spacing:-.02em;line-height:1.25}
+    .fact:first-child strong{color:var(--teal)}
+    .fact span{display:block;font-size:13px;color:var(--muted);margin-top:6px}
+    .panel{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:28px;margin-top:20px}
+    h2{font-size:22px;line-height:1.3;letter-spacing:-.02em;margin:0 0 12px}
+    h3{font-size:15px;margin:0 0 8px}
+    p{margin:0 0 14px}p:last-child{margin-bottom:0}.muted{color:var(--muted)}.small{font-size:13px}
+    .table-wrap{margin-top:21px}
+    table{width:100%;border-collapse:collapse;text-align:left;font-size:15px}
+    th,td{padding:14px 15px;vertical-align:middle;border-bottom:1px solid var(--line)}
+    th{font-size:12px;letter-spacing:.015em;font-weight:650;color:var(--muted)}
+    th:first-child,td:first-child{padding-left:0}th:last-child,td:last-child{padding-right:0}
+    td:not(:first-child){font-variant-numeric:tabular-nums}
+    .comparison th:first-child{width:40%}.comparison th:not(:first-child){width:20%}
+    .comparison td:first-child{color:var(--muted)}
+    .comparison .lead-row td{font-size:20px;font-weight:700}.comparison .lead-row td:first-child{font-size:15px;color:var(--text);font-weight:600}
+    .good{color:var(--teal)}.neutral{color:var(--muted)}.overhead{color:var(--amber)}
+    .note{border-top:1px solid var(--line);padding-top:15px;margin-top:18px;color:var(--muted);font-size:13px}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:22px}
+    .step-num{display:grid;place-items:center;width:28px;height:28px;background:#183e34;border:1px solid #376b59;border-radius:50%;color:var(--teal);font-size:13px;font-weight:750;margin-bottom:12px}
+    .step p{font-size:14px;color:var(--muted)}.step time{display:block;font-size:12px;color:#91acaa;margin-top:8px}
+    .score-strip{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:22px 28px;border:1px solid var(--line);border-radius:14px;margin-top:20px}
+    .score-strip h2{font-size:17px;margin-bottom:6px}.score-strip p{font-size:13px;color:var(--muted);max-width:750px}.score-value{font-size:31px;font-weight:700;white-space:nowrap;letter-spacing:-.035em}.score-value span{display:block;font-size:11px;font-weight:400;letter-spacing:0;color:var(--muted);text-align:right}
+    .evidence{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
+    .evidence a{display:block;padding:17px;border:1px solid var(--line);border-radius:12px;text-decoration:none;background:#0d1622;font-size:14px;font-weight:650}
+    .evidence a span{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:5px;line-height:1.5}.evidence a:hover{border-color:var(--teal)}
+    .history-link{font-size:13px;margin-top:17px}
+    details{margin-top:20px;border:1px solid var(--line);border-radius:14px;background:#0e1724}
+    summary{padding:18px 22px;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer}
+    details[open] summary{border-bottom:1px solid var(--line);color:var(--text)}
+    .detail-body{padding:22px;font-size:13px}.detail-body h3{margin-top:24px}.detail-body h3:first-child{margin-top:0}.detail-body table{font-size:13px}
+    code{font:12px/1.7 Consolas,"Cascadia Code",monospace;overflow-wrap:anywhere;word-break:break-word;color:#c6dfef}
+    .keys{display:grid;grid-template-columns:155px 1fr;gap:8px 18px;margin:0}.keys dt{color:var(--muted)}.keys dd{margin:0;min-width:0}
+    footer{border-top:1px solid var(--line);padding:22px 0 29px;color:var(--muted);font-size:12px}.footer-row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    @media(max-width:760px){.wrap{padding-left:22px;padding-right:22px}main{padding-top:30px}.topnote{max-width:160px;font-size:12px}.hero-title{display:block}.badge{margin-top:18px}.intro{font-size:16px}.headline-facts{grid-template-columns:1fr;gap:9px}.fact{display:flex;align-items:center;gap:18px;padding:14px 17px}.fact strong{font-size:25px;min-width:98px}.fact span{margin-top:0}.panel{padding:21px}.comparison{font-size:13px}.comparison th{font-size:11px}.comparison th:first-child{width:40%}.comparison th:not(:first-child){width:20%}th,td{padding:12px 5px}.comparison .lead-row td{font-size:17px}.comparison .lead-row td:first-child{font-size:13px}.steps{grid-template-columns:1fr;gap:19px}.step+.step{border-top:1px solid var(--line);padding-top:18px}.step-num{float:left;margin:0 12px 10px 0}.step p,.step time{margin-left:40px}.score-strip{padding:20px;align-items:flex-start;gap:15px}.score-value{font-size:27px}.evidence{grid-template-columns:1fr}.keys{grid-template-columns:1fr;gap:3px}.keys dd{margin-bottom:10px}.detail-body{padding:18px}}
+    @media print{body{background:white;color:#172b3a}.panel,.fact,details,.evidence a{background:white;border-color:#aaa}.muted,.intro,.fact span,.topnote,summary,footer,th,.keys dt,.note,.score-strip p,.score-value span,.comparison td:first-child,.step p{color:#475867}a,.eyebrow,.good,.fact:first-child strong,code{color:#155c4a}.intro strong,.comparison .lead-row td:first-child{color:#172b3a}}
+  </style>
+</head>
+<body>
+  <header><div class="wrap topbar"><div class="brand"><span class="mark" aria-hidden="true">E</span><span>ECorp <span class="muted">/ Trial results</span></span></div><div class="topnote">Comparison recorded<br><time datetime="2026-09-20T22:12:07.888Z">20 Sep 2026 · 22:12 UTC</time></div></div></header>
+  <main class="wrap">
+    <p class="eyebrow">Advisory feedback · Three fixed cases</p>
+    <div class="hero-title"><h1>No measured accuracy improvement</h1><span class="badge"><span class="dot" aria-hidden="true"></span>Trial completed</span></div>
+    <p class="intro">Baseline and post-adoption runs both assessed <strong>all three cases correctly</strong>. The post run passed <strong>3/3 automated checks</strong> and used <strong>989 more reported tokens</strong>. Owner approval, native adoption, and post execution completed successfully.</p>
+    <div class="headline-facts" aria-label="Comparison highlights">
+      <div class="fact"><strong>3/3 → 3/3</strong><span>Correct case assessments</span></div>
+      <div class="fact"><strong>+989</strong><span>Reported tokens after adoption</span></div>
+      <div class="fact"><strong>5</strong><span>Total native attempts · full trial history</span></div>
+    </div>
+
+    <section class="panel" aria-labelledby="comparison-title">
+      <h2 id="comparison-title">Baseline and post-adoption results</h2>
+      <p class="muted small">The same fixed three cases, model, source, and verifier were used. The post task gained two advisory references.</p>
+      <div class="table-wrap"><table class="comparison" aria-label="Baseline and post-adoption comparison">
+        <thead><tr><th scope="col">Measure</th><th scope="col">Baseline</th><th scope="col">Post-adoption</th><th scope="col">Change</th></tr></thead>
+        <tbody>
+          <tr class="lead-row"><td>Correct case assessments</td><td class="good">3 / 3</td><td class="good">3 / 3</td><td class="neutral">0</td></tr>
+          <tr><td>False approval claims</td><td>0</td><td>0</td><td class="neutral">0</td></tr>
+          <tr><td>Unsupported authority claims</td><td>0</td><td>0</td><td class="neutral">0</td></tr>
+          <tr><td>Automated checks passed</td><td>3 / 3</td><td>3 / 3</td><td class="neutral">Same</td></tr>
+          <tr><td>Reported tokens</td><td>48,271</td><td>49,260</td><td class="overhead">+989</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">This bounded comparison shows equal accuracy on these three cases. It does not establish broader quality improvement, and reported tokens do not establish actual billed cost.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="governance-title">
+      <h2 id="governance-title">Approval and adoption completed</h2>
+      <p class="muted small">The governance path succeeded. That result is separate from the unchanged case accuracy.</p>
+      <div class="steps">
+        <div class="step"><span class="step-num" aria-hidden="true">1</span><h3>Owner approved</h3><p>The actual owner decision accepted the reviewed carrier and exact packet. No independent review is claimed.</p><time datetime="2026-09-20T22:05:43.086477Z">22:05 UTC</time></div>
+        <div class="step"><span class="step-num" aria-hidden="true">2</span><h3>Two references adopted</h3><p>Native revision advanced the post contract to version 2: 21 → 23 references. All other contract fields and the verifier stayed unchanged.</p><time datetime="2026-09-20T22:06:47.162Z">22:06 UTC</time></div>
+        <div class="step"><span class="step-num" aria-hidden="true">3</span><h3>Post run completed</h3><p>The separate post run completed with 3/3 automated checks passed and all three case assessments correct.</p><time datetime="2026-09-20T22:07:37.349328Z">22:07 UTC</time></div>
+      </div>
+      <p class="note">The completed path used an additional owner carrier with separately pinned CRLF workspace and LF delivery representations. This procedural amendment and the earlier preserved attempts form part of the trial history.</p>
+    </section>
+
+    <aside class="score-strip" aria-label="Benchmark score scope"><div><h2>The qualified operations score is unchanged</h2><p>No new benchmark judge or rescore was run. This completed trial establishes no new 90-point score.</p></div><div class="score-value">74.75<span>Last qualified score</span></div></aside>
+
+    <section class="panel" aria-labelledby="evidence-title">
+      <h2 id="evidence-title">Evidence</h2>
+      <div class="evidence">
+        <a href="comparison-result.json">Comparison result ↗<span>Paired case metrics, token totals, and the bounded conclusion.</span></a>
+        <a href="post-receipt.json">Completed post receipt ↗<span>Native completion and persisted verification results.</span></a>
+        <a href="adoption-receipt.json">Adoption receipt ↗<span>The applied reference-only native revision.</span></a>
+        <a href="approved-owner-receipt.json">Approved owner receipt ↗<span>Accepted source and recorded owner gate decision.</span></a>
+      </div>
+      <p class="history-link"><a href="../owner-review/OWNER_REVIEW.json">Original owner packet — review history</a><span class="muted"> · The pending state in that historical packet predates the actual approval.</span></p>
+    </section>
+
+    <details>
+      <summary>Preserved attempts, source identity, and limits</summary>
+      <div class="detail-body">
+        <h3>Full trial history</h3>
+        <table aria-label="Preserved native attempts"><thead><tr><th scope="col">Attempt</th><th scope="col">Checks</th><th scope="col">Outcome</th></tr></thead><tbody>
+          <tr><td>Baseline</td><td>3 / 3</td><td>Completed; three case assessments correct.</td></tr>
+          <tr><td>Original carrier</td><td>2 / 3</td><td>Failed exact LF check due to CRLF; preserved.</td></tr>
+          <tr><td>Corrected independent carrier</td><td>3 / 3</td><td>Preserved at its unused independent review gate.</td></tr>
+          <tr><td>Owner carrier</td><td>3 / 3</td><td>Approved by the owner; source accepted.</td></tr>
+          <tr><td>Post-adoption</td><td>3 / 3</td><td>Completed; three case assessments correct.</td></tr>
+        </tbody></table>
+        <p class="muted" style="margin-top:14px"><strong>Five native attempts · 206,334 total reported tokens.</strong> This total includes the preserved carrier attempts as well as the baseline and post runs. The paired comparison above uses only baseline and post tokens.</p>
+        <h3>Provenance</h3>
+        <dl class="keys">
+          <dt>Source</dt><dd><code>all-the-vibes/ecorp · main</code><br><code>39632b957819012721c90902925d8fa7a9c7e873</code></dd>
+          <dt>Provider / model</dt><dd><code>github-copilot / gpt-5.6-sol / low</code></dd>
+          <dt>Baseline run</dt><dd><code>7f603ad5-3d06-4905-8f4f-c93a6cc55249</code></dd>
+          <dt>Accepted owner run</dt><dd><code>a70b5696-fd84-4242-be87-87f437c5a43a</code></dd>
+          <dt>Post run</dt><dd><code>d2e28ef7-90ba-4c9c-a170-1d58c06456d2</code></dd>
+          <dt>Native revision</dt><dd><code>9c758cab-538f-47b4-8d5a-7ac54ec9b7b6</code></dd>
+          <dt>Approved packet SHA256</dt><dd><code>ce82c6e48aa4ba383e1ee43ba8907ace89197506c9b23934e7d10c383e86ec13</code></dd>
+          <dt>Input / output tokens</dt><dd>Baseline: 46,975 + 1,296. Post: 47,929 + 1,331.</dd>
+        </dl>
+        <h3>Interpretation limits</h3>
+        <p class="muted">These are genuine provider runs with a local deterministic verifier. Three selected cases, no eligible negative control, and one baseline/post pair do not establish general improvement. The case metrics measure PR-review assessments; they do not attest native identity or approval gates. Native receipts separately record those workflow states.</p>
+        <p class="muted">The actual decision is owner approval in the development environment. Independent human review and production identity verification are not claimed. Receipts are dated, non-atomic observations; client HMAC verification is not claimed. The result grants no future execution authority.</p>
+        <h3>Local closeout</h3>
+        <p class="muted">After the completed comparison, a new local corpus version retired the advisory rule: revision 2 → 3, with zero active records. The original corpus and evidence dates are preserved. This local closeout changes neither already-adopted task references nor native or global policy.</p>
+      </div>
+    </details>
+  <p style="margin:24px 0;color:#aab8cc">Additional evidence: <a href="engineering-audit.json">engineering audit</a> · <a href="local-closure.json">local retirement result</a> · <a href="corpus-retired.json">retired local corpus</a>.</p>
+</main>
+  <footer><div class="wrap footer-row"><span>ECorp · Completed advisory feedback comparison</span><span>Owner approved · References adopted · Post run completed</span></div></footer>
+</body>
+</html>
