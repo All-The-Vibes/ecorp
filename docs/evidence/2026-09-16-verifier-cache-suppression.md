@@ -252,3 +252,74 @@ was not adopted: this reconciliation preserves the existing server-authoritative
 contract and does not expand the frontend validator. All logs, including the
 initial failures, were retained locally. Hosted results for the resulting merge
 commit are recorded separately in the PR description.
+
+
+## Shared allocation accounting and main integration — September 19, 2026
+
+This candidate integrates upstream main `39632b957819012721c90902925d8fa7a9c7e873`
+with the preceding PR head `a5e20aec76dd4fb3a4a124c6f7b2f608decfe3ba`.
+The merge preserves upstream verifier-summary improvements and the explicit cache
+policy fields. The source hashes below identify the tested follow-up independently
+of this report's eventual commit. Earlier evidence above remains historical.
+
+### Agreed behavior and bounded correction
+
+Task attempts count allocations, including an allocation later rejected before
+sending. Initial runner-selection mismatch allocates nothing. No attempt refund,
+new retry engine, or change to the separately authorized checkpoint-verification
+exception is introduced. A failed allocated dispatch retains the existing terminal
+failure behavior and cannot automatically replenish its allowance.
+
+Fresh generic and recovery pre-dispatch failure transactions now expire only
+unexpired grant metadata for their Corp/run and include the changed row count in
+the existing `run.failed` event. They preserve grant rows, original grant events,
+source history, other runs/Corps, and already-expired timestamps. This is metadata
+cleanup, not revocation of values already delivered. Replay leaves the original
+failure intact and does not backfill historical failures.
+
+### Validation
+
+Pinned Node 24.19.0, pnpm 11.19.0, Rust 1.98.1; Apple Silicon macOS,
+`TMPDIR=/private/tmp`, locked Cargo dependencies, owned disposable PostgreSQL 17.
+All nine contributor gates passed: migrations, documentation, Node unit tests
+(**1,170 passed, 49 skipped**), Steward (**227 passed**), formatting, strict
+all-target Clippy, workspace tests (**541 passed, 358 explicitly ignored**), web
+build and lint. The final rollback regression was followed by another strict
+Clippy and workspace run; opt-in results below are separate from ignored counts.
+
+```sh
+cargo test -p crony-server cache_admission_lifecycle_tests --locked --offline -- --ignored --test-threads=1 --nocapture
+cargo test -p crony-store issue221_retry_ --locked --offline -- --ignored --test-threads=1 --nocapture
+cargo test -p crony-store budget_checkpoint_tests --locked --offline -- --ignored --test-threads=1 --nocapture
+cargo test -p crony-runner issue140_ --locked --offline -- --include-ignored
+```
+
+The server lifecycle lane passed **12 tests**, including five new cases. The
+allocation test crosses the actual allocator and metadata broker, then removes
+capability at the separable final-send boundary. It proves zero sends, one retained
+allocation charge, terminal scheduling, rejection at the shared cap, and replay
+stability. Repeated initial mismatches create no run and consume no attempts.
+The recovery cleanup fixtures are preallocated: they test scoped expiry and replay,
+not recovery allocation. The rollback case injects an event-write failure and
+proves expiry and lifecycle changes roll back together in both failure paths.
+
+The existing bounded-correction lane passed **11 tests**, including real recovery
+allocation, exhausted allowance, replay, pre-dispatch failure history and rollback.
+The native cache lane passed **5 tests**. The broader checkpoint family passed
+**166 tests**, including the same 11 correction cases; those overlapping results
+are not counted twice. Checkpoint-only verification and protected-stop behavior
+remain covered by that existing suite.
+
+Copilot GPT-6 Astra/high supplied a bounded proposal and a separate actual-patch
+review. The independent review found no blocking defect and suggested the explicit
+rollback regression, which was added and passed locally. Review prose is not test
+evidence. No fresh browser/full-stack or live-provider acceptance is claimed for
+this metadata-only follow-up; earlier native integration evidence remains tied to
+its recorded source. Publication and merge authority remain separate.
+
+| Tested file | SHA-256 |
+| --- | --- |
+| `crates/crony-store/src/lib.rs` | `185d1180c842517ac7cd1e01403439470c0b58b3a8d16c92f7b0a4732a5c9fff` |
+| `crates/crony-server/src/cache_admission_tests.rs` | `ddb0bdf87d85a11bfec4c526711b7f901f5a7cc065cd117d2544db960a5bb401` |
+| `apps/web/src/verificationPolicy.ts` | `639b8b9da9ae8206ec35eb897bf065ae9fa146f113403118a91238f5a8806daa` |
+| `apps/web/src/verificationPolicy.test.mjs` | `506deaab9cd160c0ca97a40e2062584fd4d33fc155a49ee86f9660466731c3a7` |

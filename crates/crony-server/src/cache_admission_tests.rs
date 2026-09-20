@@ -594,3 +594,324 @@ async fn issue140_future_policy_does_not_starve_healthy_sibling(pool: PgPool) {
     )
     .await;
 }
+
+// The broker really persists the target grant; control rows deliberately include
+// another run, an expired grant and a cross-Corp row to exercise cleanup scoping.
+async fn seed_cleanup_grants(f: &Fixture, run_id: Uuid) -> Value {
+    let store = &f.state.store;
+    store
+        .create_secret(
+            CORP,
+            OWNER,
+            Uuid::from_u128(99),
+            "metadata-only-fixture",
+            &[1],
+            &[2],
+            &[OWNER],
+            &["fixture".into()],
+            "fixture/",
+            300,
+        )
+        .await
+        .unwrap();
+    let refs: Vec<crony_domain::TaskSecretReference> = serde_json::from_value(json!([{
+        "secret_id":Uuid::from_u128(99),"env_name":"FIXTURE_SECRET",
+        "tool":"fixture","resource":"fixture/source"
+    }]))
+    .unwrap();
+    store
+        .grant_run_secrets(CORP, TASK, run_id, RUNNER, &refs)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO corps(id,slug,name) VALUES($1,'other-cleanup-corp','Other')")
+        .bind(Uuid::from_u128(200))
+        .execute(store.pool())
+        .await
+        .unwrap();
+    for (id, corp, run, expired) in [
+        (201, CORP, SOURCE, false),
+        (202, CORP, run_id, true),
+        (203, Uuid::from_u128(200), run_id, false),
+    ] {
+        sqlx::query(
+            "INSERT INTO secret_access_grants
+            (id,corp_id,secret_id,task_id,run_id,actor_id,runner_id,tool,resource,expires_at)
+            VALUES($1,$2,$3,$4,$5,$6,$7,'fixture','fixture/source',
+            now() + CASE WHEN $8 THEN interval '-1 hour' ELSE interval '1 hour' END)",
+        )
+        .bind(Uuid::from_u128(id))
+        .bind(corp)
+        .bind(Uuid::from_u128(99))
+        .bind(TASK)
+        .bind(run)
+        .bind(OWNER)
+        .bind(RUNNER)
+        .bind(expired)
+        .execute(store.pool())
+        .await
+        .unwrap();
+    }
+    cleanup_snapshot(f).await
+}
+
+async fn cleanup_snapshot(f: &Fixture) -> Value {
+    sqlx::query_scalar("SELECT jsonb_build_object(
+        'grants',(SELECT jsonb_agg(to_jsonb(g) ORDER BY id) FROM secret_access_grants g),
+        'audit',(SELECT jsonb_agg(to_jsonb(e) ORDER BY seq) FROM events e WHERE type='secret.access_granted'),
+        'attempts',(SELECT attempt_count FROM tasks WHERE id=$1))")
+        .bind(TASK).fetch_one(f.state.store.pool()).await.unwrap()
+}
+
+async fn assert_cleanup(f: &Fixture, run_id: Uuid, before: &Value) -> Value {
+    let after = cleanup_snapshot(f).await;
+    assert_eq!(after["attempts"], before["attempts"]);
+    assert_eq!(after["audit"], before["audit"]);
+    let old = before["grants"].as_array().unwrap();
+    let new = after["grants"].as_array().unwrap();
+    assert_eq!(old.len(), new.len());
+    let mut changed = 0;
+    for (a, b) in old.iter().zip(new) {
+        if a != b {
+            changed += 1;
+            assert_eq!(b["corp_id"], json!(CORP));
+            assert_eq!(b["run_id"], json!(run_id));
+            let mut expected = a.clone();
+            expected["expires_at"] = b["expires_at"].clone();
+            assert_eq!(&expected, b);
+        }
+    }
+    assert_eq!(changed, 1);
+    let live: i64 = sqlx::query_scalar("SELECT count(*) FROM secret_access_grants WHERE corp_id=$1 AND run_id=$2 AND expires_at > now()")
+        .bind(CORP).bind(run_id).fetch_one(f.state.store.pool()).await.unwrap();
+    assert_eq!(live, 0);
+    let payload: Value = sqlx::query_scalar(
+        "SELECT payload FROM events WHERE corp_id=$1 AND aggregate_id=$2 AND type='run.failed'",
+    )
+    .bind(CORP)
+    .bind(run_id)
+    .fetch_one(f.state.store.pool())
+    .await
+    .unwrap();
+    assert_eq!(payload["expired_secret_access_grant_count"], 1);
+    after
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue140_late_loss_keeps_shared_attempt_and_expires_grants(pool: PgPool) {
+    let mut f = fixture(pool, "resume").await;
+    // One historical execution, one remaining allocation slot. No pending run.
+    sqlx::query(
+        "UPDATE tasks SET status='ready',attempt_count=1,max_attempts=2,
+        contract=jsonb_set(contract,'{secret_refs}','[]'::jsonb) WHERE id=$1",
+    )
+    .bind(TASK)
+    .execute(f.state.store.pool())
+    .await
+    .unwrap();
+    let source = f.source().await;
+    for _ in 0..2 {
+        let outcome = schedule_ready_tasks(&f.state, CORP, MISSION, Some(OWNER))
+            .await
+            .unwrap();
+        assert!(outcome.records.is_empty());
+        assert_eq!(outcome.failures.len(), 1);
+        assert!(outcome.failures[0].contains("verifier-cache-suppression-v1"));
+        let counts: (i32,i64) = sqlx::query_as("SELECT attempt_count,(SELECT count(*) FROM runs WHERE task_id=$1) FROM tasks WHERE id=$1")
+            .bind(TASK).fetch_one(f.state.store.pool()).await.unwrap();
+        assert_eq!(counts, (1, 1));
+        assert!(f.commands.try_recv().is_err());
+    }
+    f.state
+        .runners
+        .get_mut(RUNNER)
+        .unwrap()
+        .capabilities
+        .push(capability("verifier-cache-suppression-v1"));
+    // Cross the real allocation and broker boundaries, then deterministically
+    // remove support at the separable final-send boundary (no timed race).
+    let (record, _) = f
+        .state
+        .store
+        .create_task_run(CORP, MISSION, TASK, Some(OWNER), RUNNER)
+        .await
+        .unwrap();
+    let before = seed_cleanup_grants(&f, record.run_id).await;
+    assert_eq!(before["attempts"], 2);
+    f.state.runners.get_mut(RUNNER).unwrap().capabilities.pop();
+    assert_eq!(f.state.runners.get(RUNNER).unwrap().connection_epoch, EPOCH);
+    let command = serde_json::from_value(json!({
+        "type":"start_run", "corp_id":CORP,"room_id":ROOM,"mission_id":MISSION,
+        "task_id":TASK,"run_id":record.run_id,"agent_id":AGENT,
+        "assignment_token":record.assignment_token,"adapter":"codex",
+        "mission_title":"allocation accounting", "verification_policy":record.verification_policy,
+        "secrets":[]
+    }))
+    .unwrap();
+    assert_eq!(
+        send_command_to_current_runner(&f.state.runners, RUNNER, EPOCH, command),
+        Err(RunnerDispatchError::UnsupportedVerifierPolicy)
+    );
+    assert!(matches!(
+        f.commands.try_recv(),
+        Err(mpsc::error::TryRecvError::Empty)
+    ));
+    f.state
+        .store
+        .fail_run_before_dispatch(
+            CORP,
+            record.run_id,
+            RunnerDispatchError::UnsupportedVerifierPolicy.detail(),
+        )
+        .await
+        .unwrap();
+    let settled = assert_cleanup(&f, record.run_id, &before).await;
+    assert!(
+        f.state
+            .store
+            .fail_run_before_dispatch(CORP, record.run_id, "replayed reason")
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(cleanup_snapshot(&f).await, settled);
+    assert_eq!(f.source().await, source);
+    assert!(
+        f.state
+            .store
+            .schedulable_mission_ids(CORP)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    // Make only lifecycle eligibility permissive to isolate the cap guard.
+    // This is fixture setup, not an API that reopens failed tasks.
+    sqlx::raw_sql("UPDATE tasks SET status='ready'; UPDATE missions SET status='running'")
+        .execute(f.state.store.pool())
+        .await
+        .unwrap();
+    let error = f
+        .state
+        .store
+        .create_task_run(CORP, MISSION, TASK, Some(OWNER), RUNNER)
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("exhausted its retry limit"));
+    assert_eq!(cleanup_snapshot(&f).await, settled);
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM runs WHERE task_id=$1")
+        .bind(TASK)
+        .fetch_one(f.state.store.pool())
+        .await
+        .unwrap();
+    assert_eq!(count, 2);
+}
+
+async fn assert_recovery_grant_cleanup(pool: PgPool, mode: &str) {
+    let f = fixture(pool, mode).await;
+    let source = f.source().await;
+    let before = seed_cleanup_grants(&f, RUN).await;
+    // Preallocated recovery metadata fixture: this tests cleanup, not allocation.
+    f.state
+        .store
+        .fail_factory_recovery_before_dispatch(CORP, RUN, "unsupported cache policy")
+        .await
+        .unwrap();
+    let settled = assert_cleanup(&f, RUN, &before).await;
+    assert!(
+        f.state
+            .store
+            .fail_factory_recovery_before_dispatch(CORP, RUN, "replay")
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(cleanup_snapshot(&f).await, settled);
+    assert_eq!(f.source().await, source);
+    assert!(
+        f.state
+            .store
+            .schedulable_mission_ids(CORP)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue140_source_recovery_expires_only_its_grants(pool: PgPool) {
+    assert_recovery_grant_cleanup(pool, "source_correction").await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue140_verifier_recovery_expires_only_its_grants(pool: PgPool) {
+    assert_recovery_grant_cleanup(pool, "verifier_only").await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue140_rejected_failure_guard_preserves_grants(pool: PgPool) {
+    let f = fixture(pool, "source_correction").await;
+    let before = seed_cleanup_grants(&f, RUN).await;
+    sqlx::query("UPDATE runs SET status='running' WHERE id=$1")
+        .bind(RUN)
+        .execute(f.state.store.pool())
+        .await
+        .unwrap();
+    assert!(
+        f.state
+            .store
+            .fail_run_before_dispatch(CORP, RUN, "stale failure")
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        f.state
+            .store
+            .fail_factory_recovery_before_dispatch(CORP, RUN, "stale recovery")
+            .await
+            .is_err()
+    );
+    assert_eq!(cleanup_snapshot(&f).await, before);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue140_grant_expiry_rolls_back_with_failed_transition(pool: PgPool) {
+    let f = fixture(pool, "source_correction").await;
+    let before = seed_cleanup_grants(&f, RUN).await;
+    sqlx::raw_sql(
+        "CREATE FUNCTION reject_cleanup_event() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN IF NEW.type='run.failed' THEN RAISE EXCEPTION 'owned cleanup rollback fault'; END IF;
+        RETURN NEW; END $$;
+        CREATE TRIGGER reject_cleanup_event BEFORE INSERT ON events
+        FOR EACH ROW EXECUTE FUNCTION reject_cleanup_event();",
+    )
+    .execute(f.state.store.pool())
+    .await
+    .unwrap();
+    let error = f
+        .state
+        .store
+        .fail_run_before_dispatch(CORP, RUN, "cleanup rollback")
+        .await
+        .unwrap_err();
+    assert!(format!("{error:#}").contains("owned cleanup rollback fault"));
+    assert_eq!(cleanup_snapshot(&f).await, before);
+    let error = f
+        .state
+        .store
+        .fail_factory_recovery_before_dispatch(CORP, RUN, "recovery rollback")
+        .await
+        .unwrap_err();
+    assert!(format!("{error:#}").contains("owned cleanup rollback fault"));
+    assert_eq!(cleanup_snapshot(&f).await, before);
+    let statuses: (String,String,String) = sqlx::query_as("SELECT r.status,t.status,m.status FROM runs r JOIN tasks t ON t.id=r.task_id JOIN missions m ON m.id=t.mission_id WHERE r.id=$1")
+        .bind(RUN).fetch_one(f.state.store.pool()).await.unwrap();
+    assert_eq!(
+        statuses,
+        ("starting".into(), "running".into(), "running".into())
+    );
+}

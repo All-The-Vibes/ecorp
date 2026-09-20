@@ -6926,6 +6926,8 @@ impl PgStore {
             .bind(corp_id)
             .execute(&mut *tx)
             .await?;
+            let expired_secret_access_grant_count =
+                expire_run_secret_access_grants_tx(&mut tx, corp_id, run_id).await?;
             if let Some(event) = append_event_tx(
                 &mut tx,
                 NewEvent {
@@ -6938,7 +6940,8 @@ impl PgStore {
                         "run",
                         run_id,
                         format!("run:{run_id}:dispatch-failed"),
-                        json!({"error": reason, "dispatch_not_started": true}),
+                        json!({"error": reason, "dispatch_not_started": true,
+                            "expired_secret_access_grant_count": expired_secret_access_grant_count}),
                     )
                 },
             )
@@ -7122,6 +7125,8 @@ impl PgStore {
         .bind(run_id)
         .execute(&mut *tx)
         .await?;
+        let expired_secret_access_grant_count =
+            expire_run_secret_access_grants_tx(&mut tx, corp_id, run_id).await?;
         let run_event = append_event_tx(
             &mut tx,
             NewEvent {
@@ -7137,6 +7142,7 @@ impl PgStore {
                     json!({
                         "error": reason,
                         "dispatch_not_started": true,
+                        "expired_secret_access_grant_count": expired_secret_access_grant_count,
                     }),
                 )
             },
@@ -15534,6 +15540,25 @@ fn parse_pull_request_publication_state(value: &str) -> Result<PullRequestPublic
         "published" => Ok(PullRequestPublicationState::Published),
         other => Err(anyhow!("unknown pull-request publication state {other}")),
     }
+}
+
+// Caller holds the run lock and has accepted a fresh pre-dispatch failure.
+// Preserve grant rows and the original grant audit. This is metadata expiry,
+// not revocation of secret values that may already have left the server.
+async fn expire_run_secret_access_grants_tx(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    corp_id: Uuid,
+    run_id: Uuid,
+) -> Result<u64> {
+    Ok(sqlx::query(
+        "UPDATE secret_access_grants SET expires_at = now()
+         WHERE corp_id = $1 AND run_id = $2 AND expires_at > now()",
+    )
+    .bind(corp_id)
+    .bind(run_id)
+    .execute(&mut **tx)
+    .await?
+    .rows_affected())
 }
 
 fn breaker_rank(stage: &str) -> u8 {

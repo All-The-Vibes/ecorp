@@ -133,7 +133,7 @@ async function fillCheck(editor, index, check) {
     await editor.getByLabel('Required top-level keys').fill(check.required_keys.join('\n'))
   }
 }
-async function editorViewport(editor, name, width, height) {
+async function editorViewport(editor, name, width, height, expectedPolicy) {
   report.stage = `editor ${name}`
   await page.setViewportSize({ width, height })
   const tabs = editor.locator('.verification-check-tabs button')
@@ -165,7 +165,19 @@ async function editorViewport(editor, name, width, height) {
   await excluded.check()
   await gate.selectOption('none')
   assert.equal(await editor.getByLabel('Eligible roles').count(), 0)
+  const disclosure = editor.locator('.verification-plan-disclosure')
+  if (!(await disclosure.evaluate((element) => element.open))) await disclosure.locator('summary').click()
+  const summaries = await editor.getByTestId('verification-policy-preview').locator('ol li p').allTextContents()
+  assert.ok(summaries[0].endsWith('at least 1 byte'))
+  const commandIndex = expectedPolicy.checks.findIndex((check) => check.type === 'command')
+  const command = expectedPolicy.checks[commandIndex]
+  const rendered = summaries[commandIndex]
+  assert.deepEqual(JSON.parse(rendered.slice(rendered.indexOf('['), rendered.lastIndexOf(']') + 1)), [command.program, ...command.args])
+  assert.equal(await editor.getByTestId('verification-policy-preview').locator('ol li p').nth(commandIndex).evaluate((element) => getComputedStyle(element).whiteSpace), 'pre-wrap')
+  const schemaIndex = expectedPolicy.checks.findIndex((check) => check.type === 'json_schema')
+  assert.deepEqual(JSON.parse(summaries[schemaIndex].split(' · keys: ')[1]), expectedPolicy.checks[schemaIndex].required_keys)
   report.viewports.push({ name, width, height, selected, manual_gates: 'draft-only; restored to none',
+    command_summary: rendered, byte_summary: summaries[0],
     layout: await noOverflow(width), screenshot: await screenshot(`${name}-editor`) })
   await save()
 }
@@ -214,6 +226,13 @@ async function saveAndLaunch(title, expectedPolicy, expectedOutcome) {
     assert.equal(final.mission.status, 'completed')
     assert.equal(run.status, 'completed')
     assert.ok(evidence.every((item) => item.status === 'passed'))
+    for (const [index, check] of expectedPolicy.checks.entries()) {
+      if (check.type === 'command' || check.type === 'test') {
+        assert.deepEqual(evidence[index].payload.args, check.args)
+        assert.equal(evidence[index].payload.program, check.program)
+        assert.equal(evidence[index].payload.exit_code, 0)
+      }
+    }
     assert.equal(events.filter((event) => event.type === 'run.completed').length, 1)
   } else {
     assert.equal(final.mission.status, 'failed')
@@ -257,10 +276,12 @@ try {
   demo = await boot.json()
   report.corp_id = demo.corp_id
   report.development_actor_id = demo.alice_actor_id
+  const boundaryArgs = ['one two', 'two  spaces', 'quoted "value"', 'back\\slash']
+  const argumentCheck = `require('node:assert/strict').deepEqual(process.argv.slice(1), ${JSON.stringify(boundaryArgs)})`
   const passingPolicy = { checks: [
     { type: 'artifact', min_bytes: 1 },
     { type: 'file', path: 'verify.txt', min_bytes: 9 },
-    { type: 'command', program: 'node', args: ['check.mjs'], timeout_ms: 10_000 },
+    { type: 'command', program: 'node', args: ['-e', argumentCheck, ...boundaryArgs], timeout_ms: 10_000 },
     { type: 'test', program: 'node', args: ['--test', 'fixture.test.mjs'], timeout_ms: 10_000 },
     { type: 'json_schema', path: 'schema.json', required_keys: ['status', 'count'] },
     { type: 'screenshot', path: 'screenshot.png', min_bytes: 16 },
@@ -268,8 +289,8 @@ try {
   const passedTitle = `[verification-matrix] Policy browser pass ${randomUUID().slice(0, 8)}`
   const editor = await prepareMission(passedTitle)
   for (const [index, check] of passingPolicy.checks.entries()) await fillCheck(editor, index, check)
-  await editorViewport(editor, 'desktop', 1440, 1050)
-  await editorViewport(editor, 'mobile', 390, 844)
+  await editorViewport(editor, 'desktop', 1440, 1050, passingPolicy)
+  await editorViewport(editor, 'mobile', 390, 844, passingPolicy)
   await saveAndLaunch(passedTitle, passingPolicy, 'passed')
   const failedTitle = `[verification-matrix] Policy browser floor failure ${randomUUID().slice(0, 8)}`
   const failingEditor = await prepareMission(failedTitle)

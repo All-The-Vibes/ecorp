@@ -1023,7 +1023,16 @@ scheduling, resume and durable recovery preparation, and again at the current-ep
 assignment send for StartRun, ResumeRun and VerifyRun. Unsupported assignments fail
 through existing pre-dispatch handling; absent controls remain legacy-compatible.
 Direct plans that support offline creation may still be saved without a compatible
-runner; launch rejects them without creating a run or consuming a task attempt.
+runner; initial runner-selection rejection creates no run and consumes no task attempt.
+After a run is allocated, its slot remains charged to the shared task attempt limit
+if dispatch fails, including late capability loss. Source-correction and ordinary
+verifier-only recovery retain the same allocation accounting; separately authorized
+checkpoint verification retains its existing exception. These failures stop through
+the existing failure paths, without refunding attempts or adding automatic retries.
+Fresh pre-dispatch failure transactions expire unexpired secret-grant metadata for
+that Corp/run and record the number changed on the failure event. Grant rows and
+original grant events remain retained. This does not recall or revoke values already
+delivered, and replay does not backfill failures committed before this behavior.
 Automatic Python suppression still requires an updated runner. This does not grant
 any runner permission to delete ignored files. The existing cleanup gate preserves dirty,
 committed, unknown and unverifiable worktrees. Disposition detail reports independent
