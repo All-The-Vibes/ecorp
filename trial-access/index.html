@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Private access instructions and verified transport evidence for the ECorp operations trial.">
+  <meta name="description" content="Archived private access instructions and historical transport evidence for the expired ECorp operations trial window.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-  <title>ECorp · Private trial access</title>
+  <title>ECorp · Archived private trial access</title>
   <style>
     :root{color-scheme:light;--ink:#182c43;--muted:#54667b;--line:#dce4eb;--navy:#10283e;--teal:#006d64}
     *{box-sizing:border-box}body{margin:0;background:#f3f6f9;color:var(--ink);font:16px/1.6 "Segoe UI",Arial,sans-serif}
@@ -30,21 +30,22 @@
 <body>
   <header><div class="wrap"><strong>ECorp · Operating evidence</strong><a href="../">Readiness report</a></div></header>
   <div class="hero"><div class="wrap">
-    <div class="eyebrow">19 September 2026 · Private development trial</div>
-    <h1>Connect to the ECorp trial</h1>
-    <p>Rajesh and Shyam have access through a restricted Entra group. The host is running and the owner’s web and API relay checks passed. Shyam’s own connection and independent review are still pending.</p>
-    <span class="status">Transport verified · Reviewer connection pending</span>
+    <div class="eyebrow">20 September 2026 · Archived private development trial</div>
+    <h1>Private trial access has expired</h1>
+    <p>The tunnel host stopped automatically at 15:39:28 UTC (10:39:28 AM CDT) on 20 September. The owner’s web and API relay checks passed during the access window. Shyam’s own connection and independent review remain unverified.</p>
+    <span class="status">Access expired · Reviewer connection unverified</span>
   </div></div>
   <main class="wrap">
     <section class="panel summary" aria-label="Trial status">
-      <div><span class="label">Access ends</span><strong>20 Sep · 15:39 UTC</strong><br><small>10:39 AM Central Daylight Time</small></div>
+      <div><span class="label">Access ended</span><strong>20 Sep · 15:39:28 UTC</strong><br><small>10:39:28 AM Central Daylight Time</small></div>
       <div><span class="label">Operations score</span><strong>74.75 / 100</strong><br><small>Last qualified result; unchanged</small></div>
       <div><span class="label">Fresh task allocation</span><strong>0 of 3 attempts used</strong><br><small>Reserved; native admission pending</small></div>
     </section>
     <section class="panel" aria-labelledby="connect-title">
-      <h2 id="connect-title">Shyam: connect from your Windows computer</h2>
+      <h2 id="connect-title">Archived Windows connection instructions</h2>
+      <p><strong>This access window has ended.</strong> The instructions and unchanged sealed kit below are retained as historical evidence; they do not provide active access.</p>
       <p>Use PowerShell 7.4 or later, the Microsoft Azure CLI MSI, and the Microsoft-signed Dev Tunnels client. The download contains the reviewed connection scripts, this trial’s configuration and test evidence. It contains no credentials or client binary.</p>
-      <a class="button" href="ecorp-reviewer-client.zip" download>Download reviewer kit (.zip)</a>
+      <a class="button" href="ecorp-reviewer-client.zip" download>Download archived reviewer kit (.zip)</a>
       <p class="muted">Extract the kit into a folder you trust. Read <a href="reviewer-client/REVIEWER.md">REVIEWER.md</a> and review the scripts before running them. Use your organization’s normal trusted-script process if execution policy blocks a downloaded file.</p>
       <ol>
         <li><h3>Sign in to the selected tenant</h3><p>In a visible PowerShell window, use your own Microsoft account:</p>
@@ -58,7 +59,7 @@
   -DevTunnelPath C:\Tools\devtunnel.exe</code></pre>
           <p>Keep that window open. Local ports <strong>5188 and 8791</strong> must both be free. The helper refuses an existing listener; it does not stop your applications.</p>
         </li>
-        <li><h3>Open ECorp</h3><p>Once connected, open <a href="http://127.0.0.1:5188"><code>http://127.0.0.1:5188</code></a> in your browser. Both ports forward to Rajesh’s running host, so this address works on your computer after the client connects.</p>
+        <li><h3>Open ECorp</h3><p>During the access window, a successful private connection forwarded <a href="http://127.0.0.1:5188"><code>http://127.0.0.1:5188</code></a> and API port 8791 to Rajesh’s host. That tunnel host has now stopped.</p>
           <p>Check <a href="http://127.0.0.1:8791/health">API health</a> as well. Report connection success or the helper’s fixed refusal code in <a href="https://github.com/All-The-Vibes/ecorp/pull/352#issuecomment-5742904145">the GitHub coordination thread</a>. Do not post credentials or token output.</p>
         </li>
       </ol>
@@ -73,7 +74,7 @@
         <tr><td>Web without credentials</td><td>HTTP 302; challenge independently traced to Microsoft OAuth sign-in</td><td class="pass">Passed</td></tr>
         <tr><td>API without credentials</td><td>HTTP 302; challenge independently traced to Microsoft OAuth sign-in</td><td class="pass">Passed</td></tr>
         <tr><td>Reviewer connection helper</td><td>36 mocked boundary checks; source review completed</td><td class="pass">Passed</td></tr>
-        <tr><td>Shyam’s sign-in, forwarding and browser session</td><td>Requires Shyam’s own execution</td><td>Pending</td></tr>
+        <tr><td>Shyam’s sign-in, forwarding and browser session</td><td>No confirmed connection during this access window</td><td>Unverified</td></tr>
         <tr><td>Genuine provider trial and independent review</td><td>No native task attempt or human decision yet</td><td>Pending</td></tr>
       </tbody></table>
       <p class="muted" style="margin-top:15px">These are HTTP transport checks, not reviewer-client, WebSocket or production OIDC acceptance. Setup creates no measured score improvement. <a href="owner-relay-result.json">Read the sanitized relay receipt</a>.</p>
@@ -83,17 +84,17 @@
         <p><span class="label">Corp</span><code>00000000-0000-4000-8000-000000000001</code><br>ECorp Operations Network</p>
         <p><span class="label">Room</span><code>00000000-0000-4000-8000-000000000041</code><br>Automation Division</p>
         <p><span class="label">Private tunnel</span><code>ecorp-owner-20260919-4e1fd07a.usw3</code><br>Web 5188 · API 8791</p>
-        <p class="muted">The group contains exactly Rajesh and Shyam. Its connect grant and the host supervisor share the same deadline. Rajesh’s machine, web service, API and tunnel host must remain running.</p>
+        <p class="muted">The reviewed connect grant covered the two-person Rajesh/Shyam group and expired at the host supervisor’s deadline. The supervisor stopped the tunnel host at 15:39:28 UTC on 20 September and left the other ECorp services untouched. <a href="host-stop-result.json">Read the automatic stop receipt</a>.</p>
       </div>
       <div><h2>Trial preparation update</h2>
-        <p>A fresh collection at 16:17 UTC passed two matching reads across 215 issues, 140 PRs and 208 Project items. Two distinct training records and three separate evaluation cases are prepared under the preselected policy. No qualifying negative control was available; no outcome or improvement is claimed.</p>
-        <p>Local execution currently awaits Codex’s native Windows sandbox setup, followed by runner and native budget verification. Shyam’s own connection, independent participation and eventual exact decision remain pending. The three reserved provider attempts are still unused.</p>
+        <p>The collection at 16:17 UTC on 19 September passed two matching reads across 215 issues, 140 PRs and 208 Project items. Two distinct training records and three separate evaluation cases are prepared under the preselected policy. No qualifying negative control was available; no outcome or improvement is claimed.</p>
+        <p>Codex’s native Windows elevated sandbox setup reported <code>ready</code> at 17:46:42 UTC on 20 September after administrator setup, with the shared configuration unchanged. Execution-boundary checks, runner and native budget admission remain pending. No response confirming Shyam’s access or participation was found after <a href="https://github.com/All-The-Vibes/ecorp/pull/352#issuecomment-5743372356">the access notice on PR #352</a>. His earlier GitHub approval reviewed separate synthetic QA and does not establish participation in this trial. The three reserved provider attempts remain unused.</p>
         <p><strong>For the eventual review:</strong> use the exact native decision instructions supplied with the intent. The inspected browser’s generic “Accept evidence” button does not submit the required digest note and must not be used for this trial gate.</p>
-        <p class="muted">ECorp remains in development mode. Entra protects the transport, while native production identity assurance remains outside this setup. The reviewer must make their own eventual approve or reject decision.</p>
-        <p class="muted">An earlier tunnel attempt was never hosted. Its delete request returned 404 while it remained listed; removal is unresolved. It has a restricted, expiring group grant. The working tunnel and group were preserved.</p>
+        <p class="muted">ECorp remains in development mode. Entra protected the transport during the access window; native production identity assurance was outside this setup. The reviewer must make their own eventual approve or reject decision.</p>
+        <p class="muted">An earlier tunnel attempt was never hosted. Its delete request returned 404 while it remained listed; removal remains unresolved. The last inspection recorded a restricted, expiring group grant. No access renewal is recorded here.</p>
       </div>
     </section>
-    <footer>Published evidence is a timestamped snapshot. Access ends at 2026-09-20 15:39:28 UTC and may end earlier if the host disconnects. <a href="../">Return to the readiness report</a>.</footer>
+    <footer>Archived evidence: access ended at 2026-09-20 15:39:28 UTC. Historical owner checks and sealed kit bytes are unchanged. <a href="../">Return to the readiness report</a>.</footer>
   </main>
 </body>
 </html>
