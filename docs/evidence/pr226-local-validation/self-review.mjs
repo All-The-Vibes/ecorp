@@ -43,7 +43,8 @@ assert.deepEqual(red.checks.map(check => check.actualSha256), [
 ])
 assert.match(read('logs/canary.stdout.txt').toString(), /# pass 10/)
 assert.match(read('logs/canary.stdout.txt').toString(), /# fail 0/)
-const changedTracked = git(['diff', '--name-only', 'HEAD']).toString().trim().split('\n').filter(Boolean)
+// snapshot() already verifies index and working bytes; avoid checkout/stat-cache coercion.
+const changedTracked = git(['diff', '--cached', '--name-only', '-z', json('tested-inputs.json').sourceHead]).toString().split('\0').filter(Boolean)
 assert(changedTracked.every(path => path.startsWith('docs/')), 'non-documentation tracked change')
 const files = readdirSync(directory, { recursive: true, withFileTypes: true })
   .filter(entry => entry.isFile())
