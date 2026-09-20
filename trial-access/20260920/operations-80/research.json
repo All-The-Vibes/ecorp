@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-20T23:08:41.899Z",
+  "kind": "ecorp-operations-80-research",
+  "status": "research-and-local-consumer-evidence-complete; target-not-yet-achieved",
+  "historical_score": {
+    "operations": 74.75,
+    "assessed_commit": "30f80e0323c5020eadbc84db676e21ad0acc4fdc",
+    "source_scope": "commit plus 17 frozen local paths",
+    "completed_at": "2026-09-18T17:39:20.1588254Z",
+    "vector": [
+      {
+        "id": 1,
+        "weight": 9,
+        "raw": 3
+      },
+      {
+        "id": 2,
+        "weight": 13,
+        "raw": 3
+      },
+      {
+        "id": 3,
+        "weight": 18,
+        "raw": 3
+      },
+      {
+        "id": 4,
+        "weight": 13,
+        "raw": 3
+      },
+      {
+        "id": 5,
+        "weight": 9,
+        "raw": 3
+      },
+      {
+        "id": 6,
+        "weight": 10,
+        "raw": 3
+      },
+      {
+        "id": 7,
+        "weight": 9,
+        "raw": 4
+      },
+      {
+        "id": 8,
+        "weight": 9,
+        "raw": 3
+      },
+      {
+        "id": 9,
+        "weight": 10,
+        "raw": 2
+      }
+    ]
+  },
+  "current_diagnostic": {
+    "source_commit": "39632b957819012721c90902925d8fa7a9c7e873",
+    "source_files": 736,
+    "structural_only": 87.4,
+    "new_operations_score": null,
+    "parallel_stages": [
+      "substrate",
+      "evidence-pack"
+    ],
+    "source_unchanged": true,
+    "signals": {
+      "codeowners": false,
+      "scheduled_workflow": false,
+      "workflow_chaining": true,
+      "shipped_mcp": [],
+      "rollback_path": false
+    }
+  },
+  "conditional_scenarios": [
+    {
+      "promotions": [
+        "D2 maintenance 3 to 4",
+        "D8 human integration 3 to 4"
+      ],
+      "operations_if_all_other_scores_hold": 80.25
+    },
+    {
+      "promotions": [
+        "D4 learning 3 to 4",
+        "D8 human integration 3 to 4"
+      ],
+      "operations_if_all_other_scores_hold": 80.25
+    },
+    {
+      "promotions": [
+        "D2 maintenance 3 to 4",
+        "D4 learning 3 to 4"
+      ],
+      "operations_if_all_other_scores_hold": 81.25
+    },
+    {
+      "promotions": [
+        "D2 maintenance 3 to 4",
+        "D4 learning 3 to 4",
+        "D8 human integration 3 to 4"
+      ],
+      "operations_if_all_other_scores_hold": 83.5
+    }
+  ],
+  "real_defect": {
+    "trigger": "PR body within collector UTF-16-unit limit exceeds mismatched consumer UTF-8-byte limit",
+    "observed_units": 65535,
+    "observed_bytes": 65795,
+    "historical_patch_files": 3,
+    "patch_insertions": 55,
+    "patch_deletions": 1,
+    "aggregate_byte_limit_unchanged": 16777216,
+    "current_main_failure": "INPUT_BOUND",
+    "prior_test_evidence": {
+      "focused_pass": 7,
+      "core_pass": 234,
+      "rerun_today": false
+    },
+    "integrated_or_new_pr": false
+  },
+  "new_consumer_evidence": {
+    "source_scope": "Previously qualified cf7-based local steward candidate with Unicode-bound correction and bounded DRIFT diagnostics; not unmodified main396",
+    "input_mode": "provided-snapshot",
+    "captured_at": "2026-09-20T23:02:29.564Z",
+    "consumed_at": "2026-09-20T23:06:32.689Z",
+    "matching_findings": 9,
+    "retired_annotations": 0,
+    "skip_reason": "operator-retired",
+    "rule_unexpired": true,
+    "corpus_revision": 3,
+    "unchanged_input_repeat": "no-op",
+    "original_snapshot_and_corpus_unchanged": true,
+    "native_provider_launches": 0,
+    "global_revocation": false
+  },
+  "preserved_attempts": [
+    {
+      "attempt": 1,
+      "outcome": "fresh live snapshot admitted; main396 consumer failed INPUT_BOUND",
+      "requests": 36
+    },
+    {
+      "attempt": 2,
+      "outcome": "live collection refused real pass-to-pass DRIFT",
+      "requests": 36
+    },
+    {
+      "attempt": 3,
+      "outcome": "live collection refused real pass-to-pass DRIFT",
+      "requests": 36
+    },
+    {
+      "attempt": 4,
+      "outcome": "candidate consumer succeeded on original supplied snapshot within native freshness window",
+      "requests": 0
+    },
+    {
+      "attempt": 5,
+      "outcome": "same-input consumer no-op",
+      "requests": 0
+    }
+  ],
+  "existing_owner_evidence": {
+    "human_review": "requesting owner",
+    "independent_human_review": false,
+    "baseline_correct": "3/3",
+    "post_correct": "3/3",
+    "accuracy_gain": 0,
+    "post_reported_token_delta": 989,
+    "current_native_owner_routing_confirmed": true
+  },
+  "limits": [
+    "All projected scores are conditional arithmetic, not a model award or a prediction.",
+    "Current source differs from the historical assessed source; retaining other dimension scores requires fresh evidence.",
+    "Recognized report paths do not imply report contents reach judges.",
+    "Profile scope supports honest disclosure, not a typed D4/D8 import or guaranteed verified credit.",
+    "Fresh current-source native qualification is still required to retain qualified D3/D7 evidence.",
+    "No evaluator, rubric, generated evidence pack, authorship or historical result was changed.",
+    "No new score, source-code commit or PR is claimed."
+  ]
+}
