@@ -256,7 +256,8 @@ commit are recorded separately in the PR description.
 
 ## Shared allocation accounting and main integration — September 19, 2026
 
-This candidate integrates upstream main `39632b957819012721c90902925d8fa7a9c7e873`
+The tested behavior revision is `1ddda1d1d2f5e2066c0e7d8fc59796a5a2d0f438`.
+It integrates upstream main `39632b957819012721c90902925d8fa7a9c7e873`
 with the preceding PR head `a5e20aec76dd4fb3a4a124c6f7b2f608decfe3ba`.
 The merge preserves upstream verifier-summary improvements and the explicit cache
 policy fields. The source hashes below identify the tested follow-up independently

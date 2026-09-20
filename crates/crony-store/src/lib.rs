@@ -15915,6 +15915,9 @@ mod tests {
                 station TEXT, current_run_id UUID);
             CREATE TABLE queued_messages (id UUID PRIMARY KEY, corp_id UUID,
                 run_id UUID, status TEXT);
+            -- Empty grants still participate in the pre-dispatch failure transaction.
+            CREATE TABLE secret_access_grants (id UUID PRIMARY KEY, corp_id UUID NOT NULL,
+                run_id UUID NOT NULL, expires_at TIMESTAMPTZ NOT NULL);
             CREATE TABLE factory_work_items (id UUID PRIMARY KEY, corp_id UUID,
                 mission_id UUID UNIQUE, state TEXT, version BIGINT DEFAULT 1,
                 failure_detail TEXT, updated_at TIMESTAMPTZ DEFAULT now());
