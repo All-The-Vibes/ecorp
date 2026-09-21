@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "issue": "A237-02",
+  "aliases": [
+    "PR237-B-002",
+    "ATV237-01"
+  ],
+  "status": "fixed_locally_verified_pending_independent_review",
+  "workspace": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+  "branch": "codex/pr237-review-fixes",
+  "base": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "head": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "runtime_model": {
+    "model": "gpt-6-astra",
+    "effort": "medium",
+    "timestamp": "2026-09-21T00:12:16.214Z"
+  },
+  "assignment_receipt": "assignment.json",
+  "changed_file_hashes": [
+    {
+      "path": "tools/local_stack.psm1",
+      "sha256": "a5f71d8e9402f334b99da34fa51285369bc3b945c1302314b0607df0f33779f0"
+    },
+    {
+      "path": "tools/factory_budget_process.mjs",
+      "sha256": "fafbd932c5b5d18c5390b392722b9d04f916352dd97a2712a51fa9b2329bfcc4"
+    },
+    {
+      "path": "tools/factory_budget_process.test.mjs",
+      "sha256": "d7745afa695a6aeb1a69023b5bda8aec6019b551c53e71385e1887645a98d1fb"
+    },
+    {
+      "path": "tools/e2e_factory_budget_recovery.mjs",
+      "sha256": "07b5521fb6156ed852b8660758788f65a917c3a52ca36b240808cc98843c90f1"
+    },
+    {
+      "path": "tools/local_stack_identity.test.ps1",
+      "sha256": "4c75cd7ae20085b89d9e34095bd648caa4f7cba87dbb151a511aedbfca64ea54"
+    }
+  ],
+  "root_cause": "Shared catch-all converted unknown inspection to null; PowerShell property getters can also hide getter failures. This propagated through adapter absence and driver exit/release checks.",
+  "changes": [
+    "Only exact native missing-PID error ID/category/target or native HasExited returns null. Invalid PID and lookup/handle/exit/path/time failures propagate.",
+    "Explicit native getters avoid PowerShell property-error suppression; incomplete executable identity is rejected.",
+    "Stop preserves retained-handle verification/termination; only missing PID returns false from lookup; broad exception-to-false catches removed.",
+    "Adapter emits explicit JSON null for confirmed absence and rejects missing/truncated stdout. Driver cleanup/release predicates require exact null.",
+    "Shared native fault-injection regression plus extracted cleanup-only integration regression; no candidate driver startup."
+  ],
+  "caller_trace": [
+    {
+      "effect": "Unknown propagates; mismatched/absent valid records still false. Exact stop retains its one handle.",
+      "path": "tools/local_stack.psm1",
+      "callers": "Test-LocalOwnedProcess -> Get-LocalProcessIdentity; Stop-LocalOwnedProcess native lookup/handle path"
+    },
+    {
+      "effect": "Unknown aborts admission/reuse; rollback error is attached to persistence failure and receipt retained.",
+      "path": "tools/local_stack_start.ps1",
+      "callers": "Role-Live; Ensure-FreePort; Wait-Service; Launch; anyLive; rollback Stop"
+    },
+    {
+      "effect": "Unknown throws before already_absent or state clearing; persisted receipt remains.",
+      "path": "tools/stop_local.ps1",
+      "callers": "Stop, then Get on false"
+    },
+    {
+      "effect": "Unknown throws before successful stop stamping.",
+      "path": "tools/qa_factory_run_activity.ps1",
+      "callers": "Status and Stop Test/Stop calls"
+    },
+    {
+      "effect": "Unknown fails admission or reaches existing failed cleanup catch; receipts retained.",
+      "path": "tools/ci_external_adapters_windows.ps1",
+      "callers": "Postgres receipt admission; Wait-FixtureReady; cleanup Test/Stop"
+    },
+    {
+      "effect": "PowerShell nonzero rejects execFile; only explicit JSON null signifies absence.",
+      "path": "tools/factory_budget_process.mjs",
+      "callers": "factoryBudgetProcessIdentity; stopFactoryBudgetProcess"
+    },
+    {
+      "effect": "Unknown rejects waits; cleanup catches record unverified_preserved and set exitCode=1. No attempts/review-proof edits.",
+      "path": "tools/e2e_factory_budget_recovery.mjs",
+      "callers": "identity -> start; release wait; fault cleanup; child cleanup and stop wait"
+    },
+    {
+      "effect": "Existing suites pass; exact timestamp/path/workspace checks retained.",
+      "path": "tools/local_stack_lifecycle.test.ps1 and tools/factory_budget_process.test.mjs",
+      "callers": "native lifecycle and adapter checks"
+    }
+  ],
+  "caller_inventory": "callers.log",
+  "semantics": {
+    "local_runtime": {
+      "dotnet": ".NET 10.0.11",
+      "powershell": "7.6.5"
+    },
+    "evidence": [
+      "powershell-upstream-semantics-full.log",
+      "dotnet-upstream-semantics.log"
+    ],
+    "race_policy": "Exit racing a native getter may conservatively throw unknown; never translate arbitrary failure into absence.",
+    "local_probe": "native-absence-semantics.json",
+    "upstream": {
+      "dotnet": "dotnet/runtime v10.0.0 Process.cs GetProcessById throws ArgumentException when IsProcessRunning is false",
+      "powershell": "PowerShell/PowerShell v7.6.0 Process.cs GetMatchingProcessesById catches ArgumentException and emits NoProcessFoundForGivenId/ObjectNotFound for target PID"
+    }
+  },
+  "tdd": {
+    "green": {
+      "failed": 0,
+      "cleanup_verified": true,
+      "command_receipt": "final-native-command.json",
+      "exit_code": 0,
+      "passed": 37,
+      "log": "final-native.log"
+    },
+    "test_evolution": "After RED the per-fault attempted-kill sentinel was reset independently to prevent cascading diagnostic failures. Core uncertainty assertions and actual native boundary were unchanged.",
+    "red": {
+      "log": "red-native.log",
+      "passed": 13,
+      "cleanup_verified": true,
+      "exit_code": 1,
+      "command_receipt": "red-native-command.json",
+      "reason": "Expected assertion failures: uncertainty converted to absence/success, broad stop catches, invalid PID absence; not setup failure.",
+      "baseline_module_hashes": "before-hashes.json",
+      "failed": 24
+    }
+  },
+  "checks": [
+    {
+      "receipt": "final-native-command.json",
+      "command": "pwsh -NoProfile -NonInteractive -File tools/local_stack_identity.test.ps1 -EvidenceRoot <receipt-directory>",
+      "started_at": "2026-09-20T19:21:20.4384615-05:00",
+      "finished_at": "2026-09-20T19:21:22.0124397-05:00",
+      "exit_code": 0
+    },
+    {
+      "receipt": "final-process-suite-command.json",
+      "command": "node --test tools/factory_budget_process.test.mjs",
+      "started_at": "2026-09-20T19:19:28.7005969-05:00",
+      "finished_at": "2026-09-20T19:19:50.2255858-05:00",
+      "exit_code": 0
+    },
+    {
+      "receipt": "green-native-command.json",
+      "command": "pwsh -NoProfile -NonInteractive -File tools/local_stack_identity.test.ps1 -EvidenceRoot <receipt-directory>",
+      "started_at": "2026-09-20T19:17:11.3751967-05:00",
+      "finished_at": "2026-09-20T19:17:12.9124901-05:00",
+      "exit_code": 0
+    },
+    {
+      "receipt": "green-process-suite-command.json",
+      "command": "node --test tools/factory_budget_process.test.mjs",
+      "started_at": "2026-09-20T19:18:11.6950374-05:00",
+      "finished_at": "2026-09-20T19:18:29.2830769-05:00",
+      "exit_code": 0
+    },
+    {
+      "receipt": "lifecycle-module-command.json",
+      "command": "pwsh -NoProfile -NonInteractive -File tools/local_stack_lifecycle.test.ps1 -Suite Module -NodePath <resolved-node>",
+      "started_at": "2026-09-20T19:19:52.8063693-05:00",
+      "finished_at": "2026-09-20T19:20:03.116214-05:00",
+      "exit_code": 0
+    },
+    {
+      "receipt": "lifecycle-source-command.json",
+      "command": "pwsh -NoProfile -NonInteractive -File tools/local_stack_lifecycle.test.ps1 -Suite Source -NodePath <resolved-node>",
+      "started_at": "2026-09-20T19:20:03.2020705-05:00",
+      "finished_at": "2026-09-20T19:20:05.7222947-05:00",
+      "exit_code": 0
+    },
+    {
+      "receipt": "red-native-command.json",
+      "command": "pwsh -NoProfile -NonInteractive -File tools/local_stack_identity.test.ps1 -EvidenceRoot <receipt-directory>",
+      "started_at": "2026-09-20T19:16:36.5630149-05:00",
+      "finished_at": "2026-09-20T19:16:38.4347962-05:00",
+      "exit_code": 1
+    }
+  ],
+  "diagnostics": [
+    {
+      "output": "",
+      "exit_code": 0,
+      "command": "node --check tools/factory_budget_process.mjs"
+    },
+    {
+      "output": "",
+      "exit_code": 0,
+      "command": "node --check tools/factory_budget_process.test.mjs"
+    },
+    {
+      "output": "",
+      "exit_code": 0,
+      "command": "node --check tools/e2e_factory_budget_recovery.mjs"
+    },
+    {
+      "errors": [],
+      "exit_code": 0,
+      "command": "PowerShell Parser.ParseFile tools/local_stack.psm1"
+    },
+    {
+      "errors": [],
+      "exit_code": 0,
+      "command": "PowerShell Parser.ParseFile tools/local_stack_identity.test.ps1"
+    },
+    {
+      "output": "{\r\n  \"schema_version\": 1,\r\n  \"migration_count\": 41,\r\n  \"latest_version\": 41,\r\n  \"immutable_checksums\": true\r\n}\r\n",
+      "exit_code": 0,
+      "command": "node tools/check_migrations.mjs"
+    },
+    {
+      "output": "warning: in the working copy of 'tools/e2e_factory_budget_recovery.mjs', LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of 'tools/factory_budget_process.mjs', LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of 'tools/factory_budget_process.test.mjs', LF will be replaced by CRLF the next time Git touches it\r\nwarning: in the working copy of 'tools/local_stack.psm1', LF will be replaced by CRLF the next time Git touches it\r\n",
+      "exit_code": 0,
+      "command": "git diff --check -- <four scoped tracked paths>"
+    }
+  ],
+  "verification_summary": {
+    "cleanup_cases": [
+      "initial native inspection uncertainty",
+      "release-poll uncertainty",
+      "mismatched receipt",
+      "post-stop inspection uncertainty",
+      "positively confirmed absence"
+    ],
+    "lifecycle_module": "20 passed; 14 created inert processes; 0 remaining; temporary tree removed by suite",
+    "shared_native_cases": 37,
+    "owned_fixtures": [
+      {
+        "receipt": {
+          "executable": "C:\\nvm4w\\nodejs\\node.exe",
+          "pid": 55080,
+          "started_utc": "2026-09-21T00:19:30.5025196Z",
+          "workspace": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-cleanup-iBJAT4"
+        },
+        "report": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-cleanup-iBJAT4\\report.json",
+        "cleanup_verified": true
+      },
+      {
+        "receipt": {
+          "executable": "C:\\nvm4w\\nodejs\\node.exe",
+          "workspace": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-cleanup-kMvb85",
+          "pid": 52616,
+          "started_utc": "2026-09-21T00:18:13.5261309Z"
+        },
+        "report": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-cleanup-kMvb85\\report.json",
+        "cleanup_verified": true
+      },
+      {
+        "receipt": {
+          "started_utc": "2026-09-21T00:17:12.3215219Z",
+          "workspace": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-07b7222774694b348fe22ce1a344e6e8",
+          "pid": 40648,
+          "executable": "C:\\nvm4w\\nodejs\\node.exe"
+        },
+        "report": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-07b7222774694b348fe22ce1a344e6e8\\report.json",
+        "cleanup_verified": true
+      },
+      {
+        "receipt": {
+          "started_utc": "2026-09-21T00:21:21.1163043Z",
+          "executable": "C:\\nvm4w\\nodejs\\node.exe",
+          "workspace": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-cada3624f0a547ec90a7370395b0d3c4",
+          "pid": 37840
+        },
+        "report": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-cada3624f0a547ec90a7370395b0d3c4\\report.json",
+        "cleanup_verified": true
+      },
+      {
+        "receipt": {
+          "started_utc": "2026-09-21T00:16:37.4392449Z",
+          "pid": 39948,
+          "workspace": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-cbb699b47ba54eb1ad5854ef31b749a7",
+          "executable": "C:\\nvm4w\\nodejs\\node.exe"
+        },
+        "report": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-cbb699b47ba54eb1ad5854ef31b749a7\\report.json",
+        "cleanup_verified": true
+      },
+      {
+        "receipt": {
+          "executable": "C:\\nvm4w\\nodejs\\node.exe",
+          "workspace": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-cdd5a6222fdd46379e144a6c1493cdd5",
+          "started_utc": "2026-09-21T00:19:29.8361823Z",
+          "pid": 10688
+        },
+        "report": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-cdd5a6222fdd46379e144a6c1493cdd5\\report.json",
+        "cleanup_verified": true
+      },
+      {
+        "receipt": {
+          "started_utc": "2026-09-21T00:18:12.7735874Z",
+          "workspace": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-d5549ec661224ae69631e0a22e254013",
+          "executable": "C:\\nvm4w\\nodejs\\node.exe",
+          "pid": 39528
+        },
+        "report": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-process-uncertainty\\ecorp-identity-d5549ec661224ae69631e0a22e254013\\report.json",
+        "cleanup_verified": true
+      }
+    ],
+    "node_process_suite": "6 passed, 0 failed, 0 skipped; includes shared native test and extracted cleanup-only integration",
+    "lifecycle_source": "10 passed; no processes"
+  },
+  "scope_limits": [
+    "No services, database, Factory, candidate runtime driver, manual API8791/web5187/DB54329, or runner-local executed/touched.",
+    "Only fresh bounded inert children; child environments allowlisted. Faults injected at native Get-Process/getter boundary, not actual OS ACL revocation.",
+    "No commit, push, install, credential access, attempts-path or independent-review-proof changes.",
+    "Rust/web build and full workspace tests not run: no Rust/web changes; scoped native/script verification only, not product E2E acceptance.",
+    "Other fixer changes in owned_test_stack and e2e_predispatch_failure are outside this ownership and were not reverted.",
+    "No independent Santa/security approval claimed; integration and fresh independent review remain with coordinator."
+  ],
+  "stopping_condition": "Shared defect repaired and bounded tests/diagnostics pass; ready for independent review of exact changed hashes.",
+  "finished_at": "2026-09-20T19:22:15.1920196-05:00"
+}

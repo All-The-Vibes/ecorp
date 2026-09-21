@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "retainedRuntimeFunctionsUnchanged": true,
+  "removedMechanismTests": [
+    "the readiness marker is synthetic, unique to the connection and explicitly not checkout evidence",
+    "identity markers are per-connection preview-only data, without changing artifact markers"
+  ],
+  "preserved": [
+    {
+      "file": "tools/controlled_runner_fixture.test.mjs",
+      "before": 12,
+      "after": 11,
+      "tests": [
+        "model-scoped readiness selects its probe despite another runner with the same source",
+        "a missing or disabled probe model cannot borrow another runtime or source",
+        "artifact smoke requires explicit owned opt-in, loopback origin and output",
+        "full SQL and restart coverage remains restricted to the exact Actions integration fixture",
+        "registration alone cannot satisfy readiness; only bounded source-specific read-only previews are retried",
+        "wrong, disconnected, ambiguous or unavailable controlled runner cannot pass the preview gate",
+        "readiness fails closed on unrelated HTTP errors and has a deterministic deadline",
+        "every artifact launch must belong to the controlled runner before waiting for an assignment",
+        "source-bound fixture readiness verifies the expected repository, ref, commit, Corp and unique runner",
+        "automatic factory verification requires exact persisted completion, scope, version and event lineage",
+        "Linux keeps the full artifact suite and Windows smoke cannot claim fault or restart coverage"
+      ]
+    },
+    {
+      "file": "tools/identity_fixture.test.mjs",
+      "before": 13,
+      "after": 12,
+      "tests": [
+        "lifecycle-only preview requires an explicit owned scope and cannot claim OIDC coverage",
+        "identity fixture rejects manual, foreign and credential-bearing endpoints before effects",
+        "full identity/OIDC conformance stays confined to the exact hosted integration fixture",
+        "model/source selection rejects ambiguity, wrong scope, missing capabilities and prior work",
+        "identity readiness retries only native read-only previews before any mission or launch",
+        "assignment binds exact source/model, scope and fence without leaking secrets",
+        "assignment listener exists before launch and is removed with its timer after success",
+        "wrong-runner launch fails immediately without a dangling assignment deadline",
+        "failed launch cancels assignment listening without masking the HTTP error",
+        "assignment timeout stays observed during launch and cleans up deterministically",
+        "closed and malformed probe streams fail without waiting for the full deadline",
+        "Linux retains full auth coverage and Windows lifecycle evidence cannot claim OIDC"
+      ]
+    }
+  ]
+}

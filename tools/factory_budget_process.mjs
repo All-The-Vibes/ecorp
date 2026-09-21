@@ -16,14 +16,16 @@ async function nativeOwnership(script, values, { workspace, environment = proces
     cwd: workspace, windowsHide: true, timeout: 30000, maxBuffer: 64 * 1024,
     env: { ...environment, ECORP_QA_OWNERSHIP_MODULE: modulePath, ECORP_QA_WORKSPACE: workspace, ...values },
   })
-  return stdout.trim() ? JSON.parse(stdout) : null
+  // Empty/truncated inspection output is not positive evidence of absence.
+  return JSON.parse(stdout)
 }
 
 export async function factoryBudgetProcessIdentity(processId, options) {
   assert.ok(Number.isSafeInteger(processId) && processId > 0, 'Valid owned child PID required')
   return nativeOwnership(
     '$identity = Get-LocalProcessIdentity -ProcessId ([int]$env:ECORP_QA_PROCESS_ID); ' +
-    'if ($identity) { $identity.workspace=$env:ECORP_QA_WORKSPACE; $identity | ConvertTo-Json -Compress }',
+    'if ($identity) { $identity.workspace=$env:ECORP_QA_WORKSPACE }; ' +
+    'ConvertTo-Json -InputObject $identity -Compress',
     { ECORP_QA_PROCESS_ID: String(processId) }, options,
   )
 }

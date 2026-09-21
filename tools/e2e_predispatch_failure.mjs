@@ -24,7 +24,7 @@ import { existsSync, lstatSync } from 'node:fs'
 import { readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { promisify } from 'node:util'
-import { assertOwnedRestart, restartOwnedTestServer } from './owned_test_stack.mjs'
+import { assertOwnedRestart, restartOwnedTestServer, serverIdentity } from './owned_test_stack.mjs'
 
 const execFile = promisify(execFileCallback)
 const root = path.resolve(import.meta.dirname, '..')
@@ -195,19 +195,8 @@ async function processOwnership() {
   assert.ok(typeof manifest.workspace === 'string' && path.isAbsolute(manifest.workspace),
     'Owned manifest must explicitly name its absolute workspace')
   assert.ok(Number.isSafeInteger(manifest.server) && manifest.server > 0, 'Invalid owned server PID')
-  // Use the same PowerShell 7 runtime as the owned stack launcher. The legacy
-  // Windows PowerShell CIM import can exceed the unchanged probe deadline.
-  const identity = JSON.parse(await command('pwsh.exe', [
-    '-NoProfile', '-NonInteractive', '-Command', [
-      "$ErrorActionPreference='Stop'",
-      '$p=Get-CimInstance Win32_Process -Filter "ProcessId = $env:ECORP_QA_PROCESS_ID"',
-      "if (!$p) { throw 'Owned server absent' }",
-      '$listeners=@(Get-NetTCPConnection -State Listen -LocalPort ([int]$env:ECORP_QA_PROCESS_PORT))',
-      "@{executable=$p.ExecutablePath; creation=$p.CreationDate.ToUniversalTime().ToString('o');",
-      'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $p.ProcessId)} | ConvertTo-Json -Compress',
-    ].join('\n'),
-  ], { env: { ...process.env, ECORP_QA_PROCESS_ID: String(manifest.server),
-    ECORP_QA_PROCESS_PORT: endpoint.port } }))
+  bounded()
+  const identity = await serverIdentity(manifest.server, { root, server, binary })
   assertOwnedRestart(manifest, identity, { root, server, binary })
 }
 function connectedSource(state) {

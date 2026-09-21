@@ -1,0 +1,451 @@
+{
+  "finding": "PR237-B-003",
+  "round": 2,
+  "status": "implemented_locally_targeted_verified",
+  "base": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "worktree": "C:/Users/sschofield/repos/ecorp-pr237-review-fixes",
+  "completed_at": "2026-09-20T19:29:16.8609109-05:00",
+  "model": "gpt-6-astra, resolved developer agent metadata",
+  "writes": [
+    "tools/e2e_factory_budget_recovery.mjs:4,49-61,125-126,145-170,409-456",
+    "tools/factory_budget_process.test.mjs:3,239-356"
+  ],
+  "changes": [
+    "lstat every existing ancestor, refusing links including dangling junctions before preflight and mkdir",
+    "Validate attempts parent before exclusive mkdir of a fresh leaf and canonicalize the newly created attempt before effects",
+    "Admission-gate finally, revalidate paths, preserve uncertain processes/paths rather than writing reports or lock-release signals through rejection",
+    "Add real filesystem junction regression using existing controlled source extraction; no driver execution"
+  ],
+  "tdd": {
+    "red": {
+      "started_at": "2026-09-20T19:25:52.6075599-05:00",
+      "finished_at": "2026-09-20T19:25:53.2574419-05:00",
+      "command": "node --test --test-name-pattern='actual budget attempt admission' tools/factory_budget_process.test.mjs",
+      "hashes": [
+        {
+          "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\e2e_factory_budget_recovery.mjs",
+          "Hash": "07B5521FB6156ED852B8660758788F65A917C3A52CA36B240808CC98843C90F1"
+        },
+        {
+          "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\factory_budget_process.test.mjs",
+          "Hash": "D80C80FD0855A88AA47392E710194570CE8B13AC7B7DE6ABF9F3FCFDF7F81CFD"
+        }
+      ],
+      "exit_code": 1
+    },
+    "red_summary": "7 failing subcases, 1 passing positive control; 8 failed Node test entries including parent; real attempts junction wrote report.json in separately owned outside/test",
+    "green": {
+      "temp_root": "C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-237/round-2/fix-attempt-path/verified/temp",
+      "path_evidence": "C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-237/round-2/fix-attempt-path/verified",
+      "command": "node --test tools/factory_budget_process.test.mjs tools/factory_budget_fixture_config.test.mjs",
+      "exit_code": 0,
+      "started_at": "2026-09-20T19:27:50.0098738-05:00",
+      "process_evidence": "C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-237/round-2/fix-attempt-path/verified/temp",
+      "finished_at": "2026-09-20T19:28:09.2229996-05:00"
+    },
+    "green_summary": "19 tests passed, 0 failed, 0 skipped; includes all 8 path scenarios plus existing process/source/config tests",
+    "identical_regression_source": true,
+    "setup_failure": "setup-extraction retained: initial CRLF-sensitive harness boundary failure, not counted as RED",
+    "earlier_runs": [
+      "red/",
+      "green/"
+    ],
+    "confirmed_red": "red-confirmed/",
+    "final_green": "verified/"
+  },
+  "diagnostics": [
+    {
+      "command": "node --check tools/e2e_factory_budget_recovery.mjs",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check tools/factory_budget_process.test.mjs",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check -- tools/e2e_factory_budget_recovery.mjs tools/factory_budget_process.test.mjs",
+      "exit_code": 0
+    }
+  ],
+  "preservation": [
+    {
+      "check": "  // Stop dotenv discovery",
+      "unchanged": true
+    },
+    {
+      "check": "  // Release the owned fault injector normally",
+      "unchanged": true
+    },
+    {
+      "check": "Existing process and source tests unchanged except path-test imports",
+      "unchanged": true
+    },
+    {
+      "check": "Exact same regression source in confirmed RED and final GREEN",
+      "unchanged": true
+    },
+    {
+      "check": "All 8 tested input hashes still match",
+      "unchanged": true
+    },
+    {
+      "check": "Linked-path preflight precedes first reference/port/git probe",
+      "unchanged": true
+    }
+  ],
+  "input_hashes": [
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\e2e_factory_budget_recovery.mjs",
+      "Hash": "ED127289F6DE7AD15E2D515A168929B759FD6DE1E64560D78C65BE6A588CA88D"
+    },
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\factory_budget_process.test.mjs",
+      "Hash": "D80C80FD0855A88AA47392E710194570CE8B13AC7B7DE6ABF9F3FCFDF7F81CFD"
+    },
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\factory_budget_process.mjs",
+      "Hash": "FAFBD932C5B5D18C5390B392722B9D04F916352DD97A2712A51FA9B2329BFCC4"
+    },
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\local_stack.psm1",
+      "Hash": "A5F71D8E9402F334B99DA34FA51285369BC3B945C1302314B0607DF0F33779F0"
+    },
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\local_stack_identity.test.ps1",
+      "Hash": "4C75CD7AE20085B89D9E34095BD648CAA4F7CBA87DBB151A511AEDBFCA64EA54"
+    },
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\qa_hold_checkpoint_file.ps1",
+      "Hash": "D309264AFE807DC104717A3A7610838208E7FC7B3D298C28632739A6719D0E16"
+    },
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\factory_budget_fixture_config.mjs",
+      "Hash": "E72A65CE08A4846A7B55D2CE3A54AA467027ABF5CD5B4E29CDF308B1F28881CF"
+    },
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\factory_budget_fixture_config.test.mjs",
+      "Hash": "4B64047DECE94F3363A0A6C46913FD7A9716FEC935FB86670FC7259994DDFA78"
+    }
+  ],
+  "owned_paths": [
+    {
+      "scenario": "attempts-junction",
+      "root": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-vGE0Da",
+      "outside": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-outside-nvk8kx",
+      "links": [
+        "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-vGE0Da\\qa\\issue-50-factory-recovery\\attempts"
+      ],
+      "before": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ],
+        [
+          "test",
+          []
+        ]
+      ],
+      "cleanup": "owned links removed and verified absent; owned roots retained",
+      "after": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ],
+        [
+          "test",
+          []
+        ]
+      ],
+      "calls": [],
+      "report": {
+        "cleanup": [],
+        "status": "fixture_error",
+        "error": "Refuse linked or non-directory QA path: C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-vGE0Da\\qa\\issue-50-factory-recovery\\attempts"
+      },
+      "exitCode": 1,
+      "outside_final": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ],
+        [
+          "test",
+          []
+        ]
+      ]
+    },
+    {
+      "scenario": "dangling-attempts-junction",
+      "root": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-3P3k7K",
+      "outside": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-outside-EAhqwW",
+      "links": [
+        "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-3P3k7K\\qa\\issue-50-factory-recovery\\attempts"
+      ],
+      "before": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "cleanup": "owned links removed and verified absent; owned roots retained",
+      "after": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "calls": [],
+      "report": {
+        "cleanup": [],
+        "status": "fixture_error",
+        "error": "Refuse linked or non-directory QA path: C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-3P3k7K\\qa\\issue-50-factory-recovery\\attempts"
+      },
+      "exitCode": 1,
+      "outside_final": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ]
+    },
+    {
+      "scenario": "attempt-junction",
+      "root": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-rlO7dw",
+      "outside": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-outside-YsG4XV",
+      "links": [
+        "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-rlO7dw\\qa\\issue-50-factory-recovery\\attempts\\test"
+      ],
+      "before": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "cleanup": "owned links removed and verified absent; owned roots retained",
+      "after": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "calls": [],
+      "report": {
+        "cleanup": [],
+        "status": "fixture_error",
+        "error": "Refuse linked or non-directory QA path: C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-rlO7dw\\qa\\issue-50-factory-recovery\\attempts\\test"
+      },
+      "exitCode": 1,
+      "outside_final": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ]
+    },
+    {
+      "scenario": "unknown-attempt",
+      "root": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-zezbmJ",
+      "outside": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-outside-wKRl8v",
+      "links": [],
+      "before": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "cleanup": "owned links removed and verified absent; owned roots retained",
+      "after": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "calls": [],
+      "report": {
+        "cleanup": [],
+        "status": "fixture_error",
+        "error": "EEXIST: file already exists, mkdir 'C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-zezbmJ\\qa\\issue-50-factory-recovery\\attempts\\test'"
+      },
+      "exitCode": 1,
+      "outside_final": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ]
+    },
+    {
+      "scenario": "invalid-owner",
+      "root": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-iTAh4e",
+      "outside": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-outside-vQQiIK",
+      "links": [],
+      "before": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "cleanup": "owned links removed and verified absent; owned roots retained",
+      "after": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "calls": [],
+      "report": {
+        "cleanup": [],
+        "status": "fixture_error",
+        "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'unknown'\n- 'issue-50-factory-budget-recovery-v1'\n"
+      },
+      "exitCode": 1,
+      "outside_final": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ]
+    },
+    {
+      "scenario": "new-attempt-junction",
+      "root": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-X6WEpU",
+      "outside": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-outside-IqBVnW",
+      "links": [
+        "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-X6WEpU\\qa\\issue-50-factory-recovery\\attempts\\test"
+      ],
+      "before": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "cleanup": "owned links removed and verified absent; owned roots retained",
+      "after": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "calls": [],
+      "report": {
+        "cleanup": [],
+        "status": "fixture_error",
+        "error": "Refuse linked or non-directory QA path: C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-X6WEpU\\qa\\issue-50-factory-recovery\\attempts\\test"
+      },
+      "exitCode": 1,
+      "outside_final": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ]
+    },
+    {
+      "scenario": "finally-attempt-junction",
+      "root": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-Jkd8KB",
+      "outside": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-outside-B37r0N",
+      "links": [
+        "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-Jkd8KB\\qa\\issue-50-factory-recovery\\attempts\\test"
+      ],
+      "before": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "cleanup": "owned links removed and verified absent; owned roots retained",
+      "after": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "calls": [
+        "lifecycle"
+      ],
+      "report": {
+        "cleanup": [
+          {
+            "name": "qa-attempt-path",
+            "status": "unverified_preserved",
+            "error": "Refuse linked or non-directory QA path: C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-Jkd8KB\\qa\\issue-50-factory-recovery\\attempts\\test"
+          }
+        ],
+        "status": "fixture_error",
+        "path_error": "Refuse linked or non-directory QA path: C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-Jkd8KB\\qa\\issue-50-factory-recovery\\attempts\\test"
+      },
+      "exitCode": 1,
+      "outside_final": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ]
+    },
+    {
+      "scenario": "plain",
+      "root": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-owned-4acYEL",
+      "outside": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-attempt-path\\verified\\temp\\ecorp-attempt-outside-2oahBV",
+      "links": [],
+      "before": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "cleanup": "owned links removed and verified absent; owned roots retained",
+      "after": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ],
+      "calls": [
+        "lifecycle",
+        "ports",
+        "reference"
+      ],
+      "report": {
+        "cleanup": [],
+        "ports_after": [],
+        "retained_after": null,
+        "retained_unchanged": null,
+        "finished_at": "2026-09-21T00:28:09.159Z"
+      },
+      "exitCode": 0,
+      "outside_final": [
+        [
+          "sentinel.txt",
+          "6f757473696465206d7573742072656d61696e20756e6368616e6765640a"
+        ]
+      ]
+    }
+  ],
+  "cleanup": "All path-regression junctions unlinked and absence verified after each run; owned roots and RED escaped synthetic report bytes retained. Existing process tests prove exact owned-child exit; existing source test retains its owned source alias as before.",
+  "evidence_files": [
+    "scope.json",
+    "driver.before.mjs",
+    "test.before.mjs",
+    "driver.issue-only.diff",
+    "test.issue-only.diff",
+    "red-confirmed/driver.mjs",
+    "red-confirmed/test.mjs",
+    "red-confirmed/output.txt",
+    "red-confirmed/command.json",
+    "red-confirmed/path-fixtures.json",
+    "verified/inputs/",
+    "verified/output.txt",
+    "verified/command.json",
+    "verified/path-fixtures.json",
+    "verified/input-hashes.json",
+    "verified/checks.json",
+    "preservation.json"
+  ],
+  "limits": [
+    "No service, DB, Factory, recovery driver, incoming-shell or user/manual-directory execution; lifecycle boundary is an observable stub in the source-extraction regression",
+    "No packages, credentials, commit, push or changes to CI/storage.rs",
+    "No full Rust/web build, browser acceptance, independent review or whole-PR closure claimed",
+    "Path checks reject preexisting and observed redirected paths, not atomic OS-handle isolation against adversarial concurrent filesystem replacement between awaits",
+    "If final path validation fails after startup, processes and paths are explicitly unverified/preserved; there is no unsafe cleanup fallback"
+  ]
+}

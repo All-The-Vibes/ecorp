@@ -3,6 +3,8 @@ import test from 'node:test'
 import path from 'node:path'
 import net from 'node:net'
 import os from 'node:os'
+import fs from 'node:fs'
+import { syncBuiltinESMExports } from 'node:module'
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { assertOwnedRestart, assertTestEndpoint, ownedServerEnvironment, restartOwnedTestServer, startOwnedTestServer, stopOwnedTestServer } from './owned_test_stack.mjs'
 
@@ -16,6 +18,52 @@ const manifest = {
 }
 const identity = { platform: 'win32', pid: manifest.server, executable: binary, creation: manifest.server_creation, port_owned: true }
 const context = { root, server, binary, platform: 'win32' }
+
+test('database query options are refused before filesystem or lifecycle effects', async t => {
+  const folder = path.resolve(os.tmpdir(), 'ecorp-owned-query-fixture')
+  const settings = { root: folder, server, binary: process.execPath,
+    manifestPath: path.join(folder, 'server.json') }
+  const refusal = 'PostgreSQL test database query options are not supported; refusing lifecycle operation.'
+  // Block the first lifecycle write even on the unfixed helper: no real files,
+  // process discovery, signals, sockets, or child launches can be reached.
+  const resolved = t.mock.method(fs, 'realpathSync', value => value)
+  const opened = t.mock.method(fs, 'openSync', () => { throw new Error('fixture lifecycle boundary reached') })
+  syncBuiltinESMExports()
+  try {
+    for (const operation of [startOwnedTestServer, restartOwnedTestServer, stopOwnedTestServer]) {
+      for (const query of [
+        'host=other.invalid', 'hostaddr=127.0.0.2', 'port=55472', 'dbname=other', 'user=other',
+        'port=55472&dbname=other', 'host=%2Ffixture-socket', 'unknown=private-query-canary',
+        '%68ost=other.invalid', 'HOST=other.invalid', 'HostAddr=127.0.0.2', 'DBNAME=other',
+        'port=55471&port=55472', 'sslmode=require', 'options=-csearch_path%3Dother',
+        'password=private-query-canary', 'host', '&&', '%',
+      ]) {
+        // Test names and refusal diagnostics never contain a supplied URL/value.
+        await t.test(`${operation.name} rejects query case ${query.split('=')[0]}`, async () => {
+          resolved.mock.resetCalls()
+          opened.mock.resetCalls()
+          await assert.rejects(operation({ ...settings,
+            databaseUrl: `postgres://fixture:private-password-canary@127.0.0.1:55471/fixture?${query}`,
+          }), error => error.message === refusal)
+          assert.equal(resolved.mock.callCount(), 0)
+          assert.equal(opened.mock.callCount(), 0)
+        })
+      }
+      for (const suffix of ['', '?']) {
+        await t.test(`${operation.name} allows URL without query options (${suffix.length})`, async () => {
+          opened.mock.resetCalls()
+          await assert.rejects(operation({ ...settings,
+            databaseUrl: `postgresql://fixture:private-password-canary@127.0.0.1:55471/fixture${suffix}`,
+          }), /fixture lifecycle boundary reached/u)
+          assert.equal(opened.mock.callCount(), 1)
+        })
+      }
+    }
+  } finally {
+    t.mock.restoreAll()
+    syncBuiltinESMExports()
+  }
+})
 
 test('upstream restart environment remains bounded and cannot override database authority', () => {
   const inherited = { PATH: 'fixture', DATABASE_URL: 'old-private-value' }

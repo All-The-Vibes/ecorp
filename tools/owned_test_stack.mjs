@@ -84,7 +84,7 @@ async function linuxProcess(request) {
   return JSON.parse(stdout)
 }
 
-async function serverIdentity(pid, context) {
+export async function serverIdentity(pid, context) {
   if (!Number.isSafeInteger(pid) || pid <= 1) throw new Error(refusal)
   const endpoint = assertTestEndpoint(context.server)
   if (process.platform === 'linux') {
@@ -138,7 +138,9 @@ function options({ root, server, databaseUrl, binary = process.env.CRONY_TEST_SE
   let database
   try { database = new URL(databaseUrl) } catch { throw new Error('Invalid PostgreSQL test database URL; its value was not disclosed.') }
   if (!['postgres:', 'postgresql:'].includes(database.protocol)) throw new Error('Expected an explicit PostgreSQL test database.')
-  // Passwords and URL options are deliberately not part of persisted receipts.
+  // SQLx query options can override the target recorded from authority/path.
+  if (database.search) throw new Error('PostgreSQL test database query options are not supported; refusing lifecycle operation.')
+  // Passwords are deliberately not part of persisted receipts.
   const databaseTarget = { host: database.hostname, port: database.port || '5432',
     database: database.pathname, user: database.username }
   return { root: realpathSync(root), server, binary: realpathSync(binary), databaseUrl,

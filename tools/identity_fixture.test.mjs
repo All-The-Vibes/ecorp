@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
-import { controlledReadinessCapability, controlledReadinessSource } from './controlled_runner_fixture.mjs'
 import { assertIdentityAssignment, assertIdentityProbeSelection, captureIdentityAssignment,
   identityFixtureConfig, identityFixturePreview, waitForIdentityProbe } from './identity_fixture.mjs'
 
@@ -74,16 +73,6 @@ test('full identity/OIDC conformance stays confined to the exact hosted integrat
     ['DATABASE_URL', undefined], ['DATABASE_URL', 'private-value-not-to-be-printed'],
     ['CRONY_AUTH_TEST_PORT', '8793'], ['FAKE_OIDC_PORT', '8792'],
   ]) assert.throws(() => identityFixtureConfig([], { ...actionsEnv, [key]: value }))
-})
-
-test('identity markers are per-connection preview-only data, without changing artifact markers', () => {
-  const legacyId = 'aaa-identity-probe-' + id(3)
-  const marker = controlledReadinessSource(legacyId, id(4))
-  assert.notDeepEqual(marker, controlledReadinessSource(legacyId, id(5)))
-  assert.equal(marker.base_ref, 'readiness-only')
-  assert.equal(controlledReadinessSource('aaa-artifact-staging-' + id(3), id(4)).base_commit, marker.base_commit)
-  assert.match(controlledReadinessCapability(marker).detail, /preview only, not checkout evidence/u)
-  assert.throws(() => controlledReadinessSource('runner-local', id(4)))
 })
 
 test('model/source selection rejects ambiguity, wrong scope, missing capabilities and prior work', () => {

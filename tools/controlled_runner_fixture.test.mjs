@@ -6,8 +6,6 @@ import {
   artifactStagingFixtureConfig,
   assertAutomaticFactoryVerification,
   assertControlledAssignment,
-  controlledReadinessCapability,
-  controlledReadinessSource,
   selectFixtureRunnerForSource,
   waitForControlledRunnerDispatch,
 } from './controlled_runner_fixture.mjs'
@@ -26,8 +24,9 @@ const actionsEnv = {
 }
 const demo = { corp_id: '00000000-0000-4000-8000-000000000001', alice_actor_id: 'owner-fixture' }
 const runnerId = 'aaa-artifact-staging-00000000-0000-4000-8000-000000000001'
-const epoch = '00000000-0000-4000-8000-000000000002'
-const source = controlledReadinessSource(runnerId, epoch)
+const source = { repository: 'all-the-vibes/ecorp', base_ref: 'HEAD', base_commit: 'a'.repeat(40) }
+const sourceCapability = { name: 'workspace-isolation', available: true,
+  source_repository: source.repository, source_base_ref: source.base_ref, source_base_commit: source.base_commit }
 const runner = { runnerId, readinessSource: source }
 
 test('model-scoped readiness selects its probe despite another runner with the same source', async () => {
@@ -64,7 +63,7 @@ test('a missing or disabled probe model cannot borrow another runtime or source'
     const request = async (_route, init) => {
       if (init) { previews++; throw new Error('Must reject before a preview') }
       return { response: { status: 200 }, body: { runners: [{ id: runnerId, connected: true, corp_id: demo.corp_id,
-        capabilities: [controlledReadinessCapability(source), { name: 'codex', available: true, models }] }],
+        capabilities: [sourceCapability, { name: 'codex', available: true, models }] }],
       snapshot: { missions: [], tasks: [], runs: [] } } }
     }
     await assert.rejects(waitForControlledRunnerDispatch({ request, demo, runner: probe }))
@@ -103,24 +102,10 @@ test('full SQL and restart coverage remains restricted to the exact Actions inte
   assert.throws(() => artifactStagingFixtureConfig([], smokeEnv), /restricted/)
 })
 
-test('the readiness marker is synthetic, unique to the connection and explicitly not checkout evidence', () => {
-  assert.deepEqual(source, controlledReadinessSource(runnerId, epoch))
-  assert.notDeepEqual(source, controlledReadinessSource(runnerId, '00000000-0000-4000-8000-000000000003'))
-  assert.equal(source.repository, 'fixture/' + runnerId)
-  assert.equal(source.base_ref, 'readiness-only')
-  assert.match(source.base_commit, /^[0-9a-f]{40}$/)
-  const cap = controlledReadinessCapability(source)
-  assert.equal(cap.source_repository, source.repository)
-  assert.equal(cap.source_base_ref, source.base_ref)
-  assert.equal(cap.source_base_commit, source.base_commit)
-  assert.match(cap.detail, /preview only, not checkout evidence/)
-  assert.throws(() => controlledReadinessSource('runner-local', epoch))
-})
-
 function mock({ delays = 0, status, error, mutate } = {}) {
   const state = {
     runners: [{ id: runnerId, corp_id: demo.corp_id, connected: true,
-      capabilities: [controlledReadinessCapability(source), { name: 'fake-process', available: true }] }],
+      capabilities: [structuredClone(sourceCapability), { name: 'fake-process', available: true }] }],
     snapshot: { missions: [], tasks: [], runs: [] },
   }
   if (mutate) mutate(state)
@@ -195,7 +180,8 @@ test('every artifact launch must belong to the controlled runner before waiting 
 
 test('source-bound fixture readiness verifies the expected repository, ref, commit, Corp and unique runner', () => {
   const expected = { repository: 'all-the-vibes/ecorp', base_ref: 'HEAD', base_commit: 'a'.repeat(40) }
-  const cap = { ...controlledReadinessCapability(expected), source_repository: 'All-The-Vibes/ecorp' }
+  const cap = { name: 'workspace-isolation', available: true, source_repository: 'All-The-Vibes/ecorp',
+    source_base_ref: expected.base_ref, source_base_commit: expected.base_commit }
   const state = { runners: [{ id: 'runner-local', corp_id: demo.corp_id, connected: true, capabilities: [cap] }] }
   const selected = selectFixtureRunnerForSource(state, demo, expected)
   assert.equal(selected.runnerId, 'runner-local')

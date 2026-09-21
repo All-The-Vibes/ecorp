@@ -1,0 +1,113 @@
+{
+  "issue": "PONY237-02",
+  "pr": 237,
+  "round": 2,
+  "checked_at": "2026-09-21T00:39:22.900Z",
+  "base": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "status": "implemented_and_locally_verified_not_independently_reviewed",
+  "source": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\e2e_factory_claims.mjs",
+  "added_lines": 0,
+  "deleted_lines": 16,
+  "scope": {
+    "red_exception": "Deletion-only redundancy removal; existing contract regressions should pass before and after. No manufactured failing test.",
+    "base": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+    "stop": "Stop after before/after pure suite and exact deletion equivalence, or on scope/conflict/test failure",
+    "budget": "One scoped deletion-only fix; no numeric budget assigned",
+    "round": 2,
+    "pr": 237,
+    "issue": "PONY237-02",
+    "model": "Native Astra per assignment; runtime model identity not independently inspected",
+    "exclusions": [
+      "Full E2E import/execution",
+      "DB/Factory/services/GitHub effects",
+      "Dependencies",
+      "Credentials",
+      "Commit/push",
+      "Other source edits"
+    ],
+    "authorized_source": "C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_claims.mjs"
+  },
+  "hashes": [
+    {
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\e2e_factory_claims.mjs",
+      "before_sha256": "1de134f842166fce160ae418fb3d20022f86a6926ca4dc6802914100173d6635",
+      "after_sha256": "4ed72c8c408d9e9f71a774b5218769fee878835b3e8d824ea5ec3b8ef01ffe95"
+    },
+    {
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\controlled_runner_fixture.mjs",
+      "before_sha256": "c91138fa11844544f29bc1bd082d977ca95878d35782c8297d80dcb1fd401162",
+      "after_sha256": "c91138fa11844544f29bc1bd082d977ca95878d35782c8297d80dcb1fd401162"
+    },
+    {
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\controlled_runner_fixture.test.mjs",
+      "before_sha256": "f36510673959f63883d6ba51ce73eab98a5480684331debaa6b0cd6d5e588a74",
+      "after_sha256": "f36510673959f63883d6ba51ce73eab98a5480684331debaa6b0cd6d5e588a74"
+    },
+    {
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\ci_factory_repository.test.mjs",
+      "before_sha256": "2845aba6b08ed8a1478099481184f63428e27bc6d4f0aabfa3fbd7ea5959bc1d",
+      "after_sha256": "2845aba6b08ed8a1478099481184f63428e27bc6d4f0aabfa3fbd7ea5959bc1d"
+    },
+    {
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\fixture_source_identity.mjs",
+      "before_sha256": "f23a6fd5dc6379a442b49f41940f4930f69e340a023f528d449762841b1eb052",
+      "after_sha256": "f23a6fd5dc6379a442b49f41940f4930f69e340a023f528d449762841b1eb052"
+    }
+  ],
+  "checks": [
+    {
+      "phase": "before",
+      "command": "node --test tools/controlled_runner_fixture.test.mjs tools/ci_factory_repository.test.mjs",
+      "exit_code": 0,
+      "output": "before.log"
+    },
+    {
+      "phase": "after",
+      "command": "node --test tools/controlled_runner_fixture.test.mjs tools/ci_factory_repository.test.mjs",
+      "exit_code": 0,
+      "output": "after.log"
+    },
+    {
+      "phase": "syntax",
+      "command": "node --check tools/e2e_factory_claims.mjs",
+      "exit_code": 0,
+      "output": "syntax.log"
+    },
+    {
+      "phase": "diff-check",
+      "command": "git diff --check -- tools/e2e_factory_claims.mjs",
+      "exit_code": 0,
+      "output": "diff-check.log"
+    }
+  ],
+  "equivalence_check": {
+    "command": "node \"C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-duplicate-verification\\verify.mjs\"",
+    "result": "PASS",
+    "exact_authorized_deletions_only": true,
+    "unchanged_before_and_after_call": "assertAutomaticFactoryVerification(completed.state, {\r\n  corpId: demo.corp_id, workItemId: claim.work_item.id, missionId: materialized[0].mission_id,\r\n  runId: launch.run_id, previousVersion: running.work_item.version,\r\n})",
+    "helper_and_test_hashes_unchanged": true,
+    "mapping": [
+      "verified state and mission link: same item ID selected; helper additionally requires exactly one item and matching Corp",
+      "version 5: unchanged earlier assertion pins running.work_item.version to 4; helper requires previousVersion + 1",
+      "event query: same completed.state snapshot, aggregate item ID and factory.verified type",
+      "event count/version/correlation/causation/payload: identical checks remain in helper",
+      "event Corp, null actor, deterministic idempotency key: unchanged stricter helper checks"
+    ],
+    "retained": [
+      "verified lookup and existence",
+      "failure_detail === null",
+      "helper call with identical arguments",
+      "all stale-write and final-state checks",
+      "all other source bytes"
+    ]
+  },
+  "red_exception": "Authorized deletion-only exception. Baseline already passes; this removes redundant assertions, not broken behavior. No failing regression was manufactured. Existing helper positive and 16 negative mutations cover the contract.",
+  "validation_correction": "Initial byte-equivalence check found three context-line CRLF endings normalized by apply_patch. Restored those CRLF bytes, then reran verification. Original failure retained in equivalence.initial-line-ending-failure.log; not a behavioral RED test. Initial green suite logs retained as after.pre-line-ending-restore.log.",
+  "limits": [
+    "No full E2E driver imported or executed; syntax check only",
+    "No DB, Factory, services, GitHub, credential, dependency, commit or push effects",
+    "No build or full workspace suite: scoped JS deletion verified with existing pure suites and syntax check",
+    "No independent Santa/Ponytail approval claimed; integration and fresh review remain downstream",
+    "QA237-01 budget recovery driver and other prior dirty files were not edited"
+  ]
+}

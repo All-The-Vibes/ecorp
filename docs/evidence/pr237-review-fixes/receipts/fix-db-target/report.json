@@ -1,0 +1,89 @@
+{
+  "finding": "PR237-B-001",
+  "alias": "ATV237-02",
+  "status": "SCOPED_FIX_VERIFIED",
+  "pr": 237,
+  "round": 2,
+  "branch": "codex/pr237-review-fixes",
+  "base_head": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "workspace": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+  "changed_paths": [
+    "tools/owned_test_stack.mjs",
+    "tools/owned_test_stack.test.mjs"
+  ],
+  "changed_file_sha256": [
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\owned_test_stack.mjs",
+      "Hash": "2772F08F9E4EC2A51500EAE42D1928642DAE026D38CAF9543F46CCF7DBC65DAA"
+    },
+    {
+      "Path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\owned_test_stack.test.mjs",
+      "Hash": "E92DF321D2CB566D44CD40279DC1E733FBA74E27629AB1AC0A2F8E1CA333C635"
+    }
+  ],
+  "implementation": "Reject every nonempty PostgreSQL URL query in shared options(), before realpath/lock/manifest/process/socket/launch effects. Generic refusal discloses no URL. No safe allowlist needed by inspected callers.",
+  "coverage": [
+    "All start/restart/stop entrypoints",
+    "Query-only host/hostaddr/port/dbname/user drift",
+    "Combined/duplicate targets, encoded host key/socket value, case variants, unknown options, SSL/options/password, bare/malformed query",
+    "Exact generic refusal and zero realpath/open spy calls",
+    "Query-free postgres-compatible URLs and empty query reach blocked lock boundary"
+  ],
+  "checks": [
+    {
+      "name": "RED",
+      "command_script": "red.ps1",
+      "exit_code": 1,
+      "result": "57 negative subtests fail at blocked lifecycle write; 6 controls pass; 58 failures including parent, 64 total",
+      "unchanged_helper_proof": "git diff --exit-code -- tools/owned_test_stack.mjs = 0; SHA256 in red.json",
+      "log": "red.log"
+    },
+    {
+      "name": "GREEN",
+      "command_script": "green.ps1",
+      "exit_code": 0,
+      "result": "64 pass, 0 fail",
+      "log": "green.log"
+    },
+    {
+      "name": "Affected safe suite",
+      "command_script": "affected.ps1",
+      "exit_code": 0,
+      "result": "75 pass, 0 fail, 1 native child test skipped",
+      "log": "affected.log"
+    },
+    {
+      "name": "Syntax and whitespace",
+      "command_script": "diagnostics.ps1",
+      "exit_code": 0,
+      "result": "Both node --check commands and scoped git diff --check pass",
+      "log": "diagnostics.log"
+    },
+    {
+      "name": "Sanitization",
+      "result": "No synthetic password/query canaries or PostgreSQL URLs in command output logs"
+    }
+  ],
+  "tdd_test_bytes_unchanged": true,
+  "read_basis": [
+    "AGENTS.md",
+    "docs/PRODUCT_AND_TECHNICAL_PLAN.md",
+    "docs/ARCHITECTURE.md",
+    "docs/SECURITY.md",
+    "docs/EVALS.md",
+    "Trusted remediation.md at ecorp-review-candidate-80f32b7",
+    "reviewer-b.json PR237-B-001",
+    "reviewer-b-diagnostics/sqlx-parser-provenance.json",
+    "Local pinned sqlx-postgres-0.8.6/src/options/parse.rs",
+    "Shared lifecycle callers and CI configuration/tests"
+  ],
+  "limitations": [
+    "Pure validation/spy and safe fixture evidence only; no SQLx connection, server/runner launch, browser, live Factory, manual stack, or native lifecycle acceptance",
+    "Full Rust/web/build/repository gates not run: two MJS files only, no build artifact; node syntax checks passed",
+    "All nonempty queries including SSL configuration are intentionally rejected; callers requiring these need separately reviewed scope",
+    "Independent review/integration/PR acceptance remains with leader; no self-approval, commit or push",
+    "Native model identified by supplied executor metadata; no independent provider telemetry available"
+  ],
+  "stop_condition": "Scoped fix and focused verification complete; retained evidence handed off for independent review",
+  "recorded_at": "2026-09-20T19:14:31.7652032-05:00"
+}

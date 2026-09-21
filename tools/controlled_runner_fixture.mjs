@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict'
-import { createHash } from 'node:crypto'
 import path from 'node:path'
 
 const root = path.resolve(import.meta.dirname, '..')
@@ -33,26 +32,6 @@ export function artifactStagingFixtureConfig(args, env) {
   return {
     server: endpoint.origin, readinessSmoke, dryRun: args.includes('--dry-run'),
     output: readinessSmoke ? env.CRONY_ARTIFACT_STAGING_OUTPUT : path.join(root, 'output', 'e2e-artifact-staging.json'),
-  }
-}
-
-export function controlledReadinessSource(runnerId, connectionEpoch) {
-  assert.match(runnerId, /^aaa-(artifact-staging|identity-probe)-[0-9a-f-]{36}$/u)
-  assert.match(connectionEpoch, /^[0-9a-f-]{36}$/u)
-  // A synthetic, per-connection marker for preview selection only. No mission
-  // is executed against this marker and it is not evidence of a Git checkout.
-  return {
-    repository: 'fixture/' + runnerId,
-    base_ref: 'readiness-only',
-    base_commit: createHash('sha256').update(connectionEpoch).digest('hex').slice(0, 40),
-  }
-}
-
-export function controlledReadinessCapability(source) {
-  return {
-    name: 'workspace-isolation', available: true, models: [],
-    detail: 'synthetic controlled-runner readiness marker; preview only, not checkout evidence',
-    source_repository: source.repository, source_base_ref: source.base_ref, source_base_commit: source.base_commit,
   }
 }
 

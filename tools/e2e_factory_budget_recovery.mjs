@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict'
 import { execFile as execFileCallback, spawn } from 'node:child_process'
-import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, writeFile, access, realpath } from 'node:fs/promises'
-import { openSync, closeSync } from 'node:fs'
+import { createHash, randomUUID } from 'node:crypto'
+import { mkdir, readFile, writeFile, access, realpath, lstat, open } from 'node:fs/promises'
+import { constants, openSync, closeSync } from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import { fixtureMode, referenceSnapshotUrl } from './factory_budget_fixture_config.mjs'
 import { factoryBudgetProcessIdentity, stopFactoryBudgetProcess } from './factory_budget_process.mjs'
+// Both modules guard their native entrypoints; these imports only reuse read checks.
+import { checkContainedFile } from './e2e_stopped_source_checkpoint.mjs'
+import { readTrustedExecutableDigest } from './e2e_checkpoint_verification.mjs'
 
 // Operator-owned, synthetic-only Windows fixture. No retained-stack defaults.
 const execFile = promisify(execFileCallback)
@@ -45,6 +48,19 @@ const run = (program, args, extra = {}) => execFile(program, args, {
 async function exists(file) {
   try { await access(file); return true }
   catch(error) { if(error.code === 'ENOENT') return false; throw error }
+}
+async function assertUnlinkedDirectory(directory, allowMissing = false) {
+  for (let current = path.resolve(directory); ; current = path.dirname(current)) {
+    try {
+      const info = await lstat(current)
+      assert.ok(info.isDirectory() && !info.isSymbolicLink(), `Refuse linked or non-directory QA path: ${current}`)
+    } catch (error) {
+      if (!allowMissing || error.code !== 'ENOENT') throw error
+    }
+    if (current === path.dirname(current)) break
+  }
+  if (!allowMissing) assert.equal((await realpath(directory)).toLowerCase(), path.resolve(directory).toLowerCase(),
+    'QA directory must not redirect outside its declared path')
 }
 async function ports() {
   const { stdout } = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
@@ -92,6 +108,80 @@ async function ok(route, body) {
   assert.ok(result.status >= 200 && result.status < 300, `${route}: ${JSON.stringify(result)}`)
   return result.body
 }
+// Actual tested-input binding. No Git diff/source bytes or environment values in receipts.
+async function sourceFileDigest(sourceRoot, relative) {
+  assert.ok(relative && !/[:\\\x00-\x1f]/u.test(relative) &&
+    relative.split('/').every(part => part && part !== '.' && part !== '..'),
+  'Unsafe source path')
+  assert.ok(!relative.split('/').some(part => /^(?:\.git|\.codex|\.omx|credentials|pg-data|runner-workspaces|worktrees)$/iu.test(part)) &&
+    !/(?:^|\/)(?:\.env(?!\.example$)(?:\..*)?|credential\.json|enrollment\.token)$|\.(?:pem|key|pfx|p12|sqlite|db)$/iu.test(relative),
+  'Private path is not a source input')
+  const file = path.join(sourceRoot, relative)
+  try { await checkContainedFile(sourceRoot, file) }
+  catch (error) {
+    if (error.code === 'ENOENT') return { path: relative, missing: true }
+    throw error
+  }
+  const before = await lstat(file)
+  assert.ok(before.size <= 64 * 1024 * 1024, 'Source file exceeds binding bound')
+  const handle = await open(file, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0))
+  try {
+    const opened = await handle.stat()
+    assert.ok(opened.isFile() && opened.nlink === 1 && opened.dev === before.dev &&
+      opened.ino === before.ino && opened.size === before.size, 'Source identity changed before read')
+    const hash = createHash('sha256')
+    const buffer = Buffer.alloc(64 * 1024)
+    let bytes = 0
+    while (true) {
+      const { bytesRead } = await handle.read(buffer, 0, buffer.length, bytes)
+      if (!bytesRead) break
+      bytes += bytesRead
+      assert.ok(bytes <= before.size, 'Source grew during binding')
+      hash.update(buffer.subarray(0, bytesRead))
+    }
+    const after = await handle.stat()
+    await checkContainedFile(sourceRoot, file)
+    const current = await lstat(file)
+    assert.ok(bytes === opened.size && [after, current].every(info =>
+      info.dev === opened.dev && info.ino === opened.ino && info.size === opened.size &&
+      info.mtimeMs === opened.mtimeMs && info.ctimeMs === opened.ctimeMs && info.nlink === 1),
+    'Source identity changed during binding')
+    return { path: relative, bytes, sha256: hash.digest('hex') }
+  } finally { await handle.close() }
+}
+async function captureSourceBinding(sourceRoot, programs) {
+  const git = async args => (await run('git', ['-c', 'core.fsmonitor=false', ...args], { cwd: sourceRoot })).stdout
+  const head = (await git(['rev-parse', 'HEAD'])).trim()
+  // Git enumerates tracked names; untracked discovery is restricted to code/config/test
+  // roots. Never walk QA data, credentials, arbitrary ignored files or private workspaces.
+  const untrackedRoots = ['apps', 'crates', 'db/migrations', 'deploy', 'scenarios', 'scripts', 'tests', 'tools', '.github',
+    '.gitignore', '.gitattributes', '.npmrc', '.env.example',
+    ...['toml', 'lock', 'json', 'yaml', 'yml', 'mjs', 'js', 'ps1', 'py'].map(ext => `:(top,glob)*.${ext}`)]
+  const excluded = ['.git', '.codex', '.omx', 'credentials', 'pg-data', 'runner-workspaces', 'worktrees',
+    'target', 'node_modules', 'output'].map(name => `:(exclude,glob)**/${name}/**`)
+  const tracked = await git(['ls-files', '--cached', '-z'])
+  const untracked = await git(['ls-files', '--others', '--exclude-standard', '-z', '--', ...untrackedRoots, ...excluded])
+  const paths = [...new Set((tracked + untracked).split('\0').filter(Boolean))].sort()
+  assert.ok(paths.length > 0 && paths.length <= 25000, 'Source inventory exceeds binding bound')
+  const files = []
+  for (const relative of paths) files.push(await sourceFileDigest(sourceRoot, relative))
+  assert.equal((await git(['rev-parse', 'HEAD'])).trim(), head, 'HEAD changed during binding')
+  const executables = {}
+  for (const name of Object.keys(programs).sort()) {
+    const file = programs[name]
+    assert.ok(path.isAbsolute(file), 'Explicit executable path required')
+    executables[name] = { path: file, sha256: await readTrustedExecutableDigest(file) }
+  }
+  return { source: { head, untracked_roots: untrackedRoots, files,
+    sha256: createHash('sha256').update(JSON.stringify(files)).digest('hex') }, executables }
+}
+async function finishSourceBinding(report, sourceRoot, programs) {
+  report.provenance.consistent = false
+  report.provenance.after = await captureSourceBinding(sourceRoot, programs)
+  report.provenance.consistent =
+    JSON.stringify(report.provenance.before) === JSON.stringify(report.provenance.after)
+  assert.ok(report.provenance.consistent, 'Tested source/executable binding changed')
+}
 async function readReference() {
   if (!referenceUrl) return null
   // Deliberately separate from QA requests: reference access has no write path,
@@ -109,6 +199,8 @@ function stableState(data) {
     factory_items:s.factory_work_items.map(({id,state,version})=>({id,state,version})),
     controllers:s.factory_controllers.length, publications:s.pull_request_publications?.length ?? 0 }
 }
+// Refuse linked paths even before the read-only preflight commands.
+await assertUnlinkedDirectory(attempt, true)
 report.retained_before = await readReference()
 report.retained_comparison = referenceUrl ? 'requested' : 'not_requested'
 report.ports_before = await ports()
@@ -123,12 +215,26 @@ if (!execute) {
     'stop only receipt-owned QA processes; retain evidence']}, null, 2))
   process.exit(0)
 }
+const provenancePrograms = {
+  server: path.join(root, 'target/debug/crony-server.exe'),
+  runner: path.join(root, 'target/debug/crony-runner.exe'),
+  cli: path.join(root, 'target/debug/crony-cli.exe'),
+  node: process.execPath,
+  ...Object.fromEntries(['initdb', 'postgres', 'psql', 'createdb', 'pg_ctl'].map(name =>
+    [name, path.join(pgBin, `${name}.exe`)])),
+}
 let demo
 let lockedWorkspace
 let lockedFileBytes
 let lockProcess
+let attemptAdmitted = false
 const releaseSignal=path.join(attempt,'release-checkpoint-read-lock')
 try {
+  report.provenance = { schema_version: 1, assurance: 'input identity only; not build or native-scenario proof',
+    before: await captureSourceBinding(root, provenancePrograms), consistent: null }
+  assert.equal(report.provenance.before.source.head, report.source_code_commit, 'HEAD changed after preflight')
+  // Check every existing ancestor, including dangling links, before creating anything.
+  await assertUnlinkedDirectory(attempt, true)
   const ownerFile = path.join(qa, 'ownership.json')
   if (await exists(qa)) {
     assert.equal((await realpath(qa)).toLowerCase(),path.resolve(qa).toLowerCase(),'QA path must not redirect outside its owned root')
@@ -144,7 +250,13 @@ try {
     await json(ownerFile, {suite, qa_root:qa, source_worktree:root, created_at:new Date().toISOString()})
   }
   assert.equal((await realpath(qa)).toLowerCase(),path.resolve(qa).toLowerCase(),'QA path must not redirect outside its owned root')
-  await mkdir(attempt, {recursive:true})
+  await mkdir(path.dirname(attempt), {recursive:true})
+  await assertUnlinkedDirectory(path.dirname(attempt))
+  // Never adopt a timestamp collision or an unknown pre-existing attempt.
+  await mkdir(attempt)
+  await assertUnlinkedDirectory(attempt)
+  attemptAdmitted = true
+  await json(path.join(attempt, 'provenance-before.json'), report.provenance)
   // Stop dotenv discovery at the QA root; never inherit a parent .env file.
   const dotenvFile=path.join(qa,'.env')
   if(await exists(dotenvFile))assert.equal(await readFile(dotenvFile,'utf8'),'# Synthetic QA only\n')
@@ -272,7 +384,7 @@ try {
     assert.match(initial.run.workspace_detail,/workspace fingerprint path .*README\.md/i)
     report.missing_checkpoint_detail=initial.run.workspace_detail
     await writeFile(releaseSignal,'release synthetic QA file handle\n')
-    await until('synthetic file handle released',async()=>!(await identity(lockProcess.pid)),10000)
+    await until('synthetic file handle released',async()=>(await identity(lockProcess.pid))===null,10000)
     assert.equal(await exists(path.join(lockedWorkspace,'.qa-checkpoint-lock-ready')),false,'Lock handshake marker must not contaminate resumed source')
     assert.equal(await readFile(path.join(lockedWorkspace,'base.txt'),'utf8'),'base\n')
     assert.deepEqual(await readFile(path.join(lockedWorkspace,'README.md')),lockedFileBytes)
@@ -282,6 +394,7 @@ try {
   const r = initial.run
   const task = initial.data.snapshot.tasks.find(t=>t.id===r.task_id)
   const mission = initial.data.snapshot.missions.find(m=>m.id===task.mission_id)
+  assert.deepEqual(task.verification_policy,JSON.parse(await readFile(verifier,'utf8')))
   assert.equal(r.input_tokens+r.output_tokens,6000)
   assert.ok(r.provider_session_id)
   report.lineage = {mission_id:mission.id,task_id:task.id,source_run_id:r.id,provider_session_id:r.provider_session_id,
@@ -333,12 +446,48 @@ try {
           return n && ['waiting_for_approval','completed','failed','cancelled','lost'].includes(n.status)
         })
         const reviewState=await snapshot()
-        if(reviewState.snapshot.runs.find(n=>n.id===newId).status==='waiting_for_approval') {
+        if(!overrun) {
+          const s=reviewState.snapshot
+          const n=s.runs.find(n=>n.id===newId)
+          assert.equal(n?.status,'waiting_for_approval','Recovery must observe the pending review, not direct completion')
+          assert.equal(n.verification_status,'waiting_for_approval')
+          const pendingTask=s.tasks.find(t=>t.id===n.task_id)
+          assert.equal(pendingTask?.id,task.id)
+          assert.equal(pendingTask.status,'awaiting_approval')
+          assert.deepEqual(pendingTask.verification_policy,task.verification_policy)
+          const gate=s.verification_requests.find(g=>g.run_id===newId)
+          assert.ok(gate,'Recovery requires a persisted pending review')
+          assert.equal(gate.corp_id,demo.corp_id)
+          assert.equal(gate.task_id,task.id)
+          assert.equal(gate.gate_type,'independent_review')
+          assert.deepEqual(gate.gate,task.verification_policy.manual_gate)
+          assert.equal(gate.gate.type,'independent_review')
+          assert.equal(gate.gate.exclude_requester,true)
+          assert.equal(gate.status,'pending')
+          assert.equal(gate.decided_by,null)
+          assert.equal(gate.decided_at,null)
+          assert.equal(mission.requested_by,demo.alice_actor_id)
+          const reviewer=s.actors.find(a=>a.id===demo.bob_actor_id)
+          assert.equal(reviewer?.corp_id,demo.corp_id)
+          assert.equal(reviewer.kind,'human')
+          assert.ok(gate.gate.roles.includes(reviewer.role))
+          assert.notEqual(reviewer.id,mission.requested_by)
+          const producer=s.agents.find(a=>a.id===n.agent_id)
+          assert.ok(producer)
+          assert.notEqual(reviewer.id,producer.actor_id)
+          report.pending_review=gate
           report.self_review=await request(`${prefix}/runs/${newId}/verification-decision`,{
             actor_id:demo.alice_actor_id,approved:true,note:'Negative synthetic check: requester must not self-review.'})
           assert.equal(report.self_review.status,403)
-          await ok(`${prefix}/runs/${newId}/verification-decision`,{actor_id:demo.bob_actor_id,approved:true,
+          const denied=await snapshot()
+          assert.equal(denied.snapshot.runs.find(n=>n.id===newId)?.status,'waiting_for_approval')
+          assert.deepEqual(denied.snapshot.verification_requests.find(g=>g.run_id===newId),gate,
+            'Rejected requester decision must leave the pending review unchanged')
+          report.independent_review=await request(`${prefix}/runs/${newId}/verification-decision`,{actor_id:demo.bob_actor_id,approved:true,
             note:'Synthetic independent reviewer confirms resumed.txt and verifier evidence; no publication.'})
+          assert.equal(report.independent_review.status,200)
+          assert.equal(report.independent_review.body.run_id,newId)
+          assert.equal(report.independent_review.body.status,'approved')
           report.independent_review_verified=true
         }
         const resumed=await until('resumed synthetic run terminal',async()=>{
@@ -371,9 +520,102 @@ try {
   const original=final.snapshot.runs.find(x=>x.id===r.id)
   assert.equal(original.input_tokens+original.output_tokens,6000)
   assert.equal(original.breaker_stage,'suspend')
+  assert.deepEqual(original,r,'Original suspended run, including missing fingerprint and spend, must remain unchanged')
+  const originalEvents=initial.data.snapshot.events.filter(e=>e.aggregate_id===r.id)
+  assert.ok(originalEvents.length,'Original run history must be present')
+  for(const event of originalEvents) {
+    assert.deepEqual(final.snapshot.events.find(e=>e.id===event.id),event,'Original suspension history must remain unchanged')
+  }
+  const incidents=initial.data.snapshot.circuit_breaker_incidents.filter(i=>i.run_id===r.id)
+  assert.ok(incidents.some(i=>i.stage==='suspend'),'Original suspension incident must be present')
+  assert.deepEqual(final.snapshot.circuit_breaker_incidents.filter(i=>i.run_id===r.id),incidents)
   report.original_spend_and_breaker_preserved=true
+  if(report.resume_run) {
+    const s=final.snapshot
+    const n=s.runs.find(n=>n.id===report.resume_run.id)
+    assert.ok(n)
+    assert.equal(n.id,report.resume.body.run_id)
+    assert.equal(n.corp_id,r.corp_id)
+    assert.equal(n.task_id,task.id)
+    assert.equal(n.provider_session_id,r.provider_session_id)
+    assert.equal(n.workspace_run_id,r.workspace_run_id)
+    assert.equal(n.resumed_from_run_id,r.id)
+    const finishedTask=s.tasks.find(t=>t.id===task.id)
+    assert.ok(finishedTask)
+    assert.equal(finishedTask.corp_id,task.corp_id)
+    assert.equal(finishedTask.mission_id,mission.id)
+    for(const field of ['source_repository','source_base_ref','source_base_commit']) {
+      assert.ok(r[field],`Suspended source tuple omitted ${field}`)
+      assert.equal(task.contract[field],r[field])
+      assert.equal(n[field],r[field])
+      assert.equal(finishedTask.contract[field],r[field])
+    }
+    assert.equal(n.workspace_connection_id,r.workspace_connection_id)
+    assert.deepEqual(finishedTask.verification_policy,task.verification_policy)
+    const revision=s.mission_budget_revisions.find(v=>v.id===report.proposal.body.revision.id)
+    assert.ok(revision,'Approved finish-budget revision must be persisted')
+    assert.equal(revision.corp_id,mission.corp_id)
+    assert.equal(revision.mission_id,mission.id)
+    assert.equal(revision.status,'approved')
+    assert.equal(revision.decided_by,demo.alice_actor_id)
+    assert.equal(revision.replacement_task_id,task.id)
+    assert.deepEqual(revision.previous_contract,task.contract)
+    assert.deepEqual(revision.previous_verification_policy,task.verification_policy)
+    assert.deepEqual(revision.replacement_verification_policy,task.verification_policy)
+    const {task_id,verification_policy,...finishContract}=proposalBody.finish_scope
+    assert.deepEqual(revision.replacement_contract,{...task.contract,...finishContract})
+    assert.deepEqual(finishedTask.contract,revision.replacement_contract)
+    assert.equal(n.budget_tokens_limit,finishContract.budget_tokens)
+    assert.equal(n.budget_cost_microusd_limit,finishContract.budget_cost_microusd)
+    assert.equal(revision.consumed_tokens_at_proposal,r.input_tokens+r.output_tokens)
+    assert.equal(revision.consumed_cost_microusd_at_proposal,r.cost_microusd)
+    const finishedMission=s.missions.find(m=>m.id===mission.id)
+    assert.ok(finishedMission)
+    for(const field of ['budget_tokens','budget_cost_microusd']) {
+      assert.equal(revision[`current_${field}`],mission[field])
+      assert.equal(revision[`proposed_${field}`],proposalBody[`proposed_${field}`])
+      assert.equal(finishedMission[field],proposalBody[`proposed_${field}`])
+      assert.equal(finishedMission[`original_${field}`],mission[`original_${field}`])
+    }
+    if(overrun) {
+      assert.equal(n.breaker_stage,'stop')
+      assert.notEqual(n.status,'completed')
+    } else {
+      assert.equal(n.status,'completed')
+      assert.equal(n.verification_status,'passed')
+      assert.equal(finishedTask.status,'completed')
+      assert.equal(finishedTask.verification_status,'passed')
+      assert.equal(report.pending_review?.status,'pending')
+      assert.equal(report.self_review?.status,403)
+      assert.equal(report.independent_review?.status,200)
+      assert.equal(report.independent_review.body.run_id,n.id)
+      assert.equal(report.independent_review.body.status,'approved')
+      assert.equal(report.independent_review_verified,true)
+      const decision=s.verification_requests.find(g=>g.run_id===n.id)
+      assert.ok(decision,'Completed recovery requires a persisted independent decision')
+      for(const field of ['run_id','corp_id','task_id','gate_type','gate','requested_at']) {
+        assert.deepEqual(decision[field],report.pending_review[field])
+      }
+      assert.equal(decision.status,'approved')
+      assert.equal(decision.decided_by,demo.bob_actor_id)
+      assert.notEqual(decision.decided_by,mission.requested_by)
+      assert.ok(decision.decided_at)
+      const evidence=s.verification_evidence.filter(e=>e.run_id===n.id).sort((a,b)=>a.check_index-b.check_index)
+      assert.equal(evidence.length,task.verification_policy.checks.length)
+      task.verification_policy.checks.forEach((check,index)=>{
+        assert.equal(evidence[index].corp_id,n.corp_id)
+        assert.equal(evidence[index].task_id,task.id)
+        assert.equal(evidence[index].check_index,index)
+        assert.equal(evidence[index].kind,check.type)
+        assert.equal(evidence[index].status,'passed')
+      })
+      assert.ok(n.artifact_id,'Artifact check requires persisted artifact linkage')
+      report.recovery_proof_verified=true
+    }
+  }
   report.status=report.resume_run?.status==='completed' && report.final.missions.find(m=>m.id===mission.id)?.status==='completed'
-    && report.final.factory_items[0]?.state==='verified' ? 'recovery_passed' : 'recovery_not_complete'
+    && report.final.factory_items[0]?.state==='verified' && report.independent_review_verified===true
+    && report.recovery_proof_verified===true ? 'recovery_passed' : 'recovery_not_complete'
   if(overrun && report.hard_stop_protected)report.status='hard_stop_protected'
   if(report.status==='recovery_not_complete')process.exitCode=1
   await json(path.join(attempt,'qa-state.json'),{...report.final,revisions:final.snapshot.mission_budget_revisions,
@@ -383,13 +625,25 @@ try {
   report.error=error.message
   process.exitCode=1
 } finally {
+  if (attemptAdmitted) {
+    try { await assertUnlinkedDirectory(attempt) }
+    catch (error) {
+      attemptAdmitted = false
+      report.status = 'fixture_error'
+      report.path_error = error.message
+      report.cleanup.push({name:'qa-attempt-path',status:'unverified_preserved',error:error.message})
+      process.exitCode = 1
+    }
+  }
+  // Refusal must not release locks, probe processes, or report through an unowned path.
+  if (attemptAdmitted) {
   // Release the owned fault injector normally even after a failed assertion so
   // its finally block can remove the marker before any provider resume/reuse.
   if (lockProcess) {
     try {
-      if (await identity(lockProcess.pid)) {
+      if ((await identity(lockProcess.pid))!==null) {
         await writeFile(releaseSignal,'release synthetic QA file handle\n')
-        await until('fault injector cleanup',async()=>!(await identity(lockProcess.pid)),10000)
+        await until('fault injector cleanup',async()=>(await identity(lockProcess.pid))===null,10000)
       }
       assert.equal(await exists(path.join(lockedWorkspace,'.qa-checkpoint-lock-ready')),false,'Lock marker cleanup must be verified')
     } catch (error) {
@@ -400,12 +654,12 @@ try {
   for (const owned of [...children].reverse()) {
     try {
       const current=await identity(owned.child.pid)
-      if(!current) {report.cleanup.push({name:owned.name,status:'already_exited'});continue}
+      if(current===null) {report.cleanup.push({name:owned.name,status:'already_exited'});continue}
       assert.deepEqual(current,owned.receipt,'Process identity changed; preserve unknown process')
       if(owned.name==='postgres') {
         await run(path.join(pgBin,'pg_ctl.exe'),['-D',pgData,'stop','-m','fast','-w','-t','30'])
       } else await stopVerifiedChild(owned)
-      await until(`${owned.name} stopped`,async()=> !(await identity(owned.child.pid)),30000)
+      await until(`${owned.name} stopped`,async()=> (await identity(owned.child.pid))===null,30000)
       report.cleanup.push({name:owned.name,status:'stopped_verified_qa_process',pid:owned.child.pid})
     }catch(error){report.cleanup.push({name:owned.name,status:'unverified_preserved',error:error.message});process.exitCode=1}
   }
@@ -413,8 +667,16 @@ try {
   report.retained_after=await readReference()
   report.retained_unchanged=referenceUrl ? JSON.stringify(report.retained_before)===JSON.stringify(report.retained_after) : null
   if(report.retained_unchanged===false || report.ports_after.length)process.exitCode=1
+  try { await finishSourceBinding(report, root, provenancePrograms) }
+  catch {
+    report.status='fixture_error'
+    report.provenance_error='Source/executable binding changed or could not be verified; preserve receipts'
+    process.exitCode=1
+  }
   report.finished_at=new Date().toISOString()
-  if(await exists(attempt))await json(path.join(attempt,'report.json'),report)
-  console.log(JSON.stringify({status:report.status,error:report.error,report:path.join(attempt,'report.json'),
+  await json(path.join(attempt,'report.json'),report)
+  }
+  console.log(JSON.stringify({status:report.status,error:report.error,path_error:report.path_error,
+    report:attemptAdmitted?path.join(attempt,'report.json'):null,
     resume:report.resume,cleanup:report.cleanup,retained_unchanged:report.retained_unchanged,ports_after:report.ports_after},null,2))
 }

@@ -496,23 +496,7 @@ const verified = completed.state.snapshot.factory_work_items.find(
   (item) => item.id === claim.work_item.id,
 )
 assert.ok(verified, 'completed mission is missing its factory work item')
-assert.equal(verified.state, 'verified')
-assert.equal(verified.version, 5)
-assert.equal(verified.mission_id, materialized[0].mission_id)
 assert.equal(verified.failure_detail, null)
-const verifiedEvents = completed.state.snapshot.events.filter(
-  (event) => event.aggregate_id === verified.id && event.type === 'factory.verified',
-)
-assert.equal(verifiedEvents.length, 1)
-assert.equal(verifiedEvents[0].aggregate_version, verified.version)
-assert.equal(verifiedEvents[0].correlation_id, materialized[0].mission_id)
-assert.equal(verifiedEvents[0].causation_id, launch.run_id)
-assert.deepEqual(verifiedEvents[0].payload, {
-  previous_state: 'running',
-  state: 'verified',
-  mission_id: materialized[0].mission_id,
-  run_id: launch.run_id,
-})
 assertAutomaticFactoryVerification(completed.state, {
   corpId: demo.corp_id, workItemId: claim.work_item.id, missionId: materialized[0].mission_id,
   runId: launch.run_id, previousVersion: running.work_item.version,

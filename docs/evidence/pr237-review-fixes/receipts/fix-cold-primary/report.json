@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "issue": "A237-03",
+  "pr": 237,
+  "round": 2,
+  "status": "IMPLEMENTED_AND_CURRENT_LOCAL_NATIVE_VERIFIED; HOSTED_COLD_PERFORMANCE_UNQUALIFIED",
+  "base": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "worktree": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+  "generatedAt": "2026-09-20T19:30:54.2611691-05:00",
+  "model": {
+    "source": "C:/Users/sschofield/.codex/sessions/2026/09/20/rollout-2026-09-20T19-21-16-01a0c156-a62f-7fc3-9980-d96aea533e5f.jsonl",
+    "evidence": "runtime-turn.json",
+    "turnId": "01a0c156-a75a-70d1-a9d8-76110fdf6bcd",
+    "name": "gpt-6-astra"
+  },
+  "classification": "Missing primary-path validation coverage, not a demonstrated new production Rust defect",
+  "changes": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "description": "Run exact Windows native primary ACL regression before explicit warm-up; retain warm-up, full serial Windows suite, Unix scheduling and existing actions",
+      "lines": "332-347"
+    },
+    {
+      "path": "tools/ci_runner_tests.test.mjs",
+      "description": "Assert primary-before-prewarm ordering, exact native namespace and module linkage; retain deadline/privacy/warm-up contracts",
+      "lines": "19-66"
+    },
+    {
+      "path": "crates/crony-runner/src/connection_setup/storage.rs",
+      "description": "Windows-only test calls actual PrivateRoot::open before any native warm-up on a unique owned temp directory, then reads actual ACL through run_owned; remove only empty owned directory on success, retain on failure",
+      "lines": "273-347"
+    }
+  ],
+  "trace": [
+    "connections.rs ConnectionManager::new -> PrivateRoot::open",
+    "storage.rs PrivateRoot::open -> protect_directory",
+    "storage.rs protect_directory -> process::run_owned with unchanged Utc::now()+10 seconds",
+    "process.rs run_owned -> OwnedProcessTree native ownership, bounded output, timeout and verified cleanup"
+  ],
+  "tdd": {
+    "baseline": {
+      "exitCode": 0,
+      "passed": 2,
+      "receipt": "baseline.json",
+      "log": "baseline.log"
+    },
+    "filterCorrectionRed": {
+      "exitCode": 1,
+      "passed": 2,
+      "receipt": "filter-contract-red.json",
+      "reason": "Actual native --list proved module is connections::storage, not source-directory name",
+      "failed": 1
+    },
+    "initialContractGreen": {
+      "exitCode": 0,
+      "passed": 3,
+      "limitation": "Static green did not prove correct native module filter; superseded by final contract plus native binding",
+      "receipt": "contract-green.json"
+    },
+    "finalGreen": {
+      "exitCode": 0,
+      "passed": 3,
+      "receipt": "contract-final-green.json",
+      "log": "contract-final-green.log",
+      "failed": 0
+    },
+    "orderingRed": {
+      "failed": 1,
+      "passed": 2,
+      "exitCode": 1,
+      "log": "contract-red.log",
+      "receipt": "contract-red.json",
+      "reason": "Absent primary invocation before prewarming"
+    },
+    "productionRuntimeRedClaimed": false
+  },
+  "failedValidationAttempts": [
+    {
+      "validationStatus": "FAILED_ZERO_TESTS",
+      "qualifiesPrimaryPath": false,
+      "receipt": "native-primary.json",
+      "executedTests": 0,
+      "exitCode": 0,
+      "filteredTests": 215,
+      "correction": "Preserved without relabeling; actual binary --list established connections::storage::tests::windows_private_root_primary_path_enforces_acl; CI and contract corrected",
+      "log": "native-primary.log"
+    }
+  ],
+  "native": {
+    "fixtureCleanup": "source-binding-and-cleanup.json: both owned ACL fixture paths absent after nonrecursive cleanup",
+    "primary": {
+      "ignoredTests": 0,
+      "exitCode": 0,
+      "log": "native-primary-corrected.log",
+      "ciBinding": "ci-native-binding.json",
+      "filteredTests": 214,
+      "passedTests": 1,
+      "receipt": "native-primary-corrected.json",
+      "executedTests": 1,
+      "explicitPrewarmPerformed": false,
+      "aclVerified": [
+        "owner is current user SID",
+        "DACL inheritance protected",
+        "exact owner and SYSTEM principals, deduplicated if identical",
+        "only explicit Allow FullControl",
+        "ContainerInherit and ObjectInherit with no propagation flags"
+      ],
+      "primaryOpenElapsedMs": 915.4565,
+      "classification": "Current-local first executed primary invocation in this task, not truly cold hosted-image performance"
+    },
+    "sourceBinding": "native-source-before.json and native-source-after.json: 44 inputs unchanged",
+    "binaryDigests": "native-test-binaries.json",
+    "storageSuite": {
+      "filteredTests": 210,
+      "ignoredTests": 0,
+      "exitCode": 0,
+      "log": "native-storage-suite.log",
+      "receipt": "native-storage-suite.json",
+      "classification": "Current-local after primary invocation, serialized storage tests",
+      "passedTests": 5
+    },
+    "build": {
+      "locked": true,
+      "offline": true,
+      "exitCode": 0,
+      "stdout": "native-build.stdout.jsonl",
+      "receipt": "native-build.json",
+      "output": "build-output",
+      "stderr": "native-build.stderr.log"
+    },
+    "nativeHost": "native-host.json"
+  },
+  "diagnostics": {
+    "scope": "scope-check.json: production Rust unchanged and workflow changes confined to runner-platforms",
+    "nodeSyntax": "PASS",
+    "cargoFmt": "PASS",
+    "toolchain": "toolchain.txt",
+    "scopedDiffCheck": "PASS",
+    "clippy": {
+      "exitCode": 0,
+      "command": "cargo clippy --locked --offline -p crony-runner --all-targets --target-dir C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-237/round-2/fix-cold-primary/build-output -- -D warnings"
+    },
+    "final": "diagnostics-final.json",
+    "aclReadbackPowerShellParse": "acl-readback-parse.json: zero errors"
+  },
+  "historicalFailures": {
+    "path": "docs/evidence/2026-09-12-ci-external-adapter-platforms.md:482-586",
+    "preserved": true,
+    "causeNotAsserted": true,
+    "log": "history-preserved.log",
+    "diffExitCode": 0
+  },
+  "backgroundReference": {
+    "path": "tools/windows_connection_acl_readiness.ps1",
+    "git": "39632b957819012721c90902925d8fa7a9c7e873",
+    "use": "Read-only reference for exact ACL verification conditions; 60-second readiness/prewarm mechanism not imported or executed"
+  },
+  "gaps": [
+    "No fresh hosted windows-latest run or truly cold image/OS cache measurement. The current-local 915ms result does not establish an exclusively hosted-image/version cause or repair historical timeouts.",
+    "No full runner/workspace suite, migration, web build/lint, or browser/server/runner end-to-end run in this narrowly scoped task. The isolated runner test build, Clippy and storage regression were executed; services, DB, Factory and shared manual stack were not used.",
+    "No full workflow execution or automated YAML parser validation; exact relevant workflow contract and manual diff review passed.",
+    "No independent re-review, human approval, protected merge gate satisfaction, PR integration or publication is claimed."
+  ],
+  "boundaries": {
+    "otherActorFilesWritten": false,
+    "settingsChanged": false,
+    "productionTimeoutAclOwnershipChanged": false,
+    "commitPushPerformed": false,
+    "servicesDbFactoryCredentialsSharedStackUsed": false,
+    "selfApproval": false,
+    "buildOutputsRetained": true,
+    "packagesDownloaded": false,
+    "sourceCheckoutAclsChanged": false
+  },
+  "artifacts": {
+    "filterRed": "filter-source-red.json",
+    "receiptHashes": "receipt-hashes.json",
+    "policyAndHistory": "policy-and-historical-source-hashes.json",
+    "final": "source-final.json",
+    "red": "source-red.json",
+    "before": "source-before.json",
+    "patch": "fix-final.patch"
+  },
+  "stopCondition": "Scoped coverage implemented; expected CI contract red/green and actual one-test native invocation plus five storage tests and scoped build/Clippy verified. Hosted-cold performance and independent acceptance remain external evidence gaps."
+}

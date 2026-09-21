@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "issue": "PONY237-01",
+  "pr": 237,
+  "round": 2,
+  "status": "FIXED_LOCALLY_FOCUSED_CHECKS_PASS",
+  "completedAt": "2026-09-21T00:35:20.0164674Z",
+  "baseHead": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "worktree": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+  "authorization": {
+    "pr": 237,
+    "budget": "One assigned issue; no numeric token/time budget supplied",
+    "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+    "round": 2,
+    "authorizedWrites": [
+      "tools/controlled_runner_fixture.mjs",
+      "tools/controlled_runner_fixture.test.mjs",
+      "tools/identity_fixture.test.mjs"
+    ],
+    "prohibited": "No E2E imports/execution, services, DB, Factory, GitHub, credentials, installs, commits or pushes",
+    "model": "gpt-6-astra per native developer agent metadata; no independent provider attestation",
+    "issue": "PONY237-01",
+    "stop": "Remove obsolete mechanism, retain all non-mechanism tests, run safe focused suite and static checks; stop on conflict or safety boundary",
+    "tdd": "Deletion-only exception: these exports have only test callers and do not participate in current runtime routing. There is no faulty production behavior to RED. Baseline and preserved behavior tests provide before/after evidence; no fabricated failure or permanent obsolete-name test.",
+    "head": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100"
+  },
+  "changes": [
+    {
+      "added": 0,
+      "path": "tools/controlled_runner_fixture.mjs",
+      "deleted": 21
+    },
+    {
+      "added": 7,
+      "path": "tools/controlled_runner_fixture.test.mjs",
+      "deleted": 21
+    },
+    {
+      "added": 0,
+      "path": "tools/identity_fixture.test.mjs",
+      "deleted": 11
+    }
+  ],
+  "totals": {
+    "deleted": 53,
+    "obsoleteExportsRemoved": 2,
+    "netDeleted": 46,
+    "dependenciesAdded": 0,
+    "mechanismTestsRemoved": 2,
+    "added": 7
+  },
+  "baseline": {
+    "failed": 0,
+    "passed": 25,
+    "log": "baseline-tests.log",
+    "metadata": "baseline-command.json",
+    "exitCode": 0,
+    "tests": 25,
+    "command": "node --test tools/controlled_runner_fixture.test.mjs tools/identity_fixture.test.mjs"
+  },
+  "final": {
+    "failed": 0,
+    "passed": 23,
+    "log": "final-tests.log",
+    "metadata": "final-command.json",
+    "exitCode": 0,
+    "tests": 23,
+    "command": "node --test tools/controlled_runner_fixture.test.mjs tools/identity_fixture.test.mjs"
+  },
+  "tdd": {
+    "preservationCommand": "preservation-command.json",
+    "status": "JUSTIFIED_DELETION_ONLY_EXCEPTION",
+    "behaviorRedExecuted": false,
+    "reason": "Deletion-only exception: these exports have only test callers and do not participate in current runtime routing. There is no faulty production behavior to RED. Baseline and preserved behavior tests provide before/after evidence; no fabricated failure or permanent obsolete-name test.",
+    "staticPreservationCheck": "check-preserved-contracts.mjs"
+  },
+  "sourceHashes": {
+    "baseline": [
+      {
+        "path": "tools/controlled_runner_fixture.mjs",
+        "sha256": "e060cda9e75a491d940bdb4ee58a091dd05b5258c9c96c0e9d4cb06c9bae3bb0"
+      },
+      {
+        "path": "tools/controlled_runner_fixture.test.mjs",
+        "sha256": "2d8d68c5dddd53d420db3a9fd39af64c90e866e1fa549f94ad5e2f22d9aca457"
+      },
+      {
+        "path": "tools/identity_fixture.test.mjs",
+        "sha256": "2b9e0cb165f6afded184de60450e8034c3f71d01624d27f0852eb227d5a0c8ec"
+      },
+      {
+        "path": "tools/identity_fixture.mjs",
+        "sha256": "7fad459b2fc076dbf9170120a8f2909ff35739b4575b05a24344e5ddee082b2e"
+      },
+      {
+        "path": "tools/e2e_artifact_staging.mjs",
+        "sha256": "da7c42d5329086b114367a97588bf6eda44cb490441050b197543f5cff05be5e"
+      },
+      {
+        "path": "tools/e2e_identity.mjs",
+        "sha256": "5005ea45de3fbcc859f99f87d919e11f69437cc14dda1f394d10e95caa54e126"
+      },
+      {
+        "path": "tools/e2e_factory_claims.mjs",
+        "sha256": "1de134f842166fce160ae418fb3d20022f86a6926ca4dc6802914100173d6635"
+      },
+      {
+        "path": "tools/ci_external_adapters_windows.ps1",
+        "sha256": "e49370f852eeb7813d36c526808a6acf5dce5e9b82cef6f936b2bb7acd123402"
+      },
+      {
+        "path": ".github/workflows/ci.yml",
+        "sha256": "c3de066b011df815fb89b104d0cccc136dab57299588041eb88458b3182b91e3"
+      },
+      {
+        "path": "AGENTS.md",
+        "sha256": "b33af5640c08cd5e951b14d3a1c54dd3c309e6b0f64870f8cb3415a938ac68ca"
+      },
+      {
+        "path": "docs/PRODUCT_AND_TECHNICAL_PLAN.md",
+        "sha256": "bf13c6ff3ac6b7ec609b3235e24d5fb74737e0a2b06050c9ef2433d3fcf17b5e"
+      },
+      {
+        "path": "docs/ARCHITECTURE.md",
+        "sha256": "f52d0ffca8100747f93e7c219fccc8ec57dfde2bb126f7c37be6cf985ebf08a0"
+      },
+      {
+        "path": "docs/SECURITY.md",
+        "sha256": "177a711907120c45749b35e47b4ddd96154e834c56ce42e231706aa0ddcfc3ee"
+      },
+      {
+        "path": "docs/EVALS.md",
+        "sha256": "0bbaab171f8b89321b9e68f62e395cf8d0cfb3130cab4feb378925d79d8e4d16"
+      }
+    ],
+    "trustedReferences": [
+      {
+        "path": "C:/Users/sschofield/repos/ecorp-review-candidate-80f32b7/.github/skills/code-review/references/remediation.md",
+        "sha256": "fd63d7a467ba5b1cda5dbaca428c458fa97f0ac2d98ea8e3ccccf4c3571300f1"
+      },
+      {
+        "path": "C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-237/round-1/audits.json",
+        "sha256": "d288418d6b055c418bc892a5b740195b178b22ce3c575c34523df359262a024a"
+      }
+    ],
+    "final": [
+      {
+        "path": "tools/controlled_runner_fixture.mjs",
+        "sha256": "c91138fa11844544f29bc1bd082d977ca95878d35782c8297d80dcb1fd401162"
+      },
+      {
+        "path": "tools/controlled_runner_fixture.test.mjs",
+        "sha256": "f36510673959f63883d6ba51ce73eab98a5480684331debaa6b0cd6d5e588a74"
+      },
+      {
+        "path": "tools/identity_fixture.test.mjs",
+        "sha256": "4664bf457719de4c4ccd72848b9c2d2f3b961d470360712327a377ef144b1019"
+      },
+      {
+        "path": "tools/identity_fixture.mjs",
+        "sha256": "7fad459b2fc076dbf9170120a8f2909ff35739b4575b05a24344e5ddee082b2e"
+      },
+      {
+        "path": "tools/e2e_artifact_staging.mjs",
+        "sha256": "da7c42d5329086b114367a97588bf6eda44cb490441050b197543f5cff05be5e"
+      },
+      {
+        "path": "tools/e2e_identity.mjs",
+        "sha256": "5005ea45de3fbcc859f99f87d919e11f69437cc14dda1f394d10e95caa54e126"
+      },
+      {
+        "path": "tools/e2e_factory_claims.mjs",
+        "sha256": "1de134f842166fce160ae418fb3d20022f86a6926ca4dc6802914100173d6635"
+      },
+      {
+        "path": "tools/ci_external_adapters_windows.ps1",
+        "sha256": "e49370f852eeb7813d36c526808a6acf5dce5e9b82cef6f936b2bb7acd123402"
+      },
+      {
+        "path": ".github/workflows/ci.yml",
+        "sha256": "c3de066b011df815fb89b104d0cccc136dab57299588041eb88458b3182b91e3"
+      },
+      {
+        "path": "AGENTS.md",
+        "sha256": "b33af5640c08cd5e951b14d3a1c54dd3c309e6b0f64870f8cb3415a938ac68ca"
+      },
+      {
+        "path": "docs/PRODUCT_AND_TECHNICAL_PLAN.md",
+        "sha256": "bf13c6ff3ac6b7ec609b3235e24d5fb74737e0a2b06050c9ef2433d3fcf17b5e"
+      },
+      {
+        "path": "docs/ARCHITECTURE.md",
+        "sha256": "f52d0ffca8100747f93e7c219fccc8ec57dfde2bb126f7c37be6cf985ebf08a0"
+      },
+      {
+        "path": "docs/SECURITY.md",
+        "sha256": "177a711907120c45749b35e47b4ddd96154e834c56ce42e231706aa0ddcfc3ee"
+      },
+      {
+        "path": "docs/EVALS.md",
+        "sha256": "0bbaab171f8b89321b9e68f62e395cf8d0cfb3130cab4feb378925d79d8e4d16"
+      }
+    ]
+  },
+  "trace": {
+    "after": "Repository-wide obsolete symbol rg exits 1: no matches",
+    "artifact": "e2e_artifact_staging.mjs reads initial runner workspace capability, pins immutable source, creates unique artifact-staging model, registers probe, then calls waitForControlledRunnerDispatch and asserts controlled assignment",
+    "identity": "e2e_identity.mjs reads immutable workspace source, creates unique lifecycle model and uses identity_fixture.mjs waitForIdentityProbe/captureIdentityAssignment",
+    "factory": "e2e_factory_claims.mjs retains selectFixtureRunnerForSource, waitForControlledRunnerDispatch and assertAutomaticFactoryVerification; no obsolete imports",
+    "repositoryWide": "callers-before.txt",
+    "obsoleteCallers": "Only the two assigned test modules; no runtime consumers"
+  },
+  "preservedCoverage": {
+    "status": "PASS",
+    "retainedRuntimeFunctionsUnchanged": true,
+    "removedMechanismTests": [
+      "the readiness marker is synthetic, unique to the connection and explicitly not checkout evidence",
+      "identity markers are per-connection preview-only data, without changing artifact markers"
+    ],
+    "preserved": [
+      {
+        "file": "tools/controlled_runner_fixture.test.mjs",
+        "before": 12,
+        "after": 11,
+        "tests": [
+          "model-scoped readiness selects its probe despite another runner with the same source",
+          "a missing or disabled probe model cannot borrow another runtime or source",
+          "artifact smoke requires explicit owned opt-in, loopback origin and output",
+          "full SQL and restart coverage remains restricted to the exact Actions integration fixture",
+          "registration alone cannot satisfy readiness; only bounded source-specific read-only previews are retried",
+          "wrong, disconnected, ambiguous or unavailable controlled runner cannot pass the preview gate",
+          "readiness fails closed on unrelated HTTP errors and has a deterministic deadline",
+          "every artifact launch must belong to the controlled runner before waiting for an assignment",
+          "source-bound fixture readiness verifies the expected repository, ref, commit, Corp and unique runner",
+          "automatic factory verification requires exact persisted completion, scope, version and event lineage",
+          "Linux keeps the full artifact suite and Windows smoke cannot claim fault or restart coverage"
+        ]
+      },
+      {
+        "file": "tools/identity_fixture.test.mjs",
+        "before": 13,
+        "after": 12,
+        "tests": [
+          "lifecycle-only preview requires an explicit owned scope and cannot claim OIDC coverage",
+          "identity fixture rejects manual, foreign and credential-bearing endpoints before effects",
+          "full identity/OIDC conformance stays confined to the exact hosted integration fixture",
+          "model/source selection rejects ambiguity, wrong scope, missing capabilities and prior work",
+          "identity readiness retries only native read-only previews before any mission or launch",
+          "assignment binds exact source/model, scope and fence without leaking secrets",
+          "assignment listener exists before launch and is removed with its timer after success",
+          "wrong-runner launch fails immediately without a dangling assignment deadline",
+          "failed launch cancels assignment listening without masking the HTTP error",
+          "assignment timeout stays observed during launch and cleans up deterministically",
+          "closed and malformed probe streams fail without waiting for the full deadline",
+          "Linux retains full auth coverage and Windows lifecycle evidence cannot claim OIDC"
+        ]
+      }
+    ]
+  },
+  "staticChecks": [
+    {
+      "output": [],
+      "exitCode": 0,
+      "command": "node --check tools/controlled_runner_fixture.mjs"
+    },
+    {
+      "output": [],
+      "exitCode": 0,
+      "command": "node --check tools/controlled_runner_fixture.test.mjs"
+    },
+    {
+      "output": [],
+      "exitCode": 0,
+      "command": "node --check tools/identity_fixture.test.mjs"
+    },
+    {
+      "output": [],
+      "exitCode": 0,
+      "command": "node --check tools/identity_fixture.mjs"
+    },
+    {
+      "output": [],
+      "exitCode": 0,
+      "command": "node --check tools/e2e_artifact_staging.mjs"
+    },
+    {
+      "output": [],
+      "exitCode": 0,
+      "command": "node --check tools/e2e_identity.mjs"
+    },
+    {
+      "output": [],
+      "exitCode": 0,
+      "command": "node --check tools/e2e_factory_claims.mjs"
+    },
+    {
+      "output": [
+        "warning: in the working copy of 'tools/controlled_runner_fixture.test.mjs', LF will be replaced by CRLF the next time Git touches it"
+      ],
+      "exitCode": 0,
+      "command": "git diff --check -- tools/controlled_runner_fixture.mjs tools/controlled_runner_fixture.test.mjs tools/identity_fixture.test.mjs"
+    },
+    {
+      "expectedExitCode": 1,
+      "meaning": "No remaining callers or declarations",
+      "output": [],
+      "exitCode": 1,
+      "command": "rg -n --hidden -g '!.git' 'controlledReadinessSource|controlledReadinessCapability' ."
+    }
+  ],
+  "selfReview": "Reviewed final three-file diff. Runtime retained functions unchanged; mutable mock capabilities get a fresh structuredClone to avoid leaking negative mutations. Source mismatch b differs from literal source a. All retained assertions and negative mutation cases preserved.",
+  "concurrency": {
+    "scopedSourceHashesStillMatchFinal": true,
+    "existingChangesPreserved": "No writes outside assigned files and own receipt directory; baseline-status.txt and final-status.txt retained",
+    "inputsChangedAfterTests": []
+  },
+  "limitations": [
+    "Pure controlled fixture unit tests and static read/parse checks only; no full E2E imports, DB/server/Factory/GitHub/provider effects.",
+    "No repository-wide Rust/web build, lint or six-gate/native acceptance run; outside this bounded pure-fixture assignment.",
+    "No commit, push, install, credential access or approval request.",
+    "No independent Santa/architect review or whole-PR convergence claimed.",
+    "Native model designation comes from developer agent metadata, not an independently fetched provider receipt.",
+    "Git emitted an LF-to-CRLF normalization warning; diff whitespace check exited 0.",
+    "Initial static-check JSON serialized a PowerShell warning object too deeply; initial output retained and output normalized to plain strings without rerunning or changing exit codes."
+  ],
+  "stopCondition": "Assigned obsolete mechanism removed; retained behavior suite and static checks pass; integration/review handed back to leader."
+}
