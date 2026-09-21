@@ -47,6 +47,17 @@ test('the entrypoint and maintained references resolve inside the package', () =
   assert.match(entrypoint, /^---\r?\nname: code-review\r?\ndescription: [^\r\n]+\r?\n---/)
 })
 
+test('entrypoint stays within pinned ATV AGENT-03 effective prose limit', (t) => {
+  // Same measurement as the ATV-PUB-02 audit's support.mjs; do not count raw Markdown.
+  const prose = (text) => text.replace(/^---\r?\n[\s\S]*?\r?\n---/, '')
+    .replace(/```[\s\S]*?```/g, '').split('\n')
+    .filter((line) => !line.trim().startsWith('|')).join('\n')
+  assert.equal(prose('---\nname: example\n---\nKeep\n```sh\nignored\n```\n| ignored |\nEnd'), '\nKeep\n\nEnd')
+  const count = prose(readFileSync(resolve(root, 'SKILL.md'), 'utf8')).length
+  t.diagnostic(`ATV AGENT-03 effective prose: ${count}/8000 characters`)
+  assert.ok(count <= 8000, `ATV AGENT-03: ${count} effective prose characters exceeds 8000`)
+})
+
 test('maintained instructions distinguish scoped publication from full acceptance', () => {
   for (const name of ['SKILL.md', 'references/executor.md', 'references/remediation.md']) {
     const text = readFileSync(resolve(root, name), 'utf8').replace(/\s+/gu, ' ')
@@ -55,6 +66,14 @@ test('maintained instructions distinguish scoped publication from full acceptanc
     assert.match(text, /full.PR/iu, name)
     assert.match(text, /NICE/u, name)
   }
+  const entrypoint = readFileSync(resolve(root, 'SKILL.md'), 'utf8').replace(/\s+/gu, ' ')
+  for (const reference of ['dependencies', 'template-selection', 'remediation', 'executor']) {
+    assert.ok(entrypoint.includes(`](references/${reference}.md)`), `missing ${reference} routing`)
+  }
+  assert.match(entrypoint, /two fresh independent reviewers must examine the exact remote-head → candidate correction/u)
+  assert.match(entrypoint, /unsafe or unverified changes may not be published/u)
+  assert.match(entrypoint, /separate full-PR Santa pair before NICE; scoped publication reviews cannot substitute/u)
+  assert.match(entrypoint, /Never claim an audit, subagent, test, model selection, or automatic trigger ran without a receipt/u)
   const executor = readFileSync(resolve(root, 'references/executor.md'), 'utf8').replace(/\s+/gu, ' ')
   assert.match(executor, /Publication reviews cannot be relabeled, reused, or promoted/u)
   assert.match(executor, /After activation, an update additionally needs retained ongoing owner authority/u)

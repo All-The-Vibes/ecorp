@@ -155,6 +155,10 @@ sessions, failed tests and original receipts.
    notice. The notice does not grant an attempt or reset the stopped PR.
    New ordering decisions are journal-stamped; old selections retain their
    original replay semantics.
+   Competing resumable checkpoints rotate through `next`. Check each returned
+   claim once per wake; without actual clearance, continue to the next one
+   without calling `resume`. Stop on a repeated claim. Selection alone neither
+   fixes a finding nor spends a review round; lone or exhausted notices stay quiet.
 4. Before a new audit/fix round, persist its consumption with `begin`. Follow
    the main skill: resolve the exact-base template, build every rubric row,
    actually load and run ATV security and the whole-repository Ponytail audit,

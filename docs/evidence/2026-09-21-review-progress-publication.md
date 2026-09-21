@@ -50,3 +50,37 @@ This is pre-publication validation. Independent exact-policy and full-PR
 reviews, the real push, new-head CI/Copilot feedback and recorded policy
 adoption are separate subsequent gates. The PR's draft, target-update and
 human-review requirements are not waived.
+
+## Correction 2: review findings resolved
+
+Independent review rejected the first candidate despite its passing tests.
+The corrected helper now distinguishes exhausted failures from finishable
+charged work, rotates competing recoveries without spending rounds, and retains
+review-source ownership after completion projections are cleared. The caller
+checks each returned recovery once per wake and stops on a repeated claim.
+The shared receipt collection also removes the flagged duplication. The skill
+entrypoint is below the pinned ATV effective-prose limit.
+
+- Fresh integrated Linux Node 24.19 suite: **467/467 passed**, zero failures or
+  skips; all 26 copied package/check inputs were SHA-256 verified in the
+  network-disabled container.
+- Final Windows package/snapshot checks: **21/21 passed**.
+- Recovery TDD: 5 expected failures, an intermediate 6-failure run retained,
+  then 103/103 focused passes. Review-source TDD: 13 expected failures, then
+  29/29 focused passes, including 14 new regressions.
+- Entrypoint test: 6 passes/1 failure before, 7/7 after; 7,926 effective
+  characters against the pinned 8,000 limit.
+- All 383 application/build inputs still match the six earlier passing
+  baseline runs above. Those commands were **not rerun** for this policy-only
+  correction. The 323 ignored Rust tests remain ignored, not passes.
+- Fresh independent ATV/Ponytail recheck closed all seven named finding IDs
+  (including aliases for the shared recovery defect), with no new in-scope
+  issue. Unused starter SVGs remain unrelated base debt. This is not a new
+  dependency-vulnerability scan or native application acceptance.
+
+Focused counts overlap the complete suite; they are not additional coverage.
+Original failures, source bindings and native agent identities remain retained.
+Fresh exact-policy/full-PR Santa decisions, publication, new-head CI/Copilot
+and recorded adoption are still separate subsequent gates at capture time.
+
+![Actual correction-2 local-log capture](assets/astra-review-executor/28-progress-recovery-and-review-ownership.png)

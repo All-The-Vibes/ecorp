@@ -3436,6 +3436,134 @@ const deploymentInput = (dir, previousPolicySha = init.policySha, policySha = sh
   }
 }
 
+for (const retained of ['head', 'base', 'cleared completion', 'read-only']) {
+  test(`PR304-A-REVIEW-SOURCE-REUSE: ${retained} source cannot support fresh NICE identities`, () => {
+    const dir = setup(), original = complete(dir)
+    let snapshot = pr(1, retained === 'base' ? { base: sha(20) } :
+      retained === 'cleared completion' ? { reviewKey: key(2) } : { head: sha(12) })
+    let sources = original.receipts.map((r) => r.sourceRef)
+    if (retained === 'read-only') {
+      run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, sourceRepo: 'fork/ecorp' }] })
+      const input = readOnlyInput(next(dir))
+      run(dir, 'read-only', input)
+      sources = [input.receipt.sourceRef]
+      snapshot = { ...snapshot, head: sha(13) }
+    }
+    run(dir, 'sync', { owner, complete: true, prs: [snapshot] })
+    const claim = start(dir), pair = reviewers(claim), before = run(dir, 'show'), bytes = journalBytes(dir)
+    if (retained === 'cleared completion') {
+      assert.equal(before.prs['1'].cycles.length, 1)
+      assert.equal(before.prs['1'].cycles[0].completion, null)
+      assert.equal(claim.round, 2)
+    }
+    const reused = pair.map((r, n) => ({ ...r, sourceRef: sources[n] ?? r.sourceRef }))
+    assert.match(run(dir, 'save', saveInput(claim, {
+      phase: 'complete', technicalVerdict: 'NICE', reviewers: reused,
+    }), false).error, /retained review decision/)
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before, 'refusal preserves the original sources, claim and charge')
+    run(dir, 'save', saveInput(claim, { phase: 'complete', technicalVerdict: 'NICE', reviewers: pair }))
+    assert.equal(run(dir, 'show').prs['1'].cycles.at(-1).technicalVerdict, 'NICE')
+  })
+}
+
+for (const consumer of ['published', 'progress-published', 'deploy', 'post-activation deploy', 'feedback sourceRef', 'feedback generationSourceRef']) {
+  test(`PR304-A-REVIEW-SOURCE-REUSE: ${consumer} retains cleared completion ownership`, () => {
+    const dir = setup(), original = complete(dir, fixedCanaryFindings)
+    run(dir, 'sync', { owner, complete: true, prs: [pr(1, { reviewKey: key(2) })] })
+    const claim = start(dir), snapshot = { ...claim.snapshot, head: sha(12) }
+    assert.equal(run(dir, 'show').prs['1'].cycles[0].completion, null)
+    let command = consumer, input
+    if (['published', 'progress-published'].includes(consumer)) {
+      if (consumer === 'progress-published') run(dir, 'progress-rubric', progressBinding(claim, snapshot))
+      else bindRubric(dir, snapshot)
+      input = progressInput(claim, snapshot)
+      if (consumer === 'published') input.reviewers = reviewers({ ...claim, head: snapshot.head })
+    } else if (consumer === 'deploy') input = deploymentInput(dir)
+    else {
+      bindRubric(dir, snapshot)
+      const pair = reviewers({ ...claim, head: snapshot.head })
+      const published = run(dir, 'published', { ...beginInput(claim), snapshot, reviewers: pair,
+        push: { repo, branch: snapshot.branch, before: claim.head, head: snapshot.head,
+          sourceRef: 'synthetic/fresh-full-push.json', pushedAt: new Date().toISOString() } })
+      run(dir, 'save', saveInput(published, { technicalVerdict: 'NICE', reviewers: pair, findings: fixedCanaryFindings }))
+      if (consumer === 'post-activation deploy') {
+        run(dir, 'autonomy', autonomyInput())
+        run(dir, 'enable', { owner, acceptanceProof: proof(published, pair, undefined,
+          registeredWakeProof(dir, 'synthetic-source-ownership')) })
+        command = 'deploy'
+        input = deploymentInput(dir)
+      } else {
+        run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(3) }] })
+        command = 'feedback'
+        input = feedbackInput(feedbackClaim(dir))
+      }
+    }
+    const bad = structuredClone(input)
+    if (command === 'feedback') bad.receipt[consumer.split(' ')[1]] = original.receipts[0].sourceRef
+    else bad.reviewers[0].sourceRef = original.receipts[0].sourceRef
+    const bytes = journalBytes(dir), before = run(dir, 'show')
+    assert.match(run(dir, command, bad, false).error, /retained review decision|sources must be (fresh|unused)/)
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before)
+    run(dir, command, input)
+    assertHistoryPrefix(dir, bytes)
+  })
+}
+
+for (const consumer of ['next feedback', 'feedback', 'enable', 'v1 enable']) {
+  test(`PR304-A-REVIEW-SOURCE-REUSE: ${consumer} refuses conflicting historical full-review basis without rewriting replay`, () => {
+    const dir = setup(), original = complete(dir, fixedCanaryFindings)
+    run(dir, 'sync', { owner, complete: true, prs: [pr(1, { head: sha(12) })] })
+    const claim = start(dir), snapshot = { ...claim.snapshot, head: sha(13) }
+    bindRubric(dir, snapshot)
+    const pair = reviewers({ ...claim, head: snapshot.head })
+      .map((r, n) => ({ ...r, sourceRef: original.receipts[n].sourceRef }))
+    // These admissions model the bug in the handed-off helper, not new acceptable evidence.
+    appendHistorical(dir, 'published', { ...beginInput(claim), snapshot, reviewers: pair,
+      push: { repo, branch: snapshot.branch, before: claim.head, head: snapshot.head,
+        sourceRef: 'synthetic/historical-push.json', pushedAt: new Date().toISOString() } })
+    const published = run(dir, 'show').active
+    appendHistorical(dir, 'save', saveInput(published, {
+      technicalVerdict: 'NICE', reviewers: pair, findings: fixedCanaryFindings,
+    }))
+    if (consumer === 'v1 enable') {
+      writeJournal(dir, JSON.parse(journalBytes(dir)).events.map(
+        ({ version, admission, failedCompletionFence, recoveryPriority, ...e }) => e), 1)
+    }
+    let command, input
+    if (consumer.endsWith('enable')) {
+      run(dir, 'autonomy', autonomyInput())
+      command = 'enable'
+      input = { owner, acceptanceProof: proof(published, pair, undefined,
+        registeredWakeProof(dir, 'synthetic-historical-source')) }
+    } else {
+      run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(2) }] })
+      if (consumer === 'feedback') {
+        appendHistorical(dir, 'next', { owner, feedbackNumber: 1 })
+        command = 'feedback'
+        input = feedbackInput(run(dir, 'show').active)
+      } else {
+        command = 'next'
+        input = { owner, feedbackNumber: 1 }
+      }
+    }
+    const bytes = journalBytes(dir), before = run(dir, 'show')
+    assert.equal(before.prs['1'].cycles.at(-1).technicalVerdict, 'NICE', 'old accepted projection is retained')
+    assert.equal(journalBytes(dir), bytes)
+    assert.match(run(dir, command, input, false).error, /retained review decision/)
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before)
+    if (consumer === 'feedback') {
+      run(dir, 'feedback', { ...input, receipt: { ...input.receipt, disposition: 'BLOCKED' } })
+      const blocked = run(dir, 'show')
+      assert.equal(blocked.active, null, 'safe blocked retention still releases the historical writer')
+      assert.deepEqual(blocked.prs['1'].cycles.at(-1).completion, before.prs['1'].cycles.at(-1).completion)
+      assertHistoryPrefix(dir, bytes)
+    }
+  })
+}
+
 const publicationCriteria = ['SOURCE_SCOPE', 'FIX_EVIDENCE', 'NO_NEW_BLOCKERS', 'TRUTHFUL_STATUS']
 const progressBinding = (claim, snapshot) => ({
   owner, base: claim.head, head: snapshot.head, sourceRef: 'synthetic/progress-rubric.json',
@@ -3657,20 +3785,177 @@ test('PUBLICATION-BOUNDARY: failed review provenance requires retry before progr
   assertHistoryPrefix(dir, prefix)
 })
 
-test('PUBLICATION-BOUNDARY: unfinished progress yields to other PRs without spending or losing its charge', () => {
+for (const bound of ['no-progress', 'round']) for (const failed of [false, true]) {
+  test(`ATV-PUB-01: ${failed ? 'failed' : 'unfinished'} progress at ${bound} limit reports exact recovery eligibility`, () => {
+    const dir = setup()
+    let claim = start(dir), findings = []
+    for (let round = 1; round < (bound === 'round' ? 3 : 2); round++) {
+      if (bound === 'round') findings = progressFailure(dir, claim, findings)
+      else failedReview(dir, claim, findings)
+      claim = run(dir, 'retry', retryInput(claim))
+    }
+    const snapshot = pr(1, { head: sha(12) })
+    run(dir, 'progress-rubric', progressBinding(claim, snapshot))
+    const published = run(dir, 'progress-published', progressInput(claim, snapshot))
+    if (failed) failedReview(dir, published, findings)
+    run(dir, 'save', saveInput(published, { phase: 'blocked', findings }))
+    const bytes = journalBytes(dir), before = run(dir, 'show'), c = before.prs['1'].cycles[0]
+    assert.equal(c.rounds, bound === 'round' ? 3 : 2)
+    assert.equal(c.noProgress, bound === 'round' ? 1 : 2)
+    const route = next(dir)
+    assert.equal(route.action, 'blocked')
+    assert.equal(route.claimId, published.claimId)
+    assert.equal(route.round, published.round)
+    assert.equal(route.recovery, failed ? undefined : 'resume')
+    if (failed) {
+      assert.equal(route.reason, `${bound} limit exhausted`)
+      assert.equal(route.retryRequired, true)
+      assert.match(run(dir, 'resume', resumeInput(route), false).error, /limit exhausted/)
+    }
+    assert.deepEqual(next(dir), route, 'repeated notice remains quiet across CLI restarts')
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before, 'routing and refused resume preserve all history and counts')
+    if (!failed) {
+      const resumed = run(dir, 'resume', resumeInput(route)), after = run(dir, 'show')
+      assert.equal(resumed.round, published.round)
+      assert.equal(resumed.startedAt, published.startedAt)
+      assert.equal(after.prs['1'].cycles[0].rounds, c.rounds)
+      assert.equal(after.prs['1'].cycles[0].noProgress, c.noProgress)
+      assertHistoryPrefix(dir, bytes)
+    }
+  })
+}
+
+for (const failedOlder of [false, true]) {
+  test(`ATV-PUB-01: unfinished final-charge progress outranks exhausted waiting, failed older=${failedOlder}`, () => {
+    const dir = setup([pr(), pr(2), pr(3)]), canary = publishComplete(dir)
+    run(dir, 'autonomy', autonomyInput())
+    run(dir, 'enable', { owner, acceptanceProof: proof(canary.claim, canary.receipts, undefined,
+      registeredWakeProof(dir, 'synthetic-recovery-ranking')) })
+    const eligible = failedOlder ? 3 : 2
+    for (const number of [2, 3]) {
+      run(dir, 'wake', wakeInput(`synthetic-ranking-${number}`))
+      let claim = start(dir)
+      assert.equal(claim.number, number)
+      failedReview(dir, claim)
+      claim = run(dir, 'retry', retryInput(claim))
+      if (number === eligible) {
+        const snapshot = pr(number, { head: sha(12) })
+        run(dir, 'progress-rubric', progressBinding(claim, snapshot))
+        claim = run(dir, 'progress-published', progressInput(claim, snapshot))
+        run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+      } else {
+        failedReview(dir, claim)
+        run(dir, 'save', saveInput(claim))
+      }
+    }
+    const before = run(dir, 'show'), prefix = journalBytes(dir)
+    for (let n = 0; n < 3; n++) {
+      const route = next(dir)
+      assert.equal(route.number, eligible)
+      assert.equal(route.recovery, 'resume')
+    }
+    assert.equal(journalBytes(dir), prefix, 'one eligible recovery needs no rotation')
+    run(dir, 'wake', wakeInput('synthetic-ranking-next-wake'))
+    const route = next(dir)
+    assert.equal(route.number, eligible)
+    assert.equal(route.recovery, 'resume')
+    const wakes = run(dir, 'show').wakes
+    run(dir, 'resume', resumeInput(route))
+    const after = run(dir, 'show')
+    assert.deepEqual(after.wakes, wakes)
+    for (const number of [2, 3]) assert.deepEqual(after.prs[number].cycles.map((c) =>
+      [c.rounds, c.noProgress, c.findings]), before.prs[number].cycles.map((c) => [c.rounds, c.noProgress, c.findings]))
+    assert.deepEqual(after.prs[failedOlder ? 2 : 3], before.prs[failedOlder ? 2 : 3])
+    assertHistoryPrefix(dir, prefix)
+  })
+}
+
+for (const later of ['progress', 'failed waiting']) {
+  test(`ATV-PUB-01: uncleared progress yields to ${later} recovery across restart and wake`, () => {
+    const dir = setup([pr(), pr(2), pr(3)]), canary = publishComplete(dir)
+    run(dir, 'autonomy', autonomyInput())
+    run(dir, 'enable', { owner, acceptanceProof: proof(canary.claim, canary.receipts, undefined,
+      registeredWakeProof(dir, 'synthetic-recovery-rotation')) })
+    for (const number of [2, 3]) {
+      let claim = start(dir)
+      if (number === 3 && later === 'failed waiting') {
+        failedReview(dir, claim)
+        run(dir, 'save', saveInput(claim))
+      } else {
+        const snapshot = pr(number, { head: sha(12) })
+        run(dir, 'progress-rubric', progressBinding(claim, snapshot))
+        claim = run(dir, 'progress-published', progressInput(claim, snapshot))
+        run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+      }
+    }
+    const before = run(dir, 'show')
+    run(dir, 'sync', { owner, complete: true, prs: Object.values(before.prs).map((p) =>
+      p.snapshot.number === 3 ? { ...p.snapshot, gateKey: key(2) } : p.snapshot) })
+    const prefix = journalBytes(dir), selected = []
+    for (const recoverySelection of [true, false, null, 1]) {
+      assert.match(run(dir, 'next', { owner, recoverySelection }, false).error, /fields/)
+      assert.equal(journalBytes(dir), prefix)
+    }
+    selected.push(next(dir).number)
+    const events = JSON.parse(journalBytes(dir)).events
+    assert.equal(events.at(-1).recoverySelection, true)
+    const historical = fixture(), old = structuredClone(events)
+    delete old.at(-1).recoverySelection
+    writeJournal(historical, old)
+    const oldBytes = journalBytes(historical), replay = run(historical, 'show')
+    assert.equal(replay.sequence, before.sequence, 'unmarked recovery notices retain old selection semantics')
+    assert.equal(journalBytes(historical), oldBytes)
+    for (const marker of [false, 1]) {
+      const invalid = fixture(), changed = structuredClone(events)
+      changed.at(-1).recoverySelection = marker
+      writeJournal(invalid, changed)
+      assert.match(run(invalid, 'show', undefined, false).error, /invalid recovery selection marker/)
+    }
+    selected.push(next(dir).number)
+    run(dir, 'wake', wakeInput('synthetic-rotation-next-wake'))
+    selected.push(next(dir).number)
+    const route = next(dir)
+    selected.push(route.number)
+    assert.deepEqual(selected, [2, 3, 2, 3], 'no invented clearance for PR2 is needed to reach PR3')
+    const after = run(dir, 'show')
+    for (const number of [2, 3]) {
+      assert.deepEqual(after.prs[number].cycles, before.prs[number].cycles)
+      assert.deepEqual(after.prs[number].blockedClaim, before.prs[number].blockedClaim)
+    }
+    assert.deepEqual(after.wakes.slice(0, -1), before.wakes)
+    assert.equal(after.wakes.at(-1).chargedRounds, 0)
+    assert.equal(after.active, null)
+    const resumed = run(dir, 'resume', resumeInput(route))
+    assert.equal(resumed.round, 1)
+    assert.equal(resumed.claimId, route.claimId)
+    assert.deepEqual(run(dir, 'show').wakes, after.wakes)
+    assertHistoryPrefix(dir, prefix)
+  })
+}
+
+for (const failed of [false, true]) test(`PUBLICATION-BOUNDARY: ${failed ? 'exhausted failed' : 'unfinished'} progress yields to other PRs without spending or losing its charge`, () => {
   const dir = setup([pr(), pr(2), pr(3)]), canary = publishComplete(dir)
   run(dir, 'autonomy', autonomyInput())
   run(dir, 'enable', { owner, acceptanceProof: proof(canary.claim, canary.receipts, undefined,
     registeredWakeProof(dir, 'synthetic-progress-queue')) })
-  const claim = start(dir), snapshot = pr(2, { head: sha(12) })
+  let claim = start(dir)
+  if (failed) {
+    failedReview(dir, claim)
+    claim = run(dir, 'retry', retryInput(claim))
+  }
+  const snapshot = pr(2, { head: sha(12) })
   run(dir, 'progress-rubric', progressBinding(claim, snapshot))
   const published = run(dir, 'progress-published', progressInput(claim, snapshot))
+  if (failed) failedReview(dir, published)
   run(dir, 'save', saveInput(published, { phase: 'blocked' }))
-  const before = run(dir, 'show')
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  assert.equal(before.prs['2'].cycles[0].noProgress, failed ? 2 : 1)
   assert.equal(next(dir).number, 3)
   const after = run(dir, 'show')
   assert.deepEqual(after.prs['2'], before.prs['2'])
   assert.deepEqual(after.wakes, before.wakes)
+  assertHistoryPrefix(dir, bytes)
 })
 
 test('PUBLICATION-BOUNDARY: post-activation deploy rejects charged work, stale proof, reuse and marker injection', () => {
