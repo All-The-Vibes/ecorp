@@ -3564,6 +3564,110 @@ for (const consumer of ['next feedback', 'feedback', 'enable', 'v1 enable']) {
   })
 }
 
+// Actual trusted 80f32b7 CLI histories; deployed additionally contains a real
+// 016653c maintenance admission. Synthetic evidence only, no hand-edited events.
+const provenanceHistories = JSON.parse(gunzipSync(Buffer.from(
+  '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',
+  'base64')).toString())
+
+for (const stage of ['reused', 'selected', 'blocked', 'deployed']) {
+  test(`PR304-REPORT-OWNERSHIP: old CLI ${stage} activation is readable but not current authority`, () => {
+    const dir = fixture(), journal = provenanceHistories[stage]
+    writeJournal(dir, journal.events, journal.version)
+    const bytes = journalBytes(dir), before = run(dir, 'show')
+    assert.equal(before.enabled, true, 'historical acceptance is not rewritten')
+    assert.equal(before.activation.valid, false)
+    assert.match(before.activation.reason, /retained review decision/)
+    assert.equal(journalBytes(dir), bytes)
+    const input = deploymentInput(dir, before.deployments.at(-1).policySha, sha(101))
+    const bound = journalBytes(dir)
+    assert.match(run(dir, 'deploy', input, false).error, /valid current activation/)
+    if (stage === 'selected') {
+      assert.equal(next(dir).action, 'reconcile')
+      assert.match(run(dir, 'begin', beginInput(before.active), false).error, /retained review decision/)
+    } else if (stage === 'blocked' || stage === 'deployed') {
+      assert.match(run(dir, 'resume', resumeInput(before.prs['2'].blockedClaim.claim), false).error,
+        /retained review decision/)
+    } else run(dir, 'next', { owner, gateNumber: 2 }, false)
+    assert.equal(journalBytes(dir), bound, 'refused authority cannot append or charge')
+    const after = run(dir, 'show')
+    for (const field of ['prs', 'active', 'sequence', 'wakes', 'acceptanceProof', 'deployments']) {
+      assert.deepEqual(after[field], before[field], field)
+    }
+    assertHistoryPrefix(dir, bytes)
+    if (stage === 'reused') assert.equal(next(dir).number, 1, 'only bounded canary correction is admitted')
+  })
+}
+
+test('PR304-REPORT-OWNERSHIP: source-invalid activation recovers through a fresh charged canary decision', () => {
+  const dir = fixture(), journal = provenanceHistories.reused
+  writeJournal(dir, journal.events, journal.version)
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  const selected = next(dir)
+  assert.equal(selected.number, 1)
+  const claim = run(dir, 'begin', beginInput(selected)), pair = reviewers(claim)
+  assert.equal(claim.round, before.prs['1'].cycles.at(-1).rounds + 1)
+  assert.equal(run(dir, 'show').wakes.at(-1).chargedRounds, before.wakes.at(-1).chargedRounds + 1)
+  run(dir, 'save', saveInput(claim, { phase: 'complete', technicalVerdict: 'NICE',
+    reviewers: pair, findings: fixedCanaryFindings }))
+  const acceptanceProof = { ...proof(claim, pair, undefined,
+    registeredWakeProof(dir, 'synthetic-corrected-source')), push: before.prs['1'].publications.at(-1).push }
+  run(dir, 'enable', { owner, acceptanceProof })
+  const accepted = run(dir, 'show'), ack = journalBytes(dir)
+  assert.equal(accepted.activation.valid, true)
+  assert.equal(accepted.activations[0].valid, false)
+  run(dir, 'enable', { owner, acceptanceProof })
+  assert.equal(journalBytes(dir), ack, 'exact new acceptance ACK stays quiet')
+  assertHistoryPrefix(dir, bytes)
+  assert.equal(next(dir).number, 2)
+})
+
+test('PR304-REPORT-OWNERSHIP: genuine old activation keeps exact ACK and non-canary/deployment authority', () => {
+  const dir = fixture(), journal = provenanceHistories.genuine
+  writeJournal(dir, journal.events, journal.version)
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  assert.equal(before.activation.valid, true)
+  run(dir, 'enable', { owner, acceptanceProof: before.acceptanceProof })
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'deploy', deploymentInput(dir))
+  const selected = next(dir)
+  assert.equal(selected.number, 2)
+  assert.equal(run(dir, 'begin', beginInput(selected)).round, 1)
+  assertHistoryPrefix(dir, bytes)
+})
+
+for (const historical of [false, true]) for (const field of ['sourceRef', 'reviewerId']) {
+  test(`PR304-REPORT-OWNERSHIP: ${historical ? 'historical' : 'live'} later read-only ${field} cannot poison original full decision`, () => {
+    const dir = setup(), published = publishComplete(dir)
+    run(dir, 'autonomy', autonomyInput())
+    const acceptanceProof = proof(published.claim, published.receipts, undefined,
+      registeredWakeProof(dir, 'synthetic-original-owner'))
+    run(dir, 'enable', { owner, acceptanceProof })
+    const fork = pr(2, { sourceRepo: 'fork/ecorp' })
+    run(dir, 'sync', { owner, complete: true, prs: [published.snapshot, fork] })
+    const ro = next(dir), input = readOnlyInput(ro, { [field]: published.receipts[0][field] })
+    assert.equal(ro.action, 'read-only')
+    if (historical) appendHistorical(dir, 'read-only', input)
+    else {
+      const bytes = journalBytes(dir), before = run(dir, 'show')
+      assert.match(run(dir, 'read-only', input, false).error, /retained review decision|sources must be unused/)
+      assert.equal(journalBytes(dir), bytes)
+      assert.deepEqual(run(dir, 'show'), before)
+      run(dir, 'read-only', readOnlyInput(ro))
+    }
+    const bytes = journalBytes(dir), before = run(dir, 'show')
+    assert.equal(before.activation.valid, true, 'a later collision cannot invalidate earlier genuine authority')
+    run(dir, 'enable', { owner, acceptanceProof })
+    assert.equal(journalBytes(dir), bytes, 'the original exact decision remains a quiet ACK')
+    assert.deepEqual(run(dir, 'show'), before)
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...published.snapshot, reviewKey: key(2) }, fork] })
+    const feedback = feedbackClaim(dir)
+    run(dir, 'feedback', feedbackInput(feedback))
+    assert.deepEqual(run(dir, 'show').prs['1'].cycles[0].completion.reviewers, published.receipts)
+    assertHistoryPrefix(dir, bytes)
+  })
+}
+
 const publicationCriteria = ['SOURCE_SCOPE', 'FIX_EVIDENCE', 'NO_NEW_BLOCKERS', 'TRUTHFUL_STATUS']
 const progressBinding = (claim, snapshot) => ({
   owner, base: claim.head, head: snapshot.head, sourceRef: 'synthetic/progress-rubric.json',

@@ -149,6 +149,8 @@ sessions, failed tests and original receipts.
    PRs retain a resumable `read-only` claim. Perform safe static assessment and
    save the actual report with the helper's `read-only` command before consuming
    that revision. A read-only PASS is not technical NICE or execution authority.
+   Use unclaimed reviewer/report identities; a read-only receipt cannot take
+   ownership of an earlier full review's identity or source.
    Do not call `begin`, run their tests/hooks, dispatch fixers or publish from
    those claims. Never grant fork code credentials or internal-service access.
    Prefer admissible work or permitted recovery over an exhausted recovery
@@ -312,6 +314,9 @@ After any recorded activation, inspect `show.activation.valid` and its reason:
 `enabled` alone is a historical outcome, not current authority. Invalid
 activation blocks new non-canary admissions and continuations, including
 retained claims; only unchanged blocked evidence may be recorded for them.
+Historical report-ownership conflicts invalidate their activation basis without
+rewriting the journal. Ownership follows recorded order: a later conflicting
+receipt cannot poison an earlier genuine decision or its exact acknowledgement.
 Correct the canary under its existing scope and supply the full new acceptance
 proof to `enable`. A later clean publication or wake alone does not repair
 activation. The previous activation events and proofs remain retained.

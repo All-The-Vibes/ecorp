@@ -335,7 +335,8 @@ function validateSnapshot(p) {
       [null, 'SIGTERM', 'SIGKILL', 'SIGINT'].includes(f.signal), 'invalid safe readFailure descriptor')
   }
 }
-function retainedReviewDecisions(s, completions = []) {
+function retainedReviewDecisions(s, reviewDecisions) {
+  if (reviewDecisions) return reviewDecisions
   return [...s.deployments,
     ...Object.values(s.prs).flatMap((p) => [
       ...(p.publications ?? []),
@@ -343,23 +344,37 @@ function retainedReviewDecisions(s, completions = []) {
         ({ reviewers: c.completion.reviewers, reviewClaim: c.completion })),
       ...(p.feedbackReviews ?? []).map((f) => ({ reviewers: [f.receipt] })),
       ...(p.readOnlyReviews ?? []).map((f) => ({ reviewers: [f.receipt] })),
-    ]), ...completions.map((c) => ({ reviewers: c.reviewers, reviewClaim: c }))]
+    ])]
 }
-function unusedReviewers(receipts, s, completions) {
-  const prior = retainedReviewDecisions(s, completions).flatMap((d) => d.reviewers ?? [])
+function reviewOwnershipError(receipts, claim, decisions) {
+  for (const r of receipts) {
+    // First ownership is chronological, not receipt-family or PR enumeration order.
+    // Later historical collisions stay readable but cannot steal an earlier report.
+    const collides = (old) => old.reviewerId === r.reviewerId ||
+      [old.sourceRef, old.generationSourceRef].some((ref) =>
+        text(ref) && [r.sourceRef, r.generationSourceRef].includes(ref))
+    const d = decisions.find((d) => d.reviewers?.some(collides)), old = d?.reviewers.find(collides)
+    if (old && (digest(old) !== digest(r) || (claim.claimId &&
+      (d.reviewClaim?.claimId !== claim.claimId || d.reviewClaim?.round !== claim.round)))) {
+      return 'retained review decision cannot change candidate, receipt or round'
+    }
+  }
+  return null
+}
+function unusedReviewers(receipts, s, reviewDecisions) {
+  const prior = retainedReviewDecisions(s, reviewDecisions).flatMap((d) => d.reviewers ?? [])
   check(receipts.every((r) => !s.usedReviewers.includes(r.reviewerId) && prior.every((old) =>
     old.reviewerId !== r.reviewerId && ![old.sourceRef, old.generationSourceRef].includes(r.sourceRef))),
   'reviewer identities and sources must be unused')
 }
-function validateReviewers(receipts, claim, s, at, progress = false, completions) {
+function validateReviewers(receipts, claim, s, at, progress = false, reviewDecisions) {
   check(hex(claim.base) && hex(claim.head), 'invalid reviewed revision')
   const config = s.config, rubric = (progress ? s.progressRubrics : s.rubrics)?.[`${claim.base}:${claim.head}`]
   check(rubric, 'bind exact trusted rubric before reviewer dispatch')
   check(Array.isArray(receipts) && receipts.length === 2, 'NICE requires two reviewer receipts')
   check(new Set(receipts.map((r) => r?.reviewerId)).size === 2, 'duplicate reviewer IDs')
   // Broaden live admission only; already accepted journal events keep their rules.
-  const decisions = completions ? retainedReviewDecisions(s, completions) :
-    [...s.deployments, ...Object.values(s.prs).flatMap((p) => p.publications ?? [])]
+  const decisions = [...s.deployments, ...Object.values(s.prs).flatMap((p) => p.publications ?? [])]
   for (const r of receipts) {
     fields(r, ['reviewerId', 'model', 'base', 'head', 'verdict', 'completedAt', 'sourceRef', 'criteria',
       ...(progress ? ['runtime'] : [])])
@@ -367,14 +382,19 @@ function validateReviewers(receipts, claim, s, at, progress = false, completions
       same(r, claim) && r.verdict === (progress ? 'SAFE_TO_PUBLISH' : 'NICE') &&
       (!progress || r.runtime === 'native') && text(r.sourceRef) &&
       fresh(r.completedAt, claim.startedAt, at) && r.completedAt >= rubric.boundAt, 'malformed or stale reviewer receipt')
-    check(Object.values(s.prs).every((p) => (p.feedbackReviews ?? []).every((f) =>
-      f.receipt.reviewerId !== r.reviewerId && ![f.receipt.sourceRef, f.receipt.generationSourceRef].includes(r.sourceRef))),
-    'feedback gatechecker cannot substitute for independent Santa reviewer')
-    check(decisions.every((d) => !d.reviewers?.some((old) =>
-      (old.reviewerId === r.reviewerId || old.sourceRef === r.sourceRef) &&
-      (digest(old) !== digest(r) || (claim.claimId &&
-        (d.reviewClaim?.claimId !== claim.claimId || d.reviewClaim?.round !== claim.round))))),
-    'retained review decision cannot change candidate, receipt or round')
+    if (reviewDecisions) {
+      const error = reviewOwnershipError([r], claim, reviewDecisions)
+      check(!error, error)
+    } else {
+      check(Object.values(s.prs).every((p) => (p.feedbackReviews ?? []).every((f) =>
+        f.receipt.reviewerId !== r.reviewerId && ![f.receipt.sourceRef, f.receipt.generationSourceRef].includes(r.sourceRef))),
+      'feedback gatechecker cannot substitute for independent Santa reviewer')
+      check(decisions.every((d) => !d.reviewers?.some((old) =>
+        (old.reviewerId === r.reviewerId || old.sourceRef === r.sourceRef) &&
+        (digest(old) !== digest(r) || (claim.claimId &&
+          (d.reviewClaim?.claimId !== claim.claimId || d.reviewClaim?.round !== claim.round))))),
+      'retained review decision cannot change candidate, receipt or round')
+    }
     check(Array.isArray(r.criteria) && r.criteria.length > 0 &&
       new Set(r.criteria.map((c) => c.id)).size === r.criteria.length, 'missing or duplicate criteria')
     for (const c of r.criteria) {
@@ -384,7 +404,7 @@ function validateReviewers(receipts, claim, s, at, progress = false, completions
     check(digest(r.criteria.map((c) => c.id).sort()) === digest(rubric.binding.criteria.slice().sort()), 'review must cover exact pinned rubric')
   }
   check(receipts[0].sourceRef !== receipts[1].sourceRef, 'reviewers need distinct source references')
-  if (progress) unusedReviewers(receipts, s, completions)
+  if (progress) unusedReviewers(receipts, s, reviewDecisions)
 }
 
 // The original audit identity, not a nullable projection or read-only claim, owns failure.
@@ -393,7 +413,7 @@ function failedReviewBasisError(claim, failedReviews) {
     ? 'retained failed review requires permitted charged retry before feedback or activation' : null
 }
 
-function feedbackBasis(s, p, at, failedReviews, completions) {
+function feedbackBasis(s, p, at, failedReviews, reviewDecisions) {
   const c = p && cycle(p), publication = p?.publications?.at(-1), snapshot = p?.snapshot
   check(p?.present && snapshot.state === 'open' && !p.blockedReason &&
     sameRepo(p.sourceRepo, s.config.repo) && sameRepo(snapshot.sourceRepo, s.config.repo) &&
@@ -420,7 +440,7 @@ function feedbackBasis(s, p, at, failedReviews, completions) {
     const error = failedReviewBasisError(completion, failedReviews)
     check(!error, error)
   }
-  validateReviewers(completion.reviewers, completion, s, at, false, completions)
+  validateReviewers(completion.reviewers, completion, s, at, false, reviewDecisions)
   return completion
 }
 
@@ -448,7 +468,7 @@ function activationBindingError(s, proof) {
   return null
 }
 
-function apply(s, e, conflictingPublications = new Set(), { activation, activationAt, live = false, failedReviews = new Map(), failedWaits = new Map(), pendingRenewals = new Map(), completions } = {}) {
+function apply(s, e, conflictingPublications = new Set(), { activation, activationAt, live = false, failedReviews = new Map(), failedWaits = new Map(), pendingRenewals = new Map(), reviewDecisions } = {}) {
   const { command, input: i, at, id } = e
   if (command === 'init') {
     check(s === null, 'already initialized; immutable configuration')
@@ -540,8 +560,8 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
     const startedAt = e.postActivationDeploy && activationAt > previous.deployedAt ? activationAt : previous.deployedAt
     // Enforce the transition on live admission, not by rewriting accepted history.
     validateReviewers(i.reviewers, { base: live || e.postActivationDeploy ? previous.policySha : i.reviewers?.[0]?.base,
-      head: i.policySha, startedAt }, s, at, false, completions)
-    if (e.postActivationDeploy) unusedReviewers(i.reviewers, s, completions)
+      head: i.policySha, startedAt }, s, at, false, reviewDecisions)
+    if (e.postActivationDeploy) unusedReviewers(i.reviewers, s, reviewDecisions)
     check(i.reviewers.every((r) => !s.usedReviewers.includes(r.reviewerId) &&
       !s.deployments.some((d) => d.reviewers?.some((old) => old.sourceRef === r.sourceRef))), 'deployment reviewers and sources must be fresh')
     fields(i.validation, ['policySha', 'status', 'sourceRef', 'verifiedAt'])
@@ -649,7 +669,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
     if (i.feedbackNumber !== undefined) {
       const p = s.prs[i.feedbackNumber]
       check(enabled || i.feedbackNumber === s.config.canary, 'feedback target outside canary')
-      const completion = feedbackBasis(s, p, at, live ? failedReviews : undefined, completions)
+      const completion = feedbackBasis(s, p, at, live ? failedReviews : undefined, reviewDecisions)
       s.active = { number: i.feedbackNumber, base: p.snapshot.base, head: p.snapshot.head,
         action: 'feedback', reason: 'Read-only current feedback triage; no code/fix authority',
         claimId: id, snapshot: p.snapshot, round: null, startedAt: at,
@@ -794,6 +814,10 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
       ['PASS', 'FAIL', 'BLOCKED'].includes(r.verdict) && text(r.sourceRef) &&
       fresh(r.completedAt, a.startedAt, at), 'invalid read-only review receipt')
     check(current(a, p) || r.verdict === 'BLOCKED', 'stale read-only claim requires BLOCKED receipt')
+    if (live) {
+      const error = reviewOwnershipError([r], a, reviewDecisions)
+      check(!error, error)
+    }
     p.readOnlyReviews ??= []
     p.readOnlyReviews.push({ claimId: a.claimId, snapshot: a.snapshot, receipt: r })
     if (current(a, p)) Object.assign(p, { seen: signature(a.snapshot), seenAudit: auditKey(a.snapshot) })
@@ -813,7 +837,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
       Object.values(r.coverage).every(text) &&
       ['NO_ACTIONABLE_FINDINGS', 'ACTIONABLE_FINDINGS', 'BLOCKED'].includes(r.disposition),
     'invalid scoped complete native feedback receipt')
-    const prior = retainedReviewDecisions(s, completions).flatMap((d) => d.reviewers ?? [])
+    const prior = retainedReviewDecisions(s, reviewDecisions).flatMap((d) => d.reviewers ?? [])
     check(!s.usedReviewers.includes(r.reviewerId) && prior.every((old) =>
       old.reviewerId !== r.reviewerId && ![old.sourceRef, old.generationSourceRef]
         .some((ref) => [r.sourceRef, r.generationSourceRef].includes(ref))),
@@ -823,7 +847,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
     // Old admissions replay unchanged. BLOCKED only retains evidence/releases the writer.
     if (exact) check(digest(feedbackBasis(s, p, at,
       live && r.disposition !== 'BLOCKED' ? failedReviews : undefined,
-      r.disposition !== 'BLOCKED' ? completions : undefined)) === digest(a.completion) &&
+      r.disposition !== 'BLOCKED' ? reviewDecisions : undefined)) === digest(a.completion) &&
       digest(s.rubrics[`${a.base}:${a.head}`].binding) === a.rubricKey, 'feedback reviewed basis changed')
     p.feedbackReviews ??= []
     p.feedbackReviews.push({ claim: a, receipt: r })
@@ -871,7 +895,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
       targetCompatible(a.snapshot, i.snapshot) && p.snapshot.baseRef === i.snapshot.baseRef &&
       i.snapshot.branch === a.snapshot.branch && p.present &&
       (current(a, p) || signature(p.snapshot) === signature(i.snapshot)), 'publication readback conflicts with retained claim/inventory')
-    validateReviewers(i.reviewers, { ...a, ...(progress ? { base: a.head } : {}), head: i.snapshot.head }, s, at, progress, completions)
+    validateReviewers(i.reviewers, { ...a, ...(progress ? { base: a.head } : {}), head: i.snapshot.head }, s, at, progress, reviewDecisions)
     check(i.reviewers.every((r) => !s.usedReviewers.includes(r.reviewerId)), 'reviewer IDs must be fresh')
     check(sameRepo(i.push.repo, s.config.repo) && i.push.branch === a.snapshot.branch &&
       i.push.before === a.head && i.push.head === i.snapshot.head && text(i.push.sourceRef) &&
@@ -959,7 +983,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
       if (i.technicalVerdict === 'NICE') {
         check(['complete', 'waiting'].includes(i.phase), 'NICE must complete technical work')
         check(i.findings.every((f) => f.status === 'fixed'), 'open findings prevent NICE')
-        validateReviewers(i.reviewers, a, s, at, false, completions)
+        validateReviewers(i.reviewers, a, s, at, false, reviewDecisions)
         if (a.publication && a.publicationKind !== 'progress') check(digest(i.reviewers) === digest(a.publication.reviewers), 'NICE must retain published candidate reviewers')
         check(i.reviewers.every((r) => !s.usedReviewers.includes(r.reviewerId)), 'reviewer IDs must be fresh')
         s.usedReviewers.push(...i.reviewers.map((r) => r.reviewerId))
@@ -1012,7 +1036,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
       sameRepo(p.snapshot.sourceRepo, s.config.repo) && c.technicalVerdict === 'NICE' && same(proof, p.snapshot) &&
       same(proof, c.completion) && c.completion.auditKey === auditKey(p.snapshot) &&
       p.seen === signature(p.snapshot), 'canary needs current processed technical NICE and gates')
-    validateReviewers(proof.reviewers, c.completion, s, at, false, completions)
+    validateReviewers(proof.reviewers, c.completion, s, at, false, reviewDecisions)
     check(digest(proof.reviewers) === digest(c.completion.reviewers), 'acceptance reviewers differ from saved NICE')
     fields(proof.ci, ['base', 'head', 'gateKey', 'baseRef', 'status', 'sourceRef', 'verifiedAt'])
     fields(proof.push, ['repo', 'branch', 'before', 'head', 'sourceRef', 'pushedAt'])
@@ -1103,9 +1127,10 @@ function main() {
     const failedReviews = new Map()
     const failedWaits = new Map()
     const pendingRenewals = new Map()
-    const completions = []
+    const reviewDecisions = []
     const activations = []
     let activation = { eventId: null, valid: false, reason: 'canary acceptance not recorded' }
+    let replayActivation = activation
     let activationAt = null
     let correctiveAcceptance = null
     if (command !== 'init') {
@@ -1158,12 +1183,18 @@ function main() {
           number: state.active.number, action: state.active.action,
           claimId: state.active.claimId, round: state.active.round,
         }
-        const result = apply(state, e, conflictingPublications, { activation, activationAt, failedReviews, failedWaits, pendingRenewals })
+        // Old unfenced admissions keep their original activation semantics. Existing
+        // corrective markers bind new recovery to the derived ownership-invalid basis.
+        const admittedActivation = e.activationFence || e.correctiveBinding || e.command === 'enable'
+          ? activation : replayActivation
+        const result = apply(state, e, conflictingPublications, { activation: admittedActivation, activationAt, failedReviews, failedWaits, pendingRenewals })
         state = result.state
-        // Retain source ownership even after begin/feedback replaces the projection.
-        // This private replay index never changes historical decisions or stored state.
-        if (e.command === 'save' && e.input.technicalVerdict === 'NICE' && result.changed !== false) {
-          completions.push(cycle(state.prs[e.input.number]).completion)
+        // Keep every accepted report in event order, including replaced completions.
+        const receipts = e.input.reviewers ??
+          (['read-only', 'feedback'].includes(e.command) ? [e.input.receipt] : [])
+        if (receipts.length && result.changed !== false) {
+          reviewDecisions.push({ reviewers: receipts,
+            reviewClaim: e.command === 'deploy' ? state.deployments.at(-1).reviewClaim : activeBefore })
         }
         if (conflict && state.prs[e.input.number].publications.at(-1) !== publication) {
           conflictingPublications.add(state.prs[e.input.number].publications.at(-1))
@@ -1194,9 +1225,13 @@ function main() {
             ? 'activation publication source/target conflicts with retained claim; preserve work and correct canary'
             : activationBindingError(state, e.input.acceptanceProof) ??
             failedReviewBasisError(completion, failedReviews) ??
+            (wasEnabled && !replayActivation.valid && !replacementAccepted
+              ? 'activation replacement lacks charged corrective code acceptance; preserve history and correct canary' : null)
+          replayActivation = { eventId: e.id, valid: reason === null, reason }
+          const currentReason = reason ?? reviewOwnershipError(e.input.acceptanceProof.reviewers, completion, reviewDecisions) ??
             (wasEnabled && !activation.valid && !replacementAccepted
               ? 'activation replacement lacks charged corrective code acceptance; preserve history and correct canary' : null)
-          activation = { eventId: e.id, valid: reason === null, reason }
+          activation = { eventId: e.id, valid: currentReason === null, reason: currentReason }
           activationAt = e.at
           activations.push({ ...activation, acceptanceProof: e.input.acceptanceProof })
         }
@@ -1236,7 +1271,7 @@ function main() {
       ...(command === 'begin' && state.enabled && !activation.valid ? { activationFence: true } : {}),
       ...(command === 'next' ? { admission: 'detail-read-recovery', recoveryPriority: true,
         ...(state.enabled && !activation.valid ? { activationFence: true, canaryRecovery: true } : {}) } : {}) }
-    const result = apply(state, event, conflictingPublications, { activation, activationAt, live: true, failedReviews, failedWaits, pendingRenewals, completions })
+    const result = apply(state, event, conflictingPublications, { activation, activationAt, live: true, failedReviews, failedWaits, pendingRenewals, reviewDecisions })
     if (result.changed !== false) {
       events.push(event)
       const temporary = join(dir, `state.${token}.tmp`)

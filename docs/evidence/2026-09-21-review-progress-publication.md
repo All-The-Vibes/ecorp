@@ -84,3 +84,29 @@ Fresh exact-policy/full-PR Santa decisions, publication, new-head CI/Copilot
 and recorded adoption are still separate subsequent gates at capture time.
 
 ![Actual correction-2 local-log capture](assets/astra-review-executor/28-progress-recovery-and-review-ownership.png)
+
+## Correction 3: historical authority and read-only admission
+
+The second candidate's final reviewers found two remaining ownership paths:
+historical activation and incoming read-only receipts. It was not published or
+adopted. Ownership now follows journal order. Conflicting historical authority
+is withheld without rewriting old events, and a later conflicting receipt
+cannot take an earlier genuine report or invalidate its acknowledgement.
+
+The new regression run produced **9 genuine failures and 1 positive control**
+before the fix, then **35/35 focused passes**. Five historical comparisons kept
+their journals, projections and counters intact while classifying conflicting
+authority correctly. A copy of the actual retained journal also has identical
+projection and valid activation; its uncharged PR255 claim is unchanged.
+
+The complete final suite is **477/477 PASS**, zero failures/skips, with all
+26 copied inputs verified. Final Windows package/snapshot checks are **21/21**.
+The same 383 application/build inputs retain the six earlier baseline results;
+these were not rerun. Focused counts overlap the full suite. ATV/Ponytail
+rechecked the new paths and prior closures with no new in-scope finding; the
+unchanged asset debt and lack of new SCA/native acceptance remain explicit.
+
+![Actual correction-3 local-log capture](assets/astra-review-executor/29-chronological-review-ownership.png)
+
+As with the earlier captures, this precedes fresh final independent acceptance,
+publication, hosted CI/Copilot and deployment. It is not proof of those effects.
