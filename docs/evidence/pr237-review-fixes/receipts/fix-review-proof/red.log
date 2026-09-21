@@ -1,0 +1,520 @@
+✖ direct completion cannot bypass pending independent review (missing checkpoint: false) (5.629ms)
+✔ complete persisted proof is accepted (missing checkpoint: false) (0.6844ms)
+✖ direct completion cannot bypass pending independent review (missing checkpoint: true) (0.4676ms)
+✔ complete persisted proof is accepted (missing checkpoint: true) (0.4285ms)
+✔ pending review requires requester denial followed by distinct reviewer approval (1.6015ms)
+✖ pending gate rejects missing review (0.5482ms)
+✖ pending gate rejects non-independent gate (0.5521ms)
+✖ pending gate rejects requester allowed (0.5807ms)
+✖ pending gate rejects already decided gate (0.6973ms)
+✖ pending gate rejects same actor (0.7551ms)
+✖ pending gate rejects unauthorized role (0.5563ms)
+✖ pending gate rejects producer reviewing (0.4328ms)
+✔ pending gate rejects requester accepted (1.0482ms)
+✖ pending gate rejects reviewer denied (0.3799ms)
+✖ final recovery rejects no pending observation (0.6461ms)
+✖ final recovery rejects no requester denial (0.4598ms)
+✖ final recovery rejects requester non-403 (0.4226ms)
+✖ final recovery rejects no independent response (0.329ms)
+✖ final recovery rejects no independent proof flag (0.3155ms)
+✖ final recovery rejects no persisted decision (0.3767ms)
+✖ final recovery rejects decision by requester (0.4534ms)
+✖ final recovery rejects decision still pending (0.4561ms)
+✖ final recovery rejects missing automated evidence (0.5572ms)
+✖ final recovery rejects failed file check (0.7366ms)
+✖ final recovery rejects foreign proof (0.5024ms)
+✖ final recovery rejects wrong proof kind (0.4452ms)
+✖ final recovery rejects wrong proof task (0.3811ms)
+✖ final recovery rejects missing artifact (0.3836ms)
+✖ final recovery rejects failed verification (0.3251ms)
+✖ final recovery rejects changed source ref (0.4202ms)
+✖ final recovery rejects changed source repository (0.6097ms)
+✖ final recovery rejects changed source commit (1.5656ms)
+✖ final recovery rejects changed verifier (0.3535ms)
+✖ final recovery rejects changed finish tokens (0.3801ms)
+✖ final recovery rejects changed finish cost (0.4201ms)
+✖ final recovery rejects changed revision task (0.3977ms)
+✖ final recovery rejects missing approved revision (0.4018ms)
+✖ final recovery rejects changed original budget (0.3571ms)
+✖ final recovery rejects rewritten original fingerprint (0.3691ms)
+✔ final recovery rejects rewritten original spend (0.5338ms)
+✖ final recovery rejects rewritten suspension history (0.4879ms)
+✔ hard-stop lane needs no successful review (0.3752ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 6
+ℹ fail 36
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 218.9177
+
+✖ failing tests:
+
+test at tools\e2e_factory_budget_recovery.test.mjs:103:3
+✖ direct completion cannot bypass pending independent review (missing checkpoint: false) (5.629ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:106:5)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:103:3
+✖ direct completion cannot bypass pending independent review (missing checkpoint: true) (0.4676ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:106:5)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:134:4
+✖ pending gate rejects missing review (0.5482ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:137:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:134:4
+✖ pending gate rejects non-independent gate (0.5521ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:137:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:134:4
+✖ pending gate rejects requester allowed (0.5807ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:137:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:134:4
+✖ pending gate rejects already decided gate (0.6973ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:137:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:134:4
+✖ pending gate rejects same actor (0.7551ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:137:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:134:4
+✖ pending gate rejects unauthorized role (0.5563ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:137:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:134:4
+✖ pending gate rejects producer reviewing (0.4328ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:137:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:134:4
+✖ pending gate rejects reviewer denied (0.3799ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:137:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects no pending observation (0.6461ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects no requester denial (0.4598ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects requester non-403 (0.4226ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects no independent response (0.329ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects no independent proof flag (0.3155ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects no persisted decision (0.3767ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects decision by requester (0.4534ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects decision still pending (0.4561ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects missing automated evidence (0.5572ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects failed file check (0.7366ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects foreign proof (0.5024ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects wrong proof kind (0.4452ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects wrong proof task (0.3811ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects missing artifact (0.3836ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects failed verification (0.3251ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects changed source ref (0.4202ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects changed source repository (0.6097ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects changed source commit (1.5656ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects changed verifier (0.3535ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects changed finish tokens (0.3801ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects changed finish cost (0.4201ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects changed revision task (0.3977ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects missing approved revision (0.4018ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects changed original budget (0.3571ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects rewritten original fingerprint (0.3691ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_factory_budget_recovery.test.mjs:168:4
+✖ final recovery rejects rewritten suspension history (0.4879ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection (AssertionError).
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_factory_budget_recovery.test.mjs:174:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'rejects',
+    diff: 'simple'
+  }

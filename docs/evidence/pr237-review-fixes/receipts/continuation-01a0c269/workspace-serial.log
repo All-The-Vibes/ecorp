@@ -1,0 +1,983 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.97s
+     Running unittests src\main.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_cli-7b08358633388329.exe)
+
+running 119 tests
+test factory::project::tests::accepts_a_genuinely_empty_project ... ok
+test factory::project::tests::accepts_an_empty_errors_array ... ok
+test factory::project::tests::enforces_item_and_page_size_limits ... ok
+test factory::project::tests::enforces_page_limit_without_fetching_page_one_hundred_and_one ... ok
+test factory::project::tests::enforces_total_json_budget_including_resolution_and_ignored_fields ... ok
+test factory::project::tests::invalid_requested_identity_never_calls_fetch ... ok
+test factory::project::tests::json_budget_counts_serialized_utf8_and_escaping_at_the_exact_boundary ... ok
+test factory::project::tests::non_issue_and_null_content_remain_counted_non_candidates ... ok
+test factory::project::tests::propagates_fetch_failure_without_returning_accumulated_items ... ok
+test factory::project::tests::queries_use_verified_fragments_filtered_items_and_rate_limit ... ok
+test factory::project::tests::rejects_archived_missing_identity_and_malformed_source_rows ... ok
+test factory::project::tests::rejects_duplicate_item_ids_within_and_across_pages_even_for_placeholders ... ok
+test factory::project::tests::rejects_empty_non_progress_and_early_truncation ... ok
+test factory::project::tests::rejects_missing_null_empty_or_wrong_type_cursors_even_on_final_pages ... ok
+test factory::project::tests::rejects_null_or_missing_pages_and_pagination_metadata ... ok
+test factory::project::tests::rejects_null_or_missing_resolution_data ... ok
+test factory::project::tests::rejects_partial_graphql_errors_at_every_stage_without_echoing_them ... ok
+test factory::project::tests::rejects_project_identity_mismatch_at_resolution_and_on_later_pages ... ok
+test factory::project::tests::rejects_repeated_and_looping_cursors_including_the_terminal_page ... ok
+test factory::project::tests::rejects_total_count_drift_in_both_directions ... ok
+test factory::project::tests::supports_more_than_one_thousand_items_and_exact_maximum ... ok
+test factory::project::tests::two_pages_preserve_exact_source_and_opaque_variables ... ok
+test factory::project::tests::unset_or_other_type_status_is_not_a_candidate_status ... ok
+test factory::project::tests::user_and_organization_identity_match_case_insensitively ... ok
+test factory::quota::tests::expired_failures_escalate_until_a_success_and_never_overflow ... ok
+test factory::quota::tests::final_http_status_is_used_and_prior_valid_retry_hints_are_not_shortened ... ok
+test factory::quota::tests::graphql_rate_limited_and_http_failures_are_typed ... ok
+test factory::quota::tests::high_balance_does_not_cancel_an_outstanding_wait ... ok
+test factory::quota::tests::invalid_observations_leave_state_intact_and_errors_do_not_echo_values ... ok
+test factory::quota::tests::invalid_persisted_quota_fails_conservatively_without_shortening_valid_wait ... ok
+test factory::quota::tests::low_quota_accepts_response_but_blocks_next_request_and_clones_share_state ... ok
+test factory::quota::tests::malformed_hints_fall_back_and_unrepresentable_positive_hints_fail_closed ... ok
+test factory::quota::tests::malformed_or_oversized_headers_have_safe_errors ... ok
+test factory::quota::tests::only_data_rate_limit_is_an_observation ... ok
+test factory::quota::tests::oversized_diagnostics_cannot_hide_a_longer_retry_requirement ... ok
+test factory::quota::tests::plain_json_fixtures_are_unchanged_and_http_preambles_are_stripped ... ok
+test factory::quota::tests::primary_failure_uses_known_reset_but_secondary_does_not_use_high_quota_reset ... ok
+test factory::quota::tests::primary_headers_and_duplicate_hints_choose_the_latest_deadline ... ok
+test factory::quota::tests::primary_or_explicitly_exhausted_responses_still_respect_hourly_reset ... ok
+test factory::quota::tests::reserve_scales_down_and_includes_actual_observed_cost ... ok
+test factory::quota::tests::reset_header_has_a_safety_margin ... ok
+test factory::quota::tests::reset_margin_expires_without_inventing_a_new_balance ... ok
+test factory::quota::tests::restart_round_trip_and_stale_reconcile_preserve_the_longest_wait ... ok
+test factory::quota::tests::restore_reconstructs_low_quota_wait_and_bounds_bad_persisted_counters ... ok
+test factory::quota::tests::secondary_403_and_503_ignore_healthy_primary_reset_and_escalate_locally ... ok
+test factory::quota::tests::secondary_retry_after_supports_http_dates_and_stderr_headers ... ok
+test factory::quota::tests::stale_and_out_of_order_observations_do_not_restore_spent_budget ... ok
+test factory::quota::tests::successful_data_and_non_retryable_errors_are_not_misclassified ... ok
+test factory::quota::tests::typed_display_debug_and_error_chain_never_contain_remote_secrets ... ok
+test factory::quota::tests::typed_failure_only_and_admission_wait_is_not_a_failed_attempt ... ok
+test factory::tests::acceptance_parser_preserves_issue_checklist_order ... ok
+test factory::tests::dependency_parser_uses_only_explicit_blockers ... ok
+test factory::tests::exact_project_reads_preserve_source_content_and_project_identity ... ok
+test factory::tests::exact_project_reads_reject_deleted_or_non_issue_content ... ok
+test factory::tests::github_identity_and_failure_details_are_canonical_and_single_line ... ok
+test factory::tests::graphql_error_envelope_must_be_absent_or_an_empty_array ... ok
+test factory::tests::issue204_bound_source_resolution_needs_no_controller_checkout ... ok
+test factory::tests::issue204_checked_source_fences_scope_readiness_adapter_and_revision ... ok
+test factory::tests::issue204_factory_option_is_typed_and_rejects_nil ... ok
+test factory::tests::issue204_new_policy_pins_connection_without_changing_legacy_shape ... ok
+test factory::tests::issue204_recovery_rejects_connection_substitution_or_silent_fallback ... ok
+test factory::tests::issue206_dry_run_reads_proof_but_never_posts_reconciliation_or_opens_a_checkout ... ok
+test factory::tests::issue206_explicit_reconciliation_uses_only_the_current_marker_and_native_endpoint ... ok
+test factory::tests::issue206_future_catch_up_keeps_only_a_server_validated_running_checkpoint_recoverable ... ok
+test factory::tests::issue206_generic_polling_and_other_modes_never_read_or_repair_cancelled_items ... ok
+test factory::tests::issue206_only_explicit_checkpoint_recovery_admits_the_marked_cancelled_item ... ok
+test factory::tests::issue206_production_flow_returns_dry_run_before_repair_and_refreshes_before_claim ... ok
+test factory::tests::issue206_reconciliation_request_is_exact_idempotent_and_never_uses_a_checkout ... ok
+test factory::tests::issue221_active_correction_replays_only_the_same_native_request_without_new_work ... ok
+test factory::tests::issue221_active_replay_dry_run_matches_existing_request_without_mutations ... ok
+test factory::tests::issue221_active_replay_rejects_mismatched_mode_actor_source_revision_and_request ... ok
+test factory::tests::issue221_active_replay_still_requires_current_native_authority ... ok
+test factory::tests::issue221_checkpoint_actions_honor_availability_without_weakening_cancelled_proof ... ok
+test factory::tests::issue221_current_provider_correction_retains_null_head_and_current_revision ... ok
+test factory::tests::issue221_fresh_recovery_context_denies_before_revision_or_recovery_mutation ... ok
+test factory::tests::issue221_mode_preflight_denies_unavailable_or_malformed_flags_even_in_dry_run ... ok
+test factory::tests::issue221_native_mode_flags_are_mode_specific_and_preserve_legacy_defaults ... ok
+test factory::tests::issue221_present_malformed_flags_fail_closed_in_both_context_decoders ... ok
+test factory::tests::issue221_production_mode_preflight_precedes_dry_run_and_rechecks_before_claim ... ok
+test factory::tests::issue224_existing_factory_policy_is_reused_and_never_revised_by_an_override ... ok
+test factory::tests::issue224_factory_policy_and_bodies_share_only_the_explicit_planning_choice ... ok
+test factory::tests::issue224_invalid_or_incongruent_attempt_choices_fail_before_preflight ... ok
+test factory::tests::issue224_legacy_null_policy_is_read_without_inserting_a_request_key ... ok
+test factory::tests::issue224_recovery_attempt_congruence_precedes_dry_run_and_remote_mutations ... ok
+test factory::tests::issue224_recovery_revision_requests_do_not_carry_an_attempt_setter ... ok
+test factory::tests::issue79_legacy_cost_requires_exact_intake_and_only_audited_server_reconciliation ... ok
+test factory::tests::issue79_legacy_cost_selector_mismatches_never_post_or_pin_source ... ok
+test factory::tests::issue79_run_rejects_cost_before_github_or_server_in_both_modes ... ok
+test factory::tests::publication_base_defaults_to_the_selected_source_ref ... ok
+test factory::tests::publication_base_requires_head_or_a_branch_ref ... ok
+test factory::tests::recovery_active_replay_requires_the_same_reviewed_source_and_policy ... ok
+test factory::tests::recovery_cached_revision_rejects_changed_policy_with_same_source_and_reason ... ok
+test factory::tests::recovery_cached_revision_rejects_changed_reviewed_source ... ok
+test factory::tests::recovery_cached_revision_rejects_wrong_attribution_or_superseded_contract ... ok
+test factory::tests::recovery_cached_revision_replays_the_exact_current_replacement ... ok
+test factory::tests::recovery_completion_preserves_catch_up_states_and_cleanup_gate ... ok
+test factory::tests::recovery_contract_preserves_authority_and_replaces_only_its_provenance_marker ... ok
+test factory::tests::recovery_legacy_unbound_revision_requires_a_new_explicit_binding ... ok
+test factory::tests::recovery_never_falls_back_to_new_factory_work_or_another_issue ... ok
+test factory::tests::recovery_publication_base_reuses_persisted_policy ... ok
+test factory::tests::recovery_revision_keys_bind_policy_actor_source_and_exact_request ... ok
+test factory::tests::recovery_source_binding_survives_objective_size_cap_and_description_normalization ... ok
+test factory::tests::recovery_verifier_only_policy_revision_replays_after_a_lost_authorization_response ... ok
+test factory::tests::source_commit_requires_a_full_git_object_id ... ok
+test factory::tests::utf8_truncation_never_splits_a_character ... ok
+test factory::tests::verified_items_leave_the_queue_and_expired_claims_allow_failover ... ok
+test publish::tests::default_publication_branch_is_stable ... ok
+test publish::tests::portable_bundle_head_is_single_exact_and_bounded ... ok
+test publish::tests::publication_branch_authorization_and_body_are_retry_stable ... ok
+test publish::tests::publication_branch_uses_git_branch_rules ... ok
+test publish::tests::publication_start_and_recovery_keys_track_the_exact_invocation ... ok
+test publish::tests::remote_base_refs_are_explicit ... ok
+test publish::tests::remote_head_requires_one_symbolic_branch_and_object ... ok
+test tests::copied_recovery_commands_preserve_every_literal_argument ... ok
+test tests::copied_recovery_commands_reject_missing_required_arguments ... ok
+test tests::issue224_invalid_attempt_flags_fail_during_argument_parsing ... ok
+test tests::issue224_launch_and_resume_have_no_attempt_override ... ok
+test tests::issue224_planning_flags_are_optional_and_use_the_shared_ceiling ... ok
+test tests::ordinary_factory_commands_do_not_require_recovery_options ... ok
+
+test result: ok. 119 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.46s
+
+     Running unittests src\lib.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_domain-e1423bb459fb8d07.exe)
+
+running 19 tests
+test factory_connection::tests::issue204_factory_binding_preserves_legacy_unbound_policy ... ok
+test factory_connection::tests::issue204_factory_binding_rejects_malformed_and_nil_values_without_echoing_input ... ok
+test factory_connection::tests::issue204_factory_binding_retains_the_exact_connection ... ok
+test planned_attempts::tests::issue224_explicit_attempt_policy_uses_the_existing_ceiling ... ok
+test planned_attempts::tests::issue224_invalid_attempt_policy_is_rejected_without_echoing_input ... ok
+test planned_attempts::tests::issue224_omitted_attempt_policy_preserves_legacy_shape ... ok
+test planning_cost::tests::issue79_cost_allocations_preserve_small_defaults_and_boundaries ... ok
+test planning_cost::tests::issue79_cost_rejects_overflow_impossible_splits_and_unknown_strategies ... ok
+test planning_cost::tests::issue79_policy_validates_every_strategy_without_rewriting_json ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_grant_rejects_missing_or_conflated_generations ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_rejects_duplicate_native_fields_in_literal_bytes ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_rejects_foreign_or_falsely_completed_content ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_requires_complete_native_shape_and_safe_relative_paths ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_validates_exact_bytes_without_rewriting ... ok
+test tests::mission_context_wire_shape_contains_only_scoped_source_linkage ... ok
+test tests::portable_paths_and_write_scopes_have_one_shared_grammar ... ok
+test tests::status_serialization_is_stable ... ok
+test workspace_connections::tests::setup_progress_is_not_terminal_or_authenticated_readiness ... ok
+test workspace_connections::tests::workspace_setup_is_a_fixed_native_surface_not_remote_shell ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_gateways-c6538f2b10b99670.exe)
+
+running 6 tests
+test tests::gateways_do_not_expose_internal_database_shapes ... ok
+test tests::issue224_gateway_planning_rejects_malformed_attempts_without_defaulting ... ok
+test tests::issue224_mcp_creation_preserves_omission_and_forwards_explicit_attempts ... ok
+test tests::issue224_mcp_schema_exposes_optional_native_attempt_bounds ... ok
+test tests::issue224_nonplanning_mcp_actions_reject_attempt_fields_before_api_calls ... ok
+test tests::protocol_versions_fail_closed ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\bin\crony-a2a.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_a2a-3a30d90d63a5fb72.exe)
+
+running 2 tests
+test tests::issue224_a2a_creation_keeps_legacy_shape_and_forwards_attempt_choice ... ok
+test tests::issue224_a2a_invalid_or_postplanning_attempt_fields_fail_before_api_calls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\bin\crony-acp.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_acp-321beb933fab802e.exe)
+
+running 2 tests
+test tests::issue224_acp_creation_keeps_legacy_shape_and_forwards_attempt_choice ... ok
+test tests::issue224_acp_invalid_or_postplanning_attempt_fields_leave_sessions_unchanged ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\bin\crony-mcp.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_mcp-70ccde5e13f97f71.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_protocol-f7b7988e774204f9.exe)
+
+running 10 tests
+test tests::durable_control_message_accepts_the_legacy_wire_shape ... ok
+test tests::issue224_contract_revisions_reject_nested_attempt_settings ... ok
+test tests::issue224_existing_execution_commands_reject_attempt_changes ... ok
+test tests::issue224_factory_preflight_tasks_preserve_legacy_reads_and_attempt_values ... ok
+test tests::issue224_planning_requests_preserve_omitted_and_explicit_attempt_policy ... ok
+test tests::launch_replay_flag_is_backward_compatible_with_prior_responses ... ok
+test tests::mission_preview_wire_shape_is_only_the_public_graph_summary ... ok
+test tests::verifier_artifact_debug_never_discloses_transferred_bytes ... ok
+test tests::verifier_artifact_reference_preserves_metadata_only_wire_compatibility ... ok
+test tests::verifier_artifact_transfer_is_explicit_in_the_runner_wire_shape ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\main.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_runner-48f9a515e69075ab.exe)
+
+running 215 tests
+test adapter::codex::tests::executes_streams_usage_and_writes_evidence ... ok
+test adapter::codex::tests::failed_turn_returns_failed_exit_with_evidence ... ok
+test adapter::codex::tests::forwards_live_steering_to_the_active_turn ... ok
+test adapter::codex::tests::installed_codex_reports_full_capabilities ... ok
+test adapter::codex::tests::interrupts_then_resumes_the_same_session_and_workspace ... ok
+test adapter::codex::tests::stop_is_graceful_and_evidenced ... ok
+test adapter::codex::tests::unavailable_codex_reports_explicit_capabilities ... ok
+test adapter::codex::tests::usage_notifications_are_deduplicated_and_scoped_to_the_active_turn ... ok
+test adapter::connection::tests::native_auth_and_catalog_parsing_fail_closed ... ok
+test adapter::connection::tests::native_claude_code_bridge_binds_prompt_and_adopts_persisted_auth ... ok
+test adapter::connection::tests::native_claude_rejects_foreign_prompt_input_without_writing_it ... ok
+test adapter::connection::tests::native_code_input_is_bounded_and_cleared_on_cancellation ... ok
+test adapter::connection::tests::native_codex_device_login_and_inspection_never_send_a_turn ... ok
+test adapter::connection::tests::native_copilot_device_login_uses_same_empty_profile_and_no_sessions ... ok
+test adapter::connection::tests::native_copilot_home_is_not_its_per_worktree_session_filesystem ... ok
+test adapter::connection::tests::native_copilot_never_falls_back_to_path_or_a_fixture_as_readiness ... ok
+test adapter::connection::tests::native_login_instructions_allow_only_native_urls_and_safe_codes ... ok
+test adapter::connection::tests::native_missing_install_is_not_ready ... ok
+test adapter::connection::tests::native_profile_constructor_is_lazy_and_rejects_overlapping_storage ... ok
+test adapter::connection::tests::native_profile_environment_is_shared_by_probe_execute_and_resume ... ok
+test adapter::connection::tests::native_protocol_reader_bounds_before_allocating_untrusted_lines ... ok
+test adapter::connection::tests::native_ready_mixed_catalog_advertises_only_usable_models ... ok
+test adapter::connection::tests::native_ready_preserves_enabled_and_policy_absent_native_catalogs ... ok
+test adapter::connection::tests::native_ready_rejects_disabled_or_unknown_policy_only_catalogs ... ok
+test adapter::connection::tests::native_system_sign_in_and_expired_inspection_spawn_nothing ... ok
+test adapter::copilot::stopped_evidence::tests::issue211_native_history_and_account_bounds_fail_closed ... ok
+test adapter::copilot::stopped_evidence::tests::issue211_native_history_receipt_is_redacted_and_never_claims_provider_completion ... ok
+test adapter::copilot::stopped_evidence::tests::issue211_native_history_rejects_foreign_missing_or_repeated_identity ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_enforces_total_history_bytes_and_page_limit ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_http_and_websocket_hooks_deny_without_downstream_contact ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_rechecks_account_after_history_without_fallback ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_rejects_malformed_expired_duplicate_and_oversize_pages ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_rejects_unpinned_runtime_before_history_or_auth_reads ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_session_not_found_has_no_resume_or_send_fallback ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_timeline_not_found_has_no_automatic_fallback ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_uses_only_fixed_paginated_reads ... ok
+test adapter::copilot::tests::copilot_cli_does_not_inherit_common_credential_environment ... ok
+test adapter::copilot::tests::fixture_exposes_every_model_and_policy_state ... ok
+test adapter::copilot::tests::fixture_runs_selected_model_and_emits_evidence ... ok
+test adapter::copilot::tests::local_cli_launch_preserves_runtime_and_sandbox_policy ... ok
+test adapter::copilot::tests::native_managed_permissions_never_pre_authorize_shell ... ok
+test adapter::copilot::tests::permission_handler_requires_decisions_for_every_exception_class ... ok
+test adapter::copilot::tests::permission_policy_is_scoped_to_the_worktree ... ok
+test adapter::copilot::tests::sandbox_denies_the_user_profile_and_sensitive_stores ... ok
+test adapter::copilot::tests::tool_activity_signature_tracks_arguments_without_exposing_them ... ok
+test adapter::copilot::tests::typed_directory_tool_is_idempotent_and_cannot_expand_authority ... ok
+test adapter::copilot::tests::typed_directory_tool_rejects_relative_and_absolute_symlink_paths ... ok
+test adapter::copilot::tests::unverified_runtime_versions_do_not_advertise_native_filesystem_support ... ok
+test adapter::copilot_fs::tests::all_operations_reject_linked_paths_and_protect_roots ... ok
+test adapter::copilot_fs::tests::dangling_symlinks_cannot_create_external_files ... ok
+test adapter::copilot_fs::tests::file_modes_reject_privilege_bits_and_invalid_values ... ok
+test adapter::copilot_fs::tests::filesystem_provider_contains_reads_writes_and_renames ... ok
+test adapter::copilot_fs::tests::hard_links_cannot_mutate_external_files ... ok
+test adapter::copilot_fs::tests::namespace_spelling_does_not_authorize_another_root_or_device ... ok
+test adapter::copilot_fs::tests::native_windows_namespace_paths_read_the_same_capability_scoped_file ... ok
+test adapter::copilot_fs::tests::native_writes_obey_the_persisted_task_scope ... ok
+test adapter::copilot_fs::tests::worktree_directory_resolution_keeps_native_state_authority_separate ... ok
+test adapter::copilot_fs::tests::worktree_directory_resolution_rejects_state_nested_under_workspace ... ok
+test adapter::external::tests::adapter_drop_during_runner_shutdown_kills_the_owned_scope ... ok
+test adapter::external::tests::availability_probe_cleans_descendants_after_root_exit ... ok
+test adapter::external::tests::availability_probe_owns_and_times_out_the_complete_scope ... ok
+test adapter::external::tests::claude_and_opencode_produce_equivalent_evidence ... ok
+test adapter::external::tests::claude_error_and_malformed_results_cannot_complete ... ok
+test adapter::external::tests::claude_permission_bridge_auto_allows_only_contained_worktree_path ... ok
+test adapter::external::tests::claude_permission_bridge_denies_rejection_and_expiry ... ok
+test adapter::external::tests::claude_permission_bridge_suspends_and_applies_one_matching_approval ... ok
+test adapter::external::tests::claude_permission_frame_preserves_provider_context ... ok
+test adapter::external::tests::claude_permission_response_write_failure_fails_provider ... ok
+test adapter::external::tests::claude_resume_session_id_cannot_be_parsed_as_a_flag ... ok
+test adapter::external::tests::claude_runs_without_user_plugins_mcp_or_browser_integrations ... ok
+test adapter::external::tests::external_interrupt_removes_stubborn_process_tree ... ok
+test adapter::external::tests::external_stop_removes_process_tree_after_grandchild_already_exited ... ok
+test adapter::external::tests::initialization_is_preempted_by_stop_interrupt_and_hard_breaker ... ok
+test adapter::external::tests::opencode_runs_without_external_plugins ... ok
+test adapter::external::tests::repeated_stop_is_bounded_and_reports_one_terminal_result ... ok
+test adapter::external::tests::root_exit_is_observed_without_waiting_for_inherited_pipe_eof ... ok
+test adapter::external::tests::spawn_setup_failure_retains_scope_until_verified ... ok
+test adapter::external::tests::stop_preempts_a_blocked_protocol_write ... ok
+test adapter::external::tests::terminal_result_is_drained_after_root_exit_before_inherited_pipe_eof ... ok
+test adapter::external::tests::verification_failure_reports_uncertainty_once_and_retries_owned_cleanup ... ok
+test adapter::process_tree::tests::root_query_failure_keeps_the_owned_scope_for_verified_cleanup ... ok
+test adapter::process_tree::tests::stubborn_tree_is_removed_idempotently_without_killing_unrelated_process ... ok
+test adapter::process_tree::tests::termination_handles_a_descendant_that_already_exited ... ok
+test adapter::process_tree::tests::verification_failure_keeps_the_owned_scope_for_retry ... ok
+test adapter::tests::capabilities_are_explicit ... ok
+test adapter::tests::fake_adapter_passes_spawn_stream_steer_and_artifact_contract ... ok
+test adapter::tests::fake_adapter_passes_stop_contract ... ok
+test adapter::tests::unsupported_features_return_typed_errors ... ok
+test connections::github::tests::github_repository_choice_normalizes_case_without_changing_id_or_branch ... ok
+test connections::github::tests::personal_scope_removes_machine_tokens_without_changing_global_login ... ok
+test connections::github::tests::repository_and_device_instruction_parsing_never_accept_shell_or_token_text ... ok
+test connections::integration_tests::native_fixture_personal_github_profiles_and_login_replay_survive_restart ... ok
+test connections::integration_tests::native_fixture_ready_ack_refresh_rejection_and_old_run_pins_survive_restart ... ok
+test connections::process::tests::setup_reader_bounds_unterminated_lines_and_never_retains_diagnostics ... ok
+test connections::storage::tests::browser_paths_cannot_use_traversal_or_windows_device_names ... ok
+test connections::storage::tests::canonical_roots_keep_native_workspace_path_representation ... ok
+test connections::storage::tests::private_root_cannot_hide_inside_a_source_checkout ... ok
+test connections::storage::tests::registry_replacement_is_exact_and_rejects_corrupt_or_escaping_files ... ok
+test connections::storage::tests::windows_private_root_primary_path_enforces_acl ... ok
+test connections::tests::branch_refresh_keeps_old_accepted_pin_and_fences_older_ready_ack ... ok
+test connections::tests::completed_auth_check_is_terminal_and_source_survives_later_agent_failure ... ok
+test connections::tests::connection_ready_requires_exact_server_ack_and_survives_registry_roundtrip ... ok
+test connections::tests::installed_executable_and_native_account_are_independent_choices ... ok
+test connections::tests::late_ack_recognizes_server_committed_history_without_reselecting_old_profile ... ok
+test connections::tests::native_code_cannot_target_non_claude_or_expired_login_and_is_not_serialized ... ok
+test connections::tests::native_code_is_prompt_bound_one_shot_and_exact_retries_never_feed_another_prompt ... ok
+test connections::tests::operation_replay_preserves_native_login_receipt_and_rejects_changed_scope ... ok
+test connections::tests::receipt_cap_live_duplicate_and_conflicting_commands_do_not_compact_or_restart ... ok
+test connections::tests::receipt_cap_preserves_live_unacked_unfinished_and_unexpired_operations ... ok
+test connections::tests::receipt_cap_restart_preserves_current_source_and_all_retained_receipts ... ok
+test connections::tests::receipt_cap_rollover_prunes_old_terminal_acknowledged_entries_without_reset ... ok
+test connections::tests::rejected_ready_and_forged_acceptance_are_not_dispatch_authority ... ok
+test connections::tests::saved_native_identity_never_falls_back_to_another_source_or_profile ... ok
+test deliverable::tests::archive_is_deterministic_and_includes_tracked_and_untracked_source ... ok
+test deliverable::tests::commit_form_bundles_validated_branch_when_head_is_detached ... ok
+test deliverable::tests::commit_form_updates_only_the_isolated_branch_after_verification ... ok
+test deliverable::tests::default_export_rejects_changes_outside_task_write_scope ... ok
+test deliverable::tests::git_pathspec_magic_is_rejected_before_staging ... ok
+test deliverable::tests::nested_secret_directories_are_rejected_before_export ... ok
+test deliverable::tests::scoped_archive_preserves_staged_and_unselected_source_exactly ... ok
+test deliverable::tests::scoped_commit_excludes_unselected_committed_changes ... ok
+test deliverable::tests::scoped_commit_preserves_unselected_staged_work ... ok
+test deliverable::tests::scoped_commit_reset_treats_selected_paths_literally ... ok
+test deliverable::tests::secret_like_paths_are_rejected_before_export ... ok
+test deliverable::tests::sensitive_directories_match_at_every_depth ... ok
+test deliverable::tests::verifier_only_export_preserves_post_base_git_modes_and_readonly_source ... ok
+test deliverable::tests::verifier_only_export_preserves_the_existing_head_commit ... ok
+test deliverable::tests::verifier_only_export_rejects_unselected_preserved_head_changes ... ok
+test retained_provider_receipt_tests::issue211_existing_provider_artifact_reference_remains_a_transfer_not_a_collection ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_ack_identity_requires_new_run_role_digest_and_stored_id ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_capability_and_workspace_only_route_are_wired ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_grant_fences_command_mode_run_and_checkpoint_scope ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_is_excluded_from_export_without_changing_source_bytes ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_is_not_implicitly_collected_without_a_grant ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_missing_ack_withholds_artifact_checks_and_retries_are_identical ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_missing_malformed_and_oversized_files_never_upload ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_rejects_wrong_historical_session_model_and_current_checkpoint ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_source_drift_or_identical_file_replacement_is_rejected_at_ack ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_stop_interrupt_and_control_closure_cancel_during_collection ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_upload_is_exact_and_all_current_checks_and_manual_gate_run ... ok
+test source_checkpoint::tests::issue190_blocked_checkpoint_capture_has_an_overall_deadline ... ok
+test source_checkpoint::tests::issue190_cancelled_exit_checkpoints_before_terminal_event ... ok
+test source_checkpoint::tests::issue190_checkpoint_binds_changed_policy_and_untracked_bytes ... ok
+test source_checkpoint::tests::issue190_checkpoint_read_limits_preserve_source ... ok
+test source_checkpoint::tests::issue190_checkpoint_rejects_detached_or_replaced_branch_and_source_base ... ok
+test source_checkpoint::tests::issue190_cleanup_commit_rejects_a_late_retention_acknowledgment ... ok
+test source_checkpoint::tests::issue190_failed_exit_checkpoints_before_terminal_event ... ok
+test source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal ... ok
+test source_checkpoint::tests::issue190_late_stop_cancels_running_verifier_without_post_verifier_seal ... ok
+test source_checkpoint::tests::issue190_quarantine_never_mints_or_downgrades_a_checkpoint ... ok
+test source_checkpoint::tests::issue190_runtime_error_retains_without_checkpoint_proof ... ok
+test source_checkpoint::tests::issue190_soft_directive_keeps_normal_verification ... ok
+test source_checkpoint::tests::issue190_stop_wins_over_provider_completion_and_seals_source ... ok
+test source_checkpoint::tests::issue190_stopped_artifact_callback_cannot_fail_an_unreadable_local_artifact ... ok
+test source_checkpoint::tests::issue190_suspend_wins_over_provider_completion_and_seals_source ... ok
+test source_checkpoint::tests::issue190_uncertain_teardown_retains_without_checkpoint_proof ... ok
+test source_checkpoint::tests::issue190_unpinned_legacy_source_retains_without_checkpoint_proof ... ok
+test stopped_session_probe_tests::issue211_native_stopped_session_read_without_inference ... ignored, requires an explicit owned stopped-session probe file; never starts inference
+test tests::active_secrets_schedule_a_bounded_provider_lifetime ... ok
+test tests::buffered_run_events_rebind_epoch_without_changing_assignment_fence ... ok
+test tests::checkpoint_verifier_cancellation_does_not_quarantine_own_commit ... ok
+test tests::checkpoint_verifier_cancellation_still_quarantines_unexpected_head ... ok
+test tests::checkpoint_verifier_exports_uncommitted_source_without_a_provider ... ok
+test tests::checkpoint_verifier_rejects_head_drift_after_its_owned_commit ... ok
+test tests::checkpoint_verifier_retains_own_commit_after_ack_failure ... ok
+test tests::expired_secrets_fail_before_provider_start ... ok
+test tests::ordinary_verifier_still_rejects_an_uncommitted_replacement_tree ... ok
+test tests::teardown_fail_closed_execute_assignment_preserves_exact_workspace_until_verified ... ok
+test tests::teardown_fail_closed_preserves_workspace_without_false_terminal_claim ... ok
+test tests::verifier_artifact_transfer_bounds_encoded_decoded_and_declared_size ... ok
+test tests::verifier_artifact_transfer_cancellation_cleans_all_snapshots ... ok
+test tests::verifier_artifact_transfer_cancellation_during_upload_cannot_accept_completion ... ok
+test tests::verifier_artifact_transfer_cleanup_error_blocks_acceptance ... ok
+test tests::verifier_artifact_transfer_decodes_inline_bytes ... ok
+test tests::verifier_artifact_transfer_early_error_preserves_prepared_workspace ... ok
+test tests::verifier_artifact_transfer_fingerprint_mismatch_is_quarantined ... ok
+test tests::verifier_artifact_transfer_held_upload_artifact_error_keeps_matching_checkpoint_trusted ... ok
+test tests::verifier_artifact_transfer_held_upload_head_drift_is_quarantined ... ok
+test tests::verifier_artifact_transfer_held_upload_head_drift_with_manual_gate_is_quarantined ... ok
+test tests::verifier_artifact_transfer_held_upload_source_drift_is_quarantined ... ok
+test tests::verifier_artifact_transfer_held_upload_source_drift_with_manual_gate_is_quarantined ... ok
+test tests::verifier_artifact_transfer_held_upload_unchanged_checkpoint_is_trusted ... ok
+test tests::verifier_artifact_transfer_inline_assignment_preserves_completed_source ... ok
+test tests::verifier_artifact_transfer_keeps_exact_source_and_baseline ... ok
+test tests::verifier_artifact_transfer_provider_admission_failure_preserves_workspace ... ok
+test tests::verifier_artifact_transfer_quarantine_flag_is_explicit_not_text_derived ... ok
+test tests::verifier_artifact_transfer_rejects_tampered_hash ... ok
+test tests::verifier_artifact_transfer_stages_contained_legacy_bytes_privately ... ok
+test tests::workspace_setup_capability_requires_storage_and_native_process_ownership ... ok
+test verifier::tests::cancelled_verifier_command_terminates_its_owned_process_tree ... ok
+test verifier::tests::command_failure_records_bounded_resolution_evidence ... ok
+test verifier::tests::explicit_paths_are_canonicalized_and_directory_targets_are_rejected ... ok
+test verifier::tests::matrix_checks_pass_and_missing_or_escaping_files_fail ... ok
+test verifier::tests::missing_programs_fail_closed_without_searching_the_workspace ... ok
+test verifier::tests::windows_batch_launch_does_not_inject_malicious_arguments ... ok
+test verifier::tests::windows_installed_npm_shim_runs_incident_command_policy ... ok
+test verifier::tests::windows_pathext_resolves_package_manager_and_direct_executable_names ... ok
+test workspace::tests::fingerprint_and_legacy_search_never_traverse_windows_junctions ... ok
+test workspace::tests::fingerprint_binds_windows_readonly_modes_and_snapshots_preserve_them ... ok
+test workspace::tests::fingerprint_covers_tracked_untracked_and_ignored_bytes ... ok
+test workspace::tests::fingerprint_entry_and_snapshot_byte_limits_fail_without_source_mutation ... ok
+test workspace::tests::fingerprint_is_reproducible_and_excludes_only_root_git_control ... ok
+test workspace::tests::github_remote_urls_normalize_to_repository_identity ... ok
+test workspace::tests::initialize_pinned_retains_commit_after_ref_advances_or_disappears ... ok
+test workspace::tests::legacy_artifact_search_is_bounded_by_name_size_and_digest ... ok
+test workspace::tests::local_repository_identity_is_stable_and_contract_safe ... ok
+test workspace::tests::occupied_or_tampered_target_never_falls_back_to_the_source_checkout ... ok
+test workspace::tests::path_and_ref_guards_fail_closed ... ok
+test workspace::tests::pinned_snapshots_share_identity_lock_and_preserved_dirty_worktrees ... ok
+test workspace::tests::pinned_sources_reject_invalid_unavailable_and_non_commit_ids ... ok
+test workspace::tests::provisions_distinct_worktrees_without_touching_source_checkout ... ok
+test workspace::tests::removes_only_clean_integrated_worktrees ... ok
+test workspace::tests::source_identity_requires_the_exact_resolved_commit ... ok
+test workspace::tests::unpinned_worktrees_follow_the_live_ref_while_pinned_and_resumed_work_stays_fixed ... ok
+test workspace::tests::verifier_snapshot_is_physical_isolated_and_excludes_git_control ... ok
+
+test result: ok. 214 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 386.32s
+
+     Running unittests src\main.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_server-7fe8f0a07470b1a3.exe)
+
+running 127 tests
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_cannot_enter_ordinary_or_missing_grant_path ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_checks_native_content_not_only_its_declared_digest ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_rejects_foreign_new_run_task_or_corp ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_rejects_relabelled_provenance_and_false_completion ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_signature_binds_historical_and_current_identity ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_signs_current_collection_and_preserves_exact_bytes ... ok
+test artifacts::tests::artifact_file_names_reject_content_disposition_injection ... ok
+test artifacts::tests::bounded_artifact_stream_rejects_size_or_range_mismatch_before_polling ... ok
+test artifacts::tests::bounded_artifact_stream_rejects_understated_body_without_draining ... ok
+test artifacts::tests::bounded_artifact_stream_requires_exact_length_and_eof ... ok
+test artifacts::tests::bounded_verified_read_preserves_signature_retention_digest_and_media_checks ... ok
+test artifacts::tests::bounded_verified_read_rejects_oversized_object_with_small_signed_metadata ... ok
+test artifacts::tests::bounded_verified_read_round_trips_small_artifact_without_limiting_downloads ... ok
+test artifacts::tests::local_store_round_trips_verified_content_and_provenance ... ok
+test artifacts::tests::media_validation_rejects_mismatches ... ok
+test artifacts::tests::production_requires_private_s3_storage ... ok
+test artifacts::tests::source_deliverable_role_and_exact_linkage_are_signed ... ok
+test artifacts::tests::staged_objects_finalize_idempotently_and_cleanup_safely ... ok
+test auth::tests::role_matrix_is_fail_closed ... ok
+test dependency_source::tests::an_invalid_later_file_never_returns_a_partial_handoff ... ok
+test dependency_source::tests::base64_rejects_noncanonical_padding_bits_alphabets_and_whitespace ... ok
+test dependency_source::tests::changed_paths_are_an_additional_exact_unordered_constraint ... ok
+test dependency_source::tests::deleted_renamed_unmerged_and_nonregular_changes_are_rejected ... ok
+test dependency_source::tests::duplicate_fields_are_rejected_including_equal_values_and_nulls ... ok
+test dependency_source::tests::empty_files_bom_and_whitespace_are_not_omitted_or_normalized ... ok
+test dependency_source::tests::envelope_and_file_count_caps_precede_unbounded_parsing ... ok
+test dependency_source::tests::every_export_field_is_required_even_nullable_metadata ... ok
+test dependency_source::tests::expectations_require_immutable_ids_and_a_nonempty_exact_set ... ok
+test dependency_source::tests::extra_missing_duplicate_and_case_aliased_files_fail ... ok
+test dependency_source::tests::file_hash_and_actual_decoded_byte_count_are_verified ... ok
+test dependency_source::tests::full_sha256_git_object_ids_are_supported ... ok
+test dependency_source::tests::invalid_utf8_and_utf8_binary_controls_fail_with_correct_hashes ... ok
+test dependency_source::tests::mime_must_match_a_supported_text_extension_and_content ... ok
+test dependency_source::tests::multiple_handoffs_are_complete_lossless_and_sorted ... ok
+test dependency_source::tests::optional_source_record_binds_identity_mime_and_exact_envelope ... ok
+test dependency_source::tests::patch_integrity_and_typed_set_metadata_are_fail_closed ... ok
+test dependency_source::tests::per_file_encoded_decoded_and_declared_sizes_are_bounded ... ok
+test dependency_source::tests::planner_preflight_rejects_the_same_path_dialect_before_provider_work ... ok
+test dependency_source::tests::redundant_patch_has_independent_encoded_and_decoded_caps ... ok
+test dependency_source::tests::regular_modes_and_non_deleted_export_statuses_are_supported ... ok
+test dependency_source::tests::schema_form_base_and_verifier_are_exact ... ok
+test dependency_source::tests::total_prompt_cap_includes_paths_hashes_framing_and_utf8_bytes ... ok
+test dependency_source::tests::traversal_git_internal_secret_and_nonportable_paths_are_rejected ... ok
+test dependency_source::tests::unknown_fields_positional_arrays_trailing_data_and_wrong_types_fail ... ok
+test factory_connection_tests::issue204_handler_bound_only_preflight_and_materialization ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_post_claim_readiness_conflict_releases_exact_claim ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_post_claim_source_conflict_releases_exact_claim ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_stale_claim_conflicts_do_not_release_current_claim ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue79_claim_handler_and_preflight_reject_cost_without_durable_effects ... ignored, requires explicitly owned SQLx maintenance database
+test planning::tests::deterministic_verification_strategy_drops_provider_model_settings ... ok
+test planning::tests::issue224_attempt_override_rejects_out_of_bounds_values ... ok
+test planning::tests::issue224_attempt_override_sets_every_task_without_changing_other_plan_fields ... ok
+test planning::tests::issue224_fixture_strategies_preserve_default_one_attempt ... ok
+test planning::tests::issue224_ordinary_strategies_preserve_default_two_attempts ... ok
+test planning::tests::issue79_every_registered_strategy_uses_shared_cost_allocation ... ok
+test planning::tests::ordered_candidates_exclude_retired_agents ... ok
+test planning::tests::parallel_strategy_scopes_model_settings_to_matching_adapters ... ok
+test planning::tests::rejects_cycles_depth_budget_and_retry_violations ... ok
+test planning::tests::single_strategy_enforces_requested_adapter ... ok
+test planning::tests::single_strategy_preserves_typed_deliverable_and_rejects_unsafe_scope ... ok
+test planning::tests::strategies_are_replaceable_and_deterministic ... ok
+test planning::tests::studio_handoffs_prioritize_decisions_and_delegate_mechanical_checks ... ok
+test planning::tests::studio_swarm_pins_model_and_reasoning_on_every_task ... ok
+test planning::tests::studio_swarm_prefers_staffing_roles_and_reserves_them_before_fallback ... ok
+test planning::tests::studio_swarm_preserves_graph_and_budget_bounds ... ok
+test planning::tests::studio_swarm_rejects_duplicate_manager_retired_or_offline_workers ... ok
+test planning::tests::studio_swarm_rejects_insufficient_or_mixed_provider_workers ... ok
+test planning::tests::studio_swarm_rejects_non_copilot_adapter_requests ... ok
+test planning::tests::studio_swarm_rejects_unsafe_handoff_roots ... ok
+test planning::tests::studio_swarm_scopes_role_handoffs_and_preserves_final_deliverable ... ok
+test planning::tests::studio_swarm_splits_budgets_and_bounds_attempts ... ok
+test planning::tests::studio_swarm_uses_three_distinct_copilot_roots_and_gameplay_join ... ok
+test planning::tests::verifier_policies_reject_unsafe_paths_commands_and_gates ... ok
+test publication_checkpoint_permission_tests::owned_failure_reporting_does_not_grant_effect_permission ... ok
+test secrets::tests::ciphertext_is_bound_to_corp_secret_and_name ... ok
+test staffing::tests::empty_corp_gets_only_the_required_roles ... ok
+test staffing::tests::only_idle_pinned_same_corp_role_is_reused ... ok
+test staffing::tests::studio_never_falls_back_to_another_provider ... ok
+test tests::artifact_content_disposition_encodes_untrusted_file_names ... ok
+test tests::checkpoint_command_rejects_cross_corp_and_cross_run_payloads ... ok
+test tests::checkpoint_denial_retires_only_the_command_and_store_errors_remain_retryable ... ok
+test tests::checkpoint_verification_requires_explicit_runner_support ... ok
+test tests::durable_verifier_references_reject_embedded_data_bad_digests_and_oversized_transfers ... ok
+test tests::factory_materialization_failure_detail_is_bounded_single_line_text ... ok
+test tests::factory_review_is_required_for_the_outcome_not_each_internal_handoff ... ok
+test tests::factory_review_preserves_explicit_internal_policy_and_reviews_provider_ancestry ... ok
+test tests::issue171_epoch_loss_during_commands_cannot_wake_scheduling ... ok
+test tests::issue171_failed_command_handling_cannot_wake_scheduling ... ok
+test tests::issue171_failed_or_superseded_finalization_cannot_wake_scheduling ... ok
+test tests::issue171_reconnect_wakeup_waits_for_finalization_then_commands ... ok
+test tests::issue171_tick_bounds_and_rotates_unique_current_ready_corps ... ok
+test tests::issue171_tick_continues_other_corps_after_a_scheduling_failure ... ok
+test tests::issue171_tick_skips_unready_and_rechecks_corp_epoch_snapshots ... ok
+test tests::issue171_ticks_retry_failed_commands_or_scheduling_without_new_events ... ok
+test tests::issue171_unready_or_stale_epoch_never_polls_commands_or_scheduler ... ok
+test tests::issue172_all_failing_peers_remain_bounded_and_each_get_a_turn ... ok
+test tests::issue172_corp_batching_does_not_alias_runner_rotation ... ok
+test tests::issue172_epoch_replacement_during_commands_cannot_schedule_or_pin_the_corp ... ok
+test tests::issue172_removed_representative_does_not_reset_other_corps_or_accumulate_state ... ok
+test tests::issue172_repeated_failure_cannot_starve_same_corp_healthy_runner ... ok
+test tests::issue172_snapshot_fencing_skips_a_peer_moved_to_another_corp ... ok
+test tests::issue172_unvisited_singleton_churn_preserves_runner_rotation ... ok
+test tests::issue210_transient_authorization_reads_do_not_terminalize_recovery ... ok
+test tests::issue211_retained_dispatch_binds_exact_provider_free_command ... ok
+test tests::issue211_retained_dispatch_does_not_send_private_upload_binding ... ok
+test tests::issue211_retained_dispatch_requires_its_own_available_capability ... ok
+test tests::issue211_retained_receipt_ack_uses_exact_role_and_digest ... ok
+test tests::issue211_retained_receipt_db_error_is_retryable_but_authority_denial_is_not ... ok
+test tests::issue224_attempt_request_must_match_the_pre_execution_factory_policy ... ok
+test tests::issue224_factory_operation_snapshots_keep_legacy_omission ... ok
+test tests::issue224_planning_input_keeps_the_exact_requested_attempt_allowance ... ok
+test tests::mission_description_is_normalized_and_delivered_to_each_task ... ok
+test tests::mission_preview_and_create_mapping_leave_defaults_to_the_shared_planner ... ok
+test tests::mission_preview_and_create_mapping_preserve_every_request_field ... ok
+test tests::mission_preview_projects_the_actual_plan_without_identity_or_contract_data ... ok
+test tests::mission_source_is_pinned_to_every_planned_task ... ok
+test tests::mission_verification_applies_to_every_terminal_output_even_at_different_depths ... ok
+test tests::model_less_adapter_reports_the_invalid_model_requirement ... ok
+test tests::provider_backed_factory_tasks_require_independent_verification ... ok
+test tests::reconnect_closed_socket_does_not_report_command_delivery ... ok
+test tests::reconnect_dispatch_and_matching_wait_for_successful_finalization ... ok
+test tests::reconnect_failed_or_superseded_finalization_keeps_dispatch_closed ... ok
+test tests::reconnect_preserves_offline_recovery_after_command_ack ... ok
+test tests::reconnect_preserves_pending_recoveries_beyond_one_dispatch_page ... ok
+test tests::reconnect_stale_epoch_cannot_enable_or_deliver_to_replacement_socket ... ok
+test tests::runner_matching_enforces_model_and_reasoning_support ... ok
+test tests::runner_matching_enforces_repository_and_base_ref ... ok
+
+test result: ok. 122 passed; 0 failed; 5 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+     Running unittests src\lib.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_store-0ef051b7be371546.exe)
+
+running 398 tests
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_explicit_operator_cancellation_is_not_reconciled ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_late_journal_failure_rolls_back_reconciliation ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_missing_termination_or_native_budget_proof_never_reconciles ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_native_explicit_stop_cannot_be_overridden ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_newer_factory_event_rejects_stale_projection_proof ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_policy_cancellation_detail_remains_protected ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_quarantined_predecessor_rejects_valid_latest_source ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_reconcile_native_projection_then_verify_same_source ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_reconciliation_and_replay_require_current_recovery_authority ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_reconciliation_binds_version_event_revision_and_checkpoint ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::cancellation_reconciliation::issue206_reconciliation_serializes_actor_demotion ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_broken_or_foreign_correction_parent_and_source_bindings_are_denied ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_corrected_checkpoint_publication_start_preserves_history ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_current_checkpoint_proof_revalidates_all_public_controls ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_current_role_room_and_publisher_authority_are_revalidated ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_erased_checkpoint_markers_cannot_hide_native_suspension ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_explicit_stop_of_authorized_corrected_source_blocks_publication ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_explicit_stop_of_exact_original_suspension_blocks_publication ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_historical_correction_grant_revalidates_all_public_controls ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_native_loop_counters_are_not_a_checkpoint_budget_exemption ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_ordinary_checkpoint_publication_start_renew_replay_preserves_history ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_ordinary_source_only_predecessor_correction_stop_checkpoint_publication_succeeds ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_public_start_renew_forward_and_exact_replay_preserve_history ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_quarantine_of_exact_origin_correction_or_verifier_is_never_exempt ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_start_and_renew_post_allocation_failures_roll_back_every_row ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::correction_publication::issue216_unrelated_checkpoint_child_stop_or_suspension_is_not_exempt ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_budget_incident_cannot_override_native_explicit_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_command_failure_rolls_back_the_entire_authorization ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_dispatch_binds_current_command_source_and_policy ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_dispatch_rechecks_artifact_free_author_role ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_dispatch_rechecks_artifact_free_room_membership ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_dispatch_rejects_foreign_and_stale_commands ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_dispatch_rejects_settled_and_inactive_recoveries ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_explicit_stop_fences_dispatch_budget_exemption_and_retry ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_exported_retry_after_cancellation_preserves_head ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_exported_retry_after_failure_preserves_head ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_missing_provider_artifact_cannot_pass_its_required_check ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_never_reopens_provider_or_changes_reviewed_source ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_preserves_another_active_agent_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_preserves_unrelated_blocks_quarantine_and_loop_stops ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_healthy_history_ignores_only_retrospective_model_budget ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_rechecks_actor_room_and_publisher_credentials ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_rechecks_source_policy_checkpoint_and_quarantine ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_requires_checkpoint_mode_and_native_origin_events ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_requires_ready_unexpired_exact_artifact_metadata ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_review_failure_after_artifact_expiry ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_review_failure_after_role_change ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_review_failure_after_room_revocation ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_review_legacy_upgrade_on_checkpoint ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_review_legacy_upgrade_on_renewal_replay ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_publication_start_renew_replay_preserves_provenance_and_spend ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_reaches_independent_review_without_more_provider_budget ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_requires_native_termination_and_exact_policy ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_retention_binds_export_head_by_mode_without_rewriting_origin ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_retention_reattest_rechecks_role_room_and_claim ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_retention_reattest_rejects_stop_quarantine_and_active_lineage ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_retention_reattests_waiting_run_with_one_replayable_command ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_retention_rejects_unbound_export ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_retention_unclaimed_reconnect_preserves_only_bound_review ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_retry_stays_provider_free_and_old_source_is_fenced ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_unrelated_stop_events_do_not_revoke_budget_recovery ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::issue148_checkpoint_zero_limits_are_not_a_generic_verifier_budget_bypass ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_binding_survives_abandon_and_rejects_replacement ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_does_not_bypass_unjoined_source_signature ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_does_not_override_protected_states_or_explicit_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_preserves_authorized_historical_suspension_and_policy ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_rechecks_native_checkpoint_before_finalize ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_rechecks_policy_before_finalize ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_rechecks_role_before_finalize ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_rechecks_room_before_finalize ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_rechecks_source_before_finalize ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_rejects_missing_malformed_foreign_grants_and_inputs ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_rejects_unrelated_suspension_or_corrupt_historical_authority ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_replays_new_receipt_for_latest_failed_checkpoint ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_requires_a_native_completed_receipt_generation ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_reservation_and_finalization_roll_back_sqlx_failures ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::retained_receipts::issue211_collection_takes_both_native_gates_before_artifact_rows ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_after_failed_checkpoint_correction ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_command_insert_failure_rolls_back_the_full_allocation ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_context_and_current_replay_keep_two_correction_chain ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_cost_spend ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_does_not_reset_exhausted_token_spend ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_fences_current_scope_request_and_pending_command ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_predispatch_failure_keeps_latest_physical_source ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_native_provider_failure_stays_governed_and_bounded ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_current_authority_and_protected_lineage ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rechecks_native_history_and_revision_ledger_bridge ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue221_retry_rejects_missing_and_damaged_prior_and_current_grants ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue224_legacy_verifier_seal_allows_context_revision_retry_and_exact_replay ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue224_legacy_verifier_seal_rejects_contradictory_head_without_mutation ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::correction_retry::issue224_legacy_verifier_seal_requires_matching_fingerprint_and_verifier_grant ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_clamps_to_remaining_rolling_tokens_and_cost ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_command_failure_rolls_back_authority_and_accounting ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_exact_replay_and_changed_request_are_mutation_free ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_provider_usage_consumes_allocation_without_zero_exemption ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_actor_demotion ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_altered_inherited_authority ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_altered_native_checkpoint ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_changed_child_connection ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_changed_factory_policy ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_changed_origin_connection ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_changed_origin_source ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_changed_verification_policy ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_child_explicit_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_child_quarantine ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_child_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_exhausted_actor_cost ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_exhausted_actor_tokens ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_exhausted_corp_cost ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_exhausted_corp_tokens ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_exhausted_mission_cost ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_exhausted_mission_tokens ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_exhausted_provider_attempts ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_live_native_termination ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_missing_budget_incident ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_missing_native_checkpoint ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_missing_native_termination ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_missing_provider_session ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_no_progress ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_non_budget_incident ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_offline_connection ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_origin_explicit_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_origin_quarantine ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_origin_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_repeated_tool ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_room_revocation ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_rejects_unrelated_suspension ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_replay_rechecks_actor_role ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_replay_rechecks_room_membership ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_correction_requires_explicit_current_revision ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_and_replay_reject_damaged_correction_grant ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_and_replay_reject_missing_correction_grant ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_binds_exact_native_command_and_rejects_other_modes ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_actor_demotion ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_altered_checkpoint ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_altered_inherited_authority ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_child_connection ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_child_explicit_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_child_quarantine ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_child_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_factory_policy ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_missing_budget_incident ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_missing_checkpoint ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_missing_termination ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_native_explicit_stop_of_provider_child ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_offline_connection ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_origin_connection ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_origin_explicit_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_origin_quarantine ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_origin_source ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_origin_stop ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_rolling_spend_after_authorization ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_room_revocation ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_unrelated_suspension ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rechecks_verification_policy ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rejects_failed_recovery_without_another_attempt ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rejects_malformed_correction_grant ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rejects_settled_native_command ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_rejects_superseded_generation ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_retains_allocated_attempt_while_database_fences_excess ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_dispatch_serializes_native_factory_block_while_connection_waits ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_initial_correction_resumes_after_failed_checkpoint ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_ordinary_source_correction_retains_healthy_provider_path ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_other_modes_cannot_resume_measured_provider_origin ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_publication_guard_rejects_missing_correction_grant_without_panic ... ignored, requires explicitly owned SQLx maintenance database
+test budget_checkpoint_tests::source_correction::issue210_revised_narrowing_context_distinguishes_correction_from_checkpoint ... ignored, requires explicitly owned SQLx maintenance database
+test budget_revision::tests::finish_scope_containment_is_fail_closed ... ok
+test budget_revision::tests::mission_budget_ceiling_migration_preserves_graph_shape_bounds ... ok
+test budget_revision::tests::proposal_normalization_requires_a_monotonic_bounded_increase ... ok
+test budget_revision::tests::recovery_and_finish_scope_token_ceilings_are_distinct ... ok
+test checkpoint_correction::history::tests::issue224_legacy_verifier_seal_distinguishes_absence_from_invalid_explicit_head ... ok
+test checkpoint_correction::history::tests::issue224_legacy_verifier_seal_requires_verifier_mode_and_exact_guard ... ok
+test checkpoint_publication::tests::checkpoint_publication_provenance_cannot_be_missing_changed_or_forged ... ok
+test checkpoint_publication::tests::legacy_checkpoint_provenance_upgrades_without_weakening_current_proof ... ok
+test contract_revision::tests::revised_descriptions_replace_the_prior_generated_prefix ... ok
+test factory_attempt_policy::tests::issue224_factory_request_cannot_substitute_omit_or_add_attempt_authority ... ok
+test factory_attempt_policy::tests::issue224_factory_request_retains_legacy_omission_and_exact_explicit_policy ... ok
+test factory_controller::polling_tests::polling_observations_are_bounded_and_monotonic ... ok
+test factory_controller::polling_tests::retry_metadata_cannot_be_ambiguous_or_unbounded ... ok
+test factory_controller::polling_tests::unexpired_wait_survives_clear_shorten_and_legacy_updates ... ok
+test factory_recovery_loss_tests::issue183_acked_source_correction_loss_terminalizes_exact_recovery ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_cleanup_after_missing_started_report_restores_bound_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_foreign_and_replaced_recovery_bindings_are_not_adopted ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_item_gate_precedes_loss_rows ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_loss_rolls_back_when_factory_transition_cannot_commit ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_native_cleanup_restores_exact_source_correction_context ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_next_native_recovery_keeps_the_cleaned_lost_source_binding ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_ordinary_provider_loss_is_not_a_verification_recovery ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_pending_command_and_accepted_claim_are_not_lost ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_publication_gate_precedes_loss_rows ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_source_correction_grace_expiry_is_atomic_and_epoch_fenced ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_terminal_factory_outcomes_are_not_downgraded ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue183_verifier_only_loss_keeps_original_cleanup_seal ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_changed_agent_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_changed_authorized_fingerprint_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_changed_runner_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_changed_source_commit_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_changed_source_ref_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_changed_source_repository_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_changed_workspace_root_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_completed_receipt_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_foreign_factory_item_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_foreign_receipt_corp_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_foreign_receipt_mission_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_foreign_receipt_task_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_missing_receipt_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_missing_replacement_identity_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_missing_resume_parent_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_missing_source_tuple_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_quarantine_blocks_later_preserved_report_and_first_fingerprint ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_quarantine_keeps_existing_fingerprint_after_later_preserved_report ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_replaced_receipt_identity_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_wrong_receipt_mode_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_recovery_loss_tests::issue186_wrong_source_run_cannot_backfill_missing_assignment ... ignored, requires explicitly owned SQLx maintenance database
+test factory_run_failure::tests::issue169_active_descendant_rejects_parent_resume_without_lineage_lock_wait ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_all_five_lifecycle_events_take_publication_gate_before_rows ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_all_five_lifecycle_events_take_recovery_gate_before_rows ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_artifact_failure_releases_native_retry ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_keeps_attached_exact_run_cleanup ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_preserves_later_terminal_assignment ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_preserves_other_pointer ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_preserves_other_provisioning ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_preserves_other_running ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_preserves_other_starting ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_preserves_other_verifying ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_preserves_other_waiting_for_approval ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_preserves_other_waiting_for_input ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_detached_review_rejects_ambiguous_assignment_order ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_duplicate_late_and_foreign_callbacks_have_no_effect ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_empty_diagnostics_still_persist_a_useful_block ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_exhausted_failure_is_atomic_scoped_and_preserves_evidence ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_failure_rolls_back_all_state_and_events_on_reconciliation_error ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_failures_preserve_accepted_outcomes_and_unrelated_blocks ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_hard_breaker_failure_is_not_retried_or_resumable ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_lease_chain_rejects_changed_authority_or_unproven_revisions ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_native_lease_renewal_preserves_exact_failure_origin_through_resume ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_native_resume_does_not_clear_stale_version_or_policy_block ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_native_resume_joins_existing_gate_order ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_native_resume_preserves_authorization_budgets_and_protected_outcomes ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_native_resume_requires_exact_origin_run_and_preserves_other_failure ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_native_same_run_resume_reaches_verified_without_rewriting_history ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_nonfactory_and_foreign_factory_are_untouched ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_only_factory_lifecycle_events_take_factory_gates ... ok
+test factory_run_failure::tests::issue169_output_and_usage_never_wait_on_factory_gates ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_resume_rejects_accounted_budget_exhaustion ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_resumed_manual_review_retains_authority_and_recovery_lock_order ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_resumed_review_cannot_clear_policy_block_and_obeys_publication_gate ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_retryable_failure_retains_running_factory_and_retry_budget ... ignored, requires the approved isolated issue169 SQLx loader
+test factory_run_failure::tests::issue169_superseded_active_callback_cannot_fail_newer_assignment ... ignored, requires the approved isolated issue169 SQLx loader
+test finished_review_tests::issue265_finished_review_survives_grace_expiry_with_epoch_fencing ... ignored, requires explicitly owned SQLx maintenance database
+test finished_review_tests::issue265_finished_review_survives_reconnect_and_keeps_independent_decision ... ignored, requires explicitly owned SQLx maintenance database
+test finished_review_tests::issue265_incomplete_or_unsafe_review_still_follows_native_loss ... ignored, requires explicitly owned SQLx maintenance database
+test finished_review_tests::issue265_later_teardown_uncertainty_prevents_finished_review_exception ... ignored, requires explicitly owned SQLx maintenance database
+test mission_context_tests::issue199_context_denies_unknown_and_nonhuman_actors ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_context_is_scoped_to_corp_and_mission_room ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_context_rechecks_membership_removal ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_context_rechecks_role_removal ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_context_returns_none_for_absent_mission ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_cross_corp_factory_link_is_none_not_direct ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_current_human_operator_roles_read_both_origins ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_direct_and_factory_context_deny_guests_and_spectators ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_direct_context_uses_native_creation_and_exact_fields ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_factory_context_excludes_private_metadata ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_factory_context_uses_native_materialization_and_exact_fields ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test mission_context_tests::issue199_factory_origin_survives_501_newer_snapshot_items ... ignored, requires the approved isolated SQLx loader with filter issue199_
+test publication::tests::github_pull_request_urls_compare_repository_case_insensitively ... ok
+test publication::tests::only_suspend_ancestors_are_treated_as_recovered_for_publication ... ok
+test publication::tests::publication_branch_validation_matches_git_rejections ... ok
+test publication::tests::publication_failure_is_single_line_and_bounded ... ok
+test publication::tests::publication_recovery_selection_follows_the_selected_resume_lineage ... ok
+test publication::tests::publication_resume_lineage_fails_closed_on_missing_or_cyclic_parents ... ok
+test publication::tests::publication_source_provenance_is_backward_compatible_and_versioned ... ok
+test publication::tests::publication_source_revision_links_completed_recovery ... ok
+test publication::tests::publication_states_are_monotonic ... ok
+test publication::tests::publisher_credential_touch_locks_for_update_without_widening_authentication ... ok
+test staffing::tests::issue171_all_other_native_active_run_statuses_block_reactivation ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_committed_reactivation_survives_transient_scheduling_failure ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_concurrent_cancellation_or_assignment_is_not_overwritten ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_concurrent_reconciliation_consumes_one_retirement_once ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_consumed_reactivation_key_cannot_clear_retirement ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_control_leases_and_all_queued_message_states_are_preserved ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_event_failure_rolls_back_retirement_clear_and_history ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_exact_native_retirement_provenance_is_required ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_held_terminal_and_exhausted_task_boundaries ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_later_unknown_or_manual_retirement_never_adopts_old_origin ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_locked_mission_or_agent_is_skipped_and_rechecked_next_tick ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_native_retirement_resume_reopen_selects_only_integration ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_pending_approvals_and_commands_are_preserved ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_pending_work_reactivation_does_not_bypass_dependencies ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_reconciliation_is_bounded_to_one_hundred_workers_per_tick ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_replayed_or_ambiguous_retirement_generation_fails_closed ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_teardown_uncertainty_requires_later_same_run_termination ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test staffing::tests::issue171_worker_ownership_pinning_status_and_pointer_boundaries ... ignored, requires the approved isolated SQLx loader with filter issue171_
+test steering_lock_tests::issue223_authority_replay_and_queued_delivery ... ignored, requires explicitly owned SQLx maintenance database
+test steering_lock_tests::issue223_changed_destination_rolls_back ... ignored, requires explicitly owned SQLx maintenance database
+test steering_lock_tests::issue223_late_run_is_not_steered_without_its_lock ... ignored, requires explicitly owned SQLx maintenance database
+test steering_lock_tests::issue223_lease_rotation_while_waiting_rejects_stale_token ... ignored, requires explicitly owned SQLx maintenance database
+test steering_lock_tests::issue223_membership_revocation_rejects_waiting_message ... ignored, requires explicitly owned SQLx maintenance database
+test steering_lock_tests::issue223_message_failure_rolls_back_already_inserted_command ... ignored, requires explicitly owned SQLx maintenance database
+test steering_lock_tests::issue223_replay_retains_original_destination_across_replacement ... ignored, requires explicitly owned SQLx maintenance database
+test steering_lock_tests::issue223_retirement_while_waiting_rejects_grant ... ignored, requires explicitly owned SQLx maintenance database
+test steering_lock_tests::issue223_stale_assignment_rejected_and_usage_output_preserved ... ignored, requires explicitly owned SQLx maintenance database
+test steering_lock_tests::issue223_steering_and_status_complete_under_observed_contention ... ignored, requires explicitly owned SQLx maintenance database
+test terminal_accounting::tests::issue193_active_termination_validates_without_changing_projection ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_event_failure_rolls_back_everything ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_foreign_assignment_dimensions_never_append ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_invalid_terminal_payloads_never_append ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_legacy_start_evidence_binds_adapter_not_current_agent_config ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_missing_ambiguous_or_conflicting_adapter_authority_is_rejected ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_native_failure_accepts_only_append_only_termination ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_native_termination_shape_is_explicit_and_bounded ... ok
+test terminal_accounting::tests::issue193_other_assignment_pointer_and_all_active_states_remain_untouched ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_protected_terminal_states_and_quarantine_never_change ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_terminal_progress_remains_rejected ... ignored, requires the explicitly owned issue193 SQLx maintenance fixture
+test terminal_accounting::tests::issue193_verifier_only_work_cannot_claim_provider_termination ... ok
+test tests::artifact_rejection_reasons_are_bounded_single_line_text ... ok
+test tests::dependency_artifacts_bind_recovered_parent_and_reject_invalid_metadata ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::dependency_artifacts_follow_multiple_recoveries_without_stale_or_cyclic_fallback ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::factory_claims_reject_expired_tokens_and_stale_versions ... ok
+test tests::factory_outcome_review_allows_verified_internal_handoffs_without_human_gates ... ok
+test tests::factory_outcome_review_cannot_be_bypassed_by_a_deterministic_terminal_task ... ok
+test tests::factory_outcome_review_preserves_policy_for_leaves_at_different_depths ... ok
+test tests::factory_policy_requires_every_task_to_retain_pinned_provider_settings ... ok
+test tests::factory_source_and_lease_validation_are_bounded ... ok
+test tests::factory_state_transitions_do_not_skip_governance_stages ... ok
+test tests::hard_breakers_block_retries_and_human_completion_paths ... ok
+test tests::hard_breakers_fence_progress_but_allow_terminal_cleanup ... ok
+test tests::held_missions_require_explicit_dispatch_and_running_graphs_keep_advancing ... ok
+test tests::issue204_factory_policy_rejects_missing_substituted_and_unclaimed_connections ... ok
+test tests::issue204_policy_normalization_rejects_bad_binding_and_canonicalizes_uuid ... ok
+test tests::issue224_factory_plan_preserves_legacy_and_explicit_attempt_limits ... ok
+test tests::issue224_factory_policy_rejects_invalid_attempts_before_claiming ... ok
+test tests::new_factory_claim_policies_require_an_immutable_source_commit ... ok
+test tests::predispatch_diagnostic_is_nonempty_single_line_and_utf8_bounded ... ok
+test tests::predispatch_failure_blocks_factory_atomically_and_replays_without_effects ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::predispatch_failure_cleans_new_resumes_without_downgrading_factory_outcomes ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::predispatch_failure_fences_terminal_started_newer_and_foreign_work ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::predispatch_failure_never_mutates_another_corps_factory ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::predispatch_failure_repairs_legacy_state_without_rewriting_failure_history ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::predispatch_failure_rolls_back_every_projection_when_factory_update_fails ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::predispatch_failure_takes_publication_gate_before_row_locks ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::predispatch_failure_takes_recovery_gate_before_row_locks ... ignored, requires an explicitly owned PostgreSQL test database
+test tests::recovery_checkpoint_retains_authorized_head_without_a_deliverable ... ok
+test tests::recovery_decision_events_follow_persisted_sequence_without_dropping_events ... ok
+test tests::recovery_dispatch_never_reexecutes_settled_or_terminal_work ... ok
+test tests::recovery_generic_resume_fences_failed_and_revised_factory_work ... ok
+test tests::recovery_generic_resume_preserves_non_factory_and_budget_resume ... ok
+test tests::recovery_lost_admission_does_not_reclassify_provider_loss_or_weaken_legacy_resume ... ok
+test tests::recovery_lost_checkpoint_rejects_tampered_fingerprint_head_and_quarantine ... ok
+test tests::recovery_lost_source_requires_confirmed_native_cleanup ... ok
+test tests::recovery_verifier_revision_preserves_gate_count_and_kinds ... ok
+test tests::verification_failed_requires_dedicated_factory_recovery ... ok
+test tests::workspace_quarantine_is_structured_and_never_downgraded_by_cleanup ... ok
+test verification_dispatch::tests::verification_dispatch_identity_does_not_require_an_artifact ... ok
+test verification_dispatch::tests::verification_dispatch_identity_rejects_other_command_modes_without_mutation ... ok
+test verification_dispatch::tests::verification_dispatch_identity_rejects_wrong_or_malformed_scope ... ok
+test workspace_connections::tests::machine_account_and_local_paths_are_explicit_operator_actions ... ok
+test workspace_connections::tests::repository_sources_use_absolute_paths_and_safe_immutable_refs ... ok
+test workspace_connections::tests::workspace_repositories_never_accept_credentials_flags_or_other_hosts ... ok
+test workspace_connections_tests::factory_connections::attempt_policy::issue224_attempt_policy_rejections_preserve_preflight_and_claimed_ledgers ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::attempt_policy::issue224_explicit_attempt_policy_preflight_materialization_and_replay ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::attempt_policy::issue224_legacy_attempt_omission_replays_without_retrospective_override ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::cost_policy::issue79_invalid_cost_claims_and_preflight_leave_all_ledgers_unchanged ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::cost_policy::issue79_legacy_invalid_claim_reconciles_once_with_audit_and_no_policy_rewrite ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::cost_policy::issue79_legacy_reconciliation_is_atomic_and_competing_requests_emit_one_failure ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::cost_policy::issue79_materialized_history_is_not_revalidated_or_rewritten_on_reclaim ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::cost_policy::issue79_valid_small_and_max_costs_materialize_without_budget_or_attempt_changes ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_authorized_claim_and_both_materialization_replays_survive_offline_connection ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_both_materialization_replays_reject_revoked_mission_room ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_both_materialization_replays_require_current_human_operator ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_factory_binding_cannot_be_removed_substituted_or_injected ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_factory_claim_and_materialization_replay_preserve_original_binding ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_factory_claim_rejects_unknown_foreign_and_other_room_connections ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_factory_claim_replay_and_reclaim_recheck_room_authority ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_factory_late_failure_rolls_back_connection_bound_graph ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_factory_materialization_rechecks_connection_readiness ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_factory_materialization_rejects_source_changed_after_claim ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_factory_preflight_rechecks_current_actor_corp_and_room ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_factory_uses_connection_room_not_oldest_room ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_legacy_unbound_factory_materialization_remains_compatible ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::factory_connections::issue204_preflight_materialization_and_run_retain_claimed_connection ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_checks_use_saved_configuration_and_sign_in_stays_owner_bound ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_connections_enforce_actor_room_and_corp_isolation ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_create_check_and_report_roll_back_on_late_event_failure ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_create_replay_normalizes_and_rejects_changed_requests ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_duplicate_reports_do_not_duplicate_events_or_replace_terminal_results ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_native_plan_and_run_retain_connection_room_source_and_machine ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_native_setup_requires_current_human_and_machine_authority ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_native_sign_in_input_is_actor_step_and_terminal_fenced ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_native_sign_in_input_obeys_instruction_and_operation_expiry ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_offline_selection_is_saved_per_actor_without_admitting_a_plan ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_run_admission_rechecks_failed_connection_and_changed_source_atomically ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_saved_ready_connection_cannot_start_a_run_after_runner_disconnect ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_setup_reports_and_delivery_reject_wrong_runner_and_stale_epoch ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_shared_connection_does_not_echo_private_native_diagnostics ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_sign_in_and_catalogue_are_private_but_connection_events_are_redacted ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_stale_success_and_expired_checks_cannot_revive_a_newer_failed_connection ... ignored, requires explicitly owned SQLx maintenance database
+test workspace_connections_tests::issue198_wrong_source_reports_leave_connection_operation_and_events_unchanged ... ignored, requires explicitly owned SQLx maintenance database
+
+test result: ok. 61 passed; 0 failed; 337 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+   Doc-tests crony_domain
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests crony_gateways
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests crony_protocol
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests crony_store
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

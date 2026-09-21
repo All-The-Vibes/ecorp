@@ -1,0 +1,1173 @@
+TAP version 13
+# Subtest: CI server preview is explicit, isolated, read-only and credential-free
+ok 1 - CI server preview is explicit, isolated, read-only and credential-free
+  ---
+  duration_ms: 1.2515
+  type: 'test'
+  ...
+# Subtest: CI server refuses missing scope, legacy/manual targets and unexpected database configuration
+ok 2 - CI server refuses missing scope, legacy/manual targets and unexpected database configuration
+  ---
+  duration_ms: 3.4157
+  type: 'test'
+  ...
+# Subtest: owned cleanup wiring accepts LF and CRLF but still requires unconditional exact cleanup
+ok 3 - owned cleanup wiring accepts LF and CRLF but still requires unconditional exact cleanup
+  ---
+  duration_ms: 0.4628
+  type: 'test'
+  ...
+# Subtest: all CI restart fixtures consume the same explicit ownership manifest without numeric-PID fallbacks
+ok 4 - all CI restart fixtures consume the same explicit ownership manifest without numeric-PID fallbacks
+  ---
+  duration_ms: 2.6724
+  type: 'test'
+  ...
+# Subtest: Windows runner tests are serialized without filtering tests or changing Unix scheduling
+ok 5 - Windows runner tests are serialized without filtering tests or changing Unix scheduling
+  ---
+  duration_ms: 2.9051
+  type: 'test'
+  ...
+# Subtest: Windows primary ACL path runs before explicit prewarming and the complete serial suite
+ok 6 - Windows primary ACL path runs before explicit prewarming and the complete serial suite
+  ---
+  duration_ms: 2.6173
+  type: 'test'
+  ...
+# Subtest: Windows warm-up remains bounded and leaves native ACL enforcement unchanged
+ok 7 - Windows warm-up remains bounded and leaves native ACL enforcement unchanged
+  ---
+  duration_ms: 1.2474
+  type: 'test'
+  ...
+# Subtest: model-scoped readiness selects its probe despite another runner with the same source
+ok 8 - model-scoped readiness selects its probe despite another runner with the same source
+  ---
+  duration_ms: 3.676
+  type: 'test'
+  ...
+# Subtest: a missing or disabled probe model cannot borrow another runtime or source
+ok 9 - a missing or disabled probe model cannot borrow another runtime or source
+  ---
+  duration_ms: 0.8591
+  type: 'test'
+  ...
+# Subtest: artifact smoke requires explicit owned opt-in, loopback origin and output
+ok 10 - artifact smoke requires explicit owned opt-in, loopback origin and output
+  ---
+  duration_ms: 1.539
+  type: 'test'
+  ...
+# Subtest: full SQL and restart coverage remains restricted to the exact Actions integration fixture
+ok 11 - full SQL and restart coverage remains restricted to the exact Actions integration fixture
+  ---
+  duration_ms: 1.3962
+  type: 'test'
+  ...
+# Subtest: registration alone cannot satisfy readiness; only bounded source-specific read-only previews are retried
+ok 12 - registration alone cannot satisfy readiness; only bounded source-specific read-only previews are retried
+  ---
+  duration_ms: 1.5251
+  type: 'test'
+  ...
+# Subtest: wrong, disconnected, ambiguous or unavailable controlled runner cannot pass the preview gate
+ok 13 - wrong, disconnected, ambiguous or unavailable controlled runner cannot pass the preview gate
+  ---
+  duration_ms: 2.256
+  type: 'test'
+  ...
+# Subtest: readiness fails closed on unrelated HTTP errors and has a deterministic deadline
+ok 14 - readiness fails closed on unrelated HTTP errors and has a deterministic deadline
+  ---
+  duration_ms: 1.421
+  type: 'test'
+  ...
+# Subtest: every artifact launch must belong to the controlled runner before waiting for an assignment
+ok 15 - every artifact launch must belong to the controlled runner before waiting for an assignment
+  ---
+  duration_ms: 0.4207
+  type: 'test'
+  ...
+# Subtest: source-bound fixture readiness verifies the expected repository, ref, commit, Corp and unique runner
+ok 16 - source-bound fixture readiness verifies the expected repository, ref, commit, Corp and unique runner
+  ---
+  duration_ms: 1.3774
+  type: 'test'
+  ...
+# Subtest: automatic factory verification requires exact persisted completion, scope, version and event lineage
+ok 17 - automatic factory verification requires exact persisted completion, scope, version and event lineage
+  ---
+  duration_ms: 6.3789
+  type: 'test'
+  ...
+# Subtest: Linux keeps the full artifact suite and Windows smoke cannot claim fault or restart coverage
+ok 18 - Linux keeps the full artifact suite and Windows smoke cannot claim fault or restart coverage
+  ---
+  duration_ms: 1.938
+  type: 'test'
+  ...
+# Subtest: direct completion cannot bypass pending independent review (missing checkpoint: false)
+ok 19 - direct completion cannot bypass pending independent review (missing checkpoint: false)
+  ---
+  duration_ms: 4.9794
+  type: 'test'
+  ...
+# Subtest: complete persisted proof is accepted (missing checkpoint: false)
+ok 20 - complete persisted proof is accepted (missing checkpoint: false)
+  ---
+  duration_ms: 1.0928
+  type: 'test'
+  ...
+# Subtest: direct completion cannot bypass pending independent review (missing checkpoint: true)
+ok 21 - direct completion cannot bypass pending independent review (missing checkpoint: true)
+  ---
+  duration_ms: 0.5091
+  type: 'test'
+  ...
+# Subtest: complete persisted proof is accepted (missing checkpoint: true)
+ok 22 - complete persisted proof is accepted (missing checkpoint: true)
+  ---
+  duration_ms: 0.5787
+  type: 'test'
+  ...
+# Subtest: pending review requires requester denial followed by distinct reviewer approval
+ok 23 - pending review requires requester denial followed by distinct reviewer approval
+  ---
+  duration_ms: 0.9939
+  type: 'test'
+  ...
+# Subtest: pending gate rejects missing review
+ok 24 - pending gate rejects missing review
+  ---
+  duration_ms: 0.4642
+  type: 'test'
+  ...
+# Subtest: pending gate rejects non-independent gate
+ok 25 - pending gate rejects non-independent gate
+  ---
+  duration_ms: 0.5348
+  type: 'test'
+  ...
+# Subtest: pending gate rejects requester allowed
+ok 26 - pending gate rejects requester allowed
+  ---
+  duration_ms: 0.9974
+  type: 'test'
+  ...
+# Subtest: pending gate rejects already decided gate
+ok 27 - pending gate rejects already decided gate
+  ---
+  duration_ms: 0.5963
+  type: 'test'
+  ...
+# Subtest: pending gate rejects same actor
+ok 28 - pending gate rejects same actor
+  ---
+  duration_ms: 0.562
+  type: 'test'
+  ...
+# Subtest: pending gate rejects unauthorized role
+ok 29 - pending gate rejects unauthorized role
+  ---
+  duration_ms: 4.1499
+  type: 'test'
+  ...
+# Subtest: pending gate rejects producer reviewing
+ok 30 - pending gate rejects producer reviewing
+  ---
+  duration_ms: 0.4775
+  type: 'test'
+  ...
+# Subtest: pending gate rejects requester accepted
+ok 31 - pending gate rejects requester accepted
+  ---
+  duration_ms: 0.4836
+  type: 'test'
+  ...
+# Subtest: pending gate rejects reviewer denied
+ok 32 - pending gate rejects reviewer denied
+  ---
+  duration_ms: 0.4769
+  type: 'test'
+  ...
+# Subtest: pending gate rejects reviewer response for another run
+ok 33 - pending gate rejects reviewer response for another run
+  ---
+  duration_ms: 0.507
+  type: 'test'
+  ...
+# Subtest: pending gate rejects requester denial changes gate
+ok 34 - pending gate rejects requester denial changes gate
+  ---
+  duration_ms: 0.7798
+  type: 'test'
+  ...
+# Subtest: final recovery rejects no pending observation
+ok 35 - final recovery rejects no pending observation
+  ---
+  duration_ms: 0.5383
+  type: 'test'
+  ...
+# Subtest: final recovery rejects no requester denial
+ok 36 - final recovery rejects no requester denial
+  ---
+  duration_ms: 1.0395
+  type: 'test'
+  ...
+# Subtest: final recovery rejects requester non-403
+ok 37 - final recovery rejects requester non-403
+  ---
+  duration_ms: 0.5003
+  type: 'test'
+  ...
+# Subtest: final recovery rejects no independent response
+ok 38 - final recovery rejects no independent response
+  ---
+  duration_ms: 0.4984
+  type: 'test'
+  ...
+# Subtest: final recovery rejects no independent proof flag
+ok 39 - final recovery rejects no independent proof flag
+  ---
+  duration_ms: 0.4844
+  type: 'test'
+  ...
+# Subtest: final recovery rejects no persisted decision
+ok 40 - final recovery rejects no persisted decision
+  ---
+  duration_ms: 0.4225
+  type: 'test'
+  ...
+# Subtest: final recovery rejects decision by requester
+ok 41 - final recovery rejects decision by requester
+  ---
+  duration_ms: 0.4462
+  type: 'test'
+  ...
+# Subtest: final recovery rejects decision still pending
+ok 42 - final recovery rejects decision still pending
+  ---
+  duration_ms: 0.4761
+  type: 'test'
+  ...
+# Subtest: final recovery rejects decision gate drift
+ok 43 - final recovery rejects decision gate drift
+  ---
+  duration_ms: 0.5422
+  type: 'test'
+  ...
+# Subtest: final recovery rejects foreign decision
+ok 44 - final recovery rejects foreign decision
+  ---
+  duration_ms: 0.4024
+  type: 'test'
+  ...
+# Subtest: final recovery rejects missing decision timestamp
+ok 45 - final recovery rejects missing decision timestamp
+  ---
+  duration_ms: 0.7719
+  type: 'test'
+  ...
+# Subtest: final recovery rejects missing automated evidence
+ok 46 - final recovery rejects missing automated evidence
+  ---
+  duration_ms: 0.4047
+  type: 'test'
+  ...
+# Subtest: final recovery rejects failed file check
+ok 47 - final recovery rejects failed file check
+  ---
+  duration_ms: 0.5037
+  type: 'test'
+  ...
+# Subtest: final recovery rejects foreign proof
+ok 48 - final recovery rejects foreign proof
+  ---
+  duration_ms: 0.464
+  type: 'test'
+  ...
+# Subtest: final recovery rejects wrong proof kind
+ok 49 - final recovery rejects wrong proof kind
+  ---
+  duration_ms: 0.485
+  type: 'test'
+  ...
+# Subtest: final recovery rejects wrong proof task
+ok 50 - final recovery rejects wrong proof task
+  ---
+  duration_ms: 0.4289
+  type: 'test'
+  ...
+# Subtest: final recovery rejects wrong proof Corp
+ok 51 - final recovery rejects wrong proof Corp
+  ---
+  duration_ms: 0.3986
+  type: 'test'
+  ...
+# Subtest: final recovery rejects wrong proof index
+ok 52 - final recovery rejects wrong proof index
+  ---
+  duration_ms: 0.3635
+  type: 'test'
+  ...
+# Subtest: final recovery rejects missing artifact
+ok 53 - final recovery rejects missing artifact
+  ---
+  duration_ms: 0.367
+  type: 'test'
+  ...
+# Subtest: final recovery rejects failed verification
+ok 54 - final recovery rejects failed verification
+  ---
+  duration_ms: 0.4289
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed source ref
+ok 55 - final recovery rejects changed source ref
+  ---
+  duration_ms: 0.3569
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed source repository
+ok 56 - final recovery rejects changed source repository
+  ---
+  duration_ms: 1.7009
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed source commit
+ok 57 - final recovery rejects changed source commit
+  ---
+  duration_ms: 0.4895
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed source connection
+ok 58 - final recovery rejects changed source connection
+  ---
+  duration_ms: 0.3826
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed provider session
+ok 59 - final recovery rejects changed provider session
+  ---
+  duration_ms: 0.3358
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed workspace lineage
+ok 60 - final recovery rejects changed workspace lineage
+  ---
+  duration_ms: 0.452
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed resume ancestor
+ok 61 - final recovery rejects changed resume ancestor
+  ---
+  duration_ms: 0.4252
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed verifier
+ok 62 - final recovery rejects changed verifier
+  ---
+  duration_ms: 0.459
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed finish tokens
+ok 63 - final recovery rejects changed finish tokens
+  ---
+  duration_ms: 0.3432
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed finish cost
+ok 64 - final recovery rejects changed finish cost
+  ---
+  duration_ms: 0.3358
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed revision task
+ok 65 - final recovery rejects changed revision task
+  ---
+  duration_ms: 0.421
+  type: 'test'
+  ...
+# Subtest: final recovery rejects missing approved revision
+ok 66 - final recovery rejects missing approved revision
+  ---
+  duration_ms: 0.3117
+  type: 'test'
+  ...
+# Subtest: final recovery rejects unapproved revision
+ok 67 - final recovery rejects unapproved revision
+  ---
+  duration_ms: 0.3224
+  type: 'test'
+  ...
+# Subtest: final recovery rejects rewritten prior contract
+ok 68 - final recovery rejects rewritten prior contract
+  ---
+  duration_ms: 0.3926
+  type: 'test'
+  ...
+# Subtest: final recovery rejects rewritten prior policy
+ok 69 - final recovery rejects rewritten prior policy
+  ---
+  duration_ms: 0.3962
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed current mission budget
+ok 70 - final recovery rejects changed current mission budget
+  ---
+  duration_ms: 0.393
+  type: 'test'
+  ...
+# Subtest: final recovery rejects changed original budget
+ok 71 - final recovery rejects changed original budget
+  ---
+  duration_ms: 0.3489
+  type: 'test'
+  ...
+# Subtest: final recovery rejects rewritten original fingerprint
+ok 72 - final recovery rejects rewritten original fingerprint
+  ---
+  duration_ms: 0.37
+  type: 'test'
+  ...
+# Subtest: final recovery rejects rewritten original spend
+ok 73 - final recovery rejects rewritten original spend
+  ---
+  duration_ms: 0.2923
+  type: 'test'
+  ...
+# Subtest: final recovery rejects rewritten suspension history
+ok 74 - final recovery rejects rewritten suspension history
+  ---
+  duration_ms: 0.3465
+  type: 'test'
+  ...
+# Subtest: final recovery rejects missing original event
+ok 75 - final recovery rejects missing original event
+  ---
+  duration_ms: 0.3353
+  type: 'test'
+  ...
+# Subtest: final recovery rejects rewritten breaker incident
+ok 76 - final recovery rejects rewritten breaker incident
+  ---
+  duration_ms: 0.5622
+  type: 'test'
+  ...
+# Subtest: final recovery rejects missing breaker incident
+ok 77 - final recovery rejects missing breaker incident
+  ---
+  duration_ms: 0.4347
+  type: 'test'
+  ...
+# Subtest: hard-stop lane needs no successful review
+ok 78 - hard-stop lane needs no successful review
+  ---
+  duration_ms: 0.3501
+  type: 'test'
+  ...
+# Subtest: predispatch ownership uses the native receipt contract
+    # Subtest: matching native receipt passes the actual caller
+    ok 1 - matching native receipt passes the actual caller
+      ---
+      duration_ms: 2.7679
+      type: 'test'
+      ...
+    # Subtest: one native tick changed is denied
+    ok 2 - one native tick changed is denied
+      ---
+      duration_ms: 1.0127
+      type: 'test'
+      ...
+    # Subtest: native ticks missing is denied
+    ok 3 - native ticks missing is denied
+      ---
+      duration_ms: 0.456
+      type: 'test'
+      ...
+    # Subtest: native ticks rounded to number is denied
+    ok 4 - native ticks rounded to number is denied
+      ---
+      duration_ms: 0.5272
+      type: 'test'
+      ...
+    # Subtest: PID changed is denied
+    ok 5 - PID changed is denied
+      ---
+      duration_ms: 0.4156
+      type: 'test'
+      ...
+    # Subtest: PID missing is denied
+    ok 6 - PID missing is denied
+      ---
+      duration_ms: 0.4441
+      type: 'test'
+      ...
+    # Subtest: platform changed is denied
+    ok 7 - platform changed is denied
+      ---
+      duration_ms: 0.3799
+      type: 'test'
+      ...
+    # Subtest: platform missing is denied
+    ok 8 - platform missing is denied
+      ---
+      duration_ms: 0.4935
+      type: 'test'
+      ...
+    # Subtest: executable changed is denied
+    ok 9 - executable changed is denied
+      ---
+      duration_ms: 0.4787
+      type: 'test'
+      ...
+    # Subtest: listener not owned is denied
+    ok 10 - listener not owned is denied
+      ---
+      duration_ms: 0.6809
+      type: 'test'
+      ...
+    1..10
+ok 79 - predispatch ownership uses the native receipt contract
+  ---
+  duration_ms: 19.9941
+  type: 'test'
+  ...
+# Subtest: no mode is a dry-run; execution always requires its explicit switch
+ok 80 - no mode is a dry-run; execution always requires its explicit switch
+  ---
+  duration_ms: 1.7402
+  type: 'test'
+  ...
+# Subtest: ambiguous execution modes and unknown switches fail closed
+ok 81 - ambiguous execution modes and unknown switches fail closed
+  ---
+  duration_ms: 0.8864
+  type: 'test'
+  ...
+# Subtest: reference inspection is opt-in and supports one exact snapshot
+ok 82 - reference inspection is opt-in and supports one exact snapshot
+  ---
+  duration_ms: 1.2698
+  type: 'test'
+  ...
+# Subtest: reference URL rejects remote, credential-bearing, unrelated and QA targets
+ok 83 - reference URL rejects remote, credential-bearing, unrelated and QA targets
+  ---
+  duration_ms: 2.4517
+  type: 'test'
+  ...
+# Subtest: shared native identity distinguishes inspection uncertainty from absence
+ok 84 - shared native identity distinguishes inspection uncertainty from absence
+  ---
+  duration_ms: 1125.127
+  type: 'test'
+  ...
+# Subtest: recovery cleanup preserves live uncertain or mismatched children and receipts; only proven absence succeeds
+ok 85 - recovery cleanup preserves live uncertain or mismatched children and receipts; only proven absence succeeds
+  ---
+  duration_ms: 8400.7423
+  type: 'test'
+  ...
+# Subtest: budget process adapter delegates exact identity and stop to the existing native helper
+ok 86 - budget process adapter delegates exact identity and stop to the existing native helper
+  ---
+  duration_ms: 2.2271
+  type: 'test'
+  ...
+# Subtest: actual lock helper cleans its handshake on release and preserves a pre-existing marker on failure
+ok 87 - actual lock helper cleans its handshake on release and preserves a pre-existing marker on failure
+  ---
+  duration_ms: 1763.1686
+  type: 'test'
+  ...
+# Subtest: actual Windows budget-fixture child stop preserves mismatches and terminates only the verified receipt
+ok 88 - actual Windows budget-fixture child stop preserves mismatches and terminates only the verified receipt
+  ---
+  duration_ms: 6708.5847
+  type: 'test'
+  ...
+# Subtest: actual budget source-admission block rejects redirected or non-synthetic retained sources
+ok 89 - actual budget source-admission block rejects redirected or non-synthetic retained sources
+  ---
+  duration_ms: 44.0684
+  type: 'test'
+  ...
+# Subtest: actual budget attempt admission refuses linked and unknown paths before effects, including finally
+    # Subtest: attempts-junction
+    ok 1 - attempts-junction
+      ---
+      duration_ms: 27.5136
+      type: 'test'
+      ...
+    # Subtest: dangling-attempts-junction
+    ok 2 - dangling-attempts-junction
+      ---
+      duration_ms: 25.0741
+      type: 'test'
+      ...
+    # Subtest: attempt-junction
+    ok 3 - attempt-junction
+      ---
+      duration_ms: 44.7247
+      type: 'test'
+      ...
+    # Subtest: unknown-attempt
+    ok 4 - unknown-attempt
+      ---
+      duration_ms: 46.5474
+      type: 'test'
+      ...
+    # Subtest: invalid-owner
+    ok 5 - invalid-owner
+      ---
+      duration_ms: 23.7021
+      type: 'test'
+      ...
+    # Subtest: new-attempt-junction
+    ok 6 - new-attempt-junction
+      ---
+      duration_ms: 25.927
+      type: 'test'
+      ...
+    # Subtest: finally-attempt-junction
+    ok 7 - finally-attempt-junction
+      ---
+      duration_ms: 26.9597
+      type: 'test'
+      ...
+    # Subtest: plain
+    ok 8 - plain
+      ---
+      duration_ms: 45.5569
+      type: 'test'
+      ...
+    1..8
+ok 90 - actual budget attempt admission refuses linked and unknown paths before effects, including finally
+  ---
+  duration_ms: 270.4305
+  type: 'test'
+  ...
+# {"scenario":"attempts-junction","root":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-1Zio8e","outside":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-outside-r0Jm8d","links":["C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-1Zio8e\\\\qa\\\\issue-50-factory-recovery\\\\attempts"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"],["test",[]]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"],["test",[]]],"calls":[],"report":{"cleanup":[],"status":"fixture_error","error":"Refuse linked or non-directory QA path: C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-1Zio8e\\\\qa\\\\issue-50-factory-recovery\\\\attempts"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"],["test",[]]]}
+# {"scenario":"dangling-attempts-junction","root":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-4KBf4F","outside":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-outside-BOtaFk","links":["C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-4KBf4F\\\\qa\\\\issue-50-factory-recovery\\\\attempts"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"status":"fixture_error","error":"Refuse linked or non-directory QA path: C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-4KBf4F\\\\qa\\\\issue-50-factory-recovery\\\\attempts"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+# {"scenario":"attempt-junction","root":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-sfzJDA","outside":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-outside-rGgqLC","links":["C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-sfzJDA\\\\qa\\\\issue-50-factory-recovery\\\\attempts\\\\test"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"status":"fixture_error","error":"Refuse linked or non-directory QA path: C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-sfzJDA\\\\qa\\\\issue-50-factory-recovery\\\\attempts\\\\test"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+# {"scenario":"unknown-attempt","root":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-BsFL1z","outside":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-outside-FvyQMn","links":[],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"status":"fixture_error","error":"EEXIST: file already exists, mkdir 'C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-BsFL1z\\\\qa\\\\issue-50-factory-recovery\\\\attempts\\\\test'"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+# {"scenario":"invalid-owner","root":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-9yk4qb","outside":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-outside-2HDUHG","links":[],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"status":"fixture_error","error":"Expected values to be strictly equal:\\n+ actual - expected\\n\\n+ 'unknown'\\n- 'issue-50-factory-budget-recovery-v1'\\n"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+# {"scenario":"new-attempt-junction","root":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-QUBZxD","outside":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-outside-G1JPdI","links":["C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-QUBZxD\\\\qa\\\\issue-50-factory-recovery\\\\attempts\\\\test"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"status":"fixture_error","error":"Refuse linked or non-directory QA path: C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-QUBZxD\\\\qa\\\\issue-50-factory-recovery\\\\attempts\\\\test"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+# {"scenario":"finally-attempt-junction","root":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-6h2tUm","outside":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-outside-OgQNRi","links":["C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-6h2tUm\\\\qa\\\\issue-50-factory-recovery\\\\attempts\\\\test"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":["lifecycle"],"report":{"cleanup":[{"name":"qa-attempt-path","status":"unverified_preserved","error":"Refuse linked or non-directory QA path: C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-6h2tUm\\\\qa\\\\issue-50-factory-recovery\\\\attempts\\\\test"}],"status":"fixture_error","path_error":"Refuse linked or non-directory QA path: C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-6h2tUm\\\\qa\\\\issue-50-factory-recovery\\\\attempts\\\\test"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+# {"scenario":"plain","root":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-owned-HoqI62","outside":"C:\\\\Users\\\\sschofield\\\\.codex\\\\review-executors\\\\ecorp\\\\receipts\\\\pr-237\\\\round-2\\\\node-integration-temp\\\\ecorp-attempt-outside-FM9mrg","links":[],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":["lifecycle","ports","reference"],"report":{"cleanup":[],"ports_after":[],"retained_after":null,"retained_unchanged":null,"finished_at":"2026-09-21T00:41:22.660Z"},"exitCode":0,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+# Subtest: lifecycle-only preview requires an explicit owned scope and cannot claim OIDC coverage
+ok 91 - lifecycle-only preview requires an explicit owned scope and cannot claim OIDC coverage
+  ---
+  duration_ms: 3.1471
+  type: 'test'
+  ...
+# Subtest: identity fixture rejects manual, foreign and credential-bearing endpoints before effects
+ok 92 - identity fixture rejects manual, foreign and credential-bearing endpoints before effects
+  ---
+  duration_ms: 1.9056
+  type: 'test'
+  ...
+# Subtest: full identity/OIDC conformance stays confined to the exact hosted integration fixture
+ok 93 - full identity/OIDC conformance stays confined to the exact hosted integration fixture
+  ---
+  duration_ms: 2.2093
+  type: 'test'
+  ...
+# Subtest: model/source selection rejects ambiguity, wrong scope, missing capabilities and prior work
+ok 94 - model/source selection rejects ambiguity, wrong scope, missing capabilities and prior work
+  ---
+  duration_ms: 5.6319
+  type: 'test'
+  ...
+# Subtest: identity readiness retries only native read-only previews before any mission or launch
+ok 95 - identity readiness retries only native read-only previews before any mission or launch
+  ---
+  duration_ms: 113.5359
+  type: 'test'
+  ...
+# Subtest: assignment binds exact source/model, scope and fence without leaking secrets
+ok 96 - assignment binds exact source/model, scope and fence without leaking secrets
+  ---
+  duration_ms: 2.2982
+  type: 'test'
+  ...
+# Subtest: assignment listener exists before launch and is removed with its timer after success
+ok 97 - assignment listener exists before launch and is removed with its timer after success
+  ---
+  duration_ms: 33.3839
+  type: 'test'
+  ...
+# Subtest: wrong-runner launch fails immediately without a dangling assignment deadline
+ok 98 - wrong-runner launch fails immediately without a dangling assignment deadline
+  ---
+  duration_ms: 0.8102
+  type: 'test'
+  ...
+# Subtest: failed launch cancels assignment listening without masking the HTTP error
+ok 99 - failed launch cancels assignment listening without masking the HTTP error
+  ---
+  duration_ms: 0.4861
+  type: 'test'
+  ...
+# Subtest: assignment timeout stays observed during launch and cleans up deterministically
+ok 100 - assignment timeout stays observed during launch and cleans up deterministically
+  ---
+  duration_ms: 3.7328
+  type: 'test'
+  ...
+# Subtest: closed and malformed probe streams fail without waiting for the full deadline
+ok 101 - closed and malformed probe streams fail without waiting for the full deadline
+  ---
+  duration_ms: 0.813
+  type: 'test'
+  ...
+# Subtest: Linux retains full auth coverage and Windows lifecycle evidence cannot claim OIDC
+ok 102 - Linux retains full auth coverage and Windows lifecycle evidence cannot claim OIDC
+  ---
+  duration_ms: 1.6803
+  type: 'test'
+  ...
+# Subtest: database query options are refused before filesystem or lifecycle effects
+    # Subtest: startOwnedTestServer rejects query case host
+    ok 1 - startOwnedTestServer rejects query case host
+      ---
+      duration_ms: 2.51
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case hostaddr
+    ok 2 - startOwnedTestServer rejects query case hostaddr
+      ---
+      duration_ms: 0.5966
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case port
+    ok 3 - startOwnedTestServer rejects query case port
+      ---
+      duration_ms: 0.5301
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case dbname
+    ok 4 - startOwnedTestServer rejects query case dbname
+      ---
+      duration_ms: 0.2612
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case user
+    ok 5 - startOwnedTestServer rejects query case user
+      ---
+      duration_ms: 0.524
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case port
+    ok 6 - startOwnedTestServer rejects query case port
+      ---
+      duration_ms: 0.4718
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case host
+    ok 7 - startOwnedTestServer rejects query case host
+      ---
+      duration_ms: 0.4111
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case unknown
+    ok 8 - startOwnedTestServer rejects query case unknown
+      ---
+      duration_ms: 0.34
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case %68ost
+    ok 9 - startOwnedTestServer rejects query case %68ost
+      ---
+      duration_ms: 0.4344
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case HOST
+    ok 10 - startOwnedTestServer rejects query case HOST
+      ---
+      duration_ms: 0.5296
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case HostAddr
+    ok 11 - startOwnedTestServer rejects query case HostAddr
+      ---
+      duration_ms: 0.2024
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case DBNAME
+    ok 12 - startOwnedTestServer rejects query case DBNAME
+      ---
+      duration_ms: 0.302
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case port
+    ok 13 - startOwnedTestServer rejects query case port
+      ---
+      duration_ms: 0.2616
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case sslmode
+    ok 14 - startOwnedTestServer rejects query case sslmode
+      ---
+      duration_ms: 0.2576
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case options
+    ok 15 - startOwnedTestServer rejects query case options
+      ---
+      duration_ms: 0.2871
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case password
+    ok 16 - startOwnedTestServer rejects query case password
+      ---
+      duration_ms: 0.241
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case host
+    ok 17 - startOwnedTestServer rejects query case host
+      ---
+      duration_ms: 0.1602
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case &&
+    ok 18 - startOwnedTestServer rejects query case &&
+      ---
+      duration_ms: 0.1657
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer rejects query case %
+    ok 19 - startOwnedTestServer rejects query case %
+      ---
+      duration_ms: 0.201
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer allows URL without query options (0)
+    ok 20 - startOwnedTestServer allows URL without query options (0)
+      ---
+      duration_ms: 1.2719
+      type: 'test'
+      ...
+    # Subtest: startOwnedTestServer allows URL without query options (1)
+    ok 21 - startOwnedTestServer allows URL without query options (1)
+      ---
+      duration_ms: 0.2884
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case host
+    ok 22 - restartOwnedTestServer rejects query case host
+      ---
+      duration_ms: 0.2752
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case hostaddr
+    ok 23 - restartOwnedTestServer rejects query case hostaddr
+      ---
+      duration_ms: 0.1705
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case port
+    ok 24 - restartOwnedTestServer rejects query case port
+      ---
+      duration_ms: 0.1408
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case dbname
+    ok 25 - restartOwnedTestServer rejects query case dbname
+      ---
+      duration_ms: 0.1392
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case user
+    ok 26 - restartOwnedTestServer rejects query case user
+      ---
+      duration_ms: 0.1427
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case port
+    ok 27 - restartOwnedTestServer rejects query case port
+      ---
+      duration_ms: 0.1487
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case host
+    ok 28 - restartOwnedTestServer rejects query case host
+      ---
+      duration_ms: 0.1425
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case unknown
+    ok 29 - restartOwnedTestServer rejects query case unknown
+      ---
+      duration_ms: 0.2036
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case %68ost
+    ok 30 - restartOwnedTestServer rejects query case %68ost
+      ---
+      duration_ms: 0.2735
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case HOST
+    ok 31 - restartOwnedTestServer rejects query case HOST
+      ---
+      duration_ms: 0.2269
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case HostAddr
+    ok 32 - restartOwnedTestServer rejects query case HostAddr
+      ---
+      duration_ms: 0.1714
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case DBNAME
+    ok 33 - restartOwnedTestServer rejects query case DBNAME
+      ---
+      duration_ms: 0.263
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case port
+    ok 34 - restartOwnedTestServer rejects query case port
+      ---
+      duration_ms: 0.1778
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case sslmode
+    ok 35 - restartOwnedTestServer rejects query case sslmode
+      ---
+      duration_ms: 0.2957
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case options
+    ok 36 - restartOwnedTestServer rejects query case options
+      ---
+      duration_ms: 0.2304
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case password
+    ok 37 - restartOwnedTestServer rejects query case password
+      ---
+      duration_ms: 0.1913
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case host
+    ok 38 - restartOwnedTestServer rejects query case host
+      ---
+      duration_ms: 0.2265
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case &&
+    ok 39 - restartOwnedTestServer rejects query case &&
+      ---
+      duration_ms: 0.2502
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer rejects query case %
+    ok 40 - restartOwnedTestServer rejects query case %
+      ---
+      duration_ms: 0.1494
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer allows URL without query options (0)
+    ok 41 - restartOwnedTestServer allows URL without query options (0)
+      ---
+      duration_ms: 0.3071
+      type: 'test'
+      ...
+    # Subtest: restartOwnedTestServer allows URL without query options (1)
+    ok 42 - restartOwnedTestServer allows URL without query options (1)
+      ---
+      duration_ms: 0.3011
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case host
+    ok 43 - stopOwnedTestServer rejects query case host
+      ---
+      duration_ms: 0.43
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case hostaddr
+    ok 44 - stopOwnedTestServer rejects query case hostaddr
+      ---
+      duration_ms: 0.2602
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case port
+    ok 45 - stopOwnedTestServer rejects query case port
+      ---
+      duration_ms: 0.1743
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case dbname
+    ok 46 - stopOwnedTestServer rejects query case dbname
+      ---
+      duration_ms: 0.2177
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case user
+    ok 47 - stopOwnedTestServer rejects query case user
+      ---
+      duration_ms: 0.2262
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case port
+    ok 48 - stopOwnedTestServer rejects query case port
+      ---
+      duration_ms: 0.1172
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case host
+    ok 49 - stopOwnedTestServer rejects query case host
+      ---
+      duration_ms: 0.1367
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case unknown
+    ok 50 - stopOwnedTestServer rejects query case unknown
+      ---
+      duration_ms: 0.2777
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case %68ost
+    ok 51 - stopOwnedTestServer rejects query case %68ost
+      ---
+      duration_ms: 0.342
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case HOST
+    ok 52 - stopOwnedTestServer rejects query case HOST
+      ---
+      duration_ms: 0.1685
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case HostAddr
+    ok 53 - stopOwnedTestServer rejects query case HostAddr
+      ---
+      duration_ms: 0.1669
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case DBNAME
+    ok 54 - stopOwnedTestServer rejects query case DBNAME
+      ---
+      duration_ms: 0.2131
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case port
+    ok 55 - stopOwnedTestServer rejects query case port
+      ---
+      duration_ms: 0.1938
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case sslmode
+    ok 56 - stopOwnedTestServer rejects query case sslmode
+      ---
+      duration_ms: 0.1487
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case options
+    ok 57 - stopOwnedTestServer rejects query case options
+      ---
+      duration_ms: 0.2406
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case password
+    ok 58 - stopOwnedTestServer rejects query case password
+      ---
+      duration_ms: 0.1954
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case host
+    ok 59 - stopOwnedTestServer rejects query case host
+      ---
+      duration_ms: 0.1886
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case &&
+    ok 60 - stopOwnedTestServer rejects query case &&
+      ---
+      duration_ms: 0.1855
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer rejects query case %
+    ok 61 - stopOwnedTestServer rejects query case %
+      ---
+      duration_ms: 0.2088
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer allows URL without query options (0)
+    ok 62 - stopOwnedTestServer allows URL without query options (0)
+      ---
+      duration_ms: 0.4452
+      type: 'test'
+      ...
+    # Subtest: stopOwnedTestServer allows URL without query options (1)
+    ok 63 - stopOwnedTestServer allows URL without query options (1)
+      ---
+      duration_ms: 0.3187
+      type: 'test'
+      ...
+    1..63
+ok 103 - database query options are refused before filesystem or lifecycle effects
+  ---
+  duration_ms: 34.7642
+  type: 'test'
+  ...
+# Subtest: upstream restart environment remains bounded and cannot override database authority
+ok 104 - upstream restart environment remains bounded and cannot override database authority
+  ---
+  duration_ms: 2.4715
+  type: 'test'
+  ...
+# Subtest: owned server requires matching executable, creation, endpoint, and workspace
+ok 105 - owned server requires matching executable, creation, endpoint, and workspace
+  ---
+  duration_ms: 1.4608
+  type: 'test'
+  ...
+# Subtest: manual, remote, stale, or non-owned manifests never authorize restart
+ok 106 - manual, remote, stale, or non-owned manifests never authorize restart
+  ---
+  duration_ms: 0.4665
+  type: 'test'
+  ...
+# Subtest: Windows native receipts preserve sub-millisecond creation identity without numeric rounding
+ok 107 - Windows native receipts preserve sub-millisecond creation identity without numeric rounding
+  ---
+  duration_ms: 2.2104
+  type: 'test'
+  ...
+# Subtest: owned endpoints reject every reserved/manual port and non-origin URL
+ok 108 - owned endpoints reject every reserved/manual port and non-origin URL
+  ---
+  duration_ms: 0.6871
+  type: 'test'
+  ...
+# Subtest: Linux receipts require exact kernel identity and case-sensitive executable paths
+ok 109 - Linux receipts require exact kernel identity and case-sensitive executable paths
+  ---
+  duration_ms: 1.5045
+  type: 'test'
+  ...
+# Subtest: legacy PID files and pre-existing locks are preserved without signalling or starting a process
+ok 110 - legacy PID files and pre-existing locks are preserved without signalling or starting a process
+  ---
+  duration_ms: 71.2364
+  type: 'test'
+  ...
+# Subtest: native owned child startup, two restarts, refusal of database drift and idempotent stop
+ok 111 - native owned child startup, two restarts, refusal of database drift and idempotent stop # SKIP
+  ---
+  duration_ms: 0.3044
+  type: 'test'
+  ...
+1..111
+# tests 192
+# suites 0
+# pass 191
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 19771.4325
