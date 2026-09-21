@@ -258,9 +258,9 @@ const digest = (o) => createHash('sha256').update(JSON.stringify(o)).digest('hex
 const refs = (a) => Array.isArray(a) && a.every(text)
 const publicationCriteria = ['SOURCE_SCOPE', 'FIX_EVIDENCE', 'NO_NEW_BLOCKERS', 'TRUTHFUL_STATUS']
 const same = (a, b) => a.base === b.base && a.head === b.head
-function completedRevisionChanged(c, snapshot, e, live, failedReviews) {
+function completedRevisionChanged(c, snapshot, e, live, failedReviews, reviewDecisions) {
   if (c.technicalVerdict !== 'NICE' || ((live || e.failedCompletionFence) &&
-    failedReviewBasisError(c.completion, failedReviews))) return false
+    completionAuthorityError(c.completion, failedReviews, reviewDecisions))) return false
   // Stamp only the new decision; never reinterpret an already-accepted event.
   if (live && c.completion.base !== snapshot.base) e.baseHeadRenewal = true
   return e.baseHeadRenewal ? !same(c.completion, snapshot) : c.completion.head !== snapshot.head
@@ -408,9 +408,11 @@ function validateReviewers(receipts, claim, s, at, progress = false, reviewDecis
 }
 
 // The original audit identity, not a nullable projection or read-only claim, owns failure.
-function failedReviewBasisError(claim, failedReviews) {
-  return claim && failedReviews.has(`${claim.claimId}:${claim.round}`)
-    ? 'retained failed review requires permitted charged retry before feedback or activation' : null
+function completionAuthorityError(claim, failedReviews, reviewDecisions) {
+  if (!claim) return null
+  return failedReviews?.has(`${claim.claimId}:${claim.round}`)
+    ? 'retained failed review requires permitted charged retry before feedback or activation'
+    : reviewDecisions ? reviewOwnershipError(claim.reviewers, claim, reviewDecisions) : null
 }
 
 function feedbackBasis(s, p, at, failedReviews, reviewDecisions) {
@@ -437,7 +439,7 @@ function feedbackBasis(s, p, at, failedReviews, reviewDecisions) {
   check(same(completion, snapshot) && completion.round === c.rounds &&
     completion.auditKey !== auditKey(snapshot), 'feedback requires pending same-code generation')
   if (failedReviews) {
-    const error = failedReviewBasisError(completion, failedReviews)
+    const error = completionAuthorityError(completion, failedReviews, reviewDecisions)
     check(!error, error)
   }
   validateReviewers(completion.reviewers, completion, s, at, false, reviewDecisions)
@@ -479,6 +481,14 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
       enabled: false, acceptanceProof: null, prs: {}, active: null, sequence: 0, usedReviewers: [] }, output: { initialized: true } }
   }
   check(s && i.owner === s.config.owner, 'owner mismatch or missing initialization')
+  if (live && ['next', 'begin', 'resume'].includes(command)) {
+    // Only ownership failures not already covered by the old failed-review fence
+    // need a new replay rule. Rejected/no-op commands never persist the marker.
+    const scopes = command === 'next' ? Object.values(s.prs) : [s.prs[i.number]]
+    if (scopes.some((p) => p && cycle(p).technicalVerdict === 'NICE' &&
+      !completionAuthorityError(cycle(p).completion, failedReviews) &&
+      completionAuthorityError(cycle(p).completion, failedReviews, reviewDecisions))) e.completionOwnershipFence = true
+  }
   const recovery = command === 'resume' ? failedWaiting(s.prs[i.number], failedWaits) ?? s.prs[i.number]?.blockedClaim : null
   const failureClaim = command === 'resume' ? recovery?.claim : s.active
   const retainedFailure = failureClaim && failedReviews.get(`${failureClaim.claimId}:${failureClaim.round}`)
@@ -600,7 +610,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
     const corrective = (p) => (e.canaryRecovery || e.publicationRecovery) && correctionId && p.snapshot.number === s.config.canary
     const pendingCorrection = (p) => corrective(p) && p.correctiveAudit?.[correctionField] !== correctionId
     const completionFailed = (p) => (live || e.failedCompletionFence) &&
-      cycle(p).technicalVerdict === 'NICE' && failedReviewBasisError(cycle(p).completion, failedReviews)
+      cycle(p).technicalVerdict === 'NICE' && completionAuthorityError(cycle(p).completion, failedReviews, reviewDecisions)
     const retainedFailedAdmission = (p) => {
       const b = p.blockedClaim
       return completionFailed(p) && b?.claim.action === 'audit' && b.claim.round === null &&
@@ -751,7 +761,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
     const readOnly = !sameRepo(snapshot.sourceRepo, s.config.repo) || !sameRepo(p.sourceRepo, s.config.repo)
     const action = target || (processedAudit(p) && !(recoverPending && pendingRound(p))) ? 'check' : 'audit'
     if (live && pendingRenewal(p)) e.retainedBaseRenewal = true
-    const renewed = !corrective(p) && completedRevisionChanged(c, snapshot, e, live, failedReviews)
+    const renewed = !corrective(p) && completedRevisionChanged(c, snapshot, e, live, failedReviews, reviewDecisions)
     const reason = p.blockedReason ?? (
       !renewed && action === 'audit' && c.rounds >= roundLimit(s) ? 'round limit exhausted' :
       !renewed && action === 'audit' && c.noProgress >= 2 ? 'no-progress limit exhausted' : null)
@@ -788,7 +798,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
       (i.round === null || c.technicalVerdict !== 'NICE'),
     'no matching retained unfinished blocked claim/round')
     const renewed = !correctionId && p.correctiveAudit?.claimId !== b.claim.claimId &&
-      i.round === null && completedRevisionChanged(c, b.claim, e, live, failedReviews)
+      i.round === null && completedRevisionChanged(c, b.claim, e, live, failedReviews, reviewDecisions)
     check(renewed || !resumeLimitReason(s, b, c, live && retainedFailure), 'round or no-progress limit exhausted')
     check((s.enabled || i.number === s.config.canary) && current(b.claim, p) &&
       p.snapshot.state === 'open' && targetCompatible(b.claim.snapshot, p.snapshot) &&
@@ -940,7 +950,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
         if (c.findings.some((f) => f.status === 'fixed' && a.baseline.includes(f.id))) c.noProgress = 0
       } else check(a.round === null, 'round already begun; resume with next')
       if (command === 'begin' && !correctionId && p.correctiveAudit?.claimId !== a.claimId &&
-        completedRevisionChanged(c, a, e, live, failedReviews)) {
+        completedRevisionChanged(c, a, e, live, failedReviews, reviewDecisions)) {
         p.cycles.push(freshCycle())
         c = cycle(p)
       }
@@ -1054,7 +1064,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, activati
     check(text(proof.schedulerWake.id) && fresh(proof.schedulerWake.at, c.completion.startedAt, at) &&
       text(proof.schedulerWake.sourceRef) && text(proof.resumeRef) && text(proof.quietNoopRef), 'native wake/resume/quiet evidence required')
     if (live) {
-      const error = activationBindingError(s, proof) ?? failedReviewBasisError(c.completion, failedReviews)
+      const error = activationBindingError(s, proof) ?? completionAuthorityError(c.completion, failedReviews, reviewDecisions)
       check(!error, error)
     }
     check(positive(proof.copilot.reviewId) && proof.copilot.head === proof.head &&
@@ -1145,7 +1155,7 @@ function main() {
       let version = 1
       // ponytail: replay/rewrite the retained journal; checkpoint only if measured history size needs it.
       for (const e of events) {
-        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery', 'baseHeadRenewal', 'retainedBaseRenewal', 'correctiveBinding', 'failedCompletionFence', 'recoveryPriority', 'recoverySelection', 'postActivationDeploy'])
+        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery', 'baseHeadRenewal', 'retainedBaseRenewal', 'correctiveBinding', 'failedCompletionFence', 'completionOwnershipFence', 'recoveryPriority', 'recoverySelection', 'postActivationDeploy'])
         check(e.postActivationDeploy === undefined || (e.version === 2 && e.command === 'deploy' &&
           e.postActivationDeploy === true), 'invalid post-activation deployment marker')
         check(e.correctiveBinding === undefined || (e.version === 2 && ['begin', 'retry', 'resume'].includes(e.command) &&
@@ -1164,6 +1174,8 @@ function main() {
           ['unclaimed-round', 'detail-read-observation', 'detail-read-recovery'].includes(e.admission)), 'invalid admission marker')
         check(e.failedCompletionFence === undefined || (e.version === 2 &&
           ['next', 'begin', 'resume'].includes(e.command) && e.failedCompletionFence === true), 'invalid failed completion fence')
+        check(e.completionOwnershipFence === undefined || (e.version === 2 && e.failedCompletionFence === true &&
+          ['next', 'begin', 'resume'].includes(e.command) && e.completionOwnershipFence === true), 'invalid completion ownership fence')
         check(e.recoveryPriority === undefined || (e.version === 2 && e.command === 'next' &&
           e.recoveryPriority === true), 'invalid recovery priority marker')
         check(e.recoverySelection === undefined || (e.version === 2 && e.command === 'next' &&
@@ -1187,7 +1199,8 @@ function main() {
         // corrective markers bind new recovery to the derived ownership-invalid basis.
         const admittedActivation = e.activationFence || e.correctiveBinding || e.command === 'enable'
           ? activation : replayActivation
-        const result = apply(state, e, conflictingPublications, { activation: admittedActivation, activationAt, failedReviews, failedWaits, pendingRenewals })
+        const result = apply(state, e, conflictingPublications, { activation: admittedActivation, activationAt, failedReviews, failedWaits, pendingRenewals,
+          ...(e.completionOwnershipFence ? { reviewDecisions } : {}) })
         state = result.state
         // Keep every accepted report in event order, including replaced completions.
         const receipts = e.input.reviewers ??
@@ -1224,11 +1237,11 @@ function main() {
           const reason = conflictingPublications.has(state.prs[e.input.acceptanceProof.number].publications.at(-1))
             ? 'activation publication source/target conflicts with retained claim; preserve work and correct canary'
             : activationBindingError(state, e.input.acceptanceProof) ??
-            failedReviewBasisError(completion, failedReviews) ??
+            completionAuthorityError(completion, failedReviews) ??
             (wasEnabled && !replayActivation.valid && !replacementAccepted
               ? 'activation replacement lacks charged corrective code acceptance; preserve history and correct canary' : null)
           replayActivation = { eventId: e.id, valid: reason === null, reason }
-          const currentReason = reason ?? reviewOwnershipError(e.input.acceptanceProof.reviewers, completion, reviewDecisions) ??
+          const currentReason = reason ?? completionAuthorityError(completion, failedReviews, reviewDecisions) ??
             (wasEnabled && !activation.valid && !replacementAccepted
               ? 'activation replacement lacks charged corrective code acceptance; preserve history and correct canary' : null)
           activation = { eventId: e.id, valid: currentReason === null, reason: currentReason }

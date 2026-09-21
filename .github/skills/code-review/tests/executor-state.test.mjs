@@ -3668,6 +3668,154 @@ for (const historical of [false, true]) for (const field of ['sourceRef', 'revie
   })
 }
 
+// Real trusted80 completions plus frozen828 begin/resume continuations. Synthetic
+// reports only; every event below was emitted by a CLI, not rewritten for this fix.
+const completionAuthorityHistories = JSON.parse(gunzipSync(Buffer.from(
+  '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',
+  'base64')).toString())
+const completionAuthorityFixture = (name) => {
+  const dir = fixture(), journal = completionAuthorityHistories[name]
+  writeJournal(dir, journal.events, journal.version)
+  return dir
+}
+
+for (const [history, change] of [['invalidBound', 'unchanged'], ['invalidBound', 'head'],
+  ['invalidBound', 'base'], ['publishedBound', 'unchanged']]) {
+  test(`PR304-COMPLETION-AUTHORITY: ${history}/${change} cannot consume gates or renew exhausted ownership-invalid NICE`, () => {
+    const dir = completionAuthorityFixture(history), old = run(dir, 'show')
+    if (change !== 'unchanged') run(dir, 'sync', { owner, complete: true,
+      prs: [{ ...old.prs['1'].snapshot, [change]: sha(20) }] })
+    const before = run(dir, 'show'), bytes = journalBytes(dir)
+    assert.deepEqual(before.prs['1'].cycles.map((c) => [c.rounds, c.noProgress, c.technicalVerdict]), [[2, 2, 'NICE']])
+    assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit/)
+    const stopped = next(dir)
+    assert.equal(stopped.action, 'blocked')
+    assert.equal(stopped.claimId, null)
+    assert.match(stopped.reason, /no-progress limit exhausted/)
+    assert.deepEqual(next(dir), stopped, 'identical exhausted observations remain quiet')
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before, 'no new cycle, projected repair, selection or charge')
+  })
+}
+
+test('PR304-COMPLETION-AUTHORITY: retained old base-only rejection cannot recover invalid success authority', () => {
+  const dir = completionAuthorityFixture('invalidBound'), old = run(dir, 'show')
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...old.prs['1'].snapshot, base: sha(20) }] })
+  // Model the already-covered pre-baseHeadRenewal admission, without changing
+  // any captured CLI history. Trusted80 itself already supported base renewal.
+  appendHistorical(dir, 'next', { owner })
+  const events = JSON.parse(journalBytes(dir)).events
+  events.at(-1).admission = 'detail-read-recovery'
+  writeJournal(dir, events)
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  assert.equal(before.active, null)
+  assert.notEqual(before.prs['1'].seenAudit, before.prs['1'].cycles[0].completion.auditKey)
+  assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit/)
+  const stopped = next(dir)
+  assert.equal(stopped.action, 'blocked')
+  assert.match(stopped.reason, /no-progress limit exhausted/)
+  assert.deepEqual(next(dir), stopped)
+  assert.equal(journalBytes(dir), bytes)
+  assert.deepEqual(run(dir, 'show'), before)
+})
+
+for (const change of ['head', 'base']) {
+  test(`PR304-COMPLETION-AUTHORITY: genuine exhausted NICE still permits ${change} renewal`, () => {
+    const dir = completionAuthorityFixture('validBound'), before = run(dir, 'show')
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...before.prs['1'].snapshot, [change]: sha(20) }] })
+    const bytes = journalBytes(dir), claim = next(dir)
+    assert.equal(claim.action, 'audit')
+    assert.equal(run(dir, 'begin', beginInput(claim)).round, 1)
+    const after = run(dir, 'show')
+    assert.deepEqual(after.prs['1'].cycles[0], before.prs['1'].cycles[0])
+    assert.deepEqual(after.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[2, 2], [1, 1]])
+    assert.ok(JSON.parse(journalBytes(dir)).events.every((e) => e.completionOwnershipFence === undefined))
+    assertHistoryPrefix(dir, bytes)
+  })
+  for (const stage of ['Admitted', 'Blocked']) {
+    test(`PR304-COMPLETION-AUTHORITY: old ${change}/${stage} cannot renew invalid NICE through begin or uncharged resume`, () => {
+      const dir = completionAuthorityFixture(`${change}${stage}`), before = run(dir, 'show'), bytes = journalBytes(dir)
+      const claim = before.active ?? before.prs['1'].blockedClaim.claim
+      assert.equal(claim.round, null)
+      assert.match(run(dir, stage === 'Blocked' ? 'resume' : 'begin',
+        stage === 'Blocked' ? resumeInput(claim) : beginInput(claim), false).error, /no-progress limit exhausted/)
+      assert.equal(journalBytes(dir), bytes)
+      assert.deepEqual(run(dir, 'show'), before)
+    })
+  }
+  test(`PR304-COMPLETION-AUTHORITY: already accepted old ${change} renewal retains exact replay and charge`, () => {
+    const dir = completionAuthorityFixture(`${change}Renewed`), bytes = journalBytes(dir), before = run(dir, 'show')
+    assert.deepEqual(before.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[2, 2], [1, 1]])
+    assert.equal(next(dir).claimId, before.active.claimId)
+    assert.equal(journalBytes(dir), bytes)
+    assert.deepEqual(run(dir, 'show'), before)
+  })
+}
+
+for (const change of ['unchanged', 'head', 'base']) {
+  test(`PR304-COMPLETION-AUTHORITY: underbound ${change} correction stays pending and resumes in the original cycle`, () => {
+    const dir = completionAuthorityFixture('invalidUnder'), old = run(dir, 'show')
+    if (change !== 'unchanged') run(dir, 'sync', { owner, complete: true,
+      prs: [{ ...old.prs['1'].snapshot, [change]: sha(20) }] })
+    const before = run(dir, 'show'), bytes = journalBytes(dir), findings = before.prs['1'].cycles[0].findings
+    assert.deepEqual(before.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[2, 1]])
+    assert.match(run(dir, 'next', { owner, gateNumber: 1 }, false).error, /pending audit/)
+    const claim = next(dir)
+    assert.equal(claim.action, 'audit')
+    assert.equal(next(dir).claimId, claim.claimId, 'the new admission must replay exactly')
+    run(dir, 'save', saveInput(claim, { phase: 'blocked', findings }))
+    const blocked = journalBytes(dir), route = next(dir)
+    assert.equal(route.recovery, 'resume')
+    assert.equal(route.claimId, claim.claimId)
+    assert.equal(journalBytes(dir), blocked, 'retained unfinished preparation is not replaced')
+    run(dir, 'resume', resumeInput(claim))
+    assert.equal(run(dir, 'begin', beginInput(claim)).round, 3)
+    const after = run(dir, 'show'), events = JSON.parse(journalBytes(dir)).events
+    assert.deepEqual(after.prs['1'].cycles.map((c) => [c.rounds, c.noProgress]), [[3, 2]])
+    assert.deepEqual(after.prs['1'].cycles[0].findings, findings)
+    assert.deepEqual(after.wakes, before.wakes)
+    const admissions = events.slice(before.events).filter((e) => ['next', 'resume', 'begin'].includes(e.command))
+    assert.deepEqual(admissions.map((e) => e.command), ['next', 'resume', 'begin'])
+    assert.ok(admissions.every((e) => e.completionOwnershipFence === true))
+    assertHistoryPrefix(dir, bytes)
+    if (change === 'base') {
+      for (const value of [false, 'true', null]) {
+        const invalid = fixture(), altered = structuredClone(events)
+        altered.at(-1).completionOwnershipFence = value
+        writeJournal(invalid, altered)
+        assert.match(run(invalid, 'show', undefined, false).error, /invalid completion ownership fence/)
+      }
+    }
+  })
+}
+
+test('PR304-COMPLETION-AUTHORITY: private ownership fence cannot be supplied by a caller', () => {
+  const dir = completionAuthorityFixture('invalidUnder'), bytes = journalBytes(dir)
+  for (const value of [true, false, null]) {
+    assert.match(run(dir, 'next', { owner, completionOwnershipFence: value }, false).error, /fields/)
+    assert.equal(journalBytes(dir), bytes)
+  }
+})
+
+test('PR304-COMPLETION-AUTHORITY: later historical read-only collision cannot revoke a genuine owners renewal', () => {
+  const dir = fixture(), journal = provenanceHistories.genuine
+  writeJournal(dir, journal.events, journal.version)
+  const before = run(dir, 'show'), snapshot = before.prs['1'].snapshot, fork = pr(2, { sourceRepo: 'fork/ecorp' })
+  run(dir, 'sync', { owner, complete: true, prs: [snapshot, fork] })
+  appendHistorical(dir, 'read-only', readOnlyInput(next(dir), { sourceRef: before.acceptanceProof.reviewers[0].sourceRef }))
+  const bytes = journalBytes(dir)
+  run(dir, 'enable', { owner, acceptanceProof: before.acceptanceProof })
+  assert.equal(journalBytes(dir), bytes, 'original exact acknowledgement stays quiet')
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, head: sha(20) }, fork] })
+  const claim = next(dir)
+  assert.equal(claim.number, 1)
+  assert.equal(run(dir, 'begin', beginInput(claim)).round, 1)
+  const after = run(dir, 'show')
+  assert.deepEqual(after.prs['1'].cycles.slice(0, -1), before.prs['1'].cycles)
+  assert.equal(after.prs['1'].cycles.length, before.prs['1'].cycles.length + 1)
+  assertHistoryPrefix(dir, bytes)
+})
+
 const publicationCriteria = ['SOURCE_SCOPE', 'FIX_EVIDENCE', 'NO_NEW_BLOCKERS', 'TRUTHFUL_STATUS']
 const progressBinding = (claim, snapshot) => ({
   owner, base: claim.head, head: snapshot.head, sourceRef: 'synthetic/progress-rubric.json',

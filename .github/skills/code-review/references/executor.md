@@ -387,8 +387,8 @@ Normal completed NICE cycles renew when either base or head changes; a new
 diff must not inherit an exhausted prior successful cycle. Same-revision
 feedback, unfinished/failed work and invalid policy/publication correction
 retain their existing bounds.
-An old NICE projection with unresolved failed-review provenance is not a
-successful cycle. Under-bound pending work must use a charged audit in its
+An old NICE projection with unresolved failed-review provenance or conflicting
+report ownership is not a successful cycle. Under-bound pending work must use a charged audit in its
 existing cycle; head/base changes cannot reset its failed bounds. Exhausted
 stops remain stops, without consuming or repeatedly replacing retained work.
 An old unclaimed bound rejection may have incorrectly consumed a base-only

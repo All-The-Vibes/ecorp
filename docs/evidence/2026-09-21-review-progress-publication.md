@@ -110,3 +110,29 @@ unchanged asset debt and lack of new SCA/native acceptance remain explicit.
 
 As with the earlier captures, this precedes fresh final independent acceptance,
 publication, hosted CI/Copilot and deployment. It is not proof of those effects.
+
+## Shared completion authority
+
+The next acceptance pass rejected cycle renewal based on ownership-invalid
+historical NICE. That candidate remained unpublished. A shared completion
+authority check now combines failed-review provenance and chronological report
+ownership across renewal, admission, begin, uncharged resume, processed and
+retained-successful completion, feedback and activation. New admission semantics
+are stamped; already accepted historical decisions are not reinterpreted.
+
+The current complete suite is **495/495 PASS**, zero failures/skips; all 26
+copied inputs match their recorded hashes. Windows package/snapshot checks are
+**21/21**. Focused TDD is **36/36**, including 18 new cases. Eleven original
+boundary failures and the separately corrected retained-rejection RED are
+preserved; the initial fixture mistake and intermediate failure are not claimed
+as successful checks. Eleven historical comparisons preserve journal bytes,
+projections and counters. The actual copied journal also remains unchanged with
+valid activation and its original uncharged PR255 claim.
+
+ATV/Ponytail rechecked the renewal finding and previous closures with no new
+in-scope finding. The six earlier application baselines still cover 383 identical
+inputs; they were not rerun, and 323 ignored Rust tests are not passes. Focused
+counts overlap the complete suite. Publication, fresh final acceptance, current
+CI/Copilot and adoption are not asserted by this local evidence.
+
+![Actual completion-authority local-log capture](assets/astra-review-executor/30-completion-authority.png)
