@@ -1,0 +1,145 @@
+{
+  "schema_version": 2,
+  "created_at": "2026-09-21T01:24:53.510Z",
+  "status": "native-verification-and-export-verified-owner-decision-pending",
+  "repository": "https://github.com/All-The-Vibes/ecorp",
+  "issue": 361,
+  "base_commit": "39632b957819012721c90902925d8fa7a9c7e873",
+  "exported_commit": "3aff250c118c1e24daebc39e7c8655049a344fb5",
+  "recovery_id": "408fa2c6-69d4-4f31-b050-6b2b3b097d03",
+  "run_id": "caa55ef2-f313-4867-a60f-d676676fc70d",
+  "contract_revision_id": "5c97a645-d84e-4c37-ac89-b6bd54fd82ee",
+  "contract_revision_version": 2,
+  "original_failed_run": "910b058f-f2f5-4b92-b437-b8207c4b62eb",
+  "original_failure_preserved": true,
+  "native_checks": {
+    "passed": 2,
+    "total": 2
+  },
+  "focused_regressions": {
+    "tests": 7,
+    "pass": 7,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "execution_mode": "verification_only",
+  "provider_session_present": false,
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "source_deliverable_id": "e2673442-6e2b-4cbd-a91d-c63132f18ac6",
+  "artifact_bytes": 95252,
+  "artifact_sha256": "20d42b17fd0f5f5f7a5f411008390d85e33c932c0687cf3290df8d98c1890aeb",
+  "verification_sha256": "25004f9a6f0ebf123cd211d07a17a94a83d04f884fdea47468de62d8737c1d5d",
+  "bundle_bytes": 2301,
+  "bundle_sha256": "c89c74b7a31ba4ec2a490c1cca09dac678c0651d53d5b85e8be8e715bcca4fba",
+  "tree_entries": 736,
+  "unchanged_tree_entries": 733,
+  "modes_preserved": true,
+  "provider_evidence_excluded": true,
+  "verified_blobs": [
+    {
+      "path": "scenarios/repo-steward/README.md",
+      "blob_oid": "d9609c0d551a40a057246d327f764c11bddfea3b",
+      "bytes": 22472,
+      "sha256": "25d8d5808fe463676301e088df8b4c2b6ec472f6ed1290b0bdea8c3e5d150d22",
+      "mode": "100644"
+    },
+    {
+      "path": "scenarios/repo-steward/lib/common.mjs",
+      "blob_oid": "f54103e779be060942868eead6d64f1210f06148",
+      "bytes": 9337,
+      "sha256": "17ed4f262ecc4394bfa3c8bb87e0d82eda95d7130bf649a7335909849e6eb5d9",
+      "mode": "100644"
+    },
+    {
+      "path": "scenarios/repo-steward/steward.test.mjs",
+      "blob_oid": "f563ad9bd16a0348ea597385ad99d44dec5022da",
+      "bytes": 30246,
+      "sha256": "c7c5728ce644228dc1bd36b99f1827c3c0040846f950cd4aa611d345af747041",
+      "mode": "100644"
+    }
+  ],
+  "review_diff": {
+    "file": "candidate.diff",
+    "bytes": 5798,
+    "sha256": "661622d5c97bdb32f5cb444e7e69ac900688b98610eb9d1c3a55420ca69890a9"
+  },
+  "native_patch": {
+    "bytes": 5996,
+    "sha256": "649ccaa34374ced2fcc081eaca280f3ea2f3bb11e95e08b6498a830772b75f5d"
+  },
+  "diff_note": "Canonical exported file contents match the review candidate. Review and native patch serializations are not byte-identical.",
+  "audit_receipt_sha256": "d27f7462d3a1f3e087f788c834d6db62a5e2b994f4e658436e62e29e1b93ac3d",
+  "owner_gate": {
+    "type": "human_approval",
+    "roles": [
+      "owner"
+    ],
+    "status": "pending"
+  },
+  "publication": "pending",
+  "new_benchmark_score": null,
+  "gate_rows": [
+    [
+      "Migration check",
+      "Pass",
+      "0.876 s"
+    ],
+    [
+      "Documentation contracts",
+      "Pass",
+      "5.590 s"
+    ],
+    [
+      "Web/tool unit tests",
+      "1,204 passed · 44 skipped · 0 failed",
+      "73.971 s"
+    ],
+    [
+      "Steward tests",
+      "234 passed · 0 skipped · 0 failed",
+      "56.707 s"
+    ],
+    [
+      "Rust formatting",
+      "Pass",
+      "6.958 s"
+    ],
+    [
+      "Rust Clippy, all targets, warnings denied",
+      "Pass",
+      "163.600 s"
+    ],
+    [
+      "Rust workspace tests",
+      "565 passed · 343 ignored · 0 failed",
+      "276.147 s"
+    ],
+    [
+      "Web production build",
+      "Pass",
+      "27.384 s"
+    ],
+    [
+      "Web lint",
+      "Pass",
+      "5.221 s"
+    ]
+  ],
+  "focused_test_descriptions": [
+    "Collector preserves a complete Unicode PR body with 65,535 UTF-16 units and 65,795 UTF-8 bytes.",
+    "Issue body at exactly 65,536 UTF-16 units is accepted unchanged.",
+    "Issue body at 65,537 UTF-16 units is rejected.",
+    "PR body at exactly 65,536 UTF-16 units is accepted unchanged.",
+    "PR body at 65,537 UTF-16 units is rejected.",
+    "Individually valid bodies cannot exceed the aggregate 16 MiB snapshot byte limit.",
+    "The collector rejects cumulative response bytes beyond its 16 MiB limit."
+  ],
+  "limitations": [
+    "44 JavaScript skips and343 ignored Rust tests are not passes.",
+    "Local development identity is not production-authentication or OS-isolation proof.",
+    "Approval, publication and a new benchmark score remain pending."
+  ]
+}

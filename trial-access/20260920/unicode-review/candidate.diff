@@ -1,0 +1,89 @@
+diff --git a/scenarios/repo-steward/README.md b/scenarios/repo-steward/README.md
+index cc5f36e..d9609c0 100644
+--- a/scenarios/repo-steward/README.md
++++ b/scenarios/repo-steward/README.md
+@@ -59,6 +59,10 @@ exhausted GraphQL reserve. Two matching reads are not an atomic GitHub transacti
+ A saved snapshot remains supplied data, not fresh authorization. Answers label
+ their timestamp and freshness. Hosted live audits refuse stale snapshots.
+ 
++Issue and PR bodies use the existing 65,536 UTF-16 code-unit string limit, so a
++bounded Unicode body is not rejected for taking more UTF-8 bytes. Complete
++snapshots and cumulative collection responses retain their 16 MiB byte limits.
++
+ ## Manual GitHub Actions pilot
+ 
+ The workflow source is `.github/workflows/repo-steward.yml`. Adding that file to a
+diff --git a/scenarios/repo-steward/lib/common.mjs b/scenarios/repo-steward/lib/common.mjs
+index 1c80de1..f54103e 100644
+--- a/scenarios/repo-steward/lib/common.mjs
++++ b/scenarios/repo-steward/lib/common.mjs
+@@ -51,7 +51,8 @@ export function readJson(path, maxBytes = 16777216) {
+ function array(value, name, max = 1000) { requireThat(Array.isArray(value) && value.length <= max, 'SNAPSHOT', `Invalid ${name}.`); }
+ function entity(row, kind) {
+   requireThat(isObject(row) && integer(row.number) && typeof row.title === 'string' && typeof row.body === 'string', 'SNAPSHOT', `Invalid ${kind}.`);
+-  requireThat(Buffer.byteLength(row.body) <= 65536 && row.title.length <= 1024, 'INPUT_BOUND', `${kind} text exceeds its bound.`);
++  // Match safeData's UTF-16 string bound; aggregate snapshot bytes remain bounded.
++  requireThat(row.body.length <= 65536 && row.title.length <= 1024, 'INPUT_BOUND', `${kind} text exceeds its bound.`);
+   requireThat(validTime(row.updated_at), 'SNAPSHOT', `Invalid ${kind} revision.`);
+   requireThat(row.repository === undefined || sameRepo(row.repository), 'SCOPE', 'Entity is outside the approved repository.');
+   requireThat(row.url === (kind === 'issue' ? issueUrl(row.number) : prUrl(row.number)), 'SCOPE', 'Entity URL does not match its identity.');
+diff --git a/scenarios/repo-steward/steward.test.mjs b/scenarios/repo-steward/steward.test.mjs
+index 3b376f8..f563ad9 100644
+--- a/scenarios/repo-steward/steward.test.mjs
++++ b/scenarios/repo-steward/steward.test.mjs
+@@ -181,6 +181,55 @@ for (const [name, mutate] of [
+   ['duplicate project item', s => { s.project_items.push(structuredClone(s.project_items[0])); counts(s); }], ['oversized body', s => { s.issues[0].body = 'a'.repeat(65537); }],
+ ]) test(`snapshot rejects ${name}`, () => { const snapshot = fresh(); mutate(snapshot); assert.throws(() => validateSnapshot(snapshot)); });
+ 
++test('Unicode body bounds: collector preserves the full bounded multibyte PR body', async () => {
++  const snapshot = fresh(), body = 'a'.repeat(65275) + 'é'.repeat(260);
++  assert.equal(body.length, 65535); assert.equal(Buffer.byteLength(body), 65795);
++  assert.equal(safeText(body, 65536), body);
++  snapshot.pull_requests[0].body = body;
++  const collected = await collectSnapshot({ reader: mockReader(snapshot), now: () => now });
++  assert.equal(collected.pull_requests[0].body, body);
++  assert.equal(collected.collection.writes, 0);
++});
++
++for (const [key, kind] of [['issues', 'issue'], ['pull_requests', 'pull request']]) {
++  test(`Unicode body bounds: ${kind} accepts 65536 UTF-16 units unchanged`, () => {
++    const snapshot = fresh(), body = 'é漢🙂'.repeat(16384);
++    assert.equal(body.length, 65536); assert.ok(Buffer.byteLength(body) > 65536);
++    snapshot[key][0].body = body;
++    assert.doesNotThrow(() => validateSnapshot(snapshot));
++    assert.equal(snapshot[key][0].body, body);
++  });
++  test(`Unicode body bounds: ${kind} validator rejects 65537 UTF-16 units`, () => {
++    const snapshot = fresh(), body = 'é'.repeat(65535) + '🙂';
++    assert.equal(body.length, 65537);
++    snapshot[key][0].body = body;
++    assert.throws(() => validateSnapshot(snapshot), { code: 'INPUT_BOUND', message: `${kind} text exceeds its bound.` });
++  });
++}
++
++test('Unicode body bounds: individually valid bodies still exceed the aggregate snapshot byte limit', () => {
++  const snapshot = fresh(), policy = loadPolicy(), body = '漢'.repeat(65536);
++  assert.equal(policy.limits.max_bytes, 16777216);
++  for (let i = 0; i < Math.ceil(policy.limits.max_bytes / Buffer.byteLength(body)); i++) {
++    snapshot.issues.push(fixtureIssue(900 + i, 'Bounded Unicode body', { body }));
++  }
++  counts(snapshot);
++  const serialized = JSON.stringify(snapshot);
++  assert.ok(snapshot.issues.length < policy.limits.max_records);
++  assert.ok(serialized.length < policy.limits.max_bytes);
++  assert.ok(Buffer.byteLength(serialized) > policy.limits.max_bytes);
++  assert.throws(() => validateSnapshot(snapshot, policy), { code: 'INPUT_BOUND', message: 'Snapshot exceeds byte bound.' });
++});
++
++test('Unicode body bounds: reader retains the aggregate UTF-8 response byte limit', async () => {
++  const policy = loadPolicy();
++  const response = JSON.stringify({ login: SCOPE.collector_login, padding: '漢'.repeat(Math.ceil(policy.limits.max_bytes / 3)) });
++  assert.ok(response.length < policy.limits.max_bytes);
++  assert.ok(Buffer.byteLength(response) > policy.limits.max_bytes);
++  const reader = createGithubReader({ policy, run: async () => response });
++  await assert.rejects(reader.account(), { code: 'INPUT_BOUND', message: 'Collection response byte bound exceeded.' });
++});
++
+ test('collector completes two matching passes with no writes', async () => {
+   const snapshot = await collectSnapshot({ reader: mockReader(), now: () => now });
+   assert.equal(snapshot.issues.length, 12); assert.equal(snapshot.collection.writes, 0); assert.match(snapshot.coverage.consistency, /not an atomic/);
