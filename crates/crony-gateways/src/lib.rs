@@ -106,6 +106,11 @@ impl GatewayClient {
         }
         let response = request.send().await.context("send ECorp API request")?;
         let status = response.status();
+        if status.is_redirection() {
+            return Err(anyhow!(
+                "ECorp API returned redirect {status}; configure the canonical API origin"
+            ));
+        }
         let value = if let Some(limit) = self.response_byte_limit {
             bounded_response_json(response, limit).await?
         } else {
@@ -572,45 +577,58 @@ mod tests {
             time::{Duration, timeout},
         };
         for access in [McpAccess::ReadOnly, McpAccess::ReadWrite] {
-            let destination = TcpListener::bind("127.0.0.1:0").await.unwrap();
-            let redirect = TcpListener::bind("127.0.0.1:0").await.unwrap();
-            let origin = format!("http://{}", redirect.local_addr().unwrap());
-            let location = format!("http://{}/leak", destination.local_addr().unwrap());
-            let server = tokio::spawn(async move {
-                let (mut stream, _) = redirect.accept().await.unwrap();
-                let mut request = [0; 4096];
-                assert!(stream.read(&mut request).await.unwrap() > 0);
-                stream.write_all(format!(
-                    "HTTP/1.1 307 Temporary Redirect\r\nLocation: {location}\r\nContent-Length: 2\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{{}}"
-                ).as_bytes()).await.unwrap();
-            });
-            let client = GatewayClient::new(
-                origin,
-                Uuid::from_u128(1),
-                Uuid::from_u128(2),
-                Some("fixture-bearer".to_owned()),
-            )
-            .unwrap()
-            .with_mcp_access(access)
-            .unwrap();
-            let error = timeout(
-                Duration::from_secs(5),
-                client.request(
-                    Method::POST,
-                    "/api/fixture",
-                    Some(json!({"token":"fixture"})),
-                ),
-            )
-            .await
-            .expect("redirect rejection must finish without waiting on the destination")
-            .unwrap_err();
-            assert!(error.to_string().contains("307"));
-            server.await.unwrap();
-            assert!(
-                timeout(Duration::from_millis(100), destination.accept())
-                    .await
-                    .is_err()
-            );
+            for body in [
+                "",
+                "<html>DO_NOT_DISCLOSE_BODY</html>",
+                r#"{"detail":"DO_NOT_DISCLOSE_BODY"}"#,
+            ] {
+                let destination = TcpListener::bind("127.0.0.1:0").await.unwrap();
+                let redirect = TcpListener::bind("127.0.0.1:0").await.unwrap();
+                let origin = format!("http://{}", redirect.local_addr().unwrap());
+                let location = format!(
+                    "http://{}/DO_NOT_DISCLOSE_LOCATION",
+                    destination.local_addr().unwrap()
+                );
+                let server = tokio::spawn(async move {
+                    let (mut stream, _) = redirect.accept().await.unwrap();
+                    let mut request = [0; 4096];
+                    assert!(stream.read(&mut request).await.unwrap() > 0);
+                    stream.write_all(format!(
+                        "HTTP/1.1 307 Temporary Redirect\r\nLocation: {location}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                        body.len()
+                    ).as_bytes()).await.unwrap();
+                });
+                let client = GatewayClient::new(
+                    origin,
+                    Uuid::from_u128(1),
+                    Uuid::from_u128(2),
+                    Some("fixture-bearer".to_owned()),
+                )
+                .unwrap()
+                .with_mcp_access(access)
+                .unwrap();
+                let error = timeout(
+                    Duration::from_secs(5),
+                    client.request(
+                        Method::POST,
+                        "/api/fixture",
+                        Some(json!({"token":"fixture"})),
+                    ),
+                )
+                .await
+                .expect("redirect rejection must finish without waiting on the destination")
+                .unwrap_err();
+                let message = error.to_string();
+                assert!(message.contains("redirect 307"));
+                assert!(message.contains("canonical API origin"));
+                assert!(!message.contains("DO_NOT_DISCLOSE"));
+                server.await.unwrap();
+                assert!(
+                    timeout(Duration::from_millis(100), destination.accept())
+                        .await
+                        .is_err()
+                );
+            }
         }
     }
 
