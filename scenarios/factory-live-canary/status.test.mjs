@@ -42,7 +42,7 @@ test('CLI rejects missing, extra and invalid arguments', () => {
 })
 
 test('importing the module has no CLI side effects', () => {
-  const result = run(['--input-type=module', '-e', `await import(${JSON.stringify(moduleUrl.href)})`])
+  const result = run(['--input-type=module', '-e', 'await import(process.argv[1])', moduleUrl.href])
   assert.equal(result.status, 0, result.stderr)
   assert.equal(result.stdout, '')
   assert.equal(result.stderr, '')
@@ -51,8 +51,18 @@ test('importing the module has no CLI side effects', () => {
 test('output Error and TypeError diagnostics are preserved without intercepting stderr', () => {
   for (const kind of ['Error', 'TypeError']) {
     const marker = `factory-canary-EIO-${kind}`
-    const script = `process.argv=${JSON.stringify(['node', scenarioFile, 'done'])}; process.stdout.write=()=>{const error=new ${kind}(${JSON.stringify(marker)}); error.code='EIO'; throw error;}; await import(${JSON.stringify(moduleUrl.href)});`
-    const result = run(['--input-type=module', '-e', script])
+    const script = `
+      const [scenarioFile, moduleHref, kind, marker] = process.argv.slice(1)
+      const ErrorType = kind === 'TypeError' ? TypeError : Error
+      process.argv = [process.execPath, scenarioFile, 'done']
+      process.stdout.write = () => {
+        const error = new ErrorType(marker)
+        error.code = 'EIO'
+        throw error
+      }
+      await import(moduleHref)
+    `
+    const result = run(['--input-type=module', '-e', script, scenarioFile, moduleUrl.href, kind, marker])
     assert.equal(result.status, 1, result.stderr)
     assert.equal(result.stdout, '')
     assert.ok(result.stderr.includes(marker))
