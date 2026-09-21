@@ -2,6 +2,10 @@
 
 This is candidate repair evidence, not a claim that the changes are merged or deployed.
 
+The [gauntlet evidence addendum](2026-09-21-pr362-gauntlet-remediation.md) retains the original
+attestation and earlier receipts, and adds source-bound local logs, genuine captures, explicit
+configuration fields, and clearly retrospective regression checks.
+
 ## Boundaries repaired
 
 - CLI and every gateway mode validate the configured API origin, require HTTPS outside
