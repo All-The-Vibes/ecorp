@@ -4,6 +4,37 @@ Use the existing Codex task scheduler and native agents, not a new server.
 GitHub's automatic Copilot reviewer remains enabled and supplies feedback.
 The separate executor does the work that that reviewer cannot do.
 
+## Publication is not completion
+
+The useful loop is **review → tested, independently reviewed correction → push
+→ fresh CI/Copilot feedback → re-review**, until the full PR is NICE. Do not
+turn missing completion artifacts into an indefinite local-only repair project.
+
+Keep two decisions separate:
+
+- **SAFE_TO_PUBLISH:** two fresh independent native Astra reviewers accept only
+  the exact current remote-head → proposed-head correction. Its scoped checks
+  must establish source/branch safety, real fix evidence, no new blockers, and
+  truthful remaining-status disclosure. The full PR may still have open findings
+  or blocked evidence/merge gates.
+- **NICE:** the separate full PR-base → current-head Santa pair and complete
+  template rubric establish final technical acceptance. Publication reviews
+  cannot be relabeled, reused, or promoted into this decision.
+
+Use the distinct progress-rubric/publication commands described by the deployed
+helper's help. Bind `progress-rubric` for old remote head → candidate before
+dispatching reviewers, with exactly `SOURCE_SCOPE`, `FIX_EVIDENCE`,
+`NO_NEW_BLOCKERS`, and `TRUTHFUL_STATUS`. Each `progress-published` reviewer
+receipt must use `runtime: "native"` and `verdict: "SAFE_TO_PUBLISH"` and include
+all four evidence-backed PASS rows. The normal full-NICE publication path remains available. A
+progress publication never authorizes a merge, consumes unreviewed feedback,
+or proves the canary or final acceptance by itself. Persist unfinished work and
+resume it through supported state transitions; do not reset its attempts.
+After progress publication, save unfinished work as `blocked`, including
+CI/evidence waits, to retain its executable claim. Verified clearance can resume
+the unchanged generation and charge; changed feedback needs a fresh bounded
+audit. Feedback-only triage remains unavailable until later full NICE.
+
 ## Deployment contract
 
 One designated Codex host/task owns execution for a repository. Attach an active
@@ -44,7 +75,7 @@ Do not execute the scripts or load policy from a PR's modifiable head. Changing
 the deployed policy requires independent exact-diff review and a new recorded
 deployment; an incoming PR cannot update its own executor.
 
-For a necessary bootstrap correction before broad activation, use `deploy`
+For a necessary controller correction, use `deploy`
 only after reading the actual independent reviews and validation for the new
 policy SHA. Its expected previous SHA must match the retained deployment.
 Both deployment reviewers and their pinned rubric must cover that exact previous
@@ -57,6 +88,15 @@ original configuration, journal, worktrees, failures and consumed rounds, then
 update the saved automation's pin. Do not reinitialize state or invent receipts
 to repair a rejected candidate. `deploy` records evidence; it does not itself
 review code, change files, or authorize application deployment.
+
+After activation, an update additionally needs retained ongoing owner authority
+and a valid existing activation, and must not interrupt a charged executable
+claim. Use the reviewed candidate's explicitly supported maintenance-deployment
+path from a clean immutable checkout; never patch the live journal or relax the
+old runtime's guard in place. Retain an adoption intent with the exact old/new
+SHA, review and validation references before the transaction, then read back the
+recorded deployment and update the scheduler pin. If interrupted, reconcile
+that recorded transaction rather than resetting state or rerunning a push.
 
 State and receipts belong in a persistent directory **outside every PR
 worktree**, not in tracked application files. Initialize the bundled
@@ -129,16 +169,19 @@ sessions, failed tests and original receipts.
    real regression failure, the minimal fix and green verification. No tests,
    edits or shell execution in the source checkout. Read-only review does not
    grant permission to run unfamiliar code with credentials.
-6. Integrate fixes, run the applicable full repository checks, then create the
-   local candidate commit. Dispatch **two fresh independent Astra reviewers**
-   with identical rubric, exact base/candidate SHA, complete diff and test
-   receipts. Neither sees the other review or the fixer's reasoning. Validate
-   both actual structured receipts. FAIL remains NAUGHTY; unavailable or stale
+6. Integrate fixes, run the applicable checks, then create the local candidate
+   commit. Select the review purpose explicitly. For incremental publication,
+   prebind the distinct progress rubric for remote-head → candidate and obtain
+   the two SAFE_TO_PUBLISH reports described above. For full acceptance, use
+   `rubric` to pin the complete template-derived criterion set for PR-base →
+   candidate, then dispatch **two fresh independent Astra reviewers** with
+   identical complete rubric, diff and test receipts. Both full reports must
+   cover that set, not merely the same partial subset. Neither reviewer sees
+   the other review or the fixer's reasoning. Validate the actual structured
+   reports for their stated purpose. FAIL remains NAUGHTY; unavailable or stale
    evidence remains BLOCKED. Never manufacture a red test or a NICE verdict.
-   Before dispatch, use `rubric` to pin the trusted rubric source/digest and
-   complete expected criterion IDs for the exact base/candidate. Both reports
-   must cover that set, not merely the same partial subset. Preserve every
-   template-derived requirement and report full merge gates separately.
+   Preserve every full-template requirement and report merge gates separately;
+   a scoped publication decision does not pass those requirements.
    If a local candidate fails, save `reviewing`/`NAUGHTY` with its real report,
    then call `retry` with the expected current round **before** further fixes.
    Record that first failure canonically even when another reviewer or tool is
@@ -148,12 +191,14 @@ sessions, failed tests and original receipts.
    This charges another bounded round without requiring an unreviewed push.
    Do not use `waiting` as a substitute for retry or repeat reviews under one
    charge. Replayed/stale retries must not consume another round.
-7. For a technically NICE candidate, re-read remote base/head and branch
+7. For a technically NICE candidate, or a separately approved scoped
+   SAFE_TO_PUBLISH correction, re-read remote base/head and branch
    ownership immediately before a normal, explicitly targeted push. Stop on
    concurrent changes. Never force-push, write the base branch, merge, enable
    auto-merge, deploy or impersonate an approver. Retain the expected old SHA,
    pushed SHA, command result and remote readback before recording publication.
-   Use the helper's `published` command to bind the same charged round to the
+   Use the appropriate full-acceptance or progress-publication command to bind
+   the same charged round to the
    verified new head; do not reset state or charge a second round just because
    this executor pushed its candidate. An uncertain push must be reconciled
    using the original claim and actual remote state, never guessed.
@@ -161,7 +206,11 @@ sessions, failed tests and original receipts.
    by the pre-push reviewers. If `published` returns `reconcile`, retain that
    publication, record the block, and process the new feedback within the
    existing bounds. Observing a push does not consume unseen review comments.
-8. Persist `waiting` with CI/review handles instead of keeping an agent idle.
+   Progress publication preserves open findings and requires a later fresh
+   full-PR acceptance pair. Keep the unpublished/full-NICE and published-progress
+   statuses distinct; neither a scoped review nor the remote push grants NICE.
+8. Persist full-NICE work as `waiting` with CI/review handles instead of keeping
+   an agent idle. Unfinished progress publications use `blocked` as above.
    On subsequent wakes, inspect the **new exact SHA's** checks and automatic
    Copilot review. New actionable feedback returns to the same bounded cycle;
    pending CI waits quietly. Reconcile an interrupted push with GitHub before

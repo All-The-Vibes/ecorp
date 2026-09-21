@@ -36,6 +36,19 @@ Keep dirty, committed, and unverifiable worktrees and all failed evidence.
 Publishing fixes is not authority to merge, auto-merge, deploy, or resolve a
 human's approval on their behalf.
 
+Do not make full-PR NICE a prerequisite for every corrective push. Two fresh
+independent reviewers may return **SAFE_TO_PUBLISH** for the exact remote-head
+to candidate delta after checking scoped test evidence, source/branch safety,
+absence of new blockers, and accurate remaining-status disclosure. Use the
+executor's separate progress rubric and publication receipt; keep open findings
+open. An unavailable test needed to judge the correction's safety still blocks
+that correction. A missing completion artifact does not justify inventing a new
+test platform or withholding an otherwise verified independent fix.
+
+Publishing progress is not completion. Inspect fresh exact-head CI and Copilot
+feedback and obtain the separate full-PR Santa review before reporting NICE.
+Do not recycle the scoped publication reviewers as final acceptance reviewers.
+
 After integration repeat rubric → security/Ponytail/Santa audit → TDD correction
 at the new head, within the applicable bounds. Preserve the finding ledger and
 all review/test receipts. Exhausted native-wake capacity is WAITING for automatic

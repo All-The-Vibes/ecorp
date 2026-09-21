@@ -3436,6 +3436,275 @@ const deploymentInput = (dir, previousPolicySha = init.policySha, policySha = sh
   }
 }
 
+const publicationCriteria = ['SOURCE_SCOPE', 'FIX_EVIDENCE', 'NO_NEW_BLOCKERS', 'TRUTHFUL_STATUS']
+const progressBinding = (claim, snapshot) => ({
+  owner, base: claim.head, head: snapshot.head, sourceRef: 'synthetic/progress-rubric.json',
+  sha256: key(600), criteria: publicationCriteria,
+})
+const progressInput = (claim, snapshot) => ({
+  ...beginInput(claim), snapshot,
+  reviewers: reviewers({ ...claim, claimId: `${claim.claimId}-progress-${claim.round}`,
+    base: claim.head, head: snapshot.head }).map((r) => ({
+    ...r, runtime: 'native', verdict: 'SAFE_TO_PUBLISH',
+    criteria: publicationCriteria.map((id) => ({ id, result: 'PASS', sourceRef: `synthetic/${id}.json` })),
+  })),
+  push: { repo, branch: snapshot.branch, before: claim.head, head: snapshot.head,
+    sourceRef: 'synthetic/progress-push.json', pushedAt: new Date().toISOString() },
+})
+
+test('PUBLICATION-BOUNDARY: useful delta publishes before full NICE and resumes the same unfinished charge', () => {
+  const dir = setup(), claim = start(dir), snapshot = pr(1, { head: sha(12) })
+  const findings = [{ id: 'screenshots', status: 'open', evidence: ['synthetic/missing-native-evidence.json'] }]
+  run(dir, 'save', saveInput(claim, { phase: 'fixing', findings }))
+  bindRubric(dir, snapshot)
+  const partial = progressInput(claim, snapshot)
+  run(dir, 'published', partial, false) // Full NICE must still refuse this useful but incomplete delivery.
+  run(dir, 'progress-rubric', progressBinding(claim, snapshot))
+  const input = progressInput(claim, snapshot), prefix = journalBytes(dir)
+  const published = run(dir, 'progress-published', input)
+  const bytes = journalBytes(dir), state = run(dir, 'show')
+  assert.equal(published.round, claim.round)
+  assert.equal(published.startedAt, claim.startedAt)
+  assert.equal(state.prs['1'].cycles[0].technicalVerdict, null)
+  assert.equal(state.prs['1'].seenAudit, null, 'progress never consumes the full audit')
+  assert.equal(state.enabled, false)
+  assert.deepEqual(state.usedReviewers, input.reviewers.map((r) => r.reviewerId))
+  run(dir, 'progress-published', input)
+  assert.equal(journalBytes(dir), bytes, 'canonical progress ACK is quiet')
+  run(dir, 'save', saveInput(published, { phase: 'blocked', findings, reason: 'CI and native screenshots pending' }))
+  const blocked = journalBytes(dir)
+  run(dir, 'next', { owner, feedbackNumber: 1 }, false)
+  run(dir, 'next', { owner, gateNumber: 1 }, false)
+  assert.equal(journalBytes(dir), blocked)
+  run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, gateKey: key(2) }] })
+  const route = next(dir)
+  assert.equal(route.recovery, 'resume')
+  assert.equal(route.claimId, claim.claimId)
+  const resumed = run(dir, 'resume', resumeInput(route))
+  assert.equal(resumed.round, claim.round)
+  const fresh = reviewers({ ...resumed, claimId: `${claim.claimId}-full` })
+  run(dir, 'save', saveInput(resumed, { phase: 'waiting', technicalVerdict: 'NICE', reviewers: fresh,
+    findings: findings.map((f) => ({ ...f, status: 'fixed', evidence: [...f.evidence, 'synthetic/screenshots.json'] })) }))
+  const done = run(dir, 'show')
+  assert.equal(done.prs['1'].cycles[0].technicalVerdict, 'NICE')
+  assert.equal(done.prs['1'].cycles[0].rounds, 1)
+  assert.equal(done.prs['1'].cycles[0].noProgress, 0)
+  assert.deepEqual(done.prs['1'].publications[0].push, input.push)
+  assertHistoryPrefix(dir, prefix)
+})
+
+test('PUBLICATION-BOUNDARY: reviewed post-activation deployment preserves an uncharged claim and activation', () => {
+  const dir = setup([pr(), pr(2)]), published = publishComplete(dir)
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined,
+    registeredWakeProof(dir, 'synthetic-maintenance')) })
+  const claim = next(dir)
+  assert.equal(claim.number, 2)
+  assert.equal(claim.round, null)
+  const input = deploymentInput(dir), before = run(dir, 'show'), prefix = journalBytes(dir)
+  run(dir, 'deploy', input)
+  const after = run(dir, 'show')
+  for (const field of ['config', 'active', 'prs', 'autonomy', 'wakes', 'activation', 'activations', 'usedReviewers']) {
+    assert.deepEqual(after[field], before[field], field)
+  }
+  assert.equal(after.deployments.at(-1).policySha, input.policySha)
+  assert.equal(JSON.parse(journalBytes(dir)).events.at(-1).postActivationDeploy, true)
+  assertHistoryPrefix(dir, prefix)
+})
+
+test('PUBLICATION-BOUNDARY: delta rubric and native receipts cannot be forged, stale, partial or relabelled', () => {
+  const dir = setup(), claim = start(dir), snapshot = pr(1, { head: sha(12) })
+  const binding = progressBinding(claim, snapshot), stale = progressInput(claim, snapshot)
+  bindRubric(dir, snapshot)
+  let bytes = journalBytes(dir)
+  run(dir, 'progress-published', stale, false)
+  for (const change of [
+    { owner: 'other' }, { base: snapshot.head }, { head: 'bad' }, { sha256: 'bad' },
+    { criteria }, { criteria: publicationCriteria.slice(1) }, { criteria: [...publicationCriteria, 'EXTRA'] },
+  ]) run(dir, 'progress-rubric', { ...binding, ...change }, false)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'progress-rubric', binding)
+  bytes = journalBytes(dir)
+  run(dir, 'progress-rubric', binding)
+  run(dir, 'progress-rubric', { ...binding, sourceRef: 'replacement.json' }, false)
+  run(dir, 'progress-published', stale, false)
+  const input = progressInput(claim, snapshot)
+  const badReviews = [
+    { reviewerId: owner }, { reviewerId: input.reviewers[0].reviewerId },
+    { sourceRef: input.reviewers[0].sourceRef }, { sourceRef: '' }, { model: 'other' },
+    { runtime: 'cli' }, { runtime: undefined }, { verdict: 'NICE' },
+    { base: claim.base }, { head: claim.head }, { criteria: [] },
+    { criteria: input.reviewers[1].criteria.slice(1) },
+    { criteria: input.reviewers[1].criteria.map((c) => ({ ...c, result: 'BLOCKED' })) },
+    { criteria: input.reviewers[1].criteria.map((c) => ({ ...c, sourceRef: '' })) },
+    { completedAt: '2000-01-01T00:00:00.000Z' }, { completedAt: '9999-01-01T00:00:00.000Z' },
+  ]
+  for (const change of badReviews) {
+    run(dir, 'progress-published', { ...input, reviewers: [input.reviewers[0], { ...input.reviewers[1], ...change }] }, false)
+  }
+  for (const change of [
+    { owner: 'other' }, { claimId: 'other' }, { base: sha(80) }, { head: sha(80) },
+    { number: 2 }, { reviewers: [] }, { unknown: true },
+    { snapshot: { ...snapshot, sourceRepo: 'fork/ecorp' } },
+    { snapshot: { ...snapshot, base: sha(80) } }, { snapshot: { ...snapshot, branch: 'other' } },
+    { snapshot: { ...snapshot, baseRef: 'other' } }, { snapshot: { ...snapshot, baseRef: undefined } },
+    { snapshot: { ...snapshot, head: claim.head } }, { snapshot: { ...snapshot, readError: 'DETAIL_READ_FAILED' } },
+    { push: { ...input.push, before: sha(80) } }, { push: { ...input.push, head: sha(80) } },
+    { push: { ...input.push, repo: 'fork/ecorp' } }, { push: { ...input.push, branch: 'other' } },
+    { push: { ...input.push, pushedAt: '2000-01-01T00:00:00.000Z' } },
+    { push: { ...input.push, pushedAt: '9999-01-01T00:00:00.000Z' } },
+  ]) run(dir, 'progress-published', { ...input, ...change }, false)
+  assert.equal(journalBytes(dir), bytes, 'every refusal leaves the owned synthetic journal byte-identical')
+  const published = run(dir, 'progress-published', input)
+  bytes = journalBytes(dir)
+  run(dir, 'published', input, false)
+  run(dir, 'progress-published', { ...input, push: { ...input.push, sourceRef: 'alias.json' } }, false)
+  run(dir, 'save', saveInput(published), false, 'unfinished work cannot lose its claim through ordinary waiting')
+  for (const field of ['reviewerId', 'sourceRef']) {
+    const recycled = reviewers({ ...published, claimId: 'synthetic-fresh-full' })
+      .map((r, n) => ({ ...r, [field]: input.reviewers[n][field] }))
+    run(dir, 'save', saveInput(published, { technicalVerdict: 'NICE', reviewers: recycled }), false)
+    const deployment = { owner, previousPolicySha: init.policySha, policySha: snapshot.head,
+      reviewers: recycled, validation: { policySha: snapshot.head, status: 'passed',
+        sourceRef: 'synthetic/policy-validation.json', verifiedAt: new Date().toISOString() } }
+    run(dir, 'deploy', deployment, false)
+  }
+  assert.equal(journalBytes(dir), bytes, 'neither verdict relabelling nor source/ID reuse promotes progress')
+})
+
+for (const changedFeedback of [false, true]) {
+  test(`PUBLICATION-BOUNDARY: progress readback feedback=${changedFeedback} keeps canonical ACK and needs full acceptance`, () => {
+    const dir = setup(), claim = start(dir)
+    const open = { id: 'useful-fix', status: 'open', evidence: ['synthetic/red.log'] }
+    run(dir, 'save', saveInput(claim, { phase: 'fixing', findings: [open] }))
+    const fixed = { ...open, status: 'fixed', evidence: [...open.evidence, 'synthetic/green.log'] }
+    run(dir, 'save', saveInput(claim, { phase: 'reviewing', findings: [fixed] }))
+    const snapshot = pr(1, { head: sha(12), reviewKey: key(changedFeedback ? 2 : 1) })
+    run(dir, 'progress-rubric', progressBinding(claim, snapshot))
+    const input = progressInput(claim, snapshot)
+    run(dir, 'sync', { owner, complete: true, prs: [snapshot] })
+    const published = run(dir, 'progress-published', input), bytes = journalBytes(dir)
+    assert.equal(published.action, changedFeedback ? 'reconcile' : 'audit')
+    assert.equal(run(dir, 'progress-published', input).action, published.action)
+    assert.equal(journalBytes(dir), bytes)
+    run(dir, 'save', saveInput(published, { phase: 'blocked', findings: [fixed] }))
+    const blocked = journalBytes(dir)
+    run(dir, 'next', { owner, feedbackNumber: 1 }, false)
+    run(dir, 'next', { owner, gateNumber: 1 }, false)
+    assert.equal(journalBytes(dir), blocked)
+    let final
+    if (changedFeedback) {
+      run(dir, 'resume', resumeInput(published), false)
+      final = start(dir)
+      assert.notEqual(final.claimId, claim.claimId)
+      assert.equal(final.round, 2)
+    } else {
+      final = run(dir, 'resume', resumeInput(next(dir)))
+      bindRubric(dir, final)
+      assert.equal(final.round, 1)
+    }
+    const receipts = reviewers({ ...final, claimId: `${final.claimId}-full` })
+    run(dir, 'save', saveInput(final, { findings: [fixed], technicalVerdict: 'NICE', reviewers: receipts }))
+    run(dir, 'autonomy', autonomyInput())
+    const schedulerWake = registeredWakeProof(dir, 'synthetic-progress-full-acceptance')
+    const acceptanceProof = { ...proof(final, receipts, snapshot, schedulerWake, fixed.id), push: input.push }
+    run(dir, 'enable', { owner, acceptanceProof: { ...acceptanceProof,
+      ci: { ...acceptanceProof.ci, status: 'failed' } } }, false)
+    run(dir, 'enable', { owner, acceptanceProof })
+    const state = run(dir, 'show')
+    assert.equal(state.activation.valid, true)
+    assert.equal(state.prs['1'].cycles.length, 1)
+    assert.equal(state.prs['1'].cycles[0].rounds, changedFeedback ? 2 : 1)
+    assert.deepEqual(state.prs['1'].publications[0].push, input.push)
+    assertHistoryPrefix(dir, bytes)
+    run(dir, 'sync', { owner, complete: true, prs: [{ ...snapshot, reviewKey: key(3) }] })
+    assert.equal(run(dir, 'next', { owner, feedbackNumber: 1 }).action, 'feedback',
+      'only the later true full NICE unlocks metadata triage')
+  })
+}
+
+test('PUBLICATION-BOUNDARY: failed review provenance requires retry before progress and survives blocked resume', () => {
+  const dir = setup(), claim = start(dir), snapshot = pr(1, { head: sha(12) })
+  const open = { id: 'bug', status: 'open', evidence: ['synthetic/red.log'] }
+  failedReview(dir, claim, [open])
+  run(dir, 'progress-rubric', progressBinding(claim, snapshot))
+  const stale = progressInput(claim, snapshot), prefix = journalBytes(dir)
+  assert.match(run(dir, 'progress-published', stale, false).error, /explicit retry/)
+  assert.equal(journalBytes(dir), prefix)
+  const retry = run(dir, 'retry', retryInput(claim))
+  run(dir, 'progress-published', stale, false)
+  const fixed = { ...open, status: 'fixed', evidence: [...open.evidence, 'synthetic/green.log'] }
+  run(dir, 'save', saveInput(retry, { phase: 'fixing', findings: [fixed] }))
+  const input = progressInput(retry, snapshot), published = run(dir, 'progress-published', input)
+  failedReview(dir, published, [fixed])
+  run(dir, 'progress-published', input) // An ACK is not a new correction.
+  run(dir, 'save', saveInput(published, { phase: 'blocked', findings: [fixed] }))
+  const resumed = run(dir, 'resume', resumeInput(published))
+  assert.equal(next(dir).retryRequired, true)
+  assert.match(run(dir, 'save', saveInput(resumed, { phase: 'fixing', findings: [fixed] }), false).error, /explicit retry/)
+  const final = run(dir, 'retry', retryInput(resumed))
+  assert.equal(final.round, 3)
+  bindRubric(dir, final)
+  run(dir, 'save', saveInput(final, { phase: 'blocked', findings: [fixed] }))
+  const route = next(dir)
+  assert.equal(route.recovery, 'resume')
+  assert.equal(run(dir, 'resume', resumeInput(route)).round, 3, 'unfinished last charge resumes, never resets')
+  run(dir, 'save', saveInput(final, { technicalVerdict: 'NICE', findings: [fixed],
+    reviewers: reviewers({ ...final, claimId: 'synthetic-final-round' }) }))
+  const state = run(dir, 'show')
+  assert.equal(state.prs['1'].cycles[0].rounds, 3)
+  assert.ok(state.prs['1'].cycles[0].evidence.includes('evidence/failed-review.json'))
+  assertHistoryPrefix(dir, prefix)
+})
+
+test('PUBLICATION-BOUNDARY: unfinished progress yields to other PRs without spending or losing its charge', () => {
+  const dir = setup([pr(), pr(2), pr(3)]), canary = publishComplete(dir)
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(canary.claim, canary.receipts, undefined,
+    registeredWakeProof(dir, 'synthetic-progress-queue')) })
+  const claim = start(dir), snapshot = pr(2, { head: sha(12) })
+  run(dir, 'progress-rubric', progressBinding(claim, snapshot))
+  const published = run(dir, 'progress-published', progressInput(claim, snapshot))
+  run(dir, 'save', saveInput(published, { phase: 'blocked' }))
+  const before = run(dir, 'show')
+  assert.equal(next(dir).number, 3)
+  const after = run(dir, 'show')
+  assert.deepEqual(after.prs['2'], before.prs['2'])
+  assert.deepEqual(after.wakes, before.wakes)
+})
+
+test('PUBLICATION-BOUNDARY: post-activation deploy rejects charged work, stale proof, reuse and marker injection', () => {
+  const dir = setup([pr(), pr(2)]), published = publishComplete(dir)
+  run(dir, 'autonomy', autonomyInput())
+  run(dir, 'enable', { owner, acceptanceProof: proof(published.claim, published.receipts, undefined,
+    registeredWakeProof(dir, 'synthetic-maintenance-negatives')) })
+  const claim = start(dir), input = deploymentInput(dir), charged = journalBytes(dir)
+  assert.match(run(dir, 'deploy', input, false).error, /active charged executable claim/)
+  assert.equal(journalBytes(dir), charged)
+  run(dir, 'save', saveInput(claim, { phase: 'blocked' }))
+  const before = run(dir, 'show'), bytes = journalBytes(dir)
+  for (const change of [
+    { owner: 'other' }, { previousPolicySha: sha(98) }, { postActivationDeploy: true },
+    { reviewers: input.reviewers.map((r) => ({ ...r, verdict: 'SAFE_TO_PUBLISH' })) },
+    { reviewers: input.reviewers.map((r) => ({ ...r, completedAt: '2000-01-01T00:00:00.000Z' })) },
+    { reviewers: input.reviewers.map((r, n) => ({ ...r, reviewerId: published.receipts[n].reviewerId })) },
+    { reviewers: input.reviewers.map((r, n) => ({ ...r, sourceRef: published.receipts[n].sourceRef })) },
+    { validation: { ...input.validation, policySha: sha(98) } },
+    { validation: { ...input.validation, verifiedAt: '2000-01-01T00:00:00.000Z' } },
+  ]) run(dir, 'deploy', { ...input, ...change }, false)
+  assert.equal(journalBytes(dir), bytes)
+  run(dir, 'deploy', input)
+  assert.deepEqual(run(dir, 'show').prs, before.prs, 'blocked charged checkpoint is preserved, not an active execution')
+  assert.equal(run(dir, 'resume', resumeInput(claim)).round, claim.round)
+  assertHistoryPrefix(dir, bytes)
+  const invalid = setup(), old = publishComplete(invalid)
+  appendHistorical(invalid, 'enable', { owner, acceptanceProof: proof(old.claim, old.receipts) })
+  run(invalid, 'autonomy', autonomyInput())
+  const refused = deploymentInput(invalid), invalidBytes = journalBytes(invalid)
+  assert.match(run(invalid, 'deploy', refused, false).error, /valid current activation/)
+  assert.equal(journalBytes(invalid), invalidBytes, 'later authority cannot repair invalid activation through deploy')
+})
+
 test('deploy: owner-bound bootstrap roll-forward preserves init, claims, rounds, findings and all prior journal events', () => {
   const dir = setup(), claim = start(dir)
   failedReview(dir, claim, [{ id: 'E1', status: 'open', evidence: ['red.log'] }])

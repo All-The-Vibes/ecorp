@@ -138,11 +138,29 @@ An explicitly authorized persistent executor instead uses bounded native-wake
 batches under [executor.md](references/executor.md), without per-run approval.
 No automatic review may enter this phase.
 
+### Publish progress without claiming completion
+
+In authorized fix mode, publish useful, tested corrections rather than keeping
+all fixes local until the entire PR is NICE. Before that push, two fresh
+independent reviewers must examine the exact remote-head → candidate correction,
+its tests, branch/source safety, and truthful disclosure of remaining findings.
+Their **SAFE_TO_PUBLISH** decision is scoped to that correction, not full-PR
+acceptance. Missing completion evidence or an external merge gate may remain
+open; unsafe or unverified changes may not be published through this route.
+
+Use the deployed executor's distinct progress-publication contract. Do not
+rename a failed Santa report to obtain permission to push. Keep the remaining
+rubric gaps visible, preserve branch protections and human approvals, and never
+merge or mark a draft ready merely because a correction was published.
+
 ## 5. Repeat and report
 
 After each integrated fix, refresh status and repeat **2–4** at the new head.
 Previous test/review receipts are stale after relevant code or base changes.
 Recheck remote base/head before the final verdict.
+After a progress push, inspect that exact head's CI and automatic Copilot
+feedback, then continue the review/fix loop. Obtain the separate full-PR Santa
+pair before NICE; scoped publication reviews cannot substitute for it.
 
 - **NICE** requires an actual independent Santa verdict for that revision,
   every in-scope finding verified fixed, every applicable rubric row PASS,

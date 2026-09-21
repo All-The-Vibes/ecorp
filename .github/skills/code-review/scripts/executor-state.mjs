@@ -30,7 +30,10 @@
 //   missing binding blocks NICE, never silently migrates partial reviewer criteria.
 // deploy {owner,previousPolicySha:40hex,policySha:different40hex,reviewers:[Reviewer,Reviewer],
 //   validation:{policySha,status:"passed",sourceRef,verifiedAt}}
-//   Bootstrap only BEFORE enable. previousPolicySha must equal deployments[-1].policySha.
+//   previousPolicySha must equal deployments[-1].policySha. After enable, requires
+//   retained ongoing owner authority, valid activation, and no active charged audit.
+//   Fresh policy reviews/validation must postdate activation and last deployment.
+//   The CLI stamps postActivationDeploy:true; old accepted events keep their rules.
 //   Reviewers and their bound rubric must cover previousPolicySha -> policySha;
 //   bind that exact base/head rubric first, never relabel broader PR-base reviews.
 //   Historical accepted deployments replay unchanged. Both reviews and validation
@@ -138,6 +141,18 @@
 //   retries): save blocked with that returned claim, then next/begin fresh feedback
 //   work within existing bounds, or explicitly next {feedbackNumber} for read-only
 //   triage. Canonical publication stays retained; no new push or implicit consumption.
+// progress-rubric {owner,base:oldRemoteHead,head:newHead,sourceRef,sha256,criteria}
+//   Separate immutable DELTA rubric; exactly SOURCE_SCOPE,FIX_EVIDENCE,
+//   NO_NEW_BLOCKERS,TRUTHFUL_STATUS. Bind before dispatch, never relabel full NICE.
+// progress-published {owner,number,claimId,base,head,snapshot,push,reviewers}
+//   Same publication fences/ACK as published; reviewers cover old head -> new head,
+//   use runtime:"native", verdict:"SAFE_TO_PUBLISH", all four PASS evidence rows.
+//   Burns reviewer IDs/sources for full acceptance. Driver verifies independence,
+//   actual fixes and truthful disclosure of every open finding/template blocker.
+//   Does not consume the full audit or grant NICE/feedback/activation authority.
+//   Save unfinished work as blocked (including CI/evidence waits), then resume the
+//   same generation/charge after clearance, or next/begin on changed feedback.
+//   Full completion still needs fresh PR-base -> head NICE, all findings fixed.
 // save {owner,number,claimId,base,head,round:positiveInteger|null,phase,evidence,findings,technicalVerdict,reason,reviewers?}
 //   Every live save must supply the dispatched attempt's exact active round.
 //   Uncharged/gate claims require explicit null; never infer a fresh round for a
@@ -238,6 +253,7 @@ function fields(o, required, optional = []) {
 }
 const digest = (o) => createHash('sha256').update(JSON.stringify(o)).digest('hex')
 const refs = (a) => Array.isArray(a) && a.every(text)
+const publicationCriteria = ['SOURCE_SCOPE', 'FIX_EVIDENCE', 'NO_NEW_BLOCKERS', 'TRUTHFUL_STATUS']
 const same = (a, b) => a.base === b.base && a.head === b.head
 function completedRevisionChanged(c, snapshot, e, live, failedReviews) {
   if (c.technicalVerdict !== 'NICE' || ((live || e.failedCompletionFence) &&
@@ -309,17 +325,31 @@ function validateSnapshot(p) {
       [null, 'SIGTERM', 'SIGKILL', 'SIGINT'].includes(f.signal), 'invalid safe readFailure descriptor')
   }
 }
-function validateReviewers(receipts, claim, s, at) {
+function unusedReviewers(receipts, s) {
+  const prior = [...s.deployments.flatMap((d) => d.reviewers ?? []),
+    ...Object.values(s.prs).flatMap((p) => [
+      ...(p.publications ?? []).flatMap((d) => d.reviewers),
+      ...p.cycles.flatMap((c) => c.completion?.reviewers ?? []),
+      ...(p.feedbackReviews ?? []).map((f) => f.receipt),
+      ...(p.readOnlyReviews ?? []).map((f) => f.receipt),
+    ])]
+  check(receipts.every((r) => !s.usedReviewers.includes(r.reviewerId) && prior.every((old) =>
+    old.reviewerId !== r.reviewerId && ![old.sourceRef, old.generationSourceRef].includes(r.sourceRef))),
+  'reviewer identities and sources must be unused')
+}
+function validateReviewers(receipts, claim, s, at, progress = false) {
   check(hex(claim.base) && hex(claim.head), 'invalid reviewed revision')
-  const config = s.config, rubric = s.rubrics[`${claim.base}:${claim.head}`]
+  const config = s.config, rubric = (progress ? s.progressRubrics : s.rubrics)?.[`${claim.base}:${claim.head}`]
   check(rubric, 'bind exact trusted rubric before reviewer dispatch')
   check(Array.isArray(receipts) && receipts.length === 2, 'NICE requires two reviewer receipts')
   check(new Set(receipts.map((r) => r?.reviewerId)).size === 2, 'duplicate reviewer IDs')
   const decisions = [...s.deployments, ...Object.values(s.prs).flatMap((p) => p.publications ?? [])]
   for (const r of receipts) {
-    fields(r, ['reviewerId', 'model', 'base', 'head', 'verdict', 'completedAt', 'sourceRef', 'criteria'])
+    fields(r, ['reviewerId', 'model', 'base', 'head', 'verdict', 'completedAt', 'sourceRef', 'criteria',
+      ...(progress ? ['runtime'] : [])])
     check(text(r.reviewerId) && r.reviewerId !== config.owner && r.model === config.model &&
-      same(r, claim) && r.verdict === 'NICE' && text(r.sourceRef) &&
+      same(r, claim) && r.verdict === (progress ? 'SAFE_TO_PUBLISH' : 'NICE') &&
+      (!progress || r.runtime === 'native') && text(r.sourceRef) &&
       fresh(r.completedAt, claim.startedAt, at) && r.completedAt >= rubric.boundAt, 'malformed or stale reviewer receipt')
     check(Object.values(s.prs).every((p) => (p.feedbackReviews ?? []).every((f) =>
       f.receipt.reviewerId !== r.reviewerId && ![f.receipt.sourceRef, f.receipt.generationSourceRef].includes(r.sourceRef))),
@@ -338,6 +368,7 @@ function validateReviewers(receipts, claim, s, at) {
     check(digest(r.criteria.map((c) => c.id).sort()) === digest(rubric.binding.criteria.slice().sort()), 'review must cover exact pinned rubric')
   }
   check(receipts[0].sourceRef !== receipts[1].sourceRef, 'reviewers need distinct source references')
+  if (progress) unusedReviewers(receipts, s)
 }
 
 // The original audit identity, not a nullable projection or read-only claim, owns failure.
@@ -357,6 +388,7 @@ function feedbackBasis(s, p, at, failedReviews) {
   'feedback requires unchanged canonical reviewed code/source/target, never NAUGHTY')
   let completion = c.technicalVerdict === 'NICE' ? c.completion : null
   if (!completion) {
+    check(publication.kind !== 'progress', 'progress publication needs later full NICE before feedback-only review')
     const b = p.blockedClaim, a = b?.claim
     const { startedAt, reviewClaim, ...published } = publication
     check(c.phase === 'blocked' && b?.cycle === p.cycles.length && a?.round === c.rounds &&
@@ -400,7 +432,7 @@ function activationBindingError(s, proof) {
   return null
 }
 
-function apply(s, e, conflictingPublications = new Set(), { activation, live = false, failedReviews = new Map(), failedWaits = new Map(), pendingRenewals = new Map() } = {}) {
+function apply(s, e, conflictingPublications = new Set(), { activation, activationAt, live = false, failedReviews = new Map(), failedWaits = new Map(), pendingRenewals = new Map() } = {}) {
   const { command, input: i, at, id } = e
   if (command === 'init') {
     check(s === null, 'already initialized; immutable configuration')
@@ -425,7 +457,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
   if (invalidActivation) {
     const number = command === 'next' ? i.gateNumber ?? i.feedbackNumber : i.number
     if (number !== undefined && number !== s.config.canary &&
-      ['next', 'begin', 'retry', 'resume', 'save', 'published', 'feedback', 'read-only'].includes(command)) {
+      ['next', 'begin', 'retry', 'resume', 'save', 'published', 'progress-published', 'feedback', 'read-only'].includes(command)) {
       const retainOnly = (command === 'save' && i.phase === 'blocked' && i.technicalVerdict !== 'NICE' &&
         digest(i.findings) === digest(s.prs[number] && cycle(s.prs[number]).findings)) ||
         (command === 'feedback' && i.receipt?.disposition === 'BLOCKED') ||
@@ -433,7 +465,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       check(retainOnly, activation.reason)
     }
   }
-  if (s.autonomy && s.active?.action === 'audit' && ['begin', 'retry', 'save', 'published'].includes(command)) {
+  if (s.autonomy && s.active?.action === 'audit' && ['begin', 'retry', 'save', 'published', 'progress-published'].includes(command)) {
     check(scopeCurrent(s.active, s.prs[s.active.number]) ||
       (command === 'save' && i.phase === 'blocked' && i.technicalVerdict !== 'NICE'),
     'autonomous claim source/target conflicts; preserve work and save blocked')
@@ -463,30 +495,44 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     s.wakes ??= []
     output = { input: i, recordedAt: at, chargedRounds: 0 }
     s.wakes.push(output)
-  } else if (command === 'rubric') {
+  } else if (command === 'rubric' || command === 'progress-rubric') {
+    const progress = command === 'progress-rubric'
     fields(i, ['owner', 'base', 'head', 'sourceRef', 'sha256', 'criteria'])
     check(hex(i.base) && hex(i.head) && text(i.sourceRef) && hex(i.sha256, 64) &&
       refs(i.criteria) && new Set(i.criteria).size === i.criteria.length &&
-      ['CORRECTNESS', 'DURABILITY', 'SECURITY', 'TEMPLATE', 'VERIFICATION', 'COMPLETENESS', 'SIMPLICITY', 'TRUTHFULNESS']
+      (progress ? i.base !== i.head && i.criteria.length === publicationCriteria.length : true) &&
+      (progress ? publicationCriteria :
+        ['CORRECTNESS', 'DURABILITY', 'SECURITY', 'TEMPLATE', 'VERIFICATION', 'COMPLETENESS', 'SIMPLICITY', 'TRUTHFULNESS'])
         .every((id) => i.criteria.includes(id)), 'invalid or incomplete trusted rubric')
-    const key = `${i.base}:${i.head}`, old = s.rubrics[key]
+    const rubrics = progress ? (s.progressRubrics ??= {}) : s.rubrics
+    const key = `${i.base}:${i.head}`, old = rubrics[key]
     check(!old || digest(old.binding) === digest(i), 'rubric binding is immutable')
     changed = !old
-    if (changed) s.rubrics[key] = { binding: i, boundAt: at }
-    output = s.rubrics[key]
+    if (changed) rubrics[key] = { binding: i, boundAt: at }
+    output = rubrics[key]
   } else if (command === 'deploy') {
     fields(i, ['owner', 'previousPolicySha', 'policySha', 'reviewers', 'validation'])
     const previous = s.deployments.at(-1)
-    check(!s.enabled && i.previousPolicySha === previous.policySha &&
+    if (live && s.enabled) e.postActivationDeploy = true
+    if (e.postActivationDeploy) {
+      check(s.enabled && s.autonomy && activation?.valid, 'post-activation deployment requires ongoing authority and valid current activation')
+      check(!(s.active?.action === 'audit' && s.active.round !== null),
+        'post-activation deployment refuses an active charged executable claim')
+    }
+    check((!s.enabled || e.postActivationDeploy) && i.previousPolicySha === previous.policySha &&
       hex(i.policySha) && i.policySha !== i.previousPolicySha, 'deployment requires pre-activation and exact previous/different new policy SHA')
+    const startedAt = e.postActivationDeploy && activationAt > previous.deployedAt ? activationAt : previous.deployedAt
     // Enforce the transition on live admission, not by rewriting accepted history.
-    validateReviewers(i.reviewers, { base: live ? previous.policySha : i.reviewers?.[0]?.base,
-      head: i.policySha, startedAt: previous.deployedAt }, s, at)
+    validateReviewers(i.reviewers, { base: live || e.postActivationDeploy ? previous.policySha : i.reviewers?.[0]?.base,
+      head: i.policySha, startedAt }, s, at)
+    if (e.postActivationDeploy) unusedReviewers(i.reviewers, s)
     check(i.reviewers.every((r) => !s.usedReviewers.includes(r.reviewerId) &&
       !s.deployments.some((d) => d.reviewers?.some((old) => old.sourceRef === r.sourceRef))), 'deployment reviewers and sources must be fresh')
     fields(i.validation, ['policySha', 'status', 'sourceRef', 'verifiedAt'])
     check(i.validation.policySha === i.policySha && i.validation.status === 'passed' &&
-      text(i.validation.sourceRef) && fresh(i.validation.verifiedAt, previous.deployedAt, at), 'fresh exact-policy validation evidence required')
+      text(i.validation.sourceRef) && fresh(i.validation.verifiedAt, startedAt, at) &&
+      (!e.postActivationDeploy || i.validation.verifiedAt >= s.rubrics[`${previous.policySha}:${i.policySha}`].boundAt),
+    'fresh exact-policy validation evidence required')
     const { owner, ...deployment } = i
     const reviewClaim = s.active?.round && s.active.base === i.reviewers[0].base
       ? { claimId: s.active.claimId, round: s.active.round } : null
@@ -540,13 +586,21 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       return b && current(b.claim, p) && scopeCurrent(b.claim, p, b.claim.effectiveBaseRef) &&
         sameRepo(p.sourceRepo, s.config.repo) && sameRepo(p.snapshot.sourceRepo, s.config.repo)
     }
+    const progressRecovery = (p) => {
+      const b = p.blockedClaim, c = cycle(p)
+      return p.publications?.at(-1)?.kind === 'progress' && b && b.cycle === p.cycles.length &&
+        b.rounds === c.rounds && b.claim.round === c.rounds && !c.completion &&
+        current(b.claim, p) && scopeCurrent(b.claim, p, b.claim.effectiveBaseRef)
+    }
     const recoveryPriority = (p) => {
-      if (!waitingRecovery(p) && !pendingFailedCompletion(p)) return 0
+      if (!waitingRecovery(p) && !pendingFailedCompletion(p) && !progressRecovery(p)) return 0
       const c = cycle(p)
       return (live || e.recoveryPriority) && (c.rounds >= roundLimit(s) || c.noProgress >= 2) ? 2 : 1
     }
     const processedAudit = (p) => {
       const c = cycle(p), snapshot = p.snapshot, publication = p.publications?.at(-1)
+      if (publication?.kind === 'progress' && (!c.completion || c.technicalVerdict !== 'NICE' ||
+        c.completion.auditKey !== auditKey(snapshot))) return false
       if (completionFailed(p) || pendingRenewal(p)) return false
       if (corrective(p) && (pendingCorrection(p) || c.completion?.claimId !== p.correctiveAudit.claimId)) return false
       // Completion pins feedback/source/revision; canonical publication supplies
@@ -594,7 +648,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
     const p = target ?? Object.values(s.prs).filter((p) => p.present && p.snapshot.state === 'open' &&
       (enabled || p.snapshot.number === s.config.canary) &&
       (!publicationKey || s.autonomy) &&
-      (p.seen !== signature(p.snapshot) || waitingRecovery(p) || pendingFailedCompletion(p) || pendingRenewal(p) || (s.autonomy &&
+      (p.seen !== signature(p.snapshot) || waitingRecovery(p) || progressRecovery(p) || pendingFailedCompletion(p) || pendingRenewal(p) || (s.autonomy &&
         ((recoverPending && pendingRound(p)) || pendingCorrection(p)) &&
         !p.blockedReason && cycle(p).noProgress < 2 &&
         sameRepo(p.sourceRepo, s.config.repo) && sameRepo(p.snapshot.sourceRepo, s.config.repo))))
@@ -626,6 +680,11 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
         reason: reason ?? 'retained failed waiting audit requires resume, then charged retry' }, changed: false }
     }
     const b = p.blockedClaim
+    if (!target && progressRecovery(p)) {
+      return { state: s, output: { ...claimOutput(b.claim, p, s,
+        failedReviews.get(`${b.claim.claimId}:${b.claim.round}`)), action: 'blocked', recovery: 'resume',
+      reason: 'unfinished progress publication requires verified resume; full audit remains pending' }, changed: false }
+    }
     // Live-only, mutation-free refusal: old canaryRecovery events may have
     // admitted replacements with dependent charges; their replay stays unchanged.
     if (live && corrective(p) && b?.claim.action === 'audit' &&
@@ -772,11 +831,13 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       p.blockedClaim = null
       s.active = null
     }
-  } else if (command === 'published') {
+  } else if (command === 'published' || command === 'progress-published') {
+    const progress = command === 'progress-published'
     fields(i, ['owner', 'number', 'claimId', 'base', 'head', 'snapshot', 'push', 'reviewers'])
     const a = s.active, p = s.prs[i.number]
     check(a && a.action === 'audit' && a.number === i.number && a.claimId === i.claimId && a.round !== null, 'publication requires active charged audit claim')
-    if (a.publication && digest(a.publication) === digest(i)) return { state: s, output: claimOutput(a, p, s), changed: false }
+    if (a.publication && (a.publicationKind === 'progress') === progress &&
+      digest(a.publication) === digest(i)) return { state: s, output: claimOutput(a, p, s), changed: false }
     check((e.version !== 2 || !a.failureEvidence) && !(live && retainedFailure),
       'failed review requires explicit retry before new publication')
     validateSnapshot(i.snapshot)
@@ -787,17 +848,22 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       targetCompatible(a.snapshot, i.snapshot) && p.snapshot.baseRef === i.snapshot.baseRef &&
       i.snapshot.branch === a.snapshot.branch && p.present &&
       (current(a, p) || signature(p.snapshot) === signature(i.snapshot)), 'publication readback conflicts with retained claim/inventory')
-    validateReviewers(i.reviewers, { ...a, head: i.snapshot.head }, s, at)
+    validateReviewers(i.reviewers, { ...a, ...(progress ? { base: a.head } : {}), head: i.snapshot.head }, s, at, progress)
     check(i.reviewers.every((r) => !s.usedReviewers.includes(r.reviewerId)), 'reviewer IDs must be fresh')
     check(sameRepo(i.push.repo, s.config.repo) && i.push.branch === a.snapshot.branch &&
       i.push.before === a.head && i.push.head === i.snapshot.head && text(i.push.sourceRef) &&
       fresh(i.push.pushedAt, a.startedAt, at) && i.reviewers.every((r) => r.completedAt <= i.push.pushedAt), 'push needs exact old/new head and preceding reviews')
     const reviewedSnapshot = { ...i.snapshot, baseRef: a.snapshot.baseRef, reviewKey: a.snapshot.reviewKey }
     observeSnapshot(p, i.snapshot, at, a)
-    Object.assign(p, { seen: signature(reviewedSnapshot), seenAudit: auditKey(reviewedSnapshot) })
+    Object.assign(p, { seen: signature(reviewedSnapshot), seenAudit: progress ? null : auditKey(reviewedSnapshot) })
     p.publications ??= []
-    p.publications.push({ ...i, startedAt: a.startedAt, reviewClaim: { claimId: a.claimId, round: a.round } })
+    p.publications.push({ ...i, ...(progress ? { kind: 'progress' } : {}),
+      startedAt: a.startedAt, reviewClaim: { claimId: a.claimId, round: a.round } })
     Object.assign(a, { head: i.snapshot.head, snapshot: reviewedSnapshot, publication: i })
+    if (progress) {
+      a.publicationKind = 'progress'
+      s.usedReviewers.push(...i.reviewers.map((r) => r.reviewerId))
+    } else delete a.publicationKind
     output = claimOutput(a, p, s)
   } else if (command === 'begin' || command === 'retry' || command === 'save') {
     fields(i, ['owner', 'number', 'claimId', 'base', 'head',
@@ -835,6 +901,7 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
       if (publicationKey && command === 'begin') p.correctiveAudit = { publicationKey, claimId: a.claimId }
       if (s.autonomy) s.wakes.at(-1).chargedRounds++
       Object.assign(a, { snapshot: p.snapshot, round: ++c.rounds, startedAt: at, baseline: c.findings.filter((f) => f.status === 'open').map((f) => f.id), publication: null, failureEvidence: null, failureReceipt: null, failureReceiptVersion: null })
+      delete a.publicationKind
       c.noProgress++
       c.phase = 'auditing'
       c.technicalVerdict = null
@@ -863,15 +930,19 @@ function apply(s, e, conflictingPublications = new Set(), { activation, live = f
         f.evidence.every((ref) => g.evidence.includes(ref)))), 'findings/evidence cannot be dropped')
       if (a.round === null) check(digest(c.findings) === digest(i.findings) && i.technicalVerdict === null, 'gate check cannot change audit results')
       check(i.phase !== 'complete' || i.technicalVerdict === 'NICE', 'complete requires structured NICE')
+      check(p.publications?.at(-1)?.kind !== 'progress' || a.round === null ||
+        i.phase !== 'waiting' || i.technicalVerdict === 'NICE',
+        'unfinished progress publication must save blocked to retain its executable claim')
       if (i.technicalVerdict === 'NICE') {
         check(['complete', 'waiting'].includes(i.phase), 'NICE must complete technical work')
         check(i.findings.every((f) => f.status === 'fixed'), 'open findings prevent NICE')
         validateReviewers(i.reviewers, a, s, at)
-        if (a.publication) check(digest(i.reviewers) === digest(a.publication.reviewers), 'NICE must retain published candidate reviewers')
+        if (a.publication && a.publicationKind !== 'progress') check(digest(i.reviewers) === digest(a.publication.reviewers), 'NICE must retain published candidate reviewers')
         check(i.reviewers.every((r) => !s.usedReviewers.includes(r.reviewerId)), 'reviewer IDs must be fresh')
         s.usedReviewers.push(...i.reviewers.map((r) => r.reviewerId))
         c.completion = { base: a.base, head: a.head, claimId: a.claimId, round: a.round,
           startedAt: a.startedAt, auditKey: auditKey(a.snapshot), reviewers: i.reviewers }
+        if (p.publications?.at(-1)?.kind === 'progress') p.seenAudit = auditKey(a.snapshot)
       } else check(i.reviewers === undefined, 'reviewers only accepted with structured NICE')
       const terminal = ['waiting', 'blocked', 'complete'].includes(i.phase)
       if (a.round !== null) a.baseline = [...new Set([...a.baseline, ...i.findings.filter((f) => f.status === 'open').map((f) => f.id)])]
@@ -989,7 +1060,7 @@ function main() {
   const [, , target, command, ...extra] = process.argv
   if (target === 'help' || command === 'help') return { help: readFileSync(new URL(import.meta.url), 'utf8').split('\nimport ')[0] }
   check(target && command && extra.length === 0, 'usage: node executor-state.mjs STATE_DIR COMMAND')
-  check(['init', 'autonomy', 'wake', 'rubric', 'deploy', 'sync', 'next', 'read-only', 'feedback', 'begin', 'retry', 'resume', 'published', 'save', 'enable', 'show'].includes(command), 'unknown command')
+  check(['init', 'autonomy', 'wake', 'rubric', 'progress-rubric', 'deploy', 'sync', 'next', 'read-only', 'feedback', 'begin', 'retry', 'resume', 'published', 'progress-published', 'save', 'enable', 'show'].includes(command), 'unknown command')
   const dir = resolve(target), file = join(dir, 'state.json'), lock = join(dir, 'executor.lock')
   outsideGit(dir)
   const input = command === 'show' ? null : JSON.parse(readFileSync(0, 'utf8').replace(/^\uFEFF/, ''))
@@ -1011,6 +1082,7 @@ function main() {
     const pendingRenewals = new Map()
     const activations = []
     let activation = { eventId: null, valid: false, reason: 'canary acceptance not recorded' }
+    let activationAt = null
     let correctiveAcceptance = null
     if (command !== 'init') {
       check(lstatSync(file).isFile() && !lstatSync(file).isSymbolicLink(), 'invalid state file')
@@ -1024,7 +1096,9 @@ function main() {
       let version = 1
       // ponytail: replay/rewrite the retained journal; checkpoint only if measured history size needs it.
       for (const e of events) {
-        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery', 'baseHeadRenewal', 'retainedBaseRenewal', 'correctiveBinding', 'failedCompletionFence', 'recoveryPriority'])
+        fields(e, ['id', 'at', 'command', 'input'], ['version', 'admission', 'activationFence', 'canaryRecovery', 'publicationRecovery', 'baseHeadRenewal', 'retainedBaseRenewal', 'correctiveBinding', 'failedCompletionFence', 'recoveryPriority', 'postActivationDeploy'])
+        check(e.postActivationDeploy === undefined || (e.version === 2 && e.command === 'deploy' &&
+          e.postActivationDeploy === true), 'invalid post-activation deployment marker')
         check(e.correctiveBinding === undefined || (e.version === 2 && ['begin', 'retry', 'resume'].includes(e.command) &&
           e.correctiveBinding === true), 'invalid corrective binding marker')
         check(e.retainedBaseRenewal === undefined || (e.version === 2 && e.command === 'next' &&
@@ -1050,15 +1124,15 @@ function main() {
         previousAt = e.at
         // Capture scope before publication rebinds the claim or later feedback clears it.
         // Old accepted events still replay; their conflicting basis grants no new authority.
-        const publication = e.command === 'published' && state?.prs[e.input.number]?.publications?.at(-1)
-        const conflict = e.command === 'published' && state?.active &&
+        const publication = ['published', 'progress-published'].includes(e.command) && state?.prs[e.input.number]?.publications?.at(-1)
+        const conflict = ['published', 'progress-published'].includes(e.command) && state?.active &&
           !scopeCurrent(state.active, { present: true, snapshot: e.input.snapshot }, state.active.effectiveBaseRef)
         const wasEnabled = state?.enabled
         const activeBefore = state?.active && {
           number: state.active.number, action: state.active.action,
           claimId: state.active.claimId, round: state.active.round,
         }
-        const result = apply(state, e, conflictingPublications, { activation, failedReviews, failedWaits, pendingRenewals })
+        const result = apply(state, e, conflictingPublications, { activation, activationAt, failedReviews, failedWaits, pendingRenewals })
         state = result.state
         if (conflict && state.prs[e.input.number].publications.at(-1) !== publication) {
           conflictingPublications.add(state.prs[e.input.number].publications.at(-1))
@@ -1092,6 +1166,7 @@ function main() {
             (wasEnabled && !activation.valid && !replacementAccepted
               ? 'activation replacement lacks charged corrective code acceptance; preserve history and correct canary' : null)
           activation = { eventId: e.id, valid: reason === null, reason }
+          activationAt = e.at
           activations.push({ ...activation, acceptanceProof: e.input.acceptanceProof })
         }
       }
@@ -1109,16 +1184,16 @@ function main() {
     check(!conflictingPublications.has(state?.prs[basisNumber]?.publications?.at(-1)),
       'publication source/target conflicts with retained claim; preserve blocked evidence')
     // Live admission only: retained v1/v2 snapshot events keep their replay contract.
-    if (command === 'sync' || command === 'published') {
+    if (['sync', 'published', 'progress-published'].includes(command)) {
       const snapshots = command === 'sync' ? input.prs : [input.snapshot]
       check(Array.isArray(snapshots) && snapshots.every((p) => text(p?.baseRef)),
         'new live snapshots require baseRef')
     }
     const a = command === 'resume' ? state.prs[input.number]?.blockedClaim?.claim : state?.active
     if (a?.action === 'audit' && a.effectiveBaseRef !== undefined &&
-      ['begin', 'retry', 'save', 'published', 'resume'].includes(command)) {
+      ['begin', 'retry', 'save', 'published', 'progress-published', 'resume'].includes(command)) {
       check((scopeCurrent(a, state.prs[a.number], a.effectiveBaseRef) &&
-        (command !== 'published' || targetCompatible(a.snapshot, input.snapshot, a.effectiveBaseRef))) ||
+        (!['published', 'progress-published'].includes(command) || targetCompatible(a.snapshot, input.snapshot, a.effectiveBaseRef))) ||
         (command === 'save' && input.phase === 'blocked' && input.technicalVerdict !== 'NICE'),
       'claim source/target conflicts; preserve work and save blocked')
     }
@@ -1130,7 +1205,7 @@ function main() {
       ...(command === 'begin' && state.enabled && !activation.valid ? { activationFence: true } : {}),
       ...(command === 'next' ? { admission: 'detail-read-recovery', recoveryPriority: true,
         ...(state.enabled && !activation.valid ? { activationFence: true, canaryRecovery: true } : {}) } : {}) }
-    const result = apply(state, event, conflictingPublications, { activation, live: true, failedReviews, failedWaits, pendingRenewals })
+    const result = apply(state, event, conflictingPublications, { activation, activationAt, live: true, failedReviews, failedWaits, pendingRenewals })
     if (result.changed !== false) {
       events.push(event)
       const temporary = join(dir, `state.${token}.tmp`)

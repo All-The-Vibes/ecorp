@@ -47,6 +47,20 @@ test('the entrypoint and maintained references resolve inside the package', () =
   assert.match(entrypoint, /^---\r?\nname: code-review\r?\ndescription: [^\r\n]+\r?\n---/)
 })
 
+test('maintained instructions distinguish scoped publication from full acceptance', () => {
+  for (const name of ['SKILL.md', 'references/executor.md', 'references/remediation.md']) {
+    const text = readFileSync(resolve(root, name), 'utf8').replace(/\s+/gu, ' ')
+    assert.match(text, /SAFE_TO_PUBLISH/u, name)
+    assert.match(text, /two fresh independent/iu, name)
+    assert.match(text, /full.PR/iu, name)
+    assert.match(text, /NICE/u, name)
+  }
+  const executor = readFileSync(resolve(root, 'references/executor.md'), 'utf8').replace(/\s+/gu, ' ')
+  assert.match(executor, /Publication reviews cannot be relabeled, reused, or promoted/u)
+  assert.match(executor, /After activation, an update additionally needs retained ongoing owner authority/u)
+  assert.match(executor, /must not interrupt a charged executable claim/u)
+})
+
 const stableRustInput = /^        with:\r?\n          toolchain: (?:stable|1\.98\.1)\r?$/m
 
 test('Rust input accepts stable or the accepted exact release, not implicit or other channels', () => {

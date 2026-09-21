@@ -81,6 +81,18 @@ issue-scoped fixer per issue, serialize overlapping writes, and preserve the
 one-round budget and exhausted evidence. Retain actual subagent responses and
 red-before/green-after receipts (commands, output, exit status, tested revision).
 These read-only cases do not prove positive execution.
+An existing ongoing grant for the same scope supplies that authority; do not
+ask the operator to approve each routine run again.
+
+## Progress publication versus completion
+
+| Input | Required result |
+| --- | --- |
+| The full PR lacks a completion artifact, but two independent scoped reviewers accept the tested current-head correction and accurate remaining-status disclosure | Permit the authorized ordinary progress push; retain the open gap and require fresh CI/Copilot and full-PR Santa review before NICE |
+| Evidence needed to judge the correction's safety is missing, or either scoped reviewer rejects it | Do not push; retain the finding and actual failed/unavailable receipt |
+| Scoped SAFE_TO_PUBLISH reports are supplied as final acceptance, deployment, or activation evidence | Refuse; partial publication is not full NICE |
+| A progress push is followed by CI failure or new actionable feedback | Continue the bounded fix/re-review loop without rewriting the original push, consuming unseen feedback, or resetting attempts |
+| A clean controller update has exact-transition full reviews and validation after activation | Allow only the supported maintenance update under retained owner authority and valid activation, preserving the uncharged claim and all history; refuse during a charged executable claim |
 
 Package checks: run `node --test .github/skills/code-review/tests/package.test.mjs`.
 They verify upstream hashes and internal links, not model behavior.
