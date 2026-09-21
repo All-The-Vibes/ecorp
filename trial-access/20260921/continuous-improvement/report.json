@@ -1,0 +1,294 @@
+{
+  "schema_version": 1,
+  "title": "ECorp continuous improvement and CI recovery",
+  "generated_at": "2026-09-21T05:55:08.077Z",
+  "implementation_status": "implemented; local deterministic acceptance verified; genuine pilots and qualified reassessment not run",
+  "source": {
+    "repository": "All-The-Vibes/ecorp",
+    "implementation_commit": "4e541467c3f716865497dd48f6b78949bbb5e2d9",
+    "base_commit": "3aff250c118c1e24daebc39e7c8655049a344fb5",
+    "source_head": "4e541467c3f716865497dd48f6b78949bbb5e2d9",
+    "working_tree_changes": false,
+    "file_count": 769,
+    "source_manifest_sha256": "244560243628bd123cbf5e3fe9180bea7cb4d8b5c0afb9a0efe7c9bb8d552bf7",
+    "evidence_manifest_sha256": "02f60c7089e8e48f1a4e46f8f8f6ccf3131af484d182834a48200d14e5e93fb5",
+    "source_publication_performed": false
+  },
+  "benchmark": {
+    "prior_qualified": {
+      "operations": 71.5,
+      "substrate": 87.4,
+      "composite": 79.1,
+      "evidence_mode": "evaluator-observed-local",
+      "verification_status": "verified",
+      "applies_to_new_implementation": false
+    },
+    "new_structural_diagnostic": {
+      "substrate": 87.4,
+      "operations_assessed": false,
+      "composite_assessed": false
+    },
+    "new_qualified_assessment": "not-run",
+    "score_improvement_claimed": false
+  },
+  "capabilities": [
+    {
+      "name": "Reviewed advisory learning",
+      "behavior": "A reviewed, versioned intent appends selected guidance to one held task; native admission records actual consumption and enforces expiry and retirement.",
+      "limit": "Only schema-3 native observations can be promoted. Legacy resume observations remain candidates. Guidance cannot expand source, tools, write scope, spending or verification."
+    },
+    {
+      "name": "Finite CI repair and isolated restoration",
+      "behavior": "One existing grant binds a repair and restoration to distinct held tasks, exact sources, unchanged checks and finite budgets. Rejected work remains preserved.",
+      "limit": "Restoration is a new isolated native run at the verified known-good commit. It is not deployment rollback or an unlimited retry loop."
+    },
+    {
+      "name": "Manual recovery workflow",
+      "behavior": "A trusted default-branch job can continue an existing recovery UUID through the native watch command, with exact source readback and an exclusive checkout.",
+      "limit": "Implemented but not enrolled or executed in hosted GitHub Actions. It creates no grant, mission or review decision."
+    },
+    {
+      "name": "Scheduled read-only Steward audit",
+      "behavior": "A separate opt-in six-hour schedule runs three bounded audit cycles and retains metadata only.",
+      "limit": "Implemented but disabled and unenrolled. It performs no task launch or cleanup mutation, and shares no state across jobs."
+    },
+    {
+      "name": "Documentation drift checks",
+      "behavior": "Generated protected HTTP paths and marked maintenance commands are checked against source alongside existing command/version contracts.",
+      "limit": "Coverage is bounded: 59 paths and six maintenance commands. It does not prove every document or HTTP schema is current."
+    },
+    {
+      "name": "Honest delivery accounting",
+      "behavior": "Live API authorship, exact native-produced contributions, dependency automation and co-author metadata are reported separately.",
+      "limit": "Custom bot labels and co-author trailers do not establish evaluator recognition. Whole-PR authorship is not inferred from one native commit."
+    }
+  ],
+  "next_steps": [
+    {
+      "area": "Substantive delivery",
+      "action": "Select real scoped repository work, use native execution with explicit contracts and finite budgets, and retain verified output and review evidence."
+    },
+    {
+      "area": "Recognizable throughput",
+      "action": "Count delivery only after normal maintainer review and merge. Preserve the API publisher identity and immutable commit, verification and publication provenance; confirm actual evaluator account-recognition policy before making recognition claims."
+    },
+    {
+      "area": "Operating enablement",
+      "action": "After default-branch acceptance, deliberately provision the dedicated control host and repository enablement. Enroll the manual recovery and read-only schedule separately, then retain actual hosted run evidence."
+    },
+    {
+      "area": "Fresh qualification",
+      "action": "Proceed with the separately prepared bounded nine-call generic qualification against frozen source and unchanged controls. Genuine learning and hosted CI pilots remain separate evidence for higher operating claims; they are not prerequisites for that generic qualification."
+    }
+  ],
+  "gates": [
+    {
+      "name": "Rust workspace",
+      "command": "cargo test --workspace",
+      "status": "passed",
+      "passed": 568,
+      "ignored": 362,
+      "failed": 0,
+      "evidence": "rust-workspace-suite"
+    },
+    {
+      "name": "Node unit suite",
+      "command": "pnpm test:unit",
+      "status": "passed",
+      "passed": 1366,
+      "skipped": 44,
+      "failed": 0,
+      "evidence": "node-unit-suite",
+      "scope": "Full gate before the final narrow scheduler guard follow-up; follow-up covered separately"
+    },
+    {
+      "name": "Steward",
+      "command": "pnpm test:steward",
+      "status": "passed",
+      "passed": 234,
+      "failed": 0,
+      "evidence": "steward-suite"
+    },
+    {
+      "name": "Focused feedback",
+      "command": "cargo test -p crony-store feedback_ -- --include-ignored --test-threads=1",
+      "status": "passed",
+      "passed": 6,
+      "database_tests": 5,
+      "canonical_unit_tests": 1,
+      "evidence": "feedback-focused-suite"
+    },
+    {
+      "name": "Focused CI recovery",
+      "command": "cargo test -p crony-store ci_recovery_ -- --ignored --test-threads=1",
+      "status": "passed",
+      "passed": 14,
+      "database_tests": 14,
+      "evidence": "ci-focused-suite"
+    },
+    {
+      "name": "Final scheduler guard",
+      "command": "node --test tools/steward_schedule.test.mjs",
+      "status": "passed",
+      "passed": 17,
+      "failed": 0,
+      "evidence": "scheduler-followup-suite"
+    },
+    {
+      "name": "Migrations",
+      "command": "node tools/check_migrations.mjs",
+      "status": "passed",
+      "migrations": 43,
+      "evidence": "migration-check"
+    },
+    {
+      "name": "Documentation contracts",
+      "command": "pnpm check:docs",
+      "status": "passed",
+      "protected_paths": 59,
+      "maintenance_commands": 6,
+      "evidence": "documentation-check"
+    },
+    {
+      "name": "Formatting",
+      "command": "cargo fmt --check",
+      "status": "passed",
+      "evidence": "format-check"
+    },
+    {
+      "name": "Clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "status": "passed",
+      "evidence": "clippy"
+    },
+    {
+      "name": "Native build",
+      "command": "cargo build --workspace",
+      "status": "passed",
+      "evidence": "native-build"
+    },
+    {
+      "name": "Web build",
+      "command": "pnpm build:web",
+      "status": "passed",
+      "evidence": "web-build"
+    },
+    {
+      "name": "Web lint",
+      "command": "pnpm lint:web",
+      "status": "passed",
+      "evidence": "web-lint"
+    }
+  ],
+  "database_test_accounting": {
+    "focused_database_tests": 19,
+    "additional_canonical_unit_tests": 1,
+    "ignored_workspace_tests_were_not_all_executed": true
+  },
+  "native_acceptance": {
+    "learning_current": {
+      "status": "passed",
+      "assertions": 6,
+      "native_runs": 7,
+      "completed": 6,
+      "expected_baseline_failures": 1,
+      "qa_fixture_decisions": 3,
+      "fixture_baseline_passed": 0,
+      "fixture_treatment_passed": 1,
+      "fixed_cases": 1,
+      "automatic_retries": 0,
+      "clean_single_driver_invocation": true,
+      "preservation_audit": "passed",
+      "evidence": "current-native-learning",
+      "audit_evidence": "current-learning-preservation-audit"
+    },
+    "learning_prior": {
+      "status": "retained-prior-evidence",
+      "native_runs": 7,
+      "qa_fixture_decisions": 3,
+      "evidence": "prior-native-learning"
+    },
+    "ci_core": {
+      "status": "passed",
+      "native_runs": 4,
+      "checks": 12,
+      "evidence": "native-ci-core"
+    },
+    "ci_independent_review": {
+      "status": "passed",
+      "native_runs": 3,
+      "checks": 10,
+      "synthetic_reviewer_decisions": 3,
+      "requester_self_approval_http_status": 403,
+      "evidence": "native-ci-independent-review"
+    },
+    "browser": {
+      "status": "passed",
+      "native_run_count": 1,
+      "assertions": 6,
+      "verification_checks": 1,
+      "verified_artifact_bytes": 327,
+      "provider_inference": false,
+      "detail": "One fresh native deterministic run launched through the CUA browser; six assertions, one verifier check and 327 verified artifact bytes."
+    },
+    "assurance": "Real native transport, gates, verification and artifact handling exercised with deterministic fake-process behavior and synthetic QA decisions.",
+    "provider_inference_claimed": false,
+    "actual_human_review_claimed": false,
+    "causal_learning_gain_claimed": false,
+    "deployment_rollback_claimed": false,
+    "prior_failures_retained": true
+  },
+  "throughput": {
+    "window": {
+      "since": "2026-06-23T04:53:05.000Z",
+      "until": "2026-09-21T04:53:05.000Z"
+    },
+    "merged_prs": 102,
+    "user_account_published_prs": 96,
+    "distinct_human_people_claimed": false,
+    "dependency_bot_prs": 6,
+    "human_published_origin_unknown_prs": 95,
+    "native_produced_human_published_prs": 1,
+    "native_contribution_pr": "https://github.com/All-The-Vibes/ecorp/pull/234",
+    "native_contribution_commit": "97012e2e9dc0bbed21578e24b21700c4bfdb6097",
+    "native_contribution_is_subset_of_user_published_prs": true,
+    "whole_pr_agent_authorship_claimed": false,
+    "distinct_captured_commits": 345,
+    "commits_with_coauthor_trailers": 5,
+    "recognized_agent_share": null,
+    "recognition": "unknown; no evaluator-issued registry supplied"
+  },
+  "remaining": [
+    {
+      "item": "Browser-to-native acceptance",
+      "status": "passed"
+    },
+    {
+      "item": "Final source commit",
+      "status": "complete"
+    },
+    {
+      "item": "Genuine provider learning and hosted CI pilots",
+      "status": "not-run"
+    },
+    {
+      "item": "Fresh qualified operations/composite assessment",
+      "status": "not-run"
+    },
+    {
+      "item": "Hosted scheduled and manual workflow enrollment",
+      "status": "disabled-unenrolled"
+    }
+  ],
+  "publication": {
+    "github_mutations_by_this_report": 0,
+    "source_or_pr_publication": false,
+    "deployment": false
+  },
+  "privacy": {
+    "contains_private_paths": false,
+    "contains_credentials": false,
+    "contains_authentication_details": false,
+    "contains_raw_native_ledgers": false
+  }
+}
