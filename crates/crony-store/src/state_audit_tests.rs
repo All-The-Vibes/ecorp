@@ -1234,6 +1234,134 @@ impl crony_audit::PublicationTransport for PublicationFixture {
 
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn native_archive_publication_requires_complete_readback_and_upgrades_legacy_receipt(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, ids, mission, _, _) = fixture(pool).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    let key = crony_audit::SigningKey::from_bytes(&[7; 32]);
+    let checkpoint = store
+        .audit_checkpoint(ids.corp_id, "fixture-key", &key)
+        .await?;
+    let destination = state_audit::AuditDestination {
+        id: Uuid::new_v4(),
+        corp_id: ids.corp_id,
+        kind: "github".into(),
+        interval_seconds: 60,
+        calendar_schedule: None,
+        overdue_after_seconds: 3600,
+        workflow_gate: "published".into(),
+        config: json!({"repository":"fixture/audit","branch":"main","path":"audit"}),
+    };
+    store
+        .configure_audit_destination(ids.alice_actor_id, &destination)
+        .await?;
+    let remote = PublicationFixture::default();
+    crony_audit::publish_checkpoint(&remote, "audit", &checkpoint, None).await?;
+    let legacy = remote.files.lock().unwrap().clone();
+    assert_eq!(legacy.len(), 4);
+    // Reproduce a legacy checkpoint predating the key registry in this SQLx
+    // disposable fixture, exactly as the existing schema-upgrade regression does.
+    sqlx::query("ALTER TABLE state_audit_signing_keys DISABLE TRIGGER state_audit_signing_keys_delete_guard")
+        .execute(&store.pool).await?;
+    sqlx::query("DELETE FROM state_audit_signing_keys WHERE corp_id=$1")
+        .bind(ids.corp_id)
+        .execute(&store.pool)
+        .await?;
+    sqlx::query(
+        "ALTER TABLE state_audit_signing_keys ENABLE TRIGGER state_audit_signing_keys_delete_guard",
+    )
+    .execute(&store.pool)
+    .await?;
+    *remote.fail.lock().unwrap() = Some(6);
+    assert!(
+        store
+            .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+            .await
+            .is_err()
+    );
+    let status = store.audit_status(ids.corp_id, ids.alice_actor_id).await?;
+    assert_eq!(status["receipts"][0]["status"], "pending");
+    assert!(
+        status["receipts"][0]["witness"]
+            .get("archive_publication")
+            .is_none()
+    );
+    let partial = remote.files.lock().unwrap().clone();
+    assert_eq!(
+        partial.len(),
+        5,
+        "Archive part exists before failed index creation"
+    );
+    let unchanged = store
+        .audit_checkpoint(ids.corp_id, "fixture-key", &key)
+        .await?;
+    assert_eq!(unchanged, checkpoint);
+    *remote.fail.lock().unwrap() = None;
+    store
+        .request_audit_publication(ids.corp_id, ids.alice_actor_id, destination.id)
+        .await?;
+    assert!(
+        store
+            .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+            .await?
+    );
+    let status = store.audit_status(ids.corp_id, ids.alice_actor_id).await?;
+    let receipt = &status["receipts"][0];
+    assert_eq!(receipt["status"], "published");
+    let publication: crony_audit::PublishedArchive =
+        serde_json::from_value(receipt["witness"]["archive_publication"].clone())?;
+    assert_eq!(publication.archive.checkpoint_digest, checkpoint.digest);
+    let archive_bytes: Vec<u8> = {
+        let files = remote.files.lock().unwrap();
+        for (path, bytes) in &partial {
+            assert!(
+                files.get(path) == Some(bytes),
+                "V1 checkpoint or adopted legacy archive bytes changed"
+            );
+        }
+        publication
+            .archive
+            .parts
+            .iter()
+            .flat_map(|part| files[&part.path].clone())
+            .collect()
+    };
+    let archive: crony_audit::Archive = serde_json::from_slice(&archive_bytes)?;
+    archive.verify(&key.verifying_key(), Some(&checkpoint.digest))?;
+    assert!(
+        archive_bytes
+            == serde_json::to_vec(&store.audit_export(ids.corp_id, ids.alice_actor_id).await?)?
+    );
+    let writes = *remote.writes.lock().unwrap();
+    // Model an existing pre-extension durable receipt; only native publication
+    // may add the complete archive witness on the next publication request.
+    sqlx::query("UPDATE state_audit_anchor_receipts SET witness=witness-'archive_publication' WHERE destination_id=$1")
+        .bind(destination.id).execute(&store.pool).await?;
+    store
+        .request_audit_publication(ids.corp_id, ids.alice_actor_id, destination.id)
+        .await?;
+    assert!(
+        store
+            .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+            .await?
+    );
+    let upgraded = store.audit_status(ids.corp_id, ids.alice_actor_id).await?;
+    assert_eq!(
+        upgraded["receipts"][0]["witness"]["archive_publication"],
+        serde_json::to_value(&publication)?
+    );
+    assert_eq!(*remote.writes.lock().unwrap(), writes);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
 async fn issue283_midpublication_ancestry_rewrite_disables_destination(pool: PgPool) -> Result<()> {
     let (store, ids, mission, _, _) = fixture(pool).await?;
     store

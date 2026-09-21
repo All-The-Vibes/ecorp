@@ -11,7 +11,17 @@ repository.workspace = true
 name = "crony-base-worker"
 path = "src/base_worker.rs"
 
+[features]
+default = []
+native-qualification = ["crony-base/test-support", "crony-base/gateway-service", "crony-audit/test-support", "dep:alloy"]
+
+[[bin]]
+name = "crony-native-fixture"
+path = "src/native_fixture.rs"
+required-features = ["native-qualification"]
+
 [dependencies]
+alloy = { version = "=0.8.3", default-features = false, features = ["signer-local"], optional = true }
 anyhow.workspace = true
 async-trait.workspace = true
 axum.workspace = true

@@ -59,6 +59,29 @@ impl EndpointSecrets for Secrets {
 }
 
 #[tokio::test]
+async fn unavailable_gateway_fails_closed_without_disclosing_endpoint_or_credential() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    drop(listener);
+    let secrets = Secrets {
+        url: format!("http://{address}/synthetic-private-endpoint"),
+        token: "synthetic-unavailable-gateway-token-00001".into(),
+    };
+    let gateway = HttpSigningGateway::connect_test_loopback("fixture", "fixture", &secrets)
+        .await
+        .unwrap();
+    let error = gateway
+        .identity()
+        .await
+        .expect_err("absent gateway must not qualify");
+    assert!(matches!(error, Error::Rpc(_)));
+    let message = error.to_string();
+    assert!(!message.contains("synthetic-private-endpoint"));
+    assert!(!message.contains(&secrets.token));
+    assert!(!message.contains(&address.to_string()));
+}
+
+#[tokio::test]
 async fn actual_client_and_router_authenticate_identity_and_nonempty_scoped_journal() {
     let corp = Uuid::new_v4();
     let request = SignRequest {

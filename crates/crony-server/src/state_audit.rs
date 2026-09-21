@@ -22,6 +22,27 @@ struct RetainedWitness {
 }
 
 impl Service {
+    fn transport(
+        &self,
+        config: &GitHubDestination,
+    ) -> anyhow::Result<crony_audit::GitHubTransport> {
+        #[cfg(all(feature = "native-qualification", debug_assertions))]
+        if base_worker::qualification_mode()? {
+            return crony_audit::GitHubTransport::new_test_loopback(
+                &config.repository,
+                &config.branch,
+                "127.0.0.1:18558".parse()?,
+            );
+        }
+        crony_audit::GitHubTransport::new(
+            &config.repository,
+            &config.branch,
+            self.github_token
+                .as_deref()
+                .context("audit GitHub credential unavailable")?,
+        )
+    }
+
     pub fn from_environment() -> anyhow::Result<Option<Arc<Self>>> {
         let Some(path) = std::env::var_os("CRONY_STATE_AUDIT_SIGNING_KEY_FILE") else {
             return Ok(None);
@@ -148,7 +169,7 @@ impl Service {
                         last_checkpoint = Some(tokio::time::Instant::now());
                     }
                 }
-                if let Some(token) = &self.github_token {
+                if self.github_token.is_some() {
                     match store.due_audit_destinations().await {
                         Ok(destinations) => {
                             for destination in destinations {
@@ -174,11 +195,7 @@ impl Service {
                                     }
                                     let config: GitHubDestination =
                                         serde_json::from_value(destination.config)?;
-                                    let transport = crony_audit::GitHubTransport::new(
-                                        &config.repository,
-                                        &config.branch,
-                                        token,
-                                    )?;
+                                    let transport = self.transport(&config)?;
                                     store
                                         .publish_audit_destination(
                                             destination.id,
@@ -334,7 +351,7 @@ pub async fn handle(
             let retained_commit = witness.github_commit.as_deref().ok_or_else(|| {
                 ApiError::conflict("reconciliation requires the retained witness GitHub commit")
             })?;
-            let token = signer.github_token.as_deref().ok_or_else(|| {
+            signer.github_token.as_deref().ok_or_else(|| {
                 ApiError::conflict("state audit GitHub credential is not configured")
             })?;
             let config = state
@@ -342,9 +359,7 @@ pub async fn handle(
                 .audit_github_destination_config(corp, destination_id)
                 .await
                 .map_err(map_store_error)?;
-            let transport =
-                crony_audit::GitHubTransport::new(&config.repository, &config.branch, token)
-                    .map_err(ApiError::internal)?;
+            let transport = signer.transport(&config).map_err(ApiError::internal)?;
             state
                 .store
                 .reconcile_audit_destination(

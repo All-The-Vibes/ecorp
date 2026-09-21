@@ -738,6 +738,216 @@ use crony_base::{
     signing::{FrozenTransaction, SignRequest, SignedTransaction},
 };
 
+async fn base_request_counts(store: &PgStore, corp: Uuid) -> Result<(i64, i64, i64, i64, i64)> {
+    sqlx::query_as(
+        "SELECT
+         (SELECT count(*) FROM base_audit_intents WHERE corp_id=$1),
+         (SELECT count(*) FROM base_audit_operations WHERE corp_id=$1),
+         (SELECT count(*) FROM base_audit_evidence WHERE corp_id=$1 AND kind='requested'),
+         (SELECT count(*) FROM base_audit_attempts WHERE corp_id=$1),
+         (SELECT count(*) FROM base_audit_signed_results WHERE corp_id=$1)",
+    )
+    .bind(corp)
+    .fetch_one(&store.pool)
+    .await
+    .map_err(Into::into)
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned disposable PostgreSQL; synthetic store fixture, not runtime acceptance"]
+async fn base_v2_phase3_same_key_request_replays_once(pool: PgPool) -> Result<()> {
+    let (store, ids, input) = base_fixture(pool).await?;
+    enable_fixture(&store, &ids, &input).await?;
+    let key = Uuid::new_v4();
+    let (first, concurrent) = futures_util::future::join(
+        store.request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, key),
+        store.request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, key),
+    )
+    .await;
+    let first = first?;
+    assert_eq!(first.id, concurrent?.id);
+    let replay = store
+        .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, key)
+        .await?;
+    assert_eq!(first.id, replay.id);
+    assert_eq!(first.checkpoint_digest, replay.checkpoint_digest);
+    assert_eq!(replay.state, "archive_pending");
+    assert_eq!(
+        base_request_counts(&store, ids.corp_id).await?,
+        (1, 1, 1, 0, 0),
+        "concurrent and later replay must retain one intent, operation and requested evidence"
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned disposable PostgreSQL; synthetic store fixture, not runtime acceptance"]
+async fn base_v2_phase3_changed_destination_reused_key_rejected(pool: PgPool) -> Result<()> {
+    let (store, ids, input) = base_fixture(pool).await?;
+    enable_fixture(&store, &ids, &input).await?;
+    let second = second_destination(&store, &ids, &input).await?;
+    let key = Uuid::new_v4();
+    let first = store
+        .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, key)
+        .await?;
+    let error = store
+        .request_base_anchor(ids.corp_id, ids.alice_actor_id, second.id, key)
+        .await
+        .expect_err("changed destination must not reuse the first request key");
+    assert_eq!(
+        error.to_string(),
+        "publication key reused for another destination"
+    );
+    assert_eq!(
+        base_request_counts(&store, ids.corp_id).await?,
+        (1, 1, 1, 0, 0)
+    );
+    assert_eq!(
+        store
+            .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, key)
+            .await?
+            .id,
+        first.id,
+        "a rejected changed request cannot corrupt the original replay"
+    );
+    let second_intent = store
+        .request_base_anchor(ids.corp_id, ids.alice_actor_id, second.id, Uuid::new_v4())
+        .await?;
+    assert_ne!(second_intent.id, first.id);
+    assert_eq!(
+        base_request_counts(&store, ids.corp_id).await?,
+        (2, 2, 2, 0, 0)
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned disposable PostgreSQL; synthetic store fixture, not runtime acceptance"]
+async fn base_v2_phase3_incomplete_room_coverage_rejects_reads_and_requests(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, ids, input) = base_fixture(pool).await?;
+    enable_fixture(&store, &ids, &input).await?;
+    let key = Uuid::new_v4();
+    let first = store
+        .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, key)
+        .await?;
+    let covered_room: Uuid = sqlx::query_scalar(
+        "SELECT m.room_id FROM state_audit_coverage c
+         JOIN missions m ON m.corp_id=c.corp_id AND m.id=c.mission_id
+         WHERE c.corp_id=$1 LIMIT 1",
+    )
+    .bind(ids.corp_id)
+    .fetch_one(&store.pool)
+    .await?;
+    let unrelated_room = Uuid::new_v4();
+    sqlx::query("INSERT INTO rooms(id,corp_id,name,purpose) VALUES($1,$2,'Other room','Store coverage fixture')")
+        .bind(unrelated_room).bind(ids.corp_id).execute(&store.pool).await?;
+    sqlx::query("INSERT INTO room_memberships(room_id,actor_id) VALUES($1,$2)")
+        .bind(unrelated_room)
+        .bind(ids.alice_actor_id)
+        .execute(&store.pool)
+        .await?;
+    let removed = sqlx::query("DELETE FROM room_memberships WHERE room_id=$1 AND actor_id=$2")
+        .bind(covered_room)
+        .bind(ids.alice_actor_id)
+        .execute(&store.pool)
+        .await?;
+    assert_eq!(removed.rows_affected(), 1);
+    for request_key in [key, Uuid::new_v4()] {
+        let error = store
+            .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, request_key)
+            .await
+            .expect_err("owner with incomplete covered-room membership cannot request or replay");
+        assert_eq!(
+            error.to_string(),
+            "forbidden: actor is not a member of this room"
+        );
+    }
+    let status_error = store
+        .base_status(ids.corp_id, ids.alice_actor_id)
+        .await
+        .expect_err("partial room membership cannot read complete-Corp status");
+    let history_error = store
+        .base_history(ids.corp_id, ids.alice_actor_id, input.id, None, 100)
+        .await
+        .expect_err("partial room membership cannot read complete-Corp history");
+    for error in [status_error, history_error] {
+        assert_eq!(
+            error.to_string(),
+            "forbidden: actor is not a member of this room"
+        );
+    }
+    assert_eq!(
+        base_request_counts(&store, ids.corp_id).await?,
+        (1, 1, 1, 0, 0)
+    );
+    sqlx::query("INSERT INTO room_memberships(room_id,actor_id) VALUES($1,$2)")
+        .bind(covered_room)
+        .bind(ids.alice_actor_id)
+        .execute(&store.pool)
+        .await?;
+    assert_eq!(
+        store
+            .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, key)
+            .await?
+            .id,
+        first.id
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned disposable PostgreSQL; synthetic store fixture, not runtime acceptance"]
+async fn base_v2_phase3_missing_archive_cannot_claim_freeze_or_authorize_signing(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, ids, input) = base_fixture(pool).await?;
+    enable_fixture(&store, &ids, &input).await?;
+    let intent = store
+        .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, Uuid::new_v4())
+        .await?;
+    let receipts: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM state_audit_anchor_receipts WHERE corp_id=$1")
+            .bind(ids.corp_id)
+            .fetch_one(&store.pool)
+            .await?;
+    assert_eq!(receipts, 0);
+    let worker = Uuid::new_v4();
+    for worker_id in [worker, Uuid::new_v4()] {
+        assert!(
+            store
+                .claim_base_intent(ids.corp_id, input.id, worker_id)
+                .await?
+                .is_none(),
+            "missing archive must not issue any worker claim"
+        );
+    }
+    // No issued BaseClaim means the caller has no capability to reserve/freeze an attempt.
+    let error = store
+        .authorized_base_attempt(ids.corp_id, Uuid::new_v4())
+        .await
+        .err()
+        .expect("no frozen attempt means no gateway signing authority");
+    assert!(matches!(
+        error.downcast_ref::<sqlx::Error>(),
+        Some(sqlx::Error::RowNotFound)
+    ));
+    assert_eq!(
+        base_request_counts(&store, ids.corp_id).await?,
+        (1, 1, 1, 0, 0)
+    );
+    let pending: (String, Option<i64>, Option<Uuid>) = sqlx::query_as(
+        "SELECT state,nonce,worker_id FROM base_audit_intents WHERE corp_id=$1 AND id=$2",
+    )
+    .bind(ids.corp_id)
+    .bind(intent.id)
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(pending, ("archive_pending".into(), None, None));
+    Ok(())
+}
+
 async fn base_fixture(pool: PgPool) -> Result<(PgStore, DemoIds, BaseDestinationInput)> {
     let (store, ids, mission, contract, verification_policy) =
         state_audit_tests::fixture(pool).await?;

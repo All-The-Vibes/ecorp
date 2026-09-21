@@ -345,6 +345,12 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
     let args = Args::parse();
+    if base_worker::qualification_mode()? {
+        anyhow::ensure!(
+            args.bind.ip().is_loopback(),
+            "qualification server must bind loopback"
+        );
+    }
 
     let store = PgStore::connect(&args.database_url).await?;
     store.migrate().await?;

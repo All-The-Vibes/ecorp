@@ -1,4 +1,4 @@
-use crate::SignedCheckpoint;
+use crate::{Archive, MAX_ARCHIVE_BYTES, MAX_RECORD_BYTES, SignedCheckpoint, TrustedSigningKey};
 use anyhow::{Context, Result, ensure};
 use base64::{Engine, engine::general_purpose::STANDARD};
 use futures_util::future::BoxFuture;
@@ -6,7 +6,42 @@ use reqwest::{
     Client, StatusCode,
     header::{AUTHORIZATION, HeaderMap, HeaderValue},
 };
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
+
+/// An ordered raw-byte slice, not necessarily a standalone JSON document.
+/// Hashes are lowercase hexadecimal; SHA-1 includes Git's `blob <len>\0` header.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ArchivePublicationPart {
+    pub path: String,
+    pub byte_count: u64,
+    pub sha256: String,
+    pub git_blob_sha1: String,
+}
+
+/// Concatenating parts in order reproduces `serde_json::to_vec(Archive)` exactly.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ArchivePublicationIndex {
+    pub schema_version: u32,
+    pub ledger_id: String,
+    pub checkpoint_digest: String,
+    pub byte_count: u64,
+    pub sha256: String,
+    pub parts: Vec<ArchivePublicationPart>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct PublishedArchive {
+    pub commit: String,
+    pub index_path: String,
+    pub index_git_blob_sha1: String,
+    pub index_sha256: String,
+    pub archive: ArchivePublicationIndex,
+}
 
 pub trait PublicationTransport: Send + Sync {
     fn head(&self) -> BoxFuture<'_, Result<String>>;
@@ -48,6 +83,105 @@ pub async fn publish_checkpoint<T: PublicationTransport>(
     checkpoint: &SignedCheckpoint,
     previous_commit: Option<&str>,
 ) -> Result<String> {
+    let (_, files) = checkpoint_files(root, checkpoint)?;
+    publish_files(transport, &files, previous_commit).await
+}
+
+/// Publishes complete native history without changing the V1 checkpoint files.
+/// `trusted_keys` must come from independent authoritative history, not from an
+/// untrusted archive. A receipt proves exact readback at one immutable commit,
+/// not retention, latest-head status, or independent chain inclusion/finality.
+/// A legacy keyless export requires one independently supplied historical key.
+pub async fn publish_checkpoint_archive<T: PublicationTransport>(
+    transport: &T,
+    root: &str,
+    checkpoint: &SignedCheckpoint,
+    archive: &Archive,
+    trusted_keys: &[TrustedSigningKey],
+    previous_commit: Option<&str>,
+) -> Result<PublishedArchive> {
+    let (stem, mut files) = checkpoint_files(root, checkpoint)?;
+    ensure!(
+        archive.ledger_id == checkpoint.checkpoint.ledger_id
+            && archive.checkpoints.last() == Some(checkpoint),
+        "archive does not end at the exact checkpoint"
+    );
+    if archive.signing_keys.is_empty() {
+        ensure!(
+            trusted_keys.len() == 1,
+            "legacy archive requires one trusted key"
+        );
+        let trusted = &trusted_keys[0];
+        ensure!(
+            archive.checkpoints.iter().all(|checkpoint| {
+                checkpoint.checkpoint.key_id == trusted.key_id
+                    && checkpoint.checkpoint.last_sequence >= trusted.activated_sequence
+                    && trusted
+                        .retired_sequence
+                        .is_none_or(|end| checkpoint.checkpoint.last_sequence <= end)
+            }),
+            "legacy checkpoint lies outside trusted key history"
+        );
+        archive.verify(&trusted.verifying_key()?, Some(&checkpoint.digest))?;
+    } else {
+        archive.verify_with_key_history(trusted_keys, Some(&checkpoint.digest))?;
+    }
+    let bytes = serde_json::to_vec(archive)?;
+    ensure!(
+        bytes.len() as u64 <= MAX_ARCHIVE_BYTES,
+        "archive exceeds publication bound"
+    );
+    let mut parts = Vec::new();
+    for (number, body) in bytes.chunks(MAX_RECORD_BYTES).enumerate() {
+        let path = format!("{stem}/archive-{number:05}.json");
+        parts.push(ArchivePublicationPart {
+            path: path.clone(),
+            byte_count: body.len() as u64,
+            sha256: hex::encode(Sha256::digest(body)),
+            git_blob_sha1: git_blob_sha1(body),
+        });
+        files.push((path, body.to_vec()));
+    }
+    ensure!(
+        !parts.is_empty() && parts.len() <= 128,
+        "archive part count exceeds bound"
+    );
+    let index = ArchivePublicationIndex {
+        schema_version: 1,
+        ledger_id: archive.ledger_id.clone(),
+        checkpoint_digest: checkpoint.digest.clone(),
+        byte_count: bytes.len() as u64,
+        sha256: hex::encode(Sha256::digest(&bytes)),
+        parts,
+    };
+    let index_path = format!("{stem}/archive.json");
+    let index_bytes = serde_json::to_vec(&index)?;
+    let index_git_blob_sha1 = git_blob_sha1(&index_bytes);
+    let index_sha256 = hex::encode(Sha256::digest(&index_bytes));
+    files.push((index_path.clone(), index_bytes));
+    let commit = publish_files(transport, &files, previous_commit).await?;
+    Ok(PublishedArchive {
+        commit,
+        index_path,
+        index_git_blob_sha1,
+        index_sha256,
+        archive: index,
+    })
+}
+
+fn git_blob_sha1(body: &[u8]) -> String {
+    let mut digest = sha1::Sha1::new();
+    digest.update(format!("blob {}\0", body.len()));
+    digest.update(body);
+    hex::encode(digest.finalize())
+}
+
+type PublicationFiles = Vec<(String, Vec<u8>)>;
+
+fn checkpoint_files(
+    root: &str,
+    checkpoint: &SignedCheckpoint,
+) -> Result<(String, PublicationFiles)> {
     validate_destination("audit/validation", "audit", root)?;
     ensure!(root.len() <= 128, "audit root exceeds bound");
     checkpoint.validate_envelope()?;
@@ -55,7 +189,7 @@ pub async fn publish_checkpoint<T: PublicationTransport>(
         "{root}/{}/{:020}-{}",
         checkpoint.checkpoint.ledger_id, checkpoint.checkpoint.last_sequence, checkpoint.digest
     );
-    let files = [
+    let files = vec![
         (
             format!(
                 "{root}/{}/{:020}.checkpoint",
@@ -67,6 +201,23 @@ pub async fn publish_checkpoint<T: PublicationTransport>(
         (format!("{stem}.ed25519"), checkpoint.signature.clone()),
         (format!("{stem}.json"), serde_json::to_vec(checkpoint)?),
     ];
+    Ok((stem, files))
+}
+
+async fn publish_files<T: PublicationTransport>(
+    transport: &T,
+    files: &[(String, Vec<u8>)],
+    previous_commit: Option<&str>,
+) -> Result<String> {
+    // Validate the entire set before any remote effect, including transports
+    // that do not enforce GitHub's own per-file and safe-path constraints.
+    for (path, body) in files {
+        validate_destination("audit/validation", "audit", path)?;
+        ensure!(
+            body.len() <= MAX_RECORD_BYTES,
+            "publication file exceeds bound"
+        );
+    }
     let initial = transport.head().await?;
     if let Some(old) = previous_commit {
         ensure!(
@@ -74,7 +225,7 @@ pub async fn publish_checkpoint<T: PublicationTransport>(
             "GitHub history rewrite detected"
         );
     }
-    for (path, body) in &files {
+    for (path, body) in files {
         let head = transport.head().await?;
         ensure!(
             transport.descends_from(&initial, &head).await?,
@@ -94,7 +245,7 @@ pub async fn publish_checkpoint<T: PublicationTransport>(
         transport.descends_from(&initial, &final_head).await?,
         "GitHub branch changed ancestry"
     );
-    for (path, body) in &files {
+    for (path, body) in files {
         ensure!(
             transport.read(path, &final_head).await?.as_ref() == Some(body),
             "incomplete remote checkpoint"
@@ -108,6 +259,7 @@ pub struct GitHubTransport {
     client: Client,
     repository: String,
     branch: String,
+    origin: String,
 }
 impl GitHubTransport {
     pub fn new(repository: &str, branch: &str, token: &str) -> Result<Self> {
@@ -136,10 +288,34 @@ impl GitHubTransport {
             client,
             repository: repository.into(),
             branch: branch.into(),
+            origin: "https://api.github.com".into(),
+        })
+    }
+    /// Exercises the same publication protocol against an exact local fixture.
+    #[cfg(all(feature = "test-support", debug_assertions))]
+    pub fn new_test_loopback(
+        repository: &str,
+        branch: &str,
+        address: std::net::SocketAddr,
+    ) -> Result<Self> {
+        validate_destination(repository, branch, "audit")?;
+        ensure!(
+            address.ip().is_loopback() && address.port() != 0,
+            "GitHub fixture must use exact nonzero loopback"
+        );
+        Ok(Self {
+            client: Client::builder()
+                .no_proxy()
+                .redirect(reqwest::redirect::Policy::none())
+                .timeout(std::time::Duration::from_secs(15))
+                .build()?,
+            repository: repository.into(),
+            branch: branch.into(),
+            origin: format!("http://{address}"),
         })
     }
     fn url(&self, suffix: &str) -> String {
-        format!("https://api.github.com/repos/{}/{suffix}", self.repository)
+        format!("{}/repos/{}/{suffix}", self.origin, self.repository)
     }
     async fn decode(mut response: reqwest::Response) -> Result<Value> {
         let status = response.status();
@@ -165,6 +341,46 @@ fn sha(value: &str) -> Result<()> {
         "invalid GitHub commit SHA"
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod transport_tests {
+    use super::*;
+
+    #[test]
+    fn production_transport_retains_fixed_origin() {
+        let transport = GitHubTransport::new("audit/validation", "audit", "inert-test-fixture")
+            .expect("valid non-network constructor");
+        assert_eq!(
+            transport.url("branches/audit"),
+            "https://api.github.com/repos/audit/validation/branches/audit"
+        );
+    }
+
+    #[cfg(all(feature = "test-support", debug_assertions))]
+    #[test]
+    fn fixture_transport_requires_exact_nonzero_loopback() {
+        for address in ["0.0.0.0:18548", "192.0.2.1:18548", "127.0.0.1:0"] {
+            assert!(
+                GitHubTransport::new_test_loopback(
+                    "audit/validation",
+                    "audit",
+                    address.parse().unwrap()
+                )
+                .is_err()
+            );
+        }
+        let transport = GitHubTransport::new_test_loopback(
+            "audit/validation",
+            "audit",
+            "127.0.0.1:18548".parse().unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            transport.url("branches/audit"),
+            "http://127.0.0.1:18548/repos/audit/validation/branches/audit"
+        );
+    }
 }
 impl PublicationTransport for GitHubTransport {
     fn head(&self) -> BoxFuture<'_, Result<String>> {
@@ -230,6 +446,10 @@ impl PublicationTransport for GitHubTransport {
             ensure!(
                 bytes.len() <= 262144,
                 "GitHub file exceeds checkpoint bound"
+            );
+            ensure!(
+                value["sha"].as_str() == Some(git_blob_sha1(&bytes).as_str()),
+                "GitHub blob identity disagrees with returned bytes"
             );
             Ok(Some(bytes))
         })

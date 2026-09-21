@@ -5,6 +5,10 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[features]
+default = []
+test-support = []
+
 [dependencies]
 anyhow.workspace = true
 blake3 = "1"
@@ -16,8 +20,9 @@ base64.workspace = true
 hex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha1 = "=0.10.7"
+sha2.workspace = true
 
 [dev-dependencies]
 revm = "19"
-sha2.workspace = true
 tokio.workspace = true

@@ -25,7 +25,7 @@ use futures_util::FutureExt;
 use sqlx::{ConnectOptions, PgPool, postgres::PgPoolOptions};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-const NODE: &str = "http://127.0.0.1:18546";
+const NODE: &str = "http://127.0.0.1:18556";
 const TOKEN: &str = "local-worker-fixture-credential-not-production";
 const ORACLE: &str = "0x420000000000000000000000000000000000000F";
 const ORACLE_CODE: &str = "0x6103e860005260206000f3";
@@ -49,7 +49,8 @@ async fn node(method: &str, params: Value) -> Result<Value> {
         .await?;
     ensure!(
         response.get("error").is_none(),
-        "local fixture RPC {method}: {response}"
+        "local fixture RPC {method} returned error code {:?}",
+        response["error"]["code"].as_i64()
     );
     response
         .get("result")
@@ -628,7 +629,7 @@ async fn fixture_connection(
             input.config.clone(),
             trust,
             &secrets,
-            EndpointPolicy::test_only_loopback("127.0.0.1:18546".parse()?)?,
+            EndpointPolicy::test_only_loopback("127.0.0.1:18556".parse()?)?,
             EndpointPolicy::test_only_loopback(
                 secondary_url.trim_start_matches("http://").parse()?,
             )?,
@@ -656,7 +657,7 @@ async fn fixture_connection(
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]
-#[ignore = "requires owned PostgreSQL and separate owned Anvil at loopback18546"]
+#[ignore = "requires owned PostgreSQL and separate owned Anvil at loopback18556"]
 async fn base_worker_http_gateway_restart_and_finality(pool: PgPool) -> Result<()> {
     let journal_name = format!("worker_journal_{}", Uuid::new_v4().simple());
     sqlx::query(&format!("CREATE DATABASE {journal_name}"))
@@ -685,6 +686,14 @@ async fn base_worker_http_gateway_restart_and_finality(pool: PgPool) -> Result<(
 }
 
 async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
+    let started = std::time::Instant::now();
+    let step = |stage: &str| {
+        eprintln!(
+            "worker fixture stage={stage} elapsed_ms={}",
+            started.elapsed().as_millis()
+        );
+    };
+    step("local_prerequisites");
     ensure!(
         node("eth_chainId", json!([])).await? == json!("0x14a34"),
         "wrong fixture chain"
@@ -709,7 +718,7 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
     let deployment = node_receipt(deployed).await?;
     ensure!(
         deployment["status"] == "0x1",
-        "fixture registry deployment failed: {deployment}"
+        "fixture registry deployment failed"
     );
     let registry: Address = serde_json::from_value(deployment["contractAddress"].clone())?;
     let local_key = B256::from_slice(Uuid::new_v4().as_bytes().repeat(2).as_slice());
@@ -836,7 +845,19 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
             replies: AtomicUsize::new(0),
         }),
         GatewayAccess::new(TOKEN.as_bytes(), BTreeSet::from([ids.corp_id]))?,
-    );
+    )
+    .layer(axum::middleware::from_fn(
+        |request: axum::extract::Request, next: axum::middleware::Next| async move {
+            let response = next.run(request).await;
+            if !response.status().is_success() {
+                eprintln!(
+                    "worker fixture gateway HTTP status={}",
+                    response.status().as_u16()
+                );
+            }
+            response
+        },
+    ));
     let _server = AbortTask(tokio::spawn(async move {
         axum::serve(listener, app)
             .await
@@ -847,23 +868,60 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
     let secondary_url = format!("http://{}", secondary_listener.local_addr()?);
     let proxy = axum::Router::new().route(
         "/",
-        axum::routing::post(|axum::Json(request): axum::Json<Value>| async move {
-            let client = reqwest::Client::builder()
-                .no_proxy()
-                .timeout(Duration::from_secs(15))
-                .build()
-                .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;
+        axum::routing::post(|axum::extract::State(client): axum::extract::State<reqwest::Client>, axum::Json(request): axum::Json<Value>| async move {
+            // Only fixed method labels and transport metadata may enter fixture diagnostics.
+            let method = match request["method"].as_str() {
+                Some("eth_getBlockByHash") => "eth_getBlockByHash",
+                Some("eth_getBlockByNumber") => "eth_getBlockByNumber",
+                Some("eth_getTransactionReceipt") => "eth_getTransactionReceipt",
+                Some("eth_getLogs") => "eth_getLogs",
+                Some("eth_call") => "eth_call",
+                Some("eth_getCode") => "eth_getCode",
+                Some("eth_chainId") => "eth_chainId",
+                Some("eth_getTransactionCount") => "eth_getTransactionCount",
+                Some("eth_getBalance") => "eth_getBalance",
+                Some("eth_feeHistory") => "eth_feeHistory",
+                Some("eth_estimateGas") => "eth_estimateGas",
+                _ => "other",
+            };
+            let started = std::time::Instant::now();
             let response = client
                 .post(NODE)
                 .json(&request)
                 .send()
                 .await
-                .map_err(|_| axum::http::StatusCode::BAD_GATEWAY)?
+                .map_err(|error| {
+                    eprintln!(
+                        "worker fixture secondary method={method} send_failed=true timeout={} connect={} elapsed_ms={}",
+                        error.is_timeout(),
+                        error.is_connect(),
+                        started.elapsed().as_millis()
+                    );
+                    axum::http::StatusCode::BAD_GATEWAY
+                })?;
+            let status = response.status().as_u16();
+            if !response.status().is_success() {
+                eprintln!("worker fixture secondary method={method} upstream_status={status}");
+            }
+            let response = response
                 .json::<Value>()
                 .await
-                .map_err(|_| axum::http::StatusCode::BAD_GATEWAY)?;
+                .map_err(|error| {
+                    eprintln!(
+                        "worker fixture secondary method={method} decode_failed=true timeout={} upstream_status={status} elapsed_ms={}",
+                        error.is_timeout(),
+                        started.elapsed().as_millis()
+                    );
+                    axum::http::StatusCode::BAD_GATEWAY
+                })?;
             Ok::<_, axum::http::StatusCode>(axum::Json(response))
         }),
+    )
+    .with_state(
+        reqwest::Client::builder()
+            .no_proxy()
+            .timeout(Duration::from_secs(15))
+            .build()?,
     );
     let _secondary = AbortTask(tokio::spawn(async move {
         axum::serve(secondary_listener, proxy)
@@ -871,6 +929,7 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
             .expect("fixture secondary RPC proxy");
     }));
     let oracle_hash = keccak256(hex::decode(ORACLE_CODE.trim_start_matches("0x"))?);
+    step("initial_validation");
     let connection = fixture_connection(&input, &gateway_url, &secondary_url, oracle_hash).await?;
     let disabled = store
         .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
@@ -878,7 +937,8 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
     assert!(!disabled.enabled);
     assert!(
         validate_connection(&store, &disabled, &connection)
-            .await?
+            .await
+            .context("fixture initial validation")?
             .is_some()
     );
     store
@@ -901,6 +961,7 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
     let d = store
         .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
         .await?;
+    step("injected_lost_sign_reply");
     let first_error = drive_intent(&store, &d, &connection, &claim)
         .await
         .expect_err("injected lost sign reply");
@@ -925,14 +986,23 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
         .release_base_claim(&claim, "signer_unavailable")
         .await?;
     drop(connection);
+    step("reconnect_after_journal_commit");
     let restarted = fixture_connection(&input, &gateway_url, &secondary_url, oracle_hash).await?;
-    assert!(validate_connection(&store, &d, &restarted).await?.is_some());
+    assert!(
+        validate_connection(&store, &d, &restarted)
+            .await
+            .context("fixture validation after journal commit")?
+            .is_some()
+    );
     let recovered = store
         .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
         .await?
         .context("restarted claim")?;
     let snapshot_before_broadcast = node("evm_snapshot", json!([])).await?;
-    drive_intent(&store, &d, &restarted, &recovered).await?;
+    step("recover_and_broadcast");
+    drive_intent(&store, &d, &restarted, &recovered)
+        .await
+        .context("fixture recover signature and broadcast")?;
     assert_eq!(
         calls.load(Ordering::SeqCst),
         1,
@@ -943,11 +1013,12 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
             .bind(frozen[0].request.attempt_id)
             .fetch_one(pool)
             .await?;
-    assert_eq!(raw, journaled.raw(), "broadcast exactly journaled bytes");
+    assert!(raw == journaled.raw(), "broadcast exactly journaled bytes");
     let tentative = store
         .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
         .await?
         .context("tentative inclusion claim")?;
+    step("tentative_inclusion");
     assert!(
         drive_intent(&store, &d, &restarted, &tentative)
             .await
@@ -990,6 +1061,7 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
         "pending validation must not leave a usable enable ticket"
     );
     drop(restarted);
+    step("resume_scanner_tail");
     let restarted = fixture_connection(&input, &gateway_url, &secondary_url, oracle_hash).await?;
     let d = store
         .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
@@ -1001,6 +1073,7 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
             .is_some(),
         "the next bounded validation tick must verify the scanner-created tail"
     );
+    step("revert_tentative_inclusion");
     ensure!(
         node("evm_revert", json!([snapshot_before_broadcast])).await? == json!(true),
         "owned fixture revert failed"
@@ -1025,22 +1098,28 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
     assert!(reorged.enabled && reorged.restore_required);
     assert!(
         validate_connection(&store, &reorged, &restarted)
-            .await?
+            .await
+            .context("fixture validation after tentative reorg")?
             .is_some()
     );
     let retry = store
         .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
         .await?
         .context("reorg retry claim")?;
-    drive_intent(&store, &reorged, &restarted, &retry).await?;
+    step("rebroadcast_after_reorg");
+    drive_intent(&store, &reorged, &restarted, &retry)
+        .await
+        .context("fixture rebroadcast after tentative reorg")?;
     assert_eq!(
         calls.load(Ordering::SeqCst),
         1,
         "reorg retry must preserve identical signed bytes"
     );
+    step("mine_long_ancestry");
     for _ in 0..33 {
         node("anvil_mine", json!(["0x100"])).await?;
     }
+    step("historical_reconciliation");
     let d = store
         .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
         .await?;
@@ -1061,12 +1140,15 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
         "the next bounded tick must verify the scanner-created tail before proceeding"
     );
     let mut terminal = false;
-    for _ in 0..32 {
+    step("bounded_finality");
+    for tick in 0..32 {
         let final_claim = store
             .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
             .await?
             .context("finality continuation claim")?;
-        drive_intent(&store, &d, &restarted, &final_claim).await?;
+        drive_intent(&store, &d, &restarted, &final_claim)
+            .await
+            .with_context(|| format!("fixture finality continuation tick {tick}"))?;
         terminal = sqlx::query_scalar("SELECT terminal FROM base_audit_intents WHERE id=$1")
             .bind(intent.id)
             .fetch_one(pool)
@@ -1074,6 +1156,7 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
         if terminal {
             break;
         }
+        eprintln!("worker fixture finality_tick={tick} terminal=false");
     }
     assert!(
         terminal,
@@ -1085,6 +1168,7 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
         retained > 16384,
         "both providers must retain full long-history ancestry"
     );
+    step("retained_finality_history");
     let history = store
         .base_history(ids.corp_id, ids.alice_actor_id, input.id, None, 100)
         .await?;

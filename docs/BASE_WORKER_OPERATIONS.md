@@ -143,8 +143,8 @@ and drops its own uniquely named journal database; it does not use the
 application schema for the signing journal.
 
 ```powershell
-$env:DATABASE_URL = 'postgres://postgres@127.0.0.1:55473/postgres'
-$env:CARGO_TARGET_DIR = 'C:\Users\awiedemann\Projects\TaskRabbit\ecorp-contributor\target'
+$env:DATABASE_URL = 'postgres://postgres@127.0.0.1:55483/postgres'
+$env:CARGO_TARGET_DIR = Join-Path (Get-Location) 'target-native-qualification'
 cargo test -p crony-store base_v2_ -- --ignored --test-threads=1
 ```
 
@@ -166,18 +166,110 @@ crosses the existing per-tick log-range bound: completed header work survives
 that defer rather than restarting from the first retained row.
 
 The executable-path test requires a **separate, disposable** Anvil node on
-loopback port 18546, using the pinned repository launcher. It deploys a local
+loopback port 18556, using the pinned repository launcher. It deploys a local
 registry, configures a synthetic fixed-fee oracle, and funds a deterministic
 fixture signer only on that disposable node. Do not point it at a shared or
 customer chain. The other registry suite's node on port 18545 is not used.
 
 ```powershell
 # Keep running in a separate terminal.
-.\tools\start_base_registry_anvil.ps1 -Port 18546 -ChainId 84532
+.\tools\start_base_registry_anvil.ps1 -Port 18556 -ChainId 84532
 
 # Run from the repository root with the owned DATABASE_URL above.
 cargo test -p crony-server --bin crony-base-worker base_worker_http_gateway_restart_and_finality -- --ignored --nocapture
 ```
+
+The launcher creates a separate state cache for each node. `-CacheDirectory` can
+name a new, absolute host-owned directory; it must not already exist. Retain it
+when diagnosing a failure. The secondary HTTP fixture reuses its client pool:
+constructing a client per ancestry-header request can exhaust local TCP endpoints.
+
+## Full native runtime qualification (development only)
+
+`crony-server/native-qualification` is nondefault, rejects release builds, and
+requires `CRONY_NATIVE_QUALIFICATION=1`. It enables exact-loopback fixtures, not
+production transport exceptions. Build server, runner, CLI and the
+`crony-native-fixture` binary into `target-native-qualification`.
+
+`tools\native_qualification_stack.ps1` owns API8992, UI5298, PostgreSQL55483,
+Anvil18557, GitHub18558, secondary RPC18559 and gateway18560. It expects the owned
+container `ecorp-foreground287-20260917-postgres`. Supply `-HostDirectory` under
+the current Copilot session's files directory, outside Git. It restricts host
+file ACLs and records exact process ownership before any restart or stop.
+The gateway key remains in memory; do not restart its fixture during recovery.
+Factory stays disabled. Local registry deployment and funding are fixture
+operations only; never redirect these tools to public endpoints.
+
+With the pinned toolchain and the existing PostgreSQL image installed, create
+the explicitly disposable database container and build the fixture binaries:
+
+```powershell
+docker run --detach --pull=never --name ecorp-foreground287-20260917-postgres `
+  -p 127.0.0.1:55483:5432 -e POSTGRES_HOST_AUTH_METHOD=trust postgres:17-alpine
+$env:CARGO_TARGET_DIR = Join-Path (Get-Location) 'target-native-qualification'
+cargo build --locked -p crony-server -p crony-runner -p crony-cli `
+  --features crony-server/native-qualification --bins
+```
+
+The loopback trust-auth database is a reduced-assurance local fixture only.
+Never reuse an existing container or production database to avoid a port conflict.
+
+Restore the locked frontend with the pinned package manager and its supply-chain
+checks intact. A corporate mirror may return different tarball locations.
+Qualify any machine-local transport mapping against the registry's exact package
+version and the unchanged locked integrity; do not weaken policy or silently
+upgrade dependencies. Do not use a failed installation as acceptance evidence.
+
+Run the existing drivers in this order:
+
+1. Start the owned stack; run `e2e_native_qualification_browser.mjs --phase prepare`.
+2. Run `e2e_native_qualification.mjs --phase audit`; start the gateway fixture;
+   restart the server/runner to load their host configuration.
+3. Run `--phase request`: configure disabled, validate, enable with the current
+   version, request one stable intent, publish the complete native archive, and
+   wait for the held journal response.
+4. Retain `signing-restart-before.json` (processes, gateway metrics and zero
+   application signed-result count); physically restart server/runner; retain
+   `signing-restart-after.json`. Run `--phase broadcast`.
+5. Require an observed pending transaction and null receipt. Retain
+   `broadcast-restart-before.json` (processes and pending evidence), restart,
+   retain `broadcast-restart-after.json`, then run `--phase recover`.
+6. Retain `final-restart-before.json`, perform a final server/runner restart,
+   and retain `final-restart-after.json`.
+7. Put the six restart records under the output's `restart-evidence` directory.
+   Run `native_qualification_attempt.mjs --begin`, then runtime `--phase readback`,
+   `e2e_native_archive.mjs`, and browser `--phase readback`, in that order.
+8. Run `native_qualification_acceptance.mjs`. It derives acceptance from the
+   successful current reports and restart records; it contains no historical
+   command outcomes. Do not edit source or restart processes between these
+   identity-bound readbacks.
+
+The drivers require `CRONY_NATIVE_QUALIFICATION=1`,
+`CRONY_SERVER_HTTP=http://127.0.0.1:8992`, and the private
+`CRONY_NATIVE_HOST_DIRECTORY`. The browser also requires
+`CRONY_NATIVE_WEB=http://127.0.0.1:5298`, an absolute `CRONY_NATIVE_OUTPUT` pointing
+to `output\native-qualification\phase2`, and an installed Playwright module
+selected by `CRONY_PLAYWRIGHT_MODULE`.
+
+If mining and native finality completed before a harness assertion failed,
+`--phase observe-finality` performs read-only reconciliation of that same attempt.
+It requires the previously captured pending-after-restart evidence. It does not
+repeat a restart, mine, sign, or broadcast. Preserve the failed invocation.
+Provider finality tips may differ while advancing; the harness checks recorded
+inclusion and both tips against both endpoints, plus retained ancestry counts,
+rather than requiring simultaneous tips.
+
+The UI's **Audit evidence** panel is read-only and uses the existing authorized
+native status/history APIs. It shows verified checkpoints, registry/stream,
+finality transactions, provider observations and complete archive receipts.
+Changing the viewer remounts the panel; denied or failed reads do not show a
+previous viewer's evidence. The qualification browser checks the rendered panel,
+not just a fetch from the browser origin.
+
+Passing this lane qualifies local native wiring and recovery only. Development
+identities, a deterministic runner, a same-node RPC proxy, a memory-only signer,
+a synthetic oracle and a local GitHub fixture do not qualify production identity,
+provider independence, KMS, public GitHub, public Base, or a hardened deployment.
 
 This test uses the actual bounded HTTP RPC client, authenticated gateway router,
 policy gateway, application `PgStore` intent authorizer, separate PostgreSQL

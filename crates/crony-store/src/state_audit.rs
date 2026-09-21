@@ -662,6 +662,11 @@ impl PgStore {
         key: &crony_audit::VerifyingKey,
     ) -> Result<bool> {
         let mut tx = self.pool.begin().await?;
+        // Keep archive rows, refs and trusted key history at one committed snapshot
+        // without holding the governed ledger lock during remote publication.
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+            .execute(&mut *tx)
+            .await?;
         // Network work holds only the destination row, never the governed head.
         let Some(d)=sqlx::query("SELECT corp_id,config,last_commit,last_checkpoint_digest,interval_seconds,calendar_schedule,overdue_after_seconds,workflow_gate FROM state_audit_destinations WHERE id=$1 AND kind='github' AND publication_disabled=false AND next_due<=now() FOR UPDATE SKIP LOCKED").bind(destination).fetch_optional(&mut *tx).await? else {tx.commit().await?;return Ok(false)};
         let corp: Uuid = d.get("corp_id");
@@ -718,19 +723,40 @@ impl PgStore {
             checkpoint.verify(key, None)?;
         }
         let previous: Option<String> = d.get("last_commit");
-        let result = crony_audit::publish_checkpoint(
-            transport,
-            &config.path,
-            &checkpoint,
-            previous.as_deref(),
-        )
+        let result = async {
+            let mut archive = Self::load_archive(
+                &mut tx,
+                corp,
+                Uuid::parse_str(&checkpoint.checkpoint.ledger_id)?,
+            )
+            .await?;
+            Self::adopt_legacy_audit_key(
+                &mut tx,
+                corp,
+                &mut archive,
+                &checkpoint.checkpoint.key_id,
+                key,
+            )
+            .await?;
+            let trusted_keys = Self::load_signing_keys(&mut tx, corp).await?;
+            crony_audit::publish_checkpoint_archive(
+                transport,
+                &config.path,
+                &checkpoint,
+                &archive,
+                &trusted_keys,
+                previous.as_deref(),
+            )
+            .await
+        }
         .await;
         match result {
-            Ok(commit) => {
+            Ok(publication) => {
+                let commit = &publication.commit;
                 sqlx::query("UPDATE state_audit_anchor_receipts r SET status='superseded',witness=$3,updated_at=now() FROM state_audit_checkpoints c WHERE r.destination_id=$1 AND r.status='pending' AND c.corp_id=r.corp_id AND c.digest=r.checkpoint_digest AND c.sequence<$2")
                     .bind(destination).bind(i64::try_from(checkpoint.checkpoint.last_sequence)?).bind(json!({"covered_by":checkpoint.digest})).execute(&mut *tx).await?;
-                sqlx::query("UPDATE state_audit_anchor_receipts SET status='published',witness=$3,updated_at=now() WHERE destination_id=$1 AND checkpoint_digest=$2 AND status<>'published'")
-                    .bind(destination).bind(&checkpoint.digest).bind(json!({"provider":"github","repository":config.repository,"branch":config.branch,"path":config.path,"commit":commit,"previous_destination_checkpoint":d.get::<Option<String>,_>("last_checkpoint_digest"),"independently_verified":false,"finalized":false})).execute(&mut *tx).await?;
+                sqlx::query("UPDATE state_audit_anchor_receipts SET status='published',witness=$3,updated_at=now() WHERE destination_id=$1 AND checkpoint_digest=$2 AND (status<>'published' OR witness->'archive_publication' IS NULL)")
+                    .bind(destination).bind(&checkpoint.digest).bind(json!({"provider":"github","repository":config.repository,"branch":config.branch,"path":config.path,"commit":commit,"archive_publication":publication,"previous_destination_checkpoint":d.get::<Option<String>,_>("last_checkpoint_digest"),"independently_verified":false,"finalized":false})).execute(&mut *tx).await?;
                 sqlx::query("UPDATE state_audit_destinations SET last_commit=$2,last_checkpoint_digest=$3,last_published_sequence=$4,last_attempted_publication=now(),last_successful_publication=now(),next_due=$5,scheduled_due=$5,failures=0,last_error=NULL,reconciliation_error=NULL WHERE id=$1")
                     .bind(destination).bind(commit).bind(&checkpoint.digest)
                     .bind(i64::try_from(checkpoint.checkpoint.last_sequence)?)
@@ -752,20 +778,15 @@ impl PgStore {
         }
     }
 
-    /// Server-side only: keys are supplied by the trusted service, never runners.
-    pub async fn audit_checkpoint(
-        &self,
+    async fn adopt_legacy_audit_key(
+        tx: &mut Transaction<'_, Postgres>,
         corp: Uuid,
+        archive: &mut crony_audit::Archive,
         key_id: &str,
-        key: &crony_audit::SigningKey,
-    ) -> Result<crony_audit::SignedCheckpoint> {
-        let mut tx = self.pool.begin().await?;
-        let ledger = lock_ledger(&mut tx, corp)
-            .await?
-            .context("audit ledger not initialized")?;
-        let mut archive = Self::load_archive(&mut tx, corp, ledger).await?;
+        key: &crony_audit::VerifyingKey,
+    ) -> Result<()> {
         if archive.signing_keys.is_empty() && !archive.checkpoints.is_empty() {
-            archive.verify_history(&key.verifying_key())?;
+            archive.verify_history(key)?;
             ensure!(
                 archive
                     .checkpoints
@@ -780,10 +801,27 @@ impl PgStore {
                 .checkpoint
                 .last_sequence;
             sqlx::query("INSERT INTO state_audit_signing_keys(corp_id,key_id,public_key,activated_sequence) VALUES($1,$2,$3,$4)")
-                .bind(corp).bind(key_id).bind(key.verifying_key().as_bytes())
-                .bind(i64::try_from(activation_sequence)?).execute(&mut *tx).await?;
-            archive.signing_keys = Self::load_signing_keys(&mut tx, corp).await?;
+                .bind(corp).bind(key_id).bind(key.as_bytes())
+                .bind(i64::try_from(activation_sequence)?).execute(&mut **tx).await?;
+            archive.signing_keys = Self::load_signing_keys(tx, corp).await?;
         }
+        Ok(())
+    }
+
+    /// Server-side only: keys are supplied by the trusted service, never runners.
+    pub async fn audit_checkpoint(
+        &self,
+        corp: Uuid,
+        key_id: &str,
+        key: &crony_audit::SigningKey,
+    ) -> Result<crony_audit::SignedCheckpoint> {
+        let mut tx = self.pool.begin().await?;
+        let ledger = lock_ledger(&mut tx, corp)
+            .await?
+            .context("audit ledger not initialized")?;
+        let mut archive = Self::load_archive(&mut tx, corp, ledger).await?;
+        Self::adopt_legacy_audit_key(&mut tx, corp, &mut archive, key_id, &key.verifying_key())
+            .await?;
         let verified = if archive.signing_keys.is_empty() {
             archive.verify_history(&key.verifying_key())?
         } else {

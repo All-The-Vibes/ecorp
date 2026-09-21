@@ -1,4 +1,6 @@
 //! Optional trusted Base worker. It never deploys, registers, funds or owns a private key.
+#[cfg(all(feature = "native-qualification", not(debug_assertions)))]
+compile_error!("native-qualification is forbidden in release builds");
 #[cfg(all(test, debug_assertions))]
 #[path = "base_worker_tests.rs"]
 mod tests;
@@ -34,6 +36,7 @@ use uuid::Uuid;
 #[allow(dead_code)]
 #[tokio::main]
 async fn main() -> Result<()> {
+    qualification_mode()?;
     if std::env::var_os("CRONY_BASE_WORKER_CONFIG_FILE").is_none() {
         return Ok(());
     }
@@ -129,6 +132,7 @@ pub struct Service {
 impl Service {
     /// No network, database, or signing work occurs during ordinary server initialization.
     pub fn from_environment() -> Result<Option<Arc<Self>>> {
+        qualification_mode()?;
         Ok(settings()?.map(|(settings, secrets)| Arc::new(Self { settings, secrets })))
     }
 
@@ -243,6 +247,20 @@ async fn connect(
     for next in d.input.manifests.iter().skip(1) {
         trust.advance(next)?;
     }
+    #[cfg(all(feature = "native-qualification", debug_assertions))]
+    if qualification_mode()? {
+        return Ok(Connected {
+            chain: BaseConnection::connect_test_loopback(d.input.config.clone(), trust, secrets)
+                .await?,
+            gateway: HttpSigningGateway::connect_test_loopback(
+                &host.gateway_secret,
+                &d.input.config.signer_gateway_identity,
+                secrets,
+            )
+            .await?,
+            settings: host.clone(),
+        });
+    }
     let policy = EndpointPolicy::production(host.allowed_hosts.clone());
     let chain = BaseConnection::connect(
         d.input.config.clone(),
@@ -264,6 +282,20 @@ async fn connect(
         gateway,
         settings: host.clone(),
     })
+}
+
+pub(crate) fn qualification_mode() -> Result<bool> {
+    match std::env::var("CRONY_NATIVE_QUALIFICATION") {
+        Err(std::env::VarError::NotPresent) => Ok(false),
+        Ok(value) => {
+            ensure!(
+                cfg!(all(feature = "native-qualification", debug_assertions)) && value == "1",
+                "native qualification requires an explicit debug fixture build and value 1"
+            );
+            Ok(true)
+        }
+        Err(_) => anyhow::bail!("invalid native qualification mode"),
+    }
 }
 
 async fn validate_connection(

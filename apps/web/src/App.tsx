@@ -34,6 +34,7 @@ import type { DiscussionScope } from './missionProjection'
 import { createSnapshotRefresher } from './snapshotRefresh'
 import { evidenceSelectionKey, readEvidenceSelection, rememberEvidenceSelection } from './evidenceSelection'
 import { ConnectionsPanel } from './ConnectionsPanel'
+import { AuditEvidencePanel } from './AuditEvidencePanel'
 import { MissionOriginText } from './MissionOriginDetails'
 import { useMissionOriginContext } from './useMissionOriginContext'
 import { useMissionResultContext } from './useMissionResultContext'
@@ -6452,6 +6453,9 @@ function App() {
           </button>
         </div>
       ) : null}
+
+      <AuditEvidencePanel key={`audit:${data.snapshot.corp.id}:${selectedActor.id}`}
+        corpId={data.snapshot.corp.id} actorId={selectedActor.id} api={api} />
 
       <div className="workspace-surface" hidden={activeWorkspaceView !== 'factory'}>
         <FactoryPanel
