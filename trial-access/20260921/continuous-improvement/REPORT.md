@@ -1,6 +1,6 @@
 # ECorp continuous improvement and CI recovery
 
-Generated 2026-09-21T07:45:18.722Z.
+Generated 2026-09-21T08:18:00.825Z.
 
 Reviewed advisory learning and finite CI recovery are implemented and verified through local deterministic native acceptance. **Fresh qualification was attempted and failed before judging. Genuine learning and hosted CI pilots remain unrun.**
 
@@ -13,7 +13,27 @@ Reviewed advisory learning and finite CI recovery are implemented and verified t
 
 The prior qualified assessment predates this implementation. The new structural scan does not supply a new operations score or composite score. No score improvement is claimed.
 
-## Fresh qualification outcome
+## Latest qualification closure
+
+**The latest assessment failed before judging. Operations remains 71.5 from the earlier qualified assessment; the 80 and 90 goals remain unmet.**
+
+| Case | Actual outcome |
+| --- | --- |
+| Recurring proposal | Provider reported content filtering: 19,514 input tokens, zero output and zero tool calls. The proposal was absent; native verification failed and source stayed unchanged. |
+| Feedback proposal and repair | The actual proposal was independently reviewed. The repair request then reported content filtering: 36,722 input tokens, zero output and zero tool calls. The byte guard rejected the unchanged target before controller acceptance, export or consumption. |
+| Negative control | Native edit preserved the exact intended source bytes, including mixed line endings. The run was cancelled by the hard budget breaker at 277,845 reported tokens against a 250,000-token phase limit. The proposal contained literal newline escapes outside JSON strings and was invalid; no review or recovery cycle completed. |
+
+Four native attempts used 562,402 reported tokens: three failed and one cancelled. All runs are terminal and worktrees are preserved. The nine-attempt allocation is closed: four consumed, five unused, zero reusable. Lifetime accounting is 43 provider attempts and 4,151,470 reported tokens, with earlier records counted once. Reported usage is not a billing estimate. No judge stages ran and no new score was produced.
+
+The corrected native edit tool preserved the negative candidate exactly. The strict review guard also correctly refused an unapplied approved repair. These observations do not turn the failed qualification into a success. The provider did not supply a filtering category or trigger; no cause is inferred and no filter workaround or further retry was attempted.
+
+Before dispatch, the correction passed 45 standalone byte-guard tests, 37 controller integration tests, 36 transport/controller checks and 22 allocation tests. Independent reviews verified unchanged product source, functional oracles and grading. The implementation remains local commit 4e541467; hosted workflows are unenrolled and source PR publication remains blocked by automatic approval policy.
+
+The pinned benchmark caps Self-Healing CI/CD at raw 3 when its rollback-path signal is false. The source includes native isolated known-good workspace restoration, which is narrower than deployment rollback. The scanner returned no rollback signal; neither labels nor passing local fixtures can establish a deployed rollback path.
+
+[Latest sanitized qualification data](qualification.json). Earlier failures follow and remain part of the record.
+
+## Earlier qualification outcome
 
 **The new assessment failed before judging. Operations remains 71.5 from the earlier qualified assessment; neither the 80 nor 90 goal has been reached.**
 
@@ -29,9 +49,9 @@ These were genuine provider executions in the native local lifecycle with indepe
 
 The earlier metadata refusal and first transport attempt remain recorded separately. That first executing attempt used five native attempts and 229,467 reported tokens; its fault was the observer's incorrect all-CRLF baseline assumption. The latest failure concerns edits made after the corrected baseline passed.
 
-A new strict reviewed-transform guard passed 45 offline tests, including the retained unauthorized line-ending rewrite. Nine provider-free regression checks of the pinned Copilot native driver reproduced the patch failure and showed that edit/str_replace preserves approved repair, interruption, restoration and append bytes. Read-only live metadata confirms that Claude Opus 5 exposes that native edit tool; the GPT model used in the failed attempt does not. A new prospective package is being prepared with this supported model/tool selection, exact review checks and fresh bounded allocation. No new execution is claimed by this report.
+A new strict reviewed-transform guard passed 45 offline tests, including the retained unauthorized line-ending rewrite. Nine provider-free regression checks of the pinned Copilot native driver reproduced the patch failure and showed that edit/str_replace preserves approved repair, interruption, restoration and append bytes. Read-only live metadata confirms that Claude Opus 5 exposes that native edit tool; the GPT model used in the failed attempt does not. That prospective package was subsequently executed; its failed outcome is recorded in the latest closure above.
 
-[Sanitized qualification details](qualification.json).
+[Earlier qualification details](qualification-previous.json).
 
 ## Implemented capabilities
 
@@ -94,17 +114,17 @@ The scheduled read-only audit and manual recovery workflow are implemented, disa
 
 ## Concrete next steps
 
-1. **Finish the corrected qualification:** Independently review and freeze the new native edit configuration, strict approved-byte guard and fresh finite allocation, then run the unchanged qualification. Retain every failed attempt; publish a score only if the official evaluator completes.
-2. **Measure real agent delivery:** Use native missions for substantive issues and preserve exact commit, verifier and publication provenance. Track accepted merges, lead time, rework and review effort over the same fixed window. Separate account authorship, verified production origin, dependency automation and evaluator-recognized agent identity; do not manufacture attribution.
-3. **Enable hosted operating evidence:** After source publication and normal default-branch acceptance, provision a dedicated trusted control host and explicitly enroll the existing CI recovery workflow and scheduled read-only audit. Capture real failure, repair/restoration, review and subsequent run evidence.
-4. **Demonstrate governed learning:** Run a genuine provider pilot with repeated source-bound observations, a concrete owner-reviewed adoption and a fixed prospective before/after comparison. Preserve regressions, retire stale guidance and compare future outcomes without relabeling deterministic fixtures as provider learning.
+1. **Resolve the provider refusal:** Use supported provider diagnostics to resolve the reported content-filter response. Its trigger was not supplied. Preserve the refusal evidence; do not reword or reroute the same blocked request to evade the filter.
+2. **Correct future artifact formatting:** Use valid compact JSON or actual whitespace for new evidence files. Literal newline escapes outside JSON strings are invalid. Preserve failed outputs, keep the existing JSON-schema verifier, and review any future execution allocation separately.
+3. **Deliver and measure real changes:** Resolve the automatic policy block on source PR publication, then use normal review and merge for substantive native-produced changes. Record immutable production provenance, lead time, rework and review effort; keep unknown origin distinct from recognized agent authorship.
+4. **Enable and prove the operating loop:** After default-branch acceptance, enroll the bounded audit and recovery workflows on the trusted host. A genuine learning pilot requires repeated native observations, a concrete owner-reviewed adoption, actual later consumption and a fixed comparison. Isolated source restoration does not establish deployment rollback.
 
 ## Evidence identity
 
 Implementation commit: `4e541467c3f716865497dd48f6b78949bbb5e2d9`. Parent/base commit: `3aff250c118c1e24daebc39e7c8655049a344fb5`. Source working tree was clean at capture.
 
 - Source file manifest SHA-256: `244560243628bd123cbf5e3fe9180bea7cb4d8b5c0afb9a0efe7c9bb8d552bf7`
-- Evidence manifest SHA-256: `156e4aa355a4f080a6b2eaee4f71b8e5e29afd8be19a1909e9a15b1e7d68561b`
+- Evidence manifest SHA-256: `4d07ffaa983ac8c23c91aa2778b9f24e59b2c7a6e333733e6e74083e0492550f`
 - Source files captured: 769.
 
 The manifests contain repository-relative filenames or evidence identifiers and hashes. Raw private logs, native ledgers, routing and authentication details are retained separately and excluded here. See [sanitized report JSON](report.json), [source manifest](source-manifest.json) and [evidence manifest](evidence-manifest.json).
