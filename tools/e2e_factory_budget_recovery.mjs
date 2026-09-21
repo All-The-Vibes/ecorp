@@ -215,11 +215,12 @@ if (!execute) {
     'stop only receipt-owned QA processes; retain evidence']}, null, 2))
   process.exit(0)
 }
+const trustedNode = await realpath(process.execPath)
 const provenancePrograms = {
   server: path.join(root, 'target/debug/crony-server.exe'),
   runner: path.join(root, 'target/debug/crony-runner.exe'),
   cli: path.join(root, 'target/debug/crony-cli.exe'),
-  node: process.execPath,
+  node: trustedNode,
   ...Object.fromEntries(['initdb', 'postgres', 'psql', 'createdb', 'pg_ctl'].map(name =>
     [name, path.join(pgBin, `${name}.exe`)])),
 }
@@ -308,7 +309,7 @@ try {
     ['--server-ws','ws://127.0.0.1:18450/ws/runner','--runner-id',runnerId,'--corp-id',demo.corp_id,
       '--credential-file',path.join(attempt,'credential.json'),'--enrollment-token-file',enrollment,
       '--workspace',path.join(attempt,'runner-workspaces'),'--source-repository',source,'--source-base-ref','HEAD',
-      '--codex-command',process.execPath,'--codex-command-arg',path.join(root,'scripts/fake-codex-app-server.mjs'),
+      '--codex-command',trustedNode,'--codex-command-arg',path.join(root,'scripts/fake-codex-app-server.mjs'),
       '--claude-command',path.join(qa,'disabled-claude.exe'),'--opencode-command',path.join(qa,'disabled-opencode.exe'),
       '--copilot-cli-path',path.join(qa,'disabled-copilot.exe'),'--copilot-home',path.join(attempt,'copilot-home'),
       '--connections-directory',path.join(attempt,'connections'),'--github-command',path.join(qa,'disabled-gh.exe'),
@@ -332,7 +333,7 @@ try {
     const args = ['--server',api,'factory',demo.corp_id,demo.alice_actor_id,'--owner','ecorp-qa','--project-number','50',
       '--repository','All-The-Vibes/ecorp','--source-repository-path',source,'--source-base-ref','HEAD','--adapter','codex',
       '--strategy','single','--budget-tokens','6000','--budget-cost-microusd','10000000','--lease-seconds','300',
-      '--github-cli',process.execPath,'--issue','9050','--write-scope','**','--verification-policy-file',verifier,...(dry?['--dry-run']:[])]
+      '--github-cli',trustedNode,'--issue','9050','--write-scope','**','--verification-policy-file',verifier,...(dry?['--dry-run']:[])]
     try {
       const {stdout}=await run(path.join(root,'target/debug/crony-cli.exe'),args,{env:{...env,
         ECORP_GITHUB_CLI_PREFIX_ARGS_JSON:JSON.stringify([path.join(root,'tools/fake_github_cli.mjs')]),ECORP_FAKE_GITHUB_STATE:ghState}})

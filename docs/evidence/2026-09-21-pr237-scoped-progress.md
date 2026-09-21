@@ -62,3 +62,39 @@ Any permission to publish this correction must come from two fresh independent
 cannot stand in for full-PR NICE.
 
 ![Actual current local-log capture](assets/pr237-progress/local-verification.png)
+
+## Follow-up before publication
+
+The first scoped publication pair disagreed: one reviewer found that the
+installed Node junction was rejected by mandatory executable binding. That
+candidate was not pushed. After a recorded retry, the driver now selects the
+canonical trusted Node executable once and uses it for hashing and both Node
+launch configurations. The real selected Windows Node and an owned alias/target
+regression pass without relaxing any separate path, source or cleanup guard.
+
+The three missing CI regression files are now selected in the existing
+platform-appropriate jobs, including the Windows-specific cases. Pins, job
+permissions, opt-in boundaries and cold-primary ordering remain unchanged.
+
+Current integrated Windows validation: **213 passed, 0 failed, 1 skipped**;
+owned-inert-child identity checks: **37/37**, with cleanup verified. Canonical
+Node TDD reproduced both failures before **10/10 green** and **89/89 adjacent**
+checks. CI selection retained real red runs, then **7/7 contract checks** and
+**88/88 focused Windows cases**. These counts overlap.
+
+An optional cached Linux-container probe was **not successful**: eight
+provenance cases could not launch Git because the image lacks it. That is not
+a source failure or a Linux pass. No Git/package/image was installed to hide
+the failure; actual hosted Linux validation remains a future gate.
+
+All 202 recorded Rust/web input entries still match the original qualified
+baseline evidence. One checkout's CRLF-only Rust-test materialization was
+returned to the exact tested bytes after verifying identical Git blobs; no
+semantic code change or new Rust run is claimed.
+
+[Current follow-up raw receipts](pr237-progress/round-3/manifest.json) preserve
+the commands, failures and hashes. Earlier receipt packets remain byte-exact.
+The original three full-acceptance gaps, merge conflicts and human review gates
+remain open. Fresh scoped publication reviews still precede any push.
+
+![Actual follow-up local-log capture](assets/pr237-progress/canonical-node-and-ci.png)

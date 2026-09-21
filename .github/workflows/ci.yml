@@ -29,7 +29,7 @@ jobs:
       - name: Test platform-specific CI fixture contracts
         env:
           ECORP_OWNED_PROCESS_TEST: '1'
-        run: node --test tools/e2e_external_adapters.test.mjs tools/e2e_external_adapters_http.test.mjs tools/task_graph_fixture.test.mjs tools/controlled_runner_fixture.test.mjs tools/ci_factory_repository.test.mjs tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/identity_fixture.test.mjs tools/ci_runner_tests.test.mjs tools/fixture_source_identity.test.mjs tools/budget_fixture.test.mjs tools/factory_budget_fixture_config.test.mjs tools/fake_codex_budget_stream.test.mjs tools/factory_budget_process.test.mjs
+        run: node --test tools/e2e_external_adapters.test.mjs tools/e2e_external_adapters_http.test.mjs tools/task_graph_fixture.test.mjs tools/controlled_runner_fixture.test.mjs tools/ci_factory_repository.test.mjs tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/identity_fixture.test.mjs tools/ci_runner_tests.test.mjs tools/fixture_source_identity.test.mjs tools/budget_fixture.test.mjs tools/factory_budget_fixture_config.test.mjs tools/fake_codex_budget_stream.test.mjs tools/factory_budget_process.test.mjs tools/e2e_factory_budget_recovery.test.mjs tools/factory_budget_provenance.test.mjs
       - name: Test native Linux process ownership
         run: python3 -B tools/owned_test_process_linux_test.py -v
       - run: node tools/check_migrations.mjs
@@ -282,7 +282,7 @@ jobs:
       - name: Verify Windows owned-server receipts and restart
         env:
           ECORP_OWNED_PROCESS_TEST: '1'
-        run: node --test tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/factory_budget_process.test.mjs
+        run: node --test tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/factory_budget_process.test.mjs tools/e2e_predispatch_failure.test.mjs tools/factory_budget_provenance.test.mjs
       - name: Validate PostgreSQL tools
         shell: pwsh
         run: |

@@ -3,6 +3,35 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
 
+for (const [job, runner, stepName, suites] of [
+  ['quality', 'ubuntu-latest', 'Test platform-specific CI fixture contracts',
+    ['e2e_factory_budget_recovery', 'factory_budget_provenance']],
+  ['external-adapters-windows', 'windows-latest', 'Verify Windows owned-server receipts and restart',
+    ['e2e_predispatch_failure', 'factory_budget_provenance']],
+]) {
+  test(`${job} runs the recovery regressions on their supported platform without filtering`, () => {
+    const workflow = readFileSync(path.join(import.meta.dirname, '..', '.github', 'workflows', 'ci.yml'), 'utf8')
+      .replace(/\r\n/gu, '\n')
+    const section = workflow.split(`\n  ${job}:\n`)[1]?.split(/\n  [\w-]+:\n/u)[0]
+    assert.ok(section, `missing existing ${job} job`)
+    assert.ok(section.startsWith(`    runs-on: ${runner}\n`), 'use the actual supported runner, not a skipped foreign-platform suite')
+    const step = section.split(`      - name: ${stepName}\n`)[1]?.split('\n      - ')[0]
+    assert.ok(step, 'retain the existing Node test step')
+    assert.doesNotMatch(step, /^\s+if:|continue-on-error|--test-(?:name|skip)-pattern|--test-only/mu)
+    assert.equal(step.split('        run:')[0], "        env:\n          ECORP_OWNED_PROCESS_TEST: '1'\n",
+      'retain process-only opt-in; do not enable a real-stack driver')
+    const command = step.match(/^        run: node --test ([^\n]+)$/mu)?.[1]
+    assert.ok(command, 'invoke the Node test runner, not the E2E service entrypoints')
+    const selected = command.split(' ')
+    for (const file of selected) assert.match(file, /^tools\/[\w.]+\.test\.mjs$/u)
+    for (const suite of suites) {
+      assert.equal(selected.filter(file => file === `tools/${suite}.test.mjs`).length, 1, suite)
+    }
+    if (job === 'quality') assert.ok(!selected.includes('tools/e2e_predispatch_failure.test.mjs'),
+      'the native win32 regression must execute in Windows, not silently skip in Linux')
+  })
+}
+
 test('CI remote actions use the accepted target immutable SHA pins', () => {
   const workflow = readFileSync(path.join(import.meta.dirname, '..', '.github', 'workflows', 'ci.yml'), 'utf8')
   // Accepted main 39632b957819012721c90902925d8fa7a9c7e873; repository requires SHA pinning.

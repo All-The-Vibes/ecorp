@@ -1,0 +1,38 @@
+✔ quality runs the recovery regressions on their supported platform without filtering (4.8177ms)
+✖ external-adapters-windows runs the recovery regressions on their supported platform without filtering (2.5078ms)
+✔ CI remote actions use the accepted target immutable SHA pins (2.2268ms)
+✔ every pinned Rust action explicitly retains toolchain 1.98.1 (1.34ms)
+✔ Windows runner tests are serialized without filtering tests or changing Unix scheduling (34.5951ms)
+✔ Windows primary ACL path runs before explicit prewarming and the complete serial suite (6.9588ms)
+✔ Windows warm-up remains bounded and leaves native ACL enforcement unchanged (16.484ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 208.5534
+
+✖ failing tests:
+
+test at tools\ci_runner_tests.test.mjs:12:3
+✖ external-adapters-windows runs the recovery regressions on their supported platform without filtering (2.5078ms)
+  AssertionError [ERR_ASSERTION]: factory_budget_provenance
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-progress-correction/tools/ci_runner_tests.test.mjs:28:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

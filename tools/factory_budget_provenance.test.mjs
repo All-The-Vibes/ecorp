@@ -16,6 +16,9 @@ const start = driver.indexOf('// Actual tested-input binding.')
 const helpers = start < 0 ? '' : driver.slice(start, driver.indexOf('async function readReference()', start))
 const legacy = driver.match(/report\.source_code_commit = .*$/m)[0]
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
+const selection = driver.match(/process\.exit\(0\)\r?\n\}([\s\S]*?)let demo/)[1]
+const selectPrograms = new AsyncFunction('root', 'pgBin', 'process', 'path', 'realpath',
+  selection + ';return provenancePrograms')
 const load = new AsyncFunction('ctx', `
   const {assert, createHash, constants, lstat, open, realpath, path,
     checkContainedFile, readTrustedExecutableDigest, run} = ctx;
@@ -165,7 +168,81 @@ test('source hard links and unsafe Git path listings fail without outside reads'
   }
 })
 
-test('native admission binds before effects; dry-run does not require executables', () => {
+test('owned Node directory alias is resolved once and pinned for binding and every launch', async t => {
+  const f = await fixture(t)
+  const alias = path.join(f.base, 'node-alias')
+  const target = path.join(f.base, 'node-target')
+  await mkdir(target)
+  const executable = path.join(target, 'node.exe')
+  await writeFile(executable, 'inert Node bytes; DO NOT EXECUTE\n')
+  await symlink(target, alias, process.platform === 'win32' ? 'junction' : 'dir')
+  const execPath = path.join(alias, 'node.exe')
+  await assert.rejects(readTrustedExecutableDigest(execPath), /canonical_owned_directory_required/)
+  let resolutions = 0
+  const programs = await selectPrograms(f.root, f.base, { execPath }, path, async file => {
+    resolutions++
+    assert.equal(file, execPath)
+    return realpath(file)
+  })
+  const report = { provenance: { before: await capture(f.root, { node: programs.node }) } }
+  assert.equal(programs.node, executable)
+  assert.equal(resolutions, 1)
+  assert.equal(report.provenance.before.executables.node.sha256,
+    await readTrustedExecutableDigest(executable))
+  // Retarget only our junction; neither launches nor final binding may follow it again.
+  await unlink(alias)
+  await symlink(f.base, alias, process.platform === 'win32' ? 'junction' : 'dir')
+  const runnerStart = driver.indexOf("  await start('runner',")
+  const controllerStart = driver.indexOf('  async function controller(')
+  const runnerEnd = driver.indexOf("  await until('QA fake Codex runner ready'", runnerStart)
+  const controllerEnd = driver.indexOf('  report.preview_attempts=', controllerStart)
+  assert.ok(runnerStart >= 0 && runnerEnd > runnerStart && controllerStart >= 0 && controllerEnd > controllerStart)
+  const launches = []
+  const launch = new AsyncFunction('ctx', `
+    const {path, root, qa, attempt, source, trustedNode, process, start, run} = ctx;
+    const runnerId = 'inert', demo = {corp_id:'inert', alice_actor_id:'inert'};
+    const enrollment = 'inert', api = 'inert', verifier = 'inert', ghState = 'inert', env = {};
+    ${driver.slice(runnerStart, runnerEnd)}
+    ${driver.slice(controllerStart, controllerEnd)}
+    return [await controller(true), await controller()];
+  `)
+  const results = await launch({ path, root: f.root, qa: f.base, attempt: f.base, source: f.root,
+    trustedNode: programs.node, process: { get execPath() { assert.fail('Node must stay pinned') } },
+    start: async (name, program, args) => launches.push({ name, program, args }),
+    run: async (program, args) => { launches.push({ name: 'controller', program, args }); return { stdout: '{}' } } })
+  assert.deepEqual(results, [{ ok: true, body: {} }, { ok: true, body: {} }])
+  assert.equal(launches.length, 3)
+  for (const call of launches) {
+    const flag = call.name === 'runner' ? '--codex-command' : '--github-cli'
+    assert.equal(call.args[call.args.indexOf(flag) + 1], programs.node)
+  }
+  assert.equal((driver.match(/process\.execPath/g) ?? []).length, 1)
+  await finish(report, f.root, { node: programs.node })
+  assert.equal(report.provenance.consistent, true)
+  t.diagnostic(JSON.stringify({ case: 'pinned-node-alias', execPath, selectedNode: programs.node,
+    resolutions, launches, provenance: report.provenance }))
+  await writeFile(executable, 'changed inert Node bytes\n')
+  await assert.rejects(finish(report, f.root, { node: programs.node }), /binding changed/)
+  assert.equal(report.provenance.consistent, false)
+})
+
+test('actual selected Windows Node passes the real read-only digest and before/after binding',
+  { skip: process.platform !== 'win32' }, async t => {
+    const f = await fixture(t)
+    const programs = await selectPrograms(f.root, f.base, process, path, realpath)
+    const selectedDigest = await readTrustedExecutableDigest(programs.node)
+    const canonicalNode = await realpath(process.execPath)
+    assert.equal(programs.node, canonicalNode)
+    assert.equal(selectedDigest, await readTrustedExecutableDigest(canonicalNode))
+    const report = { provenance: { before: await capture(f.root, { node: programs.node }) } }
+    await finish(report, f.root, { node: programs.node })
+    assert.equal(report.provenance.consistent, true)
+    assert.equal(report.provenance.before.executables.node.sha256, selectedDigest)
+    t.diagnostic(JSON.stringify({ case: 'actual-selected-node', execPath: process.execPath,
+      selectedNode: programs.node, canonicalNode, selectedDigest, provenance: report.provenance }))
+  })
+
+test('native admission binds before effects; dry-run does not require executables', async () => {
   const dry = driver.indexOf('if (!execute)')
   const bind = driver.indexOf('before: await captureSourceBinding(root, provenancePrograms)')
   const persist = driver.indexOf("'provenance-before.json'")
@@ -173,9 +250,8 @@ test('native admission binds before effects; dry-run does not require executable
   assert.ok(persist > bind && persist < driver.indexOf('const dotenvFile='))
   assert.ok(driver.indexOf('await finishSourceBinding(report, root, provenancePrograms)') <
     driver.indexOf("await json(path.join(attempt,'report.json'),report)"))
-  const programs = new Function('root', 'pgBin', 'process', 'path',
-    driver.slice(driver.indexOf('const provenancePrograms ='), driver.indexOf('let demo')) +
-    ';return provenancePrograms')(path.resolve('repo'), path.resolve('pg'), { execPath: 'exact-node.exe' }, path)
+  const programs = await selectPrograms(path.resolve('repo'), path.resolve('pg'),
+    { execPath: 'exact-node.exe' }, path, async file => file)
   assert.deepEqual(Object.keys(programs), ['server', 'runner', 'cli', 'node', 'initdb', 'postgres', 'psql', 'createdb', 'pg_ctl'])
   assert.equal(programs.node, 'exact-node.exe')
   for (const name of ['server', 'runner', 'cli']) {
