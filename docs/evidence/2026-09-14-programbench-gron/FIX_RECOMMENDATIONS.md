@@ -115,6 +115,12 @@ Add local-server cases for uppercase schemes, userinfo, Unicode paths/queries,
 already escaped input and duplicate query parameters. The raw uppercase-HTTPS
 failure is officially excluded and is not an additional eligible failure.
 
+Retain URL userinfo only for request authentication. Remove it from every
+formatted URL, exception, stderr message and downstream diagnostic. Add a
+failing-request case with a credential-bearing URL that verifies authentication
+still works while captured errors and logs contain neither the username nor the
+password.
+
 ## 6. Match the request deadline
 
 The candidate uses 30 seconds; the failing fixture delays response headers for
