@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="ECorp readiness results, delivered improvements, validation scope and remaining operating-evidence gaps. Updated September 20, 2026; qualified assessment September 18.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+  <title>ECorp · Readiness &amp; operating evidence · 19 September 2026</title>
+  <style>
+    :root { --ink:#182c43; --muted:#54667b; --line:#dce4eb; --paper:#f3f6f9; --navy:#10283e; --teal:#00766f; --teal-soft:#e7f5f1; --amber:#8a5400; --amber-soft:#fff3dc; --blue:#355db1; --blue-soft:#edf2ff; --radius:16px; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.55 "Segoe UI", Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+    a { color:#2855a2; text-underline-offset:3px; }
+    a:hover { color:#173a75; }
+    a:focus-visible, button:focus-visible { outline:3px solid #8aaafb; outline-offset:4px; }
+    button { font:inherit; }
+    code { font:0.88em/1.4 Consolas, "Courier New", monospace; overflow-wrap:anywhere; }
+    h1,h2,h3,p { margin:0; }
+    h1 { font-size:clamp(32px,4.3vw,50px); line-height:1.08; letter-spacing:-1.5px; font-weight:650; }
+    h2 { font-size:25px; line-height:1.25; letter-spacing:-0.5px; font-weight:650; }
+    h3 { font-size:17px; line-height:1.35; font-weight:650; }
+    p + p { margin-top:12px; }
+    .wrap { width:min(1120px,calc(100% - 48px)); margin:0 auto; }
+    .topbar { background:#fff; border-bottom:1px solid var(--line); }
+    .topbar .wrap { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 0; }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:0.2px; }
+    .brand-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:9px; background:var(--navy); color:white; font-size:21px; font-weight:700; }
+    .brand-sub { display:block; color:var(--muted); font-size:11px; font-weight:500; letter-spacing:1.2px; text-transform:uppercase; }
+    .actions { display:flex; align-items:center; gap:18px; font-size:13px; }
+    .actions a { text-decoration:none; font-weight:600; }
+    .print-button { background:#fff; color:var(--ink); border:1px solid #b8c6d2; border-radius:8px; padding:8px 12px; cursor:pointer; }
+    .print-button:hover { background:var(--paper); }
+    .hero { background:var(--navy); color:#fff; padding:44px 0 34px; }
+    .eyebrow { font-size:11px; text-transform:uppercase; letter-spacing:1.8px; font-weight:700; }
+    .hero .eyebrow { color:#a7c5da; margin-bottom:13px; }
+    .hero-title { display:flex; justify-content:space-between; align-items:flex-start; gap:25px; }
+    .hero-copy { margin-top:14px; color:#cbd9e5; max-width:665px; font-size:16px; }
+    .date { flex-shrink:0; color:#cbd9e5; font-size:13px; padding-top:6px; }
+    .scores { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:30px; }
+    .score-card { border:1px solid #426077; background:#19364e; border-radius:14px; padding:21px 23px 18px; }
+    .score-card.operations { background:#2a3741; border-color:#81725b; }
+    .score-label { font-weight:600; color:#d5e2ec; font-size:13px; }
+    .score-value { display:block; margin:8px 0 5px; font-size:58px; font-weight:650; letter-spacing:-2.5px; line-height:1.05; font-variant-numeric:tabular-nums; }
+    .score-value small { font-size:17px; letter-spacing:0; font-weight:400; color:#b7cbdc; }
+    .operations .score-value { color:#ffd595; }
+    .score-note { font-size:12px; color:#c6d7e3; }
+    .hero-meta { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-top:21px; }
+    .hero-tag { font-size:11px; font-weight:600; padding:4px 9px; border:1px solid #537085; border-radius:5px; color:#e0eaf1; }
+    .hero-tag.alert { background:#ffe2b0; color:#654000; border-color:#ffe2b0; }
+    .source-line { margin-top:15px; font-size:11px; color:#b3c8d9; overflow-wrap:anywhere; }
+    .source-line a { color:#d5e7ff; }
+    main { padding:26px 0 38px; }
+    .recency { display:grid; grid-template-columns:4px 1fr; gap:18px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px 22px 18px 0; box-shadow:0 3px 10px #12304a06; }
+    .recency::before { content:""; background:var(--blue); border-radius:4px; }
+    .recency h2 { font-size:16px; letter-spacing:0; margin-bottom:5px; }
+    .recency p { color:var(--muted); font-size:13px; }
+    section { margin-top:36px; }
+    .section-heading { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+    .section-heading .sub { font-size:12px; color:var(--muted); }
+    .two-col { display:grid; grid-template-columns:1.1fr 1fr; gap:18px; }
+    .panel { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:24px; }
+    .panel h3 { margin-bottom:12px; }
+    .panel p { color:var(--muted); font-size:13px; }
+    .plain-list { list-style:none; margin:0; padding:0; }
+    .plain-list li { display:flex; align-items:flex-start; gap:12px; margin-top:13px; font-size:13px; color:var(--muted); }
+    .plain-list li:first-child { margin-top:0; }
+    .list-number { flex:0 0 22px; display:grid; place-items:center; height:22px; background:var(--blue-soft); color:var(--blue); border-radius:50%; font-size:11px; font-weight:700; }
+    .plain-list strong { color:var(--ink); }
+    .math-box { border-left:3px solid #d5a858; padding-left:14px; margin-top:18px; }
+    .math-box strong { color:var(--ink); }
+    .mini-label { display:inline-block; font-size:10px; font-weight:700; line-height:1.3; letter-spacing:0.5px; text-transform:uppercase; padding:4px 7px; border-radius:4px; background:var(--teal-soft); color:#00675e; }
+    .mini-label.later { color:#315293; background:var(--blue-soft); }
+    .mini-label.history { color:#5f6170; background:#eff0f4; }
+    .dimension-panel { background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+    table { border-collapse:collapse; width:100%; }
+    caption { text-align:left; padding:17px 20px; font-size:12px; color:var(--muted); }
+    th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.9px; color:var(--muted); background:#f8fafc; }
+    th,td { padding:12px 20px; border-bottom:1px solid #e8edf1; vertical-align:middle; }
+    tbody tr:last-child td { border-bottom:0; }
+    .dimension { width:32%; font-size:13px; font-weight:600; }
+    .dimension span { color:#718093; font-size:10px; margin-right:8px; font-weight:600; }
+    .score-cell { width:20%; min-width:140px; }
+    .bar-row { display:flex; align-items:center; gap:10px; }
+    .bar { flex:1; height:7px; background:#e8edf3; border-radius:8px; overflow:hidden; }
+    .bar i { display:block; height:100%; background:#5c7abb; border-radius:8px; }
+    .bar.low i { background:#b5863e; }
+    .bar.full i { background:var(--teal); }
+    .raw-score { width:25px; font:600 12px/1.4 Consolas,monospace; white-space:nowrap; }
+    .weight { width:8%; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+    .basis { font-size:12px; color:var(--muted); line-height:1.45; }
+    .table-note { padding:14px 20px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); background:#f8fafc; }
+    .delivery-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; }
+    .delivery-card { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:23px; }
+    .delivery-card h3 { margin:11px 0 10px; }
+    .delivery-card p { font-size:13px; color:var(--muted); }
+    .delivery-card ul { margin:12px 0 0; padding-left:17px; font-size:12px; color:var(--muted); }
+    .delivery-card li + li { margin-top:6px; }
+    .latest-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:15px; }
+    .latest-grid .delivery-card { border-top:3px solid #6888c2; }
+    .evidence-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .stat-line { display:flex; align-items:baseline; flex-wrap:wrap; gap:9px; margin:14px 0 9px; }
+    .stat-line strong { font-size:32px; letter-spacing:-1px; font-weight:650; font-variant-numeric:tabular-nums; }
+    .stat-line span { color:var(--muted); font-size:12px; }
+    .evidence-list { margin:13px 0 0; padding:0; list-style:none; font-size:12px; color:var(--muted); }
+    .evidence-list li { padding:8px 0; border-top:1px solid #e8edf1; }
+    .evidence-list b { color:var(--ink); }
+    .cadence { margin-top:18px; padding:21px 24px; background:var(--teal-soft); border:1px solid #c7e3d9; border-radius:var(--radius); }
+    .cadence h3 { font-size:16px; }
+    .cadence-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:17px; }
+    .cadence-step { border-left:1px solid #b8d8cc; padding-left:15px; }
+    .cadence-step:first-child { border-left:0; padding-left:0; }
+    .cadence-step time { display:block; font-size:11px; color:#466e63; }
+    .cadence-step strong { display:block; margin:4px 0 1px; font-size:22px; font-weight:650; letter-spacing:-0.6px; }
+    .cadence-step span { font-size:11px; color:#426c60; }
+    .cadence-note { font-size:11px; color:#426c60; margin-top:15px; }
+    .historical { margin-top:18px; padding:20px 24px; border:1px solid var(--line); background:#fff; border-radius:var(--radius); }
+    .historical h3 { font-size:15px; margin-bottom:12px; }
+    .historical-grid { display:grid; grid-template-columns:1fr 1fr; gap:25px; }
+    .historical p { font-size:12px; color:var(--muted); }
+    .historical strong { color:var(--ink); }
+    .retained { margin-top:17px; color:var(--muted); font-size:12px; line-height:1.55; }
+    .auxiliary { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .auxiliary .panel { padding:20px 23px; }
+    .auxiliary h3 { font-size:15px; }
+    .next { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:24px; }
+    .next-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:35px; }
+    .next p { font-size:13px; color:var(--muted); }
+    .issue-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:15px; }
+    .issue-links a { display:inline-block; font-size:11px; font-weight:600; text-decoration:none; padding:6px 9px; border:1px solid #cad5e2; border-radius:6px; }
+    .publication { border-left:3px solid #bdcce0; padding-left:17px; }
+    .publication h3 { font-size:15px; margin-bottom:8px; }
+    .sources { margin-top:32px; border-top:1px solid #cfd9e2; padding-top:21px; }
+    .sources h2 { font-size:16px; letter-spacing:0; margin-bottom:11px; }
+    .source-links { display:flex; flex-wrap:wrap; gap:8px 20px; font-size:12px; }
+    .sources p { color:var(--muted); font-size:11px; margin-top:14px; }
+    .footer { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:11px; color:#637489; margin-top:24px; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    @media (max-width:850px) {
+      .hero-title { display:block; }
+      .date { margin-top:15px; }
+      .score-value { font-size:48px; }
+      .score-card { padding:19px; }
+      .two-col,.next-grid { grid-template-columns:1fr; }
+      .delivery-grid { grid-template-columns:1fr; }
+      .delivery-card { padding:20px; }
+      .basis { display:none; }
+      .dimension { width:55%; }
+      .score-cell { width:30%; }
+      .weight { width:15%; }
+      th,td { padding:13px 16px; }
+    }
+    @media (max-width:600px) {
+      .wrap { width:calc(100% - 30px); }
+      .topbar .wrap { padding:13px 0; }
+      .actions { gap:9px; }
+      .actions .branch-link { display:none; }
+      .print-button { font-size:11px; padding:7px 9px; }
+      .hero { padding:30px 0 25px; }
+      .hero-copy { font-size:14px; }
+      .scores { grid-template-columns:1fr; gap:10px; margin-top:23px; }
+      .score-card { display:grid; grid-template-columns:1fr auto; column-gap:12px; padding:14px 17px; align-items:center; }
+      .score-label { grid-column:1; }
+      .score-value { grid-column:2; grid-row:1 / span 2; font-size:39px; letter-spacing:-1.5px; margin:0; }
+      .score-value small { font-size:12px; }
+      .score-note { grid-column:1; font-size:11px; }
+      h2 { font-size:22px; }
+      section { margin-top:28px; }
+      .panel { padding:20px; }
+      .latest-grid,.evidence-grid,.historical-grid,.auxiliary { grid-template-columns:1fr; }
+      .dimension { font-size:12px; }
+      .dimension span { display:block; margin:0 0 3px; }
+      .score-cell { min-width:96px; }
+      .bar-row { gap:6px; }
+      th,td { padding:11px 12px; }
+      .cadence { padding:20px; }
+      .cadence-grid { grid-template-columns:1fr 1fr; row-gap:20px; }
+      .cadence-step:nth-child(3) { border-left:0; padding-left:0; }
+      .historical-grid { gap:13px; }
+      .next { padding:21px; }
+    }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    @media print {
+      @page { size:A4; margin:13mm 14mm; }
+      body { background:#fff; font-size:10px; line-height:1.45; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .wrap { width:100%; }
+      .topbar { border:0; }
+      .topbar .wrap { padding:0 0 10px; }
+      .brand-mark { width:25px; height:25px; border-radius:6px; font-size:17px; }
+      .brand-sub { font-size:8px; }
+      .actions { display:none; }
+      .hero { padding:23px; border-radius:10px; }
+      h1 { font-size:31px; letter-spacing:-0.8px; }
+      h2 { font-size:19px; }
+      h3 { font-size:13px; }
+      .hero-copy { font-size:12px; }
+      .date { font-size:10px; }
+      .scores { gap:10px; margin-top:20px; grid-template-columns:repeat(3,1fr); }
+      .score-card { padding:13px; }
+      .score-value { font-size:39px; }
+      .score-value small { font-size:12px; }
+      .score-label,.score-note,.hero-tag,.source-line { font-size:9px; }
+      main { padding-top:15px; }
+      section { margin-top:24px; }
+      .recency { padding:13px 15px 13px 0; }
+      .recency h2 { font-size:13px; }
+      .recency p,.panel p,.plain-list li,.delivery-card p,.delivery-card ul,.next p { font-size:10px; }
+      .panel,.delivery-card,.next { padding:17px; }
+      .two-col,.evidence-grid,.historical-grid,.auxiliary { grid-template-columns:1fr 1fr; gap:13px; }
+      .delivery-grid { grid-template-columns:repeat(3,1fr); gap:12px; }
+      .latest-grid { grid-template-columns:1fr 1fr; }
+      .basis { display:table-cell; font-size:9px; }
+      .dimension { width:32%; font-size:10px; }
+      .score-cell { width:20%; min-width:90px; }
+      .weight { width:8%; font-size:10px; }
+      th,td { padding:9px 11px; }
+      th,caption,.table-note,.evidence-list,.historical p,.retained,.cadence-note,.issue-links a,.source-links { font-size:9px; }
+      .stat-line strong { font-size:27px; }
+      .stat-line span { font-size:10px; }
+      .cadence { padding:16px 20px; }
+      .cadence-grid { grid-template-columns:repeat(4,1fr); }
+      .cadence-step strong { font-size:18px; }
+      .cadence-step time,.cadence-step span { font-size:9px; }
+      .next-grid { grid-template-columns:1.2fr 1fr; gap:20px; }
+      .section-heading,h2,h3 { break-after:avoid; }
+      .score-card,.panel,.delivery-card,.cadence,.historical,.next,tr { break-inside:avoid; }
+      .dimension-panel { overflow:visible; }
+      thead { display:table-header-group; }
+      .hero,.recency { break-inside:avoid; }
+      a { color:inherit; }
+      .footer { margin-top:15px; font-size:9px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">E</span><span>ECorp<span class="brand-sub">Engineering evidence</span></span></div>
+      <div class="actions">
+        <a class="branch-link" href="https://github.com/All-The-Vibes/ecorp/pull/326">Prior PR #326 ↗</a>
+        <button class="print-button" id="print-report" type="button">Print / save PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="wrap">
+      <div class="hero-title">
+        <div>
+          <p class="eyebrow">Latest qualified benchmark · CodeBlend V5c</p>
+          <h1>Repository readiness.<br>Operating evidence.</h1>
+          <p class="hero-copy">Strong repository foundations, verified local execution, and a clear remaining gap to sustained governed operation.</p>
+        </div>
+        <time class="date" datetime="2026-09-19">Updated 19 September 2026 · UTC</time>
+      </div>
+      <div class="scores" aria-label="Latest qualified scores, each out of 100">
+        <div class="score-card">
+          <div class="score-label">Structure</div>
+          <strong class="score-value">92.0 <small>/ 100</small></strong>
+          <div class="score-note">Above the 90-point target</div>
+        </div>
+        <div class="score-card operations">
+          <div class="score-label">Operations</div>
+          <strong class="score-value">74.75 <small>/ 100</small></strong>
+          <div class="score-note">+6.50 points · 15.25 below target</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">Composite</div>
+          <strong class="score-value">82.9 <small>/ 100</small></strong>
+          <div class="score-note">Geometric mean of both axes</div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <span class="hero-tag alert">90 / 90 target not met</span>
+        <span class="hero-tag">AI-ready: no</span>
+        <span class="hero-tag">Q2 · Verifiable-but-manual</span>
+        <span class="hero-tag">R4 · Delegable</span>
+        <span class="hero-tag">Verified · evaluator-observed-local</span>
+      </div>
+      <p class="source-line">Assessed <a href="https://github.com/All-The-Vibes/ecorp/commit/30f80e0323c5020eadbc84db676e21ad0acc4fdc"><code>30f80e0</code></a> plus 17 local change paths · 737 files · Working-tree identity <code title="dcd12fe1f5059f3d1ae24fa37e8246e45b513ed5331d67e4447d2cca8a482902">dcd12fe1f505…</code><br>Run <code>20260919-012629+0800</code> · Completed 18 September 2026, 17:39 UTC · Three successful judges, one round</p>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <aside class="recency" aria-label="Private reviewer access" style="margin-bottom:18px"><div><h2>Owner-approved feedback trial completed</h2><p>Your owner approval was recorded, the exact two-reference update was applied, and the saved comparison passed 3/3 checks. Baseline and post-adoption each assessed all three cases correctly: <strong>no measured accuracy improvement</strong>, with 989 more reported tokens in the post run. <a href="trial-access/20260920/comparison/">Read the completed comparison and native receipts</a>. The last qualified operations score remains 74.75; these new results are unscored. Earlier failures and the change to owner review remain recorded.</p></div></aside>
+    <aside class="recency" aria-label="Benchmark scope and recency"><div>
+      <h2>Operations rose from 68.25 to 74.75. The 90-point goal remains open.</h2>
+      <p>This qualified assessment covers the frozen local working tree, including the CI Maintenance observer and its workflow chaining. Since that assessment, <a href="https://github.com/All-The-Vibes/ecorp/pull/342">PR #342</a> was approved and merged, and a real hosted CI handoff was independently verified. <a href="https://github.com/All-The-Vibes/ecorp/pull/351">PR #351</a> was also approved and merged by the maintainer; <a href="https://github.com/All-The-Vibes/ecorp/pull/352">PR #352</a> adds native-review binding with separate synthetic QA. PR #352 now corrects artifact-path diagnostics, and <a href="https://github.com/All-The-Vibes/ecorp/pull/356">PR #356</a> extends the merged observer configuration to the main CI workflow. PR #352 passed 18/18 hosted checks and was approved and merged by the maintainer at 01:24 UTC on 19 September. PR #356 passed 18/18 checks at <code>cf7af18</code> and was approved and merged into <code>39632b9</code> at 01:47 UTC. The first expanded primary-CI hosted handoff was independently verified at 01:59 UTC, with zero findings from its successful parent and no repair or score claim. The V5c source was frozen before these later external repository updates. These later results remain unscored. PR #326 was separately approved and merged.</p>
+    </div></aside>
+
+    <section aria-labelledby="gap-title">
+      <div class="section-heading"><h2 id="gap-title">Why operations is still below 90</h2><span class="sub">Capabilities need operating evidence</span></div>
+      <div class="two-col">
+        <div class="panel">
+          <h3>Three outcomes remain under-evidenced</h3>
+          <ol class="plain-list">
+            <li><span class="list-number">1</span><span><strong>Governed recurring delivery.</strong> Repeatable tools and a short local cadence do not yet establish sustained, coordinated maintenance delivery.</span></li>
+            <li><span class="list-number">2</span><span><strong>Learning that improves later behavior.</strong> Candidates, advisory references and repair tests do not prove authenticated rule promotion or better later decisions.</span></li>
+            <li><span class="list-number">3</span><span><strong>Accepted agent contributions.</strong> The API evidence window classified none of 91 merged PRs as agent-authored; four of 277 commits carried agent co-authorship.</span></li>
+          </ol>
+        </div>
+        <div class="panel">
+          <h3>Read the limits precisely</h3>
+          <p>Local restoration was verified. Yet all judges kept self-healing at <strong>3/4</strong>, citing the pack’s static <code>hasRollbackPath:false</code> signal alongside its observed <code>automaticRollbackVerified:true</code>. This is an evidence-model tension, not proof that native restoration is absent.</p>
+          <div class="math-box">
+            <p>Raising automation and improvement loops alone to <strong>4/4</strong> would yield <strong>81.25</strong> operations. If D3 remains 3 and D9 remains 2, every other dimension must reach 4 to yield <strong>90.5</strong>.</p>
+            <p>These are arithmetic bounds, not predicted scores. No scoring rules or authorship history were changed.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="dimensions-title">
+      <div class="section-heading"><h2 id="dimensions-title">The operations scorecard</h2><span class="sub">Final rubric values · 0–4 scale</span></div>
+      <div class="dimension-panel">
+        <table>
+          <caption>Weighted score = sum of each raw score ÷ 4 × its weight = <strong>74.75 / 100</strong>.</caption>
+          <thead><tr><th scope="col">Dimension</th><th scope="col">Score</th><th scope="col">Weight</th><th scope="col" class="basis">Evaluator basis</th></tr></thead>
+          <tbody>
+            <tr><td class="dimension"><span>D1</span>Agent interface &amp; operability</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">9%</td><td class="basis">Integrated guidance and validation; accepted agent PRs not demonstrated.</td></tr>
+            <tr><td class="dimension"><span>D2</span>Routine maintenance automation</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">13%</td><td class="basis">Workflow chaining and bounded maintenance are integrated; sustained unattended delivery remains unverified.</td></tr>
+            <tr><td class="dimension"><span>D3</span>Self-healing CI/CD</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">18%</td><td class="basis">Local repair/recovery verified; judges retain the static rollback-path limitation.</td></tr>
+            <tr><td class="dimension"><span>D4</span>Continuous improvement loops</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">13%</td><td class="basis">Repair, proof-of-fix and repeat handling are integrated; the governed learning corpus is not visible in this evidence pack.</td></tr>
+            <tr><td class="dimension"><span>D5</span>Agent execution surfaces</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">9%</td><td class="basis">Machine-operable surfaces earn a floor of 3; MCP inventory recognition is incomplete.</td></tr>
+            <tr><td class="dimension"><span>D6</span>Policy &amp; change guardrails</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">10%</td><td class="basis">Review rules, checks and execution bounds; full autonomous safety closure unproven.</td></tr>
+            <tr><td class="dimension"><span>D7</span>Observability of agentic work</td><td class="score-cell"><div class="bar-row"><span class="bar full" aria-hidden="true"><i style="width:100%"></i></span><span class="raw-score">4/4</span></div></td><td class="weight">9%</td><td class="basis">Verified origin, lifecycle, completion, consumption and recovery traceability.</td></tr>
+            <tr><td class="dimension"><span>D8</span>Human-on-the-loop integration</td><td class="score-cell"><div class="bar-row"><span class="bar" aria-hidden="true"><i style="width:75%"></i></span><span class="raw-score">3/4</span></div></td><td class="weight">9%</td><td class="basis">Review and escalation support supervision; full exception-to-shipping path unproven.</td></tr>
+            <tr><td class="dimension"><span>D9</span>Agentic change throughput</td><td class="score-cell"><div class="bar-row"><span class="bar low" aria-hidden="true"><i style="width:50%"></i></span><span class="raw-score">2/4</span></div></td><td class="weight">10%</td><td class="basis">Metadata-only attribution is floored and capped at 2 without API-confirmed agent merges.</td></tr>
+          </tbody>
+        </table>
+        <p class="table-note">D2 judge votes: 3 / 3 / 3. D4 votes: 3 / 2 / 3. Both final values are 3; D4 still has panel disagreement. Final values include deterministic adjustments; a missing detected signal is not evidence that corresponding product code is absent.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="delivered-title">
+      <div class="section-heading"><h2 id="delivered-title">Measured work and the next increment</h2><span class="sub">Existing ECorp primitives, with explicit boundaries</span></div>
+      <div class="delivery-grid">
+        <article class="delivery-card">
+          <span class="mini-label">Included before benchmark</span><h3>Repository foundations</h3>
+          <p>More complete regression discovery and reproducible contributor tooling.</p>
+          <ul><li>Linux/Windows Node gates, documentation contracts and bounded dependency updates.</li><li>Scoped web-model and native Rust coverage.</li><li>Portable setup, pinned tooling, secret scanning and production-key rejection.</li></ul>
+        </article>
+        <article class="delivery-card">
+          <span class="mini-label">Included before benchmark</span><h3>Native operations evidence</h3>
+          <p>Inspectable runs and verifier-controlled completion through the native runner.</p>
+          <ul><li>Read-only MCP inspection and bounded observation export/consumption.</li><li>Verification-policy UI/model extraction with browser acceptance.</li><li>Removed per-run writes to shared Copilot account settings.</li></ul>
+        </article>
+        <article class="delivery-card">
+          <span class="mini-label">Included before benchmark</span><h3>Advisory feedback</h3>
+          <p>Finite local audits, durable deduplication and candidate/active/retired guidance.</p>
+          <ul><li>Source-bound checkpoints, pause/resume and terminal stop.</li><li>Exact raw/typed artifact binding and reference-only native contract revisions.</li><li>Launch stays separate; uncertain writes retain their reconciliation evidence.</li></ul>
+        </article>
+      </div>
+      <div class="latest-grid">
+        <article class="delivery-card"><span class="mini-label">Included in V5c</span><h3>CI Maintenance observer</h3><p>Bounded, read-only GitHub run inspection binds the repository, workflow, run, attempt and head. It emits a review handoff, preserves failed/cancelled/skipped findings and supports exact-source no-op replay. <a href="https://github.com/All-The-Vibes/ecorp/pull/342">PR #342</a> was subsequently approved and merged. Its earlier exact-source no-op replay remains separate from the later verified <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35400704454">hosted activation</a>. That activation correctly reported a cancelled parent; it did not infer passing tests or repair. The later hosted evidence does not change the V5c score.</p></article>
+        <article class="delivery-card"><span class="mini-label later">Separate · unscored follow-up</span><h3>Native recovery inspection</h3><p>A thin read-only MCP wrapper exposes the existing Factory recovery-context API. It preserves server authorization and exposes no recovery action. <a href="https://github.com/All-The-Vibes/ecorp/pull/351">PR #351</a> was approved at head <code>8e84f33</code> and merged by the maintainer into <code>6da3026</code>. Its earlier qualification and hosted-check snapshots remain recorded. Compiled probe/consumer cases use the pinned gateway; retained full-stack acceptance remains tied to its original producer. This feature did not contribute to the scores above.</p></article>
+        <article class="delivery-card">
+          <span class="mini-label">Included in the assessed source</span><h3>Explicit collector profiles</h3>
+          <p>A hash-pinned local profile selects the expected read principal while preserving the existing pilot default and fixed repository/Project scope. Identity and profile drift refuse reuse. No credentials, permissions or scheduler installation change.</p>
+        </article>
+        <article class="delivery-card">
+          <span class="mini-label">Included in the assessed source</span><h3>Honest historical evidence admission</h3>
+          <p>The importer retains native and external checker outcomes as bounded corpus candidates. Duplicate imports cannot manufacture repetition. Historical records cannot be activated by a local review hash or forged activation history; explicit rejection remains available.</p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="validation-title">
+      <div class="section-heading"><h2 id="validation-title">Validation, at its actual scope</h2><span class="sub">Fresh checks are separate from historical evidence</span></div>
+      <div class="evidence-grid">
+        <article class="panel">
+          <span class="mini-label later">Qualified V5c source</span>
+          <div class="stat-line"><strong>1,399</strong><span>Node + Steward tests passed · 0 failed · 0 skipped</span></div>
+          <p>1,182 web/tool tests plus 217 Steward tests passed before source freeze. All nine contributor gates passed on the reconciled executable inputs; the final workflow/documentation delta was separately validated. The later recovery-inspection candidate has its own validation and is not included in these counts.</p>
+          <ul class="evidence-list"><li><b>Profile boundaries:</b> defaults, principal mismatch, scope/hash drift and retained state.</li><li><b>Importer boundaries:</b> real retained files, exact provenance bindings, refusal to activate historical candidates.</li><li><b>Scope:</b> Node tools and documentation. These are not fresh Rust coverage or new provider acceptance results.</li></ul>
+        </article>
+        <article class="panel">
+          <span class="mini-label">Qualified V5c · real provider</span>
+          <div class="stat-line"><strong>9</strong><span>fresh native invocations · 959,215 reported tokens</span></div>
+          <p>All three bounded case pipelines fulfilled their contracts. Recurrence repair passed 18/18 and expiry repair 22/22 in native, physical and exported verification.</p>
+          <ul class="evidence-list"><li><b>Controls:</b> duplicate/no-op handling, stale refusal and exact restoration. Interrupted runs claim no oracle result.</li><li><b>Accounting:</b> three prior failed calls remain counted: 12 aggregate calls and 1,311,836 tokens, below the unchanged 1.8M-token ceiling. Source, supplemental coverage evidence and shared settings stayed unchanged.</li><li><b>Scope:</b> real inference on controlled local defects, not production autonomy. Reported cost is not billing proof.</li></ul>
+        </article>
+      </div>
+      <div class="cadence">
+        <h3>Actual live GitHub cadence · three bounded read-only cycles</h3>
+        <div class="cadence-grid">
+          <div class="cadence-step"><time datetime="2026-09-18T08:46:07.002Z">08:46:07 UTC</time><strong>157 findings</strong><span>Initial advisory report + handoff</span></div>
+          <div class="cadence-step"><time datetime="2026-09-18T08:47:44.827Z">08:47:44 UTC</time><strong>No-op</strong><span>Fresh capture, same evidence</span></div>
+          <div class="cadence-step"><time datetime="2026-09-18T08:49:22.279Z">08:49:22 UTC</time><strong>No-op</strong><span>No duplicate handoff</span></div>
+          <div class="cadence-step"><time datetime="2026-09-18T08:49:23.060Z">08:49:23 UTC</time><strong>Stopped</strong><span>Durable stop · three attempts</span></div>
+        </div>
+        <p class="cadence-note">Three genuine two-pass collections at the pinned current <code>main</code> source. Profile and implementation pins stayed unchanged. Zero GitHub mutations, native missions or provider runs. This was a finite foreground cadence, not an enrolled hosted schedule.</p>
+      </div>
+      <div class="historical">
+        <h3><span class="mini-label history">Separate evidence scopes</span> Rust and deterministic integration</h3>
+        <div class="historical-grid">
+          <p><strong>Fresh Windows Rust gate:</strong> 561 passed, 0 failed, <strong>343 ignored</strong>. Formatting, Clippy, web build/lint, migrations and documentation checks also passed. Ignored cases are not passes.<br><strong>Retained Linux Rust coverage:</strong> 873 passed; <strong>68.1427% line coverage</strong>, from an actual successful Linux coverage job with 102 declared and 154 expanded inputs matched to the assessed source. Its parent workflow failed; this is job-scoped evidence. This excludes web/provider execution and the unexecuted stopped-session probe.</p>
+          <p><strong>Separate real-provider feedback holdout:</strong> four native runs exercised baseline, corpus carrier, active guidance and retired control. Baseline and guided decisions both passed 30/30 factual checks: <strong>zero measured accuracy gain</strong>, with 41,621 more tokens under active guidance. The holdout report is not exposed in the evaluator’s visible evidence pack; it is separate engineering evidence, not an explanation for the D4 increase.</p>
+        </div>
+      </div>
+      <p class="retained"><strong>Failures remain part of the record.</strong> V5 stopped before inference on adapter integration defects. V5b ran three initial calls, then its strict source guard rejected a shared Git configuration change; all 737 source files were unchanged. V5c used a fully separate Git database, preserved those calls and their 352,621 tokens, and corrected two read-only preparation failures before new inference. Earlier history also remains: Two V4 profile attempts stopped before inference. Original V4 remained incomplete after an extra separator CRLF violated its strict append contract. A V4b source setup was refused outside the existing allowlist. Fresh V4b used a prospectively declared append variant and lower cost caps; the earlier failure was not regraded.</p>
+    </section>
+
+    <section aria-labelledby="current-progress-title">
+      <div class="section-heading"><h2 id="current-progress-title">Progress after the scored assessment</h2><span class="sub">Unscored updates · PR #304 reconciled locally; first primary-CI handoff verified</span></div>
+      <div class="two-col">
+
+        <article class="panel"><span class="mini-label later">19 September · PR #304 current source · unscored</span><h3>Recovery and CI triage: package checks passed</h3><p>At the 02:29 UTC snapshot, <a href="https://github.com/All-The-Vibes/ecorp/pull/304">PR #304</a> was open at <code>80f32b7</code>. All <strong>18 REST check runs passed</strong>, including secrets; the PR still has merge conflicts and no observed approval of this head. The author's change binds represented fixer issues to retained fixed findings in the canary's current cycle. Both local candidates preserve that guard during live acceptance and replay.</p><p>The separate two-file legacy correction reproduced its defect on unchanged production, then passed <strong>25/25 focused cases</strong> in two parallel lanes. It allows an eligible, newly accepted publication to continue already-charged legacy work while preserving historical acknowledgements and failed-evidence blocks. The five-file R3 candidate passed <strong>45/45 focused cases</strong>, with 1,159 bounded fixture CLI calls. R3 admits Repository checks diagnosis to ordinary charged audit; it is a data validator and contains no live executor.</p><p><strong>Later package qualification:</strong> the legacy correction passed <strong>443/443 cases</strong>: 425 state cases across four verified positive-filter groups, plus 18 earlier snapshot/package cases on identical source. Independent audit checked all 688 manifest entries and 618 unchanged source files. R3’s first complete positive-filter run reached <strong>460/461</strong>; one healthy-bootstrap case failed with Windows <code>EPERM</code> during atomic state-file rename. A fresh-fixture diagnostic passed 1/1, but the cause is unknown and the original failure remains. The unchanged-source confirmation then passed <strong>461/461 cases</strong>: 443 fresh state cases plus 18 bound snapshot/package cases. Independent audit verified the exact case sets, paired receipts and all 620 unchanged source files. The parallel state window was 512.905 seconds; the earlier error remains unexplained. Both candidates separately passed the migration checksum gate for 41 migrations.</p><p><strong>Initial full-suite attempts remain incomplete:</strong> the legacy state lane reached its fixed 660-second limit and R3 reached 900 seconds. Each candidate passed its 18 snapshot/package tests, but neither state lane produced a terminal test summary, so no partial state pass count is inferred. Both frozen sources stayed unchanged. Later runs use native-verified positive filters. The original interrupted attempts and the subsequently stopped negative-filter component remain recorded and excluded.</p><p>These candidates remain separate and unpublished. Full contributor qualification is incomplete; Rust validation remains paused after automatic approval review rejected the npm preflight with “blocked by policy.” The old 776-based test results and failing secrets scan below retain their historical scope. No new provider call, activation or operations score is claimed.</p></article>
+        <article class="panel"><span class="mini-label later">19 September · 01:59 UTC · unscored</span><h3>First primary-CI hosted handoff verified</h3><p><a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35414278676">Handoff 35414278676, attempt 1</a> completed successfully from trusted source <code>39632b9</code> and selected exact <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35413753362">primary CI parent 35413753362, attempt 1</a>, which also succeeded. Independent checks verified the source bindings and CI-specific contract <code>9d99b90a…</code>. This establishes the expanded workflow's first hosted primary-CI selection.</p><p>Both selected main-source parent workflows completed successfully: CI at 01:58:24 UTC and <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35413753356">Repository checks</a> at 02:01:21 UTC. These terminal metadata results were sealed at 02:03 UTC; no additional test totals are inferred.</p><p>The observer matched six jobs and five artifact metadata records, including the four required report names, and recorded <strong>zero findings</strong>. It used <strong>5 metadata GETs / 59,367 bytes</strong>. Independent audit verified its own 5,540-byte output ZIP, including its native digest and exactly three permitted members: receipt, summary and handoff. Parent logs and artifact contents were not read; no GitHub writes occurred.</p><p>One re-fetched workflow-metadata response had a different raw hash. That mismatch is retained; native workflow ID/path/name and source still matched. The receipt is <strong>recorded with no predecessor</strong>. This does not establish failed-parent detection, parent-content validity, a durable predecessor/no-op chain, automatic repair, task improvement or a new score.</p></article>
+        <article class="panel"><span class="mini-label history">19 September · 01:51 UTC snapshot</span><h3>Earlier snapshot: configuration merged, handoff pending</h3><p>Maintainer <code>shyamsridhar123</code> <a href="https://github.com/All-The-Vibes/ecorp/pull/356#pullrequestreview-5254047697">approved exact PR #356 head <code>cf7af18</code></a> at 01:47:46 UTC and merged it into <a href="https://github.com/All-The-Vibes/ecorp/commit/39632b957819012721c90902925d8fa7a9c7e873"><code>39632b9</code></a> at 01:47:56 UTC. The merge parents are <code>8796f07</code> and <code>cf7af18</code>. All four merged observer blobs match the original <code>033a022</code> publication.</p><p>Main now contains the configuration for both <strong>Repository checks</strong> and <strong>CI</strong>. At 01:51:12 UTC, the new main-source <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35413753362">CI run</a> and <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35413753356">Repository checks run</a> were still running. No CI Maintenance handle using trusted source <code>39632b9</code> was listed yet. Earlier handoffs used pre-merge source <code>8796f07</code>; they do not establish expanded activation. <strong>The first expanded hosted execution remains unverified at this snapshot.</strong></p><p>The approval and merge metadata are verified. Additional validation described by the maintainer remains attributed to that review; its raw test receipts have not been independently audited here. Original 033a qualification, cf7 diagnostics and the frozen V5c assessment retain their original scope. No new runtime qualification or benchmark score is assigned.</p></article>
+        <article class="panel"><span class="mini-label history">19 September · 01:44 UTC snapshot</span><h3>Before merge: cf7 passed 18/18 checks</h3><p>The maintainer externally merged accepted main <code>8796f07</code> into observer branch <code>033a022</code>, producing <a href="https://github.com/All-The-Vibes/ecorp/commit/cf7af18805d1f70369784c4ba68c3c5bf03d94db"><code>cf7af18</code></a>. Independent source inspection confirmed all four observer change blobs are unchanged. This branch update did not merge PR #356 into main.</p><p>At 01:44:04 UTC, all <a href="https://github.com/All-The-Vibes/ecorp/pull/356/checks">18 checks on cf7</a> succeeded, with zero pending, failed, neutral or skipped checks. The <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35412825958">CI run</a> and <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35412825966">Repository checks run</a> completed successfully. These are fresh results, separate from the retained 033a snapshot; raw hosted test totals and checkout-tree identity are not inferred.</p><p>The <a href="https://github.com/All-The-Vibes/ecorp/pull/356#pullrequestreview-5254002609">Copilot review at that snapshot</a> reports no findings and has native state <strong>COMMENTED</strong>. At the 01:44 UTC snapshot, PR #356 was <strong>open</strong>, with auto-merge disabled and the proposed expanded hosted trigger not yet merged. No human approval, PR merge, observer activation or benchmark-score change follows from these checks.</p></article>
+        <article class="panel"><span class="mini-label later">Frozen cf7 diagnostics · separate scope</span><h3>Fresh structural score: 87.4</h3><p>The deterministic substrate and evidence-pack scans ran in parallel on a clean, frozen <code>cf7af18</code> source with <strong>736 files</strong>. Both exited successfully, with no selected exclusions; independent audit verified source identity <code>f79f4909…</code>. No provider judges or full evaluation were requested. These stages produced <strong>no new operations/composite score, AI-ready verdict or operating tier</strong>.</p><p>V5c's historical structural <strong>92</strong> included generated Linux Rust coverage that raised Testing from L4 to L5. That generated report is absent here and was not copied or requalified for cf7. The 4.6-point difference does not establish a test or actual-coverage regression. The historical <strong>74.75 operations / 92 structure / 82.9 composite</strong> assessment remains tied to its original frozen source.</p><p>The agent-surfaces, self-healing, CI and observability detector aggregates are unchanged. Actual matrix runner tests remain present; GitHub expressions and conditional reachability limit their static discovery. Equal aggregates and empty detector fields do not establish unchanged capability or runtime success. The diagnostic audit retains its command-receipt and policy-digest limits.</p><p>The existing fresh schema-1 feedback lifecycle and native-reviewed adoption of already-active guidance provide a supported route. It still needs genuine scoped source/target inputs and evidence, actual independent reviewer decisions, adoption/readback, later observed behavior and retirement. Historical schema-2 candidate promotion remains a separate guarded capability; no improvement or authenticated corpus provenance is established here.</p></article>
+        <article class="panel"><span class="mini-label later">19 September · 01:24 UTC · unscored</span><h3>Feedback review: approved and merged</h3><p>Maintainer <code>shyamsridhar123</code> <a href="https://github.com/All-The-Vibes/ecorp/pull/352#pullrequestreview-5253978277">approved PR #352 head <code>de616a6</code></a> at 01:23:46 UTC and merged it at 01:24:02 UTC into <a href="https://github.com/All-The-Vibes/ecorp/commit/8796f07d5969c4c086c0510c8d92f80446f0056f"><code>8796f07</code></a>. The native 01:24:16 UTC snapshot recorded all 18 checks successful on that exact head. This was external repository activity.</p><p>The approval describes additional local validation and synthetic native/browser QA. This update verifies the review and merge metadata; those reported tests have not been independently audited from raw receipts here. Earlier audited evidence retains its original source and scope. Repository approval does not establish native feedback adoption, production identity or a new benchmark score.</p><p>At the 01:24:16 UTC snapshot, <a href="https://github.com/All-The-Vibes/ecorp/pull/356">PR #356</a> was open at <code>033a022</code>, with 18/18 checks and no new review or inline finding. At that 01:24 UTC snapshot, its expanded hosted trigger was unmerged and inactive. The same snapshot found no active CI Maintenance handle; no new activation or parent association is inferred.</p></article>
+        <article class="panel"><span class="mini-label history">Earlier open-PR snapshots · unscored</span><h3>Both heads passed 18/18 checks before the merge</h3><p><a href="https://github.com/All-The-Vibes/ecorp/pull/352">PR #352</a> at <code>de616a6</code> passed all 18 checks at 01:05:07 UTC; <a href="https://github.com/All-The-Vibes/ecorp/pull/356">PR #356</a> at <code>033a022</code> passed all 18 at 01:13:42 UTC on 19 September. Both snapshots have zero pending, failed, neutral or skipped checks. Both PRs were open at those snapshots, with auto-merge disabled.</p><p>The Copilot reviews at those snapshots report no findings. Their native state is <strong>COMMENTED</strong>; neither is a human approval. These are exact-head check snapshots, without inferred hosted test totals.</p><p>PR #352 fixes a concrete review finding: a valid artifact UUID with an invalid relative path now returns <code>invalid_artifact_path</code>. The regression failed before the correction and passed afterward; the full feedback module passed 116 tests. Fresh non-Rust qualification passed <strong>1,227 unit tests and 227 Steward tests</strong>, plus migrations, documentation, web build and lint. The original aggregate-parser failure remains preserved; closed native summaries were independently reconciled without rerunning tests.</p></article>
+        <article class="panel"><span class="mini-label later">19 September · 01:25 UTC · unscored</span><h3>Open desktop dependency finding</h3><p>The desktop lockfile contains <code>glib 0.18.5</code>, covered by <a href="https://github.com/advisories/GHSA-wrw7-89jp-8q8g">GHSA-wrw7-89jp-8q8g</a>; patched versions start at <code>0.20.0</code>. The inspected latest stable Tauri <code>2.11.5</code> and Wry <code>0.57.0</code> releases still require GTK <code>^0.18</code>. GTK <code>0.19.0</code> requires glib <code>^0.22</code> and falls outside those GTK ranges.</p><p>No ordinary compatible upgrade was identified while retaining the current Tauri/GTK3 stack; future releases, reviewed backports and migrations remain outside this finding. The alert remains open. No platform-specific exploitability or benchmark-score claim is made.</p></article>
+        <article class="panel"><span class="mini-label history">Original 033a proposal · historical qualification</span><h3>Pre-merge CI observation gap</h3><p>Before PR #356 merged, the deployed observer watched only <strong>Repository checks</strong>. The earlier f6 Windows failure occurred in the separate <strong>CI</strong> workflow while Repository checks passed. This explains why the successful hosted handoff did not report that failure.</p><p><a href="https://github.com/All-The-Vibes/ecorp/pull/356">PR #356</a> adds CI to a fixed workflow allowlist, validates native workflow identity, requires its six jobs and four artifacts, and rejects cross-workflow receipt reuse. Read-only permissions, trusted-source checkout, bounded metadata reads and existing finding identities remain intact.</p><p>The following qualification belongs to the original <code>033a022</code> publication source. Three regressions failed before the change; the corrected observer suite passed <strong>51/51</strong>. Fresh non-Rust qualification passed <strong>1,218 unit tests and 227 Steward tests</strong>, plus migrations, documentation, web build and lint. Six gates ran in parallel. Both candidates separately reuse audited equivalent-input Linux Rust evidence: 535 passed, 343 ignored. <strong>At the original 033a publication snapshot, the expanded trigger was not yet merged.</strong> The separate local R3 executor still accepts only Repository checks.</p></article>
+        <article class="panel"><span class="mini-label later">Genuine local observations · unscored</span><h3>The new observer detects the missed failure</h3><p>Two native CLI observations ran in parallel against historical CI attempts. The <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35406221041">failed f6 run</a> produced <code>JOB_REQUIRES_REVIEW</code> and <code>EVIDENCE_ARTIFACT_MISSING</code> for Windows job <code>105796420597</code> and its absent Windows report. The <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35408073458">passing d3 run</a> produced zero findings.</p><p>Each used five metadata GETs, completing in 3.277 and 3.298 seconds. Independent audit verified source bindings, native projections, receipt integrity and findings. Both receipts are local, recorded observations with no predecessor. No logs, artifact contents, provider calls, GitHub writes or reruns were used. Historical API bodies were not retained for full raw-byte rehash. These observations establish detection, without establishing hosted activation or automatic repair.</p></article>
+        <article class="panel"><span class="mini-label later">Deployed observer evidence · unscored</span><h3>Two more automatic handoffs verified</h3><p><a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35407043894">Handoff 35407043894</a> observed successful Repository checks run <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35406220967">35406220967</a> at f6; <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35408859284">handoff 35408859284</a> observed successful Repository checks run <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35408073472">35408073472</a> at d3. Both used trusted main <code>6da3026</code>, completed successfully and recorded zero findings.</p><p>Each observer used five metadata reads. Independent audit verified their own bounded output archives and native projections. One historical raw-response hash could not be revalidated; the failed extra equality assertion is preserved. Neither handoff observed the separate f6 CI failure, proves repair, or establishes a durable predecessor chain. No new score is assigned.</p></article>
+        <article class="panel"><span class="mini-label history">Earlier passing head · unscored</span><h3>Windows runner checks passed at d3c4bc7</h3><p><a href="https://github.com/All-The-Vibes/ecorp/pull/352">PR #352</a> includes <code>d3c4bc7</code>, which shares the existing bounded Windows PowerShell ACL readiness check between both Windows lanes. The <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35408073458/job/105801866448">new runner job</a> passed <strong>212 tests, 0 failed, 1 ignored</strong> in 220.76 seconds. Both formerly failing connection fixtures and the previously skipped platform-contract check passed. The separate Windows coverage job passed <strong>565 Rust tests</strong>, with 343 ignored; that total already includes its runner tests. At the 00:20 UTC snapshot, <a href="https://github.com/All-The-Vibes/ecorp/pull/352/checks">17 PR checks passed</a>, with 0 pending and 0 failed.</p><p>The production 10-second ACL deadline, Node 24, assertions and non-Windows commands remain unchanged. One local helper execution passed in 847 ms; independent review verified the exact three-file change and 733 unchanged files. This is a verified passing follow-up run, without a claim that the precise earlier timing cause is proved. Prior failures remain below. The benchmark has not been rerun.</p></article>
+        <article class="panel"><span class="mini-label history">Historical 776-based candidate · unscored</span><h3>Earlier CI triage: 453 tests passed</h3><p>The separate R3 follow-up on <a href="https://github.com/All-The-Vibes/ecorp/pull/304">PR #304</a> base <code>776a7a4</code> passed its complete JavaScript package suite: <strong>453/453 tests</strong>, zero failures or skips, in 426.556 seconds. An independent audit verified 9,545 paired CLI receipts, 1,386 sealed evidence entries and 618 unchanged source files.</p><p>The change connects an independent CI diagnosis to the existing ordinary audit, preserving its budgets and authority checks. That retained candidate remains <strong>local and uncommitted</strong>, separate from the earlier 435-test legacy correction; neither result qualifies the newer 80f candidates. Rust validation is still awaiting approval: the existing hosted Rust checks used a different merge with 207 changed paths and cannot qualify this candidate. No executor, provider or feedback adoption was activated.</p></article>
+        <article class="panel"><span class="mini-label later">Later evidence · unscored</span><h3>Repository checks observer merged and active</h3><p><a href="https://github.com/All-The-Vibes/ecorp/pull/342#pullrequestreview-5253016436">Exact-head approval</a> preceded the merge of <a href="https://github.com/All-The-Vibes/ecorp/pull/342">PR #342</a> at 22:00:54 UTC. <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35400704454">Hosted run 35400704454</a> succeeded from trusted main <code>8d185b5</code>.</p><p>Its <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35400296664">parent Repository checks run</a> was cancelled. The handoff accurately records two cancelled Rust coverage jobs. Its own receipt/summary/handoff artifact and source bindings were independently checked; the observer itself read metadata only. No parent coverage or test totals were verified by that handoff.</p></article>
+        <article class="panel"><span class="mini-label later">Later evidence · unscored</span><h3>Recovery inspection: approved and merged</h3><p><a href="https://github.com/All-The-Vibes/ecorp/pull/351">PR #351</a> received <a href="https://github.com/All-The-Vibes/ecorp/pull/351#pullrequestreview-5253325659">approval of head <code>8e84f33</code></a> at 22:59:30 UTC. Maintainer <code>shyamsridhar123</code> merged it at 22:59:41 UTC into <code>6da3026</code>. This was external repository activity; the earlier 17-check snapshot remains historical.</p><p>The qualified numeric fix <code>d599b28</code> passed 1,167 web/tool tests and 227 Steward tests. Its other 727 source files match the earlier qualified inputs, including the 565-pass Rust result with 343 ignored cases. Earlier failed attempts remain retained. These exact-source results do not transfer the original benchmark score to current main.</p></article>
+        <article class="panel"><span class="mini-label later">Synthetic native QA · unscored</span><h3>Exact-intent feedback review</h3><p><a href="https://github.com/All-The-Vibes/ecorp/pull/352">PR #352</a> was open at <code>f6b266e</code> in the earlier 18 September snapshot. One CI line serializes Windows runner tests, preserving parent <code>03464be</code>, other OS commands, assertions and the production ACL deadline. At the 23:37 UTC snapshot, hosted checks were <a href="https://github.com/All-The-Vibes/ecorp/pull/352/checks">10 successful, 1 neutral, 6 pending, 0 failed</a>. The <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35406221041/job/105796420597">new Windows runner job</a> was still running.</p><p>The follow-up freshly executed a retained runner test binary with <strong>72 matched inputs: 212 passed, 0 failed, 1 existing ignored</strong>, in 299.89 seconds. This was not a new build or full merged-source qualification. The <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35404327764/job/105790816777">earlier Windows failure at <code>03464be</code></a> remains recorded: two initial ACL setup timeouts, with 210 passed and 1 ignored. All nine original full local gates and native QA remain attributed to <code>f4b7ae5</code>: 1,186 unit tests, 227 Steward tests and 564 Rust tests; 343 Rust cases were ignored.</p><p>Recorded native/browser QA used two saved missions and one browser-launched carrier. The carrier passed 3/3 checks; <strong>explicitly synthetic QA-only Bob</strong> approved its exact intent. One reference-only revision moved the target to spec/contract v2 with <strong>zero target runs</strong>. Independent closed-packet audit passed: all 64 evidence files verified, code/runtime pins matched, and the one later documentation edit was reconciled to the original producer. All four owned processes are absent and QA ports are closed; data was retained. This is not actual human approval, production identity, provider inference or measured task improvement.</p></article>
+        <article class="panel"><span class="mini-label later">Earlier failed run · preserved</span><h3>Earlier Windows failure at f6b266e</h3><p>The completed <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35406221041/job/105796420597">Windows runner job at <code>f6b266e</code></a> failed despite using <code>--test-threads=1</code>: <strong>211 passed, 1 failed, 1 ignored</strong> in 219.21 seconds. The personal GitHub profile/restart fixture timed out while opening its native connection manager. The platform-contract step was skipped.</p><p>Serialization alone was insufficient. The retained log locates the failure in private-root ACL setup, but cannot distinguish the initial open from a reopen or establish the underlying timing cause. The separate <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35406220967/job/105796421604">Windows coverage job</a> succeeded. The completed comparison found its existing ACL readiness step, subsequently shared in the <code>d3c4bc7</code> follow-up above. The earlier pending snapshot and local 212-pass result remain separately attributed. This f6b266e run remains failed; the passing d3c4bc7 follow-up above is separate. Neither changes the benchmark score.</p></article>
+        <article class="panel"><span class="mini-label history">Historical 776-based correction · unscored</span><h3>Earlier correction and preserved scan failure</h3><p>The retained, unpublished two-file correction on PR #304 base <code>776a7a4</code> passed 435/435 package tests, 24 focused checks, 65 CI fixtures, migrations, web build and lint. Those results do not qualify the newer 80f candidate. Rust validation was paused after automatic approval review rejected the npm preflight.</p><p>The <a href="https://github.com/All-The-Vibes/ecorp/actions/runs/35398601348/job/105773062445">old 776 secrets scan</a> remains a failed historical run. A redacted local reproduction found three fingerprints already reviewed on main. The newer 80f author change restored main’s scan baseline and its secrets check passed. No old failure was deleted or relabeled successful.</p><p>Actual feedback review, authenticated operating identities, later task behavior and sustained governed delivery still need evidence. The last qualified operations score remains <strong>74.75</strong>; a new assessment is required to change it.</p></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="auxiliary-title">
+      <div class="section-heading"><h2 id="auxiliary-title">Other evaluator findings</h2><span class="sub">Reported detection scope, not blanket absence claims</span></div>
+      <div class="auxiliary">
+        <div class="panel"><h3>Cleanup · 70/100, enrollment unverified</h3><p>The score-neutral analysis detected a cleanup capability and repeatable driver, but no concrete scheduler enrollment. It reported four read errors. This is separate from the verified shutdown of owned QA processes.</p></div>
+        <div class="panel"><h3>Documentation drift · partial</h3><p>The evaluator reported targeted advisory controls without repository-wide enforceability. Existing command/version checks have tested failure behavior; broader semantic documentation coverage remains unproven.</p></div>
+      </div>
+    </section>
+
+    <section class="next" aria-labelledby="next-title">
+      <div class="next-grid">
+        <div>
+          <h2 id="next-title">Review the change. Keep the claims bounded.</h2>
+      <p><strong>Throughput milestone:</strong> the last assessed 90-day window recognized zero agent-authored merged PRs out of 91, leaving D9 capped at 2/4. First complete one useful native agent contribution with independent review and maintainer merge, then verify that CodeBlend recognizes its genuine provenance. Human-published PRs and co-authorship trailers may remain metadata-only to the classifier. Three API-recognized agent-authored merges trigger the retained 3/4 floor: <strong>+2.5 operations points</strong>, or 77.25 if every other score stays unchanged. This is a conditional milestone, not a measured new score. Continue tracking accepted changes, review effort, rework and regressions.</p>
+          <p style="margin-top:12px"><strong>Pilot queue check, 19 September 03:22 UTC:</strong> the public Project #5 inventory had <strong>zero Todo issues marked factory:ready</strong>. Ready items were already in progress, in review, or linked to an open PR outside this Project. The first step is owner curation of a bounded current-source task. Native claim authority was not inspected; this public queue snapshot is not dispatch authorization.</p><p style="margin-top:12px">The next evidence needs authenticated promotion, validated later behavior, and sustained governed delivery. Coordinate with existing native review/autonomy work rather than creating another engine or relabeling historical contributions.</p>
+          <div class="issue-links"><a href="https://github.com/All-The-Vibes/ecorp/issues/317">Readiness · #317</a><a href="https://github.com/All-The-Vibes/ecorp/issues/280">Factory autonomy · #280</a><a href="https://github.com/All-The-Vibes/ecorp/issues/95">Governed revisions · #95</a><a href="https://github.com/All-The-Vibes/ecorp/issues/269">PR remediation · #269</a><a href="https://github.com/All-The-Vibes/ecorp/pull/323">Related draft · #323</a></div>
+        </div>
+        <div class="publication">
+          <h3>Publication scope</h3>
+          <p><a href="https://github.com/All-The-Vibes/ecorp/pull/326">PR #326</a> was approved and merged on 18 September at 16:38 UTC after 17 successful checks. This was external repository activity. The four-file CI follow-up <a href="https://github.com/All-The-Vibes/ecorp/pull/342">PR #342</a> was later approved and merged by the maintainer, with its original activation and two more Repository checks handoffs verified. Recovery inspection <a href="https://github.com/All-The-Vibes/ecorp/pull/351">PR #351</a> was approved and merged by the maintainer at 22:59 UTC; feedback review <a href="https://github.com/All-The-Vibes/ecorp/pull/352">PR #352</a> was approved and merged by the maintainer at 01:24 UTC on 19 September. <a href="https://github.com/All-The-Vibes/ecorp/pull/356">PR #356</a> was approved and merged into main <code>39632b9</code> at 01:47 UTC on 19 September. Its first expanded primary-CI hosted handoff was independently verified at 01:59 UTC. The earlier pending snapshot and all original qualification limits remain preserved. These later contributions remain unscored. This report publication is separate from product deployment and native Dark Factory provenance.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="sources">
+      <h2>Source reports</h2>
+      <nav class="source-links" aria-label="Detailed evidence sources">
+        <a href="score-summary.json">Latest qualified score JSON</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/755553bc3c20e8750195ab631dec1ee3f3fef725/docs/evidence/2026-09-18-codeblend-v4b.md">Previous V4b benchmark</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/755553bc3c20e8750195ab631dec1ee3f3fef725/docs/evidence/2026-09-18-local-operations-continuation.md">Latest local operations</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/755553bc3c20e8750195ab631dec1ee3f3fef725/docs/evidence/2026-09-18-native-feedback.md">Native feedback acceptance</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/755553bc3c20e8750195ab631dec1ee3f3fef725/docs/evidence/2026-09-18-recurring-audit.md">Recurrence &amp; Linux coverage</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/755553bc3c20e8750195ab631dec1ee3f3fef725/docs/evidence/2026-09-17-codeblend-hardening.md">Repository hardening</a>
+        <a href="https://github.com/All-The-Vibes/ecorp/blob/755553bc3c20e8750195ab631dec1ee3f3fef725/docs/evidence/assets/codeblend-readiness/codeblend-v4b.json">Benchmark evidence JSON</a>
+      </nav>
+      <p><strong>Method:</strong> CodeBlend revision <code>0a9accccd36446c381c118b783e2e9f623643efa</code>; mandatory API evidence; no added scan exclusions. Judges: Claude Opus 5, GPT-6 Astra and Grok 4.6. Total V5c benchmark time: 770.601 s. Previous qualified V4b: 68.25 operations / 92.0 structure / 79.2 composite. Native cases used the pinned Copilot SDK 1.0.11 / CLI 1.0.79. Agent review is not authenticated human approval.</p>
+      <p><strong>Limits:</strong> controlled local development identity and evidence. Later hosted handoffs and synthetic QA are separately labeled and unscored. Production isolation, production-native reviewer identity, learned decision quality, autonomous repair and sustained agent-attributable merged throughput are not established. Private workstation paths and credentials are omitted.</p>
+      <div class="footer"><span>ECorp · Team review report · Updated 19 September 2026</span><span>Self-contained offline HTML · source links open GitHub</span></div>
+    </footer>
+  </main>
+  <script>
+    document.getElementById('print-report').addEventListener('click', function () { window.print(); });
+  </script>
+</body>
+</html>

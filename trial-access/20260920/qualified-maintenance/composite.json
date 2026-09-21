@@ -1,0 +1,4531 @@
+{
+  "assessmentContext": {
+    "version": 1,
+    "requestedMode": "evaluator-observed-local",
+    "evidenceMode": "evaluator-observed-local",
+    "verificationStatus": "verified",
+    "assessedScope": "repository",
+    "verificationScope": "Native qualification of main396 plus Unicode fix: 3 cases, 9 bounded calls, fixed oracles, independent agent reviews. Retain 17 historical calls and 87,753 Factory tokens; recovery used 0. Owner approved 3aff250c. PR pending tool-policy refusal; CLI URL-case defect required API recovery. Local development identity; no production, sustained throughput or learning-gain claim.",
+    "profileSHA256": "c5ea84a171b0131aac0787e04f8bbe561e5a3ae00e51c79ebf22ac8c984c6718",
+    "verifierSHA256": "6f93505424fe3bd58433e8296446de1da5f0e27f2f47da2551db79709747ade7",
+    "observationSHA256": "8c061b2415089b77a338a88bd40ed4bcc43eb551775459968b3365adc5c4d5c9"
+  },
+  "repo": "All-The-Vibes/ecorp",
+  "substrate": {
+    "score": 87.4,
+    "level": 5
+  },
+  "operation": {
+    "score": 71.5,
+    "tier": "Agent-Enabled",
+    "tierIndex": 3
+  },
+  "quadrant": {
+    "id": "Q2",
+    "name": "Verifiable-but-manual"
+  },
+  "compositeRung": {
+    "value": 4,
+    "name": "R4 Delegable"
+  },
+  "compositeScore": 79.1,
+  "aiReady": false,
+  "prAuditor": {
+    "category": "LLM PR Auditor",
+    "score": 0,
+    "rating": "Insufficient evidence",
+    "details": [
+      "Insufficient correlated evidence for an LLM PR auditor."
+    ],
+    "issues": [
+      "Missing evidence: llm evaluation, automatic PR trigger or manual invocation"
+    ],
+    "metrics": {
+      "exists": false,
+      "confidence": "insufficient",
+      "automatic": false,
+      "manual": false,
+      "comment_only": false,
+      "merge_gate": false,
+      "scoped_guards": false,
+      "whole_diff_coverage": false,
+      "agent_generated_pr_coverage": false,
+      "platforms": [
+        "github_copilot"
+      ],
+      "evidence": {
+        "agent_contract": [
+          ".github/skills/ecorp-operations/SKILL.md"
+        ],
+        "diff_or_guard_coverage": [
+          ".github/skills/ecorp-operations/SKILL.md"
+        ],
+        "review_output": [
+          ".github/skills/ecorp-operations/SKILL.md"
+        ]
+      }
+    },
+    "limitations": [
+      "Static repository evidence cannot prove that configured jobs currently run successfully.",
+      "Unreferenced configuration is supporting evidence only. Provider activation outside root GitHub workflows and their literal local invocation chains is unknown; Azure DevOps registration requires provider evidence.",
+      "Signals must share explicit file references, distinctive identifiers, or review-invocation semantics.",
+      "Merge gating is reported only when an explicit required status, policy, vote, or blocking rule is present.",
+      "Author coverage is inferred from trigger definitions; runtime policy APIs may provide stronger evidence.",
+      ".github/workflows/ci.yml: command execution is unknown: shell expansion is not resolved",
+      ".github/workflows/ci.yml: command execution is unknown: shell functions, control flow, expansions or redirections are not resolved",
+      ".github/workflows/ci.yml: conditional invocation is unknown",
+      ".github/workflows/ci.yml: interpreter invocation is not a supported literal script operand",
+      ".github/workflows/ci.yml: non-default execution context is unknown",
+      ".github/workflows/ci.yml: non-local or dynamic uses invocation is unknown",
+      ".github/workflows/repo-steward.yml: conditional invocation is unknown",
+      ".github/workflows/repo-steward.yml: non-default execution context is unknown",
+      ".github/workflows/repository-checks.yml: conditional invocation is unknown",
+      ".github/workflows/repository-checks.yml: interpreter invocation is not a supported literal script operand",
+      ".github/workflows/repository-checks.yml: non-default execution context is unknown",
+      ".github/workflows/repository-checks.yml: non-local or dynamic uses invocation is unknown",
+      ".github/workflows/security-scan.yml: command execution is unknown: shell expansion is not resolved",
+      ".github/workflows/security-scan.yml: command execution is unknown: shell functions, control flow, expansions or redirections are not resolved",
+      ".github/workflows/security-scan.yml: non-local or dynamic uses invocation is unknown",
+      "tools/check_migrations.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/coverage_web_models.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_approvals.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_artifact_staging.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_artifacts.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_budgets.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_chaos_report.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_codex.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_copilot.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_demo_lifecycle.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_external_adapters.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_factory_claims.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_factory_controller.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_factory_publication.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_gateways.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_idempotency.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_identity.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_idle_cleanup.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_leases.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_portable_deliverables.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_replay.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_rooms.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_runner_reconnect.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_secrets.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_task_graph.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_verification.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/e2e_worktrees.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/platform_runner_contract.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+      "tools/run_evals.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only"
+    ]
+  },
+  "schemaVersion": 2,
+  "documentationDrift": {
+    "coverage": "partial",
+    "controls": [
+      {
+        "kind": "deterministic validation",
+        "scope": "targeted",
+        "trigger": "PR",
+        "effect": "advisory report",
+        "deterministic": true,
+        "failOnStaleMode": false,
+        "tested": false,
+        "enforceable": false
+      },
+      {
+        "kind": "deterministic validation",
+        "scope": "targeted",
+        "trigger": "post-merge",
+        "effect": "advisory report",
+        "deterministic": true,
+        "failOnStaleMode": false,
+        "tested": false,
+        "enforceable": false
+      },
+      {
+        "kind": "deterministic validation",
+        "scope": "targeted",
+        "trigger": "manual",
+        "effect": "advisory report",
+        "deterministic": true,
+        "failOnStaleMode": false,
+        "tested": false,
+        "enforceable": false
+      },
+      {
+        "kind": "deterministic validation",
+        "scope": "targeted",
+        "trigger": "manual",
+        "effect": "advisory report",
+        "deterministic": true,
+        "failOnStaleMode": false,
+        "tested": true,
+        "enforceable": false
+      }
+    ],
+    "proseClaims": 9,
+    "residualAction": "Add checked-diff or fail-on-stale semantics to the existing documentation generation, then wire it into affected PR validation."
+  },
+  "cleanupAutomation": {
+    "category": "Continuous cleanup automation",
+    "score": 70,
+    "rating": "Enrollment unverified",
+    "details": [
+      "Cleanup capability: detected with 135 executable or configured evidence file(s).",
+      "Bounded repeatable driver: detected with 12 executable or configured evidence file(s).",
+      "Concrete scheduler enrollment: not detected.",
+      "Observed behavior: mutating."
+    ],
+    "issues": [
+      "The cleanup driver is designed for repeated invocation, but concrete scheduler enrollment was not found."
+    ],
+    "metrics": {
+      "advisory_capability_exists": false,
+      "behavior": "mutating",
+      "cleanup_capability_exists": true,
+      "manifest_declaration_count": 0,
+      "mutation_capability_exists": true,
+      "read_error_count": 3,
+      "scheduled_driver_exists": true,
+      "scheduler_enrollment_exists": false,
+      "state_config_count": 3
+    },
+    "capabilities": {
+      "advisory": {
+        "available": false,
+        "evidence": [
+          "apps/web/src/App.tsx",
+          "apps/web/src/PublishedResultCard.tsx",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/runActivity.ts",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "crates/crony-cli/src/factory.rs",
+          "crates/crony-runner/src/adapter/connection/copilot.rs",
+          "crates/crony-runner/src/adapter/connection/tests.rs",
+          "crates/crony-runner/src/adapter/copilot.rs",
+          "crates/crony-runner/src/adapter/copilot_fs.rs",
+          "crates/crony-runner/src/adapter/external.rs",
+          "crates/crony-runner/src/connection_setup/integration_tests.rs",
+          "crates/crony-runner/src/connection_setup/tests.rs",
+          "crates/crony-runner/src/connections.rs",
+          "crates/crony-runner/src/deliverable.rs",
+          "crates/crony-runner/src/main.rs",
+          "crates/crony-runner/src/source_checkpoint.rs",
+          "crates/crony-runner/src/verifier.rs",
+          "crates/crony-runner/src/workspace.rs",
+          "crates/crony-server/src/artifacts.rs",
+          "crates/crony-server/src/factory_connection_tests.rs",
+          "crates/crony-server/src/main.rs",
+          "crates/crony-store/src/budget_checkpoint_tests.rs",
+          "crates/crony-store/src/checkpoint_correction_retry_tests.rs",
+          "crates/crony-store/src/checkpoint_retention.rs",
+          "crates/crony-store/src/factory_connection_tests.rs",
+          "crates/crony-store/src/factory_recovery_loss_tests.rs",
+          "crates/crony-store/src/factory_run_failure.rs",
+          "crates/crony-store/src/retained_provider_receipt.rs",
+          "crates/crony-store/src/retained_provider_receipt_tests.rs",
+          "crates/crony-store/src/staffing.rs",
+          "crates/crony-store/src/workspace_connections.rs",
+          "crates/crony-store/src/workspace_connections_tests.rs",
+          "docs/assets/readme/generate_ecorp_arcade_assets.py",
+          "scenarios/incident-command/server.mjs",
+          "scenarios/incident-command/test/incident-command.test.mjs",
+          "scenarios/repo-steward/actions.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/lib/feedback.mjs",
+          "scenarios/repo-steward/lib/github.mjs",
+          "scenarios/repo-steward/lib/recurring-audit.mjs",
+          "scenarios/repo-steward/lib/steward.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tools/bootstrap_github.ps1",
+          "tools/check_documentation.test.mjs",
+          "tools/ci_maintenance.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/e2e_approvals.mjs",
+          "tools/e2e_artifact_staging.mjs",
+          "tools/e2e_artifacts.mjs",
+          "tools/e2e_budget_revision.mjs",
+          "tools/e2e_checkpoint_verification.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_codex.mjs",
+          "tools/e2e_evidence_selection.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_factory_claims.mjs",
+          "tools/e2e_factory_cockpit_reconnect.mjs",
+          "tools/e2e_factory_commit_routing.mjs",
+          "tools/e2e_factory_controller.mjs",
+          "tools/e2e_factory_controller_service.mjs",
+          "tools/e2e_factory_publication.mjs",
+          "tools/e2e_factory_run_activity.py",
+          "tools/e2e_factory_source_drift.mjs",
+          "tools/e2e_factory_verification_recovery.mjs",
+          "tools/e2e_idle_cleanup.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_leases.mjs",
+          "tools/e2e_mission_contracts.mjs",
+          "tools/e2e_mission_preview.mjs",
+          "tools/e2e_mission_repository_routing.mjs",
+          "tools/e2e_operation_feedback.mjs",
+          "tools/e2e_portable_deliverables.mjs",
+          "tools/e2e_predispatch_failure.mjs",
+          "tools/e2e_publication_credential_lock.mjs",
+          "tools/e2e_recovery_operations_browser.mjs",
+          "tools/e2e_runner_reconnect.mjs",
+          "tools/e2e_steward_maintenance.mjs",
+          "tools/e2e_worktrees.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/import_operation_behavior.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_lifecycle.test.ps1",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/probe_copilot_live.mjs",
+          "tools/run_evals.mjs",
+          "tools/windows_connection_acl_readiness.ps1"
+        ]
+      },
+      "cleanup_capability": {
+        "available": true,
+        "evidence": [
+          "apps/web/src/App.tsx",
+          "apps/web/src/PublishedResultCard.tsx",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/runActivity.ts",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "crates/crony-cli/src/factory.rs",
+          "crates/crony-cli/src/factory/project.rs",
+          "crates/crony-cli/src/factory/quota.rs",
+          "crates/crony-domain/src/lib.rs",
+          "crates/crony-runner/src/adapter/connection.rs",
+          "crates/crony-runner/src/adapter/connection/copilot.rs",
+          "crates/crony-runner/src/adapter/connection/tests.rs",
+          "crates/crony-runner/src/adapter/copilot.rs",
+          "crates/crony-runner/src/adapter/copilot_evidence.rs",
+          "crates/crony-runner/src/adapter/copilot_evidence_wire_tests.rs",
+          "crates/crony-runner/src/adapter/copilot_fs.rs",
+          "crates/crony-runner/src/adapter/external.rs",
+          "crates/crony-runner/src/adapter/process_tree.rs",
+          "crates/crony-runner/src/connection_setup/integration_tests.rs",
+          "crates/crony-runner/src/connection_setup/process.rs",
+          "crates/crony-runner/src/connection_setup/storage.rs",
+          "crates/crony-runner/src/connection_setup/tests.rs",
+          "crates/crony-runner/src/connections.rs",
+          "crates/crony-runner/src/deliverable.rs",
+          "crates/crony-runner/src/main.rs",
+          "crates/crony-runner/src/retained_provider_receipt_tests.rs",
+          "crates/crony-runner/src/source_checkpoint.rs",
+          "crates/crony-runner/src/verifier.rs",
+          "crates/crony-runner/src/workspace.rs",
+          "crates/crony-server/src/artifacts.rs",
+          "crates/crony-server/src/auth.rs",
+          "crates/crony-server/src/dependency_source.rs",
+          "crates/crony-server/src/factory_connection_tests.rs",
+          "crates/crony-server/src/main.rs",
+          "crates/crony-server/src/startup.rs",
+          "crates/crony-store/src/budget_checkpoint.rs",
+          "crates/crony-store/src/budget_checkpoint_tests.rs",
+          "crates/crony-store/src/checkpoint_cancellation_tests.rs",
+          "crates/crony-store/src/checkpoint_correction_publication_tests.rs",
+          "crates/crony-store/src/checkpoint_correction_retry_tests.rs",
+          "crates/crony-store/src/checkpoint_retention.rs",
+          "crates/crony-store/src/factory_connection_tests.rs",
+          "crates/crony-store/src/factory_cost_policy_tests.rs",
+          "crates/crony-store/src/factory_recovery_loss_tests.rs",
+          "crates/crony-store/src/factory_run_failure.rs",
+          "crates/crony-store/src/publication.rs",
+          "crates/crony-store/src/retained_provider_receipt.rs",
+          "crates/crony-store/src/retained_provider_receipt_tests.rs",
+          "crates/crony-store/src/staffing.rs",
+          "crates/crony-store/src/steering_lock_tests.rs",
+          "crates/crony-store/src/workspace_connections.rs",
+          "crates/crony-store/src/workspace_connections_tests.rs",
+          "docs/assets/readme/generate_ecorp_arcade_assets.py",
+          "scenarios/incident-command/server.mjs",
+          "scenarios/incident-command/test/incident-command.test.mjs",
+          "scenarios/repo-steward/actions.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/fixtures/demo.mjs",
+          "scenarios/repo-steward/lib/feedback.mjs",
+          "scenarios/repo-steward/lib/github.mjs",
+          "scenarios/repo-steward/lib/recurring-audit.mjs",
+          "scenarios/repo-steward/lib/steward.mjs",
+          "scenarios/repo-steward/maintenance.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "scenarios/vendor-guard/public/app.js",
+          "scenarios/vendor-guard/test/browser.test.mjs",
+          "scenarios/vendor-guard/test/server.test.mjs",
+          "tools/bootstrap_github.ps1",
+          "tools/check_documentation.test.mjs",
+          "tools/ci_maintenance.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/e2e_approvals.mjs",
+          "tools/e2e_artifact_staging.mjs",
+          "tools/e2e_artifacts.mjs",
+          "tools/e2e_budget_revision.mjs",
+          "tools/e2e_checkpoint_verification.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_codex.mjs",
+          "tools/e2e_evidence_selection.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_factory_claims.mjs",
+          "tools/e2e_factory_cockpit_reconnect.mjs",
+          "tools/e2e_factory_commit_routing.mjs",
+          "tools/e2e_factory_controller.mjs",
+          "tools/e2e_factory_controller_service.mjs",
+          "tools/e2e_factory_publication.mjs",
+          "tools/e2e_factory_run_activity.py",
+          "tools/e2e_factory_source_drift.mjs",
+          "tools/e2e_factory_verification_recovery.mjs",
+          "tools/e2e_idle_cleanup.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_launch_admission.mjs",
+          "tools/e2e_leases.mjs",
+          "tools/e2e_mission_contracts.mjs",
+          "tools/e2e_mission_preview.mjs",
+          "tools/e2e_mission_repository_routing.mjs",
+          "tools/e2e_mission_staffing.mjs",
+          "tools/e2e_operation_feedback.mjs",
+          "tools/e2e_portable_deliverables.mjs",
+          "tools/e2e_predispatch_failure.mjs",
+          "tools/e2e_publication_credential_lock.mjs",
+          "tools/e2e_recovery_operations_browser.mjs",
+          "tools/e2e_runner_reconnect.mjs",
+          "tools/e2e_steward_maintenance.mjs",
+          "tools/e2e_worktrees.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/import_operation_behavior.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_lifecycle.test.ps1",
+          "tools/local_stack_start.ps1",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_copilot_live.mjs",
+          "tools/run_evals.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/test_startup_validation.py",
+          "tools/test_startup_validation_harness.py",
+          "tools/windows_connection_acl_readiness.ps1"
+        ]
+      },
+      "mutation": {
+        "available": true,
+        "evidence": [
+          "crates/crony-runner/src/adapter/copilot.rs",
+          "crates/crony-server/src/artifacts.rs",
+          "tools/e2e_checkpoint_verification.mjs",
+          "tools/local_stack_lifecycle.test.ps1",
+          "tools/probe_copilot_live.mjs"
+        ]
+      },
+      "scheduled_driver": {
+        "available": true,
+        "evidence": [
+          "scripts/fake-agent.mjs",
+          "tools/bootstrap_github.ps1",
+          "tools/ci_maintenance.mjs",
+          "tools/e2e_checkpoint_verification.mjs",
+          "tools/e2e_evidence_selection.mjs",
+          "tools/e2e_factory_verification_recovery.mjs",
+          "tools/e2e_late_termination.mjs",
+          "tools/e2e_mission_staffing.mjs",
+          "tools/e2e_predispatch_failure.mjs",
+          "tools/e2e_recovery_operations_browser.mjs",
+          "tools/e2e_stopped_source_checkpoint.mjs",
+          "tools/fake_github_cli.mjs"
+        ]
+      },
+      "scheduler_enrollment": {
+        "available": false,
+        "evidence": []
+      }
+    },
+    "supporting_evidence": {
+      "agent_or_skill_manifests": [],
+      "read_errors": [
+        ".devcontainer/Dockerfile: UnicodeError",
+        "LICENSE: UnicodeError",
+        "NOTICE: UnicodeError"
+      ],
+      "state_or_cadence_config": [
+        ".github/workflows/ci.yml",
+        "scenarios/repo-steward/policy.json",
+        "scenarios/vendor-guard/evidence/browser-result.json"
+      ]
+    }
+  },
+  "remediation": {
+    "substrateGaps": [
+      {
+        "pillar": "Code Quality",
+        "level": 3,
+        "action": "code-level transform (Phase 3)"
+      }
+    ],
+    "operationGaps": [
+      {
+        "dimension": "continuous-improvement-loops",
+        "rawScore": 2,
+        "weight": 13,
+        "rfc": "RFC-03"
+      },
+      {
+        "dimension": "agentic-change-throughput",
+        "rawScore": 2,
+        "weight": 10,
+        "rfc": "RFC-05"
+      }
+    ]
+  },
+  "explanation": {
+    "version": 1,
+    "derivation": {
+      "headline": {
+        "substrateScore": 87.4,
+        "operationScore": 71.5,
+        "method": "geometric mean: sqrt(substrate * operation), rounded to one decimal place",
+        "compositeScore": 79.1,
+        "weakerAxis": "operation"
+      },
+      "substrate": {
+        "terms": [
+          {
+            "pillar": "Testing",
+            "level": 4,
+            "weight": 0.23,
+            "contribution": 18.4,
+            "maxContribution": 23
+          },
+          {
+            "pillar": "Code Quality",
+            "level": 3,
+            "weight": 0.2,
+            "contribution": 12,
+            "maxContribution": 20
+          },
+          {
+            "pillar": "Build System",
+            "level": 5,
+            "weight": 0.15,
+            "contribution": 15,
+            "maxContribution": 15
+          },
+          {
+            "pillar": "Dev Environment",
+            "level": 5,
+            "weight": 0.12,
+            "contribution": 12,
+            "maxContribution": 12
+          },
+          {
+            "pillar": "Style \u0026 Validation",
+            "level": 5,
+            "weight": 0.12,
+            "contribution": 12,
+            "maxContribution": 12
+          },
+          {
+            "pillar": "Documentation",
+            "level": 5,
+            "weight": 0.1,
+            "contribution": 10,
+            "maxContribution": 10
+          },
+          {
+            "pillar": "Security \u0026 Governance",
+            "level": 5,
+            "weight": 0.08,
+            "contribution": 8,
+            "maxContribution": 8
+          }
+        ],
+        "termTotal": 87.4,
+        "reportedScore": 87.4,
+        "reconciles": true,
+        "advancedAdjustmentReported": true,
+        "pillarScoreBeforeAdvanced": 80.4,
+        "advancedAdjustment": 7,
+        "maturityLevel": 5,
+        "maturityName": "Autonomous",
+        "maturityBandLower": 81,
+        "maturityCapped": false,
+        "maturityFloorNote": "",
+        "cappedByPillars": []
+      },
+      "operation": {
+        "terms": [
+          {
+            "dimension": "agent-interface-operability",
+            "name": "Agent Interface \u0026 Operability",
+            "rawScore": 3,
+            "weight": 9,
+            "weighted": 6.75
+          },
+          {
+            "dimension": "automation-coverage",
+            "name": "Automation Coverage for Routine Maintenance",
+            "rawScore": 3,
+            "weight": 13,
+            "weighted": 9.75
+          },
+          {
+            "dimension": "self-healing-cicd",
+            "name": "Self-Healing CI/CD",
+            "rawScore": 3,
+            "weight": 18,
+            "weighted": 13.5
+          },
+          {
+            "dimension": "continuous-improvement-loops",
+            "name": "Continuous Improvement Loops",
+            "rawScore": 2,
+            "weight": 13,
+            "weighted": 6.5
+          },
+          {
+            "dimension": "agent-execution-surfaces",
+            "name": "Agent Execution Surfaces",
+            "rawScore": 3,
+            "weight": 9,
+            "weighted": 6.75
+          },
+          {
+            "dimension": "policy-safety-guardrails",
+            "name": "Policy, Safety, and Change Guardrails",
+            "rawScore": 3,
+            "weight": 10,
+            "weighted": 7.5
+          },
+          {
+            "dimension": "observability",
+            "name": "Observability of Agentic Work",
+            "rawScore": 4,
+            "weight": 9,
+            "weighted": 9
+          },
+          {
+            "dimension": "human-on-the-loop",
+            "name": "Human-on-the-Loop Integration",
+            "rawScore": 3,
+            "weight": 9,
+            "weighted": 6.75
+          },
+          {
+            "dimension": "agentic-change-throughput",
+            "name": "Agentic Change Throughput \u0026 Contributor Mix",
+            "rawScore": 2,
+            "weight": 10,
+            "weighted": 5
+          }
+        ],
+        "termTotal": 71.5,
+        "reportedScore": 71.5,
+        "reconciles": true,
+        "maxTotal": 100,
+        "tier": "Agent-Enabled",
+        "tierLower": 60
+      }
+    },
+    "substratePillars": [
+      {
+        "pillar": "Code Quality",
+        "level": 3,
+        "ruleLevel": 3,
+        "advancedAdjusted": false,
+        "weight": 0.2,
+        "contribution": 12,
+        "matchedRule": "code-quality/L3.structured",
+        "ruleMatched": true,
+        "ruleReason": "organized structure with entry points and few oversized files",
+        "ruleTerms": [
+          {
+            "indicator": "total_code_files",
+            "kind": "atLeast",
+            "threshold": 1,
+            "description": "total_code_files \u003e= 1",
+            "observed": 301,
+            "satisfied": true
+          },
+          {
+            "indicator": "organized_structure",
+            "kind": "is",
+            "description": "organized_structure",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "entry_points",
+            "kind": "atLeast",
+            "threshold": 1,
+            "description": "entry_points \u003e= 1",
+            "observed": 14,
+            "satisfied": true
+          },
+          {
+            "indicator": "files_over_large_threshold",
+            "kind": "atMost",
+            "threshold": 3,
+            "description": "files_over_large_threshold \u003c= 3",
+            "observed": 0,
+            "satisfied": true
+          }
+        ],
+        "nextLevel": {
+          "reachable": true,
+          "targetLevel": 4,
+          "ruleId": "code-quality/L4.clean-modular",
+          "ruleReason": "organized structure with no oversized files, low coupling, and healthy modularity",
+          "conditions": [
+            {
+              "signal": "low_coupling",
+              "description": "low_coupling",
+              "observed": false
+            }
+          ],
+          "alternatives": [],
+          "guaranteed": true,
+          "statement": "satisfying low_coupling raises Code Quality to L4"
+        },
+        "indicators": [
+          {
+            "name": "avg_imports_per_file",
+            "value": 10.4,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "circular_dep_pairs",
+            "value": 0,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "cross_dir_import_pairs",
+            "value": 2,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "dirs_with_entry_point",
+            "value": 3,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "entry_points",
+            "value": 14,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "files_over_large_threshold",
+            "value": 0,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "good_modularity",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "high_import_files",
+            "value": 41,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "low_coupling",
+            "value": false,
+            "kind": "boolean",
+            "satisfied": false
+          },
+          {
+            "name": "max_dir_concentration",
+            "value": 37.5,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "module_boundary_depth",
+            "value": 1,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "module_container",
+            "value": "",
+            "kind": "text",
+            "satisfied": null
+          },
+          {
+            "name": "module_count",
+            "value": 6,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "modules_balanced",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "organized_structure",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "primary_language",
+            "value": ".js",
+            "kind": "text",
+            "satisfied": null
+          },
+          {
+            "name": "total_code_files",
+            "value": 301,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "total_lines",
+            "value": 193283,
+            "kind": "numeric",
+            "satisfied": null
+          }
+        ],
+        "details": [
+          "Codebase: 301 code files, ~193283 lines, primary language: .js",
+          "Modules: 6 top dirs, largest has 38% of files",
+          "Entry points: 14 (3/6 dirs have entry files)"
+        ]
+      },
+      {
+        "pillar": "Testing",
+        "level": 4,
+        "ruleLevel": 4,
+        "advancedAdjusted": false,
+        "weight": 0.23,
+        "contribution": 18.4,
+        "matchedRule": "testing/L4.suite+e2e+command",
+        "ruleMatched": true,
+        "ruleReason": "a configured suite of at least five test files with end-to-end coverage and a discoverable test command; based only on recognized evidence: unassessed validation paths do not establish absence",
+        "ruleTerms": [
+          {
+            "indicator": "test_files_count",
+            "kind": "atLeast",
+            "threshold": 5,
+            "description": "test_files_count \u003e= 5",
+            "observed": 135,
+            "satisfied": true
+          },
+          {
+            "indicator": "test_config",
+            "kind": "is",
+            "description": "test_config",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "e2e_tests",
+            "kind": "is",
+            "description": "e2e_tests",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "test_cmd_discoverable",
+            "kind": "is",
+            "description": "test_cmd_discoverable",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "testing_maturity_cap",
+            "kind": "atLeast",
+            "threshold": 4,
+            "description": "testing_maturity_cap \u003e= 4",
+            "observed": 4,
+            "satisfied": true
+          }
+        ],
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no rule defines a level above L4 for Testing; this pillar is at its highest defined level"
+        },
+        "indicators": [
+          {
+            "name": "e2e_tests",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "inline_test_count",
+            "value": 857,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "test_cmd_discoverable",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "test_code_files_count",
+            "value": 64,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "test_command_paths",
+            "value": [
+              ".github/workflows/ci.yml"
+            ],
+            "kind": "other",
+            "satisfied": null
+          },
+          {
+            "name": "test_config",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "test_files_count",
+            "value": 135,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "test_files_discovered_by_convention",
+            "value": 65,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "test_projects_count",
+            "value": 7,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "test_projects_runnable",
+            "value": 7,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "test_projects_with_execution",
+            "value": 7,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "testing_maturity_cap",
+            "value": 4,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "validation_discovery_limitations",
+            "value": [
+              ".github/workflows/ci-maintenance.yml: conditional PR reachability is not resolved",
+              ".github/workflows/ci-maintenance.yml: reusable actions, templates and non-POSIX commands are not followed",
+              ".github/workflows/ci-maintenance.yml: shell expansion is not resolved",
+              ".github/workflows/ci.yml: conditional PR reachability is not resolved",
+              ".github/workflows/ci.yml: non-POSIX workflow shell is not resolved",
+              ".github/workflows/ci.yml: non-default command execution context is not resolved",
+              ".github/workflows/ci.yml: reusable actions, templates and non-POSIX commands are not followed",
+              ".github/workflows/ci.yml: shell expansion is not resolved",
+              ".github/workflows/ci.yml: shell functions, control flow, expansions or redirections are not resolved",
+              ".github/workflows/repo-steward.yml: conditional PR reachability is not resolved",
+              ".github/workflows/repo-steward.yml: non-default command execution context is not resolved",
+              ".github/workflows/repository-checks.yml: conditional PR reachability is not resolved",
+              ".github/workflows/repository-checks.yml: non-default command execution context is not resolved",
+              ".github/workflows/repository-checks.yml: reusable actions, templates and non-POSIX commands are not followed",
+              ".github/workflows/security-scan.yml: reusable actions, templates and non-POSIX commands are not followed",
+              ".github/workflows/security-scan.yml: shell expansion is not resolved",
+              ".github/workflows/security-scan.yml: shell functions, control flow, expansions or redirections are not resolved"
+            ],
+            "kind": "other",
+            "satisfied": null
+          }
+        ],
+        "details": [
+          "test_files_count counts dedicated test files plus production files containing inline tests; inline_test_count reports executable inline Rust test functions separately",
+          ".github/workflows/ci-maintenance.yml: conditional PR reachability is not resolved",
+          ".github/workflows/ci-maintenance.yml: reusable actions, templates and non-POSIX commands are not followed",
+          ".github/workflows/ci-maintenance.yml: shell expansion is not resolved",
+          ".github/workflows/ci.yml: conditional PR reachability is not resolved",
+          ".github/workflows/ci.yml: non-POSIX workflow shell is not resolved",
+          ".github/workflows/ci.yml: non-default command execution context is not resolved",
+          ".github/workflows/ci.yml: reusable actions, templates and non-POSIX commands are not followed",
+          ".github/workflows/ci.yml: shell expansion is not resolved",
+          ".github/workflows/ci.yml: shell functions, control flow, expansions or redirections are not resolved",
+          ".github/workflows/repo-steward.yml: conditional PR reachability is not resolved",
+          ".github/workflows/repo-steward.yml: non-default command execution context is not resolved",
+          ".github/workflows/repository-checks.yml: conditional PR reachability is not resolved",
+          ".github/workflows/repository-checks.yml: non-default command execution context is not resolved",
+          ".github/workflows/repository-checks.yml: reusable actions, templates and non-POSIX commands are not followed",
+          ".github/workflows/security-scan.yml: reusable actions, templates and non-POSIX commands are not followed",
+          ".github/workflows/security-scan.yml: shell expansion is not resolved",
+          ".github/workflows/security-scan.yml: shell functions, control flow, expansions or redirections are not resolved"
+        ]
+      },
+      {
+        "pillar": "Build System",
+        "level": 5,
+        "ruleLevel": 4,
+        "advancedAdjusted": true,
+        "weight": 0.15,
+        "contribution": 15,
+        "matchedRule": "build-system/L4.ci+lock",
+        "ruleMatched": true,
+        "ruleReason": "CI runs against committed dependency lock files",
+        "ruleTerms": [
+          {
+            "indicator": "ci_cd",
+            "kind": "is",
+            "description": "ci_cd",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "dependency_lock",
+            "kind": "is",
+            "description": "dependency_lock",
+            "observed": true,
+            "satisfied": true
+          }
+        ],
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no rule defines a level above L4 for Build System; this pillar is at its highest defined level"
+        },
+        "indicators": [
+          {
+            "name": "build_config",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "ci_cd",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "dependency_lock",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          }
+        ],
+        "details": []
+      },
+      {
+        "pillar": "Dev Environment",
+        "level": 5,
+        "ruleLevel": 5,
+        "advancedAdjusted": false,
+        "weight": 0.12,
+        "contribution": 12,
+        "matchedRule": "dev-environment/L5.automated",
+        "ruleMatched": true,
+        "ruleReason": "a dev container, setup scripts, an environment template, and at least four configured signals",
+        "ruleTerms": [
+          {
+            "indicator": "dev_container",
+            "kind": "is",
+            "description": "dev_container",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "setup_scripts",
+            "kind": "is",
+            "description": "setup_scripts",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "env_example",
+            "kind": "is",
+            "description": "env_example",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "configured_indicators",
+            "kind": "atLeast",
+            "threshold": 4,
+            "description": "configured_indicators \u003e= 4",
+            "observed": 5,
+            "satisfied": true
+          }
+        ],
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no rule defines a level above L5 for Dev Environment; this pillar is at its highest defined level"
+        },
+        "indicators": [
+          {
+            "name": "configured_indicators",
+            "value": 5,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "dev_container",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "env_example",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "ide_config",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "setup_scripts",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "version_management",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          }
+        ],
+        "details": []
+      },
+      {
+        "pillar": "Documentation",
+        "level": 5,
+        "ruleLevel": 5,
+        "advancedAdjusted": false,
+        "weight": 0.1,
+        "contribution": 10,
+        "matchedRule": "documentation/L5.spec-driven",
+        "ruleMatched": true,
+        "ruleReason": "agent documentation plus harness or tool configuration and versioned specs",
+        "ruleTerms": [
+          {
+            "indicator": "readme",
+            "kind": "is",
+            "description": "readme",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "readme_lines",
+            "kind": "atLeast",
+            "threshold": 20,
+            "description": "readme_lines \u003e= 20",
+            "observed": 307,
+            "satisfied": true
+          },
+          {
+            "indicator": "architecture_docs",
+            "kind": "is",
+            "description": "architecture_docs",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "agent_docs",
+            "kind": "is",
+            "description": "agent_docs",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "agent_harness_config",
+            "kind": "is",
+            "description": "agent_harness_config",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "agent_tools_config",
+            "kind": "is",
+            "description": "agent_tools_config",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "versioned_specs",
+            "kind": "is",
+            "description": "versioned_specs",
+            "observed": true,
+            "satisfied": true
+          }
+        ],
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no rule defines a level above L5 for Documentation; this pillar is at its highest defined level"
+        },
+        "indicators": [
+          {
+            "name": "agent_doc_quality",
+            "value": 1,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "agent_docs",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "agent_harness_config",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "agent_harness_quality",
+            "value": 0,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "agent_tools_config",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "api_docs",
+            "value": false,
+            "kind": "boolean",
+            "satisfied": false
+          },
+          {
+            "name": "architecture_docs",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "readme",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "readme_lines",
+            "value": 307,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "subdirectory_agent_docs",
+            "value": 2,
+            "kind": "numeric",
+            "satisfied": null
+          },
+          {
+            "name": "versioned_specs",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          }
+        ],
+        "details": [
+          "Harness config exists but is minimal"
+        ]
+      },
+      {
+        "pillar": "Security \u0026 Governance",
+        "level": 5,
+        "ruleLevel": 4,
+        "advancedAdjusted": true,
+        "weight": 0.08,
+        "contribution": 8,
+        "matchedRule": "security-governance/L4.secret-detection",
+        "ruleMatched": true,
+        "ruleReason": "secrets ignored and secret detection configured",
+        "ruleTerms": [
+          {
+            "indicator": "gitignore",
+            "kind": "is",
+            "description": "gitignore",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "ignores_secrets",
+            "kind": "is",
+            "description": "ignores_secrets",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "secret_detection",
+            "kind": "is",
+            "description": "secret_detection",
+            "observed": true,
+            "satisfied": true
+          }
+        ],
+        "nextLevel": {
+          "reachable": true,
+          "targetLevel": 5,
+          "ruleId": "security-governance/L5.scanning+sast",
+          "ruleReason": "secrets ignored, secret detection configured, and static analysis in place",
+          "conditions": [
+            {
+              "signal": "sast",
+              "description": "sast",
+              "observed": false
+            }
+          ],
+          "alternatives": [],
+          "guaranteed": true,
+          "statement": "satisfying sast raises Security \u0026 Governance to L5"
+        },
+        "indicators": [
+          {
+            "name": "component_governance",
+            "value": false,
+            "kind": "boolean",
+            "satisfied": false
+          },
+          {
+            "name": "gitignore",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "ignores_secrets",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "ms_security_tools",
+            "value": false,
+            "kind": "boolean",
+            "satisfied": false
+          },
+          {
+            "name": "sast",
+            "value": false,
+            "kind": "boolean",
+            "satisfied": false
+          },
+          {
+            "name": "secret_detection",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          }
+        ],
+        "details": []
+      },
+      {
+        "pillar": "Style \u0026 Validation",
+        "level": 5,
+        "ruleLevel": 4,
+        "advancedAdjusted": true,
+        "weight": 0.12,
+        "contribution": 12,
+        "matchedRule": "style-validation/L4.lint+format+hooks+types",
+        "ruleMatched": true,
+        "ruleReason": "linting, formatting, local hooks, and type checking are all enforced; based only on recognized evidence: unassessed validation paths do not establish absence",
+        "ruleTerms": [
+          {
+            "indicator": "linter",
+            "kind": "is",
+            "description": "linter",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "formatter",
+            "kind": "is",
+            "description": "formatter",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "pre_commit_hooks",
+            "kind": "is",
+            "description": "pre_commit_hooks",
+            "observed": true,
+            "satisfied": true
+          },
+          {
+            "indicator": "type_checking",
+            "kind": "is",
+            "description": "type_checking",
+            "observed": true,
+            "satisfied": true
+          }
+        ],
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no rule defines a level above L4 for Style \u0026 Validation; this pillar is at its highest defined level"
+        },
+        "indicators": [
+          {
+            "name": "csharp_analyzer_packages",
+            "value": false,
+            "kind": "boolean",
+            "satisfied": false
+          },
+          {
+            "name": "formatter",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "formatter_command_paths",
+            "value": [
+              ".github/workflows/ci.yml"
+            ],
+            "kind": "other",
+            "satisfied": null
+          },
+          {
+            "name": "linter",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "linter_command_paths",
+            "value": [
+              ".github/workflows/ci.yml"
+            ],
+            "kind": "other",
+            "satisfied": null
+          },
+          {
+            "name": "pre_commit_hooks",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "stylecop_configured",
+            "value": false,
+            "kind": "boolean",
+            "satisfied": false
+          },
+          {
+            "name": "type_checking",
+            "value": true,
+            "kind": "boolean",
+            "satisfied": true
+          },
+          {
+            "name": "type_checking_command_paths",
+            "value": [
+              ".github/workflows/ci.yml"
+            ],
+            "kind": "other",
+            "satisfied": null
+          },
+          {
+            "name": "validation_discovery_limitations",
+            "value": [
+              ".github/workflows/ci-maintenance.yml: conditional PR reachability is not resolved",
+              ".github/workflows/ci-maintenance.yml: reusable actions, templates and non-POSIX commands are not followed",
+              ".github/workflows/ci-maintenance.yml: shell expansion is not resolved",
+              ".github/workflows/ci.yml: conditional PR reachability is not resolved",
+              ".github/workflows/ci.yml: non-POSIX workflow shell is not resolved",
+              ".github/workflows/ci.yml: non-default command execution context is not resolved",
+              ".github/workflows/ci.yml: reusable actions, templates and non-POSIX commands are not followed",
+              ".github/workflows/ci.yml: shell expansion is not resolved",
+              ".github/workflows/ci.yml: shell functions, control flow, expansions or redirections are not resolved",
+              ".github/workflows/repo-steward.yml: conditional PR reachability is not resolved",
+              ".github/workflows/repo-steward.yml: non-default command execution context is not resolved",
+              ".github/workflows/repository-checks.yml: conditional PR reachability is not resolved",
+              ".github/workflows/repository-checks.yml: non-default command execution context is not resolved",
+              ".github/workflows/repository-checks.yml: reusable actions, templates and non-POSIX commands are not followed",
+              ".github/workflows/security-scan.yml: reusable actions, templates and non-POSIX commands are not followed",
+              ".github/workflows/security-scan.yml: shell expansion is not resolved",
+              ".github/workflows/security-scan.yml: shell functions, control flow, expansions or redirections are not resolved"
+            ],
+            "kind": "other",
+            "satisfied": null
+          }
+        ],
+        "details": [
+          ".github/workflows/ci-maintenance.yml: conditional PR reachability is not resolved",
+          ".github/workflows/ci-maintenance.yml: reusable actions, templates and non-POSIX commands are not followed",
+          ".github/workflows/ci-maintenance.yml: shell expansion is not resolved",
+          ".github/workflows/ci.yml: conditional PR reachability is not resolved",
+          ".github/workflows/ci.yml: non-POSIX workflow shell is not resolved",
+          ".github/workflows/ci.yml: non-default command execution context is not resolved",
+          ".github/workflows/ci.yml: reusable actions, templates and non-POSIX commands are not followed",
+          ".github/workflows/ci.yml: shell expansion is not resolved",
+          ".github/workflows/ci.yml: shell functions, control flow, expansions or redirections are not resolved",
+          ".github/workflows/repo-steward.yml: conditional PR reachability is not resolved",
+          ".github/workflows/repo-steward.yml: non-default command execution context is not resolved",
+          ".github/workflows/repository-checks.yml: conditional PR reachability is not resolved",
+          ".github/workflows/repository-checks.yml: non-default command execution context is not resolved",
+          ".github/workflows/repository-checks.yml: reusable actions, templates and non-POSIX commands are not followed",
+          ".github/workflows/security-scan.yml: reusable actions, templates and non-POSIX commands are not followed",
+          ".github/workflows/security-scan.yml: shell expansion is not resolved",
+          ".github/workflows/security-scan.yml: shell functions, control flow, expansions or redirections are not resolved"
+        ]
+      }
+    ],
+    "operationDimensions": [
+      {
+        "key": "agent-interface-operability",
+        "name": "Agent Interface \u0026 Operability",
+        "rawScore": 3,
+        "weight": 9,
+        "weighted": 6.75,
+        "status": "Strength",
+        "modelScores": [
+          {
+            "model": "claude-opus-5",
+            "score": 3
+          },
+          {
+            "model": "gpt-6-astra",
+            "score": 3
+          },
+          {
+            "model": "grok-4.6",
+            "score": 3
+          }
+        ],
+        "panelCentral": 3,
+        "spread": 0,
+        "vetoed": false,
+        "contested": false,
+        "floor": 3,
+        "floorAttribution": {
+          "value": 3,
+          "applied": true,
+          "ruleId": "agent-interface-operability/L3.docs+machine-surface",
+          "reason": "agent instructions plus a machine-operable surface establish integrated operability",
+          "fields": [
+            "agentSurfaces.agentsMdPaths",
+            "agentSurfaces.mcpConfigPaths",
+            "agentSurfaces.skillFiles"
+          ]
+        },
+        "floorDecidedScore": false,
+        "ceiling": null,
+        "ceilingAttribution": {
+          "value": 0,
+          "applied": false,
+          "ruleId": "",
+          "reason": "no ceiling rule applies to this dimension",
+          "fields": []
+        },
+        "decidedBy": "model panel",
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no deterministic floor establishes a higher score for this dimension; the remaining distance is a panel judgement, and score 4 is reserved for a verified closed loop"
+        },
+        "rubricConstraints": [
+          {
+            "dimension": "agent-interface-operability",
+            "rule": "For D1, MCP servers or skills alone do not establish integrated operability. When agent instructions and a reproducible bootstrap-validation-compliant-PR path are absent, cap D1 at 2.",
+            "lifts": "a reproducible bootstrap, validation, and compliant-PR path alongside agent instructions"
+          }
+        ],
+        "modelReasoning": [
+          {
+            "model": "claude-opus-5",
+            "rawScore": 3,
+            "rationale": [
+              "Three AGENTS.md files, devcontainer, MCP config, skill and PR-reachable cargo fmt/clippy/test give a bootstrap-validate path, but agentAuthoredMergedCount=0 shows no demonstrated compliant agent PR, so not verified autonomous."
+            ],
+            "evidenceRefs": [
+              "agentSurfaces.agentsMdPaths",
+              "files.devcontainer"
+            ]
+          },
+          {
+            "model": "gpt-6-astra",
+            "rawScore": 3,
+            "rationale": [
+              "Agent instructions, a reproducible development environment and PR-reachable validation support integrated operability. A completed, accepted agent PR path is not demonstrated."
+            ],
+            "evidenceRefs": [
+              "agentSurfaces.agentsMdPaths",
+              "agentSurfaces.devcontainerPaths",
+              "validationCommands"
+            ]
+          },
+          {
+            "model": "grok-4.6",
+            "rawScore": 3,
+            "rationale": [
+              "AGENTS.md (root and nested), devcontainer bootstrap, MCP config, skills, and PR-reachable cargo fmt/clippy/test form an integrated agent path. No shipped MCP servers or merged agent PRs for closed-loop credit."
+            ],
+            "evidenceRefs": [
+              "agentSurfaces.agentsMdPaths",
+              "files.devcontainer",
+              "validationCommands"
+            ]
+          }
+        ],
+        "reasoningAvailable": true,
+        "reasoningNote": ""
+      },
+      {
+        "key": "automation-coverage",
+        "name": "Automation Coverage for Routine Maintenance",
+        "rawScore": 3,
+        "weight": 13,
+        "weighted": 9.75,
+        "status": "Strength",
+        "modelScores": [
+          {
+            "model": "claude-opus-5",
+            "score": 3
+          },
+          {
+            "model": "gpt-6-astra",
+            "score": 3
+          },
+          {
+            "model": "grok-4.6",
+            "score": 3
+          }
+        ],
+        "panelCentral": 3,
+        "spread": 0,
+        "vetoed": false,
+        "contested": false,
+        "floor": 3,
+        "floorAttribution": {
+          "value": 3,
+          "applied": true,
+          "ruleId": "automation-coverage/L3.chaining",
+          "reason": "workflow chaining across at least two pipelines",
+          "fields": [
+            "ci.effectivePipelineCount",
+            "ci.hasWorkflowChaining"
+          ]
+        },
+        "floorDecidedScore": false,
+        "ceiling": null,
+        "ceilingAttribution": {
+          "value": 0,
+          "applied": false,
+          "ruleId": "",
+          "reason": "no ceiling rule applies to this dimension",
+          "fields": []
+        },
+        "decidedBy": "model panel",
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no deterministic floor establishes a higher score for this dimension; the remaining distance is a panel judgement, and score 4 is reserved for a verified closed loop"
+        },
+        "rubricConstraints": [],
+        "modelReasoning": [
+          {
+            "model": "claude-opus-5",
+            "rawScore": 3,
+            "rationale": [
+              "Workflow chaining via workflow_run, manual dispatch, steward/maintenance pipelines and ADR-0022 idempotent PR publication with recurring-audit evidence; no scheduled workflow (hasScheduledWorkflow=false) limits unattended maintenance."
+            ],
+            "evidenceRefs": [
+              "ci.hasWorkflowChaining",
+              "ci.pipelineFiles"
+            ]
+          },
+          {
+            "model": "gpt-6-astra",
+            "rawScore": 3,
+            "rationale": [
+              "Machine-triggerable workflows and chaining integrate maintenance automation. Verified recurring-audit deduplication and repeat no-op behavior strengthen reliability, but do not establish closure of the complete maintenance-to-accepted-PR lifecycle."
+            ],
+            "evidenceRefs": [
+              "ci.hasWorkflowChaining",
+              "agentSurfaces.machineTriggerable",
+              "executionVerification.observations"
+            ]
+          },
+          {
+            "model": "grok-4.6",
+            "rawScore": 3,
+            "rationale": [
+              "Workflow chaining, machine-triggerable surfaces, PR validation, and repo-steward/ci-maintenance pipelines show integrated maintenance. No scheduled workflow or verified unattended closed loop."
+            ],
+            "evidenceRefs": [
+              "ci.hasWorkflowChaining",
+              "ci.pipelineFiles",
+              "agentSurfaces.machineTriggerable"
+            ]
+          }
+        ],
+        "reasoningAvailable": true,
+        "reasoningNote": ""
+      },
+      {
+        "key": "self-healing-cicd",
+        "name": "Self-Healing CI/CD",
+        "rawScore": 3,
+        "weight": 18,
+        "weighted": 13.5,
+        "status": "Strength",
+        "modelScores": [
+          {
+            "model": "claude-opus-5",
+            "score": 3
+          },
+          {
+            "model": "gpt-6-astra",
+            "score": 3
+          },
+          {
+            "model": "grok-4.6",
+            "score": 3
+          }
+        ],
+        "panelCentral": 3,
+        "spread": 0,
+        "vetoed": false,
+        "contested": false,
+        "floor": 1,
+        "floorAttribution": {
+          "value": 1,
+          "applied": true,
+          "ruleId": "self-healing-cicd/L1.pr-detection",
+          "reason": "meaningful PR validation establishes automated failure detection",
+          "fields": [
+            "ci.effectivePrValidation"
+          ]
+        },
+        "floorDecidedScore": false,
+        "ceiling": null,
+        "ceilingAttribution": {
+          "value": 0,
+          "applied": false,
+          "ruleId": "",
+          "reason": "no ceiling rule applies to this dimension",
+          "fields": []
+        },
+        "decidedBy": "model panel",
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no deterministic floor establishes a higher score for this dimension; the remaining distance is a panel judgement, and score 4 is reserved for a verified closed loop"
+        },
+        "rubricConstraints": [
+          {
+            "dimension": "self-healing-cicd",
+            "rule": "D3 is capped at 3 when selfHealing.hasRollbackPath is false.",
+            "lifts": "selfHealing.hasRollbackPath"
+          }
+        ],
+        "modelReasoning": [
+          {
+            "model": "claude-opus-5",
+            "rawScore": 3,
+            "rationale": [
+              "Evaluator-observed native runs show two failure classes with 1,0,0 repair/validation pairs, escalation and repeat no-op handling, but selfHealing.hasRollbackPath=false caps this dimension at 3."
+            ],
+            "evidenceRefs": [
+              "selfHealing.hasRollbackPath",
+              "executionVerification.facts",
+              "executionVerification.observations"
+            ]
+          },
+          {
+            "model": "gpt-6-astra",
+            "rawScore": 3,
+            "rationale": [
+              "Authorized evaluator-observed execution verifies multiple failure classes, repair/validation pairs, rollback, escalation and connected handoffs. Nevertheless, the explicit rubric cap limits D3 to 3 because selfHealing.hasRollbackPath is false."
+            ],
+            "evidenceRefs": [
+              "executionVerification.facts",
+              "executionVerification.recovery",
+              "selfHealing.hasRollbackPath"
+            ]
+          },
+          {
+            "model": "grok-4.6",
+            "rawScore": 3,
+            "rationale": [
+              "Evaluator-observed verification covers multiple failure classes, repair/validation pairs, CI intake, and rollback. selfHealing.hasRollbackPath is false, so D3 is capped at 3."
+            ],
+            "evidenceRefs": [
+              "executionVerification.facts.multipleFailureClassesVerified",
+              "executionVerification.facts.automaticRollbackVerified",
+              "selfHealing.hasRollbackPath"
+            ]
+          }
+        ],
+        "reasoningAvailable": true,
+        "reasoningNote": ""
+      },
+      {
+        "key": "continuous-improvement-loops",
+        "name": "Continuous Improvement Loops",
+        "rawScore": 2,
+        "weight": 13,
+        "weighted": 6.5,
+        "status": "On track",
+        "modelScores": [
+          {
+            "model": "claude-opus-5",
+            "score": 3
+          },
+          {
+            "model": "gpt-6-astra",
+            "score": 2
+          },
+          {
+            "model": "grok-4.6",
+            "score": 2
+          }
+        ],
+        "panelCentral": 2,
+        "spread": 1,
+        "vetoed": false,
+        "contested": false,
+        "floor": 0,
+        "floorAttribution": {
+          "value": 0,
+          "applied": false,
+          "ruleId": "",
+          "reason": "no floor rule satisfied; no deterministic minimum established",
+          "fields": []
+        },
+        "floorDecidedScore": false,
+        "ceiling": null,
+        "ceilingAttribution": {
+          "value": 0,
+          "applied": false,
+          "ruleId": "",
+          "reason": "no ceiling rule applies to this dimension",
+          "fields": []
+        },
+        "decidedBy": "model panel",
+        "nextLevel": {
+          "reachable": true,
+          "targetLevel": 3,
+          "ruleId": "continuous-improvement-loops/L3.scheduled-review",
+          "ruleReason": "scheduled workflows feeding agent review or agentic workflows",
+          "conditions": [
+            {
+              "signal": "ci.effectiveScheduledWorkflow",
+              "description": "ci.effectiveScheduledWorkflow",
+              "observed": false
+            },
+            {
+              "signal": "governance.agentReviewConfigFiles",
+              "description": "governance.agentReviewConfigFiles \u003e= 1",
+              "observed": 0
+            }
+          ],
+          "alternatives": [],
+          "guaranteed": true,
+          "statement": "satisfying ci.effectiveScheduledWorkflow and governance.agentReviewConfigFiles \u003e= 1 guarantees at least 3/4 regardless of what the model panel returns"
+        },
+        "rubricConstraints": [],
+        "modelReasoning": [
+          {
+            "model": "claude-opus-5",
+            "rawScore": 3,
+            "rationale": [
+              "Recurring-audit dedupe and feedback-expiry cases with proof-of-fix pairs, evidence reports and evidence-gated ADRs show governed loops, but no bounded active learned-rule corpus with candidate/active/retired promotion is evidenced."
+            ],
+            "evidenceRefs": [
+              "observability.reportArtifactPaths"
+            ]
+          },
+          {
+            "model": "gpt-6-astra",
+            "rawScore": 2,
+            "rationale": [
+              "Recurring audits, feedback handling and verified proof-of-fix support repeatable improvement. No governed learned-rule corpus, repeated-evidence promotion or candidate-active-retired rule lifecycle is established."
+            ],
+            "evidenceRefs": [
+              "executionVerification.observations",
+              "executionVerification.facts.repairValidationPairsVerified"
+            ]
+          },
+          {
+            "model": "grok-4.6",
+            "rawScore": 2,
+            "rationale": [
+              "Recurring-audit and feedback scenarios with proof-style artifacts show repeatable review/fix loops. No governed learned-rule corpus or candidate-active-retired promotion; pack disclaims learning-gain."
+            ],
+            "evidenceRefs": [
+              "executionVerification.observations",
+              "observability.reportArtifactPaths"
+            ]
+          }
+        ],
+        "reasoningAvailable": true,
+        "reasoningNote": ""
+      },
+      {
+        "key": "agent-execution-surfaces",
+        "name": "Agent Execution Surfaces",
+        "rawScore": 3,
+        "weight": 9,
+        "weighted": 6.75,
+        "status": "Strength",
+        "modelScores": [
+          {
+            "model": "claude-opus-5",
+            "score": 2
+          },
+          {
+            "model": "gpt-6-astra",
+            "score": 3
+          },
+          {
+            "model": "grok-4.6",
+            "score": 2
+          }
+        ],
+        "panelCentral": 2,
+        "spread": 1,
+        "vetoed": false,
+        "contested": false,
+        "floor": 3,
+        "floorAttribution": {
+          "value": 3,
+          "applied": true,
+          "ruleId": "agent-execution-surfaces/L3.skills+mcp-config",
+          "reason": "curated skills combined with MCP configuration",
+          "fields": [
+            "agentSurfaces.mcpConfigPaths",
+            "agentSurfaces.skillFiles"
+          ]
+        },
+        "floorDecidedScore": true,
+        "ceiling": null,
+        "ceilingAttribution": {
+          "value": 0,
+          "applied": false,
+          "ruleId": "",
+          "reason": "no ceiling rule applies to this dimension",
+          "fields": []
+        },
+        "decidedBy": "deterministic floor",
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no deterministic floor establishes a higher score for this dimension; the remaining distance is a panel judgement, and score 4 is reserved for a verified closed loop"
+        },
+        "rubricConstraints": [],
+        "modelReasoning": [
+          {
+            "model": "claude-opus-5",
+            "rawScore": 2,
+            "rationale": [
+              "Machine-triggerable workflows and one curated skill exist, but mcpServersShipped is empty (config-only .mcp.json/.codex), no prompt files and no agentic workflow files, so surfaces stay repeatable not integrated."
+            ],
+            "evidenceRefs": [
+              "agentSurfaces.mcpServersShipped",
+              "agentSurfaces.skillFiles",
+              "agentSurfaces.machineTriggerable"
+            ]
+          },
+          {
+            "model": "gpt-6-astra",
+            "rawScore": 3,
+            "rationale": [
+              "Machine-triggerable execution, a repository-specific operations skill and verified isolated local execution provide integrated surfaces. No shipped MCP server or hostile-source sandbox is evidenced; configuration alone does not establish autonomous closure."
+            ],
+            "evidenceRefs": [
+              "agentSurfaces.machineTriggerable",
+              "agentSurfaces.skillFiles",
+              "executionVerification.environment"
+            ]
+          },
+          {
+            "model": "grok-4.6",
+            "rawScore": 2,
+            "rationale": [
+              "Machine-triggerable workflows, one operations skill, and MCP/devcontainer configs are repeatable execution surfaces. No shipped MCP servers, agentic workflows, or PR-lifecycle skills for integration."
+            ],
+            "evidenceRefs": [
+              "agentSurfaces.machineTriggerable",
+              "agentSurfaces.skillFiles",
+              "agentSurfaces.mcpConfigPaths"
+            ]
+          }
+        ],
+        "reasoningAvailable": true,
+        "reasoningNote": ""
+      },
+      {
+        "key": "policy-safety-guardrails",
+        "name": "Policy, Safety, and Change Guardrails",
+        "rawScore": 3,
+        "weight": 10,
+        "weighted": 7.5,
+        "status": "Strength",
+        "modelScores": [
+          {
+            "model": "claude-opus-5",
+            "score": 3
+          },
+          {
+            "model": "gpt-6-astra",
+            "score": 3
+          },
+          {
+            "model": "grok-4.6",
+            "score": 3
+          }
+        ],
+        "panelCentral": 3,
+        "spread": 0,
+        "vetoed": false,
+        "contested": false,
+        "floor": 2,
+        "floorAttribution": {
+          "value": 2,
+          "applied": true,
+          "ruleId": "policy-safety-guardrails/L2.partial",
+          "reason": "a partial guardrail is present",
+          "fields": [
+            "governance.actionsPinned"
+          ]
+        },
+        "floorDecidedScore": false,
+        "ceiling": null,
+        "ceilingAttribution": {
+          "value": 0,
+          "applied": false,
+          "ruleId": "",
+          "reason": "no ceiling rule applies to this dimension",
+          "fields": []
+        },
+        "decidedBy": "model panel",
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no deterministic floor establishes a higher score for this dimension; the remaining distance is a panel judgement, and score 4 is reserved for a verified closed loop"
+        },
+        "rubricConstraints": [],
+        "modelReasoning": [
+          {
+            "model": "claude-opus-5",
+            "rawScore": 3,
+            "rationale": [
+              "Three rulesets enforce PR review, code-owner review, thread resolution, CodeQL scanning, code quality and six required checks; actions fully pinned and outputs bounded. No CODEOWNERS file and non-OS sandbox limits keep it below 4."
+            ],
+            "evidenceRefs": [
+              "governance.actionsPinned",
+              "apiEvidence.branchProtection.effectiveRules",
+              "executionVerification.limits"
+            ]
+          },
+          {
+            "model": "gpt-6-astra",
+            "rawScore": 3,
+            "rationale": [
+              "Effective rules enforce reviews, owner approval, status checks and security gates; actions are pinned and execution bounds verified. The classic protection endpoint limitation does not negate observed rulesets. End-to-end autonomous policy closure is not established."
+            ],
+            "evidenceRefs": [
+              "apiEvidence.branchProtection.effectiveRules",
+              "governance.actionsPinned",
+              "executionVerification.facts.policyBoundsVerified"
+            ]
+          },
+          {
+            "model": "grok-4.6",
+            "rawScore": 3,
+            "rationale": [
+              "Rulesets enforce reviews, team reviewers, last-push approval, strict status checks, CodeQL, and Copilot review; actions are pinned. Classic CODEOWNERS file is absent; not a verified closed-loop."
+            ],
+            "evidenceRefs": [
+              "apiEvidence.branchProtection.effectiveRules",
+              "governance.actionsPinned",
+              "apiEvidence.branchProtection.requiresStatusChecks"
+            ]
+          }
+        ],
+        "reasoningAvailable": true,
+        "reasoningNote": ""
+      },
+      {
+        "key": "observability",
+        "name": "Observability of Agentic Work",
+        "rawScore": 4,
+        "weight": 9,
+        "weighted": 9,
+        "status": "Strength",
+        "modelScores": [
+          {
+            "model": "claude-opus-5",
+            "score": 4
+          },
+          {
+            "model": "gpt-6-astra",
+            "score": 4
+          },
+          {
+            "model": "grok-4.6",
+            "score": 4
+          }
+        ],
+        "panelCentral": 4,
+        "spread": 0,
+        "vetoed": false,
+        "contested": false,
+        "floor": 3,
+        "floorAttribution": {
+          "value": 3,
+          "applied": true,
+          "ruleId": "observability/L3.machine-consumable",
+          "reason": "machine-consumable CI signals combined with labels or reporting",
+          "fields": [
+            "ci.effectiveMachineConsumableSignals",
+            "observability.reportArtifactPaths"
+          ]
+        },
+        "floorDecidedScore": false,
+        "ceiling": null,
+        "ceilingAttribution": {
+          "value": 0,
+          "applied": false,
+          "ruleId": "",
+          "reason": "no ceiling rule applies to this dimension",
+          "fields": []
+        },
+        "decidedBy": "model panel",
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no deterministic floor establishes a higher score for this dimension; the remaining distance is a panel judgement, and score 4 is reserved for a verified closed loop"
+        },
+        "rubricConstraints": [],
+        "modelReasoning": [
+          {
+            "model": "claude-opus-5",
+            "rawScore": 4,
+            "rationale": [
+              "Evaluator-observed, controller-authorized verification confirms agent-origin correlation, lifecycle traces, machine completion signals, consumer actions plus stale/duplicate and failure/recovery handling, meeting local-closed-loop L4 for observability."
+            ],
+            "evidenceRefs": [
+              "executionVerification.facts",
+              "executionVerification.producerAuthorization",
+              "ci.machineConsumableSignals"
+            ]
+          },
+          {
+            "model": "gpt-6-astra",
+            "rawScore": 4,
+            "rationale": [
+              "Authorized evaluator-observed local execution verifies agent-origin correlation, inspectable lifecycle outcomes, completion signals and consumer actions, including recovery and stale/duplicate handling. This meets local closed-loop criteria without hosted observation or signatures."
+            ],
+            "evidenceRefs": [
+              "executionVerification.origin",
+              "executionVerification.producerAuthorization",
+              "executionVerification.facts"
+            ]
+          },
+          {
+            "model": "grok-4.6",
+            "rawScore": 4,
+            "rationale": [
+              "Evaluator-observed local closure verifies agent-origin correlation, inspectable lifecycle, machine completion signals, consumer actions, and stale/duplicate handling. Hosting and attestation are not required for local L4."
+            ],
+            "evidenceRefs": [
+              "executionVerification.facts.machineCompletionSignalsVerified",
+              "executionVerification.facts.agentOriginCorrelated",
+              "executionVerification.facts.staleDuplicateHandlingVerified"
+            ]
+          }
+        ],
+        "reasoningAvailable": true,
+        "reasoningNote": ""
+      },
+      {
+        "key": "human-on-the-loop",
+        "name": "Human-on-the-Loop Integration",
+        "rawScore": 3,
+        "weight": 9,
+        "weighted": 6.75,
+        "status": "Strength",
+        "modelScores": [
+          {
+            "model": "claude-opus-5",
+            "score": 3
+          },
+          {
+            "model": "gpt-6-astra",
+            "score": 3
+          },
+          {
+            "model": "grok-4.6",
+            "score": 3
+          }
+        ],
+        "panelCentral": 3,
+        "spread": 0,
+        "vetoed": false,
+        "contested": false,
+        "floor": 3,
+        "floorAttribution": {
+          "value": 3,
+          "applied": true,
+          "ruleId": "human-on-the-loop/L3.agent-review-enforced",
+          "reason": "agent code review is enforced at the runtime boundary",
+          "fields": [
+            "apiEvidence.available",
+            "apiEvidence.branchProtection.agentCodeReviewEnforced"
+          ]
+        },
+        "floorDecidedScore": false,
+        "ceiling": null,
+        "ceilingAttribution": {
+          "value": 0,
+          "applied": false,
+          "ruleId": "",
+          "reason": "no ceiling rule applies to this dimension",
+          "fields": []
+        },
+        "decidedBy": "model panel",
+        "nextLevel": {
+          "reachable": false,
+          "targetLevel": 0,
+          "ruleId": "",
+          "ruleReason": "",
+          "conditions": [],
+          "alternatives": [],
+          "guaranteed": false,
+          "statement": "no deterministic floor establishes a higher score for this dimension; the remaining distance is a panel judgement, and score 4 is reserved for a verified closed loop"
+        },
+        "rubricConstraints": [],
+        "modelReasoning": [
+          {
+            "model": "claude-opus-5",
+            "rawScore": 3,
+            "rationale": [
+              "Enforced approvals, team reviewer routing, last-push approval, Copilot code review on push, 36 structured labels and PR/issue templates support supervision; no compliant agent PRs merged and no CODEOWNERS file limits routing proof."
+            ],
+            "evidenceRefs": [
+              "apiEvidence.branchProtection.requiresCodeOwnerReview",
+              "apiEvidence.labels.count",
+              "governance.prTemplatePaths"
+            ]
+          },
+          {
+            "model": "gpt-6-astra",
+            "rawScore": 3,
+            "rationale": [
+              "Enforced human and owner reviews, automated agent review, structured routing labels and verified escalation integrate human supervision. A completed compliant agent PR and closed exception-to-acceptance lifecycle are not demonstrated."
+            ],
+            "evidenceRefs": [
+              "apiEvidence.branchProtection.effectiveRules",
+              "apiEvidence.labels.names",
+              "executionVerification.facts.escalationVerified"
+            ]
+          },
+          {
+            "model": "grok-4.6",
+            "rawScore": 3,
+            "rationale": [
+              "Enforced human review, team routing, Copilot review, structured labels, and PR/issue templates provide integrated supervision. CODEOWNERS file missing; agent merged PRs not demonstrated."
+            ],
+            "evidenceRefs": [
+              "apiEvidence.branchProtection.requiredApprovingReviewCount",
+              "apiEvidence.labels.names",
+              "governance.prTemplatePaths"
+            ]
+          }
+        ],
+        "reasoningAvailable": true,
+        "reasoningNote": ""
+      },
+      {
+        "key": "agentic-change-throughput",
+        "name": "Agentic Change Throughput \u0026 Contributor Mix",
+        "rawScore": 2,
+        "weight": 10,
+        "weighted": 5,
+        "status": "On track",
+        "modelScores": [
+          {
+            "model": "claude-opus-5",
+            "score": 2
+          },
+          {
+            "model": "gpt-6-astra",
+            "score": 2
+          },
+          {
+            "model": "grok-4.6",
+            "score": 2
+          }
+        ],
+        "panelCentral": 2,
+        "spread": 0,
+        "vetoed": false,
+        "contested": false,
+        "floor": 2,
+        "floorAttribution": {
+          "value": 2,
+          "applied": true,
+          "ruleId": "agentic-change-throughput/L2.coauthored",
+          "reason": "recurring agent co-authorship without enforced-review corroboration is metadata-only",
+          "fields": [
+            "authorship.aiAgentCoauthored"
+          ]
+        },
+        "floorDecidedScore": false,
+        "ceiling": 2,
+        "ceilingAttribution": {
+          "value": 2,
+          "applied": true,
+          "ruleId": "agentic-change-throughput/ceiling.unverified-authorship",
+          "reason": "no API-confirmed agent-authored merged pull request; capped at 2 for metadata-only attribution",
+          "fields": [
+            "apiEvidence.available",
+            "apiEvidence.mergedPRs.agentAuthoredMergedCount"
+          ]
+        },
+        "decidedBy": "model panel",
+        "nextLevel": {
+          "reachable": true,
+          "targetLevel": 3,
+          "ruleId": "agentic-change-throughput/L3.merged-3",
+          "ruleReason": "API evidence confirms at least three agent-authored merged pull requests",
+          "conditions": [
+            {
+              "signal": "apiEvidence.mergedPRs.agentAuthoredMergedCount",
+              "description": "apiEvidence.mergedPRs.agentAuthoredMergedCount \u003e= 3",
+              "observed": 0
+            }
+          ],
+          "alternatives": [
+            "agentic-change-throughput/L3.coauthored+enforced-review"
+          ],
+          "guaranteed": true,
+          "statement": "satisfying apiEvidence.mergedPRs.agentAuthoredMergedCount \u003e= 3 guarantees at least 3/4 regardless of what the model panel returns"
+        },
+        "rubricConstraints": [
+          {
+            "dimension": "agentic-change-throughput",
+            "rule": "D9 is capped at 2 for metadata-only attribution without enforced-review corroboration; recurring co-authorship with enforced human review can reach 3 but not 4.",
+            "lifts": "apiEvidence.mergedPRs.agentAuthoredMergedCount"
+          }
+        ],
+        "modelReasoning": [
+          {
+            "model": "claude-opus-5",
+            "rawScore": 2,
+            "rationale": [
+              "Zero agent-authored merged PRs over 90 days and 0% agent authorship share; only 7 of 295 commits carry agent Co-authored-by trailers, so attributable agentic throughput is limited metadata-only despite enforced review."
+            ],
+            "evidenceRefs": [
+              "apiEvidence.mergedPRs.agentAuthoredMergedShare",
+              "authorship.aiAgentCoauthored",
+              "authorship.shares.aiAgent"
+            ]
+          },
+          {
+            "model": "gpt-6-astra",
+            "rawScore": 2,
+            "rationale": [
+              "Seven agent-coauthored commits provide recurring but limited attribution alongside enforced review. Zero agent-authored merged PRs are observed in the window; material agentic throughput or measurable velocity impact is not established."
+            ],
+            "evidenceRefs": [
+              "authorship.aiAgentCoauthored",
+              "apiEvidence.mergedPRs",
+              "apiEvidence.branchProtection.effectiveRules"
+            ]
+          },
+          {
+            "model": "grok-4.6",
+            "rawScore": 2,
+            "rationale": [
+              "Seven agent co-authored commits with enforced review show limited repeatable attribution; zero agent-authored merged PRs and no throughput claim. Not material guarded volume."
+            ],
+            "evidenceRefs": [
+              "authorship.aiAgentCoauthored",
+              "apiEvidence.mergedPRs.agentAuthoredMergedCount",
+              "apiEvidence.branchProtection.requiredApprovingReviewCount"
+            ]
+          }
+        ],
+        "reasoningAvailable": true,
+        "reasoningNote": ""
+      }
+    ],
+    "cleanupAutomation": {
+      "category": "Continuous cleanup automation",
+      "score": 70,
+      "rating": "Enrollment unverified",
+      "details": [
+        "Cleanup capability: detected with 135 executable or configured evidence file(s).",
+        "Bounded repeatable driver: detected with 12 executable or configured evidence file(s).",
+        "Concrete scheduler enrollment: not detected.",
+        "Observed behavior: mutating."
+      ],
+      "issues": [
+        "The cleanup driver is designed for repeated invocation, but concrete scheduler enrollment was not found."
+      ],
+      "metrics": {
+        "advisory_capability_exists": false,
+        "behavior": "mutating",
+        "cleanup_capability_exists": true,
+        "manifest_declaration_count": 0,
+        "mutation_capability_exists": true,
+        "read_error_count": 3,
+        "scheduled_driver_exists": true,
+        "scheduler_enrollment_exists": false,
+        "state_config_count": 3
+      },
+      "capabilities": {
+        "advisory": {
+          "available": false,
+          "evidence": [
+            "apps/web/src/App.tsx",
+            "apps/web/src/PublishedResultCard.tsx",
+            "apps/web/src/factoryCheckpointRecovery.test.mjs",
+            "apps/web/src/missionCollaboration.test.mjs",
+            "apps/web/src/missionOriginContext.test.mjs",
+            "apps/web/src/office/officeModel.test.mjs",
+            "apps/web/src/runActivity.test.mjs",
+            "apps/web/src/runActivity.ts",
+            "apps/web/src/snapshotRefresh.test.mjs",
+            "apps/web/src/workResultCard.test.mjs",
+            "crates/crony-cli/src/factory.rs",
+            "crates/crony-runner/src/adapter/connection/copilot.rs",
+            "crates/crony-runner/src/adapter/connection/tests.rs",
+            "crates/crony-runner/src/adapter/copilot.rs",
+            "crates/crony-runner/src/adapter/copilot_fs.rs",
+            "crates/crony-runner/src/adapter/external.rs",
+            "crates/crony-runner/src/connection_setup/integration_tests.rs",
+            "crates/crony-runner/src/connection_setup/tests.rs",
+            "crates/crony-runner/src/connections.rs",
+            "crates/crony-runner/src/deliverable.rs",
+            "crates/crony-runner/src/main.rs",
+            "crates/crony-runner/src/source_checkpoint.rs",
+            "crates/crony-runner/src/verifier.rs",
+            "crates/crony-runner/src/workspace.rs",
+            "crates/crony-server/src/artifacts.rs",
+            "crates/crony-server/src/factory_connection_tests.rs",
+            "crates/crony-server/src/main.rs",
+            "crates/crony-store/src/budget_checkpoint_tests.rs",
+            "crates/crony-store/src/checkpoint_correction_retry_tests.rs",
+            "crates/crony-store/src/checkpoint_retention.rs",
+            "crates/crony-store/src/factory_connection_tests.rs",
+            "crates/crony-store/src/factory_recovery_loss_tests.rs",
+            "crates/crony-store/src/factory_run_failure.rs",
+            "crates/crony-store/src/retained_provider_receipt.rs",
+            "crates/crony-store/src/retained_provider_receipt_tests.rs",
+            "crates/crony-store/src/staffing.rs",
+            "crates/crony-store/src/workspace_connections.rs",
+            "crates/crony-store/src/workspace_connections_tests.rs",
+            "docs/assets/readme/generate_ecorp_arcade_assets.py",
+            "scenarios/incident-command/server.mjs",
+            "scenarios/incident-command/test/incident-command.test.mjs",
+            "scenarios/repo-steward/actions.mjs",
+            "scenarios/repo-steward/actions.test.mjs",
+            "scenarios/repo-steward/feedback.test.mjs",
+            "scenarios/repo-steward/lib/feedback.mjs",
+            "scenarios/repo-steward/lib/github.mjs",
+            "scenarios/repo-steward/lib/recurring-audit.mjs",
+            "scenarios/repo-steward/lib/steward.mjs",
+            "scenarios/repo-steward/maintenance.test.mjs",
+            "scenarios/repo-steward/recurring-audit.test.mjs",
+            "scenarios/repo-steward/steward.test.mjs",
+            "scenarios/repo-steward/teams-host.mjs",
+            "scenarios/repo-steward/teams-host.test.mjs",
+            "tools/bootstrap_github.ps1",
+            "tools/check_documentation.test.mjs",
+            "tools/ci_maintenance.mjs",
+            "tools/ci_maintenance.test.mjs",
+            "tools/e2e_approvals.mjs",
+            "tools/e2e_artifact_staging.mjs",
+            "tools/e2e_artifacts.mjs",
+            "tools/e2e_budget_revision.mjs",
+            "tools/e2e_checkpoint_verification.mjs",
+            "tools/e2e_checkpoint_verification.test.mjs",
+            "tools/e2e_codex.mjs",
+            "tools/e2e_evidence_selection.mjs",
+            "tools/e2e_external_adapters.test.mjs",
+            "tools/e2e_factory_claims.mjs",
+            "tools/e2e_factory_cockpit_reconnect.mjs",
+            "tools/e2e_factory_commit_routing.mjs",
+            "tools/e2e_factory_controller.mjs",
+            "tools/e2e_factory_controller_service.mjs",
+            "tools/e2e_factory_publication.mjs",
+            "tools/e2e_factory_run_activity.py",
+            "tools/e2e_factory_source_drift.mjs",
+            "tools/e2e_factory_verification_recovery.mjs",
+            "tools/e2e_idle_cleanup.mjs",
+            "tools/e2e_late_termination.test.mjs",
+            "tools/e2e_leases.mjs",
+            "tools/e2e_mission_contracts.mjs",
+            "tools/e2e_mission_preview.mjs",
+            "tools/e2e_mission_repository_routing.mjs",
+            "tools/e2e_operation_feedback.mjs",
+            "tools/e2e_portable_deliverables.mjs",
+            "tools/e2e_predispatch_failure.mjs",
+            "tools/e2e_publication_credential_lock.mjs",
+            "tools/e2e_recovery_operations_browser.mjs",
+            "tools/e2e_runner_reconnect.mjs",
+            "tools/e2e_steward_maintenance.mjs",
+            "tools/e2e_worktrees.mjs",
+            "tools/fake_github_quota.test.mjs",
+            "tools/import_operation_behavior.mjs",
+            "tools/import_operation_behavior.test.mjs",
+            "tools/local_stack_lifecycle.test.mjs",
+            "tools/local_stack_lifecycle.test.ps1",
+            "tools/office_model.test.mjs",
+            "tools/operation_feedback.mjs",
+            "tools/operation_feedback.test.mjs",
+            "tools/operation_receipt.test.mjs",
+            "tools/probe_copilot_live.mjs",
+            "tools/run_evals.mjs",
+            "tools/windows_connection_acl_readiness.ps1"
+          ]
+        },
+        "cleanup_capability": {
+          "available": true,
+          "evidence": [
+            "apps/web/src/App.tsx",
+            "apps/web/src/PublishedResultCard.tsx",
+            "apps/web/src/factoryCheckpointRecovery.test.mjs",
+            "apps/web/src/factoryControllerSelection.test.mjs",
+            "apps/web/src/missionCollaboration.test.mjs",
+            "apps/web/src/missionOriginContext.test.mjs",
+            "apps/web/src/missionProjection.test.mjs",
+            "apps/web/src/missionResultContext.test.mjs",
+            "apps/web/src/office/officeModel.test.mjs",
+            "apps/web/src/runActivity.test.mjs",
+            "apps/web/src/runActivity.ts",
+            "apps/web/src/snapshotRefresh.test.mjs",
+            "apps/web/src/workResultCard.test.mjs",
+            "crates/crony-cli/src/factory.rs",
+            "crates/crony-cli/src/factory/project.rs",
+            "crates/crony-cli/src/factory/quota.rs",
+            "crates/crony-domain/src/lib.rs",
+            "crates/crony-runner/src/adapter/connection.rs",
+            "crates/crony-runner/src/adapter/connection/copilot.rs",
+            "crates/crony-runner/src/adapter/connection/tests.rs",
+            "crates/crony-runner/src/adapter/copilot.rs",
+            "crates/crony-runner/src/adapter/copilot_evidence.rs",
+            "crates/crony-runner/src/adapter/copilot_evidence_wire_tests.rs",
+            "crates/crony-runner/src/adapter/copilot_fs.rs",
+            "crates/crony-runner/src/adapter/external.rs",
+            "crates/crony-runner/src/adapter/process_tree.rs",
+            "crates/crony-runner/src/connection_setup/integration_tests.rs",
+            "crates/crony-runner/src/connection_setup/process.rs",
+            "crates/crony-runner/src/connection_setup/storage.rs",
+            "crates/crony-runner/src/connection_setup/tests.rs",
+            "crates/crony-runner/src/connections.rs",
+            "crates/crony-runner/src/deliverable.rs",
+            "crates/crony-runner/src/main.rs",
+            "crates/crony-runner/src/retained_provider_receipt_tests.rs",
+            "crates/crony-runner/src/source_checkpoint.rs",
+            "crates/crony-runner/src/verifier.rs",
+            "crates/crony-runner/src/workspace.rs",
+            "crates/crony-server/src/artifacts.rs",
+            "crates/crony-server/src/auth.rs",
+            "crates/crony-server/src/dependency_source.rs",
+            "crates/crony-server/src/factory_connection_tests.rs",
+            "crates/crony-server/src/main.rs",
+            "crates/crony-server/src/startup.rs",
+            "crates/crony-store/src/budget_checkpoint.rs",
+            "crates/crony-store/src/budget_checkpoint_tests.rs",
+            "crates/crony-store/src/checkpoint_cancellation_tests.rs",
+            "crates/crony-store/src/checkpoint_correction_publication_tests.rs",
+            "crates/crony-store/src/checkpoint_correction_retry_tests.rs",
+            "crates/crony-store/src/checkpoint_retention.rs",
+            "crates/crony-store/src/factory_connection_tests.rs",
+            "crates/crony-store/src/factory_cost_policy_tests.rs",
+            "crates/crony-store/src/factory_recovery_loss_tests.rs",
+            "crates/crony-store/src/factory_run_failure.rs",
+            "crates/crony-store/src/publication.rs",
+            "crates/crony-store/src/retained_provider_receipt.rs",
+            "crates/crony-store/src/retained_provider_receipt_tests.rs",
+            "crates/crony-store/src/staffing.rs",
+            "crates/crony-store/src/steering_lock_tests.rs",
+            "crates/crony-store/src/workspace_connections.rs",
+            "crates/crony-store/src/workspace_connections_tests.rs",
+            "docs/assets/readme/generate_ecorp_arcade_assets.py",
+            "scenarios/incident-command/server.mjs",
+            "scenarios/incident-command/test/incident-command.test.mjs",
+            "scenarios/repo-steward/actions.mjs",
+            "scenarios/repo-steward/actions.test.mjs",
+            "scenarios/repo-steward/feedback.test.mjs",
+            "scenarios/repo-steward/fixtures/demo.mjs",
+            "scenarios/repo-steward/lib/feedback.mjs",
+            "scenarios/repo-steward/lib/github.mjs",
+            "scenarios/repo-steward/lib/recurring-audit.mjs",
+            "scenarios/repo-steward/lib/steward.mjs",
+            "scenarios/repo-steward/maintenance.mjs",
+            "scenarios/repo-steward/maintenance.test.mjs",
+            "scenarios/repo-steward/recurring-audit.test.mjs",
+            "scenarios/repo-steward/steward.test.mjs",
+            "scenarios/repo-steward/teams-host.mjs",
+            "scenarios/repo-steward/teams-host.test.mjs",
+            "scenarios/vendor-guard/public/app.js",
+            "scenarios/vendor-guard/test/browser.test.mjs",
+            "scenarios/vendor-guard/test/server.test.mjs",
+            "tools/bootstrap_github.ps1",
+            "tools/check_documentation.test.mjs",
+            "tools/ci_maintenance.mjs",
+            "tools/ci_maintenance.test.mjs",
+            "tools/e2e_approvals.mjs",
+            "tools/e2e_artifact_staging.mjs",
+            "tools/e2e_artifacts.mjs",
+            "tools/e2e_budget_revision.mjs",
+            "tools/e2e_checkpoint_verification.mjs",
+            "tools/e2e_checkpoint_verification.test.mjs",
+            "tools/e2e_codex.mjs",
+            "tools/e2e_evidence_selection.mjs",
+            "tools/e2e_external_adapters.test.mjs",
+            "tools/e2e_factory_claims.mjs",
+            "tools/e2e_factory_cockpit_reconnect.mjs",
+            "tools/e2e_factory_commit_routing.mjs",
+            "tools/e2e_factory_controller.mjs",
+            "tools/e2e_factory_controller_service.mjs",
+            "tools/e2e_factory_publication.mjs",
+            "tools/e2e_factory_run_activity.py",
+            "tools/e2e_factory_source_drift.mjs",
+            "tools/e2e_factory_verification_recovery.mjs",
+            "tools/e2e_idle_cleanup.mjs",
+            "tools/e2e_late_termination.test.mjs",
+            "tools/e2e_launch_admission.mjs",
+            "tools/e2e_leases.mjs",
+            "tools/e2e_mission_contracts.mjs",
+            "tools/e2e_mission_preview.mjs",
+            "tools/e2e_mission_repository_routing.mjs",
+            "tools/e2e_mission_staffing.mjs",
+            "tools/e2e_operation_feedback.mjs",
+            "tools/e2e_portable_deliverables.mjs",
+            "tools/e2e_predispatch_failure.mjs",
+            "tools/e2e_publication_credential_lock.mjs",
+            "tools/e2e_recovery_operations_browser.mjs",
+            "tools/e2e_runner_reconnect.mjs",
+            "tools/e2e_steward_maintenance.mjs",
+            "tools/e2e_worktrees.mjs",
+            "tools/fake_github_quota.test.mjs",
+            "tools/import_operation_behavior.mjs",
+            "tools/import_operation_behavior.test.mjs",
+            "tools/local_stack_lifecycle.test.mjs",
+            "tools/local_stack_lifecycle.test.ps1",
+            "tools/local_stack_start.ps1",
+            "tools/office_model.test.mjs",
+            "tools/operation_feedback.mjs",
+            "tools/operation_feedback.test.mjs",
+            "tools/operation_receipt.test.mjs",
+            "tools/owned_test_stack.test.mjs",
+            "tools/probe_copilot_live.mjs",
+            "tools/run_evals.mjs",
+            "tools/runner_ack_fault_relay.test.mjs",
+            "tools/test_startup_validation.py",
+            "tools/test_startup_validation_harness.py",
+            "tools/windows_connection_acl_readiness.ps1"
+          ]
+        },
+        "mutation": {
+          "available": true,
+          "evidence": [
+            "crates/crony-runner/src/adapter/copilot.rs",
+            "crates/crony-server/src/artifacts.rs",
+            "tools/e2e_checkpoint_verification.mjs",
+            "tools/local_stack_lifecycle.test.ps1",
+            "tools/probe_copilot_live.mjs"
+          ]
+        },
+        "scheduled_driver": {
+          "available": true,
+          "evidence": [
+            "scripts/fake-agent.mjs",
+            "tools/bootstrap_github.ps1",
+            "tools/ci_maintenance.mjs",
+            "tools/e2e_checkpoint_verification.mjs",
+            "tools/e2e_evidence_selection.mjs",
+            "tools/e2e_factory_verification_recovery.mjs",
+            "tools/e2e_late_termination.mjs",
+            "tools/e2e_mission_staffing.mjs",
+            "tools/e2e_predispatch_failure.mjs",
+            "tools/e2e_recovery_operations_browser.mjs",
+            "tools/e2e_stopped_source_checkpoint.mjs",
+            "tools/fake_github_cli.mjs"
+          ]
+        },
+        "scheduler_enrollment": {
+          "available": false,
+          "evidence": []
+        }
+      },
+      "supporting_evidence": {
+        "agent_or_skill_manifests": [],
+        "read_errors": [
+          ".devcontainer/Dockerfile: UnicodeError",
+          "LICENSE: UnicodeError",
+          "NOTICE: UnicodeError"
+        ],
+        "state_or_cadence_config": [
+          ".github/workflows/ci.yml",
+          "scenarios/repo-steward/policy.json",
+          "scenarios/vendor-guard/evidence/browser-result.json"
+        ]
+      }
+    },
+    "evidenceAppendix": {
+      "categories": [
+        {
+          "category": "agentSurfaces",
+          "empty": false,
+          "entries": [
+            {
+              "field": "agentsMdPaths",
+              "value": [
+                "AGENTS.md",
+                "apps/web/AGENTS.md",
+                "tools/AGENTS.md"
+              ],
+              "empty": false
+            },
+            {
+              "field": "copilotInstructionPaths",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "devcontainerPaths",
+              "value": [
+                ".devcontainer/Dockerfile",
+                ".devcontainer/devcontainer.json"
+              ],
+              "empty": false
+            },
+            {
+              "field": "machineTriggerable",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "mcpConfigPaths",
+              "value": [
+                ".codex/config.toml",
+                ".mcp.json"
+              ],
+              "empty": false
+            },
+            {
+              "field": "mcpServersShipped",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "promptFiles",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "skillFiles",
+              "value": [
+                ".github/skills/ecorp-operations/SKILL.md"
+              ],
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "ci",
+          "empty": false,
+          "entries": [
+            {
+              "field": "agenticWorkflowFiles",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "azurePipelineFiles",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "hasManualDispatch",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "hasPrValidation",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "hasScheduledWorkflow",
+              "value": false,
+              "empty": false
+            },
+            {
+              "field": "hasWorkflowChaining",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "machineConsumableSignals",
+              "value": [
+                "workflow_run"
+              ],
+              "empty": false
+            },
+            {
+              "field": "pipelineFiles",
+              "value": [
+                ".github/workflows/ci-maintenance.yml",
+                ".github/workflows/ci.yml",
+                ".github/workflows/repo-steward.yml",
+                ".github/workflows/repository-checks.yml",
+                ".github/workflows/security-scan.yml"
+              ],
+              "empty": false
+            },
+            {
+              "field": "prWorkflowHasExplicitTestCommand",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "workflowFiles",
+              "value": [
+                ".github/workflows/ci-maintenance.yml",
+                ".github/workflows/ci.yml",
+                ".github/workflows/repo-steward.yml",
+                ".github/workflows/repository-checks.yml",
+                ".github/workflows/security-scan.yml"
+              ],
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "governance",
+          "empty": false,
+          "entries": [
+            {
+              "field": "actionsPinned",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "agentReviewConfigFiles",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "branchPolicyFiles",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "codeownersPath",
+              "value": "",
+              "empty": true
+            },
+            {
+              "field": "contributingPath",
+              "value": "CONTRIBUTING.md",
+              "empty": false
+            },
+            {
+              "field": "issueTemplatePaths",
+              "value": [
+                ".github/ISSUE_TEMPLATE/bug.yml",
+                ".github/ISSUE_TEMPLATE/config.yml",
+                ".github/ISSUE_TEMPLATE/feature.yml"
+              ],
+              "empty": false
+            },
+            {
+              "field": "labelConfigPaths",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "prTemplatePaths",
+              "value": [
+                ".github/pull_request_template.md"
+              ],
+              "empty": false
+            },
+            {
+              "field": "unpinnedActions",
+              "value": [],
+              "empty": true
+            }
+          ]
+        },
+        {
+          "category": "selfHealing",
+          "empty": false,
+          "entries": [
+            {
+              "field": "hasRollbackPath",
+              "value": false,
+              "empty": false
+            },
+            {
+              "field": "signalFiles",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "signalsFound",
+              "value": [],
+              "empty": true
+            }
+          ]
+        },
+        {
+          "category": "observability",
+          "empty": false,
+          "entries": [
+            {
+              "field": "dashboardPaths",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "reportArtifactPaths",
+              "value": [
+                "docs/evidence/2026-09-18-recurring-audit.md",
+                "docs/evidence/assets/codeblend-readiness/local-recurring-audit.json",
+                "docs/reports/README.md",
+                "docs/reports/ecorp-codeblend-readiness-2026-09-18.html"
+              ],
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "docs",
+          "empty": false,
+          "entries": [
+            {
+              "field": "adrPaths",
+              "value": [
+                "docs/adr/0001-greenfield-modular-monolith.md",
+                "docs/adr/0002-three-plane-architecture.md",
+                "docs/adr/0003-event-and-state-model.md",
+                "docs/adr/0004-agent-runner-boundary.md",
+                "docs/adr/0005-identity-and-secret-broker.md",
+                "docs/adr/0006-protocol-boundaries.md",
+                "docs/adr/0007-office-is-a-projection.md",
+                "docs/adr/0008-license-and-provenance.md",
+                "docs/adr/0009-worktree-isolation-and-preservation.md",
+                "docs/adr/0010-bounded-task-graph-strategies.md",
+                "docs/adr/0011-evidence-gated-completion.md",
+                "docs/adr/0012-oidc-authentication-and-corp-rbac.md",
+                "docs/adr/0013-runner-enrollment-and-rotating-identity.md",
+                "docs/adr/0014-scoped-secret-broker.md",
+                "docs/adr/0015-durable-action-approvals.md",
+                "docs/adr/0016-budget-circuit-breaker.md",
+                "docs/adr/0017-thin-tauri-desktop-shell.md",
+                "docs/adr/0018-normalized-external-cli-adapters.md",
+                "docs/adr/0019-external-protocol-gateways.md",
+                "docs/adr/0020-governed-factory-claims.md",
+                "docs/adr/0021-portable-source-deliverables.md",
+                "docs/adr/0022-idempotent-pull-request-publication.md",
+                "docs/adr/0023-authorized-mission-budget-recovery.md",
+                "docs/adr/0024-versioned-mission-contracts.md"
+              ],
+              "empty": false
+            },
+            {
+              "field": "architectureDocPaths",
+              "value": [
+                "docs/ARCHITECTURE.md"
+              ],
+              "empty": false
+            },
+            {
+              "field": "threatModelPaths",
+              "value": [
+                "docs/THREAT_MODEL.md"
+              ],
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "apiEvidence",
+          "empty": false,
+          "entries": [
+            {
+              "field": "available",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "branchProtection.activeRulesets",
+              "value": 3,
+              "empty": false
+            },
+            {
+              "field": "branchProtection.agentCodeReviewEnforced",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "branchProtection.branch",
+              "value": "main",
+              "empty": false
+            },
+            {
+              "field": "branchProtection.effectiveRules",
+              "value": [
+                [
+                  {
+                    "ruleset_id": 23348877,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "deletion"
+                  },
+                  {
+                    "ruleset_id": 23348877,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "non_fast_forward"
+                  },
+                  {
+                    "parameters": {
+                      "review_draft_pull_requests": true,
+                      "review_on_push": true
+                    },
+                    "ruleset_id": 23348877,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "copilot_code_review"
+                  },
+                  {
+                    "ruleset_id": 22420664,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "deletion"
+                  },
+                  {
+                    "ruleset_id": 22420664,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "non_fast_forward"
+                  },
+                  {
+                    "ruleset_id": 22420664,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "update"
+                  },
+                  {
+                    "ruleset_id": 22420664,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "creation"
+                  },
+                  {
+                    "ruleset_id": 23565201,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "non_fast_forward"
+                  },
+                  {
+                    "parameters": {
+                      "allowed_merge_methods": [
+                        "merge",
+                        "squash",
+                        "rebase"
+                      ],
+                      "dismiss_stale_reviews_on_push": true,
+                      "dismissal_restriction": {
+                        "allowed_actors": [],
+                        "enabled": false
+                      },
+                      "require_code_owner_review": true,
+                      "require_extra_approval_for_unattributed_changes": true,
+                      "require_last_push_approval": true,
+                      "required_approving_review_count": 1,
+                      "required_review_thread_resolution": true,
+                      "required_reviewers": [
+                        {
+                          "file_patterns": [
+                            "*"
+                          ],
+                          "minimum_approvals": 1,
+                          "reviewer": {
+                            "id": 19536566,
+                            "type": "Team"
+                          }
+                        }
+                      ]
+                    },
+                    "ruleset_id": 23565201,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "pull_request"
+                  },
+                  {
+                    "parameters": {
+                      "code_scanning_tools": [
+                        {
+                          "alerts_threshold": "errors",
+                          "security_alerts_threshold": "high_or_higher",
+                          "tool": "CodeQL"
+                        }
+                      ]
+                    },
+                    "ruleset_id": 23565201,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "code_scanning"
+                  },
+                  {
+                    "parameters": {
+                      "severity": "errors"
+                    },
+                    "ruleset_id": 23565201,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "code_quality"
+                  },
+                  {
+                    "parameters": {
+                      "review_draft_pull_requests": false,
+                      "review_on_push": false
+                    },
+                    "ruleset_id": 23565201,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "copilot_code_review"
+                  },
+                  {
+                    "parameters": {
+                      "do_not_enforce_on_create": false,
+                      "required_status_checks": [
+                        {
+                          "context": "quality",
+                          "integration_id": 15368
+                        },
+                        {
+                          "context": "integration",
+                          "integration_id": 15368
+                        },
+                        {
+                          "context": "runner-platforms (ubuntu-latest)",
+                          "integration_id": 15368
+                        },
+                        {
+                          "context": "runner-platforms (windows-latest)",
+                          "integration_id": 15368
+                        },
+                        {
+                          "context": "runner-platforms (macos-latest)",
+                          "integration_id": 15368
+                        },
+                        {
+                          "context": "desktop-windows",
+                          "integration_id": 15368
+                        }
+                      ],
+                      "strict_required_status_checks_policy": true
+                    },
+                    "ruleset_id": 23565201,
+                    "ruleset_source": "All-The-Vibes/ecorp",
+                    "ruleset_source_type": "Repository",
+                    "type": "required_status_checks"
+                  }
+                ]
+              ],
+              "empty": false
+            },
+            {
+              "field": "branchProtection.observable",
+              "value": false,
+              "empty": false
+            },
+            {
+              "field": "branchProtection.requiredApprovingReviewCount",
+              "value": 1,
+              "empty": false
+            },
+            {
+              "field": "branchProtection.requiresCodeOwnerReview",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "branchProtection.requiresStatusChecks",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "labels.count",
+              "value": 36,
+              "empty": false
+            },
+            {
+              "field": "labels.names",
+              "value": [
+                "accessibility",
+                "agent-runtime",
+                "area:docs",
+                "area:infra",
+                "area:protocol",
+                "area:runner",
+                "area:server",
+                "area:web",
+                "bug",
+                "dark-factory",
+                "dark-mode",
+                "dependencies",
+                "documentation",
+                "duplicate",
+                "enhancement",
+                "evals",
+                "executive-view",
+                "factory:ready",
+                "github_actions",
+                "good first issue",
+                "help wanted",
+                "invalid",
+                "javascript",
+                "multiplayer",
+                "priority:p0",
+                "priority:p1",
+                "priority:p2",
+                "question",
+                "rust",
+                "status:blocked",
+                "type:bug",
+                "type:feature",
+                "type:research",
+                "type:security",
+                "ui-ux",
+                "wontfix"
+              ],
+              "empty": false
+            },
+            {
+              "field": "labels.namesDigest",
+              "value": "371cf965cfdb9f08ed484c06a7502a036bc012d1aa2439ed528e729c5bdce7b7",
+              "empty": false
+            },
+            {
+              "field": "labels.observable",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "limitations",
+              "value": [
+                "branchProtectionUnobservable"
+              ],
+              "empty": false
+            },
+            {
+              "field": "mergedPRs.agentAuthoredMergedCount",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "mergedPRs.agentAuthoredMergedShare",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "mergedPRs.byAuthorType.agent",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "mergedPRs.byAuthorType.dependency",
+              "value": 6,
+              "empty": false
+            },
+            {
+              "field": "mergedPRs.byAuthorType.human",
+              "value": 96,
+              "empty": false
+            },
+            {
+              "field": "mergedPRs.byAuthorType.otherBot",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "mergedPRs.merged",
+              "value": 102,
+              "empty": false
+            },
+            {
+              "field": "mergedPRs.observable",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "mergedPRs.windowDays",
+              "value": 90,
+              "empty": false
+            },
+            {
+              "field": "ownerRepo",
+              "value": "All-The-Vibes/ecorp",
+              "empty": false
+            },
+            {
+              "field": "retrieval.endpoints",
+              "value": [
+                "GET /repos/{owner}/{repo}",
+                "GET /repos/{owner}/{repo}/branches/{branch}",
+                "GET /repos/{owner}/{repo}/rules/branches/{branch}",
+                "GET /repos/{owner}/{repo}/branches/{branch}/protection",
+                "GET /repos/{owner}/{repo}/labels",
+                "GET /repos/{owner}/{repo}/pulls",
+                "GET /repos/{owner}/{repo}/pulls"
+              ],
+              "empty": false
+            },
+            {
+              "field": "retrieval.outcomes",
+              "value": [
+                {
+                  "availability": "available",
+                  "endpoint": "GET /repos/{owner}/{repo}",
+                  "retrievalMode": "provider",
+                  "retrievedAt": "2026-09-21T03:09:44Z",
+                  "status": 200
+                },
+                {
+                  "availability": "available",
+                  "endpoint": "GET /repos/{owner}/{repo}/branches/{branch}",
+                  "retrievalMode": "provider",
+                  "retrievedAt": "2026-09-21T03:09:44Z",
+                  "status": 200
+                },
+                {
+                  "availability": "available",
+                  "endpoint": "GET /repos/{owner}/{repo}/rules/branches/{branch}",
+                  "retrievalMode": "provider",
+                  "retrievedAt": "2026-09-21T03:09:44Z",
+                  "status": 200
+                },
+                {
+                  "availability": "not_found_or_hidden",
+                  "endpoint": "GET /repos/{owner}/{repo}/branches/{branch}/protection",
+                  "retrievalMode": "provider",
+                  "retrievedAt": "2026-09-21T03:09:44Z",
+                  "status": 404
+                },
+                {
+                  "availability": "available",
+                  "endpoint": "GET /repos/{owner}/{repo}/labels",
+                  "retrievalMode": "provider",
+                  "retrievedAt": "2026-09-21T03:09:44Z",
+                  "status": 200
+                },
+                {
+                  "availability": "available",
+                  "endpoint": "GET /repos/{owner}/{repo}/pulls",
+                  "retrievalMode": "provider",
+                  "retrievedAt": "2026-09-21T03:09:44Z",
+                  "status": 200
+                },
+                {
+                  "availability": "available",
+                  "endpoint": "GET /repos/{owner}/{repo}/pulls",
+                  "retrievalMode": "provider",
+                  "retrievedAt": "2026-09-21T03:09:44Z",
+                  "status": 200
+                }
+              ],
+              "empty": false
+            },
+            {
+              "field": "retrieval.provenanceVersion",
+              "value": 1,
+              "empty": false
+            },
+            {
+              "field": "retrieval.retrievedAt",
+              "value": "2026-09-21T03:09:44Z",
+              "empty": false
+            },
+            {
+              "field": "source",
+              "value": "github",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "files",
+          "empty": false,
+          "entries": [
+            {
+              "field": "agentsMd",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "codeowners",
+              "value": false,
+              "empty": false
+            },
+            {
+              "field": "contributing",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "copilotInstructions",
+              "value": false,
+              "empty": false
+            },
+            {
+              "field": "devcontainer",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "mcpConfig",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "skillsDir",
+              "value": true,
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "authorship",
+          "empty": false,
+          "entries": [
+            {
+              "field": "aiAgentCoauthored",
+              "value": 7,
+              "empty": false
+            },
+            {
+              "field": "byAuthorType.aiAgent",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "byAuthorType.ciAutomation",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "byAuthorType.dependencyAutomation",
+              "value": 6,
+              "empty": false
+            },
+            {
+              "field": "byAuthorType.human",
+              "value": 289,
+              "empty": false
+            },
+            {
+              "field": "byAuthorType.otherBot",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "note",
+              "value": "Aggregate automation signal only - not per-person. Dependency/CI bots are generic automation, not agentic throughput. aiAgentCoauthored counts human-authored commits that credit an agent via Co-authored-by (overlaps byAuthorType, excluded from shares).",
+              "empty": false
+            },
+            {
+              "field": "shares.aiAgent",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "shares.ciAutomation",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "shares.dependencyAutomation",
+              "value": 0.0203,
+              "empty": false
+            },
+            {
+              "field": "shares.human",
+              "value": 0.9797,
+              "empty": false
+            },
+            {
+              "field": "shares.otherBot",
+              "value": 0,
+              "empty": false
+            },
+            {
+              "field": "totalCommits",
+              "value": 295,
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "git",
+          "empty": false,
+          "entries": [
+            {
+              "field": "shallow",
+              "value": false,
+              "empty": false
+            },
+            {
+              "field": "totalCommitsAllTime",
+              "value": 426,
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "assessmentContext",
+          "empty": false,
+          "entries": [
+            {
+              "field": "assessedScope",
+              "value": "repository",
+              "empty": false
+            },
+            {
+              "field": "evidenceMode",
+              "value": "evaluator-observed-local",
+              "empty": false
+            },
+            {
+              "field": "observationSHA256",
+              "value": "8c061b2415089b77a338a88bd40ed4bcc43eb551775459968b3365adc5c4d5c9",
+              "empty": false
+            },
+            {
+              "field": "profileSHA256",
+              "value": "c5ea84a171b0131aac0787e04f8bbe561e5a3ae00e51c79ebf22ac8c984c6718",
+              "empty": false
+            },
+            {
+              "field": "requestedMode",
+              "value": "evaluator-observed-local",
+              "empty": false
+            },
+            {
+              "field": "verificationScope",
+              "value": "Native qualification of main396 plus Unicode fix: 3 cases, 9 bounded calls, fixed oracles, independent agent reviews. Retain 17 historical calls and 87,753 Factory tokens; recovery used 0. Owner approved 3aff250c. PR pending tool-policy refusal; CLI URL-case defect required API recovery. Local development identity; no production, sustained throughput or learning-gain claim.",
+              "empty": false
+            },
+            {
+              "field": "verificationStatus",
+              "value": "verified",
+              "empty": false
+            },
+            {
+              "field": "verifierSHA256",
+              "value": "6f93505424fe3bd58433e8296446de1da5f0e27f2f47da2551db79709747ade7",
+              "empty": false
+            },
+            {
+              "field": "version",
+              "value": 1,
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "executionVerification",
+          "empty": false,
+          "entries": [
+            {
+              "field": "cryptographicAttestation",
+              "value": "not-provided",
+              "empty": false
+            },
+            {
+              "field": "environment",
+              "value": "isolated-local-workspaces",
+              "empty": false
+            },
+            {
+              "field": "facts.agentOriginCorrelated",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.automaticRollbackVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.ciFailureIntakeObserved",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.closedHandoffsVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.consumerActionsVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.escalationVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.executionVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.humanInspectableOutcomesVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.lifecycleTraceVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.machineCompletionSignalsVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.multipleFailureClassesVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.policyBoundsVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.repairValidationPairsVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.repeatNoOpVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.scopeCoverageVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.sourceOracleBindingVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.staleDuplicateHandlingVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "facts.terminalOutcomesVerified",
+              "value": true,
+              "empty": false
+            },
+            {
+              "field": "hostedObservation",
+              "value": false,
+              "empty": false
+            },
+            {
+              "field": "limits",
+              "value": "Operator-approved trusted local code; not an OS sandbox for hostile source. Fixed commands, pinned tools/inputs, bounded output/time and unchanged primary source.",
+              "empty": false
+            },
+            {
+              "field": "method",
+              "value": "fresh-native-execution",
+              "empty": false
+            },
+            {
+              "field": "observationSHA256",
+              "value": "8c061b2415089b77a338a88bd40ed4bcc43eb551775459968b3365adc5c4d5c9",
+              "empty": false
+            },
+            {
+              "field": "observations",
+              "value": [
+                {
+                  "assessedSourceCheck": 0,
+                  "assessedTargetSHA256": "83121f604ebb40ad4a2e2c091a4718f05e6021b3c4803a721ffad1d0a533ff45",
+                  "completionConsumer": "validated-current-no-op",
+                  "duplicateConsumer": "validated-current-no-op",
+                  "failureClass": "recurring-audit-dedupe",
+                  "independentNativeExitCodes": [
+                    1,
+                    0,
+                    0
+                  ],
+                  "nativeExitCodes": [
+                    1,
+                    0,
+                    0
+                  ],
+                  "oracleIdentity": "e95f87bff75312a0b0153a2c4b02e513592a706d92c7b87f9d4db0887c30d89c",
+                  "provenance": null,
+                  "repeatOwnerOutcome": "no-op",
+                  "staleConsumer": "review-new-source",
+                  "target": "scenarios/repo-steward/lib/recurring-audit.mjs"
+                },
+                {
+                  "assessedSourceCheck": 0,
+                  "assessedTargetSHA256": "3c24b80c276a6aef9f284980b8c3be8bcb35c34dc7bc7307c8ae80047b3cdcba",
+                  "completionConsumer": "validated-current-no-op",
+                  "duplicateConsumer": "validated-current-no-op",
+                  "failureClass": "feedback-expiry",
+                  "independentNativeExitCodes": [
+                    1,
+                    0,
+                    0
+                  ],
+                  "nativeExitCodes": [
+                    1,
+                    0,
+                    0
+                  ],
+                  "oracleIdentity": "9dbbdce1deac314de02771336fb2bd39ff17f2db3ded964e41e15245fedbcde5",
+                  "provenance": null,
+                  "repeatOwnerOutcome": "no-op",
+                  "staleConsumer": "review-new-source",
+                  "target": "scenarios/repo-steward/lib/feedback.mjs"
+                }
+              ],
+              "empty": false
+            },
+            {
+              "field": "origin",
+              "value": "evaluator-observed",
+              "empty": false
+            },
+            {
+              "field": "producerAuthorization",
+              "value": "verified-by-assessment-controller-outside-candidate-control",
+              "empty": false
+            },
+            {
+              "field": "profileSHA256",
+              "value": "c5ea84a171b0131aac0787e04f8bbe561e5a3ae00e51c79ebf22ac8c984c6718",
+              "empty": false
+            },
+            {
+              "field": "recovery",
+              "value": "Actual rejected-proposal rollback and post-application process interruption/restoration, followed by escalation; explicit fault-injection controls.",
+              "empty": false
+            },
+            {
+              "field": "scope",
+              "value": "Native qualification of main396 plus Unicode fix: 3 cases, 9 bounded calls, fixed oracles, independent agent reviews. Retain 17 historical calls and 87,753 Factory tokens; recovery used 0. Owner approved 3aff250c. PR pending tool-policy refusal; CLI URL-case defect required API recovery. Local development identity; no production, sustained throughput or learning-gain claim.",
+              "empty": false
+            },
+            {
+              "field": "status",
+              "value": "verified",
+              "empty": false
+            },
+            {
+              "field": "timeoutSeconds",
+              "value": 3600,
+              "empty": false
+            },
+            {
+              "field": "verifierSHA256",
+              "value": "6f93505424fe3bd58433e8296446de1da5f0e27f2f47da2551db79709747ade7",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "repo",
+          "empty": false,
+          "entries": [
+            {
+              "field": "name",
+              "value": "ecorp",
+              "empty": false
+            },
+            {
+              "field": "nameWithOwner",
+              "value": "All-The-Vibes/ecorp",
+              "empty": false
+            }
+          ]
+        },
+        {
+          "category": "scanExclusions",
+          "empty": false,
+          "entries": [
+            {
+              "field": "configurationSHA256",
+              "value": "3bb02c591009d8557365d3950208a43ef4b8bafda524044725609f1b5fe6015f",
+              "empty": false
+            },
+            {
+              "field": "paths",
+              "value": [],
+              "empty": true
+            },
+            {
+              "field": "repository",
+              "value": "All-The-Vibes/ecorp",
+              "empty": false
+            },
+            {
+              "field": "repositoryIdentity",
+              "value": "remote|github|github.com|all-the-vibes|ecorp",
+              "empty": false
+            },
+            {
+              "field": "schemaVersion",
+              "value": 1,
+              "empty": false
+            }
+          ]
+        }
+      ],
+      "derivedSignals": [
+        {
+          "signal": "ci.effectivePrValidation",
+          "value": true,
+          "from": [
+            "ci.hasPrValidation",
+            "apiEvidence.source",
+            "apiEvidence.azurePipelines.prValidation.meaningful"
+          ],
+          "meaning": "meaningful PR validation from repository-native semantics or verified Azure DevOps runtime policy and execution"
+        },
+        {
+          "signal": "ci.effectiveScheduledWorkflow",
+          "value": false,
+          "from": [
+            "ci.hasScheduledWorkflow",
+            "apiEvidence.azurePipelines.scheduledAutomation"
+          ],
+          "meaning": "scheduled automation is present in repository configuration or verified Azure DevOps runtime evidence"
+        },
+        {
+          "signal": "ci.effectiveMachineConsumableSignals",
+          "value": 1,
+          "from": [
+            "ci.machineConsumableSignals",
+            "apiEvidence.azurePipelines.machineConsumableSignals"
+          ],
+          "meaning": "count of machine-consumable completion signals from repository or Azure DevOps runtime evidence"
+        },
+        {
+          "signal": "ci.effectivePipelineCount",
+          "value": 5,
+          "from": [
+            "ci.pipelineFiles",
+            "apiEvidence.azurePipelines.definitions.enabled"
+          ],
+          "meaning": "conservative pipeline breadth using the larger confirmed repository-file or enabled runtime-definition count"
+        },
+        {
+          "signal": "selfHealing.remediation",
+          "value": false,
+          "from": [
+            "selfHealing.signalsFound",
+            "selfHealing.signalFiles"
+          ],
+          "meaning": "a self-healing signal describes repair rather than containment, or signal files exist with no classified signals"
+        },
+        {
+          "signal": "selfHealing.containment",
+          "value": false,
+          "from": [
+            "selfHealing.signalsFound"
+          ],
+          "meaning": "a self-healing signal describes containing a failure, such as quarantine, retry, or rerun"
+        }
+      ],
+      "prAuditor": {
+        "category": "LLM PR Auditor",
+        "score": 0,
+        "rating": "Insufficient evidence",
+        "details": [
+          "Insufficient correlated evidence for an LLM PR auditor."
+        ],
+        "issues": [
+          "Missing evidence: llm evaluation, automatic PR trigger or manual invocation"
+        ],
+        "metrics": {
+          "exists": false,
+          "confidence": "insufficient",
+          "automatic": false,
+          "manual": false,
+          "comment_only": false,
+          "merge_gate": false,
+          "scoped_guards": false,
+          "whole_diff_coverage": false,
+          "agent_generated_pr_coverage": false,
+          "platforms": [
+            "github_copilot"
+          ],
+          "evidence": {
+            "agent_contract": [
+              ".github/skills/ecorp-operations/SKILL.md"
+            ],
+            "diff_or_guard_coverage": [
+              ".github/skills/ecorp-operations/SKILL.md"
+            ],
+            "review_output": [
+              ".github/skills/ecorp-operations/SKILL.md"
+            ]
+          }
+        },
+        "limitations": [
+          "Static repository evidence cannot prove that configured jobs currently run successfully.",
+          "Unreferenced configuration is supporting evidence only. Provider activation outside root GitHub workflows and their literal local invocation chains is unknown; Azure DevOps registration requires provider evidence.",
+          "Signals must share explicit file references, distinctive identifiers, or review-invocation semantics.",
+          "Merge gating is reported only when an explicit required status, policy, vote, or blocking rule is present.",
+          "Author coverage is inferred from trigger definitions; runtime policy APIs may provide stronger evidence.",
+          ".github/workflows/ci.yml: command execution is unknown: shell expansion is not resolved",
+          ".github/workflows/ci.yml: command execution is unknown: shell functions, control flow, expansions or redirections are not resolved",
+          ".github/workflows/ci.yml: conditional invocation is unknown",
+          ".github/workflows/ci.yml: interpreter invocation is not a supported literal script operand",
+          ".github/workflows/ci.yml: non-default execution context is unknown",
+          ".github/workflows/ci.yml: non-local or dynamic uses invocation is unknown",
+          ".github/workflows/repo-steward.yml: conditional invocation is unknown",
+          ".github/workflows/repo-steward.yml: non-default execution context is unknown",
+          ".github/workflows/repository-checks.yml: conditional invocation is unknown",
+          ".github/workflows/repository-checks.yml: interpreter invocation is not a supported literal script operand",
+          ".github/workflows/repository-checks.yml: non-default execution context is unknown",
+          ".github/workflows/repository-checks.yml: non-local or dynamic uses invocation is unknown",
+          ".github/workflows/security-scan.yml: command execution is unknown: shell expansion is not resolved",
+          ".github/workflows/security-scan.yml: command execution is unknown: shell functions, control flow, expansions or redirections are not resolved",
+          ".github/workflows/security-scan.yml: non-local or dynamic uses invocation is unknown",
+          "tools/check_migrations.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/coverage_web_models.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_approvals.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_artifact_staging.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_artifacts.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_budgets.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_chaos_report.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_codex.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_copilot.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_demo_lifecycle.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_external_adapters.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_factory_claims.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_factory_controller.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_factory_publication.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_gateways.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_idempotency.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_identity.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_idle_cleanup.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_leases.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_portable_deliverables.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_replay.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_rooms.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_runner_reconnect.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_secrets.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_task_graph.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_verification.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/e2e_worktrees.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/platform_runner_contract.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only",
+          "tools/run_evals.mjs: model invocation in this implementation language is unknown; source text is supporting evidence only"
+        ]
+      },
+      "advancedAnalyses": [
+        {
+          "key": "api_surface",
+          "category": "API Surface Clarity",
+          "score": 50,
+          "rating": "N/A (binary app)",
+          "skipped": false,
+          "details": [
+            "API surface analysis skipped — binary apps don't expose a library API"
+          ],
+          "issues": []
+        },
+        {
+          "key": "cleanup_automation",
+          "category": "Continuous cleanup automation",
+          "score": 70,
+          "rating": "Enrollment unverified",
+          "skipped": false,
+          "scoreNeutral": true,
+          "details": [
+            "Cleanup capability: detected with 135 executable or configured evidence file(s).",
+            "Bounded repeatable driver: detected with 12 executable or configured evidence file(s).",
+            "Concrete scheduler enrollment: not detected.",
+            "Observed behavior: mutating."
+          ],
+          "issues": [
+            "The cleanup driver is designed for repeated invocation, but concrete scheduler enrollment was not found."
+          ]
+        },
+        {
+          "key": "code_quality_deep",
+          "category": "Code-Level Quality (Deep Analysis)",
+          "score": 33,
+          "rating": "Needs attention",
+          "skipped": false,
+          "details": [],
+          "issues": []
+        },
+        {
+          "key": "context_efficiency",
+          "category": "Context Efficiency",
+          "score": 5,
+          "rating": "Inefficient",
+          "skipped": false,
+          "details": [
+            "Total codebase: ~2044322 tokens across 301 files (avg 6791 tokens/file)"
+          ],
+          "issues": [
+            "Module 'apps' is ~217021 tokens (59 files) — too large for agent context",
+            "Module 'crates' is ~1122893 tokens (92 files) — too large for agent context",
+            "Module 'scenarios' is ~130844 tokens (31 files) — too large for agent context",
+            "Module 'tools' is ~560353 tokens (113 files) — too large for agent context"
+          ]
+        },
+        {
+          "key": "coupling",
+          "category": "Coupling \u0026 Change Amplification",
+          "score": 50,
+          "rating": "Moderate coupling",
+          "skipped": false,
+          "details": [
+            "Git history (last 100 commits): median 3.0 files/commit",
+            "Low coupling: changes are well-scoped (median)"
+          ],
+          "issues": [
+            "High avg imports (10.4/file) — deep dependency chains"
+          ]
+        },
+        {
+          "key": "error_handling",
+          "category": "Error Handling Patterns",
+          "score": 90,
+          "rating": "Consistent",
+          "skipped": false,
+          "details": [],
+          "issues": []
+        },
+        {
+          "key": "feedback_speed",
+          "category": "Feedback Speed",
+          "score": 90,
+          "rating": "Good",
+          "skipped": false,
+          "details": [
+            "Pre-commit hooks found: .pre-commit-config.yaml",
+            ".pre-commit-config.yaml: 4 hook entries detected",
+            "CI pipeline found: .github/workflows/ci-maintenance.yml",
+            ".github/workflows/ci-maintenance.yml: uses caching",
+            "CI timeout: 5 min (good for agents)",
+            ".github/workflows/ci.yml: uses fast-fail flags",
+            ".github/workflows/ci.yml: uses matrix/parallel jobs",
+            "Staged-file validation unknown: inspection limits, invalid or unsupported lint-staged configuration, dynamic wiring, functions, arbitrary control flow and finding filters cannot establish the configured capability; this is not evidence of absence"
+          ],
+          "issues": []
+        },
+        {
+          "key": "harness_engineering",
+          "category": "Harness Engineering",
+          "score": 25,
+          "rating": "Poor",
+          "skipped": false,
+          "details": [
+            "AGENTS.md found (2592 chars — Agents agent guidance)",
+            "Agent doc is 61 lines (≤120 — within length discipline target)",
+            "docs/SECURITY.md found (security policy defined)"
+          ],
+          "issues": [
+            "Add explore + plan sub-agents to .claude/agents/*.md or .github/agents/*.agent.md — the Explore sub-agent is the single highest-leverage context firewall for legacy repos",
+            "Add ≥3 silent-on-success-verbose-on-failure wrappers to scripts/agent/ (currently 0)",
+            "Add scripts/agent/eval/ with at minimum keep-rate.sh — owner needs an honest production metric (Cursor's framing)",
+            "Add MEMORY.md or a .agent/ directory to persist agent state across sessions",
+            ".pre-commit-config.yaml found but no lint-only tools detected (add ruff, eslint, golangci-lint, etc.)",
+            "Add a CODEOWNERS file to define review ownership for agent-generated PRs",
+            "Subdirectory AGENTS.md coverage is 22% — add more to cover \u003e30% of modules"
+          ]
+        },
+        {
+          "key": "review_workflow",
+          "category": "Review Workflow",
+          "score": 65,
+          "rating": "Good",
+          "skipped": false,
+          "details": [
+            "PR template found — agents get structured review guidance",
+            "Issue templates configured",
+            "Dependabot configured — dependency PRs automated",
+            "CONTRIBUTING.md found — contribution workflow documented"
+          ],
+          "issues": [
+            "Add security scanning (CodeQL, gosec for Go, bandit for Python, cargo-audit for Rust)"
+          ]
+        },
+        {
+          "key": "smell_density",
+          "category": "Code Smell Density",
+          "score": 35,
+          "rating": "High",
+          "skipped": false,
+          "details": [],
+          "issues": [
+            "5.4 smells per 1000 lines — consider architectural cleanup"
+          ]
+        },
+        {
+          "key": "test_quality",
+          "category": "Test Quality",
+          "score": 50,
+          "rating": "Moderate",
+          "skipped": false,
+          "details": [
+            "Test/source ratios are code-volume heuristics, not measured coverage or executable test-case counts; .NET test-project helpers count as test code, linked paths count once, shared production/test files count once as source, and conventional generated C# files are excluded",
+            "Base test_files_count additionally includes source files with detected inline Rust tests; inline_test_count counts those detected cases without treating the entire source file as test code"
+          ],
+          "issues": []
+        },
+        {
+          "key": "workflow_safeguards",
+          "category": "Agent Workflow Safeguards",
+          "score": 22,
+          "rating": "Partial",
+          "skipped": false,
+          "scoreNeutral": true,
+          "details": [
+            "Detected 2/9 workflow safeguard capabilities from implementation and test evidence."
+          ],
+          "issues": [
+            "Add a numeric orchestration-iteration cap with explicit cancellation, stop, or handoff exits"
+          ]
+        }
+      ],
+      "codeSmells": {
+        "total": 1041,
+        "included": 500,
+        "truncated": true,
+        "byCategory": [
+          {
+            "category": "god_class",
+            "count": 83
+          },
+          {
+            "category": "high_coupling",
+            "count": 53
+          },
+          {
+            "category": "high_instability",
+            "count": 53
+          },
+          {
+            "category": "oversized_function",
+            "count": 852
+          }
+        ],
+        "shown": [
+          {
+            "category": "god_class",
+            "file": "apps/web/src/App.tsx",
+            "severity": "high",
+            "metric": "tokens=78230, methods=151"
+          },
+          {
+            "category": "god_class",
+            "file": "apps/web/src/factoryCheckpointRecovery.test.mjs",
+            "severity": "high",
+            "metric": "tokens=11662, methods=29"
+          },
+          {
+            "category": "god_class",
+            "file": "apps/web/src/workResultCard.test.mjs",
+            "severity": "high",
+            "metric": "tokens=12176, methods=49"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-cli/src/factory.rs",
+            "severity": "high",
+            "metric": "tokens=67399, methods=182"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-cli/src/factory/quota.rs",
+            "severity": "high",
+            "metric": "tokens=11329, methods=54"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-cli/src/publish.rs",
+            "severity": "high",
+            "metric": "tokens=18808, methods=68"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-protocol/src/lib.rs",
+            "severity": "high",
+            "metric": "tokens=12432, methods=23"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/adapter/codex.rs",
+            "severity": "high",
+            "metric": "tokens=15194, methods=44"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/adapter/copilot.rs",
+            "severity": "high",
+            "metric": "tokens=19097, methods=53"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/adapter/copilot_fs.rs",
+            "severity": "high",
+            "metric": "tokens=10801, methods=39"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/adapter/external.rs",
+            "severity": "high",
+            "metric": "tokens=25821, methods=72"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/connections.rs",
+            "severity": "high",
+            "metric": "tokens=19082, methods=40"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/deliverable.rs",
+            "severity": "high",
+            "metric": "tokens=15902, methods=37"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/main.rs",
+            "severity": "high",
+            "metric": "tokens=53895, methods=92"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/verifier.rs",
+            "severity": "high",
+            "metric": "tokens=12763, methods=45"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/workspace.rs",
+            "severity": "high",
+            "metric": "tokens=26046, methods=96"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-server/src/artifacts.rs",
+            "severity": "high",
+            "metric": "tokens=12238, methods=43"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-server/src/dependency_source.rs",
+            "severity": "high",
+            "metric": "tokens=12908, methods=52"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-server/src/main.rs",
+            "severity": "high",
+            "metric": "tokens=86036, methods=199"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-server/src/planning.rs",
+            "severity": "high",
+            "metric": "tokens=22050, methods=62"
+          }
+        ],
+        "displayBound": 20,
+        "completeSetAvailableAt": [
+          "cb.json",
+          "csv/CodeBlend_AgenticReadiness_EvidenceItem.csv",
+          "findings.jsonl.gz (only when --full-findings was requested)"
+        ],
+        "notDisplayed": 1021
+      },
+      "opportunities": {
+        "total": 1041,
+        "included": 500,
+        "truncated": true,
+        "byCategory": [
+          {
+            "category": "god_class",
+            "count": 83
+          },
+          {
+            "category": "high_coupling",
+            "count": 53
+          },
+          {
+            "category": "high_instability",
+            "count": 53
+          },
+          {
+            "category": "oversized_function",
+            "count": 852
+          }
+        ],
+        "shown": [
+          {
+            "category": "god_class",
+            "file": "apps/web/src/App.tsx",
+            "severity": "high",
+            "metric": "tokens=78230, methods=151"
+          },
+          {
+            "category": "god_class",
+            "file": "apps/web/src/factoryCheckpointRecovery.test.mjs",
+            "severity": "high",
+            "metric": "tokens=11662, methods=29"
+          },
+          {
+            "category": "god_class",
+            "file": "apps/web/src/workResultCard.test.mjs",
+            "severity": "high",
+            "metric": "tokens=12176, methods=49"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-cli/src/factory.rs",
+            "severity": "high",
+            "metric": "tokens=67399, methods=182"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-cli/src/factory/quota.rs",
+            "severity": "high",
+            "metric": "tokens=11329, methods=54"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-cli/src/publish.rs",
+            "severity": "high",
+            "metric": "tokens=18808, methods=68"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-protocol/src/lib.rs",
+            "severity": "high",
+            "metric": "tokens=12432, methods=23"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/adapter/codex.rs",
+            "severity": "high",
+            "metric": "tokens=15194, methods=44"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/adapter/copilot.rs",
+            "severity": "high",
+            "metric": "tokens=19097, methods=53"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/adapter/copilot_fs.rs",
+            "severity": "high",
+            "metric": "tokens=10801, methods=39"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/adapter/external.rs",
+            "severity": "high",
+            "metric": "tokens=25821, methods=72"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/connections.rs",
+            "severity": "high",
+            "metric": "tokens=19082, methods=40"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/deliverable.rs",
+            "severity": "high",
+            "metric": "tokens=15902, methods=37"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/main.rs",
+            "severity": "high",
+            "metric": "tokens=53895, methods=92"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/verifier.rs",
+            "severity": "high",
+            "metric": "tokens=12763, methods=45"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-runner/src/workspace.rs",
+            "severity": "high",
+            "metric": "tokens=26046, methods=96"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-server/src/artifacts.rs",
+            "severity": "high",
+            "metric": "tokens=12238, methods=43"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-server/src/dependency_source.rs",
+            "severity": "high",
+            "metric": "tokens=12908, methods=52"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-server/src/main.rs",
+            "severity": "high",
+            "metric": "tokens=86036, methods=199"
+          },
+          {
+            "category": "god_class",
+            "file": "crates/crony-server/src/planning.rs",
+            "severity": "high",
+            "metric": "tokens=22050, methods=62"
+          }
+        ],
+        "displayBound": 20,
+        "completeSetAvailableAt": [
+          "cb.json",
+          "csv/CodeBlend_AgenticReadiness_EvidenceItem.csv",
+          "findings.jsonl.gz (only when --full-findings was requested)"
+        ],
+        "notDisplayed": 1021
+      }
+    }
+  }
+}
