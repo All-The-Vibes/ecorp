@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "status": "All nine contributor commands and both canary suites passed locally; independent gauntlet and native acceptance remain separate",
+  "generated_at": "2026-09-21T18:55:49.3848865Z",
+  "source_head": "ebaf582fc2fdd90c3c5eac2abacba46967917595",
+  "source_tree": "6f027117897a8ec87673e98036fd4ea22de077af",
+  "contributor_commands": 9,
+  "additional_canary_invocations": 1,
+  "native_terminal_captures": 11,
+  "new_skips_or_filters_introduced": 0,
+  "red_applicability": "N/A: clean target integration, not an authored behavior fix",
+  "source_evidence_separation": "All 834 tested source files are pinned; only this new evidence directory is added afterward",
+  "results": [
+    {
+      "gate": "01-migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:37:15.7629264Z",
+      "finished_at": "2026-09-21T18:37:15.9191112Z",
+      "receipt": "01-migrations.json",
+      "console_log": "logs/01-migrations.console.txt",
+      "console_sha256": "6AE889B1834275B33238126326A4EC2F6D463F30C578AB57292BCC69ABEB1823",
+      "counts": null,
+      "captures": [
+        "captures/01-migrations.png"
+      ]
+    },
+    {
+      "gate": "02-docs",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:38:33.2675912Z",
+      "finished_at": "2026-09-21T18:38:34.4985318Z",
+      "receipt": "02-docs.json",
+      "console_log": "logs/02-docs.console.txt",
+      "console_sha256": "DA0A3808709F745FD80C41E75E624A2DADE2E948901EF747868DDB0F84D4E406",
+      "counts": null,
+      "captures": [
+        "captures/02-docs.png"
+      ]
+    },
+    {
+      "gate": "03-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:39:38.8569904Z",
+      "finished_at": "2026-09-21T18:40:29.1618284Z",
+      "receipt": "03-unit.json",
+      "console_log": "logs/03-unit.console.txt",
+      "console_sha256": "C37ADD5DE545ABA229B25D26E0B40905CBC5DD6B3592D0C1465905A338177D33",
+      "counts": {
+        "tests": 1248,
+        "pass": 1204,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 44,
+        "todo": 0
+      },
+      "captures": [
+        "captures/03-unit.png"
+      ]
+    },
+    {
+      "gate": "04-steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:41:56.5564738Z",
+      "finished_at": "2026-09-21T18:42:44.5959477Z",
+      "receipt": "04-steward.json",
+      "console_log": "logs/04-steward.console.txt",
+      "console_sha256": "73AF890E3CF4A01FAC3C57494083F62D4FA93ECBEC48F2A2EF0FB13730A07163",
+      "counts": {
+        "tests": 227,
+        "pass": 227,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "captures": [
+        "captures/04-steward.png"
+      ]
+    },
+    {
+      "gate": "05-fmt",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:44:26.2056502Z",
+      "finished_at": "2026-09-21T18:44:28.7150652Z",
+      "receipt": "05-fmt.json",
+      "console_log": "logs/05-fmt.console.txt",
+      "console_sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "counts": null,
+      "captures": [
+        "captures/05-fmt.png"
+      ]
+    },
+    {
+      "gate": "06-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:44:57.951371Z",
+      "finished_at": "2026-09-21T18:45:06.3392564Z",
+      "receipt": "06-clippy.json",
+      "console_log": "logs/06-clippy.console.txt",
+      "console_sha256": "F42E981D0AB2D3788E6A258A7EA4E52CA5EF641AF9E1DA0C60CC93800BDAEBB8",
+      "counts": null,
+      "captures": [
+        "captures/06-clippy.png"
+      ]
+    },
+    {
+      "gate": "07-cargo-test",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:46:04.1238835Z",
+      "finished_at": "2026-09-21T18:47:49.2406937Z",
+      "receipt": "07-cargo-test.json",
+      "console_log": "logs/07-cargo-test.console.txt",
+      "console_sha256": "68158BF7353F7378FCF8DEAA0AC3035EA9E0B00845C5B73BC7A2EE46DCF71B51",
+      "counts": {
+        "totals": {
+          "passed": 566,
+          "failed": 0,
+          "ignored": 343,
+          "measured": 0,
+          "filtered": 0
+        },
+        "harnesses": [
+          {
+            "passed": 119,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 19,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 11,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 212,
+            "failed": 0,
+            "ignored": 1,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 130,
+            "failed": 0,
+            "ignored": 5,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 61,
+            "failed": 0,
+            "ignored": 337,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        ]
+      },
+      "captures": [
+        "captures/07-cargo-store-result.png",
+        "captures/07-cargo-test.png"
+      ]
+    },
+    {
+      "gate": "08-web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:50:45.5916881Z",
+      "finished_at": "2026-09-21T18:50:52.825256Z",
+      "receipt": "08-web-build.json",
+      "console_log": "logs/08-web-build.console.txt",
+      "console_sha256": "FD4ABE7F59D9FD76DE7A7CF090AE326FCD073E865B9CE729B0F7ADE70ACF6ADF",
+      "counts": null,
+      "captures": [
+        "captures/08-web-build.png"
+      ]
+    },
+    {
+      "gate": "09-web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:51:26.0129165Z",
+      "finished_at": "2026-09-21T18:51:28.1480464Z",
+      "receipt": "09-web-lint.json",
+      "console_log": "logs/09-web-lint.console.txt",
+      "console_sha256": "DECA5B7FFC1D7732E5A5700F4A5B1F466CD3B0CDE0C3173B41B6187DBA7BD8E3",
+      "counts": null,
+      "captures": [
+        "captures/09-web-lint.png"
+      ]
+    },
+    {
+      "gate": "10-canary",
+      "command": "node --test scenarios/factory-live-canary/status.test.mjs scenarios/factory-live-canary/git-bytes.test.mjs",
+      "exit_code": 0,
+      "started_at": "2026-09-21T18:51:58.4027754Z",
+      "finished_at": "2026-09-21T18:52:01.2256051Z",
+      "receipt": "10-canary.json",
+      "console_log": "logs/10-canary.console.txt",
+      "console_sha256": "71EC094001D8470F2A576E2165BAF434EE7E2B7CC6780C6DE363608A632B8C92",
+      "counts": {
+        "tests": 10,
+        "pass": 10,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "captures": [
+        "captures/10-canary.png"
+      ]
+    }
+  ],
+  "remaining": [
+    "44 default Node native-MCP skips",
+    "343 default Rust SQLx/native-probe ignores",
+    "Other platforms and browser/server/runner acceptance not run",
+    "Original issue225 Factory/TDD acceptance not re-attested",
+    "Fresh independent full-PR gauntlet, CI, required approvals and publication remain separate"
+  ]
+}
