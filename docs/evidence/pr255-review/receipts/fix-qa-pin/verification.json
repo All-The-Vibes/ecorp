@@ -1,0 +1,231 @@
+{
+  "observedAt": "2026-09-21T14:43:56.098Z",
+  "head": "690ee80e692d848c4c3a371ddb31388a78b9ddf3",
+  "changed": [
+    {
+      "path": "tools/issue161/qa-api.mjs",
+      "bytes": 3547,
+      "sha256": "5745d69d38ee470db2668f8648acf88398c4e6b38b19cb4b9b129178e63a7d82"
+    },
+    {
+      "path": "tools/issue161/qa-api-provenance.test.mjs",
+      "bytes": 4251,
+      "sha256": "a2f7ee74d59417ba012e53fd9439acf05676731d0fb3574552806a7118be8c16"
+    },
+    {
+      "path": "tools/issue161/qa-helper-binding.md",
+      "bytes": 2764,
+      "sha256": "3721bd850b4e616a11d6a57a6069943eb088e1fa1f7521b1129cdd6353b621e1"
+    }
+  ],
+  "allCommandsPassed": true,
+  "records": [
+    {
+      "name": "syntax-driver",
+      "command": [
+        "C:\\nvm4w\\nodejs\\node.exe",
+        "--check",
+        "tools/issue161/qa-api.mjs"
+      ],
+      "cwd": "C:/Users/sschofield/repos/ecorp-pr255-review-fixes",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "syntax-test",
+      "command": [
+        "C:\\nvm4w\\nodejs\\node.exe",
+        "--check",
+        "tools/issue161/qa-api-provenance.test.mjs"
+      ],
+      "cwd": "C:/Users/sschofield/repos/ecorp-pr255-review-fixes",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "affected-pure",
+      "command": [
+        "C:\\nvm4w\\nodejs\\node.exe",
+        "--test",
+        "tools/issue161/qa-api-provenance.test.mjs",
+        "tools/issue161/qa-plan.test.mjs"
+      ],
+      "cwd": "C:/Users/sschofield/repos/ecorp-pr255-review-fixes",
+      "exit": 0,
+      "stdout": "✔ published base plus complete patch reconstructs the current driver pin (UTF-8 LF, no BOM) (4.7498ms)\nℹ {\"baseCommit\":\"b31a38a62330aacba80c3953142e1da957a63ecd\",\"baseSha256\":\"d5a475ec96be30a2a02b978c7dd8a43dba528b1aa1cefac0931f9313fb1b4c7b\",\"patchLfSha256\":\"6c34349d7acdea6718bec4051a025adca8cc47df860bfe9c957dd91fc4a25732\",\"reconstructedBytes\":16321,\"reconstructedSha256\":\"6d0bc7975f68c578a77ac3ebf54b7ee64e99871cfe964d5b9bf6afa2dd58cb1e\"}\n✔ guard rejects unpatched, tampered and noncanonical helper bytes (6.6669ms)\n✔ guard rejects the correct helper from a different source commit (1.0203ms)\n✔ guard rejects clean or additional dirty/untracked dependency files (4.306ms)\n✔ preview has no mutations and keeps all resources outside both checkouts (3.4417ms)\n✔ reject execution, occupied roots, missing binaries, redirects and unsafe paths (3.0976ms)\n✔ parser permits only explicit dry-run setup options and rejects ambiguous input (0.8036ms)\nℹ tests 7\nℹ suites 0\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 574.7039\n",
+      "stderr": ""
+    },
+    {
+      "name": "scope-whitespace",
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "tools/issue161/qa-api.mjs",
+        "tools/issue161/pr237-native-time.patch"
+      ],
+      "cwd": "C:/Users/sschofield/repos/ecorp-pr255-review-fixes",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "warning: in the working copy of 'tools/issue161/qa-api.mjs', LF will be replaced by CRLF the next time Git touches it\n"
+    },
+    {
+      "name": "scoped-diff",
+      "command": [
+        "git",
+        "diff",
+        "--",
+        "tools/issue161/qa-api.mjs",
+        "tools/issue161/pr237-native-time.patch"
+      ],
+      "cwd": "C:/Users/sschofield/repos/ecorp-pr255-review-fixes",
+      "exit": 0,
+      "stdout": "diff --git a/tools/issue161/qa-api.mjs b/tools/issue161/qa-api.mjs\nindex 20609fe..a7741ee 100644\n--- a/tools/issue161/qa-api.mjs\n+++ b/tools/issue161/qa-api.mjs\n@@ -10,12 +10,15 @@ const worktree = path.resolve(import.meta.dirname, '../..')\n const dependency = path.join(qa, 'dependencies/pr237')\n assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dependency, encoding: 'utf8', windowsHide: true }).trim(),\n   'b31a38a62330aacba80c3953142e1da957a63ecd')\n-// A narrowly recorded native timestamp fix is layered on the pinned dependency.\n+// Current reconstruction v2: exact base + pr237-native-time.patch, UTF-8 LF, no BOM.\n+// See qa-helper-binding.md. This is NOT recovered historical runtime evidence:\n+// the old aa0d3c377847c479c69e8be6e1f809bf4b155c53dc6903c1d6922fde4732e144\n+// binding remains in the original reports; its helper bytes were not recovered.\n // No arbitrary dirty helper, other source change or untracked file is accepted.\n assert.equal(execFileSync('git', ['status', '--porcelain'], { cwd: dependency, encoding: 'utf8', windowsHide: true }).trim(), 'M tools/owned_test_stack.mjs')\n const helperPath = path.join(dependency, 'tools/owned_test_stack.mjs')\n assert.equal(createHash('sha256').update(readFileSync(helperPath)).digest('hex'),\n-  'aa0d3c377847c479c69e8be6e1f809bf4b155c53dc6903c1d6922fde4732e144')\n+  '6d0bc7975f68c578a77ac3ebf54b7ee64e99871cfe964d5b9bf6afa2dd58cb1e')\n const helpers = await import(pathToFileURL(helperPath))\n const action = process.argv[2]\n assert.ok(['start', 'restart-shared', 'stop'].includes(action), 'Use an explicit bounded QA API action')\n",
+      "stderr": "warning: in the working copy of 'tools/issue161/qa-api.mjs', LF will be replaced by CRLF the next time Git touches it\n"
+    },
+    {
+      "name": "head-readback",
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "C:/Users/sschofield/repos/ecorp-pr255-review-fixes",
+      "exit": 0,
+      "stdout": "690ee80e692d848c4c3a371ddb31388a78b9ddf3\n",
+      "stderr": ""
+    },
+    {
+      "name": "status-readback",
+      "command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "cwd": "C:/Users/sschofield/repos/ecorp-pr255-review-fixes",
+      "exit": 0,
+      "stdout": " M apps/web/src/App.tsx\n M apps/web/src/factoryAuthority.ts\n M apps/web/src/snapshotRefresh.test.mjs\n M tools/issue161/qa-api.mjs\n M tools/issue161/qa-host.ps1\n M tools/local_stack.psm1\n?? apps/web/src/factoryAuthorityConnection.test.mjs\n?? tools/issue161/qa-api-provenance.test.mjs\n?? tools/issue161/qa-helper-binding.md\n?? tools/local_stack_identity.test.ps1\n",
+      "stderr": ""
+    }
+  ],
+  "preserved": [
+    {
+      "path": "docs/evidence/issue161/implementation-notes.md",
+      "sha256": "4bd1fff1c533cd6631dbc860fe5f0c62e060713139db558b793ccc1d012944b7",
+      "actualSha256": "4bd1fff1c533cd6631dbc860fe5f0c62e060713139db558b793ccc1d012944b7",
+      "unchanged": true
+    },
+    {
+      "path": "docs/evidence/issue161/pr-preparation-validation.md",
+      "sha256": "6ecc47abff4a3e5a19431dad645996d1875099907eec690a7332c5586f26786f",
+      "actualSha256": "6ecc47abff4a3e5a19431dad645996d1875099907eec690a7332c5586f26786f",
+      "unchanged": true
+    },
+    {
+      "path": "docs/evidence/issue161/qa-handoff.md",
+      "sha256": "d8e101e8194c9e0717a3ba854780ba528f3f0ba8f2c24babcba67211b1cd6eab",
+      "actualSha256": "d8e101e8194c9e0717a3ba854780ba528f3f0ba8f2c24babcba67211b1cd6eab",
+      "unchanged": true
+    },
+    {
+      "path": "docs/evidence/issue161/review-integration-followup.md",
+      "sha256": "8139554e124335d0428bb085a83b4083e50892c5b6bbd0558be4719933d83cb9",
+      "actualSha256": "8139554e124335d0428bb085a83b4083e50892c5b6bbd0558be4719933d83cb9",
+      "unchanged": true
+    },
+    {
+      "path": "docs/evidence/issue161/runtime-acceptance.md",
+      "sha256": "06eb32e9fba0fbe9f9ab07453a281ae234fd45029c8fcb26b23a95863ca4bcac",
+      "actualSha256": "06eb32e9fba0fbe9f9ab07453a281ae234fd45029c8fcb26b23a95863ca4bcac",
+      "unchanged": true
+    },
+    {
+      "path": "docs/evidence/issue161/runtime-result.json",
+      "sha256": "fec6cca01d64405942842c8c9c1aef63fe9df946705b09c39a59a9f8ff3ac760",
+      "actualSha256": "fec6cca01d64405942842c8c9c1aef63fe9df946705b09c39a59a9f8ff3ac760",
+      "unchanged": true
+    },
+    {
+      "path": "tools/issue161/qa-finish-evidence.mjs",
+      "sha256": "379896deae1a78c672a3c0ecd60ac603efad9167d40cab24c77590c2e186e454",
+      "actualSha256": "379896deae1a78c672a3c0ecd60ac603efad9167d40cab24c77590c2e186e454",
+      "unchanged": true
+    },
+    {
+      "path": "tools/issue161/pr237-native-time.patch",
+      "sha256": "20c581c4adee73de0f763e652d35a9fafe1ac6f72b2a81c0e5ea221f2bce1119",
+      "actualSha256": "20c581c4adee73de0f763e652d35a9fafe1ac6f72b2a81c0e5ea221f2bce1119",
+      "unchanged": true
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "sha256": "a67da5b051260fb5a0136d41061c13c4340d3ad95cad8497eb901ea8f974e4ed",
+      "actualSha256": "a67da5b051260fb5a0136d41061c13c4340d3ad95cad8497eb901ea8f974e4ed",
+      "unchanged": true
+    },
+    {
+      "path": "apps/web/src/factoryAuthority.ts",
+      "sha256": "b4820e49c1b4e79bd5fa2a1e74c0fe762425f3a9bb4d7503749c6cc3efc90ff4",
+      "actualSha256": "2f76c5833795c8457a99b73008f86fa70fc45e39b33824b3e430788c8eee1f70",
+      "unchanged": false
+    },
+    {
+      "path": "apps/web/src/snapshotRefresh.test.mjs",
+      "sha256": "79fc2e26315bb2a5a7d2b1dffe9a07d79359aeff34e763a4e71bdaaaad9854e3",
+      "actualSha256": "79fc2e26315bb2a5a7d2b1dffe9a07d79359aeff34e763a4e71bdaaaad9854e3",
+      "unchanged": true
+    },
+    {
+      "path": "apps/web/src/factoryAuthorityConnection.test.mjs",
+      "sha256": "26b88b479abc0f93e122199ccac57173fe24e298a04907e48c334830a613bb98",
+      "actualSha256": "f489937bd31643551921fd6fde9f47a682f365a8e42a53ccb3389678b6c14334",
+      "unchanged": false
+    },
+    {
+      "path": "tools/local_stack.psm1",
+      "sha256": "342118dd4ccabca013fa8bf83cd50aaace666fb64bc5c3b7a8820c18c41e2444",
+      "actualSha256": "342118dd4ccabca013fa8bf83cd50aaace666fb64bc5c3b7a8820c18c41e2444",
+      "unchanged": true
+    },
+    {
+      "path": "tools/issue161/qa-host.ps1",
+      "sha256": "cb2af65c6b9efa54e08bde0ede81f742164932a158f6a0a5e14b6ad2ca246a05",
+      "actualSha256": "cb2af65c6b9efa54e08bde0ede81f742164932a158f6a0a5e14b6ad2ca246a05",
+      "unchanged": true
+    },
+    {
+      "path": "tools/local_stack_identity.test.ps1",
+      "sha256": "301f7d321950f27d4d2fb0e1ee7dce9bf99796a72bd2ab5ccb1130771435b578",
+      "actualSha256": "301f7d321950f27d4d2fb0e1ee7dce9bf99796a72bd2ab5ccb1130771435b578",
+      "unchanged": true
+    }
+  ],
+  "allPreservedUnchanged": false,
+  "tdd": {
+    "red": {
+      "receipt": "red2.log",
+      "exit": 1,
+      "pass": 3,
+      "fail": 1,
+      "reason": "Actual driver SHA-256 assertion: reconstructed LF 6d0bc797... versus historical aa0d3c377..."
+    },
+    "green": {
+      "receipt": "green.log",
+      "exit": 0,
+      "pass": 4,
+      "fail": 0
+    },
+    "earlierDiagnostic": {
+      "receipt": "red.log",
+      "exit": 1,
+      "reason": "Ambient core.autocrlf produced CRLF; test recipe fixed to specify native Git LF configuration before the genuine hash-mismatch RED. Not counted as the finding RED."
+    }
+  },
+  "scope": "Only pure scratch reconstruction, pre-import guards with stubbed reads, syntax and diff diagnostics. No helper import/actions, service/DB/provider/process lifecycle operations, install, commit/push, GitHub or review-state mutation.",
+  "remaining": "Historical aa0d3c bytes unrecovered. Parent independent review, native/runtime acceptance and broader repository validation remain required; no claim of NICE or completed runtime acceptance.",
+  "diffSha256": "6e696f0862f3631d4ae2e4c23dc5193f5a89e7ed7a28782269819c65412e5d7e",
+  "status": " M apps/web/src/App.tsx\n M apps/web/src/factoryAuthority.ts\n M apps/web/src/snapshotRefresh.test.mjs\n M tools/issue161/qa-api.mjs\n M tools/issue161/qa-host.ps1\n M tools/local_stack.psm1\n?? apps/web/src/factoryAuthorityConnection.test.mjs\n?? tools/issue161/qa-api-provenance.test.mjs\n?? tools/issue161/qa-helper-binding.md\n?? tools/local_stack_identity.test.ps1\n"
+}

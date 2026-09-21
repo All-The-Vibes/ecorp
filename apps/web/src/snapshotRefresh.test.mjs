@@ -136,7 +136,9 @@ test('websocket events use the coalescer and cleanup cancels its read scope', as
 
 test('initial connection is bounded, cancellable and offers retry rather than mission restart', async () => {
   const app = await readFile(new URL('./App.tsx', import.meta.url), 'utf8')
-  assert.match(app, /fetch\(`\$\{API_URL\}\/health`, \{ signal: controller\.signal \}\)/)
+  const authority = await readFile(new URL('./factoryAuthority.ts', import.meta.url), 'utf8')
+  assert.match(app, /fetchServerMode\(API_URL, controller\.signal\)/)
+  assert.match(authority, /fetch\(`\$\{endpoint\}\/health`, \{ signal \}\)/)
   assert.match(app, /await refresh\(result\.corp_id, initialActor, controller\.signal\)/)
   assert.match(app, /30_000/)
   assert.match(app, /Retry connection/)

@@ -1,0 +1,51 @@
+✔ authority endpoint never displays credentials, query or fragment (0.988ms)
+✔ missing, nil, malformed and mismatched authority stays unverified (0.4799ms)
+✔ production health, failed snapshot, then development retry replaces the old mode (8.0973ms)
+✔ development health, failed snapshot, then production retry records production without demo bootstrap (1.9483ms)
+✔ each pending attempt and failed snapshot clears previously verified mode (2.4088ms)
+▶ unavailable or malformed health cannot retain authentication assurance or bootstrap
+  ✔ network failure (1.7061ms)
+  ✔ HTTP failure with production body (1.5965ms)
+  ✔ invalid JSON (1.7524ms)
+  ✔ null (1.439ms)
+  ✔ {} (2.2476ms)
+  ✔ [] (1.5242ms)
+  ✔ "production" (1.3349ms)
+  ✔ {"status":"ok"} (1.2427ms)
+  ✔ {"status":"ok","mode":null} (1.2451ms)
+  ✔ {"status":"ok","mode":42} (1.2464ms)
+  ✔ {"status":"ok","mode":"Production"} (1.6379ms)
+  ✔ {"status":"ok","mode":"unknown"} (1.1898ms)
+  ✔ {"mode":"production"} (1.2498ms)
+  ✔ {"mode":"production","status":"failed"} (1.1009ms)
+✔ unavailable or malformed health cannot retain authentication assurance or bootstrap (23.5169ms)
+✔ cancelled health cannot overwrite a newer successful development attempt (1.9791ms)
+✔ production form retry clears failed assurance and revalidates health on success (2.22ms)
+✔ health validation without a caller signal still has a bounded deadline (0.8157ms)
+✔ a burst of 1000 streamed events schedules one snapshot instead of 1000 requests (1.6595ms)
+✔ events arriving during a request produce exactly one trailing snapshot (5.4659ms)
+✔ the final event during the trailing request is not dropped (0.8413ms)
+✔ disposing before a scheduled refresh prevents any fetch (0.3476ms)
+✔ disposing an actor/Corp scope aborts its request and drops trailing work (1.631ms)
+✔ refresh failures are handled and a later event can still refresh (1.078ms)
+✔ a disposed scope does not report an obsolete aborted read as a new UI error (3.7874ms)
+✔ websocket events use the coalescer and cleanup cancels its read scope (12.075ms)
+✔ initial connection is bounded, cancellable and offers retry rather than mission restart (2.7581ms)
+✔ actual App presence polling only runs for open connection-dependent views, without reconnecting the event socket (205.4085ms)
+✔ quality selects existing contracts and PR255 pure frontend/QA regressions (1.3681ms)
+✔ quality provisions the exact QA source before the provenance test, outside test code (0.8977ms)
+✔ identity regression runs only in the existing Windows matrix lane before lifecycle checks (0.3961ms)
+✔ remote actions use immutable SHAs under the repository Actions policy (0.502ms)
+✔ published base plus complete patch reconstructs the current driver pin (UTF-8 LF, no BOM) (3.7973ms)
+ℹ {"baseCommit":"b31a38a62330aacba80c3953142e1da957a63ecd","baseSha256":"d5a475ec96be30a2a02b978c7dd8a43dba528b1aa1cefac0931f9313fb1b4c7b","patchLfSha256":"6c34349d7acdea6718bec4051a025adca8cc47df860bfe9c957dd91fc4a25732","reconstructedBytes":16321,"reconstructedSha256":"6d0bc7975f68c578a77ac3ebf54b7ee64e99871cfe964d5b9bf6afa2dd58cb1e"}
+✔ guard rejects unpatched, tampered and noncanonical helper bytes (5.578ms)
+✔ guard rejects the correct helper from a different source commit (0.8715ms)
+✔ guard rejects clean or additional dirty/untracked dependency files (3.1023ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1188.3831

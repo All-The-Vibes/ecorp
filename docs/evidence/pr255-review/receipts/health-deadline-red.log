@@ -1,0 +1,61 @@
+✖ health validation without a caller signal still has a bounded deadline (3.9585ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 709.1549
+
+✖ failing tests:
+
+test at apps\web\src\factoryAuthorityConnection.test.mjs:172:1
+✖ health validation without a caller signal still has a bounded deadline (3.9585ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /health deadline/. Input:
+  
+  'AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n' +
+    '+ actual - expected\n' +
+    '\n' +
+    '+ undefined\n' +
+    '- AbortSignal {\n' +
+    '-   Symbol(events.maxEventTargetListeners): 0,\n' +
+    '-   Symbol(events.maxEventTargetListenersWarned): false,\n' +
+    '-   Symbol(kAborted): false,\n' +
+    '-   Symbol(kComposite): false,\n' +
+    '-   Symbol(kEvents): SafeMap(0) {},\n' +
+    '-   Symbol(kHandlers): SafeMap(0) {},\n' +
+    '-   Symbol(kReason): undefined\n' +
+    '- }\n'
+  
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:186:3)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - AbortSignal {
+    -   Symbol(events.maxEventTargetListeners): 0,
+    -   Symbol(events.maxEventTargetListenersWarned): false,
+    -   Symbol(kAborted): false,
+    -   Symbol(kComposite): false,
+    -   Symbol(kEvents): SafeMap(0) {},
+    -   Symbol(kHandlers): SafeMap(0) {},
+    -   Symbol(kReason): undefined
+    - }
+    
+        at file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:179:12
+        at Object.apply (node:internal/test_runner/mock/mock:756:20)
+        at Module.fetchServerMode (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthority.ts:4:26)
+        at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:184:29)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1306:25)
+        at Test.start (node:internal/test_runner/test:1177:17)
+        at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17),
+    expected: /health deadline/,
+    operator: 'rejects',
+    diff: 'simple'
+  }

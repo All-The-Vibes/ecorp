@@ -10,6 +10,7 @@ import { OfficeFloor, OfficePortrait } from './OfficeFloor'
 import { OfficeInspector } from './OfficeInspector'
 import { FactoryPollingNotice } from './FactoryPollingNotice'
 import { FactoryAuthorityNotice } from './FactoryAuthorityNotice'
+import { fetchServerMode } from './factoryAuthority'
 import type { ClaimAuthorityCorp } from './factoryAuthority'
 import { factoryControllerState } from './factoryPolling'
 import { selectFactoryController } from './factoryControllerSelection'
@@ -626,13 +627,6 @@ type LaunchMissionResponse = {
   runner_id: string
   run_ids: string[]
   runner_ids: string[]
-}
-
-type HealthResponse = {
-  status: 'ok'
-  service: string
-  runners: number
-  mode: 'development' | 'production'
 }
 
 const API_URL = import.meta.env.VITE_CRONY_SERVER_HTTP ?? 'http://127.0.0.1:8791'
@@ -5111,11 +5105,11 @@ function App() {
       controller.abort()
     }, 30_000)
     void (async () => {
-      const health = await fetch(`${API_URL}/health`, { signal: controller.signal }).then((response) =>
-        response.json() as Promise<HealthResponse>,
-      )
-      if (health.mode === 'production') {
-        if (!cancelled) setServerMode('production')
+      setServerMode('unknown')
+      const mode = await fetchServerMode(API_URL, controller.signal)
+      if (cancelled) return
+      setServerMode(mode)
+      if (mode === 'production') {
         const corpId = window.sessionStorage.getItem('ecorp_corp_id')
         const actorId = window.sessionStorage.getItem('ecorp_actor_id')
         if (!corpId || !actorId || !storedAccessToken()) {
@@ -5161,6 +5155,7 @@ function App() {
     })()
       .catch((caught: unknown) => {
         if (cancelled) return
+        setServerMode('unknown')
         setError(timedOut
           ? 'ECorp did not finish connecting within 30 seconds. Agent runs are independent of this tab. Retry the connection; do not restart the mission.'
           : caught instanceof Error ? caught.message : String(caught))
@@ -6107,6 +6102,7 @@ function App() {
     const actorId = connectionActorId.trim()
     const token = connectionToken.trim()
     if (!corpId || !actorId || !token) return
+    setServerMode('unknown')
     currentViewer.current = { corpId, actorId }
     currentComments.current = null
     setBusy(true)
@@ -6115,6 +6111,8 @@ function App() {
     window.sessionStorage.setItem('ecorp_actor_id', actorId)
     window.sessionStorage.setItem('ecorp_access_token', token)
     try {
+      const mode = await fetchServerMode(API_URL)
+      if (mode !== 'production') throw new Error('The control plane is not in production mode.')
       const result: BootstrapResponse = {
         corp_id: corpId,
         room_id: '',
@@ -6126,12 +6124,14 @@ function App() {
         codex_agent_id: '',
       }
       await refresh(corpId, actorId)
+      setServerMode(mode)
       setBootstrap(result)
       setSelectedActorId(actorId)
       setConnectionToken('')
       setRequiresConnection(false)
       setAnnouncement('Authenticated production connection established.')
     } catch (caught) {
+      setServerMode('unknown')
       window.sessionStorage.removeItem('ecorp_access_token')
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {

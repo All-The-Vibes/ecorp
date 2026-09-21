@@ -1,0 +1,46 @@
+{
+  "excluded": [
+    "No Cargo/full build/lint (parent-owned)",
+    "No service/provider/unowned lifecycle execution",
+    "No commits/pushes/GitHub/settings/credential changes or installs",
+    "No agents, controller state mutations or new round charge"
+  ],
+  "stop_condition": "Scoped integration corrected; hand off to parent for independent review and existing full validation.",
+  "diagnostics": "node --check; git diff --check; migration check; exact preexisting workflow preservation comparison: all exit 0",
+  "provenance": "verification.json contains current permissions, target SHA, independently read accepted action mappings, trusted deployed policy SHA, Git object IDs and SHA-256 hashes",
+  "windows": {
+    "cleanup_verified": true,
+    "log": "windows.log",
+    "passed": 46,
+    "exit": 0,
+    "failed": 0,
+    "workspace": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-255\\round-2\\fix-ci-selection\\ecorp-identity-9c31c8f44609401aab968071d9632e82",
+    "command": "pwsh -NoProfile -File tools/local_stack_identity.test.ps1 -EvidenceRoot C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-255\\round-2\\fix-ci-selection"
+  },
+  "risks": [
+    "Adds one exact-SHA Git fetch and associated network/retention dependency; failure remains fatal, no fallback.",
+    "Action mapping changes required because sha_pinning_required is currently true. Current main has newer action majors; accepted main-ancestor mappings preserve this workflow v4/v2/stable semantics and all inputs.",
+    "Local Node 24 versus hosted Node 22; hosted Actions and action download execution not verified.",
+    "Generated stable Rust action pin carries existing retention caveat documented by trusted policy.",
+    "CI policy diff requires independent out-of-band trusted-policy review; no NICE/approval claim."
+  ],
+  "green": {
+    "skipped": 0,
+    "log": "green.log",
+    "passed": 41,
+    "exit": 0,
+    "failed": 0,
+    "command": "node --test tools/ci_runner_tests.test.mjs apps/web/src/factoryAuthority.test.mjs apps/web/src/factoryAuthorityConnection.test.mjs apps/web/src/snapshotRefresh.test.mjs tools/issue161/qa-api-provenance.test.mjs"
+  },
+  "owned_files": [
+    ".github/workflows/ci.yml",
+    "tools/ci_runner_tests.test.mjs"
+  ],
+  "red": {
+    "log": "red-selection.log",
+    "failed": 4,
+    "exit": 1,
+    "command": "node --test tools/ci_runner_tests.test.mjs"
+  },
+  "outcome": "Implemented and focused local verification passed; independent review and hosted CI pending"
+}

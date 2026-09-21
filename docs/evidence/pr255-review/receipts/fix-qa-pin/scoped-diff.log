@@ -1,0 +1,29 @@
+$ git diff -- tools/issue161/qa-api.mjs tools/issue161/pr237-native-time.patch
+cwd=C:/Users/sschofield/repos/ecorp-pr255-review-fixes
+exit=0
+STDOUT
+diff --git a/tools/issue161/qa-api.mjs b/tools/issue161/qa-api.mjs
+index 20609fe..a7741ee 100644
+--- a/tools/issue161/qa-api.mjs
++++ b/tools/issue161/qa-api.mjs
+@@ -10,12 +10,15 @@ const worktree = path.resolve(import.meta.dirname, '../..')
+ const dependency = path.join(qa, 'dependencies/pr237')
+ assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dependency, encoding: 'utf8', windowsHide: true }).trim(),
+   'b31a38a62330aacba80c3953142e1da957a63ecd')
+-// A narrowly recorded native timestamp fix is layered on the pinned dependency.
++// Current reconstruction v2: exact base + pr237-native-time.patch, UTF-8 LF, no BOM.
++// See qa-helper-binding.md. This is NOT recovered historical runtime evidence:
++// the old aa0d3c377847c479c69e8be6e1f809bf4b155c53dc6903c1d6922fde4732e144
++// binding remains in the original reports; its helper bytes were not recovered.
+ // No arbitrary dirty helper, other source change or untracked file is accepted.
+ assert.equal(execFileSync('git', ['status', '--porcelain'], { cwd: dependency, encoding: 'utf8', windowsHide: true }).trim(), 'M tools/owned_test_stack.mjs')
+ const helperPath = path.join(dependency, 'tools/owned_test_stack.mjs')
+ assert.equal(createHash('sha256').update(readFileSync(helperPath)).digest('hex'),
+-  'aa0d3c377847c479c69e8be6e1f809bf4b155c53dc6903c1d6922fde4732e144')
++  '6d0bc7975f68c578a77ac3ebf54b7ee64e99871cfe964d5b9bf6afa2dd58cb1e')
+ const helpers = await import(pathToFileURL(helperPath))
+ const action = process.argv[2]
+ assert.ok(['start', 'restart-shared', 'stop'].includes(action), 'Use an explicit bounded QA API action')
+
+STDERR
+warning: in the working copy of 'tools/issue161/qa-api.mjs', LF will be replaced by CRLF the next time Git touches it

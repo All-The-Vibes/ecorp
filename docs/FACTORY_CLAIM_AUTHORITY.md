@@ -58,6 +58,25 @@ See [the measured runtime verdict](evidence/issue161/runtime-acceptance.md).
 
 ## Enforcement and compatibility
 
+This is a **breaking production admission/API change**. Existing pin-omitting
+clients/controllers can no longer create new production claims or register
+controllers. Preserving legacy history and replay does not preserve compatibility
+for new intake. Updated `factory` and `factory-watch` also require the authority
+endpoint; they cannot use an older server that lacks it.
+
+Coordinate server, client, controller and configuration rollout before resuming
+new production intake:
+
+1. Hold new intake and controller registration while deploying migration 0042 and
+   the authority-capable server. Preserve existing work and recorded lineage.
+2. Upgrade clients/controllers and independently configure the approved ledger pin.
+   New claim requests need `policy.claim_authority_id`; controller registration
+   needs `claim_authority_id`. Use the CLI flag or trusted host configuration
+   described above, including on controller restart.
+3. Compare the approved endpoint/Corp's authority with that independently approved
+   pin before resuming intake. Never auto-adopt an endpoint-returned pin, fall back
+   to an older server, omit a required pin or weaken production enforcement.
+
 - New production claims and production controller registration require a matching
   authority pin. Pin omission, malformed values and mismatches fail before new
   claims are persisted. The server never derives a missing pin from the current

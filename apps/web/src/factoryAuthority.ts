@@ -1,5 +1,17 @@
 export type ClaimAuthorityCorp = { id: string; claim_authority_id?: string | null }
 
+export async function fetchServerMode(endpoint: string, signal = AbortSignal.timeout(30_000)): Promise<'development' | 'production'> {
+  const response = await fetch(`${endpoint}/health`, { signal })
+  if (!response.ok) throw new Error(`Health request failed (${response.status}).`)
+  const health: unknown = await response.json()
+  if (typeof health !== 'object' || health === null
+    || !('status' in health) || health.status !== 'ok'
+    || !('mode' in health) || (health.mode !== 'development' && health.mode !== 'production')) {
+    throw new Error('Server authentication mode could not be verified.')
+  }
+  return health.mode
+}
+
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export function validAuthorityId(value: unknown): value is string {
   return typeof value === 'string' && uuid.test(value)

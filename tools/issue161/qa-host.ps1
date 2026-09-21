@@ -168,6 +168,8 @@ switch ($Action) {
     'Stop' {
         foreach ($role in @($state.processes.Keys | Where-Object { $_ -ne 'postgres' })) {
             $record = $state.processes[$role]
+            # Null means confirmed absence. Inspection errors must escape before
+            # saving stopped_verified; preserve the ownership receipt for retry.
             $current = Get-LocalProcessIdentity -ProcessId $record.pid
             if ($current) {
                 if (-not (Test-LocalOwnedProcess -Record $record -Workspace $qa)) { throw "Ownership changed for $role; no stop was attempted." }

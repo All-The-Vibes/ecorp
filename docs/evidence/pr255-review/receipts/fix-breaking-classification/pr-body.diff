@@ -1,0 +1,31 @@
+diff --git "a/C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-255\\round-2\\fix-breaking-classification\\pr-body-before.md" "b/C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-255\\round-2\\fix-breaking-classification\\pr-body-candidate.md"
+index f7f94f2..a669007 100644
+--- "a/C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-255\\round-2\\fix-breaking-classification\\pr-body-before.md"
++++ "b/C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-255\\round-2\\fix-breaking-classification\\pr-body-candidate.md"
+@@ -25,7 +25,7 @@ Three untracked local draft/patch files remain excluded.
+ 
+ ## Type of change
+ 
+-- [x] New feature (bounded, non-breaking authority foundation)
++- [x] Breaking change (production new-claim and controller-registration admission)
+ - [x] Documentation and integration-test update
+ 
+ ## How Has This Been Tested?
+@@ -66,6 +66,17 @@ real model or external GitHub effect was exercised by the database validation.
+ 
+ ## AI agent integration handoff and migration sequence
+ 
++- **Coordinated breaking rollout:** hold new production intake and controller
++  registration while deploying migration0042 and the authority-capable server.
++  Upgrade clients/controllers and independently configure the approved ledger pin
++  before resuming intake: `policy.claim_authority_id` for new claims,
++  `claim_authority_id` for registration, or the CLI's `--claim-authority-id` /
++  trusted `ECORP_FACTORY_CLAIM_AUTHORITY_ID` configuration, retained across restarts.
++  Existing pin-omitting callers now fail. Updated `factory`/`factory-watch` require
++  the authority endpoint and cannot use older servers without it. Compare against
++  the independently approved pin; never auto-adopt endpoint-returned pins, add an
++  old-server fallback or weaken enforcement. Legacy history/replay remains intact;
++  this does not preserve old new-intake caller compatibility.
+ - Reuse native PostgreSQL claim locks/uniqueness, fencing, replay, runner lifecycle
+   and verifier policy. A ledger UUID is an authority pin, not a distributed lock
+   for copied or independently writable databases.

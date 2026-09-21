@@ -24,20 +24,27 @@ function ConvertTo-LocalProcessArgument {
 }
 
 function Get-LocalProcessIdentity {
-    param([Parameter(Mandatory)][int]$ProcessId)
-    if ($ProcessId -le 0) { return $null }
+    param([Parameter(Mandatory)][ValidateRange(1, [int]::MaxValue)][int]$ProcessId)
     $process = $null
     try {
-        $process = Get-Process -Id $ProcessId -ErrorAction Stop
-        [void]$process.Handle
-        if ($process.HasExited) { return $null }
+        try { $process = Get-Process -Id $ProcessId -ErrorAction Stop }
+        catch {
+            if ($_.FullyQualifiedErrorId -ceq 'NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand' -and
+                $_.CategoryInfo.Category -eq 'ObjectNotFound' -and $_.TargetObject -eq $ProcessId) { return $null }
+            throw
+        }
+        # Call native getters explicitly: PowerShell property access can hide a
+        # getter failure as null. Only a missing PID or confirmed exit is absence.
+        [void]$process.get_Handle()
+        if ($process.get_HasExited()) { return $null }
+        $executable = $process.get_MainModule().get_FileName()
+        if (![IO.Path]::IsPathFullyQualified($executable)) { throw 'Process executable inspection is incomplete.' }
         @{
             pid = $process.Id
-            executable = $process.Path
-            started_utc = $process.StartTime.ToUniversalTime().ToString('o')
+            executable = $executable
+            started_utc = $process.get_StartTime().ToUniversalTime().ToString('o')
         }
-    } catch { return $null }
-    finally { if ($process) { $process.Dispose() } }
+    } finally { if ($process) { $process.Dispose() } }
 }
 
 function Test-LocalRecordShape {
@@ -67,22 +74,26 @@ function Stop-LocalOwnedProcess {
     if (!(Test-LocalRecordShape $Record $Workspace)) { return $false }
     $process = $null
     try {
-        $process = Get-Process -Id ([int]$Record.pid) -ErrorAction Stop
+        try { $process = Get-Process -Id ([int]$Record.pid) -ErrorAction Stop }
+        catch {
+            if ($_.FullyQualifiedErrorId -ceq 'NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand' -and
+                $_.CategoryInfo.Category -eq 'ObjectNotFound' -and $_.TargetObject -eq [int]$Record.pid) { return $false }
+            throw
+        }
         # Keep the process handle open across verification and termination. Do
         # not look up a PID again, or infer ownership of its current descendants.
-        [void]$process.Handle
-        if ($process.HasExited -or !(Test-LocalPathEqual $process.Path $Record.executable) -or
-            $process.StartTime.ToUniversalTime().Ticks -ne
+        [void]$process.get_Handle()
+        if ($process.get_HasExited()) { return $false }
+        $executable = $process.get_MainModule().get_FileName()
+        if (![IO.Path]::IsPathFullyQualified($executable)) { throw 'Process executable inspection is incomplete.' }
+        if (!(Test-LocalPathEqual $executable $Record.executable) -or
+            $process.get_StartTime().ToUniversalTime().Ticks -ne
             ([DateTimeOffset]$Record.started_utc).UtcTicks) { return $false }
         $process.Kill()
         if (!$process.WaitForExit(15000)) {
             throw 'The verified process has not exited; its ownership record is retained.'
         }
         return $true
-    } catch [Microsoft.PowerShell.Commands.ProcessCommandException] {
-        return $false
-    } catch [System.ArgumentException] {
-        return $false
     } finally {
         if ($process) { $process.Dispose() }
     }
