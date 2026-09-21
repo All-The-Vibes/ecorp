@@ -3,16 +3,36 @@ import { spawn } from 'node:child_process'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import test from 'node:test'
-import { probeConfiguration, probeMcp, snapshotCounts } from './probe_mcp.mjs'
+import { probeConfiguration, probeMcp, recoveryContextMetadata, snapshotCounts, READ_ONLY_MCP_TOOLS } from './probe_mcp.mjs'
 
 const CORP_ID = '00000000-0000-4000-8000-000000000001'
 const ACTOR_ID = '00000000-0000-4000-8000-000000000011'
+const WORK_ITEM_ID = '01234567-89ab-4cde-8fab-0123456789ab'
+const MISSION_ID = '00000000-0000-4000-8000-000000000021'
+const TASK_ID = '00000000-0000-4000-8000-000000000031'
+const RUN_ID = '00000000-0000-4000-8000-000000000041'
 const binary = process.env.CRONY_MCP_TEST_BINARY
 const nativeOptions = { skip: !binary && 'Set CRONY_MCP_TEST_BINARY to the compiled native MCP gateway' }
 const PRIVATE_MARKER = 'fixture-private-content-not-for-the-probe-report'
 const READ_ONLY_HTTP_BODY_LIMIT = 16 * 1024 * 1024
 const READ_ONLY_HTTP_BODY_ERROR = 'read-only MCP response exceeded the 16 MiB body limit'
 const SNAPSHOT_FRAME = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'crony_snapshot', arguments: {} } }
+const RECOVERY_FRAME = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: {
+  name: 'crony_factory_recovery_context', arguments: { work_item_id: WORK_ITEM_ID },
+} }
+
+function recoveryContext() {
+  return {
+    work_item: { id: WORK_ITEM_ID, corp_id: CORP_ID, mission_id: MISSION_ID, version: 4,
+      policy: { private: PRIVATE_MARKER }, failure_detail: PRIVATE_MARKER },
+    recoveries: [{ failure_detail: PRIVATE_MARKER }],
+    mission_id: MISSION_ID, task_id: TASK_ID, source_run_id: RUN_ID,
+    remaining_attempts: 1, remaining_mission_tokens: 4000, remaining_mission_cost_microusd: 12000,
+    workspace_fingerprint: PRIVATE_MARKER, expected_head_commit: PRIVATE_MARKER,
+    checkpoint_verification: true, checkpoint_source_correction: false,
+    checkpoint_verification_available: false,
+  }
+}
 
 function configuration(server = 'http://127.0.0.1:8791') {
   return {
@@ -142,6 +162,162 @@ test('probe permits HTTP only for normalized canonical loopback origins and requ
   }
 })
 
+test('recovery probe reports only native metadata and never infers missing capability or exposes policy', () => {
+  const context = recoveryContext()
+  const metadata = recoveryContextMetadata(context, CORP_ID, WORK_ITEM_ID.toUpperCase())
+  assert.equal(metadata.work_item_id, WORK_ITEM_ID)
+  assert.equal(metadata.work_item_version, 4)
+  assert.equal(metadata.remaining_attempts, 1)
+  assert.equal(metadata.checkpoint_verification_available, false)
+  assert.equal(metadata.recovery_count, 1)
+  assert.equal(JSON.stringify(metadata).includes(PRIVATE_MARKER), false)
+  delete context.checkpoint_verification_available
+  assert.equal(recoveryContextMetadata(context, CORP_ID, WORK_ITEM_ID).checkpoint_verification_available, null)
+  for (const edit of [
+    c => { c.work_item.corp_id = ACTOR_ID }, c => { c.work_item.id = ACTOR_ID },
+    c => { c.work_item.mission_id = TASK_ID }, c => { c.source_run_id = 'bad' },
+    c => { c.remaining_mission_tokens = Number.MAX_SAFE_INTEGER + 1 },
+    c => { c.checkpoint_verification_available = null }, c => { c.recoveries = {} },
+  ]) {
+    const changed = recoveryContext(); edit(changed)
+    assert.throws(() => recoveryContextMetadata(changed, CORP_ID, WORK_ITEM_ID), /MCP recovery context/u)
+  }
+})
+
+test('recovery probe rejects malformed work-item IDs before spawning any gateway', async () => {
+  for (const workItemId of ['', null, 5, '../other', WORK_ITEM_ID.replaceAll('-', ''), `urn:uuid:${WORK_ITEM_ID}`]) {
+    await assert.rejects(probeMcp({ env: {}, workItemId }), /hyphenated UUID/u)
+  }
+})
+
+test('compiled recovery probe rejects impossible native numeric metadata and preserves exhausted authority', nativeOptions, async (t) => {
+  let context = recoveryContext()
+  const api = await fixture(t, (_request, response) => response.end(JSON.stringify(context)))
+  for (const [field, value] of [
+    ['version', 0], ['version', -1], ['version', 1.5],
+    ['remaining_attempts', -1], ['remaining_mission_tokens', -1], ['remaining_mission_cost_microusd', -1],
+  ]) {
+    context = recoveryContext()
+    if (field === 'version') context.work_item.version = value
+    else context[field] = value
+    await assert.rejects(probeMcp({ env: configuration(api.origin), workItemId: WORK_ITEM_ID }),
+      /MCP recovery context returned invalid (version or history metadata|remaining authority)/u)
+  }
+  context = recoveryContext()
+  context.work_item.version = 1
+  for (const field of ['remaining_attempts', 'remaining_mission_tokens', 'remaining_mission_cost_microusd']) context[field] = 0
+  const report = await probeMcp({ env: configuration(api.origin), workItemId: WORK_ITEM_ID })
+  assert.equal(report.recovery.work_item_version, 1)
+  assert.equal(report.recovery.remaining_attempts, 0)
+  assert.equal(report.recovery.remaining_mission_tokens, 0)
+  assert.equal(report.recovery.remaining_mission_cost_microusd, 0)
+  assert.equal(api.requests.length, 7)
+  assert.ok(api.requests.every(request => request.method === 'GET'))
+})
+
+test('compiled recovery tool makes exactly the selected authorized GET in both modes', nativeOptions, async (t) => {
+  const api = await fixture(t, (_request, response) => {
+    response.setHeader('content-type', 'application/json')
+    response.end(JSON.stringify(recoveryContext()))
+  })
+  for (const readOnly of [true, false]) {
+    const frame = structuredClone(RECOVERY_FRAME)
+    frame.params.arguments.work_item_id = WORK_ITEM_ID.toUpperCase()
+    const replies = await nativeFrames(configuration(api.origin), [frame], readOnly)
+    assert.deepEqual(replies[0].result.structuredContent, recoveryContext())
+  }
+  assert.deepEqual(api.requests, Array.from({ length: 2 }, () => ({
+    method: 'GET',
+    url: `/api/corps/${CORP_ID}/factory/work-items/${WORK_ITEM_ID}/verification-recoveries?actor_id=${ACTOR_ID}`,
+    authorization: 'Bearer synthetic-fixture-token',
+  })))
+})
+
+test('compiled recovery probe selects one context without reading the broad snapshot or exposing private fields', nativeOptions, async (t) => {
+  const api = await fixture(t, (_request, response) => response.end(JSON.stringify(recoveryContext())))
+  const report = await probeMcp({ env: configuration(api.origin), workItemId: WORK_ITEM_ID })
+  assert.equal(api.requests.length, 1)
+  assert.equal(api.requests[0].method, 'GET')
+  assert.equal(api.requests[0].url, `/api/corps/${CORP_ID}/factory/work-items/${WORK_ITEM_ID}/verification-recoveries?actor_id=${ACTOR_ID}`)
+  assert.equal(report.inspection, 'factory_recovery_context')
+  assert.equal(report.recovery.work_item_id, WORK_ITEM_ID)
+  assert.equal(report.recovery.checkpoint_verification_available, false)
+  assert.equal(report.counts, undefined)
+  assert.equal(JSON.stringify(report).includes(PRIVATE_MARKER), false)
+  assert.equal(JSON.stringify(report).includes('synthetic-fixture-token'), false)
+})
+
+test('compiled recovery tool refuses malformed IDs, extra scope or effect arguments before HTTP', nativeOptions, async (t) => {
+  const api = await fixture(t, (_request, response) => response.end(JSON.stringify(recoveryContext())))
+  const malformed = [null, [], {}, { work_item_id: null }, { work_item_id: 1 },
+    { work_item_id: WORK_ITEM_ID.replaceAll('-', '') }, { work_item_id: `urn:uuid:${WORK_ITEM_ID}` },
+    { work_item_id: ` ${WORK_ITEM_ID}` }, { work_item_id: '../elsewhere?actor_id=other' },
+    { work_item_id: WORK_ITEM_ID, actor_id: ACTOR_ID }, { work_item_id: WORK_ITEM_ID, corp_id: CORP_ID },
+    { work_item_id: WORK_ITEM_ID, mode: 'source_correction' }, { work_item_id: WORK_ITEM_ID, max_task_attempts: 3 }]
+  for (const readOnly of [true, false]) {
+    const frames = malformed.map((arguments_, index) => ({ ...RECOVERY_FRAME, id: index + 1,
+      params: { name: RECOVERY_FRAME.params.name, arguments: arguments_ } }))
+    const replies = await nativeFrames(configuration(api.origin), frames, readOnly)
+    assert.equal(replies.length, frames.length)
+    assert.ok(replies.every(reply => reply.error?.code === -32000))
+  }
+  assert.equal(api.requests.length, 0)
+})
+
+test('compiled recovery tool rejects mismatched Corp or work-item responses', nativeOptions, async (t) => {
+  for (const field of ['id', 'corp_id']) {
+    const context = recoveryContext(); context.work_item[field] = ACTOR_ID
+    const api = await fixture(t, (_request, response) => response.end(JSON.stringify(context)))
+    for (const readOnly of [true, false]) {
+      const replies = await nativeFrames(configuration(api.origin), [RECOVERY_FRAME], readOnly)
+      assert.equal(replies[0].error?.message, 'native recovery context did not match the requested scope')
+      assert.equal(JSON.stringify(replies).includes(PRIVATE_MARKER), false)
+    }
+    assert.equal(api.requests.length, 2)
+  }
+})
+
+test('compiled recovery probe preserves authorization and not-found failures without private diagnostics', nativeOptions, async (t) => {
+  for (const status of [401, 403, 404]) {
+    const api = await fixture(t, (_request, response) => {
+      response.writeHead(status, { 'content-type': 'application/json' })
+      response.end(JSON.stringify({ error: PRIVATE_MARKER }))
+    })
+    await assert.rejects(probeMcp({ env: configuration(api.origin), workItemId: WORK_ITEM_ID }), error => {
+      assert.match(error.message, /response bodies were withheld/u)
+      assert.equal(error.message.includes(PRIVATE_MARKER), false)
+      return true
+    })
+    assert.equal(api.requests.length, 1)
+  }
+})
+
+test('compiled recovery inspection never follows redirects in either gateway mode', nativeOptions, async (t) => {
+  const destination = await fixture(t, (_request, response) => response.end(JSON.stringify(recoveryContext())))
+  const source = await fixture(t, (_request, response) => {
+    response.writeHead(302, { location: destination.origin + '/private', 'content-type': 'application/json' })
+    response.end('{}')
+  })
+  for (const readOnly of [true, false]) {
+    const replies = await nativeFrames(configuration(source.origin), [RECOVERY_FRAME], readOnly)
+    assert.equal(replies[0].error?.code, -32000)
+  }
+  assert.equal(source.requests.length, 2)
+  assert.equal(destination.requests.length, 0)
+})
+
+test('compiled recovery inspection caps HTTP bodies even in the legacy write-capable gateway mode', nativeOptions, async (t) => {
+  const api = await fixture(t, (_request, response) => {
+    response.writeHead(200, { 'content-type': 'application/json', 'content-length': String(READ_ONLY_HTTP_BODY_LIMIT + 1) })
+    response.flushHeaders()
+  })
+  for (const readOnly of [true, false]) {
+    const replies = await nativeFrames(configuration(api.origin), [RECOVERY_FRAME], readOnly)
+    assert.equal(replies[0].error?.message, READ_ONLY_HTTP_BODY_ERROR)
+  }
+  assert.equal(api.requests.length, 2)
+})
+
 test('compiled read-only MCP completes the real stdio handshake and makes only one scoped GET', nativeOptions, async (t) => {
   const api = await fixture(t, (_request, response) => {
     response.setHeader('content-type', 'application/json')
@@ -153,7 +329,7 @@ test('compiled read-only MCP completes the real stdio handshake and makes only o
     url: `/api/corps/${CORP_ID}/snapshot?actor_id=${ACTOR_ID}`,
     authorization: 'Bearer synthetic-fixture-token',
   }])
-  assert.deepEqual(report.tool_names, ['crony_snapshot'])
+  assert.deepEqual(report.tool_names, READ_ONLY_MCP_TOOLS)
   assert.equal(report.read_only, true)
   assert.equal(report.corp_scope_verified, true)
   assert.equal(report.counts_scope, 'returned_snapshot_collection_lengths')
@@ -177,7 +353,7 @@ test('compiled MCP ignores notifications and denies mutating calls before HTTP w
   ]
   const replies = await nativeFrames(configuration(api.origin), frames)
   assert.deepEqual(replies.map((reply) => reply.id), [1, 2, 3, 4, 5, null])
-  assert.equal(replies[1].result.tools.length, 1)
+  assert.equal(replies[1].result.tools.length, 2)
   for (const reply of replies.slice(2, 4)) {
     assert.equal(reply.error.code, -32000)
     assert.equal(reply.error.message, 'tool is unavailable in read-only MCP mode')
@@ -185,7 +361,7 @@ test('compiled MCP ignores notifications and denies mutating calls before HTTP w
   assert.deepEqual(replies[4].result, {})
   const compatible = await nativeFrames(configuration(api.origin), [frames[2], frames[3]], false)
   assert.deepEqual(compatible.map((reply) => reply.id), [2])
-  assert.equal(compatible[0].result.tools.length, 3)
+  assert.equal(compatible[0].result.tools.length, 4)
   assert.equal(api.requests.length, 0)
 })
 
@@ -306,7 +482,7 @@ for (const mode of readOnlyModes) {
     ], mode.args, [], mode.env)
     assert.equal(result.code, 0)
     const replies = result.output.trim().split('\n').map((line) => JSON.parse(line))
-    assert.deepEqual(replies[0].result.tools.map((tool) => tool.name), ['crony_snapshot'])
+    assert.deepEqual(replies[0].result.tools.map((tool) => tool.name), READ_ONLY_MCP_TOOLS)
     assert.deepEqual(replies[1].result.structuredContent, snapshot())
     assert.equal(api.requests.length, 1)
     assert.equal(api.requests[0].authorization, `Bearer ${ENV_TOKEN}`)
@@ -324,7 +500,7 @@ for (const form of tokenForms) {
       ], form.args, [], { CRONY_MCP_READ_ONLY: 'false' })
       assert.equal(result.code, 0)
       const replies = result.output.trim().split('\n').map((line) => JSON.parse(line))
-      assert.equal(replies[0].result.tools.length, 3)
+      assert.equal(replies[0].result.tools.length, 4)
       assert.deepEqual(replies[1].result.structuredContent, snapshot())
       assert.equal(api.requests.at(-1).authorization, `Bearer ${CLI_TOKEN}`)
     }

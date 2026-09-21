@@ -8,7 +8,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 import { applyOperationFeedback, bindFeedbackCorpusArtifact, buildFeedbackProposal, feedbackCommandExitCode, main, prepareOperationFeedback, projectFeedbackTarget,
-  readFeedbackFile, renderFeedbackProposal } from './operation_feedback.mjs'
+  readFeedbackFile, renderFeedbackProposal, prepareFeedbackReviewIntent, projectFeedbackNativeReview, feedbackReviewNote,
+  renderFeedbackReviewIntent, buildFeedbackReviewIntent } from './operation_feedback.mjs'
 import { audit } from '../scenarios/repo-steward/lib/steward.mjs'
 import { fixtureSnapshot } from '../scenarios/repo-steward/fixtures/demo.mjs'
 import { createFeedbackCorpus, createFeedbackEvidence, createNativeBehaviorEvidence, proposeFeedback, reviewFeedback, validateFeedbackCorpus } from '../scenarios/repo-steward/lib/feedback.mjs'
@@ -146,6 +147,279 @@ function harness(configuration = {}) {
   return { ...f, native, proposal, calls, apply, currentTarget: () => target, currentSource: () => source,
     changeTarget: fn => fn(target), changeSource: fn => fn(source), changeArtifact: fn => { sourceBytes = fn(sourceBytes) }, loseNextResponse: () => { loseResponse = true } }
 }
+
+function reviewedHarness() {
+  const h = harness({ typed: true })
+  const gate = { type: 'independent_review', roles: ['owner'], exclude_requester: true }
+  const policy = { checks: [{ type: 'artifact', min_bytes: 1 }], manual_gate: clone(gate) }
+  const request = { run_id: id(6), corp_id: id(1), task_id: id(5), gate_type: 'independent_review', gate,
+    status: 'pending', requested_at: new Date(now.getTime() - 1000).toISOString(), decided_by: null, decided_at: null, decision_note: null }
+  h.changeSource(source => {
+    source.mission.status = 'running'; source.task.status = 'awaiting_approval'
+    source.run.status = 'waiting_for_approval'; source.run.verification_status = 'waiting_for_approval'
+    source.verification.persisted_acceptance_observed = false
+    source.verification.manual_gate = { gate_type: 'independent_review', status: 'pending', decided_by: null, decided_at: null }
+  })
+  const sync = () => { h.options.receiptBytes = bytes(h.currentSource()) }
+  sync()
+  const payload = () => ({ snapshot: { corp: { id: id(1) },
+    runs: [{ ...clone(h.currentSource().run), id: id(6), corp_id: id(1), task_id: id(5) }],
+    tasks: [{ id: id(5), corp_id: id(1), mission_id: id(4), contract_version: 1, verification_policy: clone(policy) }],
+    missions: [{ id: id(4), corp_id: id(1), room_id: id(3), requested_by: id(72), specification_version: 1 }],
+    agents: [{ id: id(7), corp_id: id(1), actor_id: id(71) }], verification_requests: [clone(request)] } })
+  h.native.readReview = async ({ receipt }) => { h.calls.reviewReads = (h.calls.reviewReads ?? 0) + 1; return projectFeedbackNativeReview(payload(), receipt) }
+  const approve = (intent, changes = {}) => {
+    const at = new Date(now.getTime() + 1000).toISOString()
+    Object.assign(request, { status: 'approved', decided_by: id(73), decided_at: at, decision_note: feedbackReviewNote(intent) }, changes)
+    h.changeSource(source => {
+      source.mission.status = 'completed'; source.task.status = 'completed'; source.run.status = 'completed'; source.run.verification_status = 'passed'
+      for (const row of [source.mission, source.task, source.run]) row.updated_at = at
+      source.verification.persisted_acceptance_observed = true
+      source.verification.manual_gate = { gate_type: 'independent_review', status: request.status, decided_by: request.decided_by, decided_at: request.decided_at }
+    })
+    h.options.now = new Date(at); sync()
+  }
+  const intent = () => prepareFeedbackReviewIntent(h.options, h.native)
+  const prepare = intent => prepareOperationFeedback({ ...h.options, requireNativeIndependentReview: true, reviewIntentBytes: bytes(intent) }, h.native)
+  const applyReviewed = (intent, proposal, overrides = {}, dependencies = {}) => applyOperationFeedback({ ...h.options, reviewIntentBytes: bytes(intent),
+    proposalBytes: bytes(proposal), expectedSha256: hash(bytes(proposal)), ...overrides }, { ...h.native, ...dependencies })
+  return { ...h, request, policy, payload, sync, approve, intent, prepare, applyReviewed }
+}
+
+test('pending native review distinguishes invalid artifact paths from invalid artifact IDs', () => {
+  const h = reviewedHarness()
+  const review = projectFeedbackNativeReview(h.payload(), h.currentSource())
+  assert.equal(buildFeedbackReviewIntent(h.options, review, h.native).state, 'ready-for-native-review')
+  for (const artifactPath of ['../corpus.json', 'C:/corpus.json', 'dir\\corpus.json', '', '/corpus.json', 'con/corpus.json']) {
+    assert.throws(() => buildFeedbackReviewIntent({ ...h.options, artifactPath }, review, h.native),
+      { code: 'invalid_artifact_path' }, artifactPath)
+  }
+  for (const artifactPath of ['corpus.json', '../corpus.json']) {
+    assert.throws(() => buildFeedbackReviewIntent({ ...h.options, artifactId: 'not-a-uuid', artifactPath }, review, h.native),
+      { code: 'invalid_artifact_selection' })
+  }
+  assert.equal(h.calls.reads, 0)
+  assert.equal(h.calls.posts.length, 0)
+})
+
+test('pending native intent survives acceptance changes and reviewed adoption replays one exact revision', async () => {
+  const h = reviewedHarness(), pending = clone(h.currentSource())
+  const intent = await h.intent()
+  assert.equal(intent.state, 'ready-for-native-review', intent.reasons?.join(','))
+  assert.equal(h.calls.posts.length, 0)
+  assert.equal(h.calls.reviewReads, 2)
+  assert.match(renderFeedbackReviewIntent(intent), /Canonical intent digest/)
+  assert.match(renderFeedbackReviewIntent(intent), /Raw intent-file SHA-256/)
+  assert.notEqual(hash(bytes(intent)), intent.source.verification_sha256)
+  h.approve(intent)
+  assert.equal(h.currentSource().run.verification_sha256, pending.run.verification_sha256)
+  assert.deepEqual(h.currentSource().verification.evidence, pending.verification.evidence)
+  assert.notDeepEqual(h.currentSource().verification, pending.verification)
+  const proposal = await h.prepare(intent)
+  assert.equal(proposal.state, 'ready-for-review', proposal.reasons?.join(','))
+  assert.equal(proposal.schema_version, 2)
+  assert.equal(proposal.assurance.production_identity_verified, false)
+  assert.equal(proposal.assurance.independent_review_verified, false)
+  assert.equal(proposal.assurance.native_independent_review_binding_verified, true)
+  assert.equal(proposal.idempotency_key, intent.intent_id)
+  const first = await h.applyReviewed(intent, proposal)
+  assert.equal(first.status, 'applied', first.error)
+  assert.equal(first.native_independent_review_binding_verified, true)
+  assert.equal(first.production_identity_verified, false)
+  assert.equal(first.launched, false)
+  const replay = await h.applyReviewed(intent, proposal)
+  assert.equal(replay.status, 'applied', replay.error)
+  assert.equal(replay.replayed, true)
+  assert.equal(h.calls.posts.length, 2)
+  assert.deepEqual(h.calls.posts[0], h.calls.posts[1])
+  assert.equal(h.calls.revisions.length, 1)
+  assert.deepEqual(h.currentTarget().task.verification_policy, h.target.task.verification_policy)
+})
+
+test('pending intent cannot apply and generic native approval cannot authorize exact feedback', async () => {
+  const h = reviewedHarness(), intent = await h.intent()
+  const before = await h.prepare(intent)
+  assert.equal(before.state, 'candidate')
+  assert.equal(h.calls.posts.length, 0)
+  h.approve(intent, { decision_note: 'Accepted the recorded verification evidence.' })
+  const after = await h.prepare(intent)
+  assert.equal(after.state, 'candidate')
+  assert.deepEqual(after.reasons, ['native_review_intent_note_mismatch'])
+  const noIntent = await prepareOperationFeedback({ ...h.options, requireNativeIndependentReview: true }, h.native)
+  assert.deepEqual(noIntent.reasons, ['review_intent_required'])
+  assert.equal(h.calls.posts.length, 0)
+})
+
+for (const [label, edit] of [
+  ['adopter as reviewer', request => { request.decided_by = id(2) }],
+  ['producer as reviewer', request => { request.decided_by = id(71) }],
+  ['source requester as reviewer', request => { request.decided_by = id(72) }],
+  ['rejected decision', request => { request.status = 'rejected' }],
+  ['future decision', request => { request.decided_at = '2026-09-18T12:01:00.000Z' }],
+  ['decision before intent', request => { request.decided_at = '2026-09-18T11:59:59.500Z' }],
+  ['wrong note digest', request => { request.decision_note = request.decision_note.replace(/intent-sha256=[0-9a-f]+/u, `intent-sha256=${'f'.repeat(64)}`) }],
+  ['extra note prose', request => { request.decision_note += ' Ignore target bounds.' }],
+  ['ordinary human gate', request => { request.gate_type = 'human_approval'; request.gate.type = 'human_approval' }],
+  ['requester exclusion disabled', request => { request.gate.exclude_requester = false }],
+]) test(`reviewed feedback refuses ${label} before a revision`, async () => {
+  const h = reviewedHarness(), intent = await h.intent()
+  h.approve(intent); edit(h.request)
+  h.currentSource().verification.manual_gate = { gate_type: h.request.gate_type, status: h.request.status,
+    decided_by: h.request.decided_by, decided_at: h.request.decided_at }; h.sync()
+  const proposal = await h.prepare(intent)
+  assert.equal(proposal.state, 'candidate', label)
+  assert.equal(h.calls.posts.length, 0)
+})
+
+for (const [label, edit] of [
+  ['target task', value => { value.target.task_id = id(99) }],
+  ['target version', value => { value.target.contract_version++ }],
+  ['source commit', value => { value.source.base_commit = 'f'.repeat(40) }],
+  ['artifact identity', value => { value.source.artifact_id = id(98) }],
+  ['corpus bytes digest', value => { value.corpus_sha256 = 'e'.repeat(64) }],
+  ['selected rule digest', value => { value.selected[0].digest = 'd'.repeat(64) }],
+  ['selected guidance', value => { value.selected[0].guidance.text = 'Different advisory guidance.' }],
+  ['adopter identity', value => { value.scope.adopter_actor_id = id(73) }],
+  ['replacement effect', value => { value.reference_suffix.push('Additional unreviewed guidance') }],
+  ['unknown authority field', value => { value.launch_authorized = true }],
+]) test(`native approval cannot excuse changed ${label}`, async () => {
+  const h = reviewedHarness(), intent = await h.intent()
+  edit(intent); h.approve(intent)
+  const proposal = await h.prepare(intent)
+  assert.equal(proposal.state, 'candidate', label)
+  assert.deepEqual(proposal.reasons, ['review_intent_binding_changed'])
+  assert.equal(h.calls.posts.length, 0)
+})
+
+test('persisted verifier policy and automated evidence drift invalidate the intent independently of acceptance', async () => {
+  for (const change of [
+    h => { h.policy.checks[0].min_bytes = 2 },
+    h => { h.currentSource().verification.evidence[0].exit_code = 1; h.sync() },
+    h => { h.currentSource().run.verification_sha256 = 'e'.repeat(64); h.sync() },
+  ]) {
+    const h = reviewedHarness(), intent = await h.intent()
+    h.approve(intent); change(h)
+    assert.equal((await h.prepare(intent)).state, 'candidate')
+    assert.equal(h.calls.posts.length, 0)
+  }
+})
+
+test('missing or contradictory native rows and capture drift fail closed', async () => {
+  const h = reviewedHarness(), intent = await h.intent()
+  h.approve(intent)
+  const receipt = h.currentSource()
+  for (const change of [
+    payload => { payload.snapshot.verification_requests = [] },
+    payload => { payload.snapshot.verification_requests.push(clone(payload.snapshot.verification_requests[0])) },
+    payload => { payload.snapshot.verification_requests[0].corp_id = id(99) },
+    payload => { payload.snapshot.tasks[0].verification_policy.manual_gate = null },
+    payload => { payload.snapshot.agents = [] },
+  ]) {
+    const payload = h.payload(); change(payload)
+    assert.throws(() => projectFeedbackNativeReview(payload, receipt))
+  }
+  let reads = 0
+  const result = await prepareOperationFeedback({ ...h.options, requireNativeIndependentReview: true, reviewIntentBytes: bytes(intent) },
+    { ...h.native, readReview: async options => { const review = await h.native.readReview(options); if (++reads === 2) review.decision_note += ' changed'; return review } })
+  assert.deepEqual(result.reasons, ['native_review_changed_during_capture'])
+  assert.equal(h.calls.posts.length, 0)
+})
+
+test('reviewed apply rechecks the actual decision and preserves ambiguous outcomes and idempotency', async () => {
+  const h = reviewedHarness(), intent = await h.intent()
+  h.approve(intent)
+  const proposal = await h.prepare(intent)
+  h.loseNextResponse()
+  const unknown = await h.applyReviewed(intent, proposal)
+  assert.equal(unknown.status, 'outcome-unknown')
+  assert.equal(unknown.idempotency_key, intent.intent_id)
+  const replay = await h.applyReviewed(intent, proposal)
+  assert.equal(replay.status, 'applied', replay.error)
+  assert.equal(h.calls.revisions.length, 1)
+  h.request.decision_note += ' contradicted'
+  const refused = await h.applyReviewed(intent, proposal)
+  assert.equal(refused.status, 'refused-before-effect')
+  assert.equal(refused.mutation_requests, 0)
+  assert.equal(h.calls.posts.length, 2)
+})
+
+test('reviewed apply rejects altered intent bytes and expired proposal without native effects', async () => {
+  const h = reviewedHarness(), intent = await h.intent()
+  h.approve(intent)
+  const proposal = await h.prepare(intent)
+  const altered = await h.applyReviewed(intent, proposal, { reviewIntentBytes: Buffer.concat([bytes(intent), Buffer.from(' ')]) })
+  assert.equal(altered.error, 'review_intent_bytes_changed')
+  assert.equal(altered.schema_version, 2)
+  assert.equal(altered.native_independent_review_binding_verified, false)
+  const missing = await h.applyReviewed(intent, proposal, { reviewIntentBytes: undefined })
+  assert.equal(missing.error, 'review_intent_bytes_changed')
+  assert.equal(missing.schema_version, 2)
+  const expired = await h.applyReviewed(intent, proposal, { now: new Date(Date.parse(proposal.expires_at)) })
+  assert.equal(expired.error, 'proposal_expired_or_future')
+  assert.equal(h.calls.posts.length, 0)
+})
+
+test('a changed post-effect review remains uncertain and cannot assert a verified binding', async () => {
+  const h = reviewedHarness(), intent = await h.intent()
+  h.approve(intent)
+  const proposal = await h.prepare(intent)
+  const result = await h.applyReviewed(intent, proposal, {}, { revise: async options => {
+    const result = await h.native.revise(options); h.request.decision_note += ' changed'; return result
+  } })
+  assert.equal(result.status, 'applied-but-source-changed')
+  assert.equal(result.native_independent_review_binding_verified, false)
+  assert.equal(h.calls.revisions.length, 1)
+})
+
+test('review intent time bounds are revalidated during accepted-source reconstruction', async () => {
+  const h = reviewedHarness(), intent = await h.intent()
+  const early = clone(intent)
+  early.created_at = new Date(Date.parse(h.request.requested_at) - 1).toISOString()
+  // Keep the interval valid so this isolates the native-request temporal guard.
+  early.expires_at = new Date(Date.parse(early.created_at) + 86400000).toISOString()
+  h.approve(early)
+  assert.deepEqual((await h.prepare(early)).reasons, ['review_intent_predates_request'])
+  h.approve(intent)
+  h.options.now = new Date(intent.expires_at)
+  assert.deepEqual((await h.prepare(intent)).reasons, ['review_intent_expired_or_invalid'])
+  assert.equal(h.calls.posts.length, 0)
+})
+
+test('CLI native-review preparation, exact intent selection and apply keep separate raw and canonical hashes', async () => {
+  const h = reviewedHarness(), directory = mkdtempSync(path.join(tmpdir(), 'ecorp-native-feedback-cli-'))
+  const files = Object.fromEntries(['corpus', 'review', 'pending', 'accepted', 'intent', 'proposal', 'application'].map(name => [name, path.join(directory, `${name}.json`)]))
+  for (const [file, content] of [[files.corpus, h.options.corpusBytes], [files.review, h.options.reviewBytes], [files.pending, h.options.receiptBytes]]) writeFileSync(file, content)
+  const prepareArgs = (command, receipt, output) => [command, '--corpus', files.corpus, '--corpus-sha256', hash(h.options.corpusBytes),
+    '--review', files.review, '--review-sha256', hash(h.options.reviewBytes), '--receipt', receipt, '--receipt-sha256', hash(readFileSync(receipt)),
+    '--artifact-id', id(9), '--artifact-path', 'corpus.json', '--rule-ids', h.options.selectedRuleIds.join(','),
+    '--mission-id', id(10), '--task-id', id(11), '--out', output]
+  const dependencies = { ...h.native, env, clock: () => h.options.now }
+  const intentResult = await main(prepareArgs('prepare-review', files.pending, files.intent), dependencies)
+  assert.equal(intentResult.status, 'ready-for-native-review')
+  assert.equal(intentResult.mutation_requests, 0)
+  const intent = JSON.parse(readFileSync(files.intent, 'utf8'))
+  assert.equal(intentResult.output_sha256, hash(readFileSync(files.intent)))
+  assert.ok(readFileSync(`${files.intent}.md`, 'utf8').includes(feedbackReviewNote(intent)))
+  h.approve(intent); writeFileSync(files.accepted, h.options.receiptBytes)
+  const proposalResult = await main([...prepareArgs('prepare', files.accepted, files.proposal), '--require-native-independent-review',
+    '--review-intent', files.intent, '--review-intent-sha256', intentResult.output_sha256], dependencies)
+  assert.equal(proposalResult.status, 'ready-for-review')
+  const proposal = JSON.parse(readFileSync(files.proposal, 'utf8'))
+  assert.equal(proposal.schema_version, 2)
+  assert.equal(proposal.inputs.review_intent_sha256, intentResult.output_sha256)
+  assert.notEqual(proposal.native_review.intent_sha256, proposal.inputs.review_intent_sha256)
+  assert.equal(h.calls.posts.length, 0)
+  const applied = await main(['apply', '--proposal', files.proposal, '--sha256', proposalResult.output_sha256,
+    '--corpus', files.corpus, '--review', files.review, '--receipt', files.accepted, '--review-intent', files.intent, '--out', files.application], dependencies)
+  assert.equal(applied.status, 'applied')
+  assert.equal(applied.mutation_requests, 1)
+  assert.equal(h.calls.revisions.length, 1)
+  for (const extra of [ ['--require-native-independent-review'], ['--review-intent', files.intent],
+    ['--review-intent-sha256', intentResult.output_sha256] ]) {
+    await assert.rejects(main([...prepareArgs('prepare', files.accepted, path.join(directory, 'refused.json')), ...extra], dependencies), { code: 'review_intent_required' })
+  }
+  assert.equal(h.calls.revisions.length, 1)
+})
 
 test('prepare is read-only and exposes the exact reference-only change for review', async () => {
   const h = harness()
