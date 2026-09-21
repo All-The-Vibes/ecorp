@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
         }
         None => "http://127.0.0.1:8791".to_owned(),
     };
-    let client = GatewayClient::new(server, args.corp_id, args.actor_id, args.access_token)
+    let client = GatewayClient::new(server, args.corp_id, args.actor_id, args.access_token)?
         .with_mcp_access(access)?;
     let mut lines = BufReader::new(tokio::io::stdin()).lines();
     while let Some(line) = lines.next_line().await? {

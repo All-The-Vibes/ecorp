@@ -313,8 +313,12 @@ async function createMaterializationBarrierProxy() {
       if (contentType) response.setHeader('content-type', contentType)
       response.end(Buffer.from(await upstream.arrayBuffer()))
     } catch (error) {
+      const code = error?.cause?.code ?? error?.code
+      const category = ['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND']
+        .find((allowed) => allowed === code) ?? 'UPSTREAM_FAILURE'
+      console.error('Factory fixture upstream failure:', category)
       if (!response.headersSent) response.statusCode = 502
-      response.end(String(error))
+      response.end('Fixture upstream request failed')
     }
   })
   proxy.on('connection', (socket) => {

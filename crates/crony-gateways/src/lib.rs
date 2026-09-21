@@ -22,7 +22,7 @@ pub enum McpAccess {
 
 #[derive(Debug, Clone)]
 pub struct GatewayClient {
-    pub server: String,
+    server: reqwest::Url,
     pub corp_id: Uuid,
     pub actor_id: Uuid,
     pub access_token: Option<String>,
@@ -36,55 +36,67 @@ impl GatewayClient {
         corp_id: Uuid,
         actor_id: Uuid,
         access_token: Option<String>,
-    ) -> Self {
-        Self {
-            server: server.trim_end_matches('/').to_owned(),
+    ) -> Result<Self> {
+        let server = reqwest::Url::parse(&server)
+            .map_err(|_| anyhow!("ECorp gateway requires an explicit HTTP(S) API origin"))?;
+        if !matches!(server.scheme(), "http" | "https")
+            || !server.username().is_empty()
+            || server.password().is_some()
+            || server.query().is_some()
+            || server.fragment().is_some()
+            || server.path() != "/"
+        {
+            return Err(anyhow!(
+                "ECorp gateway requires an HTTP(S) origin without credentials or parameters"
+            ));
+        }
+        let loopback = matches!(server.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"));
+        if server.scheme() == "http" && !loopback {
+            return Err(anyhow!(
+                "ECorp gateway requires HTTPS outside explicit loopback origins"
+            ));
+        }
+        let mut transport = Client::builder()
+            .https_only(server.scheme() == "https")
+            .redirect(reqwest::redirect::Policy::none());
+        if loopback {
+            transport = transport.no_proxy();
+        }
+        Ok(Self {
+            server,
             corp_id,
             actor_id,
             access_token,
-            http: Client::new(),
+            http: transport
+                .build()
+                .context("configure ECorp gateway transport")?,
             response_byte_limit: None,
-        }
+        })
     }
 
-    /// Inspection stays on the selected origin, including on redirect responses.
-    /// Other integrations retain their existing transport behavior.
+    /// Read-only inspection also bounds the response before JSON decoding.
     pub fn with_mcp_access(mut self, access: McpAccess) -> Result<Self> {
         if access == McpAccess::ReadOnly {
-            let server = reqwest::Url::parse(&self.server)
-                .context("read-only MCP requires an explicit HTTP(S) API origin")?;
-            if !matches!(server.scheme(), "http" | "https")
-                || !server.username().is_empty()
-                || server.password().is_some()
-                || server.query().is_some()
-                || server.fragment().is_some()
-                || server.path() != "/"
-            {
-                return Err(anyhow!(
-                    "read-only MCP requires an HTTP(S) origin without credentials or parameters"
-                ));
-            }
-            if server.scheme() == "http"
-                && !matches!(server.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"))
-            {
-                return Err(anyhow!(
-                    "read-only MCP requires HTTPS outside explicitly configured loopback origins"
-                ));
-            }
-            self.server = server.origin().ascii_serialization();
-            self.http = Client::builder()
-                .redirect(reqwest::redirect::Policy::none())
-                .build()
-                .context("configure read-only MCP transport")?;
             self.response_byte_limit = Some(MCP_READ_ONLY_MAX_RESPONSE_BYTES);
         }
         Ok(self)
     }
 
     pub async fn request(&self, method: Method, path: &str, body: Option<Value>) -> Result<Value> {
+        if !path.starts_with('/') || path.starts_with("//") {
+            return Err(anyhow!(
+                "ECorp API request requires an origin-relative path"
+            ));
+        }
+        let url = self.server.join(path).context("invalid ECorp API path")?;
+        if url.origin() != self.server.origin() {
+            return Err(anyhow!(
+                "ECorp API request cannot change the configured origin"
+            ));
+        }
         let mut request = self
             .http
-            .request(method, format!("{}{}", self.server, path))
+            .request(method, url)
             .header("content-type", "application/json");
         if let Some(token) = &self.access_token {
             request = request.bearer_auth(token);
@@ -352,6 +364,7 @@ async fn handle_mcp_tool_with_access(
                 .get("room_id")
                 .and_then(Value::as_str)
                 .context("message tool omitted room_id")?;
+            let room_id = Uuid::parse_str(room_id).context("room_id must be a UUID")?;
             let body = arguments
                 .get("body")
                 .and_then(Value::as_str)
@@ -460,7 +473,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn readonly_mcp_transport_requires_an_origin_and_https_outside_loopback() {
+    fn all_gateway_modes_require_an_origin_and_https_outside_loopback() {
         let client = |server: &str| {
             GatewayClient::new(
                 server.to_owned(),
@@ -475,7 +488,18 @@ mod tests {
             "http://[::1]:8791",
             "https://ecorp.example.test",
         ] {
-            assert!(client(server).with_mcp_access(McpAccess::ReadOnly).is_ok());
+            assert!(
+                client(server)
+                    .unwrap()
+                    .with_mcp_access(McpAccess::ReadOnly)
+                    .is_ok()
+            );
+            assert!(
+                client(server)
+                    .unwrap()
+                    .with_mcp_access(McpAccess::ReadWrite)
+                    .is_ok()
+            );
         }
         for server in [
             "",
@@ -485,8 +509,108 @@ mod tests {
             "https://ecorp.example.test/private",
             "https://user:secret@ecorp.example.test",
         ] {
-            assert!(client(server).with_mcp_access(McpAccess::ReadOnly).is_err());
-            assert!(client(server).with_mcp_access(McpAccess::ReadWrite).is_ok());
+            assert!(client(server).is_err());
+        }
+    }
+
+    #[tokio::test]
+    async fn untrusted_room_ids_and_foreign_paths_fail_before_http() {
+        use tokio::{
+            net::TcpListener,
+            time::{Duration, timeout},
+        };
+        let upstream = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let client = GatewayClient::new(
+            format!("http://{}", upstream.local_addr().unwrap()),
+            Uuid::from_u128(1),
+            Uuid::from_u128(2),
+            None,
+        )
+        .unwrap();
+        for room_id in [
+            "../..",
+            "../../../demo/reset#",
+            "%2e%2e%2freset",
+            "01234567-89ab-4cde-8fab-0123456789ab?actor_id=other",
+            "01234567-89ab-4cde-8fab-0123456789ab#",
+            "https://other.example.test",
+        ] {
+            let error = timeout(Duration::from_secs(5), handle_mcp_tool_with_access(
+                &client,
+                &json!({"name":"crony_post_room_message","arguments":{"room_id":room_id,"body":"fixture"}}),
+                McpAccess::ReadWrite,
+            )).await.expect("invalid room must fail before HTTP").unwrap_err();
+            assert_eq!(error.to_string(), "room_id must be a UUID");
+        }
+        for path in [
+            "//other.example.test/api",
+            "/\\other.example.test/api",
+            "https://other.example.test",
+        ] {
+            assert!(
+                timeout(
+                    Duration::from_secs(5),
+                    client.request(Method::POST, path, None)
+                )
+                .await
+                .expect("invalid path must fail before HTTP")
+                .is_err()
+            );
+        }
+        assert!(
+            timeout(Duration::from_millis(100), upstream.accept())
+                .await
+                .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn every_gateway_mode_refuses_credential_bearing_redirects() {
+        use tokio::{
+            io::{AsyncReadExt, AsyncWriteExt},
+            net::TcpListener,
+            time::{Duration, timeout},
+        };
+        for access in [McpAccess::ReadOnly, McpAccess::ReadWrite] {
+            let destination = TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let redirect = TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let origin = format!("http://{}", redirect.local_addr().unwrap());
+            let location = format!("http://{}/leak", destination.local_addr().unwrap());
+            let server = tokio::spawn(async move {
+                let (mut stream, _) = redirect.accept().await.unwrap();
+                let mut request = [0; 4096];
+                assert!(stream.read(&mut request).await.unwrap() > 0);
+                stream.write_all(format!(
+                    "HTTP/1.1 307 Temporary Redirect\r\nLocation: {location}\r\nContent-Length: 2\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{{}}"
+                ).as_bytes()).await.unwrap();
+            });
+            let client = GatewayClient::new(
+                origin,
+                Uuid::from_u128(1),
+                Uuid::from_u128(2),
+                Some("fixture-bearer".to_owned()),
+            )
+            .unwrap()
+            .with_mcp_access(access)
+            .unwrap();
+            let error = timeout(
+                Duration::from_secs(5),
+                client.request(
+                    Method::POST,
+                    "/api/fixture",
+                    Some(json!({"token":"fixture"})),
+                ),
+            )
+            .await
+            .expect("redirect rejection must finish without waiting on the destination")
+            .unwrap_err();
+            assert!(error.to_string().contains("307"));
+            server.await.unwrap();
+            assert!(
+                timeout(Duration::from_millis(100), destination.accept())
+                    .await
+                    .is_err()
+            );
         }
     }
 
@@ -529,11 +653,12 @@ mod tests {
     #[tokio::test]
     async fn recovery_inspection_rejects_invalid_or_extra_arguments_before_http() {
         let client = GatewayClient::new(
-            "invalid-unused-server".to_owned(),
+            "http://127.0.0.1:1".to_owned(),
             Uuid::from_u128(1),
             Uuid::from_u128(2),
             None,
-        );
+        )
+        .expect("gateway client");
         for arguments in [
             Value::Null,
             json!([]),
@@ -565,11 +690,12 @@ mod tests {
     #[tokio::test]
     async fn readonly_mcp_rejects_mutations_before_any_api_request() {
         let client = GatewayClient::new(
-            "invalid-unused-server".to_owned(),
+            "http://127.0.0.1:1".to_owned(),
             Uuid::from_u128(1),
             Uuid::from_u128(2),
             None,
-        );
+        )
+        .expect("gateway client");
         for name in ["crony_create_mission", "crony_post_room_message", "unknown"] {
             let response = handle_mcp_with_access(
                 &client,
@@ -593,11 +719,12 @@ mod tests {
     #[tokio::test]
     async fn invalid_mcp_rpc_version_cannot_reach_the_api() {
         let client = GatewayClient::new(
-            "invalid-unused-server".to_owned(),
+            "http://127.0.0.1:1".to_owned(),
             Uuid::from_u128(1),
             Uuid::from_u128(2),
             None,
-        );
+        )
+        .expect("gateway client");
         let response = handle_mcp(
             &client,
             JsonRpcRequest {
@@ -687,11 +814,12 @@ mod tests {
     #[tokio::test]
     async fn issue224_nonplanning_mcp_actions_reject_attempt_fields_before_api_calls() {
         let client = GatewayClient::new(
-            "invalid-unused-server".to_owned(),
+            "http://127.0.0.1:1".to_owned(),
             Uuid::from_u128(1),
             Uuid::from_u128(2),
             None,
-        );
+        )
+        .expect("gateway client");
         for name in ["crony_snapshot", "crony_post_room_message"] {
             for value in [Value::Null, json!(MAX_TASK_ATTEMPTS)] {
                 let error = handle_mcp_tool_with_access(

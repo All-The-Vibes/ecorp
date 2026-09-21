@@ -37,6 +37,13 @@ Only credential hashes are stored. Replayed, expired, unknown, and revoked crede
 Secrets are encrypted with ChaCha20-Poly1305 and authenticated associated data. The broker checks
 actor, task, run, runner, tool, resource, and expiry scope before dispatch. Events and snapshots
 contain grant metadata only. Environment injection is labeled reduced assurance.
+CLI and gateway API clients require HTTPS outside explicit loopback development origins and do
+not follow redirects, including requests carrying publisher credentials or fencing tokens.
+Loopback API requests bypass proxies. The unauthenticated A2A listener is restricted to loopback;
+remote ingress requires a separate authenticated caller boundary. MCP room identifiers are parsed
+as UUIDs before constructing API paths.
+Candidate regression evidence and its remaining dependency boundary are recorded in
+[the September 21 transport report](evidence/2026-09-21-security-transport.md).
 Production requires a private 32-byte master key and rejects the public built-in development key,
 including equivalent case and surrounding-whitespace representations, before database or storage
 initialization. Development retains its fixture key for local compatibility; it is not a deployment
