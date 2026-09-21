@@ -827,6 +827,7 @@ assert.deepEqual(dryRun.mutations, [])
 assert.deepEqual(dryRun.verification_policy, explicitVerificationPolicy)
 assert.deepEqual(dryRun.preflight, {
   valid: true,
+  dispatch_readiness: { status: 'ready' },
   strategy: 'single',
   task_count: 1,
   budget_tokens: 20_000,
