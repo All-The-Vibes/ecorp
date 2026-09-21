@@ -3,6 +3,8 @@ mod auth;
 mod dependency_source;
 #[cfg(test)]
 mod factory_connection_tests;
+#[cfg(test)]
+mod factory_source_audit_tests;
 mod planning;
 mod secrets;
 mod staffing;

@@ -3509,8 +3509,9 @@ impl PgStore {
 
     pub async fn upgrade_factory_source_commit(
         &self,
-        input: UpgradeFactorySourceCommitInput,
+        mut input: UpgradeFactorySourceCommitInput,
     ) -> Result<FactoryWorkItemOutcome> {
+        input.idempotency_key = normalize_factory_idempotency_key(&input.idempotency_key)?;
         let mission_id: Option<Uuid> = sqlx::query_scalar(
             "SELECT mission_id FROM factory_work_items WHERE id = $1 AND corp_id = $2",
         )
@@ -3568,7 +3569,7 @@ impl PgStore {
         }
         let source_base_commit = input.source_base_commit.trim().to_ascii_lowercase();
         validate_factory_base_commit(&source_base_commit)?;
-        let idempotency_key = normalize_factory_idempotency_key(&input.idempotency_key)?;
+        let idempotency_key = input.idempotency_key;
         let operation_request = json!({
             "work_item_id": input.work_item_id,
             "expected_version": input.expected_version,
@@ -13326,7 +13327,7 @@ fn ensure_factory_recovery_verification_policy_not_weakened(
     replacement: &VerificationPolicy,
 ) -> Result<()> {
     if previous.manual_gate != replacement.manual_gate {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "factory recovery cannot remove or change the persisted manual verification gate"
         ));
     }
@@ -13337,7 +13338,7 @@ fn ensure_factory_recovery_verification_policy_not_weakened(
             .zip(&replacement.checks)
             .any(|(left, right)| left.kind() != right.kind())
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "factory recovery verifier revisions must preserve check count and kinds"
         ));
     }

@@ -19,6 +19,8 @@ struct RetainedWitness {
     checkpoint_digest: String,
     #[serde(default)]
     github_commit: Option<String>,
+    #[serde(default)]
+    destination_id: Option<Uuid>,
 }
 
 impl Service {
@@ -83,12 +85,34 @@ impl Service {
                 );
                 Vec::new()
             };
-        let mut corps = std::collections::BTreeSet::new();
-        for witness in &witnesses {
+        Self::validate_witnesses(&witnesses)?;
+        Ok(Some(Arc::new(Self {
+            key: crony_audit::SigningKey::from_bytes(&raw),
+            key_id,
+            github_token,
+            checkpoint_seconds,
+            witnesses,
+        })))
+    }
+    fn validate_witnesses(witnesses: &[RetainedWitness]) -> anyhow::Result<()> {
+        let mut destinations = std::collections::BTreeSet::new();
+        let mut scopes = std::collections::BTreeMap::new();
+        for witness in witnesses {
+            ensure!(
+                witness.github_commit.is_none() || witness.destination_id.is_some(),
+                "retained github_commit requires an explicit immutable destination_id"
+            );
+            ensure!(
+                scopes
+                    .insert(witness.corp_id, witness.destination_id.is_some())
+                    .is_none_or(|bound| bound == witness.destination_id.is_some()),
+                "cannot mix Corp-only bootstrap and destination-bound retained witnesses"
+            );
             ensure!(
                 !witness.corp_id.is_nil()
                     && !witness.ledger_id.is_nil()
-                    && corps.insert(witness.corp_id)
+                    && witness.destination_id.is_none_or(|id| !id.is_nil())
+                    && destinations.insert((witness.corp_id, witness.destination_id))
                     && witness.checkpoint_digest.len() == 64
                     && witness
                         .checkpoint_digest
@@ -103,14 +127,57 @@ impl Service {
                 "invalid or duplicate retained audit witness"
             );
         }
-        Ok(Some(Arc::new(Self {
-            key: crony_audit::SigningKey::from_bytes(&raw),
-            key_id,
-            github_token,
-            checkpoint_seconds,
-            witnesses,
-        })))
+        Ok(())
     }
+
+    fn witness(&self, corp: Uuid, destination: Uuid) -> Option<&RetainedWitness> {
+        self.witnesses.iter().find(|w| {
+            w.corp_id == corp
+                && (w.destination_id == Some(destination)
+                    || (w.destination_id.is_none() && w.github_commit.is_none()))
+        })
+    }
+
+    async fn publish_destination<T: crony_audit::PublicationTransport>(
+        &self,
+        store: &PgStore,
+        destination: &AuditDestination,
+        transport: &T,
+    ) -> anyhow::Result<bool> {
+        let Some(witness) = self.witness(destination.corp_id, destination.id) else {
+            store
+                .disable_audit_destination_for_divergence(destination.id)
+                .await?;
+            anyhow::bail!(
+                "publication disabled: no independently retained Corp/destination witness"
+            );
+        };
+        if let Err(error) = store
+            .validate_audit_witness(
+                destination.corp_id,
+                witness.ledger_id,
+                &witness.checkpoint_digest,
+                &self.key.verifying_key(),
+            )
+            .await
+        {
+            store
+                .disable_audit_destination_for_divergence(destination.id)
+                .await?;
+            return Err(
+                error.context("publication disabled pending explicit witness reconciliation")
+            );
+        }
+        store
+            .publish_audit_destination(
+                destination.id,
+                transport,
+                &self.key.verifying_key(),
+                witness.github_commit.as_deref(),
+            )
+            .await
+    }
+
     pub fn start(self: Arc<Self>, store: PgStore) {
         tokio::spawn(async move {
             let mut timer =
@@ -153,38 +220,14 @@ impl Service {
                         Ok(destinations) => {
                             for destination in destinations {
                                 let result = async {
-                                    let Some(witness) = self.witnesses.iter().find(|w| w.corp_id == destination.corp_id) else {
-                                        store
-                                            .disable_audit_destination_for_divergence(destination.id)
-                                            .await?;
-                                        anyhow::bail!("publication disabled: no independently retained Corp witness");
-                                    };
-                                    if let Err(error) = store.validate_audit_witness(
-                                        destination.corp_id,
-                                        witness.ledger_id,
-                                        &witness.checkpoint_digest,
-                                        &self.key.verifying_key(),
-                                    ).await {
-                                        store
-                                            .disable_audit_destination_for_divergence(destination.id)
-                                            .await?;
-                                        return Err(error.context(
-                                            "publication disabled pending explicit witness reconciliation",
-                                        ));
-                                    }
                                     let config: GitHubDestination =
-                                        serde_json::from_value(destination.config)?;
+                                        serde_json::from_value(destination.config.clone())?;
                                     let transport = crony_audit::GitHubTransport::new(
                                         &config.repository,
                                         &config.branch,
                                         token,
                                     )?;
-                                    store
-                                        .publish_audit_destination(
-                                            destination.id,
-                                            &transport,
-                                            &self.key.verifying_key(),
-                                        )
+                                    self.publish_destination(&store, &destination, &transport)
                                         .await
                                 }
                                 .await;
@@ -321,13 +364,8 @@ pub async fn handle(
                 .as_ref()
                 .ok_or_else(|| ApiError::conflict("state audit signer is not configured"))?;
             let witness = signer
-                .witnesses
-                .iter()
-                .find(|w| {
-                    w.corp_id == corp
-                        && w.ledger_id == ledger_id
-                        && w.checkpoint_digest == checkpoint_digest
-                })
+                .witness(corp, destination_id)
+                .filter(|w| w.ledger_id == ledger_id && w.checkpoint_digest == checkpoint_digest)
                 .ok_or_else(|| {
                     ApiError::conflict("reconciliation must match a configured retained witness")
                 })?;
@@ -445,6 +483,7 @@ mod tests {
                     ledger_id: ledger,
                     checkpoint_digest: "00".repeat(32),
                     github_commit: None,
+                    destination_id: None,
                 })
                 .into_iter()
                 .collect(),
@@ -516,3 +555,7 @@ mod tests {
         assert!(serde_json::from_value::<AuditRequest>(serde_json::json!({"actor_id":actor,"command":{"action":"checkpoint"},"token":"not accepted"})).is_err());
     }
 }
+
+#[cfg(test)]
+#[path = "state_audit_retained_pin_tests.rs"]
+mod retained_pin_tests;

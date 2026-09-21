@@ -54,17 +54,23 @@ async fn publication_interruption_adoption_conflict_and_rewrite() {
     .unwrap();
     let fake = Fake::default();
     *fake.fail_at.lock().unwrap() = Some(2);
-    assert!(publish_checkpoint(&fake, "audit", &cp, None).await.is_err());
+    assert!(
+        publish_checkpoint(&fake, "audit", &cp, None, None)
+            .await
+            .is_err()
+    );
     *fake.fail_at.lock().unwrap() = None;
-    let head = publish_checkpoint(&fake, "audit", &cp, None).await.unwrap();
+    let head = publish_checkpoint(&fake, "audit", &cp, None, None)
+        .await
+        .unwrap();
     let count = *fake.writes.lock().unwrap();
-    publish_checkpoint(&fake, "audit", &cp, Some(&head))
+    publish_checkpoint(&fake, "audit", &cp, Some(&head), None)
         .await
         .unwrap();
     assert_eq!(count, *fake.writes.lock().unwrap());
     *fake.rewritten.lock().unwrap() = true;
     assert!(
-        publish_checkpoint(&fake, "audit", &cp, Some(&head))
+        publish_checkpoint(&fake, "audit", &cp, Some(&head), None)
             .await
             .is_err()
     );
@@ -77,12 +83,12 @@ async fn publication_interruption_adoption_conflict_and_rewrite() {
         .unwrap()
         .push(0);
     assert!(
-        publish_checkpoint(&fake, "audit", &cp, Some(&head))
+        publish_checkpoint(&fake, "audit", &cp, Some(&head), None)
             .await
             .is_err()
     );
     assert!(
-        publish_checkpoint(&fake, "../escape", &cp, None)
+        publish_checkpoint(&fake, "../escape", &cp, None, None)
             .await
             .is_err()
     );
@@ -94,11 +100,15 @@ async fn publication_interruption_adoption_conflict_and_rewrite() {
         .lock()
         .unwrap()
         .insert(conflict, "22".repeat(32).into_bytes());
-    assert!(publish_checkpoint(&fake, "audit", &cp, None).await.is_err());
+    assert!(
+        publish_checkpoint(&fake, "audit", &cp, None, None)
+            .await
+            .is_err()
+    );
     let mut invalid = cp;
     invalid.digest = "../escape".into();
     assert!(
-        publish_checkpoint(&Fake::default(), "audit", &invalid, None)
+        publish_checkpoint(&Fake::default(), "audit", &invalid, None, None)
             .await
             .is_err()
     );

@@ -47,6 +47,7 @@ pub async fn publish_checkpoint<T: PublicationTransport>(
     root: &str,
     checkpoint: &SignedCheckpoint,
     previous_commit: Option<&str>,
+    retained_commit: Option<&str>,
 ) -> Result<String> {
     validate_destination("audit/validation", "audit", root)?;
     ensure!(root.len() <= 128, "audit root exceeds bound");
@@ -68,7 +69,8 @@ pub async fn publish_checkpoint<T: PublicationTransport>(
         (format!("{stem}.json"), serde_json::to_vec(checkpoint)?),
     ];
     let initial = transport.head().await?;
-    if let Some(old) = previous_commit {
+    // Both fences must constrain this operation's initial head, not a preflight.
+    for old in [previous_commit, retained_commit].into_iter().flatten() {
         ensure!(
             transport.descends_from(old, &initial).await?,
             "GitHub history rewrite detected"

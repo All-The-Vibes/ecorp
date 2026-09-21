@@ -26,8 +26,8 @@ impl std::fmt::Display for AuditedPolicyRefusal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "audit refusal receipt {}:{}:{}: {}",
-            self.receipt.ledger_id, self.receipt.sequence, self.receipt.row_hash, self.message
+            "{}; audit refusal receipt {}:{}:{}",
+            self.message, self.receipt.ledger_id, self.receipt.sequence, self.receipt.row_hash
         )
     }
 }
@@ -282,6 +282,11 @@ impl PgStore {
         for mission in missions {
             authorize(&mut tx, corp, actor, mission, "destination").await?;
         }
+        // Match configuration's ledger-before-destination lock order.
+        ensure!(
+            lock_ledger(&mut tx, corp).await? == Some(witness.ledger_id),
+            "retained witness ledger identity missing or changed"
+        );
         let destination_corp: Uuid = sqlx::query_scalar(
             "SELECT corp_id FROM state_audit_destinations WHERE id=$1 AND corp_id=$2 FOR UPDATE",
         )
@@ -291,10 +296,6 @@ impl PgStore {
         .await?
         .context("audit destination not found in Corp")?;
         ensure!(destination_corp == corp, "foreign Corp destination");
-        ensure!(
-            lock_ledger(&mut tx, corp).await? == Some(witness.ledger_id),
-            "retained witness ledger identity missing or changed"
-        );
         let archive = Self::load_archive(&mut tx, corp, witness.ledger_id).await?;
         if archive.signing_keys.is_empty() {
             archive.verify_history(key)?;
@@ -660,6 +661,7 @@ impl PgStore {
         destination: Uuid,
         transport: &T,
         key: &crony_audit::VerifyingKey,
+        retained_commit: Option<&str>,
     ) -> Result<bool> {
         let mut tx = self.pool.begin().await?;
         // Network work holds only the destination row, never the governed head.
@@ -723,6 +725,7 @@ impl PgStore {
             &config.path,
             &checkpoint,
             previous.as_deref(),
+            retained_commit,
         )
         .await;
         match result {

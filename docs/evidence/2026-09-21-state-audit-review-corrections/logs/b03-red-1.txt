@@ -1,0 +1,39 @@
+Owned fixture identity/label/loopback verified. Credential delivery: ephemeral environment-only reduced assurance.
+Inherited provider/application credentials removed by environment allowlist.
+Command: <review-host>\.cargo\bin\cargo.exe test -p crony-store --lib --locked --offline -j 2 issue283_factory_resume_ -- --test-threads=1 --nocapture --ignored
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.60s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-c43d8b35d717387f.exe)
+
+running 5 tests
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_changed_gate_refusal ...
+thread 'contract_revision::state_audit_refusal_tests::issue283_factory_resume_changed_gate_refusal' (69856) panicked at crates\crony-store\src\state_audit_refusal_tests.rs:181:10:
+valid covered Factory Resume policy denial must have a durable refusal receipt
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_check_count_refusal ...
+thread 'contract_revision::state_audit_refusal_tests::issue283_factory_resume_check_count_refusal' (76316) panicked at crates\crony-store\src\state_audit_refusal_tests.rs:181:10:
+valid covered Factory Resume policy denial must have a durable refusal receipt
+FAILED
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_check_kind_refusal ...
+thread 'contract_revision::state_audit_refusal_tests::issue283_factory_resume_check_kind_refusal' (7336) panicked at crates\crony-store\src\state_audit_refusal_tests.rs:181:10:
+valid covered Factory Resume policy denial must have a durable refusal receipt
+FAILED
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_internal_error_rolls_back ... ok
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_removed_gate_refusal ...
+thread 'contract_revision::state_audit_refusal_tests::issue283_factory_resume_removed_gate_refusal' (82916) panicked at crates\crony-store\src\state_audit_refusal_tests.rs:181:10:
+valid covered Factory Resume policy denial must have a durable refusal receipt
+FAILED
+
+failures:
+
+failures:
+    contract_revision::state_audit_refusal_tests::issue283_factory_resume_changed_gate_refusal
+    contract_revision::state_audit_refusal_tests::issue283_factory_resume_check_count_refusal
+    contract_revision::state_audit_refusal_tests::issue283_factory_resume_check_kind_refusal
+    contract_revision::state_audit_refusal_tests::issue283_factory_resume_removed_gate_refusal
+
+test result: FAILED. 1 passed; 4 failed; 0 ignored; 0 measured; 410 filtered out; finished in 24.70s
+
+error: test failed, to rerun pass `-p crony-store --lib`
+
+Exit code: 101

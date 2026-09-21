@@ -1,0 +1,152 @@
+{
+  "date": "2026-09-21",
+  "startingRemoteHead": "ab84f5aa72649fad2e323fac95d3e8755ebd6e96",
+  "target": "b2523964e7576cafc00e84a51e1044f55826dea7",
+  "sourceInputsUnchangedDuringCombinedRuns": true,
+  "scope": "Local isolated correction verification; not full-PR NICE, real provider/GitHub/chain, or browser-server-runner acceptance",
+  "environment": {
+    "os": "Windows x64",
+    "rust": "1.98.1",
+    "node": "24.16.0",
+    "pnpm": "11.19.0",
+    "postgres": "17-alpine pinned existing image",
+    "buildJobs": 2,
+    "testThreads": 1,
+    "credentialDelivery": "Ephemeral fixture only, child environment, reduced assurance; unrelated inherited credentials scrubbed"
+  },
+  "combined": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "log": "logs/integrated_1-migrations.txt",
+      "startedAt": "2026-09-21T20:45:58.385179+00:00",
+      "finishedAt": "2026-09-21T20:45:58.613514+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      "databaseCleanupWarnings": 0
+    },
+    {
+      "name": "fmt",
+      "exitCode": 0,
+      "log": "logs/integrated_1-fmt.txt",
+      "startedAt": "2026-09-21T20:45:58.615515+00:00",
+      "finishedAt": "2026-09-21T20:46:01.135856+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      "databaseCleanupWarnings": 0
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "log": "logs/integrated_1-clippy.txt",
+      "startedAt": "2026-09-21T20:46:01.143386+00:00",
+      "finishedAt": "2026-09-21T20:51:05.559526+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      "databaseCleanupWarnings": 0
+    },
+    {
+      "name": "workspace",
+      "exitCode": 0,
+      "log": "logs/integrated_1-workspace.txt",
+      "startedAt": "2026-09-21T20:51:05.563523+00:00",
+      "finishedAt": "2026-09-21T21:05:22.221720+00:00",
+      "testTotals": {
+        "passed": 561,
+        "failed": 0,
+        "ignored": 371
+      },
+      "databaseCleanupWarnings": 0
+    },
+    {
+      "name": "build_web",
+      "exitCode": 0,
+      "log": "logs/integrated_1-build_web.txt",
+      "startedAt": "2026-09-21T21:05:22.223486+00:00",
+      "finishedAt": "2026-09-21T21:05:41.368212+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      "databaseCleanupWarnings": 0
+    },
+    {
+      "name": "lint_web",
+      "exitCode": 0,
+      "log": "logs/integrated_1-lint_web.txt",
+      "startedAt": "2026-09-21T21:05:41.369946+00:00",
+      "finishedAt": "2026-09-21T21:05:45.291181+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      },
+      "databaseCleanupWarnings": 0
+    },
+    {
+      "name": "store",
+      "exitCode": 0,
+      "log": "logs/integrated_sqlx_store.txt",
+      "startedAt": "2026-09-21T21:04:00.187502+00:00",
+      "finishedAt": "2026-09-21T21:05:26.599462+00:00",
+      "testTotals": {
+        "passed": 29,
+        "failed": 0,
+        "ignored": 0
+      },
+      "databaseCleanupWarnings": 0
+    },
+    {
+      "name": "server",
+      "exitCode": 0,
+      "log": "logs/integrated_sqlx_server.txt",
+      "startedAt": "2026-09-21T21:05:26.628667+00:00",
+      "finishedAt": "2026-09-21T21:06:06.339242+00:00",
+      "testTotals": {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0
+      },
+      "databaseCleanupWarnings": 2
+    }
+  ],
+  "separateFrontendTests": {
+    "passed": 233,
+    "failed": 0,
+    "note": "Previously executed on byte-identical unchanged frontend source; not product browser acceptance"
+  },
+  "behavioralRedFailures": 15,
+  "tddIssueCounts": {
+    "B01": {
+      "red": 1,
+      "scopedGreen": 4
+    },
+    "B02": {
+      "red": 5,
+      "scopedGreen": 11
+    },
+    "B03": {
+      "red": 4,
+      "scopedGreen": 9
+    },
+    "B04": {
+      "red": 4,
+      "scopedGreen": 6
+    },
+    "B05": {
+      "red": 1,
+      "scopedGreen": 6
+    }
+  },
+  "countNote": "Scoped issue checks overlap; do not sum them as unique tests. Ordinary workspace ignores SQLx opt-ins; selected native harness runs below execute them separately."
+}

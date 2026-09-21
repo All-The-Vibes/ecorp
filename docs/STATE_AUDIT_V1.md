@@ -56,7 +56,24 @@ key/token command-line arguments or API inputs:
 | `CRONY_STATE_AUDIT_KEY_ID` | Required nonempty identifier, at most 128 bytes |
 | `CRONY_STATE_AUDIT_CHECKPOINT_SECONDS` | Local checkpoint schedule, default 300; range 1..31,536,000 |
 | `CRONY_STATE_AUDIT_GITHUB_TOKEN_FILE` | Optional UTF-8 GitHub token file, at most 4,096 bytes; absent means no GitHub network publication |
-| `CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE` | JSON array of independently retained `{ "corp_id": UUID, "ledger_id": UUID, "checkpoint_digest": lowercase_hex, "github_commit": lowercase_hex }`; required with a GitHub credential, at most 256 KiB. `github_commit` may be omitted for verification-only witnesses, but is required for explicit GitHub reconciliation. |
+| `CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE` | JSON array of independently retained `{ "corp_id": UUID, "ledger_id": UUID, "checkpoint_digest": lowercase_hex, "destination_id": UUID, "github_commit": lowercase_hex }`; required with a GitHub credential, at most 256 KiB. A nonnull `github_commit` requires the immutable `destination_id`; both are required for explicit GitHub reconciliation. |
+
+Retain a separate entry per exact Corp/destination. Automatic publication and
+reconciliation select that same association; neither infers it from restored
+database state or applies another destination's commit. Legacy nonnull commits
+without `destination_id` fail startup with a configuration error and must be
+explicitly bound, not silently downgraded to bootstrap. Duplicate entries for
+the same Corp/destination are rejected.
+
+For initial publication, a checkpoint-only entry (no `github_commit`) still
+requires independently verified local ledger/checkpoint history. It may name
+the new destination. Legacy Corp-only checkpoint-only entries remain supported,
+but cannot be mixed with destination-bound entries for that Corp: when adopting
+per-destination witnesses, explicitly configure every intended destination.
+Checkpoint-only bootstrap has **no independent remote ancestry protection**;
+after publication, retain its destination and observed commit outside the
+database. A restored NULL/older database commit cannot detect remote history
+loss without that independently retained remote pin.
 
 Provision keys/credentials through your secret-management process and restrict
 file ACLs to the trusted service identity. Distribute the corresponding raw
@@ -261,7 +278,12 @@ explicit `reconcile` command containing the retained ledger identity and
 checkpoint digest and that witness verifies against the complete local
 history. Reconciliation also requires the configured retained GitHub commit,
 proves that the current branch head descends from it, and restores that commit
-as the destination's ancestry fence. Remote branch rewrites and same-sequence conflicting checkpoint files
+as the destination's ancestry fence. Automatic publication checks both the
+destination-associated independent commit and database `last_commit` against
+the same initial remote head inside the existing publication operation, before
+any remote create. Subsequent ancestry/readback checks remain in force; there
+is no separate unchecked preflight-to-publication handoff.
+Remote branch rewrites and same-sequence conflicting checkpoint files
 also disable publication. Newer valid local history is allowed. Configure the
 first pin after independently
 verifying the first checkpoint; without a pin no publication occurs.

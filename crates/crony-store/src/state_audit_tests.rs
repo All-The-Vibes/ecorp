@@ -996,6 +996,55 @@ async fn issue281_covered_task_cannot_escape_by_reparenting(pool: PgPool) -> Res
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires explicitly owned disposable PostgreSQL"]
 async fn issue281_legacy_source_commit_upgrade_is_audited_atomically(pool: PgPool) -> Result<()> {
+    source_upgrade_audit_replay(
+        pool,
+        ["source-upgrade", " \tsource-upgrade\r\n"],
+        ["source-upgrade-refused"; 2],
+    )
+    .await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_source_upgrade_accepted_padded_then_trimmed(pool: PgPool) -> Result<()> {
+    source_upgrade_audit_replay(
+        pool,
+        [" \tsource-upgrade\r\n", "source-upgrade"],
+        ["source-upgrade-refused"; 2],
+    )
+    .await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_source_upgrade_refused_trimmed_then_padded(pool: PgPool) -> Result<()> {
+    source_upgrade_audit_replay(
+        pool,
+        ["source-upgrade"; 2],
+        ["source-upgrade-refused", " \tsource-upgrade-refused\r\n"],
+    )
+    .await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_source_upgrade_refused_padded_then_trimmed(pool: PgPool) -> Result<()> {
+    source_upgrade_audit_replay(
+        pool,
+        ["source-upgrade"; 2],
+        [" \tsource-upgrade-refused\r\n", "source-upgrade-refused"],
+    )
+    .await
+}
+
+async fn source_upgrade_fixture(
+    pool: PgPool,
+) -> Result<(
+    PgStore,
+    DemoIds,
+    MissionPlanIds,
+    UpgradeFactorySourceCommitInput,
+)> {
     let (store, ids, mission, _, _) = fixture(pool).await?;
     let work_item_id = Uuid::new_v4();
     let claim_token = Uuid::new_v4();
@@ -1037,12 +1086,6 @@ async fn issue281_legacy_source_commit_upgrade_is_audited_atomically(pool: PgPoo
     .bind(mission.mission_id)
     .execute(&store.pool)
     .await?;
-    store
-        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
-        .await?;
-    store
-        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
-        .await?;
     let input = UpgradeFactorySourceCommitInput {
         corp_id: ids.corp_id,
         work_item_id,
@@ -1052,6 +1095,24 @@ async fn issue281_legacy_source_commit_upgrade_is_audited_atomically(pool: PgPoo
         idempotency_key: "source-upgrade".into(),
         source_base_commit: "ab".repeat(20),
     };
+    Ok((store, ids, mission, input))
+}
+
+async fn source_upgrade_audit_replay(
+    pool: PgPool,
+    accepted_keys: [&str; 2],
+    refused_keys: [&str; 2],
+) -> Result<()> {
+    let (store, ids, mission, mut input) = source_upgrade_fixture(pool).await?;
+    let work_item_id = input.work_item_id;
+    let claim_token = input.claim_token;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    input.idempotency_key = accepted_keys[0].into();
     let accepted = store.upgrade_factory_source_commit(input.clone()).await?;
     assert!(!accepted.replayed);
     let mut wrong_token = input.clone();
@@ -1065,6 +1126,50 @@ async fn issue281_legacy_source_commit_upgrade_is_audited_atomically(pool: PgPoo
     let replayed = store.upgrade_factory_source_commit(input.clone()).await?;
     assert!(replayed.replayed);
     assert_eq!(replayed.claim_token, Some(claim_token));
+    assert!(replayed.event.is_none());
+    assert_eq!(
+        serde_json::to_value(&replayed.work_item)?,
+        serde_json::to_value(&accepted.work_item)?
+    );
+    let request_id = state_audit::derived_request_id(
+        "factory-source-commit-upgrade",
+        ids.corp_id,
+        ids.alice_actor_id,
+        input.idempotency_key.trim(),
+    )?;
+    let first_receipt = store
+        .audit_receipt(ids.corp_id, ids.alice_actor_id, request_id)
+        .await?;
+    input.idempotency_key = accepted_keys[1].into();
+    let alias_replay = store.upgrade_factory_source_commit(input.clone()).await?;
+    assert_eq!(
+        serde_json::to_value(&alias_replay)?,
+        serde_json::to_value(&replayed)?
+    );
+    assert_eq!(
+        store
+            .audit_receipt(ids.corp_id, ids.alice_actor_id, request_id)
+            .await?,
+        first_receipt
+    );
+    let mut conflict = input.clone();
+    conflict.source_base_commit = "cd".repeat(20);
+    assert!(
+        store
+            .upgrade_factory_source_commit(conflict)
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains("different semantic inputs")
+    );
+    let mut unauthorized = input.clone();
+    unauthorized.actor_id = ids.eve_actor_id;
+    assert!(
+        store
+            .upgrade_factory_source_commit(unauthorized)
+            .await
+            .is_err()
+    );
     sqlx::query(
         "UPDATE factory_work_items SET lease_expires_at=now()-interval '1 second' WHERE id=$1",
     )
@@ -1078,7 +1183,7 @@ async fn issue281_legacy_source_commit_upgrade_is_audited_atomically(pool: PgPoo
         "factory-source-commit-upgrade",
         ids.corp_id,
         ids.alice_actor_id,
-        &input.idempotency_key,
+        input.idempotency_key.trim(),
     )?;
     let receipt = store
         .audit_receipt(ids.corp_id, ids.alice_actor_id, request_id)
@@ -1147,37 +1252,112 @@ async fn issue281_legacy_source_commit_upgrade_is_audited_atomically(pool: PgPoo
         actor_id: ids.alice_actor_id,
         claim_token,
         expected_version: 2,
-        idempotency_key: "source-upgrade-refused".into(),
+        idempotency_key: refused_keys[0].into(),
         source_base_commit: "cd".repeat(20),
     };
-    assert!(
-        store
-            .upgrade_factory_source_commit(refused_input.clone())
-            .await
-            .is_err()
-    );
+    let refusal_error = store
+        .upgrade_factory_source_commit(refused_input.clone())
+        .await
+        .unwrap_err()
+        .to_string();
     let refused_request_id = state_audit::derived_request_id(
         "factory-source-commit-upgrade",
         ids.corp_id,
         ids.alice_actor_id,
-        &refused_input.idempotency_key,
+        refused_input.idempotency_key.trim(),
     )?;
     let first_refusal = store
         .audit_receipt(ids.corp_id, ids.alice_actor_id, refused_request_id)
         .await?
         .context("missing source-upgrade refusal receipt")?;
     assert_eq!(first_refusal.decision, "refused");
-    assert!(
+    let mut refused_retry = refused_input.clone();
+    refused_retry.idempotency_key = refused_keys[1].into();
+    assert_eq!(
         store
-            .upgrade_factory_source_commit(refused_input)
+            .upgrade_factory_source_commit(refused_retry.clone())
             .await
-            .is_err()
+            .unwrap_err()
+            .to_string(),
+        refusal_error
     );
     let replayed_refusal = store
         .audit_receipt(ids.corp_id, ids.alice_actor_id, refused_request_id)
         .await?
         .context("missing replayed source-upgrade refusal receipt")?;
     assert_eq!(replayed_refusal, first_refusal);
+    refused_retry.source_base_commit = "ef".repeat(20);
+    assert!(
+        store
+            .upgrade_factory_source_commit(refused_retry)
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains("different semantic inputs")
+    );
+    for key in [
+        " \t\r\n".into(),
+        "bad key".into(),
+        "bad\u{0}key".into(),
+        "x".repeat(241),
+    ] {
+        let mut malformed = input.clone();
+        malformed.idempotency_key = key;
+        assert!(
+            store
+                .upgrade_factory_source_commit(malformed)
+                .await
+                .unwrap_err()
+                .to_string()
+                .starts_with("factory idempotency key")
+        );
+    }
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM state_audit_decisions WHERE corp_id=$1 AND decision->>'operation'='source_commit_upgrade'")
+            .bind(ids.corp_id).fetch_one(&store.pool).await?,
+        3,
+        "one accepted decision and two distinct refusals, not extra alias decisions"
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM factory_operations WHERE work_item_id=$1 AND operation='upgrade_source_commit'")
+            .bind(work_item_id).fetch_one(&store.pool).await?,
+        1
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM events WHERE aggregate_id=$1 AND type='factory.source_commit_pinned'")
+            .bind(work_item_id).fetch_one(&store.pool).await?,
+        1
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_source_upgrade_precoverage_alias_remains_rejected(pool: PgPool) -> Result<()> {
+    let (store, ids, mission, mut input) = source_upgrade_fixture(pool).await?;
+    store.upgrade_factory_source_commit(input.clone()).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    for key in ["source-upgrade", " \tsource-upgrade\r\n"] {
+        input.idempotency_key = key.into();
+        assert!(
+            store
+                .upgrade_factory_source_commit(input.clone())
+                .await
+                .unwrap_err()
+                .to_string()
+                .contains("predates audit coverage")
+        );
+    }
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT count(*) FROM state_audit_decisions WHERE corp_id=$1 AND decision->>'operation'='source_commit_upgrade'")
+            .bind(ids.corp_id).fetch_one(&store.pool).await?,
+        0
+    );
     Ok(())
 }
 
@@ -1265,7 +1445,7 @@ async fn issue283_midpublication_ancestry_rewrite_disables_destination(pool: PgP
             ..Default::default()
         };
         let error = store
-            .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+            .publish_audit_destination(destination.id, &remote, &key.verifying_key(), None)
             .await
             .unwrap_err();
         assert!(format!("{error:#}").contains("GitHub branch changed ancestry"));
@@ -1287,7 +1467,7 @@ async fn issue283_midpublication_ancestry_rewrite_disables_destination(pool: PgP
             .await?;
         assert!(
             !store
-                .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+                .publish_audit_destination(destination.id, &remote, &key.verifying_key(), None)
                 .await?
         );
         assert_eq!(*remote.writes.lock().unwrap(), threshold);
@@ -1339,7 +1519,7 @@ async fn issue281_durable_publisher_interruption_and_covering_catchup(pool: PgPo
     *remote.fail.lock().unwrap() = Some(2);
     assert!(
         store
-            .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+            .publish_audit_destination(destination.id, &remote, &key.verifying_key(), None)
             .await
             .is_err()
     );
@@ -1368,7 +1548,7 @@ async fn issue281_durable_publisher_interruption_and_covering_catchup(pool: PgPo
         .execute(&store.pool)
         .await?;
     let uncovered = store
-        .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+        .publish_audit_destination(destination.id, &remote, &key.verifying_key(), None)
         .await
         .unwrap_err()
         .to_string();
@@ -1386,7 +1566,7 @@ async fn issue281_durable_publisher_interruption_and_covering_catchup(pool: PgPo
         .execute(&store.pool)
         .await?;
     store
-        .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+        .publish_audit_destination(destination.id, &remote, &key.verifying_key(), None)
         .await?;
     let writes = *remote.writes.lock().unwrap();
     sqlx::query("UPDATE state_audit_destinations SET next_due=now() WHERE id=$1")
@@ -1394,7 +1574,7 @@ async fn issue281_durable_publisher_interruption_and_covering_catchup(pool: PgPo
         .execute(&store.pool)
         .await?;
     store
-        .publish_audit_destination(destination.id, &remote, &key.verifying_key())
+        .publish_audit_destination(destination.id, &remote, &key.verifying_key(), None)
         .await?;
     assert_eq!(writes, *remote.writes.lock().unwrap());
     let receipts = store.audit_status(ids.corp_id, ids.alice_actor_id).await?["receipts"]
@@ -1433,6 +1613,134 @@ async fn issue281_durable_publisher_interruption_and_covering_catchup(pool: PgPo
     );
     assert_eq!(status["assurance"]["publication_errors"], 0);
     assert_eq!(status["assurance"]["overdue_destinations"], 0);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_reconciliation_and_configuration_lock_ledger_first(pool: PgPool) -> Result<()> {
+    async fn waiting(pool: &PgPool, exclude_pid: i32) -> Result<(i32, String)> {
+        tokio::time::timeout(std::time::Duration::from_secs(10), async {
+            loop {
+                if let Some(waiter) = sqlx::query_as(
+                    "SELECT pid,query FROM pg_stat_activity WHERE datname=current_database()
+                     AND wait_event_type='Lock' AND pid<>$1",
+                )
+                .bind(exclude_pid)
+                .fetch_optional(pool)
+                .await?
+                {
+                    return Ok(waiter);
+                }
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .context("expected database lock wait not observed")?
+    }
+
+    let (store, ids, mission, _, _) = fixture(pool).await?;
+    let ledger = Uuid::new_v4();
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, ledger)
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    let key = crony_audit::SigningKey::from_bytes(&[7; 32]);
+    let checkpoint = store
+        .audit_checkpoint(ids.corp_id, "fixture-key", &key)
+        .await?;
+    let mut destination = state_audit::AuditDestination {
+        id: Uuid::new_v4(),
+        corp_id: ids.corp_id,
+        kind: "github".into(),
+        interval_seconds: 60,
+        calendar_schedule: None,
+        overdue_after_seconds: 3600,
+        workflow_gate: "published".into(),
+        config: json!({"repository":"fixture/audit","branch":"main","path":"audit"}),
+    };
+    store
+        .configure_audit_destination(ids.alice_actor_id, &destination)
+        .await?;
+    store
+        .disable_audit_destination_for_divergence(destination.id)
+        .await?;
+    let mut gate = store.pool.begin().await?;
+    let gate_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *gate)
+        .await?;
+    sqlx::query("SELECT id FROM state_audit_destinations WHERE id=$1 FOR UPDATE")
+        .bind(destination.id)
+        .execute(&mut *gate)
+        .await?;
+    destination.interval_seconds = 120;
+    let configure = {
+        let store = store.clone();
+        let destination = destination.clone();
+        tokio::spawn(async move {
+            store
+                .configure_audit_destination(ids.alice_actor_id, &destination)
+                .await
+        })
+    };
+    let (configure_pid, configure_query) = waiting(&store.pool, gate_pid).await?;
+    assert!(configure_query.contains("FROM state_audit_destinations"));
+    let reconcile = {
+        let store = store.clone();
+        tokio::spawn(async move {
+            store
+                .reconcile_audit_destination(
+                    ids.corp_id,
+                    ids.alice_actor_id,
+                    destination.id,
+                    state_audit::AuditReconciliation {
+                        ledger_id: ledger,
+                        checkpoint_digest: &checkpoint.digest,
+                        github_commit: &"aa".repeat(20),
+                    },
+                    &PublicationFixture::default(),
+                    &key.verifying_key(),
+                )
+                .await
+        })
+    };
+    let (reconcile_pid, reconcile_query) = waiting(&store.pool, configure_pid).await?;
+    let blocked_by_configure: bool = sqlx::query_scalar("SELECT $1=ANY(pg_blocking_pids($2))")
+        .bind(configure_pid)
+        .bind(reconcile_pid)
+        .fetch_one(&store.pool)
+        .await?;
+    eprintln!(
+        "Observed configure PID {configure_pid} waiting behind destination gate {gate_pid}; reconciliation PID {reconcile_pid}: {reconcile_query}"
+    );
+    gate.rollback().await?;
+    let (configured, reconciled) =
+        tokio::time::timeout(std::time::Duration::from_secs(10), async {
+            tokio::join!(configure, reconcile)
+        })
+        .await?;
+    configured??;
+    reconciled??;
+    assert!(
+        reconcile_query.contains("FROM state_audit_ledgers") && blocked_by_configure,
+        "reconciliation must wait on configuration's ledger before locking the destination: {reconcile_query}"
+    );
+    let row = sqlx::query(
+        "SELECT interval_seconds,publication_disabled,reconciliation_error,last_commit
+         FROM state_audit_destinations WHERE id=$1",
+    )
+    .bind(destination.id)
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(row.get::<i64, _>("interval_seconds"), 120);
+    assert!(!row.get::<bool, _>("publication_disabled"));
+    assert!(
+        row.get::<Option<String>, _>("reconciliation_error")
+            .is_none()
+    );
+    assert_eq!(row.get::<String, _>("last_commit"), "aa".repeat(20));
     Ok(())
 }
 

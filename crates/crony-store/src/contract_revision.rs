@@ -4,6 +4,10 @@ use std::collections::HashSet;
 
 use super::*;
 
+#[cfg(test)]
+#[path = "state_audit_refusal_tests.rs"]
+mod state_audit_refusal_tests;
+
 impl PgStore {
     pub async fn create_mission_contract_revision(
         &self,
