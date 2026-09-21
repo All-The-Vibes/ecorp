@@ -1,8 +1,8 @@
 # ECorp continuous improvement and CI recovery
 
-Generated 2026-09-21T05:55:08.077Z.
+Generated 2026-09-21T07:45:18.722Z.
 
-Reviewed advisory learning and finite CI recovery are implemented and verified through local deterministic native acceptance. **Genuine provider pilots and a new qualified operations assessment have not run.**
+Reviewed advisory learning and finite CI recovery are implemented and verified through local deterministic native acceptance. **Fresh qualification was attempted and failed before judging. Genuine learning and hosted CI pilots remain unrun.**
 
 ## Benchmark status
 
@@ -12,6 +12,26 @@ Reviewed advisory learning and finite CI recovery are implemented and verified t
 | New structural diagnostic only | Not assessed | 87.4 | Not assessed |
 
 The prior qualified assessment predates this implementation. The new structural scan does not supply a new operations score or composite score. No score improvement is claimed.
+
+## Fresh qualification outcome
+
+**The new assessment failed before judging. Operations remains 71.5 from the earlier qualified assessment; neither the 80 nor 90 goal has been reached.**
+
+| Case | Actual outcome |
+| --- | --- |
+| Recurring maintenance | All seven stages passed; exact reviewed repair; fixed checks 15/18 → 18/18; duplicate/replay and stale-evidence rejection verified. |
+| Feedback repair | Functional checks improved 20/22 → 22/22, but the edit normalized 61 line endings outside the approved one-byte change. Exact review compliance failed. |
+| Negative control | Stopped when its candidate normalized the same 61 line endings and failed the exact experiment transform. Rejection, interruption and restoration were not completed for this case. |
+
+This attempt used 7 native attempts and 789,564 reported tokens. All runs are terminal, no provider run remains active, and failed artifacts/worktrees are preserved. Reported token usage is not a billing estimate. This allocation is closed: seven used, two unused, zero reusable. No judge stages ran and no new score was produced.
+
+These were genuine provider executions in the native local lifecycle with independent agent proposal reviews. They do not establish a genuine human approval, a causal learning gain, hosted CI operation, or an accepted source PR. The controller marked both positive stage chains fulfilled, but the separate byte audit invalidates the feedback repair; functional success does not override that audit.
+
+The earlier metadata refusal and first transport attempt remain recorded separately. That first executing attempt used five native attempts and 229,467 reported tokens; its fault was the observer's incorrect all-CRLF baseline assumption. The latest failure concerns edits made after the corrected baseline passed.
+
+A new strict reviewed-transform guard passed 45 offline tests, including the retained unauthorized line-ending rewrite. Nine provider-free regression checks of the pinned Copilot native driver reproduced the patch failure and showed that edit/str_replace preserves approved repair, interruption, restoration and append bytes. Read-only live metadata confirms that Claude Opus 5 exposes that native edit tool; the GPT model used in the failed attempt does not. A new prospective package is being prepared with this supported model/tool selection, exact review checks and fresh bounded allocation. No new execution is claimed by this report.
+
+[Sanitized qualification details](qualification.json).
 
 ## Implemented capabilities
 
@@ -67,24 +87,24 @@ Recognized-agent merged share is **unknown (null)** because no evaluator-issued 
 - Browser-to-native acceptance: **passed**.
 - Final source commit: **complete**.
 - Genuine provider learning and hosted CI pilots: **not-run**.
-- Fresh qualified operations/composite assessment: **not-run**.
+- Fresh qualified operations/composite assessment: **attempted; failed before judging**.
 - Hosted scheduled and manual workflow enrollment: **disabled-unenrolled**.
 
-The scheduled read-only audit and manual recovery workflow are implemented, disabled and unenrolled. No hosted invocation, source publication, PR publication, merge or deployment is claimed by this report.
+The scheduled read-only audit and manual recovery workflow are implemented, disabled and unenrolled. No hosted invocation, source publication, PR publication, merge or deployment is claimed. Automatic approval review blocked source PR publication; the committed source remains local.
 
 ## Concrete next steps
 
-1. **Substantive delivery:** Select real scoped repository work, use native execution with explicit contracts and finite budgets, and retain verified output and review evidence.
-2. **Recognizable throughput:** Count delivery only after normal maintainer review and merge. Preserve the API publisher identity and immutable commit, verification and publication provenance; confirm actual evaluator account-recognition policy before making recognition claims.
-3. **Operating enablement:** After default-branch acceptance, deliberately provision the dedicated control host and repository enablement. Enroll the manual recovery and read-only schedule separately, then retain actual hosted run evidence.
-4. **Fresh qualification:** Proceed with the separately prepared bounded nine-call generic qualification against frozen source and unchanged controls. Genuine learning and hosted CI pilots remain separate evidence for higher operating claims; they are not prerequisites for that generic qualification.
+1. **Finish the corrected qualification:** Independently review and freeze the new native edit configuration, strict approved-byte guard and fresh finite allocation, then run the unchanged qualification. Retain every failed attempt; publish a score only if the official evaluator completes.
+2. **Measure real agent delivery:** Use native missions for substantive issues and preserve exact commit, verifier and publication provenance. Track accepted merges, lead time, rework and review effort over the same fixed window. Separate account authorship, verified production origin, dependency automation and evaluator-recognized agent identity; do not manufacture attribution.
+3. **Enable hosted operating evidence:** After source publication and normal default-branch acceptance, provision a dedicated trusted control host and explicitly enroll the existing CI recovery workflow and scheduled read-only audit. Capture real failure, repair/restoration, review and subsequent run evidence.
+4. **Demonstrate governed learning:** Run a genuine provider pilot with repeated source-bound observations, a concrete owner-reviewed adoption and a fixed prospective before/after comparison. Preserve regressions, retire stale guidance and compare future outcomes without relabeling deterministic fixtures as provider learning.
 
 ## Evidence identity
 
 Implementation commit: `4e541467c3f716865497dd48f6b78949bbb5e2d9`. Parent/base commit: `3aff250c118c1e24daebc39e7c8655049a344fb5`. Source working tree was clean at capture.
 
 - Source file manifest SHA-256: `244560243628bd123cbf5e3fe9180bea7cb4d8b5c0afb9a0efe7c9bb8d552bf7`
-- Evidence manifest SHA-256: `02f60c7089e8e48f1a4e46f8f8f6ccf3131af484d182834a48200d14e5e93fb5`
+- Evidence manifest SHA-256: `156e4aa355a4f080a6b2eaee4f71b8e5e29afd8be19a1909e9a15b1e7d68561b`
 - Source files captured: 769.
 
 The manifests contain repository-relative filenames or evidence identifiers and hashes. Raw private logs, native ledgers, routing and authentication details are retained separately and excluded here. See [sanitized report JSON](report.json), [source manifest](source-manifest.json) and [evidence manifest](evidence-manifest.json).

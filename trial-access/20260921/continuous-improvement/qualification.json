@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-21T07:45:18.722Z",
+  "official_run": "20260921-152450+0800",
+  "qualified": false,
+  "judge_stages_run": 0,
+  "native_attempts": 7,
+  "distinct_provider_sessions": 3,
+  "reported_tokens": 789564,
+  "reported_cost_microusd": 0,
+  "reported_cost_is_billing_proof": false,
+  "terminal_statuses": {
+    "completed": 4,
+    "failed": 3
+  },
+  "lifetime": {
+    "native_attempts": 39,
+    "reported_tokens": 3589068,
+    "prior_attempts_counted_once": true
+  },
+  "allocation": {
+    "status": "closed",
+    "maximum_attempts": 9,
+    "consumed_attempts": 7,
+    "unused_attempts": 2,
+    "reusable_attempts": 0
+  },
+  "exact_review_compliance": {
+    "recurring_maintenance": "passed",
+    "feedback_expiry": "failed"
+  },
+  "feedback_transform": {
+    "approved_bytes": 36045,
+    "actual_bytes": 36106,
+    "unapproved_normalized_line_endings": 61,
+    "approved_sha256": "2a92f79bfb791b8635504350974467669574be17c352e2e6d5ee9e1a76379722",
+    "actual_sha256": "6af8d436b4433de15e828acc06c4feb71ba6a715c86f793d899045328c46bbe6"
+  },
+  "assurance": {
+    "genuine_provider_execution": true,
+    "independent_agent_reviews": true,
+    "human_approval_claimed": false,
+    "causal_learning_gain_claimed": false,
+    "hosted_ci_execution_claimed": false,
+    "new_qualified_score_claimed": false,
+    "all_old_evidence_preserved": true
+  },
+  "hardening_summary": "A new strict reviewed-transform guard passed 45 offline tests, including the retained unauthorized line-ending rewrite. Nine provider-free regression checks of the pinned Copilot native driver reproduced the patch failure and showed that edit/str_replace preserves approved repair, interruption, restoration and append bytes. Read-only live metadata confirms that Claude Opus 5 exposes that native edit tool; the GPT model used in the failed attempt does not. A new prospective package is being prepared with this supported model/tool selection, exact review checks and fresh bounded allocation. No new execution is claimed by this report.",
+  "hardening": {
+    "strict_guard_tests": {
+      "passed": 45,
+      "failed": 0
+    },
+    "native_driver_tests": {
+      "passed": 9,
+      "failed": 0,
+      "provider_calls": 0,
+      "source_mutations": 0,
+      "earlier_failed_exploratory_probe_retained": true
+    },
+    "prospective_model": "claude-opus-5",
+    "prospective_tool": "edit/str_replace",
+    "fresh_package_status": "preparing-not-dispatched",
+    "functional_tests_and_graders_unchanged": true
+  }
+}
