@@ -41,6 +41,7 @@ class TlsFixtureTests(unittest.TestCase):
             with harness.http_fixture(True, (cert, key)) as server:
                 self.assertEqual(server.socket.context.minimum_version, ssl.TLSVersion.TLSv1_2)
                 client = ssl.create_default_context(cafile=str(cert))
+                client.minimum_version = ssl.TLSVersion.TLSv1_2
                 client.maximum_version = ssl.TLSVersion.TLSv1_2
                 with socket.create_connection(('127.0.0.1', server.server_port), timeout=2) as sock:
                     with client.wrap_socket(sock, server_hostname='localhost') as connection:
