@@ -913,10 +913,11 @@ snapshot, work item, and mission remain authoritative even when more recent hist
 have displaced it from the shared snapshot. Claim and reclaim idempotency keys also include the
 normalized lease duration because lease duration is part of the persisted operation request.
 
-ECorp Build GitHub Project #3 and its linked issues remain the planning and status source of truth;
-`docs/BACKLOG.md` is historical seed material only. External status changes must follow durable
-ECorp transitions. Pull-request publication, merge, and deployment are separate effects with
-separate authorization and idempotency boundaries. See ADR 0020.
+ECorp Build GitHub Project #5 and its linked issues are the planning and status source of truth for
+new work. Personal Project #3 retains existing execution lineage, and `docs/BACKLOG.md` is
+historical seed material only. External status changes must follow durable ECorp transitions.
+Pull-request publication, merge, and deployment are separate effects with separate authorization
+and idempotency boundaries. See ADR 0020.
 
 Factory controller configuration and health are persisted separately from individual work-item
 leases. A controller records its Project and repository scope, desired running or paused state,
@@ -1162,8 +1163,8 @@ the durable publication target.
 
 ## Near-term architecture work
 
-These categories are not a live priority list. Use ECorp Build Project #3 and linked issues for
-ordering and status.
+These categories are not a live priority list. Use ECorp Build Project #5 and linked issues for
+new-work ordering and status. Project #3 remains the record for existing execution lineage.
 
 1. Add stronger OS/container isolation for untrusted child processes.
 2. Add artifact retention sweeping and signing-key rotation.
