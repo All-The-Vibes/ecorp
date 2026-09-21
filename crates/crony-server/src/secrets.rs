@@ -188,6 +188,29 @@ mod tests {
     }
 
     #[test]
+    fn nonces_are_not_constrained_to_uuid_v4_fixed_bits() {
+        let cipher = SecretCipher::initialize(ServerMode::Development, None).unwrap();
+        let corp_id = Uuid::new_v4();
+        let secret_id = Uuid::new_v4();
+        let mut non_v4_version = false;
+        let mut non_uuid_variant = false;
+        // Detect the historical truncated-UUID pattern, not entropy quality.
+        // Random samples can still match either fixed field by chance.
+        for _ in 0..32 {
+            let (_, nonce) = cipher
+                .encrypt(corp_id, secret_id, "fixture", b"same plaintext")
+                .unwrap();
+            assert_eq!(nonce.len(), 12);
+            non_v4_version |= nonce[6] & 0xf0 != 0x40;
+            non_uuid_variant |= nonce[8] & 0xc0 != 0x80;
+        }
+        assert!(
+            non_v4_version && non_uuid_variant,
+            "nonce samples retain UUID fixed fields: non_v4_version={non_v4_version}, non_uuid_variant={non_uuid_variant}"
+        );
+    }
+
+    #[test]
     fn repeated_plaintext_uses_fresh_authenticated_nonces() {
         let cipher = SecretCipher::initialize(ServerMode::Development, None).unwrap();
         let corp_id = Uuid::new_v4();

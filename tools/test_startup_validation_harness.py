@@ -6,6 +6,7 @@ import socket
 import ssl
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -38,7 +39,17 @@ class TlsFixtureTests(unittest.TestCase):
             harness.openssl(['req', '-x509', '-newkey', 'rsa:2048', '-nodes',
                 '-keyout', str(key), '-out', str(cert), '-days', '1', '-subj', '/CN=localhost',
                 '-addext', 'subjectAltName=DNS:localhost'])
-            with harness.http_fixture(True, (cert, key)) as server:
+            def context_with_stricter_default(protocol):
+                self.assertEqual(protocol, ssl.PROTOCOL_TLS_SERVER)
+                context = ssl.SSLContext(protocol)
+                context.minimum_version = ssl.TLSVersion.TLSv1_3
+                return context
+
+            # Replace only the fixture module's constructor lookup, not ssl.SSLContext:
+            # keep real context/property/handshake semantics and system defaults intact.
+            fixture_ssl = SimpleNamespace(SSLContext=context_with_stricter_default,
+                PROTOCOL_TLS_SERVER=ssl.PROTOCOL_TLS_SERVER, TLSVersion=ssl.TLSVersion)
+            with patch.object(harness, 'ssl', fixture_ssl), harness.http_fixture(True, (cert, key)) as server:
                 self.assertEqual(server.socket.context.minimum_version, ssl.TLSVersion.TLSv1_2)
                 client = ssl.create_default_context(cafile=str(cert))
                 client.minimum_version = ssl.TLSVersion.TLSv1_2
