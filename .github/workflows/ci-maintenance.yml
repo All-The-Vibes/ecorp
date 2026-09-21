@@ -1,0 +1,57 @@
+name: CI maintenance handoff (read-only)
+
+on:
+  workflow_run:
+    workflows: [Repository checks, CI]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ci-maintenance-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: >-
+      github.repository == 'All-The-Vibes/ecorp' &&
+      github.event.workflow_run.head_repository.id == github.event.repository.id
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # workflow_run uses the trusted default branch SHA, not the triggering PR.
+      # The CLI also checks the native event and the actual observer checkout.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.23.2
+          package-manager-cache: false
+      - name: Observe the exact completed parent attempt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PARENT_RUN_ID: ${{ github.event.workflow_run.id }}
+          PARENT_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          PARENT_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: >-
+          node tools/ci_maintenance.mjs observe
+          --run-id "$PARENT_RUN_ID"
+          --run-attempt "$PARENT_RUN_ATTEMPT"
+          --head-sha "$PARENT_HEAD_SHA"
+          --out "$RUNNER_TEMP/ci-maintenance"
+      - name: Retain the bounded read-only handoff
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci-maintenance-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ci-maintenance/receipt.json
+            ${{ runner.temp }}/ci-maintenance/handoff.md
+            ${{ runner.temp }}/ci-maintenance/summary.json
+            ${{ runner.temp }}/ci-maintenance/failure.json
+          if-no-files-found: error
+          retention-days: 14

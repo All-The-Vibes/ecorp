@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-17",
+  "repository": "All-The-Vibes/ecorp",
+  "issue": 317,
+  "evaluator_commit": "0a9accccd36446c381c118b783e2e9f623643efa",
+  "evaluator_sha256": "4229e93d77dce70e4e3493cab6bc5311c2d02551d024de33319c27ae6a323290",
+  "copilot_cli": "1.0.85",
+  "models": [
+    "claude-opus-5",
+    "gpt-6-astra",
+    "grok-4.6"
+  ],
+  "max_rounds": 1,
+  "api_evidence_required": true,
+  "mode": "reported-evidence-only",
+  "original": {
+    "commit": "b2523964e7576cafc00e84a51e1044f55826dea7",
+    "composite": 51.6,
+    "substrate": 72,
+    "operation": 37
+  },
+  "baseline": {
+    "commit": "7eecd39e43720851512225844bf5d8158e8a944f",
+    "composite": 53,
+    "substrate": 72,
+    "operation": 39,
+    "run": "20260918-014450+0800",
+    "native_report_sha256": "f7173fcee4c4dfe6021263ddb721d1d11fc6663ac38274ac8a58ed233d05e49f"
+  },
+  "candidate": {
+    "source_commit": "f379f2577dcfb545efa253ea9d9e106e29359005",
+    "git_tree": "144f5d78db3990d572163169647b1b7602d3cf50",
+    "composite": 53.6,
+    "substrate": 73.6,
+    "operation": 39,
+    "ai_ready": false,
+    "run": "20260918-015702+0800",
+    "native_report_sha256": "fd8f8224ac75c3c7e291d732edadd1cb043a34c354fa1732d8c38cf28dedd115",
+    "scope_note": "Evaluated staged working tree before commit; committed source tree was checked identical. This evidence-only report was added afterward."
+  },
+  "native_documentation_drift": {
+    "baseline": {
+      "coverage": "documented",
+      "controls": [],
+      "proseClaims": 3,
+      "residualAction": "Replace prose-only documentation drift expectations with a deterministic check in affected PR validation."
+    },
+    "candidate": {
+      "coverage": "partial",
+      "controls": [
+        {
+          "kind": "deterministic validation",
+          "scope": "targeted",
+          "trigger": "PR",
+          "effect": "advisory report",
+          "deterministic": true,
+          "failOnStaleMode": false,
+          "tested": false,
+          "enforceable": false
+        },
+        {
+          "kind": "deterministic validation",
+          "scope": "targeted",
+          "trigger": "post-merge",
+          "effect": "advisory report",
+          "deterministic": true,
+          "failOnStaleMode": false,
+          "tested": false,
+          "enforceable": false
+        },
+        {
+          "kind": "deterministic validation",
+          "scope": "targeted",
+          "trigger": "manual",
+          "effect": "advisory report",
+          "deterministic": true,
+          "failOnStaleMode": false,
+          "tested": false,
+          "enforceable": false
+        },
+        {
+          "kind": "deterministic validation",
+          "scope": "targeted",
+          "trigger": "manual",
+          "effect": "advisory report",
+          "deterministic": true,
+          "failOnStaleMode": false,
+          "tested": true,
+          "enforceable": false
+        }
+      ],
+      "proseClaims": 3,
+      "residualAction": "Add checked-diff or fail-on-stale semantics to the existing documentation generation, then wire it into affected PR validation."
+    },
+    "limitation": "Native report recognizes partial coverage but does not recognize the actual checker exit-code failure and all fixture proof. Gate scope remains current validation commands and Copilot pins, not semantic documentation coverage."
+  },
+  "validation": {
+    "platform": "Windows x64",
+    "node_version": "v22.23.2",
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "migrations": {
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "count": 41
+    },
+    "documentation": {
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "validation_documents": 5,
+      "runtime_documents": 2,
+      "new_fixture_cases": 28
+    },
+    "node": {
+      "command": "node --test --test-concurrency=2 --test-timeout=180000 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=output/codeblend-readiness-validation/unit-node22/final.xml \"apps/web/src/**/*.test.mjs\" \"tools/*.test.mjs\"",
+      "files": 36,
+      "exit_code": 0,
+      "summary": {
+        "tests": 841,
+        "suites": 0,
+        "pass": 841,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "duration_ms": 38865.5763
+      },
+      "junit_sha256": "8fa5ac4bb2caaaa2f58c150acb61cbe7b3764502992610ceb23845b500baca10"
+    },
+    "rust": {
+      "gates": [
+        {
+          "command": "cargo fmt --check",
+          "exit_code": 0,
+          "duration_seconds": 3.73
+        },
+        {
+          "command": "cargo clippy --workspace --all-targets -- -D warnings",
+          "exit_code": 0,
+          "duration_seconds": 86.526
+        },
+        {
+          "command": "cargo test --workspace",
+          "exit_code": 0,
+          "duration_seconds": 79.527
+        }
+      ],
+      "totals": {
+        "passed": 547.0,
+        "failed": 0.0,
+        "ignored": 333.0,
+        "suite_summaries": 14
+      },
+      "ignored_scope": "332 opt-in PostgreSQL tests and one stopped-session provider probe",
+      "passing_log_sha256": "03a42fc0f945c2fe73e629da12949878a09cd428c17ceb11474e6e4166045e11"
+    },
+    "web_build": {
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "elapsed_seconds": 20.3114281
+    },
+    "web_lint": {
+      "command": "pnpm lint:web",
+      "exit_code": 0
+    },
+    "workflow_lint": {
+      "tool": "actionlint",
+      "version": "1.7.12",
+      "exitCode": 0,
+      "file": ".github/workflows/repository-checks.yml",
+      "downloadSha256": "6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9"
+    },
+    "native_test_fixture": {
+      "passing_exit": 0,
+      "passing_cases": 4,
+      "intentional_failure_exit": 1,
+      "checks": [
+        "nested web tests discovered",
+        "bare E2E drivers and output excluded",
+        "TypeScript import works",
+        "JUnit retained on failure"
+      ]
+    }
+  },
+  "limitations": [
+    "Hosted Linux/Windows jobs were not run during local validation.",
+    "Canonical frozen installation could not be completed because every tested secure client fails the npm registry TLS handshake on this host. Installed dependencies were used for the passing checks; TLS and integrity policies were not relaxed.",
+    "Initial Node missing-dependency failures and Rust missing-npm-PATH failure remain in local logs.",
+    "Local regression fixtures do not replace full product browser/server/runner or real-provider acceptance.",
+    "This PR does not establish autonomous CI repair, operational scheduler enrollment, agent-attributable history, or AI-ready qualification."
+  ]
+}

@@ -1,0 +1,404 @@
+{
+  "schema_version": 1,
+  "kind": "ecorp-developer-environment-evidence",
+  "recorded_at": "2026-09-17T21:16:12.520Z",
+  "repository_base_commit": "0eb4435615908f737fdb02165f47ecb095b5db98",
+  "code_state": "Developer environment, checkpoint portability and portable lockfile working-tree changes on the base; no score or hosted-run claim",
+  "implementation_hashes": [
+    {
+      "file": ".devcontainer/Dockerfile",
+      "sha256": "1f433871749871a6764cfeedf080b9bb10023dc9de376b05acaef7a9cad874bc"
+    },
+    {
+      "file": ".devcontainer/devcontainer.json",
+      "sha256": "6636ec332159c182665a89e018b423a94b773b1eb4cd211f94b2812211205de5"
+    },
+    {
+      "file": "CONTRIBUTING.md",
+      "sha256": "72880a6e1294340599bfdbe1253ab6fd604821daab632fd356c4053af20d210e"
+    },
+    {
+      "file": "tools/e2e_checkpoint_verification.mjs",
+      "sha256": "3969929ea53396eb19e9746bba17966ecc5438a443ecaaf53bcefeebda7a51b7"
+    },
+    {
+      "file": "tools/e2e_checkpoint_verification.test.mjs",
+      "sha256": "3e1131cb193455b234905cf2062fd94c309d2f90f1d185c15753e953fd341f36"
+    },
+    {
+      "file": ".npmrc",
+      "sha256": "1cda2ed73d1ce5b3df5862aebf3345886c068ae8686133d76feaee2739a81705"
+    },
+    {
+      "file": "pnpm-lock.yaml",
+      "sha256": "46fa9b35fac3c25ffb755ac355c01b7b94c4a0ab1f92986b65a263e7a48d0094"
+    }
+  ],
+  "developer_container": {
+    "platform": "Linux amd64 in WSL; Docker Engine 29.1.3",
+    "rust": {
+      "targeted": {
+        "passed": 40,
+        "failed": 0,
+        "ignored": 0
+      },
+      "workspace": {
+        "passed": 525,
+        "failed": 0,
+        "ignored": 333
+      }
+    },
+    "node": {
+      "total": 936,
+      "passed": 931,
+      "failed": 0,
+      "skipped": 5,
+      "skip_reasons": [
+        {
+          "name": "local stack owned-process and state regression fixtures",
+          "reason": "Requires Windows and PowerShell 7.4+"
+        },
+        {
+          "name": "local stack starter source guards",
+          "reason": "Requires the PowerShell AST parser"
+        },
+        {
+          "name": "one checkout serializes commands while another checkout remains usable",
+          "reason": "Windows local launcher"
+        },
+        {
+          "name": "explicit restart nesting and failed operations release their native lock",
+          "reason": "Windows local launcher"
+        },
+        {
+          "name": "an interrupted command does not leave a stale lock requiring manual cleanup",
+          "reason": "Windows local launcher"
+        }
+      ]
+    },
+    "pnpm": "11.19.0",
+    "base_images": {
+      "rust": "rust:1.98.1-bookworm@sha256:cdb2da72943ec036bf0c731ef5ac9e5fb2b1d17d3a9256a581bad64cf6fc093d",
+      "node": "node:24.19.0-bookworm-slim@sha256:e5a8dee7bc1e6a215d224a7ef8206f7e77271bc3cabd5febf2beafac0674f174"
+    },
+    "image_id": "sha256:4fbd63992e7328654f1f133737b6e772b629e7b844714735f8c69fcd4df57021",
+    "devcontainer_cli": {
+      "version": "0.89.0",
+      "archive_sha256": "49c7d71d40058f89e1fd8b019a193ed4215b7fc773c0f6273f7032a46cd33f4b",
+      "archive_sha512": "LzaoOGKQ/Zql6PsiZ4hVIYVZagzWkD65aG/1ou5/Kly5Y1PtjLg1yn7qu+LZCzVoAl6DZZ/pbz8qOO4RLNlqMg==",
+      "integrity_verified": true,
+      "read_configuration": "passed",
+      "up_and_post_create": "passed",
+      "exec_toolchain_doctor": "passed"
+    },
+    "user": {
+      "name": "developer",
+      "uid": 1000,
+      "gid": 1000
+    },
+    "controls": {
+      "privileged": false,
+      "capabilities_dropped": [
+        "ALL"
+      ],
+      "no_new_privileges": true,
+      "docker_socket_mounted": false,
+      "host_credentials_mounted": false,
+      "host_network": false,
+      "workspace": "independent source clone only",
+      "cargo_build_jobs": 2,
+      "optional_copilot_cli_download_disabled": true
+    },
+    "containers": [
+      {
+        "role": "docker-validation",
+        "id": "44293c439a967fa49be29504978a154b88aff7ac10285dac0259b21e5efdb812",
+        "image": "sha256:4fbd63992e7328654f1f133737b6e772b629e7b844714735f8c69fcd4df57021",
+        "stopped": true
+      },
+      {
+        "role": "native-devcontainer-client",
+        "id": "e603a4718825d50cd3eb2ce44336a33e9569a3e7c33fedd27e4f337845077c36",
+        "image": "sha256:03ce6735baf1f7743fd0aaa1432d945310151a7ec697fee6bc7df91e570311bf",
+        "stopped": true
+      }
+    ],
+    "source_snapshot": {
+      "base_commit": "a86822071790c271974919b341b9a5bbf47d0346",
+      "file_count": 641,
+      "manifest_sha256": "bf9537097959eaf6bdc14e4051e72b5443ba6f589862862096ab6c1fa58dfad7",
+      "source_files_unchanged_after_checks": true,
+      "commit_note": "Snapshot preceded the base observation commit; that commit did not change the tested Rust bytes."
+    },
+    "mcp_binary": {
+      "sha256": "a7ee058345855606fbc7d43d97eee014ae7e36fe577c9daefb43d58a48db32f7",
+      "compiled_cases_enabled_for_final_node": true
+    },
+    "checks": [
+      {
+        "name": "canonical-frozen-install",
+        "command": [
+          "pnpm",
+          "install",
+          "--frozen-lockfile"
+        ],
+        "exit_code": 0,
+        "duration_ms": 5903
+      },
+      {
+        "name": "doctor-post-install",
+        "command": [
+          "node",
+          "tools/verify_toolchain.mjs"
+        ],
+        "exit_code": 0,
+        "duration_ms": 2527
+      },
+      {
+        "name": "docs",
+        "command": [
+          "pnpm",
+          "check:docs"
+        ],
+        "exit_code": 0,
+        "duration_ms": 2201
+      },
+      {
+        "name": "migrations",
+        "command": [
+          "node",
+          "tools/check_migrations.mjs"
+        ],
+        "exit_code": 0,
+        "duration_ms": 179
+      },
+      {
+        "name": "rust-fmt",
+        "command": [
+          "cargo",
+          "fmt",
+          "--check"
+        ],
+        "exit_code": 0,
+        "duration_ms": 3004
+      },
+      {
+        "name": "rust-targeted",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-domain",
+          "-p",
+          "crony-protocol",
+          "-p",
+          "crony-gateways"
+        ],
+        "exit_code": 0,
+        "duration_ms": 129847
+      },
+      {
+        "name": "rust-workspace",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--workspace"
+        ],
+        "exit_code": 0,
+        "duration_ms": 429932
+      },
+      {
+        "name": "rust-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--workspace",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "duration_ms": 201847
+      },
+      {
+        "name": "node-regressions-final",
+        "command": [
+          "pnpm",
+          "test:unit"
+        ],
+        "exit_code": 0,
+        "duration_ms": 26773
+      },
+      {
+        "name": "docs-final",
+        "command": [
+          "pnpm",
+          "check:docs"
+        ],
+        "exit_code": 0,
+        "duration_ms": 2168
+      },
+      {
+        "name": "web-build-final",
+        "command": [
+          "pnpm",
+          "build:web"
+        ],
+        "exit_code": 0,
+        "duration_ms": 20490
+      },
+      {
+        "name": "web-lint-final",
+        "command": [
+          "pnpm",
+          "lint:web"
+        ],
+        "exit_code": 0,
+        "duration_ms": 4185
+      }
+    ]
+  },
+  "checkpoint_portability": {
+    "windows_before": {
+      "passed": 155,
+      "failed": 0,
+      "skipped": 0
+    },
+    "windows_after": {
+      "passed": 157,
+      "failed": 0,
+      "skipped": 0
+    },
+    "linux_after": {
+      "passed": 157,
+      "failed": 0,
+      "skipped": 0
+    },
+    "initial_linux_full_suite": {
+      "total": 934,
+      "passed": 848,
+      "failed": 62,
+      "skipped": 24
+    },
+    "cause": "Historical Windows receipts were mixed with default POSIX paths in pure assessment on Linux.",
+    "change": "Explicit path API injection through pure assessment and suite coordination; historical fixtures use path.win32. Native defaults remain the host path implementation.",
+    "guards": {
+      "local_absolute_and_containment_implementation_unchanged": true,
+      "foreign_namespace_default_rejected": true,
+      "no_cli_path_semantics_override": true
+    },
+    "prior_failures_retained": true
+  },
+  "portable_lockfile": {
+    "source_commit": "0eb4435615908f737fdb02165f47ecb095b5db98",
+    "before_sha256": "27ee37bd138599c2db5ce7cf7b65ed8ea7e1e47e69dffe511378832e669f981c",
+    "after_sha256": "46fa9b35fac3c25ffb755ac355c01b7b94c4a0ab1f92986b65a263e7a48d0094",
+    "derived_tarball_urls_removed": 71,
+    "sha1_integrity_pins_retained": 71,
+    "versions_integrities_importers_snapshots_settings_unchanged": true,
+    "normalization_exactly_reversible": true,
+    "registry_resolution": "Package locations are resolved by pnpm through the operator-selected registry; the repository does not hardcode a registry URL.",
+    "windows_fresh": {
+      "registry_kind": "operator-approved enterprise registry",
+      "fresh_source": true,
+      "initial_store_empty": true,
+      "initial_metadata_cache_empty": true,
+      "command": "pnpm install --frozen-lockfile --store-dir <empty-store> --cache-dir <empty-cache>",
+      "exit_code": 0,
+      "downloaded": 28,
+      "reused": 0,
+      "policy_entries_checked": 71,
+      "pnpm_reported_seconds": 9.4,
+      "wall_seconds": 9.6668737,
+      "lock_sha256": "46fa9b35fac3c25ffb755ac355c01b7b94c4a0ab1f92986b65a263e7a48d0094"
+    },
+    "windows_current_checkout": [
+      {
+        "command": "pnpm install --frozen-lockfile",
+        "exit_code": 0,
+        "elapsed_seconds": 2.3491386
+      },
+      {
+        "command": "pnpm build:web",
+        "exit_code": 0,
+        "elapsed_seconds": 24.419739
+      },
+      {
+        "command": "pnpm lint:web",
+        "exit_code": 0,
+        "elapsed_seconds": 4.7522232
+      }
+    ],
+    "linux_fresh": {
+      "registry_kind": "public default registry",
+      "user_npmrc_present": false,
+      "prior_node_modules_present": false,
+      "command": "pnpm install --frozen-lockfile",
+      "exit_code": 0,
+      "elapsed_ms": 5349,
+      "lock_before_sha256": "46fa9b35fac3c25ffb755ac355c01b7b94c4a0ab1f92986b65a263e7a48d0094",
+      "lock_after_sha256": "46fa9b35fac3c25ffb755ac355c01b7b94c4a0ab1f92986b65a263e7a48d0094",
+      "installed_package_count": 28,
+      "installed_names_versions_and_manifest_hashes_match_previous_canonical_install": true,
+      "web_build": {
+        "exit_code": 0,
+        "elapsed_ms": 15007
+      },
+      "web_lint": {
+        "exit_code": 0,
+        "elapsed_ms": 4498
+      },
+      "container": {
+        "id": "a41fdda807155861b81bef4087d8aaf0fbb72d56a9c7654dbee79d85c41c025c",
+        "image": "sha256:4fbd63992e7328654f1f133737b6e772b629e7b844714735f8c69fcd4df57021",
+        "stopped": true
+      }
+    }
+  },
+  "windows_final_repository_gate": {
+    "command": "pnpm check",
+    "exit_code": 0,
+    "elapsed_seconds": 244.4413766,
+    "node": "22.23.2",
+    "rust": "1.98.1",
+    "registry_kind": "operator-approved registry via user configuration",
+    "native_mcp_cases_enabled": true,
+    "node_tests": {
+      "total": 966,
+      "passed": 966,
+      "failed": 0,
+      "skipped": 0
+    },
+    "rust_tests": {
+      "passed": 555,
+      "failed": 0,
+      "ignored": 333
+    },
+    "gates": [
+      "migration check",
+      "documentation contract check",
+      "Node regressions",
+      "rustfmt",
+      "Clippy",
+      "Rust workspace tests",
+      "web build",
+      "web lint"
+    ]
+  },
+  "cleanup": {
+    "owned_containers_stopped": 3,
+    "unrelated_programbench_resources_unchanged": true,
+    "owned_images_and_stopped_caches_preserved": true
+  },
+  "limitations": [
+    "Linux full regression and Rust evidence used the original lockfile before portable normalization; fresh portable-lock install/build/lint were separately rerun on Linux. The version/integrity/dependency graph is unchanged.",
+    "Opt-in Rust tests remained ignored and Windows-only Node tests remained explicitly skipped on Linux.",
+    "This is a contributor build environment, not product server/runner/database/provider acceptance or production OS-isolation proof.",
+    "No benchmark score is inferred and no hosted CI execution is claimed for these changes.",
+    "Earlier failed setup and test attempts remain retained; the first web harness hit an evidence filename collision after install, and the first Docker run preceded completion of its owned source copy."
+  ]
+}
