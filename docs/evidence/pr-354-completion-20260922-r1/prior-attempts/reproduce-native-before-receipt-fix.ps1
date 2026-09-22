@@ -17,10 +17,7 @@ $prefix = "pr$Number-native-$Revision"
 $lifecyclePath = Join-Path $PSScriptRoot "$prefix-lifecycle.json"
 $validation = Get-Content -LiteralPath (Join-Path $ValidationDirectory 'validation.json') -Raw | ConvertFrom-Json
 $tree = (& git -C $product write-tree).Trim()
-$testedTree = if ($validation.tested_staged_tree) { $validation.tested_staged_tree } else { $validation.staged_tree }
-if ($validation.status -ne 'passed' -or $testedTree -notmatch '^[0-9a-f]{40,64}$' -or (& git -C $product diff --name-only)) { throw 'A valid passing validation receipt and staged source are required.' }
-$sourceChanges = @(& git -C $product diff --name-only $testedTree $tree -- . ':(exclude)docs/evidence/**')
-if ($LASTEXITCODE -or $sourceChanges.Count) { throw 'Implementation must match passing validation; subsequent evidence documentation is excluded.' }
+if ($validation.status -ne 'passed' -or $validation.staged_tree -ne $tree -or (& git -C $product diff --name-only)) { throw 'Source must match passing validation.' }
 if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $lifecyclePath)) { throw 'Preserve existing fixture and receipts.' }
 foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
   if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS')) {

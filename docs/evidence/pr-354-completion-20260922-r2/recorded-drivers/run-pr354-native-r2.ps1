@@ -17,10 +17,7 @@ $prefix = "pr$Number-native-$Revision"
 $lifecyclePath = Join-Path $PSScriptRoot "$prefix-lifecycle.json"
 $validation = Get-Content -LiteralPath (Join-Path $ValidationDirectory 'validation.json') -Raw | ConvertFrom-Json
 $tree = (& git -C $product write-tree).Trim()
-$testedTree = if ($validation.tested_staged_tree) { $validation.tested_staged_tree } else { $validation.staged_tree }
-if ($validation.status -ne 'passed' -or $testedTree -notmatch '^[0-9a-f]{40,64}$' -or (& git -C $product diff --name-only)) { throw 'A valid passing validation receipt and staged source are required.' }
-$sourceChanges = @(& git -C $product diff --name-only $testedTree $tree -- . ':(exclude)docs/evidence/**')
-if ($LASTEXITCODE -or $sourceChanges.Count) { throw 'Implementation must match passing validation; subsequent evidence documentation is excluded.' }
+if ($validation.status -ne 'passed' -or $validation.staged_tree -ne $tree -or (& git -C $product diff --name-only)) { throw 'Source must match passing validation.' }
 if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $lifecyclePath)) { throw 'Preserve existing fixture and receipts.' }
 foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
   if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS')) {
@@ -46,7 +43,7 @@ function With-Cargo([scriptblock]$Action) {
   } finally { if ($held) { $mutex.ReleaseMutex() }; $mutex.Dispose() }
 }
 Save-Receipt
-$supervisor = Join-Path $product 'tools/qa_factory_run_activity.ps1'
+$supervisor = Join-Path $PSScriptRoot 'qa-pr354-stack-r2.ps1'
 $serverPort = 29000 + $Number
 $webPort = 26000 + $Number
 $databasePort = 25000 + $Number
@@ -82,7 +79,9 @@ try {
   $state = Get-Content -LiteralPath (Join-Path $qa 'ownership.json') -Raw | ConvertFrom-Json -AsHashtable
   if ($Number -in @(354,355)) {
     # SQLx provisions its own test databases on this new, owned maintenance server.
-    $env:DATABASE_URL = "postgres://pr265_qa@127.0.0.1:$databasePort/postgres"
+    $databasePassword = [IO.File]::ReadAllText((Join-Path $qa 'credentials/postgres-password.txt'))
+    if ($databasePassword -notmatch '^[a-f0-9]{64}$') { throw 'Invalid owned database credential format.' }
+    $env:DATABASE_URL = "postgres://pr265_qa:${databasePassword}@127.0.0.1:$databasePort/postgres"
     With-Cargo {
       $refreshLog = Join-Path $PSScriptRoot "$prefix-sqlx-workspace-cache-refresh.log"
       & cargo clean --workspace --target-dir $target *> $refreshLog
@@ -90,11 +89,13 @@ try {
       $package = if ($Number -eq 354) { 'crony-server' } else { 'crony-store' }
       $filter = if ($Number -eq 354) { 'issue256_' } else { 'issue89_' }
       $log = Join-Path $PSScriptRoot "$prefix-sqlx.log"
-      & cargo test -p $package $filter -- --ignored --test-threads=1 *> $log
+      & cargo test -p $package $filter -- --ignored --test-threads=1 2>&1 | ForEach-Object { ([string]$_).Replace($databasePassword,'[ephemeral database credential]') } | Set-Content -LiteralPath $log -Encoding utf8
       Record-Check 'owned-postgresql-regressions' $log $LASTEXITCODE
     }
     Remove-Item -LiteralPath Env:DATABASE_URL
+    $databasePassword = $null
   }
+  $env:PGPASSFILE=Join-Path $qa 'credentials/pgpass.conf'
   $env:ECORP_COMPLETION_QA_ROOT=$qa
   $env:ECORP_COMPLETION_PRODUCT=$product
   $env:ECORP_COMPLETION_PR=[string]$Number
@@ -168,6 +169,8 @@ test('deterministic verifier inputs', async () => {
       $receipt.cleanup='Only owned processes stopped; database, source, credentials, workspaces and logs retained.'
     } catch { $receipt.cleanup='Failed; inspect retained exact ownership records.';$receipt.status='failed' }
   }
+  Remove-Item -LiteralPath Env:DATABASE_URL,Env:PGPASSFILE -ErrorAction SilentlyContinue
+  $databasePassword=$null
   $receipt.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
   Save-Receipt
 }

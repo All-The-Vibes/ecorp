@@ -1560,12 +1560,40 @@ fn send_command_to_current_runner(
     connection_epoch: Uuid,
     command: ServerToRunner,
 ) -> bool {
-    // Keep the map guard through the synchronous send: a replaced socket must not
-    // receive or acknowledge a command fetched by an older dispatch invocation.
+    // Keep the map guard through capability validation and the synchronous send:
+    // selection can predate awaited storage/secret work or a capability update.
     runners.get(runner_id).is_some_and(|connection| {
-        connection.connection_epoch == connection_epoch
-            && connection.dispatch_ready
-            && connection.tx.send(command).is_ok()
+        if connection.connection_epoch != connection_epoch || !connection.dispatch_ready {
+            return false;
+        }
+        if let ServerToRunner::StartRun {
+            corp_id,
+            workspace_connection_id,
+            adapter,
+            model,
+            reasoning_effort,
+            source_repository,
+            source_base_ref,
+            source_base_commit,
+            ..
+        } = &command
+            && !runner_satisfies_requirements(
+                &connection,
+                *corp_id,
+                &RunnerRequirements {
+                    adapter,
+                    model: model.as_deref(),
+                    reasoning_effort: reasoning_effort.as_deref(),
+                    source_repository: source_repository.as_deref(),
+                    source_base_ref: source_base_ref.as_deref(),
+                    source_base_commit: source_base_commit.as_deref(),
+                    workspace_connection_id: *workspace_connection_id,
+                },
+            )
+        {
+            return false;
+        }
+        connection.tx.send(command).is_ok()
     })
 }
 
@@ -4681,7 +4709,8 @@ async fn schedule_ready_tasks(
                 secrets,
             },
         ) {
-            let reason = "runner disconnected or changed epoch before accepting the run";
+            let reason =
+                "runner disconnected or changed epoch or capabilities before accepting the run";
             if let Ok(events) = state
                 .store
                 .fail_run_before_dispatch(corp_id, record.run_id, reason)
@@ -5038,6 +5067,35 @@ struct RunnerRequirements<'a> {
     workspace_connection_id: Option<Uuid>,
 }
 
+fn runner_satisfies_requirements(
+    connection: &RunnerConnection,
+    corp_id: Uuid,
+    requirements: &RunnerRequirements<'_>,
+) -> bool {
+    let capabilities = connection
+        .capabilities
+        .iter()
+        .filter(|cap| cap.workspace_connection_id == requirements.workspace_connection_id)
+        .cloned()
+        .collect::<Vec<_>>();
+    connection.dispatch_ready
+        && connection.corp_id == corp_id
+        && runner_workspace_satisfies_requirement(
+            &capabilities,
+            requirements.source_repository,
+            requirements.source_base_ref,
+            requirements.source_base_commit,
+        )
+        && capabilities.iter().any(|capability| {
+            capability_satisfies_requirement(
+                capability,
+                requirements.adapter,
+                requirements.model,
+                requirements.reasoning_effort,
+            )
+        })
+}
+
 fn select_runner(
     state: &AppState,
     corp_id: Uuid,
@@ -5053,30 +5111,7 @@ fn select_ready_runner(
 ) -> Option<(String, Uuid)> {
     let mut runners = connections
         .iter()
-        .filter(|entry| {
-            let capabilities = entry
-                .capabilities
-                .iter()
-                .filter(|cap| cap.workspace_connection_id == requirements.workspace_connection_id)
-                .cloned()
-                .collect::<Vec<_>>();
-            entry.dispatch_ready
-                && entry.corp_id == corp_id
-                && runner_workspace_satisfies_requirement(
-                    &capabilities,
-                    requirements.source_repository,
-                    requirements.source_base_ref,
-                    requirements.source_base_commit,
-                )
-                && capabilities.iter().any(|capability| {
-                    capability_satisfies_requirement(
-                        capability,
-                        requirements.adapter,
-                        requirements.model,
-                        requirements.reasoning_effort,
-                    )
-                })
-        })
+        .filter(|entry| runner_satisfies_requirements(entry, corp_id, requirements))
         .map(|entry| (entry.key().clone(), entry.connection_epoch))
         .collect::<Vec<_>>();
     runners.sort_by(|left, right| left.0.cmp(&right.0));
@@ -8517,6 +8552,150 @@ mod tests {
                 .collect(),
             default_reasoning_effort: None,
             billing_multiplier: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn issue256_start_dispatch_rechecks_capabilities_after_selection() {
+        for changed in [
+            "adapter",
+            "model",
+            "reasoning",
+            "repository",
+            "ref",
+            "commit",
+            "workspace",
+            "corp",
+        ] {
+            let epoch = Uuid::from_u128(2);
+            let workspace = Some(Uuid::from_u128(3));
+            let commit = "a".repeat(40);
+            let (mut connection, mut received) = reconnect_test_connection(epoch);
+            let corp_id = connection.corp_id;
+            connection.dispatch_ready = true;
+            connection.capabilities = vec![
+                RunnerCapability {
+                    workspace_connection_id: workspace,
+                    name: "workspace-isolation".to_owned(),
+                    available: true,
+                    detail: None,
+                    models: Vec::new(),
+                    source_repository: Some("fixture/ecorp".to_owned()),
+                    source_base_ref: Some("HEAD".to_owned()),
+                    source_base_commit: Some(commit.clone()),
+                },
+                RunnerCapability {
+                    workspace_connection_id: workspace,
+                    name: "github-copilot".to_owned(),
+                    available: true,
+                    detail: None,
+                    models: vec![model("fixture-model", &["high"])],
+                    source_repository: None,
+                    source_base_ref: None,
+                    source_base_commit: None,
+                },
+            ];
+            let runners = Arc::new(DashMap::new());
+            runners.insert("runner".to_owned(), connection);
+            let requirements = RunnerRequirements {
+                workspace_connection_id: workspace,
+                adapter: "github-copilot",
+                model: Some("fixture-model"),
+                reasoning_effort: Some("high"),
+                source_repository: Some("fixture/ecorp"),
+                source_base_ref: Some("HEAD"),
+                source_base_commit: Some(&commit),
+            };
+            let (runner_id, selected_epoch) =
+                select_ready_runner(&runners, corp_id, &requirements).unwrap();
+            let command = ServerToRunner::StartRun {
+                workspace_connection_id: workspace,
+                corp_id,
+                room_id: Uuid::from_u128(4),
+                mission_id: Uuid::from_u128(5),
+                task_id: Uuid::from_u128(6),
+                run_id: Uuid::from_u128(7),
+                agent_id: Uuid::from_u128(8),
+                assignment_token: Uuid::from_u128(9),
+                adapter: "github-copilot".to_owned(),
+                mission_title: "dispatch capability regression".to_owned(),
+                model: Some("fixture-model".to_owned()),
+                reasoning_effort: Some("high".to_owned()),
+                source_repository: Some("fixture/ecorp".to_owned()),
+                source_base_ref: Some("HEAD".to_owned()),
+                source_base_commit: Some(commit),
+                verification_policy: VerificationPolicy {
+                    checks: Vec::new(),
+                    manual_gate: None,
+                },
+                write_scope: Vec::new(),
+                deliverable: None,
+                secrets: Vec::new(),
+            };
+            assert!(send_command_to_current_runner(
+                &runners,
+                &runner_id,
+                selected_epoch,
+                command.clone(),
+            ));
+            assert!(matches!(
+                received.try_recv().unwrap(),
+                ServerToRunner::StartRun { .. }
+            ));
+
+            // Model the scheduler's awaited storage/secret work after selection.
+            // The same socket advertises a changed capability before enqueue.
+            let (ready, resume) = oneshot::channel();
+            let dispatch_runners = runners.clone();
+            let dispatch = tokio::spawn(async move {
+                resume.await.unwrap();
+                send_command_to_current_runner(
+                    &dispatch_runners,
+                    &runner_id,
+                    selected_epoch,
+                    command,
+                )
+            });
+            {
+                let mut connection = runners.get_mut("runner").unwrap();
+                match changed {
+                    "adapter" => connection.capabilities[1].available = false,
+                    "model" => connection.capabilities[1].models.clear(),
+                    "reasoning" => connection.capabilities[1].models[0]
+                        .supported_reasoning_efforts
+                        .clear(),
+                    "repository" => {
+                        connection.capabilities[0].source_repository =
+                            Some("fixture/other".to_owned())
+                    }
+                    "ref" => connection.capabilities[0].source_base_ref = Some("other".to_owned()),
+                    "commit" => {
+                        connection.capabilities[0].source_base_commit = Some("b".repeat(40))
+                    }
+                    "workspace" => connection.capabilities[0].workspace_connection_id = None,
+                    "corp" => connection.corp_id = Uuid::from_u128(999),
+                    _ => unreachable!(),
+                }
+                assert_eq!(connection.connection_epoch, epoch);
+                assert!(connection.dispatch_ready);
+            }
+            ready.send(()).unwrap();
+            assert!(
+                !dispatch.await.unwrap(),
+                "stale {changed} capability reached enqueue"
+            );
+            assert!(received.try_recv().is_err());
+            // Safety/control commands remain deliverable after capability loss.
+            assert!(send_command_to_current_runner(
+                &runners,
+                "runner",
+                epoch,
+                reconnect_test_command(Uuid::from_u128(7)),
+            ));
+            assert!(matches!(
+                received.try_recv().unwrap(),
+                ServerToRunner::StopRun { .. }
+            ));
         }
     }
 
