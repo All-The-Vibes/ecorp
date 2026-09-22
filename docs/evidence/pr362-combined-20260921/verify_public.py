@@ -48,20 +48,29 @@ def filename(name):
 def regular_file(root, relative):
     canonical = unlinked_path(root / relative)
     assert canonical.is_relative_to(root), ('evidence path escaped root', str(relative))
-    assert stat.S_ISREG(canonical.lstat().st_mode), ('non-regular evidence entry', str(relative))
+    info = canonical.lstat()
+    assert stat.S_ISREG(info.st_mode), ('non-regular evidence entry', str(relative))
+    assert info.st_nlink == 1, ('hard-linked evidence entry', str(relative))
     return canonical
 
 
 def read_file(root, relative):
     path = regular_file(root, relative)
     before = path.lstat()
+    assert stat.S_ISREG(before.st_mode) and before.st_nlink == 1, 'evidence file changed before open'
     flags = os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NOFOLLOW', 0)
     descriptor = os.open(path, flags)
     with os.fdopen(descriptor, 'rb') as stream:
         opened = os.fstat(stream.fileno())
-        assert stat.S_ISREG(opened.st_mode) and (opened.st_dev, opened.st_ino) == (before.st_dev, before.st_ino), 'evidence file changed before read'
+        assert stat.S_ISREG(opened.st_mode) and opened.st_nlink == 1 and (opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns) == (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns), 'evidence file changed before read'
         assert regular_file(root, relative) == path, 'evidence path changed before read'
-        return stream.read()
+        data = stream.read()
+        after = os.fstat(stream.fileno())
+        assert after.st_nlink == 1 and len(data) == opened.st_size and (after.st_size, after.st_mtime_ns) == (opened.st_size, opened.st_mtime_ns), 'evidence file changed during read'
+        assert regular_file(root, relative) == path, 'evidence path changed during read'
+        current = path.lstat()
+        assert (current.st_dev, current.st_ino) == (opened.st_dev, opened.st_ino), 'evidence file replaced during read'
+        return data
 
 def safe(names):
     assert len(names) == len(set(n.casefold() for n in names)), 'duplicate archive path'

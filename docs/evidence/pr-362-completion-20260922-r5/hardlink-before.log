@@ -1,0 +1,70 @@
+test_hard_linked_manifest_and_delivered_file_are_rejected (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_hard_linked_manifest_and_delivered_file_are_rejected) ...
+  test_hard_linked_manifest_and_delivered_file_are_rejected (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_hard_linked_manifest_and_delivered_file_are_rejected) (name='manifest.json') ... FAIL
+  test_hard_linked_manifest_and_delivered_file_are_rejected (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_hard_linked_manifest_and_delivered_file_are_rejected) (name='README.md') ... FAIL
+
+======================================================================
+FAIL: test_hard_linked_manifest_and_delivered_file_are_rejected (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_hard_linked_manifest_and_delivered_file_are_rejected) (name='manifest.json')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 189, in test_hard_linked_manifest_and_delivered_file_are_rejected
+    self.assert_refused(base, "hard-linked evidence entry")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 37, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_hard_linked_manifest_and_delivered_file_are_rejected (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_hard_linked_manifest_and_delivered_file_are_rejected) (name='README.md')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 189, in test_hard_linked_manifest_and_delivered_file_are_rejected
+    self.assert_refused(base, "hard-linked evidence entry")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 37, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+----------------------------------------------------------------------
+Ran 1 test in 3.987s
+
+FAILED (failures=2)

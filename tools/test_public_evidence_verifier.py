@@ -174,6 +174,24 @@ class PublicEvidenceVerifierTests(unittest.TestCase):
                 self.mutate_manifest(base, lambda manifest: manifest["delivered_files"][0].update(path=unsafe))
                 self.assert_refused(base, "unsafe packet filename")
 
+    def test_hard_linked_manifest_and_delivered_file_are_rejected(self):
+        for name in ("manifest.json", "README.md"):
+            with self.subTest(name=name), self.packet_copy() as base:
+                entry = base / PACKETS[0] / name
+                original = entry.read_bytes()
+                target = base.parent / ("outside-" + name)
+                target.write_bytes(original)
+                entry.unlink()
+                os.link(target, entry)
+                try:
+                    self.assertEqual(entry.stat().st_nlink, 2)
+                    self.assertEqual(entry.read_bytes(), original)
+                    self.assert_refused(base, "hard-linked evidence entry")
+                finally:
+                    entry.unlink()
+                self.assertEqual(target.read_bytes(), original)
+                self.assertEqual(target.stat().st_nlink, 1)
+
     def test_image_path_cannot_escape_manifest_inventory(self):
         with self.packet_copy() as base:
             manifest = json.loads((base / PACKETS[0] / "manifest.json").read_bytes())
