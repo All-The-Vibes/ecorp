@@ -1,0 +1,83 @@
+{
+  "scope": "Actual command execution captured by a browser-based test runner; not replayed logs or an application screen.",
+  "tested_staged_tree": "d0b14516558c71d7aed5f8346f26e25c8203cc86",
+  "captures": [
+    {
+      "name": "migrations",
+      "execution_receipt": "migrations.execution.json",
+      "execution_receipt_sha256": "2c822ff9e5def11657480111994ef3ce149fbc00ab7218d7537540eaf6747dcf",
+      "command_configuration": "migrations.command.json",
+      "original_configuration_sha256": "ed2f63984d7ce494ec1178a71234f02017b9e1b7d87fd7bc60b9c5dfc3e3d894",
+      "published_configuration_sha256": "5d98d385a66797eee59e186f2173bfab577c978285cd99179510fdc633b4b4ae"
+    },
+    {
+      "name": "documentation",
+      "execution_receipt": "documentation.execution.json",
+      "execution_receipt_sha256": "05ecfb77b486fefeff98361b75c2eb7c3019f67b3d90d20cb3bde2c38b8200d2",
+      "command_configuration": "documentation.command.json",
+      "original_configuration_sha256": "38d51c79b7f42e53a332bfd989be387e30111cbb7e99691f71c90b3ec94d5fc5",
+      "published_configuration_sha256": "f9d0e20fdb0d73e4fceb993ef5e7d732816df273c9df655c01dce694ed6a4772"
+    },
+    {
+      "name": "rust-format",
+      "execution_receipt": "rust-format.execution.json",
+      "execution_receipt_sha256": "d113506ac46418996711c11b6e32cd91ebc8df1f6e8620171faa5eb597326a93",
+      "command_configuration": "rust-format.command.json",
+      "original_configuration_sha256": "96df13f9cfa86da768b3e45fa7489ec6a496e08abd1ddf2bcd77df6198ec7848",
+      "published_configuration_sha256": "2cba38622765d4bfdc16f71c6dd274a781dfebf997c2599933d85ec76b0764eb"
+    },
+    {
+      "name": "rust-clippy",
+      "execution_receipt": "rust-clippy.execution.json",
+      "execution_receipt_sha256": "bbad47535944712b236e4718034d87f3b724d87ea7795a11491f07a3e5160831",
+      "command_configuration": "rust-clippy.command.json",
+      "original_configuration_sha256": "b0ee19d836aa9622a1ec6b75f0f46f6c51bbf83d51ff39e0610fd565065c3115",
+      "published_configuration_sha256": "cf21febffee74225e731dd180c83ddb056ce72f7c04434417acbbf887c86ea23"
+    },
+    {
+      "name": "rust-workspace",
+      "execution_receipt": "rust-workspace.execution.json",
+      "execution_receipt_sha256": "d77dba9634c74d3efa2e2170d9fdd91583299eef604c70ebec2d56de76a8c629",
+      "command_configuration": "rust-workspace.command.json",
+      "original_configuration_sha256": "0baaa2f7418a6fc2afec3731f4a2fdad0ab4cf3d28ff0a246e5b0b567e9b8bd6",
+      "published_configuration_sha256": "9a55311b7d8758a81ff107ecb4a9e041ee6075f5915fa1193a9911733dd95703"
+    },
+    {
+      "name": "node-unit",
+      "execution_receipt": "node-unit.execution.json",
+      "execution_receipt_sha256": "651cf17bc6da2780c0f86bb5edcd7bcfefaba36701293375ecef7626f135e2ed",
+      "command_configuration": "node-unit.command.json",
+      "original_configuration_sha256": "f68da286bbb7a934f88ddbe6cb75d21bddad5bd6dde524de09ae2d6e0180fe19",
+      "published_configuration_sha256": "0a14e36f947f5c9750541dd2bc8a6d1c89f5b3884dee58d99841131160f28847"
+    },
+    {
+      "name": "steward",
+      "execution_receipt": "steward.execution.json",
+      "execution_receipt_sha256": "3f7d557b6be09ed1922bfa60f82b6b29f462005f041f58a0eb097308dadb68cf",
+      "command_configuration": "steward.command.json",
+      "original_configuration_sha256": "e631d16cf5812ece61eb8fdaadefe6b3b73a6a92c4dacbd2a85bd1ab3cfbc4db",
+      "published_configuration_sha256": "080dccd937cfabbe05faae0958adedc23d134581488063ebec8890e553eeaac1"
+    },
+    {
+      "name": "web-build",
+      "execution_receipt": "web-build.execution.json",
+      "execution_receipt_sha256": "42ef8c5fae15805889174916de9105531f3ab5a00e17f27b16429c5e455c04e8",
+      "command_configuration": "web-build.command.json",
+      "original_configuration_sha256": "1cd6ca040653e11295c34d86441817019a334573e0c621472986d0562c305953",
+      "published_configuration_sha256": "8bfca54fa3af1f5cddafc1703a3a0a70d820d5a1ea06425efbac011866b761ff"
+    },
+    {
+      "name": "web-lint",
+      "execution_receipt": "web-lint.execution.json",
+      "execution_receipt_sha256": "b9629157f2864db3966e0ef578fb6a2bf6fa8a444dbe27115059ca35d47001dc",
+      "command_configuration": "web-lint.command.json",
+      "original_configuration_sha256": "2d6072ac84bcbdfa54e1b2f1c8adf3da726ca43b2092a350a65feafc3b468c9e",
+      "published_configuration_sha256": "09e14990b9d5ab68e1466132960caee103212edba913eab519c5b7432987e28e"
+    }
+  ],
+  "helper": {
+    "file": "live-command-capture.mjs",
+    "sha256": "6a93bba707000e2901a7424d97e7a904f3e9b6334033846db402fa83f8f8851a"
+  },
+  "reproduction": "Install the recorded toolchain, PowerShell 7, Playwright and Edge. Copy one command JSON to a new private output directory, replace the two path placeholders with absolute paths, set CRONY_PLAYWRIGHT_MODULE to the installed Playwright module and CARGO_TARGET_DIR to an isolated source-bound build directory, and invoke node live-command-capture.mjs <configuration.json>. The stagedTree must match git write-tree. Use a fresh native crony-mcp binary via CRONY_MCP_TEST_BINARY for the Node gate. Each execution writes raw output, a source/exit receipt and running/completed PNGs. Original/private configurations remain separately hashed."
+}

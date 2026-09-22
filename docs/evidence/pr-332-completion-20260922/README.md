@@ -23,3 +23,5 @@ The 1440-pixel desktop and 390-pixel mobile captures exercise all six verifier e
 The six PNGs are actual, unmodified browser screenshots. The task's small screenshot-signature fixture exercises the screenshot verifier and is not presented as a rendered browser image. The report's `source_commit` is the isolated task fixture; `product_source_head` identifies the reviewed dependency branch. The evidence does not claim real-provider inference, manual approval decisions, production authentication or hosted CI success.
 
 Trailing line whitespace and blank lines at EOF are removed from the published logs. This formatting normalization does not alter test-result text; original and published hashes are distinct. The local `.gitattributes` preserves published evidence bytes on checkout.
+
+The complete, secret-free reconstructed native browser recipe is in [REPRODUCE.md](REPRODUCE.md). It retains the historical product/source bindings and does not claim another browser run.
