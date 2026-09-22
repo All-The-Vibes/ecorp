@@ -20,9 +20,16 @@ for (const name of [
 const directory = path.dirname(fileURLToPath(import.meta.url))
 const script = path.join(directory, 'local_stack_lifecycle.test.ps1')
 const resultPrefix = 'ECORP_LOCAL_STACK_TEST_RESULT='
+// Module includes Startup: 82 cases took 184s under concurrent validation.
+// Allow bounded scheduling headroom without changing Source or fixture TTLs.
+const moduleWatchdogMs = 300_000
+const moduleTestOptions = {
+  skip: process.platform !== 'win32' ? 'Requires Windows and PowerShell 7.4+' : false,
+  timeout: moduleWatchdogMs + 30_000,
+}
 
-async function runSuite(t, suite) {
-  const result = spawnSync('pwsh.exe', [
+async function runSuite(t, suite, spawn = spawnSync) {
+  const result = spawn('pwsh.exe', [
     '-NoLogo', '-NoProfile', '-NonInteractive', '-File', script,
     '-Suite', suite, '-NodePath', process.execPath,
   ], {
@@ -30,9 +37,7 @@ async function runSuite(t, suite) {
     env: environment,
     encoding: 'utf8',
     windowsHide: true,
-    // Module now also exercises the complete startup preflight matrix. A native
-    // Windows run can exceed two minutes; keep a bounded allowance for slow CI.
-    timeout: 300_000,
+    timeout: suite === 'Module' ? moduleWatchdogMs : 120_000,
     maxBuffer: 2 * 1024 * 1024,
   })
   assert.ifError(result.error)
@@ -63,11 +68,34 @@ async function runSuite(t, suite) {
     'PowerShell exit status must agree with the reported cases')
 }
 
+test('local stack wrapper watchdog contract is bounded and suite-local', async () => {
+  const context = { test: async (_name, check) => check(), diagnostic: () => {} }
+  for (const [suite, expectedWatchdog] of [['Module', 300_000], ['Source', 120_000]]) {
+    // Contract-only double: this checks actual wrapper options, not fixture behavior.
+    await runSuite(context, suite, (executable, args, options) => {
+      assert.equal(executable, 'pwsh.exe')
+      assert.equal(args[args.indexOf('-Suite') + 1], suite)
+      assert.equal(options.timeout, expectedWatchdog)
+      if (suite === 'Module') {
+        assert.equal(moduleTestOptions.timeout, options.timeout + 30_000)
+        assert.equal(moduleTestOptions.timeout, 330_000)
+      }
+      return {
+        status: 0,
+        stdout: resultPrefix + JSON.stringify({
+          suite, scope: 'synthetic-only; not native startup acceptance',
+          cases: [{ name: 'wrapper contract report', passed: true }],
+          cleanup: { remaining_processes: 0, temp_removed: true, created_processes: 1 },
+        }),
+      }
+    })
+  }
+})
+
 // Module fixtures may execute the AST-extracted Launch function against owned
 // children and a locked temporary state file; neither starter entrypoint runs.
-test('local stack owned-process and state regression fixtures', {
-  skip: process.platform !== 'win32' ? 'Requires Windows and PowerShell 7.4+' : false,
-}, async (t) => runSuite(t, 'Module'))
+test('local stack owned-process and state regression fixtures', moduleTestOptions,
+  async (t) => runSuite(t, 'Module'))
 
 // While implementation is in progress, run only the module test with
 // --test-name-pattern=owned-process. These checks parse, never execute, starters.

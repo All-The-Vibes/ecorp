@@ -351,17 +351,20 @@ function Assert-LocalStackPath {
     param([Parameter(Mandatory)][string]$Path, [switch]$Directory, [switch]$Required,
         [switch]$AllowDependencyLink)
     if (![IO.Path]::IsPathFullyQualified($Path)) { throw "An absolute local path is required: $Path" }
-    if ($Required -and !(Test-Path -LiteralPath $Path)) { throw "Required startup path is missing: $Path" }
-    if (Test-Path -LiteralPath $Path) {
-        $item = Get-Item -LiteralPath $Path -Force
+    if ($Required -and !(Test-Path -LiteralPath $Path -ErrorAction Stop)) { throw "Required startup path is missing: $Path" }
+    if (Test-Path -LiteralPath $Path -ErrorAction Stop) {
+        $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
         if ($Directory -and !$item.PSIsContainer) { throw "Expected a directory: $Path" }
         if (!$Directory -and $item.PSIsContainer) { throw "Expected a file: $Path" }
     }
     if ($AllowDependencyLink) { return }
     for ($cursor = $Path; $cursor; $cursor = Split-Path -Parent $cursor) {
-        if ((Test-Path -LiteralPath $cursor) -and
-            ((Get-Item -LiteralPath $cursor -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
-            throw "Startup cannot verify redirected path: $cursor"
+        if (Test-Path -LiteralPath $cursor -ErrorAction Stop) {
+            $item = Get-Item -LiteralPath $cursor -Force -ErrorAction Stop
+            if ($cursor -ne $Path -and !$item.PSIsContainer) { throw "Expected a directory: $cursor" }
+            if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                throw "Startup cannot verify redirected path: $cursor"
+            }
         }
     }
 }
@@ -407,6 +410,15 @@ function Invoke-LocalSourceGitRead {
             [void]$process.WaitForExit(5000)
         }
         $process.Dispose()
+    }
+}
+
+function Assert-LocalRunnerSourceRef {
+    param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][AllowEmptyString()][string]$Ref)
+    # Match WorkspaceManager's native validate_ref, not Factory's separate contract.
+    if ([string]::IsNullOrEmpty($Ref) -or [Text.Encoding]::UTF8.GetByteCount($Ref) -gt 256 -or
+        $Ref.StartsWith('-') -or $Ref -cmatch '[^A-Za-z0-9._/@{}^~-]') {
+        throw "Invalid source ref for repository: $Repository"
     }
 }
 
@@ -670,4 +682,4 @@ Export-ModuleMember -Function Get-LocalFullPath, Test-LocalPathEqual,
     Stop-LocalOwnedProcess, New-LocalProcessEnvironment, Start-LocalOwnedProcess,
     Read-LocalStackState, Save-LocalStackState, Assert-LocalStackPath,
     Get-LocalSourceCommit, Assert-LocalStackProcesses, Get-LocalDatabaseIdentity, Assert-LocalDatabaseIdentity,
-    Assert-LocalRunnerIdentity
+    Assert-LocalRunnerIdentity, Assert-LocalRunnerSourceRef
