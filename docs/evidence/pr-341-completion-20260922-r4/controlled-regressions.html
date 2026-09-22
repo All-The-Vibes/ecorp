@@ -1,0 +1,137 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>PR 341 retained native regression results</title><style>body{font:16px/1.5 system-ui;margin:32px;max-width:1380px}pre{font:13px/1.45 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f6f8;padding:16px}</style><h1>PR #341: retained native regression results</h1><p>Real saved command output, rendered after execution. This is a saved-results report capture, not a live terminal or application screenshot.</p><p>Former workflow: two expected failures. Corrected workflow: 66 passes, zero skips. Actual native Gitleaks 8.30.1; source binding and original/published log hashes accompany this report.</p><h2>native-before.log</h2><pre>✖ native scanner redaction does not permit a sensitive filename in diagnostics (3303.043ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✖ native partial timeout keeps collected findings explicitly incomplete (5890.6423ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9373.4677
+
+✖ failing tests:
+
+test at tools\secret_scan_native.test.mjs:140:1
+✖ native scanner redaction does not permit a sensitive filename in diagnostics (3303.043ms)
+  AssertionError [ERR_ASSERTION]: raw matches must not cross the reporter boundary
+
+  true !== false
+
+      at Object.scan (file:///&lt;reviewed-worktree&gt;/tools/secret_scan_native.test.mjs:80:14)
+      at TestContext.&lt;anonymous&gt; (file:///&lt;reviewed-worktree&gt;/tools/secret_scan_native.test.mjs:145:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: &#x27;ERR_ASSERTION&#x27;,
+    actual: true,
+    expected: false,
+    operator: &#x27;strictEqual&#x27;,
+    diff: &#x27;simple&#x27;
+  }
+
+test at tools\secret_scan_native.test.mjs:205:1
+✖ native partial timeout keeps collected findings explicitly incomplete (5890.6423ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + &#x27;failed&#x27;
+  - &#x27;scan_error&#x27;
+
+      at TestContext.&lt;anonymous&gt; (file:///&lt;reviewed-worktree&gt;/tools/secret_scan_native.test.mjs:236:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: &#x27;ERR_ASSERTION&#x27;,
+    actual: &#x27;failed&#x27;,
+    expected: &#x27;scan_error&#x27;,
+    operator: &#x27;strictEqual&#x27;,
+    diff: &#x27;simple&#x27;
+  }
+</pre><h2>all-after.log</h2><pre>✔ completed findings emit only bounded attribution metadata, never report content (205.1556ms)
+✔ clean requires native success and a valid empty report (187.5825ms)
+✔ workflow-command delimiters stay private while safe identifiers preserve attribution (193.0733ms)
+✔ empty findings do not hide scanner/tool exit 1 (198.9076ms)
+✔ empty findings do not hide scanner/tool exit 2 (192.1374ms)
+✔ empty findings do not hide scanner/tool exit 124 (193.7276ms)
+✔ empty findings do not hide scanner/tool exit 137 (186.3016ms)
+✔ empty findings do not hide scanner/tool exit 255 (191.0623ms)
+✔ native success with findings cannot become a passing result (187.8094ms)
+✔ missing report fails without echoing input or inventing clean results (153.2778ms)
+✔ empty report fails without echoing input or inventing clean results (185.5202ms)
+✔ invalid JSON report fails without echoing input or inventing clean results (180.6998ms)
+✔ invalid UTF8 report fails without echoing input or inventing clean results (160.8262ms)
+✔ null report fails without echoing input or inventing clean results (173.3083ms)
+✔ object report fails without echoing input or inventing clean results (175.7532ms)
+✔ too many findings report fails without echoing input or inventing clean results (169.2289ms)
+✔ oversized report fails without echoing input or inventing clean results (163.1227ms)
+✔ non-regular report is rejected before reading (157.8805ms)
+✔ exact report byte limit accepts valid JSON without truncation (188.054ms)
+✔ exact finding limit is accepted with explicit bounded display (203.0194ms)
+✔ exact metadata limits preserve identifiers for all validated values (167.3015ms)
+✔ malformed finding is rejected (null) (187.6248ms)
+✔ malformed finding is rejected ([]) (160.8619ms)
+✔ malformed finding is rejected (1) (140.3694ms)
+✔ malformed finding is rejected (&quot;not a record&quot;) (164.0222ms)
+✔ reject invalid Commit metadata (&quot;main&quot;) (178.0384ms)
+✔ reject invalid Commit metadata (123) (145.7904ms)
+✔ reject invalid Commit metadata (&quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&quot;) (155.308ms)
+✔ reject invalid Commit metadata (&quot;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&quot;) (162.9039ms)
+✔ reject invalid Commit metadata (&quot;gggggggggggggggggggggggggggggggggggggggg&quot;) (157.17ms)
+✔ reject invalid File metadata (&quot;/absolute&quot;) (175.5408ms)
+✔ reject invalid File metadata (&quot;C:\\absolute&quot;) (170.3633ms)
+✔ reject invalid File metadata (&quot;../outside&quot;) (163.9368ms)
+✔ reject invalid File metadata (&quot;dir/../outside&quot;) (150.6614ms)
+✔ reject invalid File metadata (&quot;dir//file&quot;) (153.8176ms)
+✔ reject invalid File metadata (&quot;name\n::error::NON_CREDENTIAL_DIAGNOSTIC_TES) (154.607ms)
+✔ reject invalid File metadata (&quot;\u001b[31mfile&quot;) (167.9177ms)
+✔ reject invalid File metadata (&quot;‮file&quot;) (165.1923ms)
+✔ reject invalid File metadata (&quot;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) (159.6678ms)
+✔ reject invalid RuleID metadata (&quot;bad NON_CREDENTIAL_DIAGNOSTIC_TEST_CANARY&quot;) (139.7019ms)
+✔ reject invalid RuleID metadata (&quot;rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr) (155.0967ms)
+✔ reject invalid StartLine metadata (0) (158.1497ms)
+✔ reject invalid StartLine metadata (&quot;1&quot;) (139.5722ms)
+✔ reject invalid StartLine metadata (9007199254740992) (162.0566ms)
+✔ reject invalid EndLine metadata (2) (171.3378ms)
+✔ all findings are validated before bounded display (326.8184ms)
+✔ invalid scanner status is rejected (-1) (161.8221ms)
+✔ invalid scanner status is rejected (256) (176.7476ms)
+✔ invalid scanner status is rejected (1.5) (188.1558ms)
+✔ invalid scanner status is rejected () (150.6537ms)
+✔ invalid scanner status is rejected (01) (171.2441ms)
+✔ invalid scanner status is rejected (NON_CREDENTIAL_DIAGNOSTIC_TEST_CANARY) (161.0675ms)
+✔ unexpected arguments are not echoed (147.4458ms)
+✔ workflow retains scan scope, redaction, pinning, failure propagation and ephemeral reports (0.3277ms)
+✔ selected metadata never publishes a canary in a path or rule identifier (157.1095ms)
+✔ completed finding and partial scan results retain distinct native outcomes (346.9622ms)
+✔ production scan is independent of selected-head fixture code and fixture job tests its workflow revision (0.6699ms)
+✔ native scanner clean history yields a clean bounded report (3175.6122ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner attributes a current finding and preserves failure (3274.435ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner attributes a historical finding and preserves failure (3684.4846ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner configuration failure cannot become a clean result (2327.2821ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner redaction does not permit a sensitive filename in diagnostics (2971.4354ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scan works on an older selected head without workflow support files (3235.1052ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ selected-head executable fixtures cannot run in the production scan path (3574.7528ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native Git completeness check rejects unavailable historical objects before scanning (3256.9849ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native partial timeout keeps collected findings explicitly incomplete (5328.4873ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+ℹ tests 66
+ℹ suites 0
+ℹ pass 66
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31064.479
+</pre>

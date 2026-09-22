@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -11,6 +12,7 @@ assert.equal(blocks.length, 1)
 const program = blocks[0][1].split(/\r?\n/).map(line => line.replace(/^          /, '')).join('\n')
 const canary = 'NON_CREDENTIAL_DIAGNOSTIC_TEST_CANARY'
 const commit = 'a'.repeat(40)
+const identifier = value => `sha256:${createHash('sha256').update(value, 'utf8').digest('hex')}`
 const finding = () => ({ Commit: commit, File: 'folder with spaces/example.txt', RuleID: 'example-rule',
   StartLine: 3, EndLine: 4, Secret: canary, Match: canary, Description: canary,
   Author: canary, Email: canary, Message: canary, Tags: [canary], Fingerprint: canary,
@@ -23,7 +25,7 @@ async function fixture(t) {
     await rm(directory, { recursive: true, force: true })
   })
   const report = path.join(directory, 'report.json')
-  async function run(contents, status = '1', extra = []) {
+  async function run(contents, status = '42', extra = []) {
     if (contents !== undefined) await writeFile(report, contents)
     const result = spawnSync(process.execPath, ['--input-type=module', '-', report, status, ...extra], {
       input: program, encoding: 'utf8', cwd: directory, timeout: 10000, windowsHide: true,
@@ -37,18 +39,18 @@ async function fixture(t) {
   return { run, report }
 }
 
-test('native failure emits only bounded attribution metadata, never report content', async t => {
+test('completed findings emit only bounded attribution metadata, never report content', async t => {
   const f = await fixture(t)
   const result = await f.run(JSON.stringify([finding(), { ...finding(), File: 'second.txt', StartLine: 9, EndLine: 9 }]))
-  assert.equal(result.status, 1)
+  assert.equal(result.status, 42)
   assert.equal(result.stderr, '')
-  assert.equal(result.output.status, 'failed')
+  assert.equal(result.output.status, 'findings')
   assert.equal(result.output.finding_count, 2)
   assert.equal(result.output.displayed, 2)
   assert.equal(result.output.omitted, 0)
   assert.deepEqual(result.output.findings[0], {
-    commit, file: 'folder with spaces/example.txt', start_line: 3, end_line: 4,
-    rule_id: 'example-rule', fingerprint: `${commit}:folder with spaces/example.txt:example-rule:3`,
+    commit, file_id: identifier('folder with spaces/example.txt'), start_line: 3, end_line: 4,
+    rule_id: identifier('example-rule'), finding_id: identifier(JSON.stringify([commit, 'folder with spaces/example.txt', 'example-rule', 3, 4])),
   })
 })
 
@@ -60,13 +62,13 @@ test('clean requires native success and a valid empty report', async t => {
   assert.deepEqual(result.output.findings, [])
 })
 
-test('workflow-command delimiters are inert while decoded metadata preserves identity', async t => {
+test('workflow-command delimiters stay private while safe identifiers preserve attribution', async t => {
   const f = await fixture(t)
   const file = '::error::##[error]example.txt'
   const result = await f.run(JSON.stringify([{ ...finding(), File: file }]))
-  assert.equal(result.status, 1)
-  assert.equal(result.output.findings[0].file, file)
-  assert.equal(result.output.findings[0].fingerprint, `${commit}:${file}:example-rule:3`)
+  assert.equal(result.status, 42)
+  assert.equal(result.output.findings[0].file_id, identifier(file))
+  assert.equal(result.output.findings[0].finding_id, identifier(JSON.stringify([commit, file, 'example-rule', 3, 4])))
   assert(!result.stdout.includes('::'))
   assert(!result.stdout.includes('##['))
 })
@@ -76,7 +78,7 @@ for (const status of ['1', '2', '124', '137', '255']) {
     const f = await fixture(t)
     const result = await f.run('[]', status)
     assert.equal(result.status, Number(status))
-    assert.equal(result.output.status, 'failed')
+    assert.equal(result.output.status, 'scan_error')
     assert.equal(result.output.scan_exit_code, Number(status))
   })
 }
@@ -111,7 +113,7 @@ test('non-regular report is rejected before reading', async t => {
   const f = await fixture(t)
   await mkdir(f.report)
   const result = await f.run(undefined)
-  assert.equal(result.status, 1)
+  assert.equal(result.status, 42)
   assert.equal(result.output.error_code, 'report_not_regular')
 })
 
@@ -125,20 +127,20 @@ test('exact report byte limit accepts valid JSON without truncation', async t =>
 test('exact finding limit is accepted with explicit bounded display', async t => {
   const f = await fixture(t)
   const result = await f.run(JSON.stringify(Array.from({ length: 1000 }, () => finding())))
-  assert.equal(result.status, 1)
+  assert.equal(result.status, 42)
   assert.equal(result.output.finding_count, 1000)
   assert.equal(result.output.displayed, 50)
   assert.equal(result.output.omitted, 950)
 })
 
-test('exact metadata limits preserve all validated values', async t => {
+test('exact metadata limits preserve identifiers for all validated values', async t => {
   const f = await fixture(t)
   const record = { ...finding(), File: 'x'.repeat(1024), RuleID: 'R'.repeat(128),
     StartLine: Number.MAX_SAFE_INTEGER, EndLine: Number.MAX_SAFE_INTEGER }
   const result = await f.run(JSON.stringify([record]))
-  assert.equal(result.status, 1)
-  assert.equal(result.output.findings[0].file, record.File)
-  assert.equal(result.output.findings[0].rule_id, record.RuleID)
+  assert.equal(result.status, 42)
+  assert.equal(result.output.findings[0].file_id, identifier(record.File))
+  assert.equal(result.output.findings[0].rule_id, identifier(record.RuleID))
   assert.equal(result.output.findings[0].end_line, record.EndLine)
 })
 
@@ -146,7 +148,7 @@ for (const record of [null, [], 1, 'not a record']) {
   test(`malformed finding is rejected (${JSON.stringify(record)})`, async t => {
     const f = await fixture(t)
     const result = await f.run(JSON.stringify([record]))
-    assert.equal(result.status, 1)
+    assert.equal(result.status, 42)
     assert.equal(result.output.error_code, 'invalid_finding')
   })
 }
@@ -163,7 +165,7 @@ for (const [field, value] of [
   test(`reject invalid ${field} metadata (${JSON.stringify(value).slice(0, 45)})`, async t => {
     const f = await fixture(t)
     const result = await f.run(JSON.stringify([{ ...finding(), [field]: value }]))
-    assert.equal(result.status, 1)
+    assert.equal(result.status, 42)
     assert.equal(result.output.status, 'diagnostics_failed')
     assert.equal(result.stdout, '')
   })
@@ -210,4 +212,43 @@ test('workflow retains scan scope, redaction, pinning, failure propagation and e
   assert(!workflow.includes('--exit-code=0'))
   assert(!workflow.includes('node-version-file:'))
   assert(workflow.includes('node-version: 24.19.0'))
+})
+
+test('selected metadata never publishes a canary in a path or rule identifier', async t => {
+  const f = await fixture(t)
+  const result = await f.run(JSON.stringify([{ ...finding(), File: `folder/${canary}.txt`, RuleID: canary }]), '42')
+  assert.equal(result.status, 42)
+  assert.equal(result.output.status, 'findings')
+  assert.match(result.output.findings[0].file_id, /^sha256:[a-f0-9]{64}$/)
+  assert.match(result.output.findings[0].rule_id, /^sha256:[a-f0-9]{64}$/)
+  assert.match(result.output.findings[0].finding_id, /^sha256:[a-f0-9]{64}$/)
+})
+
+test('completed finding and partial scan results retain distinct native outcomes', async t => {
+  const f = await fixture(t)
+  const completed = await f.run(JSON.stringify([finding()]), '42')
+  const partial = await f.run(JSON.stringify([finding()]), '1')
+  assert.equal(completed.status, 42)
+  assert.equal(completed.output.status, 'findings')
+  assert.equal(completed.output.scan_complete, true)
+  assert.equal(partial.status, 1)
+  assert.equal(partial.output.status, 'scan_error')
+  assert.equal(partial.output.scan_complete, false)
+  assert.deepEqual(completed.output.findings, partial.output.findings)
+})
+
+test('production scan is independent of selected-head fixture code and fixture job tests its workflow revision', () => {
+  const jobs = workflow.split(/^  native-fixtures:\s*$/m)
+  assert.equal(jobs.length, 2)
+  const [production, fixtures] = jobs
+  assert(!production.includes('secret_scan_native.test.mjs'))
+  assert(!production.includes('node --test'))
+  assert(!production.includes('needs:'))
+  assert(production.includes('ref: ${{ github.event.pull_request.head.sha || github.sha }}'))
+  assert(production.indexOf('sha256sum --check --status') < production.indexOf('gitleaks git .'))
+  assert(fixtures.includes('ref: ${{ github.workflow_sha }}'))
+  assert(fixtures.includes('secret_scan_native.test.mjs'))
+  assert(fixtures.includes('ECORP_GITLEAKS_BINARY='))
+  assert(production.includes('--exit-code=42'))
+  assert(!workflow.includes('continue-on-error'))
 })

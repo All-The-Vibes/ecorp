@@ -1,0 +1,47 @@
+✔ native scanner clean history yields a clean bounded report (2780.9651ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner attributes a current finding and preserves failure (2955.4054ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner attributes a historical finding and preserves failure (3576.6667ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner configuration failure cannot become a clean result (2333.0665ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner redaction does not permit a sensitive filename in diagnostics (2932.322ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scan works on an older selected head without workflow support files (3046.2312ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ selected-head executable fixtures cannot run in the production scan path (3100.1071ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✖ native partial history failure keeps its valid findings report explicitly incomplete (3853.8919ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+ℹ tests 8
+ℹ suites 0
+ℹ pass 7
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24731.2769
+
+✖ failing tests:
+
+test at tools\secret_scan_native.test.mjs:186:1
+✖ native partial history failure keeps its valid findings report explicitly incomplete (3853.8919ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  0 !== 1
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/secret_scan_native.test.mjs:200:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
