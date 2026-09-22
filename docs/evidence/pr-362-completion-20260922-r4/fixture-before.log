@@ -1,0 +1,30 @@
+F
+======================================================================
+FAIL: test_intact_copy_under_linked_temporary_parent_is_accepted (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_intact_copy_under_linked_temporary_parent_is_accepted)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 114, in test_intact_copy_under_linked_temporary_parent_is_accepted
+    with self.packet_copy() as base:
+         ^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 30, in packet_copy
+    shutil.copytree(EVIDENCE / packet, base / packet)
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1204, in _execute_mock_call
+    result = effect(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 101, in copy_to_canonical_root
+    self.assertEqual(
+AssertionError: Windo[80 chars]nt-r48aqpbx/system-temp-alias/evidence/pr362-startup-20260921') != Windo[80 chars]nt-r48aqpbx/physical-temp/evidence/pr362-startup-20260921') : the trusted allocated test root must be canonical before copying
+
+----------------------------------------------------------------------
+Ran 1 test in 0.080s
+
+FAILED (failures=1)

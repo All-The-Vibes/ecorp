@@ -1,6 +1,6 @@
 """Exercise the public evidence verifier in normal and optimized interpreters."""
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import json
 import os
 from pathlib import Path
@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 EVIDENCE = Path(__file__).resolve().parents[1] / "docs" / "evidence"
@@ -24,7 +25,9 @@ class PublicEvidenceVerifierTests(unittest.TestCase):
     @contextmanager
     def packet_copy(self):
         with tempfile.TemporaryDirectory(prefix="ecorp-public-evidence-test-") as root:
-            base = Path(root) / "evidence"
+            # Canonicalize only our newly allocated fixture root. Evidence paths
+            # remain lexical so the verifier can reject links inside a packet.
+            base = Path(root).resolve(strict=True) / "evidence"
             for packet in PACKETS:
                 shutil.copytree(EVIDENCE / packet, base / packet)
             yield base
@@ -79,15 +82,43 @@ class PublicEvidenceVerifierTests(unittest.TestCase):
         self.assertIn('"result": "PASS"', result.stdout)
 
     def test_normal_interpreter_rejects_corrupted_packet(self):
-        with tempfile.TemporaryDirectory(prefix="ecorp-public-evidence-test-") as root:
-            base = Path(root)
-            for packet in PACKETS:
-                shutil.copytree(EVIDENCE / packet, base / packet)
+        with self.packet_copy() as base:
             readme = base / PACKETS[0] / "README.md"
             readme.write_bytes(readme.read_bytes() + b"\ncontrolled fixture corruption\n")
             result = self.invoke(base / PACKETS[-1] / "verify_public.py")
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn('"result": "PASS"', result.stdout)
+
+    def test_intact_copy_under_linked_temporary_parent_is_accepted(self):
+        with tempfile.TemporaryDirectory(prefix="ecorp-public-evidence-temp-parent-") as root:
+            parent = Path(root).resolve(strict=True)
+            physical = parent / "physical-temp"
+            physical.mkdir()
+            alias = parent / "system-temp-alias"
+            self.directory_link(alias, physical)
+            try:
+                copytree = shutil.copytree
+
+                def copy_to_canonical_root(source, destination):
+                    self.assertEqual(
+                        destination, physical / "evidence" / source.name,
+                        "the trusted allocated test root must be canonical before copying",
+                    )
+                    return copytree(source, destination)
+
+                # Model the OS returning an already allocated temporary directory
+                # through an alias, as macOS does for /var. Do not ask Windows
+                # mkdtemp to create a directory through a junction.
+                with (
+                    patch.object(tempfile, "TemporaryDirectory", return_value=nullcontext(str(alias))),
+                    patch.object(shutil, "copytree", side_effect=copy_to_canonical_root),
+                ):
+                    with self.packet_copy() as base:
+                        result = self.invoke(base / PACKETS[-1] / "verify_public.py")
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertIn('"result": "PASS"', result.stdout)
+            finally:
+                self.remove_directory_link(alias)
 
     def test_unlisted_nested_directory_is_rejected(self):
         with self.packet_copy() as base:
