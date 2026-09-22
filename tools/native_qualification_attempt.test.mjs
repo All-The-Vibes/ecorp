@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import test from 'node:test'
-import { reportFiles, validateReports } from './native_qualification_attempt.mjs'
+import { reportFiles, root, sourceIdentity, validateReports } from './native_qualification_attempt.mjs'
 
 const hash = (value) => createHash('sha256').update(`${JSON.stringify(value, null, 2)}\n`).digest('hex')
 const surfaces = Object.keys(reportFiles)
@@ -197,4 +201,80 @@ test('current descriptor without identity hash fails closed', () => {
   const value = fixture()
   delete value.current.identity.sha256
   rejects(value, /Begin a current qualification attempt first/)
+})
+
+test('native Git source identity covers schema, contracts and other source inputs', async (t) => {
+  const temporaryRoot = await realpath(tmpdir())
+  const directory = await mkdtemp(path.join(temporaryRoot, 'ecorp-qualification-identity-'))
+  t.after(async () => {
+    const resolved = await realpath(directory)
+    assert.equal(path.dirname(resolved), temporaryRoot, 'Cleanup must stay inside the owned temporary parent')
+    assert.ok(path.basename(resolved).startsWith('ecorp-qualification-identity-'))
+    await rm(resolved, { recursive: true, force: true })
+  })
+  const git = (cwd, args) => execFileSync('git', args, {
+    cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim()
+  const write = async (file, bytes) => {
+    const destination = path.join(directory, file)
+    await mkdir(path.dirname(destination), { recursive: true })
+    await writeFile(destination, bytes)
+  }
+  // Use every checked-in schema/contract input, not a hand-maintained subset.
+  const inputs = git(root, ['ls-files', '-z', '--', 'db', 'contracts', 'foundry.toml']).split('\0').filter(Boolean)
+  assert.ok(inputs.includes('db/migrations/manifest.json'))
+  assert.ok(inputs.includes('contracts/ECorpCheckpointRegistryV1.compiled.json'))
+  assert.ok(inputs.includes('foundry.toml'))
+  git(directory, ['init', '--quiet', '--template='])
+  await write('.gitignore', await readFile(path.join(root, '.gitignore')))
+  for (const file of inputs) await write(file, await readFile(path.join(root, file)))
+  for (const file of ['scripts/fake-agent.mjs', 'pnpm-workspace.yaml', 'new-source/input.txt', 'tools/control.mjs']) {
+    await write(file, 'initial source\n')
+    inputs.push(file)
+  }
+  git(directory, ['add', '.'])
+  git(directory, ['-c', 'user.name=Qualification test', '-c', 'user.email=qualification@example.invalid',
+    '-c', 'commit.gpgSign=false', '-c', 'core.hooksPath=.git/no-hooks', 'commit', '--quiet', '-m', 'Owned fixture'])
+  const head = git(directory, ['rev-parse', 'HEAD'])
+  const before = await sourceIdentity(directory)
+  assert.deepEqual(await sourceIdentity(directory), before)
+  for (const file of inputs) {
+    await t.test(`uncommitted ${file} changes actual source identity`, async () => {
+      const original = await readFile(path.join(directory, file))
+      try {
+        // Same-size changes prove content hashing, not just a path/size check.
+        const changed = Buffer.from(original)
+        changed[0] ^= 1
+        await write(file, changed)
+        const after = await sourceIdentity(directory)
+        assert.notEqual(hash(after), hash(before), `${file} must affect source identity without commit or rebuild`)
+        const entry = after.find((value) => value.path === file.replaceAll('/', '\\'))
+        assert.deepEqual(entry, { path: file.replaceAll('/', '\\'),
+          sha256: createHash('sha256').update(changed).digest('hex'), bytes: changed.length })
+      } finally {
+        await write(file, original)
+      }
+    })
+  }
+  await t.test('nonignored untracked schema and contract inputs are included', async () => {
+    for (const file of ['db/migrations/new.sql', 'contracts/New.sol', 'new-source/untracked.txt']) {
+      const previous = await sourceIdentity(directory)
+      await write(file, 'new uncommitted source\n')
+      const after = await sourceIdentity(directory)
+      assert.notEqual(hash(after), hash(previous), `${file} must affect source identity before git add`)
+      assert.ok(after.some((entry) => entry.path === file.replaceAll('/', '\\')))
+    }
+  })
+  await t.test('ignored credentials and generated runtime evidence remain excluded', async () => {
+    const previous = await sourceIdentity(directory)
+    for (const file of ['.env', '.env.local', 'contracts/.env', 'output/native-qualification/phase2/current-attempt.json',
+      'target/foundry/out/registry.json', 'target-native-qualification/debug/build/generated.json',
+      'apps/web/dist/index.html', 'tools/registry-toolchain/node_modules/generated.js']) {
+      await write(file, 'synthetic ignored input, not a real credential\n')
+      assert.deepEqual(await sourceIdentity(directory), previous, `${file} must not affect source identity`)
+      await write(file, 'changed generated input\n')
+      assert.deepEqual(await sourceIdentity(directory), previous, `${file} changes must remain excluded`)
+    }
+  })
+  assert.equal(git(directory, ['rev-parse', 'HEAD']), head, 'No commits or builds during identity checks')
 })

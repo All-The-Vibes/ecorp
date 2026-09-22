@@ -42,16 +42,23 @@ function acquireLock(purpose, beforeRelease = () => {}) {
 // Held through both checks and acceptance emission; competing invocations are not admitted.
 export function lockAcceptance() { return acquireLock('acceptance') }
 
-export async function identity() {
-  const git = (args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }).trim()
+export async function sourceIdentity(sourceRoot) {
+  const git = (args) => execFileSync('git', args, { cwd: sourceRoot, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }).trim()
+  // Include all Git source inputs; runtime evidence and build output are not source.
   const paths = git(['ls-files', '--cached', '--others', '--exclude-standard', '-z', '--',
-    'crates', 'apps', 'tools', 'docs', 'Cargo.toml', 'Cargo.lock', 'package.json', 'pnpm-lock.yaml', 'AGENTS.md'])
+    ':(top,exclude)output', ':(top,exclude)target-native-qualification'])
     .split('\0').filter(Boolean)
   const source_files = []
   for (const file of [...new Set(paths)].sort()) {
-    const bytes = await readFile(path.join(root, file))
+    const bytes = await readFile(path.join(sourceRoot, file))
     source_files.push({ path: file.replaceAll('/', '\\'), sha256: hash(bytes), bytes: bytes.length })
   }
+  return source_files
+}
+
+export async function identity() {
+  const git = (args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }).trim()
+  const source_files = await sourceIdentity(root)
   const binaries = []
   for (const name of ['crony-server', 'crony-base-worker', 'crony-runner', 'crony-cli', 'crony-native-fixture']) {
     const bytes = await readFile(path.join(root, 'target-native-qualification', 'debug', `${name}.exe`))
