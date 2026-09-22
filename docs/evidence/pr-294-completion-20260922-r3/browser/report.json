@@ -1,0 +1,2910 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "started_at": "2026-09-22T22:59:02.738Z",
+  "server": "http://127.0.0.1:59014",
+  "web": "http://127.0.0.1:26294",
+  "scope": "Real browser/server/runner with deterministic fake-process; development identity, no real-provider inference or manual review decisions",
+  "screenshot_fixture": "The existing fake-agent screenshot signature fixture exercises the screenshot verifier; browser screenshots below are separate real rendered captures.",
+  "source_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+  "errors": [],
+  "blocked_requests": [],
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1050,
+      "selected": [
+        {
+          "index": 0,
+          "type": "artifact",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 1,
+          "type": "file",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 2,
+          "type": "command",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 3,
+          "type": "test",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 4,
+          "type": "json_schema",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 5,
+          "type": "screenshot",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        }
+      ],
+      "manual_gates": "draft-only; restored to none",
+      "command_summary": "Command · [\"node\",\"-e\",\"require('node:assert/strict').deepEqual(process.argv.slice(1), [\\\"one two\\\",\\\"two  spaces\\\",\\\"quoted \\\\\\\"value\\\\\\\"\\\",\\\"back\\\\\\\\slash\\\"])\",\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"] · 10s",
+      "byte_summary": "Provider artifact · at least 1 byte",
+      "layout": {
+        "viewport": 1440,
+        "content": 1440
+      },
+      "screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\evidence\\browser-2026-09-22T22-59-02.736Z-02af987e\\desktop-editor.png",
+        "sha256": "2abd3844d463ad15d31dbbf189b306ab14d9067fb4197960b389f76791296851"
+      }
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "selected": [
+        {
+          "index": 0,
+          "type": "artifact",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 1,
+          "type": "file",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 2,
+          "type": "command",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 3,
+          "type": "test",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 4,
+          "type": "json_schema",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 5,
+          "type": "screenshot",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        }
+      ],
+      "manual_gates": "draft-only; restored to none",
+      "command_summary": "Command · [\"node\",\"-e\",\"require('node:assert/strict').deepEqual(process.argv.slice(1), [\\\"one two\\\",\\\"two  spaces\\\",\\\"quoted \\\\\\\"value\\\\\\\"\\\",\\\"back\\\\\\\\slash\\\"])\",\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"] · 10s",
+      "byte_summary": "Provider artifact · at least 1 byte",
+      "layout": {
+        "viewport": 390,
+        "content": 390
+      },
+      "screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\evidence\\browser-2026-09-22T22-59-02.736Z-02af987e\\mobile-editor.png",
+        "sha256": "8e21f9620453127725980b4d2ae9bbda1885ba7f3b5704f5c049543f22faaebf"
+      }
+    }
+  ],
+  "missions": [
+    {
+      "title": "[verification-matrix] Policy browser pass bccdeae3",
+      "mission_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+      "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+      "authored": {
+        "title": "[verification-matrix] Policy browser pass bccdeae3",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/pr265-run-activity",
+          "base_ref": "HEAD",
+          "base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "review_only_report",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "verify.txt",
+              "min_bytes": 9
+            },
+            {
+              "type": "command",
+              "program": "node",
+              "args": [
+                "-e",
+                "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                "one two",
+                "two  spaces",
+                "quoted \"value\"",
+                "back\\slash"
+              ],
+              "timeout_ms": 10000
+            },
+            {
+              "type": "test",
+              "program": "node",
+              "args": [
+                "--test",
+                "fixture.test.mjs"
+              ],
+              "timeout_ms": 10000
+            },
+            {
+              "type": "json_schema",
+              "path": "schema.json",
+              "required_keys": [
+                "status",
+                "count"
+              ]
+            },
+            {
+              "type": "screenshot",
+              "path": "screenshot.png",
+              "min_bytes": 16
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "expected_outcome": "passed",
+      "saved_screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\evidence\\browser-2026-09-22T22-59-02.736Z-02af987e\\passed-saved.png",
+        "sha256": "c3b5049291e756f41e369aa799000ef9475cd7ddcdb3257d3620b4c58461fa19"
+      },
+      "launch": {
+        "run_id": "ad49c24b-436f-424c-be06-997650376c16",
+        "runner_id": "pr265-activity-qa",
+        "run_ids": [
+          "ad49c24b-436f-424c-be06-997650376c16"
+        ],
+        "runner_ids": [
+          "pr265-activity-qa"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[verification-matrix] Policy browser pass bccdeae3",
+          "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-22T22:59:15.312909Z",
+          "updated_at": "2026-09-22T22:59:22.297116Z"
+        },
+        "tasks": [
+          {
+            "id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+            "mission_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser pass bccdeae3",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser pass bccdeae3",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/pr265-run-activity",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "review_only_report",
+                "commit_after_verification": false,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 1
+                },
+                {
+                  "type": "file",
+                  "path": "verify.txt",
+                  "min_bytes": 9
+                },
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "-e",
+                    "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                    "one two",
+                    "two  spaces",
+                    "quoted \"value\"",
+                    "back\\slash"
+                  ],
+                  "timeout_ms": 10000
+                },
+                {
+                  "type": "test",
+                  "program": "node",
+                  "args": [
+                    "--test",
+                    "fixture.test.mjs"
+                  ],
+                  "timeout_ms": 10000
+                },
+                {
+                  "type": "json_schema",
+                  "path": "schema.json",
+                  "required_keys": [
+                    "status",
+                    "count"
+                  ]
+                },
+                {
+                  "type": "screenshot",
+                  "path": "screenshot.png",
+                  "min_bytes": 16
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "1db94d38-4451-47f9-b85c-1b461a2b4605",
+            "created_at": "2026-09-22T22:59:15.312909Z",
+            "updated_at": "2026-09-22T22:59:22.297116Z"
+          }
+        ],
+        "run": {
+          "id": "ad49c24b-436f-424c-be06-997650376c16",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+          "agent_id": "1db94d38-4451-47f9-b85c-1b461a2b4605",
+          "runner_id": "pr265-activity-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "ad49c24b-436f-424c-be06-997650376c16",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/pr265-run-activity",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+          "workspace_path": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\runner\\worktrees\\41e4ac2e52a94617b6023798efa326fb\\ad49c24b436f424cbe06997650376c16",
+          "workspace_branch": "crony/task-41e4ac2e52a94617b6023798efa326fb/run-ad49c24b436f424cbe06997650376c16",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=4; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+          "workspace_fingerprint": "801304c176349dc72a71de93047b71649c9b2d44a1e359f50ba7881c4590404b",
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 6 verifier checks passed",
+          "verification_sha256": "00eab8a57aa1d8aacef21eef49dbccdd873d992ef6496a9e01fc8b5b0b32adf8",
+          "deliverable_sha256": "2369faa9c86d38d3c11ce21b265728c2d77da3a8c8167bb357058c66988ac235",
+          "status": "completed",
+          "summary": "Created and verified result.md through the runner-owned child process.",
+          "artifact_id": "534cf52a-310f-48b4-99b9-c96dd3dfc0a1",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/534cf52a-310f-48b4-99b9-c96dd3dfc0a1",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "d931fe062e3f18f350597dc94de9bfd3cc7fec13b528493cc5489363a2b1bbac",
+          "artifact_sha256": "a2025c9dbf94b9f7fddc6bfa46e96c296c9373183026e27186a03b61de4bbdf4",
+          "created_at": "2026-09-22T22:59:15.824885Z",
+          "updated_at": "2026-09-22T22:59:22.735962Z"
+        },
+        "evidence": [
+          {
+            "id": "57b0032b-47ae-4ed6-9cb7-8fc0d936d552",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+            "run_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "passed",
+            "summary": "durable artifact 534cf52a-310f-48b4-99b9-c96dd3dfc0a1 has 1562 verified bytes",
+            "payload": {
+              "artifact_id": "534cf52a-310f-48b4-99b9-c96dd3dfc0a1",
+              "bytes": 1562,
+              "media_type": "text/markdown",
+              "producer_agent_id": "1db94d38-4451-47f9-b85c-1b461a2b4605",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "d931fe062e3f18f350597dc94de9bfd3cc7fec13b528493cc5489363a2b1bbac",
+              "retention_until": "2026-10-22T22:59:19.056397Z",
+              "sha256": "a2025c9dbf94b9f7fddc6bfa46e96c296c9373183026e27186a03b61de4bbdf4",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/534cf52a-310f-48b4-99b9-c96dd3dfc0a1",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:59:21.072687Z"
+          },
+          {
+            "id": "74124af4-da2d-47d7-84dc-707feec7e92a",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+            "run_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "check_index": 1,
+            "kind": "file",
+            "status": "passed",
+            "summary": "verify.txt exists with 9 bytes",
+            "payload": {
+              "bytes": 9,
+              "path": "verify.txt",
+              "sha256": "8f5a1374b3eb9532a67c0de915a0810ea089fc304c33a44642a7f4878984803e"
+            },
+            "created_at": "2026-09-22T22:59:21.096043Z"
+          },
+          {
+            "id": "b5ce4aab-6f01-495e-a707-02806171ec89",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+            "run_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "check_index": 2,
+            "kind": "command",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "-e",
+                "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                "one two",
+                "two  spaces",
+                "quoted \"value\"",
+                "back\\slash"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "stderr": "",
+              "stdout": ""
+            },
+            "created_at": "2026-09-22T22:59:21.118731Z"
+          },
+          {
+            "id": "39b96fd6-9d5c-4f26-b111-8daec65f1c95",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+            "run_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "check_index": 3,
+            "kind": "test",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "--test",
+                "fixture.test.mjs"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "stderr": "",
+              "stdout": "✔ deterministic verifier inputs (8.2082ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 148.672\n"
+            },
+            "created_at": "2026-09-22T22:59:21.150486Z"
+          },
+          {
+            "id": "a576fa30-7a07-4629-bd14-8d4ed3d8eeef",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+            "run_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "check_index": 4,
+            "kind": "json_schema",
+            "status": "passed",
+            "summary": "schema.json satisfies 2 required keys",
+            "payload": {
+              "path": "schema.json",
+              "required_keys": [
+                "status",
+                "count"
+              ]
+            },
+            "created_at": "2026-09-22T22:59:21.171485Z"
+          },
+          {
+            "id": "b0f7a900-71c4-45d3-b4f4-780b54bf9a99",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+            "run_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "check_index": 5,
+            "kind": "screenshot",
+            "status": "passed",
+            "summary": "screenshot.png is a valid png screenshot",
+            "payload": {
+              "bytes": 24,
+              "format": "png",
+              "path": "screenshot.png"
+            },
+            "created_at": "2026-09-22T22:59:21.190823Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 10,
+            "id": "68ee8c5d-2030-4417-b6e9-0282f6dbc14b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "run:ad49c24b-436f-424c-be06-997650376c16:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "1db94d38-4451-47f9-b85c-1b461a2b4605",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "pr265-activity-qa",
+              "status": "starting",
+              "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb"
+            },
+            "created_at": "2026-09-22T22:59:15.824885Z"
+          },
+          {
+            "seq": 11,
+            "id": "3b20e7f5-093b-4fd7-b369-ca7bdf3d449b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:3b20e7f5-093b-4fd7-b369-ca7bdf3d449b",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "41e4ac2e-52a9-4617-b602-3798efa326fb",
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\runner\\worktrees\\41e4ac2e52a94617b6023798efa326fb\\ad49c24b436f424cbe06997650376c16",
+              "workspace_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-41e4ac2e52a94617b6023798efa326fb/run-ad49c24b436f424cbe06997650376c16"
+            },
+            "created_at": "2026-09-22T22:59:16.422587Z"
+          },
+          {
+            "seq": 12,
+            "id": "e5f002de-1f62-4293-bc0b-f54249ece8e6",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:e5f002de-1f62-4293-bc0b-f54249ece8e6",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:59:16.513663Z"
+          },
+          {
+            "seq": 13,
+            "id": "7000e772-432c-42d1-949d-2baca9385c65",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:7000e772-432c-42d1-949d-2baca9385c65",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [verification-matrix] Policy browser pass bccdeae3\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/pr265-run-activity\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: ca5d4c61733a8eba8944038e4cd07ad992d50e67\nOBJECTIVE: Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser pass bccdeae3\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 1000000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: review_only_report\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-22T22:59:17.222730Z"
+          },
+          {
+            "seq": 14,
+            "id": "b01ba274-96eb-4bcb-a228-6fe226746442",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:b01ba274-96eb-4bcb-a228-6fe226746442",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:59:17.226274Z"
+          },
+          {
+            "seq": 15,
+            "id": "556e88f7-714f-4bcd-9298-751f7a21db46",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:556e88f7-714f-4bcd-9298-751f7a21db46",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:59:18.128162Z"
+          },
+          {
+            "seq": 16,
+            "id": "f830a592-1fd7-4b09-a622-fbd95db00333",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "artifact:534cf52a-310f-48b4-99b9-c96dd3dfc0a1:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "534cf52a-310f-48b4-99b9-c96dd3dfc0a1",
+              "artifact_role": "provider_evidence",
+              "bytes": 1562,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "1db94d38-4451-47f9-b85c-1b461a2b4605",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "d931fe062e3f18f350597dc94de9bfd3cc7fec13b528493cc5489363a2b1bbac",
+              "retention_until": "2026-10-22T22:59:19.056397Z",
+              "sha256": "a2025c9dbf94b9f7fddc6bfa46e96c296c9373183026e27186a03b61de4bbdf4",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/534cf52a-310f-48b4-99b9-c96dd3dfc0a1",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:59:19.090800Z"
+          },
+          {
+            "seq": 17,
+            "id": "884adf48-d403-4bc2-8ae8-e0d007576280",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:884adf48-d403-4bc2-8ae8-e0d007576280",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-22T22:59:19.563474Z"
+          },
+          {
+            "seq": 18,
+            "id": "1d109f76-3163-4527-8e6f-93aa9df9e56a",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:1d109f76-3163-4527-8e6f-93aa9df9e56a",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 6
+            },
+            "created_at": "2026-09-22T22:59:19.568547Z"
+          },
+          {
+            "seq": 19,
+            "id": "4561cdd5-73b3-4ea8-8ab6-4e83b60e41a7",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:4561cdd5-73b3-4ea8-8ab6-4e83b60e41a7",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "57b0032b-47ae-4ed6-9cb7-8fc0d936d552",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "534cf52a-310f-48b4-99b9-c96dd3dfc0a1",
+                "bytes": 1562,
+                "media_type": "text/markdown",
+                "producer_agent_id": "1db94d38-4451-47f9-b85c-1b461a2b4605",
+                "producer_runner_id": "pr265-activity-qa",
+                "provenance_signature": "d931fe062e3f18f350597dc94de9bfd3cc7fec13b528493cc5489363a2b1bbac",
+                "retention_until": "2026-10-22T22:59:19.056397Z",
+                "sha256": "a2025c9dbf94b9f7fddc6bfa46e96c296c9373183026e27186a03b61de4bbdf4",
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/534cf52a-310f-48b4-99b9-c96dd3dfc0a1",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "passed",
+              "summary": "durable artifact 534cf52a-310f-48b4-99b9-c96dd3dfc0a1 has 1562 verified bytes"
+            },
+            "created_at": "2026-09-22T22:59:21.072687Z"
+          },
+          {
+            "seq": 20,
+            "id": "0973619c-77c1-4203-bb1c-efc0ae6e6a62",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:0973619c-77c1-4203-bb1c-efc0ae6e6a62",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 1,
+              "evidence_id": "74124af4-da2d-47d7-84dc-707feec7e92a",
+              "kind": "file",
+              "payload": {
+                "bytes": 9,
+                "path": "verify.txt",
+                "sha256": "8f5a1374b3eb9532a67c0de915a0810ea089fc304c33a44642a7f4878984803e"
+              },
+              "status": "passed",
+              "summary": "verify.txt exists with 9 bytes"
+            },
+            "created_at": "2026-09-22T22:59:21.096043Z"
+          },
+          {
+            "seq": 21,
+            "id": "581b9168-e0f5-4142-a580-78a6d010b663",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:581b9168-e0f5-4142-a580-78a6d010b663",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 2,
+              "evidence_id": "b5ce4aab-6f01-495e-a707-02806171ec89",
+              "kind": "command",
+              "payload": {
+                "args": [
+                  "-e",
+                  "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                  "one two",
+                  "two  spaces",
+                  "quoted \"value\"",
+                  "back\\slash"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-22T22:59:21.118731Z"
+          },
+          {
+            "seq": 22,
+            "id": "f659c268-d15f-4ddd-be9e-4bac4464c930",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:f659c268-d15f-4ddd-be9e-4bac4464c930",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 3,
+              "evidence_id": "39b96fd6-9d5c-4f26-b111-8daec65f1c95",
+              "kind": "test",
+              "payload": {
+                "args": [
+                  "--test",
+                  "fixture.test.mjs"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "",
+                "stdout": "✔ deterministic verifier inputs (8.2082ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 148.672\n"
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-22T22:59:21.150486Z"
+          },
+          {
+            "seq": 23,
+            "id": "be2a8fd9-0dd8-44bf-9358-0753eb75e758",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:be2a8fd9-0dd8-44bf-9358-0753eb75e758",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 4,
+              "evidence_id": "a576fa30-7a07-4629-bd14-8d4ed3d8eeef",
+              "kind": "json_schema",
+              "payload": {
+                "path": "schema.json",
+                "required_keys": [
+                  "status",
+                  "count"
+                ]
+              },
+              "status": "passed",
+              "summary": "schema.json satisfies 2 required keys"
+            },
+            "created_at": "2026-09-22T22:59:21.171485Z"
+          },
+          {
+            "seq": 24,
+            "id": "85893afa-824a-49b4-a2d6-5ff8a9777023",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:85893afa-824a-49b4-a2d6-5ff8a9777023",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 5,
+              "evidence_id": "b0f7a900-71c4-45d3-b4f4-780b54bf9a99",
+              "kind": "screenshot",
+              "payload": {
+                "bytes": 24,
+                "format": "png",
+                "path": "screenshot.png"
+              },
+              "status": "passed",
+              "summary": "screenshot.png is a valid png screenshot"
+            },
+            "created_at": "2026-09-22T22:59:21.190823Z"
+          },
+          {
+            "seq": 25,
+            "id": "6fcca68e-3848-4896-b5ca-62b26aa931df",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "artifact:407b748f-a197-4673-939e-b594f6b12387:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "407b748f-a197-4673-939e-b594f6b12387",
+              "artifact_role": "source_deliverable",
+              "bytes": 1282,
+              "file_name": "ecorp-review-report.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+                "branch": "crony/task-41e4ac2e52a94617b6023798efa326fb/run-ad49c24b436f424cbe06997650376c16",
+                "form": "review_only_report",
+                "git_bundle_sha256": null,
+                "head_commit": null,
+                "integration_state": "not_applicable",
+                "publication_ready": false,
+                "verification_sha256": "00eab8a57aa1d8aacef21eef49dbccdd873d992ef6496a9e01fc8b5b0b32adf8"
+              },
+              "producer_agent_id": "1db94d38-4451-47f9-b85c-1b461a2b4605",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "048c29ccd506866b1e7dce24260aaf3e24cd5de522f313fe2040bfe2f85995fd",
+              "retention_until": "2026-10-22T22:59:22.216104Z",
+              "sha256": "2369faa9c86d38d3c11ce21b265728c2d77da3a8c8167bb357058c66988ac235",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/407b748f-a197-4673-939e-b594f6b12387",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:59:22.253418Z"
+          },
+          {
+            "seq": 26,
+            "id": "03312a37-d8e4-41bd-8278-8cfbadfa801e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:03312a37-d8e4-41bd-8278-8cfbadfa801e",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "2369faa9c86d38d3c11ce21b265728c2d77da3a8c8167bb357058c66988ac235",
+              "summary": "all 6 verifier checks passed",
+              "verification_sha256": "00eab8a57aa1d8aacef21eef49dbccdd873d992ef6496a9e01fc8b5b0b32adf8"
+            },
+            "created_at": "2026-09-22T22:59:22.268666Z"
+          },
+          {
+            "seq": 27,
+            "id": "37d6a3dc-7163-4ea4-be68-ea38a6f1156c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:37d6a3dc-7163-4ea4-be68-ea38a6f1156c",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created and verified result.md through the runner-owned child process."
+            },
+            "created_at": "2026-09-22T22:59:22.297116Z"
+          },
+          {
+            "seq": 28,
+            "id": "926e9283-9f94-48f4-baab-eff5ce32c996",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "ad49c24b-436f-424c-be06-997650376c16",
+            "aggregate_version": 1,
+            "correlation_id": "01a2ef12-7c4d-441b-9129-1923c53f66f2",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:926e9283-9f94-48f4-baab-eff5ce32c996",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=4; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+              "dirty": true,
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\runner\\worktrees\\41e4ac2e52a94617b6023798efa326fb\\ad49c24b436f424cbe06997650376c16",
+              "workspace_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-41e4ac2e52a94617b6023798efa326fb/run-ad49c24b436f424cbe06997650376c16",
+              "workspace_fingerprint": "801304c176349dc72a71de93047b71649c9b2d44a1e359f50ba7881c4590404b"
+            },
+            "created_at": "2026-09-22T22:59:22.735962Z"
+          }
+        ]
+      },
+      "final_screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\evidence\\browser-2026-09-22T22-59-02.736Z-02af987e\\passed-final.png",
+        "sha256": "bb518d0f6a433adc3180aa9ec97b372013a00623a4b5a800536e3974ee9719c4"
+      }
+    },
+    {
+      "title": "[verification-matrix] Policy browser floor failure ca85508f",
+      "mission_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+      "task_id": "334d6f25-ec31-4e21-9e12-f35a61742590",
+      "authored": {
+        "title": "[verification-matrix] Policy browser floor failure ca85508f",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/pr265-run-activity",
+          "base_ref": "HEAD",
+          "base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "review_only_report",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 10000000
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "expected_outcome": "failed",
+      "saved_screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\evidence\\browser-2026-09-22T22-59-02.736Z-02af987e\\failed-saved.png",
+        "sha256": "87a946ae2b3302837d2c3c5631524aa71fc02e59626dfacf5c336a2686be90ed"
+      },
+      "launch": {
+        "run_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+        "runner_id": "pr265-activity-qa",
+        "run_ids": [
+          "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2"
+        ],
+        "runner_ids": [
+          "pr265-activity-qa"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[verification-matrix] Policy browser floor failure ca85508f",
+          "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "failed",
+          "created_at": "2026-09-22T22:59:23.972753Z",
+          "updated_at": "2026-09-22T22:59:28.116440Z"
+        },
+        "tasks": [
+          {
+            "id": "334d6f25-ec31-4e21-9e12-f35a61742590",
+            "mission_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser floor failure ca85508f",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser floor failure ca85508f",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/pr265-run-activity",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "review_only_report",
+                "commit_after_verification": false,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 10000000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "failed",
+            "status": "verification_failed",
+            "assigned_agent_id": "24570cc6-11b6-47fc-a8e1-f3f10a7490a6",
+            "created_at": "2026-09-22T22:59:23.972753Z",
+            "updated_at": "2026-09-22T22:59:28.116440Z"
+          }
+        ],
+        "run": {
+          "id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "334d6f25-ec31-4e21-9e12-f35a61742590",
+          "agent_id": "24570cc6-11b6-47fc-a8e1-f3f10a7490a6",
+          "runner_id": "pr265-activity-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/pr265-run-activity",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+          "workspace_path": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\runner\\worktrees\\334d6f25ec314e219e12f35a61742590\\f7ff3d38ed874a50b9f3d42d3ae40cb2",
+          "workspace_branch": "crony/task-334d6f25ec314e219e12f35a61742590/run-f7ff3d38ed874a50b9f3d42d3ae40cb2",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+          "workspace_fingerprint": "0837d20b154841a498cbc5cebc5500bcea28049a0754cd782cd2363f8e53e9ca",
+          "execution_mode": "provider",
+          "verification_status": "failed",
+          "verification_summary": "1 of 1 verifier checks failed",
+          "verification_sha256": null,
+          "deliverable_sha256": null,
+          "status": "failed",
+          "summary": "1 of 1 verifier checks failed",
+          "artifact_id": "ab25ecf8-de81-447e-8b60-a0f38a8f00d9",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/ab25ecf8-de81-447e-8b60-a0f38a8f00d9",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "5c15d28849ab2d4d9525137d0059f34000f268ed7ad5cd1521c13d19b26f6071",
+          "artifact_sha256": "92bc415df662c8bbdb6e7fe90d49d39457dc9504b2537339881563b707cf262b",
+          "created_at": "2026-09-22T22:59:24.315781Z",
+          "updated_at": "2026-09-22T22:59:28.124292Z"
+        },
+        "evidence": [
+          {
+            "id": "b2804cc3-4977-4124-bb82-98f966368639",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "334d6f25-ec31-4e21-9e12-f35a61742590",
+            "run_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "failed",
+            "summary": "durable artifact ab25ecf8-de81-447e-8b60-a0f38a8f00d9 has 1580 verified bytes",
+            "payload": {
+              "artifact_id": "ab25ecf8-de81-447e-8b60-a0f38a8f00d9",
+              "bytes": 1580,
+              "media_type": "text/markdown",
+              "producer_agent_id": "24570cc6-11b6-47fc-a8e1-f3f10a7490a6",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "5c15d28849ab2d4d9525137d0059f34000f268ed7ad5cd1521c13d19b26f6071",
+              "retention_until": "2026-10-22T22:59:27.555697Z",
+              "sha256": "92bc415df662c8bbdb6e7fe90d49d39457dc9504b2537339881563b707cf262b",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/ab25ecf8-de81-447e-8b60-a0f38a8f00d9",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:59:28.096529Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 33,
+            "id": "8a5085df-8bad-4531-b7ef-5f8c8bef249f",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "run:f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "24570cc6-11b6-47fc-a8e1-f3f10a7490a6",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "pr265-activity-qa",
+              "status": "starting",
+              "task_id": "334d6f25-ec31-4e21-9e12-f35a61742590"
+            },
+            "created_at": "2026-09-22T22:59:24.315781Z"
+          },
+          {
+            "seq": 35,
+            "id": "e040b516-b84e-4e79-8b40-fd661bb96d48",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:e040b516-b84e-4e79-8b40-fd661bb96d48",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "334d6f25-ec31-4e21-9e12-f35a61742590",
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\runner\\worktrees\\334d6f25ec314e219e12f35a61742590\\f7ff3d38ed874a50b9f3d42d3ae40cb2",
+              "workspace_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-334d6f25ec314e219e12f35a61742590/run-f7ff3d38ed874a50b9f3d42d3ae40cb2"
+            },
+            "created_at": "2026-09-22T22:59:24.927579Z"
+          },
+          {
+            "seq": 36,
+            "id": "3504006f-f192-49a3-be7b-f9eea1188960",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:3504006f-f192-49a3-be7b-f9eea1188960",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:59:25.017754Z"
+          },
+          {
+            "seq": 37,
+            "id": "b9471ba0-25bb-4a00-be30-77121e1344bc",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:b9471ba0-25bb-4a00-be30-77121e1344bc",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [verification-matrix] Policy browser floor failure ca85508f\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/pr265-run-activity\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: ca5d4c61733a8eba8944038e4cd07ad992d50e67\nOBJECTIVE: Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser floor failure ca85508f\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 1000000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: review_only_report\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-22T22:59:25.723477Z"
+          },
+          {
+            "seq": 38,
+            "id": "2b4d59ad-445d-48ea-bd39-6ce62bd0f412",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:2b4d59ad-445d-48ea-bd39-6ce62bd0f412",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:59:25.726404Z"
+          },
+          {
+            "seq": 39,
+            "id": "8c123663-8a21-4899-adca-e4629f6087e6",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:8c123663-8a21-4899-adca-e4629f6087e6",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:59:26.628763Z"
+          },
+          {
+            "seq": 40,
+            "id": "6a67a0d3-11af-48fb-a3ef-60bb9203a4cd",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "artifact:ab25ecf8-de81-447e-8b60-a0f38a8f00d9:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "ab25ecf8-de81-447e-8b60-a0f38a8f00d9",
+              "artifact_role": "provider_evidence",
+              "bytes": 1580,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "24570cc6-11b6-47fc-a8e1-f3f10a7490a6",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "5c15d28849ab2d4d9525137d0059f34000f268ed7ad5cd1521c13d19b26f6071",
+              "retention_until": "2026-10-22T22:59:27.555697Z",
+              "sha256": "92bc415df662c8bbdb6e7fe90d49d39457dc9504b2537339881563b707cf262b",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/ab25ecf8-de81-447e-8b60-a0f38a8f00d9",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:59:27.591253Z"
+          },
+          {
+            "seq": 41,
+            "id": "4df8db04-5c6b-407f-b83b-02eb9f9026fd",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:4df8db04-5c6b-407f-b83b-02eb9f9026fd",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-22T22:59:28.070182Z"
+          },
+          {
+            "seq": 42,
+            "id": "c464903a-6ebb-4135-a7c9-81f940295212",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:c464903a-6ebb-4135-a7c9-81f940295212",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 1
+            },
+            "created_at": "2026-09-22T22:59:28.074117Z"
+          },
+          {
+            "seq": 43,
+            "id": "0c24b76e-7523-4094-ad46-52d4294c624c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:0c24b76e-7523-4094-ad46-52d4294c624c",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "b2804cc3-4977-4124-bb82-98f966368639",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "ab25ecf8-de81-447e-8b60-a0f38a8f00d9",
+                "bytes": 1580,
+                "media_type": "text/markdown",
+                "producer_agent_id": "24570cc6-11b6-47fc-a8e1-f3f10a7490a6",
+                "producer_runner_id": "pr265-activity-qa",
+                "provenance_signature": "5c15d28849ab2d4d9525137d0059f34000f268ed7ad5cd1521c13d19b26f6071",
+                "retention_until": "2026-10-22T22:59:27.555697Z",
+                "sha256": "92bc415df662c8bbdb6e7fe90d49d39457dc9504b2537339881563b707cf262b",
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/ab25ecf8-de81-447e-8b60-a0f38a8f00d9",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "failed",
+              "summary": "durable artifact ab25ecf8-de81-447e-8b60-a0f38a8f00d9 has 1580 verified bytes"
+            },
+            "created_at": "2026-09-22T22:59:28.096529Z"
+          },
+          {
+            "seq": 44,
+            "id": "2a33ed36-6a08-484a-ab44-dfd0b3626b66",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_failed",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:2a33ed36-6a08-484a-ab44-dfd0b3626b66",
+            "visibility": "corp",
+            "payload": {
+              "completion_summary": "Created and verified result.md through the runner-owned child process.",
+              "error": "1 of 1 verifier checks failed"
+            },
+            "created_at": "2026-09-22T22:59:28.116440Z"
+          },
+          {
+            "seq": 45,
+            "id": "c8c05b23-98db-4350-8230-3a6499a058ff",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "f7ff3d38-ed87-4a50-b9f3-d42d3ae40cb2",
+            "aggregate_version": 1,
+            "correlation_id": "044cdc4d-e6d4-41fa-bc7d-28a752f1266c",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:c8c05b23-98db-4350-8230-3a6499a058ff",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+              "dirty": null,
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\runner\\worktrees\\334d6f25ec314e219e12f35a61742590\\f7ff3d38ed874a50b9f3d42d3ae40cb2",
+              "workspace_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-334d6f25ec314e219e12f35a61742590/run-f7ff3d38ed874a50b9f3d42d3ae40cb2",
+              "workspace_fingerprint": "0837d20b154841a498cbc5cebc5500bcea28049a0754cd782cd2363f8e53e9ca",
+              "workspace_quarantined": false
+            },
+            "created_at": "2026-09-22T22:59:28.124292Z"
+          }
+        ]
+      },
+      "final_screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\evidence\\browser-2026-09-22T22-59-02.736Z-02af987e\\failed-final.png",
+        "sha256": "cd72d35818f94d6e12df144376b25709361597404890d4e235f15232262bccc8"
+      }
+    }
+  ],
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "development_actor_id": "00000000-0000-4000-8000-000000000011",
+  "stage": "explicit cache policy persisted through API and launched from browser",
+  "explicit_cache_policy": {
+    "mission_id": "aed666c3-658b-4529-aa17-b9673f67d47c",
+    "authored": {
+      "title": "[verification-matrix] Explicit node cache policy 6d9ad046",
+      "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+      "requested_by": "00000000-0000-4000-8000-000000000011",
+      "preferred_adapter": "fake-process",
+      "preferred_model": null,
+      "reasoning_effort": null,
+      "strategy": "single",
+      "source": {
+        "repository": "ecorp-fixture/pr265-run-activity",
+        "base_ref": "HEAD",
+        "base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67"
+      },
+      "budget_tokens": 1000000,
+      "deliverable": {
+        "form": "review_only_report",
+        "commit_after_verification": false,
+        "paths": []
+      },
+      "contract": null,
+      "verification_policy": {
+        "checks": [
+          {
+            "type": "command",
+            "program": "node",
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "timeout_ms": 10000,
+            "cache_suppression": "node_compile_cache"
+          },
+          {
+            "type": "test",
+            "program": "node",
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "timeout_ms": 10000,
+            "cache_suppression": "node_compile_cache"
+          }
+        ],
+        "manual_gate": null
+      }
+    },
+    "policy": {
+      "checks": [
+        {
+          "type": "command",
+          "program": "node",
+          "args": [
+            "-e",
+            "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+          ],
+          "timeout_ms": 10000,
+          "cache_suppression": "node_compile_cache"
+        },
+        {
+          "type": "test",
+          "program": "node",
+          "args": [
+            "-e",
+            "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+          ],
+          "timeout_ms": 10000,
+          "cache_suppression": "node_compile_cache"
+        }
+      ],
+      "manual_gate": null
+    },
+    "setup": "Supported HTTP create API; actual browser review and launch; no response mocks or database seeding",
+    "viewports": [
+      {
+        "name": "desktop",
+        "width": 1440,
+        "height": 1050,
+        "text": "Exact completion plan\n1\n\nCommand · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible runner)\n\n2\n\nTest · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible runner)\n\nManual gate\nNone",
+        "contrast": {
+          "minimum_ratio": 7.495994426354229,
+          "threshold": 4.5,
+          "rows": [
+            {
+              "text": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the miss",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "16px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Contract v",
+              "color": "rgb(53, 70, 80)",
+              "background": [
+                237,
+                241,
+                238
+              ],
+              "font_size": "12px",
+              "ratio": 8.593208645112512
+            },
+            {
+              "text": "1",
+              "color": "rgb(53, 70, 80)",
+              "background": [
+                237,
+                241,
+                238
+              ],
+              "font_size": "12px",
+              "ratio": 8.593208645112512
+            },
+            {
+              "text": "Agent",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Delivery engineer",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "·",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Test harness",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Depends on",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Nothing; ready independently",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Expected output",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "A source-backed, verified mission artifact",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Repository",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "ecorp-fixture/pr265-run-activity",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "@ HEAD",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "(ca5d4c61733a)",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Budget",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "1,000,000",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "tokens",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Write scope",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "**",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Allowed tools",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "filesystem, shell",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "References",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "None attached",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Deliverable",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Review Only Report",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Acceptance checks",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "the declared artifact exists",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "the task reports concrete verification evidence",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Prohibited actions",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "modify files outside the assigned worktree",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "use undeclared long-lived credentials",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Exact completion plan",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "1",
+              "color": "rgb(135, 13, 33)",
+              "background": [
+                246,
+                232,
+                235
+              ],
+              "font_size": "12px",
+              "ratio": 8.371218327588748
+            },
+            {
+              "text": "Command · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatibl",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "13px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "2",
+              "color": "rgb(135, 13, 33)",
+              "background": [
+                246,
+                232,
+                235
+              ],
+              "font_size": "12px",
+              "ratio": 8.371218327588748
+            },
+            {
+              "text": "Test · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible r",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "13px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Manual gate",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "9px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "None",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "Revise contract for",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "14px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "redispatch",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "14px",
+              "ratio": 18.58009472439472
+            }
+          ]
+        },
+        "layout": {
+          "viewport": 1440,
+          "content": 1440
+        },
+        "screenshot": {
+          "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\evidence\\browser-2026-09-22T22-59-02.736Z-02af987e\\cache-desktop-ready.png",
+          "sha256": "1f3c9b398e9d175d29483a827ceeae583ee3a3b5a0a476814336b9489cf815af"
+        }
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844,
+        "text": "Exact completion plan\n1\n\nCommand · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible runner)\n\n2\n\nTest · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible runner)\n\nManual gate\nNone",
+        "contrast": {
+          "minimum_ratio": 7.495994426354229,
+          "threshold": 4.5,
+          "rows": [
+            {
+              "text": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the miss",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "16px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Contract v",
+              "color": "rgb(53, 70, 80)",
+              "background": [
+                237,
+                241,
+                238
+              ],
+              "font_size": "12px",
+              "ratio": 8.593208645112512
+            },
+            {
+              "text": "1",
+              "color": "rgb(53, 70, 80)",
+              "background": [
+                237,
+                241,
+                238
+              ],
+              "font_size": "12px",
+              "ratio": 8.593208645112512
+            },
+            {
+              "text": "Agent",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Delivery engineer",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "·",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Test harness",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Depends on",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Nothing; ready independently",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Expected output",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "A source-backed, verified mission artifact",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Repository",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "ecorp-fixture/pr265-run-activity",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "@ HEAD",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "(ca5d4c61733a)",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Budget",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "1,000,000",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "tokens",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Write scope",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "**",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Allowed tools",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "filesystem, shell",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "References",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "None attached",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Deliverable",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Review Only Report",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Acceptance checks",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "the declared artifact exists",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "the task reports concrete verification evidence",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Prohibited actions",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "modify files outside the assigned worktree",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "use undeclared long-lived credentials",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Exact completion plan",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "1",
+              "color": "rgb(135, 13, 33)",
+              "background": [
+                246,
+                232,
+                235
+              ],
+              "font_size": "12px",
+              "ratio": 8.371218327588748
+            },
+            {
+              "text": "Command · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatibl",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "13px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "2",
+              "color": "rgb(135, 13, 33)",
+              "background": [
+                246,
+                232,
+                235
+              ],
+              "font_size": "12px",
+              "ratio": 8.371218327588748
+            },
+            {
+              "text": "Test · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible r",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "13px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Manual gate",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "9px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "None",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "Revise contract for",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "14px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "redispatch",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "14px",
+              "ratio": 18.58009472439472
+            }
+          ]
+        },
+        "layout": {
+          "viewport": 390,
+          "content": 390
+        },
+        "screenshot": {
+          "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\evidence\\browser-2026-09-22T22-59-02.736Z-02af987e\\cache-mobile-ready.png",
+          "sha256": "71ba516eed835434fca9e9bbc66277eb168701d86cb350b42769c3bf0e189a79"
+        }
+      }
+    ],
+    "final": {
+      "mission": {
+        "id": "aed666c3-658b-4529-aa17-b9673f67d47c",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[verification-matrix] Explicit node cache policy 6d9ad046",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "specification_version": 1,
+        "strategy": "single",
+        "max_nodes": 1,
+        "max_depth": 0,
+        "original_budget_tokens": 1000000,
+        "original_budget_cost_microusd": 1000000,
+        "budget_tokens": 1000000,
+        "budget_cost_microusd": 1000000,
+        "status": "completed",
+        "created_at": "2026-09-22T22:59:28.572215Z",
+        "updated_at": "2026-09-22T22:59:36.214134Z"
+      },
+      "tasks": [
+        {
+          "id": "3370ace8-21e8-4ace-a2f8-5e56b8fb2c2e",
+          "mission_id": "aed666c3-658b-4529-aa17-b9673f67d47c",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "title": "Produce the mission outcome",
+          "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Explicit node cache policy 6d9ad046",
+          "plan_key": "deliver",
+          "contract": {
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Explicit node cache policy 6d9ad046",
+            "expected_output": "A source-backed, verified mission artifact",
+            "source_repository": "ecorp-fixture/pr265-run-activity",
+            "source_base_ref": "HEAD",
+            "source_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+            "acceptance_tests": [
+              "the declared artifact exists",
+              "the task reports concrete verification evidence"
+            ],
+            "allowed_tools": [
+              "filesystem",
+              "shell"
+            ],
+            "prohibited_actions": [
+              "modify files outside the assigned worktree",
+              "use undeclared long-lived credentials"
+            ],
+            "references": [],
+            "write_scope": [
+              "**"
+            ],
+            "budget_tokens": 1000000,
+            "budget_cost_microusd": 1000000,
+            "deadline_at": null,
+            "escalation": "ask the current human controller or mission owner",
+            "secret_refs": [],
+            "model": null,
+            "reasoning_effort": null,
+            "deliverable": {
+              "form": "review_only_report",
+              "commit_after_verification": false,
+              "paths": []
+            }
+          },
+          "contract_version": 1,
+          "depth": 0,
+          "max_attempts": 2,
+          "attempt_count": 1,
+          "required_adapter": "fake-process",
+          "depends_on": [],
+          "verification_policy": {
+            "checks": [
+              {
+                "type": "command",
+                "program": "node",
+                "args": [
+                  "-e",
+                  "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+                ],
+                "timeout_ms": 10000,
+                "cache_suppression": "node_compile_cache"
+              },
+              {
+                "type": "test",
+                "program": "node",
+                "args": [
+                  "-e",
+                  "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+                ],
+                "timeout_ms": 10000,
+                "cache_suppression": "node_compile_cache"
+              }
+            ],
+            "manual_gate": null
+          },
+          "verification_status": "passed",
+          "status": "completed",
+          "assigned_agent_id": "29b16f59-cc13-4d69-a157-30111ad2824e",
+          "created_at": "2026-09-22T22:59:28.572215Z",
+          "updated_at": "2026-09-22T22:59:36.214134Z"
+        }
+      ],
+      "run": {
+        "id": "25a997f7-8adb-40f8-a0cc-f8fa4d7119bc",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "task_id": "3370ace8-21e8-4ace-a2f8-5e56b8fb2c2e",
+        "agent_id": "29b16f59-cc13-4d69-a157-30111ad2824e",
+        "runner_id": "pr265-activity-qa",
+        "provider_session_id": null,
+        "resumed_from_run_id": null,
+        "workspace_run_id": "25a997f7-8adb-40f8-a0cc-f8fa4d7119bc",
+        "model": null,
+        "reasoning_effort": null,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cost_microusd": 0,
+        "budget_tokens_limit": 1000000,
+        "budget_cost_microusd_limit": 1000000,
+        "breaker_stage": "healthy",
+        "no_progress_events": 0,
+        "repeated_tool_count": 0,
+        "source_repository": "ecorp-fixture/pr265-run-activity",
+        "source_base_ref": "HEAD",
+        "source_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+        "workspace_path": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\runner\\worktrees\\3370ace821e84acea2f85e56b8fb2c2e\\25a997f78adb40f8a0ccf8fa4d7119bc",
+        "workspace_branch": "crony/task-3370ace821e84acea2f85e56b8fb2c2e/run-25a997f78adb40f8a0ccf8fa4d7119bc",
+        "workspace_base_ref": "HEAD",
+        "workspace_base_commit": "ca5d4c61733a8eba8944038e4cd07ad992d50e67",
+        "workspace_disposition": "preserved",
+        "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=4; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+        "workspace_fingerprint": "9f5eff3c8259b5b7fb1b24785c416f8de2fe0f53a1ecfc78cbe35d124c2ec307",
+        "execution_mode": "provider",
+        "verification_status": "passed",
+        "verification_summary": "all 2 verifier checks passed",
+        "verification_sha256": "b66f042d1746b87d7bd82490c3d70ea69b34b46f70d800b149e7c5b47a8e2a52",
+        "deliverable_sha256": "5b68ec5b6142ec944862ec6ea4d7e5fbfbb7359d982f11266131000feef03831",
+        "status": "completed",
+        "summary": "Created and verified result.md through the runner-owned child process.",
+        "artifact_id": "21339d84-57c5-463a-b758-78a8c2707f6d",
+        "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/21339d84-57c5-463a-b758-78a8c2707f6d",
+        "artifact_media_type": "text/markdown",
+        "artifact_signature": "e41931d8a16996eb5a9fa4de39fdecca214185e8e0314a800b7ceb43cdb4194e",
+        "artifact_sha256": "dc4c53e2aada77c4d84bc8c0eef9e371640f69dac2153b77e51e6f7007d7de82",
+        "created_at": "2026-09-22T22:59:29.772193Z",
+        "updated_at": "2026-09-22T22:59:36.651308Z"
+      },
+      "evidence": [
+        {
+          "id": "b56f20aa-8e8f-4130-956b-c6ea9359b52d",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "3370ace8-21e8-4ace-a2f8-5e56b8fb2c2e",
+          "run_id": "25a997f7-8adb-40f8-a0cc-f8fa4d7119bc",
+          "check_index": 0,
+          "kind": "command",
+          "status": "passed",
+          "summary": "\"node\" exited successfully",
+          "payload": {
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "cache_suppression": {
+              "cleanup_authorized": false,
+              "policy": "node_compile_cache",
+              "requested_argument_prefix": [],
+              "requested_environment": {
+                "NODE_DISABLE_COMPILE_CACHE": "1"
+              },
+              "scope": "verifier_child",
+              "source": "explicit",
+              "zero_cache_writes_verified": false
+            },
+            "error": null,
+            "exit_code": 0,
+            "program": "node",
+            "requested_program": "node",
+            "resolution_mode": "path_pathext",
+            "resolved_executable": {
+              "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+              "file_name": "node.exe"
+            },
+            "stderr": "",
+            "stdout": ""
+          },
+          "created_at": "2026-09-22T22:59:35.080893Z"
+        },
+        {
+          "id": "7936d725-326c-4df7-8b0f-c915a4dc4627",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "3370ace8-21e8-4ace-a2f8-5e56b8fb2c2e",
+          "run_id": "25a997f7-8adb-40f8-a0cc-f8fa4d7119bc",
+          "check_index": 1,
+          "kind": "test",
+          "status": "passed",
+          "summary": "\"node\" exited successfully",
+          "payload": {
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "cache_suppression": {
+              "cleanup_authorized": false,
+              "policy": "node_compile_cache",
+              "requested_argument_prefix": [],
+              "requested_environment": {
+                "NODE_DISABLE_COMPILE_CACHE": "1"
+              },
+              "scope": "verifier_child",
+              "source": "explicit",
+              "zero_cache_writes_verified": false
+            },
+            "error": null,
+            "exit_code": 0,
+            "program": "node",
+            "requested_program": "node",
+            "resolution_mode": "path_pathext",
+            "resolved_executable": {
+              "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+              "file_name": "node.exe"
+            },
+            "stderr": "",
+            "stdout": ""
+          },
+          "created_at": "2026-09-22T22:59:35.085033Z"
+        }
+      ]
+    },
+    "screenshot": {
+      "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r5\\evidence\\browser-2026-09-22T22-59-02.736Z-02af987e\\cache-completed.png",
+      "sha256": "f28215b6e629427e76f6d08eb3b7dc3bf2cd4e0efe1a069ccfbc2e8ce570fe59"
+    }
+  },
+  "source_unchanged": true,
+  "finished_at": "2026-09-22T22:59:37.408Z"
+}
