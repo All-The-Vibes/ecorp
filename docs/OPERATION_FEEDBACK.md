@@ -121,6 +121,65 @@ evidence. Focused tests are `tools/operation_feedback.test.mjs`; the owned-stack
 driver is `tools/e2e_operation_feedback.mjs` and requires explicit setup/input/output
 paths. Test fixtures and real-provider observations remain separate.
 
+## Bind one adoption to native independent review
+
+The optional native-review mode binds an existing independent verification decision to one
+exact corpus, selected rules and target reference-only change. Its contract is
+[native feedback review v1](specs/native-feedback-review-v1.md). It adds client admission;
+the general native contract-revision API still has its existing actor authorization.
+
+The source task must have been configured with an `independent_review` gate and
+`exclude_requester: true` before it ran. While it is waiting for review, export a fresh
+pending `current-run` receipt through `operation_receipt.mjs`. Use the same corpus, local
+review, receipt, artifact, rule and saved-target arguments as `prepare`, but select
+`prepare-review` and a new output file:
+
+```powershell
+node tools/operation_feedback.mjs prepare-review `
+  --corpus $corpusFile --corpus-sha256 $corpusHash `
+  --review $reviewFile --review-sha256 $reviewHash `
+  --receipt $receiptFile --receipt-sha256 $receiptHash `
+  --artifact-id '<SELECTED_ARTIFACT_UUID>' --artifact-path corpus.json `
+  --rule-ids '<SELECTED_FB_RULE_ID>' `
+  --mission-id '<SAVED_TARGET_MISSION_UUID>' --task-id '<SAVED_TARGET_TASK_UUID>' `
+  --out 'C:\ecorp-operations\intent-001.json'
+```
+
+The example selects `corpus.json` from a typed artifact. Omit `--artifact-path` only
+when the selected artifact is the raw corpus itself.
+This command only reads native state and writes new local review files. The JSON intent
+and adjacent Markdown show the selected guidance, target, expiry and exact reviewer note.
+They distinguish the **canonical intent digest used in that note** from the **raw file
+SHA-256 used to select the input file**. Neither digest is itself approval.
+
+The actual authorized reviewer must inspect that change and decide the existing native
+source verification request with the exact generated note. The existing native CLI/API
+supports an explicit note; the browser's generic acceptance note does not bind this intent.
+The reviewer must differ from the source producer, source requester and intended adopter.
+This tool never submits a decision. A completed source cannot be reopened for a new note.
+
+After approval, export a new accepted source receipt; retain the earlier pending receipt.
+Run the existing `prepare` command with that accepted receipt and the original selection,
+adding `--require-native-independent-review`, `--review-intent <ABSOLUTE_INTENT_FILE>` and
+`--review-intent-sha256 <RAW_FILE_SHA256>`. It returns a v2 proposal only when fresh native
+reads bind the exact decision, corpus, rules, verifier policy and target. Apply that
+byte-pinned proposal using the ordinary `apply` arguments plus
+`--review-intent <SAME_ABSOLUTE_INTENT_FILE>`.
+
+Intents expire within 24 hours or the first selected-rule expiry, whichever comes first.
+Mutation proposals retain the existing five-minute maximum. Changed source, policy, rules
+or target versions require fresh review; an old decision cannot approve a new intent.
+Same-proposal reconciliation retains its original key and expects exactly one revision.
+Missing or contradictory review rows, including a request outside the bounded snapshot,
+stay candidates/refusals. Post-effect uncertainty preserves the exact request and receipt.
+
+The v2 assurance `native_independent_review_binding_verified` means the client observed
+that persisted native gate and exact effect binding. `production_identity_verified`
+remains false: the review row does not attest its historical authentication mode, and
+development actors do not prove a physical human participated. The original v1 advisory
+workflow and public operation-receipt schema remain unchanged. This mode does not activate
+historical behavioral candidates, launch a task or establish improved task performance.
+
 ## Retain historical behavioral findings
 
 `tools/import_operation_behavior.mjs` imports a selected historical append-check

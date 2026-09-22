@@ -1,6 +1,7 @@
 # MCP inspection contract v1
 
-Status: implemented in the native `crony-mcp` gateway; validation scope is recorded separately.
+Status: prior snapshot-only contract. The current additive inspection surface is specified in
+[v2](mcp-inspection-v2.md); this version retains the original boundary and acceptance description.
 Wire protocol: MCP `2025-06-18` over newline-delimited JSON-RPC 2.0 on stdio.
 
 ## Authority and capability
@@ -28,9 +29,10 @@ catalog. The repository's inspection configuration explicitly selects read-only 
 
 ## Protocol behavior
 
-Requests with IDs receive matching JSON-RPC responses. An explicit null ID remains a request;
-an omitted ID is a notification. Notifications produce no response or tool effect. Invalid
-JSON-RPC versions are rejected. Initialization and ping do not contact the server.
+Requests with IDs receive matching JSON-RPC responses. An explicit null ID remains a request.
+The gateway treats every JSON object with an omitted ID as a notification, including malformed
+objects, and produces no response or tool effect for them. Non-object frames and invalid
+JSON-RPC versions on requests are rejected. Initialization and ping do not contact the server.
 
 The client probe validates the negotiated protocol and the exact read-only catalog before
 requesting a snapshot. A successful transport without an authorized snapshot is not a passing
@@ -65,9 +67,9 @@ OS isolation, a provider run, or accepted mission completion.
 7. A probe of an existing real ECorp server preserves state and records its actual assurance scope.
 8. Oversized declared and streamed HTTP bodies are rejected before JSON decoding, with no raw
    response content in diagnostics; the exact native byte limit and unrestricted compatibility pass.
-8. A redirect cannot reach a second origin or produce a successful probe; unrestricted transport
+9. A redirect cannot reach a second origin or produce a successful probe; unrestricted transport
    compatibility remains intact.
-9. Missing read-only routing fails at startup without HTTP; the legacy unrestricted server
+10. Missing read-only routing fails at startup without HTTP; the legacy unrestricted server
    default remains unchanged.
 
 Source tests live beside the gateway and in `tools/probe_mcp.test.mjs`. The live probe is

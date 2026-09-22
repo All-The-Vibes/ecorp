@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "pr": 341,
+  "source_head": "909129c97c2834d34ae1b0b8631d035566eadcb7",
+  "tested_staged_tree": "faad737d4f2d1f47db2bea6ec1d2aac65285bf06",
+  "target_main": "410eddfc8bfcfa874dae05555128d39a914f0456",
+  "started_at_utc": "2026-09-22T07:51:32.0915201-05:00",
+  "finished_at_utc": "2026-09-22T13:16:38.3959310+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "CI-only diagnostics change. Full required local validation passes on the integrated source. Original native scanner cases remain scoped historical evidence; no application runtime behavior changed.",
+  "maintainer_changes": "Merged current main without rewriting history; reviewed the metadata-only reporter, cleanup and failure behavior. Retained the earlier Windows linker collision and reran workspace tests on the unchanged source with serialized target access.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.408393,
+      "log": "migrations.log",
+      "original_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823",
+      "published_log_sha256": "647fc92ef827bdde2d804ae951c78304f0522f35f9832dde27b39840b8263757"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.0912015,
+      "log": "documentation.log",
+      "original_log_sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406",
+      "published_log_sha256": "f7c1081b3ad5e5b322c890127d287c1cef53b868efc7b40d1b7b2eef7b9aeb18"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 62.4820317,
+      "log": "node-unit.log",
+      "original_log_sha256": "84f7edbed35f423be1c4ec21004b3c4aaad8a35b285e054d8f6198edeafe04fe",
+      "published_log_sha256": "60826df64f0c23b6e865ae0b6a25bbeb1a534c939c9052059ca46834389bdff8"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 98.7706496,
+      "log": "steward.log",
+      "original_log_sha256": "de2b36d93df47aa756735ec3cc87daf871308bf2c38775570efa9d24596d3498",
+      "published_log_sha256": "6bad78a2e79e9f97bc992cc7f980160df6fcba36765a4e88efed9c16f1ab9821"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 4.2502607,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 83.1758919,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "09f15a12d8acd036bdf50ac8665ae9b38ed506f1d5cc07f90efb285f04c00af0",
+      "published_log_sha256": "4debe66fb61dd6474ddae58437c3997c9304a8b4e8b543dca6e7eefc0363f94c"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 480.7633587,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "c7509e5b8811a1804895585c9102588c357d124e0d6056bf7b4722f903fd04af",
+      "published_log_sha256": "6ef5a36b6a5f9cf49ee40f1e56483a76a344eb2127f5b11a84f98b46803eb73f"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 14.5953655,
+      "log": "web-build.log",
+      "original_log_sha256": "a61b8f4ffedd458e4f3cd173b217ab7cc2995503d0311abb60c44f089b104f04",
+      "published_log_sha256": "a1ee65ece9444bff0af07627fd27c1c9f0cb950b291601bf1822d5c18392d53e"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 5.0192187,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true for retried commands",
+  "retry_provenance": {
+    "reason": "Initial test compilation failed with LNK1104 because a separate owned validation was still running the shared Windows test executable. Retry serializes the entire compile-and-test phase for the same unchanged staged tree.",
+    "previous_receipt": "prior-attempts/validation.json",
+    "previous_receipt_sha256": "26df5d9d592e75967ec49c78520cf883f91fde1f0752c0f7e85934c4f7477672",
+    "failed_checks": [
+      {
+        "name": "rust-workspace",
+        "program": "cargo",
+        "arguments": [
+          "test",
+          "--workspace"
+        ],
+        "exit_code": 101,
+        "started_at_utc": "2026-09-22T07:55:46.1850873-05:00",
+        "duration_seconds": 433.3647869,
+        "log": "prior-attempts/rust-workspace.log",
+        "sha256": "aa04e56258a963bb4203ef267c7154f2b5d4f5313596dca800087e468b13433e",
+        "original_log_sha256": "aa04e56258a963bb4203ef267c7154f2b5d4f5313596dca800087e468b13433e",
+        "published_log_sha256": "44096d704b394d482515e1a095ebeaa06e019601b2cc8121954838596573a6d4"
+      }
+    ],
+    "started_at_utc": "2026-09-22T13:08:35.7564212+00:00",
+    "unchanged_source_verified": true,
+    "retained_passed_checks": [
+      "migrations",
+      "documentation",
+      "node-unit",
+      "steward",
+      "rust-format",
+      "rust-clippy",
+      "web-build",
+      "web-lint"
+    ],
+    "published_previous_receipt_sha256": "561f7a677563630400916fca6c0f0223ab2cf8b8bd90c81f59ae3be338790466"
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "started_at_utc": "2026-09-22T12:51:32.0915201+00:00",
+  "repository": "<reviewed-worktree>",
+  "head": "909129c97c2834d34ae1b0b8631d035566eadcb7",
+  "staged_tree": "faad737d4f2d1f47db2bea6ec1d2aac65285bf06",
+  "unstaged_diff": [],
+  "target_main": "410eddfc8bfcfa874dae05555128d39a914f0456",
+  "diff_before": [
+    "M  .codex/config.toml",
+    "M  .github/skills/ecorp-operations/SKILL.md",
+    "A  .github/workflows/ci-maintenance.yml",
+    "M  .github/workflows/ci.yml",
+    "M  .github/workflows/repository-checks.yml",
+    "M  Cargo.lock",
+    "M  Cargo.toml",
+    "M  apps/desktop/src-tauri/Cargo.lock",
+    "M  apps/desktop/src-tauri/tauri.conf.json",
+    "M  apps/web/package.json",
+    "M  apps/web/src/App.css",
+    "M  apps/web/src/verificationPolicy.test.mjs",
+    "M  apps/web/src/verificationPolicy.ts",
+    "M  crates/crony-cli/Cargo.toml",
+    "M  crates/crony-cli/src/factory.rs",
+    "M  crates/crony-cli/src/publish.rs",
+    "M  crates/crony-gateways/src/bin/crony-mcp.rs",
+    "M  crates/crony-gateways/src/lib.rs",
+    "M  crates/crony-server/src/artifacts.rs",
+    "M  crates/crony-server/src/secrets.rs",
+    "M  crates/crony-server/src/startup.rs",
+    "A  docs/CI_MAINTENANCE.md",
+    "M  docs/MCP_OPERATIONS.md",
+    "M  docs/OPERATION_FEEDBACK.md",
+    "M  docs/evidence/2026-09-18-pr326-review.md",
+    "A  docs/evidence/assets/pr326-review/desktop-editor.png",
+    "A  docs/evidence/assets/pr326-review/mobile-editor.png",
+    "M  docs/reports/ecorp-codeblend-readiness-2026-09-18.html",
+    "M  docs/specs/mcp-inspection-v1.md",
+    "A  docs/specs/mcp-inspection-v2.md",
+    "A  docs/specs/native-feedback-review-v1.md",
+    "M  pnpm-lock.yaml",
+    "M  scenarios/repo-steward/feedback-cli.test.mjs",
+    "M  scenarios/repo-steward/feedback.mjs",
+    "M  scenarios/repo-steward/lib/recurring-audit.mjs",
+    "M  scenarios/repo-steward/maintenance.mjs",
+    "M  scenarios/repo-steward/maintenance.test.mjs",
+    "A  tools/ci_maintenance.mjs",
+    "A  tools/ci_maintenance.test.mjs",
+    "M  tools/consume_operation_receipt.mjs",
+    "M  tools/consume_operation_receipt.test.mjs",
+    "M  tools/e2e_gateways.mjs",
+    "M  tools/e2e_verification_policy_browser.mjs",
+    "M  tools/operation_feedback.mjs",
+    "M  tools/operation_feedback.test.mjs",
+    "M  tools/probe_mcp.mjs",
+    "M  tools/probe_mcp.test.mjs",
+    "A  tools/windows_connection_acl_readiness.ps1"
+  ],
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "test_threads": "1",
+  "cargo_target": "<local-user>\\code\\ecorp-pr-completion-20260922\\target",
+  "checks": [
+    {
+      "name": "migrations",
+      "program": "node",
+      "arguments": [
+        "tools/check_migrations.mjs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T12:51:33.7966771+00:00",
+      "duration_seconds": 0.408393,
+      "log": "<private-evidence>\\pr341-validation\\migrations.log",
+      "sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823"
+    },
+    {
+      "name": "documentation",
+      "program": "pnpm",
+      "arguments": [
+        "check:docs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T12:51:34.2444454+00:00",
+      "duration_seconds": 1.0912015,
+      "log": "<private-evidence>\\pr341-validation\\documentation.log",
+      "sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406"
+    },
+    {
+      "name": "node-unit",
+      "program": "pnpm",
+      "arguments": [
+        "test:unit"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T12:51:35.3427522+00:00",
+      "duration_seconds": 62.4820317,
+      "log": "<private-evidence>\\pr341-validation\\node-unit.log",
+      "sha256": "84f7edbed35f423be1c4ec21004b3c4aaad8a35b285e054d8f6198edeafe04fe"
+    },
+    {
+      "name": "steward",
+      "program": "pnpm",
+      "arguments": [
+        "test:steward"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T12:52:39.4229237+00:00",
+      "duration_seconds": 98.7706496,
+      "log": "<private-evidence>\\pr341-validation\\steward.log",
+      "sha256": "de2b36d93df47aa756735ec3cc87daf871308bf2c38775570efa9d24596d3498"
+    },
+    {
+      "name": "rust-format",
+      "program": "cargo",
+      "arguments": [
+        "fmt",
+        "--check"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T12:54:18.5394295+00:00",
+      "duration_seconds": 4.2502607,
+      "log": "<private-evidence>\\pr341-validation\\rust-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "program": "cargo",
+      "arguments": [
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T12:54:22.7966257+00:00",
+      "duration_seconds": 83.1758919,
+      "log": "<private-evidence>\\pr341-validation\\rust-clippy.log",
+      "sha256": "09f15a12d8acd036bdf50ac8665ae9b38ed506f1d5cc07f90efb285f04c00af0"
+    },
+    {
+      "name": "rust-workspace",
+      "program": "cargo",
+      "arguments": [
+        "test",
+        "--workspace"
+      ],
+      "exit_code": 101,
+      "started_at_utc": "2026-09-22T12:55:46.1850873+00:00",
+      "duration_seconds": 433.3647869,
+      "log": "<private-evidence>\\pr341-validation\\rust-workspace.log",
+      "sha256": "aa04e56258a963bb4203ef267c7154f2b5d4f5313596dca800087e468b13433e"
+    },
+    {
+      "name": "web-build",
+      "program": "pnpm",
+      "arguments": [
+        "build:web"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T13:02:59.7730910+00:00",
+      "duration_seconds": 14.5953655,
+      "log": "<private-evidence>\\pr341-validation\\web-build.log",
+      "sha256": "a61b8f4ffedd458e4f3cd173b217ab7cc2995503d0311abb60c44f089b104f04"
+    },
+    {
+      "name": "web-lint",
+      "program": "pnpm",
+      "arguments": [
+        "lint:web"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T13:03:14.6682360+00:00",
+      "duration_seconds": 5.0192187,
+      "log": "<private-evidence>\\pr341-validation\\web-lint.log",
+      "sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c"
+    }
+  ],
+  "status": "failed",
+  "finished_at_utc": "2026-09-22T13:03:19.8859327+00:00",
+  "diff_after": [
+    "M  .codex/config.toml",
+    "M  .github/skills/ecorp-operations/SKILL.md",
+    "A  .github/workflows/ci-maintenance.yml",
+    "M  .github/workflows/ci.yml",
+    "M  .github/workflows/repository-checks.yml",
+    "M  Cargo.lock",
+    "M  Cargo.toml",
+    "M  apps/desktop/src-tauri/Cargo.lock",
+    "M  apps/desktop/src-tauri/tauri.conf.json",
+    "M  apps/web/package.json",
+    "M  apps/web/src/App.css",
+    "M  apps/web/src/verificationPolicy.test.mjs",
+    "M  apps/web/src/verificationPolicy.ts",
+    "M  crates/crony-cli/Cargo.toml",
+    "M  crates/crony-cli/src/factory.rs",
+    "M  crates/crony-cli/src/publish.rs",
+    "M  crates/crony-gateways/src/bin/crony-mcp.rs",
+    "M  crates/crony-gateways/src/lib.rs",
+    "M  crates/crony-server/src/artifacts.rs",
+    "M  crates/crony-server/src/secrets.rs",
+    "M  crates/crony-server/src/startup.rs",
+    "A  docs/CI_MAINTENANCE.md",
+    "M  docs/MCP_OPERATIONS.md",
+    "M  docs/OPERATION_FEEDBACK.md",
+    "M  docs/evidence/2026-09-18-pr326-review.md",
+    "A  docs/evidence/assets/pr326-review/desktop-editor.png",
+    "A  docs/evidence/assets/pr326-review/mobile-editor.png",
+    "M  docs/reports/ecorp-codeblend-readiness-2026-09-18.html",
+    "M  docs/specs/mcp-inspection-v1.md",
+    "A  docs/specs/mcp-inspection-v2.md",
+    "A  docs/specs/native-feedback-review-v1.md",
+    "M  pnpm-lock.yaml",
+    "M  scenarios/repo-steward/feedback-cli.test.mjs",
+    "M  scenarios/repo-steward/feedback.mjs",
+    "M  scenarios/repo-steward/lib/recurring-audit.mjs",
+    "M  scenarios/repo-steward/maintenance.mjs",
+    "M  scenarios/repo-steward/maintenance.test.mjs",
+    "A  tools/ci_maintenance.mjs",
+    "A  tools/ci_maintenance.test.mjs",
+    "M  tools/consume_operation_receipt.mjs",
+    "M  tools/consume_operation_receipt.test.mjs",
+    "M  tools/e2e_gateways.mjs",
+    "M  tools/e2e_verification_policy_browser.mjs",
+    "M  tools/operation_feedback.mjs",
+    "M  tools/operation_feedback.test.mjs",
+    "M  tools/probe_mcp.mjs",
+    "M  tools/probe_mcp.test.mjs",
+    "A  tools/windows_connection_acl_readiness.ps1"
+  ]
+}
