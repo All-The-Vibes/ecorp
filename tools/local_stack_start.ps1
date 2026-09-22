@@ -149,6 +149,7 @@ $serverUrl = "http://127.0.0.1:$serverPortValue"
 $webUrl = "http://127.0.0.1:$webPortValue"
 $source = [string](Setting 'CRONY_SOURCE_REPOSITORY' 'source_repository' $root)
 $sourceRef = [string](Setting 'CRONY_SOURCE_BASE_REF' 'source_base_ref' 'HEAD')
+Assert-LocalRunnerSourceRef -Repository $source -Ref $sourceRef
 $sourceCommit = Get-LocalSourceCommit -Repository $source -Ref $sourceRef
 $source = (Resolve-Path -LiteralPath $source).Path
 if ($saved.ContainsKey('source_commit') -and
@@ -160,6 +161,7 @@ if ($saved.ContainsKey('source_commit') -and
 $runnerWorkspace = [IO.Path]::GetFullPath([string](Setting 'CRONY_RUNNER_WORKSPACE' 'runner_workspace' (Join-Path $output 'runner')))
 $copilotHome = [IO.Path]::GetFullPath([string](Setting 'CRONY_COPILOT_HOME' 'copilot_home' (Join-Path $runnerWorkspace 'copilot-home')))
 Assert-LocalStackPath -Path $runnerWorkspace -Directory
+Assert-LocalStackPath -Path (Join-Path $runnerWorkspace 'worktrees') -Directory
 Assert-LocalStackPath -Path $copilotHome -Directory
 $runnerId = [string](Setting 'CRONY_RUNNER_ID' 'runner_id' 'runner-local')
 Assert-LocalRunnerIdentity -RunnerId $runnerId
