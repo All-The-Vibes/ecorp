@@ -202,7 +202,14 @@
 #missions .mission-runtime-error { color: #86243a; background: #fff3f4; border-color: #d9b8b7; }
 #missions .field-warning { color: #86243a; background: #fff3f4; padding: 8px 12px; font-size: 13px; line-height: 1.5; }
 #missions .contract-error { color: #86243a; background: #fff3f4; padding: 10px 12px; font: inherit; line-height: 1.5; }
-#missions :is(.strategy-chip, .contract-version-chip) { color: #354650; background: #edf1ee; border: 1px solid #c8cec9; padding: 4px 7px; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; }
+#missions :is(.strategy-chip, .contract-version-chip, .task-contract-heading > span) { color: #354650; background: #edf1ee; border: 1px solid #c8cec9; padding: 4px 7px; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; }
+
+#missions .task-contract {
+  min-width: 0;
+  color: var(--ink);
+  background: var(--paper-light);
+  border-color: var(--line);
+}
 
 @media (max-width: 720px) {
   .app-shell .operator-console .operations-identity { grid-column: 1 / -1; width: 100%; }
@@ -521,7 +528,7 @@
 #missions .mission-form :is(.verification-policy-editor, .manual-gate-editor, fieldset) { min-width: 0; }
 #missions .mission-form :is(.contract-section-heading, .verification-check-toolbar) { flex-wrap: wrap; gap: 12px; }
 
-#missions .mission-form :is(.verification-plan-disclosure, .verification-policy-preview) {
+#missions :is(.mission-form, .task-contract) :is(.verification-plan-disclosure, .verification-policy-preview) {
   min-width: 0;
   color: var(--ink);
   border-color: var(--line);
@@ -529,8 +536,8 @@
   overflow-wrap: anywhere;
 }
 
-#missions .mission-form .verification-policy-preview :is(p, small) { font-size: 13px; line-height: 1.5; }
-#missions .mission-form .verification-policy-preview li > span { color: var(--cobalt-dark); background: var(--surface-selected); font-size: 12px; }
+#missions :is(.mission-form, .task-contract) .verification-policy-preview :is(p, small) { font-size: 13px; line-height: 1.5; }
+#missions :is(.mission-form, .task-contract) .verification-policy-preview li > span { color: var(--cobalt-dark); background: var(--surface-selected); font-size: 12px; }
 #missions .mission-form .default-gate-callout {
   margin-top: 0;
   padding: 12px;
