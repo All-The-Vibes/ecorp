@@ -47,7 +47,7 @@ fn upload_binding(payload: &Value) -> Result<Option<&Value>> {
     let Some(binding) = payload.get(UPLOAD) else {
         return Ok(None);
     };
-    if !binding.as_object().is_some_and(|object| object.len() == 2)
+    if binding.as_object().is_none_or(|object| object.len() != 2)
         || !binding
             .get("sha256")
             .and_then(Value::as_str)
@@ -990,5 +990,106 @@ impl PgStore {
         validate_upload_input_tx(&mut tx, input, &grant).await?;
         tx.commit().await?;
         Ok(Some(grant))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_invalid_binding(binding: Value) {
+        let payload = json!({(UPLOAD): binding, (GRANT): {"retained": true}});
+        let before = payload.clone();
+        assert!(has_collection(&payload));
+        assert_eq!(
+            upload_binding(&payload).unwrap_err().to_string(),
+            "retained provider receipt: stored first-upload binding is malformed"
+        );
+        assert!(executable_payload(&payload).is_err());
+        assert_eq!(payload, before);
+    }
+
+    #[test]
+    fn upload_binding_absence_preserves_legacy_payload() {
+        for payload in [json!({}), json!({(GRANT): {"retained": true}})] {
+            assert_eq!(upload_binding(&payload).unwrap(), None);
+            assert_eq!(executable_payload(&payload).unwrap(), payload);
+        }
+    }
+
+    #[test]
+    fn upload_binding_accepts_exact_shape_and_inclusive_byte_bounds() {
+        let max = MAX_RETAINED_PROVIDER_RECEIPT_BYTES as i64;
+        for bytes in [1, max - 1, max] {
+            for sha256 in ["0".repeat(64), "0123456789abcdef".repeat(4)] {
+                let binding = json!({"sha256": sha256, "bytes": bytes});
+                let payload = json!({(UPLOAD): binding, (GRANT): {"retained": true}});
+                assert_eq!(upload_binding(&payload).unwrap(), Some(&binding));
+                assert_eq!(
+                    executable_payload(&payload).unwrap(),
+                    json!({(GRANT): {"retained": true}})
+                );
+                assert_eq!(payload[UPLOAD], binding);
+            }
+        }
+    }
+
+    #[test]
+    fn upload_binding_rejects_non_objects_missing_and_extra_fields() {
+        let sha256 = "a".repeat(64);
+        for binding in [
+            Value::Null,
+            json!(false),
+            json!(1),
+            json!("binding"),
+            json!([]),
+            json!([sha256, 1]),
+            json!({}),
+            json!({"sha256": sha256}),
+            json!({"bytes": 1}),
+            json!({"sha256": sha256, "size": 1}),
+            json!({"sha256": sha256, "bytes": 1, "extra": false}),
+        ] {
+            assert_invalid_binding(binding);
+        }
+    }
+
+    #[test]
+    fn upload_binding_rejects_malformed_digest_types_and_bytes() {
+        for sha256 in [
+            Value::Null,
+            json!(false),
+            json!(1),
+            json!([]),
+            json!({}),
+            json!(""),
+            json!("a".repeat(63)),
+            json!("a".repeat(65)),
+            json!("A".repeat(64)),
+            json!("g".repeat(64)),
+            json!("a".repeat(63) + " "),
+            json!("\u{00e9}".repeat(32)),
+        ] {
+            assert_invalid_binding(json!({"sha256": sha256, "bytes": 1}));
+        }
+    }
+
+    #[test]
+    fn upload_binding_rejects_invalid_byte_types_and_limits() {
+        for bytes in [
+            Value::Null,
+            json!(true),
+            json!("1"),
+            json!(1.0),
+            json!([]),
+            json!({}),
+            json!(0),
+            json!(-1),
+            json!(MAX_RETAINED_PROVIDER_RECEIPT_BYTES + 1),
+            json!(i64::MAX),
+            json!(u64::MAX),
+        ] {
+            assert_invalid_binding(json!({"sha256": "a".repeat(64), "bytes": bytes}));
+        }
     }
 }

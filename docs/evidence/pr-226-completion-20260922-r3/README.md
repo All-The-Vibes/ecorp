@@ -41,3 +41,7 @@ chronology. The original `validation.html`, `validation.png`, `validation.json`
 and all other logs remain unchanged. Their nine-gate receipt describes its
 historical tested tree, not this new scanner/evidence correction. Fresh correction
 checks and combined validation/review belong to the parent before publication.
+
+## Current-main validation evidence
+
+See [current-validation/README.md](current-validation/README.md) for the separately source-bound R8 nine-gate results, retained R7 failures/rerun, author-delegate receipt and static browser capture. Historical receipts above remain unchanged.
