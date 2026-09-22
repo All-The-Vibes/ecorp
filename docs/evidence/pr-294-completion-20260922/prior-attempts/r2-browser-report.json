@@ -1,0 +1,1741 @@
+{
+  "schema_version": 1,
+  "status": "failed",
+  "started_at": "2026-09-22T22:03:34.358Z",
+  "server": "http://127.0.0.1:59014",
+  "web": "http://127.0.0.1:26294",
+  "scope": "Real browser/server/runner with deterministic fake-process; development identity, no real-provider inference or manual review decisions",
+  "screenshot_fixture": "The existing fake-agent screenshot signature fixture exercises the screenshot verifier; browser screenshots below are separate real rendered captures.",
+  "source_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+  "errors": [],
+  "blocked_requests": [],
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1050,
+      "selected": [
+        {
+          "index": 0,
+          "type": "artifact",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 1,
+          "type": "file",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 2,
+          "type": "command",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 3,
+          "type": "test",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 4,
+          "type": "json_schema",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 5,
+          "type": "screenshot",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        }
+      ],
+      "manual_gates": "draft-only; restored to none",
+      "command_summary": "Command · [\"node\",\"-e\",\"require('node:assert/strict').deepEqual(process.argv.slice(1), [\\\"one two\\\",\\\"two  spaces\\\",\\\"quoted \\\\\\\"value\\\\\\\"\\\",\\\"back\\\\\\\\slash\\\"])\",\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"] · 10s",
+      "byte_summary": "Provider artifact · at least 1 byte",
+      "layout": {
+        "viewport": 1440,
+        "content": 1440
+      },
+      "screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\evidence\\browser-2026-09-22T22-03-34.356Z-e9a08727\\desktop-editor.png",
+        "sha256": "53d342d33b092ee9433678d066a9d65135a9b6198684e7b46b68255f5bbaa396"
+      }
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "selected": [
+        {
+          "index": 0,
+          "type": "artifact",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 1,
+          "type": "file",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 2,
+          "type": "command",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 3,
+          "type": "test",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 4,
+          "type": "json_schema",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 5,
+          "type": "screenshot",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        }
+      ],
+      "manual_gates": "draft-only; restored to none",
+      "command_summary": "Command · [\"node\",\"-e\",\"require('node:assert/strict').deepEqual(process.argv.slice(1), [\\\"one two\\\",\\\"two  spaces\\\",\\\"quoted \\\\\\\"value\\\\\\\"\\\",\\\"back\\\\\\\\slash\\\"])\",\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"] · 10s",
+      "byte_summary": "Provider artifact · at least 1 byte",
+      "layout": {
+        "viewport": 390,
+        "content": 390
+      },
+      "screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\evidence\\browser-2026-09-22T22-03-34.356Z-e9a08727\\mobile-editor.png",
+        "sha256": "07ddbe9a1ad8e0a463290746331848219162827d637accb53cace8e9d8a43bbf"
+      }
+    }
+  ],
+  "missions": [
+    {
+      "title": "[verification-matrix] Policy browser pass 0b45d0d7",
+      "mission_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+      "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+      "authored": {
+        "title": "[verification-matrix] Policy browser pass 0b45d0d7",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/pr265-run-activity",
+          "base_ref": "HEAD",
+          "base_commit": "f14361e940ae387c137454ca07b0376b42b20330"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "review_only_report",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "verify.txt",
+              "min_bytes": 9
+            },
+            {
+              "type": "command",
+              "program": "node",
+              "args": [
+                "-e",
+                "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                "one two",
+                "two  spaces",
+                "quoted \"value\"",
+                "back\\slash"
+              ],
+              "timeout_ms": 10000
+            },
+            {
+              "type": "test",
+              "program": "node",
+              "args": [
+                "--test",
+                "fixture.test.mjs"
+              ],
+              "timeout_ms": 10000
+            },
+            {
+              "type": "json_schema",
+              "path": "schema.json",
+              "required_keys": [
+                "status",
+                "count"
+              ]
+            },
+            {
+              "type": "screenshot",
+              "path": "screenshot.png",
+              "min_bytes": 16
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "expected_outcome": "passed",
+      "saved_screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\evidence\\browser-2026-09-22T22-03-34.356Z-e9a08727\\passed-saved.png",
+        "sha256": "8f8d54f70ff9e3fe44e9ffeb4e7e59952b9ea422310b063d2e50883c5f9d402f"
+      },
+      "launch": {
+        "run_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+        "runner_id": "pr265-activity-qa",
+        "run_ids": [
+          "e9186ab8-6360-4a45-89b4-68d3750043a5"
+        ],
+        "runner_ids": [
+          "pr265-activity-qa"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[verification-matrix] Policy browser pass 0b45d0d7",
+          "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-22T22:03:46.219460Z",
+          "updated_at": "2026-09-22T22:03:53.264455Z"
+        },
+        "tasks": [
+          {
+            "id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+            "mission_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser pass 0b45d0d7",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser pass 0b45d0d7",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/pr265-run-activity",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "review_only_report",
+                "commit_after_verification": false,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 1
+                },
+                {
+                  "type": "file",
+                  "path": "verify.txt",
+                  "min_bytes": 9
+                },
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "-e",
+                    "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                    "one two",
+                    "two  spaces",
+                    "quoted \"value\"",
+                    "back\\slash"
+                  ],
+                  "timeout_ms": 10000
+                },
+                {
+                  "type": "test",
+                  "program": "node",
+                  "args": [
+                    "--test",
+                    "fixture.test.mjs"
+                  ],
+                  "timeout_ms": 10000
+                },
+                {
+                  "type": "json_schema",
+                  "path": "schema.json",
+                  "required_keys": [
+                    "status",
+                    "count"
+                  ]
+                },
+                {
+                  "type": "screenshot",
+                  "path": "screenshot.png",
+                  "min_bytes": 16
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "6be9909c-f48e-4733-98c5-394a72ef6806",
+            "created_at": "2026-09-22T22:03:46.219460Z",
+            "updated_at": "2026-09-22T22:03:53.264455Z"
+          }
+        ],
+        "run": {
+          "id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+          "agent_id": "6be9909c-f48e-4733-98c5-394a72ef6806",
+          "runner_id": "pr265-activity-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/pr265-run-activity",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+          "workspace_path": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\runner\\worktrees\\1b54903cb48943c6967c43d2e98d77e4\\e9186ab863604a4589b468d3750043a5",
+          "workspace_branch": "crony/task-1b54903cb48943c6967c43d2e98d77e4/run-e9186ab863604a4589b468d3750043a5",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=4; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+          "workspace_fingerprint": "cb4d14783b62d6e5453c58f51c6c2268c2d6a561dfc572012ca56100b91d749e",
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 6 verifier checks passed",
+          "verification_sha256": "9b7d2d68851f05cd4a0933e15ccffa647dea462c5edfc98d8e40bea98a21d929",
+          "deliverable_sha256": "5e0794272f77898b75cd879e94ba0ae27f3437b18c96fd85c47a14568597b23a",
+          "status": "completed",
+          "summary": "Created and verified result.md through the runner-owned child process.",
+          "artifact_id": "45cad145-6281-436e-a7f1-24b6cd68a371",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/45cad145-6281-436e-a7f1-24b6cd68a371",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "2e360344f47d564b7ea60d96de32b7c4595b9e367fe11edb2dc6d76a874b96f0",
+          "artifact_sha256": "4aa0405e5d5869fb22ccb276122aa18f0b37e97bce6c3ccb64a316d32162113f",
+          "created_at": "2026-09-22T22:03:46.691848Z",
+          "updated_at": "2026-09-22T22:03:53.645692Z"
+        },
+        "evidence": [
+          {
+            "id": "84614301-a9ae-48c3-88ef-006b79d2f7d9",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+            "run_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "passed",
+            "summary": "durable artifact 45cad145-6281-436e-a7f1-24b6cd68a371 has 1562 verified bytes",
+            "payload": {
+              "artifact_id": "45cad145-6281-436e-a7f1-24b6cd68a371",
+              "bytes": 1562,
+              "media_type": "text/markdown",
+              "producer_agent_id": "6be9909c-f48e-4733-98c5-394a72ef6806",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "2e360344f47d564b7ea60d96de32b7c4595b9e367fe11edb2dc6d76a874b96f0",
+              "retention_until": "2026-10-22T22:03:49.956205Z",
+              "sha256": "4aa0405e5d5869fb22ccb276122aa18f0b37e97bce6c3ccb64a316d32162113f",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/45cad145-6281-436e-a7f1-24b6cd68a371",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:03:52.004712Z"
+          },
+          {
+            "id": "eb2ade25-bf75-404c-a085-28ac038c5c41",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+            "run_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "check_index": 1,
+            "kind": "file",
+            "status": "passed",
+            "summary": "verify.txt exists with 9 bytes",
+            "payload": {
+              "bytes": 9,
+              "path": "verify.txt",
+              "sha256": "8f5a1374b3eb9532a67c0de915a0810ea089fc304c33a44642a7f4878984803e"
+            },
+            "created_at": "2026-09-22T22:03:52.028687Z"
+          },
+          {
+            "id": "f5722abb-2e0c-4c03-b05c-089bd8c6c202",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+            "run_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "check_index": 2,
+            "kind": "command",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "-e",
+                "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                "one two",
+                "two  spaces",
+                "quoted \"value\"",
+                "back\\slash"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "stderr": "",
+              "stdout": ""
+            },
+            "created_at": "2026-09-22T22:03:52.049514Z"
+          },
+          {
+            "id": "5eb4741d-b204-4798-9497-23b65d0e11cf",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+            "run_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "check_index": 3,
+            "kind": "test",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "--test",
+                "fixture.test.mjs"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "stderr": "",
+              "stdout": "✔ deterministic verifier inputs (6.942ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 140.7313\n"
+            },
+            "created_at": "2026-09-22T22:03:52.075306Z"
+          },
+          {
+            "id": "8c403adc-abf0-4d2d-92a4-f3150e21f597",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+            "run_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "check_index": 4,
+            "kind": "json_schema",
+            "status": "passed",
+            "summary": "schema.json satisfies 2 required keys",
+            "payload": {
+              "path": "schema.json",
+              "required_keys": [
+                "status",
+                "count"
+              ]
+            },
+            "created_at": "2026-09-22T22:03:52.095150Z"
+          },
+          {
+            "id": "873f1674-faba-40a1-bdd1-b846ae56204c",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+            "run_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "check_index": 5,
+            "kind": "screenshot",
+            "status": "passed",
+            "summary": "screenshot.png is a valid png screenshot",
+            "payload": {
+              "bytes": 24,
+              "format": "png",
+              "path": "screenshot.png"
+            },
+            "created_at": "2026-09-22T22:03:52.113746Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 10,
+            "id": "3934d49a-ae0c-4b5a-8099-63ae4ee23ce0",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "run:e9186ab8-6360-4a45-89b4-68d3750043a5:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "6be9909c-f48e-4733-98c5-394a72ef6806",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "pr265-activity-qa",
+              "status": "starting",
+              "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4"
+            },
+            "created_at": "2026-09-22T22:03:46.691848Z"
+          },
+          {
+            "seq": 11,
+            "id": "1e09c3fc-29a6-4871-919e-cd40ecdb98fd",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:1e09c3fc-29a6-4871-919e-cd40ecdb98fd",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "1b54903c-b489-43c6-967c-43d2e98d77e4",
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\runner\\worktrees\\1b54903cb48943c6967c43d2e98d77e4\\e9186ab863604a4589b468d3750043a5",
+              "workspace_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-1b54903cb48943c6967c43d2e98d77e4/run-e9186ab863604a4589b468d3750043a5"
+            },
+            "created_at": "2026-09-22T22:03:47.316607Z"
+          },
+          {
+            "seq": 12,
+            "id": "e5cb9dab-53b9-45d9-b156-6b198719c09d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:e5cb9dab-53b9-45d9-b156-6b198719c09d",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:03:47.411462Z"
+          },
+          {
+            "seq": 13,
+            "id": "314db864-ec89-4422-8ffc-6f243e43d41d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:314db864-ec89-4422-8ffc-6f243e43d41d",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [verification-matrix] Policy browser pass 0b45d0d7\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/pr265-run-activity\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: f14361e940ae387c137454ca07b0376b42b20330\nOBJECTIVE: Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser pass 0b45d0d7\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 1000000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: review_only_report\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-22T22:03:48.112164Z"
+          },
+          {
+            "seq": 14,
+            "id": "c8557498-9710-4f1e-8b10-057aed0c14b1",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:c8557498-9710-4f1e-8b10-057aed0c14b1",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:03:48.115776Z"
+          },
+          {
+            "seq": 15,
+            "id": "a3b623e8-0a06-4ca6-8de4-cb8c7e81b566",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:a3b623e8-0a06-4ca6-8de4-cb8c7e81b566",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:03:49.021659Z"
+          },
+          {
+            "seq": 16,
+            "id": "47da2828-661a-48ee-b650-440d47a0f3ec",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "artifact:45cad145-6281-436e-a7f1-24b6cd68a371:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "45cad145-6281-436e-a7f1-24b6cd68a371",
+              "artifact_role": "provider_evidence",
+              "bytes": 1562,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "6be9909c-f48e-4733-98c5-394a72ef6806",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "2e360344f47d564b7ea60d96de32b7c4595b9e367fe11edb2dc6d76a874b96f0",
+              "retention_until": "2026-10-22T22:03:49.956205Z",
+              "sha256": "4aa0405e5d5869fb22ccb276122aa18f0b37e97bce6c3ccb64a316d32162113f",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/45cad145-6281-436e-a7f1-24b6cd68a371",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:03:49.989801Z"
+          },
+          {
+            "seq": 17,
+            "id": "bc454802-2698-49e0-8184-d2e7d404f099",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:bc454802-2698-49e0-8184-d2e7d404f099",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-22T22:03:50.458855Z"
+          },
+          {
+            "seq": 18,
+            "id": "2120585a-9dc3-441a-b023-c20cef9cb3de",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:2120585a-9dc3-441a-b023-c20cef9cb3de",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 6
+            },
+            "created_at": "2026-09-22T22:03:50.466140Z"
+          },
+          {
+            "seq": 19,
+            "id": "082eea98-5eae-43e0-b53f-8acfee489bb6",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:082eea98-5eae-43e0-b53f-8acfee489bb6",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "84614301-a9ae-48c3-88ef-006b79d2f7d9",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "45cad145-6281-436e-a7f1-24b6cd68a371",
+                "bytes": 1562,
+                "media_type": "text/markdown",
+                "producer_agent_id": "6be9909c-f48e-4733-98c5-394a72ef6806",
+                "producer_runner_id": "pr265-activity-qa",
+                "provenance_signature": "2e360344f47d564b7ea60d96de32b7c4595b9e367fe11edb2dc6d76a874b96f0",
+                "retention_until": "2026-10-22T22:03:49.956205Z",
+                "sha256": "4aa0405e5d5869fb22ccb276122aa18f0b37e97bce6c3ccb64a316d32162113f",
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/45cad145-6281-436e-a7f1-24b6cd68a371",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "passed",
+              "summary": "durable artifact 45cad145-6281-436e-a7f1-24b6cd68a371 has 1562 verified bytes"
+            },
+            "created_at": "2026-09-22T22:03:52.004712Z"
+          },
+          {
+            "seq": 20,
+            "id": "7fc7e283-2e22-4324-a219-637439b3c3f2",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:7fc7e283-2e22-4324-a219-637439b3c3f2",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 1,
+              "evidence_id": "eb2ade25-bf75-404c-a085-28ac038c5c41",
+              "kind": "file",
+              "payload": {
+                "bytes": 9,
+                "path": "verify.txt",
+                "sha256": "8f5a1374b3eb9532a67c0de915a0810ea089fc304c33a44642a7f4878984803e"
+              },
+              "status": "passed",
+              "summary": "verify.txt exists with 9 bytes"
+            },
+            "created_at": "2026-09-22T22:03:52.028687Z"
+          },
+          {
+            "seq": 21,
+            "id": "7edcd8dd-33a7-45c9-bfef-51b67e165cd3",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:7edcd8dd-33a7-45c9-bfef-51b67e165cd3",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 2,
+              "evidence_id": "f5722abb-2e0c-4c03-b05c-089bd8c6c202",
+              "kind": "command",
+              "payload": {
+                "args": [
+                  "-e",
+                  "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                  "one two",
+                  "two  spaces",
+                  "quoted \"value\"",
+                  "back\\slash"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-22T22:03:52.049514Z"
+          },
+          {
+            "seq": 22,
+            "id": "3434aef1-913c-4b1a-b501-555d213ceb83",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:3434aef1-913c-4b1a-b501-555d213ceb83",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 3,
+              "evidence_id": "5eb4741d-b204-4798-9497-23b65d0e11cf",
+              "kind": "test",
+              "payload": {
+                "args": [
+                  "--test",
+                  "fixture.test.mjs"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "",
+                "stdout": "✔ deterministic verifier inputs (6.942ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 140.7313\n"
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-22T22:03:52.075306Z"
+          },
+          {
+            "seq": 23,
+            "id": "41a09ed6-091e-4624-b3d9-ac43c1b46372",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:41a09ed6-091e-4624-b3d9-ac43c1b46372",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 4,
+              "evidence_id": "8c403adc-abf0-4d2d-92a4-f3150e21f597",
+              "kind": "json_schema",
+              "payload": {
+                "path": "schema.json",
+                "required_keys": [
+                  "status",
+                  "count"
+                ]
+              },
+              "status": "passed",
+              "summary": "schema.json satisfies 2 required keys"
+            },
+            "created_at": "2026-09-22T22:03:52.095150Z"
+          },
+          {
+            "seq": 24,
+            "id": "e35c9eb7-f6c7-40de-b2eb-2cd6cf92868f",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:e35c9eb7-f6c7-40de-b2eb-2cd6cf92868f",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 5,
+              "evidence_id": "873f1674-faba-40a1-bdd1-b846ae56204c",
+              "kind": "screenshot",
+              "payload": {
+                "bytes": 24,
+                "format": "png",
+                "path": "screenshot.png"
+              },
+              "status": "passed",
+              "summary": "screenshot.png is a valid png screenshot"
+            },
+            "created_at": "2026-09-22T22:03:52.113746Z"
+          },
+          {
+            "seq": 25,
+            "id": "46924b46-b6bd-4fee-a48d-b0f3b32376a4",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "artifact:c0958571-d0d3-455c-a3d2-e6ff5c3872e9:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "c0958571-d0d3-455c-a3d2-e6ff5c3872e9",
+              "artifact_role": "source_deliverable",
+              "bytes": 1282,
+              "file_name": "ecorp-review-report.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+                "branch": "crony/task-1b54903cb48943c6967c43d2e98d77e4/run-e9186ab863604a4589b468d3750043a5",
+                "form": "review_only_report",
+                "git_bundle_sha256": null,
+                "head_commit": null,
+                "integration_state": "not_applicable",
+                "publication_ready": false,
+                "verification_sha256": "9b7d2d68851f05cd4a0933e15ccffa647dea462c5edfc98d8e40bea98a21d929"
+              },
+              "producer_agent_id": "6be9909c-f48e-4733-98c5-394a72ef6806",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "cf0e75b2c2136d46485d3f3c7240cf151bcca84b23031f970815c51da1a0a5b5",
+              "retention_until": "2026-10-22T22:03:53.173468Z",
+              "sha256": "5e0794272f77898b75cd879e94ba0ae27f3437b18c96fd85c47a14568597b23a",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/c0958571-d0d3-455c-a3d2-e6ff5c3872e9",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:03:53.213001Z"
+          },
+          {
+            "seq": 26,
+            "id": "b6b6c1d6-5b3e-4bf0-8a5a-aa4956c6d0d1",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:b6b6c1d6-5b3e-4bf0-8a5a-aa4956c6d0d1",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "5e0794272f77898b75cd879e94ba0ae27f3437b18c96fd85c47a14568597b23a",
+              "summary": "all 6 verifier checks passed",
+              "verification_sha256": "9b7d2d68851f05cd4a0933e15ccffa647dea462c5edfc98d8e40bea98a21d929"
+            },
+            "created_at": "2026-09-22T22:03:53.232319Z"
+          },
+          {
+            "seq": 27,
+            "id": "098d6446-6c2a-46b6-900f-8a31ee0f25d7",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:098d6446-6c2a-46b6-900f-8a31ee0f25d7",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created and verified result.md through the runner-owned child process."
+            },
+            "created_at": "2026-09-22T22:03:53.264455Z"
+          },
+          {
+            "seq": 28,
+            "id": "d7f095b8-1543-405a-9c37-42ccc4fbedd4",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "e9186ab8-6360-4a45-89b4-68d3750043a5",
+            "aggregate_version": 1,
+            "correlation_id": "82790499-b2d2-4df4-8f70-c6798bc94532",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:d7f095b8-1543-405a-9c37-42ccc4fbedd4",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=4; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+              "dirty": true,
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\runner\\worktrees\\1b54903cb48943c6967c43d2e98d77e4\\e9186ab863604a4589b468d3750043a5",
+              "workspace_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-1b54903cb48943c6967c43d2e98d77e4/run-e9186ab863604a4589b468d3750043a5",
+              "workspace_fingerprint": "cb4d14783b62d6e5453c58f51c6c2268c2d6a561dfc572012ca56100b91d749e"
+            },
+            "created_at": "2026-09-22T22:03:53.645692Z"
+          }
+        ]
+      },
+      "final_screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\evidence\\browser-2026-09-22T22-03-34.356Z-e9a08727\\passed-final.png",
+        "sha256": "75e7b4a9f87269058eed01d50c12464daa7a62d3ec4ee87dbdb4599b33e3d3b2"
+      }
+    },
+    {
+      "title": "[verification-matrix] Policy browser floor failure 7f3e3d0a",
+      "mission_id": "50a48496-29d1-4f90-969b-df594b08196a",
+      "task_id": "13d31f7c-3369-4812-84c8-cacceca25d08",
+      "authored": {
+        "title": "[verification-matrix] Policy browser floor failure 7f3e3d0a",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/pr265-run-activity",
+          "base_ref": "HEAD",
+          "base_commit": "f14361e940ae387c137454ca07b0376b42b20330"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "review_only_report",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 10000000
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "expected_outcome": "failed",
+      "saved_screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\evidence\\browser-2026-09-22T22-03-34.356Z-e9a08727\\failed-saved.png",
+        "sha256": "1d12bf5b665c07cafabb79671bc60c43901931b39ea06e0cc169c8d22d95375a"
+      },
+      "launch": {
+        "run_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+        "runner_id": "pr265-activity-qa",
+        "run_ids": [
+          "467aedc5-4aa3-4015-a971-8e096d9f0d42"
+        ],
+        "runner_ids": [
+          "pr265-activity-qa"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "50a48496-29d1-4f90-969b-df594b08196a",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[verification-matrix] Policy browser floor failure 7f3e3d0a",
+          "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "failed",
+          "created_at": "2026-09-22T22:03:54.917901Z",
+          "updated_at": "2026-09-22T22:03:59.039718Z"
+        },
+        "tasks": [
+          {
+            "id": "13d31f7c-3369-4812-84c8-cacceca25d08",
+            "mission_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser floor failure 7f3e3d0a",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser floor failure 7f3e3d0a",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/pr265-run-activity",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "review_only_report",
+                "commit_after_verification": false,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 10000000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "failed",
+            "status": "verification_failed",
+            "assigned_agent_id": "639cc932-2b1c-47e5-8727-bb9cf8e6fac8",
+            "created_at": "2026-09-22T22:03:54.917901Z",
+            "updated_at": "2026-09-22T22:03:59.039718Z"
+          }
+        ],
+        "run": {
+          "id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "13d31f7c-3369-4812-84c8-cacceca25d08",
+          "agent_id": "639cc932-2b1c-47e5-8727-bb9cf8e6fac8",
+          "runner_id": "pr265-activity-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/pr265-run-activity",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+          "workspace_path": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\runner\\worktrees\\13d31f7c3369481284c8cacceca25d08\\467aedc54aa34015a9718e096d9f0d42",
+          "workspace_branch": "crony/task-13d31f7c3369481284c8cacceca25d08/run-467aedc54aa34015a9718e096d9f0d42",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+          "workspace_fingerprint": "1aa8689993140ffb8a0c7dade42639bee8d7b8da9f2d2d5d36cf36046665c327",
+          "execution_mode": "provider",
+          "verification_status": "failed",
+          "verification_summary": "1 of 1 verifier checks failed",
+          "verification_sha256": null,
+          "deliverable_sha256": null,
+          "status": "failed",
+          "summary": "1 of 1 verifier checks failed",
+          "artifact_id": "914ff7dc-f0bc-4485-a0dd-f00f4346a380",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/914ff7dc-f0bc-4485-a0dd-f00f4346a380",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "0a5728797788719b44b40cca51055ebad0cda4f06b1a84899053d8da86b20d0a",
+          "artifact_sha256": "ea1ea186f8e1c2208c7035481e550c1f331e752aa5e6edd4f8f07377296c5794",
+          "created_at": "2026-09-22T22:03:55.242768Z",
+          "updated_at": "2026-09-22T22:03:59.047764Z"
+        },
+        "evidence": [
+          {
+            "id": "199f8265-59fc-4ea3-a6a5-b8c52c2268b4",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "13d31f7c-3369-4812-84c8-cacceca25d08",
+            "run_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "failed",
+            "summary": "durable artifact 914ff7dc-f0bc-4485-a0dd-f00f4346a380 has 1580 verified bytes",
+            "payload": {
+              "artifact_id": "914ff7dc-f0bc-4485-a0dd-f00f4346a380",
+              "bytes": 1580,
+              "media_type": "text/markdown",
+              "producer_agent_id": "639cc932-2b1c-47e5-8727-bb9cf8e6fac8",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "0a5728797788719b44b40cca51055ebad0cda4f06b1a84899053d8da86b20d0a",
+              "retention_until": "2026-10-22T22:03:58.503014Z",
+              "sha256": "ea1ea186f8e1c2208c7035481e550c1f331e752aa5e6edd4f8f07377296c5794",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/914ff7dc-f0bc-4485-a0dd-f00f4346a380",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:03:59.020052Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 34,
+            "id": "00cc5c29-16a0-4086-8548-69672d1a1e17",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "run:467aedc5-4aa3-4015-a971-8e096d9f0d42:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "639cc932-2b1c-47e5-8727-bb9cf8e6fac8",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "pr265-activity-qa",
+              "status": "starting",
+              "task_id": "13d31f7c-3369-4812-84c8-cacceca25d08"
+            },
+            "created_at": "2026-09-22T22:03:55.242768Z"
+          },
+          {
+            "seq": 35,
+            "id": "9efe7871-2179-4225-807b-768c9986b0cd",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:9efe7871-2179-4225-807b-768c9986b0cd",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "50a48496-29d1-4f90-969b-df594b08196a",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "13d31f7c-3369-4812-84c8-cacceca25d08",
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\runner\\worktrees\\13d31f7c3369481284c8cacceca25d08\\467aedc54aa34015a9718e096d9f0d42",
+              "workspace_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-13d31f7c3369481284c8cacceca25d08/run-467aedc54aa34015a9718e096d9f0d42"
+            },
+            "created_at": "2026-09-22T22:03:55.871313Z"
+          },
+          {
+            "seq": 36,
+            "id": "279720c0-fb93-4886-ba6a-82b6d8e57853",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:279720c0-fb93-4886-ba6a-82b6d8e57853",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:03:55.965031Z"
+          },
+          {
+            "seq": 37,
+            "id": "36b920d2-58dc-4d2d-b549-b66e691a3780",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:36b920d2-58dc-4d2d-b549-b66e691a3780",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [verification-matrix] Policy browser floor failure 7f3e3d0a\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/pr265-run-activity\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: f14361e940ae387c137454ca07b0376b42b20330\nOBJECTIVE: Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser floor failure 7f3e3d0a\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 1000000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: review_only_report\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-22T22:03:56.679748Z"
+          },
+          {
+            "seq": 38,
+            "id": "1199fe3d-a988-4961-9e18-2335c798bfa9",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:1199fe3d-a988-4961-9e18-2335c798bfa9",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:03:56.681807Z"
+          },
+          {
+            "seq": 39,
+            "id": "45784a61-dc29-484c-a564-a2e60b05ecbd",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:45784a61-dc29-484c-a564-a2e60b05ecbd",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T22:03:57.582013Z"
+          },
+          {
+            "seq": 40,
+            "id": "581e1db3-73f0-4c97-8155-dce7d086f791",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "artifact:914ff7dc-f0bc-4485-a0dd-f00f4346a380:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "914ff7dc-f0bc-4485-a0dd-f00f4346a380",
+              "artifact_role": "provider_evidence",
+              "bytes": 1580,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "639cc932-2b1c-47e5-8727-bb9cf8e6fac8",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "0a5728797788719b44b40cca51055ebad0cda4f06b1a84899053d8da86b20d0a",
+              "retention_until": "2026-10-22T22:03:58.503014Z",
+              "sha256": "ea1ea186f8e1c2208c7035481e550c1f331e752aa5e6edd4f8f07377296c5794",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/914ff7dc-f0bc-4485-a0dd-f00f4346a380",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T22:03:58.514727Z"
+          },
+          {
+            "seq": 41,
+            "id": "3b0fa2e0-ec4d-4134-9545-124d54e2d838",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:3b0fa2e0-ec4d-4134-9545-124d54e2d838",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-22T22:03:59.012797Z"
+          },
+          {
+            "seq": 42,
+            "id": "5d2d8081-ccb4-4941-8559-4151eaf73477",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:5d2d8081-ccb4-4941-8559-4151eaf73477",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 1
+            },
+            "created_at": "2026-09-22T22:03:59.015767Z"
+          },
+          {
+            "seq": 43,
+            "id": "d23579de-8886-4953-8116-f357f54ade49",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:d23579de-8886-4953-8116-f357f54ade49",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "199f8265-59fc-4ea3-a6a5-b8c52c2268b4",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "914ff7dc-f0bc-4485-a0dd-f00f4346a380",
+                "bytes": 1580,
+                "media_type": "text/markdown",
+                "producer_agent_id": "639cc932-2b1c-47e5-8727-bb9cf8e6fac8",
+                "producer_runner_id": "pr265-activity-qa",
+                "provenance_signature": "0a5728797788719b44b40cca51055ebad0cda4f06b1a84899053d8da86b20d0a",
+                "retention_until": "2026-10-22T22:03:58.503014Z",
+                "sha256": "ea1ea186f8e1c2208c7035481e550c1f331e752aa5e6edd4f8f07377296c5794",
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/914ff7dc-f0bc-4485-a0dd-f00f4346a380",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "failed",
+              "summary": "durable artifact 914ff7dc-f0bc-4485-a0dd-f00f4346a380 has 1580 verified bytes"
+            },
+            "created_at": "2026-09-22T22:03:59.020052Z"
+          },
+          {
+            "seq": 44,
+            "id": "5bf2fb5c-df6b-4100-89b5-089c84c991fb",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_failed",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:5bf2fb5c-df6b-4100-89b5-089c84c991fb",
+            "visibility": "corp",
+            "payload": {
+              "completion_summary": "Created and verified result.md through the runner-owned child process.",
+              "error": "1 of 1 verifier checks failed"
+            },
+            "created_at": "2026-09-22T22:03:59.039718Z"
+          },
+          {
+            "seq": 45,
+            "id": "eb0eeb8e-79a3-48f0-a993-683e396e262a",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "467aedc5-4aa3-4015-a971-8e096d9f0d42",
+            "aggregate_version": 1,
+            "correlation_id": "50a48496-29d1-4f90-969b-df594b08196a",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:eb0eeb8e-79a3-48f0-a993-683e396e262a",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+              "dirty": null,
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\runner\\worktrees\\13d31f7c3369481284c8cacceca25d08\\467aedc54aa34015a9718e096d9f0d42",
+              "workspace_base_commit": "f14361e940ae387c137454ca07b0376b42b20330",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-13d31f7c3369481284c8cacceca25d08/run-467aedc54aa34015a9718e096d9f0d42",
+              "workspace_fingerprint": "1aa8689993140ffb8a0c7dade42639bee8d7b8da9f2d2d5d36cf36046665c327",
+              "workspace_quarantined": false
+            },
+            "created_at": "2026-09-22T22:03:59.047764Z"
+          }
+        ]
+      },
+      "final_screenshot": {
+        "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\evidence\\browser-2026-09-22T22-03-34.356Z-e9a08727\\failed-final.png",
+        "sha256": "04f286d349f86bd484a1e15b2f20c3aae819448dd965ba7cd7b7576e78c20470"
+      }
+    }
+  ],
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "development_actor_id": "00000000-0000-4000-8000-000000000011",
+  "stage": "explicit cache policy persisted through API and launched from browser",
+  "explicit_cache_policy": {
+    "mission_id": "0e792c3e-adc4-4345-953f-f868925c3d09",
+    "authored": {
+      "title": "[verification-matrix] Explicit node cache policy 67323191",
+      "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+      "requested_by": "00000000-0000-4000-8000-000000000011",
+      "preferred_adapter": "fake-process",
+      "preferred_model": null,
+      "reasoning_effort": null,
+      "strategy": "single",
+      "source": {
+        "repository": "ecorp-fixture/pr265-run-activity",
+        "base_ref": "HEAD",
+        "base_commit": "f14361e940ae387c137454ca07b0376b42b20330"
+      },
+      "budget_tokens": 1000000,
+      "deliverable": {
+        "form": "review_only_report",
+        "commit_after_verification": false,
+        "paths": []
+      },
+      "contract": null,
+      "verification_policy": {
+        "checks": [
+          {
+            "type": "command",
+            "program": "node",
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "timeout_ms": 10000,
+            "cache_suppression": "node_compile_cache"
+          },
+          {
+            "type": "test",
+            "program": "node",
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "timeout_ms": 10000,
+            "cache_suppression": "node_compile_cache"
+          }
+        ],
+        "manual_gate": null
+      }
+    },
+    "policy": {
+      "checks": [
+        {
+          "type": "command",
+          "program": "node",
+          "args": [
+            "-e",
+            "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+          ],
+          "timeout_ms": 10000,
+          "cache_suppression": "node_compile_cache"
+        },
+        {
+          "type": "test",
+          "program": "node",
+          "args": [
+            "-e",
+            "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+          ],
+          "timeout_ms": 10000,
+          "cache_suppression": "node_compile_cache"
+        }
+      ],
+      "manual_gate": null
+    },
+    "setup": "Supported HTTP create API; actual browser review and launch; no response mocks or database seeding",
+    "viewports": []
+  },
+  "failure": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-mission-id=\"0e792c3e-adc4-4345-953f-f868925c3d09\"]').getByTestId('verification-policy-preview') to be visible\u001b[22m\n\u001b[2m    62 × locator resolved to hidden <div class=\"verification-policy-preview\" data-testid=\"verification-policy-preview\">…</div>\u001b[22m\n",
+  "failure_screenshot": {
+    "file": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r2\\evidence\\browser-2026-09-22T22-03-34.356Z-e9a08727\\failure.png",
+    "sha256": "81340ed39a11bf775cf7d2869a27fc149c49e370f1aea06fec64c7a9f3c221ad"
+  },
+  "finished_at": "2026-09-22T22:04:30.431Z"
+}
