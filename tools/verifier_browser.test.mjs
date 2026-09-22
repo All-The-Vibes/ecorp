@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { chmod, link, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { chmod, link, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { hostname, tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -30,7 +30,7 @@ async function fixture(t) {
 test('explicit path with spaces is literal, pinned, host-bound and evidenced', async (t) => {
   const f = await fixture(t)
   const result = await resolveVerifierBrowser(f)
-  assert.equal(result.launchOptions.executablePath, f.executable)
+  assert.equal(result.launchOptions.executablePath, await realpath(f.executable))
   assert.deepEqual(Object.keys(result.launchOptions).sort(), ['executablePath', 'headless', 'timeout'])
   assert.equal(result.evidence.host, hostname())
   assert.equal(result.evidence.sha256, f.policy.sha256)
@@ -47,7 +47,7 @@ test('managed Chromium uses only the supplied native path and authorized hash', 
   await writeFile(managed, await readFile(f.executable))
   await chmod(managed, 0o700)
   const selection = await resolveVerifierBrowser({ ...f, chromiumExecutable: managed })
-  assert.equal(selection.launchOptions.executablePath, managed)
+  assert.equal(selection.launchOptions.executablePath, await realpath(managed))
   assert.equal(selection.evidence.selection, 'playwright-managed')
   await assert.rejects(resolveVerifierBrowser(f), /Chromium is unavailable/u)
 })
@@ -136,14 +136,14 @@ test('declared Windows, Linux and macOS browser paths validate independently', (
 
 test('CLI is quiet on import, outputs exact selection, and fails for invalid input', async (t) => {
   const f = await fixture(t)
-  const success = spawnSync(process.execPath, [helper, '--policy', f.policyPath], { cwd: f.workspace, encoding: 'utf8', timeout: 5000 })
+  const success = spawnSync(process.execPath, [helper, '--policy', f.policyPath], { cwd: f.workspace, encoding: 'utf8', timeout: 5000, windowsHide: true })
   assert.equal(success.status, 0, success.stderr)
   assert.equal(JSON.parse(success.stdout).evidence.sha256, f.policy.sha256)
-  const imported = spawnSync(process.execPath, ['--input-type=module', '-e', `await import(${JSON.stringify(new URL('./verifier_browser.mjs', import.meta.url).href)})`], { encoding: 'utf8', timeout: 5000 })
+  const imported = spawnSync(process.execPath, ['--input-type=module', '-e', `await import(${JSON.stringify(new URL('./verifier_browser.mjs', import.meta.url).href)})`], { encoding: 'utf8', timeout: 5000, windowsHide: true })
   assert.equal(imported.status, 0, imported.stderr)
   assert.equal(imported.stdout, '')
   for (const args of [[], ['--policy'], ['--policy', f.policyPath, '--unknown', 'value']]) {
-    const failed = spawnSync(process.execPath, [helper, ...args], { cwd: f.workspace, encoding: 'utf8', timeout: 5000 })
+    const failed = spawnSync(process.execPath, [helper, ...args], { cwd: f.workspace, encoding: 'utf8', timeout: 5000, windowsHide: true })
     assert.equal(failed.status, 1)
     assert.equal(failed.stdout, '')
     assert.match(failed.stderr, /usage:/u)
@@ -156,7 +156,7 @@ test('CLI preserves an unexpected stdout failure rather than treating it as bad 
 process.stdout.write = () => { throw new Error('ISSUE136_STDOUT_EIO') };
 await import(${JSON.stringify(new URL('./verifier_browser.mjs', import.meta.url).href)});`
   const failed = spawnSync(process.execPath, ['--input-type=module', '-e', script], {
-    cwd: f.workspace, encoding: 'utf8', timeout: 5000,
+    cwd: f.workspace, encoding: 'utf8', timeout: 5000, windowsHide: true,
   })
   assert.equal(failed.status, 1)
   assert.match(failed.stderr, /ISSUE136_STDOUT_EIO/u)

@@ -13,7 +13,7 @@ assert.ok(workspaceInput && path.isAbsolute(workspaceInput), 'Explicit owned wor
 assert.ok(outputInput && path.isAbsolute(outputInput), 'Explicit evidence output required')
 const workspace = await realpath(workspaceInput)
 assert.ok((await lstat(path.join(workspace, '.git'))).isFile(), 'A separate Git worktree is required')
-const gitRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: workspace, encoding: 'utf8' }).trim()
+const gitRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: workspace, encoding: 'utf8', windowsHide: true }).trim()
 assert.equal(await realpath(gitRoot), workspace)
 await mkdir(outputInput, { recursive: true })
 const outputRoot = await realpath(outputInput)
@@ -53,7 +53,7 @@ try {
     const policyPath = path.join(output, `${name}.json`)
     await writeFile(policyPath, JSON.stringify(policy), { flag: 'wx' })
     const failed = spawnSync(process.execPath, [verifier, fixtureName], {
-      cwd: workspace, encoding: 'utf8', timeout: 120_000,
+      cwd: workspace, encoding: 'utf8', timeout: 120_000, windowsHide: true,
       env: { ...process.env, CRONY_VERIFIER_BROWSER_POLICY: policyPath },
     })
     assert.ifError(failed.error)
@@ -70,14 +70,14 @@ try {
       const helper = fileURLToPath(new URL('./verifier_browser.mjs', import.meta.url))
       const nativePathArgs = original.executable === undefined ? ['--chromium-executable', chromium.executablePath()] : []
       const cli = spawnSync(process.execPath, [helper, '--policy', process.env.CRONY_VERIFIER_BROWSER_POLICY, ...nativePathArgs], {
-        cwd: workspace, encoding: 'utf8', timeout: 30_000,
+        cwd: workspace, encoding: 'utf8', timeout: 30_000, windowsHide: true,
       })
       assert.ifError(cli.error)
       assert.equal(cli.status, 0, cli.stderr)
       assert.deepEqual(JSON.parse(cli.stdout), selection)
     }
     const run = spawnSync(process.execPath, [verifier, fixtureName], {
-      cwd: workspace, encoding: 'utf8', timeout: 120_000, env: process.env,
+      cwd: workspace, encoding: 'utf8', timeout: 120_000, windowsHide: true, env: process.env,
     })
     await writeFile(path.join(output, `${mode}.stdout.log`), run.stdout ?? '')
     await writeFile(path.join(output, `${mode}.stderr.log`), run.stderr ?? '')

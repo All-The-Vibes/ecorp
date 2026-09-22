@@ -184,5 +184,6 @@ test('history inspectors retain the full snapshot while the floor uses current i
   assert.match(app, /<OfficeFloor\s+agents=\{floorAgents\}/)
   assert.match(app, /<MissionCard[\s\S]*?agents=\{data\.snapshot\.agents\}/)
   assert.match(app, /<FactoryPanel[\s\S]*?agents=\{data\.snapshot\.agents\}/)
-  assert.match(app, /data\.snapshot\.missions\.find\(\(mission\) => mission\.id === selectedMissionId\)/)
+  assert.match(app, /selectCollaborationMission\(data\?\.snapshot\.missions \?\? \[\], selectedMissionId\)/)
+  assert.match(app, /const selectedMission = collaborationMission/)
 })
