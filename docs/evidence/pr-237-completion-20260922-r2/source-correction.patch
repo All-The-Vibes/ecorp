@@ -1,0 +1,12 @@
+diff --git a/.gitleaksignore b/.gitleaksignore
+index 5937106..2cd16a3 100644
+--- a/.gitleaksignore
++++ b/.gitleaksignore
+@@ -10,3 +10,7 @@ a2d2b532ffd506878f7f47fc2f7d6fb1f31340a3:docs/evidence/assets/predispatch-failur
+ # Owned PR265 fixture materialization idempotency prefix plus runtime UUID;
+ # not an authentication credential. Exact original-main history only.
+ 7bcaef498ab4747fe8ded518294367125f662cd0:tools/e2e_factory_run_activity.py:generic-api-key:221
++# Historical isolated identity fixture used the published DEVELOPMENT_KEY_HEX
++# from crates/crony-server/src/secrets.rs. Current fixture keys are random per run.
++# This exact historical location does not suppress new uses of that value.
++273114b1fe5aa850f8767e1c9062c5100d885a7f:tools/e2e_identity.mjs:generic-api-key:381
