@@ -1,5 +1,3 @@
-> **Superseded local workspace source binding:** the retained `rust-workspace.log` executes 398 store tests (61 passed, 337 ignored) and omits the five new unconditional tests in the claimed tree. That local workspace result does not establish execution of the candidate source. The original log, metadata, report image, and README are preserved; see `README.original.md` and `supersession.json`. The separate Rust 1.94 focused result and hosted 403-test result retain their stated scopes. Current-source validation and retrospective MSRV effectiveness evidence are recorded separately in `../pr-338-completion-20260922-r2/` when published.
-
 # PR #338 completion evidence
 
 Date: September 22, 2026. Maintainer completion pass performed under the existing ECorp-only authorization.
