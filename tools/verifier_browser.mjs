@@ -20,9 +20,11 @@ const supportedName = (browser, file, platform) => {
   const name = (platform === 'win32' ? path.win32 : path.posix).basename(file)
   return names[platform][browser].includes(platform === 'win32' ? name.toLowerCase() : name)
 }
-const supportedPath = (browser, file, platform) =>
+const localAbsolutePath = (file, platform) =>
   typeof file === 'string' && file.length <= 1024 && !/[\0\r\n]/u.test(file) &&
-  (platform === 'win32' ? path.win32.isAbsolute(file) && /^[A-Za-z]:[\\/]/u.test(file) : path.posix.isAbsolute(file)) &&
+  (platform === 'win32' ? path.win32.isAbsolute(file) && /^[A-Za-z]:[\\/]/u.test(file) : path.posix.isAbsolute(file))
+const supportedPath = (browser, file, platform) =>
+  localAbsolutePath(file, platform) &&
   supportedName(browser, file, platform)
 
 export function validateBrowserPolicy(policy, platform = process.platform, host = hostname()) {
@@ -83,10 +85,11 @@ async function fileDigest(file, maximumBytes) {
 }
 
 export async function resolveVerifierBrowser({ policyPath, chromiumExecutable, workspace = process.cwd() }) {
-  if (typeof policyPath !== 'string' || !path.isAbsolute(policyPath)) fail('an absolute policy path is required')
+  if (!localAbsolutePath(policyPath, process.platform)) fail('a local absolute policy path of at most 1024 characters is required')
   const root = await realpath(workspace)
   outsideWorkspace(policyPath, root, 'policy')
   const policyFile = await realpath(policyPath)
+  if (!localAbsolutePath(policyFile, process.platform)) fail('a local absolute policy path of at most 1024 characters is required')
   outsideWorkspace(policyFile, root, 'policy')
   const info = await lstat(policyPath)
   if (!info.isFile() || info.isSymbolicLink() || info.nlink !== 1 || info.size > 8192) {
@@ -100,13 +103,18 @@ export async function resolveVerifierBrowser({ policyPath, chromiumExecutable, w
         opened.dev !== info.dev || opened.ino !== info.ino || opened.size !== info.size ||
         opened.mtimeMs !== info.mtimeMs) fail(`policy changed during preflight: ${policyPath}`)
     const buffer = Buffer.alloc(8193)
-    const read = await handle.read(buffer)
-    if (read.bytesRead > 8192) fail(`policy exceeded 8192 bytes: ${policyPath}`)
+    let total = 0
+    while (total < buffer.length) {
+      const { bytesRead } = await handle.read(buffer, total, buffer.length - total, total)
+      if (bytesRead === 0) break
+      total += bytesRead
+    }
+    if (total > 8192) fail(`policy exceeded 8192 bytes: ${policyPath}`)
     const after = await handle.stat()
-    if (read.bytesRead !== opened.size || after.size !== opened.size || after.mtimeMs !== opened.mtimeMs) {
+    if (total !== opened.size || after.size !== opened.size || after.mtimeMs !== opened.mtimeMs) {
       fail(`policy changed during preflight: ${policyPath}`)
     }
-    bytes = buffer.subarray(0, read.bytesRead)
+    bytes = buffer.subarray(0, total)
   } finally {
     await handle.close()
   }

@@ -54,6 +54,54 @@ test('managed Chromium uses only the supplied native path and authorized hash', 
   await assert.rejects(resolveVerifierBrowser(f), /Chromium is unavailable/u)
 })
 
+for (const excluded of [
+  '\\\\f03.invalid\\share\\policy.json', '//f03.invalid/share/policy.json',
+  '\\\\?\\UNC\\f03.invalid\\share\\policy.json', '\\\\.\\PIPE\\policy',
+  '\\\\?\\C:\\browser\\policy.json', '\\\\.\\C:\\browser\\policy.json',
+  '\\??\\UNC\\f03.invalid\\share\\policy.json', '\\browser\\policy.json',
+  'C:browser\\policy.json', '\u212a:\\browser\\policy.json', '\u017f:\\browser\\policy.json',
+  'C:\\browser\0\\policy.json', 'C:\\browser\n\\policy.json', 'C:\\browser\r\\policy.json',
+  'C:\\' + 'p'.repeat(1022),
+]) {
+  test(`F03 rejects unsafe policy path ${JSON.stringify(excluded)} before filesystem access`,
+    { skip: process.platform !== 'win32' }, async (t) => {
+      const f = await fixture(t)
+      const calls = []
+      for (const operation of ['realpath', 'lstat', 'open', 'access']) {
+        t.mock.method(fs, operation, async () => {
+          calls.push(operation)
+          throw new Error('unexpected filesystem access')
+        })
+      }
+      syncBuiltinESMExports()
+      t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports() })
+      await assert.rejects(resolveVerifierBrowser({ ...f, policyPath: excluded }), /absolute policy path/u)
+      assert.deepEqual(calls, [])
+    })
+}
+
+test('bounded policy reader accepts complete bytes delivered by short regular-file reads', async (t) => {
+  const f = await fixture(t)
+  const nativeOpen = fs.open
+  let reads = 0
+  t.mock.method(fs, 'open', async (file, ...args) => {
+    const handle = await nativeOpen(file, ...args)
+    if (file === f.policyPath) {
+      const nativeRead = handle.read.bind(handle)
+      t.mock.method(handle, 'read', async (buffer, offset = 0, length = buffer.length - offset, position = null) => {
+        reads++
+        return nativeRead(buffer, offset, Math.min(length, 7), position)
+      })
+    }
+    return handle
+  })
+  syncBuiltinESMExports()
+  t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports() })
+  const selection = await resolveVerifierBrowser(f)
+  assert.equal(selection.evidence.policySha256, hash(await readFile(f.policyPath)))
+  assert.ok(reads > 1)
+})
+
 // No network/device path reaches the OS, even when testing the unfixed resolver.
 // Only unreachable path resolution and reads are mocked; policy and pinned bytes are local.
 for (const [kind, excluded] of [
