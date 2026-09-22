@@ -1,0 +1,34 @@
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 07s
+     Running unittests src\main.rs (<local-user>\code\ecorp-pr-completion-20260922\target-validation\debug\deps\crony_server-05dbe3038b00ba36.exe)
+
+running 2 tests
+test agent_pinning_tests::issue48_handler_authorizes_and_publishes_only_first_operation ... ok
+test agent_pinning_tests::issue48_handler_oidc_mapping_rejects_spoofed_actor_and_replay ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 136 filtered out; finished in 5.16s
+
+     Running unittests src\lib.rs (<local-user>\code\ecorp-pr-completion-20260922\target-validation\debug\deps\crony_store-0bc2ae57aa4f5633.exe)
+
+running 16 tests
+test agent_pinning::tests::issue48_active_work_and_every_obligation_are_byte_preserved ... ok
+test agent_pinning::tests::issue48_concurrent_different_operators_use_expected_version ... ok
+test agent_pinning::tests::issue48_concurrent_exact_requests_commit_once ... ok
+test agent_pinning::tests::issue48_current_authority_required_on_new_operations_and_replay ... ok
+test agent_pinning::tests::issue48_event_failure_rolls_back_flag_and_version ... ok
+test agent_pinning::tests::issue48_exact_replay_does_not_undo_newer_unpin_or_retirement ... ok
+test agent_pinning::tests::issue48_foreign_missing_and_invalid_requests_do_not_mutate ... ok
+test agent_pinning::tests::issue48_journal_and_snapshot_obey_room_visibility ... ok
+test agent_pinning::tests::issue48_pin_serializes_with_automatic_retirement ... ok
+test agent_pinning::tests::issue48_pinned_reuse_then_unpin_preserves_saved_plan ... ok
+test agent_pinning::tests::issue48_replay_rejects_key_substitution_and_stale_aba ... ok
+test agent_pinning::tests::issue48_role_demotion_serializes_before_replay ... ok
+test agent_pinning::tests::issue48_roles_match_operate_and_require_human ... ok
+test agent_pinning::tests::issue48_room_revocation_serializes_before_new_pin ... ok
+test agent_pinning::tests::issue48_unpin_keeps_native_recovered_activation_contract ... ok
+test agent_pinning::tests::issue48_unpin_waits_for_each_terminal_obligation ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 398 filtered out; finished in 33.72s

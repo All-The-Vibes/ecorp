@@ -3097,6 +3097,11 @@ function MissionCard({
   const pendingReviewRuns = runs.filter((run) => pendingReviewForRun(run, verificationRequests))
   const pendingRequest = pendingReviewForRun(evidenceRun, verificationRequests)
   const pendingRun = selectedEvidenceRunId !== null && pendingRequest ? evidenceRun : undefined
+  const pendingReviewBlockedReason = pendingRequest ? reviewBlockedReason(
+    pendingRequest.gate,
+    { id: actorId, role: actorRole, name: actors.find((actor) => actor.id === actorId)?.name },
+    mission.requested_by,
+  ) : null
   const runIds = new Set(runs.map((run) => run.id))
   const pendingActionApprovals = actionApprovals.filter(
     (approval) => runIds.has(approval.run_id) && approval.status === 'pending',
@@ -3319,7 +3324,7 @@ function MissionCard({
         />
       ) : (
         <WorkResultCard
-          heading={pendingRun ? 'Your review is needed'
+          heading={pendingRun ? pendingReviewBlockedReason ? 'Awaiting an eligible reviewer' : 'Your review is needed'
             : pendingActionApprovals.length ? 'A requested action needs a decision'
               : mission.status === 'ready' ? 'Ready to start'
                 : mission.status === 'running' ? activeRuns ? 'Your team is working' : 'Work is in progress'
@@ -3327,7 +3332,7 @@ function MissionCard({
           status={pendingRun || pendingActionApprovals.length ? 'Needs attention' : missionStatusLabel(mission.status)}
           tone={pendingRun || pendingActionApprovals.length || ['failed', 'cancelled'].includes(mission.status)
             ? 'attention' : mission.status === 'completed' ? 'success' : mission.status === 'running' ? 'working' : 'neutral'}
-          description={pendingRun ? 'Review this exact run’s checks and source before making the existing outcome decision.'
+          description={pendingRun ? pendingReviewBlockedReason ?? 'Review this exact run’s checks and source before making the existing outcome decision.'
             : pendingActionApprovals.length ? 'Inspect the requested scope and consequence. Discussion alone does not approve an action.'
               : mission.status === 'ready' ? 'Start the planned team in its isolated workspace. Any required decision stays attached to this work.'
                 : mission.status === 'running' ? `${activeRuns ? `${activeRuns} live agent${activeRuns === 1 ? '' : 's'}. ` : ''}Task owners and progress are available without following the office animation.`
@@ -3335,7 +3340,7 @@ function MissionCard({
                     : 'The recorded history remains available. Inspect the selected run and its existing recovery controls before choosing the next action.'}
           actions={<>
             {pendingRun ? (
-              <button type="button" className="button button-primary" onClick={() => focusWorkSection(`mission-review-${mission.id}`)}>Review outcome</button>
+              <button type="button" className="button button-primary" onClick={() => focusWorkSection(`mission-review-${mission.id}`)}>{pendingReviewBlockedReason ? 'Inspect review requirements' : 'Review outcome'}</button>
             ) : pendingActionApprovals.length ? (
               <button type="button" className="button button-primary" onClick={() => focusWorkSection(`mission-actions-${mission.id}`)}>Review requested actions</button>
             ) : mission.status === 'ready' ? (
@@ -3978,11 +3983,7 @@ function MissionCard({
         <div className="verification-actions" id={`mission-review-${mission.id}`} tabIndex={-1} data-review-run-id={pendingRun.id} data-review-task-id={pendingRun.task_id}>
           {(() => {
             const requiredRoles = pendingRequest.gate.roles
-            const blockedReason = reviewBlockedReason(
-              pendingRequest.gate,
-              { id: actorId, role: actorRole, name: actors.find((actor) => actor.id === actorId)?.name },
-              mission.requested_by,
-            )
+            const blockedReason = pendingReviewBlockedReason
             const canDecide = !blockedReason
             const noticeId = `mission-review-eligibility-${pendingRun.id}`
             return (

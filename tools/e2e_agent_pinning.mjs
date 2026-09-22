@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 assert.equal(process.env.CRONY_PIN_TEST, '1', 'Explicit owned-stack opt-in required')
@@ -32,9 +32,61 @@ assert.equal(process.env.PGHOST, '127.0.0.1')
 assert.equal(process.env.PGPORT, '59030')
 assert.match(process.env.PGDATABASE ?? '', /^issue48_app(?:_[a-z0-9]+)?$/)
 assert.equal(process.env.PGUSER, 'issue48')
-const output = process.env.CRONY_PIN_OUTPUT
+// Resolve existing ancestors before creating anything: lexical absolute paths
+// can still alias the source through junctions, symlinks or Windows casing.
+async function directoryLocation(value) {
+  let ancestor = path.resolve(value)
+  const missing = []
+  for (;;) {
+    try {
+      await lstat(ancestor)
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error
+      const parent = path.dirname(ancestor)
+      assert.notEqual(parent, ancestor, 'Directory must have an existing ancestor')
+      missing.unshift(path.basename(ancestor))
+      ancestor = parent
+      continue
+    }
+    // A dangling link must fail here, rather than being treated as a missing
+    // directory and followed by a later recursive mkdir.
+    const resolved = await realpath(ancestor)
+    assert.ok((await stat(resolved)).isDirectory(), 'Existing ancestor must be a directory')
+    return path.join(resolved, ...missing)
+  }
+}
+const source = await realpath(process.env.CRONY_PIN_SOURCE)
+assert.ok((await stat(source)).isDirectory(), 'Source must be a directory')
+const output = await directoryLocation(process.env.CRONY_PIN_OUTPUT)
+const privateDirectory = await directoryLocation(process.env.CRONY_PIN_PRIVATE)
+const directories = [source, output, privateDirectory]
+function contains(parent, child) {
+  const relative = path.relative(parent, child)
+  return relative === '' || (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith(`..${path.sep}`))
+}
+for (let left = 0; left < directories.length; left += 1) {
+  for (let right = left + 1; right < directories.length; right += 1) {
+    assert.ok(!contains(directories[left], directories[right]) && !contains(directories[right], directories[left]),
+      'source, output and private directories must be disjoint')
+  }
+}
+async function verifyDirectories() {
+  for (const directory of directories) {
+    assert.equal(path.relative(directory, await directoryLocation(directory)), '', 'Fixture directory changed or became an alias')
+  }
+}
 const checkpointPath = path.join(output, 'native-agent-pinning.json')
-const privatePath = path.join(process.env.CRONY_PIN_PRIVATE, 'pin-lease.json')
+const privatePath = path.join(privateDirectory, 'pin-lease.json')
+async function verifyFile(file) {
+  let info
+  try { info = await lstat(file) } catch (error) {
+    if (error.code === 'ENOENT') return
+    throw error
+  }
+  assert.ok(info.isFile() && !info.isSymbolicLink() && info.nlink === 1, 'Fixture files must be regular unaliased files')
+}
+await verifyFile(checkpointPath)
+await verifyFile(privatePath)
 const sha = (value) => createHash('sha256').update(value).digest('hex')
 const canonical = (value) => JSON.stringify(value, (_, item) => item && typeof item === 'object' && !Array.isArray(item)
   ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item)
@@ -43,9 +95,9 @@ const sql = (query) => JSON.parse(execFileSync(process.env.ECORP_PSQL_BINARY,
   ['-X', '-q', '-t', '-A', '-v', 'ON_ERROR_STOP=1', '-c', query],
   { encoding: 'utf8', windowsHide: true, timeout: 15000 }).trim())
 const sourceIdentity = () => ({
-  head: execFileSync('git', ['-C', process.env.CRONY_PIN_SOURCE, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-  status: execFileSync('git', ['-C', process.env.CRONY_PIN_SOURCE, 'status', '--porcelain'], { encoding: 'utf8' }).trim(),
-  seed: sha(execFileSync('git', ['-C', process.env.CRONY_PIN_SOURCE, 'show', 'HEAD:seed.txt'])),
+  head: execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+  status: execFileSync('git', ['-C', source, 'status', '--porcelain'], { encoding: 'utf8' }).trim(),
+  seed: sha(execFileSync('git', ['-C', source, 'show', 'HEAD:seed.txt'])),
 })
 let checkpoint
 await mkdir(output, { recursive: true })
@@ -63,7 +115,11 @@ if (phase === 'prepare') {
   assert.equal(checkpoint.web, web)
   assert.equal(checkpoint.phase, phase === 'start' ? 'awaiting_browser_pin' : 'awaiting_browser_unpin')
 }
-const save = () => writeFile(checkpointPath, `${JSON.stringify(checkpoint, null, 2)}\n`)
+const save = async () => {
+  await verifyDirectories()
+  await verifyFile(checkpointPath)
+  await writeFile(checkpointPath, `${JSON.stringify(checkpoint, null, 2)}\n`)
+}
 const check = (name) => { checkpoint.checks.push(name) }
 const api = (suffix) => `/api/corps/${checkpoint.ids.corp_id}${suffix}`
 async function request(route, body, expected = 200) {
@@ -186,7 +242,8 @@ try {
     checkpoint.approval = pending.snapshot.action_approvals.find((a) => a.run_id === checkpoint.launch.run_id).id
     const lease = await request(api(`/agents/${checkpoint.agent}/lease`), { actor_id: checkpoint.ids.bob_actor_id })
     assert.equal(lease.acquired, true)
-    await mkdir(process.env.CRONY_PIN_PRIVATE, { recursive: true })
+    await verifyDirectories()
+    await mkdir(privateDirectory, { recursive: true })
     await writeFile(privatePath, JSON.stringify(lease), { flag: 'wx' })
     checkpoint.queued = await request(api(`/agents/${checkpoint.agent}/messages`), {
       actor_id: checkpoint.ids.alice_actor_id, text: 'Retain for the next assigned mission; this is not a task.',
