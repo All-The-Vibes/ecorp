@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { execFile as execFileCallback, spawn } from 'node:child_process'
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { mkdir, readFile, writeFile, access, realpath, lstat, open } from 'node:fs/promises'
 import { constants, openSync, closeSync } from 'node:fs'
 import path from 'node:path'
@@ -208,7 +208,7 @@ assert.equal(report.ports_before.length, 0, 'A QA port is already occupied; do n
 report.source_code_commit = (await run('git', ['rev-parse', 'HEAD'], {cwd:root})).stdout.trim()
 if (!execute) {
   console.log(JSON.stringify({...report, dry_run:true, proposed: ['create/reuse only receipt-owned QA cluster',
-    'loopback-only trust authentication for synthetic data; no operator credentials',
+    'loopback SCRAM authentication with a fresh fixture-owned password; no operator credentials',
     'new per-attempt test database', 'native server and fake Codex runner',
     'fake-GitHub one-shot Factory, budget revision and explicit resume',
     ...(missingCheckpoint?['hold only the unchanged synthetic QA README.md unreadable during checkpoint capture; release before native resume; never edit persisted checkpoint proof']:[]),
@@ -262,9 +262,42 @@ try {
   const dotenvFile=path.join(qa,'.env')
   if(await exists(dotenvFile))assert.equal(await readFile(dotenvFile,'utf8'),'# Synthetic QA only\n')
   else await writeFile(dotenvFile,'# Synthetic QA only\n',{flag:'wx'})
-  if (!(await exists(pgData))) {
-    await run(path.join(pgBin,'initdb.exe'), ['-D',pgData,'-U','ecorp_qa50','-A','trust','--encoding=UTF8','--locale=C'])
+  // PostgreSQL provides native password-file authentication. Keep the fixture's
+  // ephemeral credential outside both the synthetic source and runner workspaces.
+  const privateRoot = path.join(qa, 'private')
+  const passwordFile = path.join(privateRoot, 'database-password.txt')
+  const passFile = path.join(privateRoot, 'pgpass.conf')
+  const rejectedPassFile = path.join(privateRoot, 'pgpass-rejected.conf')
+  await assertUnlinkedDirectory(privateRoot, true)
+  if (!(await exists(privateRoot))) await mkdir(privateRoot)
+  const sid = (await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
+    '[System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value'])).stdout.trim()
+  // WindowsIdentity supplies a native SID; Entra accounts use authority 12.
+  // Validate the returned structure without restricting it to authority 5.
+  assert.match(sid, /^S-1-[0-9]+(?:-[0-9]+){1,15}$/)
+  await run('icacls.exe', [privateRoot, '/inheritance:r', '/grant:r',
+    `*${sid}:(OI)(CI)F`, '*S-1-5-18:(OI)(CI)F'])
+  if (!(await exists(passwordFile))) {
+    assert.equal(await exists(pgData), false, 'Preserve legacy clusters without an authenticated fixture receipt')
+    const password = randomBytes(32).toString('hex')
+    await writeFile(passwordFile, `${password}\n`, {flag:'wx', mode:0o600})
+    await writeFile(passFile, `127.0.0.1:${pgPort}:*:ecorp_qa50:${password}\n`, {flag:'wx', mode:0o600})
+    await writeFile(rejectedPassFile, `127.0.0.1:${pgPort}:*:ecorp_qa50:rejected-fixture-password\n`, {flag:'wx', mode:0o600})
   }
+  for (const file of [passwordFile, passFile, rejectedPassFile]) await checkContainedFile(qa, file)
+  const databasePassword = (await readFile(passwordFile, 'utf8')).trim()
+  assert.ok(/^[0-9a-f]{64}$/.test(databasePassword), 'Invalid fixture password file; preserve state')
+  assert.ok(await readFile(passFile, 'utf8') === `127.0.0.1:${pgPort}:*:ecorp_qa50:${databasePassword}\n`,
+    'Authenticated fixture passfile changed; preserve state')
+  assert.equal(await readFile(rejectedPassFile, 'utf8'), `127.0.0.1:${pgPort}:*:ecorp_qa50:rejected-fixture-password\n`)
+  if (!(await exists(pgData))) {
+    await run(path.join(pgBin,'initdb.exe'), ['-D',pgData,'-U','ecorp_qa50','-A','scram-sha-256',
+      '--pwfile',passwordFile,'--encoding=UTF8','--locale=C'])
+  }
+  report.database_authentication = { method:'scram-sha-256', password_storage:'ACL-private fixture files',
+    psql_delivery:'PGPASSFILE', server_delivery:'environment-only; reduced assurance',
+    scope:'Owned synthetic database only; runner and provider environments omit database credentials. Same-user process isolation is not established.',
+    wrong_password_rejected:false }
   assert.equal((await readFile(path.join(pgData,'PG_VERSION'),'utf8')).trim(), '17')
   assert.equal((await realpath(pgData)).toLowerCase(),path.resolve(pgData).toLowerCase())
   assert.equal(await exists(path.join(pgData,'postmaster.pid')), false, 'Retained QA postmaster receipt exists; inspect before reuse')
@@ -286,7 +319,11 @@ try {
   report.fixture_source_commit = (await run('git',['-C',source,'rev-parse','HEAD'])).stdout.trim()
   const pgChild = await start('postgres',path.join(pgBin,'postgres.exe'), ['-D',pgData,'-p',String(pgPort),'-h','127.0.0.1'])
   await until('QA PostgreSQL listener', async()=> (await ports()).some(p=>p.LocalPort===pgPort && p.OwningProcess===pgChild.pid))
-  const pgEnv = {...env, PGHOST:'127.0.0.1',PGPORT:String(pgPort),PGUSER:'ecorp_qa50',PGDATABASE:'postgres'}
+  const pgEnv = {...env, PGHOST:'127.0.0.1',PGPORT:String(pgPort),PGUSER:'ecorp_qa50',PGDATABASE:'postgres', PGPASSFILE:passFile}
+  await assert.rejects(() => run(path.join(pgBin,'psql.exe'), ['-X','-w','-At','-c','SELECT 1'],
+    {env:{...pgEnv, PGPASSFILE:rejectedPassFile}}),
+  error => error.code === 2 && /password authentication failed/iu.test(error.stderr))
+  report.database_authentication.wrong_password_rejected = true
   const verified = (await run(path.join(pgBin,'psql.exe'), ['-X','-At','-v','ON_ERROR_STOP=1','-c',
     "SELECT current_setting('data_directory') || '|' || current_setting('port') || '|' || current_user"], {env:pgEnv})).stdout.trim().split('|')
   assert.equal(path.resolve(verified[0]).toLowerCase(),path.resolve(pgData).toLowerCase())
@@ -296,7 +333,7 @@ try {
   report.database = db
   const apiChild = await start('server',path.join(root,'target/debug/crony-server.exe'),
     ['--bind','127.0.0.1:18450','--mode','development','--object-store-local-root',path.join(attempt,'artifacts')],
-    { DATABASE_URL:`postgres://ecorp_qa50@127.0.0.1:${pgPort}/${db}`, CRONY_RUNNER_CREDENTIAL_TTL_SECS:'1800' })
+    { DATABASE_URL:`postgres://ecorp_qa50:${databasePassword}@127.0.0.1:${pgPort}/${db}`, CRONY_RUNNER_CREDENTIAL_TTL_SECS:'1800' })
   await until('QA API ready', async()=> { try{return (await request('/health')).body.status==='ok'}catch{return false} })
   assert.ok((await ports()).some(p=>p.LocalPort===18450 && p.OwningProcess===apiChild.pid))
   demo = await ok('/api/demo/bootstrap', {})

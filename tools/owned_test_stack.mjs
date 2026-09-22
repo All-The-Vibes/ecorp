@@ -113,6 +113,52 @@ export async function serverIdentity(pid, context) {
   return JSON.parse(stdout)
 }
 
+// Read-only compatibility entry points used by the browser and operation
+// evidence drivers. Capturing a receipt never starts or stops a process.
+export function parseOwnedTestServerManifest(text, { root, server, binary, platform = process.platform }) {
+  try {
+    assertTestEndpoint(server)
+    const paths = platform === 'win32' ? path.win32 : path.posix
+    const normalize = value => {
+      if (typeof value !== 'string' || !paths.isAbsolute(value)) throw new Error(refusal)
+      return platform === 'win32' ? paths.resolve(value).toLowerCase() : paths.resolve(value)
+    }
+    if (!['win32', 'linux'].includes(platform) || typeof text !== 'string' || text.length > 16_384) throw new Error(refusal)
+    const manifest = JSON.parse(text)
+    if (!manifest || Array.isArray(manifest) || manifest.test_owned !== true ||
+        manifest.server_url !== server || normalize(manifest.workspace) !== normalize(root) ||
+        !Number.isSafeInteger(manifest.server) || manifest.server <= 1 ||
+        (manifest.platform !== undefined && manifest.platform !== platform)) throw new Error(refusal)
+    normalize(binary)
+    if (manifest.server_identity !== undefined) {
+      assertOwnedRestart(manifest, manifest.server_identity, { root, server, binary, platform })
+      return manifest
+    }
+    if (platform === 'win32') {
+      if (typeof manifest.server_creation !== 'string' || !Number.isFinite(Date.parse(manifest.server_creation))) throw new Error(refusal)
+    } else if (manifest.platform !== 'linux' ||
+        !/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/u.test(manifest.server_boot_id ?? '') ||
+        !/^[0-9]{1,20}$/u.test(manifest.server_start_ticks ?? '') ||
+        BigInt(manifest.server_start_ticks) > 18446744073709551615n ||
+        normalize(manifest.server_executable) !== normalize(binary)) throw new Error(refusal)
+    return manifest
+  } catch { throw new Error(refusal) }
+}
+
+export async function captureOwnedTestServerManifest({ root, server, binary, pidPath, pid }) {
+  if (![root, binary, pidPath].every(value => typeof value === 'string' && path.isAbsolute(value))) throw new Error(refusal)
+  assertTestEndpoint(server)
+  const context = { root: realpathSync(root), server, binary: realpathSync(binary) }
+  const identity = await serverIdentity(pid, context)
+  const manifest = { test_owned: true, workspace: context.root, server_url: server,
+    platform: process.platform, server: pid, server_executable: identity.executable,
+    server_creation: identity.creation, server_identity: identity, server_state: 'running',
+    ...(process.platform === 'linux' ? { server_boot_id: identity.boot_id, server_start_ticks: identity.start_ticks } : {}) }
+  assertOwnedRestart(manifest, identity, context)
+  writeFileSync(pidPath, `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx', mode: 0o600 })
+  return manifest
+}
+
 export function ownedServerEnvironment(environment = {}, databaseUrl, inherited = process.env) {
   const bounds = { CRONY_ARTIFACT_RECOVERY_GRACE_SECS: [0, 3600], CRONY_ARTIFACT_RECOVERY_INTERVAL_SECS: [1, 3600] }
   if (!environment || Array.isArray(environment) || typeof environment !== 'object') throw new Error(refusal)

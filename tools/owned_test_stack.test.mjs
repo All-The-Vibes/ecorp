@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import childProcess from 'node:child_process'
 import { syncBuiltinESMExports } from 'node:module'
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
-import { assertOwnedRestart, assertTestEndpoint, ownedServerEnvironment, restartOwnedTestServer, startOwnedTestServer, stopOwnedTestServer } from './owned_test_stack.mjs'
+import { assertOwnedRestart, assertTestEndpoint, captureOwnedTestServerManifest, parseOwnedTestServerManifest, ownedServerEnvironment, restartOwnedTestServer, startOwnedTestServer, stopOwnedTestServer } from './owned_test_stack.mjs'
 
 // Pure fixtures: no process discovery, signals, services, or filesystem mutation.
 const root = 'C:\\fixture-root'
@@ -19,6 +19,26 @@ const manifest = {
 }
 const identity = { platform: 'win32', pid: manifest.server, executable: binary, creation: manifest.server_creation, port_owned: true }
 const context = { root, server, binary, platform: 'win32' }
+
+test('read-only manifest parsing retains ownership scope for existing evidence drivers', () => {
+  assert.deepEqual(parseOwnedTestServerManifest(JSON.stringify(manifest), context), manifest)
+  for (const changed of [null, [], { ...manifest, test_owned: false }, { ...manifest, server: 1 },
+    { ...manifest, workspace: `${root}\\other` }, { ...manifest, server_url: 'http://remote.invalid:18965' },
+    { ...manifest, server_creation: 'invalid' }, { ...manifest, platform: 'linux' }]) {
+    assert.throws(() => parseOwnedTestServerManifest(JSON.stringify(changed), context), /refusing/u)
+  }
+  assert.throws(() => parseOwnedTestServerManifest(' '.repeat(16_385), context), /refusing/u)
+  assert.throws(() => parseOwnedTestServerManifest('{', context), /refusing/u)
+  const linux = { test_owned: true, workspace: '/fixture', server_url: server, server: 4242,
+    platform: 'linux', server_executable: '/fixture/server',
+    server_boot_id: '12345678-1234-1234-1234-123456789abc', server_start_ticks: '1234' }
+  const linuxContext = { root: '/fixture', server, binary: '/fixture/server', platform: 'linux' }
+  assert.deepEqual(parseOwnedTestServerManifest(JSON.stringify(linux), linuxContext), linux)
+  for (const changed of [{ ...linux, server_boot_id: 'invalid' }, { ...linux, server_start_ticks: '-1' },
+    { ...linux, server_executable: '/fixture/Server' }]) {
+    assert.throws(() => parseOwnedTestServerManifest(JSON.stringify(changed), linuxContext), /refusing/u)
+  }
+})
 
 test('database query options are refused before filesystem or lifecycle effects', async t => {
   const folder = path.resolve(os.tmpdir(), 'ecorp-owned-query-fixture')
@@ -302,6 +322,15 @@ test('native owned child startup, two restarts, refusal of database drift and id
     assert.equal(initial.server_state, 'running')
     assert.equal(initial.test_owned, true)
     assert.equal(initial.server_identity.port_owned, true)
+    assert.deepEqual(parseOwnedTestServerManifest(readFileSync(manifestPath, 'utf8'), settings), initial)
+    const capturedPath = path.join(folder, 'captured.json')
+    const captured = await captureOwnedTestServerManifest({ ...settings, pid: first, pidPath: capturedPath })
+    assert.equal(captured.server, first)
+    assert.deepEqual(captured.server_identity, initial.server_identity)
+    assert.deepEqual(parseOwnedTestServerManifest(readFileSync(capturedPath, 'utf8'), settings), captured)
+    await assert.rejects(captureOwnedTestServerManifest({ ...settings, pid: first, pidPath: capturedPath }), /EEXIST/u)
+    assert.deepEqual(JSON.parse(readFileSync(capturedPath, 'utf8')), captured)
+    assert.equal((await fetch(`${endpoint}/health`)).ok, true)
     if (process.platform === 'win32') {
       assert.match(initial.server_identity.native_creation_ticks, /^[1-9][0-9]{0,18}$/u)
       const changed = { ...initial, server_identity: { ...initial.server_identity,

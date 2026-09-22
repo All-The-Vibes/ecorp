@@ -33,6 +33,39 @@ const run = async (program, args, options) => ({
 })
 const { capture, finish } = await load({ assert, createHash, constants, lstat, open, realpath,
   path, checkContainedFile, readTrustedExecutableDigest, run })
+const sidStart = driver.indexOf("  const sid = (await run('powershell.exe'")
+const sidEnd = driver.indexOf('  if (!(await exists(passwordFile)))', sidStart)
+assert.ok(sidStart >= 0 && sidEnd > sidStart)
+const restrictPrivateRoot = new AsyncFunction('assert', 'run', 'privateRoot',
+  driver.slice(sidStart, sidEnd))
+
+test('private recovery credentials accept native local and Entra account SIDs', async () => {
+  for (const sid of ['S-1-5-21-1-2-3-1001', 'S-1-12-1-1-2-3-4']) {
+    const calls = []
+    await restrictPrivateRoot(assert, async (program, args) => {
+      calls.push({ program, args })
+      return { stdout: sid + '\r\n' }
+    }, 'owned-private-root')
+    assert.deepEqual(calls[1], { program: 'icacls.exe', args: [
+      'owned-private-root', '/inheritance:r', '/grant:r',
+      `*${sid}:(OI)(CI)F`, '*S-1-5-18:(OI)(CI)F',
+    ] })
+    assert.equal(calls.length, 2)
+  }
+})
+
+test('malformed account SIDs fail before changing credential ACLs', async () => {
+  for (const sid of ['', 'S-1-5-', 'S-1-12-1--2', 'S-1-12-1-2:(OI)F', 'S-1-5-18\nS-1-5-32']) {
+    let calls = 0
+    await assert.rejects(restrictPrivateRoot(assert, async program => {
+      calls++
+      assert.equal(program, 'powershell.exe')
+      return { stdout: sid }
+    }, 'owned-private-root'), assert.AssertionError)
+    assert.equal(calls, 1)
+  }
+})
+
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
 // These files are hashed, never executed. Use intact local Windows executables
 // because repeated text files named .exe can be quarantined during this fixture.
