@@ -1,0 +1,10 @@
+file:///<private-evidence>/pr359-full-driver-path-r5/no-network.mjs:1
+import { appendFileSync } from 'node:fs'; globalThis.fetch = async () => { appendFileSync(process.env.PATH_REPLAY_NETWORK_LOG, 'fetch intercepted before network\n'); throw new Error('OWNED_PATH_REPLAY_NO_NETWORK'); };
+                                                                                                                                                                            ^
+
+Error: OWNED_PATH_REPLAY_NO_NETWORK
+    at globalThis.fetch (file:///<private-evidence>/pr359-full-driver-path-r5/no-network.mjs:1:173)
+    at request (file:///<private-evidence>/pr359-full-driver-path-r5/baseline.mjs:74:26)
+    at async file:///<private-evidence>/pr359-full-driver-path-r5/baseline.mjs:141:22
+
+Node.js v24.21.0

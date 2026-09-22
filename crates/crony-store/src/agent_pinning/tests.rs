@@ -455,7 +455,7 @@ async fn issue48_pinned_reuse_then_unpin_preserves_saved_plan(pool: PgPool) -> R
     f.store.set_agent_pin(f.input(true, 0)).await?;
     assert_eq!(
         f.store
-            .agents_for_planning(f.ids.corp_id, f.ids.alice_actor_id)
+            .agents_for_planning(f.ids.corp_id, f.ids.alice_actor_id, None)
             .await?
             .len(),
         1
@@ -475,7 +475,7 @@ async fn issue48_pinned_reuse_then_unpin_preserves_saved_plan(pool: PgPool) -> R
     assert!(f.agent().await?.retired_at.is_none());
     assert!(
         f.store
-            .agents_for_planning(f.ids.corp_id, f.ids.alice_actor_id)
+            .agents_for_planning(f.ids.corp_id, f.ids.alice_actor_id, None)
             .await?
             .is_empty()
     );

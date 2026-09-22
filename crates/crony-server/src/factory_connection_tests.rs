@@ -335,6 +335,206 @@ impl Drop for Fixture {
 
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue48_planner_reuses_pins_in_the_saved_connection_room(pool: PgPool) -> Result<()> {
+    let f = Fixture::new(pool.clone()).await?;
+    let second_room = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO rooms(id,corp_id,name,purpose,created_at) \
+         SELECT $1,$2,'Pin destination','Two-room planner regression',created_at+interval '1 second' \
+         FROM rooms WHERE id=$3",
+    )
+    .bind(second_room)
+    .bind(f.ids.corp_id)
+    .bind(f.ids.room_id)
+    .execute(&pool)
+    .await?;
+    sqlx::query("INSERT INTO room_memberships(room_id,actor_id) VALUES($1,$2)")
+        .bind(second_room)
+        .bind(f.ids.alice_actor_id)
+        .execute(&pool)
+        .await?;
+    let created = f
+        .state
+        .store
+        .create_workspace_connection(CreateWorkspaceConnectionInput {
+            corp_id: f.ids.corp_id,
+            room_id: second_room,
+            actor_id: f.ids.alice_actor_id,
+            runner_id: f.runner_id.clone(),
+            label: "Pin destination connection".to_owned(),
+            configuration: configuration(),
+            idempotency_key: "issue48-second-room".to_owned(),
+        })
+        .await?;
+    let ready = f
+        .state
+        .store
+        .apply_workspace_setup_report(
+            f.ids.corp_id,
+            &f.runner_id,
+            f.epoch,
+            created.operation.id,
+            report(),
+        )
+        .await?;
+    let second_connection = ready.connection.context("second connection")?.id;
+    f.state
+        .runners
+        .get_mut(&f.runner_id)
+        .unwrap()
+        .capabilities
+        .extend([
+            capability("workspace-isolation", Some(second_connection)),
+            capability("codex", Some(second_connection)),
+        ]);
+    let request = |connection_id| -> CreateMissionRequest {
+        serde_json::from_value(json!({
+            "title": "Pin destination regression",
+            "requested_by": f.ids.alice_actor_id,
+            "preferred_adapter": "codex",
+            "preferred_model": model().id,
+            "strategy": "single",
+            "source": source(),
+            "workspace_connection_id": connection_id,
+            "budget_tokens": 1000,
+            "budget_cost_microusd": 1000000,
+            "contract": {
+                "objective": "Verify same-room pinned identity reuse",
+                "expected_output": "result.md",
+                "allowed_tools": ["filesystem"],
+                "prohibited_actions": ["No external effects"],
+                "write_scope": ["result.md"],
+            },
+        }))
+        .unwrap()
+    };
+    let mut pins = Vec::new();
+    // Seed both rooms before pinning either identity, so the baseline defect
+    // cannot prevent this fixture from creating the second room's worker.
+    for (connection_id, room_id) in [
+        (f.connection_id, f.ids.room_id),
+        (second_connection, second_room),
+    ] {
+        let input = request(connection_id);
+        let plan = plan_mission(
+            &f.state,
+            f.ids.corp_id,
+            MissionPlanInput::from_create_request(&input, f.ids.alice_actor_id),
+        )
+        .await
+        .unwrap();
+        assert_eq!(plan.staffing.len(), 1);
+        let agent = plan.tasks[0].assigned_agent_id;
+        let (mission, _) = f
+            .state
+            .store
+            .create_mission(
+                f.ids.corp_id,
+                f.ids.alice_actor_id,
+                &input.title,
+                &input.description,
+                &plan,
+            )
+            .await?;
+        let actual_room: Uuid = sqlx::query_scalar("SELECT room_id FROM missions WHERE id=$1")
+            .bind(mission.mission_id)
+            .fetch_one(&pool)
+            .await?;
+        assert_eq!(actual_room, room_id);
+        sqlx::query("UPDATE tasks SET status='completed' WHERE mission_id=$1")
+            .bind(mission.mission_id)
+            .execute(&pool)
+            .await?;
+        sqlx::query("UPDATE missions SET status='completed' WHERE id=$1")
+            .bind(mission.mission_id)
+            .execute(&pool)
+            .await?;
+        pins.push(agent);
+    }
+    for &agent_id in &pins {
+        f.state
+            .store
+            .set_agent_pin(crony_store::SetAgentPinInput {
+                corp_id: f.ids.corp_id,
+                agent_id,
+                actor_id: f.ids.alice_actor_id,
+                pinned: true,
+                expected_version: 0,
+                idempotency_key: Uuid::new_v4(),
+            })
+            .await?;
+    }
+    let defaults = f
+        .state
+        .store
+        .agents_for_planning(f.ids.corp_id, f.ids.alice_actor_id, None)
+        .await?;
+    assert!(defaults.iter().any(|agent| agent.id == pins[0]));
+    assert!(!defaults.iter().any(|agent| agent.id == pins[1]));
+    let input = request(second_connection);
+    let plan = plan_mission(
+        &f.state,
+        f.ids.corp_id,
+        MissionPlanInput::from_create_request(&input, f.ids.alice_actor_id),
+    )
+    .await
+    .unwrap();
+    assert!(
+        plan.staffing.is_empty(),
+        "reuse the destination's pinned worker"
+    );
+    assert_eq!(plan.tasks[0].assigned_agent_id, pins[1]);
+    let (mission, _) = f
+        .state
+        .store
+        .create_mission(
+            f.ids.corp_id,
+            f.ids.alice_actor_id,
+            &input.title,
+            &input.description,
+            &plan,
+        )
+        .await?;
+    let actual_room: Uuid = sqlx::query_scalar("SELECT room_id FROM missions WHERE id=$1")
+        .bind(mission.mission_id)
+        .fetch_one(&pool)
+        .await?;
+    assert_eq!(actual_room, second_room);
+    assert!(
+        f.state
+            .store
+            .agents_for_planning(f.ids.corp_id, f.ids.bob_actor_id, Some(second_room),)
+            .await
+            .is_err(),
+        "membership in the oldest room does not authorize another room"
+    );
+    assert!(
+        f.state
+            .store
+            .agents_for_planning(Uuid::new_v4(), f.ids.alice_actor_id, Some(second_room),)
+            .await
+            .is_err(),
+        "room membership does not authorize another Corp"
+    );
+    sqlx::query("DELETE FROM room_memberships WHERE room_id=$1 AND actor_id=$2")
+        .bind(second_room)
+        .bind(f.ids.alice_actor_id)
+        .execute(&pool)
+        .await?;
+    let error = plan_mission(
+        &f.state,
+        f.ids.corp_id,
+        MissionPlanInput::from_create_request(&input, f.ids.alice_actor_id),
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(error.status, StatusCode::FORBIDDEN);
+    f.finish().await;
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
 async fn issue79_claim_handler_and_preflight_reject_cost_without_durable_effects(
     pool: PgPool,
 ) -> Result<()> {

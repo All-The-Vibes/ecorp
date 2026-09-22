@@ -1,0 +1,1853 @@
+{
+  "snapshot": {
+    "corp": {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "slug": "ecorp-demo",
+      "name": "ECorp Operations Network",
+      "created_at": "2026-09-22T21:17:01.402901Z"
+    },
+    "actors": [
+      {
+        "id": "00000000-0000-4000-8000-000000000011",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "name": "Alice",
+        "kind": "human",
+        "role": "owner",
+        "created_at": "2026-09-22T21:17:01.402901Z"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000012",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "name": "Bob",
+        "kind": "human",
+        "role": "member",
+        "created_at": "2026-09-22T21:17:01.402901Z"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000013",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "name": "Eve",
+        "kind": "human",
+        "role": "guest",
+        "created_at": "2026-09-22T21:17:01.402901Z"
+      },
+      {
+        "id": "78827d1a-73ac-4fdc-b10b-9a93cf27bca2",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "name": "Delivery engineer",
+        "kind": "agent",
+        "role": "engineer",
+        "created_at": "2026-09-22T21:20:16.571098Z"
+      }
+    ],
+    "rooms": [
+      {
+        "id": "00000000-0000-4000-8000-000000000041",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "name": "Automation Division",
+        "purpose": "Governed workspace for human and autonomous operations",
+        "created_at": "2026-09-22T21:17:01.402901Z"
+      }
+    ],
+    "agents": [
+      {
+        "id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "actor_id": "78827d1a-73ac-4fdc-b10b-9a93cf27bca2",
+        "name": "Delivery engineer",
+        "role": "engineer",
+        "adapter": "fake-process",
+        "status": "idle",
+        "station": null,
+        "current_run_id": null,
+        "accent": "cobalt",
+        "created_at": "2026-09-22T21:20:16.571098Z",
+        "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "pinned": false,
+        "pin_version": 4,
+        "retired_at": "2026-09-22T21:20:42.899010Z"
+      }
+    ],
+    "missions": [
+      {
+        "id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "issue48 pinned identity reused",
+        "description": "",
+        "specification_version": 1,
+        "strategy": "single",
+        "max_nodes": 1,
+        "max_depth": 0,
+        "original_budget_tokens": 80000,
+        "original_budget_cost_microusd": 1000000,
+        "budget_tokens": 80000,
+        "budget_cost_microusd": 1000000,
+        "status": "completed",
+        "created_at": "2026-09-22T21:20:31.047217Z",
+        "updated_at": "2026-09-22T21:20:41.710768Z"
+      },
+      {
+        "id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[approval-action] issue48 native retention",
+        "description": "",
+        "specification_version": 1,
+        "strategy": "single",
+        "max_nodes": 1,
+        "max_depth": 0,
+        "original_budget_tokens": 80000,
+        "original_budget_cost_microusd": 1000000,
+        "budget_tokens": 80000,
+        "budget_cost_microusd": 1000000,
+        "status": "completed",
+        "created_at": "2026-09-22T21:20:16.571098Z",
+        "updated_at": "2026-09-22T21:20:30.687526Z"
+      }
+    ],
+    "mission_contract_revisions": [],
+    "mission_budget_revisions": [],
+    "tasks": [
+      {
+        "id": "9675effd-dd0e-4054-8575-94e617d1ad80",
+        "mission_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "title": "Produce the mission outcome",
+        "objective": "Complete the mission outcome: issue48 pinned identity reused",
+        "plan_key": "deliver",
+        "contract": {
+          "objective": "Complete the mission outcome: issue48 pinned identity reused",
+          "expected_output": "A source-backed, verified mission artifact",
+          "source_repository": "ecorp-fixture/pr359-agent-pinning",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "5207508b468840844384ebc718cec223f184852a",
+          "acceptance_tests": [
+            "the declared artifact exists",
+            "the task reports concrete verification evidence"
+          ],
+          "allowed_tools": [
+            "filesystem",
+            "shell"
+          ],
+          "prohibited_actions": [
+            "modify files outside the assigned worktree",
+            "use undeclared long-lived credentials"
+          ],
+          "references": [],
+          "write_scope": [
+            "**"
+          ],
+          "budget_tokens": 80000,
+          "budget_cost_microusd": 1000000,
+          "deadline_at": null,
+          "escalation": "ask the current human controller or mission owner",
+          "secret_refs": [],
+          "model": null,
+          "reasoning_effort": null,
+          "deliverable": null
+        },
+        "contract_version": 1,
+        "depth": 0,
+        "max_attempts": 2,
+        "attempt_count": 1,
+        "required_adapter": "fake-process",
+        "depends_on": [],
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "result.md",
+              "min_bytes": 1
+            }
+          ],
+          "manual_gate": null
+        },
+        "verification_status": "passed",
+        "status": "completed",
+        "assigned_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "created_at": "2026-09-22T21:20:31.047217Z",
+        "updated_at": "2026-09-22T21:20:41.710768Z"
+      },
+      {
+        "id": "f25c3122-ec81-4cad-bde9-f3a528a7bcde",
+        "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "title": "Produce the mission outcome",
+        "objective": "Complete the mission outcome: [approval-action] issue48 native retention",
+        "plan_key": "deliver",
+        "contract": {
+          "objective": "Complete the mission outcome: [approval-action] issue48 native retention",
+          "expected_output": "A source-backed, verified mission artifact",
+          "source_repository": "ecorp-fixture/pr359-agent-pinning",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "5207508b468840844384ebc718cec223f184852a",
+          "acceptance_tests": [
+            "the declared artifact exists",
+            "the task reports concrete verification evidence"
+          ],
+          "allowed_tools": [
+            "filesystem",
+            "shell"
+          ],
+          "prohibited_actions": [
+            "modify files outside the assigned worktree",
+            "use undeclared long-lived credentials"
+          ],
+          "references": [],
+          "write_scope": [
+            "**"
+          ],
+          "budget_tokens": 80000,
+          "budget_cost_microusd": 1000000,
+          "deadline_at": null,
+          "escalation": "ask the current human controller or mission owner",
+          "secret_refs": [],
+          "model": null,
+          "reasoning_effort": null,
+          "deliverable": null
+        },
+        "contract_version": 1,
+        "depth": 0,
+        "max_attempts": 2,
+        "attempt_count": 1,
+        "required_adapter": "fake-process",
+        "depends_on": [],
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "result.md",
+              "min_bytes": 1
+            }
+          ],
+          "manual_gate": null
+        },
+        "verification_status": "passed",
+        "status": "completed",
+        "assigned_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "created_at": "2026-09-22T21:20:16.571098Z",
+        "updated_at": "2026-09-22T21:20:30.687526Z"
+      }
+    ],
+    "runs": [
+      {
+        "id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "task_id": "9675effd-dd0e-4054-8575-94e617d1ad80",
+        "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "runner_id": "runner-issue48-42269426",
+        "provider_session_id": null,
+        "resumed_from_run_id": null,
+        "workspace_run_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "model": null,
+        "reasoning_effort": null,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cost_microusd": 0,
+        "budget_tokens_limit": 80000,
+        "budget_cost_microusd_limit": 1000000,
+        "breaker_stage": "healthy",
+        "no_progress_events": 0,
+        "repeated_tool_count": 0,
+        "source_repository": "ecorp-fixture/pr359-agent-pinning",
+        "source_base_ref": "HEAD",
+        "source_base_commit": "5207508b468840844384ebc718cec223f184852a",
+        "workspace_path": "<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r3\\runner\\worktrees\\9675effddd0e4054857594e617d1ad80\\e14b55845e63478c985ddfb1367a2829",
+        "workspace_branch": "crony/task-9675effddd0e4054857594e617d1ad80/run-e14b55845e63478c985ddfb1367a2829",
+        "workspace_base_ref": "HEAD",
+        "workspace_base_commit": "5207508b468840844384ebc718cec223f184852a",
+        "workspace_disposition": "preserved",
+        "workspace_detail": "working tree contains uncommitted or untracked changes",
+        "workspace_fingerprint": "dc8a547c4be85d53e671fdba42845846282cf7269a71a48dd3c5fb9b5da143d9",
+        "execution_mode": "provider",
+        "verification_status": "passed",
+        "verification_summary": "all 2 verifier checks passed",
+        "verification_sha256": null,
+        "deliverable_sha256": null,
+        "status": "completed",
+        "summary": "Created and verified result.md through the runner-owned child process.",
+        "artifact_id": "1cb3745d-1b76-467b-9912-ad1a7ca5cc10",
+        "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/1cb3745d-1b76-467b-9912-ad1a7ca5cc10",
+        "artifact_media_type": "text/markdown",
+        "artifact_signature": "563a14dde6d07c87ac09ce9d72aeedc1baa9af3bc28f3f443b99f51dd7ea49ef",
+        "artifact_sha256": "f30c83aa2a394a98ad9aa2d03c2b975acbae614ea4ed240dedfedffeafab22f1",
+        "created_at": "2026-09-22T21:20:37.839250Z",
+        "updated_at": "2026-09-22T21:20:42.129154Z"
+      },
+      {
+        "id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "task_id": "f25c3122-ec81-4cad-bde9-f3a528a7bcde",
+        "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "runner_id": "runner-issue48-42269426",
+        "provider_session_id": null,
+        "resumed_from_run_id": null,
+        "workspace_run_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "model": null,
+        "reasoning_effort": null,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cost_microusd": 0,
+        "budget_tokens_limit": 80000,
+        "budget_cost_microusd_limit": 1000000,
+        "breaker_stage": "healthy",
+        "no_progress_events": 0,
+        "repeated_tool_count": 0,
+        "source_repository": "ecorp-fixture/pr359-agent-pinning",
+        "source_base_ref": "HEAD",
+        "source_base_commit": "5207508b468840844384ebc718cec223f184852a",
+        "workspace_path": "<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r3\\runner\\worktrees\\f25c3122ec814cadbde9f3a528a7bcde\\2529ec046ea740e0b5c8cd43b7b3402e",
+        "workspace_branch": "crony/task-f25c3122ec814cadbde9f3a528a7bcde/run-2529ec046ea740e0b5c8cd43b7b3402e",
+        "workspace_base_ref": "HEAD",
+        "workspace_base_commit": "5207508b468840844384ebc718cec223f184852a",
+        "workspace_disposition": "preserved",
+        "workspace_detail": "working tree contains uncommitted or untracked changes",
+        "workspace_fingerprint": "6f439151ae4e62ae02e347593239edf84a1debef5634b85949b41539acf52ad9",
+        "execution_mode": "provider",
+        "verification_status": "passed",
+        "verification_summary": "all 2 verifier checks passed",
+        "verification_sha256": null,
+        "deliverable_sha256": null,
+        "status": "completed",
+        "summary": "Created and verified result.md through the runner-owned child process.",
+        "artifact_id": "04862847-7b65-42fe-b782-54f0f861fdd1",
+        "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/04862847-7b65-42fe-b782-54f0f861fdd1",
+        "artifact_media_type": "text/markdown",
+        "artifact_signature": "f3862ec3d1e67bb9678f39d3b92e765c54fee2443add1e003ef6192c36535889",
+        "artifact_sha256": "b2864061d91c4f7b7ae845f6929e5ae76f294e14d8962f9ba7b7bc5761f03a08",
+        "created_at": "2026-09-22T21:20:21.527242Z",
+        "updated_at": "2026-09-22T21:20:31.026724Z"
+      }
+    ],
+    "room_messages": [],
+    "leases": [],
+    "queued_messages": [
+      {
+        "id": "5ab06992-620a-4cb9-87bb-0e851d8a6473",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "text": "Retain for the next assigned mission; this is not a task.",
+        "status": "delivered",
+        "created_at": "2026-09-22T21:20:23.241970Z"
+      }
+    ],
+    "verification_evidence": [
+      {
+        "id": "c3ddfd13-9bbe-4f76-a24e-688776bf9721",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "task_id": "f25c3122-ec81-4cad-bde9-f3a528a7bcde",
+        "run_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "check_index": 0,
+        "kind": "artifact",
+        "status": "passed",
+        "summary": "durable artifact 04862847-7b65-42fe-b782-54f0f861fdd1 has 1368 verified bytes",
+        "payload": {
+          "artifact_id": "04862847-7b65-42fe-b782-54f0f861fdd1",
+          "bytes": 1368,
+          "media_type": "text/markdown",
+          "producer_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+          "producer_runner_id": "runner-issue48-42269426",
+          "provenance_signature": "f3862ec3d1e67bb9678f39d3b92e765c54fee2443add1e003ef6192c36535889",
+          "retention_until": "2026-10-22T21:20:29.977283Z",
+          "sha256": "b2864061d91c4f7b7ae845f6929e5ae76f294e14d8962f9ba7b7bc5761f03a08",
+          "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/04862847-7b65-42fe-b782-54f0f861fdd1",
+          "verifier": "crony-server:artifact-ingest-v1"
+        },
+        "created_at": "2026-09-22T21:20:30.516556Z"
+      },
+      {
+        "id": "079d9ba0-9631-474f-80af-369bfa5b30ea",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "task_id": "f25c3122-ec81-4cad-bde9-f3a528a7bcde",
+        "run_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "check_index": 1,
+        "kind": "file",
+        "status": "passed",
+        "summary": "result.md exists with 1368 bytes",
+        "payload": {
+          "bytes": 1368,
+          "path": "result.md",
+          "sha256": "b2864061d91c4f7b7ae845f6929e5ae76f294e14d8962f9ba7b7bc5761f03a08"
+        },
+        "created_at": "2026-09-22T21:20:30.551078Z"
+      },
+      {
+        "id": "8aff15f6-696f-4c27-a514-4fe54784fabd",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "task_id": "9675effd-dd0e-4054-8575-94e617d1ad80",
+        "run_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "check_index": 0,
+        "kind": "artifact",
+        "status": "passed",
+        "summary": "durable artifact 1cb3745d-1b76-467b-9912-ad1a7ca5cc10 has 1618 verified bytes",
+        "payload": {
+          "artifact_id": "1cb3745d-1b76-467b-9912-ad1a7ca5cc10",
+          "bytes": 1618,
+          "media_type": "text/markdown",
+          "producer_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+          "producer_runner_id": "runner-issue48-42269426",
+          "provenance_signature": "563a14dde6d07c87ac09ce9d72aeedc1baa9af3bc28f3f443b99f51dd7ea49ef",
+          "retention_until": "2026-10-22T21:20:41.133980Z",
+          "sha256": "f30c83aa2a394a98ad9aa2d03c2b975acbae614ea4ed240dedfedffeafab22f1",
+          "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/1cb3745d-1b76-467b-9912-ad1a7ca5cc10",
+          "verifier": "crony-server:artifact-ingest-v1"
+        },
+        "created_at": "2026-09-22T21:20:41.651330Z"
+      },
+      {
+        "id": "3814bb61-e15c-489d-bdf2-640d2f006d3f",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "task_id": "9675effd-dd0e-4054-8575-94e617d1ad80",
+        "run_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "check_index": 1,
+        "kind": "file",
+        "status": "passed",
+        "summary": "result.md exists with 1618 bytes",
+        "payload": {
+          "bytes": 1618,
+          "path": "result.md",
+          "sha256": "f30c83aa2a394a98ad9aa2d03c2b975acbae614ea4ed240dedfedffeafab22f1"
+        },
+        "created_at": "2026-09-22T21:20:41.681908Z"
+      }
+    ],
+    "verification_requests": [],
+    "source_deliverables": [],
+    "pull_request_publications": [],
+    "pull_request_publication_attempts": [],
+    "action_approvals": [
+      {
+        "id": "1e680475-c383-4e18-823d-c972fbe72321",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "task_id": "f25c3122-ec81-4cad-bde9-f3a528a7bcde",
+        "run_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "action_key": "publish-release",
+        "action": "Publish the prepared release artifact",
+        "risk": "high",
+        "rationale": "Publishing is an externally visible side effect.",
+        "required_roles": [
+          "owner",
+          "admin",
+          "member"
+        ],
+        "status": "approved",
+        "expires_at": "2026-09-22T21:25:23.048142Z",
+        "created_at": "2026-09-22T21:20:23.027077Z",
+        "decided_by": "00000000-0000-4000-8000-000000000012",
+        "decision_note": "Owned deterministic fixture approval",
+        "decided_at": "2026-09-22T21:20:28.109178Z"
+      }
+    ],
+    "circuit_breaker_incidents": [],
+    "factory_work_items": [],
+    "factory_controllers": [],
+    "factory_verification_recoveries": [],
+    "events": [
+      {
+        "seq": 1,
+        "id": "b026d0a0-2f0f-484b-98b8-6eee33fa4e31",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "corp.demo_bootstrapped",
+        "aggregate_type": "corp",
+        "aggregate_id": "00000000-0000-4000-8000-000000000001",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "demo-bootstrap-v1",
+        "visibility": "corp",
+        "payload": {
+          "actors": [
+            "Alice",
+            "Bob",
+            "Eve"
+          ],
+          "name": "ECorp Operations Network",
+          "seed_crew": false
+        },
+        "created_at": "2026-09-22T21:17:01.402901Z"
+      },
+      {
+        "seq": 2,
+        "id": "1fa4d678-5d65-4d5f-a17c-a69007089910",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "runner.enrollment_created",
+        "aggregate_type": "runner_enrollment",
+        "aggregate_id": "537b2934-2b59-4ad6-852a-4872002eb006",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "runner-enrollment-created:537b2934-2b59-4ad6-852a-4872002eb006",
+        "visibility": "corp",
+        "payload": {
+          "expires_at": "2026-09-22T21:32:01.459798800Z",
+          "runner_id": "runner-issue48-42269426"
+        },
+        "created_at": "2026-09-22T21:17:01.460356Z"
+      },
+      {
+        "seq": 3,
+        "id": "be7a8fc9-05ca-4e5c-8cc3-078bf40b1b81",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "runner.enrolled",
+        "aggregate_type": "runner",
+        "aggregate_id": "cfe4fdc3-5910-46f1-9707-2a1058363caa",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "runner.enrolled:cfe4fdc3-5910-46f1-9707-2a1058363caa:392a0b4c-62e5-4b58-8656-b67495ad5090",
+        "visibility": "corp",
+        "payload": {
+          "credential_expires_at": "2026-09-22T23:17:04.693939500Z",
+          "runner_id": "runner-issue48-42269426"
+        },
+        "created_at": "2026-09-22T21:17:04.694313Z"
+      },
+      {
+        "seq": 5,
+        "id": "b4edd034-6e55-4834-92ae-24669e18e9df",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "mission.created",
+        "aggregate_type": "mission",
+        "aggregate_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "mission:4ab4c606-f0fc-4beb-9a47-bf7789b96385:created",
+        "visibility": "corp",
+        "payload": {
+          "budget_cost_microusd": 1000000,
+          "budget_tokens": 80000,
+          "description_bytes": 0,
+          "description_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "max_depth": 0,
+          "max_nodes": 1,
+          "specification_version": 1,
+          "status": "ready",
+          "strategy": "single",
+          "title": "[approval-action] issue48 native retention"
+        },
+        "created_at": "2026-09-22T21:20:16.571098Z"
+      },
+      {
+        "seq": 6,
+        "id": "3466f35e-a07e-4ad6-b0cc-915324b620c7",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "agent.staffed",
+        "aggregate_type": "agent",
+        "aggregate_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "agent:6800a644-9fe9-4ab7-916f-be33ac18f653:staffed",
+        "visibility": "corp",
+        "payload": {
+          "actor_id": "78827d1a-73ac-4fdc-b10b-9a93cf27bca2",
+          "adapter": "fake-process",
+          "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+          "name": "Delivery engineer",
+          "pinned": false,
+          "role": "engineer"
+        },
+        "created_at": "2026-09-22T21:20:16.571098Z"
+      },
+      {
+        "seq": 7,
+        "id": "8b3902d2-f906-4354-b290-fcfd9591436e",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "task.created",
+        "aggregate_type": "task",
+        "aggregate_id": "f25c3122-ec81-4cad-bde9-f3a528a7bcde",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": "b4edd034-6e55-4834-92ae-24669e18e9df",
+        "idempotency_key": "task:f25c3122-ec81-4cad-bde9-f3a528a7bcde:created",
+        "visibility": "corp",
+        "payload": {
+          "assigned_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+          "budget_tokens": 80000,
+          "depends_on": [],
+          "depth": 0,
+          "max_attempts": 2,
+          "plan_key": "deliver",
+          "required_adapter": "fake-process",
+          "status": "ready",
+          "title": "Produce the mission outcome"
+        },
+        "created_at": "2026-09-22T21:20:16.571098Z"
+      },
+      {
+        "seq": 8,
+        "id": "fe0e0395-141c-46d9-95e1-9ad4448eaf29",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "mission.planned",
+        "aggregate_type": "mission",
+        "aggregate_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": "b4edd034-6e55-4834-92ae-24669e18e9df",
+        "idempotency_key": "mission:4ab4c606-f0fc-4beb-9a47-bf7789b96385:planned",
+        "visibility": "corp",
+        "payload": {
+          "strategy": "single",
+          "task_count": 1,
+          "task_ids": [
+            "f25c3122-ec81-4cad-bde9-f3a528a7bcde"
+          ]
+        },
+        "created_at": "2026-09-22T21:20:16.571098Z"
+      },
+      {
+        "seq": 10,
+        "id": "1495d7ca-b07f-48a3-afe4-9e6967c5ebdd",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "agent.pinned",
+        "aggregate_type": "agent",
+        "aggregate_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "agent-pin:3921bbfa-cdd0-4b32-96b1-025738e7e8c9",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+          "pin_version": 1,
+          "pinned": true,
+          "previous_pinned": false,
+          "request": {
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+            "expected_version": 0,
+            "pinned": true
+          }
+        },
+        "created_at": "2026-09-22T21:20:20.522137Z"
+      },
+      {
+        "seq": 11,
+        "id": "e063b50c-c5db-4ab5-88b7-114a8837b12c",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "run.requested",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "run:2529ec04-6ea7-40e0-b5c8-cd43b7b3402e:requested",
+        "visibility": "corp",
+        "payload": {
+          "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+          "attempt": 1,
+          "max_attempts": 2,
+          "mission_launch": true,
+          "model": null,
+          "reasoning_effort": null,
+          "runner_id": "runner-issue48-42269426",
+          "status": "starting",
+          "task_id": "f25c3122-ec81-4cad-bde9-f3a528a7bcde"
+        },
+        "created_at": "2026-09-22T21:20:21.527242Z"
+      },
+      {
+        "seq": 12,
+        "id": "9493416d-35d0-406e-94d6-5f3df95361b3",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.started",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:9493416d-35d0-406e-94d6-5f3df95361b3",
+        "visibility": "corp",
+        "payload": {
+          "adapter": "fake-process",
+          "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "task_id": "f25c3122-ec81-4cad-bde9-f3a528a7bcde",
+          "workspace": "<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r3\\runner\\worktrees\\f25c3122ec814cadbde9f3a528a7bcde\\2529ec046ea740e0b5c8cd43b7b3402e",
+          "workspace_base_commit": "5207508b468840844384ebc718cec223f184852a",
+          "workspace_base_ref": "HEAD",
+          "workspace_branch": "crony/task-f25c3122ec814cadbde9f3a528a7bcde/run-2529ec046ea740e0b5c8cd43b7b3402e"
+        },
+        "created_at": "2026-09-22T21:20:22.206536Z"
+      },
+      {
+        "seq": 13,
+        "id": "956a6fea-e184-4c4b-b4fd-17118e1e0bdb",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.status",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:956a6fea-e184-4c4b-b4fd-17118e1e0bdb",
+        "visibility": "corp",
+        "payload": {
+          "message": "Reading the mission contract",
+          "station": "briefing",
+          "status": "working"
+        },
+        "created_at": "2026-09-22T21:20:22.314396Z"
+      },
+      {
+        "seq": 14,
+        "id": "b0273743-6e88-4ca3-a4eb-8d36ee56d976",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.approval_requested",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:b0273743-6e88-4ca3-a4eb-8d36ee56d976",
+        "visibility": "corp",
+        "payload": {
+          "action": "Publish the prepared release artifact",
+          "action_key": "publish-release",
+          "approval_id": "1e680475-c383-4e18-823d-c972fbe72321",
+          "expires_in_seconds": 300,
+          "rationale": "Publishing is an externally visible side effect.",
+          "required_roles": [
+            "owner",
+            "admin",
+            "member"
+          ],
+          "risk": "high"
+        },
+        "created_at": "2026-09-22T21:20:23.027077Z"
+      },
+      {
+        "seq": 15,
+        "id": "20087b2a-5f47-41ac-956c-6d4e408f8fea",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "control.lease_acquired",
+        "aggregate_type": "agent",
+        "aggregate_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "lease-acquire:6800a644-9fe9-4ab7-916f-be33ac18f653:0bd1c707-ac00-428c-860e-a6ca967f395e",
+        "visibility": "corp",
+        "payload": {
+          "actor_id": "00000000-0000-4000-8000-000000000012",
+          "expires_at": "2026-09-22T21:25:23.226608Z"
+        },
+        "created_at": "2026-09-22T21:20:23.223731Z"
+      },
+      {
+        "seq": 16,
+        "id": "e10c8588-298e-44c1-afde-767cad10838f",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "control.message_queued",
+        "aggregate_type": "agent",
+        "aggregate_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "control-message:5ab06992-620a-4cb9-87bb-0e851d8a6473",
+        "visibility": "corp",
+        "payload": {
+          "delivery": "queued",
+          "message_id": "5ab06992-620a-4cb9-87bb-0e851d8a6473",
+          "text": "Retain for the next assigned mission; this is not a task."
+        },
+        "created_at": "2026-09-22T21:20:23.241970Z"
+      },
+      {
+        "seq": 18,
+        "id": "3d6dc643-491d-48c3-ab83-a77a0c78d8c7",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "agent.unpinned",
+        "aggregate_type": "agent",
+        "aggregate_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "aggregate_version": 2,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "agent-pin:41d49d9b-2b89-4144-9eac-b72b1de93bbc",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+          "pin_version": 2,
+          "pinned": false,
+          "previous_pinned": true,
+          "request": {
+            "actor_id": "00000000-0000-4000-8000-000000000012",
+            "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+            "expected_version": 1,
+            "pinned": false
+          }
+        },
+        "created_at": "2026-09-22T21:20:25.975264Z"
+      },
+      {
+        "seq": 19,
+        "id": "4103dfe5-89a1-4f7b-9c5b-21e323b8bf6a",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "agent.pinned",
+        "aggregate_type": "agent",
+        "aggregate_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "aggregate_version": 3,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "agent-pin:4631df7d-a9d7-4095-a5ad-2d4d1e03d730",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+          "pin_version": 3,
+          "pinned": true,
+          "previous_pinned": false,
+          "request": {
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+            "expected_version": 2,
+            "pinned": true
+          }
+        },
+        "created_at": "2026-09-22T21:20:27.991768Z"
+      },
+      {
+        "seq": 20,
+        "id": "8346c0c3-fa96-4046-a9ed-f63091372776",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "approval.decided",
+        "aggregate_type": "approval",
+        "aggregate_id": "1e680475-c383-4e18-823d-c972fbe72321",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "approval-decision-event:1e680475-c383-4e18-823d-c972fbe72321:ca07e2fd-2322-4b96-9a7b-373bc38825ce",
+        "visibility": "corp",
+        "payload": {
+          "command_id": "ae02e8e7-2d6b-49de-b689-b818b7ee51cf",
+          "decision_note": "Owned deterministic fixture approval",
+          "run_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+          "status": "approved"
+        },
+        "created_at": "2026-09-22T21:20:28.109178Z"
+      },
+      {
+        "seq": 21,
+        "id": "f72f22c4-2af4-4842-ae45-2b52d365f445",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "runner.command_acknowledged",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner-command-ack:ae02e8e7-2d6b-49de-b689-b818b7ee51cf",
+        "visibility": "corp",
+        "payload": {
+          "command_id": "ae02e8e7-2d6b-49de-b689-b818b7ee51cf",
+          "command_kind": "approval_decision",
+          "message_id": null,
+          "runner_id": "runner-issue48-42269426"
+        },
+        "created_at": "2026-09-22T21:20:28.142834Z"
+      },
+      {
+        "seq": 22,
+        "id": "7e23a476-5629-4aed-867e-f61ccabc3d37",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.status",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:7e23a476-5629-4aed-867e-f61ccabc3d37",
+        "visibility": "corp",
+        "payload": {
+          "message": "Authorized action resumed exactly once",
+          "station": "terminal",
+          "status": "working"
+        },
+        "created_at": "2026-09-22T21:20:28.155437Z"
+      },
+      {
+        "seq": 23,
+        "id": "1ecd9b13-fec6-414a-af59-64da90dd7622",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.output",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:1ecd9b13-fec6-414a-af59-64da90dd7622",
+        "visibility": "corp",
+        "payload": {
+          "stream": "stdout",
+          "text": "Mission accepted: MISSION: [approval-action] issue48 native retention\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/pr359-agent-pinning\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: 5207508b468840844384ebc718cec223f184852a\nOBJECTIVE: Complete the mission outcome: [approval-action] issue48 native retention\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 80000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: none\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+        },
+        "created_at": "2026-09-22T21:20:28.191548Z"
+      },
+      {
+        "seq": 24,
+        "id": "e634cbe7-74a6-4377-99c9-1e39bbab5eb2",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.status",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:e634cbe7-74a6-4377-99c9-1e39bbab5eb2",
+        "visibility": "corp",
+        "payload": {
+          "message": "Collecting evidence and constraints",
+          "station": "research",
+          "status": "working"
+        },
+        "created_at": "2026-09-22T21:20:28.195123Z"
+      },
+      {
+        "seq": 25,
+        "id": "bf7cfdab-dc18-4ae5-800b-986437f78de9",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.status",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:bf7cfdab-dc18-4ae5-800b-986437f78de9",
+        "visibility": "corp",
+        "payload": {
+          "message": "Producing the artifact in an isolated workspace",
+          "station": "terminal",
+          "status": "working"
+        },
+        "created_at": "2026-09-22T21:20:29.054304Z"
+      },
+      {
+        "seq": 26,
+        "id": "264e8cc1-f00c-4086-99e0-a19519c75cb6",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.artifact",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "artifact:04862847-7b65-42fe-b782-54f0f861fdd1:ready",
+        "visibility": "corp",
+        "payload": {
+          "artifact_id": "04862847-7b65-42fe-b782-54f0f861fdd1",
+          "artifact_role": "provider_evidence",
+          "bytes": 1368,
+          "file_name": "result.md",
+          "media_type": "text/markdown",
+          "metadata": {
+            "workspace_relative_path": "result.md"
+          },
+          "producer_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+          "producer_runner_id": "runner-issue48-42269426",
+          "provenance_signature": "f3862ec3d1e67bb9678f39d3b92e765c54fee2443add1e003ef6192c36535889",
+          "retention_until": "2026-10-22T21:20:29.977283Z",
+          "sha256": "b2864061d91c4f7b7ae845f6929e5ae76f294e14d8962f9ba7b7bc5761f03a08",
+          "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/04862847-7b65-42fe-b782-54f0f861fdd1",
+          "verifier": "crony-server:artifact-ingest-v1"
+        },
+        "created_at": "2026-09-22T21:20:30.017302Z"
+      },
+      {
+        "seq": 27,
+        "id": "28905b2f-c658-4751-8b35-f950ad61135b",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.session_terminated",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:28905b2f-c658-4751-8b35-f950ad61135b",
+        "visibility": "corp",
+        "payload": {
+          "adapter": "fake-process",
+          "message": "Provider session stopped; no idle agent process remains.",
+          "outcome": "completed",
+          "provider_process_alive": false
+        },
+        "created_at": "2026-09-22T21:20:30.481052Z"
+      },
+      {
+        "seq": 28,
+        "id": "8f75185e-5bf4-4d44-aa20-cf23f38e6533",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.verification_started",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:8f75185e-5bf4-4d44-aa20-cf23f38e6533",
+        "visibility": "corp",
+        "payload": {
+          "check_count": 2
+        },
+        "created_at": "2026-09-22T21:20:30.485353Z"
+      },
+      {
+        "seq": 29,
+        "id": "aa2d6c5a-1305-4d0b-ba27-d5afc42d43f1",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.verification_evidence",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:aa2d6c5a-1305-4d0b-ba27-d5afc42d43f1",
+        "visibility": "corp",
+        "payload": {
+          "check_index": 0,
+          "evidence_id": "c3ddfd13-9bbe-4f76-a24e-688776bf9721",
+          "kind": "artifact",
+          "payload": {
+            "artifact_id": "04862847-7b65-42fe-b782-54f0f861fdd1",
+            "bytes": 1368,
+            "media_type": "text/markdown",
+            "producer_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+            "producer_runner_id": "runner-issue48-42269426",
+            "provenance_signature": "f3862ec3d1e67bb9678f39d3b92e765c54fee2443add1e003ef6192c36535889",
+            "retention_until": "2026-10-22T21:20:29.977283Z",
+            "sha256": "b2864061d91c4f7b7ae845f6929e5ae76f294e14d8962f9ba7b7bc5761f03a08",
+            "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/04862847-7b65-42fe-b782-54f0f861fdd1",
+            "verifier": "crony-server:artifact-ingest-v1"
+          },
+          "status": "passed",
+          "summary": "durable artifact 04862847-7b65-42fe-b782-54f0f861fdd1 has 1368 verified bytes"
+        },
+        "created_at": "2026-09-22T21:20:30.516556Z"
+      },
+      {
+        "seq": 30,
+        "id": "65a8fac5-23f4-4812-b68e-ee65d8ff6e6c",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.verification_evidence",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:65a8fac5-23f4-4812-b68e-ee65d8ff6e6c",
+        "visibility": "corp",
+        "payload": {
+          "check_index": 1,
+          "evidence_id": "079d9ba0-9631-474f-80af-369bfa5b30ea",
+          "kind": "file",
+          "payload": {
+            "bytes": 1368,
+            "path": "result.md",
+            "sha256": "b2864061d91c4f7b7ae845f6929e5ae76f294e14d8962f9ba7b7bc5761f03a08"
+          },
+          "status": "passed",
+          "summary": "result.md exists with 1368 bytes"
+        },
+        "created_at": "2026-09-22T21:20:30.551078Z"
+      },
+      {
+        "seq": 31,
+        "id": "fbcfd3d2-a7e9-4081-86e9-c9998c426248",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.verification_passed",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:fbcfd3d2-a7e9-4081-86e9-c9998c426248",
+        "visibility": "corp",
+        "payload": {
+          "summary": "all 2 verifier checks passed"
+        },
+        "created_at": "2026-09-22T21:20:30.657379Z"
+      },
+      {
+        "seq": 32,
+        "id": "303f4e2c-e587-4ea8-8dfe-6d0004aba5ba",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.completed",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:303f4e2c-e587-4ea8-8dfe-6d0004aba5ba",
+        "visibility": "corp",
+        "payload": {
+          "summary": "Created and verified result.md through the runner-owned child process."
+        },
+        "created_at": "2026-09-22T21:20:30.687526Z"
+      },
+      {
+        "seq": 33,
+        "id": "6861f703-b8db-4bc4-a5a6-6b4cc706de04",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.workspace_preserved",
+        "aggregate_type": "run",
+        "aggregate_id": "2529ec04-6ea7-40e0-b5c8-cd43b7b3402e",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:6861f703-b8db-4bc4-a5a6-6b4cc706de04",
+        "visibility": "corp",
+        "payload": {
+          "branch_deleted": false,
+          "commits_ahead": null,
+          "detail": "working tree contains uncommitted or untracked changes",
+          "dirty": true,
+          "workspace": "<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r3\\runner\\worktrees\\f25c3122ec814cadbde9f3a528a7bcde\\2529ec046ea740e0b5c8cd43b7b3402e",
+          "workspace_base_commit": "5207508b468840844384ebc718cec223f184852a",
+          "workspace_base_ref": "HEAD",
+          "workspace_branch": "crony/task-f25c3122ec814cadbde9f3a528a7bcde/run-2529ec046ea740e0b5c8cd43b7b3402e",
+          "workspace_fingerprint": "6f439151ae4e62ae02e347593239edf84a1debef5634b85949b41539acf52ad9"
+        },
+        "created_at": "2026-09-22T21:20:31.026724Z"
+      },
+      {
+        "seq": 34,
+        "id": "7f475dda-fc4c-406c-bcdc-02554990832b",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": null,
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "type": "control.lease_released",
+        "aggregate_type": "agent",
+        "aggregate_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "aggregate_version": 1,
+        "correlation_id": null,
+        "causation_id": null,
+        "idempotency_key": "lease-release:6800a644-9fe9-4ab7-916f-be33ac18f653:334b4569-3e5e-4140-be3e-82d4fb1fb6c3",
+        "visibility": "corp",
+        "payload": {
+          "actor_id": "00000000-0000-4000-8000-000000000012"
+        },
+        "created_at": "2026-09-22T21:20:31.031842Z"
+      },
+      {
+        "seq": 35,
+        "id": "95d4e409-90f3-4fdf-b0c9-a313e0752b56",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "mission.created",
+        "aggregate_type": "mission",
+        "aggregate_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "mission:d1903111-9e9c-4bf9-9fc7-17683c6e1bba:created",
+        "visibility": "corp",
+        "payload": {
+          "budget_cost_microusd": 1000000,
+          "budget_tokens": 80000,
+          "description_bytes": 0,
+          "description_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "max_depth": 0,
+          "max_nodes": 1,
+          "specification_version": 1,
+          "status": "ready",
+          "strategy": "single",
+          "title": "issue48 pinned identity reused"
+        },
+        "created_at": "2026-09-22T21:20:31.047217Z"
+      },
+      {
+        "seq": 36,
+        "id": "c6a760fe-c7fa-497e-b9b4-7378f93e2e84",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "task.created",
+        "aggregate_type": "task",
+        "aggregate_id": "9675effd-dd0e-4054-8575-94e617d1ad80",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": "95d4e409-90f3-4fdf-b0c9-a313e0752b56",
+        "idempotency_key": "task:9675effd-dd0e-4054-8575-94e617d1ad80:created",
+        "visibility": "corp",
+        "payload": {
+          "assigned_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+          "budget_tokens": 80000,
+          "depends_on": [],
+          "depth": 0,
+          "max_attempts": 2,
+          "plan_key": "deliver",
+          "required_adapter": "fake-process",
+          "status": "ready",
+          "title": "Produce the mission outcome"
+        },
+        "created_at": "2026-09-22T21:20:31.047217Z"
+      },
+      {
+        "seq": 37,
+        "id": "04dd1b67-e4b0-4dd5-9fca-67068521a976",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "mission.planned",
+        "aggregate_type": "mission",
+        "aggregate_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": "95d4e409-90f3-4fdf-b0c9-a313e0752b56",
+        "idempotency_key": "mission:d1903111-9e9c-4bf9-9fc7-17683c6e1bba:planned",
+        "visibility": "corp",
+        "payload": {
+          "strategy": "single",
+          "task_count": 1,
+          "task_ids": [
+            "9675effd-dd0e-4054-8575-94e617d1ad80"
+          ]
+        },
+        "created_at": "2026-09-22T21:20:31.047217Z"
+      },
+      {
+        "seq": 38,
+        "id": "3c6a4fcd-c9bb-40d4-a535-e2a59ffade06",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "agent.unpinned",
+        "aggregate_type": "agent",
+        "aggregate_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "aggregate_version": 4,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "agent-pin:a3d62cb4-266f-49d1-b932-0346d3cdd6e4",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+          "pin_version": 4,
+          "pinned": false,
+          "previous_pinned": true,
+          "request": {
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+            "expected_version": 3,
+            "pinned": false
+          }
+        },
+        "created_at": "2026-09-22T21:20:31.165026Z"
+      },
+      {
+        "seq": 39,
+        "id": "773e71b4-8d19-4d17-8a25-5047b06ff800",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "type": "run.requested",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "run:e14b5584-5e63-478c-985d-dfb1367a2829:requested",
+        "visibility": "corp",
+        "payload": {
+          "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+          "attempt": 1,
+          "max_attempts": 2,
+          "mission_launch": true,
+          "model": null,
+          "reasoning_effort": null,
+          "runner_id": "runner-issue48-42269426",
+          "status": "starting",
+          "task_id": "9675effd-dd0e-4054-8575-94e617d1ad80"
+        },
+        "created_at": "2026-09-22T21:20:37.839250Z"
+      },
+      {
+        "seq": 40,
+        "id": "ca603ded-23b7-4fcd-b7d1-bec7a11e013f",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.started",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:ca603ded-23b7-4fcd-b7d1-bec7a11e013f",
+        "visibility": "corp",
+        "payload": {
+          "adapter": "fake-process",
+          "mission_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "task_id": "9675effd-dd0e-4054-8575-94e617d1ad80",
+          "workspace": "<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r3\\runner\\worktrees\\9675effddd0e4054857594e617d1ad80\\e14b55845e63478c985ddfb1367a2829",
+          "workspace_base_commit": "5207508b468840844384ebc718cec223f184852a",
+          "workspace_base_ref": "HEAD",
+          "workspace_branch": "crony/task-9675effddd0e4054857594e617d1ad80/run-e14b55845e63478c985ddfb1367a2829"
+        },
+        "created_at": "2026-09-22T21:20:38.493336Z"
+      },
+      {
+        "seq": 41,
+        "id": "d7c79b6e-5bfd-4779-be9a-e8866fd24847",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.status",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:d7c79b6e-5bfd-4779-be9a-e8866fd24847",
+        "visibility": "corp",
+        "payload": {
+          "message": "Reading the mission contract",
+          "station": "briefing",
+          "status": "working"
+        },
+        "created_at": "2026-09-22T21:20:38.587188Z"
+      },
+      {
+        "seq": 42,
+        "id": "e6cd35fc-16f3-4e5a-8748-d5181c8296dd",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.output",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:e6cd35fc-16f3-4e5a-8748-d5181c8296dd",
+        "visibility": "corp",
+        "payload": {
+          "stream": "stdout",
+          "text": "Mission accepted: MISSION: issue48 pinned identity reused\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/pr359-agent-pinning\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: 5207508b468840844384ebc718cec223f184852a\nOBJECTIVE: Complete the mission outcome: issue48 pinned identity reused\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 80000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: none\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner\n\nQUEUED OPERATOR NOTES:\nThese durable notes were queued while the agent was off shift. Address each note in this turn.\n- message 5ab06992-620a-4cb9-87bb-0e851d8a6473 from actor 00000000-0000-4000-8000-000000000011: Retain for the next assigned mission; this is not a task.\n"
+        },
+        "created_at": "2026-09-22T21:20:39.291296Z"
+      },
+      {
+        "seq": 43,
+        "id": "d56ed959-6b08-4e15-aba2-5c8d751c884a",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.status",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:d56ed959-6b08-4e15-aba2-5c8d751c884a",
+        "visibility": "corp",
+        "payload": {
+          "message": "Collecting evidence and constraints",
+          "station": "research",
+          "status": "working"
+        },
+        "created_at": "2026-09-22T21:20:39.294550Z"
+      },
+      {
+        "seq": 44,
+        "id": "822a727e-2795-459d-bde1-0066daabb6bc",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.status",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:822a727e-2795-459d-bde1-0066daabb6bc",
+        "visibility": "corp",
+        "payload": {
+          "message": "Producing the artifact in an isolated workspace",
+          "station": "terminal",
+          "status": "working"
+        },
+        "created_at": "2026-09-22T21:20:40.200977Z"
+      },
+      {
+        "seq": 45,
+        "id": "75518cf1-e129-450c-b978-1453d3c6b7bd",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.artifact",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "artifact:1cb3745d-1b76-467b-9912-ad1a7ca5cc10:ready",
+        "visibility": "corp",
+        "payload": {
+          "artifact_id": "1cb3745d-1b76-467b-9912-ad1a7ca5cc10",
+          "artifact_role": "provider_evidence",
+          "bytes": 1618,
+          "file_name": "result.md",
+          "media_type": "text/markdown",
+          "metadata": {
+            "workspace_relative_path": "result.md"
+          },
+          "producer_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+          "producer_runner_id": "runner-issue48-42269426",
+          "provenance_signature": "563a14dde6d07c87ac09ce9d72aeedc1baa9af3bc28f3f443b99f51dd7ea49ef",
+          "retention_until": "2026-10-22T21:20:41.133980Z",
+          "sha256": "f30c83aa2a394a98ad9aa2d03c2b975acbae614ea4ed240dedfedffeafab22f1",
+          "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/1cb3745d-1b76-467b-9912-ad1a7ca5cc10",
+          "verifier": "crony-server:artifact-ingest-v1"
+        },
+        "created_at": "2026-09-22T21:20:41.150384Z"
+      },
+      {
+        "seq": 46,
+        "id": "477da4ad-2d3d-49bd-aeaf-48c67de4df91",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.session_terminated",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:477da4ad-2d3d-49bd-aeaf-48c67de4df91",
+        "visibility": "corp",
+        "payload": {
+          "adapter": "fake-process",
+          "message": "Provider session stopped; no idle agent process remains.",
+          "outcome": "completed",
+          "provider_process_alive": false
+        },
+        "created_at": "2026-09-22T21:20:41.640525Z"
+      },
+      {
+        "seq": 47,
+        "id": "75ee65d7-be8f-4170-a6e7-e2f3bdf2c0d0",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.verification_started",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:75ee65d7-be8f-4170-a6e7-e2f3bdf2c0d0",
+        "visibility": "corp",
+        "payload": {
+          "check_count": 2
+        },
+        "created_at": "2026-09-22T21:20:41.644803Z"
+      },
+      {
+        "seq": 48,
+        "id": "8cac62cd-de0c-4058-8141-72caa7d31702",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.verification_evidence",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:8cac62cd-de0c-4058-8141-72caa7d31702",
+        "visibility": "corp",
+        "payload": {
+          "check_index": 0,
+          "evidence_id": "8aff15f6-696f-4c27-a514-4fe54784fabd",
+          "kind": "artifact",
+          "payload": {
+            "artifact_id": "1cb3745d-1b76-467b-9912-ad1a7ca5cc10",
+            "bytes": 1618,
+            "media_type": "text/markdown",
+            "producer_agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+            "producer_runner_id": "runner-issue48-42269426",
+            "provenance_signature": "563a14dde6d07c87ac09ce9d72aeedc1baa9af3bc28f3f443b99f51dd7ea49ef",
+            "retention_until": "2026-10-22T21:20:41.133980Z",
+            "sha256": "f30c83aa2a394a98ad9aa2d03c2b975acbae614ea4ed240dedfedffeafab22f1",
+            "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/1cb3745d-1b76-467b-9912-ad1a7ca5cc10",
+            "verifier": "crony-server:artifact-ingest-v1"
+          },
+          "status": "passed",
+          "summary": "durable artifact 1cb3745d-1b76-467b-9912-ad1a7ca5cc10 has 1618 verified bytes"
+        },
+        "created_at": "2026-09-22T21:20:41.651330Z"
+      },
+      {
+        "seq": 49,
+        "id": "d0585591-0af1-49ae-a09f-e83a431f1416",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.verification_evidence",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:d0585591-0af1-49ae-a09f-e83a431f1416",
+        "visibility": "corp",
+        "payload": {
+          "check_index": 1,
+          "evidence_id": "3814bb61-e15c-489d-bdf2-640d2f006d3f",
+          "kind": "file",
+          "payload": {
+            "bytes": 1618,
+            "path": "result.md",
+            "sha256": "f30c83aa2a394a98ad9aa2d03c2b975acbae614ea4ed240dedfedffeafab22f1"
+          },
+          "status": "passed",
+          "summary": "result.md exists with 1618 bytes"
+        },
+        "created_at": "2026-09-22T21:20:41.681908Z"
+      },
+      {
+        "seq": 50,
+        "id": "47b99b18-b814-4e76-8150-8d9587b2e978",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.verification_passed",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:47b99b18-b814-4e76-8150-8d9587b2e978",
+        "visibility": "corp",
+        "payload": {
+          "summary": "all 2 verifier checks passed"
+        },
+        "created_at": "2026-09-22T21:20:41.686495Z"
+      },
+      {
+        "seq": 51,
+        "id": "05bea308-3d2f-407f-8f53-4d4e19bf3665",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.completed",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:05bea308-3d2f-407f-8f53-4d4e19bf3665",
+        "visibility": "corp",
+        "payload": {
+          "summary": "Created and verified result.md through the runner-owned child process."
+        },
+        "created_at": "2026-09-22T21:20:41.710768Z"
+      },
+      {
+        "seq": 52,
+        "id": "a7cdfcd1-f0f3-4023-85e7-b58b9c6c4e78",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "run.workspace_preserved",
+        "aggregate_type": "run",
+        "aggregate_id": "e14b5584-5e63-478c-985d-dfb1367a2829",
+        "aggregate_version": 1,
+        "correlation_id": "d1903111-9e9c-4bf9-9fc7-17683c6e1bba",
+        "causation_id": null,
+        "idempotency_key": "runner:runner-issue48-42269426:event:a7cdfcd1-f0f3-4023-85e7-b58b9c6c4e78",
+        "visibility": "corp",
+        "payload": {
+          "branch_deleted": false,
+          "commits_ahead": null,
+          "detail": "working tree contains uncommitted or untracked changes",
+          "dirty": true,
+          "workspace": "<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r3\\runner\\worktrees\\9675effddd0e4054857594e617d1ad80\\e14b55845e63478c985ddfb1367a2829",
+          "workspace_base_commit": "5207508b468840844384ebc718cec223f184852a",
+          "workspace_base_ref": "HEAD",
+          "workspace_branch": "crony/task-9675effddd0e4054857594e617d1ad80/run-e14b55845e63478c985ddfb1367a2829",
+          "workspace_fingerprint": "dc8a547c4be85d53e671fdba42845846282cf7269a71a48dd3c5fb9b5da143d9"
+        },
+        "created_at": "2026-09-22T21:20:42.129154Z"
+      },
+      {
+        "seq": 53,
+        "id": "6de594f1-1f96-4453-8a31-07eef4c52c1c",
+        "schema_version": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "actor_id": null,
+        "type": "agent.retired",
+        "aggregate_type": "agent",
+        "aggregate_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "aggregate_version": 1,
+        "correlation_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+        "causation_id": null,
+        "idempotency_key": "agent:6800a644-9fe9-4ab7-916f-be33ac18f653:retired:cc7ec401-ea97-4215-ae67-a20cdf7c8a3e",
+        "visibility": "corp",
+        "payload": {
+          "mission_id": "4ab4c606-f0fc-4beb-9a47-bf7789b96385",
+          "reason": "terminal mission, no live authority"
+        },
+        "created_at": "2026-09-22T21:20:42.899010Z"
+      }
+    ]
+  },
+  "runners": [
+    {
+      "id": "runner-issue48-42269426",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "hostname": "CPC-shyam-9UD55",
+      "os": "windows",
+      "capabilities": [
+        {
+          "name": "claude-code",
+          "available": false,
+          "detail": "Anthropic Claude Code; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes; model discovery failed: Anthropic Claude Code availability probe failed: The system cannot find the file specified. (os error 2)",
+          "models": []
+        },
+        {
+          "name": "codex",
+          "available": false,
+          "detail": "OpenAI Codex app-server; spawn=no, stream=no, steer=no, interrupt=no, stop=no, resume=no, usage=no, artifacts=no",
+          "models": []
+        },
+        {
+          "name": "fake-process",
+          "available": true,
+          "detail": "Deterministic process; spawn=yes, stream=yes, steer=yes, interrupt=no, stop=yes, resume=no, usage=no, artifacts=yes",
+          "models": []
+        },
+        {
+          "name": "github-copilot",
+          "available": true,
+          "detail": "GitHub Copilot SDK; spawn=yes, stream=yes, steer=yes, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes",
+          "models": [
+            {
+              "id": "copilot-test-fast",
+              "name": "Copilot Test Fast",
+              "policy_state": "enabled",
+              "policy_terms": null,
+              "supports_vision": false,
+              "supports_reasoning_effort": false,
+              "max_prompt_tokens": null,
+              "max_context_window_tokens": 64000,
+              "supported_reasoning_efforts": [],
+              "default_reasoning_effort": null,
+              "billing_multiplier": 1
+            },
+            {
+              "id": "copilot-test-reasoning",
+              "name": "Copilot Test Reasoning",
+              "policy_state": "enabled",
+              "policy_terms": null,
+              "supports_vision": true,
+              "supports_reasoning_effort": true,
+              "max_prompt_tokens": 120000,
+              "max_context_window_tokens": 128000,
+              "supported_reasoning_efforts": [
+                "low",
+                "medium",
+                "high"
+              ],
+              "default_reasoning_effort": "medium",
+              "billing_multiplier": 1.5
+            },
+            {
+              "id": "copilot-test-disabled",
+              "name": "Copilot Test Disabled",
+              "policy_state": "disabled",
+              "policy_terms": "fixture policy",
+              "supports_vision": false,
+              "supports_reasoning_effort": false,
+              "max_prompt_tokens": null,
+              "max_context_window_tokens": 32000,
+              "supported_reasoning_efforts": [],
+              "default_reasoning_effort": null,
+              "billing_multiplier": null
+            }
+          ]
+        },
+        {
+          "name": "opencode",
+          "available": false,
+          "detail": "OpenCode; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes; model discovery failed: OpenCode availability probe failed: The system cannot find the file specified. (os error 2)",
+          "models": []
+        },
+        {
+          "name": "workspace-isolation",
+          "available": true,
+          "detail": "root=<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r3\\runner; repository=<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r3\\source; remote=ecorp-fixture/pr359-agent-pinning; base=HEAD; commit=5207508b468840844384ebc718cec223f184852a",
+          "models": [],
+          "source_repository": "ecorp-fixture/pr359-agent-pinning",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "5207508b468840844384ebc718cec223f184852a"
+        },
+        {
+          "name": "durable-control-v1",
+          "available": true,
+          "detail": "control messages use command ids, runner deduplication, and explicit acknowledgment",
+          "models": []
+        },
+        {
+          "name": "verification-artifact-transfer-v1",
+          "available": true,
+          "detail": "bounded, digest-checked provider evidence isolated from source and check snapshots",
+          "models": []
+        },
+        {
+          "name": "checkpoint-verification-v1",
+          "available": true,
+          "detail": "exact stopped-source admission and runner-owned verification commit without a provider",
+          "models": []
+        },
+        {
+          "name": "retained-provider-receipt-v1",
+          "available": true,
+          "detail": "explicit historical receipt collection from sealed source with a new durable artifact acknowledgment",
+          "models": []
+        },
+        {
+          "name": "secret-delivery",
+          "available": true,
+          "detail": "task-scoped, expiring broker grants; environment injection is reduced assurance",
+          "models": []
+        },
+        {
+          "name": "workspace-setup-v1",
+          "available": true,
+          "detail": "Native repository and coding-agent connections with runner-private state",
+          "models": []
+        }
+      ],
+      "connected": true,
+      "status": "connected",
+      "last_seen_at": "2026-09-22T21:20:34.711959+00:00",
+      "grace_expires_at": null
+    }
+  ]
+}

@@ -2517,7 +2517,7 @@ async fn plan_mission(
                 input.reasoning_effort,
             )
         };
-    let source = if let Some(connection_id) = input.workspace_connection_id {
+    let (source, destination_room_id) = if let Some(connection_id) = input.workspace_connection_id {
         let (connection, _) = state
             .store
             .workspace_connection_settings(corp_id, input.actor_id, connection_id)
@@ -2547,17 +2547,23 @@ async fn plan_mission(
                 "the saved source changed; review its current revision before building",
             ));
         }
-        Some(resolve_mission_source_in_connection(
-            state,
-            corp_id,
-            requested,
-            Some(connection_id),
-        )?)
+        (
+            Some(resolve_mission_source_in_connection(
+                state,
+                corp_id,
+                requested,
+                Some(connection_id),
+            )?),
+            Some(connection.room_id),
+        )
     } else {
-        input
-            .source
-            .map(|source| resolve_mission_source(state, corp_id, source))
-            .transpose()?
+        (
+            input
+                .source
+                .map(|source| resolve_mission_source(state, corp_id, source))
+                .transpose()?,
+            None,
+        )
     };
     validate_requested_model(
         state,
@@ -2568,7 +2574,7 @@ async fn plan_mission(
     )?;
     let existing_agents = state
         .store
-        .agents_for_planning(corp_id, input.actor_id)
+        .agents_for_planning(corp_id, input.actor_id, destination_room_id)
         .await
         .map_err(ApiError::internal)?;
     let dynamic_staffing = strategy == "studio-swarm"

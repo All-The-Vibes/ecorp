@@ -1,0 +1,273 @@
+{
+  "status": "passed",
+  "started_at_utc": "2026-09-22T21:20:08.598Z",
+  "source_tree": "5c8db0930157853b582d3184b1521b1161dbd5ae",
+  "scope": "Full historical/current driver bytes against fresh synthetic Git sources; fetch is intercepted before network, no server/runner/SQL/provider calls occur.",
+  "cases": [
+    {
+      "version": "baseline",
+      "case": "equal",
+      "source_ref": "5bfb44015b1f97e21e768ea0054b26f16b83350d:tools/e2e_agent_pinning.mjs",
+      "driver_sha256": "2af0b9cf35915f1ba61cc3e37b2bbd3eafbe3eee3ca006e29af709cefc855722",
+      "command": [
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--import",
+        "file:///<private-evidence>/pr359-full-driver-path-r5/no-network.mjs",
+        "<private-evidence>\\pr359-full-driver-path-r5\\baseline.mjs",
+        "--phase",
+        "prepare"
+      ],
+      "started_at_utc": "2026-09-22T21:20:09.482Z",
+      "finished_at_utc": "2026-09-22T21:20:10.201Z",
+      "exit_code": 1,
+      "source_changed": true,
+      "seed_preserved": true,
+      "before": {
+        "files": [
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": ""
+      },
+      "after": {
+        "files": [
+          {
+            "path": "native-agent-pinning.json",
+            "sha256": "dc902229824a202c983679ee078e04ca814531b88aa3caae5b87ca6246aa08b9"
+          },
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": "?? native-agent-pinning.json"
+      },
+      "intercepted_before_network": true,
+      "rejected_before_network": false,
+      "log": "baseline-equal/execution.log",
+      "log_sha256": "8886ef87215f10e8d42fc787aea138e57ae4d58dc8bc46032511dbc72b667bed",
+      "expected_result_observed": true
+    },
+    {
+      "version": "baseline",
+      "case": "nested",
+      "source_ref": "5bfb44015b1f97e21e768ea0054b26f16b83350d:tools/e2e_agent_pinning.mjs",
+      "driver_sha256": "2af0b9cf35915f1ba61cc3e37b2bbd3eafbe3eee3ca006e29af709cefc855722",
+      "command": [
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--import",
+        "file:///<private-evidence>/pr359-full-driver-path-r5/no-network.mjs",
+        "<private-evidence>\\pr359-full-driver-path-r5\\baseline.mjs",
+        "--phase",
+        "prepare"
+      ],
+      "started_at_utc": "2026-09-22T21:20:10.957Z",
+      "finished_at_utc": "2026-09-22T21:20:11.605Z",
+      "exit_code": 1,
+      "source_changed": true,
+      "seed_preserved": true,
+      "before": {
+        "files": [
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": ""
+      },
+      "after": {
+        "files": [
+          {
+            "path": "new-output/native-agent-pinning.json",
+            "sha256": "e7a3a9533294f9f6ac2218324c10c8eca0555f3fa2cd027a86a2609a479c38c9"
+          },
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": "?? new-output/"
+      },
+      "intercepted_before_network": true,
+      "rejected_before_network": false,
+      "log": "baseline-nested/execution.log",
+      "log_sha256": "8886ef87215f10e8d42fc787aea138e57ae4d58dc8bc46032511dbc72b667bed",
+      "expected_result_observed": true
+    },
+    {
+      "version": "baseline",
+      "case": "junction",
+      "source_ref": "5bfb44015b1f97e21e768ea0054b26f16b83350d:tools/e2e_agent_pinning.mjs",
+      "driver_sha256": "2af0b9cf35915f1ba61cc3e37b2bbd3eafbe3eee3ca006e29af709cefc855722",
+      "command": [
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--import",
+        "file:///<private-evidence>/pr359-full-driver-path-r5/no-network.mjs",
+        "<private-evidence>\\pr359-full-driver-path-r5\\baseline.mjs",
+        "--phase",
+        "prepare"
+      ],
+      "started_at_utc": "2026-09-22T21:20:12.299Z",
+      "finished_at_utc": "2026-09-22T21:20:12.884Z",
+      "exit_code": 1,
+      "source_changed": true,
+      "seed_preserved": true,
+      "before": {
+        "files": [
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": ""
+      },
+      "after": {
+        "files": [
+          {
+            "path": "native-agent-pinning.json",
+            "sha256": "1727e86eb2038307eed01d0fc4d4dc1fc422b2e81516829dd3c1346e17fb7e71"
+          },
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": "?? native-agent-pinning.json"
+      },
+      "intercepted_before_network": true,
+      "rejected_before_network": false,
+      "log": "baseline-junction/execution.log",
+      "log_sha256": "8886ef87215f10e8d42fc787aea138e57ae4d58dc8bc46032511dbc72b667bed",
+      "expected_result_observed": true
+    },
+    {
+      "version": "corrected",
+      "case": "equal",
+      "source_ref": ":tools/e2e_agent_pinning.mjs",
+      "driver_sha256": "0cb95eb41c72259217a6ce862c2bd74cee312483587b7a2da69f2adda1bb29c1",
+      "command": [
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--import",
+        "file:///<private-evidence>/pr359-full-driver-path-r5/no-network.mjs",
+        "<private-evidence>\\pr359-full-driver-path-r5\\corrected.mjs",
+        "--phase",
+        "prepare"
+      ],
+      "started_at_utc": "2026-09-22T21:20:13.765Z",
+      "finished_at_utc": "2026-09-22T21:20:14.051Z",
+      "exit_code": 1,
+      "source_changed": false,
+      "seed_preserved": true,
+      "before": {
+        "files": [
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": ""
+      },
+      "after": {
+        "files": [
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": ""
+      },
+      "intercepted_before_network": false,
+      "rejected_before_network": true,
+      "log": "corrected-equal/execution.log",
+      "log_sha256": "52ce88266435fb7f006dd905b74242623840d11fb8d09fc8f01d59d000e1a8be",
+      "expected_result_observed": true
+    },
+    {
+      "version": "corrected",
+      "case": "nested",
+      "source_ref": ":tools/e2e_agent_pinning.mjs",
+      "driver_sha256": "0cb95eb41c72259217a6ce862c2bd74cee312483587b7a2da69f2adda1bb29c1",
+      "command": [
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--import",
+        "file:///<private-evidence>/pr359-full-driver-path-r5/no-network.mjs",
+        "<private-evidence>\\pr359-full-driver-path-r5\\corrected.mjs",
+        "--phase",
+        "prepare"
+      ],
+      "started_at_utc": "2026-09-22T21:20:14.738Z",
+      "finished_at_utc": "2026-09-22T21:20:15.049Z",
+      "exit_code": 1,
+      "source_changed": false,
+      "seed_preserved": true,
+      "before": {
+        "files": [
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": ""
+      },
+      "after": {
+        "files": [
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": ""
+      },
+      "intercepted_before_network": false,
+      "rejected_before_network": true,
+      "log": "corrected-nested/execution.log",
+      "log_sha256": "52ce88266435fb7f006dd905b74242623840d11fb8d09fc8f01d59d000e1a8be",
+      "expected_result_observed": true
+    },
+    {
+      "version": "corrected",
+      "case": "junction",
+      "source_ref": ":tools/e2e_agent_pinning.mjs",
+      "driver_sha256": "0cb95eb41c72259217a6ce862c2bd74cee312483587b7a2da69f2adda1bb29c1",
+      "command": [
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--import",
+        "file:///<private-evidence>/pr359-full-driver-path-r5/no-network.mjs",
+        "<private-evidence>\\pr359-full-driver-path-r5\\corrected.mjs",
+        "--phase",
+        "prepare"
+      ],
+      "started_at_utc": "2026-09-22T21:20:15.735Z",
+      "finished_at_utc": "2026-09-22T21:20:16.025Z",
+      "exit_code": 1,
+      "source_changed": false,
+      "seed_preserved": true,
+      "before": {
+        "files": [
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": ""
+      },
+      "after": {
+        "files": [
+          {
+            "path": "seed.txt",
+            "sha256": "bd58d65b8030a0e46f19164bc0f57630ad998c76456dccefd2a599f5ceb2581c"
+          }
+        ],
+        "git_status": ""
+      },
+      "intercepted_before_network": false,
+      "rejected_before_network": true,
+      "log": "corrected-junction/execution.log",
+      "log_sha256": "52ce88266435fb7f006dd905b74242623840d11fb8d09fc8f01d59d000e1a8be",
+      "expected_result_observed": true
+    }
+  ],
+  "finished_at_utc": "2026-09-22T21:20:16.168Z"
+}

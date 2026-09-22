@@ -860,7 +860,7 @@ function browserOperationKey(storageKey: string, payload: string): string {
     window.sessionStorage.setItem(storageKey, JSON.stringify({ payload, key }))
     return key
   } catch {
-    return crypto.randomUUID()
+    throw new Error('Browser storage could not preserve the retry key. Restore session storage before trying again; no request was sent.')
   }
 }
 
@@ -1234,6 +1234,7 @@ function FactoryPanel({
 }) {
   const [commentBody, setCommentBody] = useState('')
   const [steerText, setSteerText] = useState('')
+  const [operationError, setOperationError] = useState<string | null>(null)
   const stateTone = (state: FactoryWorkItem['state']) => {
     if (['verified', 'published'].includes(state)) return 'completed'
     if (['blocked', 'verification_failed', 'failed', 'cancelled'].includes(state)) {
@@ -1311,6 +1312,7 @@ function FactoryPanel({
       data-testid="factory-panel"
       tabIndex={-1}
     >
+      {operationError ? <p className="error-banner" role="alert">{operationError}</p> : null}
       <div className="panel-heading factory-heading">
         <div>
           <span className="section-code">Factory</span>
@@ -1714,10 +1716,14 @@ function FactoryPanel({
                               })
                               const operationStorageKey =
                                 `ecorp:factory-comment:${discussionScopeKey(scope)}:${selected.id}`
-                              const idempotencyKey = browserOperationKey(
-                                operationStorageKey,
-                                payload,
-                              )
+                              let idempotencyKey: string
+                              setOperationError(null)
+                              try {
+                                idempotencyKey = browserOperationKey(operationStorageKey, payload)
+                              } catch (caught) {
+                                setOperationError(caught instanceof Error ? caught.message : String(caught))
+                                return
+                              }
                               void onPostComment({
                                 source: 'factory',
                                 scope,
@@ -1791,21 +1797,26 @@ function FactoryPanel({
                                 onSubmit={(event) => {
                                   event.preventDefault()
                                   if (!steerText.trim()) return
+                                  let idempotencyKey: string
+                                  setOperationError(null)
+                                  try {
+                                    idempotencyKey = browserOperationKey(
+                                      `ecorp:factory-steer:${activeRun.id}:${selectedActor.id}`,
+                                      JSON.stringify({
+                                        agentId: activeAgent.id,
+                                        actorId: selectedActor.id,
+                                        text: steerText.trim(),
+                                      }),
+                                    )
+                                  } catch (caught) {
+                                    setOperationError(caught instanceof Error ? caught.message : String(caught))
+                                    return
+                                  }
                                   void onSteer(
                                     activeAgent,
                                     steerText.trim(),
                                     activeLeaseToken,
-                                    (() => {
-                                      const payload = JSON.stringify({
-                                        agentId: activeAgent.id,
-                                        actorId: selectedActor.id,
-                                        text: steerText.trim(),
-                                      })
-                                      return browserOperationKey(
-                                        `ecorp:factory-steer:${activeRun.id}:${selectedActor.id}`,
-                                        payload,
-                                      )
-                                    })(),
+                                    idempotencyKey,
                                   ).then((saved) => {
                                     if (saved) {
                                       clearBrowserOperation(
@@ -1925,6 +1936,7 @@ function AgentDesk({
 }) {
   const [text, setText] = useState('')
   const [transferActorId, setTransferActorId] = useState('')
+  const [operationError, setOperationError] = useState<string | null>(null)
   const ownsLease = lease?.actor_id === actor.id
   const live = Boolean(agent.current_run_id) && agent.status !== 'idle' && agent.status !== 'offline'
   const operator = canOperate(actor.role)
@@ -1956,16 +1968,21 @@ function AgentDesk({
       text: normalized,
     })
     const operationStorageKey = `ecorp:agent-message:${agent.id}:${actor.id}`
-    const idempotencyKey = browserOperationKey(operationStorageKey, payload)
-    const saved = await onMessage(
-      agent,
-      normalized,
-      messageToken,
-      idempotencyKey,
-    )
-    if (saved) {
-      clearBrowserOperation(operationStorageKey)
-      setText('')
+    setOperationError(null)
+    try {
+      const idempotencyKey = browserOperationKey(operationStorageKey, payload)
+      const saved = await onMessage(
+        agent,
+        normalized,
+        messageToken,
+        idempotencyKey,
+      )
+      if (saved) {
+        clearBrowserOperation(operationStorageKey, idempotencyKey)
+        setText('')
+      }
+    } catch (caught) {
+      setOperationError(caught instanceof Error ? caught.message : String(caught))
     }
   }
 
@@ -2060,6 +2077,7 @@ function AgentDesk({
         </button>
       ) : null}
       <form className="agent-message" onSubmit={submit}>
+        {operationError ? <p className="error-banner" role="alert">{operationError}</p> : null}
         <input
           aria-label={`Message ${agent.name}`}
           value={text}
@@ -4086,6 +4104,7 @@ function RoomPanel({
   const setBody = (value: string) => changeDraft({ body: value })
   const setReplyToId = (value: string | null) => changeDraft({ replyToId: value })
   const [posting, setPosting] = useState(false)
+  const [operationError, setOperationError] = useState<string | null>(null)
   const contextMissionId = scope.missionId
   const context = roomWorkContext({ missions, tasks, runs }, room?.id, contextMissionId)
   const contextMission = missions.find((mission) => mission.id === contextMissionId)
@@ -4167,10 +4186,12 @@ function RoomPanel({
       link,
     })
     const operationStorageKey = `ecorp:room-message:${discussionScopeKey(scope)}`
-    const idempotencyKey = browserOperationKey(operationStorageKey, payload)
     setPosting(true)
+    setOperationError(null)
     let saved = false
+    let idempotencyKey: string | undefined
     try {
+      idempotencyKey = browserOperationKey(operationStorageKey, payload)
       saved = await onPost({
         source,
         scope,
@@ -4181,10 +4202,12 @@ function RoomPanel({
         link,
         idempotencyKey,
       })
+    } catch (caught) {
+      setOperationError(caught instanceof Error ? caught.message : String(caught))
     } finally {
       setPosting(false)
     }
-    if (saved) {
+    if (saved && idempotencyKey) {
       clearBrowserOperation(operationStorageKey, idempotencyKey)
       drafts.complete(draftKey, draft)
     }
@@ -4258,6 +4281,7 @@ function RoomPanel({
           )}
         </ol>
         <form className="room-composer" onSubmit={submit} aria-busy={posting}>
+          {operationError ? <p className="error-banner" role="alert">{operationError}</p> : null}
           <label htmlFor="room-message">Post as {selectedActor.name}</label>
           {composerError ? (
             <div className="room-denied" role="alert">
@@ -5301,13 +5325,13 @@ function App() {
     const operationStorageKey =
       `ecorp:approval-decision:${bootstrap.corp_id}:${selectedActor.id}:` +
       `${approval.id}:${approved ? 'approve' : 'reject'}`
-    const decisionKey = browserOperationKey(
-      operationStorageKey,
-      JSON.stringify({ approvalId: approval.id, approved, note }),
-    )
     setBusy(true)
     setError(null)
     try {
+      const decisionKey = browserOperationKey(
+        operationStorageKey,
+        JSON.stringify({ approvalId: approval.id, approved, note }),
+      )
       await api(
         `/api/corps/${bootstrap.corp_id}/approvals/${approval.id}/decision`,
         {
@@ -5337,9 +5361,10 @@ function App() {
       pinned,
       expected_version: agent.pin_version,
     }
-    const idempotencyKey = browserOperationKey(storageKey, JSON.stringify(payload))
+    let idempotencyKey: string | undefined
     setError(null)
     try {
+      idempotencyKey = browserOperationKey(storageKey, JSON.stringify(payload))
       await api(`/api/corps/${bootstrap.corp_id}/agents/${agent.id}/pin`, {
         method: 'POST',
         body: JSON.stringify({ ...payload, idempotency_key: idempotencyKey }),
@@ -5348,7 +5373,7 @@ function App() {
       await refresh(bootstrap.corp_id, selectedActor.id)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught))
-      if (caught instanceof ApiRequestError && caught.status === 409) {
+      if (idempotencyKey && caught instanceof ApiRequestError && caught.status === 409) {
         clearBrowserOperation(storageKey, idempotencyKey)
         try {
           await refresh(bootstrap.corp_id, selectedActor.id)

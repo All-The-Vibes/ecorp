@@ -1159,8 +1159,21 @@ impl PgStore {
         Ok((grants, events))
     }
 
-    pub async fn agents_for_planning(&self, corp_id: Uuid, actor_id: Uuid) -> Result<Vec<Agent>> {
-        sqlx::query(
+    pub async fn agents_for_planning(
+        &self,
+        corp_id: Uuid,
+        actor_id: Uuid,
+        destination_room_id: Option<Uuid>,
+    ) -> Result<Vec<Agent>> {
+        let mut tx = self.pool.begin().await?;
+        let room_id = match destination_room_id {
+            Some(room_id) => {
+                assert_room_membership_tx(&mut tx, corp_id, room_id, actor_id).await?;
+                room_id
+            }
+            None => mission_room_for_actor_tx(&mut tx, corp_id, actor_id).await?,
+        };
+        let agents = sqlx::query(
             r#"
             SELECT id, corp_id, actor_id, name, role, adapter, status, station,
                    current_run_id, accent, created_at, mission_id, pinned, retired_at,
@@ -1174,22 +1187,21 @@ impl PgStore {
               AND (mission_id IS NULL OR EXISTS (
                 SELECT 1 FROM missions m JOIN room_memberships rm ON rm.room_id = m.room_id
                 WHERE m.id = agents.mission_id AND m.corp_id = agents.corp_id AND rm.actor_id = $2
-                  AND m.room_id = (
-                    SELECT r.id FROM rooms r JOIN room_memberships mine ON mine.room_id = r.id
-                    WHERE r.corp_id = $1 AND mine.actor_id = $2
-                    ORDER BY r.created_at, r.id LIMIT 1
-                  )
+                  AND m.room_id = $3
               ))
             ORDER BY role, adapter, name, id
             "#,
         )
         .bind(corp_id)
         .bind(actor_id)
-        .fetch_all(&self.pool)
+        .bind(room_id)
+        .fetch_all(&mut *tx)
         .await?
         .into_iter()
         .map(map_agent)
-        .collect()
+        .collect::<Result<Vec<_>>>()?;
+        tx.commit().await?;
+        Ok(agents)
     }
 
     pub async fn bootstrap_demo(&self) -> Result<(DemoIds, Option<DomainEvent>)> {
