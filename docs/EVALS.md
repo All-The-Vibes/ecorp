@@ -4,6 +4,27 @@ The [September 12 scheduler acceptance](evidence/2026-09-12-scheduler-standalone
 records PR #179's main-based source gate separately from the combined recovery
 and two-runner runtime acceptance. Earlier failed attempts remain retained.
 
+## Multiplayer and the built-in trust fabric
+
+The [September 17 multiplayer integration report](evidence/2026-09-17-multiplayer-ui-integration.md)
+is the relevant bounded local UI/server/runner evidence for shared mission/run
+context, comments, control, review, freshness, disconnect, and recovery.
+The [U7 parity matrix](multiplayer/U7_PARITY_MATRIX.md) keeps independent
+authentication, shared-machine admission, cross-owner effects, and release
+acceptance separate. A connected tab is not proof of complete multiplayer parity.
+
+[Blockchain as fabric](TRUST_FABRIC.md) names the existing weave of source
+identity, attribution, evidence integrity, and acceptance records. Its claims
+must be verified through the actual artifact, dependency, source-deliverable,
+contract, review, and publication boundaries below—not through a new unsupported
+claim of blockchain consensus. Check changed bytes, tampered signed metadata,
+wrong source/run/room, stale or expired evidence, and unauthorized review at the
+relevant existing boundary.
+
+The September 19, 2026 documentation refresh reviewed main
+`39632b957819012721c90902925d8fa7a9c7e873`; it did not itself run a new
+production-identity, cross-owner, or ledger-network acceptance exercise.
+
 ## Evidence rule
 
 An implementation claim needs evidence at the same scope:
