@@ -343,45 +343,6 @@ fn sha(value: &str) -> Result<()> {
     Ok(())
 }
 
-#[cfg(test)]
-mod transport_tests {
-    use super::*;
-
-    #[test]
-    fn production_transport_retains_fixed_origin() {
-        let transport = GitHubTransport::new("audit/validation", "audit", "inert-test-fixture")
-            .expect("valid non-network constructor");
-        assert_eq!(
-            transport.url("branches/audit"),
-            "https://api.github.com/repos/audit/validation/branches/audit"
-        );
-    }
-
-    #[cfg(all(feature = "test-support", debug_assertions))]
-    #[test]
-    fn fixture_transport_requires_exact_nonzero_loopback() {
-        for address in ["0.0.0.0:18548", "192.0.2.1:18548", "127.0.0.1:0"] {
-            assert!(
-                GitHubTransport::new_test_loopback(
-                    "audit/validation",
-                    "audit",
-                    address.parse().unwrap()
-                )
-                .is_err()
-            );
-        }
-        let transport = GitHubTransport::new_test_loopback(
-            "audit/validation",
-            "audit",
-            "127.0.0.1:18548".parse().unwrap(),
-        )
-        .unwrap();
-        assert_eq!(
-            transport.url("branches/audit"),
-            "http://127.0.0.1:18548/repos/audit/validation/branches/audit"
-        );
-    }
-}
 impl PublicationTransport for GitHubTransport {
     fn head(&self) -> BoxFuture<'_, Result<String>> {
         Box::pin(async move {
@@ -470,5 +431,45 @@ impl PublicationTransport for GitHubTransport {
             Self::decode(response).await?;
             Ok(())
         })
+    }
+}
+
+#[cfg(test)]
+mod transport_tests {
+    use super::*;
+
+    #[test]
+    fn production_transport_retains_fixed_origin() {
+        let transport = GitHubTransport::new("audit/validation", "audit", "inert-test-fixture")
+            .expect("valid non-network constructor");
+        assert_eq!(
+            transport.url("branches/audit"),
+            "https://api.github.com/repos/audit/validation/branches/audit"
+        );
+    }
+
+    #[cfg(all(feature = "test-support", debug_assertions))]
+    #[test]
+    fn fixture_transport_requires_exact_nonzero_loopback() {
+        for address in ["0.0.0.0:18548", "192.0.2.1:18548", "127.0.0.1:0"] {
+            assert!(
+                GitHubTransport::new_test_loopback(
+                    "audit/validation",
+                    "audit",
+                    address.parse().unwrap()
+                )
+                .is_err()
+            );
+        }
+        let transport = GitHubTransport::new_test_loopback(
+            "audit/validation",
+            "audit",
+            "127.0.0.1:18548".parse().unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            transport.url("branches/audit"),
+            "http://127.0.0.1:18548/repos/audit/validation/branches/audit"
+        );
     }
 }
