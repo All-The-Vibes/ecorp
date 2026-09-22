@@ -1,0 +1,1138 @@
+{
+  "pr": 355,
+  "status": "passed",
+  "started_at": "2026-09-22T20:03:17.073Z",
+  "source": {
+    "base_ref": "HEAD",
+    "base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+    "repository": "ecorp-fixture/pr265-run-activity"
+  },
+  "scope": "Real Edge browser launches deterministic native runner missions on a fresh owned PostgreSQL fixture; no vendor inference or external publication.",
+  "scenarios": [
+    {
+      "label": "restricted-scope",
+      "created": {
+        "mission_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+        "task_id": "f8954788-81e3-4257-8bad-445772fffe4a",
+        "task_ids": [
+          "f8954788-81e3-4257-8bad-445772fffe4a"
+        ],
+        "strategy": "single"
+      },
+      "request": {
+        "title": "[portable-deliverable] PR355 restricted-scope 15b5255e",
+        "description": "Owned acceptance of preserved complete source scope. No external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "strategy": "single",
+        "source": {
+          "base_ref": "HEAD",
+          "base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+          "repository": "ecorp-fixture/pr265-run-activity"
+        },
+        "max_task_attempts": 2,
+        "secret_refs": [],
+        "budget_tokens": 1000,
+        "budget_cost_microusd": 1000000,
+        "deliverable": {
+          "form": "commit_branch",
+          "commit_after_verification": true,
+          "paths": []
+        },
+        "contract": {
+          "objective": "Export the complete deterministic worktree",
+          "expected_output": "result.md",
+          "write_scope": [
+            "result.md"
+          ],
+          "allowed_tools": [
+            "filesystem"
+          ],
+          "prohibited_actions": [
+            "No external effects"
+          ]
+        },
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "file",
+              "path": "result.md",
+              "min_bytes": 1
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "no_fresh_workspace_retry": true,
+      "preserved_fingerprint": {
+        "head": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+        "index_sha256": "9ce4f7b249f11e8504e653249176b2af66d10736b103e71f1a1aaa9aea7b6e07",
+        "status": "M README.md\n?? portable-untracked.txt\n?? result.md",
+        "readme_sha256": "8dcc288e0388a406dea32ddb29e31dc18fd03c271895898eaaff1a4eb3fd9903"
+      },
+      "final": {
+        "mission": {
+          "id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[portable-deliverable] PR355 restricted-scope 15b5255e",
+          "description": "Owned acceptance of preserved complete source scope. No external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000,
+          "budget_cost_microusd": 1000000,
+          "status": "failed",
+          "created_at": "2026-09-22T20:03:19.187441Z",
+          "updated_at": "2026-09-22T20:03:26.367372Z"
+        },
+        "tasks": [
+          {
+            "id": "f8954788-81e3-4257-8bad-445772fffe4a",
+            "mission_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned acceptance of preserved complete source scope. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nExport the complete deterministic worktree",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned acceptance of preserved complete source scope. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nExport the complete deterministic worktree",
+              "expected_output": "result.md",
+              "source_repository": "ecorp-fixture/pr265-run-activity",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials",
+                "No external effects"
+              ],
+              "references": [],
+              "write_scope": [
+                "result.md"
+              ],
+              "budget_tokens": 1000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "commit_branch",
+                "commit_after_verification": true,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "file",
+                  "path": "result.md",
+                  "min_bytes": 1
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "running",
+            "status": "failed",
+            "assigned_agent_id": "c028bc43-9c9a-4d1b-a958-a1060f0d8d60",
+            "created_at": "2026-09-22T20:03:19.187441Z",
+            "updated_at": "2026-09-22T20:03:26.367372Z"
+          }
+        ],
+        "run": {
+          "id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "f8954788-81e3-4257-8bad-445772fffe4a",
+          "agent_id": "c028bc43-9c9a-4d1b-a958-a1060f0d8d60",
+          "runner_id": "pr265-activity-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/pr265-run-activity",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+          "workspace_path": "<local-user>\\code\\qa\\pr265-run-activity-pr355-20260922-r5\\runner\\worktrees\\f895478881e342578bad445772fffe4a\\6229fb7a0561478f9ce50cb58b87f5c8",
+          "workspace_branch": "crony/task-f895478881e342578bad445772fffe4a/run-6229fb7a0561478f9ce50cb58b87f5c8",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+          "workspace_fingerprint": "e39ce0c9dfa53a4f5205c6e81df679e98f18b6bdfd385aeedab0c1c4f77abe9f",
+          "execution_mode": "provider",
+          "verification_status": "running",
+          "verification_summary": null,
+          "verification_sha256": null,
+          "deliverable_sha256": null,
+          "status": "failed",
+          "summary": "Verified deliverable export failed: deliverable contains path outside the task write scope: README.md. Automatic fresh-worktree retry is disabled. Keep the preserved worktree; inspect its complete source delta and the accepted deliverable/write scope. Use the existing preserved-session Resume only when that complete delta fits the current contract. If scope excludes retained source, a new authorized full-scope mission is required; do not delete source or reset attempts.",
+          "artifact_id": "46c3a2d8-7264-4eac-8ef1-3cba23fd6932",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/46c3a2d8-7264-4eac-8ef1-3cba23fd6932",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "a7965e0f3d8b28fc12dbaa907596712dd5e48bf758d2b03da346b13d382d0b9c",
+          "artifact_sha256": "5386b6a04a44d0c1a29308cf69e171ebbf9a41687be34514041d28821fb6016e",
+          "created_at": "2026-09-22T20:03:21.398015Z",
+          "updated_at": "2026-09-22T20:03:26.381140Z"
+        },
+        "events": [
+          {
+            "seq": 9,
+            "id": "a6c3eb56-28f4-403e-a789-a65d909af3c3",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "run:6229fb7a-0561-478f-9ce5-0cb58b87f5c8:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "c028bc43-9c9a-4d1b-a958-a1060f0d8d60",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "pr265-activity-qa",
+              "status": "starting",
+              "task_id": "f8954788-81e3-4257-8bad-445772fffe4a"
+            },
+            "created_at": "2026-09-22T20:03:21.398015Z"
+          },
+          {
+            "seq": 10,
+            "id": "29f4d5cd-ac06-4df5-a4e8-6755d78eb65c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:29f4d5cd-ac06-4df5-a4e8-6755d78eb65c",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "f8954788-81e3-4257-8bad-445772fffe4a",
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr355-20260922-r5\\runner\\worktrees\\f895478881e342578bad445772fffe4a\\6229fb7a0561478f9ce50cb58b87f5c8",
+              "workspace_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-f895478881e342578bad445772fffe4a/run-6229fb7a0561478f9ce50cb58b87f5c8"
+            },
+            "created_at": "2026-09-22T20:03:22.421868Z"
+          },
+          {
+            "seq": 11,
+            "id": "94d0af02-3be4-47d6-8eee-efc9ed7bedaa",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:94d0af02-3be4-47d6-8eee-efc9ed7bedaa",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T20:03:22.668028Z"
+          },
+          {
+            "seq": 12,
+            "id": "ce01a8c5-37ce-431b-9043-4f6a9cdabf3b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:ce01a8c5-37ce-431b-9043-4f6a9cdabf3b",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [portable-deliverable] PR355 restricted-scope 15b5255e\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/pr265-run-activity\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: a77e2b356f24528e8f1746502b1898f72a93aeb9\nOBJECTIVE: Owned acceptance of preserved complete source scope. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nExport the complete deterministic worktree\nEXPECTED OUTPUT: result.md\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\n- No external effects\nREFERENCES:\n- none\nWRITE SCOPE:\n- result.md\nTOKEN BUDGET: 1000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: commit_branch\nCOMMIT AFTER VERIFICATION: true\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-22T20:03:23.365869Z"
+          },
+          {
+            "seq": 13,
+            "id": "95caa829-87f8-4467-990f-2ae0e01b2b26",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:95caa829-87f8-4467-990f-2ae0e01b2b26",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T20:03:23.369159Z"
+          },
+          {
+            "seq": 14,
+            "id": "ad4799d6-df68-413b-ac0c-130eb5e99216",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:ad4799d6-df68-413b-ac0c-130eb5e99216",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T20:03:24.267035Z"
+          },
+          {
+            "seq": 15,
+            "id": "c053a75f-1f95-45b3-a732-d684a0be1472",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "artifact:46c3a2d8-7264-4eac-8ef1-3cba23fd6932:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "46c3a2d8-7264-4eac-8ef1-3cba23fd6932",
+              "artifact_role": "provider_evidence",
+              "bytes": 1444,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "c028bc43-9c9a-4d1b-a958-a1060f0d8d60",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "a7965e0f3d8b28fc12dbaa907596712dd5e48bf758d2b03da346b13d382d0b9c",
+              "retention_until": "2026-10-22T20:03:25.210950Z",
+              "sha256": "5386b6a04a44d0c1a29308cf69e171ebbf9a41687be34514041d28821fb6016e",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/46c3a2d8-7264-4eac-8ef1-3cba23fd6932",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T20:03:25.248739Z"
+          },
+          {
+            "seq": 16,
+            "id": "73b1e0eb-9347-4ab5-8a62-4460b58b6970",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:73b1e0eb-9347-4ab5-8a62-4460b58b6970",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-22T20:03:25.764108Z"
+          },
+          {
+            "seq": 17,
+            "id": "9079ea4d-6e22-4c47-a785-9f7a49c200b5",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:9079ea4d-6e22-4c47-a785-9f7a49c200b5",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 1
+            },
+            "created_at": "2026-09-22T20:03:25.768443Z"
+          },
+          {
+            "seq": 18,
+            "id": "63b24a97-9da8-4502-8cd2-7b110df01f82",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:63b24a97-9da8-4502-8cd2-7b110df01f82",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "73b0f604-8b58-4d33-8b2f-43ea3a54f8e8",
+              "kind": "file",
+              "payload": {
+                "bytes": 1444,
+                "path": "result.md",
+                "sha256": "5386b6a04a44d0c1a29308cf69e171ebbf9a41687be34514041d28821fb6016e"
+              },
+              "status": "passed",
+              "summary": "result.md exists with 1444 bytes"
+            },
+            "created_at": "2026-09-22T20:03:25.799200Z"
+          },
+          {
+            "seq": 19,
+            "id": "8c682eca-7143-40a3-8876-cfadee4374ef",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.failed",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:8c682eca-7143-40a3-8876-cfadee4374ef",
+            "visibility": "corp",
+            "payload": {
+              "error": "Verified deliverable export failed: deliverable contains path outside the task write scope: README.md. Automatic fresh-worktree retry is disabled. Keep the preserved worktree; inspect its complete source delta and the accepted deliverable/write scope. Use the existing preserved-session Resume only when that complete delta fits the current contract. If scope excludes retained source, a new authorized full-scope mission is required; do not delete source or reset attempts.",
+              "failure_kind": "deliverable_export"
+            },
+            "created_at": "2026-09-22T20:03:26.367372Z"
+          },
+          {
+            "seq": 20,
+            "id": "574d8b18-4243-4922-a447-ab736dded9f7",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "aggregate_version": 1,
+            "correlation_id": "1dc1985d-a4f8-4678-8dcc-6f4a2e29efa4",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:574d8b18-4243-4922-a447-ab736dded9f7",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+              "dirty": null,
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr355-20260922-r5\\runner\\worktrees\\f895478881e342578bad445772fffe4a\\6229fb7a0561478f9ce50cb58b87f5c8",
+              "workspace_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-f895478881e342578bad445772fffe4a/run-6229fb7a0561478f9ce50cb58b87f5c8",
+              "workspace_fingerprint": "e39ce0c9dfa53a4f5205c6e81df679e98f18b6bdfd385aeedab0c1c4f77abe9f",
+              "workspace_quarantined": false
+            },
+            "created_at": "2026-09-22T20:03:26.381140Z"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "73b0f604-8b58-4d33-8b2f-43ea3a54f8e8",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "f8954788-81e3-4257-8bad-445772fffe4a",
+            "run_id": "6229fb7a-0561-478f-9ce5-0cb58b87f5c8",
+            "check_index": 0,
+            "kind": "file",
+            "status": "passed",
+            "summary": "result.md exists with 1444 bytes",
+            "payload": {
+              "bytes": 1444,
+              "path": "result.md",
+              "sha256": "5386b6a04a44d0c1a29308cf69e171ebbf9a41687be34514041d28821fb6016e"
+            },
+            "created_at": "2026-09-22T20:03:25.799200Z"
+          }
+        ],
+        "files": {
+          "README.md": "8dcc288e0388a406dea32ddb29e31dc18fd03c271895898eaaff1a4eb3fd9903",
+          "portable-untracked.txt": "11c215c18c181ac2c2f0d2434f30513b6794f73eecdf612bff4b5d63e72180b8",
+          "result.md": "5386b6a04a44d0c1a29308cf69e171ebbf9a41687be34514041d28821fb6016e"
+        }
+      },
+      "screenshot": {
+        "file": "pr355-restricted-scope.png",
+        "sha256": "b1819639bf384e48f99bdbfa75730f35f7333620db8d157d999c6673983e8463"
+      }
+    },
+    {
+      "label": "complete-scope",
+      "created": {
+        "mission_id": "baada379-c747-44f2-83bf-c14bec578839",
+        "task_id": "50e4d108-4a8c-4513-82d0-ac7e07eeb2c3",
+        "task_ids": [
+          "50e4d108-4a8c-4513-82d0-ac7e07eeb2c3"
+        ],
+        "strategy": "single"
+      },
+      "request": {
+        "title": "[portable-deliverable] PR355 complete-scope be312fcf",
+        "description": "Owned acceptance of preserved complete source scope. No external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "strategy": "single",
+        "source": {
+          "base_ref": "HEAD",
+          "base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+          "repository": "ecorp-fixture/pr265-run-activity"
+        },
+        "max_task_attempts": 2,
+        "secret_refs": [],
+        "budget_tokens": 1000,
+        "budget_cost_microusd": 1000000,
+        "deliverable": {
+          "form": "commit_branch",
+          "commit_after_verification": true,
+          "paths": []
+        },
+        "contract": {
+          "objective": "Export the complete deterministic worktree",
+          "expected_output": "result.md",
+          "write_scope": [
+            "README.md",
+            "portable-untracked.txt",
+            "result.md"
+          ],
+          "allowed_tools": [
+            "filesystem"
+          ],
+          "prohibited_actions": [
+            "No external effects"
+          ]
+        },
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "file",
+              "path": "result.md",
+              "min_bytes": 1
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "provider_evidence_retained_separately": {
+        "artifact_id": "b584e116-4faa-4b48-8e96-6068d4d307f8",
+        "sha256": "5d95695b65efb82cf92b0d06eef1e26143d00d7cc867e785baa7fb7e348b52e5",
+        "excluded_from_source_commit": true,
+        "preserved_in_worktree": true
+      },
+      "committed_files": [
+        "README.md",
+        "portable-untracked.txt"
+      ],
+      "final": {
+        "mission": {
+          "id": "baada379-c747-44f2-83bf-c14bec578839",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[portable-deliverable] PR355 complete-scope be312fcf",
+          "description": "Owned acceptance of preserved complete source scope. No external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-22T20:03:30.739924Z",
+          "updated_at": "2026-09-22T20:03:37.807055Z"
+        },
+        "tasks": [
+          {
+            "id": "50e4d108-4a8c-4513-82d0-ac7e07eeb2c3",
+            "mission_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned acceptance of preserved complete source scope. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nExport the complete deterministic worktree",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned acceptance of preserved complete source scope. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nExport the complete deterministic worktree",
+              "expected_output": "result.md",
+              "source_repository": "ecorp-fixture/pr265-run-activity",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials",
+                "No external effects"
+              ],
+              "references": [],
+              "write_scope": [
+                "README.md",
+                "portable-untracked.txt",
+                "result.md"
+              ],
+              "budget_tokens": 1000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "commit_branch",
+                "commit_after_verification": true,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "file",
+                  "path": "result.md",
+                  "min_bytes": 1
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "47b2deb8-7223-4fb5-a814-1de6af6b59a3",
+            "created_at": "2026-09-22T20:03:30.739924Z",
+            "updated_at": "2026-09-22T20:03:37.807055Z"
+          }
+        ],
+        "run": {
+          "id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "50e4d108-4a8c-4513-82d0-ac7e07eeb2c3",
+          "agent_id": "47b2deb8-7223-4fb5-a814-1de6af6b59a3",
+          "runner_id": "pr265-activity-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/pr265-run-activity",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+          "workspace_path": "<local-user>\\code\\qa\\pr265-run-activity-pr355-20260922-r5\\runner\\worktrees\\50e4d1084a8c451382d0ac7e07eeb2c3\\b46a69b8675440b1a602d52c54e0ef9f",
+          "workspace_branch": "crony/task-50e4d1084a8c451382d0ac7e07eeb2c3/run-b46a69b8675440b1a602d52c54e0ef9f",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "working tree contains uncommitted or untracked changes",
+          "workspace_fingerprint": "5d576fd1c7ff9dec7d21b1daedf37d93eabb570675a313f79c8d099b87ea2853",
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 1 verifier checks passed",
+          "verification_sha256": "16f07b7d6efa35b1716a6245616cc151a50b51a00d586c40b213f010283d31c5",
+          "deliverable_sha256": "e4349881961c8f605d7996c6e306c5ff782684744eb2ec88ee7166b6193fab5c",
+          "status": "completed",
+          "summary": "Created and verified result.md through the runner-owned child process.",
+          "artifact_id": "b584e116-4faa-4b48-8e96-6068d4d307f8",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b584e116-4faa-4b48-8e96-6068d4d307f8",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "086a6eefe4b31999f66b833c0b430e7bf0ea3f63fc77f1562b8a9ce5386a6a6a",
+          "artifact_sha256": "5d95695b65efb82cf92b0d06eef1e26143d00d7cc867e785baa7fb7e348b52e5",
+          "created_at": "2026-09-22T20:03:31.230951Z",
+          "updated_at": "2026-09-22T20:03:38.383575Z"
+        },
+        "events": [
+          {
+            "seq": 26,
+            "id": "6494e4d5-b3f4-4b83-ba4c-87e922a5a0da",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "run:b46a69b8-6754-40b1-a602-d52c54e0ef9f:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "47b2deb8-7223-4fb5-a814-1de6af6b59a3",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "pr265-activity-qa",
+              "status": "starting",
+              "task_id": "50e4d108-4a8c-4513-82d0-ac7e07eeb2c3"
+            },
+            "created_at": "2026-09-22T20:03:31.230951Z"
+          },
+          {
+            "seq": 27,
+            "id": "bacdd4cb-f85a-412a-b766-4261e6b3e02d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:bacdd4cb-f85a-412a-b766-4261e6b3e02d",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "baada379-c747-44f2-83bf-c14bec578839",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "50e4d108-4a8c-4513-82d0-ac7e07eeb2c3",
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr355-20260922-r5\\runner\\worktrees\\50e4d1084a8c451382d0ac7e07eeb2c3\\b46a69b8675440b1a602d52c54e0ef9f",
+              "workspace_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-50e4d1084a8c451382d0ac7e07eeb2c3/run-b46a69b8675440b1a602d52c54e0ef9f"
+            },
+            "created_at": "2026-09-22T20:03:31.997206Z"
+          },
+          {
+            "seq": 28,
+            "id": "ffe672a3-9f36-4e95-8494-e36e9899e04c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:ffe672a3-9f36-4e95-8494-e36e9899e04c",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T20:03:32.088047Z"
+          },
+          {
+            "seq": 29,
+            "id": "a1afea5e-99eb-4668-a178-75fff3ae7d5d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:a1afea5e-99eb-4668-a178-75fff3ae7d5d",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [portable-deliverable] PR355 complete-scope be312fcf\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/pr265-run-activity\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: a77e2b356f24528e8f1746502b1898f72a93aeb9\nOBJECTIVE: Owned acceptance of preserved complete source scope. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nExport the complete deterministic worktree\nEXPECTED OUTPUT: result.md\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\n- No external effects\nREFERENCES:\n- none\nWRITE SCOPE:\n- README.md\n- portable-untracked.txt\n- result.md\nTOKEN BUDGET: 1000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: commit_branch\nCOMMIT AFTER VERIFICATION: true\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-22T20:03:32.797447Z"
+          },
+          {
+            "seq": 30,
+            "id": "91d2fb90-2c51-4c43-9e6c-033aa4c88d9b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:91d2fb90-2c51-4c43-9e6c-033aa4c88d9b",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T20:03:32.800766Z"
+          },
+          {
+            "seq": 31,
+            "id": "263657f2-c592-4cac-954e-15ec6fd9a0f3",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:263657f2-c592-4cac-954e-15ec6fd9a0f3",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-22T20:03:33.705010Z"
+          },
+          {
+            "seq": 32,
+            "id": "09c886c4-a187-4181-8055-9e9a305ab4e0",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "artifact:b584e116-4faa-4b48-8e96-6068d4d307f8:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "b584e116-4faa-4b48-8e96-6068d4d307f8",
+              "artifact_role": "provider_evidence",
+              "bytes": 1479,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "47b2deb8-7223-4fb5-a814-1de6af6b59a3",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "086a6eefe4b31999f66b833c0b430e7bf0ea3f63fc77f1562b8a9ce5386a6a6a",
+              "retention_until": "2026-10-22T20:03:34.638258Z",
+              "sha256": "5d95695b65efb82cf92b0d06eef1e26143d00d7cc867e785baa7fb7e348b52e5",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b584e116-4faa-4b48-8e96-6068d4d307f8",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T20:03:34.670963Z"
+          },
+          {
+            "seq": 33,
+            "id": "4da337a6-4a77-4274-af34-37ef6b91f656",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:4da337a6-4a77-4274-af34-37ef6b91f656",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-22T20:03:35.149831Z"
+          },
+          {
+            "seq": 34,
+            "id": "43e1634a-7e9a-443d-b177-4b7262816e9a",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:43e1634a-7e9a-443d-b177-4b7262816e9a",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 1
+            },
+            "created_at": "2026-09-22T20:03:35.154029Z"
+          },
+          {
+            "seq": 35,
+            "id": "9dc629ae-13a8-4b8b-830b-fff46a89dd74",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:9dc629ae-13a8-4b8b-830b-fff46a89dd74",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "32e0a85c-c04a-4ed4-b720-53ff0419eb4c",
+              "kind": "file",
+              "payload": {
+                "bytes": 1479,
+                "path": "result.md",
+                "sha256": "5d95695b65efb82cf92b0d06eef1e26143d00d7cc867e785baa7fb7e348b52e5"
+              },
+              "status": "passed",
+              "summary": "result.md exists with 1479 bytes"
+            },
+            "created_at": "2026-09-22T20:03:35.182226Z"
+          },
+          {
+            "seq": 36,
+            "id": "120ed1b1-4cd3-4d8f-8e72-7fbb5fd40707",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "artifact:975955b6-0a7c-4e0e-bc9f-510a9bcf6cdf:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "975955b6-0a7c-4e0e-bc9f-510a9bcf6cdf",
+              "artifact_role": "source_deliverable",
+              "bytes": 2843,
+              "file_name": "ecorp-commit-branch.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+                "branch": "crony/task-50e4d1084a8c451382d0ac7e07eeb2c3/run-b46a69b8675440b1a602d52c54e0ef9f",
+                "form": "commit_branch",
+                "git_bundle_sha256": "b0c5415ca694bdb254234e99e0b81977a24fba94f2b63ce9ddd532c881f80f35",
+                "head_commit": "915301c00060a98131fd7aef63417d0dc43179b3",
+                "integration_state": "ready_for_review",
+                "publication_ready": true,
+                "verification_sha256": "16f07b7d6efa35b1716a6245616cc151a50b51a00d586c40b213f010283d31c5"
+              },
+              "producer_agent_id": "47b2deb8-7223-4fb5-a814-1de6af6b59a3",
+              "producer_runner_id": "pr265-activity-qa",
+              "provenance_signature": "e84e0e952d33e3aad239fcc8cab9395dbebd4eec01a7d0f327db0cce9d289a4b",
+              "retention_until": "2026-10-22T20:03:37.717829Z",
+              "sha256": "e4349881961c8f605d7996c6e306c5ff782684744eb2ec88ee7166b6193fab5c",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/975955b6-0a7c-4e0e-bc9f-510a9bcf6cdf",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-22T20:03:37.764661Z"
+          },
+          {
+            "seq": 37,
+            "id": "54dc6d7a-cff6-4e8a-9ebd-b14724e2724b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:54dc6d7a-cff6-4e8a-9ebd-b14724e2724b",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "e4349881961c8f605d7996c6e306c5ff782684744eb2ec88ee7166b6193fab5c",
+              "summary": "all 1 verifier checks passed",
+              "verification_sha256": "16f07b7d6efa35b1716a6245616cc151a50b51a00d586c40b213f010283d31c5"
+            },
+            "created_at": "2026-09-22T20:03:37.778416Z"
+          },
+          {
+            "seq": 38,
+            "id": "56b1921f-d8dc-4949-9637-7b0852ba7e7c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:56b1921f-d8dc-4949-9637-7b0852ba7e7c",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created and verified result.md through the runner-owned child process."
+            },
+            "created_at": "2026-09-22T20:03:37.807055Z"
+          },
+          {
+            "seq": 39,
+            "id": "76538f15-35c9-4d59-a1c2-424b5249dea3",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "aggregate_version": 1,
+            "correlation_id": "baada379-c747-44f2-83bf-c14bec578839",
+            "causation_id": null,
+            "idempotency_key": "runner:pr265-activity-qa:event:76538f15-35c9-4d59-a1c2-424b5249dea3",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "working tree contains uncommitted or untracked changes",
+              "dirty": true,
+              "workspace": "<local-user>\\code\\qa\\pr265-run-activity-pr355-20260922-r5\\runner\\worktrees\\50e4d1084a8c451382d0ac7e07eeb2c3\\b46a69b8675440b1a602d52c54e0ef9f",
+              "workspace_base_commit": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-50e4d1084a8c451382d0ac7e07eeb2c3/run-b46a69b8675440b1a602d52c54e0ef9f",
+              "workspace_fingerprint": "5d576fd1c7ff9dec7d21b1daedf37d93eabb570675a313f79c8d099b87ea2853"
+            },
+            "created_at": "2026-09-22T20:03:38.383575Z"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "32e0a85c-c04a-4ed4-b720-53ff0419eb4c",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "50e4d108-4a8c-4513-82d0-ac7e07eeb2c3",
+            "run_id": "b46a69b8-6754-40b1-a602-d52c54e0ef9f",
+            "check_index": 0,
+            "kind": "file",
+            "status": "passed",
+            "summary": "result.md exists with 1479 bytes",
+            "payload": {
+              "bytes": 1479,
+              "path": "result.md",
+              "sha256": "5d95695b65efb82cf92b0d06eef1e26143d00d7cc867e785baa7fb7e348b52e5"
+            },
+            "created_at": "2026-09-22T20:03:35.182226Z"
+          }
+        ],
+        "files": {
+          "README.md": "8dcc288e0388a406dea32ddb29e31dc18fd03c271895898eaaff1a4eb3fd9903",
+          "portable-untracked.txt": "11c215c18c181ac2c2f0d2434f30513b6794f73eecdf612bff4b5d63e72180b8",
+          "result.md": "5d95695b65efb82cf92b0d06eef1e26143d00d7cc867e785baa7fb7e348b52e5"
+        }
+      },
+      "screenshot": {
+        "file": "pr355-complete-scope.png",
+        "sha256": "27bc0b2ba109d34604f402917f5b3e656eb477dd38985b135a4ad283eae74ac2"
+      }
+    }
+  ],
+  "errors": [],
+  "blocked_requests": [],
+  "source_fingerprint": {
+    "before": {
+      "head": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+      "index_sha256": "845320117823c814bc6c55f5904bb5ccbc7b3fca78657bbd17eb22f536b85013",
+      "status": "",
+      "readme_sha256": "68a0e90a505efabd5f3cc1a5f235cc2c96f3bfa59670bf6aca23cad110ca6845"
+    },
+    "after": {
+      "head": "a77e2b356f24528e8f1746502b1898f72a93aeb9",
+      "index_sha256": "845320117823c814bc6c55f5904bb5ccbc7b3fca78657bbd17eb22f536b85013",
+      "status": "",
+      "readme_sha256": "68a0e90a505efabd5f3cc1a5f235cc2c96f3bfa59670bf6aca23cad110ca6845"
+    }
+  },
+  "finished_at": "2026-09-22T20:03:40.345Z"
+}
