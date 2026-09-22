@@ -1537,16 +1537,23 @@
     },
     {
       "path": "verify_public.py",
-      "sha256": "2316d2ef4fbaed0b48d4aae0a21b11491684172c1ef3467aa688db25f02b9549",
-      "bytes": 4674,
-      "canonical_lf_sha256": "2316d2ef4fbaed0b48d4aae0a21b11491684172c1ef3467aa688db25f02b9549",
+      "sha256": "8a70d1b3936e438c984c9e70f168d2667f90860c82b1d43d8bca1f8396b6e733",
+      "bytes": 8229,
+      "canonical_lf_sha256": "8a70d1b3936e438c984c9e70f168d2667f90860c82b1d43d8bca1f8396b6e733",
       "supersedes_verifier": {
         "path": "verify_public.py",
-        "sha256": "e2cab21ca0f056495abf89fd289093f482110e5daeb6d2913a6dcd41d05b4c4f",
-        "bytes": 4551,
-        "canonical_lf_sha256": "e2cab21ca0f056495abf89fd289093f482110e5daeb6d2913a6dcd41d05b4c4f"
+        "sha256": "2316d2ef4fbaed0b48d4aae0a21b11491684172c1ef3467aa688db25f02b9549",
+        "bytes": 4674,
+        "canonical_lf_sha256": "2316d2ef4fbaed0b48d4aae0a21b11491684172c1ef3467aa688db25f02b9549",
+        "supersedes_verifier": {
+          "path": "verify_public.py",
+          "sha256": "e2cab21ca0f056495abf89fd289093f482110e5daeb6d2913a6dcd41d05b4c4f",
+          "bytes": 4551,
+          "canonical_lf_sha256": "e2cab21ca0f056495abf89fd289093f482110e5daeb6d2913a6dcd41d05b4c4f"
+        },
+        "correction": "September 22, 2026: fail closed before public verification when Python assertions are disabled. Original verifier and manifest retained separately; original capture and receipt bytes unchanged."
       },
-      "correction": "September 22, 2026: fail closed before public verification when Python assertions are disabled. Original verifier and manifest retained separately; original capture and receipt bytes unchanged."
+      "correction": "September 22, 2026: reject directories, linked or reparse-point roots/ancestors/files, unsafe or duplicate manifest names, and image/README references outside verified inventories. Original verifier and manifest are retained privately; capture bytes remain unchanged."
     }
   ],
   "root_text_line_endings": "Exact delivered hashes plus canonical-LF hashes permit only Git text EOL conversion. Archive members and images are byte-exact."

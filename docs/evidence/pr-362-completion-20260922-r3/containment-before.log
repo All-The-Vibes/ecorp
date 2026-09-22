@@ -1,0 +1,346 @@
+test_dash_o_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_dash_o_is_refused) ... ok
+test_dash_oo_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_dash_oo_is_refused) ... ok
+test_duplicate_delivered_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_duplicate_delivered_manifest_paths_are_rejected) ... FAIL
+test_environment_level_one_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_environment_level_one_is_refused) ... ok
+test_environment_level_two_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_environment_level_two_is_refused) ... ok
+test_image_path_cannot_escape_manifest_inventory (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_image_path_cannot_escape_manifest_inventory) ... FAIL
+test_linked_delivered_file_is_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_delivered_file_is_rejected) ... FAIL
+test_linked_packet_is_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_packet_is_rejected) ... FAIL
+test_linked_root_and_ancestor_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_root_and_ancestor_are_rejected) ...
+  test_linked_root_and_ancestor_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_root_and_ancestor_are_rejected) (depth=0) ... FAIL
+  test_linked_root_and_ancestor_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_root_and_ancestor_are_rejected) (depth=1) ... FAIL
+test_normal_interpreter_accepts_intact_packet (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_normal_interpreter_accepts_intact_packet) ... ok
+test_normal_interpreter_rejects_corrupted_packet (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_normal_interpreter_rejects_corrupted_packet) ... ok
+test_readme_link_cannot_escape_the_verified_packets (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_readme_link_cannot_escape_the_verified_packets) ... FAIL
+test_unlisted_nested_directory_is_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unlisted_nested_directory_is_rejected) ... FAIL
+test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) ...
+  test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='../outside.txt') ... FAIL
+  test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='/outside.txt') ... FAIL
+  test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='C:/outside.txt') ... FAIL
+  test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='nested/file.txt') ... FAIL
+  test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='nested\\file.txt') ... FAIL
+  test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='') ... FAIL
+  test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='.') ... FAIL
+
+======================================================================
+FAIL: test_duplicate_delivered_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_duplicate_delivered_manifest_paths_are_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 158, in test_duplicate_delivered_manifest_paths_are_rejected
+    self.assert_refused(base, "duplicate packet filename")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 34, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_image_path_cannot_escape_manifest_inventory (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_image_path_cannot_escape_manifest_inventory)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 153, in test_image_path_cannot_escape_manifest_inventory
+    self.assert_refused(base, "unsafe packet filename")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 34, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_linked_delivered_file_is_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_delivered_file_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 135, in test_linked_delivered_file_is_rejected
+    self.assert_refused(base, "linked evidence path")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 34, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_linked_packet_is_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_packet_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 106, in test_linked_packet_is_rejected
+    self.assert_refused(base, "linked evidence path")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 34, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_linked_root_and_ancestor_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_root_and_ancestor_are_rejected) (depth=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 119, in test_linked_root_and_ancestor_are_rejected
+    self.assert_refused(linked_base, "linked evidence path")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 34, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_linked_root_and_ancestor_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_root_and_ancestor_are_rejected) (depth=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 119, in test_linked_root_and_ancestor_are_rejected
+    self.assert_refused(linked_base, "linked evidence path")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 34, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_readme_link_cannot_escape_the_verified_packets (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_readme_link_cannot_escape_the_verified_packets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 175, in test_readme_link_cannot_escape_the_verified_packets
+    self.assert_refused(base, "unsafe README evidence link")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 34, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_unlisted_nested_directory_is_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unlisted_nested_directory_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 97, in test_unlisted_nested_directory_is_rejected
+    self.assert_refused(base, "non-regular evidence entry")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 34, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 38,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='../outside.txt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 144, in test_unsafe_manifest_paths_are_rejected
+    self.assert_refused(base, "unsafe packet filename")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 36, in assert_refused
+    self.assertIn(message, result.stderr)
+AssertionError: 'unsafe packet filename' not found in 'Traceback (most recent call last):\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-2k2drrqn\\evidence\\pr362-combined-20260921\\verify_public.py", line 81, in <module>\n    verify(Path(__file__).resolve().parent.parent, args.source)\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-2k2drrqn\\evidence\\pr362-combined-20260921\\verify_public.py", line 37, in verify\n    assert actual == expected, (name, \'unmanifested/missing files\')\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: (\'pr362-startup-20260921\', \'unmanifested/missing files\')\n'
+
+======================================================================
+FAIL: test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='/outside.txt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 144, in test_unsafe_manifest_paths_are_rejected
+    self.assert_refused(base, "unsafe packet filename")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 36, in assert_refused
+    self.assertIn(message, result.stderr)
+AssertionError: 'unsafe packet filename' not found in 'Traceback (most recent call last):\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-bhjov6r0\\evidence\\pr362-combined-20260921\\verify_public.py", line 81, in <module>\n    verify(Path(__file__).resolve().parent.parent, args.source)\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-bhjov6r0\\evidence\\pr362-combined-20260921\\verify_public.py", line 37, in verify\n    assert actual == expected, (name, \'unmanifested/missing files\')\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: (\'pr362-startup-20260921\', \'unmanifested/missing files\')\n'
+
+======================================================================
+FAIL: test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='C:/outside.txt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 144, in test_unsafe_manifest_paths_are_rejected
+    self.assert_refused(base, "unsafe packet filename")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 36, in assert_refused
+    self.assertIn(message, result.stderr)
+AssertionError: 'unsafe packet filename' not found in 'Traceback (most recent call last):\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-utkxdj5e\\evidence\\pr362-combined-20260921\\verify_public.py", line 81, in <module>\n    verify(Path(__file__).resolve().parent.parent, args.source)\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-utkxdj5e\\evidence\\pr362-combined-20260921\\verify_public.py", line 37, in verify\n    assert actual == expected, (name, \'unmanifested/missing files\')\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: (\'pr362-startup-20260921\', \'unmanifested/missing files\')\n'
+
+======================================================================
+FAIL: test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='nested/file.txt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 144, in test_unsafe_manifest_paths_are_rejected
+    self.assert_refused(base, "unsafe packet filename")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 36, in assert_refused
+    self.assertIn(message, result.stderr)
+AssertionError: 'unsafe packet filename' not found in 'Traceback (most recent call last):\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-wx7ppys1\\evidence\\pr362-combined-20260921\\verify_public.py", line 81, in <module>\n    verify(Path(__file__).resolve().parent.parent, args.source)\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-wx7ppys1\\evidence\\pr362-combined-20260921\\verify_public.py", line 37, in verify\n    assert actual == expected, (name, \'unmanifested/missing files\')\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: (\'pr362-startup-20260921\', \'unmanifested/missing files\')\n'
+
+======================================================================
+FAIL: test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='nested\\file.txt')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 144, in test_unsafe_manifest_paths_are_rejected
+    self.assert_refused(base, "unsafe packet filename")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 36, in assert_refused
+    self.assertIn(message, result.stderr)
+AssertionError: 'unsafe packet filename' not found in 'Traceback (most recent call last):\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-4u6wn0b4\\evidence\\pr362-combined-20260921\\verify_public.py", line 81, in <module>\n    verify(Path(__file__).resolve().parent.parent, args.source)\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-4u6wn0b4\\evidence\\pr362-combined-20260921\\verify_public.py", line 37, in verify\n    assert actual == expected, (name, \'unmanifested/missing files\')\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: (\'pr362-startup-20260921\', \'unmanifested/missing files\')\n'
+
+======================================================================
+FAIL: test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 144, in test_unsafe_manifest_paths_are_rejected
+    self.assert_refused(base, "unsafe packet filename")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 36, in assert_refused
+    self.assertIn(message, result.stderr)
+AssertionError: 'unsafe packet filename' not found in 'Traceback (most recent call last):\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-ml5qveqm\\evidence\\pr362-combined-20260921\\verify_public.py", line 81, in <module>\n    verify(Path(__file__).resolve().parent.parent, args.source)\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-ml5qveqm\\evidence\\pr362-combined-20260921\\verify_public.py", line 37, in verify\n    assert actual == expected, (name, \'unmanifested/missing files\')\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: (\'pr362-startup-20260921\', \'unmanifested/missing files\')\n'
+
+======================================================================
+FAIL: test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) (path='.')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 144, in test_unsafe_manifest_paths_are_rejected
+    self.assert_refused(base, "unsafe packet filename")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 36, in assert_refused
+    self.assertIn(message, result.stderr)
+AssertionError: 'unsafe packet filename' not found in 'Traceback (most recent call last):\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-4seoauah\\evidence\\pr362-combined-20260921\\verify_public.py", line 81, in <module>\n    verify(Path(__file__).resolve().parent.parent, args.source)\n  File "<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-test-4seoauah\\evidence\\pr362-combined-20260921\\verify_public.py", line 37, in verify\n    assert actual == expected, (name, \'unmanifested/missing files\')\n           ^^^^^^^^^^^^^^^^^^\nAssertionError: (\'pr362-startup-20260921\', \'unmanifested/missing files\')\n'
+
+----------------------------------------------------------------------
+Ran 14 tests in 14.412s
+
+FAILED (failures=15)

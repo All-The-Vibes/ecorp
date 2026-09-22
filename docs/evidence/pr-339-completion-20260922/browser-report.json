@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "started_at_utc": "2026-09-22T13:56:20.329Z",
+  "tested_staged_tree": "d5d88dd7a002c094e86a806a1fc4823db8e654ed",
+  "source_commit": "89d17d9bde3684134b8406389fccd8b76a06a347",
+  "scope": "Real browser/server/PostgreSQL/native deterministic runner, development Alice/Bob/Eve identities. No provider inference, production identity, mocked responses or real human attestations.",
+  "operations": [
+    {
+      "name": "browser-save",
+      "intent_at": "2026-09-22T13:56:24.751Z",
+      "completed": true
+    },
+    {
+      "name": "browser-launch",
+      "intent_at": "2026-09-22T13:56:24.964Z",
+      "completed": true
+    },
+    {
+      "name": "development-bob-approve",
+      "intent_at": "2026-09-22T13:56:32.864Z",
+      "completed": true
+    }
+  ],
+  "checks": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1050,
+      "layout": {
+        "width": 1440,
+        "content": 1440
+      },
+      "requester_blocked": true,
+      "eligible_review_enabled": true,
+      "nonmember_mission_and_run_hidden": true,
+      "keyboard_navigation": true
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "layout": {
+        "width": 390,
+        "content": 390
+      },
+      "requester_blocked": true,
+      "eligible_review_enabled": true,
+      "nonmember_mission_and_run_hidden": true,
+      "keyboard_navigation": true
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "desktop-requester.png",
+      "sha256": "c9235ea92a1c03240569123e7ec8b60f29babd4a30e7fa4706f4f8ed63d4b71e"
+    },
+    {
+      "file": "desktop-eligible-reviewer.png",
+      "sha256": "066577eb8e6bd1746e54908aee6ef47e6040862035ffdb6a6aae91626b7bf8ca"
+    },
+    {
+      "file": "desktop-excluded-viewer.png",
+      "sha256": "e4b00ea4a879d4feea3a7fcdc6d7e65eb8aa9bf9274465ec2ee9ac681b33df6f"
+    },
+    {
+      "file": "mobile-requester.png",
+      "sha256": "0a9a29365c4fb55b16ca5b4db021e19490336b2ca9a40be9094b6bfd382e48a0"
+    },
+    {
+      "file": "mobile-eligible-reviewer.png",
+      "sha256": "40cc1e608ade3db7a11d983e17f09ff4b2ef13aef09996201d074223b90859a0"
+    },
+    {
+      "file": "mobile-excluded-viewer.png",
+      "sha256": "ff2c774c7c93e8707f41bc21cc363211a68589d96f0bcf90d36c665482b4db7c"
+    },
+    {
+      "file": "mobile-completed.png",
+      "sha256": "5ed64de14aa01b7881b279c8e8acd1f53f7202918531a704218ae831e5cd2ff0"
+    }
+  ],
+  "errors": [],
+  "blocked_requests": [],
+  "browser_version": "153.0.4234.48",
+  "mission_id": "419e1428-7d42-4588-afd8-5298bfc60f6d",
+  "authored_policy": {
+    "checks": [
+      {
+        "type": "artifact",
+        "min_bytes": 1
+      }
+    ],
+    "manual_gate": {
+      "type": "independent_review",
+      "roles": [
+        "owner",
+        "admin",
+        "manager",
+        "member"
+      ],
+      "exclude_requester": true
+    }
+  },
+  "pending_workspace_disposition": "preserved",
+  "run_id": "b97a277b-adc8-4003-a618-642325eece1f",
+  "task_id": "07b4b254-0ce8-417d-b4cc-52b0fd7bcf75",
+  "prior_attempts": [
+    {
+      "attempt": "r1",
+      "failure": "driver imported expect from the wrong module",
+      "operations": 0
+    },
+    {
+      "attempt": "r2",
+      "failure": "driver asserted cleanup before its event arrived",
+      "mission_id": "5175fe60-a09c-4485-b4c2-86a2561f95aa",
+      "operations": 2,
+      "disposition": "Separate fixture stopped; its pending mission, database, worktree, logs and failed receipt remain preserved. This run does not replay it."
+    }
+  ],
+  "final": {
+    "run_id": "b97a277b-adc8-4003-a618-642325eece1f",
+    "status": "completed",
+    "verification_status": "passed",
+    "workspace_disposition": "preserved",
+    "verification_request_status": "approved",
+    "decided_by": "00000000-0000-4000-8000-000000000012",
+    "artifact_sha256": "fe67f4f0d2c288e6d9db73faee1964606fa8ec7f33eec13a97f8f5bf7e087fb8"
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-22T13:56:34.001Z"
+}

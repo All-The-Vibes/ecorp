@@ -52,7 +52,7 @@ commit/tree readback is in the operator packet, avoiding a self-referential comm
 The operator packet is retained at:
 
 ```text
-C:\Users\sschofield\repos\ecorp\output\pr-gauntlet-20260921\pr362\remediation
+<original-user>\repos\ecorp\output\pr-gauntlet-20260921\pr362\remediation
 ```
 
 `plan.md`, `initial-source.txt`, `remote-before.txt`, `pr-before.json`,
@@ -180,3 +180,6 @@ This evidence worker cannot upgrade that verdict. The parent must inspect the ex
 obtain fresh dual independent reviews, assess any remaining literal screenshot/chronology rubric
 limits, refresh hosted checks and satisfy GitHub's protected reviews. No push, comment, PR-body
 edit, review dismissal, merge, provider call, or policy waiver is performed by this worker.
+
+
+September 22, 2026 publication correction: the report and retained receipt text now use `<original-user>` for personal home prefixes. The public archive is a path-normalized copy; private original bytes are retained. The manifest records separate original and published hashes, and hashes inside historical receipt payloads continue to describe the original execution bytes. Screenshot bytes, recorded results and historical source bindings are unchanged.
