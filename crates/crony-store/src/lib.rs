@@ -714,6 +714,14 @@ pub enum RunnerCommandDispatchState {
     Obsolete,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RunnerCommandDispatchOutcome {
+    Sent,
+    Disconnected,
+    Settled,
+    Obsolete,
+}
+
 fn runner_command_dispatch_state(
     command_status: &str,
     run_status: Option<&str>,

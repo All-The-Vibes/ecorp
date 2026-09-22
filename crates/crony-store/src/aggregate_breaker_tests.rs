@@ -643,6 +643,223 @@ async fn pending_approval(store: &PgStore, index: u128) -> Uuid {
     approval
 }
 
+async fn queued_progress_commands(store: &PgStore) -> Vec<PendingRunnerCommand> {
+    let approval = pending_approval(store, 1).await;
+    store
+        .decide_action_approval(CORP, approval, OWNER, true, "", Uuid::new_v4())
+        .await
+        .unwrap();
+    let agent = Uuid::from_u128(run_id(1).as_u128() + 1);
+    let lease = store.acquire_lease(CORP, agent, OWNER).await.unwrap();
+    assert!(lease.acquired);
+    assert!(
+        store
+            .queue_message(
+                CORP,
+                agent,
+                OWNER,
+                Some(lease.lease.token),
+                "Continue",
+                Uuid::new_v4()
+            )
+            .await
+            .unwrap()
+            .command_queued
+    );
+    let commands = store
+        .pending_runner_commands("issue56-runner-1")
+        .await
+        .unwrap();
+    assert_eq!(commands.len(), 2);
+    commands
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgPool) {
+    let store = fixture(pool).await;
+    let commands = queued_progress_commands(&store).await;
+    for command in &commands {
+        for field in ["id", "corp", "run", "runner", "kind", "payload"] {
+            let mut changed = command.clone();
+            match field {
+                "id" => changed.id = Uuid::new_v4(),
+                "corp" => changed.corp_id = Uuid::new_v4(),
+                "run" => changed.run_id = run_id(0),
+                "runner" => changed.runner_id = "issue56-runner-0".to_owned(),
+                "kind" => {
+                    changed.command_kind = if command.command_kind == "control_message" {
+                        "approval_decision".to_owned()
+                    } else {
+                        "control_message".to_owned()
+                    }
+                }
+                "payload" => changed.payload["unexpected"] = json!(true),
+                _ => unreachable!(),
+            }
+            assert_eq!(
+                store
+                    .with_progress_command_dispatch(&changed, || {
+                        panic!("mismatched {field} must never enqueue")
+                    })
+                    .await
+                    .unwrap(),
+                RunnerCommandDispatchOutcome::Settled
+            );
+        }
+        assert_eq!(
+            store
+                .with_progress_command_dispatch(command, || false)
+                .await
+                .unwrap(),
+            RunnerCommandDispatchOutcome::Disconnected
+        );
+        assert_eq!(
+            store
+                .with_progress_command_dispatch(command, || true)
+                .await
+                .unwrap(),
+            RunnerCommandDispatchOutcome::Sent
+        );
+    }
+    store
+        .acknowledge_runner_command(commands[0].id, &commands[0].runner_id)
+        .await
+        .unwrap();
+    assert_eq!(
+        store
+            .with_progress_command_dispatch(&commands[0], || panic!("settled command"))
+            .await
+            .unwrap(),
+        RunnerCommandDispatchOutcome::Settled
+    );
+    sqlx::query("UPDATE runs SET status='completed' WHERE id=$1")
+        .bind(run_id(1))
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        store
+            .with_progress_command_dispatch(&commands[1], || panic!("terminal run"))
+            .await
+            .unwrap(),
+        RunnerCommandDispatchOutcome::Obsolete
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_progress_enqueue_checks_usage_before_persisted_fence(pool: PgPool) {
+    let store = fixture(pool).await;
+    let commands = queued_progress_commands(&store).await;
+    sqlx::query("UPDATE runs SET input_tokens=100 WHERE id=$1")
+        .bind(run_id(0))
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    assert!(!breaker_is_hard(&stage(&store, 1).await));
+    for command in &commands {
+        assert_eq!(
+            store
+                .with_progress_command_dispatch(command, || panic!("aggregate budget reached"))
+                .await
+                .unwrap(),
+            RunnerCommandDispatchOutcome::Obsolete
+        );
+    }
+    store
+        .evaluate_circuit_breaker(CORP, run_id(0))
+        .await
+        .unwrap();
+    assert_eq!(stage(&store, 1).await, "suspend");
+    for command in &commands {
+        assert_eq!(
+            store
+                .with_progress_command_dispatch(command, || panic!("persisted fence"))
+                .await
+                .unwrap(),
+            RunnerCommandDispatchOutcome::Obsolete
+        );
+    }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_progress_enqueue_precedes_concurrent_accounting(pool: PgPool) {
+    let store = fixture(pool).await;
+    let commands = queued_progress_commands(&store).await;
+    // Exercise the production lock order: the dispatcher holds the Corp gate
+    // while waiting for this run, so accounting cannot fence between check/send.
+    let mut barrier = store.pool.begin().await.unwrap();
+    let blocker: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *barrier)
+        .await
+        .unwrap();
+    sqlx::query("SELECT id FROM runs WHERE id=$1 FOR UPDATE")
+        .bind(run_id(1))
+        .execute(&mut *barrier)
+        .await
+        .unwrap();
+    let enqueued = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let sent = enqueued.clone();
+    let dispatcher = store.clone();
+    let command = commands[0].clone();
+    let dispatch = tokio::spawn(async move {
+        dispatcher
+            .with_progress_command_dispatch(&command, || {
+                sent.store(true, std::sync::atomic::Ordering::SeqCst);
+                true
+            })
+            .await
+    });
+    tokio::time::timeout(std::time::Duration::from_secs(3), async {
+        loop {
+            let waiting: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM pg_stat_activity
+                 WHERE datname=current_database() AND $1=ANY(pg_blocking_pids(pid)))",
+            )
+            .bind(blocker)
+            .fetch_one(&store.pool)
+            .await
+            .unwrap();
+            if waiting {
+                break;
+            }
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("progress dispatch must reach its run lock under the Corp gate");
+    let accounting = store.clone();
+    let mut usage = tokio::spawn(async move {
+        let outcome = accounting
+            .apply_runner_event(event(0, "run.usage", json!({"input_tokens":100})))
+            .await;
+        assert!(enqueued.load(std::sync::atomic::Ordering::SeqCst));
+        outcome
+    });
+    assert!(
+        tokio::time::timeout(std::time::Duration::from_millis(100), &mut usage)
+            .await
+            .is_err()
+    );
+    barrier.commit().await.unwrap();
+    assert_eq!(
+        dispatch.await.unwrap().unwrap(),
+        RunnerCommandDispatchOutcome::Sent
+    );
+    assert_eq!(usage.await.unwrap().unwrap().breaker_commands.len(), 2);
+    for command in &commands {
+        assert_eq!(
+            store
+                .with_progress_command_dispatch(command, || panic!("late progress enqueue"))
+                .await
+                .unwrap(),
+            RunnerCommandDispatchOutcome::Obsolete
+        );
+    }
+}
+
 fn artifact(index: u128, input: &RunnerEventInput) -> StoredArtifact {
     StoredArtifact {
         id: input.event_id,

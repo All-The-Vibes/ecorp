@@ -81,8 +81,8 @@ use crony_store::{
     PullRequestPublicationCheckpointInput, PullRequestPublicationOutcome, QueuedRunMessage,
     RecordPullRequestPublicationCheckpointInput, RejectFactoryMaterializationInput,
     RenewFactoryWorkItemInput, RenewPullRequestPublicationInput, RunClaim,
-    RunnerCommandDispatchState, RunnerConnectInput, RunnerEventInput, RunnerEventOutcome,
-    StartPullRequestPublicationInput, TransitionFactoryWorkItemInput,
+    RunnerCommandDispatchOutcome, RunnerCommandDispatchState, RunnerConnectInput, RunnerEventInput,
+    RunnerEventOutcome, StartPullRequestPublicationInput, TransitionFactoryWorkItemInput,
     UpgradeFactorySourceCommitInput,
 };
 use dashmap::DashMap;
@@ -1705,12 +1705,38 @@ async fn dispatch_pending_runner_commands_for_epoch(
                 }
                 Err(error) => return Err(error),
             };
-            if !send_command_to_current_runner(
-                &state.runners,
-                runner_id,
-                connection_epoch,
-                outgoing,
+            let enqueue = || {
+                send_command_to_current_runner(
+                    &state.runners,
+                    runner_id,
+                    connection_epoch,
+                    outgoing,
+                )
+            };
+            if matches!(
+                command.command_kind.as_str(),
+                "approval_decision" | "control_message"
             ) {
+                match state
+                    .store
+                    .with_progress_command_dispatch(&command, enqueue)
+                    .await?
+                {
+                    RunnerCommandDispatchOutcome::Sent => {}
+                    RunnerCommandDispatchOutcome::Disconnected => return Ok(()),
+                    RunnerCommandDispatchOutcome::Settled => continue,
+                    RunnerCommandDispatchOutcome::Obsolete => {
+                        if let Some(event) = state.store.fail_runner_command(
+                            command.id,
+                            runner_id,
+                            "progress command target is inactive or hard budget fenced before enqueue",
+                        ).await? {
+                            publish(state, event);
+                        }
+                        continue;
+                    }
+                }
+            } else if !enqueue() {
                 return Ok(());
             }
             if command.command_kind == "control_message"

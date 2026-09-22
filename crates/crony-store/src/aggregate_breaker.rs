@@ -1,6 +1,80 @@
 use super::*;
 
 impl PgStore {
+    /// Serialize human-progress enqueue with accounting and aggregate fences.
+    /// Checkpoint and recovery commands have their own lifecycle authorization.
+    pub async fn with_progress_command_dispatch<F>(
+        &self,
+        command: &PendingRunnerCommand,
+        dispatch: F,
+    ) -> Result<RunnerCommandDispatchOutcome>
+    where
+        F: FnOnce() -> bool,
+    {
+        if !matches!(
+            command.command_kind.as_str(),
+            "approval_decision" | "control_message"
+        ) {
+            return Err(anyhow!(
+                "budget progress dispatch requires an approval or control command"
+            ));
+        }
+        let mut tx = self.pool.begin().await?;
+        lock_corp_tx(&mut tx, command.corp_id).await?;
+        // Use the same Corp -> run -> command lock order as progress writers.
+        let run = sqlx::query(
+            "SELECT status, breaker_stage FROM runs
+             WHERE corp_id=$1 AND id=$2 AND runner_id=$3 FOR UPDATE",
+        )
+        .bind(command.corp_id)
+        .bind(command.run_id)
+        .bind(&command.runner_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        let status: Option<String> = sqlx::query_scalar(
+            "SELECT status FROM runner_commands
+             WHERE id=$1 AND corp_id=$2 AND run_id=$3 AND runner_id=$4
+               AND command_kind=$5 AND payload=$6 FOR UPDATE",
+        )
+        .bind(command.id)
+        .bind(command.corp_id)
+        .bind(command.run_id)
+        .bind(&command.runner_id)
+        .bind(&command.command_kind)
+        .bind(&command.payload)
+        .fetch_optional(&mut *tx)
+        .await?;
+        let mut state = runner_command_dispatch_state(
+            status.as_deref().unwrap_or("missing"),
+            run.as_ref().map(|row| row.get::<&str, _>("status")),
+        );
+        if state == RunnerCommandDispatchState::Pending {
+            let stage: &str = run
+                .as_ref()
+                .context("pending command run")?
+                .get("breaker_stage");
+            if breaker_is_hard(stage)
+                || hard_breaker_reached_tx(&mut tx, command.corp_id, command.run_id).await?
+            {
+                state = RunnerCommandDispatchState::Obsolete;
+            }
+        }
+        let outcome = match state {
+            RunnerCommandDispatchState::Pending => {
+                if dispatch() {
+                    RunnerCommandDispatchOutcome::Sent
+                } else {
+                    RunnerCommandDispatchOutcome::Disconnected
+                }
+            }
+            RunnerCommandDispatchState::Settled => RunnerCommandDispatchOutcome::Settled,
+            RunnerCommandDispatchState::Obsolete => RunnerCommandDispatchOutcome::Obsolete,
+        };
+        // No await may occur between the final budget check and synchronous enqueue.
+        tx.commit().await?;
+        Ok(outcome)
+    }
+
     pub async fn with_run_budget_dispatch<F>(
         &self,
         corp_id: Uuid,
