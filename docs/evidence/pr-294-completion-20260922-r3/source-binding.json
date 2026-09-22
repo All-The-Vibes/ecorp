@@ -180,8 +180,27 @@
     {
       "file": "drivers/run-pr294-native-r5.ps1",
       "executed_sha256": "6a873fb2b640a0fb76bc0e5bceec5a55c9c2e76c301f40166c47c5da45aec84a"
+    },
+    {
+      "file": "guards/result.json",
+      "original_sha256": "6a8f5a01ba543851e83407d47890500ca3bd076290cdc74079a0358b404ff768",
+      "published_sha256": "6a8f5a01ba543851e83407d47890500ca3bd076290cdc74079a0358b404ff768"
+    },
+    {
+      "file": "drivers/test-pr294-replay-guards-r1.ps1",
+      "original_sha256": "0ad04600fdf8c0cbc4969a66066d5bc74aa8bebfc31b00dc151760b864408544",
+      "published_sha256": "0ad04600fdf8c0cbc4969a66066d5bc74aa8bebfc31b00dc151760b864408544"
     }
   ],
   "normalization": "Text evidence replaces local roots, uses LF and removes trailing whitespace. Original and published hashes remain separate. Driver bytes and PNGs are exact.",
-  "minimum_saved_contract_contrast": 7.495994426354229
+  "minimum_saved_contract_contrast": 7.495994426354229,
+  "receipt_guard_tests": {
+    "report": "guards/result.json",
+    "source_head": "cd74bc87e16ddb9e9c4676e983454b83a7221bfa",
+    "source_tree": "c38ec032b232b6352bc1a243a30cdf21ad6d1a7b",
+    "tested_replay_driver_sha256": "6a873fb2b640a0fb76bc0e5bceec5a55c9c2e76c301f40166c47c5da45aec84a",
+    "scope": "Synthetic receipt admission tests only; successful cases deliberately stop at the occupied-fixture guard before any provisioning.",
+    "historical_driver": "drivers/test-pr294-replay-guards-r1.ps1",
+    "driver_replay_note": "The exact historical guard-test driver retains its original local paths. Its synthetic receipts are test fixtures only, never new nine-gate validation claims."
+  }
 }
