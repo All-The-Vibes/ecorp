@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>PR226 saved correction results</title>
+<style>
+body{font:16px/1.45 system-ui,sans-serif;color:#172536;background:#fff;margin:28px;max-width:1384px}h1{font-size:28px;margin:8px 0}h2{font-size:19px;margin:0 0 8px}p{margin:8px 0}code{font:13px/1.5 Consolas,monospace;overflow-wrap:anywhere}.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}section{border:1px solid #8798a8;border-radius:5px;padding:16px}pre{white-space:pre-wrap;font:14px/1.4 Consolas,monospace;background:#f1f4f7;padding:10px;margin:10px 0}.red{color:#9c2222}.green{color:#12623a}.label{font-weight:700;color:#315372}footer{font-size:14px;margin-top:16px}
+</style></head><body>
+<p class="label">SAVED RESULTS REPORT · September 22, 2026 · not a live test or application capture</p>
+<h1>PR #226: retained correction outcomes</h1>
+<p>This view summarizes the existing logs and receipt; opening it runs no tests. Failures remain failures.<br>
+Evidence snapshot: <code>9d79db02c814497f93eed4b8d7c842cb2518d153:docs/evidence/pr-226-completion-20260922-r3/</code></p>
+
+<p>Retained validation context: source head <code>87216fa319e03ce0626805d4f6c530ed6e7f4ad9</code><br>
+Tested staged tree <code>7bdeb42dbda78174e96e54932797681a1fbcafc6</code> · target <code>de12261d045ddfccf790bcfd04a7fa254563d456</code><br>
+These are the packet's existing validation identities, not recovered per-attempt source hashes for the two failed logs.</p>
+<div class="cards">
+<section><h2 class="red">RED — before root/link correction</h2>
+<p>Source: <a href="root-before.log"><code>root-before.log</code></a></p>
+<pre>ℹ tests 6
+ℹ pass 4
+ℹ fail 2
+ℹ skipped 0</pre>
+<p>Original SHA-256 (unchanged historical identity)<br><code>ccf6c61108f0bae83dbbb293790b823d42f1f8dfdeb527032a29458e70792eed</code></p>
+<p>Current public SHA-256<br><code>fd4b4baaee51c851f565c92a94bf438d2bdb7bcfdcfc285aaf3ad8baef391b84</code></p>
+<p>Only two user-root spans normalized; failure text/counts unchanged.<br>Prior public SHA-256<br><code>5ae6bba9d30b410d2bcc0f876c4a9e686063741d4c4dbd4bf506120fafa27c7f</code></p>
+</section>
+<section><h2 class="red">FAIL — intermediate short-path attempt</h2>
+<p>Source: <a href="root-intermediate-failed.log"><code>root-intermediate-failed.log</code></a></p>
+<pre>ℹ tests 6
+ℹ pass 4
+ℹ fail 2
+ℹ skipped 0</pre>
+<p>Original SHA-256 (unchanged historical identity)<br><code>a9ad6fa83e66826ab4b6c889c4a0e00bbdacf5583ff518564376e4db9c8d6666</code></p>
+<p>Current public SHA-256<br><code>a45b90cd9c369d8d875580528f8a5e8b8f65a4ca7f36eb5c710d727cd3572f41</code></p>
+<p>Rejected ordinary Windows short-path spelling. This failed attempt is retained, not relabelled successful.</p>
+</section>
+<section><h2 class="green">GREEN — final six-case scanner suite</h2>
+<p>Source: <a href="root-after.log"><code>root-after.log</code></a></p>
+<pre>ℹ tests 6
+ℹ pass 6
+ℹ fail 0
+ℹ skipped 0</pre>
+<p>Original SHA-256 (unchanged historical identity)<br><code>32abfa0314d1794d21577be7bb94cf426fd0ea09d08ee51856c030a542175463</code></p>
+<p>Current public SHA-256<br><code>7c4f9984131a2dc3c39b98c4e4b3ce3f3fbb6202721e804de4f017fc692a9cb6</code></p>
+<p>Includes root, ancestor, nested and dangling links. This is the existing six-case GREEN, not a new run.</p>
+</section>
+<section><h2 class="green">PASS — saved receipt-reference check</h2>
+<p>Source: <a href="receipt-reference.json"><code>receipt-reference.json</code></a></p>
+<pre>status: passed
+checks: 3
+bound_artifacts: 5</pre>
+<p>Original SHA-256 (unchanged historical identity)<br><code>0906493b7439f718ada17c63bba5b1c075bffa9bd0a8e80488f07026008dad0f</code></p>
+<p>Current public SHA-256<br><code>220f4503c789863fa54089cae7b9b63504d89d08a6db79ad53421bf4297f3ced</code></p>
+<p>Three saved reference checks bind five artifacts in the r2 correction. Full reference digests remain in the linked JSON.</p>
+</section>
+</div><footer>Provenance: <a href="correction-provenance.json">correction-provenance.json</a> and <a href="validation.json">validation.json</a>.
+Original images/logs and prior publications remain retained; the public root-before copy is path-normalized.<br>
+No new development chronology, nine-gate execution, native Factory acceptance, independent review or publication approval is claimed. Issue #225 remains open/unproven.</footer>
+</body></html>

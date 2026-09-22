@@ -21,3 +21,23 @@ Build provenance: Workspace package artifacts are removed under the task Cargo m
 The focused regression failed before the correction. An intermediate correction rejected the Windows short spelling used by temporary directories; that failed attempt is retained. The final six-case suite passes. `correction-provenance.json` binds all three logs and the receipt-reference check separately. The original r2 receipt is retained under its `prior-attempts/` directory.
 
 Trailing line whitespace and blank lines at EOF are removed from the published logs. This formatting normalization does not alter test-result text; original and published hashes are distinct. The local `.gitattributes` preserves published evidence bytes on checkout.
+
+## September 22, 2026 public-evidence follow-up
+
+Two remaining user-root spans in `root-before.log` are now normalized. Its
+original raw digest and prior public digest/Git pointer remain in
+`correction-provenance.json`; the previous public bytes are also retained in
+private coordinator scratch. Failure text, counts and every other log byte are
+unchanged. The dated September 12 report received only three user-root replacements.
+The existing bounded default scanner now includes this r3 packet.
+
+[saved-correction-results.png](saved-correction-results.png) is an unedited,
+genuine Edge capture of [saved-correction-results.html](saved-correction-results.html):
+the existing root-before RED, intermediate failure, six-case GREEN and
+receipt-reference outcomes, with source pointers and original/current public hashes.
+`correction-provenance.json` binds the HTML/image, actual browser and capture time.
+This is a saved-results view, not new test execution or reconstructed development
+chronology. The original `validation.html`, `validation.png`, `validation.json`
+and all other logs remain unchanged. Their nine-gate receipt describes its
+historical tested tree, not this new scanner/evidence correction. Fresh correction
+checks and combined validation/review belong to the parent before publication.

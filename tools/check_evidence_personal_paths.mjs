@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 export const defaultEvidenceDirectories = [
   fileURLToPath(new URL('../docs/evidence/pr226-integration-20260921/', import.meta.url)),
   fileURLToPath(new URL('../docs/evidence/pr226-local-validation/', import.meta.url)),
+  fileURLToPath(new URL('../docs/evidence/pr-226-completion-20260922-r3/', import.meta.url)),
 ]
 
 // Repeated separators cover both native paths and JSON-escaped paths. A drive

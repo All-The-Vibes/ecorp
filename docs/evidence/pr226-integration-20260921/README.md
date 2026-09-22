@@ -148,3 +148,21 @@ archive. Statements above about unchanged logs describe their initial capture,
 before this documented path normalization.
 
 Follow-up normalization on September 22, 2026 also covers the drive-relative Windows HOMEPATH value in eight environment receipts. The normalization manifest preserves original hashes and the previous published hashes. Run `node tools/check_evidence_personal_paths.mjs` from the repository root to scan this packet and pr226-local-validation, including escaped and drive-relative path forms. The historical whole-source self-review still describes its original source snapshot; it was not rerun against current main.
+
+## September 22, 2026 public-image correction
+
+The earlier unchanged-image statements describe the original publication.
+`prior-attempts/capture-launch-v1-failed.png` is now an explicitly labelled
+public redacted derivative, not an original capture: five manually selected
+user-root rectangles and a disclosure label are the only changed pixel regions.
+The launch still failed before driver/test execution. The raw PNG is retained
+privately and at the immutable Git pointer recorded in `terminal-provenance.json`.
+
+`path-normalization-20260922.json`, `package-sha256.json`, capture receipts and
+all original identity records remain historical, not mutable current-file oracles.
+Their original image and README hashes are not hashes of these current copies.
+`terminal-provenance.json` separately binds the current image and this README;
+its correction also pins the unchanged historical normalization manifest.
+The default text scan now includes the r3 completion packet; it is not OCR or
+proof of pixel privacy. The derivative was manually inspected. Scoped
+`cr-at-eol` attributes recognize intentional CRLF without waiving other whitespace.

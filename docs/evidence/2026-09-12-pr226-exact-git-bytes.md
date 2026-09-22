@@ -15,7 +15,7 @@ The initial worker's read-only GitHub checks against `All-The-Vibes/ecorp` confi
   changes that stack nor claims to have rerun those checks.
 
 The assigned worktree is
-`C:\Users\shyamsridhar\.codex\worktrees\ecorp-pr226-ready-20260911`,
+`C:\Users\<original-user>\.codex\worktrees\ecorp-pr226-ready-20260911`,
 branch `codex/pr226-merge-ready`. That initial worker performed no commit,
 push, PR mutation, service, container, browser, database, or provider operation.
 
@@ -135,7 +135,7 @@ No Cargo, SQLx, web build/lint, hosted rerun, or full-stack validation was run.
 
 The only historical filesystem root inspected for this audit was:
 
-`C:\Users\shyamsridhar\.codex\dogfood\issue224-planned-attempt-policy-20260910\pr226-review-20260910T225936768`
+`C:\Users\<original-user>\.codex\dogfood\issue224-planned-attempt-policy-20260910\pr226-review-20260910T225936768`
 
 It contains nine files: `byte-review.json`, `result.json`,
 `github-review.json`, `review-body.md`, `stdout.log`, empty `stderr.log`, and
@@ -171,7 +171,7 @@ PR #226.
 
 New evidence root:
 
-`C:\Users\shyamsridhar\.codex\dogfood\merge-drain-20260911\pr226-byte-repair-20260911T215048171`
+`C:\Users\<original-user>\.codex\dogfood\merge-drain-20260911\pr226-byte-repair-20260911T215048171`
 
 - `github-before.json`: live issue/PR/review snapshot with pinned identities.
 - `published-raw.json` and `published-raw/`: freshly downloaded old Git blobs.

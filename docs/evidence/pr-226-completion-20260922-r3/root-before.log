@@ -37,7 +37,7 @@ test at tools\check_evidence_personal_paths.test.mjs:68:1
 ✖ nested and dangling directory links fail closed (7.0714ms)
   AssertionError [ERR_ASSERTION]: The input did not match the regular expression /regular files and directories/. Input:
 
-  "Error: ENOENT: no such file or directory, scandir 'C:\\Users\\SHYAMS~1\\AppData\\Local\\Temp\\ecorp-evidence-link-2YknO1\\packet\\redirect'"
+  "Error: ENOENT: no such file or directory, scandir 'C:\\Users\\<original-user>\\AppData\\Local\\Temp\\ecorp-evidence-link-2YknO1\\packet\\redirect'"
 
       at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:79:10)
       at Test.runInAsyncScope (node:async_hooks:227:14)
@@ -48,7 +48,7 @@ test at tools\check_evidence_personal_paths.test.mjs:68:1
       at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
     generatedMessage: true,
     code: 'ERR_ASSERTION',
-    actual: Error: ENOENT: no such file or directory, scandir 'C:\Users\SHYAMS~1\AppData\Local\Temp\ecorp-evidence-link-2YknO1\packet\redirect'
+    actual: Error: ENOENT: no such file or directory, scandir 'C:\Users\<original-user>\AppData\Local\Temp\ecorp-evidence-link-2YknO1\packet\redirect'
         at readdirSync (node:fs:1630:26)
         at visit (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:20:27)
         at findPersonalPathFiles (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:29:5)

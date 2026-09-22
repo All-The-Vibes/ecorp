@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
-import { findPersonalPathFiles, hasPersonalUserPath } from './check_evidence_personal_paths.mjs'
+import { defaultEvidenceDirectories, findPersonalPathFiles, hasPersonalUserPath } from './check_evidence_personal_paths.mjs'
 
 test('personal paths include drive-relative, prefixed, escaped and alternate separators', () => {
   for (const path of [
@@ -42,7 +42,10 @@ test('recursive packet scan and CLI reject a leak without printing its value', t
   assert.equal(JSON.parse(passed.stdout).status, 'passed')
 })
 
-test('both retained PR226 packets contain no personal user paths', () => {
+test('retained PR226 packets including r3 are scanned for personal user paths', () => {
+  assert(defaultEvidenceDirectories.includes(
+    fileURLToPath(new URL('../docs/evidence/pr-226-completion-20260922-r3/', import.meta.url)),
+  ), 'default scan must include the r3 completion packet')
   assert.deepEqual(findPersonalPathFiles(), [])
 })
 
