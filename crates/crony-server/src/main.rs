@@ -1649,74 +1649,59 @@ async fn dispatch_pending_runner_commands_for_epoch(
             if !runner_epoch_is_ready(&state.runners, runner_id, connection_epoch) {
                 return Ok(());
             }
-            let control_lease_token = if command.command_kind == "control_message" {
-                match state.store.control_command_lease_token(&command).await? {
-                    Some(token) => Some(token),
-                    None => {
-                        if let Some(event) = state
+            let progress = matches!(
+                command.command_kind.as_str(),
+                "approval_decision" | "control_message"
+            );
+            // Decode progress only with authority read under the final dispatch
+            // transaction; an earlier lease snapshot cannot authorize enqueue.
+            let outgoing = if progress {
+                None
+            } else {
+                let decoded =
+                    decode_recovery_runner_command(state, &command, None, durable_control).await;
+                if !runner_epoch_is_ready(&state.runners, runner_id, connection_epoch) {
+                    return Ok(());
+                }
+                match decoded {
+                    Ok(Some(outgoing)) => Some(outgoing),
+                    Ok(None) => continue,
+                    Err(error)
+                        if command.command_kind == "factory_verification_recovery"
+                            && !factory_recovery_failure_is_retryable(&error) =>
+                    {
+                        let detail = factory_recovery_dispatch_failure_detail(&error);
+                        for event in state
                             .store
-                            .fail_runner_command(
-                                command.id,
-                                runner_id,
-                                "control lease changed or expired before durable steering dispatch",
+                            .fail_factory_recovery_before_dispatch(
+                                command.corp_id,
+                                command.run_id,
+                                &detail,
                             )
                             .await?
                         {
                             publish(state, event);
                         }
+                        warn!(%error, run_id = %command.run_id, command_id = %command.id,
+                        "factory recovery command failed before runner dispatch");
                         continue;
                     }
+                    Err(error) => return Err(error),
                 }
-            } else {
-                None
             };
-            let decoded = decode_recovery_runner_command(
-                state,
-                &command,
-                control_lease_token,
-                durable_control,
-            )
-            .await;
-            if !runner_epoch_is_ready(&state.runners, runner_id, connection_epoch) {
-                return Ok(());
-            }
-            let outgoing = match decoded {
-                Ok(Some(outgoing)) => outgoing,
-                Ok(None) => continue,
-                Err(error)
-                    if command.command_kind == "factory_verification_recovery"
-                        && !factory_recovery_failure_is_retryable(&error) =>
-                {
-                    let detail = factory_recovery_dispatch_failure_detail(&error);
-                    for event in state
-                        .store
-                        .fail_factory_recovery_before_dispatch(
-                            command.corp_id,
-                            command.run_id,
-                            &detail,
-                        )
-                        .await?
-                    {
-                        publish(state, event);
-                    }
-                    warn!(%error, run_id = %command.run_id, command_id = %command.id,
-                        "factory recovery command failed before runner dispatch");
-                    continue;
-                }
-                Err(error) => return Err(error),
-            };
-            let enqueue = || {
-                send_command_to_current_runner(
+            let enqueue = |lease_token| {
+                let outgoing = match outgoing {
+                    Some(outgoing) => outgoing,
+                    None => decode_runner_command(&command, lease_token, durable_control)?,
+                };
+                Ok(send_command_to_current_runner(
                     &state.runners,
                     runner_id,
                     connection_epoch,
                     outgoing,
-                )
+                ))
             };
-            if matches!(
-                command.command_kind.as_str(),
-                "approval_decision" | "control_message"
-            ) {
+            if progress {
                 match state
                     .store
                     .with_progress_command_dispatch(&command, enqueue)
@@ -1729,14 +1714,14 @@ async fn dispatch_pending_runner_commands_for_epoch(
                         if let Some(event) = state.store.fail_runner_command(
                             command.id,
                             runner_id,
-                            "progress command target is inactive or hard budget fenced before enqueue",
+                            "progress command target is inactive, hard budget fenced, or its control lease changed or expired before enqueue",
                         ).await? {
                             publish(state, event);
                         }
                         continue;
                     }
                 }
-            } else if !enqueue() {
+            } else if !enqueue(None)? {
                 return Ok(());
             }
             if command.command_kind == "control_message"

@@ -699,7 +699,7 @@ async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgP
             }
             assert_eq!(
                 store
-                    .with_progress_command_dispatch(&changed, || {
+                    .with_progress_command_dispatch(&changed, |_| {
                         panic!("mismatched {field} must never enqueue")
                     })
                     .await
@@ -709,14 +709,14 @@ async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgP
         }
         assert_eq!(
             store
-                .with_progress_command_dispatch(command, || false)
+                .with_progress_command_dispatch(command, |_| Ok(false))
                 .await
                 .unwrap(),
             RunnerCommandDispatchOutcome::Disconnected
         );
         assert_eq!(
             store
-                .with_progress_command_dispatch(command, || true)
+                .with_progress_command_dispatch(command, |_| Ok(true))
                 .await
                 .unwrap(),
             RunnerCommandDispatchOutcome::Sent
@@ -728,7 +728,7 @@ async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgP
         .unwrap();
     assert_eq!(
         store
-            .with_progress_command_dispatch(&commands[0], || panic!("settled command"))
+            .with_progress_command_dispatch(&commands[0], |_| panic!("settled command"))
             .await
             .unwrap(),
         RunnerCommandDispatchOutcome::Settled
@@ -740,7 +740,7 @@ async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgP
         .unwrap();
     assert_eq!(
         store
-            .with_progress_command_dispatch(&commands[1], || panic!("terminal run"))
+            .with_progress_command_dispatch(&commands[1], |_| panic!("terminal run"))
             .await
             .unwrap(),
         RunnerCommandDispatchOutcome::Obsolete
@@ -790,14 +790,14 @@ async fn issue56_expired_approval_cleanup_reaches_terminal_fenced_runner(pool: P
     );
     assert_eq!(
         store
-            .with_progress_command_dispatch(command, || false)
+            .with_progress_command_dispatch(command, |_| Ok(false))
             .await
             .unwrap(),
         RunnerCommandDispatchOutcome::Disconnected
     );
     assert_eq!(
         store
-            .with_progress_command_dispatch(command, || true)
+            .with_progress_command_dispatch(command, |_| Ok(true))
             .await
             .unwrap(),
         RunnerCommandDispatchOutcome::Sent
@@ -818,7 +818,7 @@ async fn issue56_expired_approval_cleanup_reaches_terminal_fenced_runner(pool: P
         .unwrap();
     assert_eq!(
         store
-            .with_progress_command_dispatch(command, || panic!("already acknowledged"))
+            .with_progress_command_dispatch(command, |_| panic!("already acknowledged"))
             .await
             .unwrap(),
         RunnerCommandDispatchOutcome::Settled
@@ -857,7 +857,7 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
         .unwrap();
     assert_eq!(
         store
-            .with_progress_command_dispatch(command, || true)
+            .with_progress_command_dispatch(command, |_| Ok(true))
             .await
             .unwrap(),
         RunnerCommandDispatchOutcome::Sent
@@ -884,7 +884,7 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
         );
         assert_eq!(
             store
-                .with_progress_command_dispatch(&changed, || panic!("mismatched {field}"))
+                .with_progress_command_dispatch(&changed, |_| panic!("mismatched {field}"))
                 .await
                 .unwrap(),
             RunnerCommandDispatchOutcome::Settled
@@ -915,7 +915,7 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
         );
         assert_eq!(
             store
-                .with_progress_command_dispatch(&changed, || panic!("unproven negative decision"))
+                .with_progress_command_dispatch(&changed, |_| panic!("unproven negative decision"))
                 .await
                 .unwrap(),
             RunnerCommandDispatchOutcome::Obsolete
@@ -941,7 +941,7 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
             );
             assert_eq!(
                 store
-                    .with_progress_command_dispatch(command, || true)
+                    .with_progress_command_dispatch(command, |_| Ok(true))
                     .await
                     .unwrap(),
                 RunnerCommandDispatchOutcome::Sent
@@ -953,7 +953,7 @@ async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool
             );
             assert_eq!(
                 store
-                    .with_progress_command_dispatch(command, || panic!("approval is not rejected"))
+                    .with_progress_command_dispatch(command, |_| panic!("approval is not rejected"))
                     .await
                     .unwrap(),
                 RunnerCommandDispatchOutcome::Obsolete
@@ -976,7 +976,7 @@ async fn issue56_progress_enqueue_checks_usage_before_persisted_fence(pool: PgPo
     for command in &commands {
         assert_eq!(
             store
-                .with_progress_command_dispatch(command, || panic!("aggregate budget reached"))
+                .with_progress_command_dispatch(command, |_| panic!("aggregate budget reached"))
                 .await
                 .unwrap(),
             RunnerCommandDispatchOutcome::Obsolete
@@ -990,7 +990,7 @@ async fn issue56_progress_enqueue_checks_usage_before_persisted_fence(pool: PgPo
     for command in &commands {
         assert_eq!(
             store
-                .with_progress_command_dispatch(command, || panic!("persisted fence"))
+                .with_progress_command_dispatch(command, |_| panic!("persisted fence"))
                 .await
                 .unwrap(),
             RunnerCommandDispatchOutcome::Obsolete
@@ -1021,9 +1021,9 @@ async fn issue56_progress_enqueue_precedes_concurrent_accounting(pool: PgPool) {
     let command = commands[0].clone();
     let dispatch = tokio::spawn(async move {
         dispatcher
-            .with_progress_command_dispatch(&command, || {
+            .with_progress_command_dispatch(&command, |_| {
                 sent.store(true, std::sync::atomic::Ordering::SeqCst);
-                true
+                Ok(true)
             })
             .await
     });
@@ -1067,12 +1067,316 @@ async fn issue56_progress_enqueue_precedes_concurrent_accounting(pool: PgPool) {
     for command in &commands {
         assert_eq!(
             store
-                .with_progress_command_dispatch(command, || panic!("late progress enqueue"))
+                .with_progress_command_dispatch(command, |_| panic!("late progress enqueue"))
                 .await
                 .unwrap(),
             RunnerCommandDispatchOutcome::Obsolete
         );
     }
+}
+
+async fn queue_control(store: &PgStore, index: u128) -> (ControlLease, PendingRunnerCommand) {
+    let agent = Uuid::from_u128(run_id(index).as_u128() + 1);
+    let acquired = store.acquire_lease(CORP, agent, OWNER).await.unwrap();
+    assert!(acquired.acquired);
+    let message = store
+        .queue_message(
+            CORP,
+            agent,
+            OWNER,
+            Some(acquired.lease.token),
+            "Continue",
+            Uuid::new_v4(),
+        )
+        .await
+        .unwrap();
+    assert!(message.command_queued);
+    let command = store
+        .pending_runner_commands(&format!("issue56-runner-{index}"))
+        .await
+        .unwrap()
+        .into_iter()
+        .find(|command| command.payload["message_id"] == json!(message.message.id))
+        .unwrap();
+    (acquired.lease, command)
+}
+
+async fn wait_for_control_blocker(pool: &PgPool, blocker: i32) {
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        loop {
+            let waiting: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM pg_stat_activity
+                 WHERE datname=current_database() AND $1=ANY(pg_blocking_pids(pid)))",
+            )
+            .bind(blocker)
+            .fetch_one(pool)
+            .await
+            .unwrap();
+            if waiting {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .expect("control operation must reach the real PostgreSQL lock barrier");
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_control_dispatch_revalidates_lease_after_run_wait(pool: PgPool) {
+    let store = fixture(pool).await;
+    let recipient = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO actors(id,corp_id,name,kind,role) VALUES($1,$2,'Recipient','human','member')",
+    )
+    .bind(recipient)
+    .bind(CORP)
+    .execute(&store.pool)
+    .await
+    .unwrap();
+    for (offset, mutation) in [
+        "renew",
+        "release",
+        "transfer",
+        "expire",
+        "release_reacquire",
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let index = 10 + offset as u128;
+        add_run(&store, index, CORP, MISSION).await;
+        let (lease, command) = queue_control(&store, index).await;
+        let mut barrier = store.pool.begin().await.unwrap();
+        let blocker: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+            .fetch_one(&mut *barrier)
+            .await
+            .unwrap();
+        sqlx::query("SELECT id FROM runs WHERE id=$1 FOR UPDATE")
+            .bind(command.run_id)
+            .execute(&mut *barrier)
+            .await
+            .unwrap();
+        let dispatcher = store.clone();
+        let dispatch = tokio::spawn(async move {
+            dispatcher
+                .with_progress_command_dispatch(&command, |_| {
+                    panic!("stale control after {mutation}")
+                })
+                .await
+        });
+        wait_for_control_blocker(&store.pool, blocker).await;
+        tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            match mutation {
+                "renew" => {
+                    let renewed = store.acquire_lease(CORP, lease.agent_id, OWNER).await.unwrap();
+                    assert!(renewed.acquired);
+                    assert!(renewed.lease.lease_version > lease.lease_version);
+                    assert_ne!(renewed.lease.token, lease.token);
+                }
+                "release" | "release_reacquire" => {
+                    let released = store.release_lease(CORP, lease.agent_id, OWNER, lease.token).await.unwrap();
+                    assert!(released.lease.is_none());
+                    if mutation == "release_reacquire" {
+                        let reacquired = store.acquire_lease(CORP, lease.agent_id, OWNER).await.unwrap();
+                        assert!(reacquired.acquired);
+                        assert!(reacquired.lease.lease_version > lease.lease_version, "release must preserve the version fence");
+                    }
+                }
+                "transfer" => {
+                    let transferred = store.transfer_lease(CORP, lease.agent_id, OWNER, lease.token, recipient).await.unwrap();
+                    assert_eq!(transferred.lease.unwrap().actor_id, recipient);
+                }
+                "expire" => {
+                    sqlx::query("UPDATE control_leases SET expires_at=clock_timestamp()-interval '1 second' WHERE agent_id=$1")
+                        .bind(lease.agent_id).execute(&store.pool).await.unwrap();
+                }
+                _ => unreachable!(),
+            }
+        }).await.expect("lease mutation must not wait for the blocked run");
+        barrier.commit().await.unwrap();
+        assert_eq!(
+            dispatch.await.unwrap().unwrap(),
+            RunnerCommandDispatchOutcome::Obsolete,
+            "{mutation}"
+        );
+    }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_control_dispatch_locks_and_rechecks_lease_row(pool: PgPool) {
+    let store = fixture(pool).await;
+    let (lease, command) = queue_control(&store, 1).await;
+    let mut barrier = store.pool.begin().await.unwrap();
+    let blocker: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *barrier)
+        .await
+        .unwrap();
+    sqlx::query("SELECT agent_id FROM control_leases WHERE agent_id=$1 FOR UPDATE")
+        .bind(lease.agent_id)
+        .execute(&mut *barrier)
+        .await
+        .unwrap();
+    let dispatcher = store.clone();
+    let dispatch = tokio::spawn(async move {
+        dispatcher
+            .with_progress_command_dispatch(&command, |_| panic!("stale MVCC lease snapshot"))
+            .await
+    });
+    wait_for_control_blocker(&store.pool, blocker).await;
+    sqlx::query(
+        "UPDATE control_leases SET token=$2,lease_version=lease_version+1 WHERE agent_id=$1",
+    )
+    .bind(lease.agent_id)
+    .bind(Uuid::new_v4())
+    .execute(&mut *barrier)
+    .await
+    .unwrap();
+    barrier.commit().await.unwrap();
+    assert_eq!(
+        dispatch.await.unwrap().unwrap(),
+        RunnerCommandDispatchOutcome::Obsolete
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_control_dispatch_checks_wall_clock_after_lock_wait(pool: PgPool) {
+    let store = fixture(pool).await;
+    let (lease, command) = queue_control(&store, 1).await;
+    let expiry: chrono::DateTime<Utc> = sqlx::query_scalar(
+        "UPDATE control_leases SET expires_at=clock_timestamp()+interval '3 seconds' WHERE agent_id=$1 RETURNING expires_at",
+    ).bind(lease.agent_id).fetch_one(&store.pool).await.unwrap();
+    let mut barrier = store.pool.begin().await.unwrap();
+    let blocker: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *barrier)
+        .await
+        .unwrap();
+    sqlx::query("SELECT id FROM runs WHERE id=$1 FOR UPDATE")
+        .bind(command.run_id)
+        .execute(&mut *barrier)
+        .await
+        .unwrap();
+    let dispatcher = store.clone();
+    let dispatch = tokio::spawn(async move {
+        dispatcher
+            .with_progress_command_dispatch(&command, |_| {
+                panic!("lease expired while the transaction waited")
+            })
+            .await
+    });
+    wait_for_control_blocker(&store.pool, blocker).await;
+    let began_before_expiry: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database()
+         AND $1=ANY(pg_blocking_pids(pid)) AND xact_start < $2)",
+    )
+    .bind(blocker)
+    .bind(expiry)
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    assert!(
+        began_before_expiry,
+        "the test must cover expiry after transaction start"
+    );
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        while !sqlx::query_scalar::<_, bool>("SELECT clock_timestamp() >= $1")
+            .bind(expiry)
+            .fetch_one(&store.pool)
+            .await
+            .unwrap()
+        {
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
+    barrier.commit().await.unwrap();
+    assert_eq!(
+        dispatch.await.unwrap().unwrap(),
+        RunnerCommandDispatchOutcome::Obsolete
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_control_dispatch_uses_locked_token_and_preserves_retry(pool: PgPool) {
+    let store = fixture(pool).await;
+    let (lease, command) = queue_control(&store, 1).await;
+    let error = store
+        .with_progress_command_dispatch(&command, |token| {
+            assert_eq!(token, Some(lease.token));
+            Err(anyhow!("fixture decode failure"))
+        })
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("fixture decode failure"));
+    let status: String = sqlx::query_scalar("SELECT status FROM runner_commands WHERE id=$1")
+        .bind(command.id)
+        .fetch_one(&store.pool)
+        .await
+        .unwrap();
+    assert_eq!(status, "pending");
+    assert_eq!(
+        store
+            .with_progress_command_dispatch(&command, |token| {
+                assert_eq!(token, Some(lease.token));
+                Ok(true)
+            })
+            .await
+            .unwrap(),
+        RunnerCommandDispatchOutcome::Sent
+    );
+    let status: String = sqlx::query_scalar("SELECT status FROM runner_commands WHERE id=$1")
+        .bind(command.id)
+        .fetch_one(&store.pool)
+        .await
+        .unwrap();
+    assert_eq!(status, "pending", "enqueue is not a runner acknowledgement");
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_interrupt_waits_for_run_without_holding_lease(pool: PgPool) {
+    let store = fixture(pool).await;
+    let (lease, _) = queue_control(&store, 1).await;
+    let mut barrier = store.pool.begin().await.unwrap();
+    let blocker: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *barrier)
+        .await
+        .unwrap();
+    sqlx::query("SELECT id FROM runs WHERE id=$1 FOR UPDATE")
+        .bind(run_id(1))
+        .execute(&mut *barrier)
+        .await
+        .unwrap();
+    let controller = store.clone();
+    let agent = lease.agent_id;
+    let token = lease.token;
+    let interrupt = tokio::spawn(async move {
+        controller
+            .request_interrupt(CORP, agent, OWNER, token, "Stop stale work")
+            .await
+    });
+    wait_for_control_blocker(&store.pool, blocker).await;
+    let renewed = tokio::time::timeout(
+        std::time::Duration::from_secs(5),
+        store.acquire_lease(CORP, agent, OWNER),
+    )
+    .await
+    .expect("interrupt must not hold the lease while waiting for the run")
+    .unwrap();
+    assert!(renewed.acquired);
+    assert_ne!(renewed.lease.token, token);
+    barrier.commit().await.unwrap();
+    let error = interrupt.await.unwrap().unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("stale or unauthorized control lease token")
+    );
 }
 
 fn artifact(index: u128, input: &RunnerEventInput) -> StoredArtifact {

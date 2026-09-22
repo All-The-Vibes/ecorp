@@ -9,7 +9,7 @@ impl PgStore {
         dispatch: F,
     ) -> Result<RunnerCommandDispatchOutcome>
     where
-        F: FnOnce() -> bool,
+        F: FnOnce(Option<Uuid>) -> Result<bool>,
     {
         if !matches!(
             command.command_kind.as_str(),
@@ -83,9 +83,27 @@ impl PgStore {
                 state = RunnerCommandDispatchState::Obsolete;
             }
         }
+        // Lease mutation does not take the Corp budget gate. Hold the actual
+        // lease and queued message rows through enqueue, then check wall time
+        // after every lock wait; transaction-start now() would accept expiry.
+        let lease = if state == RunnerCommandDispatchState::Pending
+            && command.command_kind == "control_message"
+        {
+            control_command_lease_tx(&mut tx, command).await?
+        } else {
+            None
+        };
+        if state == RunnerCommandDispatchState::Pending
+            && command.command_kind == "control_message"
+            && lease
+                .as_ref()
+                .is_none_or(|lease| lease.expires_at <= Utc::now())
+        {
+            state = RunnerCommandDispatchState::Obsolete;
+        }
         let outcome = match state {
             RunnerCommandDispatchState::Pending => {
-                if dispatch() {
+                if dispatch(lease.map(|lease| lease.token))? {
                     RunnerCommandDispatchOutcome::Sent
                 } else {
                     RunnerCommandDispatchOutcome::Disconnected
@@ -94,7 +112,7 @@ impl PgStore {
             RunnerCommandDispatchState::Settled => RunnerCommandDispatchOutcome::Settled,
             RunnerCommandDispatchState::Obsolete => RunnerCommandDispatchOutcome::Obsolete,
         };
-        // No await may occur between the final budget check and synchronous enqueue.
+        // Budget, command, message and lease locks remain held through synchronous enqueue.
         tx.commit().await?;
         Ok(outcome)
     }
@@ -131,6 +149,84 @@ impl PgStore {
         tx.commit().await?;
         Ok(sent)
     }
+}
+
+async fn control_command_lease_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    command: &PendingRunnerCommand,
+) -> Result<Option<ControlLease>> {
+    if command.command_kind != "control_message" {
+        return Ok(None);
+    }
+    let message_id = command
+        .payload
+        .get("message_id")
+        .and_then(Value::as_str)
+        .context("control message command omitted message_id")
+        .and_then(|value| Uuid::parse_str(value).context("control message id is invalid"))?;
+    let agent_id = command
+        .payload
+        .get("agent_id")
+        .and_then(Value::as_str)
+        .context("control message command omitted agent_id")
+        .and_then(|value| Uuid::parse_str(value).context("control agent id is invalid"))?;
+    let actor_id = command
+        .payload
+        .get("actor_id")
+        .and_then(Value::as_str)
+        .context("control message command omitted actor_id")
+        .and_then(|value| Uuid::parse_str(value).context("control actor id is invalid"))?;
+    let lease_version = command
+        .payload
+        .get("lease_version")
+        .and_then(Value::as_i64)
+        .context("control message command omitted lease_version")?;
+    sqlx::query(
+        r#"
+            SELECT lease.agent_id, lease.corp_id, lease.actor_id, lease.token,
+                   lease.lease_version, lease.expires_at
+            FROM runner_commands command
+            JOIN queued_messages message
+              ON message.command_id = command.id
+             AND message.corp_id = command.corp_id
+             AND message.run_id = command.run_id
+             AND message.status = 'immediate'
+             AND message.text = command.payload->>'text'
+             AND message.id = $3
+             AND message.agent_id = $4
+             AND message.actor_id = $5
+            JOIN control_leases lease
+              ON lease.corp_id = command.corp_id
+             AND lease.agent_id = message.agent_id
+             AND lease.actor_id = message.actor_id
+             AND lease.lease_version = $6
+            JOIN runs run
+              ON run.id = command.run_id
+             AND run.corp_id = command.corp_id
+             AND run.agent_id = message.agent_id
+             AND run.runner_id = command.runner_id
+             AND run.status IN ('starting', 'running', 'waiting_for_input',
+                                'waiting_for_approval', 'verifying')
+            WHERE command.id = $1
+              AND command.runner_id = $2
+              AND command.corp_id = $7
+              AND command.run_id = $8
+              AND command.status = 'pending'
+            FOR UPDATE OF message, lease
+            "#,
+    )
+    .bind(command.id)
+    .bind(&command.runner_id)
+    .bind(message_id)
+    .bind(agent_id)
+    .bind(actor_id)
+    .bind(lease_version)
+    .bind(command.corp_id)
+    .bind(command.run_id)
+    .fetch_optional(&mut **tx)
+    .await
+    .map(|row| row.map(map_lease))
+    .map_err(Into::into)
 }
 
 pub(super) async fn lock_corp_tx(tx: &mut Transaction<'_, Postgres>, corp_id: Uuid) -> Result<()> {

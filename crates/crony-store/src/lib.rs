@@ -9533,77 +9533,6 @@ impl PgStore {
         })
     }
 
-    pub async fn control_command_lease_token(
-        &self,
-        command: &PendingRunnerCommand,
-    ) -> Result<Option<Uuid>> {
-        if command.command_kind != "control_message" {
-            return Ok(None);
-        }
-        let message_id = command
-            .payload
-            .get("message_id")
-            .and_then(Value::as_str)
-            .context("control message command omitted message_id")
-            .and_then(|value| Uuid::parse_str(value).context("control message id is invalid"))?;
-        let agent_id = command
-            .payload
-            .get("agent_id")
-            .and_then(Value::as_str)
-            .context("control message command omitted agent_id")
-            .and_then(|value| Uuid::parse_str(value).context("control agent id is invalid"))?;
-        let actor_id = command
-            .payload
-            .get("actor_id")
-            .and_then(Value::as_str)
-            .context("control message command omitted actor_id")
-            .and_then(|value| Uuid::parse_str(value).context("control actor id is invalid"))?;
-        let lease_version = command
-            .payload
-            .get("lease_version")
-            .and_then(Value::as_i64)
-            .context("control message command omitted lease_version")?;
-        sqlx::query_scalar(
-            r#"
-            SELECT lease.token
-            FROM runner_commands command
-            JOIN queued_messages message
-              ON message.command_id = command.id
-             AND message.id = $3
-             AND message.agent_id = $4
-             AND message.actor_id = $5
-            JOIN control_leases lease
-              ON lease.corp_id = command.corp_id
-             AND lease.agent_id = message.agent_id
-             AND lease.actor_id = message.actor_id
-             AND lease.lease_version = $6
-             AND lease.expires_at > now()
-            JOIN runs run
-              ON run.id = command.run_id
-             AND run.agent_id = message.agent_id
-             AND run.runner_id = command.runner_id
-             AND run.status IN ('starting', 'running', 'waiting_for_input',
-                                'waiting_for_approval', 'verifying')
-            WHERE command.id = $1
-              AND command.runner_id = $2
-              AND command.corp_id = $7
-              AND command.run_id = $8
-              AND command.status = 'pending'
-            "#,
-        )
-        .bind(command.id)
-        .bind(&command.runner_id)
-        .bind(message_id)
-        .bind(agent_id)
-        .bind(actor_id)
-        .bind(lease_version)
-        .bind(command.corp_id)
-        .bind(command.run_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(Into::into)
-    }
-
     pub async fn fail_runner_command(
         &self,
         command_id: Uuid,
@@ -10276,11 +10205,14 @@ impl PgStore {
     ) -> Result<LeaseMutationOutcome> {
         let mut tx = self.pool.begin().await?;
         assert_actor_agent_scope_tx(&mut tx, corp_id, actor_id, agent_id).await?;
+        // Retain the version fence: deleting this row would let reacquisition
+        // reuse version 1 and revive an older queued command by the same actor.
         let released = sqlx::query(
             r#"
-            DELETE FROM control_leases
+            UPDATE control_leases
+            SET expires_at = clock_timestamp(), lease_version = lease_version + 1
             WHERE agent_id = $1 AND corp_id = $2 AND actor_id = $3
-              AND token = $4 AND expires_at > now()
+              AND token = $4 AND expires_at > clock_timestamp()
             RETURNING agent_id
             "#,
         )
@@ -10864,6 +10796,26 @@ impl PgStore {
 
         let mut tx = self.pool.begin().await?;
         assert_actor_agent_scope_tx(&mut tx, corp_id, actor_id, agent_id).await?;
+        // Lock the run before its lease, as queueing and final dispatch do.
+        let row = sqlx::query(
+            r#"
+            SELECT r.id, r.runner_id, t.mission_id, m.room_id
+            FROM runs r
+            JOIN tasks t ON t.id = r.task_id
+            JOIN missions m ON m.id = t.mission_id
+            WHERE r.agent_id = $1 AND r.corp_id = $2
+              AND r.status IN ('provisioning', 'starting', 'running',
+                               'waiting_for_input', 'waiting_for_approval', 'verifying')
+            ORDER BY r.created_at DESC
+            LIMIT 1
+            FOR UPDATE OF r
+            "#,
+        )
+        .bind(agent_id)
+        .bind(corp_id)
+        .fetch_optional(&mut *tx)
+        .await?
+        .context("agent has no active run to interrupt")?;
         let lease = sqlx::query(
             r#"
             SELECT agent_id, corp_id, actor_id, token, lease_version, expires_at
@@ -10885,25 +10837,6 @@ impl PgStore {
             return Err(anyhow!("stale or unauthorized control lease token"));
         }
 
-        let row = sqlx::query(
-            r#"
-            SELECT r.id, r.runner_id, t.mission_id, m.room_id
-            FROM runs r
-            JOIN tasks t ON t.id = r.task_id
-            JOIN missions m ON m.id = t.mission_id
-            WHERE r.agent_id = $1 AND r.corp_id = $2
-              AND r.status IN ('provisioning', 'starting', 'running',
-                               'waiting_for_input', 'waiting_for_approval', 'verifying')
-            ORDER BY r.created_at DESC
-            LIMIT 1
-            FOR UPDATE OF r
-            "#,
-        )
-        .bind(agent_id)
-        .bind(corp_id)
-        .fetch_optional(&mut *tx)
-        .await?
-        .context("agent has no active run to interrupt")?;
         let run_id: Uuid = row.get("id");
         let runner_id: String = row.get("runner_id");
         let mission_id: Uuid = row.get("mission_id");
