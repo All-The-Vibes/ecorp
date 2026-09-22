@@ -10,7 +10,7 @@ use crony_domain::{
 };
 use crony_store::StoredArtifact;
 use futures_util::TryStreamExt;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use object_store::{
     GetOptions, GetRange, GetResult, ObjectStore, aws::AmazonS3Builder, local::LocalFileSystem,
     path::Path as ObjectPath,
@@ -841,6 +841,16 @@ mod tests {
     use serde_json::json;
 
     include!("issue297_native_fixture.rs");
+
+    #[test]
+    fn hmac_sha256_keeps_the_rfc4231_signature_bytes() {
+        let mut mac = Hmac::<Sha256>::new_from_slice(&[0x0b; 20]).unwrap();
+        mac.update(b"Hi There");
+        assert_eq!(
+            hex::encode(mac.finalize().into_bytes()),
+            "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"
+        );
+    }
 
     fn identity() -> ArtifactIdentity<'static> {
         ArtifactIdentity {

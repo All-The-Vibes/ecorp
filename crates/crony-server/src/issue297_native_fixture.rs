@@ -856,6 +856,39 @@ async fn issue297_exercise(fixture: &Issue297Fixture, case_id: &str) -> Vec<&'st
                     .contains("task prompt and verified dependency contents exceed 64 KiB")
             );
             assertions.push("exact_combined_prompt_bound_accepted_plus_one_rejected");
+
+            // The legacy receipt must still count when it follows the typed source.
+            // Keep both plan-key lengths unchanged so the total differs only in order.
+            sqlx::query("UPDATE tasks SET plan_key=CASE WHEN id=$1 THEN 'specialist-b' ELSE 'specialist-a' END WHERE id IN ($1,$2)")
+                .bind(fixture.provider.task_id)
+                .bind(fixture.source.task_id)
+                .execute(pool)
+                .await
+                .unwrap();
+            let reordered = fixture
+                .state
+                .store
+                .dependency_artifacts(launch.corp_id, launch.task_id)
+                .await
+                .unwrap();
+            assert_eq!(reordered[0].artifact.id, fixture.source.id);
+            assert_eq!(reordered[1].artifact.id, fixture.provider.id);
+            let error = crate::resolve_dependency_context(&fixture.state, &launch)
+                .await
+                .err()
+                .expect("a trailing text receipt must not bypass the combined prompt bound");
+            assert!(
+                error
+                    .to_string()
+                    .contains("task prompt and verified dependency contents exceed 64 KiB")
+            );
+            sqlx::query("UPDATE tasks SET plan_key=CASE WHEN id=$1 THEN 'specialist-a' ELSE 'specialist-b' END WHERE id IN ($1,$2)")
+                .bind(fixture.provider.task_id)
+                .bind(fixture.source.task_id)
+                .execute(pool)
+                .await
+                .unwrap();
+            assertions.push("typed_source_before_text_receipt_combined_bound_rejected");
         }
         "envelope-byte-limit" => {
             assert_eq!(

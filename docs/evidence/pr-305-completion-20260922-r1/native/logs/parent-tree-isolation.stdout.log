@@ -1,0 +1,12 @@
+
+running 1 test
+test issue297_native_fixtures::issue297_native_fixture_dispatch ...
+ISSUE297_NATIVE_FIXTURE: {"schema_version":1,"case_id":"parent-tree-isolation","nonce":"3b743e74-94c7-4b33-9ef5-030b2e2abc74","status":"unqualified","positive_controls":["native_assignment_provider_started","native_exact_byte_readback","native_read_write_permissions","legitimate_retained_checkpoint","owned_parent_native_read_attempt","parent_checkpoint_unchanged"],"rejection_assertions":[],"evidence_scope":"native-runner-assignment-materialization","platform":"windows","qualification":"The actual fake-process child read the owned sibling-parent sentinel with exact bytes. The current native runner does not supply OS filesystem isolation (docs/SECURITY.md; adapter/fake.rs). A worktree, native tool scope or Windows job object is not a filesystem ACL boundary. Qualifying this case needs an authorized production isolation design (separate OS identity/ACLs or container/sandbox), not fixture chmod or additional runtime provisioning. No full-stack isolation acceptance.","observations":{"exact_bytes":true,"files_read":1,"nonce":"3b743e74-94c7-4b33-9ef5-030b2e2abc74","parent":{"attempted":true,"denied":false,"exact":true,"readable":true},"read_write_permissions":true}}
+FAILED
+
+failures:
+
+failures:
+    issue297_native_fixtures::issue297_native_fixture_dispatch
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 240 filtered out; finished in 6.65s

@@ -205,7 +205,8 @@ async function post(label, route, body, browserLaunch = false) {
 }
 
 function sourceTuple(item) {
-  return { repository: item.source_repository, base_ref: item.source_base_ref,
+  // GitHub namespace casing is cosmetic; selected Git refs and commits stay exact.
+  return { repository: item.source_repository?.toLowerCase(), base_ref: item.source_base_ref,
     base_commit: item.source_base_commit }
 }
 
@@ -225,7 +226,6 @@ function fixtureRunner(state) {
   assert.match(source.repository, /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i)
   assert.ok(typeof source.base_ref === 'string' && source.base_ref.length > 0)
   assert.match(source.base_commit, COMMIT)
-  source.repository = source.repository.toLowerCase()
   if (ownedQa) {
     assert.equal(runner.id, ownedQa.qa.runner.id, 'Runner differs from operator-owned process binding')
     assert.deepEqual(source, ownedQa.qa.source, 'Runner source differs from operator-qualified candidate')
@@ -562,7 +562,6 @@ async function verifyOutcome(result) {
     const native = checkRun(state, task, run)
     if (ROOT_KEYS.includes(task.plan_key)) {
       assert.ok(checkpoint.initial_run_ids.includes(run.id))
-      assert.equal(native.requested.payload.mission_launch, true)
       assert.equal(native.requested.actor_id, checkpoint.actor_id)
       parents.push(await checkParent(state, task, run, native))
     } else {
@@ -571,6 +570,14 @@ async function verifyOutcome(result) {
   }
   assert.equal(parents.length, 2)
   assert.ok(synthesis)
+  // The first dispatched root changes the durable mission from ready to running.
+  // Later roots in the same launch therefore carry mission_launch: false.
+  const launchEvents = parents.map((parent) => parent.native.requested)
+    .sort((a, b) => a.seq - b.seq)
+  assert.deepEqual(launchEvents.map((event) => event.payload.mission_launch), [true, false],
+    'Exactly the first root must record the initial mission transition')
+  assert.equal(synthesis.native.requested.payload.mission_launch, false,
+    'Dependency release must not record another initial mission transition')
   assert.notEqual(parents[0].nonce, parents[1].nonce)
   assert.equal(new Set(parents.map((parent) => parent.source.artifact_id)).size, 2)
   assert.equal(new Set(parents.map((parent) => parent.source.sha256)).size, 2)

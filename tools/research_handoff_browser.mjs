@@ -190,8 +190,13 @@ async function closeBrowser(browser) {
 export async function openResearchBrowser(qa, { corpId, actorId, missionId, title, output }) {
   const require = createRequire(import.meta.url)
   const { chromium } = require(process.env.CRONY_PLAYWRIGHT_MODULE || 'playwright')
-  const browser = await chromium.launch({ channel: process.env.CRONY_BROWSER_CHANNEL || 'chrome', headless: true })
-  const proof = { assertions: [], browser_version: browser.version(), closed: false }
+  const allowedEnvironment = new Set(['path', 'pathext', 'systemroot', 'windir', 'comspec', 'temp', 'tmp',
+    'userprofile', 'homedrive', 'homepath', 'home', 'appdata', 'localappdata', 'programdata', 'programfiles',
+    'programfiles(x86)', 'programw6432', 'systemdrive', 'username', 'userdomain', 'computername',
+    'psmodulepath', 'number_of_processors', 'processor_architecture', 'os'])
+  const environment = Object.fromEntries(Object.entries(process.env).filter(([key]) => allowedEnvironment.has(key.toLowerCase())))
+  const browser = await chromium.launch({ channel: process.env.CRONY_BROWSER_CHANNEL || 'chrome', headless: true, env: environment })
+  const proof = { assertions: [], browser_version: browser.version(), browser_environment_keys: Object.keys(environment).sort(), closed: false }
   try {
     const context = await browser.newContext({
       viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce', serviceWorkers: 'block',
@@ -244,8 +249,15 @@ export async function openResearchBrowser(qa, { corpId, actorId, missionId, titl
     }
     await page.goto(`${web}/#missions`, { waitUntil: 'networkidle', timeout: 20_000 })
     await page.locator('.live-indicator.live-live').waitFor()
-    await page.getByRole('button').filter({ hasText: title }).click()
+    const quickSwitch = page.getByLabel('Work item', { exact: true })
+    if (await quickSwitch.isVisible()) {
+      await quickSwitch.selectOption(missionId)
+    } else {
+      await page.getByRole('navigation', { name: 'Mission records', exact: true })
+        .getByRole('button').filter({ has: page.getByText(title, { exact: true }) }).click()
+    }
     const card = page.locator(`[data-mission-id="${missionId}"]`)
+    await card.getByRole('heading', { name: title, exact: true }).waitFor()
     await card.locator('.status-chip-ready').filter({ hasText: 'Awaiting dispatch' }).waitFor()
     await check()
     proof.assertions.push('pinned_app_displays_held_mission')
@@ -264,6 +276,12 @@ export async function openResearchBrowser(qa, { corpId, actorId, missionId, titl
         return { status: result.status(), body }
       },
       async verify(synthesis) {
+        // The App keeps the first inspected run selected as new runs arrive.
+        // Select the verified synthesis explicitly before reading its artifact.
+        assert.match(synthesis.run_id, UUID)
+        assert.match(synthesis.task_id, UUID)
+        await card.getByLabel('Evidence for', { exact: true }).selectOption(synthesis.run_id)
+        await card.locator(`[aria-label="Run evidence"][data-evidence-run-id="${synthesis.run_id}"][data-evidence-task-id="${synthesis.task_id}"]`).waitFor()
         const evidence = card.locator(`[data-testid="provider-evidence"][data-artifact-id="${synthesis.artifact_id}"]`)
         await evidence.waitFor()
         const downloaded = page.waitForEvent('download')

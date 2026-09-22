@@ -3497,7 +3497,7 @@ fn reviewed_recovery_source(args: &FactoryArgs, selected: &EvaluatedItem) -> Val
         "issue_url": selected.issue.url,
         "title": selected.issue.title,
         "source_revision": selected.issue.updated_at,
-        "body_sha256": format!("{:x}", Sha256::digest(selected.issue.body.as_bytes())),
+        "body_sha256": hex::encode(Sha256::digest(selected.issue.body.as_bytes())),
     })
 }
 
@@ -3534,8 +3534,10 @@ fn recovery_contract_request(
         .references
         .retain(|reference| !reference.starts_with(RECOVERY_SOURCE_REFERENCE_PREFIX));
     contract.references.push(format!(
-        "{RECOVERY_SOURCE_REFERENCE_PREFIX}{:x}",
-        Sha256::digest(serde_json::to_vec(reviewed_source_snapshot)?)
+        "{RECOVERY_SOURCE_REFERENCE_PREFIX}{}",
+        hex::encode(Sha256::digest(serde_json::to_vec(
+            reviewed_source_snapshot
+        )?))
     ));
     if contract.references.len() > 64 {
         bail!("factory recovery contract has no room for its reviewed-source provenance reference");
@@ -3803,7 +3805,7 @@ async fn recover_factory_verification(
             "checkpoint verification cannot change the source revision or persisted verification policy"
         );
     }
-    let reason_digest = format!("{:x}", Sha256::digest(reason.as_bytes()));
+    let reason_digest = hex::encode(Sha256::digest(reason.as_bytes()));
     let contract_revision_id = if let Some(active) = snapshot.active_recovery.as_ref() {
         active_recovery_contract_revision(
             active,
