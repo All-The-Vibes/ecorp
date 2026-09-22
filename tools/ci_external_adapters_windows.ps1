@@ -36,7 +36,7 @@ while ($ancestor) {
     }
     $ancestor = Split-Path -Parent $ancestor
 }
-$reservedPorts = @(54329, 8791, 8793, 5187, 5291, 15191, 15193)
+$reservedPorts = @(5432, 54329, 8791, 8793, 5187, 5291, 15191, 15193)
 if ($ServerPort -eq $PostgresPort -or $ServerPort -in $reservedPorts -or $PostgresPort -in $reservedPorts) {
     throw 'Refusing shared/manual stack ports.'
 }
@@ -126,23 +126,45 @@ function Invoke-FixtureCommand {
     }
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $info
+    $started = $false
+    $stdout = $null
+    $stderr = $null
     try {
-        if (!$process.Start()) { throw "$Role did not start." }
+        $started = $process.Start()
+        if (!$started) { throw "$Role did not start." }
         $stdout = $process.StandardOutput.ReadToEndAsync()
         $stderr = $process.StandardError.ReadToEndAsync()
         if (!$process.WaitForExit($TimeoutSeconds * 1000)) {
-            # Exact retained handle, never a broad PID/name or descendant sweep.
-            $process.Kill()
-            [void]$process.WaitForExit(15000)
             throw "$Role exceeded its bounded deadline."
         }
+        if (![Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($stdout, $stderr), 5000)) {
+            throw "$Role output did not close within its bounded deadline."
+        }
         $out = $stdout.GetAwaiter().GetResult()
-        $err = $stderr.GetAwaiter().GetResult()
-        [IO.File]::WriteAllText((Join-Path $evidence "$Role.stdout.log"), $out)
-        [IO.File]::WriteAllText((Join-Path $evidence "$Role.stderr.log"), $err)
         if ($process.ExitCode -ne 0) { throw "$Role failed (exit $($process.ExitCode)); inspect its retained fixture logs." }
         return $out.Trim()
-    } finally { $process.Dispose() }
+    } finally {
+        $cleanupFailed = $false
+        if ($started -and !$process.HasExited) {
+            # Exact retained handle, never a broad PID/name or descendant sweep.
+            try { $process.Kill(); $cleanupFailed = !$process.WaitForExit(15000) }
+            catch { $cleanupFailed = $true }
+        }
+        try {
+            if ($stdout -and $stderr) {
+                try { [void][Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($stdout, $stderr), 5000) }
+                catch { $cleanupFailed = $true }
+                if ($stdout.IsCompletedSuccessfully) {
+                    [IO.File]::WriteAllText((Join-Path $evidence "$Role.stdout.log"), $stdout.Result)
+                }
+                if ($stderr.IsCompletedSuccessfully) {
+                    [IO.File]::WriteAllText((Join-Path $evidence "$Role.stderr.log"), $stderr.Result)
+                }
+                if (!$stdout.IsCompletedSuccessfully -or !$stderr.IsCompletedSuccessfully) { $cleanupFailed = $true }
+            }
+        } finally { $process.Dispose() }
+        if ($cleanupFailed) { throw "$Role cleanup or output capture was incomplete; preserve its fixture." }
+    }
 }
 
 function Start-FixtureProcess {

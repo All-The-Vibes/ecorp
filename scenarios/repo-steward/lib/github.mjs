@@ -4,6 +4,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { hash, integer, loadPolicy, requireThat, ROOT, safeData, sameRepo, SCOPE, StewardError, validateSnapshot } from './common.mjs';
+import { collectorPolicy } from './collector-profile.mjs';
 
 const execute = promisify(execFile);
 const page = 'totalCount pageInfo { hasNextPage endCursor }';
@@ -34,7 +35,8 @@ export function nativeGhPath() {
 
 // Only these fixed queries and GET routes exist. No caller supplies shell text,
 // arbitrary URLs, GraphQL source, extra flags, or a write operation.
-export function createGithubReader({ policy = loadPolicy(), run, clock = () => Date.now() } = {}) {
+export function createGithubReader({ policy = loadPolicy(), collectorProfile = null, run, clock = () => Date.now() } = {}) {
+  policy = collectorPolicy(collectorProfile, policy);
   const started = clock();
   let requests = 0, bytes = 0, reserve = Infinity;
   const invoke = run || (async args => {
@@ -62,7 +64,7 @@ export function createGithubReader({ policy = loadPolicy(), run, clock = () => D
     return value;
   }
   return Object.freeze({
-    async account() { const data = await request(['--method', 'GET', 'user']); requireThat(data.login === SCOPE.collector_login, 'ACCOUNT', 'The active GitHub identity is not the approved personal Bakar404 account. No account was switched.'); return data.login; },
+    async account() { const data = await request(['--method', 'GET', 'user']); requireThat(data.login === policy.collector_login, 'ACCOUNT', 'The active GitHub identity differs from the selected read-only collector. No account was switched.'); return data.login; },
     async graphql(kind, cursor = null) {
       requireThat(Object.hasOwn(queries, kind), 'READ_ONLY', 'Unsupported operation; this reader contains no write tools.');
       requireThat(cursor === null || typeof cursor === 'string' && cursor.length <= 2048 && !/[\r\n\u0000]/.test(cursor), 'CURSOR', 'Invalid pagination cursor.');
@@ -147,13 +149,17 @@ async function readPass(reader, policy) {
     issues: issues.sort((a, b) => a.number - b.number), pull_requests: pull_requests.sort((a, b) => a.number - b.number), project_items: project_items.sort((a, b) => a.id.localeCompare(b.id)), views: projectMeta.views, rulesets: rulesets.sort((a, b) => a.id - b.id), project_revision: projectMeta.updated_at };
 }
 
-export async function collectSnapshot({ reader = createGithubReader(), policy = loadPolicy(), now = () => new Date() } = {}) {
-  await reader.account();
+export async function collectSnapshot({ reader, policy = loadPolicy(), collectorProfile = null, now = () => new Date() } = {}) {
+  policy = collectorPolicy(collectorProfile, policy);
+  reader ??= createGithubReader({ policy, collectorProfile });
+  const login = await reader.account();
+  requireThat(login === policy.collector_login, 'ACCOUNT', 'The read-only collector identity differs from its selected profile.');
   const first = await readPass(reader, policy);
   const second = await readPass(reader, policy);
-  await reader.account();
+  requireThat(await reader.account() === login, 'ACCOUNT', 'The read-only collector identity changed during collection.');
+  collectorPolicy(collectorProfile); // Recheck profile bytes before accepting the observation.
   requireThat(hash(first) === hash(second), 'DRIFT', 'The board changed between collection passes. Retry later; no mixed snapshot was accepted.');
-  const snapshot = safeData({ schema_version: 1, ...second, captured_at: now().toISOString(), coverage: { complete: true, issues: second.issues.length, pull_requests: second.pull_requests.length, project_items: second.project_items.length, consistency: 'two matching bounded reads; not an atomic GitHub transaction' }, collection: { authenticated_login: SCOPE.collector_login, ...reader.metrics() } });
+  const snapshot = safeData({ schema_version: 1, ...second, captured_at: now().toISOString(), coverage: { complete: true, issues: second.issues.length, pull_requests: second.pull_requests.length, project_items: second.project_items.length, consistency: 'two matching bounded reads; not an atomic GitHub transaction' }, collection: { ...reader.metrics(), authenticated_login: login, ...(policy.collector_profile_sha256 ? { collector_profile_sha256: policy.collector_profile_sha256 } : {}) } });
   validateSnapshot(snapshot, policy);
   return snapshot;
 }

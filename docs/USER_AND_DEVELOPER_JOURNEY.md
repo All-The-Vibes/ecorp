@@ -215,14 +215,19 @@ and streams normalized lifecycle events back.
 
 ### Verification loop
 
+<!-- ecorp:validation-commands -->
 ```powershell
 node tools/check_migrations.mjs
+pnpm check:docs
+pnpm test:unit
+pnpm test:steward
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm build:web
 pnpm lint:web
 ```
+<!-- /ecorp:validation-commands -->
 
 For user-visible changes, also start the complete local stack and exercise the browser-to-server-to-
 runner path. A static build or unit test does not prove the product journey works.

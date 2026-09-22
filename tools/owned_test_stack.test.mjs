@@ -4,6 +4,7 @@ import path from 'node:path'
 import net from 'node:net'
 import os from 'node:os'
 import fs from 'node:fs'
+import childProcess from 'node:child_process'
 import { syncBuiltinESMExports } from 'node:module'
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { assertOwnedRestart, assertTestEndpoint, ownedServerEnvironment, restartOwnedTestServer, startOwnedTestServer, stopOwnedTestServer } from './owned_test_stack.mjs'
@@ -180,6 +181,101 @@ test('legacy PID files and pre-existing locks are preserved without signalling o
     rmSync(folder, { recursive: true })
   }
 })
+
+for (const operation of ['start', 'restart']) {
+  for (const phase of ['identity', 'starting-publication', 'running-publication', 'rollback-publication']) {
+    test(`native ${operation} retains diagnostics and stops its child after ${phase} failure`, {
+      skip: process.env.ECORP_OWNED_PROCESS_TEST !== '1' || !['linux', 'win32'].includes(process.platform),
+      timeout: 120_000,
+    }, async t => {
+      const folder = mkdtempSync(path.join(os.tmpdir(), 'ecorp-owned-test-'))
+      const manifestPath = path.join(folder, 'server.json')
+      const probe = net.createServer()
+      await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve))
+      const endpoint = `http://127.0.0.1:${probe.address().port}`
+      await new Promise(resolve => probe.close(resolve))
+      const settings = { root: folder, server: endpoint, binary: process.execPath, manifestPath,
+        args: [path.join(import.meta.dirname, 'fixtures', 'owned_test_server.mjs')],
+        databaseUrl: 'postgres://fixture:private-diagnostic-canary@127.0.0.1:55471/fixture',
+        minimumRunners: 0 }
+      let launched, unref, injected = 0
+      const originalSpawn = childProcess.spawn
+      const originalParse = JSON.parse
+      const originalWrite = fs.writeFileSync
+      try {
+        if (operation === 'restart') await startOwnedTestServer(settings)
+        t.mock.method(childProcess, 'spawn', (...args) => {
+          launched = originalSpawn(...args)
+          unref = t.mock.method(launched, 'unref')
+          return launched
+        })
+        t.mock.method(JSON, 'parse', (...args) => {
+          const parsed = originalParse(...args)
+          if (phase === 'identity' && !injected && launched?.pid &&
+            parsed?.pid === launched.pid && Object.hasOwn(parsed, 'port_owned')) {
+            injected++
+            throw new Error('Injected identity capture failure')
+          }
+          return parsed
+        })
+        t.mock.method(fs, 'writeFileSync', (file, data, ...args) => {
+          if (typeof file === 'string' && (file === manifestPath || file.startsWith(`${manifestPath}.next-`))) {
+            const parsed = originalParse(data)
+            if (launched?.pid && parsed.server === launched.pid && (
+              (!injected && phase === 'starting-publication' && parsed.server_state === 'starting') ||
+              (!injected && ['running-publication', 'rollback-publication'].includes(phase) && parsed.server_state === 'running') ||
+              (phase === 'rollback-publication' && parsed.server_state === 'stopped' && parsed.launch_failed === true))) {
+              injected++
+              throw new Error('Injected manifest publication failure')
+            }
+          }
+          return originalWrite(file, data, ...args)
+        })
+        syncBuiltinESMExports()
+        const action = operation === 'start' ? startOwnedTestServer : restartOwnedTestServer
+        await assert.rejects(action(settings), phase === 'rollback-publication' ? /incomplete cleanup or publication/u : /Injected/u)
+        assert.equal(injected, phase === 'rollback-publication' ? 2 : 1)
+        assert.ok(launched?.pid, 'failure happened after a real native child started')
+        assert.ok(launched.exitCode !== null || launched.signalCode !== null, 'the exact child has exited before failure returns')
+        assert.equal(unref.mock.callCount(), 0, 'a failed admission never releases the child reference')
+        await new Promise((resolve, reject) => { probe.once('error', reject); probe.listen(Number(new URL(endpoint).port), '127.0.0.1', resolve) })
+        await new Promise(resolve => probe.close(resolve))
+        const entries = fs.readdirSync(folder).filter(name => name.startsWith('server.json.launch-'))
+          .flatMap(name => readFileSync(path.join(folder, name), 'utf8').trim().split('\n').map(line => originalParse(line)))
+        const last = entries.find(entry => entry.state === 'failed_stopped' && entry.observed_child_pid === launched.pid)
+        assert.ok(last, 'failure and confirmed cleanup are retained even when the main receipt cannot be published')
+        assert.equal(last.manifest_update_failed, phase === 'rollback-publication')
+        assert.ok(entries.every(entry => entry.lifecycle_authority === false && entry.test_owned !== true))
+        assert.equal(JSON.stringify(entries).includes('private-diagnostic-canary'), false)
+        if (existsSync(manifestPath)) {
+          const saved = originalParse(readFileSync(manifestPath, 'utf8'))
+          assert.equal(saved.server_state, phase === 'rollback-publication' ? 'starting' : 'stopped')
+          if (saved.server_state === 'stopped') assert.equal(await stopOwnedTestServer(settings), false)
+          else await assert.rejects(stopOwnedTestServer(settings))
+        }
+        assert.equal(existsSync(`${manifestPath}.lock`), false)
+      } finally {
+        t.mock.restoreAll()
+        syncBuiltinESMExports()
+        if (probe.listening) await new Promise(resolve => probe.close(resolve))
+        if (launched?.pid && launched.exitCode === null && launched.signalCode === null) {
+          // The regression also cleans up the intentionally broken baseline by
+          // retaining the real ChildProcess. Never signal a parsed numeric PID.
+          await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error('Test child cleanup did not finish')), 15_000)
+            launched.once('exit', () => { clearTimeout(timer); resolve() })
+            launched.kill('SIGKILL')
+          })
+        }
+        if (!launched && existsSync(manifestPath)) {
+          try { await stopOwnedTestServer(settings) } catch { t.diagnostic('Preserved unverifiable fixture ' + folder) }
+        }
+        // Failure receipts and child logs remain available after native tests.
+        t.diagnostic('Retained owned launch failure fixture ' + folder)
+      }
+    })
+  }
+}
 
 test('native owned child startup, two restarts, refusal of database drift and idempotent stop', {
   skip: process.env.ECORP_OWNED_PROCESS_TEST !== '1' || !['linux', 'win32'].includes(process.platform),

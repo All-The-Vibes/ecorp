@@ -239,6 +239,30 @@ function sameDatabase(context, manifest) {
   if (process.platform === 'linux' && !manifest.database_target) throw new Error(refusal)
 }
 
+async function stopLaunchedChild(child) {
+  if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return
+  // Keep the original ChildProcess referenced throughout admission. Its native
+  // handle (and unreaped child on Unix) is the rollback authority, not a saved
+  // numeric PID or an identity query that may itself have failed.
+  await new Promise((resolve, reject) => {
+    const done = error => {
+      clearTimeout(timer)
+      child.removeListener('exit', exited)
+      child.removeListener('error', failed)
+      if (error) reject(error)
+      else resolve()
+    }
+    const exited = () => done()
+    const failed = () => done(new Error('Owned launch rollback failed; preserve the diagnostic receipt and logs.'))
+    const timer = setTimeout(() => done(new Error('Owned launch rollback did not confirm exit within 15 seconds.')), 15_000)
+    child.once('exit', exited)
+    child.once('error', failed)
+    try {
+      if (!child.kill('SIGKILL') && child.exitCode === null && child.signalCode === null) failed()
+    } catch { failed() }
+  })
+}
+
 async function launch(context, previous, previousRaw) {
   // Windows can report process exit before its listening socket is released.
   // Wait only after our verified stop; never stop or adopt a different listener.
@@ -252,51 +276,81 @@ async function launch(context, previous, previousRaw) {
   if (process.platform === 'linux') await linuxProcess({ action: 'capabilities' })
   const endpoint = assertTestEndpoint(context.server)
   const logRoot = path.dirname(context.manifestPath)
-  const stdout = openSync(path.join(logRoot, `${context.logPrefix}.stdout.log`), 'a', 0o600)
-  const stderr = openSync(path.join(logRoot, `${context.logPrefix}.stderr.log`), 'a', 0o600)
-  const child = spawn(context.binary, [...context.args, '--bind', `${endpoint.hostname}:${endpoint.port}`], {
-    cwd: context.root, env: ownedServerEnvironment(context.environment, context.databaseUrl),
-    detached: true, windowsHide: true, stdio: ['ignore', stdout, stderr],
-  })
+  const diagnostic = openSync(`${context.manifestPath}.launch-${randomUUID()}.jsonl`, 'wx', 0o600)
+  const record = entry => writeFileSync(diagnostic, `${JSON.stringify({ lifecycle_authority: false, ...entry })}\n`)
+  let child, next, raw
   try {
-    await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject) })
-  } finally {
-    closeSync(stdout)
-    closeSync(stderr)
-  }
-  child.unref()
-  const alive = () => { if (child.exitCode !== null || child.signalCode !== null) throw new Error('Owned test child exited; preserve its logs.') }
-  const started = await serverIdentity(child.pid, context)
-  alive() // Do not record a new process that reused an already reaped child PID.
-  const next = { ...previous, test_owned: true, workspace: context.root, server_url: context.server,
-    server: child.pid, server_binary: context.binary, server_creation: started.creation,
-    server_identity: started, server_state: 'starting', database_target: context.databaseTarget }
-  if (previous) {
-    next.previous_server_pid = previous.server
-    next.previous_server_creation = previous.server_creation
-  }
-  let raw = publish(context, next, previousRaw)
-  const deadline = Date.now() + 60_000
-  while (Date.now() < deadline) {
-    alive()
-    let healthy = false
+    // This append-only diagnostic is deliberately not a lifecycle manifest. It
+    // survives even when identity capture or manifest publication cannot run.
+    record({ state: 'pending', server_url: context.server, workspace: context.root,
+      server_binary: context.binary, previous_server_pid: previous?.server ?? null })
+    let stdout, stderr
     try {
-      const response = await fetch(`${context.server}/health`, { redirect: 'error', signal: AbortSignal.timeout(3000) })
-      const health = await response.json()
-      healthy = response.ok && health.status === 'ok' && Number.isSafeInteger(health.runners) && health.runners >= context.minimumRunners
-    } catch { /* Only readiness is retried; ownership errors below are terminal. */ }
-    if (healthy) {
-      const current = await serverIdentity(child.pid, context)
-      alive()
-      const running = { ...next, server_state: 'running' }
-      assertOwnedRestart(running, current, context)
-      running.server_identity = current
-      raw = publish(context, running, raw)
-      return child.pid
+      stdout = openSync(path.join(logRoot, `${context.logPrefix}.stdout.log`), 'a', 0o600)
+      stderr = openSync(path.join(logRoot, `${context.logPrefix}.stderr.log`), 'a', 0o600)
+      child = spawn(context.binary, [...context.args, '--bind', `${endpoint.hostname}:${endpoint.port}`], {
+        cwd: context.root, env: ownedServerEnvironment(context.environment, context.databaseUrl),
+        detached: true, windowsHide: true, stdio: ['ignore', stdout, stderr],
+      })
+      await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject) })
+    } finally {
+      if (stdout !== undefined) closeSync(stdout)
+      if (stderr !== undefined) closeSync(stderr)
     }
-    await pause(200)
+    record({ state: 'spawned', observed_child_pid: child.pid })
+    const alive = () => { if (child.exitCode !== null || child.signalCode !== null) throw new Error('Owned test child exited; preserve its logs.') }
+    const started = await serverIdentity(child.pid, context)
+    alive() // Do not record a new process that reused an already reaped child PID.
+    next = { ...previous, test_owned: true, workspace: context.root, server_url: context.server,
+      server: child.pid, server_binary: context.binary, server_creation: started.creation,
+      server_identity: started, server_state: 'starting', database_target: context.databaseTarget }
+    if (previous) {
+      next.previous_server_pid = previous.server
+      next.previous_server_creation = previous.server_creation
+    }
+    raw = publish(context, next, previousRaw)
+    const deadline = Date.now() + 60_000
+    while (Date.now() < deadline) {
+      alive()
+      let healthy = false
+      try {
+        const response = await fetch(`${context.server}/health`, { redirect: 'error', signal: AbortSignal.timeout(3000) })
+        const health = await response.json()
+        healthy = response.ok && health.status === 'ok' && Number.isSafeInteger(health.runners) && health.runners >= context.minimumRunners
+      } catch { /* Only readiness is retried; ownership errors below are terminal. */ }
+      if (healthy) {
+        const current = await serverIdentity(child.pid, context)
+        alive()
+        const running = { ...next, server_state: 'running' }
+        assertOwnedRestart(running, current, context)
+        running.server_identity = current
+        raw = publish(context, running, raw)
+        record({ state: 'running', observed_child_pid: child.pid })
+        child.unref() // Detach from the parent only after durable admission.
+        return child.pid
+      }
+      await pause(200)
+    }
+    throw new Error('Owned server/runner did not reconnect; preserve the process manifest and logs.')
+  } catch (error) {
+    let rollbackError, manifestError
+    try { await stopLaunchedChild(child) } catch (failure) { rollbackError = failure }
+    if (!rollbackError && raw !== undefined) {
+      try { publish(context, { ...next, server_state: 'stopped', launch_failed: true }, raw) }
+      catch (failure) { manifestError = failure }
+    }
+    try {
+      record({ state: rollbackError ? 'cleanup_unconfirmed' : 'failed_stopped',
+        observed_child_pid: child?.pid ?? null, manifest_update_failed: Boolean(manifestError) })
+    } catch { /* Preserve the original diagnostic bytes and report the failure. */ }
+    if (rollbackError || manifestError) {
+      throw new AggregateError([error, rollbackError, manifestError].filter(Boolean),
+        'Owned server launch failed; preserve the diagnostics and inspect incomplete cleanup or publication.')
+    }
+    throw error
+  } finally {
+    closeSync(diagnostic)
   }
-  throw new Error('Owned server/runner did not reconnect; preserve the process manifest and logs.')
 }
 
 export async function startOwnedTestServer(input) {

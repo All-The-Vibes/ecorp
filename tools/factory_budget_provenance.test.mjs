@@ -34,6 +34,14 @@ const run = async (program, args, options) => ({
 const { capture, finish } = await load({ assert, createHash, constants, lstat, open, realpath,
   path, checkContainedFile, readTrustedExecutableDigest, run })
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
+// These files are hashed, never executed. Use intact local Windows executables
+// because repeated text files named .exe can be quarantined during this fixture.
+const executableBytes = process.platform === 'win32'
+  ? readFileSync(path.join(process.env.SystemRoot, 'System32', 'whoami.exe'))
+  : Buffer.from('inert executable bytes; DO NOT EXECUTE\n')
+const changedExecutableBytes = process.platform === 'win32'
+  ? readFileSync(path.join(process.env.SystemRoot, 'System32', 'hostname.exe'))
+  : Buffer.from('different inert bytes\n')
 
 async function fixture(t) {
   // Preserve tiny, owned fixtures as evidence; never traverse a real QA workspace.
@@ -50,7 +58,7 @@ async function fixture(t) {
   git('-c', 'user.name=Inert provenance fixture', '-c', 'user.email=fixture@example.invalid',
     '-c', 'commit.gpgSign=false', 'commit', '-m', 'Inert source')
   const executable = path.join(base, 'server.exe')
-  await writeFile(executable, 'inert executable bytes; DO NOT EXECUTE\n')
+  await writeFile(executable, executableBytes)
   t.diagnostic(`owned_fixture=${base}`)
   return { base, root, git, executable, programs: { server: executable } }
 }
@@ -86,10 +94,10 @@ test('nonignored untracked test input changes, additions and deletion are bound'
 test('actual executable bytes, not name or HEAD, are hashed and drift fails finalization', async t => {
   const f = await fixture(t)
   const before = await capture(f.root, f.programs)
-  await writeFile(f.executable, 'different inert bytes\n')
+  await writeFile(f.executable, changedExecutableBytes)
   const after = await capture(f.root, f.programs)
   assert.notDeepEqual(after, before, 'Executable byte change was omitted')
-  assert.equal(after.executables.server.sha256, sha256('different inert bytes\n'))
+  assert.equal(after.executables.server.sha256, sha256(changedExecutableBytes))
   const report = { provenance: { before } }
   await assert.rejects(finish(report, f.root, f.programs), /binding changed/)
   assert.equal(report.provenance.consistent, false)
@@ -134,6 +142,19 @@ test('ignored contents and unrelated private directories are never hashed', asyn
   await assert.rejects(capture(f.root, f.programs), /Private path/)
 })
 
+test('tracked private configuration is excluded without reading its contents', async t => {
+  const f = await fixture(t)
+  const before = await capture(f.root, f.programs)
+  for (const directory of ['.codex', 'credentials']) {
+    await mkdir(path.join(f.root, directory))
+    await writeFile(path.join(f.root, directory, 'config.toml'), 'PRIVATE_SENTINEL')
+    f.git('add', '--', directory)
+  }
+  const after = await capture(f.root, f.programs)
+  assert.deepEqual(after, before)
+  assert.ok(!after.source.files.some(row => /(?:^|\/)(?:\.codex|credentials)\//u.test(row.path)))
+})
+
 test('tracked parent junction escape and executable symlink are rejected', async t => {
   const f = await fixture(t)
   const outside = path.join(f.base, 'outside')
@@ -150,7 +171,7 @@ test('tracked parent junction escape and executable symlink are rejected', async
   await writeFile(path.join(f.root, 'tools', 'input.mjs'), 'tracked original\n')
   const alias = path.join(f.base, 'linked-bin')
   await symlink(outside, alias, process.platform === 'win32' ? 'junction' : 'dir')
-  await writeFile(path.join(outside, 'server.exe'), 'OUTSIDE_EXECUTABLE_SENTINEL')
+  await writeFile(path.join(outside, 'server.exe'), changedExecutableBytes)
   await assert.rejects(capture(f.root, { server: path.join(alias, 'server.exe') }), /canonical|alias|link/)
 })
 
@@ -174,7 +195,7 @@ test('owned Node directory alias is resolved once and pinned for binding and eve
   const target = path.join(f.base, 'node-target')
   await mkdir(target)
   const executable = path.join(target, 'node.exe')
-  await writeFile(executable, 'inert Node bytes; DO NOT EXECUTE\n')
+  await writeFile(executable, executableBytes)
   await symlink(target, alias, process.platform === 'win32' ? 'junction' : 'dir')
   const execPath = path.join(alias, 'node.exe')
   await assert.rejects(readTrustedExecutableDigest(execPath), /canonical_owned_directory_required/)
@@ -221,7 +242,7 @@ test('owned Node directory alias is resolved once and pinned for binding and eve
   assert.equal(report.provenance.consistent, true)
   t.diagnostic(JSON.stringify({ case: 'pinned-node-alias', execPath, selectedNode: programs.node,
     resolutions, launches, provenance: report.provenance }))
-  await writeFile(executable, 'changed inert Node bytes\n')
+  await writeFile(executable, changedExecutableBytes)
   await assert.rejects(finish(report, f.root, { node: programs.node }), /binding changed/)
   assert.equal(report.provenance.consistent, false)
 })

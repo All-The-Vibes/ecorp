@@ -159,7 +159,7 @@ async function captureSourceBinding(sourceRoot, programs) {
     ...['toml', 'lock', 'json', 'yaml', 'yml', 'mjs', 'js', 'ps1', 'py'].map(ext => `:(top,glob)*.${ext}`)]
   const excluded = ['.git', '.codex', '.omx', 'credentials', 'pg-data', 'runner-workspaces', 'worktrees',
     'target', 'node_modules', 'output'].map(name => `:(exclude,glob)**/${name}/**`)
-  const tracked = await git(['ls-files', '--cached', '-z'])
+  const tracked = await git(['ls-files', '--cached', '-z', '--', '.', ...excluded])
   const untracked = await git(['ls-files', '--others', '--exclude-standard', '-z', '--', ...untrackedRoots, ...excluded])
   const paths = [...new Set((tracked + untracked).split('\0').filter(Boolean))].sort()
   assert.ok(paths.length > 0 && paths.length <= 25000, 'Source inventory exceeds binding bound')
@@ -172,7 +172,7 @@ async function captureSourceBinding(sourceRoot, programs) {
     assert.ok(path.isAbsolute(file), 'Explicit executable path required')
     executables[name] = { path: file, sha256: await readTrustedExecutableDigest(file) }
   }
-  return { source: { head, untracked_roots: untrackedRoots, files,
+  return { source: { head, untracked_roots: untrackedRoots, excluded_pathspecs: excluded, files,
     sha256: createHash('sha256').update(JSON.stringify(files)).digest('hex') }, executables }
 }
 async function finishSourceBinding(report, sourceRoot, programs) {

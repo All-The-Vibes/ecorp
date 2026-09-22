@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           toolchain: 1.98.1
@@ -22,7 +24,7 @@ jobs:
           version: 11.19.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - run: pnpm install --frozen-lockfile
@@ -34,8 +36,8 @@ jobs:
         run: python3 -B tools/owned_test_process_linux_test.py -v
       - run: node tools/check_migrations.mjs
       - run: cargo fmt --all -- --check
-      - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo test --workspace
+      - run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - run: cargo test --locked --workspace
       - run: pnpm build:web
       - run: pnpm lint:web
 
@@ -65,6 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
@@ -74,11 +77,15 @@ jobs:
           version: 11.19.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - run: pnpm install --frozen-lockfile
-      - run: cargo build -p crony-server -p crony-runner -p crony-cli -p crony-gateways
+      - run: cargo build --locked -p crony-server -p crony-runner -p crony-cli -p crony-gateways
+      - name: Verify native read-only MCP protocol and probe
+        env:
+          CRONY_MCP_TEST_BINARY: ${{ github.workspace }}/target/debug/crony-mcp
+        run: node --test tools/probe_mcp.test.mjs tools/operation_receipt.test.mjs tools/consume_operation_receipt.test.mjs
       - name: Start control and execution planes
         shell: bash
         run: |
@@ -271,18 +278,20 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           toolchain: 1.98.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version-file: .node-version
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-      - run: cargo build -p crony-server -p crony-runner
+      - run: cargo build --locked -p crony-server -p crony-runner
       - name: Verify Windows owned-server receipts and restart
         env:
           ECORP_OWNED_PROCESS_TEST: '1'
-        run: node --test tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/factory_budget_process.test.mjs tools/e2e_predispatch_failure.test.mjs tools/factory_budget_provenance.test.mjs
+        run: node --test tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/ci_external_adapters_windows.test.mjs tools/factory_budget_process.test.mjs tools/e2e_predispatch_failure.test.mjs tools/factory_budget_provenance.test.mjs
       - name: Validate PostgreSQL tools
         shell: pwsh
         run: |
@@ -327,54 +336,51 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           toolchain: 1.98.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version-file: .node-version
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-      # Keep every test and the native 10-second private-ACL deadline. Avoid
-      # unrelated test-process contention on the hosted Windows worker.
-      # Exercise the actual primary path before our explicit warm-up. This does
-      # not assert that the hosted image or OS caches are otherwise cold.
-      - name: Test Windows primary ACL path before explicit prewarming
+      - name: Compile Windows runner tests before native host readiness
+        if: runner.os == 'Windows'
+        run: cargo test --locked -p crony-runner --no-run
+      - name: Test Windows primary ACL path before explicit readiness
         if: runner.os == 'Windows'
         run: cargo test --locked -p crony-runner connections::storage::tests::windows_private_root_primary_path_enforces_acl -- --exact --nocapture
-      - name: Warm Windows PowerShell before bounded native setup tests
+      - name: Verify Windows PowerShell connection ACL readiness
         if: runner.os == 'Windows'
-        timeout-minutes: 1
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
-          # Retain warm-up for the full suite after the primary-path regression.
-          # Initialize the same ACL types in memory; do not change any ACLs.
-          $acl = [System.Security.AccessControl.DirectorySecurity]::new()
-          $owner = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
-          $acl.SetOwner($owner)
-          $acl.SetAccessRuleProtection($true, $false)
-          foreach ($sid in @($owner, [System.Security.Principal.SecurityIdentifier]::new('S-1-5-18'))) {
-            $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
-              $sid, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
-            $acl.AddAccessRule($rule)
-          }
-          Write-Output 'Windows PowerShell ACL dependencies initialized; native setup deadline remains 10 seconds.'
+        shell: pwsh
+        run: ./tools/windows_connection_acl_readiness.ps1 -ReportDirectory (Join-Path $env:GITHUB_WORKSPACE 'output/runner-platform-windows-readiness')
       - name: Run Windows runner tests serially
         if: runner.os == 'Windows'
-        run: cargo test -p crony-runner -- --test-threads=1
+        run: cargo test --locked -p crony-runner -- --test-threads=1
       - name: Run Unix runner tests
         if: runner.os != 'Windows'
-        run: cargo test -p crony-runner
+        run: cargo test --locked -p crony-runner
       - run: node tools/platform_runner_contract.mjs
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: runner-platform-${{ matrix.os }}
           path: output/platform/*
+      - name: Preserve Windows connection ACL readiness receipts
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: runner-platform-windows-readiness-${{ github.run_attempt }}
+          path: output/runner-platform-windows-readiness/
+          if-no-files-found: warn
+          retention-days: 14
 
   desktop-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           toolchain: 1.98.1
@@ -383,11 +389,11 @@ jobs:
           version: 11.19.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:web
       - run: cargo install tauri-cli --version 2.11.4 --locked
-      - run: cargo tauri build --debug --no-bundle
+      - run: cargo tauri build --debug --no-bundle -- --locked
         working-directory: apps/desktop

@@ -7,7 +7,7 @@ for (const [job, runner, stepName, suites] of [
   ['quality', 'ubuntu-latest', 'Test platform-specific CI fixture contracts',
     ['e2e_factory_budget_recovery', 'factory_budget_provenance']],
   ['external-adapters-windows', 'windows-latest', 'Verify Windows owned-server receipts and restart',
-    ['e2e_predispatch_failure', 'factory_budget_provenance']],
+    ['ci_external_adapters_windows', 'e2e_predispatch_failure', 'factory_budget_provenance']],
 ]) {
   test(`${job} runs the recovery regressions on their supported platform without filtering`, () => {
     const workflow = readFileSync(path.join(import.meta.dirname, '..', '.github', 'workflows', 'ci.yml'), 'utf8')
@@ -44,7 +44,7 @@ test('CI remote actions use the accepted target immutable SHA pins', () => {
     'actions/upload-artifact': 'ea165f8d65b6e75b540449e92b4886f43607fa02',
   }
   const uses = [...workflow.matchAll(/^[ \t]+(?:- )?uses: ([^\s#]+)/gmu)].map(match => match[1])
-  assert.equal(uses.length, 26, 'retain every existing action step')
+  assert.equal(uses.length, 27, 'retain every existing action step and the current-main ACL readiness upload')
   assert.deepEqual(uses, uses.map(ref => {
     const action = ref.split('@')[0]
     assert.ok(Object.hasOwn(pins, action), `unreviewed action: ${action}`)
@@ -66,30 +66,34 @@ test('Windows runner tests are serialized without filtering tests or changing Un
   const matrix = workflow.split('  runner-platforms:')[1].split('  desktop-windows:')[0]
   assert.match(matrix, /os: \[ubuntu-latest, windows-latest, macos-latest\]/u)
   assert.match(matrix, /fail-fast: false/u)
-  assert.match(matrix, /name: Run Windows runner tests serially\n\s+if: runner.os == 'Windows'\n\s+run: cargo test -p crony-runner -- --test-threads=1\n/u)
-  assert.match(matrix, /name: Run Unix runner tests\n\s+if: runner.os != 'Windows'\n\s+run: cargo test -p crony-runner\n/u)
+  assert.match(matrix, /name: Run Windows runner tests serially\n\s+if: runner.os == 'Windows'\n\s+run: cargo test --locked -p crony-runner -- --test-threads=1\n/u)
+  assert.match(matrix, /name: Run Unix runner tests\n\s+if: runner.os != 'Windows'\n\s+run: cargo test --locked -p crony-runner\n/u)
   assert.match(matrix, /run: node tools\/platform_runner_contract\.mjs/u)
   assert.doesNotMatch(matrix, /--skip|--ignored|--exclude|continue-on-error|RUST_TEST_THREADS/u)
   assert.equal((matrix.match(/--test-threads=1/gu) ?? []).length, 1)
 })
 
-test('Windows primary ACL path runs before explicit prewarming and the complete serial suite', () => {
+test('Windows primary ACL path runs before explicit readiness and the complete serial suite', () => {
   const root = path.resolve(import.meta.dirname, '..')
   const workflow = readFileSync(path.join(root, '.github', 'workflows', 'ci.yml'), 'utf8').replace(/\r\n/gu, '\n')
   const matrix = workflow.split('  runner-platforms:')[1].split('  desktop-windows:')[0]
-  const primaryName = '      - name: Test Windows primary ACL path before explicit prewarming\n'
-  const warmName = '      - name: Warm Windows PowerShell before bounded native setup tests\n'
+  const primaryName = '      - name: Test Windows primary ACL path before explicit readiness\n'
+  const warmName = '      - name: Verify Windows PowerShell connection ACL readiness\n'
   const primaryIndex = matrix.indexOf(primaryName)
   const warmIndex = matrix.indexOf(warmName)
   assert.ok(primaryIndex >= 0, 'exercise PrivateRoot::open before paying the native ACL startup cost')
-  assert.ok(primaryIndex < warmIndex, 'primary ACL regression must precede explicit prewarming')
+  assert.ok(primaryIndex < warmIndex, 'primary ACL regression must precede explicit readiness')
   const primary = matrix.slice(primaryIndex + primaryName.length, warmIndex)
   const testName = 'windows_private_root_primary_path_enforces_acl'
   assert.equal(primary.trim(), [
     "if: runner.os == 'Windows'",
     `        run: cargo test --locked -p crony-runner connections::storage::tests::${testName} -- --exact --nocapture`,
   ].join('\n'))
-  assert.doesNotMatch(matrix.slice(0, primaryIndex), /shell: powershell|DirectorySecurity|WindowsIdentity|windows_connection_acl_readiness|run:.*cargo test/u)
+  const before = matrix.slice(0, primaryIndex)
+  assert.doesNotMatch(before, /shell: powershell|DirectorySecurity|WindowsIdentity|windows_connection_acl_readiness/u)
+  for (const command of before.matchAll(/run: (cargo test[^\n]*)/gu)) {
+    assert.match(command[1], / --no-run(?: |$)/u, 'only compilation may precede the primary native ACL test')
+  }
   const storage = readFileSync(path.join(root, 'crates', 'crony-runner', 'src', 'connection_setup', 'storage.rs'), 'utf8')
   assert.match(storage, new RegExp(`#\\[cfg\\(windows\\)\\]\\s+#\\[tokio::test\\]\\s+async fn ${testName}\\(\\)`, 'u'))
   const connections = readFileSync(path.join(root, 'crates', 'crony-runner', 'src', 'connections.rs'), 'utf8')
@@ -98,22 +102,24 @@ test('Windows primary ACL path runs before explicit prewarming and the complete 
   assert.match(main, /^mod connections;/mu)
 })
 
-test('Windows warm-up remains bounded and leaves native ACL enforcement unchanged', () => {
+test('Windows readiness uses the native bounded probe and leaves runner ACL enforcement unchanged', () => {
   const root = path.resolve(import.meta.dirname, '..')
   const workflow = readFileSync(path.join(root, '.github', 'workflows', 'ci.yml'), 'utf8').replace(/\r\n/gu, '\n')
   const matrix = workflow.split('  runner-platforms:')[1].split('  desktop-windows:')[0]
-  const preflight = matrix.split('      - name: Warm Windows PowerShell before bounded native setup tests\n')[1]
+  const preflight = matrix.split('      - name: Verify Windows PowerShell connection ACL readiness\n')[1]
     ?.split('      - name: Run Windows runner tests serially\n')[0]
-  assert.ok(preflight, 'warm the exact Windows PowerShell host before running the complete test binary')
-  assert.ok(matrix.indexOf('name: Warm Windows PowerShell before bounded native setup tests') <
+  assert.ok(preflight, 'verify the exact Windows PowerShell host before running the complete test binary')
+  assert.ok(matrix.indexOf('name: Verify Windows PowerShell connection ACL readiness') <
     matrix.indexOf('name: Run Windows runner tests serially'))
   assert.match(preflight, /if: runner.os == 'Windows'/u)
-  assert.match(preflight, /timeout-minutes: 1\n\s+shell: powershell\n/u)
-  assert.match(preflight, /\$ErrorActionPreference = 'Stop'/u)
-  assert.match(preflight, /\[System.Security.AccessControl.DirectorySecurity\]::new\(\)/u)
-  assert.match(preflight, /\[System.Security.Principal.WindowsIdentity\]::GetCurrent\(\).User/u)
-  assert.match(preflight, /\$acl.SetAccessRuleProtection\(\$true, \$false\)/u)
-  assert.doesNotMatch(preflight, /SetAccessControl|Set-Acl|icacls|Start-Process|continue-on-error/u)
+  assert.match(preflight, /tools\/windows_connection_acl_readiness\.ps1/u)
+  assert.doesNotMatch(preflight, /continue-on-error/u)
+  const probe = readFileSync(path.join(root, 'tools', 'windows_connection_acl_readiness.ps1'), 'utf8')
+  assert.match(probe, /System32\/WindowsPowerShell\/v1\.0\/powershell\.exe/u)
+  assert.match(probe, /WaitForExit\(60000\)/u)
+  assert.match(probe, /ecorp-acl-readiness-.*Guid/u)
+  assert.match(probe, /\[System.IO.Directory\]::SetAccessControl\(\$env:ECORP_CONNECTION_ACL_TARGET,\$acl\)/u)
+  assert.match(probe, /finally \{/u)
   const storage = readFileSync(path.join(root, 'crates', 'crony-runner', 'src', 'connection_setup', 'storage.rs'), 'utf8')
   assert.match(storage, /Utc::now\(\) \+ chrono::Duration::seconds\(10\)/u)
   assert.match(storage, /\[System.IO.Directory\]::SetAccessControl\(\$env:ECORP_CONNECTION_ACL_TARGET,\$acl\)/u)
