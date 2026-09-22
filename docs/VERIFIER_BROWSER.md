@@ -59,6 +59,10 @@ are literal, absolute and limited to 1024 characters. The policy must be a
 regular, unlinked file. Both declared and resolved executable paths must be
 outside the task workspace; the resolved executable must have a supported name,
 be a readable regular file, be executable on Unix, and match the hash.
+The resolver rejects directories, pipes and other special files before opening
+them. Unix reads also use nonblocking, no-follow flags so a replaced path cannot
+block on a pipe or follow a new symlink. The opened policy and executable must
+still match the inspected file's identity and size; reads check for mutation.
 Windows network-share paths are not supported. A known browser filename is not
 a signature check; the authorized hash and operator-controlled installation
 remain essential.
@@ -150,3 +154,6 @@ OS isolation. Hash evidence identifies the executable at preflight, not every
 browser DLL/resource or a guarantee against privileged replacement races.
 Playwright warns that non-bundled versions may be incompatible; launch errors
 remain failures. Windows tests do not establish native Linux/macOS acceptance.
+The special-file regression suite runs directory cases on all supported hosts.
+The declared and managed browser FIFO cases require a native Unix host and are
+explicitly skipped on Windows; a Windows pass does not qualify those cases.

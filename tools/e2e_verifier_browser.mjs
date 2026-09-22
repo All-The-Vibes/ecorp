@@ -40,10 +40,18 @@ const html = `<!doctype html><html lang="en"><meta charset="utf-8">
 document.getElementById(id).onclick=()=>document.querySelector('[data-testid="game-state"]').textContent=state;</script></html>`
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex')
 const result = { passed: false, scope: 'Actual browser and arcade command verifier, not ECorp full-stack acceptance',
-  selection: selection.evidence, negative: [], reports: [], sourceUnchanged: false }
+  fixture, selection: selection.evidence, children: [], negative: [], reports: [], sourceUnchanged: false }
+async function recordChild(name, child) {
+  result.children.push({ name, exitCode: child.status, signal: child.signal, error: child.error?.message })
+  // Keep the first copy with the artifacts if output retention itself fails.
+  for (const directory of [fixture, output]) {
+    await writeFile(path.join(directory, `${name}.stdout.log`), child.stdout ?? '')
+    await writeFile(path.join(directory, `${name}.stderr.log`), child.stderr ?? '')
+  }
+}
 await mkdir(fixture)
-await writeFile(path.join(fixture, 'index.html'), html, { flag: 'wx' })
 try {
+  await writeFile(path.join(fixture, 'index.html'), html, { flag: 'wx' })
   const original = JSON.parse(await readFile(process.env.CRONY_VERIFIER_BROWSER_POLICY, 'utf8'))
   for (const [name, policy] of [
     ['wrong-hash', { ...original, sha256: '0'.repeat(64) }],
@@ -56,6 +64,7 @@ try {
       cwd: workspace, encoding: 'utf8', timeout: 120_000, windowsHide: true,
       env: { ...process.env, CRONY_VERIFIER_BROWSER_POLICY: policyPath },
     })
+    await recordChild(name, failed)
     assert.ifError(failed.error)
     assert.notEqual(failed.status, 0, name)
     assert.equal(failed.stdout, '')
@@ -72,6 +81,7 @@ try {
       const cli = spawnSync(process.execPath, [helper, '--policy', process.env.CRONY_VERIFIER_BROWSER_POLICY, ...nativePathArgs], {
         cwd: workspace, encoding: 'utf8', timeout: 30_000, windowsHide: true,
       })
+      await recordChild('cli-selection-preflight', cli)
       assert.ifError(cli.error)
       assert.equal(cli.status, 0, cli.stderr)
       assert.deepEqual(JSON.parse(cli.stdout), selection)
@@ -79,8 +89,7 @@ try {
     const run = spawnSync(process.execPath, [verifier, fixtureName], {
       cwd: workspace, encoding: 'utf8', timeout: 120_000, windowsHide: true, env: process.env,
     })
-    await writeFile(path.join(output, `${mode}.stdout.log`), run.stdout ?? '')
-    await writeFile(path.join(output, `${mode}.stderr.log`), run.stderr ?? '')
+    await recordChild(mode, run)
     assert.ifError(run.error)
     assert.equal(run.status, 0, run.stderr)
     const report = JSON.parse(await readFile(path.join(fixture, 'evidence', 'browser-verification.json'), 'utf8'))
@@ -95,15 +104,35 @@ try {
       assert.equal(hash(bytes), screenshot.sha256)
       assert.equal(bytes.length, screenshot.bytes)
     }
-    await cp(path.join(fixture, 'evidence'), path.join(output, mode), { recursive: true, errorOnExist: true })
+    await cp(path.join(fixture, 'evidence'), path.join(output, mode), { recursive: true, force: false, errorOnExist: true })
     result.reports.push({ mode, browser: report.browser, cases: report.cases.map(({ name }) => name) })
   }
   assert.equal(await readFile(path.join(fixture, 'index.html'), 'utf8'), html)
   result.sourceUnchanged = true
   result.passed = true
-} finally {
+} catch (error) {
+  result.error = error.stack ?? String(error)
+}
+try {
   await writeFile(path.join(output, 'result.json'), `${JSON.stringify(result, null, 2)}\n`)
-  // Only this newly created fixture directory is removed; operator data is never a cleanup target.
-  await rm(fixture, { recursive: true })
+  // Failed runs (including failed copies) retain the original artifact bytes.
+  if (result.passed) {
+    assert.equal(await realpath(fixture), fixture)
+    assert.ok((await lstat(fixture)).isDirectory(), 'Only the newly created fixture may be removed')
+    await rm(fixture, { recursive: true })
+  }
+} catch (error) {
+  result.passed = false
+  result.retentionError = error.stack ?? String(error)
+}
+if (!result.passed) {
+  process.exitCode = 1
+  console.error(`Failed fixture retained: ${fixture}\nEvidence output: ${output}\n${result.error ?? ''}\n${result.retentionError ?? ''}`)
+  await writeFile(path.join(fixture, 'result.json'), `${JSON.stringify(result, null, 2)}\n`)
+  try {
+    await writeFile(path.join(output, 'result.json'), `${JSON.stringify(result, null, 2)}\n`)
+  } catch (error) {
+    console.error(`Failed summary remains in ${fixture}: ${error.message}`)
+  }
 }
 console.log(JSON.stringify({ output, ...result }))

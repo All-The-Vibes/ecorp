@@ -11,10 +11,19 @@ const names = {
   darwin: { chromium: ['Chromium', 'chrome-headless-shell', 'headless_shell'], chrome: ['Google Chrome'], edge: ['Microsoft Edge'] },
 }
 const fail = (message) => { throw new Error(`Verifier browser: ${message}`) }
+// Unix open('r') can wait indefinitely for a FIFO writer before fstat can run.
+// Check the path first and also make the open nonblocking and no-follow so a
+// last-moment replacement cannot turn a regular-file check into a blocked read.
+const readOnlyFlags = constants.O_RDONLY | (process.platform === 'win32'
+  ? 0 : constants.O_NONBLOCK | constants.O_NOFOLLOW)
 const supportedName = (browser, file, platform) => {
   const name = (platform === 'win32' ? path.win32 : path.posix).basename(file)
   return names[platform][browser].includes(platform === 'win32' ? name.toLowerCase() : name)
 }
+const supportedPath = (browser, file, platform) =>
+  typeof file === 'string' && file.length <= 1024 && !/[\0\r\n]/u.test(file) &&
+  (platform === 'win32' ? path.win32.isAbsolute(file) && /^[A-Za-z]:[\\/]/u.test(file) : path.posix.isAbsolute(file)) &&
+  supportedName(browser, file, platform)
 
 export function validateBrowserPolicy(policy, platform = process.platform, host = hostname()) {
   if (!policy || typeof policy !== 'object' || Array.isArray(policy)) fail('policy must be an object')
@@ -31,11 +40,7 @@ export function validateBrowserPolicy(policy, platform = process.platform, host 
     fail('an explicit lowercase SHA-256 executable pin is required')
   }
   if (Object.hasOwn(policy, 'executable')) {
-    const paths = platform === 'win32' ? path.win32 : path.posix
-    if (typeof policy.executable !== 'string' || policy.executable.length > 1024 ||
-        /[\0\r\n]/u.test(policy.executable) || !paths.isAbsolute(policy.executable) ||
-        (platform === 'win32' && !/^[a-z]:[\\/]/iu.test(policy.executable)) ||
-        !supportedName(policy.browser, policy.executable, platform)) {
+    if (!supportedPath(policy.browser, policy.executable, platform)) {
       fail('expected one absolute supported browser executable path, not a command')
     }
   } else if (policy.browser !== 'chromium') {
@@ -52,10 +57,14 @@ function outsideWorkspace(candidate, workspace, label) {
 }
 
 async function fileDigest(file, maximumBytes) {
-  const handle = await open(file, 'r')
+  const expected = await lstat(file)
+  if (!expected.isFile() || expected.size === 0 || expected.size > maximumBytes) fail(`invalid file size/type: ${file}`)
+  const handle = await open(file, readOnlyFlags)
   try {
     const before = await handle.stat()
     if (!before.isFile() || before.size === 0 || before.size > maximumBytes) fail(`invalid file size/type: ${file}`)
+    if (before.dev !== expected.dev || before.ino !== expected.ino || before.size !== expected.size ||
+        before.mtimeMs !== expected.mtimeMs) fail(`file changed during preflight: ${file}`)
     const hash = createHash('sha256')
     let total = 0
     for await (const bytes of handle.createReadStream({ autoClose: false })) {
@@ -83,12 +92,20 @@ export async function resolveVerifierBrowser({ policyPath, chromiumExecutable, w
   if (!info.isFile() || info.isSymbolicLink() || info.nlink !== 1 || info.size > 8192) {
     fail(`policy must be a regular, unlinked file of at most 8192 bytes: ${policyPath}`)
   }
-  const handle = await open(policyFile, 'r')
+  const handle = await open(policyFile, readOnlyFlags)
   let bytes
   try {
+    const opened = await handle.stat()
+    if (!opened.isFile() || opened.nlink !== 1 || opened.size > 8192 ||
+        opened.dev !== info.dev || opened.ino !== info.ino || opened.size !== info.size ||
+        opened.mtimeMs !== info.mtimeMs) fail(`policy changed during preflight: ${policyPath}`)
     const buffer = Buffer.alloc(8193)
     const read = await handle.read(buffer)
     if (read.bytesRead > 8192) fail(`policy exceeded 8192 bytes: ${policyPath}`)
+    const after = await handle.stat()
+    if (read.bytesRead !== opened.size || after.size !== opened.size || after.mtimeMs !== opened.mtimeMs) {
+      fail(`policy changed during preflight: ${policyPath}`)
+    }
     bytes = buffer.subarray(0, read.bytesRead)
   } finally {
     await handle.close()
@@ -102,14 +119,13 @@ export async function resolveVerifierBrowser({ policyPath, chromiumExecutable, w
   }
   validateBrowserPolicy(policy)
   const executable = policy.executable ?? chromiumExecutable
-  if (typeof executable !== 'string' || !path.isAbsolute(executable) || executable.length > 1024 ||
-      !supportedName(policy.browser, executable, process.platform)) {
+  if (!supportedPath(policy.browser, executable, process.platform)) {
     fail('Playwright-managed Chromium is unavailable; supply its native executablePath(), never download implicitly')
   }
   outsideWorkspace(executable, root, 'browser')
   const resolved = await realpath(executable)
   outsideWorkspace(resolved, root, 'browser')
-  if (!supportedName(policy.browser, resolved, process.platform)) {
+  if (!supportedPath(policy.browser, resolved, process.platform)) {
     fail(`resolved target is not a supported browser executable: ${resolved}`)
   }
   await access(resolved, process.platform === 'win32' ? constants.R_OK : constants.R_OK | constants.X_OK)
