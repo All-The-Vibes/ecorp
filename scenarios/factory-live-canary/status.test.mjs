@@ -7,7 +7,7 @@ import { normalizeStatus } from './status.mjs'
 const moduleUrl = new URL('./status.mjs', import.meta.url)
 const scenarioFile = fileURLToPath(moduleUrl)
 const run = (args) => {
-  const result = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 5000 })
+  const result = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 5000, windowsHide: true })
   assert.equal(result.error, undefined, result.error?.message)
   return result
 }

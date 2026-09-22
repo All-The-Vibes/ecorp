@@ -1,7 +1,7 @@
 param([ValidateSet('provision','node','rust','rust-retry','rust-diagnostic','rust-exact-binary','rust-longpaths-diagnostic','rust-longpaths','web','canary')][string]$Lane)
 $ErrorActionPreference = 'Stop'
-$workspace = 'C:\Users\sschofield\repos\ecorp-gauntlet-pr226-20260921'
-$evidence = 'C:\Users\sschofield\repos\ecorp\output\pr-gauntlet-20260921\pr226\integration'
+$workspace = '<original-user>\repos\ecorp-gauntlet-pr226-20260921'
+$evidence = '<original-user>\repos\ecorp\output\pr-gauntlet-20260921\pr226\integration'
 Set-Location -LiteralPath $workspace
 if ((git rev-parse --show-toplevel).Replace('/', '\') -ne $workspace) { throw 'Wrong workspace' }
 $expected = '6f027117897a8ec87673e98036fd4ea22de077af'

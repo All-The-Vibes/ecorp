@@ -132,3 +132,17 @@ RED is **not applicable** to this clean target integration. No historical or
 new behavior-fix RED is fabricated. The parent must run a fresh independent
 gauntlet against the final full PR. No push, PR review, merge, protection change
 or manual-office operation is authorized by this packet.
+
+
+## September 22, 2026 path normalization
+
+The later maintainer pass replaced personal Windows user-root paths in 29 text
+files in this integration packet with `<original-user>`. Historical transcripts
+otherwise retain their original output; this normalization does not rerun or
+upgrade the earlier acceptance. Prior hash receipts still identify the original
+bytes. `path-normalization-20260922.json` records each original and published
+SHA-256 separately, so those older hashes must not be compared to the normalized
+copies. All PNG capture bytes and evidence outside this integration directory
+remain unchanged. Original text bytes are retained in the private completion
+archive. Statements above about unchanged logs describe their initial capture,
+before this documented path normalization.
