@@ -10,15 +10,46 @@ param(
     [string]$ApprovedNpmRegistry
 )
 
-function Get-U1LocalPath([string]$Value) {
+function Get-U1DriveTarget([string]$Drive) {
+    if (!('ECorp.U1DriveIdentity' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System.Runtime.InteropServices;
+using System.Text;
+namespace ECorp {
+    public static class U1DriveIdentity {
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern uint QueryDosDevice(string name, StringBuilder target, int size);
+    }
+}
+'@ -ErrorAction Stop
+    }
+    $target = [Text.StringBuilder]::new(32768)
+    if (![ECorp.U1DriveIdentity]::QueryDosDevice($Drive, $target, $target.Capacity)) {
+        throw 'Substituted, mapped or unverifiable drives are not supported.'
+    }
+    return $target.ToString()
+}
+
+function Get-U1LocalPath([string]$Value, [ref]$Identity) {
     if ([string]::IsNullOrWhiteSpace($Value) -or $Value -notmatch '^[A-Za-z]:[\\/]' -or
         $Value.Substring(2).Contains(':')) {
         throw 'Use an absolute local drive path, not a relative, UNC, device or stream path.'
     }
     foreach ($component in $Value.Replace('/', '\').Substring(3).Split('\', [StringSplitOptions]::RemoveEmptyEntries)) {
         if ($component -match '[ .]$') { throw 'Trailing dots or spaces in path components are not supported.' }
+        if ($component.IndexOfAny([IO.Path]::GetInvalidFileNameChars()) -ge 0 -or
+            $component -match '^(CON|PRN|AUX|NUL|(?:COM|LPT)[1-9\u00b9\u00b2\u00b3])(\.|$)|^CON(IN|OUT)\$$') {
+            throw 'Invalid or reserved Windows path component.'
+        }
     }
     $full = [IO.Path]::GetFullPath($Value)
+    # ponytail: direct volumes only; comparison keys unify drive letters, not all aliases.
+    # This observation must be repeated before any future launch; it reserves nothing.
+    $driveTarget = Get-U1DriveTarget $full.Substring(0, 2)
+    if ($driveTarget -notmatch '^\\Device\\HarddiskVolume[0-9]+$') {
+        throw 'Substituted, mapped or unverifiable drives are not supported.'
+    }
+    if ($null -ne $Identity) { $Identity.Value = $driveTarget + $full.Substring(2) }
     if ($full.Length -eq 3) { return $full }
     return $full.TrimEnd('\', '/')
 }
@@ -50,8 +81,8 @@ function Get-U1FixturePlan {
         [string]$Product, [string]$Root, [string[]]$Protected,
         [int[]]$Ports, [int[]]$AdditionalProtectedPorts = @()
     )
-    $productPath = Get-U1LocalPath $Product
-    $rootPath = Get-U1LocalPath $Root
+    $rootIdentity = $null
+    $rootPath = Get-U1LocalPath $Root ([ref]$rootIdentity)
     if ((Split-Path -Leaf $rootPath) -notmatch '^u1-[a-zA-Z0-9-]+$' -or
         (Split-Path -Leaf (Split-Path -Parent $rootPath)) -ne 'qa') {
         throw 'Use a new dedicated qa\u1-<name> directory.'
@@ -59,16 +90,20 @@ function Get-U1FixturePlan {
     if (!$Protected -or $Protected.Count -eq 0) {
         throw 'Explicit protected office/source roots are required; none are inferred.'
     }
-    $protectedPaths = @($productPath) + @($Protected | ForEach-Object { Get-U1LocalPath $_ })
-    foreach ($entry in $protectedPaths) {
-        Assert-U1NoReparseAncestor $entry
-        if (!(Test-Path -LiteralPath $entry -PathType Container -ErrorAction Stop)) {
-            throw 'Every protected root must be an existing directory.'
+    $protectedPaths = @(
+        foreach ($entry in @($Product) + $Protected) {
+            $identity = $null
+            $path = Get-U1LocalPath $entry ([ref]$identity)
+            Assert-U1NoReparseAncestor $path
+            if (!(Test-Path -LiteralPath $path -PathType Container -ErrorAction Stop)) {
+                throw 'Every protected root must be an existing directory.'
+            }
+            if (Test-U1PathOverlap $rootIdentity $identity) {
+                throw 'The fixture must be disjoint from product and protected roots.'
+            }
+            $path
         }
-        if (Test-U1PathOverlap $rootPath $entry) {
-            throw 'The fixture must be disjoint from product and protected roots.'
-        }
-    }
+    )
     Assert-U1NoReparseAncestor $rootPath
     if (Test-Path -LiteralPath $rootPath -ErrorAction Stop) {
         throw 'The QA root is occupied; preserve it, never reset or adopt it.'
@@ -80,7 +115,7 @@ function Get-U1FixturePlan {
         throw 'Use three distinct high ports outside the known and explicitly protected ports.'
     }
     return [ordered]@{
-        product = $productPath
+        product = $protectedPaths[0]
         qa_root = $rootPath
         protected_roots = $protectedPaths
         server = "http://127.0.0.1:$($Ports[0])"
@@ -162,6 +197,16 @@ function Invoke-U1Preflight {
         Assert-U1PortsAvailable @($Options.ServerPort, $Options.WebPort, $Options.DatabasePort) $listeners
     } 'Listener inventory failed, fixture plan is invalid, or a requested port is occupied; no port is reserved by preflight.'
     Check 'source' {
+        # -C does not override inherited repository, index or configuration selection.
+        if (@(Get-ChildItem Env: | Where-Object Name -match '^GIT_(DIR|WORK_TREE|COMMON_DIR|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|CONFIG.*|IMPLICIT_WORK_TREE|GRAFT_FILE|NO_REPLACE_OBJECTS|REPLACE_REF_BASE|PREFIX|SHALLOW_FILE|NAMESPACE|CEILING_DIRECTORIES|DISCOVERY_ACROSS_FILESYSTEM)$').Count) {
+            throw 'Inherited Git selection is not supported.'
+        }
+        $expectedRoot = Get-U1LocalPath $Product
+        Assert-U1NoReparseAncestor $expectedRoot
+        $observedRoot = Get-U1LocalPath (Invoke-U1ReadCommand 'git' @('-C', $Product, 'rev-parse', '--show-toplevel'))
+        if (!$observedRoot.Equals($expectedRoot, [StringComparison]::OrdinalIgnoreCase)) {
+            throw 'Git repository root does not match Product.'
+        }
         $head = Invoke-U1ReadCommand 'git' @('-C', $Product, 'rev-parse', 'HEAD')
         if ($head -notmatch '^[0-9a-f]{40,64}$') { throw 'Invalid source revision.' }
         $report.source_commit = $head
