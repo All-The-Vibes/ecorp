@@ -46,7 +46,7 @@ engineering contract. Here is what the current alpha can do.
 ## Press START on real work
 
 1. **Drop the mission.** Define the outcome, references, write scope, provider, model, budget, and verifier policy.
-2. **Build the crew.** Choose a solo worker, two specialists followed by synthesis, or a three-worker Copilot studio with verified handoffs before integration.
+2. **Choose a crew for the mission.** The current alpha creates mission-owned workers from fixed, bounded strategy presets: a solo worker, two specialists followed by synthesis, or a three-worker Copilot studio with verified handoffs before integration. Skill-driven team composition remains future work.
 3. **Light up isolated worktrees.** Every write-capable run gets its own branch and linked workspace. Parallel agents never pile into the configured source checkout.
 4. **Keep human hands on the controls.** Watch live state, steer the active session, queue direction, review the run, or hit an audited emergency stop.
 5. **Make proof mandatory.** Files, commands, tests, schemas, screenshots, human approval, and independent review can all block completion.
@@ -56,12 +56,24 @@ Publication never enables auto-merge and does not merge or deploy.
 
 ## How the factory works
 
-[![ECorp architecture: web, desktop, and CLI clients connect to the ECorp Control Server, which owns missions, policies, and events backed by Postgres and private artifact storage. Outbound runners execute and verify work in isolated worktrees before human-authorized pull-request publication.](docs/assets/architecture/ecorp-architecture-retro-v2.jpg)](docs/assets/architecture/ecorp-architecture-retro-v2.jpg)
+[![ECorp architecture: multiple human clients share the control server; outbound runners execute mission-shaped task graphs in isolated worktrees. Source, contributors, evidence and acceptance rules are linked by a built-in trust fabric. Verified delivery still requires human authorization.](docs/assets/architecture/ecorp-architecture-multiplayer-v3.svg)](docs/assets/architecture/ecorp-architecture-multiplayer-v3.svg)
 
 **One company. Three planes.** The **experience plane** is your shared front office. The
 **control plane** owns missions, policy, and durable state. The **execution plane** runs the crew
 in isolated worktrees, verifies the output, and returns the evidence. Human authorization and a
 trusted publisher take verified artifacts to a pull request—not an automatic merge or deployment.
+
+**Multiplayer is how the company works together. Blockchain is fabric woven through
+the work.** People share room-scoped mission context, durable comments, control
+handoffs, and role-gated decisions. Source pins, contributor attribution, evidence
+fingerprints, signed provenance, and acceptance records connect the work from
+brief to reviewed result.
+
+Explore the [multiplayer diagram](docs/assets/architecture/ecorp-multiplayer-control-v1.svg)
+and [trust-fabric diagram](docs/assets/architecture/ecorp-trust-fabric-v1.svg).
+The [implementation guide](docs/TRUST_FABRIC.md) explains what the fabric checks:
+it is not a separate product called Fabric, a token network, or a substitute for
+human authorization.
 
 Click the image for full resolution. This is a logical architecture view; worktrees are not full
 OS sandboxes. Explore the [architecture](docs/ARCHITECTURE.md),
@@ -73,12 +85,18 @@ The floor makes real work visible. Agent activity, mission status, approvals, an
 results are projections of authoritative server, runner, and provider state.
 
 - **State survives the screen.** Missions, messages, task graphs, budgets, approvals, and audit events persist in Postgres. Closing the browser or desktop client does not terminate the run.
+- **People share one mission.** Authorized teammates work from shared room/run context,
+  comment, queue direction, hand off a fenced control lease, and review through
+  distinct role-gated paths. The collaboration UI exposes snapshot freshness and
+  disconnection rather than treating a live socket as proof of fresh data.
 - **Work stays off the source checkout.** An outbound-connected runner owns provider processes, isolated worktrees, verification, and artifact collection. The server never executes agent shell commands.
 - **Proof opens the exit.** A run cannot emit accepted completion until its persisted verifier policy passes. Verified factory results can then enter the separately authorized publication lane.
 
 ### Assemble a studio, not a static cast
 
-ECorp creates mission-owned workers from the connected runner's capabilities. Choose **Studio team ·
+ECorp creates mission-owned workers using the selected strategy and a supported
+connected runtime. Each strategy defines the current roles and bounded task
+graph. For example, choose **Studio team ·
 3 Copilot agents** for visual, gameplay, and quality specialists working in parallel. Their exact
 verified handoff files feed a later integration pass by the gameplay worker.
 
@@ -87,6 +105,11 @@ agent or three agents editing the same checkout. Unpinned mission workers retire
 is terminal and no live control or cleanup obligations remain; their history stays available.
 The [studio implementation and recorded evidence](docs/evidence/2026-09-06-mission-staffing.md)
 spell out the checks and remaining staffing work.
+
+The [integrated multiplayer evidence](docs/evidence/2026-09-17-multiplayer-ui-integration.md)
+and [parity map](docs/multiplayer/U7_PARITY_MATRIX.md) distinguish today's
+collaboration foundation from the remaining independent-identity and cross-owner
+acceptance work.
 
 Want to start later? Expand **Model, limits and output**, choose **Save without starting**, then
 **Save plan**. It is stored on the server as **Awaiting dispatch**.

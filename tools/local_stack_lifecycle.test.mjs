@@ -30,7 +30,9 @@ async function runSuite(t, suite) {
     env: environment,
     encoding: 'utf8',
     windowsHide: true,
-    timeout: 120_000,
+    // Module now also exercises the complete startup preflight matrix. A native
+    // Windows run can exceed two minutes; keep a bounded allowance for slow CI.
+    timeout: 300_000,
     maxBuffer: 2 * 1024 * 1024,
   })
   assert.ifError(result.error)

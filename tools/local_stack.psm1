@@ -366,18 +366,68 @@ function Assert-LocalStackPath {
     }
 }
 
+function Invoke-LocalSourceGitRead {
+    param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][string[]]$Arguments)
+    $git = Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1
+    $info = [Diagnostics.ProcessStartInfo]::new($git.Source)
+    $info.UseShellExecute = $false
+    $info.CreateNoWindow = $true
+    $info.RedirectStandardOutput = $true
+    $info.RedirectStandardError = $true
+    foreach ($argument in (@('-C', $Repository) + $Arguments)) { $info.ArgumentList.Add($argument) }
+    # Even rev-parse can write trace files or resolve another checkout through
+    # inherited GIT_* settings. Isolate this child without changing its caller.
+    $info.Environment.Clear()
+    foreach ($name in @('SystemRoot', 'WINDIR', 'PATH', 'TEMP', 'TMP')) {
+        $value = [Environment]::GetEnvironmentVariable($name, 'Process')
+        if ($null -ne $value) { $info.Environment[$name] = $value }
+    }
+    $info.Environment['GIT_CONFIG_NOSYSTEM'] = '1'
+    $info.Environment['GIT_CONFIG_SYSTEM'] = 'NUL'
+    $info.Environment['GIT_CONFIG_GLOBAL'] = 'NUL'
+    $info.Environment['GIT_TERMINAL_PROMPT'] = '0'
+    $info.Environment['GIT_OPTIONAL_LOCKS'] = '0'
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $info
+    $started = $false
+    try {
+        $started = $process.Start()
+        if (!$started) { throw 'Git source inspection did not start.' }
+        [void]$process.Handle
+        $stdout = $process.StandardOutput.ReadToEndAsync()
+        $stderr = $process.StandardError.ReadToEndAsync()
+        if (!$process.WaitForExit(15000)) { throw 'Git source inspection timed out.' }
+        # Git diagnostics can include configuration values; do not relay them.
+        [void]$stderr.GetAwaiter().GetResult()
+        if ($process.ExitCode -ne 0) { throw 'Git source inspection failed.' }
+        $stdout.GetAwaiter().GetResult().TrimEnd([char[]]"`r`n")
+    } finally {
+        if ($started -and !$process.HasExited) {
+            $process.Kill()
+            [void]$process.WaitForExit(5000)
+        }
+        $process.Dispose()
+    }
+}
+
 function Get-LocalSourceCommit {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][string]$Ref)
     Assert-LocalStackPath -Path $Repository -Directory -Required
     if ([string]::IsNullOrWhiteSpace($Ref) -or $Ref.StartsWith('-') -or $Ref.Contains("`n") -or $Ref.Contains("`r")) {
         throw "Invalid source ref for repository: $Repository"
     }
-    $top = & git -C $Repository rev-parse --show-toplevel 2>$null
-    if ($LASTEXITCODE -ne 0 -or !(Test-LocalPathEqual ([string]$top) $Repository)) {
+    $top = Invoke-LocalSourceGitRead -Repository $Repository -Arguments @('rev-parse', '--show-toplevel')
+    if (!(Test-LocalPathEqual ([string]$top) $Repository)) {
         throw "Source must be the exact Git checkout root: $Repository"
     }
-    $commit = & git -C $Repository rev-parse --verify --end-of-options "$Ref^{commit}" 2>$null
-    if ($LASTEXITCODE -ne 0 -or [string]$commit -cnotmatch '^[0-9a-f]{40}$') {
+    try {
+        $commit = Invoke-LocalSourceGitRead -Repository $Repository -Arguments @('rev-parse', '--verify', '--end-of-options', "$Ref^{commit}")
+    } catch {
+        # Keep the existing safe rejection category for every startup mode.
+        # Native Git stderr can contain configuration values and is not relayed.
+        throw "Cannot resolve source ref to an immutable commit in: $Repository"
+    }
+    if ([string]$commit -cnotmatch '^[0-9a-f]{40}$') {
         throw "Cannot resolve source ref to an immutable commit in: $Repository"
     }
     [string]$commit

@@ -872,10 +872,23 @@ Export-ModuleMember -Function Start-LocalOwnedProcess
         node=$script:NodeExecutable;script=$script:FixtureScript;lease=$script:Lease;nonce=$nonce
     } | ConvertTo-Json)
     $statePath = Join-Path $workspace 'output\local-pids.json'
+    # Each suite owns distinct ephemeral ports. Module includes these cases too,
+    # so fixed ports can collide with a concurrently invoked Startup suite.
+    $portListeners = @(
+        [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,0)
+        [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,0)
+    )
+    try {
+        foreach ($portListener in $portListeners) { $portListener.Start() }
+        $serverPort = $portListeners[0].LocalEndpoint.Port
+        $webPort = $portListeners[1].LocalEndpoint.Port
+    } finally {
+        foreach ($portListener in $portListeners) { $portListener.Stop() }
+    }
     $baseState = @{
         schema_version=2; workspace=$workspace; configuration=@{
             source_repository=$source;source_base_ref='HEAD';source_commit=(Get-LocalSourceCommit $source HEAD)
-            runner_id='fixture-runner';server_port=57578;web_port=57579;database_identity='127.0.0.1:57577/fixture'
+            runner_id='fixture-runner';server_port=$serverPort;web_port=$webPort;database_identity='127.0.0.1:57577/fixture'
             runner_workspace=(Join-Path $workspace 'output\runner');copilot_home=(Join-Path $workspace 'output\runner\copilot-home')
         };processes=@{};previous_processes=@();corp_id=$corp;actor_id=$actor;identity_initialized=$true
     }
@@ -967,7 +980,7 @@ Export-ModuleMember -Function Start-LocalOwnedProcess
             'redirected provider home'='Startup cannot verify redirected path:*'
             'missing retained setting'='Retained configuration is missing runner_workspace*'
             'invalid schema'='Local ownership record scope/version mismatch*'
-            'occupied port'='Port 57578 is occupied without matching server ownership*'
+            'occupied port'="Port $serverPort is occupied without matching server ownership*"
             'missing credential'='Required startup path is missing:*'
             'missing source ref'='Cannot resolve source ref to an immutable commit*'
             'invalid port'='CRONY_SERVER_PORT must be a valid TCP port*'
@@ -1003,7 +1016,7 @@ Export-ModuleMember -Function Start-LocalOwnedProcess
                     'missing source ref' { $changed.CRONY_SOURCE_BASE_REF='refs/heads/no-such-fixture' }
                     'invalid port' { $changed.CRONY_SERVER_PORT='65536' }
                     'occupied port' {
-                        $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,57578)
+                        $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,$serverPort)
                         $listener.Start()
                     }
                 }
@@ -1018,7 +1031,10 @@ Export-ModuleMember -Function Start-LocalOwnedProcess
                         $failure = $null
                         try { & $starter @mode -SkipBuild -SkipInstall -SkipFactoryController | Out-Null }
                         catch { $failure = $_.Exception.Message }
-                        Assert-True ($null -ne $failure -and $failure -like $expectedErrors[$scenario]) "Expected the exact $scenario rejection, not an unrelated failure."
+                        # Report only known rejection categories, never arbitrary
+                        # exception text that could contain credential canaries.
+                        $actualRejection = @($expectedErrors.Keys | Where-Object { $failure -like $expectedErrors[$_] }) -join ', '
+                        Assert-True ($null -ne $failure -and $failure -like $expectedErrors[$scenario]) "Expected the exact $scenario rejection; observed categories: [$actualRejection]."
                         Assert-Equal (Get-StartupSnapshot) $before 'Rejected input changed files, metadata or ACLs.'
                         Assert-FixtureAlive $guard
                         if ($listener) { Assert-True $listener.Server.IsBound 'Rejected input changed the unrelated listener.' }
