@@ -298,7 +298,9 @@ jobs:
       - name: Verify Windows browser policy environment handoff
         if: runner.os == 'Windows'
         shell: pwsh
-        run: pwsh -NoProfile -File ./tools/local_stack_browser_policy_handoff.test.ps1 -NodePath (Get-Command node -CommandType Application).Source -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'output/runner-platform-browser-policy-handoff')
+        run: |
+          $nodePath = (Get-Command node -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          pwsh -NoProfile -File ./tools/local_stack_browser_policy_handoff.test.ps1 -NodePath $nodePath -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'output/runner-platform-browser-policy-handoff')
       - run: cargo test --locked -p crony-runner ${{ runner.os == 'Windows' && '-- --test-threads=1' || '' }}
       - run: node tools/platform_runner_contract.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
