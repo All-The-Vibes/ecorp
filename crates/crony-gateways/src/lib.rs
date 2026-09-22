@@ -8,6 +8,17 @@ use uuid::Uuid;
 pub const MCP_PROTOCOL_VERSION: &str = "2025-06-18";
 pub const ACP_PROTOCOL_VERSION: u32 = 1;
 pub const A2A_PROTOCOL_VERSION: &str = "1.0";
+/// Read-only MCP caps each raw HTTP response at 16 MiB before JSON decoding,
+/// including unsuccessful responses. The probe separately bounds stdio output.
+pub const MCP_READ_ONLY_MAX_RESPONSE_BYTES: usize = 16 * 1024 * 1024;
+const READ_ONLY_RESPONSE_TOO_LARGE: &str = "read-only MCP response exceeded the 16 MiB body limit";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum McpAccess {
+    #[default]
+    ReadWrite,
+    ReadOnly,
+}
 
 #[derive(Debug, Clone)]
 pub struct GatewayClient {
@@ -16,6 +27,7 @@ pub struct GatewayClient {
     pub actor_id: Uuid,
     pub access_token: Option<String>,
     http: Client,
+    response_byte_limit: Option<usize>,
 }
 
 impl GatewayClient {
@@ -31,7 +43,42 @@ impl GatewayClient {
             actor_id,
             access_token,
             http: Client::new(),
+            response_byte_limit: None,
         }
+    }
+
+    /// Inspection stays on the selected origin, including on redirect responses.
+    /// Other integrations retain their existing transport behavior.
+    pub fn with_mcp_access(mut self, access: McpAccess) -> Result<Self> {
+        if access == McpAccess::ReadOnly {
+            let server = reqwest::Url::parse(&self.server)
+                .context("read-only MCP requires an explicit HTTP(S) API origin")?;
+            if !matches!(server.scheme(), "http" | "https")
+                || !server.username().is_empty()
+                || server.password().is_some()
+                || server.query().is_some()
+                || server.fragment().is_some()
+                || server.path() != "/"
+            {
+                return Err(anyhow!(
+                    "read-only MCP requires an HTTP(S) origin without credentials or parameters"
+                ));
+            }
+            if server.scheme() == "http"
+                && !matches!(server.host_str(), Some("localhost" | "127.0.0.1" | "[::1]"))
+            {
+                return Err(anyhow!(
+                    "read-only MCP requires HTTPS outside explicitly configured loopback origins"
+                ));
+            }
+            self.server = server.origin().ascii_serialization();
+            self.http = Client::builder()
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .context("configure read-only MCP transport")?;
+            self.response_byte_limit = Some(MCP_READ_ONLY_MAX_RESPONSE_BYTES);
+        }
+        Ok(self)
     }
 
     pub async fn request(&self, method: Method, path: &str, body: Option<Value>) -> Result<Value> {
@@ -47,10 +94,14 @@ impl GatewayClient {
         }
         let response = request.send().await.context("send ECorp API request")?;
         let status = response.status();
-        let value = response
-            .json::<Value>()
-            .await
-            .context("decode ECorp API response")?;
+        let value = if let Some(limit) = self.response_byte_limit {
+            bounded_response_json(response, limit).await?
+        } else {
+            response
+                .json::<Value>()
+                .await
+                .context("decode ECorp API response")?
+        };
         if !status.is_success() {
             return Err(anyhow!("ECorp API returned {status}: {value}"));
         }
@@ -110,12 +161,49 @@ pub fn mcp_capabilities() -> Value {
 }
 
 pub fn mcp_tools() -> Value {
-    json!({
+    mcp_tools_with_access(McpAccess::ReadWrite)
+}
+
+fn is_read_only_mcp_tool(name: &str) -> bool {
+    matches!(name, "crony_snapshot" | "crony_factory_recovery_context")
+}
+
+async fn bounded_response_json(mut response: reqwest::Response, limit: usize) -> Result<Value> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > limit as u64)
+    {
+        return Err(anyhow!(READ_ONLY_RESPONSE_TOO_LARGE));
+    }
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response.chunk().await.context("read ECorp API response")? {
+        if chunk.len() > limit - bytes.len() {
+            return Err(anyhow!(READ_ONLY_RESPONSE_TOO_LARGE));
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    serde_json::from_slice(&bytes).context("decode ECorp API response")
+}
+
+pub fn mcp_tools_with_access(access: McpAccess) -> Value {
+    let mut tools = json!({
         "tools":[
             {
                 "name":"crony_snapshot",
                 "description":"Read the authenticated actor's Corp-scoped operational snapshot.",
+                "annotations":{"readOnlyHint":true,"destructiveHint":false,"idempotentHint":true},
                 "inputSchema":{"type":"object","properties":{},"additionalProperties":false}
+            },
+            {
+                "name":"crony_factory_recovery_context",
+                "description":"Inspect one Factory work item's native recovery context, remaining authority and checkpoint capabilities. This does not authorize or start recovery; the server's existing operator and room permissions apply.",
+                "annotations":{"readOnlyHint":true,"destructiveHint":false,"idempotentHint":true},
+                "inputSchema":{
+                    "type":"object",
+                    "required":["work_item_id"],
+                    "properties":{"work_item_id":{"type":"string","format":"uuid"}},
+                    "additionalProperties":false
+                }
             },
             {
                 "name":"crony_create_mission",
@@ -151,15 +239,34 @@ pub fn mcp_tools() -> Value {
                 }
             }
         ]
-    })
+    });
+    if access == McpAccess::ReadOnly {
+        tools["tools"]
+            .as_array_mut()
+            .expect("static MCP tool catalog is an array")
+            .retain(|tool| tool["name"].as_str().is_some_and(is_read_only_mcp_tool));
+    }
+    tools
 }
 
 pub async fn handle_mcp(client: &GatewayClient, request: JsonRpcRequest) -> Value {
+    handle_mcp_with_access(client, request, McpAccess::ReadWrite).await
+}
+
+pub async fn handle_mcp_with_access(
+    client: &GatewayClient,
+    request: JsonRpcRequest,
+    access: McpAccess,
+) -> Value {
     let id = request.id.clone();
+    if request.jsonrpc != "2.0" {
+        return failure(id, -32600, "unsupported JSON-RPC version");
+    }
     let result = match request.method.as_str() {
         "initialize" => Ok(mcp_capabilities()),
-        "tools/list" => Ok(mcp_tools()),
-        "tools/call" => handle_mcp_tool(client, &request.params).await,
+        "ping" => Ok(json!({})),
+        "tools/list" => Ok(mcp_tools_with_access(access)),
+        "tools/call" => handle_mcp_tool_with_access(client, &request.params, access).await,
         "resources/list" => Ok(json!({"resources":[]})),
         _ => return failure(id, -32601, "method not found"),
     };
@@ -169,11 +276,18 @@ pub async fn handle_mcp(client: &GatewayClient, request: JsonRpcRequest) -> Valu
     }
 }
 
-async fn handle_mcp_tool(client: &GatewayClient, params: &Value) -> Result<Value> {
+async fn handle_mcp_tool_with_access(
+    client: &GatewayClient,
+    params: &Value,
+    access: McpAccess,
+) -> Result<Value> {
     let name = params
         .get("name")
         .and_then(Value::as_str)
         .context("tool call omitted name")?;
+    if access == McpAccess::ReadOnly && !is_read_only_mcp_tool(name) {
+        return Err(anyhow!("tool is unavailable in read-only MCP mode"));
+    }
     let arguments = params
         .get("arguments")
         .cloned()
@@ -193,6 +307,36 @@ async fn handle_mcp_tool(client: &GatewayClient, params: &Value) -> Result<Value
                     None,
                 )
                 .await?
+        }
+        "crony_factory_recovery_context" => {
+            let work_item_id = recovery_work_item_id(&arguments)?;
+            // This new inspection is bounded and never follows redirects, even
+            // when an existing integration also enables the legacy write tools.
+            let inspection = client.clone().with_mcp_access(McpAccess::ReadOnly)?;
+            let value = inspection
+                .request(
+                    Method::GET,
+                    &format!(
+                        "/api/corps/{}/factory/work-items/{work_item_id}/verification-recoveries?actor_id={}",
+                        client.corp_id, client.actor_id
+                    ),
+                    None,
+                )
+                .await?;
+            let returned_id = |field| {
+                value
+                    .pointer(field)
+                    .and_then(Value::as_str)
+                    .and_then(|id| Uuid::parse_str(id).ok())
+            };
+            if returned_id("/work_item/id") != Some(work_item_id)
+                || returned_id("/work_item/corp_id") != Some(client.corp_id)
+            {
+                return Err(anyhow!(
+                    "native recovery context did not match the requested scope"
+                ));
+            }
+            value
         }
         "crony_create_mission" => {
             client
@@ -229,6 +373,23 @@ async fn handle_mcp_tool(client: &GatewayClient, params: &Value) -> Result<Value
         _ => return Err(anyhow!("unknown ECorp MCP tool {name}")),
     };
     Ok(json!({"content":[{"type":"text","text":value.to_string()}],"structuredContent":value}))
+}
+
+fn recovery_work_item_id(arguments: &Value) -> Result<Uuid> {
+    let fields = arguments
+        .as_object()
+        .context("recovery inspection arguments must be an object")?;
+    if fields.len() != 1 || !fields.contains_key("work_item_id") {
+        return Err(anyhow!("recovery inspection requires exactly work_item_id"));
+    }
+    let raw = fields["work_item_id"]
+        .as_str()
+        .context("work_item_id must be a hyphenated UUID")?;
+    let id = Uuid::parse_str(raw).map_err(|_| anyhow!("work_item_id must be a hyphenated UUID"))?;
+    if raw.len() != 36 || !raw.eq_ignore_ascii_case(&id.hyphenated().to_string()) {
+        return Err(anyhow!("work_item_id must be a hyphenated UUID"));
+    }
+    Ok(id)
 }
 
 fn mcp_mission_request(actor_id: Uuid, arguments: &Value) -> Result<Value> {
@@ -299,6 +460,37 @@ mod tests {
     use super::*;
 
     #[test]
+    fn readonly_mcp_transport_requires_an_origin_and_https_outside_loopback() {
+        let client = |server: &str| {
+            GatewayClient::new(
+                server.to_owned(),
+                Uuid::from_u128(1),
+                Uuid::from_u128(2),
+                None,
+            )
+        };
+        for server in [
+            "http://127.0.0.1:8791",
+            "http://LOCALHOST:8791",
+            "http://[::1]:8791",
+            "https://ecorp.example.test",
+        ] {
+            assert!(client(server).with_mcp_access(McpAccess::ReadOnly).is_ok());
+        }
+        for server in [
+            "",
+            "http://ecorp.example.test",
+            "http://127.0.0.2:8791",
+            "http://localhost.example.test",
+            "https://ecorp.example.test/private",
+            "https://user:secret@ecorp.example.test",
+        ] {
+            assert!(client(server).with_mcp_access(McpAccess::ReadOnly).is_err());
+            assert!(client(server).with_mcp_access(McpAccess::ReadWrite).is_ok());
+        }
+    }
+
+    #[test]
     fn protocol_versions_fail_closed() {
         assert_eq!(
             negotiate_version(MCP_PROTOCOL_VERSION, &[MCP_PROTOCOL_VERSION]).expect("version"),
@@ -317,6 +509,106 @@ mod tests {
         let card = a2a_agent_card("https://example.test").to_string();
         assert!(!card.contains("verification_requests"));
         assert!(card.contains("\"streaming\":true"));
+    }
+
+    #[test]
+    fn readonly_mcp_catalog_exposes_only_inspection_tools() {
+        assert_eq!(mcp_tools()["tools"].as_array().unwrap().len(), 4);
+        let catalog = mcp_tools_with_access(McpAccess::ReadOnly);
+        let tools = catalog["tools"].as_array().unwrap();
+        assert_eq!(tools.len(), 2);
+        assert_eq!(tools[0]["name"], "crony_snapshot");
+        assert_eq!(tools[1]["name"], "crony_factory_recovery_context");
+        assert!(
+            tools
+                .iter()
+                .all(|tool| tool["annotations"]["readOnlyHint"] == true)
+        );
+    }
+
+    #[tokio::test]
+    async fn recovery_inspection_rejects_invalid_or_extra_arguments_before_http() {
+        let client = GatewayClient::new(
+            "invalid-unused-server".to_owned(),
+            Uuid::from_u128(1),
+            Uuid::from_u128(2),
+            None,
+        );
+        for arguments in [
+            Value::Null,
+            json!([]),
+            json!({}),
+            json!({"work_item_id": null}),
+            json!({"work_item_id": "00000000000040008000000000000001"}),
+            json!({"work_item_id": "urn:uuid:00000000-0000-4000-8000-000000000001"}),
+            json!({"work_item_id": "../other?actor_id=other"}),
+            json!({"work_item_id": "00000000-0000-4000-8000-000000000001", "mode": "source_correction"}),
+            json!({"work_item_id": "00000000-0000-4000-8000-000000000001", "actor_id": "other"}),
+        ] {
+            let error = handle_mcp_tool_with_access(
+                &client,
+                &json!({"name":"crony_factory_recovery_context", "arguments":arguments}),
+                McpAccess::ReadOnly,
+            )
+            .await
+            .unwrap_err()
+            .to_string();
+            assert!(error.starts_with("recovery inspection") || error.starts_with("work_item_id"));
+        }
+        assert_eq!(
+            recovery_work_item_id(&json!({"work_item_id":"01234567-89AB-4CDE-8FAB-0123456789AB"}))
+                .unwrap(),
+            Uuid::parse_str("01234567-89ab-4cde-8fab-0123456789ab").unwrap()
+        );
+    }
+
+    #[tokio::test]
+    async fn readonly_mcp_rejects_mutations_before_any_api_request() {
+        let client = GatewayClient::new(
+            "invalid-unused-server".to_owned(),
+            Uuid::from_u128(1),
+            Uuid::from_u128(2),
+            None,
+        );
+        for name in ["crony_create_mission", "crony_post_room_message", "unknown"] {
+            let response = handle_mcp_with_access(
+                &client,
+                JsonRpcRequest {
+                    jsonrpc: "2.0".to_owned(),
+                    id: Some(json!(1)),
+                    method: "tools/call".to_owned(),
+                    params: json!({"name": name, "arguments": {}}),
+                },
+                McpAccess::ReadOnly,
+            )
+            .await;
+            assert_eq!(response["error"]["code"], -32000);
+            assert_eq!(
+                response["error"]["message"],
+                "tool is unavailable in read-only MCP mode"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn invalid_mcp_rpc_version_cannot_reach_the_api() {
+        let client = GatewayClient::new(
+            "invalid-unused-server".to_owned(),
+            Uuid::from_u128(1),
+            Uuid::from_u128(2),
+            None,
+        );
+        let response = handle_mcp(
+            &client,
+            JsonRpcRequest {
+                jsonrpc: "1.0".to_owned(),
+                id: Some(json!(1)),
+                method: "tools/call".to_owned(),
+                params: json!({"name": "crony_create_mission", "arguments": {"title": "Denied"}}),
+            },
+        )
+        .await;
+        assert_eq!(response["error"]["code"], -32600);
     }
 
     #[test]
@@ -402,9 +694,10 @@ mod tests {
         );
         for name in ["crony_snapshot", "crony_post_room_message"] {
             for value in [Value::Null, json!(MAX_TASK_ATTEMPTS)] {
-                let error = handle_mcp_tool(
+                let error = handle_mcp_tool_with_access(
                     &client,
                     &json!({"name": name, "arguments": {"max_task_attempts": value}}),
+                    McpAccess::ReadWrite,
                 )
                 .await
                 .unwrap_err();
