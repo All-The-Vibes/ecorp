@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { git, sha256, snapshot } from './verify-inputs.mjs'
+import { findPersonalPathFiles, hasPersonalUserPath } from '../../../tools/check_evidence_personal_paths.mjs'
 
 const directory = fileURLToPath(new URL('.', import.meta.url))
 const read = path => readFileSync(`${directory}/${path}`)
@@ -60,8 +61,9 @@ for (const path of files) {
   for (const secret of knownSecrets) assert(!text.includes(secret), `credential match withheld: ${path}`)
   assert(!/\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,})\b/.test(text),
     `credential-shaped match withheld: ${path}`)
-  assert(!/C:[/\\]+Users[/\\]+sschofield/i.test(text), `unredacted personal path: ${path}`)
+  assert(!hasPersonalUserPath(text), `unredacted personal path: ${path}`)
 }
+assert.deepEqual(findPersonalPathFiles(), [], 'personal paths in either retained PR226 packet')
 assert.match(read('README.md').toString(), /not.*historical.*RED/i)
 assert.match(read('README.md').toString(), /native acceptance.*unproven/i)
 const summary = json('summary.json')

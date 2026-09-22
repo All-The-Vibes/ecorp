@@ -146,3 +146,5 @@ copies. All PNG capture bytes and evidence outside this integration directory
 remain unchanged. Original text bytes are retained in the private completion
 archive. Statements above about unchanged logs describe their initial capture,
 before this documented path normalization.
+
+Follow-up normalization on September 22, 2026 also covers the drive-relative Windows HOMEPATH value in eight environment receipts. The normalization manifest preserves original hashes and the previous published hashes. Run `node tools/check_evidence_personal_paths.mjs` from the repository root to scan this packet and pr226-local-validation, including escaped and drive-relative path forms. The historical whole-source self-review still describes its original source snapshot; it was not rerun against current main.
