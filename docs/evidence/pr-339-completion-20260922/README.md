@@ -18,6 +18,11 @@ Native Git received `core.longpaths=true` through process-only Git configuration
 
 ## Native browser acceptance
 
+The complete [reconstructed reproduction recipe](REPRODUCE.md) records prerequisites,
+source identities, supervisor arguments, exact path substitution, fixed ports,
+positive and negative outcomes, and preserving shutdown. It was added in response
+to review 5279985007; it does not claim to be a historical command transcript.
+
 The saved browser report and seven unmodified Edge screenshots exercise the real web/server/PostgreSQL/native runner path at 1440px and 390px. Alice's excluded-requester summary, disabled review controls and keyboard focus agree; Bob's eligible controls remain enabled; Eve cannot see the mission or run. Saving and launching in the browser created one isolated run. Its artifact check passed, and the persisted run completed only after the development Bob identity accepted the pending review. The source checkout stayed unchanged and the dirty worktree remained preserved. Owned processes stopped; the fixture, database, logs and worktrees remain available privately.
 
 The report's source_commit identifies the isolated deterministic task repository. tested_staged_tree identifies the reviewed product source. These checks use development identities and a deterministic adapter; they do not claim real-provider inference, production identity validation or a human review decision.
