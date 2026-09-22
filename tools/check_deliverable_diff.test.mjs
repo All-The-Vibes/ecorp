@@ -120,6 +120,24 @@ function fixture(t) {
   return { owned, repo, scratchRoot, git, write, base, options, snapshot, check, cli }
 }
 
+for (const name of ['GIT_TRACE', 'GIT_TRACE_PERFORMANCE', 'GIT_TRACE_SETUP',
+  'GIT_TRACE2', 'GIT_TRACE2_EVENT', 'GIT_TRACE2_PERF']) {
+  test(`native ${name} isolation protects source bytes and candidate tree`, (t) => {
+    const f = fixture(t)
+    f.write('tracked.txt', 'intentional change\n')
+    const before = f.snapshot()
+    const trace = path.join(f.repo, 'inherited-trace.txt')
+    // Snapshot Git calls must run outside the injected environment so only
+    // the production checker can create this nonignored source file.
+    const result = withEnv(name, trace, () => checkDeliverableDiff(f.options))
+    assert.equal(existsSync(trace), false, 'no inherited trace may write into the source')
+    assert.deepEqual(f.snapshot(), before, 'source, real index, HEAD and refs remain unchanged')
+    assert.equal(result.passed, true)
+    assert.deepEqual(result.changes, [{ status: 'M', path: 'tracked.txt' }])
+    assert.deepEqual(readdirSync(f.scratchRoot), [])
+  })
+}
+
 // Independent replay of deliverable.rs's native Git recipe. The source hash
 // below requires re-auditing this oracle when that recipe changes.
 function nativeCandidate(f, { paths = [], providerArtifacts = [], preserveHead } = {}) {

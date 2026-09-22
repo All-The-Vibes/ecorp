@@ -127,6 +127,11 @@ export function checkDeliverableDiff({
     GIT_LITERAL_PATHSPECS: '1',
     GIT_OPTIONAL_LOCKS: '0',
   }
+  // Tracing can create files during the first rev-parse and add them to the
+  // candidate on the later add -A. Remove it before every native Git child.
+  for (const key of Object.keys(env)) {
+    if (/^GIT_TRACE/i.test(key) || /^GIT_CURL_VERBOSE$/i.test(key)) delete env[key]
+  }
   function git(args, check = false) {
     const command = args[0] === '-c' ? args[2] : args[0]
     const operation = GIT_OPERATIONS.includes(command) ? command : 'unknown'

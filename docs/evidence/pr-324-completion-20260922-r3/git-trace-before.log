@@ -1,0 +1,30 @@
+✖ native GIT_TRACE isolation protects source bytes and candidate tree (2784.112ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2946.9109
+
+✖ failing tests:
+
+test at tools\check_deliverable_diff.test.mjs:125:3
+✖ native GIT_TRACE isolation protects source bytes and candidate tree (2784.112ms)
+  AssertionError [ERR_ASSERTION]: no inherited trace may write into the source
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_deliverable_diff.test.mjs:133:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
