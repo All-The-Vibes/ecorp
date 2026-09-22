@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { createHash, randomUUID } from 'node:crypto'
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -95,15 +95,26 @@ export function main(args = process.argv.slice(2)) {
   const started = new Date().toISOString()
   const report = {
     schemaVersion: 1, group: args[1], startedAt: started,
-    source: { commit: git(['rev-parse', 'HEAD']).trim(), branch: git(['branch', '--show-current']).trim(),
+    source: { files, commit: git(['rev-parse', 'HEAD']).trim(), branch: git(['branch', '--show-current']).trim(),
       dirty: status.length > 0, trackedDiffSha256: createHash('sha256').update(changes).digest('hex'), untrackedDigests },
     node: process.versions.node, checks: [], status: 'running',
+    runningCheck: null, notRun: plan.map(check => check.name), sourceChangedDuringValidation: null,
     assurance: 'Local validation only. Ignored tests are not passes. No hosted CI, browser, provider or production claim.',
   }
   const out = path.join(ROOT, 'output', 'readiness')
   mkdirSync(out, { recursive: true })
-  const reportPath = path.join(out, `${started.replaceAll(/[:.]/gu, '-')}-${args[1]}.json`)
+  const reportPath = path.join(out, `${started.replaceAll(/[:.]/gu, '-')}-${randomUUID()}-${args[1]}.json`)
+  // One attempt owns this path; replacement never exposes partially written JSON.
+  const checkpoint = () => {
+    writeFileSync(`${reportPath}.tmp`, JSON.stringify(report, null, 2) + '\n', { flag: 'wx', flush: true })
+    renameSync(`${reportPath}.tmp`, reportPath)
+  }
+  checkpoint()
+  const maxBuffer = 32 * 1024 * 1024
   for (const check of plan) {
+    report.runningCheck = check.name
+    report.notRun = plan.slice(report.checks.length + 1).map(check => check.name)
+    checkpoint()
     const begin = Date.now()
     console.log(`Running ${check.name}`)
     const [command, ...argv] = check.argv
@@ -112,40 +123,50 @@ export function main(args = process.argv.slice(2)) {
     try {
       const invocation = invocationFor(command, argv)
       result = spawnSync(invocation.program, invocation.args, {
-        cwd: ROOT, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, shell: false,
+        cwd: ROOT, encoding: 'utf8', maxBuffer, shell: false,
         env: { ...process.env, ECORP_FACTORY_WATCH: '0' },
       })
     } catch (error) {
       result = { status: null, error: { code: 'TOOL_RESOLUTION_ERROR' }, stdout: '', stderr: error.message + '\n' }
     }
     const stdout = result.stdout ?? '', stderr = result.stderr ?? ''
-    if (check.name === 'node-tests') {
-      // Hundreds of passing TAP records obscure actionable failures in agent context.
-      const failures = [...stdout.matchAll(/^\s*not ok .*$(?:\n[\s\S]*?^\s*\.\.\.)?/gmu)].map(match => match[0])
-      const summary = stdout.split('\n').filter(line => /^# (tests|pass|fail|cancelled|skipped|todo|duration_ms) /u.test(line))
-      console.log([...failures.map(value => value.slice(0, 2400)), ...summary].join('\n'))
-    } else if (check.name === 'rust-tests' && result.status === 0) {
-      console.log(stdout.split('\n').filter(line => line.startsWith('test result:')).join('\n'))
-    } else process.stdout.write(stdout)
-    process.stderr.write(stderr.slice(0, 16000))
     const counts = summarizeTests(stdout)
     const testEvidence = check.name === 'node-tests' ? counts.node?.tests > 0 :
       check.name === 'rust-tests' ? counts.rust?.summaries > 0 : true
     const passed = result.status === 0 && !result.error && testEvidence
+    if (check.name === 'node-tests' && passed) {
+      // Compact successful TAP only; failures need all captured diagnostic context.
+      const summary = stdout.split('\n').filter(line => /^# (tests|pass|fail|cancelled|skipped|todo|duration_ms) /u.test(line))
+      console.log(summary.join('\n'))
+    } else if (check.name === 'rust-tests' && passed) {
+      console.log(stdout.split('\n').filter(line => line.startsWith('test result:')).join('\n'))
+    } else process.stdout.write(stdout)
+    process.stderr.write(passed ? stderr.slice(0, 16000) : stderr)
+    if (result.error) console.error(`Check execution/capture error: ${result.error.code ?? result.error.message}; maxBuffer=${maxBuffer} bytes; output may be incomplete`)
     report.checks.push({ name: check.name, argv: check.argv, exitCode: result.status,
       passed, durationMs: Date.now() - begin, counts,
       errorCode: result.error?.code ?? (testEvidence ? null : 'NO_TEST_SUMMARY') })
-    if (!passed) { report.status = 'failed'; break }
+    report.runningCheck = null
+    report.notRun = plan.slice(report.checks.length).map(check => check.name)
+    if (!passed) report.status = 'failed'
+    checkpoint()
+    if (!passed) break
   }
-  if (report.status === 'running') report.status = 'passed'
+  try {
+    // Bind final source membership to the same inventory used to build the plan.
+    report.sourceChangedDuringValidation = JSON.stringify(git(['ls-files', '-z', '--cached', '--others', '--exclude-standard']).split('\0').filter(Boolean)) !== JSON.stringify(report.source.files) ||
+      git(['rev-parse', 'HEAD']).trim() !== report.source.commit ||
+      createHash('sha256').update(git(['diff', '--binary', 'HEAD'])).digest('hex') !== report.source.trackedDiffSha256 ||
+      JSON.stringify(git(['ls-files', '-z', '--others', '--exclude-standard']).split('\0').filter(Boolean)
+        .map(file => [file, createHash('sha256').update(readFileSync(path.join(ROOT, file))).digest('hex')])) !== JSON.stringify(untrackedDigests)
+    if (report.status === 'running') report.status = report.sourceChangedDuringValidation ? 'source_changed' : 'passed'
+  } catch (error) {
+    report.status = 'source_unknown'
+    report.sourceEvidenceError = { code: error.code ?? null, message: error.message }
+    console.error(error.message)
+  }
   report.finishedAt = new Date().toISOString()
-  report.sourceChangedDuringValidation = git(['rev-parse', 'HEAD']).trim() !== report.source.commit ||
-    createHash('sha256').update(git(['diff', '--binary', 'HEAD'])).digest('hex') !== report.source.trackedDiffSha256 ||
-    JSON.stringify(git(['ls-files', '-z', '--others', '--exclude-standard']).split('\0').filter(Boolean)
-      .map(file => [file, createHash('sha256').update(readFileSync(path.join(ROOT, file))).digest('hex')])) !== JSON.stringify(untrackedDigests)
-  if (report.sourceChangedDuringValidation && report.status === 'passed') report.status = 'source_changed'
-  report.notRun = plan.slice(report.checks.length).map(check => check.name)
-  writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' })
+  checkpoint()
   console.log(`Validation report: ${reportPath}`)
   return report.status === 'passed' ? 0 : 1
 }

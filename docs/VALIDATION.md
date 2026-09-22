@@ -41,6 +41,13 @@ Opt-in SQLx/native probes are not passes. Use only explicitly owned fixtures; ne
 The check driver emits a unique `output/readiness/*-{group}.json` receipt with command exit
 codes, durations, source HEAD, dirty state, tracked-diff digest and untracked-file digests.
 It stops after the first failing check and lists the remaining checks as not run.
+After initial source capture, an incomplete receipt is atomically saved before execution
+and checkpointed before and after each gate. `runningCheck` distinguishes an in-flight
+gate from `notRun`; completed results remain available if the process is interrupted.
+Each attempt has its own receipt. Only successful final source verification can produce
+`passed`; an evidence-read error yields `source_unknown`, a null
+`sourceChangedDuringValidation`, and `sourceEvidenceError`, retaining counts and pending gates.
+Receipt-write errors stop execution; the last published checkpoint remains incomplete.
 Missing test output is unknown, never zero failures. Ignored/skipped tests are not passes.
 Receipts exclude raw logs and environment values; inspect the terminal for a failing command.
 The receipt is local evidence, not a signed attestation or proof of hosted CI or a browser journey.
