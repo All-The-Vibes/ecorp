@@ -40,7 +40,9 @@ test('identity regression runs only in the existing Windows matrix lane before l
   const lane = job('runner-platforms')
   assert.match(lane, /os: \[ubuntu-latest, windows-latest, macos-latest\]/)
   assert.match(lane, /if: runner\.os == 'Windows'\r?\n        shell: pwsh\r?\n        run: \.\/tools\/local_stack_identity\.test\.ps1/)
-  assert.ok(lane.indexOf('./tools/local_stack_identity.test.ps1') < lane.indexOf('run: cargo test -p crony-runner'))
+  const runnerSuite = lane.match(/^      - run: cargo test --locked -p crony-runner\b.*$/m)?.[0]
+  assert.ok(runnerSuite, 'the locked native runner suite must execute')
+  assert.ok(lane.indexOf('./tools/local_stack_identity.test.ps1') < lane.indexOf(runnerSuite))
   assert.equal(workflow.match(/run: \.\/tools\/local_stack_identity\.test\.ps1/g)?.length, 1)
 })
 

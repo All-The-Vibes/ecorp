@@ -1,0 +1,16 @@
+{
+  "name": "ECorp Linux contributor tools",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/ecorp,type=bind",
+  "workspaceFolder": "/workspaces/ecorp",
+  "containerUser": "developer",
+  "remoteUser": "developer",
+  "updateRemoteUserUID": false,
+  "init": true,
+  "runArgs": ["--cap-drop=ALL", "--security-opt=no-new-privileges"],
+  "postCreateCommand": "pnpm install --frozen-lockfile && node tools/verify_toolchain.mjs",
+  "shutdownAction": "stopContainer"
+}

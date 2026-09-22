@@ -242,6 +242,48 @@ boundaries in the architecture and security guides.
 
 ## Validate before publishing
 
+### Reproduce the recommended tools
+
+The recommended whole-repository environment is Node.js 24.19.0 (`.node-version`), Rust 1.98.1
+with rustfmt and Clippy (`rust-toolchain.toml`), and pnpm 11.19.0 (`packageManager`). Repo Steward
+requires Node 24; the web/tool regression command remains compatible with Node 22.23.2.
+Use the native Node/version-manager, Rustup and pnpm setup for your host. For Rustup, install the
+declared version and components explicitly before running Cargo:
+
+```powershell
+rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+node tools/verify_toolchain.mjs
+```
+
+The version doctor reads the declarations and queries native tool versions. It never installs
+tools, downloads a package-manager version, builds code, starts services or prints credentials.
+A passing result establishes selected tool versions only. Missing components or unavailable
+registry/network access still need their own successful setup and validation evidence.
+Editor tasks in `.vscode/tasks.json` invoke the existing contributor commands; `.editorconfig`
+keeps new edits consistent with the repository's formatting conventions.
+
+`tools/start_local.ps1` remains the supported application setup/lifecycle entry point. The
+version doctor is not a second installer or runtime supervisor. Do not treat an editor task or
+toolchain pin as evidence that a stack or Dev Container was exercised.
+
+### Linux Dev Container
+
+`.devcontainer/devcontainer.json` provides Linux/amd64 contributor tools from pinned official
+Rust 1.98.1 and Node 24.19.0 images, with pnpm 11.19.0. Open an independent clone through a Dev
+Containers client on a Linux filesystem. A linked worktree can refer to Git metadata outside the
+workspace mount, so it is not a supported shortcut for this configuration. The container
+runs as the `developer` user (UID/GID 1000), so the selected workspace must be writable by that
+user. Creation runs the canonical frozen dependency install and the version doctor.
+
+The image provides build/test tools only. It starts no ECorp server, runner, database, or provider;
+it mounts no Docker socket or host credentials and requires no privileged mode. The SDK's optional
+Copilot CLI download is disabled; provider runtime provisioning and browser/server/runner acceptance
+remain separate, explicitly owned operations. Native Linux external-CLI containment limitations
+in `docs/SECURITY.md` still apply. Run the repository gates below inside the container; a successful
+development build is not production runner-isolation evidence.
+
+### Repository gates
+
 Run targeted tests for the changed behavior. For user-visible behavior, exercise the complete
 browser-to-server-to-runner path; unit tests alone are insufficient.
 
@@ -254,17 +296,66 @@ prune unrelated containers, volumes, or worktrees as cleanup.
 
 The repository gate is:
 
+<!-- ecorp:validation-commands -->
 ```powershell
 node tools/check_migrations.mjs
+pnpm check:docs
+pnpm test:unit
+pnpm test:steward
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm build:web
 pnpm lint:web
 ```
+<!-- /ecorp:validation-commands -->
 
 `pnpm check` runs the same sequence. Record exact commands, results, commit identity, and any
 unrelated failure truthfully.
+
+Use Node.js 22.23.2 or newer for `pnpm test:unit`. The native Node test runner discovers
+`apps/web/src/**/*.test.mjs` and `tools/*.test.mjs`, including newly added tests, with two
+test files running concurrently and a three-minute per-test timeout. These local regression
+fixtures do not start the complete product stack or replace the separately owned E2E lane.
+The Repository checks workflow runs the same suites on Linux and Windows and retains JUnit
+results on success or failure. Successful jobs establish hosted regression evidence; record
+local runs separately when hosted execution is unavailable.
+
+`pnpm check:docs` compares the marked validation-command blocks in contributor documentation
+with `package.json` and the current Copilot compatibility paragraphs with their Cargo/adapter
+pins. It reads those sources without executing Markdown. Update the relevant current contract
+when an intentional command or supported-version change lands. Historical evidence remains
+historical; this check does not establish semantic, API, or complete documentation coverage.
+
+Dependabot proposes weekly Cargo, pnpm/npm, and Actions updates, capped at three open version
+update PRs per configured ecosystem entry. Minor and patch changes are grouped for review.
+The Copilot SDK is excluded because its pinned CLI must be verified with it as one compatibility
+pair. Every proposed update still needs the applicable checks and human review; scheduling a
+dependency update does not authorize merging it or operating a live Factory/Repo Steward job.
+
+### Optional local hooks and secret scanning
+
+With pre-commit 4.6.2, native Gitleaks 8.30.1, and the recommended Node/Rust tools available,
+run `pre-commit run` after staging your intended changes. The local system hooks scan staged
+changes for secrets, check current documentation contracts, and check Rust formatting when
+Rust files change. They do not install dependencies or replace the full repository gates.
+
+Manual invocation does not install Git hooks. Enable automatic hooks only in an independent
+personal clone; linked worktrees normally share a hooks directory with their source repository.
+Do not install or replace hooks in the shared source checkout or alter global Git settings.
+
+The Secret scan workflow verifies the pinned native scanner download and scans the selected
+commit's complete ancestry with read-only repository access. From a non-shallow checkout, run
+that same scan locally:
+
+```powershell
+gitleaks git . --log-opts=HEAD --redact=100 --no-banner --no-color --ignore-gitleaks-allow --gitleaks-ignore-path .gitleaksignore --timeout 300
+```
+
+`.gitleaksignore` contains only reviewed historical commit/file/rule/line fingerprints with
+rationale. It does not exclude whole fixtures, environment files, or rules. Inspect each new
+finding before adding any exception; newly introduced secrets remain failures. Keep output
+redacted and never publish matched credential values in logs or artifacts.
 
 As of September 3, 2026, GitHub-hosted Actions credits are exhausted for the month. Do not treat an
 unstarted hosted job as a completion gate or remain blocked solely for that reason. Record
