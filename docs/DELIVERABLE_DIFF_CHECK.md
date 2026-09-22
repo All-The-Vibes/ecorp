@@ -60,6 +60,45 @@ Callers must require **exit 0**, not merely successful JSON parsing or presence 
 an object ID. `candidateTree` identifies what was checked; it is not a commit,
 signed artifact, accepted completion, or publication authorization.
 
+### Error receipts
+
+Exit 2 writes one JSON line to stderr, with no stdout: `error` is
+`deliverable-diff-check`, `original` describes the check failure (or is `null`
+when only cleanup failed), and `cleanup` contains each failed owned cleanup
+operation (`unlink-index`, `unlink-lock`, `rmdir`) separately, in that order.
+Cleanup failures also include `scratchDirectory`: only the internally generated
+`ecorp-diff-check-<UUID>` child name, never the caller's scratch-root path. Use it
+under the supplied root to correlate the owned attempt with retained contents.
+The receipt is bounded below 4 KiB by fixed fields, allowlists and at most three
+cleanup entries; it is not a dump of an `Error` or its recursive causes.
+
+Native diagnostics contain `operation`, `category`, and allowlisted `code`,
+integer `status`, and `signal` values; unavailable or unknown values are `null`.
+Git operations name the subcommand, including `add`, never the `-c` option.
+A small allowlist recognizes known English fatal Git diagnostics and emits only
+fixed categories: `revision-unavailable` (check the supplied base/preserved head),
+`missing-path` (check the literal selection), and `clean-filter-failed` (inspect
+the authorized Git attributes/filter). No matched text is included.
+Unrecognized/localized diagnostics retain `revision-resolution-failed` or
+`source-selection-failed` for those steps; check the local repository, revision,
+literal selections, ignore rules and attributes/filters. These are diagnostic
+hints, not authenticated claims from arbitrary filter output or new authority.
+
+Other categories distinguish `timeout`, `output-limit`, `spawn-failed`, `signal`,
+`git-exit`, `filesystem`, `invalid-input`, `invalid-output`, and `unknown-error`.
+Check the deadline/output size, local Git installation, or owned scratch
+permissions/contents as appropriate. Fixed authored validation messages remain
+available as `message`; native error messages, paths, argv, environment, and raw
+Git/provider/filter output are never copied into an error receipt. The `details`
+field explicitly says `Untrusted error details suppressed`. This is suppression,
+not universal regex redaction: unknown child stderr is suppressed, not sanitized
+or fully preserved. Inspect retained scratch contents only through an
+authorized local diagnostic path; cleanup errors never permit recursive removal.
+
+The library still retains the underlying `cause` and aggregate member errors in
+memory. Successful/whitespace-result JSON, including source paths and Git patch
+diagnostics, is unchanged; the secret-safe error contract applies to exit 2.
+
 ## Selection parity, not another exporter
 
 The helper mirrors `crates/crony-runner/src/deliverable.rs`:
@@ -112,6 +151,15 @@ source with the CLI; compares complete candidate-tree IDs with an independent
 replay of the native export recipe; covers ignored/provider paths, literal
 selection, staging conflicts, CRLF, Windows preserved-head behavior and errors;
 and checks source-file and real-index hashes plus unchanged HEAD/refs.
+CLI failure regressions distinguish real missing revisions/selections from an
+owned Node clean filter rejected by native Git (including both `add`/128 cases).
+They also exercise native
+timeout/output-limit/spawn errors through a narrowly replaced child call, and
+separate original/cleanup failures. Synthetic sensitive markers, control
+characters and oversized unknown text must not reach error receipts.
+Set `ECORP_DIFF_TEST_ROOT` to an explicitly owned external evidence directory to
+retain all fixtures, CLI output and before/after preservation snapshots instead
+of removing fixtures after the run.
 A source-recipe hash intentionally fails when the native selection implementation
 changes, requiring an explicit parity review rather than an unnoticed stale copy.
 This is selection/command evidence, not a live runner or browser acceptance claim.

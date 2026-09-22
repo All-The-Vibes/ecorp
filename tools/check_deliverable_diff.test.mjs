@@ -8,7 +8,7 @@ import {
 import { syncBuiltinESMExports } from 'node:module'
 import path from 'node:path'
 import test from 'node:test'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { checkDeliverableDiff } from './check_deliverable_diff.mjs'
 
 const checkout = fileURLToPath(new URL('../', import.meta.url))
@@ -29,14 +29,14 @@ function withEnv(name, value, action) {
 }
 
 function fixture(t) {
-  const output = path.join(checkout, 'output')
+  const output = process.env.ECORP_DIFF_TEST_ROOT || path.join(checkout, 'output')
   mkdirSync(output, { recursive: true })
   const owned = mkdtempSync(path.join(output, 'issue81-diff-'))
   const repo = path.join(owned, 'source with spaces & [literal]')
   const scratchRoot = path.join(owned, 'owned scratch')
   mkdirSync(repo)
   mkdirSync(scratchRoot)
-  t.after(() => rmSync(owned, { recursive: true, force: false }))
+  if (!process.env.ECORP_DIFF_TEST_ROOT) t.after(() => rmSync(owned, { recursive: true, force: false }))
   const git = (args, options = {}) => execFileSync('git', args, {
     cwd: repo, encoding: 'utf8', windowsHide: true, timeout: 10_000,
     stdio: ['ignore', 'pipe', 'pipe'], ...options,
@@ -88,14 +88,27 @@ function fixture(t) {
       assert.deepEqual(readdirSync(scratchRoot), [], 'only the owned disposable index was removed')
     }
   }
-  function cli(args = []) {
+  let invocation = 0
+  function cli(args = [], { inject, cleanup = true } = {}) {
     const before = snapshot()
+    const log = path.join(owned, `cli-${++invocation}`)
+    const nodeArgs = []
+    if (inject) {
+      const preload = `${log}.mjs`
+      writeFileSync(preload, inject)
+      nodeArgs.push('--import', pathToFileURL(preload).href)
+    }
     const result = spawnSync(process.execPath, [
-      command, '--repo', repo, '--base', base, '--scratch-root', scratchRoot, ...args,
+      ...nodeArgs, command, '--repo', repo, '--base', base, '--scratch-root', scratchRoot, ...args,
     ], { encoding: 'utf8', timeout: 15_000, windowsHide: true })
+    if (process.env.ECORP_DIFF_TEST_ROOT) {
+      writeFileSync(`${log}.stdout`, result.stdout ?? '')
+      writeFileSync(`${log}.stderr`, result.stderr ?? '')
+      writeFileSync(`${log}.json`, JSON.stringify({ args, status: result.status, before, after: snapshot() }, null, 2))
+    }
     assert.equal(result.error, undefined)
     assert.deepEqual(snapshot(), before)
-    assert.deepEqual(readdirSync(scratchRoot), [])
+    if (cleanup) assert.deepEqual(readdirSync(scratchRoot), [])
     return result
   }
   return { owned, repo, scratchRoot, git, write, base, options, snapshot, check, cli }
@@ -405,7 +418,7 @@ test('whole-check timeout is a command error, never whitespace success', (t) => 
   const f = fixture(t)
   const result = f.cli(['--timeout-ms', '1'])
   assert.equal(result.status, 2)
-  assert.match(result.stderr, /timed out/)
+  assert.equal(JSON.parse(result.stderr).original.category, 'timeout')
   assert.equal(result.stdout, '')
 })
 
@@ -482,4 +495,170 @@ test('CLI rejects unknown, missing and unbounded arguments with exit 2', (t) => 
   assert.throws(() => checkDeliverableDiff({ ...f.options, scratchRoot: undefined }), /scratch root/)
   assert.throws(() => checkDeliverableDiff({ ...f.options, paths: Array(257).fill('tracked.txt') }), /256/)
   assert.equal(statSync(f.repo).isDirectory(), true)
+})
+
+const sensitive = 'F01_SECRET_canary'
+function failureReport(result, f) {
+  assert.equal(result.status, 2)
+  assert.equal(result.stdout, '')
+  assert.ok(Buffer.byteLength(result.stderr) <= 4096, 'failure receipt fits native verifier output')
+  assert.doesNotMatch(result.stderr.trimEnd(), /[\p{Cc}\p{Cf}]/u)
+  for (const hidden of [sensitive, f.repo, f.scratchRoot, f.owned]) {
+    assert.ok(!result.stderr.includes(hidden)
+      && !result.stderr.includes(JSON.stringify(hidden).slice(1, -1)), 'no raw or JSON-escaped paths/secrets')
+  }
+  const report = JSON.parse(result.stderr)
+  for (const detail of [report.original, ...report.cleanup]) {
+    for (const value of Object.values(detail ?? {})) {
+      if (typeof value === 'string') assert.doesNotMatch(value, /[\p{Cc}\p{Cf}]/u)
+    }
+  }
+  assert.equal(report.error, 'deliverable-diff-check')
+  assert.equal(report.details, 'Untrusted error details suppressed')
+  assert.ok(Array.isArray(report.cleanup))
+  return report
+}
+
+// Replace only the selected child call, in the actual CLI process. All other
+// Git operations still use the owned real repository and disposable index.
+function injectGit(body, operation = '--check') {
+  return `
+    import assert from 'node:assert/strict'
+    import cp from 'node:child_process'
+    import fs from 'node:fs'
+    import path from 'node:path'
+    import { syncBuiltinESMExports } from 'node:module'
+    const original = cp.execFileSync
+    cp.execFileSync = (program, args, options) => {
+      assert.equal(program, 'git')
+      assert.equal(options.shell, undefined)
+      assert.equal(options.maxBuffer, 8 * 1024 * 1024)
+      assert.ok(options.timeout > 0 && options.timeout <= 30000)
+      if (args.includes(${JSON.stringify(operation)})) { ${body} }
+      return original(program, args, options)
+    }
+    syncBuiltinESMExports()
+  `
+}
+
+for (const [name, args, operation, category, status] of [
+  ['unavailable revision', ['--base', `${sensitive}-missing`], 'rev-parse', 'revision-unavailable', 128],
+  ['missing literal selection', ['--path', `${sensitive}[missing].txt`], 'add', 'missing-path', 128],
+  ['ignored literal selection', ['--path', 'ignored/evidence.md'], 'add', 'source-selection-failed', 1],
+]) {
+  test(`F01 CLI reports ${name} without exposing arguments`, (t) => {
+    const f = fixture(t)
+    f.write('ignored/evidence.md', 'ignored\n')
+    const report = failureReport(f.cli(args), f)
+    assert.deepEqual(report.original, { operation, category, status, code: null, signal: null })
+    assert.deepEqual(report.cleanup, [])
+  })
+}
+
+for (const [name, body, expected] of [
+  ['native timeout', `return original(process.execPath, ['-e', 'while (true) {}'], { ...options, timeout: 20 })`,
+    { category: 'timeout', code: 'ETIMEDOUT' }],
+  ['native output overflow', `return original(process.execPath, ['-e', 'process.stdout.write("x".repeat(9 * 1024 * 1024))'], options)`,
+    { category: 'output-limit', code: 'ENOBUFS' }],
+  ['native spawn failure', `return original(path.join(path.dirname(options.env.GIT_INDEX_FILE), 'absent-git'), [], options)`,
+    { category: 'spawn-failed', code: 'ENOENT', status: null, signal: null }],
+  ['signal', `throw Object.assign(new Error('${sensitive}'), { status: null, signal: 'SIGTERM' })`,
+    { category: 'signal', code: null, status: null, signal: 'SIGTERM' }],
+  ['unrecognized filter failure', `throw Object.assign(new Error('${sensitive}'), { status: 128, stderr: Buffer.from('${sensitive}\\n\\x1b[31mfilter output') })`,
+    { category: 'source-selection-failed', code: null, status: 128, signal: null }],
+  ['unknown child fields', `throw Object.assign(new Error('${sensitive}'.repeat(2000)), {
+      code: '${sensitive}\\n\\x1b[31m', signal: '${sensitive}\\u202e', status: '${sensitive}',
+      stderr: Buffer.from('${sensitive}'.repeat(2000)), stdout: Buffer.from('${sensitive}'),
+      path: options.cwd, spawnargs: ['https://user:${sensitive}@example.invalid'], env: options.env
+    })`,
+    { category: 'unknown-error', code: null, status: null, signal: null }],
+  ['timeout with whitespace-like output', `throw Object.assign(new Error('${sensitive}'), {
+      code: 'ETIMEDOUT', status: 2, stdout: Buffer.from('${sensitive}')
+    })`, { category: 'timeout', code: 'ETIMEDOUT', status: 2, signal: null }],
+  ['overflow with whitespace-like output', `throw Object.assign(new Error('${sensitive}'), {
+      code: 'ENOBUFS', status: 2, stdout: Buffer.from('${sensitive}')
+    })`, { category: 'output-limit', code: 'ENOBUFS', status: 2, signal: null }],
+]) {
+  test(`F01 CLI retains safe ${name} classification`, (t) => {
+    const f = fixture(t)
+    const operation = name === 'unrecognized filter failure' ? 'add' : 'diff'
+    const report = failureReport(f.cli([], { inject: injectGit(body, operation === 'add' ? 'add' : '--check') }), f)
+    assert.equal(report.original.operation, operation)
+    for (const [key, value] of Object.entries(expected)) assert.equal(report.original[key], value, key)
+    assert.deepEqual(report.cleanup, [])
+  })
+}
+
+for (const originalFailure of [true, false]) {
+  test(`F01 CLI separates cleanup failure ${originalFailure ? 'from original failure' : 'after successful check'}`, (t) => {
+    const f = fixture(t)
+    const inject = injectGit(`
+      fs.writeFileSync(path.join(path.dirname(options.env.GIT_INDEX_FILE), 'unexpected.txt'), '${sensitive}')
+      ${originalFailure ? `throw Object.assign(new Error('${sensitive}'), { status: 128 })` : ''}
+    `, 'read-tree')
+    const report = failureReport(f.cli([], { inject, cleanup: false }), f)
+    if (originalFailure) {
+      assert.deepEqual(report.original, { operation: 'read-tree', category: 'git-exit', code: null, status: 128, signal: null })
+    } else assert.equal(report.original, null)
+    assert.deepEqual(report.cleanup, [
+      { operation: 'rmdir', category: 'filesystem', code: 'ENOTEMPTY', status: null, signal: null },
+    ])
+    const [directory] = readdirSync(f.scratchRoot)
+    assert.match(directory, /^ecorp-diff-check-/)
+    assert.equal(readFileSync(path.join(f.scratchRoot, directory, 'unexpected.txt'), 'utf8'), sensitive)
+    assert.equal(existsSync(path.join(f.scratchRoot, directory, 'index')), false)
+    assert.equal(existsSync(path.join(f.scratchRoot, directory, 'index.lock')), false)
+  })
+}
+
+test('F01 CLI suppresses unsafe parser/filesystem text and retains safe input guidance', (t) => {
+  const f = fixture(t)
+  for (const args of [[`--${sensitive}\n\u001b[31m`], ['--repo', path.join(f.owned, sensitive)]]) {
+    const report = failureReport(f.cli(args), f)
+    assert.ok(['invalid-input', 'filesystem'].includes(report.original.category))
+  }
+  const report = failureReport(f.cli(['--timeout-ms', '0']), f)
+  assert.equal(report.original.category, 'invalid-input')
+  assert.match(report.original.message, /Timeout must be an integer/)
+})
+
+test('F01 CLI correlates retained owned directories without revealing their sensitive root', (t) => {
+  const f = fixture(t)
+  const root = path.join(f.owned, sensitive)
+  mkdirSync(root)
+  const names = []
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const report = failureReport(f.cli(['--scratch-root', root], {
+      cleanup: false,
+      inject: injectGit(`
+        fs.writeFileSync(path.join(path.dirname(options.env.GIT_INDEX_FILE), 'unexpected.txt'), '${sensitive}')
+        throw Object.assign(new Error('${sensitive}'), { status: 128 })
+      `, 'read-tree'),
+    }), f)
+    assert.match(report.scratchDirectory, /^ecorp-diff-check-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+    assert.equal(readFileSync(path.join(root, report.scratchDirectory, 'unexpected.txt'), 'utf8'), sensitive)
+    assert.equal(existsSync(path.join(root, report.scratchDirectory, 'index')), false)
+    names.push(report.scratchDirectory)
+  }
+  assert.equal(new Set(names).size, 2)
+  assert.deepEqual(readdirSync(root).sort(), names.sort())
+})
+
+test('F01 CLI recognizes a native required clean-filter failure, not a missing path', (t) => {
+  const f = fixture(t)
+  const filter = path.join(f.owned, 'required filter.mjs')
+  // Git's native filter launches only this owned Node fixture, never a provider.
+  writeFileSync(filter, `process.stderr.write(${JSON.stringify(`${sensitive}\n\u001b[31m`)})
+process.exitCode = 1
+`)
+  f.git(['config', 'filter.f01.clean', [process.execPath, filter]
+    .map((file) => `"${file.replaceAll('\\', '/')}"`).join(' ')])
+  f.git(['config', 'filter.f01.required', 'true'])
+  f.write('.gitattributes', 'filtered.txt filter=f01\n')
+  f.write('filtered.txt', 'source for the owned failing filter\n')
+  const report = failureReport(f.cli(['--path', 'filtered.txt']), f)
+  assert.deepEqual(report.original, {
+    operation: 'add', category: 'clean-filter-failed', code: null, status: 128, signal: null,
+  })
+  assert.deepEqual(report.cleanup, [])
 })

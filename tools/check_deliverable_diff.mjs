@@ -9,12 +9,47 @@ import { parseArgs } from 'node:util'
 const MAX_OUTPUT = 8 * 1024 * 1024
 const MAX_PATHS = 256
 const utf8 = new TextDecoder('utf-8', { fatal: true })
+const GIT_OPERATIONS = ['rev-parse', 'read-tree', 'reset', 'add', 'diff', 'write-tree']
+const failureReports = new WeakMap()
+
+// Only fixed diagnostics and allowlisted native metadata cross the CLI boundary.
+// Child messages/stderr, argv and filesystem paths are not safely redactable.
+function nativeDiagnostic(error, operation = 'check') {
+  const code = [
+    'ETIMEDOUT', 'ENOBUFS', 'ENOENT', 'EACCES', 'EPERM', 'ENOEXEC', 'EAGAIN',
+    'EMFILE', 'ENFILE', 'ENOMEM', 'ENOTDIR', 'EIO', 'ENOSPC', 'ENOTEMPTY', 'EBUSY', 'EROFS',
+    'ERR_ENCODING_INVALID_ENCODED_DATA', 'ERR_PARSE_ARGS_UNKNOWN_OPTION',
+    'ERR_PARSE_ARGS_INVALID_OPTION_VALUE', 'ERR_PARSE_ARGS_UNEXPECTED_POSITIONAL',
+  ].includes(error?.code) ? error.code : null
+  const signal = ['SIGTERM', 'SIGKILL', 'SIGINT', 'SIGABRT', 'SIGSEGV', 'SIGHUP', 'SIGQUIT', 'SIGPIPE']
+    .includes(error?.signal) ? error.signal : null
+  const status = Number.isInteger(error?.status) && error.status >= -2147483648
+    && error.status <= 4294967295 ? error.status : null
+  const category = code === 'ETIMEDOUT' ? 'timeout'
+    : code === 'ENOBUFS' ? 'output-limit'
+      : code === 'ERR_ENCODING_INVALID_ENCODED_DATA' ? 'invalid-output'
+        : code?.startsWith('ERR_PARSE_ARGS_') ? 'invalid-input'
+          : code ? (GIT_OPERATIONS.includes(operation) ? 'spawn-failed' : 'filesystem')
+            : signal ? 'signal' : status !== null ? 'git-exit' : 'unknown-error'
+  return { operation, category, code, status, signal }
+}
+
+function failureReport(error) {
+  return failureReports.get(error) ?? { original: nativeDiagnostic(error), cleanup: [] }
+}
+
+// Call only with authored text, never input values or native error messages.
+function checkError(message, category = 'invalid-input') {
+  const error = new Error(message)
+  failureReports.set(error, { original: { operation: 'check', category, message }, cleanup: [] })
+  return error
+}
 
 function relativeSourcePath(value) {
   if (typeof value !== 'string' || !value || Buffer.byteLength(value) > 500
     || /^\p{White_Space}|\p{White_Space}$/u.test(value) || /[\\:\p{Cc}]/u.test(value)
     || value.split('/').some((part) => !part || part === '.' || part === '..')) {
-    throw new Error('Source paths must be portable, literal repository-relative paths')
+    throw checkError('Source paths must be portable, literal repository-relative paths')
   }
   return value
 }
@@ -28,11 +63,11 @@ function containedRelative(root, candidate) {
 function changesFromGit(text) {
   const fields = text.split('\0')
   if (fields.pop() !== '' || fields.length % 2 !== 0) {
-    throw new Error('Malformed Git name-status output')
+    throw checkError('Malformed Git name-status output', 'invalid-output')
   }
   const changes = []
   for (let i = 0; i < fields.length; i += 2) {
-    if (!/^[ADMT]$/.test(fields[i])) throw new Error('Unexpected Git change status')
+    if (!/^[ADMT]$/.test(fields[i])) throw checkError('Unexpected Git change status', 'invalid-output')
     changes.push({ status: fields[i], path: relativeSourcePath(fields[i + 1]) })
   }
   return changes.sort((a, b) => Buffer.compare(Buffer.from(a.path), Buffer.from(b.path)))
@@ -53,35 +88,36 @@ export function checkDeliverableDiff({
   timeoutMs = 30_000,
 } = {}) {
   if (typeof base !== 'string' || !base || base.includes('\0')) {
-    throw new Error('An explicit export base is required')
+    throw checkError('An explicit export base is required')
   }
-  if (!scratchRoot) throw new Error('An existing scratch root outside the worktree is required')
+  if (!scratchRoot) throw checkError('An existing scratch root outside the worktree is required')
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 120_000) {
-    throw new Error('Timeout must be an integer from 1 to 120000 milliseconds')
+    throw checkError('Timeout must be an integer from 1 to 120000 milliseconds')
   }
   if (!Array.isArray(paths) || !Array.isArray(providerArtifacts)
     || paths.length > MAX_PATHS || providerArtifacts.length > MAX_PATHS) {
-    throw new Error('At most 256 source paths and 256 provider artifacts are supported')
+    throw checkError('At most 256 source paths and 256 provider artifacts are supported')
   }
   paths.forEach(relativeSourcePath)
   if (providerArtifacts.some((value) => typeof value !== 'string' || !value || value.includes('\0'))) {
-    throw new Error('Provider artifact paths must be nonempty filesystem paths')
+    throw checkError('Provider artifact paths must be nonempty filesystem paths')
   }
   if (preserveHead !== undefined
     && (typeof preserveHead !== 'string' || !preserveHead || preserveHead.includes('\0'))) {
-    throw new Error('Preserved head must be a commit revision')
+    throw checkError('Preserved head must be a commit revision')
   }
   // Never let inherited Git routing redirect the check to a different checkout.
   for (const key of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_OBJECT_DIRECTORY',
     'GIT_ALTERNATE_OBJECT_DIRECTORIES', 'GIT_NAMESPACE']) {
-    if (process.env[key]) throw new Error(`Unset ${key} before checking a deliverable`)
+    if (process.env[key]) throw checkError(`Unset ${key} before checking a deliverable`)
   }
   const root = realpathSync(repository)
   const scratch = realpathSync(scratchRoot)
   if (scratch === root || containedRelative(root, scratch)) {
-    throw new Error('Scratch root must be outside the source worktree')
+    throw checkError('Scratch root must be outside the source worktree')
   }
-  const directory = path.join(scratch, `ecorp-diff-check-${randomUUID()}`)
+  const scratchDirectory = `ecorp-diff-check-${randomUUID()}`
+  const directory = path.join(scratch, scratchDirectory)
   mkdirSync(directory, { mode: 0o700 })
   const index = path.join(directory, 'index')
   const deadline = performance.now() + timeoutMs
@@ -92,8 +128,10 @@ export function checkDeliverableDiff({
     GIT_OPTIONAL_LOCKS: '0',
   }
   function git(args, check = false) {
+    const command = args[0] === '-c' ? args[2] : args[0]
+    const operation = GIT_OPERATIONS.includes(command) ? command : 'unknown'
     const remaining = Math.ceil(deadline - performance.now())
-    if (remaining <= 0) throw new Error('Deliverable diff check timed out')
+    if (remaining <= 0) throw checkError('Deliverable diff check timed out', 'timeout')
     try {
       return {
         status: 0,
@@ -108,22 +146,39 @@ export function checkDeliverableDiff({
       if (check && error.status === 2 && !error.signal && !error.code && error.stdout?.length) {
         return { status: 2, stdout: utf8.decode(error.stdout) }
       }
-      const reason = error.code === 'ETIMEDOUT' ? 'timed out'
-        : error.code === 'ENOBUFS' ? 'exceeded the output limit'
-          : error.code === 'ENOENT' ? 'could not start Git'
-            : `failed (${error.signal ?? error.status ?? error.code ?? 'unknown'})`
-      throw new Error(`Deliverable Git ${args[0]} ${reason}`, { cause: error })
+      const diagnostic = nativeDiagnostic(error, operation)
+      if (diagnostic.category === 'git-exit') {
+        if (operation === 'rev-parse' && args.includes('--verify')) diagnostic.category = 'revision-resolution-failed'
+        if (operation === 'add') diagnostic.category = 'source-selection-failed'
+        // Recognize only known fatal diagnostic shapes and emit fixed categories,
+        // never matched text. Unknown/localized stderr keeps the step-level category.
+        const stderr = Buffer.isBuffer(error.stderr) && error.stderr.length <= MAX_OUTPUT
+          ? error.stderr.toString('utf8') : ''
+        const known = [
+          ['rev-parse', /^fatal: Needed a single revision\r?\n?$/, 'revision-unavailable'],
+          ['add', /(?:^|\n)fatal: pathspec '[^\r\n]*' did not match any files\r?\n?$/, 'missing-path'],
+          ['add', /(?:^|\n)fatal: [^\r\n]+: clean filter '[^\r\n]+' failed\r?\n?$/, 'clean-filter-failed'],
+        ].find(([command, pattern]) => operation === command && pattern.test(stderr))
+        if (known) diagnostic.category = known[2]
+      }
+      const reason = diagnostic.code === 'ETIMEDOUT' ? 'timed out'
+        : diagnostic.code === 'ENOBUFS' ? 'exceeded the output limit'
+          : diagnostic.code === 'ENOENT' ? 'could not start Git'
+            : `failed (${diagnostic.signal ?? diagnostic.status ?? diagnostic.code ?? 'unknown'})`
+      const failure = new Error(`Deliverable Git ${operation} ${reason}`, { cause: error })
+      failureReports.set(failure, { original: diagnostic, cleanup: [] })
+      throw failure
     }
   }
   let result
   let failure
   try {
     if (realpathSync(git(['rev-parse', '--show-toplevel']).stdout.trim()) !== root) {
-      throw new Error('Repository must be the worktree root, not a subdirectory')
+      throw checkError('Repository must be the worktree root, not a subdirectory')
     }
     function commit(revision) {
       const oid = git(['rev-parse', '--verify', '--end-of-options', `${revision}^{commit}`]).stdout.trim()
-      if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(oid)) throw new Error('Invalid Git commit identity')
+      if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(oid)) throw checkError('Invalid Git commit identity', 'invalid-output')
       return oid
     }
     const baseCommit = commit(base)
@@ -148,7 +203,7 @@ export function checkDeliverableDiff({
         if (error.code === 'ENOENT' || error.code === 'ENOTDIR') continue
         throw error
       }
-      if (canonical === root) throw new Error('Provider artifact cannot be the worktree root')
+      if (canonical === root) throw checkError('Provider artifact cannot be the worktree root')
       const relative = containedRelative(root, canonical)
       if (!relative) continue
       const portable = relativeSourcePath(relative.split(path.sep).join('/'))
@@ -157,7 +212,7 @@ export function checkDeliverableDiff({
     const selectedChanges = changes()
     const candidateTree = git(['write-tree']).stdout.trim()
     if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(candidateTree)) {
-      throw new Error('Invalid Git candidate-tree identity')
+      throw checkError('Invalid Git candidate-tree identity', 'invalid-output')
     }
     const checked = git([
       'diff', '--cached', '--check', '--no-color', '--no-ext-diff', '--no-textconv', baseCommit, '--',
@@ -170,11 +225,15 @@ export function checkDeliverableDiff({
     failure = error
   }
   const cleanupErrors = []
-  for (const file of [index, `${index}.lock`]) {
+  const cleanup = []
+  for (const [file, operation] of [[index, 'unlink-index'], [`${index}.lock`, 'unlink-lock']]) {
     try {
       unlinkSync(file)
     } catch (error) {
-      if (error.code !== 'ENOENT') cleanupErrors.push(error)
+      if (error.code !== 'ENOENT') {
+        cleanupErrors.push(error)
+        cleanup.push(nativeDiagnostic(error, operation))
+      }
     }
   }
   try {
@@ -182,12 +241,15 @@ export function checkDeliverableDiff({
     rmdirSync(directory)
   } catch (error) {
     cleanupErrors.push(error)
+    cleanup.push(nativeDiagnostic(error, 'rmdir'))
   }
   if (cleanupErrors.length) {
-    throw new AggregateError(
+    const error = new AggregateError(
       [...(failure ? [failure] : []), ...cleanupErrors],
       `Deliverable diff cleanup failed; inspect owned directory ${directory}`,
     )
+    failureReports.set(error, { original: failure ? failureReport(failure).original : null, cleanup, scratchDirectory })
+    throw error
   }
   if (failure) throw failure
   return result
@@ -224,7 +286,10 @@ export function main(args = process.argv.slice(2)) {
     console.log(JSON.stringify(result, null, 2))
     return result.passed ? 0 : 1
   } catch (error) {
-    console.error(`Deliverable diff check error: ${error.message}`)
+    console.error(JSON.stringify({
+      error: 'deliverable-diff-check', ...failureReport(error),
+      details: 'Untrusted error details suppressed',
+    }))
     return 2
   }
 }
