@@ -9480,22 +9480,39 @@ impl PgStore {
         let row = sqlx::query(
             r#"
             SELECT command.status AS command_status, run.status AS run_status,
-                   run.breaker_stage
+                   run.breaker_stage,
+                   COALESCE(command.command_kind='approval_decision'
+                     AND command.payload->'approved'='false'::jsonb
+                     AND EXISTS(SELECT 1 FROM action_approvals approval
+                       WHERE approval.id::text=command.payload->>'approval_id'
+                         AND approval.corp_id=command.corp_id
+                         AND approval.run_id=command.run_id
+                         AND approval.status IN ('rejected','expired')),false) AS negative_cleanup
             FROM runner_commands command
             LEFT JOIN runs run
               ON run.id = command.run_id AND run.corp_id = command.corp_id
              AND run.runner_id = command.runner_id
             WHERE command.id = $1 AND command.corp_id = $2
               AND command.run_id = $3 AND command.runner_id = $4
+              AND command.command_kind = $5 AND command.payload = $6
             "#,
         )
         .bind(command.id)
         .bind(command.corp_id)
         .bind(command.run_id)
         .bind(&command.runner_id)
+        .bind(&command.command_kind)
+        .bind(&command.payload)
         .fetch_optional(&self.pool)
         .await?;
         Ok(match row {
+            Some(row)
+                if row.get::<String, _>("command_status") == "pending"
+                    && row.get::<Option<String>, _>("run_status").is_some()
+                    && row.get::<bool, _>("negative_cleanup") =>
+            {
+                RunnerCommandDispatchState::Pending
+            }
             Some(row)
                 if row.get::<String, _>("command_status") == "pending"
                     && matches!(

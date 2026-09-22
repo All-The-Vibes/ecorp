@@ -749,6 +749,221 @@ async fn issue56_progress_enqueue_binds_durable_identity_and_lifecycle(pool: PgP
 
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_expired_approval_cleanup_reaches_terminal_fenced_runner(pool: PgPool) {
+    let store = fixture(pool).await;
+    let approval = pending_approval(&store, 1).await;
+    sqlx::query("UPDATE action_approvals SET expires_at=now()-interval '1 second' WHERE id=$1")
+        .bind(approval)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        store
+            .expire_action_approval(approval)
+            .await
+            .unwrap()
+            .unwrap()
+            .status,
+        "expired"
+    );
+    let status: String = sqlx::query_scalar("SELECT status FROM runs WHERE id=$1")
+        .bind(run_id(1))
+        .fetch_one(&store.pool)
+        .await
+        .unwrap();
+    assert_eq!(status, "cancelled");
+    sqlx::query("UPDATE runs SET breaker_stage='stop' WHERE id=$1")
+        .bind(run_id(1))
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    let commands = store
+        .pending_runner_commands("issue56-runner-1")
+        .await
+        .unwrap();
+    assert_eq!(commands.len(), 1);
+    let command = &commands[0];
+    assert_eq!(command.payload["approved"], false);
+    assert_eq!(
+        store.runner_command_dispatch_state(command).await.unwrap(),
+        RunnerCommandDispatchState::Pending
+    );
+    assert_eq!(
+        store
+            .with_progress_command_dispatch(command, || false)
+            .await
+            .unwrap(),
+        RunnerCommandDispatchOutcome::Disconnected
+    );
+    assert_eq!(
+        store
+            .with_progress_command_dispatch(command, || true)
+            .await
+            .unwrap(),
+        RunnerCommandDispatchOutcome::Sent
+    );
+    // Enqueue must not manufacture a provider acknowledgement or revive the run.
+    let durable: (String, String) = sqlx::query_as(
+        "SELECT command.status,run.status FROM runner_commands command
+         JOIN runs run ON run.id=command.run_id WHERE command.id=$1",
+    )
+    .bind(command.id)
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    assert_eq!(durable, ("pending".into(), "cancelled".into()));
+    store
+        .acknowledge_runner_command(command.id, &command.runner_id)
+        .await
+        .unwrap();
+    assert_eq!(
+        store
+            .with_progress_command_dispatch(command, || panic!("already acknowledged"))
+            .await
+            .unwrap(),
+        RunnerCommandDispatchOutcome::Settled
+    );
+    assert!(
+        store
+            .expire_action_approval(approval)
+            .await
+            .unwrap()
+            .is_none()
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_rejection_cleanup_requires_durable_negative_approval_scope(pool: PgPool) {
+    let store = fixture(pool).await;
+    let unrelated = pending_approval(&store, 0).await;
+    let approval = pending_approval(&store, 1).await;
+    store
+        .decide_action_approval(CORP, approval, OWNER, false, "deny", Uuid::new_v4())
+        .await
+        .unwrap();
+    let commands = store
+        .pending_runner_commands("issue56-runner-1")
+        .await
+        .unwrap();
+    assert_eq!(commands.len(), 1);
+    let command = &commands[0];
+    // Persist usage without evaluation: a denial may still release the suspended
+    // provider when progress would already be blocked by aggregate accounting.
+    sqlx::query("UPDATE runs SET input_tokens=100 WHERE id=$1")
+        .bind(run_id(0))
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    assert_eq!(
+        store
+            .with_progress_command_dispatch(command, || true)
+            .await
+            .unwrap(),
+        RunnerCommandDispatchOutcome::Sent
+    );
+    sqlx::query("UPDATE runs SET breaker_stage='suspend' WHERE id=$1")
+        .bind(run_id(1))
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    for field in ["id", "corp", "run", "runner", "kind", "payload"] {
+        let mut changed = command.clone();
+        match field {
+            "id" => changed.id = Uuid::new_v4(),
+            "corp" => changed.corp_id = Uuid::new_v4(),
+            "run" => changed.run_id = run_id(0),
+            "runner" => changed.runner_id = "issue56-runner-0".into(),
+            "kind" => changed.command_kind = "control_message".into(),
+            "payload" => changed.payload["approved"] = json!(true),
+            _ => unreachable!(),
+        }
+        assert_eq!(
+            store.runner_command_dispatch_state(&changed).await.unwrap(),
+            RunnerCommandDispatchState::Settled
+        );
+        assert_eq!(
+            store
+                .with_progress_command_dispatch(&changed, || panic!("mismatched {field}"))
+                .await
+                .unwrap(),
+            RunnerCommandDispatchOutcome::Settled
+        );
+    }
+    // Even a durable false payload is insufficient when its approval is missing,
+    // belongs to a different run, or does not have a final negative decision.
+    for payload in [
+        json!({"approval_id":Uuid::new_v4(),"approved":false}),
+        json!({"approval_id":unrelated,"approved":false}),
+        json!({"approval_id":approval,"approved":true}),
+        json!({"approval_id":approval,"approved":"false"}),
+        json!({"approval_id":approval}),
+    ] {
+        sqlx::query("UPDATE runner_commands SET payload=$1 WHERE id=$2")
+            .bind(&payload)
+            .bind(command.id)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        let changed = PendingRunnerCommand {
+            payload,
+            ..command.clone()
+        };
+        assert_eq!(
+            store.runner_command_dispatch_state(&changed).await.unwrap(),
+            RunnerCommandDispatchState::Obsolete
+        );
+        assert_eq!(
+            store
+                .with_progress_command_dispatch(&changed, || panic!("unproven negative decision"))
+                .await
+                .unwrap(),
+            RunnerCommandDispatchOutcome::Obsolete
+        );
+    }
+    sqlx::query("UPDATE runner_commands SET payload=$1 WHERE id=$2")
+        .bind(&command.payload)
+        .bind(command.id)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    for status in ["pending", "approved", "rejected"] {
+        sqlx::query("UPDATE action_approvals SET status=$1 WHERE id=$2")
+            .bind(status)
+            .bind(approval)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        if status == "rejected" {
+            assert_eq!(
+                store.runner_command_dispatch_state(command).await.unwrap(),
+                RunnerCommandDispatchState::Pending
+            );
+            assert_eq!(
+                store
+                    .with_progress_command_dispatch(command, || true)
+                    .await
+                    .unwrap(),
+                RunnerCommandDispatchOutcome::Sent
+            );
+        } else {
+            assert_eq!(
+                store.runner_command_dispatch_state(command).await.unwrap(),
+                RunnerCommandDispatchState::Obsolete
+            );
+            assert_eq!(
+                store
+                    .with_progress_command_dispatch(command, || panic!("approval is not rejected"))
+                    .await
+                    .unwrap(),
+                RunnerCommandDispatchOutcome::Obsolete
+            );
+        }
+    }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
 async fn issue56_progress_enqueue_checks_usage_before_persisted_fence(pool: PgPool) {
     let store = fixture(pool).await;
     let commands = queued_progress_commands(&store).await;

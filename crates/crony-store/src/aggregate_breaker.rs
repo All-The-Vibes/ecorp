@@ -31,10 +31,19 @@ impl PgStore {
         .bind(&command.runner_id)
         .fetch_optional(&mut *tx)
         .await?;
-        let status: Option<String> = sqlx::query_scalar(
-            "SELECT status FROM runner_commands
-             WHERE id=$1 AND corp_id=$2 AND run_id=$3 AND runner_id=$4
-               AND command_kind=$5 AND payload=$6 FOR UPDATE",
+        let queued = sqlx::query(
+            "SELECT command.status,
+                    COALESCE(command.command_kind='approval_decision'
+                      AND command.payload->'approved'='false'::jsonb
+                      AND EXISTS(SELECT 1 FROM action_approvals approval
+                        WHERE approval.id::text=command.payload->>'approval_id'
+                          AND approval.corp_id=command.corp_id
+                          AND approval.run_id=command.run_id
+                          AND approval.status IN ('rejected','expired')),false) AS negative_cleanup
+             FROM runner_commands command
+             WHERE command.id=$1 AND command.corp_id=$2 AND command.run_id=$3
+               AND command.runner_id=$4 AND command.command_kind=$5 AND command.payload=$6
+             FOR UPDATE OF command",
         )
         .bind(command.id)
         .bind(command.corp_id)
@@ -44,11 +53,26 @@ impl PgStore {
         .bind(&command.payload)
         .fetch_optional(&mut *tx)
         .await?;
-        let mut state = runner_command_dispatch_state(
-            status.as_deref().unwrap_or("missing"),
-            run.as_ref().map(|row| row.get::<&str, _>("status")),
-        );
-        if state == RunnerCommandDispatchState::Pending {
+        let status = queued
+            .as_ref()
+            .map(|row| row.get::<&str, _>("status"))
+            .unwrap_or("missing");
+        let cleanup = queued
+            .as_ref()
+            .is_some_and(|row| row.get::<bool, _>("negative_cleanup"));
+        // A persisted rejection/expiry must reach its assigned provider even
+        // after cancellation or a budget fence. It denies an effect; it cannot
+        // authorize progress. Exact command payload and approval scope are bound
+        // above, and only the runner may acknowledge successful delivery.
+        let mut state = if status == "pending" && run.is_some() && cleanup {
+            RunnerCommandDispatchState::Pending
+        } else {
+            runner_command_dispatch_state(
+                status,
+                run.as_ref().map(|row| row.get::<&str, _>("status")),
+            )
+        };
+        if state == RunnerCommandDispatchState::Pending && !cleanup {
             let stage: &str = run
                 .as_ref()
                 .context("pending command run")?
