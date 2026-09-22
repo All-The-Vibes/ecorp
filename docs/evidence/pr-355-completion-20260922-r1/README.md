@@ -1,0 +1,31 @@
+# PR #355 completion evidence
+
+Date: September 22, 2026. Maintainer completion pass performed under the existing ECorp-only authorization.
+
+Integrate current main and retain typed DeliverableExport failures. Failed export preserves the complete workspace and cannot silently create an automatic retry in a fresh checkout; source scope includes every required changed or untracked source file.
+
+All nine contributor checks, owned PostgreSQL issue89 regressions, actual Edge restricted/full-source export scenarios, and browser-to-server-to-native-runner verifier-policy acceptance pass. Issue89 remains partial; no GitHub publication or external provider acceptance is claimed.
+
+The nine required commands passed on source head `2a419712f224f317329cadb66fa33d3dfb729309` with staged tree `4d03d8222e77b90d375c9886bf13e9bab844c9af`, incorporating main `5f65e536f80e206082a8a819f2675c9b16210fce`. `validation.json` binds the commands, tool versions, statuses and log hashes. Local user and checkout paths in the published logs are normalized; original hashes are also retained. The evidence files added here are subsequent documentation of that tested tree, not a claim that a not-yet-existing commit was executed.
+
+`validation.png` is a genuine Edge screenshot of `validation.html`, rendered from these saved results. It is a test-report capture, not an application screen. Full result lines, including opt-in ignored tests, remain in the logs. No original RED/GREEN development chronology is inferred from retrospective validation.
+
+Reproduction: use an isolated checkout of the PR, install the repository-pinned Rust/Node/pnpm toolchain, run `pnpm install --frozen-lockfile`, and execute the nine commands listed in `validation.json`. Set `RUST_TEST_THREADS=1` for the recorded Windows test configuration. Build the repository's native `crony-mcp` binary and set `CRONY_MCP_TEST_BINARY` to that owned binary for native MCP unit coverage. These results do not substitute for fresh hosted checks, required independent reviews, or production identity/provider acceptance.
+
+Maintainer self-review: inspected the final implementation and its current-main integration against the product, architecture, security and evaluation contracts. Only evidence documented here is claimed; existing historical reports retain their original scope and limitations.
+
+Native Git received `core.longpaths=true` through process-only Git configuration for the recorded commands. Repository and global Git configuration were not changed.
+
+Build provenance: Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary. `validation.json` also binds the workspace-refresh and MCP-build logs, their original/published hashes, and the copied MCP binary hash.
+
+Retry provenance: Initial matching-source Rust checks passed. The private validation helper then requested a nonexistent Cargo package, crony-mcp. The correct package is crony-gateways with binary crony-mcp. The initial checks are retained byte-for-byte; the auxiliary binary is rebuilt from the unchanged source after refreshing workspace artifacts, then the four remaining checks run.
+
+The first failed receipt and failed-command logs are preserved under `prior-attempts/`; normalization and separate original/published hashes are recorded in `validation.json`. Successful command logs were retained byte-for-byte before publication normalization.
+
+The actual Edge flow first requests only result.md, observes a typed DeliverableExport failure, and proves there is no automatic fresh-worktree retry. The complete dirty workspace is preserved. A separate complete-source request exports README.md and portable-untracked.txt with bytes identical to the resulting source commit. Provider evidence result.md remains separate, matches the accepted artifact hash, and stays untracked in the preserved workspace. This distinction follows crates/crony-runner/src/deliverable.rs and docs/EVALS.md. A separate generic browser policy flow also accepts valid completion and rejects verifier failure. The configured source stays unchanged.
+
+Three earlier private attempts are preserved. The first two exceeded existing mission/task budget limits; the third incorrectly expected provider evidence in the source commit. No product code was changed to accommodate these test-driver mistakes. The final driver uses the same validated source and native binary hashes. Original successful build and issue89 SQLx results are explicitly reused. The first driver version was reconstructed after execution by reversing its budget-only edit; it is not claimed as a contemporaneously hashed input. Issue89 remains partial: this does not close all recovery/export/publication acceptance.
+
+The recorded-drivers directory preserves the exact driver structure used on this machine, with paths normalized and separately hashed. These records are not claimed to run unchanged on an arbitrary checkout. To reproduce, use a new isolated Windows fixture and the recorded tools, provision owned PostgreSQL, build the recorded source with cargo build --workspace, and run the corresponding driver after substituting its explicit local paths. Supply the original internal validation receipt format (staged_tree) from a fresh nine-gate run; the published validation.json uses tested_staged_tree for the same recorded value. The driver requires its source tree to match that fresh receipt before adding evidence. Use the existing tools/qa_factory_run_activity.ps1 or the recorded specialized stack driver, deterministic native providers and the installed Edge browser. No external accounts, provider calls or publication credentials are required. All owned services were stopped after acceptance; database, credentials, source, workspaces and logs remain preserved privately.
+
+Trailing line whitespace and blank lines at EOF are removed from the published logs. This formatting normalization does not alter test-result text; original and published hashes are distinct. The local `.gitattributes` preserves published evidence bytes on checkout.
