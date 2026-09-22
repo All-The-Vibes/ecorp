@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { chmod, link, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import fs, { chmod, link, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
+import { syncBuiltinESMExports } from 'node:module'
 import { hostname, tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -11,9 +12,10 @@ import { resolveVerifierBrowser, validateBrowserPolicy } from './verifier_browse
 const helper = fileURLToPath(new URL('./verifier_browser.mjs', import.meta.url))
 const hash = (value) => createHash('sha256').update(value).digest('hex')
 const executableName = { win32: 'msedge.exe', linux: 'microsoft-edge', darwin: 'Microsoft Edge' }[process.platform]
-async function fixture(t) {
+async function fixture(t, retain = false) {
   const root = await mkdtemp(path.join(tmpdir(), 'issue136 spaces-'))
-  t.after(() => rm(root, { recursive: true }))
+  if (retain) t.diagnostic(`Retained F03 fixture: ${root}`)
+  else t.after(() => rm(root, { recursive: true }))
   const workspace = path.join(root, 'task')
   await mkdir(workspace)
   const executable = path.join(root, executableName)
@@ -51,6 +53,97 @@ test('managed Chromium uses only the supplied native path and authorized hash', 
   assert.equal(selection.evidence.selection, 'playwright-managed')
   await assert.rejects(resolveVerifierBrowser(f), /Chromium is unavailable/u)
 })
+
+// No network/device path reaches the OS, even when testing the unfixed resolver.
+// Only unreachable path resolution and reads are mocked; policy and pinned bytes are local.
+for (const [kind, excluded] of [
+  ['UNC', '\\\\f03.invalid\\share\\chrome.exe'],
+  ['slash UNC', '//f03.invalid/share/chrome.exe'],
+  ['extended UNC', '\\\\?\\UNC\\f03.invalid\\share\\chrome.exe'],
+  ['device UNC', '\\\\.\\UNC\\f03.invalid\\share\\chrome.exe'],
+  ['extended drive', '\\\\?\\C:\\browser\\chrome.exe'],
+  ['device drive', '\\\\.\\C:\\browser\\chrome.exe'],
+  ['NT device', '\\??\\UNC\\f03.invalid\\share\\chrome.exe'],
+  ['root relative', '\\browser\\chrome.exe'],
+  ['drive relative', 'C:browser\\chrome.exe'],
+  ['NUL', 'C:\\browser\0\\chrome.exe'],
+  ['newline', 'C:\\browser\n\\chrome.exe'],
+  ['carriage return', 'C:\\browser\r\\chrome.exe'],
+]) {
+  for (const route of ['declared', 'managed', 'canonical']) {
+    test(`F03 rejects ${route} ${kind} before excluded filesystem access`,
+      { skip: process.platform !== 'win32' }, async (t) => {
+        const f = await fixture(t, true)
+        f.executable = path.join(f.root, 'chrome.exe')
+        await writeFile(f.executable, 'operator-authorized fixture, never executed')
+        f.policy.browser = 'chromium'
+        if (route === 'managed') delete f.policy.executable
+        else f.policy.executable = route === 'declared' ? excluded : f.executable
+        await f.save()
+        const excludedCalls = []
+        const native = { realpath: fs.realpath, access: fs.access, open: fs.open, lstat: fs.lstat }
+        for (const operation of Object.keys(native)) {
+          t.mock.method(fs, operation, async (file, ...args) => {
+            if (file === excluded) {
+              excludedCalls.push(operation)
+              // Model matching authorized bytes without contacting any share/device.
+              return operation === 'realpath' ? excluded : native[operation](f.executable, ...args)
+            }
+            assert.ok([f.workspace, f.policyPath, f.executable].includes(file),
+              `Unexpected ${operation} path in F03 mock: ${file}`)
+            if (operation === 'realpath' && route === 'canonical' && file === f.executable) return excluded
+            return native[operation](file, ...args)
+          })
+        }
+        syncBuiltinESMExports()
+        t.after(() => {
+          t.mock.restoreAll()
+          syncBuiltinESMExports()
+          t.diagnostic(`Intercepted excluded operations: ${JSON.stringify(excludedCalls)}`)
+        })
+        await assert.rejects(resolveVerifierBrowser({ ...f, chromiumExecutable: excluded }),
+          /absolute supported browser|Chromium is unavailable|resolved target is not a supported browser/u)
+        assert.deepEqual(excludedCalls, [], 'Reject before resolving or reading excluded paths')
+      })
+  }
+}
+
+for (const route of ['declared', 'managed']) {
+  test(`F03 preserves ${route} local paths, hard links and canonical directory links`, async (t) => {
+    const f = await fixture(t, true)
+    const installation = path.join(f.root, 'local browser')
+    await mkdir(installation)
+    const name = process.platform === 'win32' ? 'chrome.exe' : process.platform === 'darwin' ? 'Chromium' : 'chrome'
+    const executable = path.join(installation, name)
+    await writeFile(executable, await readFile(f.executable))
+    await chmod(executable, 0o700)
+    const alias = path.join(f.root, 'local link')
+    await symlink(installation, alias, process.platform === 'win32' ? 'junction' : 'dir')
+    const hardlink = path.join(f.root, name)
+    await link(executable, hardlink)
+    f.policy.browser = 'chromium'
+    for (const [selected, canonical] of [
+      [executable, executable], [hardlink, hardlink], [path.join(alias, name), executable],
+    ]) {
+      if (route === 'declared') f.policy.executable = selected
+      else delete f.policy.executable
+      await f.save()
+      const result = await resolveVerifierBrowser({ ...f, chromiumExecutable: selected })
+      assert.equal(result.launchOptions.executablePath, canonical)
+      assert.equal(result.evidence.sha256, f.policy.sha256)
+      assert.equal(result.evidence.selection, route === 'declared' ? 'declared-executable' : 'playwright-managed')
+    }
+    // A legitimate local link must not bypass canonical workspace containment.
+    const workspaceExecutable = path.join(f.workspace, name)
+    await writeFile(workspaceExecutable, await readFile(executable))
+    const workspaceAlias = path.join(f.root, 'workspace link')
+    await symlink(f.workspace, workspaceAlias, process.platform === 'win32' ? 'junction' : 'dir')
+    const selected = path.join(workspaceAlias, name)
+    if (route === 'declared') f.policy.executable = selected
+    await f.save()
+    await assert.rejects(resolveVerifierBrowser({ ...f, chromiumExecutable: selected }), /outside the task workspace/u)
+  })
+}
 
 for (const [name, change, error] of [
   ['wrong host', (p) => { p.host += '-other' }, /host\/platform/u],

@@ -15,6 +15,10 @@ const supportedName = (browser, file, platform) => {
   const name = (platform === 'win32' ? path.win32 : path.posix).basename(file)
   return names[platform][browser].includes(platform === 'win32' ? name.toLowerCase() : name)
 }
+const supportedPath = (browser, file, platform) =>
+  typeof file === 'string' && file.length <= 1024 && !/[\0\r\n]/u.test(file) &&
+  (platform === 'win32' ? /^[a-z]:[\\/]/iu.test(file) : path.posix.isAbsolute(file)) &&
+  supportedName(browser, file, platform)
 
 export function validateBrowserPolicy(policy, platform = process.platform, host = hostname()) {
   if (!policy || typeof policy !== 'object' || Array.isArray(policy)) fail('policy must be an object')
@@ -31,11 +35,7 @@ export function validateBrowserPolicy(policy, platform = process.platform, host 
     fail('an explicit lowercase SHA-256 executable pin is required')
   }
   if (Object.hasOwn(policy, 'executable')) {
-    const paths = platform === 'win32' ? path.win32 : path.posix
-    if (typeof policy.executable !== 'string' || policy.executable.length > 1024 ||
-        /[\0\r\n]/u.test(policy.executable) || !paths.isAbsolute(policy.executable) ||
-        (platform === 'win32' && !/^[a-z]:[\\/]/iu.test(policy.executable)) ||
-        !supportedName(policy.browser, policy.executable, platform)) {
+    if (!supportedPath(policy.browser, policy.executable, platform)) {
       fail('expected one absolute supported browser executable path, not a command')
     }
   } else if (policy.browser !== 'chromium') {
@@ -102,14 +102,13 @@ export async function resolveVerifierBrowser({ policyPath, chromiumExecutable, w
   }
   validateBrowserPolicy(policy)
   const executable = policy.executable ?? chromiumExecutable
-  if (typeof executable !== 'string' || !path.isAbsolute(executable) || executable.length > 1024 ||
-      !supportedName(policy.browser, executable, process.platform)) {
+  if (!supportedPath(policy.browser, executable, process.platform)) {
     fail('Playwright-managed Chromium is unavailable; supply its native executablePath(), never download implicitly')
   }
   outsideWorkspace(executable, root, 'browser')
   const resolved = await realpath(executable)
   outsideWorkspace(resolved, root, 'browser')
-  if (!supportedName(policy.browser, resolved, process.platform)) {
+  if (!supportedPath(policy.browser, resolved, process.platform)) {
     fail(`resolved target is not a supported browser executable: ${resolved}`)
   }
   await access(resolved, process.platform === 'win32' ? constants.R_OK : constants.R_OK | constants.X_OK)
