@@ -21,9 +21,11 @@ Changing repository documentation does not redeploy the product site.
 
 ### Current capability language
 
-The mission defines the team: specialist roles, dependencies, connected runtime
-capabilities, and policy shape the work. The named solo/specialist/studio plans
-are implementation options, not the product's fixed headcount.
+The current alpha creates mission-owned workers from fixed, bounded strategy
+presets. Solo, specialist, and Copilot studio strategies define the roles and
+dependency graphs; the connected runtime must support the selected strategy.
+Richer skill-driven team composition is future work. These presets describe
+today's implementation rather than a permanent product-wide headcount.
 
 **Run it together** means shared room/mission context, durable discussion, fenced
 control handoffs, explicit review, and reconnect/replay. Preserve the distinction

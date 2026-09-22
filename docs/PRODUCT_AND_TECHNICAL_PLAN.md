@@ -32,11 +32,11 @@ This review uses main `39632b957819012721c90902925d8fa7a9c7e873`. It adds curren
 source and evidence pointers without relabeling historical tests as fresh
 acceptance.
 
-- **The mission shapes the team.** Mission-owned workers and bounded,
-  dependency-aware task graphs are implemented. The solo, specialist, and
-  studio strategies are supported starting plans, not the product's permanent
-  agent count. Richer planning and complete crew-management workflows remain
-  separate tracked work.
+- **Workers belong to the mission.** Mission-owned workers and bounded,
+  dependency-aware task graphs are implemented through fixed solo, specialist,
+  and Copilot studio strategy presets. Each preset defines the roles and graph;
+  skill-driven composition and complete crew-management workflows remain
+  separate tracked work. The presets are not a permanent product-wide agent limit.
 - **Multiplayer is part of the operating model.** Shared rooms, durable comments,
   fenced control leases, queued direction, role-gated decisions, replay, and
   exact mission/run context connect people to the same authoritative work.

@@ -26,9 +26,9 @@ real missions. The public tour is illustrative; it is not connected to your runn
 
 ## Current implementation highlights
 
-- **Mission-shaped teams:** mission-owned workers follow bounded task graphs; the
-  three-specialist Copilot studio is one supported starting plan, not a fixed
-  product-wide crew.
+- **Mission-owned teams:** fixed solo, specialist, and Copilot studio strategy
+  presets define roles and bounded task graphs. Skill-driven composition remains
+  future work; the presets are not a permanent product-wide crew limit.
 - **Shared human control:** rooms, durable comments, fenced control leases,
   queued direction, role-gated decisions, exact-run context, and reconnect/replay.
 - **Trust woven into the work:** source pins, contributor attribution, SHA-256

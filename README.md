@@ -46,7 +46,7 @@ engineering contract. Here is what the current alpha can do.
 ## Press START on real work
 
 1. **Drop the mission.** Define the outcome, references, write scope, provider, model, budget, and verifier policy.
-2. **Shape the crew around the mission.** Required skills, dependencies, runtime capabilities, and policy define the team. Solo, specialist, and studio strategies provide supported starting plans—not a permanent cast or a product-wide headcount limit.
+2. **Choose a crew for the mission.** The current alpha creates mission-owned workers from fixed, bounded strategy presets: a solo worker, two specialists followed by synthesis, or a three-worker Copilot studio with verified handoffs before integration. Skill-driven team composition remains future work.
 3. **Light up isolated worktrees.** Every write-capable run gets its own branch and linked workspace. Parallel agents never pile into the configured source checkout.
 4. **Keep human hands on the controls.** Watch live state, steer the active session, queue direction, review the run, or hit an audited emergency stop.
 5. **Make proof mandatory.** Files, commands, tests, schemas, screenshots, human approval, and independent review can all block completion.
@@ -94,9 +94,9 @@ results are projections of authoritative server, runner, and provider state.
 
 ### Assemble a studio, not a static cast
 
-ECorp creates mission-owned workers from the connected runner's capabilities.
-The mission owns the team; supported starting plans define the current bounded
-graphs. For example, choose **Studio team ·
+ECorp creates mission-owned workers using the selected strategy and a supported
+connected runtime. Each strategy defines the current roles and bounded task
+graph. For example, choose **Studio team ·
 3 Copilot agents** for visual, gameplay, and quality specialists working in parallel. Their exact
 verified handoff files feed a later integration pass by the gameplay worker.
 

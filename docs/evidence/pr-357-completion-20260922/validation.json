@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "pr": 357,
+  "source_head": "90efeece7bb8c7a2644550f5ff3538102b415d81",
+  "tested_staged_tree": "5ede39b687c9c34baccfcc7a8753c22b26f54be8",
+  "target_main": "410eddfc8bfcfa874dae05555128d39a914f0456",
+  "started_at_utc": "2026-09-22T12:49:43.5546030+00:00",
+  "finished_at_utc": "2026-09-22T13:06:35.6711387+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "Product documentation and architecture illustrations reviewed against current main. The staffing claims now match the implemented fixed solo, specialist, and Copilot studio strategies; richer capability-driven team composition remains future work. This documentation-only change does not alter runtime behavior.",
+  "maintainer_changes": "Integrated current main and corrected staffing claims consistently in the README, product plan, brand/site document, documentation index, and the rendered architecture illustration.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders and use LF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.290844,
+      "log": "migrations.log",
+      "original_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823",
+      "published_log_sha256": "647fc92ef827bdde2d804ae951c78304f0522f35f9832dde27b39840b8263757"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.1152093,
+      "log": "documentation.log",
+      "original_log_sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406",
+      "published_log_sha256": "f7c1081b3ad5e5b322c890127d287c1cef53b868efc7b40d1b7b2eef7b9aeb18"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 56.8352843,
+      "log": "node-unit.log",
+      "original_log_sha256": "eeeeb65520d129ebeaac9ac0c0966c408fb8e25ae2c652a7beed73e22437af82",
+      "published_log_sha256": "26992ccc1b772d816c16b10f0febb091389cfba32e11da869686d06fe763fd80"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 101.5303052,
+      "log": "steward.log",
+      "original_log_sha256": "c151ec87add4d6a5722d7cde2dea0a03c792eba4f9841abb484e1ce67ade9cd3",
+      "published_log_sha256": "aeb81297885ceb50ce5ffc91e5522d424b401bfd3ea3b6a4c87294c61b2234f5"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 4.5831216,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 193.7216722,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "2dce4a6a5690f4aef4ac0a6dffd42b9afff24917d98f36e061238c515ccb23dc",
+      "published_log_sha256": "19f1b275fbdd31c280c9c41e096afa599816ead11c67ee4745072faf91bc027a"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 643.023275,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "a794e4010e8118b3e45b6e95eaf7d1b3bb1c49c87e6dc793f34caef2e5a99905",
+      "published_log_sha256": "fc1f10209abd063ded5ca8c6cdd14bcf582a0d70374f0a383ada58fe71dce437"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 4.3253006,
+      "log": "web-build.log",
+      "original_log_sha256": "dd85568335f233024b6a880d2f2624891b33be1e19b51eac87459de9457091de",
+      "published_log_sha256": "18a068b9d20c864012c725232643d88e7a5aa172780e2d8d3d4819172b6a18ac"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 2.2410555,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ]
+}
