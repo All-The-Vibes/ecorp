@@ -295,6 +295,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: ./tools/windows_connection_acl_readiness.ps1 -ReportDirectory (Join-Path $env:GITHUB_WORKSPACE 'output/runner-platform-windows-readiness')
+      - name: Verify Windows browser policy environment handoff
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: pwsh -NoProfile -File ./tools/local_stack_browser_policy_handoff.test.ps1 -NodePath (Get-Command node -CommandType Application).Source -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'output/runner-platform-browser-policy-handoff')
       - run: cargo test --locked -p crony-runner ${{ runner.os == 'Windows' && '-- --test-threads=1' || '' }}
       - run: node tools/platform_runner_contract.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -307,6 +311,14 @@ jobs:
         with:
           name: runner-platform-windows-readiness-${{ github.run_attempt }}
           path: output/runner-platform-windows-readiness/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve Windows browser policy handoff receipts
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: runner-platform-browser-policy-handoff-${{ github.run_attempt }}
+          path: output/runner-platform-browser-policy-handoff/
           if-no-files-found: warn
           retention-days: 14
 

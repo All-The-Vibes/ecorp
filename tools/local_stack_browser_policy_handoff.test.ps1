@@ -131,8 +131,15 @@ foreach ($route in @('normal spaces', 'literal [brackets]')) {
         [IO.File]::WriteAllText((Join-Path $workspace 'ownership.json'), ($record | ConvertTo-Json))
         $process = [Diagnostics.Process]::GetProcessById($record.pid)
         $null = $process.Handle
-        $owned = $process.StartTime.ToUniversalTime().Ticks -eq ([DateTimeOffset]$record.started_utc).UtcTicks -and
-            [string]::Equals($process.Path, $node, [StringComparison]::OrdinalIgnoreCase)
+        $identity = @{
+            expected_pid = $record.pid; observed_pid = $process.Id
+            expected_ticks = ([DateTimeOffset]$record.started_utc).UtcTicks
+            observed_ticks = $process.StartTime.ToUniversalTime().Ticks
+            expected_executable = $node; observed_executable = $process.Path
+        }
+        [IO.File]::WriteAllText((Join-Path $workspace 'identity.json'), ($identity | ConvertTo-Json))
+        $owned = $identity.observed_ticks -eq $identity.expected_ticks -and
+            [string]::Equals($identity.observed_executable, $node, [StringComparison]::OrdinalIgnoreCase)
         if (!$owned) { $process.Dispose(); throw 'Owned fixture identity mismatch; no process was controlled.' }
         $failures = [Collections.Generic.List[string]]::new()
         try {
@@ -165,7 +172,7 @@ foreach ($route in @('normal spaces', 'literal [brackets]')) {
                     $failures.Add("Unexpected launch selection: $actual (expected $expectedJson).")
                 }
             } else {
-                $reason = if ($kind -eq 'empty') { 'an absolute policy path is required' } else { 'invalid policy JSON' }
+                $reason = if ($kind -eq 'empty') { 'a local absolute policy path of at most 1024 characters is required' } else { 'invalid policy JSON' }
                 if ($observed.stdout -ne '' -or $observed.stderr -notmatch [regex]::Escape($reason) -or
                     $observed.stderr -match 'F01_LAUNCH_OBSERVED_NO_BROWSER_STARTED') {
                     $failures.Add('Explicit invalid/empty policy must reject before launch, never use legacy Chrome.')

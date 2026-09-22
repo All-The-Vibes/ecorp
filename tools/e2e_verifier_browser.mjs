@@ -15,10 +15,31 @@ const workspace = await realpath(workspaceInput)
 assert.ok((await lstat(path.join(workspace, '.git'))).isFile(), 'A separate Git worktree is required')
 const gitRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: workspace, encoding: 'utf8', windowsHide: true }).trim()
 assert.equal(await realpath(gitRoot), workspace)
-await mkdir(outputInput, { recursive: true })
-const outputRoot = await realpath(outputInput)
-const relative = path.relative(workspace, outputRoot)
-assert.ok(path.isAbsolute(relative) || relative === '..' || relative.startsWith(`..${path.sep}`), 'Evidence must be outside the worktree')
+function assertExternalOutput(candidate) {
+  const relative = path.relative(workspace, candidate)
+  assert.ok(path.isAbsolute(relative) || relative === '..' || relative.startsWith(`..${path.sep}`), 'Evidence must be outside the worktree')
+}
+// Resolve the existing ancestor before any writes, including paths through aliases.
+// A dangling alias must fail, rather than be treated as an absent directory.
+let ancestor = path.resolve(outputInput)
+const missing = []
+for (;;) {
+  try {
+    await lstat(ancestor)
+    break
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error
+    const parent = path.dirname(ancestor)
+    assert.notEqual(parent, ancestor, 'An existing evidence ancestor is required')
+    missing.unshift(path.basename(ancestor))
+    ancestor = parent
+  }
+}
+const outputDestination = path.join(await realpath(ancestor), ...missing)
+assertExternalOutput(outputDestination)
+await mkdir(outputDestination, { recursive: true })
+const outputRoot = await realpath(outputDestination)
+assertExternalOutput(outputRoot)
 const output = await mkdtemp(path.join(outputRoot, 'native-browser-'))
 const modulePath = process.env.CRONY_PLAYWRIGHT_MODULE
 assert.ok(modulePath && path.isAbsolute(modulePath), 'Installed Playwright module required')
