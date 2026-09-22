@@ -38,6 +38,34 @@ Clear crew and manual Retire remain separate #48 work. See
 The [bounded validation report](evidence/2026-09-19-agent-pinning.md) separates native
 fixture results, the failed full-workspace gate, and remaining evidence limitations.
 
+### Documentation checkpoint - September 19, 2026 (UTC)
+
+This review uses main `39632b957819012721c90902925d8fa7a9c7e873`. It adds current
+source and evidence pointers without relabeling historical tests as fresh
+acceptance.
+
+- **Workers belong to the mission.** Mission-owned workers and bounded,
+  dependency-aware task graphs are implemented through fixed solo, specialist,
+  and Copilot studio strategy presets. Each preset defines the roles and graph;
+  skill-driven composition and complete crew-management workflows remain
+  separate tracked work. The presets are not a permanent product-wide agent limit.
+- **Multiplayer is part of the operating model.** Shared rooms, durable comments,
+  fenced control leases, queued direction, role-gated decisions, replay, and
+  exact mission/run context connect people to the same authoritative work.
+  The integrated collaboration UI and freshness/error states have
+  [source-bound local evidence](evidence/2026-09-17-multiplayer-ui-integration.md).
+  The [U7 parity map](multiplayer/U7_PARITY_MATRIX.md) identifies what is still
+  required for independent production identities and cross-owner execution.
+- **Blockchain as fabric is a built-in provenance model.** Pinned source,
+  contributors, evidence digests, signed artifact provenance, accepted parent
+  handoffs, and governing verifier/review records form connected strands across
+  a mission. [Trust fabric](TRUST_FABRIC.md) explains the implementation.
+  This is not a separate product named Fabric or a claim of distributed
+  blockchain consensus; Postgres remains operational authority.
+- **The architecture visuals now distinguish the planes and the weave.**
+  Human collaboration and integrity span the system; neither creates a second
+  process supervisor or bypasses explicit authorization.
+
 ### Implementation checkpoint - September 6, 2026
 
 This checkpoint adds to the September 4 baseline below; it does not turn the original delivery
@@ -1054,7 +1082,8 @@ Automerge or Yjs can support collaborative documents. Do not use CRDTs for appro
 - native mobile clients
 - full federation
 - multiple deployable backend microservices
-- a mandatory blockchain or cryptocurrency layer
+- a mandatory external blockchain network or cryptocurrency layer, distinct from
+  the built-in [provenance fabric](TRUST_FABRIC.md)
 
 ---
 
