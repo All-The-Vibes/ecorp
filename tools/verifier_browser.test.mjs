@@ -66,6 +66,8 @@ for (const [kind, excluded] of [
   ['NT device', '\\??\\UNC\\f03.invalid\\share\\chrome.exe'],
   ['root relative', '\\browser\\chrome.exe'],
   ['drive relative', 'C:browser\\chrome.exe'],
+  ['U+212A drive prefix', '\u212a:\\browser\\chrome.exe'],
+  ['U+017F drive prefix', '\u017f:\\browser\\chrome.exe'],
   ['NUL', 'C:\\browser\0\\chrome.exe'],
   ['newline', 'C:\\browser\n\\chrome.exe'],
   ['carriage return', 'C:\\browser\r\\chrome.exe'],
@@ -109,7 +111,7 @@ for (const [kind, excluded] of [
 }
 
 for (const route of ['declared', 'managed']) {
-  test(`F03 preserves ${route} local paths, hard links and canonical directory links`, async (t) => {
+  test(`F03 preserves ${route} local paths, Unicode folders, hard links and canonical directory links`, async (t) => {
     const f = await fixture(t, true)
     const installation = path.join(f.root, 'local browser')
     await mkdir(installation)
@@ -117,13 +119,19 @@ for (const route of ['declared', 'managed']) {
     const executable = path.join(installation, name)
     await writeFile(executable, await readFile(f.executable))
     await chmod(executable, 0o700)
+    const unicodeInstallation = path.join(f.root, 'local browser \u212a \u017f \u6d4f\u89c8\u5668')
+    await mkdir(unicodeInstallation)
+    const unicodeExecutable = path.join(unicodeInstallation, name)
+    await writeFile(unicodeExecutable, await readFile(executable))
+    await chmod(unicodeExecutable, 0o700)
     const alias = path.join(f.root, 'local link')
     await symlink(installation, alias, process.platform === 'win32' ? 'junction' : 'dir')
     const hardlink = path.join(f.root, name)
     await link(executable, hardlink)
     f.policy.browser = 'chromium'
     for (const [selected, canonical] of [
-      [executable, executable], [hardlink, hardlink], [path.join(alias, name), executable],
+      [executable, executable], [unicodeExecutable, unicodeExecutable],
+      [hardlink, hardlink], [path.join(alias, name), executable],
     ]) {
       if (route === 'declared') f.policy.executable = selected
       else delete f.policy.executable
@@ -213,6 +221,7 @@ test('declared Windows, Linux and macOS browser paths validate independently', (
     ['win32', 'chrome', 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'],
     ['win32', 'edge', 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'],
     ['win32', 'edge', 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\MSEDGE.EXE'],
+    ['win32', 'chrome', 'c:/local browser \u212a \u017f \u6d4f\u89c8\u5668/chrome.exe'],
     ['linux', 'chrome', '/usr/bin/google-chrome'],
     ['linux', 'edge', '/usr/bin/microsoft-edge-stable'],
     ['darwin', 'chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'],

@@ -10,7 +10,17 @@ the enclosing commit contains the tested corrections.
 | --- | --- | --- | --- |
 | F01 | Forward only `CRONY_VERIFIER_BROWSER_POLICY` through the existing runner environment allowlist. | Six explicit-policy cases failed; genuine absence still passed. | Eight native Windows cases passed, then independently passed again with the combined correction. |
 | F02 | Retain failed fixtures, artifact bytes, child streams/statuses and discoverable diagnostics; remove only a verified successful fixture after retention. | Six retention cases failed; success control passed. | Seven real-process/filesystem fault cases passed, including copy, stream and summary collisions. |
-| F03 | Reuse the same platform-path check for declared, managed and canonical browser paths. | Twenty-three path-contract failures. | Sixty resolver cases passed; combined Node run was 67 passed, zero failed/skipped. |
+| F03 | Reuse the same platform-path check for declared, managed and canonical browser paths. | Twenty-three path-contract failures. | Initial sixty resolver cases passed, but that candidate was subsequently rejected for F05 below. |
+| F05 | Preserve native Windows absolute-path validation and an ASCII drive prefix in the shared check. | Six new failures for Unicode-folded non-absolute drive prefixes across all three routes. | Sixty-six resolver cases passed; final independent combined Node run was 73 passed, zero failed/skipped. |
+
+Two independent reviewers rejected local candidate
+`8efb285e6d54bc4d03a3ffebdd834d4af25c8ba4`: Unicode case folding admitted
+U+212A/U+017F drive prefixes that the original native check rejected.
+The correction restores that check while retaining legitimate Unicode folders
+and local links. The rejected commit was never PR HEAD; its ordinary commit is
+preserved as ancestry, not erased. Earlier passing tests and the later failing
+probes remain distinct records. Final native handoff integration again passed
+all eight cases.
 
 F01 exercises parser-extracted real startup declarations, the unchanged native
 owned-process/environment module, a Node handoff shim and the actual verifier.
@@ -29,15 +39,18 @@ pwsh -NoLogo -NoProfile -NonInteractive -File tools/local_stack_browser_policy_h
 
 ## Actual browser fixture and genuine captures
 
-On September 22, 2026, 12:18:32–12:18:42 UTC, the combined source also ran
+On September 22, 2026, the initial source ran at 12:18:32–12:18:42 UTC and the
+F05-corrected source ran again at 13:03:53–13:04:01 UTC using
 `node tools/e2e_verifier_browser.mjs` with an explicit owned worktree/output,
 installed Playwright module and a host-bound, SHA-256-pinned Edge policy outside
 the worktree. Both module and CLI selection paths passed desktop and mobile
 checks. Wrong hash, wrong host and missing executable each failed before evidence
 writes. These are native Git/Edge/command-verifier results, **not ECorp full-stack**.
 
-The following are new, actual module-path captures, not the historical images
-or the synthetic fault-test artifacts. CLI-path captures were also retained.
+The following are actual module-path captures, not the historical images or
+synthetic fault-test artifacts. The fresh corrected-source run produced
+byte-identical images matching these committed files. Both runs and CLI-path
+captures were retained separately.
 
 | Capture | Measured viewport | SHA-256 |
 | --- | --- | --- |
@@ -54,7 +67,7 @@ was exercised. Child environments excluded ambient provider/GitHub credentials.
 
 ## Repository checks and remaining gates
 
-All nine contributor commands were attempted. Migration check, formatting,
+All nine contributor commands were attempted again after F05. Migration check, formatting,
 strict workspace/all-target Clippy, Rust workspace tests, web build and web lint
 passed. Rust: **554 passed, zero failed, 343 ignored**. `pnpm check:docs`,
 `pnpm test:unit` and `pnpm test:steward` were absent and actually exited 1.
@@ -66,8 +79,10 @@ without downloads or changes to committed versions/integrity. This older lock
 already has SHA-1 entries; they were not newly weakened or described as SHA-512.
 No `--trust-lockfile` or policy relaxation was used.
 
-Whole-code checks ran before this evidence note/images were added. Every tested
-input byte remained unchanged; no post-commit whole-workspace rerun is claimed.
+Final checks ran before this evidence-note update. All tested code and image
+bytes remained unchanged; only this report was updated afterward. The recorded
+input manifests preserve that distinction. No post-commit whole-workspace rerun
+is claimed.
 F04's Unix special-file preflight issue remains **open**; no Linux FIFO test or
 Docker restart occurred. These two browser captures do not satisfy screenshot
 coverage for every test. Local SQLx/full-stack, required human/draft/current-head

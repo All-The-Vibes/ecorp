@@ -17,7 +17,7 @@ const supportedName = (browser, file, platform) => {
 }
 const supportedPath = (browser, file, platform) =>
   typeof file === 'string' && file.length <= 1024 && !/[\0\r\n]/u.test(file) &&
-  (platform === 'win32' ? /^[a-z]:[\\/]/iu.test(file) : path.posix.isAbsolute(file)) &&
+  (platform === 'win32' ? path.win32.isAbsolute(file) && /^[A-Za-z]:[\\/]/u.test(file) : path.posix.isAbsolute(file)) &&
   supportedName(browser, file, platform)
 
 export function validateBrowserPolicy(policy, platform = process.platform, host = hostname()) {
