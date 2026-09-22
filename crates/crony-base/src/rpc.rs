@@ -776,6 +776,19 @@ impl ReceiptEvidence {
         call: &AnchorCall,
         expected_publisher: Address,
     ) -> Result<AnchorEvent> {
+        self.exact_event_or_replay(contract, call, expected_publisher)?
+            .ok_or(Error::Evidence(
+                "matching event absent; exact replay needs original event reconciliation",
+            ))
+    }
+    /// Only clean absence permits original-event reconciliation; invalid evidence is an error.
+    /// `None` does not itself establish replay coverage or the original event's finality.
+    pub fn exact_event_or_replay(
+        &self,
+        contract: Address,
+        call: &AnchorCall,
+        expected_publisher: Address,
+    ) -> Result<Option<AnchorEvent>> {
         if !self.receipt.status() || self.receipt.to != Some(contract) {
             return Err(Error::Evidence("anchor receipt failed or wrong target"));
         }
@@ -788,23 +801,22 @@ impl ReceiptEvidence {
                 continue;
             }
             let event = AnchorEvent::decode(log)?;
-            if event.call == *call && event.publisher == expected_publisher {
-                if matched.is_some() {
-                    return Err(Error::Evidence("duplicate matching anchor event"));
-                }
-                if log.block_hash != self.receipt.block_hash
-                    || log.block_number != self.receipt.block_number
-                    || log.transaction_hash != Some(self.receipt.transaction_hash)
-                    || log.transaction_index != self.receipt.transaction_index
-                {
-                    return Err(Error::Evidence("event and receipt identity mismatch"));
-                }
-                matched = Some(event);
+            if event.call != *call || event.publisher != expected_publisher {
+                return Err(Error::Evidence("conflicting anchor event"));
             }
+            if matched.is_some() {
+                return Err(Error::Evidence("duplicate matching anchor event"));
+            }
+            if log.block_hash != self.receipt.block_hash
+                || log.block_number != self.receipt.block_number
+                || log.transaction_hash != Some(self.receipt.transaction_hash)
+                || log.transaction_index != self.receipt.transaction_index
+            {
+                return Err(Error::Evidence("event and receipt identity mismatch"));
+            }
+            matched = Some(event);
         }
-        matched.ok_or(Error::Evidence(
-            "matching event absent; exact replay needs original event reconciliation",
-        ))
+        Ok(matched)
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -2511,6 +2523,127 @@ mod tests {
         missing_fee["l1Fee"] = json!("not-wei");
         assert!(ReceiptEvidence::parse(missing_fee).is_err());
     }
+    fn replay_event(raw: Value) -> Result<Option<AnchorEvent>> {
+        let original = AnchorEvent::decode(&serde_json::from_value(log()).unwrap()).unwrap();
+        ReceiptEvidence::parse(raw).unwrap().exact_event_or_replay(
+            Address::repeat_byte(6),
+            &original.call,
+            original.publisher,
+        )
+    }
+
+    #[test]
+    fn replay_clean_absence_requires_separate_original_reconciliation() {
+        let raw = receipt(json!([]), "0x1");
+        assert_eq!(replay_event(raw.clone()).unwrap(), None);
+        let original = AnchorEvent::decode(&serde_json::from_value(log()).unwrap()).unwrap();
+        assert!(
+            ReceiptEvidence::parse(raw)
+                .unwrap()
+                .exact_event(Address::repeat_byte(6), &original.call, original.publisher)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn replay_valid_new_event_is_not_absence() {
+        let original = AnchorEvent::decode(&serde_json::from_value(log()).unwrap()).unwrap();
+        assert_eq!(
+            replay_event(receipt(json!([log()]), "0x1")).unwrap(),
+            Some(original)
+        );
+    }
+
+    #[test]
+    fn replay_rejects_failed_or_wrong_target_receipts() {
+        for (field, value) in [
+            ("to", json!(Address::repeat_byte(9))),
+            ("to", Value::Null),
+            ("status", json!("0x0")),
+        ] {
+            for logs in [json!([]), json!([log()])] {
+                let mut raw = receipt(logs, "0x1");
+                raw[field] = value.clone();
+                assert!(replay_event(raw).is_err(), "{field}: {value}");
+            }
+        }
+    }
+
+    #[test]
+    fn replay_rejects_malformed_anchor_logs() {
+        for (field, value) in [
+            ("data", json!("0x01")),
+            (
+                "topics",
+                json!([ECorpCheckpointRegistryV1::Anchored::SIGNATURE_HASH]),
+            ),
+            ("removed", json!(true)),
+            ("logIndex", Value::Null),
+        ] {
+            let mut bad = log();
+            bad[field] = value;
+            for logs in [json!([bad]), json!([log(), bad]), json!([bad, log()])] {
+                assert!(replay_event(receipt(logs, "0x1")).is_err(), "{field}");
+            }
+        }
+    }
+
+    #[test]
+    fn replay_rejects_duplicate_matching_events() {
+        let mut second = log();
+        second["logIndex"] = json!("0x1");
+        for duplicate in [log(), second] {
+            assert!(replay_event(receipt(json!([log(), duplicate]), "0x1")).is_err());
+        }
+    }
+
+    #[test]
+    fn replay_rejects_event_receipt_identity_mismatches() {
+        for (field, value) in [
+            ("blockHash", json!(B256::repeat_byte(9))),
+            ("blockNumber", json!("0xb")),
+            ("transactionHash", json!(B256::repeat_byte(9))),
+            ("transactionIndex", json!("0x1")),
+            ("blockHash", Value::Null),
+            ("blockNumber", Value::Null),
+            ("transactionHash", Value::Null),
+            ("transactionIndex", Value::Null),
+        ] {
+            let mut bad = log();
+            bad[field] = value.clone();
+            assert!(
+                replay_event(receipt(json!([bad]), "0x1")).is_err(),
+                "{field}: {value}"
+            );
+        }
+    }
+
+    #[test]
+    fn replay_rejects_conflicting_call_or_publisher_even_beside_a_match() {
+        for field in ["stream", "sequence", "digest", "previous", "publisher"] {
+            let mut bad = log();
+            let decoded: Log = serde_json::from_value(bad.clone()).unwrap();
+            let mut event = ECorpCheckpointRegistryV1::Anchored::decode_log(&decoded.inner, true)
+                .unwrap()
+                .data;
+            match field {
+                "stream" => event.streamId = B256::repeat_byte(9),
+                "sequence" => event.sequence = 11,
+                "digest" => event.checkpointDigest = B256::repeat_byte(9),
+                "previous" => event.previousAnchorDigest = B256::repeat_byte(9),
+                "publisher" => event.publisher = Address::repeat_byte(9),
+                _ => unreachable!(),
+            }
+            let data = event.encode_log_data();
+            bad["topics"] = json!(data.topics());
+            bad["data"] = json!(data.data);
+            bad["logIndex"] = json!("0x1");
+            for logs in [json!([bad]), json!([log(), bad]), json!([bad, log()])] {
+                assert!(replay_event(receipt(logs, "0x1")).is_err(), "{field}");
+            }
+        }
+    }
+
     #[tokio::test]
     async fn logs_enforce_filter_and_adapt_only_bounded_ranges() {
         let (rpc, task) = fixture(vec![("eth_getLogs", json!([log()]))]).await;

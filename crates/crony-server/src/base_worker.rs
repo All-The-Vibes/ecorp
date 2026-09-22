@@ -929,13 +929,13 @@ async fn drive_intent(
             if !receipt.receipt.status() {
                 return Ok(());
             }
-            let event = match receipt.exact_event(
+            let event = match receipt.exact_event_or_replay(
                 d.input.config.contract_address,
                 &call,
                 d.input.config.publisher,
-            ) {
-                Ok(event) => event,
-                Err(_) => store
+            )? {
+                Some(event) => event,
+                None => store
                     .base_original_event(d.corp_id, d.id, &call)
                     .await?
                     .context("successful no-op receipt has no established original event")?,
