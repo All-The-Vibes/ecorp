@@ -154,12 +154,26 @@ export function checkDeliverableDiff({
         // never matched text. Unknown/localized stderr keeps the step-level category.
         const stderr = Buffer.isBuffer(error.stderr) && error.stderr.length <= MAX_OUTPUT
           ? error.stderr.toString('utf8') : ''
-        const known = [
-          ['rev-parse', /^fatal: Needed a single revision\r?\n?$/, 'revision-unavailable'],
-          ['add', /(?:^|\n)fatal: pathspec '[^\r\n]*' did not match any files\r?\n?$/, 'missing-path'],
-          ['add', /(?:^|\n)fatal: [^\r\n]+: clean filter '[^\r\n]+' failed\r?\n?$/, 'clean-filter-failed'],
-        ].find(([command, pattern]) => operation === command && pattern.test(stderr))
-        if (known) diagnostic.category = known[2]
+        // Fixed string scans are linear even on repeated hostile delimiters.
+        // Only the final line can match; trim one optional Git line ending.
+        let text = stderr.endsWith('\n') ? stderr.slice(0, -1) : stderr
+        if (text.endsWith('\r')) text = text.slice(0, -1)
+        const line = text.slice(text.lastIndexOf('\n') + 1)
+        if (operation === 'rev-parse' && text === 'fatal: Needed a single revision') {
+          diagnostic.category = 'revision-unavailable'
+        }
+        if (operation === 'add' && !line.includes('\r')) {
+          const prefix = "fatal: pathspec '"
+          const suffix = "' did not match any files"
+          const delimiter = ": clean filter '"
+          const at = line.indexOf(delimiter, 'fatal: '.length + 1)
+          if (line.startsWith(prefix) && line.endsWith(suffix) && line.length >= prefix.length + suffix.length) {
+            diagnostic.category = 'missing-path'
+          } else if (line.startsWith('fatal: ') && at > 'fatal: '.length
+            && line.endsWith("' failed") && at + delimiter.length < line.length - "' failed".length) {
+            diagnostic.category = 'clean-filter-failed'
+          }
+        }
       }
       const reason = diagnostic.code === 'ETIMEDOUT' ? 'timed out'
         : diagnostic.code === 'ENOBUFS' ? 'exceeded the output limit'

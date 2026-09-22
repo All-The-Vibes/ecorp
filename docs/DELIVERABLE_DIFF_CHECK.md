@@ -78,7 +78,9 @@ Git operations name the subcommand, including `add`, never the `-c` option.
 A small allowlist recognizes known English fatal Git diagnostics and emits only
 fixed categories: `revision-unavailable` (check the supplied base/preserved head),
 `missing-path` (check the literal selection), and `clean-filter-failed` (inspect
-the authorized Git attributes/filter). No matched text is included.
+the authorized Git attributes/filter). Recognition uses linear-time fixed-string
+checks of the final line, not backtracking over child-controlled text. No matched
+text is included.
 Unrecognized/localized diagnostics retain `revision-resolution-failed` or
 `source-selection-failed` for those steps; check the local repository, revision,
 literal selections, ignore rules and attributes/filters. These are diagnostic
@@ -153,6 +155,8 @@ selection, staging conflicts, CRLF, Windows preserved-head behavior and errors;
 and checks source-file and real-index hashes plus unchanged HEAD/refs.
 CLI failure regressions distinguish real missing revisions/selections from an
 owned Node clean filter rejected by native Git (including both `add`/128 cases).
+Hostile repeated delimiters, including near-8-MiB stderr, must still produce
+exit 2, a safe receipt and owned scratch cleanup before a five-second watchdog.
 They also exercise native
 timeout/output-limit/spawn errors through a narrowly replaced child call, and
 separate original/cleanup failures. Synthetic sensitive markers, control

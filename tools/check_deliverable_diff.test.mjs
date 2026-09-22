@@ -89,7 +89,7 @@ function fixture(t) {
     }
   }
   let invocation = 0
-  function cli(args = [], { inject, cleanup = true } = {}) {
+  function cli(args = [], { inject, cleanup = true, timeout = 15_000 } = {}) {
     const before = snapshot()
     const log = path.join(owned, `cli-${++invocation}`)
     const nodeArgs = []
@@ -98,15 +98,21 @@ function fixture(t) {
       writeFileSync(preload, inject)
       nodeArgs.push('--import', pathToFileURL(preload).href)
     }
+    const started = performance.now()
     const result = spawnSync(process.execPath, [
       ...nodeArgs, command, '--repo', repo, '--base', base, '--scratch-root', scratchRoot, ...args,
-    ], { encoding: 'utf8', timeout: 15_000, windowsHide: true })
+    ], { encoding: 'utf8', timeout, windowsHide: true })
+    const elapsedMs = performance.now() - started
     if (process.env.ECORP_DIFF_TEST_ROOT) {
       writeFileSync(`${log}.stdout`, result.stdout ?? '')
       writeFileSync(`${log}.stderr`, result.stderr ?? '')
-      writeFileSync(`${log}.json`, JSON.stringify({ args, status: result.status, before, after: snapshot() }, null, 2))
+      writeFileSync(`${log}.json`, JSON.stringify({
+        args, status: result.status, errorCode: result.error?.code ?? null,
+        signal: result.signal, elapsedMs, watchdogMs: timeout,
+        before, after: snapshot(), scratch: readdirSync(scratchRoot),
+      }, null, 2))
     }
-    assert.equal(result.error, undefined)
+    assert.equal(result.error?.code, undefined, 'CLI must exit before the external watchdog')
     assert.deepEqual(snapshot(), before)
     if (cleanup) assert.deepEqual(readdirSync(scratchRoot), [])
     return result
@@ -661,4 +667,79 @@ process.exitCode = 1
     operation: 'add', category: 'clean-filter-failed', code: null, status: 128, signal: null,
   })
   assert.deepEqual(report.cleanup, [])
+})
+
+for (const repeats of [24_000, Math.floor((8 * 1024 * 1024 - 4096) / 24)]) {
+  test(`F02 native filter repeated delimiters (${repeats}) cannot stall receipt or cleanup`, (t) => {
+    const f = fixture(t)
+    const filter = path.join(f.owned, 'hostile filter.mjs')
+    writeFileSync(filter, `process.stderr.write("fatal: x: clean filter '".repeat(${repeats}) + ${JSON.stringify(`${sensitive}\n`)})
+process.exitCode = 1
+`)
+    f.git(['config', 'filter.f02.clean', [process.execPath, filter]
+      .map((file) => `"${file.replaceAll('\\', '/')}"`).join(' ')])
+    f.git(['config', 'filter.f02.required', 'true'])
+    f.write('.gitattributes', 'filtered.txt filter=f02\n')
+    f.write('filtered.txt', 'source for the owned hostile filter\n')
+
+    // Prove native Git itself finished with bounded hostile stderr, not a setup
+    // failure or injected child result. Preserve this separate probe index.
+    const before = f.snapshot()
+    const env = { ...process.env, GIT_INDEX_FILE: path.join(f.owned, 'probe.index'), GIT_LITERAL_PATHSPECS: '1' }
+    f.git(['read-tree', f.base], { env })
+    const started = performance.now()
+    const probe = spawnSync('git', ['add', '-A', '--', 'filtered.txt'], {
+      cwd: f.repo, env, timeout: 1000, maxBuffer: 8 * 1024 * 1024, windowsHide: true,
+    })
+    const evidence = {
+      status: probe.status, errorCode: probe.error?.code ?? null,
+      elapsedMs: performance.now() - started, stderrBytes: probe.stderr?.length,
+      stderrSha256: hash(probe.stderr ?? ''),
+      hostilePrefix: probe.stderr?.toString('utf8').startsWith("fatal: x: clean filter '".repeat(repeats)),
+      fatalTail: probe.stderr?.toString('utf8').trimEnd().endsWith("fatal: filtered.txt: clean filter 'f02' failed"),
+      before, after: f.snapshot(),
+    }
+    if (process.env.ECORP_DIFF_TEST_ROOT) {
+      writeFileSync(path.join(f.owned, 'native-probe.json'), JSON.stringify(evidence, null, 2))
+    }
+    assert.equal(evidence.errorCode, null, 'native probe must finish before testing the classifier')
+    assert.equal(evidence.status, 128)
+    assert.ok(evidence.stderrBytes > repeats * 24 && evidence.stderrBytes < 8 * 1024 * 1024)
+    assert.equal(evidence.hostilePrefix, true)
+    assert.equal(evidence.fatalTail, true)
+    assert.deepEqual(evidence.after, before)
+    const report = failureReport(f.cli(['--path', 'filtered.txt', '--timeout-ms', '1000'], { timeout: 5000 }), f)
+    assert.deepEqual(report.original, {
+      operation: 'add', category: 'clean-filter-failed', code: null, status: 128, signal: null,
+    })
+    assert.deepEqual(report.cleanup, [])
+  })
+}
+
+test('F02 final-line recognition handles hostile near-limit shapes without trusting their text', (t) => {
+  const f = fixture(t)
+  const repeated = "fatal: x: clean filter '".repeat(Math.floor((8 * 1024 * 1024 - 4096) / 24))
+  for (const [stderr, category, operation = 'add'] of [
+    [repeated + sensitive, 'source-selection-failed'],
+    [repeated + "' failedX", 'source-selection-failed'],
+    [repeated + "' failed\r\n", 'clean-filter-failed'],
+    [`fatal: : clean filter 'x' failed\n`, 'source-selection-failed'],
+    [`fatal: x: clean filter '' failed\n`, 'source-selection-failed'],
+    [`fatal: x\r: clean filter 'y' failed\n`, 'source-selection-failed'],
+    [`fatal: x: clean filter 'y' failed\n${sensitive}\n`, 'source-selection-failed'],
+    [`${repeated}\nfatal: pathspec '${sensitive}' did not match any files\r\n`, 'missing-path'],
+    ['fatal: Needed a single revision\r\n', 'revision-unavailable', 'rev-parse'],
+    [`${sensitive}\nfatal: Needed a single revision\n`, 'git-exit', 'rev-parse'],
+  ]) {
+    // Construct large synthetic stderr inside the child, not in argv.
+    const body = stderr.startsWith(repeated)
+      ? `${JSON.stringify("fatal: x: clean filter '")}.repeat(${repeated.length / 24}) + ${JSON.stringify(stderr.slice(repeated.length))}`
+      : JSON.stringify(stderr)
+    const report = failureReport(f.cli([], {
+      timeout: 5000,
+      inject: injectGit(`throw Object.assign(new Error('${sensitive}'), { status: 128, stderr: Buffer.from(${body}) })`, operation),
+    }), f)
+    assert.deepEqual(report.original, { operation, category, code: null, status: 128, signal: null })
+    assert.deepEqual(report.cleanup, [])
+  }
 })
