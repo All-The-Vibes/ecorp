@@ -27,7 +27,9 @@ export function readOperationReceipt(file, expectedSha256) {
     const stat = fstatSync(descriptor)
     if (!stat.isFile() || stat.size < 1 || stat.size > MAX_RECEIPT_BYTES) throw new Error('size')
     const buffer = Buffer.alloc(MAX_RECEIPT_BYTES + 1)
-    const length = readSync(descriptor, buffer, 0, buffer.length, 0)
+    let length = 0, count
+    // Regular-file reads can be short; the extra byte still detects growth.
+    while (length < buffer.length && (count = readSync(descriptor, buffer, length, buffer.length - length, null)) > 0) length += count
     if (length > MAX_RECEIPT_BYTES || length !== stat.size) throw new Error('changing input')
     bytes = buffer.subarray(0, length)
   } catch {

@@ -259,7 +259,7 @@ export async function setAuditControl({ stateDirectory, sourceCommit, action, re
   });
 }
 
-export async function runAuditCycle({ stateDirectory, snapshot, sourceCommit, source = 'provided-snapshot', now, corpus = null, collectorProfile = null }) {
+export async function runAuditCycle({ stateDirectory, snapshot, sourceCommit, source = 'provided-snapshot', now, corpus = null, collectorProfile = null, inputAcquisitionFailed = false }) {
   pinSource(sourceCommit); requireThat(SOURCES.includes(source), 'SOURCE', 'Invalid audit source label.');
   requireThat(collectorProfile === null || source === 'live-github-two-pass', 'COLLECTOR_PROFILE_SOURCE', 'Collector profiles apply only to actual live collection.');
   const at = checkedTime(now), policy = collectorPolicy(collectorProfile);
@@ -275,6 +275,7 @@ export async function runAuditCycle({ stateDirectory, snapshot, sourceCommit, so
     let checkpointAttempted = false;
     const partialArtifacts = [];
     try {
+      requireThat(!inputAcquisitionFailed, 'INPUT_ACQUISITION_FAILED', 'Audit input acquisition failed; raw inputs and errors are withheld.');
       validateSnapshot(snapshot, policy);
       requireThat(snapshot.scope.source_commit === sourceCommit, 'SOURCE_DRIFT', 'Snapshot no longer matches the pinned repository source.');
       const age = at.getTime() - Date.parse(snapshot.captured_at);

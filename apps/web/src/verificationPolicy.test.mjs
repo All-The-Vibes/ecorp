@@ -27,12 +27,34 @@ for (const expected of defaults) {
 }
 
 test('check summaries preserve paths, argument boundaries, byte floors, JSON keys, and rounded timeouts', () => {
-  assert.equal(verifierCheckSummary(defaultVerifierCheck()), 'Provider artifact · at least 1 bytes')
-  assert.equal(verifierCheckSummary(defaultVerifierCheck('file')), 'File README.md · at least 1 bytes')
+  assert.equal(verifierCheckSummary(defaultVerifierCheck()), 'Provider artifact · at least 1 byte')
+  assert.equal(verifierCheckSummary(defaultVerifierCheck('file')), 'File README.md · at least 1 byte')
   assert.equal(verifierCheckSummary(defaultVerifierCheck('screenshot')), `Screenshot evidence/browser.png · at least ${(1000).toLocaleString()} bytes`)
-  assert.equal(verifierCheckSummary(defaultVerifierCheck('json_schema')), 'JSON evidence/result.json · keys: status')
-  assert.equal(verifierCheckSummary(defaultVerifierCheck('command')), 'Command · git status --short · 60s')
-  assert.equal(verifierCheckSummary({ type: 'test', program: 'node', args: ['one two', '--test'], timeout_ms: 1499 }), 'Test · node one two --test · 1s')
+  assert.equal(verifierCheckSummary(defaultVerifierCheck('json_schema')), 'JSON evidence/result.json · keys: ["status"]')
+  assert.equal(verifierCheckSummary(defaultVerifierCheck('command')), 'Command · ["git","status","--short"] · 60s')
+  assert.equal(verifierCheckSummary({ type: 'test', program: 'node', args: ['one two', '--test'], timeout_ms: 1499 }), 'Test · ["node","one two","--test"] · 1s')
+})
+
+test('array summaries distinguish item boundaries and preserve exact argument and key values', () => {
+  for (const type of ['command', 'test']) {
+    const check = { type, program: 'tool directory/runner.exe', args: ['one two'], timeout_ms: 2000 }
+    assert.notEqual(verifierCheckSummary(check), verifierCheckSummary({ ...check, args: ['one', 'two'] }))
+    for (const args of [[], ['one two', 'two  spaces', '', 'quoted "value"', 'back\\slash', 'line\nfeed', '\ttab', '>target&other']]) {
+      const summary = verifierCheckSummary({ ...check, args })
+      assert.deepEqual(JSON.parse(summary.slice(summary.indexOf('['), summary.lastIndexOf(']') + 1)), [check.program, ...args])
+      assert.ok(summary.endsWith(' · 2s'))
+    }
+  }
+  const schema = { type: 'json_schema', path: 'schema.json', required_keys: ['one, two'] }
+  assert.notEqual(verifierCheckSummary(schema), verifierCheckSummary({ ...schema, required_keys: ['one', 'two'] }))
+  assert.deepEqual(JSON.parse(verifierCheckSummary(schema).split(' · keys: ')[1]), schema.required_keys)
+})
+
+test('byte-counted summaries use singular byte only for the one-byte floor', () => {
+  for (const type of ['artifact', 'file', 'screenshot']) {
+    assert.ok(verifierCheckSummary({ ...defaultVerifierCheck(type), min_bytes: 1 }).endsWith('at least 1 byte'))
+    assert.ok(verifierCheckSummary({ ...defaultVerifierCheck(type), min_bytes: 2 }).endsWith('at least 2 bytes'))
+  }
 })
 
 test('empty and oversized policies remain invalid, with the 16-check boundary accepted', () => {

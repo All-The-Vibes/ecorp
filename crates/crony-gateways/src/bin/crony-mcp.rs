@@ -20,7 +20,7 @@ struct Args {
     actor_id: Uuid,
     #[arg(long, env = "CRONY_ACCESS_TOKEN", hide_env_values = true)]
     access_token: Option<String>,
-    /// Expose only snapshot reads; reject every other tool before making API calls.
+    /// Expose only snapshot and recovery-context reads; reject write tools before API calls.
     #[arg(long, env = "CRONY_MCP_READ_ONLY", default_value_t = false)]
     read_only: bool,
 }
@@ -54,11 +54,12 @@ async fn main() -> Result<()> {
     while let Some(line) = lines.next_line().await? {
         let response = match serde_json::from_str::<serde_json::Value>(&line) {
             Ok(value) => {
-                // Notifications have no id member; an explicit null id still
-                // receives a response. Never execute tools through notifications.
-                let notification = value.is_object() && value.get("id").is_none();
+                // This gateway keeps omitted-ID objects silent and effect-free,
+                // including malformed notifications. Explicit null remains a request.
+                if value.is_object() && value.get("id").is_none() {
+                    continue;
+                }
                 match serde_json::from_value::<JsonRpcRequest>(value) {
-                    Ok(_) if notification => continue,
                     Ok(request) => handle_mcp_with_access(&client, request, access).await,
                     Err(_) => crony_gateways::failure(None, -32600, "invalid JSON-RPC request"),
                 }

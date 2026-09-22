@@ -10,6 +10,7 @@ import * as feedback from '../scenarios/repo-steward/lib/feedback.mjs'
 export const FEEDBACK_ADMISSION_LIMITS = Object.freeze({ bytes: 1024 * 1024, rules: 8, references: 64,
   referenceBytes: 500, guidanceBytes: 8192, maximumAgeMs: 300000, timeoutMs: 30000,
   envelopeBytes: 4 * 1024 * 1024, patchBytes: 2 * 1024 * 1024, changes: 64 })
+export const FEEDBACK_REVIEW_MAXIMUM_AGE_MS = 24 * 60 * 60 * 1000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u
 const HASH = /^[0-9a-f]{64}$/u
 const RULE = /^FB-[0-9a-f]{64}$/u
@@ -121,6 +122,9 @@ function decodeCanonicalBase64(value, maximum, code) {
 }
 export function bindFeedbackCorpusArtifact({ receipt, artifactId, artifactPath = null, artifactBytes, corpusBytes }) {
   const artifact = sourceEligible(receipt, artifactId, artifactPath)
+  return bindCorpusArtifactBytes({ receipt, artifact, artifactPath, artifactBytes, corpusBytes })
+}
+function bindCorpusArtifactBytes({ receipt, artifact, artifactPath, artifactBytes, corpusBytes }) {
   bounded(corpusBytes)
   bounded(artifactBytes, 'corpus_artifact_unavailable', FEEDBACK_ADMISSION_LIMITS.envelopeBytes)
   requireThat(artifactBytes.length === artifact.bytes && sha(artifactBytes) === artifact.sha256, 'corpus_artifact_bytes_mismatch')
@@ -292,6 +296,159 @@ export function buildFeedbackProposal({ corpusBytes, reviewBytes, receiptBytes, 
   } catch (error) { return { ...base, reasons: [safeCode(error)] } }
 }
 
+// Review preparation is deliberately separate from accepted-source admission.
+// This helper is used only by the read-only intent path, never by apply.
+function pendingReviewSourceEligible(receipt, artifactId, artifactPath) {
+  try { operations.validateOperationReceipt(receipt) } catch { throw new FeedbackAdmissionError('invalid_source_receipt') }
+  requireThat(receipt.mode === 'current-run' && receipt.origin.kind === 'direct', 'unsupported_source_origin')
+  requireThat(receipt.run.status === 'waiting_for_approval' && receipt.run.verification_status === 'waiting_for_approval'
+    && receipt.task.status === 'awaiting_approval' && receipt.run.is_latest_task_run === true
+    && !receipt.verification.persisted_acceptance_observed, 'source_not_pending_review')
+  requireThat(receipt.verification.automated_checks_complete && receipt.verification.automated_checks_passed
+    && receipt.verification.expected_check_count > 0, 'source_checks_incomplete')
+  requireThat(isHash(receipt.run.verification_sha256) && receipt.lineage.resume_chain_complete, 'source_review_evidence_incomplete')
+  requireThat(receipt.verification.manual_gate?.gate_type === 'independent_review'
+    && receipt.verification.manual_gate.status === 'pending', 'source_not_pending_independent_review')
+  requireThat(isUuid(artifactId), 'invalid_artifact_selection')
+  requireThat(artifactPath === null || safeArtifactPath(artifactPath), 'invalid_artifact_path')
+  const artifact = receipt.artifacts.find(item => item.id === artifactId)
+  requireThat(artifact?.byte_hash_verified && artifact.signature_header_matches_record, 'missing_corpus_artifact')
+  requireThat(artifactPath === null ? ['application/json', 'text/plain', 'text/markdown'].includes(artifact.media_type)
+    : artifact.role === 'source_deliverable' && artifact.media_type === TYPED_ARTIFACT_MEDIA_TYPE, 'unsupported_corpus_binding')
+  return artifact
+}
+
+export function projectFeedbackNativeReview(payload, receipt) {
+  const snapshot = payload?.snapshot, scope = receipt.scope
+  requireThat(snapshot?.corp?.id === scope.corp_id, 'review_corp_mismatch')
+  const run = exactlyOne(snapshot.runs, scope.run_id, 'review_run_unavailable')
+  const task = exactlyOne(snapshot.tasks, scope.task_id, 'review_task_unavailable')
+  const mission = exactlyOne(snapshot.missions, scope.mission_id, 'review_mission_unavailable')
+  const agent = exactlyOne(snapshot.agents, run.agent_id, 'review_producer_unavailable')
+  const rows = snapshot.verification_requests?.filter(row => row?.run_id === scope.run_id)
+  requireThat(rows?.length === 1, 'native_review_unavailable')
+  const request = rows[0]
+  requireThat([run, task, mission, agent, request].every(row => row.corp_id === scope.corp_id)
+    && run.task_id === task.id && task.mission_id === mission.id && request.task_id === task.id
+    && mission.room_id === scope.room_id && run.agent_id === receipt.run.agent_id
+    && run.verification_sha256 === receipt.run.verification_sha256
+    && run.status === receipt.run.status && run.verification_status === receipt.run.verification_status
+    && task.contract_version === receipt.task.contract_version
+    && mission.specification_version === receipt.mission.specification_version, 'native_review_scope_mismatch')
+  requireThat(isUuid(agent.actor_id) && isUuid(mission.requested_by) && object(task.verification_policy), 'native_review_identity_missing')
+  requireThat(request.gate_type === 'independent_review' && request.gate?.type === 'independent_review'
+    && request.gate.exclude_requester === true && Array.isArray(request.gate.roles) && request.gate.roles.length > 0
+    && request.gate.roles.every(role => typeof role === 'string' && role.length > 0)
+    && equal(request.gate, task.verification_policy.manual_gate), 'native_review_gate_mismatch')
+  requireThat(['pending', 'approved', 'rejected'].includes(request.status), 'native_review_status_invalid')
+  if (request.status === 'pending') {
+    requireThat(request.decided_by == null && request.decided_at == null && request.decision_note == null, 'native_review_contradictory')
+  } else {
+    requireThat(isUuid(request.decided_by) && typeof request.decision_note === 'string', 'native_review_decision_missing')
+    iso(request.decided_at)
+  }
+  return { scope: clone(scope), producer_actor_id: agent.actor_id, requester_actor_id: mission.requested_by,
+    verification_policy: clone(task.verification_policy), gate: clone(request.gate), status: request.status,
+    requested_at: iso(request.requested_at), decided_by: request.decided_by ?? null,
+    decided_at: request.decided_at == null ? null : iso(request.decided_at), decision_note: request.decision_note ?? null }
+}
+
+function reviewSourceBinding(receipt, review, artifact, artifactPath) {
+  requireThat(equal(review.scope, receipt.scope) && isUuid(review.producer_actor_id) && isUuid(review.requester_actor_id)
+    && review.gate?.type === 'independent_review' && review.gate.exclude_requester === true
+    && equal(review.gate, review.verification_policy?.manual_gate), 'native_review_scope_mismatch')
+  // The runner's persisted verification_sha256 hashes the pre-decision report.
+  // Bind policy and automated evidence separately; acceptance/status/decision
+  // timestamps are intentionally absent from this stable identity.
+  return { ...clone(receipt.source), mission_id: receipt.scope.mission_id, task_id: receipt.scope.task_id,
+    run_id: receipt.scope.run_id, contract_version: receipt.task.contract_version,
+    specification_version: receipt.mission.specification_version,
+    verification_sha256: receipt.run.verification_sha256, verification_policy_sha256: digest(review.verification_policy),
+    automated_evidence_sha256: digest({ expected_check_count: receipt.verification.expected_check_count,
+      evidence: receipt.verification.evidence }), review_requested_at: iso(review.requested_at),
+    producer_actor_id: review.producer_actor_id, requester_actor_id: review.requester_actor_id,
+    artifact_id: artifact.id, artifact_sha256: artifact.sha256, artifact_path: artifactPath }
+}
+function reviewIntentContent(options, review, artifact, createdAt, expiresAt, intentId, validateCorpus) {
+  const { corpusBytes, reviewBytes, receiptBytes, selectedRuleIds, target, artifactPath = null } = options
+  const corpus = parse(corpusBytes), receipt = parse(receiptBytes), at = Date.parse(iso(createdAt))
+  requireThat(isUuid(intentId) && Date.parse(iso(expiresAt)) > at
+    && Date.parse(expiresAt) - at <= FEEDBACK_REVIEW_MAXIMUM_AGE_MS, 'review_intent_expiry_invalid')
+  requireThat(Date.parse(iso(review.requested_at)) <= at, 'review_intent_predates_request')
+  const selected = selection(corpus, selectedRuleIds, reviewBytes, at, validateCorpus)
+  requireThat(selected.every(rule => Date.parse(rule.expires_at) >= Date.parse(expiresAt)), 'review_intent_exceeds_rule_expiry')
+  requireThat(corpus.scope.repository.toLowerCase() === receipt.source.repository.toLowerCase()
+    && corpus.records.filter(record => selectedRuleIds.includes(record.id)).every(record =>
+      record.evidence.every(item => item.source_commit === receipt.source.base_commit)), 'corpus_source_mismatch')
+  targetEligible(target, receipt)
+  const suffix = [
+    `Advisory feedback corpus ${digest(corpus)}; source run ${receipt.scope.run_id}; artifact ${artifact.id}${artifactPath === null ? '' : `; file ${artifactPath}`}. Context only; the existing task contract and verification policy remain authoritative.`,
+    ...selected.map(record => `Advisory ${record.id} (${record.digest}); ${record.guidance.route}: ${record.guidance.text}`),
+  ]
+  const references = [...target.task.contract.references, ...suffix]
+  requireThat(references.length <= FEEDBACK_ADMISSION_LIMITS.references && references.every(value => typeof value === 'string'
+    && value.trim().length > 0 && Buffer.byteLength(value) <= FEEDBACK_ADMISSION_LIMITS.referenceBytes), 'reference_bounds_exceeded')
+  requireThat(Buffer.byteLength(suffix.join('\n')) <= FEEDBACK_ADMISSION_LIMITS.guidanceBytes, 'guidance_bounds_exceeded')
+  requireThat(!suffix.some(value => target.task.contract.references.includes(value)), 'guidance_already_present')
+  return { schema_version: 1, kind: 'ecorp-native-feedback-adoption-intent', state: 'ready-for-native-review',
+    intent_id: intentId, created_at: iso(createdAt), expires_at: iso(expiresAt),
+    scope: { server_origin_sha256: receipt.scope.server_origin_sha256, corp_id: receipt.scope.corp_id,
+      room_id: receipt.scope.room_id, adopter_actor_id: receipt.scope.actor_id },
+    source: reviewSourceBinding(receipt, review, artifact, artifactPath), corpus_sha256: sha(corpusBytes),
+    corpus_digest: digest(corpus), local_review_sha256: sha(reviewBytes), selected,
+    target: { mission_id: target.mission.id, task_id: target.task.id, specification_version: target.mission.specification_version,
+      contract_version: target.task.contract_version, description_sha256: sha(target.mission.description),
+      previous_contract_sha256: digest(target.task.contract), verification_policy_sha256: digest(target.task.verification_policy),
+      replacement_contract_sha256: digest({ ...target.task.contract, references }) },
+    reference_suffix: suffix, effect: 'append-selected-advisory-references-only; no launch',
+    review_requirement: 'native-independent-review; exclude producer, source requester and adopter' }
+}
+export function feedbackReviewNote(intent) {
+  return `ECorp advisory adoption v1; intent-sha256=${digest(intent)}; approve the exact corpus, selected rules and reference-only target revision; no launch.`
+}
+export function buildFeedbackReviewIntent(options, review, dependencies = {}) {
+  const receipt = parse(options.receiptBytes), artifactPath = options.artifactPath ?? null
+  const artifact = pendingReviewSourceEligible(receipt, options.artifactId, artifactPath)
+  requireThat(review.status === 'pending', 'native_review_not_pending')
+  bindCorpusArtifactBytes({ receipt, artifact, artifactPath, artifactBytes: options.sourceArtifactBytes, corpusBytes: options.corpusBytes })
+  const at = Date.parse(iso(options.now ?? new Date()))
+  const selected = selection(parse(options.corpusBytes), options.selectedRuleIds, options.reviewBytes, at, dependencies.validateCorpus ?? feedback.validateFeedbackCorpus)
+  const expires = Math.min(at + FEEDBACK_REVIEW_MAXIMUM_AGE_MS, ...selected.map(rule => Date.parse(rule.expires_at)))
+  requireThat(expires - at >= 1000 && Date.parse(review.requested_at) <= at, 'review_intent_expiry_invalid')
+  return reviewIntentContent(options, review, artifact, new Date(at), new Date(expires), options.idempotencyKey ?? randomUUID(),
+    dependencies.validateCorpus ?? feedback.validateFeedbackCorpus)
+}
+function buildReviewedProposal(options, review, dependencies) {
+  const intent = parse(options.reviewIntentBytes), receipt = parse(options.receiptBytes)
+  const at = Date.parse(iso(options.now ?? new Date()))
+  requireThat(intent.kind === 'ecorp-native-feedback-adoption-intent' && intent.schema_version === 1
+    && Date.parse(iso(intent.created_at)) <= at && at < Date.parse(iso(intent.expires_at)), 'review_intent_expired_or_invalid')
+  const artifact = sourceEligible(receipt, options.artifactId, options.artifactPath ?? null)
+  const expected = reviewIntentContent(options, review, artifact, intent.created_at, intent.expires_at, intent.intent_id, dependencies.validateCorpus)
+  requireThat(equal(intent, expected), 'review_intent_binding_changed')
+  requireThat(review.status === 'approved' && isUuid(review.decided_by)
+    && ![review.producer_actor_id, review.requester_actor_id, receipt.scope.actor_id].includes(review.decided_by), 'native_independent_review_not_approved')
+  const decidedAt = Date.parse(iso(review.decided_at))
+  requireThat(decidedAt >= Date.parse(intent.created_at) && decidedAt >= Date.parse(review.requested_at)
+    && decidedAt < Date.parse(intent.expires_at) && decidedAt <= at, 'native_review_time_invalid')
+  requireThat(review.decision_note === feedbackReviewNote(intent), 'native_review_intent_note_mismatch')
+  requireThat(receipt.verification.manual_gate?.gate_type === 'independent_review'
+    && receipt.verification.manual_gate.decided_by === review.decided_by
+    && Date.parse(receipt.verification.manual_gate.decided_at) === decidedAt, 'native_review_receipt_mismatch')
+  const ttlMs = Math.min(options.ttlMs ?? FEEDBACK_ADMISSION_LIMITS.maximumAgeMs, Date.parse(intent.expires_at) - at)
+  const result = buildFeedbackProposal({ ...options, now: new Date(at), ttlMs, idempotencyKey: intent.intent_id, requireIndependentReview: false }, dependencies)
+  requireThat(result.state === 'ready-for-review', result.reasons[0] ?? 'reviewed_proposal_unavailable')
+  result.schema_version = 2
+  result.inputs.require_independent_review = true
+  result.inputs.review_intent_sha256 = sha(options.reviewIntentBytes)
+  result.native_review = { intent_sha256: digest(intent), run_id: receipt.scope.run_id, gate: clone(review.gate),
+    requested_at: review.requested_at, decided_by: review.decided_by, decided_at: review.decided_at,
+    decision_note_sha256: sha(review.decision_note) }
+  result.assurance.native_independent_review_binding_verified = true
+  result.request.reason = `Native-reviewed advisory adoption ${digest(intent)}; source run ${receipt.scope.run_id}. Reference-only; no launch or future authority.`
+  return result
+}
+
 async function nativeJson(env, route, { method = 'GET', body, timeoutMs = FEEDBACK_ADMISSION_LIMITS.timeoutMs } = {}) {
   const config = configuration(env, timeoutMs)
   const response = await fetch(`${config.childEnv.CRONY_SERVER_HTTP}${route}`, { method, redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
@@ -319,6 +476,11 @@ export async function readFeedbackTarget({ env = process.env, missionId, taskId,
 const defaults = {
   readSource: options => { requireThat(typeof operations.exportOperationEvidence === 'function', 'artifact_capture_unavailable'); return operations.exportOperationEvidence(options) },
   readTarget: readFeedbackTarget,
+  readReview: async ({ env, receipt, timeoutMs }) => {
+    sameScope(receipt, trustedScope(env, timeoutMs))
+    const { payload } = await readMcpSnapshot({ env, timeoutMs })
+    return projectFeedbackNativeReview(payload, receipt)
+  },
   revise: ({ env, corpId, missionId, body, timeoutMs }) => nativeJson(env, `/api/corps/${corpId}/missions/${missionId}/contract-revisions`, { method: 'POST', body, timeoutMs }),
   validateCorpus: corpus => { requireThat(typeof feedback.validateFeedbackCorpus === 'function', 'corpus_validator_unavailable'); return feedback.validateFeedbackCorpus(corpus) },
 }
@@ -336,15 +498,49 @@ async function checkedSource({ receiptBytes, artifactId, artifactPath = null, en
   return { receipt: observed.receipt, bytes: bounded(artifacts[0].bytes, 'corpus_artifact_unavailable', FEEDBACK_ADMISSION_LIMITS.envelopeBytes) }
 }
 
+async function checkedReviewedSource(options, native) {
+  const remaining = deadline(options.timeoutMs), receipt = parse(options.receiptBytes)
+  const before = await native.readReview({ env: options.env, receipt, timeoutMs: remaining() })
+  const source = await checkedSource({ ...options, timeoutMs: remaining() }, native)
+  const review = await native.readReview({ env: options.env, receipt: source.receipt, timeoutMs: remaining() })
+  requireThat(equal(before, review), 'native_review_changed_during_capture')
+  return { ...source, review }
+}
+
+export async function prepareFeedbackReviewIntent(options, dependencies = {}) {
+  const native = { ...defaults, ...dependencies }, env = options.env ?? process.env
+  const remaining = deadline(options.timeoutMs ?? FEEDBACK_ADMISSION_LIMITS.timeoutMs)
+  try {
+    const receipt = parse(options.receiptBytes), artifactPath = options.artifactPath ?? null
+    pendingReviewSourceEligible(receipt, options.artifactId, artifactPath)
+    sameScope(receipt, trustedScope(env, remaining()))
+    const before = await native.readReview({ env, receipt, timeoutMs: remaining() })
+    const observed = await native.readSource({ env, runId: receipt.scope.run_id, mode: 'current-run',
+      artifactIds: [options.artifactId], timeoutMs: remaining() })
+    pendingReviewSourceEligible(observed.receipt, options.artifactId, artifactPath)
+    requireThat(operations.operationReceiptFingerprint(receipt) === operations.operationReceiptFingerprint(observed.receipt), 'pending_source_changed')
+    const after = await native.readReview({ env, receipt: observed.receipt, timeoutMs: remaining() })
+    requireThat(equal(before, after), 'native_review_changed_during_capture')
+    const artifacts = observed.artifactBytes?.filter(item => item.id === options.artifactId)
+    requireThat(artifacts?.length === 1, 'corpus_artifact_unavailable')
+    const target = await native.readTarget({ env, missionId: options.missionId, taskId: options.taskId, timeoutMs: remaining() })
+    remaining()
+    return buildFeedbackReviewIntent({ ...options, target, sourceArtifactBytes: artifacts[0].bytes }, after, native)
+  } catch (error) { return { schema_version: 1, kind: 'ecorp-native-feedback-adoption-intent', state: 'candidate', reasons: [safeCode(error)] } }
+}
+
 export async function prepareOperationFeedback(options, dependencies = {}) {
   const native = { ...defaults, ...dependencies }
   const { env = process.env, timeoutMs = FEEDBACK_ADMISSION_LIMITS.timeoutMs, missionId, taskId } = options
   const remaining = deadline(timeoutMs)
   let source, target, observationError
   try {
-    source = await checkedSource({ ...options, env, timeoutMs: remaining() }, native)
+    requireThat(options.requireNativeIndependentReview === undefined || typeof options.requireNativeIndependentReview === 'boolean', 'invalid_review_requirement')
+    requireThat(Boolean(options.requireNativeIndependentReview) === (options.reviewIntentBytes !== undefined), 'review_intent_required')
+    source = await (options.requireNativeIndependentReview ? checkedReviewedSource : checkedSource)({ ...options, env, timeoutMs: remaining() }, native)
     target = await native.readTarget({ env, timeoutMs: remaining(), missionId, taskId })
     remaining()
+    if (options.requireNativeIndependentReview) return buildReviewedProposal({ ...options, target, sourceArtifactBytes: source.bytes }, source.review, native)
   } catch (error) { observationError = safeCode(error) }
   const proposal = buildFeedbackProposal({ ...options, target, sourceArtifactBytes: source?.bytes }, native)
   return observationError ? { ...proposal, state: 'candidate', reasons: [observationError], request: null } : proposal
@@ -377,30 +573,40 @@ function unchangedAfterRevision(proposal, current) {
 }
 
 export async function applyOperationFeedback({ proposalBytes, expectedSha256, corpusBytes, reviewBytes, receiptBytes,
-  env = process.env, now, timeoutMs = FEEDBACK_ADMISSION_LIMITS.timeoutMs }, dependencies = {}) {
+  reviewIntentBytes, env = process.env, now, timeoutMs = FEEDBACK_ADMISSION_LIMITS.timeoutMs }, dependencies = {}) {
   const native = { ...defaults, ...dependencies }
   const remaining = deadline(timeoutMs)
   const clock = dependencies.clock ?? (() => now ?? new Date())
   const result = { schema_version: 1, kind: 'ecorp-feedback-application-receipt', checked_at: iso(clock()), status: 'refused-before-effect',
     proposal_sha256: sha(bounded(proposalBytes)), mutation_requests: 0, launched: false, native_revision_id: null,
     source_check_non_atomic: true, production_identity_verified: false, independent_review_verified: false }
-  let proposal, sourceOptions
+  let proposal, sourceOptions, reviewedSource
   try {
     requireThat(isHash(expectedSha256) && result.proposal_sha256 === expectedSha256, 'proposal_byte_hash_mismatch')
     proposal = parse(proposalBytes)
     requireThat(Buffer.from(`${JSON.stringify(proposal, null, 2)}\n`).equals(proposalBytes), 'proposal_encoding_changed')
     requireThat(proposal.state === 'ready-for-review' && proposal.kind === 'ecorp-feedback-contract-proposal', 'proposal_not_ready')
+    requireThat([1, 2].includes(proposal.schema_version), 'proposal_schema_unsupported')
+    const reviewed = proposal.schema_version === 2
+    if (reviewed) {
+      result.schema_version = 2
+      result.native_independent_review_binding_verified = false
+      requireThat(proposal.inputs.require_independent_review === true && Buffer.isBuffer(reviewIntentBytes)
+        && sha(bounded(reviewIntentBytes)) === proposal.inputs.review_intent_sha256, 'review_intent_bytes_changed')
+    } else requireThat(reviewIntentBytes === undefined, 'unexpected_review_intent')
     requireThat(Date.parse(proposal.created_at) <= Date.parse(result.checked_at) && Date.parse(result.checked_at) < Date.parse(proposal.expires_at)
       && Date.parse(proposal.expires_at) - Date.parse(proposal.created_at) <= FEEDBACK_ADMISSION_LIMITS.maximumAgeMs, 'proposal_expired_or_future')
     for (const [key, bytes] of [['corpus', corpusBytes], ['review', reviewBytes], ['receipt', receiptBytes]]) {
       requireThat(sha(bounded(bytes)) === proposal.inputs[`${key}_sha256`], 'input_bytes_changed')
     }
     sourceOptions = { receiptBytes, artifactId: proposal.inputs.artifact_id, artifactPath: proposal.inputs.artifact_path, env }
-    const source = await checkedSource({ ...sourceOptions, timeoutMs: remaining() }, native)
-    const rebuilt = buildFeedbackProposal({ corpusBytes, reviewBytes, receiptBytes, sourceArtifactBytes: source.bytes,
+    const source = await (reviewed ? checkedReviewedSource : checkedSource)({ ...sourceOptions, timeoutMs: remaining() }, native)
+    reviewedSource = source.review
+    const rebuildOptions = { corpusBytes, reviewBytes, receiptBytes, sourceArtifactBytes: source.bytes,
       artifactId: proposal.inputs.artifact_id, artifactPath: proposal.inputs.artifact_path, selectedRuleIds: proposal.inputs.selected_rule_ids, target: proposal.target,
       now: proposal.created_at, ttlMs: Date.parse(proposal.expires_at) - Date.parse(proposal.created_at),
-      idempotencyKey: proposal.idempotency_key, requireIndependentReview: proposal.inputs.require_independent_review }, native)
+      idempotencyKey: proposal.idempotency_key, requireIndependentReview: proposal.inputs.require_independent_review, reviewIntentBytes }
+    const rebuilt = reviewed ? buildReviewedProposal(rebuildOptions, source.review, native) : buildFeedbackProposal(rebuildOptions, native)
     requireThat(equal(proposal, rebuilt), 'proposal_contents_changed')
     // Current expiry is independent of the byte-stable proposal reconstruction.
     requireThat(proposal.selected.every(record => Date.parse(record.expires_at) > Date.parse(result.checked_at)), 'rule_expired')
@@ -440,13 +646,18 @@ export async function applyOperationFeedback({ proposalBytes, expectedSha256, co
     requireThat(unchangedAfterRevision(proposal, target), 'target_changed_after_revision')
   } catch { return { ...result, status: 'outcome-unknown', error: 'native_revision_readback_not_confirmed' } }
   try {
-    const source = await checkedSource({ ...sourceOptions, timeoutMs: remaining() }, native)
+    const source = await (proposal.schema_version === 2 ? checkedReviewedSource : checkedSource)({ ...sourceOptions, timeoutMs: remaining() }, native)
+    if (proposal.schema_version === 2) requireThat(equal(source.review, reviewedSource), 'native_review_changed_after_revision')
     const binding = bindFeedbackCorpusArtifact({ receipt: source.receipt, artifactId: proposal.inputs.artifact_id,
       artifactPath: proposal.inputs.artifact_path, artifactBytes: source.bytes, corpusBytes })
     requireThat(equal(binding, proposal.source.corpus_binding), 'source_artifact_changed')
     requireThat(proposal.selected.every(record => Date.parse(iso(clock())) < Date.parse(record.expires_at)), 'rule_expired_after_revision')
     result.source_after_fingerprint_sha256 = operations.operationReceiptFingerprint(source.receipt)
   } catch { return { ...result, status: 'applied-but-source-changed', error: 'source_readback_changed_or_unavailable' } }
+  if (proposal.schema_version === 2) {
+    result.native_independent_review_binding_verified = true
+    result.native_review = clone(proposal.native_review)
+  }
   return { ...result, status: 'applied', authority: 'Native actor-authorized reference-only contract revision; no launch or future authority.' }
 }
 
@@ -458,7 +669,10 @@ export function readFeedbackFile(file, expectedSha256) {
     descriptor = openSync(file, 'r')
     const stat = fstatSync(descriptor)
     requireThat(stat.isFile() && stat.size > 0 && stat.size <= FEEDBACK_ADMISSION_LIMITS.bytes, 'unbounded_input')
-    const buffer = Buffer.alloc(stat.size + 1), length = readSync(descriptor, buffer, 0, buffer.length, 0)
+    const buffer = Buffer.alloc(stat.size + 1)
+    let length = 0, count
+    // Regular-file reads can be short; the extra byte still detects growth.
+    while (length < buffer.length && (count = readSync(descriptor, buffer, length, buffer.length - length, null)) > 0) length += count
     requireThat(length === stat.size, 'input_changed_during_read')
     const bytes = buffer.subarray(0, length)
     if (expectedSha256 !== undefined) requireThat(isHash(expectedSha256) && sha(bytes) === expectedSha256, 'input_byte_hash_mismatch')
@@ -481,43 +695,59 @@ function writeOutput(descriptor, value) {
 export function renderFeedbackProposal(proposal) {
   if (proposal.state !== 'ready-for-review') return `Feedback remains candidate: ${proposal.reasons.join(', ')}. No native mutation.\n`
   return `Review advisory references for mission ${proposal.target.mission.id}, task ${proposal.target.task.id}.\n\nSource run: ${proposal.source.scope.run_id}\nCorpus: ${proposal.corpus_digest}\nExpected contract version: ${proposal.request.expected_contract_version}\nExpires: ${proposal.expires_at}\n\nExisting references:\n~~~json\n${JSON.stringify(proposal.target.task.contract.references, null, 2)}\n~~~\n\nOnly these references will be appended:\n~~~json\n${JSON.stringify(proposal.reference_suffix, null, 2)}\n~~~\n\nAll other task fields and verifier policy stay unchanged. Application is a native contract revision; launch remains separate. Local review hashes do not prove independent or production identity. Source observation and revision are non-atomic. The bounded snapshot shows no target run; only the native endpoint can recheck full historical run state during admission.\n`
+    + (proposal.schema_version === 2 ? `\nNative independent decision observed for canonical intent digest ${proposal.native_review.intent_sha256}. Reviewer: ${proposal.native_review.decided_by}; decision: ${proposal.native_review.decided_at}. This client binding is not mandatory server adoption policy or proof of production-human identity.\n` : '')
+}
+export function renderFeedbackReviewIntent(intent) {
+  if (intent.state !== 'ready-for-native-review') return `Feedback review intent remains candidate: ${intent.reasons.join(', ')}. No native mutation.\n`
+  const rawHash = sha(Buffer.from(`${JSON.stringify(intent, null, 2)}\n`))
+  return `Review one reference-only advisory adoption\n\nCanonical intent digest (bound by the decision note): ${digest(intent)}\nRaw intent-file SHA-256 (for --review-intent-sha256): ${rawHash}\n\nSource run: ${intent.source.run_id}\nTarget mission/task: ${intent.target.mission_id} / ${intent.target.task_id}\nAdopter: ${intent.scope.adopter_actor_id}\nExpires: ${intent.expires_at}\n\nExact advisory references:\n~~~json\n${JSON.stringify(intent.reference_suffix, null, 2)}\n~~~\n\nIf the actual authorized independent reviewer approves this exact intent, use the existing native verification decision for the source run with this exact note:\n~~~text\n${feedbackReviewNote(intent)}\n~~~\n\nThis tool submits no decision and grants no launch. A generic approval note is insufficient. Existing completed runs cannot be reopened. Native decision provenance does not attest historical production authentication or a physical human's involvement in a development fixture.\n`
 }
 // A valid candidate is a successful preparation report, not successful adoption.
 // Apply uses 0 only for confirmed application; 2 means pre-effect refusal and 3
 // means an uncertain or applied-but-changed outcome requiring reconciliation.
 export function feedbackCommandExitCode(command, result) {
   if (command === 'prepare') return ['candidate', 'ready-for-review'].includes(result.state) ? 0 : 1
+  if (command === 'prepare-review') return ['candidate', 'ready-for-native-review'].includes(result.state) ? 0 : 1
   if (command === 'apply') return result.status === 'applied' ? 0 : result.status === 'refused-before-effect' ? 2 : 3
   return 1
 }
 export async function main(argv = process.argv.slice(2), dependencies = {}) {
   requireThat(Array.isArray(argv) && argv.every(value => typeof value === 'string' && value.length > 0 && value.length <= 4096 && !/[\r\n\0]/u.test(value)), 'invalid_arguments')
   const command = argv[0] && !argv[0].startsWith('--') ? argv.shift() : 'prepare'
-  const allowed = command === 'prepare' ? ['corpus', 'corpus-sha256', 'review', 'review-sha256', 'receipt', 'receipt-sha256', 'artifact-id', 'artifact-path', 'rule-ids', 'mission-id', 'task-id', 'out']
+  const preparationArgs = ['corpus', 'corpus-sha256', 'review', 'review-sha256', 'receipt', 'receipt-sha256', 'artifact-id', 'artifact-path', 'rule-ids', 'mission-id', 'task-id', 'out']
+  const requiredArgs = command === 'prepare' || command === 'prepare-review' ? preparationArgs.filter(key => key !== 'artifact-path')
     : command === 'apply' ? ['proposal', 'sha256', 'corpus', 'review', 'receipt', 'out'] : []
-  requireThat(allowed.length > 0 && argv.length % 2 === 0, 'invalid_arguments')
+  const allowed = command === 'prepare' ? [...preparationArgs, 'require-native-independent-review', 'review-intent', 'review-intent-sha256']
+    : command === 'prepare-review' ? preparationArgs : command === 'apply' ? [...requiredArgs, 'review-intent'] : []
+  requireThat(allowed.length > 0, 'invalid_arguments')
   const args = {}
-  for (let index = 0; index < argv.length; index += 2) {
+  for (let index = 0; index < argv.length;) {
     const key = argv[index].slice(2)
-    requireThat(argv[index].startsWith('--') && allowed.includes(key) && !Object.hasOwn(args, key) && argv[index + 1], 'invalid_arguments')
-    args[key] = argv[index + 1]
+    requireThat(argv[index].startsWith('--') && allowed.includes(key) && !Object.hasOwn(args, key), 'invalid_arguments')
+    if (key === 'require-native-independent-review') { args[key] = true; index++; continue }
+    requireThat(argv[index + 1], 'invalid_arguments')
+    args[key] = argv[index + 1]; index += 2
   }
-  requireThat(allowed.filter(key => key !== 'artifact-path').every(key => Object.hasOwn(args, key)), 'missing_arguments')
+  requireThat(requiredArgs.every(key => Object.hasOwn(args, key)), 'missing_arguments')
+  if (command === 'prepare') requireThat(Boolean(args['require-native-independent-review']) === Object.hasOwn(args, 'review-intent')
+    && Object.hasOwn(args, 'review-intent') === Object.hasOwn(args, 'review-intent-sha256'), 'review_intent_required')
   let descriptor, reviewDescriptor
   try {
     // Reserve receipts before any network request. An existing/unwritable result
     // destination must not cause a mutation whose local outcome cannot be saved.
     descriptor = reserveOutput(args.out)
-    if (command === 'prepare') reviewDescriptor = reserveOutput(`${args.out}.md`)
+    if (command !== 'apply') reviewDescriptor = reserveOutput(`${args.out}.md`)
     const common = { env: dependencies.env ?? process.env, ...(dependencies.clock ? { now: dependencies.clock() } : {}) }
-    const result = command === 'prepare'
-      ? await prepareOperationFeedback({ ...common, corpusBytes: readFeedbackFile(args.corpus, args['corpus-sha256']), reviewBytes: readFeedbackFile(args.review, args['review-sha256']),
+    const result = command !== 'apply'
+      ? await (command === 'prepare-review' ? prepareFeedbackReviewIntent : prepareOperationFeedback)({ ...common, corpusBytes: readFeedbackFile(args.corpus, args['corpus-sha256']), reviewBytes: readFeedbackFile(args.review, args['review-sha256']),
         receiptBytes: readFeedbackFile(args.receipt, args['receipt-sha256']), artifactId: args['artifact-id'], artifactPath: args['artifact-path'] ?? null, selectedRuleIds: args['rule-ids'].split(','),
-        missionId: args['mission-id'], taskId: args['task-id'] }, dependencies)
+        missionId: args['mission-id'], taskId: args['task-id'], ...(args['require-native-independent-review'] ? {
+          requireNativeIndependentReview: true, reviewIntentBytes: readFeedbackFile(args['review-intent'], args['review-intent-sha256']) } : {}) }, dependencies)
       : await applyOperationFeedback({ ...common, proposalBytes: readFeedbackFile(args.proposal, args.sha256), expectedSha256: args.sha256,
-        corpusBytes: readFeedbackFile(args.corpus), reviewBytes: readFeedbackFile(args.review), receiptBytes: readFeedbackFile(args.receipt) }, dependencies)
+        corpusBytes: readFeedbackFile(args.corpus), reviewBytes: readFeedbackFile(args.review), receiptBytes: readFeedbackFile(args.receipt),
+        ...(args['review-intent'] ? { reviewIntentBytes: readFeedbackFile(args['review-intent']) } : {}) }, dependencies)
     const outputHash = writeOutput(descriptor, result)
-    if (reviewDescriptor !== undefined) writeFileSync(reviewDescriptor, renderFeedbackProposal(result))
+    if (reviewDescriptor !== undefined) writeFileSync(reviewDescriptor, command === 'prepare-review' ? renderFeedbackReviewIntent(result) : renderFeedbackProposal(result))
     return { status: result.state ?? result.status, output_sha256: outputHash, mutation_requests: result.mutation_requests ?? 0,
       launched: false, exit_code: feedbackCommandExitCode(command, result) }
   } finally {

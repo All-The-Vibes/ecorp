@@ -5,8 +5,9 @@ description: Inspect ECorp mission, run, runner, approval and verification state
 
 # Inspect ECorp operations
 
-Use the configured `ecorp` MCP server and its `crony_snapshot` tool. The repository configuration
-starts the native gateway with `--read-only`: it exposes snapshot inspection and rejects write
+Use the configured `ecorp` MCP server and its `crony_snapshot` tool. For a selected Factory work
+item, use `crony_factory_recovery_context` with its exact `work_item_id` UUID. The repository configuration
+starts the native gateway with `--read-only`: it exposes these inspection tools and rejects write
 tools before making a server request. If the installed gateway lacks this mode, build the current
 gateway; do not silently remove the flag.
 
@@ -54,3 +55,17 @@ source checkout.
 Report the observed state, its supporting IDs, the specific unresolved condition and the next
 supported operation. Keep unavailable hosted, production, provider and end-to-end evidence
 explicit. Never present an inspection or a configuration file as proof that an operating loop ran.
+
+## Inspect recovery eligibility
+
+Prefer the selected item's native recovery context over inferring eligibility from a broad
+snapshot. Correlate its work-item version, source run, remaining attempts and budget, retained
+recovery records and checkpoint capabilities. Missing flags remain unknown. A permission error
+or hidden item does not authorize another identity, broader scope or a fallback write operation.
+The server's existing `Operate` permission and human-role/room checks still apply to this GET.
+
+Do not send recovery modes, actor IDs or authority claims as tool arguments. The inspection does
+not create a checkpoint, resume a provider, clear a breaker, reset spending or approve a recovery.
+Revalidate current native authority through the existing action path before any separately
+requested change. Keep private context fields within the requesting user's authorized scope;
+use the probe's metadata report when full policy/source/failure data is unnecessary.

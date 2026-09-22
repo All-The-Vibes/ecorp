@@ -1,12 +1,34 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { main, parseArgs } from './maintenance.mjs';
-import { MAX_ATTEMPTS } from './lib/recurring-audit.mjs';
+import { MAX_ATTEMPTS, readAuditState, runAuditCycle, setAuditControl } from './lib/recurring-audit.mjs';
+import { fixtureSnapshot } from './fixtures/demo.mjs';
 
 const commit = 'a'.repeat(40);
 const once = ['once', '--state-dir', 'state', '--source-commit', commit, '--snapshot', 'input.json'];
 const watch = ['watch', ...once.slice(1), '--cycles', '3', '--interval-ms', '1000'];
 const at = new Date('2026-09-18T06:00:00Z');
+
+function inputFixture(t) {
+  const root = mkdtempSync(path.join(tmpdir(), 'ecorp-maintenance-input-'));
+  t.after(() => {
+    assert.equal(path.dirname(path.resolve(root)), path.resolve(tmpdir()));
+    assert.ok(path.basename(root).startsWith('ecorp-maintenance-input-'));
+    assert.equal(lstatSync(root).isSymbolicLink(), false);
+    rmSync(root, { recursive: true });
+  });
+  const stateDirectory = path.join(root, 'state');
+  const base = ['once', '--state-dir', stateDirectory, '--source-commit', commit];
+  const artifact = reference => JSON.parse(readFileSync(path.join(stateDirectory, reference.file), 'utf8'));
+  const retained = () => {
+    const state = readAuditState({ stateDirectory }), checkpoint = artifact(state.checkpoint);
+    return { state, checkpoint, receipt: artifact(checkpoint.receipt) };
+  };
+  return { root, stateDirectory, base, retained };
+}
 
 test('explicit collector profile requires a hash and cannot relabel a supplied snapshot', () => {
   const live = ['once', '--state-dir', 'state', '--source-commit', commit, '--live'];
@@ -96,6 +118,76 @@ test('a failed cycle stops recurrence without retrying or losing the failure', a
   await assert.rejects(main(watch, { now: () => at, state: () => null, load: () => ({}),
     cycle: () => { calls++; throw failure; }, sleep: () => { throw new Error('Must not retry'); } }), error => error === failure);
   assert.equal(calls, 1);
+});
+
+test('first snapshot acquisition failure retains one sanitized failed attempt', async t => {
+  const f = inputFixture(t);
+  await assert.rejects(main([...f.base, '--snapshot', path.join(f.root, 'PRIVATE_missing_snapshot.json')], { now: () => at }), { code: 'INPUT_ACQUISITION_FAILED' });
+  const { state, checkpoint, receipt } = f.retained();
+  assert.equal(state.attempts, 1); assert.equal(checkpoint.latest, null);
+  assert.equal(receipt.kind, 'audit-cycle-failure'); assert.equal(receipt.error, 'INPUT_ACQUISITION_FAILED');
+  assert.equal(receipt.message, 'Audit input acquisition failed; raw inputs and errors are withheld.');
+  assert.equal(JSON.stringify(receipt).includes('PRIVATE_missing_snapshot'), false);
+});
+
+test('later corpus acquisition failure preserves earlier accepted evidence and consumes one attempt', async t => {
+  const f = inputFixture(t), snapshot = fixtureSnapshot(at);
+  const first = await runAuditCycle({ stateDirectory: f.stateDirectory, sourceCommit: commit, snapshot, now: at });
+  const snapshotFile = path.join(f.root, 'snapshot.json'), corpusFile = path.join(f.root, 'corpus.json');
+  writeFileSync(snapshotFile, JSON.stringify(snapshot)); writeFileSync(corpusFile, '{"PRIVATE_CORPUS_SENTINEL":');
+  await assert.rejects(main([...f.base, '--snapshot', snapshotFile, '--corpus', corpusFile], { now: () => at }), { code: 'INPUT_ACQUISITION_FAILED' });
+  const { state, checkpoint, receipt } = f.retained();
+  assert.equal(state.attempts, 2); assert.equal(checkpoint.latest.handoff.sha256, first.handoff.sha256);
+  assert.equal(receipt.kind, 'audit-cycle-failure'); assert.equal(receipt.error, 'INPUT_ACQUISITION_FAILED');
+  assert.equal(JSON.stringify(receipt).includes('PRIVATE_CORPUS_SENTINEL'), false);
+});
+
+test('live acquisition failure is retained once without raw error text or a retry', async t => {
+  const f = inputFixture(t);
+  let calls = 0;
+  const args = ['watch', ...f.base.slice(1), '--live', '--cycles', '3', '--interval-ms', '60000'];
+  await assert.rejects(main(args, { now: () => at,
+    collect: async () => { calls++; throw new Error('PRIVATE_COLLECTOR_SENTINEL'); },
+    sleep: () => { throw new Error('Must not retry'); },
+  }), { code: 'INPUT_ACQUISITION_FAILED' });
+  const { state, receipt } = f.retained();
+  assert.equal(calls, 1); assert.equal(state.attempts, 1);
+  assert.equal(receipt.error, 'INPUT_ACQUISITION_FAILED');
+  assert.equal(JSON.stringify(receipt).includes('PRIVATE_COLLECTOR_SENTINEL'), false);
+});
+
+test('pause and stop during failed acquisition remain effective without a new admitted attempt', async t => {
+  for (const action of ['pause', 'stop']) {
+    const f = inputFixture(t), snapshot = fixtureSnapshot(at);
+    snapshot.collection = { authenticated_login: 'Bakar404', writes: 0 };
+    await runAuditCycle({ stateDirectory: f.stateDirectory, sourceCommit: commit, snapshot, now: at, source: 'live-github-two-pass' });
+    const result = await main([...f.base, '--live'], { now: () => at, collect: async () => {
+      await setAuditControl({ stateDirectory: f.stateDirectory, sourceCommit: commit, action, reason: 'Stop audit intake during a read.', now: at });
+      throw new Error('PRIVATE_COLLECTOR_SENTINEL');
+    } });
+    const { state, receipt } = f.retained();
+    assert.equal(result.exit_reason, action === 'pause' ? 'paused' : 'stopped');
+    assert.equal(state.attempts, 1); assert.equal(receipt.kind, 'audit-control');
+  }
+});
+
+test('deadline crossing during failed acquisition prevents late attempt admission', async () => {
+  let clock = at.getTime(), calls = 0;
+  const result = await main([...watch, '--duration-ms', '1000'], { now: () => new Date(clock), state: () => null,
+    load: () => { clock += 1001; throw new Error('PRIVATE_INPUT_SENTINEL'); },
+    cycle: () => { calls++; },
+  });
+  assert.equal(calls, 0); assert.equal(result.exit_reason, 'duration-limit');
+});
+
+test('interruption during failed acquisition prevents a new admitted attempt', async () => {
+  const interruption = new AbortController();
+  let calls = 0;
+  const result = await main(once, { now: () => at, state: () => null, signal: interruption.signal,
+    load: () => { interruption.abort(); throw new Error('PRIVATE_INPUT_SENTINEL'); },
+    cycle: () => { calls++; },
+  });
+  assert.equal(calls, 0); assert.equal(result.exit_reason, 'interrupted');
 });
 
 test('duration bounds stop admission after collection without writing a late result', async () => {
