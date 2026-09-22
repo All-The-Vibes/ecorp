@@ -82,3 +82,18 @@ The ordinary repository Node suite discovers this test file. Tests exercise
 the actual workflow program, metadata projection, failure propagation, malformed
 input, output injection attempts, limits and scan-policy invariants. These tests
 do not resolve existing findings or establish that a particular branch is clean.
+
+The secret-scan job also runs `tools/secret_scan_native.test.mjs` with the verified
+Gitleaks 8.30.1 executable before scanning the selected head. It creates disposable
+Git histories and passes real native reports into the exact inline reporter.
+Clean history, a current finding, a finding removed from HEAD but retained in
+history, and an invalid scanner configuration must retain their native outcomes.
+The finding cases use a generated noncredential marker and a test-only rule
+outside the fixture repository; they do not change production rules or ignores.
+Raw reports and scanner output are removed after the checks.
+
+For the same offline native acceptance locally, set `ECORP_GITLEAKS_BINARY` to an
+already verified Gitleaks 8.30.1 executable and run
+`node --test tools/secret_scan_native.test.mjs`. An explicitly selected missing or
+wrong-version binary fails; without the variable, only these four native cases
+skip in the ordinary unit lane. The CI step supplies it explicitly.

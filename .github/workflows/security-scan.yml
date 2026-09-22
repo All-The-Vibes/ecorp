@@ -82,6 +82,10 @@ jobs:
         with:
           node-version: 24.19.0
           package-manager-cache: false
+      - name: Verify native scanner diagnostics on disposable Git history
+        shell: bash
+        run: |
+          ECORP_GITLEAKS_BINARY="$(command -v gitleaks)" node --test tools/secret_scan_native.test.mjs
       - name: Scan the selected commit and its complete ancestry
         shell: bash
         run: |
