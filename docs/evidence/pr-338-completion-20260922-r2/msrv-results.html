@@ -1,0 +1,64 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>PR 338 retained Rust 1.94 results</title><style>body{font:16px/1.5 system-ui;margin:32px;max-width:1380px}pre{font:13px/1.45 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f6f8;padding:16px}h2{font-size:18px}</style><h1>PR #338: Rust 1.94.0 retained results</h1><p>Actual saved output, rendered after execution. Former predicate: strict Clippy fails. Corrected predicate: strict Clippy passes. The same five behavior tests pass both. This is a saved-results report, not a live terminal or application screenshot.</p><h2>cargo +1.94.0 clippy --locked --workspace --all-targets -- -D warnings</h2><p>Exit 101</p><pre>    Checking walkdir v2.5.0
+    Checking tungstenite v0.28.0
+    Checking regex v1.13.1
+    Checking itertools v0.14.0
+    Checking aead v0.5.2
+    Checking quick-xml v0.38.4
+    Checking humantime v2.4.0
+    Checking chacha20poly1305 v0.10.1
+    Checking object_store v0.12.5
+    Checking tokio-tungstenite v0.28.0
+    Checking crony-store v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-store)
+error: this boolean expression can be simplified
+  --&gt; crates\crony-store\src\retained_provider_receipt.rs:50:8
+   |
+50 |     if !binding.as_object().is_some_and(|object| object.len() == 2)
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `binding.as_object().is_none_or(|object| object.len() != 2)`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.94.0/index.html#nonminimal_bool
+   = note: `-D clippy::nonminimal-bool` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::nonminimal_bool)]`
+
+error: could not compile `crony-store` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...</pre><h2>cargo +1.94.0 test --locked -p crony-store retained_provider_receipt</h2><p>Exit 0</p><pre>   Compiling sqlx-macros-core v0.8.6
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling const-oid v0.10.2
+   Compiling digest v0.11.3
+   Compiling sqlx-macros v0.8.6
+   Compiling cpufeatures v0.3.1
+   Compiling sha2 v0.11.0
+   Compiling sqlx v0.8.6
+   Compiling anyhow v1.0.104
+   Compiling crony-domain v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-domain)
+   Compiling crony-store v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4m 09s
+     Running unittests src\lib.rs (target-validation\debug\deps\crony_store-81008a40dd71f5fa.exe)
+
+running 5 tests
+test retained_provider_receipt::tests::upload_binding_absence_preserves_legacy_payload ... ok
+test retained_provider_receipt::tests::upload_binding_accepts_exact_shape_and_inclusive_byte_bounds ... ok
+test retained_provider_receipt::tests::upload_binding_rejects_invalid_byte_types_and_limits ... ok
+test retained_provider_receipt::tests::upload_binding_rejects_malformed_digest_types_and_bytes ... ok
+test retained_provider_receipt::tests::upload_binding_rejects_non_objects_missing_and_extra_fields ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 398 filtered out; finished in 0.00s</pre><h2>cargo +1.94.0 clippy --locked --workspace --all-targets -- -D warnings</h2><p>Exit 0</p><pre>    Checking crony-store v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-store)
+    Checking hmac v0.13.0
+    Checking crony-runner v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-runner)
+    Checking crony-server v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-server)
+    Checking crony-cli v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-cli)
+    Checking crony-gateways v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-gateways)
+    Checking crony-protocol v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-protocol)
+    Checking crony-domain v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-domain)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 47s</pre><h2>cargo +1.94.0 test --locked -p crony-store retained_provider_receipt</h2><p>Exit 0</p><pre>   Compiling crony-store v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 35.66s
+     Running unittests src\lib.rs (target-validation\debug\deps\crony_store-81008a40dd71f5fa.exe)
+
+running 5 tests
+test retained_provider_receipt::tests::upload_binding_absence_preserves_legacy_payload ... ok
+test retained_provider_receipt::tests::upload_binding_accepts_exact_shape_and_inclusive_byte_bounds ... ok
+test retained_provider_receipt::tests::upload_binding_rejects_invalid_byte_types_and_limits ... ok
+test retained_provider_receipt::tests::upload_binding_rejects_malformed_digest_types_and_bytes ... ok
+test retained_provider_receipt::tests::upload_binding_rejects_non_objects_missing_and_extra_fields ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 398 filtered out; finished in 0.00s</pre>

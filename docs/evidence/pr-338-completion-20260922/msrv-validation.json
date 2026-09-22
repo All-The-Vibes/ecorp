@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "tested_staged_tree": "9ec6df909a798405c2c56b0ce647b8432a8e8170",
+  "toolchain": "1.94.0",
+  "scope": "Declared MSRV strict workspace Clippy and focused retained provider receipt tests.",
+  "commands": [
+    "cargo +1.94.0 clippy --locked --workspace --all-targets -- -D warnings",
+    "cargo +1.94.0 test --locked -p crony-store retained_provider_receipt"
+  ],
+  "focused": {
+    "exit_code": 0,
+    "toolchain": "1.94.0",
+    "command": "cargo +1.94.0 test --locked -p crony-store retained_provider_receipt",
+    "recorded_at_utc": "2026-09-22T13:03:19.8078517+00:00"
+  },
+  "logs": [
+    {
+      "file": "pr338-msrv-clippy.log",
+      "original_sha256": "2a326b9006e9e0078b5b64de5d54e36ca52d83ba1b559717ae9ed414d390a395",
+      "published_sha256": "c6f1e483ac94749f364288bc34b28a4256390fcfcc1d2239b4ec7979e86b7dbb"
+    },
+    {
+      "file": "pr338-msrv-focused-test.log",
+      "original_sha256": "75986da1cb450c80a4aa6ac1eef29b3df0e3a18e78934650229ada9a9083659e",
+      "published_sha256": "e97ca3b13917f5f47027d06a609c26dce3318ca592186d779899a75fc4803d9a"
+    }
+  ]
+}
