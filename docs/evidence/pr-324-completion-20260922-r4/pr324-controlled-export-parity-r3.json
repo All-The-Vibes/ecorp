@@ -1,0 +1,65 @@
+{
+  "scope": "Retrospective actual native-export mutation check; not original TDD chronology.",
+  "source": "crates/crony-runner/src/deliverable.rs",
+  "original_sha256": "8cf69cc6379a1ae044c19a85ae621b45fe2b24a55ecb09679164ed5c36bfde26",
+  "mutated_sha256": "2ecf65fea8098c9d50f1c9a801a4249b800435ba5d4af6ae451e9a307d6a2747",
+  "started_at_utc": "2026-09-22T16:27:09.980605+00:00",
+  "runs": [
+    {
+      "phase": "before",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-runner",
+        "--bin",
+        "crony-runner",
+        "deliverable::tests::native_export_matches_checker_under_inherited_tracing",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 101,
+      "log": "<private-evidence>\\pr324-export-parity-before-r3.log",
+      "sha256": "6aeeebdad7ea39fd5d7f69127a09ec5fac2ff1faf12c9de9d1941304497a38ae"
+    },
+    {
+      "phase": "after",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-runner",
+        "--bin",
+        "crony-runner",
+        "deliverable::tests::native_export_matches_checker_under_inherited_tracing",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr324-export-parity-after-r3.log",
+      "sha256": "5b97b0cbc017944c5024dee28f40bb98e50c6bb6191fc20ead70a69a7269909b"
+    }
+  ],
+  "status": "passed",
+  "prior_attempts": [
+    {
+      "file": "pr324-controlled-export-parity-r1.json",
+      "sha256": "08a22b9b10a4fa6c13c40f3ed75ad5e735fd403accf45550a7c9a5d709580b6f",
+      "limitation": "Incorrect Cargo target selection; not defect regression evidence."
+    },
+    {
+      "file": "pr324-controlled-export-parity-r2.json",
+      "sha256": "854f9d055c9720ee33998e111540d79b6f0f90e1efd9f1685ed5b1ff43a7c509",
+      "limitation": "Both phases stopped at Windows short-name root validation; not defect RED/GREEN evidence. Original incomplete receipt retained."
+    }
+  ],
+  "restored_exact_source": true,
+  "restored_sha256": "8cf69cc6379a1ae044c19a85ae621b45fe2b24a55ecb09679164ed5c36bfde26",
+  "finished_at_utc": "2026-09-22T16:28:39.421736+00:00"
+}

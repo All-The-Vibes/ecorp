@@ -143,6 +143,9 @@ for (const name of ['GIT_TRACE', 'GIT_TRACE_PERFORMANCE', 'GIT_TRACE_SETUP',
 function nativeCandidate(f, { paths = [], providerArtifacts = [], preserveHead } = {}) {
   const index = path.join(f.scratchRoot, 'oracle.index')
   const env = { ...process.env, GIT_INDEX_FILE: index, GIT_LITERAL_PATHSPECS: '1' }
+  for (const name of Object.keys(env)) {
+    if (/^GIT_TRACE|^GIT_CURL_VERBOSE$/i.test(name)) delete env[name]
+  }
   const git = (args) => f.git(args, { env })
   const changes = () => git(['diff', '--cached', '--name-status', '-z', '--no-renames', f.base, '--'])
   try {

@@ -112,6 +112,12 @@ The helper mirrors `crates/crony-runner/src/deliverable.rs`:
 3. Reset existing in-worktree provider artifacts to the base.
 4. Inspect the cached candidate against that same base with `git diff --check`.
 
+Both the checker and every native exporter Git child remove inherited
+`GIT_TRACE*` and `GIT_CURL_VERBOSE` variables case-insensitively. This also covers
+export's final real-index reset: a trace destination inside the worktree must
+not create an additional input before, during, or after selection. No trace
+path is ignored or silently dropped from an existing candidate.
+
 Thus tracked changes, committed differences from the base, staged source still
 present on disk, deletions, and non-ignored untracked source are checked. The
 **physical worktree wins over staging**: bad bytes present only in the real index
@@ -146,7 +152,15 @@ Run the focused, real-Git regression suite without a server, database or provide
 
 ```powershell
 node --test --test-concurrency=1 tools/check_deliverable_diff.test.mjs
+cargo test --locked -p crony-runner --bin crony-runner deliverable::tests::native_export_matches_checker_under_inherited_tracing -- --exact --nocapture --test-threads=1
 ```
+
+The Rust regression runs the actual checker and native commit/branch exporter
+in separate child processes with the same trace environment. It compares the
+complete candidate and exported tree IDs, checks the final real index and
+source bytes, and retains each owned Git fixture and its sibling `.evidence`
+directory, including any trace created by a failing exporter. Lowercase and
+mixed-case variable names exercise Windows' case-insensitive environment too.
 
 The suite reproduces the old false pass, then checks red and green untracked
 source with the CLI; compares complete candidate-tree IDs with an independent
