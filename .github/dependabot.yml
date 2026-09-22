@@ -1,0 +1,43 @@
+version: 2
+
+# Dependabot proposes reviewable updates; existing PR validation and approvals apply.
+# Keep the SDK/runtime pair under deliberate compatibility review.
+updates:
+  - package-ecosystem: cargo
+    directories:
+      - /
+      - /apps/desktop/src-tauri
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: github-copilot-sdk
+    groups:
+      rust-compatible-updates:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directories:
+      - /
+      - /scenarios/repo-steward
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      javascript-compatible-updates:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      actions-compatible-updates:
+        update-types:
+          - minor
+          - patch

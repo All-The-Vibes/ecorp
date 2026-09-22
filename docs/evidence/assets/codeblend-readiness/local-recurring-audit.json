@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "kind": "local-recurring-audit-validation",
+  "source_base": "d4dad1ba555b58a87271b6071234f74f50258085",
+  "scope": "Local audit-only recurrence and advisory guidance; no new operation score assigned",
+  "steward_tests": {
+    "failed": 0,
+    "wall_seconds": 91.1654667,
+    "skipped": 0,
+    "passed": 194,
+    "command": "pnpm test:steward"
+  },
+  "cli_acceptance": {
+    "source_files": [
+      {
+        "file": "scenarios/repo-steward/maintenance.mjs",
+        "sha256": "f6444dfa591b72518c341b963b77be03658969ea73cd2f80f2c905a1e0e39d14"
+      },
+      {
+        "file": "scenarios/repo-steward/feedback.mjs",
+        "sha256": "243bd999772ea26c658146ee3275882f3601bfbf0737ef8734cd7d3882efda2c"
+      },
+      {
+        "file": "scenarios/repo-steward/lib/recurring-audit.mjs",
+        "sha256": "cfa996611975bcb3c89d1b42e05e4beb26fc201b4fa267f7d3d51f8c37557057"
+      },
+      {
+        "file": "scenarios/repo-steward/lib/feedback.mjs",
+        "sha256": "0e47916345cfc51b733871ec5bbbe3285e8cc381256932d731d1cc11082a0305"
+      },
+      {
+        "file": "scenarios/repo-steward/lib/steward.mjs",
+        "sha256": "4cdb8ca3f69ef0b8c16ab496ff948e338638a805ba5ec5c136ff0837dcb948d5"
+      },
+      {
+        "file": "scenarios/repo-steward/lib/common.mjs",
+        "sha256": "a43fcb8de50e94a738db5dac23a0bee262c7ee18f6e184fb07b609877dd64c8d"
+      },
+      {
+        "file": "scenarios/repo-steward/policy.json",
+        "sha256": "0108016c61375eacc4c663ef7608a6135e25b71e0a59c15d3dc3f964cee282ad"
+      }
+    ],
+    "passed": 17,
+    "scope": "Real local CLI processes and persistent files; all repository snapshots and review inputs are explicit synthetic fixtures.",
+    "node": "v22.23.2",
+    "assertions": [
+      {
+        "name": "first real CLI audit records findings",
+        "passed": true
+      },
+      {
+        "name": "finite recurring CLI produces three no-ops and no duplicate handoff",
+        "passed": true
+      },
+      {
+        "name": "changed finding facts produce a new observation after process restart",
+        "passed": true
+      },
+      {
+        "name": "capture time alone preserves deduplication",
+        "passed": true
+      },
+      {
+        "name": "durable pause prevents snapshot reads",
+        "passed": true
+      },
+      {
+        "name": "resumed process preserves prior finding history",
+        "passed": true
+      },
+      {
+        "name": "terminal stop rejects resume",
+        "passed": true
+      },
+      {
+        "name": "stale snapshot failure is durable",
+        "passed": true
+      },
+      {
+        "name": "partial snapshot is refused",
+        "passed": true
+      },
+      {
+        "name": "review records actual file digest without identity claims",
+        "passed": true
+      },
+      {
+        "name": "unreviewed candidate contributes no guidance",
+        "passed": true
+      },
+      {
+        "name": "later real CLI audit consumes activated feedback",
+        "passed": true
+      },
+      {
+        "name": "guidance is additive and original findings remain unchanged",
+        "passed": true
+      },
+      {
+        "name": "active guidance is deduplicated on replay",
+        "passed": true
+      },
+      {
+        "name": "retired guidance is excluded from the next audit",
+        "passed": true
+      },
+      {
+        "name": "stale review cannot be applied to an active corpus",
+        "passed": true
+      },
+      {
+        "name": "all source snapshots, reviews and prior corpus versions remain byte-identical",
+        "passed": true
+      }
+    ],
+    "commands": 23
+  },
+  "integration": {
+    "windows_rust_passed": 561,
+    "production_identity": false,
+    "application_commit": "d4dad1ba555b58a87271b6071234f74f50258085",
+    "provider": "fake-process",
+    "node_passed": 1007,
+    "windows_rust_ignored": 343,
+    "collaboration_cases_passed": 2,
+    "native_positive_checks": 6,
+    "native_negative_accepted_completions": 0,
+    "node_skipped": 19,
+    "node_failed": 0,
+    "windows_rust_failed": 0,
+    "tree": "4184988712b19b552378a1b581db7a9d320ffaf1"
+  },
+  "linux_coverage": {
+    "prior_reports_or_profiles_reused": false,
+    "tests": {
+      "unit": {
+        "passed": 531,
+        "failed": 0,
+        "ignored": 343,
+        "native_summaries": 10
+      },
+      "store": {
+        "passed": 337,
+        "failed": 0,
+        "ignored": 0,
+        "native_summaries": 1
+      },
+      "server": {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "native_summaries": 1
+      }
+    },
+    "source_files": 102,
+    "unexecuted_scope": "Other ignored tests, including the explicit runner stopped-session probe, remain unexecuted.",
+    "source_commit": "d4dad1ba555b58a87271b6071234f74f50258085",
+    "native_totals": {
+      "branches": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "functions": {
+        "count": 4411,
+        "covered": 3034,
+        "percent": 68.78258898209023
+      },
+      "instantiations": {
+        "count": 9126,
+        "covered": 3712,
+        "percent": 40.67499452114836
+      },
+      "lines": {
+        "count": 73525,
+        "covered": 50109,
+        "percent": 68.15232913974837
+      },
+      "mcdc": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "regions": {
+        "count": 93907,
+        "covered": 63798,
+        "notcovered": 30109,
+        "percent": 67.93742745482231
+      }
+    },
+    "duration_seconds": 1235.137397,
+    "scope": "Native cargo-llvm-cov Rust workspace unit tests plus all existing ignored crony-store/crony-server SQLx tests on this Linux build; no requested code exclusions. This is not whole-repository, web, provider, or application E2E coverage.",
+    "source_unchanged": true,
+    "lcov": {
+      "sha256": "ba821add342ebad10e2fbe59d6b09a868fa6ff6cee9836cc94ffc1e397f4390b",
+      "files": 70,
+      "LF": 73525,
+      "LH": 50109,
+      "percent": 68.15232913974839
+    },
+    "line_floor_percent": 67,
+    "run_receipt_sha256": "ebad432529acb5871eb95d83104a842b35c445c440c1959ca7081c1b5c8c6e50"
+  },
+  "original_evidence_sha256": {
+    "integration_acceptance": "aff4acff5427dcc190f08ff82c05b942211ae7732f931f357650d380331e44ed",
+    "coverage_summary": "241578afaffc42d9e32d6f6e0a10489989c3f7693d1bc429944809f6f04e2389",
+    "process_result": "45d21d35382e213969f1ff06eb432d00b291b798286c6b11d821703d29159235"
+  },
+  "limits": [
+    "Synthetic snapshots and supplied review data do not establish live GitHub cadence or authenticated review.",
+    "No scheduler installed or Factory delivery activated.",
+    "These measurements are bound to the recorded source hashes; later implementation changes need their own validation.",
+    "Latest completed CodeBlend score remains 92.0 structure / 68.25 operations on 9a6ebace."
+  ]
+}

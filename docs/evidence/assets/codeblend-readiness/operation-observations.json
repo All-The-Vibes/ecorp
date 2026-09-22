@@ -1,0 +1,1441 @@
+{
+  "schema_version": 1,
+  "kind": "ecorp-operation-observation-evidence",
+  "recorded_at": "2026-09-17T20:34:04.484Z",
+  "repository_base_commit": "a86822071790c271974919b341b9a5bbf47d0346",
+  "code_state": "Working-tree changes on the recorded base; native runtime phases identify copied binaries separately",
+  "review": {
+    "status": "completed",
+    "additional_strong_findings": 0,
+    "resolved_findings": [
+      "Native-valid bounded runner/model/ref metadata is preserved without an invented ASCII alphabet.",
+      "Read-only native HTTP response bytes are capped before JSON decoding."
+    ],
+    "files": [
+      "tools/operation_receipt.mjs",
+      "tools/consume_operation_receipt.mjs",
+      "tools/probe_mcp.mjs",
+      "crates/crony-gateways/src/lib.rs",
+      "docs/OPERATION_OBSERVATIONS.md"
+    ]
+  },
+  "implementation_hashes": [
+    {
+      "file": "tools/operation_receipt.mjs",
+      "sha256": "30a67ed310d6dfc651b8c0ce5bdeecf02c8e66bd8cfe9fff7c4e6b103371a23a"
+    },
+    {
+      "file": "tools/consume_operation_receipt.mjs",
+      "sha256": "cca6f8efc49d04a20dfe84124104097691dfadf0bb5b2ef1d0fd118caa8e3bad"
+    },
+    {
+      "file": "tools/probe_mcp.mjs",
+      "sha256": "e1046f936568d17760ae9471f646bfd35b87be096e1b5e6b5132226b6fb36e82"
+    },
+    {
+      "file": "crates/crony-gateways/src/lib.rs",
+      "sha256": "7eaefd69a74ea2c1424bc02f793a01b7515c077ff8796126be537fbdb15cc8a2"
+    },
+    {
+      "file": "docs/OPERATION_OBSERVATIONS.md",
+      "sha256": "3868eeb6ddc7cc8f11c30e05081c558004a6cb3f2b9d49cb738b6c6fd6ec1a5e"
+    },
+    {
+      "file": ".codex/config.toml",
+      "sha256": "047e4f019980e0e6c856124475acf364b6aee91ad3f0288165bc1a89838bce10"
+    },
+    {
+      "file": "docs/MCP_OPERATIONS.md",
+      "sha256": "44f21ebf780054f1b78b716d0b41d098cd0bd8dac8c0f08cc8abd3247e163f23"
+    },
+    {
+      "file": "docs/specs/mcp-inspection-v1.md",
+      "sha256": "388b80c8d7a693d083e1abef1a5771141f4e174df742966d8d5782a7215cf919"
+    },
+    {
+      "file": ".github/workflows/repository-checks.yml",
+      "sha256": "8049b93fea3b094ef40da1548874fc11ea98a37da435f825928998474027285d"
+    }
+  ],
+  "actual_observations": {
+    "scope": "Six authorized read-only native MCP/API/artifact exports and six fresh native consumer checks; development identity, no new execution or publication effects by observation tools",
+    "phase": "Recorded before the final native metadata compatibility and HTTP body-limit refinements; final code is separately exercised with compiled native controlled HTTP fixtures",
+    "exports_passed": 6,
+    "consumer_checks_passed": 6,
+    "records": [
+      {
+        "selection": "native-current-completed-run",
+        "scope": {
+          "server_origin_sha256": "afe23a017102e383efa8a9fce191608b88e20766166d6f84aa02ea037f9d7144",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "1b8b3e92-bfe0-4a25-9a91-629e29574efc",
+          "task_id": "dccae145-d1b8-4049-8397-65e30a7bfc00",
+          "run_id": "1c5c7d53-7afd-4c69-be8a-dfc71487d8e3"
+        },
+        "checked_at": "2026-09-17T20:15:52.973Z",
+        "mode": "current-run",
+        "run_status": "completed",
+        "verification_status": "passed",
+        "persisted_acceptance_observed": true,
+        "automated_checks_complete": true,
+        "automated_checks_passed": true,
+        "artifact_count": 2,
+        "artifact_bytes": 5173,
+        "export_duration_ms": 302,
+        "receipt_sha256": "f56330dfe294d5d68d78ec1450346505a2767074b5f14087f0e6bf61bf8463b8",
+        "observation_fingerprint_sha256": "e25102eb70657b3a6c2139cbd31ee2c62ba1fbc208cbe4ee1e9f788bfe6e251f",
+        "consumer": {
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "passed": true,
+          "duration_ms": 545.953,
+          "result": "validated-current-observation"
+        }
+      },
+      {
+        "selection": "native-current-failed-run",
+        "scope": {
+          "server_origin_sha256": "afe23a017102e383efa8a9fce191608b88e20766166d6f84aa02ea037f9d7144",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "b983ddc6-ca3b-4112-92fe-9c0d1c1ac3df",
+          "task_id": "1d8b7943-040a-4ace-830a-6072ab90859e",
+          "run_id": "bef4a81c-d1a4-4a1c-b600-35072203f496"
+        },
+        "checked_at": "2026-09-17T20:17:15.071Z",
+        "mode": "current-run",
+        "run_status": "failed",
+        "verification_status": "failed",
+        "persisted_acceptance_observed": false,
+        "automated_checks_complete": true,
+        "automated_checks_passed": false,
+        "artifact_count": 1,
+        "artifact_bytes": 2190,
+        "export_duration_ms": 407,
+        "receipt_sha256": "8bffd7b226fc64ca4355d4e9657dc21dd923ceb24841c2222e1c280f7b4d0fb7",
+        "observation_fingerprint_sha256": "f5a4eed72b712cc970b83857e2510c9eacc168db5175624c6465e90aa2a6cc55",
+        "consumer": {
+          "exit_code": 1,
+          "expected_exit_code": 1,
+          "passed": true,
+          "duration_ms": 552.1341,
+          "result": "native_acceptance_not_observed"
+        }
+      },
+      {
+        "selection": "retained-cancelled-run",
+        "scope": {
+          "server_origin_sha256": "806e7ae900267d9248d9ec4a8ccbf3390c238e7f2c673bd43e4fdf009c2b983b",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "44698bab-01c5-44d0-ba51-7a5d6b50ed1f",
+          "task_id": "b1031c4c-41f9-45e0-8235-1d8604317844",
+          "run_id": "c9c179e7-7fe8-434d-8fc7-c5bb134f0c88"
+        },
+        "checked_at": "2026-09-17T20:14:23.587Z",
+        "mode": "current-run",
+        "run_status": "cancelled",
+        "verification_status": "pending",
+        "persisted_acceptance_observed": false,
+        "automated_checks_complete": false,
+        "automated_checks_passed": false,
+        "artifact_count": 0,
+        "artifact_bytes": 0,
+        "export_duration_ms": 685,
+        "receipt_sha256": "336444d57a6d205f556ad17e32e940fdd3728bab1f75b4b21a775de602d0593e",
+        "observation_fingerprint_sha256": "ff04e3f90bfd0f0cf17c99a034cef875a19c30b3b93827aff3afb079e59c085e",
+        "consumer": {
+          "exit_code": 1,
+          "expected_exit_code": 1,
+          "passed": true,
+          "duration_ms": 973,
+          "result": "native_acceptance_not_observed"
+        }
+      },
+      {
+        "selection": "retained-completed-run",
+        "scope": {
+          "server_origin_sha256": "806e7ae900267d9248d9ec4a8ccbf3390c238e7f2c673bd43e4fdf009c2b983b",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "9d0aed3c-7c7c-43d9-a5c7-66201d917532",
+          "task_id": "073da65c-bb20-495c-b044-d4ec3149e084",
+          "run_id": "44b2c3bd-bf10-435a-ac8d-12768f701e00"
+        },
+        "checked_at": "2026-09-17T20:14:25.422Z",
+        "mode": "current-run",
+        "run_status": "completed",
+        "verification_status": "passed",
+        "persisted_acceptance_observed": true,
+        "automated_checks_complete": false,
+        "automated_checks_passed": false,
+        "artifact_count": 2,
+        "artifact_bytes": 1931,
+        "export_duration_ms": 706,
+        "receipt_sha256": "93bd42e65a5af66bbc6d48a5a4f863b1d8046115a2cf8062f254a3b9bb50fba0",
+        "observation_fingerprint_sha256": "81b3682b45e2b4dde351bcf6aa1957dea6fa066b8081dcdad24a4673592b4434",
+        "consumer": {
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "passed": true,
+          "duration_ms": 851,
+          "result": "validated-current-observation"
+        }
+      },
+      {
+        "selection": "retained-failed-run",
+        "scope": {
+          "server_origin_sha256": "806e7ae900267d9248d9ec4a8ccbf3390c238e7f2c673bd43e4fdf009c2b983b",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "3bf2baa7-bbc6-46d6-945c-49bba4b3cc65",
+          "task_id": "3ce4fbf3-e0dc-476f-9d64-4038ae9133d8",
+          "run_id": "23cebb8d-49d9-49d6-a8de-571476728885"
+        },
+        "checked_at": "2026-09-17T20:14:24.548Z",
+        "mode": "current-run",
+        "run_status": "failed",
+        "verification_status": "failed",
+        "persisted_acceptance_observed": false,
+        "automated_checks_complete": true,
+        "automated_checks_passed": false,
+        "artifact_count": 1,
+        "artifact_bytes": 1358,
+        "export_duration_ms": 814,
+        "receipt_sha256": "578558c49f3ac3f43412e39535a4497ed057d7d102cc2c605bf010a1eb3298a6",
+        "observation_fingerprint_sha256": "8779543ae0d90fde1e9d129db6b5e557adcd1add5881920606ff1d842633b909",
+        "consumer": {
+          "exit_code": 1,
+          "expected_exit_code": 1,
+          "passed": true,
+          "duration_ms": 951,
+          "result": "native_acceptance_not_observed"
+        }
+      },
+      {
+        "selection": "retained-published-result",
+        "scope": {
+          "server_origin_sha256": "806e7ae900267d9248d9ec4a8ccbf3390c238e7f2c673bd43e4fdf009c2b983b",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "ce20c81f-4bbe-44fa-91da-1b928fdd7040",
+          "task_id": "878e40c5-2a57-4def-97cd-c5bcf35d39e6",
+          "run_id": "901ee3f2-1aa2-406e-905b-d5596c2289b5"
+        },
+        "checked_at": "2026-09-17T20:14:22.761Z",
+        "mode": "published-result",
+        "run_status": "completed",
+        "verification_status": "passed",
+        "persisted_acceptance_observed": true,
+        "automated_checks_complete": true,
+        "automated_checks_passed": true,
+        "artifact_count": 2,
+        "artifact_bytes": 81271,
+        "export_duration_ms": 715,
+        "receipt_sha256": "3b3f4c771691dd41d292ff613186dfdfa1c5d74153de7eaf43c25e3430ed1de6",
+        "observation_fingerprint_sha256": "53c8549071becfbf9df61690d1bc51be9c7226f0fe78ae8e13d09e97e7c51563",
+        "consumer": {
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "passed": true,
+          "duration_ms": 1069,
+          "result": "validated-current-observation"
+        }
+      }
+    ]
+  },
+  "native_control_recovery": {
+    "scope": "Actual native CLI, server, PostgreSQL, runner and isolated worktrees with existing fake-process child and fake GitHub boundary; no provider inference or human review",
+    "source_commit": "f44ce30f1a1836cd5cacac300f0516cfdb23c9ad",
+    "source_readme_sha256": "2e1acec1881b51f5d22344dbfd338a8db705fd6067f0fe6a4768fd50ff8827ac",
+    "source_clean": true,
+    "binary_hashes": {
+      "crony-server": "49c81e20cda9b0825e73449ef3e7e8d270df32954bbcb392026fad5296448b73",
+      "crony-cli": "461313aa76e7c6939245c40ddee5e6e727790d8945bde7fcfd2ef50f80655c53",
+      "fake_github": "c370fbcd2b831bd59b9d9b1204ade1471855320cc5f5b5931884411c75f20fe3",
+      "crony-runner": "d8baf0fd73c5ce45144fdad9762d6875bcd053300bf92d255d526b498ec20a67",
+      "fake_agent": "c3ade59fe08e6d0d64a4d2b3a54addd15207fb602dd5df16ea20f8b7f3aff6e9"
+    },
+    "cli_build_seconds": 42.18,
+    "phase": "Native recovery uses the recorded copied binaries. The later neutral CLI extraction experiment was fully reverted; final CLI source matches the base and contains no CLI production changes.",
+    "attempt_window": {
+      "started_at": "2026-09-17T20:13:50.142Z",
+      "finished_at": "2026-09-17T20:18:41.375Z",
+      "duration_ms": 291233,
+      "deadline_seconds": 600
+    },
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "failed",
+        "duration_ms": 103013,
+        "note": "Missing fixture crew plus an incorrect harness quota-backoff expectation; native watcher recovery occurred after idempotent crew bootstrap. Failure retained."
+      },
+      {
+        "attempt": 2,
+        "status": "failed",
+        "duration_ms": 75265,
+        "passed_cases": [
+          "controller_interruption_recovery",
+          "negative_verification"
+        ],
+        "note": "Status observation missed a short blocked-state window while awaiting the launcher; native status recovery completed. Failure retained."
+      },
+      {
+        "attempt": 3,
+        "status": "passed",
+        "duration_ms": 27705,
+        "passed_cases": [
+          "status_write_automatic_recovery"
+        ],
+        "note": "Observation begins concurrently with launch. Combined report incorporates original attempt2 interruption/negative evidence without rerunning or relabeling their execution."
+      }
+    ],
+    "cases": [
+      {
+        "name": "controller_interruption_recovery",
+        "status": "passed",
+        "evidence_attempt": 2,
+        "work_item_id": "c2dd8d68-2c27-4fa8-8824-7bad75c20135",
+        "mission_id": "b9d4fb0d-f33d-46c1-a612-06e41a350623",
+        "task_id": "88e72dd3-982a-4920-a552-238b778e4061",
+        "run_id": "54255150-63c9-4bfd-a57e-f12782435893",
+        "initial_state": "claimed",
+        "initial_version": 1,
+        "initial_run_count": 0,
+        "final_factory_state": "verified",
+        "run_status": "completed",
+        "verification_status": "passed",
+        "verification_checks": {
+          "passed": 2,
+          "failed": 0
+        },
+        "counts": {
+          "work_items": 1,
+          "missions": 1,
+          "tasks": 1,
+          "runs": 1
+        },
+        "deliverable_id": "480fc5fb-483f-4f3d-a63d-7915fb404f72",
+        "deliverable_form": "commit_branch",
+        "deliverable_integration_state": "ready_for_review",
+        "head_commit": "a63aebbfe0137158675a3258419e1f523616102c",
+        "publication_count": 0,
+        "automatic_next_cycle": false,
+        "operator_reconcile_requests": null,
+        "restart_scope": "Fixture restarts the exact-owned controller after durable claim; no unattended supervisor claim"
+      },
+      {
+        "name": "status_write_automatic_recovery",
+        "status": "passed",
+        "evidence_attempt": 3,
+        "work_item_id": "cf0ce764-c0a6-4ab8-9a22-e0fc12546025",
+        "mission_id": "701695fd-3ece-4d28-b869-8e319b41d458",
+        "task_id": "e215bde7-1cec-463d-ab49-1ae4fa503553",
+        "run_id": "7faa9c9c-6303-44ef-8f22-b8df368b6c0c",
+        "initial_state": "blocked",
+        "initial_version": null,
+        "initial_run_count": 0,
+        "final_factory_state": "verified",
+        "run_status": "completed",
+        "verification_status": "passed",
+        "verification_checks": {
+          "passed": 2,
+          "failed": 0
+        },
+        "counts": {
+          "work_items": 1,
+          "missions": 1,
+          "tasks": 1,
+          "runs": 1
+        },
+        "deliverable_id": "e06d2dde-b28f-4bc2-9403-926ac5f1e355",
+        "deliverable_form": "commit_branch",
+        "deliverable_integration_state": "ready_for_review",
+        "head_commit": "3842c42b5b4823c8fef32bbec09e7fcc5f022fea",
+        "publication_count": 0,
+        "automatic_next_cycle": true,
+        "operator_reconcile_requests": 0,
+        "restart_scope": null
+      }
+    ],
+    "negative": {
+      "run_id": "bef4a81c-d1a4-4a1c-b600-35072203f496",
+      "work_item_id": "22c91093-9e11-455f-a280-c57f1919bd34",
+      "mission_id": "b983ddc6-ca3b-4112-92fe-9c0d1c1ac3df",
+      "task_id": "1d8b7943-040a-4ace-830a-6072ab90859e",
+      "run_status": "failed",
+      "verification_status": "failed",
+      "factory_state": "verification_failed",
+      "failed_checks": 1,
+      "completed_events": 0
+    },
+    "cleanup": {
+      "status": "passed",
+      "finished_at": "2026-09-17T20:20:02.2296049Z",
+      "owned_services_stopped": true,
+      "owned_controller_records_stopped": true,
+      "remaining_owned_listeners": 0,
+      "runner_revoked": true,
+      "revoked_identity_files_removed": true,
+      "terminal_runs_preserved": [
+        {
+          "run_id": "7faa9c9c-6303-44ef-8f22-b8df368b6c0c",
+          "status": "completed",
+          "verification_status": "passed",
+          "workspace_disposition": "preserved"
+        },
+        {
+          "run_id": "54255150-63c9-4bfd-a57e-f12782435893",
+          "status": "completed",
+          "verification_status": "passed",
+          "workspace_disposition": "preserved"
+        },
+        {
+          "run_id": "516e482e-8676-455a-beee-029ccaa5b7c3",
+          "status": "completed",
+          "verification_status": "passed",
+          "workspace_disposition": "preserved"
+        },
+        {
+          "run_id": "bef4a81c-d1a4-4a1c-b600-35072203f496",
+          "status": "failed",
+          "verification_status": "failed",
+          "workspace_disposition": "preserved"
+        },
+        {
+          "run_id": "1c5c7d53-7afd-4c69-be8a-dfc71487d8e3",
+          "status": "completed",
+          "verification_status": "passed",
+          "workspace_disposition": "preserved"
+        }
+      ],
+      "preserved": [
+        "new database",
+        "retained prior database",
+        "PostgreSQL cluster",
+        "source",
+        "all worktrees",
+        "artifact objects",
+        "logs"
+      ],
+      "retained_prior_database_reset_or_dropped": false
+    },
+    "cli_source_restoration": {
+      "base_commit": "a86822071790c271974919b341b9a5bbf47d0346",
+      "source_tree_git_sha": "f95577d059796d30d2b8d480b9a72234a2390dde",
+      "tracked_files_verified": 6,
+      "all_git_blob_hashes_match": true,
+      "untracked_cli_files": 0,
+      "production_cli_changes_remaining": false
+    }
+  },
+  "http_body_bound": {
+    "raw_body_limit_bytes": 16777216,
+    "scope": "Declared length and chunked overflow checked before JSON decoding on success and error responses",
+    "baseline": {
+      "failure": "Each open oversized HTTP response reached the five-second fixture timeout",
+      "duration_ms": 20747.3184,
+      "passed": 0,
+      "test_count": 4,
+      "binary_sha256": "1b18eab1def0df36ee9ea836e7a830a91c90952b27a09a9da309ff88cc9c6070",
+      "failed": 4
+    },
+    "fixed": {
+      "binary_sha256": "d62a24612fbb0c1e9cd208a5011bd2ddbf3dd1828754d339c24cb295748e8781",
+      "gateway_source_sha256": "7eaefd69a74ea2c1424bc02f793a01b7515c077ff8796126be537fbdb15cc8a2",
+      "probe_test_source_sha256": "12068703c3eaf16a8f1024823c8fefd53007569cdd43e8e57e910e5f2b2a7ffa",
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 3678.4234,
+      "overflow_rejection_ms": [
+        53.2281,
+        83.93,
+        56.6321,
+        88.8112
+      ],
+      "inclusive_boundary_bytes": 16777216,
+      "legacy_response_accepted_bytes": 16777217,
+      "gateway_unit_tests": {
+        "ignored": 0,
+        "passed": 14,
+        "failed": 0
+      }
+    },
+    "cargo_checks": [
+      {
+        "name": "fmt",
+        "exit_code": 0,
+        "duration_ms": 479
+      },
+      {
+        "name": "clippy",
+        "exit_code": 0,
+        "duration_ms": 10502
+      },
+      {
+        "name": "test",
+        "exit_code": 0,
+        "duration_ms": 7232
+      }
+    ]
+  },
+  "validation_phases": {
+    "initial_observation_tests": {
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 2547.8276
+    },
+    "final_combined_tests": {
+      "status": "passed",
+      "passed": 68,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 3474.2297,
+      "node_version": "22.23.2",
+      "native_mcp_binary_sha256": "d62a24612fbb0c1e9cd208a5011bd2ddbf3dd1828754d339c24cb295748e8781",
+      "command": "node --test tools/operation_receipt.test.mjs tools/probe_mcp.test.mjs tools/consume_operation_receipt.test.mjs",
+      "scope": "Compiled native MCP against controlled loopback HTTP fixtures; metadata compatibility, byte bounds, privacy, native scope, drift and negative consumption"
+    },
+    "historical_receipt_schema_recheck": {
+      "receipts_validated": 6,
+      "fingerprints_unchanged": true,
+      "live_api_requests": 0,
+      "scope": "Final exporter pure schema/fingerprint validation of the preserved six original receipt files"
+    },
+    "full_node_suite": {
+      "status": "passed",
+      "command": "node --test --test-concurrency=2 --test-timeout=180000 apps/web/src/**/*.test.mjs tools/*.test.mjs",
+      "node_version": "24.19.0",
+      "compiled_mcp": true,
+      "passed": 964,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 56057.2594,
+      "wall_duration_seconds": 56.2234081
+    },
+    "final_rust_workspace": {
+      "schema_version": 1,
+      "status": "passed",
+      "first_attempt_status": "failed",
+      "first_failure": "Native npm executable absent from initial process PATH",
+      "initial_failure_preserved": true,
+      "source_files_verified": 99,
+      "source_unchanged": true,
+      "checks": [
+        {
+          "log": "fmt.log",
+          "exit_code": 0,
+          "duration_ms": 3649,
+          "command": "cargo fmt --check",
+          "name": "fmt"
+        },
+        {
+          "log": "clippy.log",
+          "exit_code": 0,
+          "duration_ms": 60145,
+          "command": "cargo clippy --locked --workspace --all-targets -- -D warnings",
+          "name": "clippy"
+        },
+        {
+          "name": "test",
+          "command": "cargo test --locked --workspace -- --test-threads=2",
+          "exit_code": 0,
+          "duration_ms": 277943,
+          "log": "test-retry.log"
+        }
+      ],
+      "tests": {
+        "passed": 555,
+        "failed": 0,
+        "ignored": 333
+      },
+      "ignored_reasons": {
+        "requires an explicit owned stopped-session probe file; never starts inference": 1,
+        "requires explicitly owned SQLx maintenance database": 248,
+        "requires the approved isolated issue169 SQLx loader": 34,
+        "requires the approved isolated SQLx loader with filter issue199_": 12,
+        "requires the approved isolated SQLx loader with filter issue171_": 18,
+        "requires the explicitly owned issue193 SQLx maintenance fixture": 10,
+        "requires an explicitly owned PostgreSQL test database": 10
+      },
+      "finished_at": "2026-09-17T20:51:39.1005038Z",
+      "environment_correction": "Installed Node22 directory with real npm.cmd prepended to clean process PATH; no source/test changes",
+      "node_version": "v22.23.2",
+      "npm_version": "10.9.8",
+      "scope": "Ordinary locked workspace tests only;332SQLx/database tests and1explicit stopped-session provider probe remain ignored"
+    }
+  },
+  "claims": {
+    "observation_only": true,
+    "offline_authority": false,
+    "client_hmac_authentication": false,
+    "production_identity_proof": false,
+    "real_provider_inference": false,
+    "live_github_effects": false,
+    "human_review_decisions": false,
+    "unattended_process_restart": false,
+    "source_code_repair_loop": false,
+    "codeblend_local_loop_qualified": false,
+    "codeblend_score_gain_claimed": false
+  },
+  "retained_evidence_hashes": [
+    {
+      "file": "output/operation-receipt-validation/validation-summary.json",
+      "sha256": "4b71b43576a121e423fe26b85be06a355aa00df38e5409fbbb00a951816119a6"
+    },
+    {
+      "file": "output/operation-receipt-validation/consumer-live-summary.json",
+      "sha256": "a745caed33784d1d0e4f64d526874577b0bf934472f13fdcfbc7cb2bf5a9d68e"
+    },
+    {
+      "file": "output/operation-receipt-validation/consumer-owned-completed.json",
+      "sha256": "23553b85442b4ef290aad8e331b2a65eb24078f804d356cabc45117071db12e7"
+    },
+    {
+      "file": "output/operation-receipt-validation/consumer-owned-failed.json",
+      "sha256": "b045fc366ddbb644a3cfc6114198a6471ef2117006cbd9b7aee3e516969b1196"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/native-recovery/report.json",
+      "sha256": "4476139efc98ae23bae7d60e14088d54d870fb8dfd0dc4c66071ea7da8f2879d"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/native-recovery/attempt2/report.json",
+      "sha256": "2380bf9783564c32b0fdab8d12fdb9de9c1e85b2b91668dbaba5d993bf8b9d12"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/native-recovery/attempt3/report.json",
+      "sha256": "ff3cc2da447f99c8706057a4d544ab754725c9ca661f41ce51a4b546f4a65b23"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/native-recovery/cleanup.json",
+      "sha256": "367aa0abd5eb6e024bf294de63d524930904a482504a91cd9910ab5b5f068cd4"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/mcp-http-bound/validation-summary.json",
+      "sha256": "01520b987bd64227a26d34c222b2fafcb226431ae2fc84def558db774f5c9a0f"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-node22-68-tests.log",
+      "sha256": "fbd69234c3fccce07ab41d1e40305f6aaf30e3138e9e85c8429d26d82db0605b"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/codex-mcp-integration.json",
+      "sha256": "74430ef37e3525b3e9ca4b83398af2bf31f32dad60a8284416cc07eca00f6dc5"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-node/summary.json",
+      "sha256": "65bf8d154691225f221cee943106841acd83a6a6eecfe382523bfe976b635825"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-node/tests.log",
+      "sha256": "c91bbbbbb04400e82f2a6e864a1deee296298095efb7265af38eb0be96fd80e1"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-rust/summary.json",
+      "sha256": "12823b31f0daf82e409f61088db8804884d6380a6d6b1fe603f36516cc15dd80"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-rust/test.log",
+      "sha256": "b49817bf9080c02862bcd472020b49ec45681b7ccb1b48673f73380667ab1621"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-rust/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-rust/clippy.log",
+      "sha256": "ffef614c474de6b99d116221819d7625f54a9d8335b409398dcea789a659c9f1"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-rust/npm-path-targeted.json",
+      "sha256": "a6ffd0d5813dbf187bd888d96d56075cea2a1d301c3310a54ee78de09f578aa3"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-rust/npm-path-targeted.log",
+      "sha256": "0ae267439501393c20af046a3685df75833e11a96b1b26b3ab268b32d8c4a09f"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-rust/test-retry-summary.json",
+      "sha256": "24a2c8548299a710c998dfe5529a1af250be92a302cb6b4d2d33c75fb743520b"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-rust/test-retry.log",
+      "sha256": "00cf783eca55fc78ea8b9fe44bf53f4b007d7947c6c3f4ab5279de1d03249a2d"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/observations-rust/final-summary.json",
+      "sha256": "3e9150497604dae6062087e240f90beb792b3a71d3c11e79878f17ac3fa27644"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/summary.json",
+      "sha256": "83ef3c83a61a86caecaffe95f428d1bd674d198c76e25870a86e83ce1062d65d"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/completed.json",
+      "sha256": "b683924ca1d2cab10435b8b47daf765a1a751b498b978ac4d2e3ef034f4e1517"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/completed-consume.json",
+      "sha256": "b2badb89196b80634498ae866b67264286a8d34c62c3369401cfa8a7dc44726b"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/completed-export.log",
+      "sha256": "1ee4ffde78b1c895da8a6acd368a10ca2f2feff123df6455963f804b7c996f65"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/published.json",
+      "sha256": "8115f30c5f41afa026ca431d7e4c03542c25d7f937f8d4f7fa80a23e73f5dbfb"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/published-consume.json",
+      "sha256": "cde5f4750a790132ea7a5ff66e945c584ea7a99319a12d8d0bab299e08180e05"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/published-export.log",
+      "sha256": "32f71165af74bef84cf982ff2baa6f1282742a37c25011b23cd36d985dffd1ce"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/failed.json",
+      "sha256": "840c6bc3b647f8358729a083ed58f567583b433be839fd52c55038d23ecccc5b"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/failed-consume.json",
+      "sha256": "4307f478dae675fbcd43c6e3431d8a26b9143380a9b852633ce083525474b46b"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/failed-export.log",
+      "sha256": "059383a1288b4e676c635e186f48026bffe88847ce6732865d7d41d4dceef04a"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/cancelled.json",
+      "sha256": "cea3f69fed6e8fe3a0b7048c06a98ef4819e4c57a847b07542aa58c50c3811b5"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/cancelled-consume.json",
+      "sha256": "4307f478dae675fbcd43c6e3431d8a26b9143380a9b852633ce083525474b46b"
+    },
+    {
+      "file": "output/operation-receipt-validation/final-retained/cancelled-export.log",
+      "sha256": "da5b2e68f912fb9f7936924c6a5213b45d0d39c3e5daf83a2d14c5647b648cd3"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/coverage-summary.json",
+      "sha256": "eceb41e4ec58a656b3c36121441ae4bd2f1973f6678d906a716160908e0fbf7e"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/workspace-coverage.json",
+      "sha256": "1d12f8791f9dd31bfbd98c4e947e8fd50f2265b1ab91f8d2ff9fecc1e21c3ea3"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/workspace-lcov.info",
+      "sha256": "c01c90a07131c59a3cf5d19452d13befeb7152f61576737652155d6939e43948"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/source-before.json",
+      "sha256": "2a322f3acc23cd5f4d1e88353499359988c5106d78d30278ba89e3da45fecf0a"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/attempt2/source-after.json",
+      "sha256": "2a322f3acc23cd5f4d1e88353499359988c5106d78d30278ba89e3da45fecf0a"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/coverage-tool-install.json",
+      "sha256": "1ed67b092edd2b0e53e9b766ddd19028981861124108432d124331c68684ab42"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/llvm-executable-hashes.json",
+      "sha256": "987c035e051b21f966f6de69168c20c776c43987522dc5abf03077e0e21538b4"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/coverage-summary.json",
+      "sha256": "5d027fc41bf0e04f612a81f4470a079d5356c3d05818fe344d6c92454a908584"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/workspace-coverage.json",
+      "sha256": "41f3f15d991961239905dc897d32e7e693c21d0676c005e82fa9b138ef6daafe"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/workspace-lcov.info",
+      "sha256": "a5aa73d0199f7468b32d083a87d3cff4f178548eb5a993b427386274a61eb23b"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/source-before.json",
+      "sha256": "2a322f3acc23cd5f4d1e88353499359988c5106d78d30278ba89e3da45fecf0a"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/source-after.json",
+      "sha256": "2a322f3acc23cd5f4d1e88353499359988c5106d78d30278ba89e3da45fecf0a"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/sqlx-accumulation/postgres-cleanup.json",
+      "sha256": "10fad348a1389817dae7096ed3aa69068209257c55653edb9c9016a68cd73120"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/rust-coverage/threshold-checks/summary.json",
+      "sha256": "87e56df3906be16187d535817b6ab204a13a5a0d194785b869638e8bd541d060"
+    },
+    {
+      "file": "output/codeblend-readiness-validation/coverage-ci-proposal/production-validation.json",
+      "sha256": "e5f0c185f8c46de06bd2b45fa4382e8404764eeaa93011b0c9ecc27a0cf31666"
+    }
+  ],
+  "native_codex_registration": {
+    "status": "passed",
+    "codex_version": "0.152.0",
+    "started_at": "2026-09-17T20:34:44.908Z",
+    "finished_at": "2026-09-17T20:34:46.211Z",
+    "duration_ms": 1303,
+    "configuration_sha256": "047e4f019980e0e6c856124475acf364b6aee91ad3f0288165bc1a89838bce10",
+    "gateway_sha256": "d62a24612fbb0c1e9cd208a5011bd2ddbf3dd1828754d339c24cb295748e8781",
+    "configuration_scope": "Trusted project in an isolated Codex home; linked-worktree trust follows the underlying repository root named by native diagnostics",
+    "command": "crony-mcp",
+    "args": [
+      "--read-only"
+    ],
+    "forwarded_environment_variable_names": [
+      "CRONY_SERVER_HTTP",
+      "CRONY_CORP_ID",
+      "CRONY_ACTOR_ID",
+      "CRONY_ACCESS_TOKEN"
+    ],
+    "enabled_tools": [
+      "crony_snapshot"
+    ],
+    "startup_timeout_seconds": 10,
+    "tool_timeout_seconds": 30,
+    "observed_server_name": "crony-mcp",
+    "observed_tool_names": [
+      "crony_snapshot"
+    ],
+    "mcp_oauth_auth_status": "unsupported",
+    "ecorp_identity_proven": false,
+    "snapshot_read_performed": false,
+    "credentials_forwarded": false,
+    "model_turns": 0,
+    "existing_personal_configuration_changed": false,
+    "prior_trust_failures_preserved": true
+  },
+  "final_retained_observations": {
+    "scope": "Fresh read-only observations against the separate retained development API with final metadata compatibility and native HTTP body-bound code; no provider, publication or task effects",
+    "checked_at": "2026-09-17T20:55:11.4366684Z",
+    "native_mcp_binary_sha256": "d62a24612fbb0c1e9cd208a5011bd2ddbf3dd1828754d339c24cb295748e8781",
+    "exports_passed": 4,
+    "consumer_checks_passed": 4,
+    "owned_api_restarted": false,
+    "owned_api_rerun": false,
+    "records": [
+      {
+        "selection": "completed",
+        "scope": {
+          "server_origin_sha256": "806e7ae900267d9248d9ec4a8ccbf3390c238e7f2c673bd43e4fdf009c2b983b",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "9d0aed3c-7c7c-43d9-a5c7-66201d917532",
+          "task_id": "073da65c-bb20-495c-b044-d4ec3149e084",
+          "run_id": "44b2c3bd-bf10-435a-ac8d-12768f701e00"
+        },
+        "checked_at": "2026-09-17T20:55:03.991Z",
+        "mode": "current-run",
+        "export_exit_code": 0,
+        "run_status": "completed",
+        "verification_status": "passed",
+        "persisted_acceptance_observed": true,
+        "automated_checks_complete": false,
+        "automated_checks_passed": false,
+        "artifact_count": 2,
+        "artifact_bytes": 1931,
+        "export_duration_ms": 1897,
+        "receipt_sha256": "b683924ca1d2cab10435b8b47daf765a1a751b498b978ac4d2e3ef034f4e1517",
+        "observation_fingerprint_sha256": "81b3682b45e2b4dde351bcf6aa1957dea6fa066b8081dcdad24a4673592b4434",
+        "consumer": {
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "passed": true,
+          "result": "validated-current-observation"
+        }
+      },
+      {
+        "selection": "published",
+        "scope": {
+          "server_origin_sha256": "806e7ae900267d9248d9ec4a8ccbf3390c238e7f2c673bd43e4fdf009c2b983b",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "ce20c81f-4bbe-44fa-91da-1b928fdd7040",
+          "task_id": "878e40c5-2a57-4def-97cd-c5bcf35d39e6",
+          "run_id": "901ee3f2-1aa2-406e-905b-d5596c2289b5"
+        },
+        "checked_at": "2026-09-17T20:55:06.384Z",
+        "mode": "published-result",
+        "export_exit_code": 0,
+        "run_status": "completed",
+        "verification_status": "passed",
+        "persisted_acceptance_observed": true,
+        "automated_checks_complete": true,
+        "automated_checks_passed": true,
+        "artifact_count": 2,
+        "artifact_bytes": 81271,
+        "export_duration_ms": 973,
+        "receipt_sha256": "8115f30c5f41afa026ca431d7e4c03542c25d7f937f8d4f7fa80a23e73f5dbfb",
+        "observation_fingerprint_sha256": "53c8549071becfbf9df61690d1bc51be9c7226f0fe78ae8e13d09e97e7c51563",
+        "consumer": {
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "passed": true,
+          "result": "validated-current-observation"
+        }
+      },
+      {
+        "selection": "failed",
+        "scope": {
+          "server_origin_sha256": "806e7ae900267d9248d9ec4a8ccbf3390c238e7f2c673bd43e4fdf009c2b983b",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "3bf2baa7-bbc6-46d6-945c-49bba4b3cc65",
+          "task_id": "3ce4fbf3-e0dc-476f-9d64-4038ae9133d8",
+          "run_id": "23cebb8d-49d9-49d6-a8de-571476728885"
+        },
+        "checked_at": "2026-09-17T20:55:08.599Z",
+        "mode": "current-run",
+        "export_exit_code": 0,
+        "run_status": "failed",
+        "verification_status": "failed",
+        "persisted_acceptance_observed": false,
+        "automated_checks_complete": true,
+        "automated_checks_passed": false,
+        "artifact_count": 1,
+        "artifact_bytes": 1358,
+        "export_duration_ms": 853,
+        "receipt_sha256": "840c6bc3b647f8358729a083ed58f567583b433be839fd52c55038d23ecccc5b",
+        "observation_fingerprint_sha256": "8779543ae0d90fde1e9d129db6b5e557adcd1add5881920606ff1d842633b909",
+        "consumer": {
+          "exit_code": 1,
+          "expected_exit_code": 1,
+          "passed": true,
+          "result": "native_acceptance_not_observed"
+        }
+      },
+      {
+        "selection": "cancelled",
+        "scope": {
+          "server_origin_sha256": "806e7ae900267d9248d9ec4a8ccbf3390c238e7f2c673bd43e4fdf009c2b983b",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "actor_id": "00000000-0000-4000-8000-000000000011",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "mission_id": "44698bab-01c5-44d0-ba51-7a5d6b50ed1f",
+          "task_id": "b1031c4c-41f9-45e0-8235-1d8604317844",
+          "run_id": "c9c179e7-7fe8-434d-8fc7-c5bb134f0c88"
+        },
+        "checked_at": "2026-09-17T20:55:10.500Z",
+        "mode": "current-run",
+        "export_exit_code": 0,
+        "run_status": "cancelled",
+        "verification_status": "pending",
+        "persisted_acceptance_observed": false,
+        "automated_checks_complete": false,
+        "automated_checks_passed": false,
+        "artifact_count": 0,
+        "artifact_bytes": 0,
+        "export_duration_ms": 686,
+        "receipt_sha256": "cea3f69fed6e8fe3a0b7048c06a98ef4819e4c57a847b07542aa58c50c3811b5",
+        "observation_fingerprint_sha256": "ff04e3f90bfd0f0cf17c99a034cef875a19c30b3b93827aff3afb079e59c085e",
+        "consumer": {
+          "exit_code": 1,
+          "expected_exit_code": 1,
+          "passed": true,
+          "result": "native_acceptance_not_observed"
+        }
+      }
+    ]
+  },
+  "observation_totals": {
+    "initial_export_executions": 6,
+    "initial_consumer_executions": 6,
+    "final_retained_export_executions": 4,
+    "final_retained_consumer_executions": 4,
+    "total_export_executions": 10,
+    "total_consumer_executions": 10,
+    "distinct_run_ids": 6
+  },
+  "native_rust_unit_coverage": {
+    "scope": "Rust workspace executed tests under native cargo-llvm-cov defaults; ignored SQLx/probe tests not executed; no JavaScript or provider-inference coverage claim",
+    "platform": "x86_64-pc-windows-msvc",
+    "tool": "cargo-llvm-cov 0.9.1",
+    "rust": "1.98.1",
+    "llvm": "22.1.8",
+    "node_for_native_fixtures": "22.23.2",
+    "tests": {
+      "passed": 555,
+      "failed": 0,
+      "ignored": 333,
+      "filtered_out": 0,
+      "suites": 10,
+      "summed_suite_seconds": 479.23
+    },
+    "totals": {
+      "branches": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "functions": {
+        "count": 4542,
+        "covered": 2643,
+        "percent": 58.190224570673706
+      },
+      "instantiations": {
+        "count": 6004,
+        "covered": 2922,
+        "percent": 48.66755496335776
+      },
+      "lines": {
+        "count": 74506,
+        "covered": 34128,
+        "percent": 45.80570692293238
+      },
+      "mcdc": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "regions": {
+        "count": 95345,
+        "covered": 48475,
+        "notcovered": 46870,
+        "percent": 50.841680213959826
+      }
+    },
+    "reported_files": 69,
+    "by_crate": {
+      "crony-cli": {
+        "files": 5,
+        "lines": {
+          "count": 9691,
+          "covered": 5894,
+          "percent": 60.81931689196161
+        },
+        "functions": {
+          "count": 671,
+          "covered": 411,
+          "percent": 61.25186289120715
+        },
+        "regions": {
+          "count": 13886,
+          "covered": 8583,
+          "percent": 61.810456574967596
+        }
+      },
+      "crony-domain": {
+        "files": 5,
+        "lines": {
+          "count": 742,
+          "covered": 602,
+          "percent": 81.13207547169812
+        },
+        "functions": {
+          "count": 77,
+          "covered": 64,
+          "percent": 83.11688311688312
+        },
+        "regions": {
+          "count": 1000,
+          "covered": 859,
+          "percent": 85.9
+        }
+      },
+      "crony-gateways": {
+        "files": 4,
+        "lines": {
+          "count": 948,
+          "covered": 637,
+          "percent": 67.19409282700423
+        },
+        "functions": {
+          "count": 79,
+          "covered": 52,
+          "percent": 65.82278481012658
+        },
+        "regions": {
+          "count": 1300,
+          "covered": 824,
+          "percent": 63.38461538461539
+        }
+      },
+      "crony-protocol": {
+        "files": 1,
+        "lines": {
+          "count": 334,
+          "covered": 284,
+          "percent": 85.02994011976048
+        },
+        "functions": {
+          "count": 24,
+          "covered": 15,
+          "percent": 62.5
+        },
+        "regions": {
+          "count": 476,
+          "covered": 409,
+          "percent": 85.92436974789916
+        }
+      },
+      "crony-runner": {
+        "files": 26,
+        "lines": {
+          "count": 21765,
+          "covered": 17489,
+          "percent": 80.35377900298644
+        },
+        "functions": {
+          "count": 1698,
+          "covered": 1432,
+          "percent": 84.33451118963487
+        },
+        "regions": {
+          "count": 30680,
+          "covered": 24754,
+          "percent": 80.6844850065189
+        }
+      },
+      "crony-server": {
+        "files": 9,
+        "lines": {
+          "count": 12748,
+          "covered": 6512,
+          "percent": 51.082522748666456
+        },
+        "functions": {
+          "count": 877,
+          "covered": 461,
+          "percent": 52.56556442417332
+        },
+        "regions": {
+          "count": 16455,
+          "covered": 9423,
+          "percent": 57.26526891522334
+        }
+      },
+      "crony-store": {
+        "files": 19,
+        "lines": {
+          "count": 28278,
+          "covered": 2710,
+          "percent": 9.583421741282976
+        },
+        "functions": {
+          "count": 1116,
+          "covered": 208,
+          "percent": 18.63799283154122
+        },
+        "regions": {
+          "count": 31548,
+          "covered": 3623,
+          "percent": 11.484087739317864
+        }
+      }
+    },
+    "duration_seconds": 500.1790127,
+    "source_unchanged": true,
+    "code_exclusions_requested": false,
+    "stable_doctest_coverage_claimed": false,
+    "database_ignored_tests_executed": false,
+    "command": "cargo +1.98.1 llvm-cov test --workspace --locked --json --summary-only --output-path <report>; cargo +1.98.1 llvm-cov report --lcov --output-path <report>",
+    "json_sha256": "1d12f8791f9dd31bfbd98c4e947e8fd50f2265b1ab91f8d2ff9fecc1e21c3ea3",
+    "lcov_sha256": "c01c90a07131c59a3cf5d19452d13befeb7152f61576737652155d6939e43948",
+    "tool_hashes": {
+      "coverage_zip_sha256": "656590cfa13bb7478595bbfdd3bc6bc075a4f7f3f0df5a439c1856cb03c5a4d2",
+      "coverage_executable_sha256": "a854b3d24f49535dc8b3d070035e0f9042b5cac25324e66cb06c639e4e04baeb",
+      "llvm_cov_sha256": "4f292df08bb53f17a3eefa6752a521963ddc29c3c62a0c2d55d17ef6db1b1403",
+      "llvm_profdata_sha256": "6fab9cf53239feebc13142330ae120ad736f7b29c00ea8143a61476038f0b432"
+    },
+    "ci": {
+      "workflow": ".github/workflows/repository-checks.yml",
+      "job": "rust-unit-coverage-windows",
+      "line_floor": 45,
+      "baseline_line_percent": 45.80570692293238,
+      "baseline_headroom_percentage_points": 0.8057069229323801,
+      "function_floor": null,
+      "timeout_minutes": 45,
+      "hosted_run_claimed": false,
+      "coverage_scope": "Whole workspace native unit tests only; database integration coverage is separate",
+      "native_report_locked_supported": true,
+      "static_validation": "passed native actionlint1.7.12 and PowerShell AST",
+      "source_snapshot_validation": {
+        "actual_files": 99,
+        "expected_files": 99,
+        "name_differences": 0,
+        "digest_mismatches": 0,
+        "empty_repository_exit": 1,
+        "empty_manifest_created": false
+      },
+      "actionlint_version": "1.7.12",
+      "actionlint_exit_code": 0
+    }
+  },
+  "native_rust_combined_database_coverage": {
+    "scope": "Rust workspace executed tests plus 332 audited native SQLx tests, accumulated with native cargo-llvm-cov defaults; stopped-session probe remains unexecuted; no JavaScript or provider-inference coverage claim",
+    "tool": "cargo-llvm-cov 0.9.1",
+    "rust": "1.98.1",
+    "llvm": "22.1.8",
+    "node_for_native_fixtures": "22.23.2",
+    "database_stage_tests": {
+      "passed": 332,
+      "failed": 0,
+      "ignored": 0,
+      "filtered_out": 186,
+      "suites": 2,
+      "summed_suite_seconds": 1189.1499999999999
+    },
+    "database_stage_retries": 0,
+    "database_stage_duration_seconds": 1490.66304,
+    "baseline_passed_tests": 555,
+    "combined_passed_tests": 887,
+    "remaining_opt_in_probe_tests": 1,
+    "reported_files": 69,
+    "totals": {
+      "branches": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "functions": {
+        "count": 4542,
+        "covered": 3412,
+        "percent": 75.12109202994276
+      },
+      "instantiations": {
+        "count": 9191,
+        "covered": 4065,
+        "percent": 44.228049178544225
+      },
+      "lines": {
+        "count": 74506,
+        "covered": 53837,
+        "percent": 72.25861004482861
+      },
+      "mcdc": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "regions": {
+        "count": 95345,
+        "covered": 69050,
+        "notcovered": 26295,
+        "percent": 72.4212071949237
+      }
+    },
+    "by_crate": {
+      "crony-cli": {
+        "files": 5,
+        "lines": {
+          "count": 9691,
+          "covered": 5894,
+          "percent": 60.81931689196161
+        },
+        "functions": {
+          "count": 671,
+          "covered": 411,
+          "percent": 61.25186289120715
+        },
+        "regions": {
+          "count": 13886,
+          "covered": 8583,
+          "percent": 61.810456574967596
+        }
+      },
+      "crony-domain": {
+        "files": 5,
+        "lines": {
+          "count": 742,
+          "covered": 667,
+          "percent": 89.8921832884097
+        },
+        "functions": {
+          "count": 77,
+          "covered": 71,
+          "percent": 92.20779220779221
+        },
+        "regions": {
+          "count": 1000,
+          "covered": 919,
+          "percent": 91.9
+        }
+      },
+      "crony-gateways": {
+        "files": 4,
+        "lines": {
+          "count": 948,
+          "covered": 637,
+          "percent": 67.19409282700423
+        },
+        "functions": {
+          "count": 79,
+          "covered": 52,
+          "percent": 65.82278481012658
+        },
+        "regions": {
+          "count": 1300,
+          "covered": 824,
+          "percent": 63.38461538461539
+        }
+      },
+      "crony-protocol": {
+        "files": 1,
+        "lines": {
+          "count": 334,
+          "covered": 284,
+          "percent": 85.02994011976048
+        },
+        "functions": {
+          "count": 24,
+          "covered": 15,
+          "percent": 62.5
+        },
+        "regions": {
+          "count": 476,
+          "covered": 409,
+          "percent": 85.92436974789916
+        }
+      },
+      "crony-runner": {
+        "files": 26,
+        "lines": {
+          "count": 21765,
+          "covered": 17489,
+          "percent": 80.35377900298644
+        },
+        "functions": {
+          "count": 1698,
+          "covered": 1432,
+          "percent": 84.33451118963487
+        },
+        "regions": {
+          "count": 30680,
+          "covered": 24754,
+          "percent": 80.6844850065189
+        }
+      },
+      "crony-server": {
+        "files": 9,
+        "lines": {
+          "count": 12748,
+          "covered": 7097,
+          "percent": 55.67147787888296
+        },
+        "functions": {
+          "count": 877,
+          "covered": 503,
+          "percent": 57.35461801596351
+        },
+        "regions": {
+          "count": 16455,
+          "covered": 10093,
+          "percent": 61.33697964144637
+        }
+      },
+      "crony-store": {
+        "files": 19,
+        "lines": {
+          "count": 28278,
+          "covered": 21769,
+          "percent": 76.98210623099229
+        },
+        "functions": {
+          "count": 1116,
+          "covered": 928,
+          "percent": 83.15412186379929
+        },
+        "regions": {
+          "count": 31548,
+          "covered": 23468,
+          "percent": 74.38823380245974
+        }
+      }
+    },
+    "denominator_changed": {
+      "lines": false,
+      "functions": false,
+      "regions": false
+    },
+    "source_unchanged": true,
+    "code_exclusions_requested": false,
+    "json_sha256": "41f3f15d991961239905dc897d32e7e693c21d0676c005e82fa9b138ef6daafe",
+    "lcov_sha256": "a5aa73d0199f7468b32d083a87d3cff4f178548eb5a993b427386274a61eb23b",
+    "unit_only_ci_claim": false,
+    "provider_inference_claim": false,
+    "threshold_checks": {
+      "kind": "native-rust-coverage-threshold-checks",
+      "checked_at": "2026-09-17T21:28:05.0988915Z",
+      "scope": "Native report-only thresholds on the combined555unit+332SQLx profiles; no tests or DB calls, not unit-only or hosted CI proof",
+      "results": [
+        {
+          "floor": "45.0",
+          "command": [
+            "cargo",
+            "+1.98.1",
+            "llvm-cov",
+            "report",
+            "--locked",
+            "--fail-under-lines",
+            "45.0"
+          ],
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "passed": true,
+          "duration_ms": 2965.7213
+        },
+        {
+          "floor": "100",
+          "command": [
+            "cargo",
+            "+1.98.1",
+            "llvm-cov",
+            "report",
+            "--locked",
+            "--fail-under-lines",
+            "100"
+          ],
+          "exit_code": 1,
+          "expected_exit_code": 1,
+          "passed": true,
+          "duration_ms": 3248.4546
+        }
+      ],
+      "raw_profiles_unchanged": true,
+      "source_unchanged": true,
+      "profile_count": 12,
+      "cleanup_safe": true
+    },
+    "cleanup": {
+      "checked_at": "2026-09-17T21:28:15.5597140Z",
+      "role": "coverage-postgres",
+      "process_id": 43308,
+      "process_identity_verified": true,
+      "directory_identity_verified": true,
+      "native_stop_exit": 0,
+      "process_absent": true,
+      "listener_absent": true,
+      "database_files_preserved": true,
+      "other_stacks_untouched": true
+    }
+  }
+}

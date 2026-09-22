@@ -10,7 +10,7 @@ use crony_domain::{
 };
 use crony_store::StoredArtifact;
 use futures_util::TryStreamExt;
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use object_store::{
     GetOptions, GetRange, GetResult, ObjectStore, aws::AmazonS3Builder, local::LocalFileSystem,
     path::Path as ObjectPath,
@@ -27,6 +27,40 @@ pub struct ArtifactStore {
     store: Arc<dyn ObjectStore>,
     signing_key: Arc<Vec<u8>>,
     max_bytes: usize,
+}
+
+// Preparation may construct native clients, but must not create directories or
+// perform object-store operations. Only activation may create local storage.
+enum PreparedBackend {
+    Local(PathBuf),
+    Ready(Arc<dyn ObjectStore>),
+}
+
+pub struct PreparedArtifactStore {
+    backend: PreparedBackend,
+    signing_key: Arc<Vec<u8>>,
+    max_bytes: usize,
+}
+
+impl PreparedArtifactStore {
+    pub fn activate(self) -> Result<ArtifactStore> {
+        let store: Arc<dyn ObjectStore> = match self.backend {
+            PreparedBackend::Ready(store) => store,
+            PreparedBackend::Local(root) => {
+                std::fs::create_dir_all(&root)
+                    .map_err(|_| anyhow!("startup failed: local artifact directory"))?;
+                Arc::new(
+                    LocalFileSystem::new_with_prefix(&root)
+                        .map_err(|_| anyhow!("startup failed: local artifact store"))?,
+                )
+            }
+        };
+        Ok(ArtifactStore {
+            store,
+            signing_key: self.signing_key,
+            max_bytes: self.max_bytes,
+        })
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -73,7 +107,7 @@ pub fn artifact_error_is_missing_objects(error: &anyhow::Error) -> bool {
 
 impl ArtifactStore {
     #[allow(clippy::too_many_arguments)]
-    pub fn initialize(
+    pub fn prepare(
         backend: &str,
         local_root: PathBuf,
         endpoint: Option<&str>,
@@ -85,9 +119,11 @@ impl ArtifactStore {
         signing_key_hex: Option<&str>,
         max_bytes: usize,
         production: bool,
-    ) -> Result<Self> {
+    ) -> Result<PreparedArtifactStore> {
         let signing_key = match signing_key_hex {
-            Some(value) => hex::decode(value).context("decode artifact signing key")?,
+            Some(value) => hex::decode(value).map_err(|_| {
+                anyhow!("invalid CRONY_ARTIFACT_SIGNING_KEY_HEX: expected hexadecimal")
+            })?,
             None if !production => vec![0x4c; 32],
             None => return Err(anyhow!("CRONY_ARTIFACT_SIGNING_KEY_HEX is required")),
         };
@@ -108,13 +144,25 @@ impl ArtifactStore {
             ));
         }
 
-        let store: Arc<dyn ObjectStore> = match backend {
-            "local" => {
-                std::fs::create_dir_all(&local_root)?;
-                Arc::new(LocalFileSystem::new_with_prefix(&local_root)?)
-            }
+        let backend = match backend {
+            "local" => PreparedBackend::Local(local_root),
             "s3" => {
-                let bucket = bucket.context("CRONY_OBJECT_STORE_BUCKET is required for S3")?;
+                let bucket = bucket
+                    .filter(|value| !value.trim().is_empty())
+                    .context("CRONY_OBJECT_STORE_BUCKET is required for S3")?;
+                // The native builder defers endpoint parsing until first use.
+                if let Some(endpoint) = endpoint {
+                    let url = reqwest::Url::parse(endpoint)
+                        .map_err(|_| anyhow!("invalid CRONY_OBJECT_STORE_ENDPOINT"))?;
+                    if !matches!(url.scheme(), "http" | "https")
+                        || url.host_str().is_none()
+                        || (url.scheme() == "http" && !allow_http)
+                    {
+                        return Err(anyhow!(
+                            "invalid CRONY_OBJECT_STORE_ENDPOINT: expected an allowed HTTP(S) URL"
+                        ));
+                    }
+                }
                 let mut builder = AmazonS3Builder::new()
                     .with_bucket_name(bucket)
                     .with_region(region.unwrap_or("us-east-1"));
@@ -132,15 +180,52 @@ impl ArtifactStore {
                 if allow_http {
                     builder = builder.with_allow_http(true);
                 }
-                Arc::new(builder.build()?)
+                PreparedBackend::Ready(Arc::new(builder.build().map_err(|_| {
+                    anyhow!("invalid S3 configuration: check CRONY_OBJECT_STORE settings")
+                })?))
             }
-            other => return Err(anyhow!("unsupported object store backend {other}")),
+            _ => {
+                return Err(anyhow!(
+                    "unsupported CRONY_OBJECT_STORE_BACKEND: expected local or s3"
+                ));
+            }
         };
-        Ok(Self {
-            store,
+        Ok(PreparedArtifactStore {
+            backend,
             signing_key: Arc::new(signing_key),
             max_bytes,
         })
+    }
+
+    #[cfg(test)]
+    #[allow(clippy::too_many_arguments)]
+    pub fn initialize(
+        backend: &str,
+        local_root: PathBuf,
+        endpoint: Option<&str>,
+        bucket: Option<&str>,
+        region: Option<&str>,
+        access_key: Option<&str>,
+        secret_key: Option<&str>,
+        allow_http: bool,
+        signing_key_hex: Option<&str>,
+        max_bytes: usize,
+        production: bool,
+    ) -> Result<Self> {
+        Self::prepare(
+            backend,
+            local_root,
+            endpoint,
+            bucket,
+            region,
+            access_key,
+            secret_key,
+            allow_http,
+            signing_key_hex,
+            max_bytes,
+            production,
+        )?
+        .activate()
     }
 
     #[cfg(test)]
@@ -754,6 +839,16 @@ mod tests {
     use futures_util::{StreamExt, stream};
     use object_store::{GetResultPayload, ObjectMeta, memory::InMemory};
     use serde_json::json;
+
+    #[test]
+    fn hmac_sha256_keeps_the_rfc4231_signature_bytes() {
+        let mut mac = Hmac::<Sha256>::new_from_slice(&[0x0b; 20]).unwrap();
+        mac.update(b"Hi There");
+        assert_eq!(
+            hex::encode(mac.finalize().into_bytes()),
+            "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"
+        );
+    }
 
     fn identity() -> ArtifactIdentity<'static> {
         ArtifactIdentity {

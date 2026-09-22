@@ -836,3 +836,6 @@ async fn issue204_legacy_unbound_factory_materialization_remains_compatible(
 
 #[path = "factory_attempt_policy_tests.rs"]
 mod attempt_policy;
+
+#[path = "factory_cost_policy_tests.rs"]
+mod cost_policy;
