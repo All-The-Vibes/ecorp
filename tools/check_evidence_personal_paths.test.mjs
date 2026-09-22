@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -24,7 +24,7 @@ test('normalized placeholders and ordinary prose remain valid', () => {
 })
 
 test('recursive packet scan and CLI reject a leak without printing its value', t => {
-  const root = mkdtempSync(join(tmpdir(), 'ecorp-evidence-path-'))
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'ecorp-evidence-path-')))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   mkdirSync(join(root, 'prior-attempts'))
   const receipt = join(root, 'prior-attempts', 'environment.json')
@@ -44,4 +44,37 @@ test('recursive packet scan and CLI reject a leak without printing its value', t
 
 test('both retained PR226 packets contain no personal user paths', () => {
   assert.deepEqual(findPersonalPathFiles(), [])
+})
+
+test('root and ancestor directory links cannot redirect an evidence scan', t => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'ecorp-evidence-root-')))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  const target = join(root, 'original')
+  const child = join(target, 'packet')
+  mkdirSync(child, { recursive: true })
+  const file = join(child, 'safe.txt')
+  writeFileSync(file, 'retained fixture bytes\n')
+  const direct = join(root, 'direct-link')
+  const ancestor = join(root, 'parent-link')
+  symlinkSync(child, direct, process.platform === 'win32' ? 'junction' : 'dir')
+  symlinkSync(target, ancestor, process.platform === 'win32' ? 'junction' : 'dir')
+  for (const redirected of [direct, join(ancestor, 'packet')]) {
+    assert.throws(() => findPersonalPathFiles([redirected]), /regular files and directories/)
+  }
+  assert.equal(readFileSync(file, 'utf8'), 'retained fixture bytes\n')
+  assert.deepEqual(findPersonalPathFiles([child]), [])
+})
+
+test('nested and dangling directory links fail closed', t => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'ecorp-evidence-link-')))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  const packet = join(root, 'packet')
+  const outside = join(root, 'outside')
+  mkdirSync(packet)
+  mkdirSync(outside)
+  const link = join(packet, 'redirect')
+  symlinkSync(outside, link, process.platform === 'win32' ? 'junction' : 'dir')
+  assert.throws(() => findPersonalPathFiles([packet]), /regular files and directories/)
+  rmSync(outside, { recursive: true })
+  assert.throws(() => findPersonalPathFiles([link]), /regular files and directories/)
 })

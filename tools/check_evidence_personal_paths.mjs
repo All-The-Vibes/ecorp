@@ -1,5 +1,5 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { basename, join, relative, resolve } from 'node:path'
+import { lstatSync, readdirSync, readFileSync, realpathSync } from 'node:fs'
+import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 export const defaultEvidenceDirectories = [
@@ -13,15 +13,37 @@ export function hasPersonalUserPath(text) {
   return /(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s"'<>]+/i.test(text)
 }
 
+function assertRegularDirectory(directory) {
+  const absolute = resolve(directory)
+  for (let current = absolute; ; current = dirname(current)) {
+    const entry = lstatSync(current)
+    if (entry.isSymbolicLink() || !entry.isDirectory()) {
+      throw new Error('Evidence path check requires regular files and directories')
+    }
+    if (dirname(current) === current) break
+  }
+  // Native canonicalization also expands ordinary Windows 8.3 path spelling.
+  return realpathSync.native(absolute)
+}
+
 export function findPersonalPathFiles(directories = defaultEvidenceDirectories) {
   const findings = []
-  for (const root of directories) {
+  for (const suppliedRoot of directories) {
+    const root = assertRegularDirectory(suppliedRoot)
     function visit(directory) {
-      for (const entry of readdirSync(directory, { withFileTypes: true })) {
-        const path = join(directory, entry.name)
-        if (entry.isSymbolicLink()) throw new Error('Evidence path check requires regular files and directories')
-        if (entry.isDirectory()) visit(path)
-        else if (entry.isFile() && hasPersonalUserPath(readFileSync(path).toString('utf8'))) {
+      const canonical = assertRegularDirectory(directory)
+      const location = relative(root, canonical).replaceAll('\\', '/')
+      if (location === '..' || location.startsWith('../') || resolve(root, location) !== canonical) {
+        throw new Error('Evidence path check requires regular files and directories')
+      }
+      for (const entry of readdirSync(canonical, { withFileTypes: true })) {
+        const path = join(canonical, entry.name)
+        const current = lstatSync(path)
+        if (current.isSymbolicLink() || (!current.isDirectory() && !current.isFile())) {
+          throw new Error('Evidence path check requires regular files and directories')
+        }
+        if (current.isDirectory()) visit(path)
+        else if (hasPersonalUserPath(readFileSync(path).toString('utf8'))) {
           findings.push(`${basename(root)}/${relative(root, path).replaceAll('\\', '/')}`)
         }
       }

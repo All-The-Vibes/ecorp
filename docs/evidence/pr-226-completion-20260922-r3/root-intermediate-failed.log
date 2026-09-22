@@ -1,0 +1,44 @@
+✔ personal paths include drive-relative, prefixed, escaped and alternate separators (3.4406ms)
+✔ normalized placeholders and ordinary prose remain valid (0.3313ms)
+✖ recursive packet scan and CLI reject a leak without printing its value (10.5621ms)
+✔ both retained PR226 packets contain no personal user paths (474.3753ms)
+✖ root and ancestor directory links cannot redirect an evidence scan (20.7213ms)
+✔ nested and dangling directory links fail closed (11.6227ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 4
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 716.4884
+
+✖ failing tests:
+
+test at tools\check_evidence_personal_paths.test.mjs:26:1
+✖ recursive packet scan and CLI reject a leak without printing its value (10.5621ms)
+  Error: Evidence path check requires regular files and directories
+      at assertRegularDirectory (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:28:11)
+      at visit (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:36:7)
+      at findPersonalPathFiles (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:49:5)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:32:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tools\check_evidence_personal_paths.test.mjs:49:1
+✖ root and ancestor directory links cannot redirect an evidence scan (20.7213ms)
+  Error: Evidence path check requires regular files and directories
+      at assertRegularDirectory (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:28:11)
+      at visit (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:36:7)
+      at findPersonalPathFiles (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:49:5)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:65:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
