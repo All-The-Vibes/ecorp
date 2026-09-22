@@ -949,6 +949,48 @@ pub struct StartupObservation {
     pub observed_at: DateTime<Utc>,
 }
 impl BaseConnection {
+    /// Absence requires both providers; a returned inclusion still needs finality verification.
+    pub async fn receipt_inclusion(
+        &self,
+        hash: B256,
+    ) -> Result<Option<(ReceiptEvidence, SealedHeader)>> {
+        let receipt = self.primary.receipt(hash).await?;
+        let independent = self.secondary.receipt(hash).await?;
+        if let Some(receipt) = receipt {
+            let block = self
+                .primary
+                .block(BlockTag::Number(
+                    receipt
+                        .receipt
+                        .block_number
+                        .ok_or(Error::Evidence("receipt block absent"))?,
+                ))
+                .await?;
+            let independent =
+                independent.ok_or(Error::Evidence("independent receipt unavailable"))?;
+            if receipt.receipt != independent.receipt
+                || receipt.l1_fee != independent.l1_fee
+                || block != self.secondary.block(BlockTag::Number(block.number)).await?
+            {
+                return Err(Error::Evidence("receipt inclusion disagreement"));
+            }
+            return Ok(Some((receipt, block)));
+        }
+        if independent.is_some() {
+            return Err(Error::Evidence("receipt inclusion disagreement"));
+        }
+        Ok(None)
+    }
+
+    /// Corroborate the consumed nonce before replacement, rebroadcast, or wallet quarantine.
+    pub async fn latest_nonce(&self, publisher: Address) -> Result<u64> {
+        let nonce = self.primary.nonce(publisher, BlockTag::Latest).await?;
+        if nonce != self.secondary.nonce(publisher, BlockTag::Latest).await? {
+            return Err(Error::Evidence("provider latest nonce disagreement"));
+        }
+        Ok(nonce)
+    }
+
     pub async fn connect(
         config: BaseDestinationConfig,
         trust: ManifestTrust,
@@ -1680,6 +1722,234 @@ mod tests {
         );
         assert!(rpc.block(BlockTag::Pending).await.is_err());
         task.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn replacement_receipt_absence_requires_both_providers() {
+        for primary_missing in [true, false] {
+            let present = receipt(json!([]), "0x1");
+            let (primary_receipt, secondary_receipt, expected) = if primary_missing {
+                (Value::Null, present, "receipt inclusion disagreement")
+            } else {
+                (present, Value::Null, "independent receipt unavailable")
+            };
+            let mut responses = vec![("eth_getTransactionReceipt", primary_receipt)];
+            if !primary_missing {
+                responses.push(("eth_getBlockByNumber", header(10, 4, 3)));
+            }
+            let (primary, p) = fixture(responses).await;
+            let (secondary, s) =
+                fixture(vec![("eth_getTransactionReceipt", secondary_receipt)]).await;
+            let connection = BaseConnection {
+                primary,
+                secondary,
+                config: BaseDestinationConfig::default(),
+                trust: trust_fixture(),
+            };
+            let observed = connection.receipt_inclusion(B256::repeat_byte(3)).await;
+            assert!(
+                matches!(observed, Err(Error::Evidence(message)) if message == expected),
+                "one missing receipt must not authorize replacement: {observed:?}"
+            );
+            p.await.unwrap();
+            s.await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn replacement_latest_nonce_requires_both_providers() {
+        for (primary_nonce, secondary_nonce) in [("0x7", "0x8"), ("0x8", "0x7")] {
+            let response = |nonce| {
+                vec![(
+                    "eth_getTransactionCount",
+                    json!({
+                        "_expected_params":[Address::repeat_byte(1),"latest"],
+                        "_result":nonce
+                    }),
+                )]
+            };
+            let (primary, p) = fixture(response(primary_nonce)).await;
+            let (secondary, s) = fixture(response(secondary_nonce)).await;
+            let connection = BaseConnection {
+                primary,
+                secondary,
+                config: BaseDestinationConfig::default(),
+                trust: trust_fixture(),
+            };
+            let observed = connection.latest_nonce(Address::repeat_byte(1)).await;
+            assert_eq!(
+                observed,
+                Err(Error::Evidence("provider latest nonce disagreement")),
+                "one provider must not authorize replacement/rebroadcast or nonce quarantine"
+            );
+            p.await.unwrap();
+            s.await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn replacement_agreed_absence_and_nonce_allow_progress() {
+        for nonce in [7, 8] {
+            let responses = vec![
+                ("eth_getTransactionReceipt", Value::Null),
+                (
+                    "eth_getTransactionCount",
+                    json!({
+                        "_expected_params":[Address::repeat_byte(1),"latest"],
+                        "_result":format!("0x{nonce:x}")
+                    }),
+                ),
+            ];
+            let (primary, p) = fixture(responses.clone()).await;
+            let (secondary, s) = fixture(responses).await;
+            let connection = BaseConnection {
+                primary,
+                secondary,
+                config: BaseDestinationConfig::default(),
+                trust: trust_fixture(),
+            };
+            assert!(
+                connection
+                    .receipt_inclusion(B256::repeat_byte(3))
+                    .await
+                    .unwrap()
+                    .is_none()
+            );
+            // Preserve both unconsumed and consumed nonce results for the worker's existing branch.
+            assert_eq!(
+                connection
+                    .latest_nonce(Address::repeat_byte(1))
+                    .await
+                    .unwrap(),
+                nonce
+            );
+            p.await.unwrap();
+            s.await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn replacement_matching_inclusion_preserves_success_and_revert() {
+        for status in ["0x0", "0x1"] {
+            let raw = receipt(json!([]), status);
+            let responses = vec![
+                ("eth_getTransactionReceipt", raw.clone()),
+                ("eth_getBlockByNumber", header(10, 4, 3)),
+            ];
+            let (primary, p) = fixture(responses.clone()).await;
+            let (secondary, s) = fixture(responses).await;
+            let connection = BaseConnection {
+                primary,
+                secondary,
+                config: BaseDestinationConfig::default(),
+                trust: trust_fixture(),
+            };
+            let (observed, block) = connection
+                .receipt_inclusion(B256::repeat_byte(3))
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(observed.raw, raw);
+            assert_eq!(observed.receipt.status(), status == "0x1");
+            assert_eq!(block.number, 10);
+            assert_eq!(block.hash, B256::repeat_byte(4));
+            p.await.unwrap();
+            s.await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn replacement_inclusion_disagreements_still_fail_closed() {
+        for field in ["status", "l1Fee", "blockHash", "header"] {
+            let raw = receipt(json!([]), "0x1");
+            let mut other = raw.clone();
+            match field {
+                "status" => other[field] = json!("0x0"),
+                "l1Fee" => other[field] = json!("0x1"),
+                "blockHash" => other[field] = json!(B256::repeat_byte(9)),
+                _ => {}
+            }
+            let (primary, p) = fixture(vec![
+                ("eth_getTransactionReceipt", raw),
+                ("eth_getBlockByNumber", header(10, 4, 3)),
+            ])
+            .await;
+            let mut responses = vec![("eth_getTransactionReceipt", other)];
+            if field == "header" {
+                responses.push(("eth_getBlockByNumber", header(10, 9, 3)));
+            }
+            let (secondary, s) = fixture(responses).await;
+            let connection = BaseConnection {
+                primary,
+                secondary,
+                config: BaseDestinationConfig::default(),
+                trust: trust_fixture(),
+            };
+            assert!(
+                matches!(
+                    connection.receipt_inclusion(B256::repeat_byte(3)).await,
+                    Err(Error::Evidence("receipt inclusion disagreement"))
+                ),
+                "{field}"
+            );
+            p.await.unwrap();
+            s.await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn replacement_rpc_failures_never_become_absence_or_nonce() {
+        for method in ["eth_getTransactionReceipt", "eth_getTransactionCount"] {
+            for secondary_failed in [false, true] {
+                // None closes the owned listener without a response; the others exercise decoding.
+                for failure in [
+                    None,
+                    Some(json!({"invalid":true})),
+                    Some(json!({"_raw":
+                        r#"{"jsonrpc":"2.0","id":1,"error":{"code":-32000,"message":"fixture unavailable"}}"#
+                    })),
+                ] {
+                    let valid = if method == "eth_getTransactionReceipt" {
+                        Value::Null
+                    } else {
+                        json!("0x7")
+                    };
+                    let failed = failure
+                        .map(|value| vec![(method, value)])
+                        .unwrap_or_default();
+                    let (primary_responses, secondary_responses) = if secondary_failed {
+                        (vec![(method, valid)], failed)
+                    } else {
+                        (failed, vec![])
+                    };
+                    let (primary, p) = fixture(primary_responses).await;
+                    let (secondary, s) = fixture(secondary_responses).await;
+                    let connection = BaseConnection {
+                        primary,
+                        secondary,
+                        config: BaseDestinationConfig::default(),
+                        trust: trust_fixture(),
+                    };
+                    let observed = if method == "eth_getTransactionReceipt" {
+                        connection
+                            .receipt_inclusion(B256::repeat_byte(3))
+                            .await
+                            .map(|_| ())
+                    } else {
+                        connection
+                            .latest_nonce(Address::repeat_byte(1))
+                            .await
+                            .map(|_| ())
+                    };
+                    assert!(
+                        observed.is_err(),
+                        "{method}, secondary_failed={secondary_failed}"
+                    );
+                    p.await.unwrap();
+                    s.await.unwrap();
+                }
+            }
+        }
     }
 
     #[derive(Default)]

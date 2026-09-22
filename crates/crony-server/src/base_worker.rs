@@ -917,33 +917,7 @@ async fn drive_intent(
         let Some(signed) = &attempt.signed else {
             continue;
         };
-        if let Some(receipt) = c.chain.primary.receipt(signed.hash()).await? {
-            let block = c
-                .chain
-                .primary
-                .block(BlockTag::Number(
-                    receipt
-                        .receipt
-                        .block_number
-                        .context("receipt block absent")?,
-                ))
-                .await?;
-            let independent = c
-                .chain
-                .secondary
-                .receipt(signed.hash())
-                .await?
-                .context("independent receipt unavailable")?;
-            ensure!(
-                receipt.receipt == independent.receipt
-                    && receipt.l1_fee == independent.l1_fee
-                    && block
-                        == c.chain
-                            .secondary
-                            .block(BlockTag::Number(block.number))
-                            .await?,
-                "receipt inclusion disagreement"
-            );
+        if let Some((receipt, block)) = c.chain.receipt_inclusion(signed.hash()).await? {
             store.record_base_inclusion(claim, &receipt, &block).await?;
             let Some(observations) = receipt_finality(c, &ancestry, &receipt, &block).await? else {
                 store.release_base_claim(claim, "included").await?;
@@ -984,11 +958,7 @@ async fn drive_intent(
             .await?;
         return Ok(());
     }
-    let nonce = c
-        .chain
-        .primary
-        .nonce(d.input.config.publisher, BlockTag::Latest)
-        .await?;
+    let nonce = c.chain.latest_nonce(d.input.config.publisher).await?;
     let mut attempt = attempts.last().context("frozen attempt absent")?.clone();
     if nonce > attempt.request.transaction.nonce {
         store
