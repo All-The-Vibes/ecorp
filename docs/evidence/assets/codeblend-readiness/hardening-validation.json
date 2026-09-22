@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "issue": "https://github.com/All-The-Vibes/ecorp/issues/317",
+  "implementationCommit": "2cde6bb11b3b5da96794684e8e3eb393f615a6ea",
+  "implementationTree": "6a415629c7c859588258de527af8b77a17464c8e",
+  "baseCommit": "7eecd39e43720851512225844bf5d8158e8a944f",
+  "benchmark": {
+    "evaluatorCommit": "0a9accccd36446c381c118b783e2e9f623643efa",
+    "evaluatorSha256": "4229e93d77dce70e4e3493cab6bc5311c2d02551d024de33319c27ae6a323290",
+    "models": [
+      "claude-opus-5",
+      "gpt-6-astra",
+      "grok-4.6"
+    ],
+    "copilotVersion": "1.0.85",
+    "noCache": true,
+    "rounds": 1,
+    "scope": "Whole repository, clean source snapshots, required GitHub API evidence; no local-loop verification requested or claimed",
+    "scanPolicySha256": "3bb02c591009d8557365d3950208a43ef4b8bafda524044725609f1b5fe6015f",
+    "baseline": {
+      "run": "20260918-033415+0800",
+      "startedAt": "2026-09-17T19:34:15.2061299Z",
+      "finishedAt": "2026-09-17T19:36:07.1389026Z",
+      "status": "succeeded",
+      "substrate": {
+        "score": 72,
+        "level": 4
+      },
+      "operation": {
+        "score": 44.75,
+        "tier": "Bot-Assisted",
+        "tierIndex": 2
+      },
+      "compositeScore": 56.8,
+      "aiReady": false,
+      "quadrant": {
+        "id": "Q4",
+        "name": "Manual"
+      },
+      "rung": {
+        "value": 3,
+        "name": "R3 Verifiable"
+      },
+      "documentationCoverage": "documented",
+      "cleanup": {
+        "score": 70,
+        "rating": "Enrollment unverified"
+      },
+      "nativeCompositeSha256": "b547fa16a883c09a4afd816d7631c3478feaedabe629a46b839b1cdc6cb3eac1",
+      "nativeRunSha256": "865265c1b56b4a5a1b20c6a3fb630ae148afc8b780d9628ea1183218110ed002"
+    },
+    "candidate": {
+      "run": "20260918-033802+0800",
+      "startedAt": "2026-09-17T19:38:02.8618488Z",
+      "finishedAt": "2026-09-17T19:39:57.8460186Z",
+      "status": "succeeded",
+      "substrate": {
+        "score": 83,
+        "level": 5
+      },
+      "operation": {
+        "score": 49.25,
+        "tier": "Bot-Assisted",
+        "tierIndex": 2
+      },
+      "compositeScore": 63.9,
+      "aiReady": false,
+      "quadrant": {
+        "id": "Q2",
+        "name": "Verifiable-but-manual"
+      },
+      "rung": {
+        "value": 3,
+        "name": "R3 Verifiable"
+      },
+      "documentationCoverage": "partial",
+      "cleanup": {
+        "score": 70,
+        "rating": "Enrollment unverified"
+      },
+      "nativeCompositeSha256": "5395d4ab39eb3b153b9fa71aad094863aee524c28119f6c68af13817497b45f4",
+      "nativeRunSha256": "efaba523770a778912daa887b97ef672935d90840e5db5c5f4f254291a603996"
+    },
+    "sourceManifestSha256": "7af50f5a951e7dc10edc50509a4f4e0d4d63d02939e9d6e6adfbcbe1aafa20f5",
+    "sourceFileCount": 628,
+    "snapshotTreeMatchesImplementation": true,
+    "target90Reached": false
+  },
+  "node": {
+    "elapsedSeconds": 42.0810322,
+    "command": "node --test --test-concurrency=2 --test-timeout=180000 apps/web/src/**/*.test.mjs tools/*.test.mjs",
+    "exitCode": 0,
+    "node": "24.19.0",
+    "passed": 904,
+    "failed": 0,
+    "skipped": 0
+  },
+  "rust": {
+    "toolchain": "1.98.1-x86_64-pc-windows-msvc",
+    "sourceStable": true,
+    "sourceSha256": "58f7b9eb2363bf62036fe0dba2343add2582df51fa73ca976db95b4dc20a8855",
+    "sourceFiles": 103,
+    "counts": {
+      "passed": 555,
+      "failed": 0,
+      "ignored": 333
+    },
+    "totalSeconds": 106.147,
+    "gates": [
+      {
+        "command": "cargo fmt --check",
+        "status": "passed",
+        "exitCode": 0,
+        "seconds": 2.194
+      },
+      {
+        "command": "cargo clippy --workspace --all-targets --locked -- -D warnings",
+        "status": "passed",
+        "exitCode": 0,
+        "seconds": 13.268
+      },
+      {
+        "command": "cargo test --workspace --locked",
+        "status": "passed",
+        "exitCode": 0,
+        "seconds": 90.685
+      }
+    ]
+  },
+  "coverage": {
+    "scope": "All 16 framework-independent web TypeScript models; excludes the two React hooks, TSX rendering, Rust, and other tools",
+    "thresholds": {
+      "lines": 99,
+      "functions": 95,
+      "branches": 97
+    },
+    "coverage": {
+      "lines": {
+        "found": 2392,
+        "hit": 2386,
+        "percent": 99.75
+      },
+      "functions": {
+        "found": 220,
+        "hit": 212,
+        "percent": 96.36
+      },
+      "branches": {
+        "found": 1056,
+        "hit": 1033,
+        "percent": 97.82
+      }
+    },
+    "files": 16,
+    "sourceStable": true,
+    "ok": true
+  },
+  "mcp": {
+    "rustTests": 14,
+    "nativeProbeTests": 8,
+    "sourceFiles": [
+      {
+        "path": "crates/crony-gateways/src/lib.rs",
+        "sha256": "f8788904bb912558dbb1c52aeef604dad97076d686daeaaf70ec9b65e3af5bdc"
+      },
+      {
+        "path": "crates/crony-gateways/src/bin/crony-mcp.rs",
+        "sha256": "2de014a462f8611a49a477cd040511ad4112b9806235fae5c919a0b6cd905ea2"
+      },
+      {
+        "path": "tools/probe_mcp.mjs",
+        "sha256": "82a6dab2e5fd4f7229c64811384f7c3250ba9f4cca6e747664c37f8c32114e5c"
+      },
+      {
+        "path": "tools/probe_mcp.test.mjs",
+        "sha256": "c6e8d610d0a1c6a2c7862dce2931d9a1b44800d6e552d54ff9cf61f189b9017c"
+      },
+      {
+        "path": "docs/MCP_OPERATIONS.md",
+        "sha256": "65ba660574e998113d34461d5879a46266eeab283613c721ffe3d2d568f6d132"
+      },
+      {
+        "path": "docs/specs/mcp-inspection-v1.md",
+        "sha256": "bc0649d233d8403d090e2b8af988cd9a8851e80b2ec0c5f21d8b17b9afe5b8f2"
+      }
+    ],
+    "nativeBinarySha256": "1b18eab1def0df36ee9ea836e7a830a91c90952b27a09a9da309ff88cc9c6070",
+    "assurance": "controlled native fixture plus existing development-auth API read; no provider execution"
+  },
+  "startup": {
+    "scope": "Native startup preparation gate with a caller-owned loopback connection canary, not a complete production startup",
+    "cases": 30,
+    "status": "passed",
+    "connectionAttempts": 0
+  },
+  "browser": {
+    "scope": "real Edge browser/server/runner; deterministic fake-process; development identity only; no human review decision or real-provider inference",
+    "seconds": 24.261,
+    "desktopWidth": 1440,
+    "mobileWidth": 390,
+    "passingRun": "d0c95ab5-a79f-473e-8430-99058d13d0bd",
+    "passingChecks": 6,
+    "acceptedCompletions": 1,
+    "failingRun": "bc2dc6e1-def6-4036-acc1-d37b77154d4d",
+    "failedArtifactFloor": 10000000,
+    "failingAcceptedCompletions": 0,
+    "cleanup": "Owned processes stopped; database, artifacts and worktrees preserved",
+    "eofNormalization": [
+      {
+        "file": "apps/web/src/VerificationPolicyEditor.tsx",
+        "before": "e1ad2a04ba14f3c08572bffb3c0504dcebfac5f2c07d9013edb14c2de33c2c4a",
+        "after": "631916debe6b083658f7b5a4866dbcdce87d368e4a5de67aae8ef7797e1a7fb6",
+        "change": "Removed one redundant terminal newline; all other bytes identical"
+      },
+      {
+        "file": "apps/web/src/formText.ts",
+        "before": "40c720c7ee02b6e469510c939c80a4c9e46520973665d7364d747a027170b577",
+        "after": "2c401686f3fd6edd856ca6dec044eb5c91afde8cca99e8d866db28639f770710",
+        "change": "Removed one redundant terminal newline; all other bytes identical"
+      }
+    ]
+  },
+  "limitations": [
+    "555 Rust passes exclude 332 opt-in PostgreSQL tests and one stopped-session provider probe.",
+    "Web build and lint passed installed native tool invocations. pnpm build:web failed registry TLS during its dependency check; canonical frozen installation remains unverified.",
+    "Hosted workflows and native pre-commit framework dispatcher have not run on this host. Direct native Gitleaks, coverage and documentation commands were exercised.",
+    "Browser acceptance uses development identities and deterministic fake-process, not production authentication or real-provider execution.",
+    "Documentation checks cover marked command/version contracts, not complete semantic/API drift.",
+    "Judge/API results can vary between runs; do not attribute the entire historical score difference to source changes.",
+    "Ignored output/precommit-venv contaminated a raw workspace scan; that result is excluded. An intermediate full run reused stale security analysis; final comparisons disable cache."
+  ]
+}
