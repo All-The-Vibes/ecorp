@@ -290,6 +290,9 @@ jobs:
       - name: Compile Windows runner tests before native host readiness
         if: runner.os == 'Windows'
         run: cargo test --locked -p crony-runner --no-run
+      - name: Verify Windows startup TLS harness and child environment
+        if: runner.os == 'Windows'
+        run: python -m unittest discover -s tools -p test_startup_validation_harness.py
       - name: Verify Windows PowerShell connection ACL readiness
         if: runner.os == 'Windows'
         shell: pwsh

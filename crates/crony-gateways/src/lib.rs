@@ -632,6 +632,113 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn loopback_gateway_bypasses_environment_proxies() {
+        use tokio::{
+            io::{AsyncReadExt, AsyncWriteExt},
+            net::TcpListener,
+            time::{Duration, timeout},
+        };
+        const CHILD_ORIGIN: &str = "ECORP_GATEWAY_PROXY_FIXTURE_ORIGIN";
+        if let Ok(origin) = std::env::var(CHILD_ORIGIN) {
+            for origin in [origin.clone(), origin.replace("127.0.0.1", "localhost")] {
+                for access in [McpAccess::ReadOnly, McpAccess::ReadWrite] {
+                    let client = GatewayClient::new(
+                        origin.clone(),
+                        Uuid::from_u128(1),
+                        Uuid::from_u128(2),
+                        Some("fixture-loopback-bearer".to_owned()),
+                    )
+                    .unwrap()
+                    .with_mcp_access(access)
+                    .unwrap();
+                    let response = timeout(
+                        Duration::from_secs(3),
+                        client.request(Method::GET, "/api/fixture", None),
+                    )
+                    .await
+                    .expect("loopback request must finish without contacting the proxy")
+                    .unwrap();
+                    assert_eq!(response, json!({}));
+                }
+            }
+            return;
+        }
+
+        // Keep proxy variables isolated from parallel tests in the parent.
+        for proxy_names in [["HTTP_PROXY", "http_proxy"], ["ALL_PROXY", "all_proxy"]] {
+            let origin = TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let proxy = TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let mut child = tokio::process::Command::new(std::env::current_exe().unwrap());
+            child
+                .args([
+                    "--exact",
+                    "tests::loopback_gateway_bypasses_environment_proxies",
+                    "--nocapture",
+                ])
+                .stdin(std::process::Stdio::null())
+                .kill_on_drop(true)
+                .env(
+                    CHILD_ORIGIN,
+                    format!("http://{}", origin.local_addr().unwrap()),
+                );
+            for name in [
+                "HTTP_PROXY",
+                "http_proxy",
+                "HTTPS_PROXY",
+                "https_proxy",
+                "ALL_PROXY",
+                "all_proxy",
+                "NO_PROXY",
+                "no_proxy",
+                "REQUEST_METHOD",
+            ] {
+                child.env_remove(name);
+            }
+            for name in proxy_names {
+                child.env(name, format!("http://{}", proxy.local_addr().unwrap()));
+            }
+            let serve_origin = async {
+                for _ in 0..4 {
+                    let (mut stream, _) = origin.accept().await.unwrap();
+                    let mut request = Vec::new();
+                    while !request.ends_with(b"\r\n\r\n") {
+                        assert!(stream.read_buf(&mut request).await.unwrap() > 0);
+                        assert!(request.len() <= 8192);
+                    }
+                    let request = String::from_utf8(request).unwrap().to_ascii_lowercase();
+                    assert!(request.starts_with("get /api/fixture http/1.1\r\n"));
+                    assert!(
+                        request.contains("\r\nauthorization: bearer fixture-loopback-bearer\r\n")
+                    );
+                    stream
+                        .write_all(
+                            b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}",
+                        )
+                        .await
+                        .unwrap();
+                }
+            };
+            let (output, served) = tokio::join!(
+                timeout(Duration::from_secs(12), child.output()),
+                timeout(Duration::from_secs(10), serve_origin),
+            );
+            assert!(
+                timeout(Duration::from_millis(100), proxy.accept())
+                    .await
+                    .is_err(),
+                "loopback bearer request connected to the environment proxy"
+            );
+            let output = output.expect("native proxy fixture must exit").unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            served.expect("every gateway access mode must reach the configured origin");
+        }
+    }
+
     #[test]
     fn protocol_versions_fail_closed() {
         assert_eq!(

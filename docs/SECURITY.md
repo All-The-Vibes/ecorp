@@ -6,6 +6,16 @@ The current implementation has production authentication, workload identity, and
 boundaries plus durable artifact storage, but it is not yet suitable for fully untrusted child
 processes until stronger OS/container isolation lands.
 
+The product's **blockchain-as-fabric** language refers to built-in, connected
+provenance and integrity controls, not a separate blockchain service. Artifact
+bytes are checked with SHA-256; artifact metadata is authenticated with a
+server-held HMAC-SHA256 key; source, task, run, contributor, verification, and
+review identities retain their links. Postgres remains the operational authority.
+A matching digest or valid signature is not a permission grant, a correctness
+proof, or independently replicated consensus. Signing-key custody, database
+administration, storage authorization, retention, and current reviewer authority
+remain trust boundaries. See [Trust fabric](TRUST_FABRIC.md).
+
 Known development-only shortcuts:
 
 - fixed demo identities
@@ -13,8 +23,10 @@ Known development-only shortcuts:
 - fake process runs with the local user's permissions
 - no network sandbox
 
-These gaps are tracked in ECorp Build GitHub Project #3 and linked issues, not in
-`docs/BACKLOG.md`, which is historical seed material only. They are not production claims.
+New work is tracked in [ECorp Build GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5)
+and linked issues. Personal Project #3 retains existing execution lineage and
+recorded routing; `docs/BACKLOG.md` is historical seed material only. Neither the
+planning board nor these development shortcuts establish production acceptance.
 
 Claude Code is launched in safe mode without user plugins, hooks, MCP servers, browser integration,
 slash commands, or auto-memory. OpenCode uses its plugin-free `--pure` mode. These controls prevent
