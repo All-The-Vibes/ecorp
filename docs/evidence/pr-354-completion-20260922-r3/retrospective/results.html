@@ -1,0 +1,33 @@
+<!doctype html><meta charset="utf-8"><title>PR 354 saved behavioral results</title><style>body{font:16px system-ui;margin:40px;max-width:1280px;color:#152536}pre{white-space:pre-wrap;background:#edf2f5;padding:18px}h1{font-size:28px}</style><h1>PR #354: saved RED/GREEN results</h1><p>Rendered from retained native logs. This is a retrospective behavioral comparison, not a product screenshot or original TDD chronology.</p><h2>baseline — exit 101</h2><p>Tested tree: af16a0b7114ee1bcb45cb5fecf006f8e3ad81859</p><pre>   Compiling crony-domain v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr354-retrospective-20260922-r1\crates\crony-domain)
+   Compiling crony-protocol v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr354-retrospective-20260922-r1\crates\crony-protocol)
+   Compiling crony-store v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr354-retrospective-20260922-r1\crates\crony-store)
+   Compiling crony-server v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr354-retrospective-20260922-r1\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 09s
+     Running unittests src\main.rs (C:\Users\shyamsridhar\code\ecorp-pr362-completion-20260922\target-validation\debug\deps\crony_server-05dbe3038b00ba36.exe)
+
+running 1 test
+
+thread &#x27;tests::issue256_start_dispatch_rechecks_capabilities_after_selection&#x27; (28160) panicked at crates\crony-server\src\main.rs:8638:13:
+stale adapter capability reached enqueue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test tests::issue256_start_dispatch_rechecks_capabilities_after_selection ... FAILED
+
+failures:
+
+failures:
+    tests::issue256_start_dispatch_rechecks_capabilities_after_selection
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 135 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p crony-server --bin crony-server`</pre><h2>candidate — exit 0</h2><p>Tested tree: 46237253fc7be2959f0d2d27c8514d075ab10534</p><pre>   Compiling crony-domain v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr354-completion-20260922\crates\crony-domain)
+   Compiling crony-store v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr354-completion-20260922\crates\crony-store)
+   Compiling crony-protocol v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr354-completion-20260922\crates\crony-protocol)
+   Compiling crony-server v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr354-completion-20260922\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 58.34s
+     Running unittests src\main.rs (C:\Users\shyamsridhar\code\ecorp-pr362-completion-20260922\target-validation\debug\deps\crony_server-05dbe3038b00ba36.exe)
+
+running 1 test
+test tests::issue256_start_dispatch_rechecks_capabilities_after_selection ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 139 filtered out; finished in 0.00s
+</pre>

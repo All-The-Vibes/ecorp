@@ -1,0 +1,144 @@
+    #[tokio::test]
+    async fn issue256_start_dispatch_rechecks_capabilities_after_selection() {
+        for changed in [
+            "adapter",
+            "model",
+            "reasoning",
+            "repository",
+            "ref",
+            "commit",
+            "workspace",
+            "corp",
+        ] {
+            let epoch = Uuid::from_u128(2);
+            let workspace = Some(Uuid::from_u128(3));
+            let commit = "a".repeat(40);
+            let (mut connection, mut received) = reconnect_test_connection(epoch);
+            let corp_id = connection.corp_id;
+            connection.dispatch_ready = true;
+            connection.capabilities = vec![
+                RunnerCapability {
+                    workspace_connection_id: workspace,
+                    name: "workspace-isolation".to_owned(),
+                    available: true,
+                    detail: None,
+                    models: Vec::new(),
+                    source_repository: Some("fixture/ecorp".to_owned()),
+                    source_base_ref: Some("HEAD".to_owned()),
+                    source_base_commit: Some(commit.clone()),
+                },
+                RunnerCapability {
+                    workspace_connection_id: workspace,
+                    name: "github-copilot".to_owned(),
+                    available: true,
+                    detail: None,
+                    models: vec![model("fixture-model", &["high"])],
+                    source_repository: None,
+                    source_base_ref: None,
+                    source_base_commit: None,
+                },
+            ];
+            let runners = Arc::new(DashMap::new());
+            runners.insert("runner".to_owned(), connection);
+            let requirements = RunnerRequirements {
+                workspace_connection_id: workspace,
+                adapter: "github-copilot",
+                model: Some("fixture-model"),
+                reasoning_effort: Some("high"),
+                source_repository: Some("fixture/ecorp"),
+                source_base_ref: Some("HEAD"),
+                source_base_commit: Some(&commit),
+            };
+            let (runner_id, selected_epoch) =
+                select_ready_runner(&runners, corp_id, &requirements).unwrap();
+            let command = ServerToRunner::StartRun {
+                workspace_connection_id: workspace,
+                corp_id,
+                room_id: Uuid::from_u128(4),
+                mission_id: Uuid::from_u128(5),
+                task_id: Uuid::from_u128(6),
+                run_id: Uuid::from_u128(7),
+                agent_id: Uuid::from_u128(8),
+                assignment_token: Uuid::from_u128(9),
+                adapter: "github-copilot".to_owned(),
+                mission_title: "dispatch capability regression".to_owned(),
+                model: Some("fixture-model".to_owned()),
+                reasoning_effort: Some("high".to_owned()),
+                source_repository: Some("fixture/ecorp".to_owned()),
+                source_base_ref: Some("HEAD".to_owned()),
+                source_base_commit: Some(commit),
+                verification_policy: VerificationPolicy {
+                    checks: Vec::new(),
+                    manual_gate: None,
+                },
+                write_scope: Vec::new(),
+                deliverable: None,
+                secrets: Vec::new(),
+            };
+            assert!(send_command_to_current_runner(
+                &runners,
+                &runner_id,
+                selected_epoch,
+                command.clone(),
+            ));
+            assert!(matches!(
+                received.try_recv().unwrap(),
+                ServerToRunner::StartRun { .. }
+            ));
+
+            // Model the scheduler's awaited storage/secret work after selection.
+            // The same socket advertises a changed capability before enqueue.
+            let (ready, resume) = oneshot::channel();
+            let dispatch_runners = runners.clone();
+            let dispatch = tokio::spawn(async move {
+                resume.await.unwrap();
+                send_command_to_current_runner(
+                    &dispatch_runners,
+                    &runner_id,
+                    selected_epoch,
+                    command,
+                )
+            });
+            {
+                let mut connection = runners.get_mut("runner").unwrap();
+                match changed {
+                    "adapter" => connection.capabilities[1].available = false,
+                    "model" => connection.capabilities[1].models.clear(),
+                    "reasoning" => connection.capabilities[1].models[0]
+                        .supported_reasoning_efforts
+                        .clear(),
+                    "repository" => {
+                        connection.capabilities[0].source_repository =
+                            Some("fixture/other".to_owned())
+                    }
+                    "ref" => connection.capabilities[0].source_base_ref = Some("other".to_owned()),
+                    "commit" => {
+                        connection.capabilities[0].source_base_commit = Some("b".repeat(40))
+                    }
+                    "workspace" => connection.capabilities[0].workspace_connection_id = None,
+                    "corp" => connection.corp_id = Uuid::from_u128(999),
+                    _ => unreachable!(),
+                }
+                assert_eq!(connection.connection_epoch, epoch);
+                assert!(connection.dispatch_ready);
+            }
+            ready.send(()).unwrap();
+            assert!(
+                !dispatch.await.unwrap(),
+                "stale {changed} capability reached enqueue"
+            );
+            assert!(received.try_recv().is_err());
+            // Safety/control commands remain deliverable after capability loss.
+            assert!(send_command_to_current_runner(
+                &runners,
+                "runner",
+                epoch,
+                reconnect_test_command(Uuid::from_u128(7)),
+            ));
+            assert!(matches!(
+                received.try_recv().unwrap(),
+                ServerToRunner::StopRun { .. }
+            ));
+        }
+    }
+

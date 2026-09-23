@@ -1,0 +1,300 @@
+{
+  "pr": 354,
+  "started_at": "2026-09-23T00:20:57.011Z",
+  "status": "failed",
+  "scope": "Real native CLI, HTTP server, reconciled runner and new owned SCRAM PostgreSQL. Fake GitHub transport only; no external GitHub or provider execution. Fixture claim setup precedes immutable ledger measurements.",
+  "source": {
+    "base_ref": "HEAD",
+    "repository": "ecorp-fixture/pr265-run-activity",
+    "base_commit": "03bf09d7940b3b2a055d55a15aead98931272ba3"
+  },
+  "credential_preflight": {
+    "forbidden_variable_names": []
+  },
+  "assertions": [
+    {
+      "name": "Valid plan remains available with a source mismatch",
+      "response": {
+        "status": 200,
+        "payload": {
+          "valid": true,
+          "dispatch_readiness": {
+            "status": "not_ready",
+            "reason": "task deliver requires source repository ecorp-fixture/pr265-run-activity at HEAD (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) but no connected runner advertises that immutable checkout"
+          },
+          "strategy": "single",
+          "task_count": 1,
+          "budget_tokens": 1000,
+          "budget_cost_microusd": 1000000,
+          "tasks": [
+            {
+              "key": "deliver",
+              "title": "Produce the mission outcome",
+              "budget_tokens": 1000,
+              "budget_cost_microusd": 1000000,
+              "depends_on": [],
+              "max_attempts": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Execution intent fails before claim or dispatch",
+      "response": {
+        "status": 409,
+        "payload": {
+          "error": "factory plan is valid but dispatch is not ready: task deliver requires source repository ecorp-fixture/pr265-run-activity at HEAD (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) but no connected runner advertises that immutable checkout"
+        }
+      }
+    },
+    {
+      "name": "Matching immutable source and native runner are ready",
+      "response": {
+        "status": 200,
+        "payload": {
+          "valid": true,
+          "dispatch_readiness": {
+            "status": "ready"
+          },
+          "strategy": "single",
+          "task_count": 1,
+          "budget_tokens": 1000,
+          "budget_cost_microusd": 1000000,
+          "tasks": [
+            {
+              "key": "deliver",
+              "title": "Produce the mission outcome",
+              "budget_tokens": 1000,
+              "budget_cost_microusd": 1000000,
+              "depends_on": [],
+              "max_attempts": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Observer cannot acquire execution authority through preflight",
+      "response": {
+        "status": 403,
+        "payload": {
+          "error": "Corp role guest is not allowed to perform this action"
+        }
+      }
+    }
+  ],
+  "cli_cases": [
+    {
+      "issue": 7101,
+      "dry_run": true,
+      "program": "<reviewed-worktree>\\target\\debug\\crony-cli.exe",
+      "arguments": [
+        "factory",
+        "00000000-0000-4000-8000-000000000001",
+        "00000000-0000-4000-8000-000000000011",
+        "--owner",
+        "acme",
+        "--project-number",
+        "7",
+        "--repository",
+        "ecorp-fixture/pr265-run-activity",
+        "--source-repository-path",
+        "<local-user>\\code\\qa\\pr265-run-activity-pr354-20260922-r5\\native-intake\\source",
+        "--source-base-ref",
+        "HEAD",
+        "--adapter",
+        "fake-process",
+        "--strategy",
+        "single",
+        "--budget-tokens",
+        "1000",
+        "--budget-cost-microusd",
+        "1000000",
+        "--lease-seconds",
+        "300",
+        "--github-cli",
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--write-scope",
+        "result.md",
+        "--issue",
+        "7101",
+        "--dry-run"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"checkpoint_reconciliation\": null,\n  \"checkpoint_reconciliation_needed\": false,\n  \"evaluated\": [\n    {\n      \"dependencies\": [],\n      \"eligible\": true,\n      \"issue_number\": 7101,\n      \"project_item_id\": \"PVTI_PR354_7101\",\n      \"project_status\": \"Todo\",\n      \"reasons\": [],\n      \"recovery\": false,\n      \"source_revision\": \"2026-09-22T00:00:00Z\",\n      \"title\": \"PR354 bounded readiness issue 7101\",\n      \"url\": \"https://github.com/ecorp-fixture/pr265-run-activity/issues/7101\"\n    }\n  ],\n  \"github_polling\": {\n    \"consecutive_failures\": 0,\n    \"graphql\": {\n      \"cost\": 1,\n      \"limit\": 5000,\n      \"observed_at\": \"2026-09-23T00:21:00.130014700Z\",\n      \"remaining\": 4997,\n      \"reset_at\": \"2026-09-23T01:20:59.859Z\"\n    },\n    \"next_retry_at\": null,\n    \"retry_reason\": null\n  },\n  \"legacy_source_upgrade_required\": false,\n  \"mode\": \"dry_run\",\n  \"mutations\": [],\n  \"preflight\": {\n    \"budget_cost_microusd\": 1000000,\n    \"budget_tokens\": 1000,\n    \"dispatch_readiness\": {\n      \"reason\": \"task deliver requires source repository ecorp-fixture/pr265-run-activity at HEAD (bd13667de7741a7e428005d832598c808242bc19) but no connected runner advertises that immutable checkout\",\n      \"status\": \"not_ready\"\n    },\n    \"strategy\": \"single\",\n    \"task_count\": 1,\n    \"tasks\": [\n      {\n        \"budget_cost_microusd\": 1000000,\n        \"budget_tokens\": 1000,\n        \"depends_on\": [],\n        \"key\": \"deliver\",\n        \"max_attempts\": 2,\n        \"title\": \"Produce the mission outcome\"\n      }\n    ],\n    \"valid\": true\n  },\n  \"project_number\": 7,\n  \"project_owner\": \"acme\",\n  \"publication_base_ref\": \"HEAD\",\n  \"repository\": \"ecorp-fixture/pr265-run-activity\",\n  \"selected\": {\n    \"dependencies\": [],\n    \"eligible\": true,\n    \"issue_number\": 7101,\n    \"project_item_id\": \"PVTI_PR354_7101\",\n    \"project_status\": \"Todo\",\n    \"reasons\": [],\n    \"recovery\": false,\n    \"source_revision\": \"2026-09-22T00:00:00Z\",\n    \"title\": \"PR354 bounded readiness issue 7101\",\n    \"url\": \"https://github.com/ecorp-fixture/pr265-run-activity/issues/7101\"\n  },\n  \"source_base_commit\": \"bd13667de7741a7e428005d832598c808242bc19\",\n  \"source_base_ref\": \"HEAD\",\n  \"source_of_truth\": \"github_project\",\n  \"verification_policy\": null\n}\n",
+      "stderr": "",
+      "routes": [
+        {
+          "method": "POST",
+          "path": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/lookup",
+          "body": {
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "source_project_item_ids": [
+              "PVTI_PR354_7101"
+            ],
+            "source_project_number": 7,
+            "source_project_owner": "acme"
+          },
+          "status": 200,
+          "response": {
+            "items": [],
+            "total_count": 0
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/api/corps/00000000-0000-4000-8000-000000000001/factory/preflight",
+          "body": {
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "budget_cost_microusd": 1000000,
+            "budget_tokens": 1000,
+            "contract": {
+              "acceptance_tests": [
+                "Keep ledger rows unchanged while the source is unavailable."
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "expected_output": "A complete, verified repository implementation for GitHub issue #7101.",
+              "objective": "Implement the authoritative GitHub issue below inside the assigned worktree.\n\nISSUE: #7101 — PR354 bounded readiness issue 7101\nURL: https://github.com/ecorp-fixture/pr265-run-activity/issues/7101\nSOURCE REVISION: 2026-09-22T00:00:00Z\n\n## Outcome\n\nVerify dispatch readiness before acquiring work.\n\n## Acceptance criteria\n\n- [ ] Keep ledger rows unchanged while the source is unavailable.\n\n## Dependencies\n\nNo blockers.",
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials",
+                "merge or deploy without a separate current authorization"
+              ],
+              "references": [
+                "https://github.com/ecorp-fixture/pr265-run-activity/issues/7101",
+                "https://github.com/users/acme/projects/7"
+              ],
+              "write_scope": [
+                "result.md"
+              ]
+            },
+            "deliverable": {
+              "commit_after_verification": true,
+              "form": "commit_branch",
+              "paths": []
+            },
+            "description": "## Outcome\n\nVerify dispatch readiness before acquiring work.\n\n## Acceptance criteria\n\n- [ ] Keep ledger rows unchanged while the source is unavailable.\n\n## Dependencies\n\nNo blockers.\n",
+            "policy": {
+              "adapter_allowlist": [
+                "fake-process"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "auto_merge": false,
+              "budget_cost_microusd": 1000000,
+              "budget_tokens": 1000,
+              "deliverable_form": "commit_branch",
+              "dependencies": [],
+              "model": null,
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials",
+                "merge or deploy without a separate current authorization"
+              ],
+              "project_number": 7,
+              "project_owner": "acme",
+              "project_status": "Todo",
+              "publication": {
+                "allowed": true,
+                "auto_merge": false,
+                "base_ref": "HEAD",
+                "branch_prefix": "ecorp/",
+                "deploy": false,
+                "merge": false,
+                "repository_allowlist": [
+                  "ecorp-fixture/pr265-run-activity"
+                ],
+                "review_status": "In Review",
+                "status_before": "In Progress"
+              },
+              "reasoning_effort": null,
+              "repository_allowlist": [
+                "ecorp-fixture/pr265-run-activity"
+              ],
+              "required_label": "factory:ready",
+              "schema_version": 1,
+              "secret_ids": [],
+              "source_base_commit": "bd13667de7741a7e428005d832598c808242bc19",
+              "source_base_ref": "HEAD",
+              "source_commit_upgrade_required": false,
+              "source_of_truth": "github_project",
+              "strategy_allowlist": [
+                "single"
+              ],
+              "verification_policy": null,
+              "verification_required": true,
+              "write_scope": [
+                "result.md"
+              ]
+            },
+            "preferred_adapter": "fake-process",
+            "preferred_model": null,
+            "reasoning_effort": null,
+            "source_repository_name": "pr265-run-activity",
+            "source_repository_owner": "ecorp-fixture",
+            "strategy": "single",
+            "title": "GitHub #7101: PR354 bounded readiness issue 7101",
+            "verification_policy": null
+          },
+          "status": 200,
+          "response": {
+            "valid": true,
+            "dispatch_readiness": {
+              "status": "not_ready",
+              "reason": "task deliver requires source repository ecorp-fixture/pr265-run-activity at HEAD (bd13667de7741a7e428005d832598c808242bc19) but no connected runner advertises that immutable checkout"
+            },
+            "strategy": "single",
+            "task_count": 1,
+            "budget_tokens": 1000,
+            "budget_cost_microusd": 1000000,
+            "tasks": [
+              {
+                "key": "deliver",
+                "title": "Produce the mission outcome",
+                "budget_tokens": 1000,
+                "budget_cost_microusd": 1000000,
+                "depends_on": [],
+                "max_attempts": 2
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "native_cli": {
+    "binary_sha256": "2a75ccb7ba85e6c38c2fe6275219028f8475d5ec9e90493ef2b3a6a95b7c9a14",
+    "source_commit": "bd13667de7741a7e428005d832598c808242bc19",
+    "runner_source_commit": "03bf09d7940b3b2a055d55a15aead98931272ba3",
+    "transport": "owned loopback recording proxy forwards every API request to the real server"
+  },
+  "failure": "Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- false\n",
+  "finished_at": "2026-09-23T00:21:00.630Z"
+}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- false
+
+    at file:///<private-evidence>/qa-pr354-readiness-r3.mjs:191:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

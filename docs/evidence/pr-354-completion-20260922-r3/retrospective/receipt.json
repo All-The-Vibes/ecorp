@@ -1,0 +1,63 @@
+{
+  "status": "passed",
+  "started_at_utc": "2026-09-23T00:02:22.0013332+00:00",
+  "scope": "Retrospective behavior comparison, not original TDD chronology. The baseline overlay adds only the exact existing candidate test function; all baseline production code is unchanged.",
+  "driver_sha256": "ce913ce910657fd5d71358078f33e19b8fa560171809688e5e0117df87c4ab25",
+  "source_manifest_sha256": "8d464ae049fe4e3f5f6200e404f3fe6140900da0f627e67ed9073b39922e1ab1",
+  "commands": [
+    {
+      "workspace_refresh": {
+        "sha256": "04ba5e2777bc5a18552a57342b593e46f4ca75ae92a8423f2a2a8d3febc9690a",
+        "log": "<private-evidence>\\pr354-retrospective-r1\\baseline-workspace-cache-refresh.log"
+      },
+      "log": "<private-evidence>\\pr354-retrospective-r1\\baseline-send-guard.log",
+      "sha256": "4b8fcec5ca4a5ac4d5c7409b4d7c7167e6576e9212858716c96e5a4ff7991d29",
+      "arguments": [
+        "test",
+        "--locked",
+        "-p",
+        "crony-server",
+        "tests::issue256_start_dispatch_rechecks_capabilities_after_selection",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "expected": "behavioral-red",
+      "expected_behavior_observed": true,
+      "program": "cargo",
+      "name": "baseline",
+      "tested_tree": "af16a0b7114ee1bcb45cb5fecf006f8e3ad81859",
+      "repository": "<local-user>\\code\\ecorp-pr354-retrospective-20260922-r1",
+      "exit_code": 101
+    },
+    {
+      "workspace_refresh": {
+        "sha256": "9c35ffe51028fdcc0f1986e4c2d7915b092fedf269bc6fea37ce132e38448034",
+        "log": "<private-evidence>\\pr354-retrospective-r1\\candidate-workspace-cache-refresh.log"
+      },
+      "log": "<private-evidence>\\pr354-retrospective-r1\\candidate-send-guard.log",
+      "sha256": "4dde7f8753d09638cf9ab5c760c61385314b7b476d170e87050a2da3b3a5574b",
+      "arguments": [
+        "test",
+        "--locked",
+        "-p",
+        "crony-server",
+        "tests::issue256_start_dispatch_rechecks_capabilities_after_selection",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "expected": "behavioral-green",
+      "expected_behavior_observed": true,
+      "program": "cargo",
+      "name": "candidate",
+      "tested_tree": "46237253fc7be2959f0d2d27c8514d075ab10534",
+      "repository": "<reviewed-worktree>",
+      "exit_code": 0
+    }
+  ],
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T00:04:41.1452710+00:00"
+}
