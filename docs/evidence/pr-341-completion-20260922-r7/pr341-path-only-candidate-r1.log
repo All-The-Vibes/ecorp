@@ -1,0 +1,94 @@
+✔ completed findings emit only bounded attribution metadata, never report content (206.7309ms)
+✔ clean requires native success and a valid empty report (166.8919ms)
+✔ native path-only findings retain hashed attribution and zero lines (171.1199ms)
+✔ invalid path/line location [0,1] remains a diagnostic failure (203.7352ms)
+✔ invalid path/line location [1,0] remains a diagnostic failure (177.7754ms)
+✔ invalid path/line location [-1,0] remains a diagnostic failure (177.5226ms)
+✔ invalid path/line location [0,-1] remains a diagnostic failure (151.0071ms)
+✔ invalid path/line location ["0",0] remains a diagnostic failure (159.2054ms)
+✔ invalid path/line location [0,"0"] remains a diagnostic failure (173.8405ms)
+✔ invalid path/line location [0.5,0] remains a diagnostic failure (168.9855ms)
+✔ invalid path/line location [1,0.5] remains a diagnostic failure (166.0423ms)
+✔ workflow-command delimiters stay private while safe identifiers preserve attribution (148.9207ms)
+✔ empty findings do not hide scanner/tool exit 1 (149.4232ms)
+✔ empty findings do not hide scanner/tool exit 2 (142.5129ms)
+✔ empty findings do not hide scanner/tool exit 124 (146.687ms)
+✔ empty findings do not hide scanner/tool exit 137 (143.9148ms)
+✔ empty findings do not hide scanner/tool exit 255 (147.633ms)
+✔ native success with findings cannot become a passing result (167.1524ms)
+✔ missing report fails without echoing input or inventing clean results (144.985ms)
+✔ empty report fails without echoing input or inventing clean results (155.9101ms)
+✔ invalid JSON report fails without echoing input or inventing clean results (155.0704ms)
+✔ invalid UTF8 report fails without echoing input or inventing clean results (144.3703ms)
+✔ null report fails without echoing input or inventing clean results (154.5838ms)
+✔ object report fails without echoing input or inventing clean results (153.6007ms)
+✔ too many findings report fails without echoing input or inventing clean results (168.6741ms)
+✔ oversized report fails without echoing input or inventing clean results (171.4641ms)
+✔ non-regular report is rejected before reading (174.1219ms)
+✔ exact report byte limit accepts valid JSON without truncation (209.5937ms)
+✔ exact finding limit is accepted with explicit bounded display (210.2613ms)
+✔ exact metadata limits preserve identifiers for all validated values (161.1401ms)
+✔ malformed finding is rejected (null) (158.344ms)
+✔ malformed finding is rejected ([]) (164.0768ms)
+✔ malformed finding is rejected (1) (167.1395ms)
+✔ malformed finding is rejected ("not a record") (174.616ms)
+✔ reject invalid Commit metadata ("main") (165.1474ms)
+✔ reject invalid Commit metadata (123) (159.8333ms)
+✔ reject invalid Commit metadata ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") (153.6058ms)
+✔ reject invalid Commit metadata ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") (139.4971ms)
+✔ reject invalid Commit metadata ("gggggggggggggggggggggggggggggggggggggggg") (147.1428ms)
+✔ reject invalid File metadata ("/absolute") (209.0341ms)
+✔ reject invalid File metadata ("C:\\absolute") (170.4952ms)
+✔ reject invalid File metadata ("../outside") (164.8064ms)
+✔ reject invalid File metadata ("dir/../outside") (161.3814ms)
+✔ reject invalid File metadata ("dir//file") (155.1843ms)
+✔ reject invalid File metadata ("name\n::error::NON_CREDENTIAL_DIAGNOSTIC_TES) (138.4037ms)
+✔ reject invalid File metadata ("\u001b[31mfile") (139.8851ms)
+✔ reject invalid File metadata ("‮file") (141.7101ms)
+✔ reject invalid File metadata ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) (147.5842ms)
+✔ reject invalid RuleID metadata ("bad NON_CREDENTIAL_DIAGNOSTIC_TEST_CANARY") (152.1837ms)
+✔ reject invalid RuleID metadata ("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr) (148.6836ms)
+✔ reject invalid StartLine metadata (0) (164.7666ms)
+✔ reject invalid StartLine metadata ("1") (144.9722ms)
+✔ reject invalid StartLine metadata (9007199254740992) (150.026ms)
+✔ reject invalid EndLine metadata (2) (132.2145ms)
+✔ all findings are validated before bounded display (285.5004ms)
+✔ invalid scanner status is rejected (-1) (142.8934ms)
+✔ invalid scanner status is rejected (256) (148.7363ms)
+✔ invalid scanner status is rejected (1.5) (179.3245ms)
+✔ invalid scanner status is rejected () (190.5543ms)
+✔ invalid scanner status is rejected (01) (161.3238ms)
+✔ invalid scanner status is rejected (NON_CREDENTIAL_DIAGNOSTIC_TEST_CANARY) (143.6319ms)
+✔ unexpected arguments are not echoed (137.4491ms)
+✔ workflow retains scan scope, redaction, pinning, failure propagation and ephemeral reports (0.2881ms)
+✔ selected metadata never publishes a canary in a path or rule identifier (146.5916ms)
+✔ completed finding and partial scan results retain distinct native outcomes (300.6728ms)
+✔ production scan is independent of selected-head fixture code and fixture job tests its workflow revision (0.4261ms)
+✔ native scanner clean history yields a clean bounded report (2897.4461ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native default pkcs12-file rule preserves path-only attribution without inventing lines (3403.2994ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner attributes a current finding and preserves failure (2959.4293ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner attributes a historical finding and preserves failure (3379.9589ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner configuration failure cannot become a clean result (2273.132ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner redaction does not permit a sensitive filename in diagnostics (2802.3367ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scan works on an older selected head without workflow support files (3320.8831ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ selected-head executable fixtures cannot run in the production scan path (3075.88ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native Git completeness check rejects unavailable historical objects before scanning (3153.9574ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native partial timeout keeps collected findings explicitly incomplete (5094.2199ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+ℹ tests 76
+ℹ suites 0
+ℹ pass 76
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32589.0801

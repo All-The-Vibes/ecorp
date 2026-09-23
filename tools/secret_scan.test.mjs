@@ -62,6 +62,30 @@ test('clean requires native success and a valid empty report', async t => {
   assert.deepEqual(result.output.findings, [])
 })
 
+test('native path-only findings retain hashed attribution and zero lines', async t => {
+  const f = await fixture(t)
+  const record = { ...finding(), File: `${canary}.p12`, RuleID: 'pkcs12-file', StartLine: 0, EndLine: 0 }
+  const result = await f.run(JSON.stringify([record]))
+  assert.equal(result.status, 42)
+  assert.equal(result.stderr, '')
+  assert.equal(result.output.status, 'findings')
+  assert.equal(result.output.scan_complete, true)
+  assert.deepEqual(result.output.findings, [{
+    commit, file_id: identifier(record.File), location_kind: 'path', start_line: 0, end_line: 0,
+    rule_id: identifier(record.RuleID), finding_id: identifier(JSON.stringify([commit, record.File, record.RuleID, 0, 0])),
+  }])
+})
+
+for (const [start, end] of [[0, 1], [1, 0], [-1, 0], [0, -1], ['0', 0], [0, '0'], [0.5, 0], [1, 0.5]]) {
+  test(`invalid path/line location ${JSON.stringify([start, end])} remains a diagnostic failure`, async t => {
+    const f = await fixture(t)
+    const result = await f.run(JSON.stringify([{ ...finding(), StartLine: start, EndLine: end }]))
+    assert.equal(result.status, 42)
+    assert.equal(result.stdout, '')
+    assert.equal(result.output.error_code, 'invalid_lines')
+  })
+}
+
 test('workflow-command delimiters stay private while safe identifiers preserve attribution', async t => {
   const f = await fixture(t)
   const file = '::error::##[error]example.txt'

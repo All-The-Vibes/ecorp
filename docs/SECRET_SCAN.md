@@ -19,6 +19,8 @@ The final scan step prints a metadata-only JSON result:
 * `finding_count`, `displayed` and `omitted` distinguish total findings from bounded output
 * Each displayed finding contains its commit, start/end line and SHA-256 identifiers
   for its relative file, rule and complete finding
+* Native path-only findings, such as the default `pkcs12-file` rule, retain
+  `start_line: 0`, `end_line: 0` and `location_kind: "path"`; no line is invented
 
 Use that commit to inspect the relevant historical source through an authorized
 local checkout. `file_id` is `sha256:` followed by the SHA-256 of the exact UTF-8
@@ -59,7 +61,8 @@ Untrusted metadata is validated before output. Current bounds are:
 * Full 40-character commit IDs
 * Relative file paths of at most 1,024 characters, without traversal or control/format characters
 * Rule IDs of at most 128 ASCII letters, digits, dots, underscores or hyphens
-* Positive safe-integer line numbers with an ordered start/end range
+* Positive safe-integer line numbers with an ordered start/end range, or exactly
+  zero/zero for a path-only finding; mixed zero/positive ranges are invalid
 
 Every record is validated, including records beyond the display limit. Missing,
 empty, malformed, changing, oversized or unsupported reports produce
@@ -107,17 +110,18 @@ histories. Its runner, executable, refs and ignore inputs are isolated from the
 production **secrets** job. The production job has no repository-executable test
 prerequisite and still scans an older selected head that lacks these support files.
 
-The native cases cover clean, current and historical findings; invalid configuration;
+The native cases cover clean, current and historical findings; a default-rule
+path-only finding from harmless synthetic `.p12` content; invalid configuration;
 sensitive filenames; older heads; unexecuted head-controlled fixtures; unavailable
 historical objects; and a real native timeout that retains already collected findings.
 The timeout fixture uses a bounded, fixture-only Git text converter and verifies
 its completion before cleanup. It does not replace or mock the native scanner.
-The finding cases use a generated noncredential marker and a test-only rule
+The line-based finding cases use a generated noncredential marker and a test-only rule
 outside the fixture repository; they do not change production rules or ignores.
 Raw reports and scanner output are removed after the checks.
 
 For the same offline native acceptance locally, set `ECORP_GITLEAKS_BINARY` to an
 already verified Gitleaks 8.30.1 executable and run
 `node --test tools/secret_scan_native.test.mjs`. An explicitly selected missing or
-wrong-version binary fails; without the variable, only these nine native cases
+wrong-version binary fails; without the variable, only these ten native cases
 skip in the ordinary unit lane. The isolated CI job supplies it explicitly.

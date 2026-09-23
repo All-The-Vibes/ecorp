@@ -72,7 +72,7 @@ function fixture(t) {
       const native = run(binary, ['git', '.', '--log-opts=HEAD', '--redact=100', '--no-banner', '--no-color',
         '--exit-code=42',
         '--ignore-gitleaks-allow', '--gitleaks-ignore-path', '.gitleaksignore', '--timeout', timeout,
-        '--config', config, '--report-format=json', `--report-path=${report}`])
+        ...(config === null ? [] : ['--config', config]), '--report-format=json', `--report-path=${report}`])
       writeFileSync(log, native.stdout + native.stderr, { mode: 0o600 })
       const reportCreated = existsSync(report)
       const reporter = run(process.execPath, ['--input-type=module', '-', report, String(native.status)], { input: program })
@@ -101,6 +101,24 @@ test('native scanner clean history yields a clean bounded report', { skip }, t =
   assert.equal(result.reporterStatus, 0)
   assert.equal(result.output.status, 'clean')
   assert.deepEqual(result.output.findings, [])
+})
+
+test('native default pkcs12-file rule preserves path-only attribution without inventing lines', { skip }, t => {
+  const f = fixture(t)
+  const filename = 'harmless-fixture.p12'
+  // No certificate, key or credential: the native default rule matches the path.
+  writeFileSync(path.join(f.repository, filename), 'Owned path-only diagnostic fixture.\n')
+  const findingCommit = f.commit()
+  const result = f.scan(null)
+  assert.equal(result.nativeStatus, 42)
+  assert.equal(result.reporterStatus, 42)
+  assert.equal(result.output.status, 'findings')
+  assert.equal(result.output.scan_complete, true)
+  assert.equal(result.output.finding_count, 1)
+  assert.deepEqual(result.output.findings, [{
+    commit: findingCommit, file_id: identifier(filename), location_kind: 'path', start_line: 0, end_line: 0,
+    rule_id: identifier('pkcs12-file'), finding_id: identifier(JSON.stringify([findingCommit, filename, 'pkcs12-file', 0, 0])),
+  }])
 })
 
 for (const historical of [false, true]) {

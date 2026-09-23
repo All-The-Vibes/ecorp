@@ -133,11 +133,13 @@ jobs:
             if (!text(File, 1024) || /^[\\/]|^[a-z]:/i.test(File)
               || File.split(/[\\/]/).some(part => !part || part === '.' || part === '..')) fail('invalid_file')
             if (typeof RuleID !== 'string' || !/^[a-z0-9][a-z0-9._-]{0,127}$/i.test(RuleID)) fail('invalid_rule')
-            if (!Number.isSafeInteger(StartLine) || StartLine < 1
-              || !Number.isSafeInteger(EndLine) || EndLine < StartLine) fail('invalid_lines')
+            const pathOnly = StartLine === 0 && EndLine === 0
+            if (!pathOnly && (!Number.isSafeInteger(StartLine) || StartLine < 1
+              || !Number.isSafeInteger(EndLine) || EndLine < StartLine)) fail('invalid_lines')
             // Native redaction does not sanitize filenames. Hash all free-form
             // selected text even when Secret/Match have already been redacted.
-            return { commit: Commit, file_id: identifier(File), start_line: StartLine, end_line: EndLine,
+            return { commit: Commit, file_id: identifier(File), ...(pathOnly ? { location_kind: 'path' } : {}),
+              start_line: StartLine, end_line: EndLine,
               rule_id: identifier(RuleID), finding_id: identifier(JSON.stringify([Commit, File, RuleID, StartLine, EndLine])) }
           }
           try {
