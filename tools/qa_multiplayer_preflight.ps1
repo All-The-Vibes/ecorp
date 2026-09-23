@@ -153,6 +153,25 @@ function Assert-U1CommandAvailable([string]$Name) {
     Get-Command $Name -CommandType Application -ErrorAction Stop | Out-Null
 }
 
+function Invoke-U1SourceGit([string]$Product, [string[]]$Arguments) {
+    # Source identity must not depend on machine/user attributes or filters.
+    # These process-only settings are restored, including originally absent keys.
+    $saved = @{}
+    $isolated = @{ GIT_CONFIG_NOSYSTEM = '1'; GIT_CONFIG_GLOBAL = 'NUL'; GIT_ATTR_NOSYSTEM = '1' }
+    try {
+        foreach ($name in $isolated.Keys) {
+            $saved[$name] = @{ exists = Test-Path -LiteralPath "Env:$name"; value = [Environment]::GetEnvironmentVariable($name, 'Process') }
+            [Environment]::SetEnvironmentVariable($name, $isolated[$name], 'Process')
+        }
+        return Invoke-U1ReadCommand 'git' (@('--no-replace-objects', '--no-optional-locks', '-c', 'core.attributesFile=', '-C', $Product) + $Arguments)
+    } finally {
+        foreach ($name in $saved.Keys) {
+            if ($saved[$name].exists) { [Environment]::SetEnvironmentVariable($name, $saved[$name].value, 'Process') }
+            else { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+        }
+    }
+}
+
 function Invoke-U1Preflight {
     param([string]$Product, [hashtable]$Options)
     $checks = [Collections.Generic.List[object]]::new()
@@ -199,22 +218,34 @@ function Invoke-U1Preflight {
     } 'Listener inventory failed, fixture plan is invalid, or a requested port is occupied; no port is reserved by preflight.'
     Check 'source' {
         # -C does not override inherited repository, index or configuration selection.
-        if (@(Get-ChildItem Env: | Where-Object Name -match '^GIT_(DIR|WORK_TREE|COMMON_DIR|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|CONFIG.*|IMPLICIT_WORK_TREE|GRAFT_FILE|NO_REPLACE_OBJECTS|REPLACE_REF_BASE|PREFIX|SHALLOW_FILE|NAMESPACE|CEILING_DIRECTORIES|DISCOVERY_ACROSS_FILESYSTEM)$').Count) {
+        if (@(Get-ChildItem Env: | Where-Object Name -match '^GIT_(DIR|WORK_TREE|COMMON_DIR|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|CONFIG.*|ATTR.*|IMPLICIT_WORK_TREE|GRAFT_FILE|NO_REPLACE_OBJECTS|REPLACE_REF_BASE|PREFIX|SHALLOW_FILE|NAMESPACE|CEILING_DIRECTORIES|DISCOVERY_ACROSS_FILESYSTEM)$').Count) {
             throw 'Inherited Git selection is not supported.'
         }
         $expectedIdentity = $null
         $expectedRoot = Get-U1LocalPath $Product ([ref]$expectedIdentity)
         Assert-U1NoReparseAncestor $expectedRoot
         $observedIdentity = $null
-        $observedRoot = Get-U1LocalPath (Invoke-U1ReadCommand 'git' @('--no-replace-objects', '-C', $Product, 'rev-parse', '--show-toplevel')) ([ref]$observedIdentity)
+        $observedRoot = Get-U1LocalPath (Invoke-U1SourceGit $Product @('rev-parse', '--show-toplevel')) ([ref]$observedIdentity)
         if (!$observedIdentity.Equals($expectedIdentity, [StringComparison]::OrdinalIgnoreCase)) {
             throw 'Git repository root does not match Product.'
         }
-        $head = Invoke-U1ReadCommand 'git' @('--no-replace-objects', '-C', $Product, 'rev-parse', 'HEAD')
+        $head = Invoke-U1SourceGit $Product @('rev-parse', 'HEAD')
         if ($head -notmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$') { throw 'Invalid source revision.' }
+        # Git status can run clean/process filters while refreshing tracked files.
+        # Reject repository/included filter definitions before any worktree comparison.
+        $configuration = Invoke-U1SourceGit $Product @('config', '--null', '--name-only', '--list')
+        if (@($configuration.Split([char]0) | Where-Object { $_ -match '^filter\.' }).Count) {
+            throw 'Repository Git filters are not supported for source attestation.'
+        }
+        $attributes = Invoke-U1SourceGit $Product @('rev-parse', '--path-format=absolute', '--git-path', 'info/attributes')
+        $attributeParent = Get-U1LocalPath (Split-Path -Parent $attributes) ([ref]$null)
+        Assert-U1NoReparseAncestor $attributeParent
+        if (Test-Path -LiteralPath $attributes -ErrorAction Stop) {
+            throw 'Repository info/attributes overrides are not supported for source attestation.'
+        }
         # Status intentionally trusts these index flags and can hide changed bytes.
         # Reject them without refreshing or altering the caller's index.
-        $entries = Invoke-U1ReadCommand 'git' @('--no-replace-objects', '--no-optional-locks', '-C', $Product, 'ls-files', '-v', '-z', '--cached')
+        $entries = Invoke-U1SourceGit $Product @('ls-files', '-v', '-z', '--cached')
         if ($entries) {
             $records = $entries.Split([char]0)
             if ($records[-1] -cne '') { throw 'Incomplete source index inventory.' }
@@ -226,10 +257,10 @@ function Invoke-U1Preflight {
         }
         # Local refs/replace must not substitute a different commit or tree while
         # HEAD still reports the original object ID that this report attests.
-        $status = Invoke-U1ReadCommand 'git' @('--no-replace-objects', '--no-optional-locks', '-c', 'core.fsmonitor=false', '-C', $Product, 'status', '--porcelain', '--untracked-files=all')
+        $status = Invoke-U1SourceGit $Product @('-c', 'core.fsmonitor=false', 'status', '--porcelain', '--untracked-files=all')
         if ($status) { throw 'Unrecorded source changes.' }
         $report.source_commit = $head
-    } 'Source revision or index could not be verified, or the candidate has tracked/untracked changes; clear hidden index flags and commit the intended candidate before runtime acceptance.'
+    } 'Source revision, index, attributes or filter configuration could not be verified, or the candidate has tracked/untracked changes; remove local overrides, clear hidden index flags and commit the intended candidate before runtime acceptance.'
     Check 'rust-commands' {
         Assert-U1CommandAvailable 'rustc'
         Assert-U1CommandAvailable 'cargo'

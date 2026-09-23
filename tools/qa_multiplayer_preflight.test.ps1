@@ -388,6 +388,85 @@ public static class U1AliasProbe {
             Assert (@($replacementResults | Where-Object { !$_ }).Count -eq 0) 'Commit and tree replacement refs must block false source attestation.'
             $control = Invoke-U1Preflight -Product $product -Options $gitOptions
             Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Restoring original objects and source must recover clean attestation.'
+            # Real clean filters can execute and normalize changed worktree bytes back
+            # to the indexed blob. Exercise local, included and user-level selection.
+            $localConfig = Join-Path $product '.git/config'
+            $originalConfig = [IO.File]::ReadAllBytes($localConfig)
+            $infoAttributes = Join-Path $product '.git/info/attributes'
+            $includedConfig = Join-Path $fixture 'included-filter-config'
+            $globalConfig = Join-Path $homeRoot '.gitconfig'
+            $explicitAttributes = Join-Path $fixture 'global-attributes'
+            $defaultAttributes = Join-Path $homeRoot 'git/attributes'
+            $filterMarker = Join-Path $fixture 'clean-filter-executed'
+            $filterBody = '$null = [Console]::In.ReadToEnd(); [IO.File]::WriteAllText(''' +
+                $filterMarker.Replace("'", "''") + ''', ''executed''); $bytes = [Convert]::FromBase64String(''' +
+                [Convert]::ToBase64String($originalSource) + '''); [Console]::OpenStandardOutput().Write($bytes, 0, $bytes.Length)'
+            $encodedFilter = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($filterBody))
+            $pwshPath = (Get-Command pwsh -CommandType Application | Select-Object -First 1).Source.Replace('\', '/')
+            $filterCommand = '"' + $pwshPath + '" -NoLogo -NoProfile -NonInteractive -EncodedCommand ' + $encodedFilter
+            $filterResults = @()
+            foreach ($selection in @('local', 'included', 'global-explicit', 'global-default')) {
+                try {
+                    Assert (!(Test-Path -LiteralPath $globalConfig)) 'The isolated user config must start absent.'
+                    if ($selection -in @('local', 'included')) {
+                        [IO.Directory]::CreateDirectory((Split-Path -Parent $infoAttributes)) | Out-Null
+                        [IO.File]::WriteAllText($infoAttributes, "source.txt filter=u1-fixture`n")
+                        if ($selection -eq 'local') {
+                            Invoke-FixtureGit $product @('config', 'filter.u1-fixture.clean', $filterCommand) | Out-Null
+                        } else {
+                            Invoke-FixtureGit $product @('config', '--file', $includedConfig, 'filter.u1-fixture.clean', $filterCommand) | Out-Null
+                            Invoke-FixtureGit $product @('config', 'include.path', $includedConfig.Replace('\', '/')) | Out-Null
+                        }
+                    } else {
+                        Invoke-FixtureGit $product @('config', '--file', $globalConfig, 'filter.u1-fixture.clean', $filterCommand) | Out-Null
+                        $selectedAttributes = if ($selection -eq 'global-explicit') { $explicitAttributes } else { $defaultAttributes }
+                        [IO.Directory]::CreateDirectory((Split-Path -Parent $selectedAttributes)) | Out-Null
+                        [IO.File]::WriteAllText($selectedAttributes, "source.txt filter=u1-fixture`n")
+                        if ($selection -eq 'global-explicit') {
+                            Invoke-FixtureGit $product @('config', '--file', $globalConfig, 'core.attributesFile', $explicitAttributes.Replace('\', '/')) | Out-Null
+                        }
+                    }
+                    [IO.File]::WriteAllText($sourcePath, "changed source hidden by $selection clean filter")
+                    Assert (!(Invoke-FixtureGit $product @('status', '--porcelain', '--untracked-files=all'))) 'The native clean filter must hide modified bytes from ordinary status.'
+                    Assert (Test-Path -LiteralPath $filterMarker) 'Ordinary status must execute the actual fixture filter.'
+                    Remove-Item -LiteralPath $filterMarker
+                    $preservedPaths = @($sourcePath, $localConfig, (Join-Path $product '.git/index'), $infoAttributes,
+                        $includedConfig, $globalConfig, $explicitAttributes, $defaultAttributes) |
+                        Where-Object { Test-Path -LiteralPath $_ }
+                    $filesBefore = @($preservedPaths | ForEach-Object { Get-FileHash -LiteralPath $_ } | Select-Object Path, Hash)
+                    $environmentBefore = @(Get-ChildItem Env:GIT_* | Sort-Object Name | Select-Object Name, Value)
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $sourceCheck = @($observed.checks | Where-Object name -eq 'source')
+                    $rejected = $observed.status -ne 'preparation-checks-passed' -and
+                        $sourceCheck.Count -eq 1 -and $sourceCheck[0].status -eq 'blocked' -and
+                        $null -eq $observed.source_commit
+                    $filterRan = Test-Path -LiteralPath $filterMarker
+                    $filesAfter = @($preservedPaths | ForEach-Object { Get-FileHash -LiteralPath $_ } | Select-Object Path, Hash)
+                    $environmentAfter = @(Get-ChildItem Env:GIT_* | Sort-Object Name | Select-Object Name, Value)
+                    Assert (($filesBefore | ConvertTo-Json -Compress) -ceq ($filesAfter | ConvertTo-Json -Compress)) 'Source admission must preserve configuration, attributes, index and modified bytes.'
+                    Assert (($environmentBefore | ConvertTo-Json -Compress) -ceq ($environmentAfter | ConvertTo-Json -Compress)) 'Source Git isolation must restore the original environment, including absent keys.'
+                    $result = @{ event = 'clean-filter-source-change'; selection = $selection; rejected = $rejected;
+                        filter_ran = $filterRan; source_status = $sourceCheck[0].status; preserved = $true }
+                    $filterResults += $result
+                    Write-Output ($result | ConvertTo-Json -Compress)
+                } finally {
+                    [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+                    [IO.File]::WriteAllBytes($localConfig, $originalConfig)
+                    foreach ($ownedFile in @($infoAttributes, $includedConfig, $globalConfig, $explicitAttributes, $defaultAttributes, $filterMarker)) {
+                        Assert ($ownedFile.StartsWith($fixture + '\', [StringComparison]::OrdinalIgnoreCase)) 'Filter cleanup must remain inside the owned fixture.'
+                        if (Test-Path -LiteralPath $ownedFile) { Remove-Item -LiteralPath $ownedFile }
+                    }
+                }
+            }
+            Assert (@($filterResults | Where-Object { !$_.rejected -or $_.filter_ran }).Count -eq 0) 'All native clean-filter selections must block false attestation without executing the filter.'
+            try {
+                [IO.File]::WriteAllText($infoAttributes, "source.txt -text`n")
+                $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                Assert (($observed.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $observed.source_commit) 'Repository info/attributes alone must block local source overrides.'
+            } finally { Remove-Item -LiteralPath $infoAttributes }
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Removing fixture filters and restoring source must recover clean attestation.'
+            Write-Output 'F03 native local/included/global filter rejection, effect prevention and source preservation passed.'
             if ($shortAvailable) {
                 $shortControl = Invoke-U1Preflight -Product $shortProduct -Options $gitOptions
                 Assert ($shortControl.status -eq 'preparation-checks-passed' -and $shortControl.source_commit -eq $candidateHead) 'An actual short alias must bind to the same clean Git source.'
@@ -419,6 +498,8 @@ public static class U1AliasProbe {
                 @{ GIT_CONFIG = $foreignConfig },
                 @{ GIT_CONFIG_GLOBAL = $foreignConfig },
                 @{ GIT_CONFIG_SYSTEM = $foreignConfig },
+                @{ GIT_ATTR_NOSYSTEM = '0' },
+                @{ GIT_ATTR_SOURCE = $otherHead },
                 @{ GIT_CONFIG_PARAMETERS = "'core.worktree=$($other.Replace('\', '/'))'" },
                 @{ GIT_CONFIG_COUNT = '1'; GIT_CONFIG_KEY_0 = 'core.worktree'; GIT_CONFIG_VALUE_0 = $other },
                 @{ GIT_CONFIG_VALUE_77 = 'F03_ENV_VALUE_MUST_NOT_APPEAR' },
@@ -477,6 +558,8 @@ public static class U1AliasProbe {
         $script:commands.Add("$Name $($Arguments -join ' ')")
         if ($Name -eq 'git') {
             if ($Arguments -contains '--show-toplevel') { return $product }
+            if ($Arguments -contains '--git-path') { return (Join-Path $product '.git/info/attributes') }
+            if ($Arguments -contains 'config') { return '' }
             if ($Arguments -contains 'rev-parse') { return 'a' * 40 }
             if ($Arguments -contains 'ls-files') { return "H source.txt`0" }
             if ($script:dirty) { return '?? unrecorded.txt' }
