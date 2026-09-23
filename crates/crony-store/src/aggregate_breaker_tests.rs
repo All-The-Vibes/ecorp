@@ -99,7 +99,7 @@ async fn issue56_nested_verifier_budget_gate_has_no_actor_corp_inversion(pool: P
     recovery.await.unwrap();
 }
 
-fn run_id(index: u128) -> Uuid {
+pub(super) fn run_id(index: u128) -> Uuid {
     Uuid::from_u128(5610 + index * 4)
 }
 
@@ -207,7 +207,7 @@ async fn issue56_native_enqueue_precedes_a_concurrent_fence(pool: PgPool) {
     assert_eq!(stage(&store, 1).await, "suspend");
 }
 
-async fn add_run(store: &PgStore, index: u128, corp: Uuid, mission: Uuid) {
+pub(super) async fn add_run(store: &PgStore, index: u128, corp: Uuid, mission: Uuid) {
     let run = run_id(index);
     let agent = Uuid::from_u128(run.as_u128() + 1);
     let actor = Uuid::from_u128(run.as_u128() + 2);

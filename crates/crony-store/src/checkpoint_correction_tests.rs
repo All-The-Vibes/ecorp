@@ -6,6 +6,9 @@ use super::*;
 #[path = "checkpoint_correction_retry_tests.rs"]
 mod correction_retry;
 
+#[path = "checkpoint_correction_dispatch_tests.rs"]
+mod dispatch;
+
 const CONNECTION: Uuid = Uuid::from_u128(210);
 
 fn correction_profile() -> CheckpointFixtureProfile {

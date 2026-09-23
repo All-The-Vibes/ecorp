@@ -1721,6 +1721,34 @@ async fn dispatch_pending_runner_commands_for_epoch(
                         continue;
                     }
                 }
+            } else if command.command_kind == "factory_verification_recovery"
+                && command
+                    .payload
+                    .get("mode")
+                    .and_then(serde_json::Value::as_str)
+                    == Some("source_correction")
+            {
+                match state
+                    .store
+                    .with_source_correction_command_dispatch(&command, || enqueue(None))
+                    .await?
+                {
+                    RunnerCommandDispatchOutcome::Sent => {}
+                    RunnerCommandDispatchOutcome::Disconnected => return Ok(()),
+                    RunnerCommandDispatchOutcome::Settled => continue,
+                    RunnerCommandDispatchOutcome::Obsolete => {
+                        // Reconnect may target an already running provider. Retire
+                        // only this stale command; the native fence owns run state.
+                        if let Some(event) = state.store.fail_runner_command(
+                            command.id,
+                            runner_id,
+                            "source-correction command authority changed or aggregate budget was fenced before enqueue",
+                        ).await? {
+                            publish(state, event);
+                        }
+                        continue;
+                    }
+                }
             } else if !enqueue(None)? {
                 return Ok(());
             }

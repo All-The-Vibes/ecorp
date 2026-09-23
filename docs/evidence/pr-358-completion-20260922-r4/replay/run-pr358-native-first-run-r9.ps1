@@ -19,6 +19,12 @@ param(
 $ErrorActionPreference = 'Stop'
 $product = (Resolve-Path -LiteralPath $Repository).Path
 $qa = [IO.Path]::GetFullPath($QaRoot)
+if (![IO.Path]::IsPathFullyQualified($QaRoot) -or
+    (Split-Path -Leaf $qa) -notmatch '^pr265-run-activity-pr358-[0-9]{8}-r[0-9]+$' -or
+    (Split-Path -Leaf (Split-Path -Parent $qa)) -ne 'qa' -or
+    $qa.StartsWith($product, [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Use a dedicated absolute qa/pr265-run-activity-pr358-YYYYMMDD-rN directory outside the product.'
+}
 $pg = (Resolve-Path -LiteralPath $PostgresBin).Path
 $target = [IO.Path]::GetFullPath($CargoTargetDirectory)
 $OutputDirectory = (Resolve-Path -LiteralPath $OutputDirectory).Path
@@ -27,18 +33,48 @@ $prefix = "pr$Number-native-$Revision"
 $lifecyclePath = Join-Path $OutputDirectory "$prefix-lifecycle.json"
 $validationPath = Join-Path $ValidationDirectory 'validation.json'
 $validation = Get-Content -LiteralPath $validationPath -Raw | ConvertFrom-Json
-$tree = (& git -C $product write-tree).Trim()
 $validationTree = if ($validation.staged_tree) { $validation.staged_tree } else { $validation.tested_staged_tree }
 $expectedChecks = @('migrations','documentation','rust-format','rust-clippy','rust-workspace','node-unit','steward','web-build','web-lint')
-if ($validation.status -ne 'passed' -or !$validationTree -or @($validation.checks).Count -ne 9 -or
-    @($validation.checks | Where-Object exit_code -ne 0).Count -or
-    (Compare-Object @($validation.checks.name | Sort-Object) @($expectedChecks | Sort-Object)) -or
-    (& git -C $product diff --name-only)) { throw 'Source must match all nine passing validation gates.' }
-if ($validationTree -cne $tree) {
-    $packet = [IO.Path]::GetRelativePath($product, (Resolve-Path -LiteralPath $ValidationDirectory).Path).Replace('\','/')
-    if ($packet -notmatch '^docs/evidence/pr-358-[a-z0-9-]+$') { throw 'Different source tree without the exact published evidence packet.' }
-    $delta = @(& git -C $product diff --name-only $validationTree $tree -- . ":(exclude)$packet/**")
-    if ($LASTEXITCODE -or $delta.Count) { throw 'Product source changed since the published validation.' }
+# Even write-tree and diff can refresh index metadata. Run every source check
+# against a private copy so success and rejection preserve the caller's bytes.
+$hadPriorIndex = Test-Path -LiteralPath Env:GIT_INDEX_FILE
+$priorIndex = [Environment]::GetEnvironmentVariable('GIT_INDEX_FILE', 'Process')
+$sourceIndex = (& git -C $product rev-parse --path-format=absolute --git-path index).Trim()
+if ($LASTEXITCODE -or !(Test-Path -LiteralPath $sourceIndex -PathType Leaf)) { throw 'Cannot locate the source index.' }
+$projectionRoot = Join-Path ([IO.Path]::GetTempPath()) ("ecorp-pr358-projection-" + [guid]::NewGuid().ToString('N'))
+$null = New-Item -ItemType Directory -Path $projectionRoot
+$projectionIndex = Join-Path $projectionRoot 'index'
+try {
+    Copy-Item -LiteralPath $sourceIndex -Destination $projectionIndex
+    [Environment]::SetEnvironmentVariable('GIT_INDEX_FILE', $projectionIndex, 'Process')
+    $tree = (& git -C $product write-tree).Trim()
+    if ($LASTEXITCODE) { throw 'Cannot read the source index tree.' }
+    $unstaged = @(& git -C $product diff --name-only)
+    if ($LASTEXITCODE) { throw 'Cannot inspect source differences.' }
+    if ($validation.status -ne 'passed' -or !$validationTree -or @($validation.checks).Count -ne 9 -or
+        @($validation.checks | Where-Object exit_code -ne 0).Count -or
+        (Compare-Object @($validation.checks.name | Sort-Object) @($expectedChecks | Sort-Object)) -or
+        $unstaged.Count) { throw 'Source must match all nine passing validation gates.' }
+    if ($validationTree -cne $tree) {
+        $packet = [IO.Path]::GetRelativePath($product, (Resolve-Path -LiteralPath $ValidationDirectory).Path).Replace('\','/')
+        if ($packet -notmatch '^docs/evidence/pr-358-[a-z0-9-]+$') { throw 'Different source tree without the exact published evidence packet.' }
+        # Reconstruct the tested projection from reachable published source;
+        # the recorded pre-evidence tree need not exist in this object store.
+        & git -C $product rm -r --cached --ignore-unmatch --quiet -- $packet
+        if ($LASTEXITCODE) { throw 'Published source projection removal failed.' }
+        $projectedTree = (& git -C $product write-tree).Trim()
+        if ($LASTEXITCODE -or $projectedTree -cne $validationTree) { throw 'Product source changed since the published validation.' }
+    }
+} finally {
+    if ($hadPriorIndex) {
+        [Environment]::SetEnvironmentVariable('GIT_INDEX_FILE', $priorIndex, 'Process')
+    } else {
+        Remove-Item -LiteralPath Env:GIT_INDEX_FILE -ErrorAction SilentlyContinue
+    }
+    foreach ($ownedFile in @($projectionIndex, "$projectionIndex.lock")) {
+        if (Test-Path -LiteralPath $ownedFile) { Remove-Item -LiteralPath $ownedFile }
+    }
+    Remove-Item -LiteralPath $projectionRoot
 }
 if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $lifecyclePath)) { throw 'Preserve existing fixture and receipts.' }
 foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
@@ -106,7 +142,7 @@ try {
       Record-Check 'sqlx-workspace-cache-refresh' $refreshLog $LASTEXITCODE
       $suites = @(
         @{package='crony-store';filter='retained_receipts::';name='retained-receipts';expected=15},
-        @{package='crony-store';filter='issue56_';name='crony-store';expected=28},
+        @{package='crony-store';filter='issue56_';name='crony-store';expected=31},
         @{package='crony-server';filter='issue56_';name='crony-server';expected=2}
       )
       foreach ($suite in $suites) {

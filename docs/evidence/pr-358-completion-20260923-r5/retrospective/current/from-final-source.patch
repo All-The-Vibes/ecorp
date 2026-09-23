@@ -1,0 +1,17 @@
+diff --git a/crates/crony-server/src/main.rs b/crates/crony-server/src/main.rs
+index 820c068..f02b3df 100644
+--- a/crates/crony-server/src/main.rs
++++ b/crates/crony-server/src/main.rs
+@@ -1722,11 +1722,7 @@ async fn dispatch_pending_runner_commands_for_epoch(
+                     }
+                 }
+             } else if command.command_kind == "factory_verification_recovery"
+-                && command
+-                    .payload
+-                    .get("mode")
+-                    .and_then(serde_json::Value::as_str)
+-                    == Some("source_correction")
++                && command.payload.get("mode").and_then(Value::as_str) == Some("source_correction")
+             {
+                 match state
+                     .store

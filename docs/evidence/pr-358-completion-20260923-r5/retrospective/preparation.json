@@ -1,0 +1,69 @@
+{
+  "status": "prepared",
+  "product_head": "5db7afa19b1bb17c06feea40043ba8d5005b22b1",
+  "product_staged_tree": "049fbec36ff5b39084b052ff88e84bc6cbec3ea2",
+  "target_main": "1edbf1b5f4d4fe3f12f9177bb72b631d8ce2e819",
+  "source_test_path": "crates/crony-store/src/aggregate_breaker_tests.rs",
+  "source_test_git_sha256": "d7aeffe5c8f8d35283157f8a956224d2c54ebd55bc6ce33d49bbcb61f86fc774",
+  "method": "Retrospective execution, not original TDD. Historical product source is unchanged. Shared tests retain current fixtures and assertions; renewal and reacquisition run separately so a first failure cannot hide the other case. Only the old callback shape is bridged in a separate test-only adapter.",
+  "shared_tests": {
+    "aggregate_sha256": "fe8a0e5e5ba53320a2c51a3551e3ea37e1a261a2767023b48d2cfb774b03605d",
+    "lease_sha256": "e4321c4bd9ace25a646df5594c42f3a70d1cbded4c7e69b5ecf116f9abdcc477"
+  },
+  "cases": [
+    {
+      "name": "aggregate-before",
+      "repository": "<local-user>\\code\\ecorp-pr358-regression-aggregate-before-20260923-r1",
+      "source_commit": "39632b957819012721c90902925d8fa7a9c7e873",
+      "original_tree": "35d5edc9cf8447f0c14a9eae8e3b38684ca1371c",
+      "test_tree": "1726a3cd795c2565dd6e9b73f8bbb082b6dea583",
+      "expected_exit": 101,
+      "expected_tests": 1,
+      "files": {
+        "pr358_retrospective_aggregate.rs": "fe8a0e5e5ba53320a2c51a3551e3ea37e1a261a2767023b48d2cfb774b03605d"
+      },
+      "test_only_changed_paths": [
+        "crates/crony-store/src/lib.rs",
+        "crates/crony-store/src/pr358_retrospective_aggregate.rs"
+      ]
+    },
+    {
+      "name": "lease-before",
+      "repository": "<local-user>\\code\\ecorp-pr358-regression-lease-before-20260923-r1",
+      "source_commit": "2e02c95a44fe4b1f7b103ac68c51e8c18476bca8",
+      "original_tree": "640707c43ee5c17918650991b3f6a48ec5c64b4b",
+      "test_tree": "61d61984edf0f8fc7731b7f29be9c47631bc95ab",
+      "expected_exit": 101,
+      "expected_tests": 2,
+      "files": {
+        "pr358_retrospective_lease.rs": "e4321c4bd9ace25a646df5594c42f3a70d1cbded4c7e69b5ecf116f9abdcc477",
+        "pr358_retrospective_dispatch_adapter.rs": "1f0cbb5bab2f572302ca2fe3e7694f6e4a4d7996bd68e9061cfc2064a3c58460"
+      },
+      "test_only_changed_paths": [
+        "crates/crony-store/src/lib.rs",
+        "crates/crony-store/src/pr358_retrospective_dispatch_adapter.rs",
+        "crates/crony-store/src/pr358_retrospective_lease.rs"
+      ]
+    },
+    {
+      "name": "current",
+      "repository": "<local-user>\\code\\ecorp-pr358-regression-current-20260923-r1",
+      "source_commit": "e99301229873fcf1a68566715afe159f5bb3662f",
+      "original_tree": "049fbec36ff5b39084b052ff88e84bc6cbec3ea2",
+      "test_tree": "5e19038e482a4f512ee0856845b8bfeb157f7027",
+      "expected_exit": 0,
+      "expected_tests": 3,
+      "files": {
+        "pr358_retrospective_aggregate.rs": "fe8a0e5e5ba53320a2c51a3551e3ea37e1a261a2767023b48d2cfb774b03605d",
+        "pr358_retrospective_lease.rs": "e4321c4bd9ace25a646df5594c42f3a70d1cbded4c7e69b5ecf116f9abdcc477",
+        "pr358_retrospective_dispatch_adapter.rs": "b27202d90ba7aeb47ea14fbd09d528e5b3f77d55d9f2ca5c7e682af4562374c7"
+      },
+      "test_only_changed_paths": [
+        "crates/crony-store/src/lib.rs",
+        "crates/crony-store/src/pr358_retrospective_aggregate.rs",
+        "crates/crony-store/src/pr358_retrospective_dispatch_adapter.rs",
+        "crates/crony-store/src/pr358_retrospective_lease.rs"
+      ]
+    }
+  ]
+}

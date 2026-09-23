@@ -4,7 +4,7 @@ $product=$env:ECORP_COMPLETION_PRODUCT
 $qa=$env:ECORP_COMPLETION_QA_ROOT
 if($env:ECORP_COMPLETION_PR -ne '358' -or
    ![IO.Path]::IsPathFullyQualified($product) -or
-   (Split-Path -Leaf $qa) -notmatch '^pr265-run-activity-pr358-20260922-r[0-9]+$'){
+   (Split-Path -Leaf $qa) -notmatch '^pr265-run-activity-pr358-[0-9]{8}-r[0-9]+$'){
     throw 'Unexpected owned aggregate-budget fixture scope.'
 }
 Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force -DisableNameChecking

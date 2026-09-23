@@ -1,0 +1,523 @@
+diff --git a/crates/crony-store/src/lib.rs b/crates/crony-store/src/lib.rs
+index e2d5bd6..4603672 100644
+--- a/crates/crony-store/src/lib.rs
++++ b/crates/crony-store/src/lib.rs
+@@ -17303,3 +17303,9 @@ mod tests {
+         ));
+     }
+ }
++
++#[cfg(test)]
++mod pr358_retrospective_aggregate;
++
++#[cfg(test)]
++mod pr358_retrospective_lease;
+diff --git a/crates/crony-store/src/pr358_retrospective_aggregate.rs b/crates/crony-store/src/pr358_retrospective_aggregate.rs
+new file mode 100644
+index 0000000..f729759
+--- /dev/null
++++ b/crates/crony-store/src/pr358_retrospective_aggregate.rs
+@@ -0,0 +1,154 @@
++use super::*;
++
++const CORP: Uuid = Uuid::from_u128(5601);
++const OWNER: Uuid = Uuid::from_u128(5602);
++const ROOM: Uuid = Uuid::from_u128(5603);
++const MISSION: Uuid = Uuid::from_u128(5604);
++
++async fn fixture(pool: PgPool) -> PgStore {
++    sqlx::query("INSERT INTO corps(id,slug,name) VALUES($1,'aggregate56','Aggregate breaker')")
++        .bind(CORP)
++        .execute(&pool)
++        .await
++        .unwrap();
++    sqlx::query(
++        "INSERT INTO actors(id,corp_id,name,kind,role) VALUES($1,$2,'Owner','human','owner')",
++    )
++    .bind(OWNER)
++    .bind(CORP)
++    .execute(&pool)
++    .await
++    .unwrap();
++    sqlx::query("INSERT INTO rooms(id,corp_id,name,purpose) VALUES($1,$2,'Budget','Scope test')")
++        .bind(ROOM)
++        .bind(CORP)
++        .execute(&pool)
++        .await
++        .unwrap();
++    sqlx::query("INSERT INTO room_memberships(room_id,actor_id) VALUES($1,$2)")
++        .bind(ROOM)
++        .bind(OWNER)
++        .execute(&pool)
++        .await
++        .unwrap();
++    sqlx::query(
++        "INSERT INTO missions(id,corp_id,room_id,requested_by,title,status,budget_tokens,
++           original_budget_tokens,budget_cost_microusd,original_budget_cost_microusd)
++         VALUES($1,$2,$3,$4,'Concurrent budget','running',100,100,1000000,1000000)",
++    )
++    .bind(MISSION)
++    .bind(CORP)
++    .bind(ROOM)
++    .bind(OWNER)
++    .execute(&pool)
++    .await
++    .unwrap();
++    let store = PgStore { pool };
++    for i in 0..2 {
++        add_run(&store, i, CORP, MISSION).await;
++    }
++    store
++}
++
++pub(super) fn run_id(index: u128) -> Uuid {
++    Uuid::from_u128(5610 + index * 4)
++}
++
++pub(super) async fn add_run(store: &PgStore, index: u128, corp: Uuid, mission: Uuid) {
++    let run = run_id(index);
++    let agent = Uuid::from_u128(run.as_u128() + 1);
++    let actor = Uuid::from_u128(run.as_u128() + 2);
++    let task = Uuid::from_u128(run.as_u128() + 3);
++    sqlx::query(
++        "INSERT INTO runner_nodes(id,corp_id,hostname,os,connection_epoch,status)
++        VALUES($1,$2,'fixture','test',$3,'connected')",
++    )
++    .bind(format!("issue56-runner-{index}"))
++    .bind(corp)
++    .bind(Uuid::new_v4())
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    sqlx::query(
++        "INSERT INTO actors(id,corp_id,name,kind,role) VALUES($1,$2,'Worker','agent','worker')",
++    )
++    .bind(actor)
++    .bind(corp)
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    sqlx::query(
++        "INSERT INTO agents(id,corp_id,actor_id,name,role,adapter,status,accent,current_run_id)
++         VALUES($1,$2,$3,'Worker','worker','fake-process','working','#123456',$4)",
++    )
++    .bind(agent)
++    .bind(corp)
++    .bind(actor)
++    .bind(run)
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    let contract = json!({
++        "objective":"Budget boundary", "expected_output":"result.md",
++        "acceptance_tests":[], "allowed_tools":["filesystem"],
++        "prohibited_actions":[], "references":[], "write_scope":["result.md"],
++        "budget_tokens":10000, "budget_cost_microusd":1000000,
++        "deadline_at":null, "escalation":"ask owner"
++    });
++    sqlx::query(
++        "INSERT INTO tasks(id,corp_id,mission_id,title,objective,status,assigned_agent_id,
++           required_adapter,plan_key,contract,verification_policy,attempt_count,max_attempts)
++         VALUES($1,$2,$3,'Worker','Budget boundary','running',$4,'fake-process',$5,$6,
++           '{\"checks\":[],\"manual_gate\":null}',1,2)",
++    )
++    .bind(task)
++    .bind(corp)
++    .bind(mission)
++    .bind(agent)
++    .bind(format!("worker-{index}"))
++    .bind(contract)
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    sqlx::query(
++        "INSERT INTO runs(id,corp_id,task_id,agent_id,runner_id,assignment_token,status,
++           workspace_run_id,budget_tokens_limit,budget_cost_microusd_limit)
++         VALUES($1,$2,$3,$4,$5,$1,'running',$1,10000,1000000)",
++    )
++    .bind(run)
++    .bind(corp)
++    .bind(task)
++    .bind(agent)
++    .bind(format!("issue56-runner-{index}"))
++    .execute(&store.pool)
++    .await
++    .unwrap();
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned retrospective PostgreSQL"]
++async fn issue56_mission_hard_budget_fences_all_active_runs(pool: PgPool) {
++    let store = fixture(pool).await;
++    sqlx::query("UPDATE runs SET input_tokens=100 WHERE id=$1")
++        .bind(run_id(0))
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    store
++        .evaluate_circuit_breaker(CORP, run_id(0))
++        .await
++        .unwrap();
++    let stages: Vec<String> =
++        sqlx::query_scalar("SELECT breaker_stage FROM runs WHERE corp_id=$1 ORDER BY id")
++            .bind(CORP)
++            .fetch_all(&store.pool)
++            .await
++            .unwrap();
++    assert_eq!(stages, vec!["suspend", "suspend"]);
++    let commands: i64 = sqlx::query_scalar("SELECT count(*) FROM runner_commands WHERE corp_id=$1")
++        .bind(CORP)
++        .fetch_one(&store.pool)
++        .await
++        .unwrap();
++    assert_eq!(commands, 2);
++}
+diff --git a/crates/crony-store/src/pr358_retrospective_dispatch_adapter.rs b/crates/crony-store/src/pr358_retrospective_dispatch_adapter.rs
+new file mode 100644
+index 0000000..edacc8c
+--- /dev/null
++++ b/crates/crony-store/src/pr358_retrospective_dispatch_adapter.rs
+@@ -0,0 +1,9 @@
++// Compatibility-only callback bridge; the regression assertions are shared.
++impl PgStore {
++    async fn retrospective_progress_dispatch<F>(
++        &self, command: &PendingRunnerCommand, dispatch: F,
++    ) -> Result<RunnerCommandDispatchOutcome>
++    where F: FnOnce(Option<Uuid>) -> Result<bool> {
++        self.with_progress_command_dispatch(command, dispatch).await
++    }
++}
+diff --git a/crates/crony-store/src/pr358_retrospective_lease.rs b/crates/crony-store/src/pr358_retrospective_lease.rs
+new file mode 100644
+index 0000000..ed69432
+--- /dev/null
++++ b/crates/crony-store/src/pr358_retrospective_lease.rs
+@@ -0,0 +1,328 @@
++use super::*;
++
++const CORP: Uuid = Uuid::from_u128(5601);
++const OWNER: Uuid = Uuid::from_u128(5602);
++const ROOM: Uuid = Uuid::from_u128(5603);
++const MISSION: Uuid = Uuid::from_u128(5604);
++
++async fn fixture(pool: PgPool) -> PgStore {
++    sqlx::query("INSERT INTO corps(id,slug,name) VALUES($1,'aggregate56','Aggregate breaker')")
++        .bind(CORP)
++        .execute(&pool)
++        .await
++        .unwrap();
++    sqlx::query(
++        "INSERT INTO actors(id,corp_id,name,kind,role) VALUES($1,$2,'Owner','human','owner')",
++    )
++    .bind(OWNER)
++    .bind(CORP)
++    .execute(&pool)
++    .await
++    .unwrap();
++    sqlx::query("INSERT INTO rooms(id,corp_id,name,purpose) VALUES($1,$2,'Budget','Scope test')")
++        .bind(ROOM)
++        .bind(CORP)
++        .execute(&pool)
++        .await
++        .unwrap();
++    sqlx::query("INSERT INTO room_memberships(room_id,actor_id) VALUES($1,$2)")
++        .bind(ROOM)
++        .bind(OWNER)
++        .execute(&pool)
++        .await
++        .unwrap();
++    sqlx::query(
++        "INSERT INTO missions(id,corp_id,room_id,requested_by,title,status,budget_tokens,
++           original_budget_tokens,budget_cost_microusd,original_budget_cost_microusd)
++         VALUES($1,$2,$3,$4,'Concurrent budget','running',100,100,1000000,1000000)",
++    )
++    .bind(MISSION)
++    .bind(CORP)
++    .bind(ROOM)
++    .bind(OWNER)
++    .execute(&pool)
++    .await
++    .unwrap();
++    let store = PgStore { pool };
++    for i in 0..2 {
++        add_run(&store, i, CORP, MISSION).await;
++    }
++    store
++}
++
++pub(super) fn run_id(index: u128) -> Uuid {
++    Uuid::from_u128(5610 + index * 4)
++}
++
++pub(super) async fn add_run(store: &PgStore, index: u128, corp: Uuid, mission: Uuid) {
++    let run = run_id(index);
++    let agent = Uuid::from_u128(run.as_u128() + 1);
++    let actor = Uuid::from_u128(run.as_u128() + 2);
++    let task = Uuid::from_u128(run.as_u128() + 3);
++    sqlx::query(
++        "INSERT INTO runner_nodes(id,corp_id,hostname,os,connection_epoch,status)
++        VALUES($1,$2,'fixture','test',$3,'connected')",
++    )
++    .bind(format!("issue56-runner-{index}"))
++    .bind(corp)
++    .bind(Uuid::new_v4())
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    sqlx::query(
++        "INSERT INTO actors(id,corp_id,name,kind,role) VALUES($1,$2,'Worker','agent','worker')",
++    )
++    .bind(actor)
++    .bind(corp)
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    sqlx::query(
++        "INSERT INTO agents(id,corp_id,actor_id,name,role,adapter,status,accent,current_run_id)
++         VALUES($1,$2,$3,'Worker','worker','fake-process','working','#123456',$4)",
++    )
++    .bind(agent)
++    .bind(corp)
++    .bind(actor)
++    .bind(run)
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    let contract = json!({
++        "objective":"Budget boundary", "expected_output":"result.md",
++        "acceptance_tests":[], "allowed_tools":["filesystem"],
++        "prohibited_actions":[], "references":[], "write_scope":["result.md"],
++        "budget_tokens":10000, "budget_cost_microusd":1000000,
++        "deadline_at":null, "escalation":"ask owner"
++    });
++    sqlx::query(
++        "INSERT INTO tasks(id,corp_id,mission_id,title,objective,status,assigned_agent_id,
++           required_adapter,plan_key,contract,verification_policy,attempt_count,max_attempts)
++         VALUES($1,$2,$3,'Worker','Budget boundary','running',$4,'fake-process',$5,$6,
++           '{\"checks\":[],\"manual_gate\":null}',1,2)",
++    )
++    .bind(task)
++    .bind(corp)
++    .bind(mission)
++    .bind(agent)
++    .bind(format!("worker-{index}"))
++    .bind(contract)
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    sqlx::query(
++        "INSERT INTO runs(id,corp_id,task_id,agent_id,runner_id,assignment_token,status,
++           workspace_run_id,budget_tokens_limit,budget_cost_microusd_limit)
++         VALUES($1,$2,$3,$4,$5,$1,'running',$1,10000,1000000)",
++    )
++    .bind(run)
++    .bind(corp)
++    .bind(task)
++    .bind(agent)
++    .bind(format!("issue56-runner-{index}"))
++    .execute(&store.pool)
++    .await
++    .unwrap();
++}
++
++async fn queue_control(store: &PgStore, index: u128) -> (ControlLease, PendingRunnerCommand) {
++    let agent = Uuid::from_u128(run_id(index).as_u128() + 1);
++    let acquired = store.acquire_lease(CORP, agent, OWNER).await.unwrap();
++    assert!(acquired.acquired);
++    let message = store
++        .queue_message(
++            CORP,
++            agent,
++            OWNER,
++            Some(acquired.lease.token),
++            "Continue",
++            Uuid::new_v4(),
++        )
++        .await
++        .unwrap();
++    assert!(message.command_queued);
++    let command = store
++        .pending_runner_commands(&format!("issue56-runner-{index}"))
++        .await
++        .unwrap()
++        .into_iter()
++        .find(|command| command.payload["message_id"] == json!(message.message.id))
++        .unwrap();
++    (acquired.lease, command)
++}
++
++async fn wait_for_control_blocker(pool: &PgPool, blocker: i32) {
++    tokio::time::timeout(std::time::Duration::from_secs(5), async {
++        loop {
++            let waiting: bool = sqlx::query_scalar(
++                "SELECT EXISTS(SELECT 1 FROM pg_stat_activity
++                 WHERE datname=current_database() AND $1=ANY(pg_blocking_pids(pid)))",
++            )
++            .bind(blocker)
++            .fetch_one(pool)
++            .await
++            .unwrap();
++            if waiting {
++                break;
++            }
++            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
++        }
++    })
++    .await
++    .expect("control operation must reach the real PostgreSQL lock barrier");
++}
++
++include!("pr358_retrospective_dispatch_adapter.rs");
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned retrospective PostgreSQL"]
++async fn issue56_control_dispatch_revalidates_lease_after_run_wait_renew(pool: PgPool) {
++    let store = fixture(pool).await;
++    let recipient = Uuid::new_v4();
++    sqlx::query(
++        "INSERT INTO actors(id,corp_id,name,kind,role) VALUES($1,$2,'Recipient','human','member')",
++    )
++    .bind(recipient)
++    .bind(CORP)
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    for (offset, mutation) in ["renew"]
++    .into_iter()
++    .enumerate()
++    {
++        let index = 10 + offset as u128;
++        add_run(&store, index, CORP, MISSION).await;
++        let (lease, command) = queue_control(&store, index).await;
++        let mut barrier = store.pool.begin().await.unwrap();
++        let blocker: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
++            .fetch_one(&mut *barrier)
++            .await
++            .unwrap();
++        sqlx::query("SELECT id FROM runs WHERE id=$1 FOR UPDATE")
++            .bind(command.run_id)
++            .execute(&mut *barrier)
++            .await
++            .unwrap();
++        let dispatcher = store.clone();
++        let dispatch = tokio::spawn(async move {
++            dispatcher
++                .retrospective_progress_dispatch(&command, |_| {
++                    panic!("stale control after {mutation}")
++                })
++                .await
++        });
++        wait_for_control_blocker(&store.pool, blocker).await;
++        tokio::time::timeout(std::time::Duration::from_secs(5), async {
++            match mutation {
++                "renew" => {
++                    let renewed = store.acquire_lease(CORP, lease.agent_id, OWNER).await.unwrap();
++                    assert!(renewed.acquired);
++                    assert!(renewed.lease.lease_version > lease.lease_version);
++                    assert_ne!(renewed.lease.token, lease.token);
++                }
++                "release" | "release_reacquire" => {
++                    let released = store.release_lease(CORP, lease.agent_id, OWNER, lease.token).await.unwrap();
++                    assert!(released.lease.is_none());
++                    if mutation == "release_reacquire" {
++                        let reacquired = store.acquire_lease(CORP, lease.agent_id, OWNER).await.unwrap();
++                        assert!(reacquired.acquired);
++                        assert!(reacquired.lease.lease_version > lease.lease_version, "release must preserve the version fence");
++                    }
++                }
++                "transfer" => {
++                    let transferred = store.transfer_lease(CORP, lease.agent_id, OWNER, lease.token, recipient).await.unwrap();
++                    assert_eq!(transferred.lease.unwrap().actor_id, recipient);
++                }
++                "expire" => {
++                    sqlx::query("UPDATE control_leases SET expires_at=clock_timestamp()-interval '1 second' WHERE agent_id=$1")
++                        .bind(lease.agent_id).execute(&store.pool).await.unwrap();
++                }
++                _ => unreachable!(),
++            }
++        }).await.expect("lease mutation must not wait for the blocked run");
++        barrier.commit().await.unwrap();
++        assert_eq!(
++            dispatch.await.unwrap().unwrap(),
++            RunnerCommandDispatchOutcome::Obsolete,
++            "{mutation}"
++        );
++    }
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned retrospective PostgreSQL"]
++async fn issue56_control_dispatch_revalidates_lease_after_run_wait_release_reacquire(pool: PgPool) {
++    let store = fixture(pool).await;
++    let recipient = Uuid::new_v4();
++    sqlx::query(
++        "INSERT INTO actors(id,corp_id,name,kind,role) VALUES($1,$2,'Recipient','human','member')",
++    )
++    .bind(recipient)
++    .bind(CORP)
++    .execute(&store.pool)
++    .await
++    .unwrap();
++    for (offset, mutation) in ["release_reacquire"]
++    .into_iter()
++    .enumerate()
++    {
++        let index = 10 + offset as u128;
++        add_run(&store, index, CORP, MISSION).await;
++        let (lease, command) = queue_control(&store, index).await;
++        let mut barrier = store.pool.begin().await.unwrap();
++        let blocker: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
++            .fetch_one(&mut *barrier)
++            .await
++            .unwrap();
++        sqlx::query("SELECT id FROM runs WHERE id=$1 FOR UPDATE")
++            .bind(command.run_id)
++            .execute(&mut *barrier)
++            .await
++            .unwrap();
++        let dispatcher = store.clone();
++        let dispatch = tokio::spawn(async move {
++            dispatcher
++                .retrospective_progress_dispatch(&command, |_| {
++                    panic!("stale control after {mutation}")
++                })
++                .await
++        });
++        wait_for_control_blocker(&store.pool, blocker).await;
++        tokio::time::timeout(std::time::Duration::from_secs(5), async {
++            match mutation {
++                "renew" => {
++                    let renewed = store.acquire_lease(CORP, lease.agent_id, OWNER).await.unwrap();
++                    assert!(renewed.acquired);
++                    assert!(renewed.lease.lease_version > lease.lease_version);
++                    assert_ne!(renewed.lease.token, lease.token);
++                }
++                "release" | "release_reacquire" => {
++                    let released = store.release_lease(CORP, lease.agent_id, OWNER, lease.token).await.unwrap();
++                    assert!(released.lease.is_none());
++                    if mutation == "release_reacquire" {
++                        let reacquired = store.acquire_lease(CORP, lease.agent_id, OWNER).await.unwrap();
++                        assert!(reacquired.acquired);
++                        assert!(reacquired.lease.lease_version > lease.lease_version, "release must preserve the version fence");
++                    }
++                }
++                "transfer" => {
++                    let transferred = store.transfer_lease(CORP, lease.agent_id, OWNER, lease.token, recipient).await.unwrap();
++                    assert_eq!(transferred.lease.unwrap().actor_id, recipient);
++                }
++                "expire" => {
++                    sqlx::query("UPDATE control_leases SET expires_at=clock_timestamp()-interval '1 second' WHERE agent_id=$1")
++                        .bind(lease.agent_id).execute(&store.pool).await.unwrap();
++                }
++                _ => unreachable!(),
++            }
++        }).await.expect("lease mutation must not wait for the blocked run");
++        barrier.commit().await.unwrap();
++        assert_eq!(
++            dispatch.await.unwrap().unwrap(),
++            RunnerCommandDispatchOutcome::Obsolete,
++            "{mutation}"
++        );
++    }
++}
++

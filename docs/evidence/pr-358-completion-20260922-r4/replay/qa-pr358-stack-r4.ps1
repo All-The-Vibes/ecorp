@@ -18,10 +18,10 @@ $ErrorActionPreference = 'Stop'
 $product = (Resolve-Path -LiteralPath $Repository).Path
 $qa = [IO.Path]::GetFullPath($QaRoot).TrimEnd('\')
 if (![IO.Path]::IsPathFullyQualified($QaRoot) -or
-    (Split-Path -Leaf $qa) -notmatch '^pr265-run-activity-[a-zA-Z0-9-]+$' -or
+    (Split-Path -Leaf $qa) -notmatch '^pr265-run-activity-pr358-[0-9]{8}-r[0-9]+$' -or
     (Split-Path -Leaf (Split-Path -Parent $qa)) -ne 'qa' -or
     $qa.StartsWith($product, [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Use a dedicated absolute qa/pr265-run-activity-* directory outside the product.'
+    throw 'Use a dedicated absolute qa/pr265-run-activity-pr358-YYYYMMDD-rN directory outside the product.'
 }
 $pg = (Resolve-Path -LiteralPath $PostgresBin).Path
 Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force
