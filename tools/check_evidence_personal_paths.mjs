@@ -1,11 +1,14 @@
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs'
+import { lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path, { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
+// Run trusted launcher source already read by this process, with isolated
+// stdlib-only Python. The native adapter admits a retained/immutable image.
+const launcher = readFileSync(new URL('./launch_verified_evidence.py', import.meta.url), 'utf8')
 let binary
 
 function executableDigest(file) {
@@ -22,12 +25,19 @@ function nativeScan(request) {
   // Dependencies keep their normal Cargo cache; the scanner executable does not.
   if (!binary) {
     const directory = realpathSync(mkdtempSync(join(tmpdir(), 'ecorp-evidence-executable-')))
-    const executable = join(directory, `crony-evidence-paths${process.platform === 'win32' ? '.exe' : ''}`)
+    const extension = process.platform === 'win32' ? '.exe' : ''
+    const linked = join(directory, `compiler-output${extension}`)
+    const executable = join(directory, `crony-evidence-paths${extension}`)
     const build = spawnSync('cargo', ['rustc', '--locked', '--quiet', '-p', 'crony-runner', '--bin', 'crony-evidence-paths',
-      '--', `--emit=link=${executable}`],
+      '--', `--emit=link=${linked}`],
       { cwd: repository, encoding: 'utf8', windowsHide: true, timeout: 600_000, maxBuffer: 4 * 1024 * 1024 })
     if (build.status !== 0) throw new Error('Unable to build the current native evidence scanner')
-    binary = { executable, digest: executableDigest(executable) }
+    const digest = executableDigest(linked)
+    // Materialize the completed linker bytes in a fresh execution file. Native
+    // Windows cold-build coverage found zero-filled code in the directly mapped
+    // linker output; no warm launch or retry is needed with this separate file.
+    writeFileSync(executable, readFileSync(linked), { flag: 'wx', mode: 0o500 })
+    binary = { executable, digest }
     process.once('exit', () => {
       // This private directory contains only outputs of this process's build.
       try { rmSync(directory, { recursive: true }) } catch { /* preserve on cleanup failure */ }
@@ -36,9 +46,11 @@ function nativeScan(request) {
   if (executableDigest(binary.executable) !== binary.digest) {
     throw new Error('Native evidence scanner integrity changed after compilation')
   }
-  const result = spawnSync(binary.executable, [], { input: JSON.stringify(request), encoding: 'utf8',
+  const python = process.platform === 'win32' ? 'python' : 'python3'
+  const result = spawnSync(python, ['-I', '-S', '-c', launcher, binary.executable, binary.digest], {
+    input: JSON.stringify(request), encoding: 'utf8',
     windowsHide: true, timeout: 120_000, maxBuffer: 4 * 1024 * 1024 })
-  if (result.status !== 0) throw new Error(result.stderr.trim() || 'Native evidence scan did not complete')
+  if (result.status !== 0) throw new Error(result.stderr?.trim() || 'Native evidence scan did not complete; a supported Python runtime is required')
   const output = JSON.parse(result.stdout)
   if (!Array.isArray(output.files) || !Array.isArray(output.directories)
     || [...output.files, ...output.directories].some(value => typeof value !== 'string')) {

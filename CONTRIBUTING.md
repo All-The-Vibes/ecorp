@@ -317,6 +317,10 @@ The Repository checks workflow runs the same suites on Linux and Windows and ret
 results on success or failure. Successful jobs establish hosted regression evidence; record
 local runs separately when hosted execution is unavailable.
 
+The native evidence scanner and its regression tests additionally require CPython
+3.12 or newer on Windows or Linux. See the [scanner setup and trust boundary](docs/EVIDENCE_SCANNER.md)
+for executable admission, platform limits and reproduction commands.
+
 `pnpm check:docs` compares the marked validation-command blocks in contributor documentation
 with `package.json` and the current Copilot compatibility paragraphs with their Cargo/adapter
 pins. It reads those sources without executing Markdown. Update the relevant current contract

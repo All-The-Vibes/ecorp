@@ -440,7 +440,7 @@ fn visit(
             );
             ensure_named(directory, name, &before)?;
             if has_personal_path(&String::from_utf8_lossy(&bytes)) {
-                let location = location.to_string_lossy().replace('\\', "/");
+                let location = utf8_path(&location)?.replace('\\', "/");
                 budget.output(&location)?;
                 findings.push(location);
             }
@@ -450,11 +450,17 @@ fn visit(
     Ok(())
 }
 
-fn packet_name(name: &str) -> bool {
-    matches!(
-        name,
-        "pr226-integration-20260921" | "pr226-local-validation"
-    ) || name.starts_with("pr-226-completion-")
+fn packet_name(name: &OsStr) -> bool {
+    // The namespace prefix is ASCII even when the suffix cannot be UTF-8.
+    let name = name.as_encoded_bytes();
+    name == b"pr226-integration-20260921"
+        || name == b"pr226-local-validation"
+        || name.starts_with(b"pr-226-completion-")
+}
+
+fn utf8_path(path: &Path) -> Result<&str> {
+    path.to_str()
+        .ok_or_else(|| anyhow::anyhow!("Evidence result paths must be valid UTF-8"))
 }
 
 #[derive(Deserialize)]
@@ -495,17 +501,18 @@ fn scan_using(
                 "Evidence entry count exceeds limit"
             );
             let name = &entry.name;
-            if !name.to_str().is_some_and(packet_name) {
+            if !packet_name(name) {
                 continue;
             }
+            let path = parent.join(name);
+            let serialized = utf8_path(&path)?;
             hook(Stage::BeforeOpen, &parent.join(name), None);
             let file = entry.open(root.dir())?;
             let metadata = file.metadata()?;
             ensure!(metadata.is_dir(), "{REGULAR}");
             let directory = Dir::from_std_file(file.into_std());
-            let path = parent.join(name);
-            budget.output(&path.to_string_lossy())?;
-            roots.push(path);
+            budget.output(serialized)?;
+            roots.push(serialized.to_owned());
             if !request.inventory_only {
                 visit(
                     &directory,
@@ -526,6 +533,7 @@ fn scan_using(
             "At least one evidence root is required"
         );
         for path in request.directories {
+            let serialized = utf8_path(&path)?;
             let root = Root::open(&path)?;
             let name = root
                 .path
@@ -541,8 +549,8 @@ fn scan_using(
                 )?;
             }
             root.unchanged()?;
-            budget.output(&path.to_string_lossy())?;
-            roots.push(path);
+            budget.output(serialized)?;
+            roots.push(serialized.to_owned());
         }
     }
     roots.sort();
@@ -1120,6 +1128,79 @@ mod tests {
         assert!(scan(request()).is_err());
         fs::write(fixture.path("pr-226-completion-invalid"), "not a directory").unwrap();
         assert!(scan(request()).is_err());
+    }
+
+    #[cfg(any(unix, windows))]
+    fn nonunicode_name(prefix: &str) -> OsString {
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStringExt;
+            let mut bytes = prefix.as_bytes().to_vec();
+            bytes.push(0xff);
+            OsString::from_vec(bytes)
+        }
+        #[cfg(windows)]
+        {
+            use std::os::windows::ffi::OsStringExt;
+            let mut units: Vec<u16> = prefix.encode_utf16().collect();
+            units.push(0xd800);
+            OsString::from_wide(&units)
+        }
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn discovery_rejects_nonunicode_completion_packet_instead_of_skipping_it() {
+        let fixture = Fixture::new();
+        fs::create_dir(fixture.path("pr226-local-validation")).unwrap();
+        let name = nonunicode_name("pr-226-completion-");
+        assert!(name.to_str().is_none());
+        assert!(packet_name(&name));
+        let packet = fixture.0.join(&name);
+        fs::create_dir(&packet).unwrap();
+        let evidence = packet.join("receipt.txt");
+        fs::write(&evidence, r"\Users\nonunicode-packet-sentinel").unwrap();
+        for inventory_only in [true, false] {
+            let error = scan(Request {
+                directories: vec![],
+                discover: Some(fixture.0.clone()),
+                inventory_only,
+            })
+            .unwrap_err();
+            assert_eq!(
+                error.to_string(),
+                "Evidence result paths must be valid UTF-8"
+            );
+        }
+        assert_eq!(
+            fs::read_to_string(evidence).unwrap(),
+            r"\Users\nonunicode-packet-sentinel"
+        );
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn nonunicode_result_paths_return_errors_without_lossy_names_or_json_panics() {
+        let fixture = Fixture::new();
+        let packet = fixture.0.join(nonunicode_name("packet-"));
+        fs::create_dir(&packet).unwrap();
+        for inventory_only in [true, false] {
+            assert!(
+                scan(Request {
+                    directories: vec![packet.clone()],
+                    discover: None,
+                    inventory_only,
+                })
+                .is_err()
+            );
+        }
+        let evidence = fixture.0.join(nonunicode_name("evidence-"));
+        fs::write(&evidence, r"\Users\nonunicode-file-sentinel").unwrap();
+        assert!(scan_with_hook(&fixture.0, &mut |_, _, _| {}).is_err());
+        assert_eq!(
+            fs::read_to_string(evidence).unwrap(),
+            r"\Users\nonunicode-file-sentinel"
+        );
     }
 
     #[cfg(windows)]

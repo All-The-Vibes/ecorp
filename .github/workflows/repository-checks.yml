@@ -39,6 +39,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           toolchain: 1.98.1
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
       - name: Build native evidence scanner dependencies
         run: cargo build --locked -p crony-runner --bin crony-evidence-paths
       - name: Prepare test reports

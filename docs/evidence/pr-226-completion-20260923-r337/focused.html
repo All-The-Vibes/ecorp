@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>PR 226 focused evidence</title><style>body{font:16px/1.5 system-ui;margin:32px;color:#142033}pre{font:13px/1.45 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;padding:16px;background:#f4f6f8}</style><h1>PR #226: actual focused results</h1><p>Nine contributor gates, including the native launch and poisoned-build regressions, passed. The separately retained Windows launch run has two passing Node tests and ten actual native launch checks. The actual compiled personal-path scanner passed with zero findings. No local Linux execution or new application/Factory acceptance is claimed.</p><p>Tested tree: d26b50c063af3f6394a1c9b83631c91053f878d9. Retrospective results are labeled; this is a saved-result report.</p><h2>pr226-native-launch-r305.log</h2><pre>{&quot;status&quot;:&quot;passed&quot;,&quot;platform&quot;:&quot;win32&quot;,&quot;checks&quot;:[&quot;trusted image executes with inherited request/output pipes&quot;,&quot;digest mismatch rejects executable before its first instruction&quot;,&quot;multiply linked executable rejected&quot;,&quot;writer after final digest denied by retained read/execute handle&quot;,&quot;replacement after final digest denied&quot;,&quot;pre-existing data writer rejects launch&quot;,&quot;pre-existing writable mapping rejects launch&quot;,&quot;wrong mapped image killed while suspended without running poison&quot;,&quot;real ancestor reparse retarget before CreateProcess rejects wrong image&quot;,&quot;retarget after mapped-image verification executes the already verified image&quot;]}
+✔ native evidence launch admits only the verified executable across filesystem races (3457.6508ms)
+✔ native wrapper rebuilds a poisoned Cargo artifact and rejects later private-executable tampering (4671.5071ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4912.8795
+</pre><h2>pr226-native-scan-r335.log</h2><pre>{
+  &quot;status&quot;: &quot;passed&quot;,
+  &quot;files&quot;: []
+}
+</pre>

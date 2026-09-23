@@ -13,6 +13,7 @@ test('native wrapper rebuilds a poisoned Cargo artifact and rejects later privat
   mkdirSync(join(root, 'crates/crony-runner/src/bin'), { recursive: true })
   mkdirSync(join(root, 'temp'))
   copyFileSync(new URL('./check_evidence_personal_paths.mjs', import.meta.url), join(root, 'tools/check_evidence_personal_paths.mjs'))
+  copyFileSync(new URL('./launch_verified_evidence.py', import.meta.url), join(root, 'tools/launch_verified_evidence.py'))
   copyFileSync(new URL('../rust-toolchain.toml', import.meta.url), join(root, 'rust-toolchain.toml'))
   writeFileSync(join(root, 'package.json'), '{"type":"module"}\n')
   writeFileSync(join(root, 'Cargo.toml'), '[workspace]\nmembers = ["crates/crony-runner"]\nresolver = "2"\n')
@@ -26,6 +27,8 @@ test('native wrapper rebuilds a poisoned Cargo artifact and rejects later privat
   const script = `
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import childProcess from 'node:child_process'
+import { syncBuiltinESMExports } from 'node:module'
 import { createHash } from 'node:crypto'
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, renameSync } from 'node:fs'
 import { join } from 'node:path'
@@ -62,10 +65,32 @@ assert.deepEqual(findPersonalPathFiles([root]), ['rebuilt-from-current-source'])
 const directories = readdirSync(join(root, 'temp')).filter(name => name.startsWith('ecorp-evidence-executable-'))
 assert.equal(directories.length, 1)
 const compiled = join(root, 'temp', directories[0], 'crony-evidence-paths' + extension)
+const originalSpawn = childProcess.spawnSync
+let changedAtLaunch = false
+childProcess.spawnSync = (program, args, options) => {
+  if (args?.[2] === '-c' && args[4] === compiled) {
+    changedAtLaunch = true
+    renameSync(compiled, join(root, 'retained-before-launch' + extension))
+    copyFileSync(poison, compiled)
+    childProcess.spawnSync = originalSpawn
+    syncBuiltinESMExports()
+  }
+  return originalSpawn(program, args, options)
+}
+syncBuiltinESMExports()
+try {
+  assert.throws(() => findPersonalPathFiles([root]), /integrity changed after compilation/)
+  assert.equal(changedAtLaunch, true, 'replace the executable after the final Node digest and before native launch')
+} finally {
+  childProcess.spawnSync = originalSpawn
+  syncBuiltinESMExports()
+}
+renameSync(compiled, join(root, 'retained-launch-poison' + extension))
+renameSync(join(root, 'retained-before-launch' + extension), compiled)
 renameSync(compiled, join(root, 'retained-private-original' + extension))
 copyFileSync(poison, compiled)
 assert.throws(() => findPersonalPathFiles([root]), /integrity changed after compilation/)
-console.log('actual cached-artifact poison ignored; private-executable tamper rejected')
+console.log('actual cached-artifact poison ignored; private-executable tamper rejected; launch-boundary replacement rejected')
 `
   writeFileSync(join(root, 'exercise.mjs'), script)
   const result = spawnSync(process.execPath, ['exercise.mjs'], {
