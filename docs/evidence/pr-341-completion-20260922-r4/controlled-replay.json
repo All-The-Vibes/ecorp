@@ -1,0 +1,36 @@
+{
+  "scope": "Retrospective replay of the preserved previous workflow with newly added regressions, then the corrected workflow. Not an original development chronology.",
+  "started_at_utc": "2026-09-22T15:48:43.852724+00:00",
+  "runs": [
+    {
+      "label": "native-before-r4",
+      "arguments": [
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--test",
+        "--test-name-pattern=sensitive filename|partial timeout",
+        "tools/secret_scan_native.test.mjs"
+      ],
+      "workflow_sha256": "00a52de5ce91a073c3292b07b59b96f695ac5ff6e68b0f0dbcfdf271a0d74cf1",
+      "exit_code": 1,
+      "log": "<private-evidence>\\pr341-native-before-r4.log",
+      "log_sha256": "d9f817e3ca7e9d2e970186658b0b9fa5fbf20643934979be14b362d2fa2638e6"
+    },
+    {
+      "label": "all-after-r4",
+      "arguments": [
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--test",
+        "tools/secret_scan.test.mjs",
+        "tools/secret_scan_native.test.mjs"
+      ],
+      "workflow_sha256": "a5152a5dc6ff42373cb0b75edb8b8d4be8d0ea9b0e3c76975410d7cb8a3b3b55",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr341-all-after-r4.log",
+      "log_sha256": "d8ae56c91f3a8c66da4293f07a0daa7df0c96c5f885d00b1c879d89a3aa5c7ca"
+    }
+  ],
+  "tools/secret_scan.test.mjs_sha256": "5939143167bdb971eb13603c264f73249ce1550faada1a7aebe829a076bab895",
+  "tools/secret_scan_native.test.mjs_sha256": "d922dd89241fcc8200f33f196a7aa9b7dfc2fa273ffa7f251e2d691b37d2e64f",
+  "corrected_workflow_restored": true,
+  "finished_at_utc": "2026-09-22T15:49:24.615141+00:00"
+}

@@ -82,34 +82,27 @@ jobs:
         with:
           node-version: 24.19.0
           package-manager-cache: false
+      - name: Verify native scanner diagnostics on disposable Git history
+        shell: bash
+        run: |
+          ECORP_GITLEAKS_BINARY="$(command -v gitleaks)" node --test tools/secret_scan_native.test.mjs
       - name: Scan the selected commit and its complete ancestry
         shell: bash
-        env:
-          ECORP_SCAN_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$ECORP_SCAN_COMMIT"
           test "$(git rev-parse --is-shallow-repository)" = 'false'
-          # The pinned scanner does not propagate every Git fragment error.
-          # Require all selected-history objects before allowing a scan result.
-          git rev-list --objects --missing=error HEAD >/dev/null 2>&1 || {
-            printf '%s\n' '{"schema_version":2,"status":"history_error","scan_complete":false}' >&2
-            exit 1
-          }
           diagnostic_dir="$(mktemp -d "$RUNNER_TEMP/ecorp-secret-scan.XXXXXX")"
           trap 'rm -f -- "$diagnostic_dir/report.json" "$diagnostic_dir/scan.log"; rmdir -- "$diagnostic_dir"' EXIT
           scan_status=0
           # Explicit HEAD scope does not scan other refs.
           # Keep native default rules and do not allow inline suppression comments.
           gitleaks git . --log-opts=HEAD --redact=100 --no-banner --no-color \
-            --exit-code=42 \
             --ignore-gitleaks-allow --gitleaks-ignore-path .gitleaksignore --timeout 300 \
             --report-format=json --report-path="$diagnostic_dir/report.json" \
             >"$diagnostic_dir/scan.log" 2>&1 || scan_status=$?
           # Keep the reporter inline: selected heads can predate its support files.
           # Metadata only; see docs/SECRET_SCAN.md. Never upload the raw report/log.
           node --input-type=module - "$diagnostic_dir/report.json" "$scan_status" <<'ECORP_SCAN_REPORT'
-          import { createHash } from 'node:crypto'
           import { openSync, closeSync, fstatSync, lstatSync, readSync } from 'node:fs'
 
           const maxBytes = 4 * 1024 * 1024
@@ -125,7 +118,6 @@ jobs:
             .replaceAll('::', '\\u003a\\u003a').replaceAll('#', '\\u0023')
           const text = (value, limit) => typeof value === 'string' && value.length > 0
             && value.length <= limit && !/[\p{Cc}\p{Cf}]/u.test(value)
-          const identifier = value => `sha256:${createHash('sha256').update(value, 'utf8').digest('hex')}`
           function metadata(finding) {
             if (!finding || typeof finding !== 'object' || Array.isArray(finding)) fail('invalid_finding')
             const { Commit, File, RuleID, StartLine, EndLine } = finding
@@ -133,14 +125,10 @@ jobs:
             if (!text(File, 1024) || /^[\\/]|^[a-z]:/i.test(File)
               || File.split(/[\\/]/).some(part => !part || part === '.' || part === '..')) fail('invalid_file')
             if (typeof RuleID !== 'string' || !/^[a-z0-9][a-z0-9._-]{0,127}$/i.test(RuleID)) fail('invalid_rule')
-            const pathOnly = StartLine === 0 && EndLine === 0
-            if (!pathOnly && (!Number.isSafeInteger(StartLine) || StartLine < 1
-              || !Number.isSafeInteger(EndLine) || EndLine < StartLine)) fail('invalid_lines')
-            // Native redaction does not sanitize filenames. Hash all free-form
-            // selected text even when Secret/Match have already been redacted.
-            return { commit: Commit, file_id: identifier(File), ...(pathOnly ? { location_kind: 'path' } : {}),
-              start_line: StartLine, end_line: EndLine,
-              rule_id: identifier(RuleID), finding_id: identifier(JSON.stringify([Commit, File, RuleID, StartLine, EndLine])) }
+            if (!Number.isSafeInteger(StartLine) || StartLine < 1
+              || !Number.isSafeInteger(EndLine) || EndLine < StartLine) fail('invalid_lines')
+            return { commit: Commit, file: File, start_line: StartLine, end_line: EndLine,
+              rule_id: RuleID, fingerprint: `${Commit}:${File}:${RuleID}:${StartLine}` }
           }
           try {
             if (!file || extra.length || status === null) fail('invalid_arguments')
@@ -174,50 +162,14 @@ jobs:
             catch { fail('invalid_report_json') }
             if (!Array.isArray(findings) || findings.length > maxFindings) fail('invalid_report_shape')
             const rows = findings.map(metadata)
-            if ((status === 0 && rows.length !== 0) || (status === 42 && rows.length === 0)) fail('inconsistent_scan_result')
-            console.log(serialize({ schema_version: 2, status: status === 0 ? 'clean' : status === 42 ? 'findings' : 'scan_error',
-              scan_complete: status === 0 || status === 42,
+            if (status === 0 && rows.length !== 0) fail('inconsistent_scan_result')
+            console.log(serialize({ schema_version: 1, status: status === 0 ? 'clean' : 'failed',
               scan_exit_code: status, finding_count: rows.length, displayed: Math.min(rows.length, displayLimit),
               omitted: Math.max(0, rows.length - displayLimit), findings: rows.slice(0, displayLimit) }))
             process.exitCode = status
           } catch (error) {
-            console.error(serialize({ schema_version: 2, status: 'diagnostics_failed', scan_exit_code: status,
+            console.error(serialize({ schema_version: 1, status: 'diagnostics_failed', scan_exit_code: status,
               error_code: error instanceof DiagnosticError ? error.message : 'report_processing_failed' }))
             process.exitCode = status || 2
           }
           ECORP_SCAN_REPORT
-
-  native-fixtures:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      # The test extracts this exact workflow's reporter. Use its immutable
-      # revision, independently of the possibly older production scan head.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.workflow_sha }}
-          fetch-depth: 1
-          fetch-tags: false
-          persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24.19.0
-          package-manager-cache: false
-      - name: Install the verified native Gitleaks release for isolated fixtures
-        shell: bash
-        run: |
-          set -euo pipefail
-          archive="$RUNNER_TEMP/gitleaks_8.30.1_linux_x64.tar.gz"
-          tool_dir="$RUNNER_TEMP/gitleaks-8.30.1"
-          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
-            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
-            --output "$archive"
-          printf '%s  %s\n' '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb' "$archive" | sha256sum --check --status
-          mkdir "$tool_dir"
-          tar -xzf "$archive" -C "$tool_dir" gitleaks
-          test "$("$tool_dir/gitleaks" version)" = '8.30.1'
-          printf '%s\n' "$tool_dir" >> "$GITHUB_PATH"
-      - name: Verify native scanner diagnostics on disposable Git history
-        shell: bash
-        run: |
-          ECORP_GITLEAKS_BINARY="$(command -v gitleaks)" node --test tools/secret_scan.test.mjs tools/secret_scan_native.test.mjs

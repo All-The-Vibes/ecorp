@@ -1,0 +1,53 @@
+✖ native scanner redaction does not permit a sensitive filename in diagnostics (3303.043ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✖ native partial timeout keeps collected findings explicitly incomplete (5890.6423ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9373.4677
+
+✖ failing tests:
+
+test at tools\secret_scan_native.test.mjs:140:1
+✖ native scanner redaction does not permit a sensitive filename in diagnostics (3303.043ms)
+  AssertionError [ERR_ASSERTION]: raw matches must not cross the reporter boundary
+
+  true !== false
+
+      at Object.scan (file:///<reviewed-worktree>/tools/secret_scan_native.test.mjs:80:14)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/secret_scan_native.test.mjs:145:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\secret_scan_native.test.mjs:205:1
+✖ native partial timeout keeps collected findings explicitly incomplete (5890.6423ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'failed'
+  - 'scan_error'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/secret_scan_native.test.mjs:236:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'scan_error',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,143 @@
+✔ completed findings emit only bounded attribution metadata, never report content (212.8269ms)
+✔ clean requires native success and a valid empty report (209.541ms)
+✖ native path-only findings retain hashed attribution and zero lines (199.3703ms)
+✔ invalid path/line location [0,1] remains a diagnostic failure (186.7858ms)
+✔ invalid path/line location [1,0] remains a diagnostic failure (177.8698ms)
+✔ invalid path/line location [-1,0] remains a diagnostic failure (169.5852ms)
+✔ invalid path/line location [0,-1] remains a diagnostic failure (164.6764ms)
+✔ invalid path/line location ["0",0] remains a diagnostic failure (179.0915ms)
+✔ invalid path/line location [0,"0"] remains a diagnostic failure (158.7617ms)
+✔ invalid path/line location [0.5,0] remains a diagnostic failure (166.6591ms)
+✔ invalid path/line location [1,0.5] remains a diagnostic failure (165.5204ms)
+✔ workflow-command delimiters stay private while safe identifiers preserve attribution (163.9311ms)
+✔ empty findings do not hide scanner/tool exit 1 (150.0583ms)
+✔ empty findings do not hide scanner/tool exit 2 (165.3418ms)
+✔ empty findings do not hide scanner/tool exit 124 (152.6098ms)
+✔ empty findings do not hide scanner/tool exit 137 (161.5781ms)
+✔ empty findings do not hide scanner/tool exit 255 (170.2095ms)
+✔ native success with findings cannot become a passing result (173.9755ms)
+✔ missing report fails without echoing input or inventing clean results (168.4988ms)
+✔ empty report fails without echoing input or inventing clean results (152.0625ms)
+✔ invalid JSON report fails without echoing input or inventing clean results (166.9148ms)
+✔ invalid UTF8 report fails without echoing input or inventing clean results (147.4007ms)
+✔ null report fails without echoing input or inventing clean results (174.4269ms)
+✔ object report fails without echoing input or inventing clean results (180.255ms)
+✔ too many findings report fails without echoing input or inventing clean results (194.0335ms)
+✔ oversized report fails without echoing input or inventing clean results (185.3073ms)
+✔ non-regular report is rejected before reading (179.9153ms)
+✔ exact report byte limit accepts valid JSON without truncation (185.0005ms)
+✔ exact finding limit is accepted with explicit bounded display (178.6807ms)
+✔ exact metadata limits preserve identifiers for all validated values (170.8198ms)
+✔ malformed finding is rejected (null) (207.2884ms)
+✔ malformed finding is rejected ([]) (163.9277ms)
+✔ malformed finding is rejected (1) (160.719ms)
+✔ malformed finding is rejected ("not a record") (152.1031ms)
+✔ reject invalid Commit metadata ("main") (152.406ms)
+✔ reject invalid Commit metadata (123) (141.3473ms)
+✔ reject invalid Commit metadata ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") (148.9861ms)
+✔ reject invalid Commit metadata ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") (156.7175ms)
+✔ reject invalid Commit metadata ("gggggggggggggggggggggggggggggggggggggggg") (165.7443ms)
+✔ reject invalid File metadata ("/absolute") (174.9869ms)
+✔ reject invalid File metadata ("C:\\absolute") (163.0571ms)
+✔ reject invalid File metadata ("../outside") (154.2668ms)
+✔ reject invalid File metadata ("dir/../outside") (160.8283ms)
+✔ reject invalid File metadata ("dir//file") (153.4372ms)
+✔ reject invalid File metadata ("name\n::error::NON_CREDENTIAL_DIAGNOSTIC_TES) (147.2478ms)
+✔ reject invalid File metadata ("\u001b[31mfile") (171.8987ms)
+✔ reject invalid File metadata ("‮file") (170.8518ms)
+✔ reject invalid File metadata ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx) (177.5606ms)
+✔ reject invalid RuleID metadata ("bad NON_CREDENTIAL_DIAGNOSTIC_TEST_CANARY") (173.6542ms)
+✔ reject invalid RuleID metadata ("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr) (161.5413ms)
+✔ reject invalid StartLine metadata (0) (160.2346ms)
+✔ reject invalid StartLine metadata ("1") (148.5494ms)
+✔ reject invalid StartLine metadata (9007199254740992) (171.9934ms)
+✔ reject invalid EndLine metadata (2) (165.185ms)
+✔ all findings are validated before bounded display (386.0231ms)
+✔ invalid scanner status is rejected (-1) (172.8328ms)
+✔ invalid scanner status is rejected (256) (160.301ms)
+✔ invalid scanner status is rejected (1.5) (149.7809ms)
+✔ invalid scanner status is rejected () (149.7993ms)
+✔ invalid scanner status is rejected (01) (158.9143ms)
+✔ invalid scanner status is rejected (NON_CREDENTIAL_DIAGNOSTIC_TEST_CANARY) (174.5431ms)
+✔ unexpected arguments are not echoed (157.3872ms)
+✔ workflow retains scan scope, redaction, pinning, failure propagation and ephemeral reports (0.2972ms)
+✔ selected metadata never publishes a canary in a path or rule identifier (191.6932ms)
+✔ completed finding and partial scan results retain distinct native outcomes (333.0426ms)
+✔ production scan is independent of selected-head fixture code and fixture job tests its workflow revision (0.5022ms)
+✔ native scanner clean history yields a clean bounded report (3174.3298ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✖ native default pkcs12-file rule preserves path-only attribution without inventing lines (3489.4102ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner attributes a current finding and preserves failure (3345.0184ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner attributes a historical finding and preserves failure (3591.3769ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner configuration failure cannot become a clean result (2289.5837ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scanner redaction does not permit a sensitive filename in diagnostics (3071.023ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native scan works on an older selected head without workflow support files (3286.2328ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ selected-head executable fixtures cannot run in the production scan path (2990.6139ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native Git completeness check rejects unavailable historical objects before scanning (2883.5566ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+✔ native partial timeout keeps collected findings explicitly incomplete (5031.1997ms)
+ℹ Native Gitleaks 8.30.1, disposable Git history, actual inline workflow reporter
+ℹ tests 76
+ℹ suites 0
+ℹ pass 74
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33354.7016
+
+✖ failing tests:
+
+test at tools\secret_scan.test.mjs:65:1
+✖ native path-only findings retain hashed attribution and zero lines (199.3703ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + '{\n' +
+  +   '  "schema_version": 2,\n' +
+  +   '  "status": "diagnostics_failed",\n' +
+  +   '  "scan_exit_code": 42,\n' +
+  +   '  "error_code": "invalid_lines"\n' +
+  +   '}\n'
+  - ''
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/secret_scan.test.mjs:70:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '{\n  "schema_version": 2,\n  "status": "diagnostics_failed",\n  "scan_exit_code": 42,\n  "error_code": "invalid_lines"\n}\n',
+    expected: '',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\secret_scan_native.test.mjs:106:1
+✖ native default pkcs12-file rule preserves path-only attribution without inventing lines (3489.4102ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'diagnostics_failed'
+  - 'findings'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/secret_scan_native.test.mjs:115:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'diagnostics_failed',
+    expected: 'findings',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
