@@ -36,21 +36,13 @@ impl Broker {
             expected_digest.len() == 64 && expected_digest.bytes().all(|b| b.is_ascii_hexdigit()),
             "delegated independent verifier digest is invalid"
         );
-        for value in [&resource_url, &browser_base, &ui_url] {
-            let url =
-                reqwest::Url::parse(value).map_err(|_| anyhow::anyhow!("delegated URL invalid"))?;
-            anyhow::ensure!(
-                url.username().is_empty()
-                    && url.password().is_none()
-                    && url.query().is_none()
-                    && url.fragment().is_none()
-                    && (url.scheme() == "https"
-                        || (mode == ServerMode::Development
-                            && url.scheme() == "http"
-                            && url.host_str() == Some("127.0.0.1"))),
-                "delegated URL requires HTTPS or explicit development loopback"
-            );
-        }
+        validate_broker_urls(
+            mode,
+            &config.redirect_uri,
+            &resource_url,
+            &browser_base,
+            &ui_url,
+        )?;
         let audience = config.downstream_audience.clone();
         let scope = config.downstream_scope.clone();
         Ok(Some(Arc::new(Self {
@@ -67,6 +59,31 @@ impl Broker {
                 .build()?,
         })))
     }
+}
+
+fn validate_broker_urls(
+    mode: ServerMode,
+    redirect_uri: &str,
+    resource_url: &str,
+    browser_base: &str,
+    ui_url: &str,
+) -> anyhow::Result<()> {
+    for value in [redirect_uri, resource_url, browser_base, ui_url] {
+        let url =
+            reqwest::Url::parse(value).map_err(|_| anyhow::anyhow!("delegated URL invalid"))?;
+        anyhow::ensure!(
+            url.username().is_empty()
+                && url.password().is_none()
+                && url.query().is_none()
+                && url.fragment().is_none()
+                && (url.scheme() == "https"
+                    || (mode == ServerMode::Development
+                        && url.scheme() == "http"
+                        && url.host_str() == Some("127.0.0.1"))),
+            "delegated URL requires HTTPS or explicit development loopback"
+        );
+    }
+    Ok(())
 }
 
 pub(super) fn routes() -> Router<AppState> {
@@ -980,6 +997,40 @@ mod authority_tests;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn delegated_urls_require_https_in_production_including_oauth_redirect() {
+        let secure = [
+            "https://server.example.invalid/api/delegated/callback",
+            "https://resource.example.invalid/flag",
+            "https://browser.example.invalid",
+            "https://office.example.invalid",
+        ];
+        let validate =
+            |mode, urls: [&str; 4]| validate_broker_urls(mode, urls[0], urls[1], urls[2], urls[3]);
+        for mode in [ServerMode::Production, ServerMode::Development] {
+            assert!(validate(mode, secure).is_ok());
+        }
+        for field in 0..secure.len() {
+            let mut urls = secure;
+            urls[field] = "http://127.0.0.1:18881/callback";
+            assert!(validate(ServerMode::Production, urls).is_err());
+            assert!(validate(ServerMode::Development, urls).is_ok());
+            for invalid in [
+                "http://remote.example.invalid/callback",
+                "https://user:private-sentinel@example.invalid/callback",
+                "https://example.invalid/callback?private-sentinel",
+                "https://example.invalid/callback#private-sentinel",
+                "invalid private-sentinel",
+            ] {
+                urls[field] = invalid;
+                for mode in [ServerMode::Production, ServerMode::Development] {
+                    let error = validate(mode, urls).unwrap_err().to_string();
+                    assert!(!error.contains("private-sentinel"));
+                }
+            }
+        }
+    }
 
     #[sqlx::test(migrations = "../../db/migrations")]
     #[ignore = "requires explicitly owned SQLx maintenance database"]
