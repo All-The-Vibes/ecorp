@@ -25,6 +25,48 @@ const detailOperation = (endpoint) => endpoint.includes('/reviews?') ? 'reviews'
 const detailPages = (operation, pages) => JSON.stringify(operation === 'check_runs' ?
   pages.map((check_runs) => ({ check_runs })) : pages)
 
+test('all inventory pages and uniqueness are validated before the first detail read', () => {
+  for (const pages of [
+    [[pr(1), { ...pr(2), title: null }]],
+    [[pr(1)], [{ ...pr(2), body: 7 }]],
+    [[pr(1), pr(1)]], [[pr(1)], [pr(1)]],
+  ]) {
+    const calls = []
+    assert.throws(() => snapshot('team/repo', (args) => {
+      calls.push(args.at(-1))
+      return args.at(-1).includes('/pulls?') ? JSON.stringify(pages) :
+        detailPages(detailOperation(args.at(-1)), [[]])
+    }), (error) => error.readFailure?.operation === 'inventory' &&
+      error.readFailure.kind === 'INVALID_RESPONSE')
+    assert.deepEqual(calls, ['repos/team/repo/pulls?state=open&per_page=100'])
+  }
+})
+
+test('source repository requires explicit deletion or a repository name on every row', () => {
+  for (const repo of [undefined, false, 7, '', [], {}, { full_name: null }, { full_name: 7 },
+    { full_name: [] }, { full_name: '' }, { full_name: 'missing-owner' },
+    { full_name: 'owner/repo/extra' }, { full_name: 'https://github.com/team/repo' }]) {
+    let calls = 0
+    const pull = pr(2)
+    pull.head.repo = repo
+    assert.throws(() => snapshot('team/repo', (args) => {
+      calls++
+      return args.at(-1).includes('/pulls?') ? JSON.stringify([[pr(1)], [pull]]) :
+        detailPages(detailOperation(args.at(-1)), [[]])
+    }), /Invalid or out-of-scope PR/)
+    assert.equal(calls, 1, 'malformed source identity must not reach detail reads')
+  }
+  for (const repo of [null, { full_name: 'Fork-Owner/Repo.name' }]) {
+    const pull = pr(1)
+    pull.head.repo = repo
+    const result = snapshot('team/repo', (args) => args.at(-1).includes('/pulls?') ?
+      JSON.stringify([[pull]]) : detailPages(detailOperation(args.at(-1)), [[]]))
+    assert.equal(result.complete, true)
+    assert.equal(result.prs[0].sourceRepo, repo === null ? null : repo.full_name)
+    assert.equal(result.prs[0].readError, undefined)
+  }
+})
+
 test('F03: inventory rejects malformed review text and out-of-scope PR URLs before detail reads', () => {
   const invalid = [
     ...[undefined, null, false, 7, [], {}].map((title) => ({ title })),

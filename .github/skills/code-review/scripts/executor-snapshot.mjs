@@ -5,6 +5,7 @@ import { branchRef } from './git-ref.mjs'
 
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 const fields = (value, names) => Object.fromEntries(names.map((name) => [name, value[name] ?? null]))
+const repositoryName = (value) => typeof value === 'string' && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(value)
 
 function validDetail(row, operation) {
   if (!Number.isSafeInteger(row.id) || row.id < 1) return false
@@ -45,7 +46,7 @@ class ReadFailure extends Error {
 export function snapshot(repo, invoke = (args) => execFileSync('gh', args, {
   encoding: 'utf8', timeout: 60_000, maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'],
 })) {
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) throw new Error('Invalid repository')
+  if (!repositoryName(repo)) throw new Error('Invalid repository')
   const pages = (endpoint, operation, collection) => {
     let raw, result
     try {
@@ -75,19 +76,27 @@ export function snapshot(repo, invoke = (args) => execFileSync('gh', args, {
   }
   const root = `repos/${repo}`
   const pulls = pages(`${root}/pulls?state=open&per_page=100`, 'inventory')
-  const prs = pulls.map((pr) => {
+  // Validate every page and identity before any per-PR detail endpoint is read.
+  for (const pr of pulls) {
     if (!Number.isSafeInteger(pr.number) || pr.number < 1 ||
         typeof pr.title !== 'string' || !(pr.body === null || typeof pr.body === 'string') ||
         typeof pr.html_url !== 'string' ||
         pr.html_url.toLowerCase() !== `https://github.com/${repo.toLowerCase()}/pull/${pr.number}` ||
         !/^[a-f0-9]{40}$/.test(pr.head?.sha) || !/^[a-f0-9]{40}$/.test(pr.base?.sha) ||
         !branchRef(pr.base?.ref) || !branchRef(pr.head?.ref) || typeof pr.draft !== 'boolean' ||
-        pr.base?.repo?.full_name?.toLowerCase() !== repo.toLowerCase() || pr.state !== 'open') {
+        !repositoryName(pr.base?.repo?.full_name) ||
+        pr.base.repo.full_name.toLowerCase() !== repo.toLowerCase() || pr.state !== 'open' ||
+        !(pr.head?.repo === null || repositoryName(pr.head?.repo?.full_name))) {
       throw new ReadFailure('inventory', 'INVALID_RESPONSE', 'Invalid or out-of-scope PR')
     }
+  }
+  if (new Set(pulls.map((pr) => pr.number)).size !== pulls.length) {
+    throw new ReadFailure('inventory', 'INVALID_RESPONSE', 'Duplicate PR')
+  }
+  const prs = pulls.map((pr) => {
     const identity = {
       number: pr.number, base: pr.base.sha, baseRef: pr.base.ref, head: pr.head.sha,
-      sourceRepo: pr.head.repo?.full_name ?? null, branch: pr.head.ref,
+      sourceRepo: pr.head.repo === null ? null : pr.head.repo.full_name, branch: pr.head.ref,
       state: 'open', draft: pr.draft, url: pr.html_url,
     }
     try {
@@ -119,9 +128,6 @@ export function snapshot(repo, invoke = (args) => execFileSync('gh', args, {
         reviewKey: key, gateKey: digest([readError, pr.base.ref]) }
     }
   })
-  if (new Set(prs.map((pr) => pr.number)).size !== prs.length) {
-    throw new ReadFailure('inventory', 'INVALID_RESPONSE', 'Duplicate PR')
-  }
   // Complete open PR inventory; individual PR evidence may be unreadable.
   return { complete: true, prs }
 }
