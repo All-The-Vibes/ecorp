@@ -789,9 +789,13 @@ async fn cancel(
     Json(request): Json<ActorRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     require_owner(&state, &principal, corp, request.actor_id, id).await?;
-    sqlx::query("UPDATE delegated_operations SET status='cancelled',token_ciphertext=NULL,token_nonce=NULL,token_expires_at=NULL,preview=NULL
-        WHERE id=$1 AND status NOT IN ('completed','cancelled','expired','failed') AND NOT released")
-        .bind(id).execute(state.store.pool()).await.map_err(db)?;
+    let changed = sqlx::query("UPDATE delegated_operations SET status='cancelled',token_ciphertext=NULL,token_nonce=NULL,token_expires_at=NULL,preview=NULL
+        WHERE id=$1 AND corp_id=$2 AND actor_id=$3 AND (status='cancelled' OR
+            (status NOT IN ('completed','expired','failed') AND NOT released AND expires_at>clock_timestamp()))")
+        .bind(id).bind(corp).bind(request.actor_id).execute(state.store.pool()).await.map_err(db)?;
+    if changed.rows_affected() != 1 {
+        return Err(deny());
+    }
     let assignment=sqlx::query("SELECT r.id,r.runner_id FROM runs r JOIN delegated_operations o ON o.run_id=r.id
         WHERE o.id=$1 AND o.status='cancelled' AND r.status IN ('starting','running','waiting_for_input')")
         .bind(id).fetch_optional(state.store.pool()).await.map_err(db)?;

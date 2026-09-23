@@ -11,12 +11,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $product = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$qa = [IO.Path]::GetFullPath($QaRoot).TrimEnd('\')
-if (![IO.Path]::IsPathFullyQualified($QaRoot) -or
-    (Split-Path -Leaf $qa) -notmatch '^delegated-keycloak-[a-zA-Z0-9-]+$' -or
-    $qa.StartsWith($product, [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Use a new absolute delegated-keycloak-* QA directory outside the product.'
-}
+. (Join-Path $PSScriptRoot 'delegated_qa_root.ps1')
+$qa = Resolve-DelegatedQaRoot -QaRoot $QaRoot -ProductRoot $product
 Import-Module (Join-Path $PSScriptRoot 'local_stack.psm1') -Force -DisableNameChecking
 $recordPath = Join-Path $qa 'ownership.json'
 if ($Phase -eq 'Status') {
@@ -40,10 +36,7 @@ if ($Phase -eq 'Stop') {
             $remaining.Dispose()
             throw 'A recorded process identity changed; retained without termination.'
         }
-        if ($role -eq 'postgres') {
-            & (Join-Path (Split-Path -Parent $record.executable) 'pg_ctl.exe') -D (Join-Path $qa 'database') -m fast -w stop
-            if ($LASTEXITCODE) { throw 'Owned PostgreSQL stop failed; retained.' }
-        } elseif (!(Stop-LocalOwnedProcess -Record $record -Workspace $qa)) {
+        if (!(Stop-LocalOwnedProcess -Record $record -Workspace $qa)) {
             throw 'Could not confirm exact fixture process termination.'
         }
     }
@@ -75,6 +68,7 @@ foreach ($file in @((Join-Path $pg 'initdb.exe'), (Join-Path $pg 'postgres.exe')
     if (!(Test-Path -LiteralPath $file -PathType Leaf)) { throw 'A required native fixture dependency is absent.' }
 }
 New-Item -ItemType Directory -Path $qa | Out-Null
+$qa = Resolve-DelegatedQaRoot -QaRoot $qa -ProductRoot $product -RequireExists
 $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 & icacls.exe $qa /inheritance:r /grant:r "*${sid}:(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' *> $null
 if ($LASTEXITCODE) { throw 'Cannot protect the private QA root.' }

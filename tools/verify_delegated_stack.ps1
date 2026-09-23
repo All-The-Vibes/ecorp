@@ -2,15 +2,9 @@
 param([Parameter(Mandatory)][string]$QaRoot)
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'local_stack.psm1') -Force -DisableNameChecking
-if (!$IsWindows -or ![IO.Path]::IsPathFullyQualified($QaRoot)) {
-    throw 'Delegated acceptance requires an explicit owned Windows QA root.'
-}
-$qa = (Resolve-Path -LiteralPath $QaRoot).Path.TrimEnd('\')
 $product = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-if ($qa.StartsWith($product, [StringComparison]::OrdinalIgnoreCase) -or
-    (Get-Item -LiteralPath $qa).Attributes -band [IO.FileAttributes]::ReparsePoint) {
-    throw 'Use an independent QA directory without redirected ownership.'
-}
+. (Join-Path $PSScriptRoot 'delegated_qa_root.ps1')
+$qa = Resolve-DelegatedQaRoot -QaRoot $QaRoot -ProductRoot $product -RequireExists
 $state = Read-LocalStackState -Path (Join-Path $qa 'ownership.json') -Workspace $qa
 if (!$state -or $state.schema_version -ne 2 -or $state.test_owned -ne $true -or
     $state.purpose -ne 'delegated-keycloak-acceptance' -or

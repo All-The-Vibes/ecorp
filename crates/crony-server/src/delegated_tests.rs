@@ -723,3 +723,121 @@ async fn delegated_independent_expiry_is_bounded_and_erases_abandoned_pkce(pool:
     }).await.unwrap();
     assert_eq!(f.provider.request_count(), 0);
 }
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn delegated_cancel_only_reports_a_persisted_cancellation(pool: sqlx::PgPool) {
+    let f = Fixture::new(pool.clone()).await;
+    let op = f.operation().await;
+    f.seed_token(&op).await;
+    for _ in 0..2 {
+        let result = cancel(
+            State(f.state.clone()),
+            Extension(f.principal()),
+            Path((f.ids.corp_id, op.id)),
+            Json(ActorRequest {
+                actor_id: f.ids.alice_actor_id,
+            }),
+        )
+        .await
+        .unwrap();
+        assert_eq!(result.0, json!({"cancelled": true}));
+    }
+    let scrubbed: bool = sqlx::query_scalar("SELECT status='cancelled' AND token_ciphertext IS NULL AND token_nonce IS NULL AND token_expires_at IS NULL AND preview IS NULL FROM delegated_operations WHERE id=$1")
+        .bind(op.id).fetch_one(&pool).await.unwrap();
+    assert!(scrubbed);
+    assert_eq!(f.resource_reads.load(Ordering::SeqCst), 0);
+    for (status, released, expired) in [
+        ("authorized", true, false),
+        ("completed", false, false),
+        ("expired", false, false),
+        ("failed", false, false),
+        ("authorized", false, true),
+    ] {
+        let op = f.operation().await;
+        f.seed_token(&op).await;
+        sqlx::query("UPDATE delegated_operations SET status=$2,released=$3,expires_at=CASE WHEN $4 THEN now()-interval '1 second' ELSE expires_at END WHERE id=$1")
+            .bind(op.id).bind(status).bind(released).bind(expired).execute(&pool).await.unwrap();
+        let before: serde_json::Value =
+            sqlx::query_scalar("SELECT to_jsonb(o) FROM delegated_operations o WHERE id=$1")
+                .bind(op.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert!(
+            cancel(
+                State(f.state.clone()),
+                Extension(f.principal()),
+                Path((f.ids.corp_id, op.id)),
+                Json(ActorRequest {
+                    actor_id: f.ids.alice_actor_id,
+                }),
+            )
+            .await
+            .is_err(),
+            "{status}, released={released}, expired={expired}"
+        );
+        let after: serde_json::Value =
+            sqlx::query_scalar("SELECT to_jsonb(o) FROM delegated_operations o WHERE id=$1")
+                .bind(op.id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(after, before, "denied cancellation must not mutate the row");
+    }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn delegated_cancel_rechecks_release_after_waiting_for_the_row(pool: sqlx::PgPool) {
+    let f = Fixture::new(pool.clone()).await;
+    let op = f.operation().await;
+    f.seed_token(&op).await;
+    let mut release_tx = pool.begin().await.unwrap();
+    sqlx::query("UPDATE delegated_operations SET released=true WHERE id=$1")
+        .bind(op.id)
+        .execute(&mut *release_tx)
+        .await
+        .unwrap();
+    let state = f.state.clone();
+    let principal = f.principal();
+    let corp = f.ids.corp_id;
+    let actor = f.ids.alice_actor_id;
+    let id = op.id;
+    let pending = tokio::spawn(async move {
+        cancel(
+            State(state),
+            Extension(principal),
+            Path((corp, id)),
+            Json(ActorRequest { actor_id: actor }),
+        )
+        .await
+    });
+    tokio::time::timeout(StdDuration::from_secs(5), async {
+        loop {
+            let waiting: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND pid<>pg_backend_pid() AND wait_event_type='Lock' AND query LIKE '%delegated_operations%')",
+            )
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+            if waiting {
+                break;
+            }
+            tokio::time::sleep(StdDuration::from_millis(10)).await;
+        }
+    })
+    .await
+    .expect("cancellation must be observed waiting on the release transaction");
+    assert!(!pending.is_finished());
+    release_tx.commit().await.unwrap();
+    assert!(pending.await.unwrap().is_err());
+    let preserved: bool = sqlx::query_scalar(
+        "SELECT released AND status='authorized' AND token_ciphertext IS NOT NULL FROM delegated_operations WHERE id=$1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert!(preserved);
+}

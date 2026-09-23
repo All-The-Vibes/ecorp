@@ -62,10 +62,24 @@ pub fn server_http_url(websocket: &str) -> anyhow::Result<Url> {
     );
     url.set_scheme(scheme)
         .map_err(|()| anyhow::anyhow!("invalid runner server URL scheme"))?;
+    ensure!(
+        secure_server_transport(&url),
+        "runner server URL requires TLS outside a literal loopback address"
+    );
     url.set_path("/");
     url.set_query(None);
     url.set_fragment(None);
     Ok(url)
+}
+
+fn secure_server_transport(url: &Url) -> bool {
+    url.scheme() == "https"
+        || (url.scheme() == "http"
+            && match url.host() {
+                Some(url::Host::Ipv4(address)) => address.is_loopback(),
+                Some(url::Host::Ipv6(address)) => address.is_loopback(),
+                _ => false,
+            })
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -235,7 +249,7 @@ async fn read_receipt(
     );
     let mut endpoint = scope.server_http_url.clone();
     ensure!(
-        matches!(endpoint.scheme(), "http" | "https")
+        secure_server_transport(&endpoint)
             && endpoint.host_str().is_some()
             && endpoint.username().is_empty()
             && endpoint.password().is_none()

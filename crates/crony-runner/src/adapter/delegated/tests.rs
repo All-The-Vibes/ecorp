@@ -218,6 +218,61 @@ async fn pending_then_ready_posts_original_scope_and_emits_receipt_artifact() {
     std::fs::remove_dir_all(workspace).unwrap();
 }
 
+#[test]
+fn plaintext_server_configuration_is_limited_to_literal_loopback() {
+    for input in [
+        "ws://127.0.0.1:8791/ws/runner",
+        "ws://127.42.0.1:8791/ws/runner",
+        "ws://[::1]:8791/ws/runner",
+        "wss://example.invalid/ws/runner",
+    ] {
+        assert!(server_http_url(input).is_ok(), "{input}");
+    }
+    for input in [
+        "ws://example.invalid/ws/runner",
+        "ws://192.0.2.1/ws/runner",
+        "ws://0.0.0.0/ws/runner",
+        "ws://[::]/ws/runner",
+        "ws://localhost/ws/runner",
+        "ws://localhost.example.invalid/ws/runner",
+    ] {
+        assert!(server_http_url(input).is_err(), "{input}");
+    }
+}
+
+#[tokio::test]
+async fn a_direct_plaintext_assignment_is_rejected_before_http_or_started_event() {
+    // The unspecified local address avoids any external service or DNS query.
+    // Keep the listener alive so accidental admission cannot be mistaken for a
+    // successful guard merely because a port is closed.
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = Url::parse(&format!(
+        "http://0.0.0.0:{}/",
+        listener.local_addr().unwrap().port()
+    ))
+    .unwrap();
+    let request = request(origin);
+    let sink = RecordingSink::default();
+    let result = tokio::time::timeout(
+        Duration::from_millis(250),
+        read_receipt(&request, &sink, Duration::from_millis(1)),
+    )
+    .await
+    .expect("transport admission must precede any network wait");
+    assert_eq!(
+        result.unwrap_err().to_string(),
+        "invalid trusted server origin"
+    );
+    assert!(sink.0.lock().unwrap().is_empty());
+    assert!(
+        tokio::time::timeout(Duration::from_millis(30), listener.accept())
+            .await
+            .is_err()
+    );
+    assert!(!request.workspace.join(RECEIPT_FILE).exists());
+    std::fs::remove_dir_all(request.workspace).unwrap();
+}
+
 #[tokio::test]
 async fn missing_misbound_or_widened_context_never_makes_a_request() {
     for mode in 0..6 {
