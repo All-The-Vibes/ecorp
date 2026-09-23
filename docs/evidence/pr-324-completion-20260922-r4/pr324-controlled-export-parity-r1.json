@@ -1,0 +1,31 @@
+{
+  "scope": "Retrospective effectiveness check of actual exporter/checker parity; not original TDD chronology.",
+  "source": "crates/crony-runner/src/deliverable.rs",
+  "original_sha256": "62c199c0fd54e19f9fae69d79979b03f9025877b6f7a666fb4c63e246cabe4b7",
+  "mutated_sha256": "0bdaa2885746cbda5a6dc41f605d5525263ceac95ea192832804c4bc5a848ac3",
+  "started_at_utc": "2026-09-22T16:13:14.454077+00:00",
+  "runs": [
+    {
+      "phase": "before",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-runner",
+        "--lib",
+        "deliverable::tests::native_export_matches_checker_under_inherited_tracing",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 101,
+      "log": "<private-evidence>\\pr324-export-parity-before-r1.log",
+      "sha256": "a78b034a682426f53eb79747be8bf73565097698dbab3e52a7fb1da46a557d77"
+    }
+  ],
+  "status": "running",
+  "restored_exact_source": true,
+  "restored_sha256": "62c199c0fd54e19f9fae69d79979b03f9025877b6f7a666fb4c63e246cabe4b7"
+}

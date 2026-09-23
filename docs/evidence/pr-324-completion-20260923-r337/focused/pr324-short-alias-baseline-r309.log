@@ -1,0 +1,82 @@
+✖ Windows short alias repository uses the same native source identity (4316.3758ms)
+ℹ Executed with a distinct native Windows 8.3 alias
+✖ Windows short alias scratch inside source rejects before creating an index (4143.6096ms)
+ℹ Executed with a distinct native Windows 8.3 alias
+✖ Windows short alias provider artifact is excluded from the candidate (6449.4128ms)
+ℹ Executed with a distinct native Windows 8.3 alias
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15095.6879
+
+✖ failing tests:
+
+test at tools\check_deliverable_diff.test.mjs:152:1
+✖ Windows short alias repository uses the same native source identity (4316.3758ms)
+  Error: Repository must be the worktree root, not a subdirectory
+      at checkError (file:///<reviewed-worktree>/tools/check_deliverable_diff.mjs:43:17)
+      at checkDeliverableDiff (file:///<reviewed-worktree>/tools/check_deliverable_diff.mjs:196:13)
+      at Object.check (file:///<reviewed-worktree>/tools/check_deliverable_diff.test.mjs:85:14)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_deliverable_diff.test.mjs:157:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at tools\check_deliverable_diff.test.mjs:160:1
+✖ Windows short alias scratch inside source rejects before creating an index (4143.6096ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_deliverable_diff.test.mjs:165:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /outside the source worktree/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tools\check_deliverable_diff.test.mjs:170:1
+✖ Windows short alias provider artifact is excluded from the candidate (6449.4128ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    {
+      baseCommit: '157f71b9586160321746295a90b1f312574d0e24',
+  +   candidateTree: '84133ae7f89ed1a03df4752ddb23b7b366748b05',
+  -   candidateTree: '34a1cf9b92dfd40aa57677eec2f108d2a9d7d079',
+      changes: [
+        {
+  +       path: 'provider artifact long filename.md',
+  +       status: 'A'
+  +     },
+  +     {
+          path: 'tracked.txt',
+          status: 'M'
+        }
+      ],
+      diagnostics: '',
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_deliverable_diff.test.mjs:179:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { passed: true, baseCommit: '157f71b9586160321746295a90b1f312574d0e24', candidateTree: '84133ae7f89ed1a03df4752ddb23b7b366748b05', changes: [ [Object], [Object] ], diagnostics: '' },
+    expected: { passed: true, baseCommit: '157f71b9586160321746295a90b1f312574d0e24', candidateTree: '34a1cf9b92dfd40aa57677eec2f108d2a9d7d079', changes: [ [Object] ], diagnostics: '' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

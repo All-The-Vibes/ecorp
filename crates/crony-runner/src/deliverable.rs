@@ -655,6 +655,7 @@ async fn commit_index(
     .await?;
     if !changes.is_empty() {
         let mut command = Command::new("git");
+        remove_git_tracing(&mut command);
         command
             .args(["reset", "--mixed", "HEAD", "--"])
             .args(changes.iter().map(|(_, path)| path))
@@ -859,6 +860,7 @@ async fn git_text_with_env(
     env: &[(&str, &str)],
 ) -> Result<String> {
     let mut command = Command::new("git");
+    remove_git_tracing(&mut command);
     command
         .args(args)
         .current_dir(workspace)
@@ -884,6 +886,7 @@ async fn git_text_with_env(
 
 async fn git_output(workspace: &Path, index: &Path, args: &[OsString]) -> Result<Output> {
     let mut command = Command::new("git");
+    remove_git_tracing(&mut command);
     command
         .args(args)
         .current_dir(workspace)
@@ -901,6 +904,17 @@ async fn git_output(workspace: &Path, index: &Path, args: &[OsString]) -> Result
         return Err(git_error(&output));
     }
     Ok(output)
+}
+
+fn remove_git_tracing(command: &mut Command) {
+    // Trace destinations can be source paths. Git must not create new inputs
+    // while selecting/exporting the tree that the verifier has checked.
+    for (name, _) in std::env::vars_os() {
+        let normalized = name.to_string_lossy().to_ascii_uppercase();
+        if normalized.starts_with("GIT_TRACE") || normalized == "GIT_CURL_VERBOSE" {
+            command.env_remove(name);
+        }
+    }
 }
 
 fn git_error(output: &Output) -> anyhow::Error {
@@ -963,6 +977,166 @@ mod tests {
             manual_gate: None,
         };
         (root, lease, report)
+    }
+
+    #[tokio::test]
+    async fn native_export_matches_checker_under_inherited_tracing() {
+        const CHILD_SOURCE: &str = "ECORP_EXPORT_PARITY_SOURCE";
+        const CHILD_BASE: &str = "ECORP_EXPORT_PARITY_BASE";
+        const CHILD_EVIDENCE: &str = "ECORP_EXPORT_PARITY_EVIDENCE";
+        if let Some(source) = std::env::var_os(CHILD_SOURCE) {
+            let root = PathBuf::from(source);
+            let evidence = PathBuf::from(std::env::var_os(CHILD_EVIDENCE).expect("owned evidence"));
+            assert!(
+                root.file_name()
+                    .expect("fixture name")
+                    .to_string_lossy()
+                    .starts_with("ecorp-deliverable-test-")
+            );
+            let lease = WorkspaceLease {
+                path: root,
+                branch: "main".to_owned(),
+                base_ref: "main".to_owned(),
+                base_commit: std::env::var(CHILD_BASE).expect("fixture base"),
+            };
+            let report = VerificationReport {
+                passed: true,
+                summary: "checker/exporter parity fixture".to_owned(),
+                checks: Vec::new(),
+                manual_gate: None,
+            };
+            let exported = export(
+                Uuid::new_v4(),
+                &DeliverableSpec {
+                    form: DeliverableForm::CommitBranch,
+                    commit_after_verification: true,
+                    paths: Vec::new(),
+                },
+                &lease,
+                &report,
+                &[],
+                &["**".to_owned()],
+                None,
+            )
+            .await
+            .expect("actual native exporter");
+            fs::write(evidence.join("export.json"), exported.bytes).expect("retain native export");
+            return;
+        }
+
+        let checker =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tools/check_deliverable_diff.mjs");
+        for name in [
+            "GIT_TRACE",
+            "GIT_TRACE_PERFORMANCE",
+            "GIT_TRACE_SETUP",
+            "GIT_TRACE2",
+            "GIT_TRACE2_EVENT",
+            "GIT_TRACE2_PERF",
+            "git_trace",
+            "GiT_tRaCe2_EvEnT",
+        ] {
+            let (root, lease, _) = fixture();
+            let evidence = root.with_extension("evidence");
+            let scratch = evidence.join("checker-scratch");
+            fs::create_dir_all(&scratch).expect("create owned evidence");
+            fs::write(root.join("tracked.txt"), b"intentional change\n")
+                .expect("modify fixture source");
+            let trace = root.join("inherited-trace.txt");
+            // Git expands Windows short-name aliases when reporting its root.
+            // Use that same spelling for the checker's strict root validation.
+            let checker_root = git(&root, &["rev-parse", "--show-toplevel"]);
+            let mut check = tokio::process::Command::new("node");
+            check
+                .arg(&checker)
+                .arg("--repo")
+                .arg(&checker_root)
+                .arg("--base")
+                .arg(&lease.base_commit)
+                .arg("--scratch-root")
+                .arg(&scratch)
+                .env(name, &trace)
+                .env("GIT_CURL_VERBOSE", "1")
+                .kill_on_drop(true);
+            let checked = tokio::time::timeout(Duration::from_secs(60), check.output())
+                .await
+                .expect("checker watchdog")
+                .expect("run actual checker");
+            fs::write(evidence.join("checker.stdout"), &checked.stdout).expect("retain checker");
+            fs::write(evidence.join("checker.stderr"), &checked.stderr)
+                .expect("retain diagnostics");
+            assert!(
+                checked.status.success(),
+                "checker failed; evidence {evidence:?}"
+            );
+            let checked: Value = serde_json::from_slice(&checked.stdout).expect("checker JSON");
+            assert_eq!(checked["passed"], true);
+            assert!(!trace.exists(), "checker must preserve source bytes");
+            let mut native =
+                tokio::process::Command::new(std::env::current_exe().expect("test executable"));
+            native
+                .args([
+                    "--exact",
+                    "deliverable::tests::native_export_matches_checker_under_inherited_tracing",
+                    "--nocapture",
+                    "--test-threads=1",
+                ])
+                .env(CHILD_SOURCE, &root)
+                .env(CHILD_BASE, &lease.base_commit)
+                .env(CHILD_EVIDENCE, &evidence)
+                .env(name, &trace)
+                .env("GIT_CURL_VERBOSE", "1")
+                .kill_on_drop(true);
+            let exported = tokio::time::timeout(Duration::from_secs(90), native.output())
+                .await
+                .expect("native exporter watchdog")
+                .expect("native exporter subprocess");
+            fs::write(evidence.join("native.stdout"), &exported.stdout)
+                .expect("retain native result");
+            fs::write(evidence.join("native.stderr"), &exported.stderr)
+                .expect("retain diagnostics");
+            let tree = git(&root, &["rev-parse", "HEAD^{tree}"]);
+            let changes = git(
+                &root,
+                &["diff", "--name-status", &lease.base_commit, "HEAD", "--"],
+            );
+            fs::write(
+                evidence.join("parity.json"),
+                serde_json::to_vec_pretty(&json!({
+                    "trace_environment": name,
+                    "base": lease.base_commit,
+                    "checker_tree": checked["candidateTree"],
+                    "exporter_tree": tree,
+                    "exporter_exit": exported.status.code(),
+                    "exported_changes": changes,
+                    "trace_created": trace.exists(),
+                }))
+                .expect("parity JSON"),
+            )
+            .expect("retain parity evidence");
+            println!("{name}: source={root:?}; evidence={evidence:?}");
+            assert!(
+                exported.status.success(),
+                "native exporter failed; evidence {evidence:?}"
+            );
+            assert_eq!(
+                checked["candidateTree"].as_str(),
+                Some(tree.as_str()),
+                "checker/exporter tree mismatch; evidence {evidence:?}"
+            );
+            assert_eq!(changes, "M\ttracked.txt");
+            assert!(
+                !trace.exists(),
+                "exporter Git children must not create source inputs"
+            );
+            assert_eq!(git(&root, &["status", "--porcelain=v1"]), "");
+            assert_eq!(
+                fs::read(root.join("tracked.txt")).expect("source bytes"),
+                b"intentional change\n"
+            );
+            // Preserve actual native export, diagnostics, and source fixtures,
+            // including failures and any trace file produced by old code.
+        }
     }
 
     #[tokio::test]

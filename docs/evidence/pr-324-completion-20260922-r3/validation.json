@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "pr": 324,
+  "source_head": "0c01bbca17bcb724c989329bb470cd0b8b11c062",
+  "tested_staged_tree": "b7b58c1b4fdc355849f0f3c4af24c30d87e57202",
+  "target_main": "410eddfc8bfcfa874dae05555128d39a914f0456",
+  "started_at_utc": "2026-09-22T13:55:12.5248458+00:00",
+  "finished_at_utc": "2026-09-22T14:07:20.1942133+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "Deliverable patch checking remains isolated from the source checkout, including hostile inherited Git tracing settings. Tooling-only acceptance; no new application runtime claim.",
+  "maintainer_changes": "Removed inherited GIT_TRACE* and GIT_CURL_VERBOSE variables before the first Git child. Six native trace regression cases preserve source bytes and the candidate tree; all 49 focused tests pass. The earlier completion packet and its linker-failure provenance remain unchanged.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.4402684,
+      "log": "migrations.log",
+      "original_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823",
+      "published_log_sha256": "647fc92ef827bdde2d804ae951c78304f0522f35f9832dde27b39840b8263757"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.0061362,
+      "log": "documentation.log",
+      "original_log_sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406",
+      "published_log_sha256": "f7c1081b3ad5e5b322c890127d287c1cef53b868efc7b40d1b7b2eef7b9aeb18"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 223.939094,
+      "log": "node-unit.log",
+      "original_log_sha256": "fb4214ecc60b3b6b6796b626f05ca6453b7884bb71d5a74ef5659f1d4d8af252",
+      "published_log_sha256": "9c15ea6523cd3342f9d43e6efb84723a2783c8ee63bac7e9ffec2300655fba33"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 80.8328742,
+      "log": "steward.log",
+      "original_log_sha256": "18d8fb867107396e672143a7204bd5b08a61640698c5876285c7a247cc44aa57",
+      "published_log_sha256": "d9dd3bd4809fc658559874b06c160372ba47a6096d9f00e814394206c7ae822a"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 3.9551175,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 2.4570433,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "881f0656ccc23ad77cd913cb1e60530e5fe59e45a87f9175049165054505e786",
+      "published_log_sha256": "dacb4dd261171075bb41a4d71d3aea845310669fcb33ec3087bb01c648230989"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 397.1824664,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "c6555d8f7801a79ccc2e96bdde19dcea3e55ba9c7b201a3698469556dd4f9c1f",
+      "published_log_sha256": "8cae9434feb600b109b65e68a45703d01da9f5beb57b3809b6a0384be6291485"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 9.9425982,
+      "log": "web-build.log",
+      "original_log_sha256": "ed7639606cf5e4f1320144c26422e547f3aed420c702cf656dcc96d1a66747e3",
+      "published_log_sha256": "f73402d2109c624a5242d90da6f0225fa5767d270df58d3e6886999ee3296f00"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 3.9216941,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true"
+}
