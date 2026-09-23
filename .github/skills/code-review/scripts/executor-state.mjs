@@ -1313,6 +1313,8 @@ function main() {
 }
 
 try { console.log(JSON.stringify(main())) } catch (error) {
-  console.log(JSON.stringify({ error: error.message }))
+  // JSON parser messages can include private bytes from stdin or the journal.
+  console.log(JSON.stringify({ error: error instanceof SyntaxError
+    ? 'invalid JSON; preserve input and state' : error.message }))
   process.exitCode = 1
 }

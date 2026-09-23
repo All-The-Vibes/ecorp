@@ -40,6 +40,39 @@ const setup = (prs = [pr()]) => {
   run(dir, 'sync', { owner, complete: true, prs })
   return dir
 }
+test('EX-JSON-DIAGNOSTICS: malformed stdin never discloses input or changes state', () => {
+  for (const payload of ['SENSITIVE_INPUT_MARKER', '{"private":"SENSITIVE_INPUT_MARKER",}']) {
+    for (const initialized of [false, true]) {
+      const dir = initialized ? setup() : fixture()
+      const state = join(dir, 'state.json')
+      const before = initialized ? readFileSync(state) : null
+      const result = spawnSync(process.execPath, [script, dir, initialized ? 'next' : 'init'], {
+        input: payload, encoding: 'utf8', timeout: 20_000,
+      })
+      assert.equal(result.status, 1)
+      assert.equal(result.stderr, '')
+      assert.deepEqual(JSON.parse(result.stdout), { error: 'invalid JSON; preserve input and state' })
+      if (initialized) assert.deepEqual(readFileSync(state), before)
+      else assert.equal(existsSync(dir), false)
+      assert.equal(existsSync(join(dir, 'executor.lock')), false)
+    }
+  }
+})
+test('EX-JSON-DIAGNOSTICS: malformed journals are retained without disclosing their bytes', () => {
+  for (const payload of ['SENSITIVE_STATE_MARKER', '{"private":"SENSITIVE_STATE_MARKER",}']) {
+    const dir = setup(), state = join(dir, 'state.json')
+    writeFileSync(state, payload)
+    const before = readFileSync(state)
+    const result = spawnSync(process.execPath, [script, dir, 'show'], {
+      encoding: 'utf8', timeout: 20_000,
+    })
+    assert.equal(result.status, 1)
+    assert.equal(result.stderr, '')
+    assert.deepEqual(JSON.parse(result.stdout), { error: 'invalid JSON; preserve input and state' })
+    assert.deepEqual(readFileSync(state), before)
+    assert.equal(existsSync(join(dir, 'executor.lock')), false)
+  }
+})
 const next = (dir) => run(dir, 'next', { owner })
 const bindRubric = (dir, claim) => run(dir, 'rubric', {
   owner, base: claim.base, head: claim.head, sourceRef: 'evidence/trusted-rubric.json', sha256: key(500), criteria,
