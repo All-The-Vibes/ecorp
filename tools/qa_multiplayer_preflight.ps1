@@ -187,6 +187,13 @@ function Get-U1GitConfigFiles([string]$Product) {
     $gitDir = if ($item -is [IO.DirectoryInfo]) { $marker } else { Read-GitPathMarker $marker $Product 'gitdir: ' }
     $commonMarker = Join-Path $gitDir 'commondir'
     $commonDir = if (Get-GitMetadataFile $commonMarker $true) { Read-GitPathMarker $commonMarker $gitDir '' } else { $gitDir }
+    # Object-source pointers can redirect even read-only Git to remote storage.
+    # Reject the checked files before Git setup, without reading their targets.
+    foreach ($name in @('alternates', 'http-alternates')) {
+        if (Get-GitMetadataFile (Join-Path $commonDir "objects/info/$name") $true) {
+            throw 'Repository alternate object stores are not supported for source attestation.'
+        }
+    }
     $local = Join-Path $commonDir 'config'
     $worktree = Join-Path $gitDir 'config.worktree'
     Get-GitMetadataFile $local | Out-Null
@@ -198,7 +205,7 @@ function Invoke-U1SourceGit([string]$Product, [string[]]$Arguments) {
     # Source identity must not depend on machine/user attributes or filters.
     # These process-only settings are restored, including originally absent keys.
     $saved = @{}
-    $isolated = @{ GIT_CONFIG_NOSYSTEM = '1'; GIT_CONFIG_GLOBAL = 'NUL'; GIT_ATTR_NOSYSTEM = '1' }
+    $isolated = @{ GIT_CONFIG_NOSYSTEM = '1'; GIT_CONFIG_GLOBAL = 'NUL'; GIT_ATTR_NOSYSTEM = '1'; GIT_NO_LAZY_FETCH = '1' }
     try {
         foreach ($name in $isolated.Keys) {
             $saved[$name] = @{ exists = Test-Path -LiteralPath "Env:$name"; value = [Environment]::GetEnvironmentVariable($name, 'Process') }
