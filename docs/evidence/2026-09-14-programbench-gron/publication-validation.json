@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "scope": "Results-only publication branch; ECorp product source equals the recorded base and excludes the local benchmark adapter patch",
+  "base_commit": "b2523964e7576cafc00e84a51e1044f55826dea7",
+  "branch": "codex/programbench-gron-results-20260914",
+  "status": "passed",
+  "started_at": "2026-09-14T14:01:26.5399841-05:00",
+  "finished_at": "2026-09-14T19:08:19.5282528+00:00",
+  "recorded_at": "2026-09-14T19:15:20.956468+00:00",
+  "runtime_versions": {
+    "cargo_version": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+    "rustc_version": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "node_version": "v24.19.0",
+    "npm_version": "11.17.0",
+    "pnpm_version": "11.19.0"
+  },
+  "commands": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 0.566,
+      "test_counts": null,
+      "test_summaries": null,
+      "retained_local_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823"
+    },
+    {
+      "name": "fmt",
+      "command": "cargo fmt --check",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 3.633,
+      "test_counts": null,
+      "test_summaries": null
+    },
+    {
+      "name": "clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 69.807,
+      "test_counts": null,
+      "test_summaries": null,
+      "retained_local_log_sha256": "0aa6a837bbf15d8856498cef4bc892e9eb222f2ea8a5f8e36e14463ee4e89afe"
+    },
+    {
+      "name": "tests",
+      "command": "cargo test --workspace",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 179.757,
+      "test_counts": {
+        "passed": 547,
+        "failed": 0,
+        "ignored": 323
+      },
+      "test_summaries": null,
+      "retained_local_log_sha256": "a91e65914c5172713ea867d6c5988f70b9915513a96fb631d0944d372b440a74"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 15.156,
+      "test_counts": null,
+      "test_summaries": null,
+      "retained_local_log_sha256": "21d12dc6d7ed5688c7e7acc11c92582a68b962e82ba05f3bd480b57a05b800c9"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 2.864,
+      "test_counts": null,
+      "test_summaries": null,
+      "retained_local_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c"
+    }
+  ],
+  "report_sha256": "e1eb2af63a97ad8177cc37d99922b419d3793edf762580a7021bbfccdb45c629",
+  "copied_artifact_count": 14,
+  "targeted_checks": {
+    "exact_copy_hashes": "passed",
+    "configured_provider_credential_value_found": false,
+    "credential_pattern_findings": 0,
+    "candidate_archive_read_without_execution": true,
+    "official_score_cli": "passed: 89 rounded, 224 tests, one instance",
+    "score_cli_note": "Initial Windows output encoding could not display the CLI emoji; repeating with UTF-8 succeeded. No evaluator rerun occurred.",
+    "report_browser_qa": "Original byte-identical HTML passed offline desktop/mobile, case filters, failure details, JSON download and print checks"
+  },
+  "environment_repair": "Initial web build/lint could not resolve TypeScript through a reused dependency junction. Separate publication dependencies were installed and only the failed web checks rerun; initial failure evidence is retained locally.",
+  "original_main_binaries_unchanged": true,
+  "new_benchmark_executions": 0,
+  "new_provider_inference": false,
+  "hosted_ci": "Separate review PR check; not claimed by local results",
+  "source_of_issue": "https://github.com/All-The-Vibes/ecorp/issues/272",
+  "original_gate_receipt": {
+    "availability": "unavailable",
+    "retained_file": null,
+    "previously_reported_sha256": "ee8d50cb7f3f3eb4d0be85feeaef890f30b0a7cfb11d148bbeed1f4a792233a1",
+    "digest_verification": "unverified: the original receipt bytes have not been recovered",
+    "qualification": "This historical publication summary is retained, but it does not make the missing original gate receipt or its underlying local logs independently inspectable. The digest alone is not evidence that those bytes are published. Fresh contributor gate results have their own named receipts under docs/evidence/pr-273-completion-20260922*."
+  }
+}

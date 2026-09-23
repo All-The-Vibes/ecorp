@@ -1,5 +1,9 @@
 # Evaluation and real-world testing
 
+The [September 14 ProgramBench gron pilot](evidence/2026-09-14-programbench-gron/README.md)
+records 200 passing and 24 failing official candidate tests, the frozen generated
+submission, provider/run provenance, and the scope of the local adapter used.
+
 The [September 12 scheduler acceptance](evidence/2026-09-12-scheduler-standalone-acceptance.md)
 records PR #179's main-based source gate separately from the combined recovery
 and two-runner runtime acceptance. Earlier failed attempts remain retained.
