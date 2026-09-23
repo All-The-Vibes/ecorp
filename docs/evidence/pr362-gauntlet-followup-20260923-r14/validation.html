@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR 362 R14 — saved local validation results</title>
+<style>
+* { box-sizing: border-box; } body { margin: 0; background: #eef2f6; color: #182431; font: 17px/1.45 Arial, sans-serif; }
+main { max-width: 1360px; margin: 28px auto; padding: 34px 40px; background: white; border: 1px solid #cbd5e1; }
+h1 { font-size: 35px; margin: 4px 0 8px; } h2 { font-size: 23px; margin: 0 0 12px; } h3 { font-size: 18px; margin: 0 0 8px; }
+p { margin: 8px 0; } .eyebrow { color: #42566d; font-weight: bold; letter-spacing: .09em; font-size: 13px; }
+.notice { padding: 14px 18px; background: #fff3d7; border-left: 5px solid #a86400; margin: 18px 0; }
+.good { color: #17663b; } .bad { color: #9b2525; } .muted { color: #495b6e; } .small { font-size: 14px; }
+section { margin-top: 24px; } table { width: 100%; border-collapse: collapse; font-size: 16px; }
+th, td { padding: 8px 12px; border-bottom: 1px solid #dbe3eb; text-align: left; } th { background: #edf3f8; }
+td:last-child { white-space: nowrap; } code { font-family: Consolas, monospace; font-size: 15px; overflow-wrap: anywhere; }
+.source { padding: 14px 18px; background: #f3f6f9; font-size: 15px; } .source p { margin: 4px 0; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; } .card { border: 1px solid #ccd7e1; padding: 17px 20px; }
+ul, ol { margin: 8px 0; padding-left: 22px; } li { margin: 5px 0; } a { color: #195a8a; text-decoration: underline; }
+footer { border-top: 2px solid #cbd5e1; margin-top: 24px; padding-top: 12px; }
+</style></head><body><main>
+<div class="eyebrow">PR #362 · R14 · SEPTEMBER 23, 2026</div>
+<h1>Saved local validation results</h1>
+<p><strong class="good">9 / 9 contributor gates passed on the frozen input.</strong> This page packages existing evidence; it does not run the product.</p>
+<div class="notice"><strong>All-green / NICE is not established.</strong> CodeQL aggregate is reported NEUTRAL despite four successful analyses. Human, independent, protected and Santa approvals remain separate.</div>
+<div class="source">
+<p><strong>Executed staged tree:</strong> <code>f127601f8885288e9b87f7569b85a647103a68bd</code></p>
+<p><strong>HEAD:</strong> <code>a3f755687f0a6778dc0bc655e38b4b130643d04c</code></p>
+<p><strong>MERGE_HEAD:</strong> <code>3195fd7f15cb43946f9705640568551cdc6a57e3</code></p>
+<p><strong>Recorded target:</strong> <code>1edbf1b5f4d4fe3f12f9177bb72b631d8ce2e819</code></p>
+<p>Validator completed 2026-09-23 08:55:50 UTC, before this packet existed. 26 direct processes exited. No later packet-bearing tree or final commit is claimed as executed.</p>
+</div>
+<section><h2>Nine required gates</h2><table><thead><tr><th>Canonical command / bound log</th><th>Recorded result</th><th>Elapsed</th></tr></thead><tbody><tr><td><a href="migrations.log">node tools/check_migrations.mjs</a></td><td>Exit 0</td><td>3.797s</td></tr><tr><td><a href="documentation.log">pnpm check:docs</a></td><td>Exit 0</td><td>4.297s</td></tr><tr><td><a href="node-unit.log">pnpm test:unit</a></td><td>1,254 passed; 0 failed/skipped</td><td>87.672s</td></tr><tr><td><a href="steward.log">pnpm test:steward</a></td><td>227 passed; 0 failed/skipped</td><td>90.469s</td></tr><tr><td><a href="rust-format.log">cargo fmt --check</a></td><td>Exit 0</td><td>9.532s</td></tr><tr><td><a href="rust-clippy.log">cargo clippy --workspace --all-targets -- -D warnings</a></td><td>Exit 0</td><td>19.828s</td></tr><tr><td><a href="rust-workspace.log">cargo test --workspace</a></td><td>580 passed; 0 failed; 343 ignored</td><td>535.515s</td></tr><tr><td><a href="web-build.log">pnpm build:web</a></td><td>Exit 0</td><td>16.437s</td></tr><tr><td><a href="web-lint.log">pnpm lint:web</a></td><td>Exit 0</td><td>9.766s</td></tr></tbody></table>
+<p class="small muted">Node 24.19.0 · pnpm 11.19.0 · Python 3.12.14 · Rust/Cargo 1.98.1. Cargo clippy/test added --locked --offline; 2 build jobs, serial tests, incremental cache. No R14 install invocation. Ignored tests remain unexecuted.</p></section>
+<section class="grid">
+<div class="card"><h2>Focused &amp; exact-staged lanes</h2><ul>
+<li>Source-native MCP build: <strong class="good">exit 0</strong>, before Node; incremental, not clean rebuild.</li>
+<li>Complete evidence discovery: <strong>69 passed</strong>; no failures or skips.</li>
+<li>Portable verifier: <strong>3 packets · 233 archive members · 25 images</strong>.</li>
+<li>Startup harness: <strong>5 passed</strong>; not the full Docker/startup drill.</li>
+<li>Actual staged driver: <strong>67 exact files; same 69 tests passed</strong>, not 69 additional unique tests.</li>
+<li>Replay binds 87 gauntlet members, 111 rows and 14 capture logs to the genuine fresh raw-nine receipt.</li>
+</ul><a href="focused.log">Complete focused and replay logs</a></div>
+<div class="card"><h2>Actual ordered metadata RED / GREEN</h2><ol>
+<li>Current-a2 unchanged helper: <strong>63 tests OK</strong>.</li>
+<li>First instrumentation: <span class="bad">5 cases, 14 failures + 1 error</span>; retained.</li>
+<li>Corrected pre-fix RED: <span class="bad">5 cases, 10 failing subtests + 1 intentional regex trap</span>; boundary controls passed.</li>
+<li>Same five cases GREEN; complete historical suite <strong>68 OK</strong>.</li>
+</ol><p class="small">Duplicate/case-alias image rows, image count/type, README reference limits, unmatched markers, non-regex scans. Current 69 includes the retained remote output-ancestor regression.</p>
+<a href="metadata-history.log">Original sequence as public derivatives</a></div></section>
+<section class="grid">
+<div class="card"><h2>Privacy correction &amp; byte custody</h2>
+<p><strong>R13-PRIVACY-01 cleared.</strong> Exactly two escaped 27-byte home-prefix spans at lines 15 and 27 were replaced.</p>
+<p><strong>3,515 / 3,569 = 98.486971%</strong> original bytes unchanged — <strong>not literally 99%</strong>. <strong>100% outside the two spans</strong> preserved.</p>
+<p>The baseline still says <code>Ran 1 test in 2.935s</code> and <code>FAILED (failures=2)</code>. No new baseline run is implied.</p>
+<p class="small">286 public text files; 61 decoded existing PNGs; 123 matching logs across 10 packets; 331 scoped text/member scans; 233 archive derivations; 4 rejected outside-rectangle RGB/alpha controls. Not general DLP/OCR or capture-authenticity proof.</p>
+<a href="correction-evidence.log">Correction and audit logs</a></div>
+<div class="card"><h2>Failures remain failures</h2>
+<p><strong>R12:</strong> 9/9 local gates on its prior target; two private postprocessing diagnostics exited 1 and remain preserved.</p>
+<p><strong>R13:</strong> 9/9 local gates, but <strong class="bad">overall FAIL_PUBLIC_EVIDENCE_PRIVACY</strong>. Both privacy audit failures remain historical.</p>
+<p><strong>R14 old-HEAD diff check:</strong> <span class="bad">exit 2</span>; 310 diagnostics in six inherited PR #273 R3 files. Staged, target and remote bytes match, including CRLF.</p>
+<p>Target-relative and correction-relative checks: <strong>exit 0</strong>. No old packet was normalized or repinned to hide the failed comparison.</p>
+</div></section>
+<section class="grid">
+<div class="card"><h2>Attributable author-side receipt</h2>
+<p><strong>Automated author-delegate in the assigned verifier context.</strong> Recorded verdict: <code>PASS_AUTHOR_SIDE_SCOPE</code>; no unresolved introduced blocking finding reported.</p>
+<p><strong>370 contribution paths · 19 non-evidence · 12 correction paths.</strong> Report covers CLI/gateway callers, protocol entrypoints, secrets, proxy/MCP fixtures, startup, portable verifier, staged driver, CI/docs and evidence history.</p>
+<p><strong>Not</strong> personal human self-review, independent review, eligible GitHub approval or a new packager review.</p>
+<a href="author-review.md">Full scope and findings</a> · <a href="author-review-receipt.json">Attributable receipt</a></div>
+<div class="card"><h2>External gates &amp; stop condition</h2>
+<p>Preserved parent receipt: four successful CodeQL analyses, <strong>NEUTRAL aggregate</strong>. Native rerun exited 1: “This workflow run cannot be retried.” No settings change or bypass.</p>
+<p>Parent retains two fresh scoped publication reviews, whole-PR reviews, live hosted fences and protected acceptance.</p>
+<p><strong>Not claimed:</strong> full browser/server/runner acceptance, full startup/Docker drill, 343 ignored Rust cases, production/provider acceptance, Santa/NICE, publication or merge.</p>
+</div></section>
+<footer><strong>Genuine browser capture of saved results — not a terminal or application runtime capture.</strong>
+<p class="small">Public summary is NOT raw private driver input. Personal-home/path and disclosed text-format derivatives retain test results, source IDs and timings; original hashes remain raw. The image has no live-test claim.</p>
+<p class="small"><a href="README.md">README / reproduction</a> · <a href="results-summary.json">Saved results</a> · <a href="provenance.json">Original vs derivative hashes</a> · <a href="SHA256SUMS">File manifest</a></p></footer>
+</main></body></html>

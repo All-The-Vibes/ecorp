@@ -22,7 +22,7 @@ import subprocess
 import zipfile
 from staged_evidence_inventory import require_regression_count, staged_blobs
 
-EXPECTED_REGRESSIONS = 64
+EXPECTED_REGRESSIONS = 69
 
 REQUIRED_GATES = {
     'migrations': ('node', ['tools/check_migrations.mjs']),

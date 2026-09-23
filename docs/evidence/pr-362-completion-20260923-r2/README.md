@@ -29,3 +29,13 @@ The linked-output baseline failed the new early-rejection assertion; that observ
 Local Node was 24.21.0; the repository pin is 24.19.0. Hosted final-commit checks and independent eligible review remain required for the protected merge.
 
 Trailing line whitespace and blank lines at EOF are removed from the published logs. This formatting normalization does not alter test-result text; original and published hashes are distinct. The local `.gitattributes` preserves published evidence bytes on checkout.
+
+## September 23, 2026: escaped-path publication correction
+
+The baseline failure log now also normalizes two escaped Windows home-prefix spans
+inside nested exception text to `<user-home>`. This is a disclosed path-only public
+derivative, not a new execution. Original execution hashes and all test-result text
+remain unchanged. The previous published bytes remain in Git commit
+`3195fd7f15cb43946f9705640568551cdc6a57e3`; `focused-validation.json` records both
+the previous published hash and the corrected published hash. Earlier validation
+and source-tree bindings still describe their original tested inputs.

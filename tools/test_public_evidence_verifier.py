@@ -331,6 +331,99 @@ class PublicEvidenceVerifierTests(unittest.TestCase):
             self.mutate_manifest(base, lambda manifest: manifest["archive_members"].append(dict(manifest["archive_members"][0])))
             self.assert_refused(base, "duplicate archive path")
 
+    def test_duplicate_image_rows_are_rejected_before_payload(self):
+        for alias in (False, True):
+            with self.subTest(case_alias=alias), self.packet_copy() as base:
+                def duplicate(manifest):
+                    row = dict(manifest["images"][0])
+                    if alias:
+                        row["path"] = row["path"].upper()
+                    manifest["images"].append(row)
+                self.mutate_manifest(base, duplicate)
+                self.assert_inventory_refused_before_payload(base, "duplicate image path")
+
+    def test_image_metadata_count_and_type_are_admitted_before_payload(self):
+        for count in (PACKET_FILE_COUNT - 1, PACKET_FILE_COUNT, None):
+            with self.subTest(count=count), self.packet_copy() as base:
+                def replace(manifest):
+                    manifest["images"] = ([dict(manifest["images"][0])] * count
+                                          if count is not None else {})
+                self.mutate_manifest(base, replace)
+                message = ("duplicate image path" if count == PACKET_FILE_COUNT - 1
+                           else "image manifest exceeds file limit")
+                self.assert_inventory_refused_before_payload(base, message)
+
+    def replace_readme(self, base, text):
+        data = text.encode("utf-8")
+        (base / PACKETS[0] / "README.md").write_bytes(data)
+
+        def update(manifest):
+            row = next(row for row in manifest["delivered_files"] if row["path"] == "README.md")
+            row.update(sha256=hashlib.sha256(data).hexdigest(), bytes=len(data))
+            row.pop("canonical_lf_sha256", None)
+        self.mutate_manifest(base, update)
+
+    def test_readme_reference_count_boundary_and_plus_one(self):
+        for reference in ("[local](README.md)", "[external](https://example.invalid)",
+                          "[anchor](#section)", "[empty]()"):
+            for count in (PACKET_FILE_COUNT, PACKET_FILE_COUNT + 1):
+                with self.subTest(reference=reference, count=count), self.packet_copy() as base:
+                    self.replace_readme(base, reference * count)
+                    verifier = self.verifier_module()
+                    original = verifier.read_file
+                    readmes = 0
+                    links_active = False
+                    link_checks = []
+                    regular = verifier.regular_file
+
+                    def read(root, relative, **kwargs):
+                        nonlocal readmes, links_active
+                        if root != base / PACKETS[0]:
+                            links_active = False
+                        data = original(root, relative, **kwargs)
+                        if root == base / PACKETS[0] and relative == "README.md":
+                            readmes += 1
+                            links_active = readmes == 2
+                        return data
+
+                    def inspect(root, relative):
+                        if root == base / PACKETS[0] and links_active:
+                            link_checks.append(relative)
+                        return regular(root, relative)
+
+                    with (patch.object(verifier, "read_file", side_effect=read),
+                          patch.object(verifier, "regular_file", side_effect=inspect)):
+                        if count == PACKET_FILE_COUNT:
+                            verifier.verify(base)
+                            expected = count if reference == "[local](README.md)" else 0
+                            self.assertEqual(len(link_checks), expected)
+                        else:
+                            with self.assertRaisesRegex(AssertionError, "README exceeds reference limit"):
+                                verifier.verify(base)
+                            self.assertEqual(link_checks, [], "Reference lookup before metadata admission.")
+
+    def test_readme_unmatched_marker_boundary_and_plus_one(self):
+        for count in (PACKET_FILE_COUNT, PACKET_FILE_COUNT + 1):
+            with self.subTest(count=count), self.packet_copy() as base:
+                self.replace_readme(base, "](" * count)
+                if count == PACKET_FILE_COUNT:
+                    result = self.invoke(base / PACKETS[-1] / "verify_public.py")
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                else:
+                    self.assert_refused(base, "README exceeds reference limit")
+
+    def test_readme_scanning_does_not_allocate_regex_matches(self):
+        with self.packet_copy() as base:
+            # Preserve local/cross-packet, external, fragment and empty-link
+            # semantics, followed by an unmatched suffix. No timing threshold.
+            self.replace_readme(base, "[local](README.md) [fragment](#section) [empty]() "
+                f"[cross](../{PACKETS[1]}/README.md) [external](https://example.invalid) "
+                + "](" * (PACKET_FILE_COUNT - 5))
+            verifier = self.verifier_module()
+            with patch.object(verifier.re, "findall",
+                              side_effect=RuntimeError("unbounded regex match allocation")):
+                verifier.verify(base)
+
     def test_intact_copy_under_linked_temporary_parent_is_accepted(self):
         with tempfile.TemporaryDirectory(prefix="ecorp-public-evidence-temp-parent-") as root:
             parent = Path(root).resolve(strict=True)

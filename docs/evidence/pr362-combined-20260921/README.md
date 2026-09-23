@@ -134,6 +134,14 @@ pixels; its script and inputs are retained in integration scratch. The portable
 checker cannot independently recover unpublished raw originals or verify image
 capture history; hashes alone are not proof of execution.
 
+Metadata replay also uses the fixed 128-file inventory headroom: image metadata
+must be a list of at most 127 case-insensitively unique filenames, admitted before
+payload reads. Each README permits at most 128 `](` markers, including repeated,
+external, empty and unmatched references, counted before reference lookups.
+Forward-only delimiter scans replace regex match allocation and repeated scans
+of unmatched suffixes. Existing pathname, byte-budget, archive and source checks
+remain in force; this is not a general Markdown parser.
+
 For a new test run, use this exact assembled source and a target exclusive to it.
 Set `TEMP`, `TMP`, and `TMPDIR` to a short new directory under native OS TEMP,
 verify no Git ancestor, retain the declared job/thread limits, and run the unchanged
