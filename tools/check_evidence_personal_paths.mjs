@@ -1,5 +1,5 @@
-import { lstatSync, readdirSync, readFileSync, realpathSync } from 'node:fs'
-import { basename, dirname, join, relative, resolve } from 'node:path'
+import { closeSync, constants, fstatSync, lstatSync, openSync, readdirSync, readSync, realpathSync } from 'node:fs'
+import path, { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 export const defaultEvidenceDirectories = [
@@ -12,6 +12,12 @@ export const defaultEvidenceDirectories = [
 // prefix is optional because Windows HOMEPATH normally omits the drive.
 export function hasPersonalUserPath(text) {
   return /(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s"'<>]+/i.test(text)
+}
+
+export function isContainedEvidencePath(root, candidate, pathApi = path) {
+  const location = pathApi.relative(root, candidate)
+  return !pathApi.isAbsolute(location) && location !== '..'
+    && !location.startsWith(`..${pathApi.sep}`) && pathApi.resolve(root, location) === candidate
 }
 
 function assertRegularDirectory(directory) {
@@ -27,24 +33,69 @@ function assertRegularDirectory(directory) {
   return realpathSync.native(absolute)
 }
 
+const maximumFileBytes = 16 * 1024 * 1024
+const regularPathError = 'Evidence path check requires regular files and directories'
+
+function assertUnchangedFile(expected, actual, acquired = true) {
+  if (!actual.isFile() || actual.isSymbolicLink() || actual.nlink !== 1n
+      || ['dev', 'ino', 'size', 'mtimeNs'].some(key => expected[key] !== actual[key])
+      || (acquired && expected.ctimeNs !== actual.ctimeNs)) {
+    throw new Error(`${regularPathError}; file changed during scan`)
+  }
+}
+
+function readEvidenceFile(root, file, expected) {
+  assertUnchangedFile(expected, expected)
+  if (expected.size > BigInt(maximumFileBytes)) throw new Error('Evidence file exceeds byte limit')
+  // O_NOFOLLOW protects supported platforms. Identity checks also fence platforms
+  // without that flag before any read, and all content comes from this one handle.
+  const descriptor = openSync(file, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0))
+  try {
+    const opened = fstatSync(descriptor, { bigint: true })
+    // NTFS can finish updating a newly written file's change time at open.
+    // Bind identity/content metadata first, then track the acquired change time.
+    assertUnchangedFile(expected, opened, false)
+    const checkNamedFile = () => {
+      const directory = assertRegularDirectory(dirname(file))
+      if (!isContainedEvidencePath(root, directory) || directory !== dirname(file)) {
+        throw new Error(regularPathError)
+      }
+      assertUnchangedFile(opened, lstatSync(file, { bigint: true }))
+      assertUnchangedFile(opened, fstatSync(descriptor, { bigint: true }))
+    }
+    checkNamedFile()
+    const bytes = Buffer.alloc(Number(expected.size) + 1)
+    let length = 0
+    while (length < bytes.length) {
+      const count = readSync(descriptor, bytes, length, bytes.length - length, null)
+      if (!count) break
+      length += count
+    }
+    checkNamedFile()
+    if (length !== Number(expected.size)) throw new Error('Evidence file changed during scan')
+    return bytes.subarray(0, length).toString('utf8')
+  } finally {
+    closeSync(descriptor)
+  }
+}
+
 export function findPersonalPathFiles(directories = defaultEvidenceDirectories) {
   const findings = []
   for (const suppliedRoot of directories) {
     const root = assertRegularDirectory(suppliedRoot)
     function visit(directory) {
       const canonical = assertRegularDirectory(directory)
-      const location = relative(root, canonical).replaceAll('\\', '/')
-      if (location === '..' || location.startsWith('../') || resolve(root, location) !== canonical) {
+      if (!isContainedEvidencePath(root, canonical)) {
         throw new Error('Evidence path check requires regular files and directories')
       }
       for (const entry of readdirSync(canonical, { withFileTypes: true })) {
         const path = join(canonical, entry.name)
-        const current = lstatSync(path)
+        const current = lstatSync(path, { bigint: true })
         if (current.isSymbolicLink() || (!current.isDirectory() && !current.isFile())) {
           throw new Error('Evidence path check requires regular files and directories')
         }
         if (current.isDirectory()) visit(path)
-        else if (hasPersonalUserPath(readFileSync(path).toString('utf8'))) {
+        else if (hasPersonalUserPath(readEvidenceFile(root, path, current))) {
           findings.push(`${basename(root)}/${relative(root, path).replaceAll('\\', '/')}`)
         }
       }

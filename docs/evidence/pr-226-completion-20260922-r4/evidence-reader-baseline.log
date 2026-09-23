@@ -1,0 +1,187 @@
+✔ personal paths include drive-relative, prefixed, escaped and alternate separators (1.6333ms)
+✔ normalized placeholders and ordinary prose remain valid (0.2236ms)
+✔ recursive packet scan and CLI reject a leak without printing its value (319.7841ms)
+✔ retained PR226 packets including r3 are scanned for personal user paths (2094.4339ms)
+✔ root and ancestor directory links cannot redirect an evidence scan (16.7778ms)
+✔ nested and dangling directory links fail closed (10.7244ms)
+✖ canonical containment rejects absolute cross-drive and UNC relative results (1.4849ms)
+✔ actual Windows short alias succeeds while a linked ancestor still fails (455.9789ms)
+✖ file replacement before-open with regular fails without reading outside bytes (19.1411ms)
+✖ file replacement before-open with symlink fails without reading outside bytes (13.3427ms)
+✖ file replacement during-read with regular fails without reading outside bytes (17.6391ms)
+✖ file replacement during-read with symlink fails without reading outside bytes (14.0847ms)
+✖ oversize sparse evidence fails before a content read (39.6318ms)
+✔ empty evidence and a file at the byte limit are accepted (49.9303ms)
+✖ hard-linked evidence is rejected without reading the shared file (12.0293ms)
+✖ file growth during a descriptor read fails instead of accepting a prefix (9.0946ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 8
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3255.4744
+
+✖ failing tests:
+
+test at tools\check_evidence_personal_paths.test.mjs:88:1
+✖ canonical containment rejects absolute cross-drive and UNC relative results (1.4849ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'undefined'
+  - 'function'
+
+      at TestContext.<anonymous> (file:///<private-evidence>/pr226-evidence-read-baseline-r2/tools/check_evidence_personal_paths.test.mjs:90:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:128:5
+✖ file replacement before-open with regular fails without reading outside bytes (19.1411ms)
+  AssertionError [ERR_ASSERTION]: no outside file content may be read
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<private-evidence>/pr226-evidence-read-baseline-r2/tools/check_evidence_personal_paths.test.mjs:177:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:128:5
+✖ file replacement before-open with symlink fails without reading outside bytes (13.3427ms)
+  AssertionError [ERR_ASSERTION]: no outside file content may be read
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<private-evidence>/pr226-evidence-read-baseline-r2/tools/check_evidence_personal_paths.test.mjs:177:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:128:5
+✖ file replacement during-read with regular fails without reading outside bytes (17.6391ms)
+  AssertionError [ERR_ASSERTION]: no outside file content may be read
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<private-evidence>/pr226-evidence-read-baseline-r2/tools/check_evidence_personal_paths.test.mjs:177:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:128:5
+✖ file replacement during-read with symlink fails without reading outside bytes (14.0847ms)
+  AssertionError [ERR_ASSERTION]: no outside file content may be read
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<private-evidence>/pr226-evidence-read-baseline-r2/tools/check_evidence_personal_paths.test.mjs:177:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:190:1
+✖ oversize sparse evidence fails before a content read (39.6318ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///<private-evidence>/pr226-evidence-read-baseline-r2/tools/check_evidence_personal_paths.test.mjs:202:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /byte limit/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:221:1
+✖ hard-linked evidence is rejected without reading the shared file (12.0293ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///<private-evidence>/pr226-evidence-read-baseline-r2/tools/check_evidence_personal_paths.test.mjs:234:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /regular files and directories/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:244:1
+✖ file growth during a descriptor read fails instead of accepting a prefix (9.0946ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///<private-evidence>/pr226-evidence-read-baseline-r2/tools/check_evidence_personal_paths.test.mjs:257:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /changed|byte limit/,
+    operator: 'throws',
+    diff: 'simple'
+  }
