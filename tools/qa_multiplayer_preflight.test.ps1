@@ -328,6 +328,30 @@ public static class U1AliasProbe {
             Assert (!(Invoke-FixtureGit $other @('status', '--porcelain', '--untracked-files=all'))) 'Foreign control must be clean.'
             $control = Invoke-U1Preflight -Product $product -Options $gitOptions
             Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Real clean Product must attest its own commit.'
+            $sourcePath = Join-Path $product 'source.txt'
+            $originalSource = [IO.File]::ReadAllBytes($sourcePath)
+            $hiddenChanges = @()
+            foreach ($indexFlag in @('assume-unchanged', 'skip-worktree')) {
+                try {
+                    Invoke-FixtureGit $product @('update-index', "--$indexFlag", '--', 'source.txt') | Out-Null
+                    [IO.File]::WriteAllText($sourcePath, 'unrecorded hidden source change')
+                    Assert (!(Invoke-FixtureGit $product @('status', '--porcelain', '--untracked-files=all'))) 'Index-flag fixture must hide the tracked modification from status.'
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $sourceCheck = @($observed.checks | Where-Object name -eq 'source')
+                    $rejected = $observed.status -ne 'preparation-checks-passed' -and
+                        $sourceCheck.Count -eq 1 -and $sourceCheck[0].status -eq 'blocked' -and
+                        $null -eq $observed.source_commit
+                    $hiddenChanges += $rejected
+                    Write-Output (@{ event = 'hidden-index-change'; flag = $indexFlag; rejected = $rejected; source_status = $sourceCheck[0].status } | ConvertTo-Json -Compress)
+                } finally {
+                    [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+                    Invoke-FixtureGit $product @('update-index', "--no-$indexFlag", '--', 'source.txt') | Out-Null
+                }
+            }
+            Assert (@($hiddenChanges | Where-Object { !$_ }).Count -eq 0) 'Both hidden index flags must block source attestation.'
+            Assert ((Invoke-FixtureGit $product @('rev-parse', 'HEAD')) -eq $candidateHead) 'Source admission must not change the fixture commit.'
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Cleared flags and restored source must pass without changing history.'
             if ($shortAvailable) {
                 $shortControl = Invoke-U1Preflight -Product $shortProduct -Options $gitOptions
                 Assert ($shortControl.status -eq 'preparation-checks-passed' -and $shortControl.source_commit -eq $candidateHead) 'An actual short alias must bind to the same clean Git source.'
@@ -346,7 +370,7 @@ public static class U1AliasProbe {
             $originalSource = [IO.File]::ReadAllText($sourceFile)
             [IO.File]::WriteAllText($sourceFile, 'preserve dirty expected Product')
             $report = Invoke-U1Preflight -Product $product -Options $gitOptions
-            Assert (($report.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $report.source_commit -eq $candidateHead) 'Real tracked dirt must block at the correct candidate identity.'
+            Assert (($report.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $report.source_commit) 'Real tracked dirt must block without attesting a source commit.'
             Write-Output 'F03 native tracked/untracked dirty controls passed; source bytes preserved.'
             $foreignConfig = Join-Path $fixture 'foreign-git-config'
             [IO.File]::WriteAllText($foreignConfig, "[core]`nworktree = $($other.Replace('\', '/'))`n")
@@ -418,6 +442,7 @@ public static class U1AliasProbe {
         if ($Name -eq 'git') {
             if ($Arguments -contains '--show-toplevel') { return $product }
             if ($Arguments -contains 'rev-parse') { return 'a' * 40 }
+            if ($Arguments -contains 'ls-files') { return "H source.txt`0" }
             if ($script:dirty) { return '?? unrecorded.txt' }
             return ''
         }
@@ -456,7 +481,7 @@ public static class U1AliasProbe {
     $script:missing = ''
     $script:dirty = $true
     $report = Invoke-U1Preflight -Product $product -Options $options
-    Assert ($report.status -eq 'blocked' -and $report.source_commit -eq ('a' * 40)) 'Dirty source must not inherit clean-source acceptance.'
+    Assert ($report.status -eq 'blocked' -and $null -eq $report.source_commit) 'Dirty source must not inherit clean-source acceptance.'
     $script:dirty = $false
     $script:busy = $true
     Assert ((Invoke-U1Preflight -Product $product -Options $options).status -eq 'blocked') 'Occupied ports must block.'

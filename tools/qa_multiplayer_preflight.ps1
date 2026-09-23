@@ -211,11 +211,23 @@ function Invoke-U1Preflight {
             throw 'Git repository root does not match Product.'
         }
         $head = Invoke-U1ReadCommand 'git' @('-C', $Product, 'rev-parse', 'HEAD')
-        if ($head -notmatch '^[0-9a-f]{40,64}$') { throw 'Invalid source revision.' }
-        $report.source_commit = $head
+        if ($head -notmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$') { throw 'Invalid source revision.' }
+        # Status intentionally trusts these index flags and can hide changed bytes.
+        # Reject them without refreshing or altering the caller's index.
+        $entries = Invoke-U1ReadCommand 'git' @('--no-optional-locks', '-C', $Product, 'ls-files', '-v', '-z', '--cached')
+        if ($entries) {
+            $records = $entries.Split([char]0)
+            if ($records[-1] -cne '') { throw 'Incomplete source index inventory.' }
+            foreach ($record in $records[0..($records.Length - 2)]) {
+                if ($record -cnotmatch '^[A-Z] [\s\S]+$' -or $record[0] -ceq 'S') {
+                    throw 'Source index hides worktree changes or cannot be verified.'
+                }
+            }
+        }
         $status = Invoke-U1ReadCommand 'git' @('--no-optional-locks', '-c', 'core.fsmonitor=false', '-C', $Product, 'status', '--porcelain', '--untracked-files=all')
         if ($status) { throw 'Unrecorded source changes.' }
-    } 'Source revision could not be read or the candidate has tracked/untracked changes; commit the intended candidate before runtime acceptance.'
+        $report.source_commit = $head
+    } 'Source revision or index could not be verified, or the candidate has tracked/untracked changes; clear hidden index flags and commit the intended candidate before runtime acceptance.'
     Check 'rust-commands' {
         Assert-U1CommandAvailable 'rustc'
         Assert-U1CommandAvailable 'cargo'
