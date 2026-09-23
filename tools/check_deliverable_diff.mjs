@@ -12,6 +12,10 @@ const utf8 = new TextDecoder('utf-8', { fatal: true })
 const GIT_OPERATIONS = ['rev-parse', 'read-tree', 'reset', 'add', 'diff', 'write-tree']
 const failureReports = new WeakMap()
 
+// Native Windows resolution expands 8.3 aliases before identity and containment
+// comparisons; the JavaScript implementation can preserve the short spelling.
+const canonicalPath = process.platform === 'win32' ? realpathSync.native : realpathSync
+
 // Only fixed diagnostics and allowlisted native metadata cross the CLI boundary.
 // Child messages/stderr, argv and filesystem paths are not safely redactable.
 function nativeDiagnostic(error, operation = 'check') {
@@ -111,8 +115,8 @@ export function checkDeliverableDiff({
     'GIT_ALTERNATE_OBJECT_DIRECTORIES', 'GIT_NAMESPACE']) {
     if (process.env[key]) throw checkError(`Unset ${key} before checking a deliverable`)
   }
-  const root = realpathSync(repository)
-  const scratch = realpathSync(scratchRoot)
+  const root = canonicalPath(repository)
+  const scratch = canonicalPath(scratchRoot)
   if (scratch === root || containedRelative(root, scratch)) {
     throw checkError('Scratch root must be outside the source worktree')
   }
@@ -192,7 +196,7 @@ export function checkDeliverableDiff({
   let result
   let failure
   try {
-    if (realpathSync(git(['rev-parse', '--show-toplevel']).stdout.trim()) !== root) {
+    if (canonicalPath(git(['rev-parse', '--show-toplevel']).stdout.trim()) !== root) {
       throw checkError('Repository must be the worktree root, not a subdirectory')
     }
     function commit(revision) {
@@ -217,7 +221,7 @@ export function checkDeliverableDiff({
     for (const artifact of providerArtifacts) {
       let canonical
       try {
-        canonical = realpathSync(path.resolve(root, artifact))
+        canonical = canonicalPath(path.resolve(root, artifact))
       } catch (error) {
         if (error.code === 'ENOENT' || error.code === 'ENOTDIR') continue
         throw error

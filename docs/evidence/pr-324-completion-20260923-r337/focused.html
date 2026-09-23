@@ -1,0 +1,146 @@
+<!doctype html><meta charset="utf-8"><title>PR 324 focused evidence</title><style>body{font:16px/1.5 system-ui;margin:32px;color:#142033}pre{font:13px/1.45 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;padding:16px;background:#f4f6f8}</style><h1>PR #324: actual focused results</h1><p>Nine contributor gates passed. The actual retrospective baseline failed three short-alias checks; the corrected 52-case checker suite passed with zero skips on the same staged tree. Earlier native exporter and browser evidence retains its original scope.</p><p>Tested tree: a4c2e4aa1433051634ec559d8007d54b572735c3. Retrospective results are labeled; this is a saved-result report.</p><h2>pr324-short-alias-baseline-r309.log</h2><pre>✖ Windows short alias repository uses the same native source identity (4316.3758ms)
+ℹ Executed with a distinct native Windows 8.3 alias
+✖ Windows short alias scratch inside source rejects before creating an index (4143.6096ms)
+ℹ Executed with a distinct native Windows 8.3 alias
+✖ Windows short alias provider artifact is excluded from the candidate (6449.4128ms)
+ℹ Executed with a distinct native Windows 8.3 alias
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15095.6879
+
+✖ failing tests:
+
+test at tools\check_deliverable_diff.test.mjs:152:1
+✖ Windows short alias repository uses the same native source identity (4316.3758ms)
+  Error: Repository must be the worktree root, not a subdirectory
+      at checkError (file:///&lt;reviewed-worktree&gt;/tools/check_deliverable_diff.mjs:43:17)
+      at checkDeliverableDiff (file:///&lt;reviewed-worktree&gt;/tools/check_deliverable_diff.mjs:196:13)
+      at Object.check (file:///&lt;reviewed-worktree&gt;/tools/check_deliverable_diff.test.mjs:85:14)
+      at TestContext.&lt;anonymous&gt; (file:///&lt;reviewed-worktree&gt;/tools/check_deliverable_diff.test.mjs:157:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at tools\check_deliverable_diff.test.mjs:160:1
+✖ Windows short alias scratch inside source rejects before creating an index (4143.6096ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.&lt;anonymous&gt; (file:///&lt;reviewed-worktree&gt;/tools/check_deliverable_diff.test.mjs:165:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: &#x27;ERR_ASSERTION&#x27;,
+    actual: undefined,
+    expected: /outside the source worktree/,
+    operator: &#x27;throws&#x27;,
+    diff: &#x27;simple&#x27;
+  }
+
+test at tools\check_deliverable_diff.test.mjs:170:1
+✖ Windows short alias provider artifact is excluded from the candidate (6449.4128ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    {
+      baseCommit: &#x27;157f71b9586160321746295a90b1f312574d0e24&#x27;,
+  +   candidateTree: &#x27;84133ae7f89ed1a03df4752ddb23b7b366748b05&#x27;,
+  -   candidateTree: &#x27;34a1cf9b92dfd40aa57677eec2f108d2a9d7d079&#x27;,
+      changes: [
+        {
+  +       path: &#x27;provider artifact long filename.md&#x27;,
+  +       status: &#x27;A&#x27;
+  +     },
+  +     {
+          path: &#x27;tracked.txt&#x27;,
+          status: &#x27;M&#x27;
+        }
+      ],
+      diagnostics: &#x27;&#x27;,
+
+      at TestContext.&lt;anonymous&gt; (file:///&lt;reviewed-worktree&gt;/tools/check_deliverable_diff.test.mjs:179:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: &#x27;ERR_ASSERTION&#x27;,
+    actual: { passed: true, baseCommit: &#x27;157f71b9586160321746295a90b1f312574d0e24&#x27;, candidateTree: &#x27;84133ae7f89ed1a03df4752ddb23b7b366748b05&#x27;, changes: [ [Object], [Object] ], diagnostics: &#x27;&#x27; },
+    expected: { passed: true, baseCommit: &#x27;157f71b9586160321746295a90b1f312574d0e24&#x27;, candidateTree: &#x27;34a1cf9b92dfd40aa57677eec2f108d2a9d7d079&#x27;, changes: [ [Object] ], diagnostics: &#x27;&#x27; },
+    operator: &#x27;deepStrictEqual&#x27;,
+    diff: &#x27;simple&#x27;
+  }
+</pre><h2>pr324-short-alias-green-r312.log</h2><pre>✔ Windows short alias repository uses the same native source identity (8421.8682ms)
+ℹ Executed with a distinct native Windows 8.3 alias
+✔ Windows short alias scratch inside source rejects before creating an index (4809.1823ms)
+ℹ Executed with a distinct native Windows 8.3 alias
+✔ Windows short alias provider artifact is excluded from the candidate (9022.0579ms)
+ℹ Executed with a distinct native Windows 8.3 alias
+✔ native GIT_TRACE isolation protects source bytes and candidate tree (3822.0326ms)
+✔ native GIT_TRACE_PERFORMANCE isolation protects source bytes and candidate tree (3438.8131ms)
+✔ native GIT_TRACE_SETUP isolation protects source bytes and candidate tree (3316.5461ms)
+✔ native GIT_TRACE2 isolation protects source bytes and candidate tree (3425.0768ms)
+✔ native GIT_TRACE2_EVENT isolation protects source bytes and candidate tree (3514.0928ms)
+✔ native GIT_TRACE2_PERF isolation protects source bytes and candidate tree (3395.4934ms)
+✔ native source-selection recipe is pinned; drift requires an explicit parity review (0.9304ms)
+✔ RED untracked whitespace escapes old diff, fails new command; GREEN clean file passes (8335.358ms)
+✔ checks tracked bytes that are present in the worktree (4198.2226ms)
+✔ checks staged modification bytes that are present in the worktree (5011.4623ms)
+✔ checks staged addition bytes that are present in the worktree (4553.8119ms)
+✔ staged-only bad bytes are not exported when the worktree has clean replacement bytes (6007.9807ms)
+✔ clean staged bytes cannot hide bad worktree bytes or revive staged-only deleted additions (4085.3981ms)
+✔ assigned base, not current HEAD, determines committed changes, deletions and renamed source (4561.8687ms)
+✔ conflicted real index is untouched; physical resolution is checked just like native export (9115.7ms)
+✔ literal selection, spaces, leading dash, Unicode and brackets do not become Git pathspecs (5997.5239ms)
+✔ selected absent, explicitly ignored and magic/escaping paths fail rather than widen selection (9583.7704ms)
+✔ ignored evidence and runner-internal files are absent; provider artifacts reset to base, not deletion (6229.7606ms)
+✔ ignored files tracked by the seeded base remain selected; later ignored additions do not (7943.2473ms)
+✔ CRLF conversion and attributes use Git blob bytes without rewriting source or index (6985.783ms)
+✔ Windows verified-head seeding retains modes and resets every unselected committed path (6442.5666ms)
+✔ binary blobs use native Git diff behavior, not an independent text scanner (4818.9055ms)
+✔ a missing real index is neither read nor recreated (3833.5215ms)
+✔ linked worktree Git control files and real index are not modified (4923.0145ms)
+✔ invalid base, routing override, nested root and in-worktree scratch fail closed (9569.2812ms)
+✔ an inherited alternate index is not used or changed (2496.2009ms)
+✔ whole-check timeout is a command error, never whitespace success (3497.1807ms)
+✔ spawn, buffer, signal and Git failures cannot masquerade as whitespace results (11923.6584ms)
+✔ unexpected scratch contents cause visible cleanup failure and are preserved (2156.5334ms)
+✔ CLI rejects unknown, missing and unbounded arguments with exit 2 (10425.3811ms)
+✔ F01 CLI reports unavailable revision without exposing arguments (3338.4995ms)
+✔ F01 CLI reports missing literal selection without exposing arguments (3625.837ms)
+✔ F01 CLI reports ignored literal selection without exposing arguments (3839.3002ms)
+✔ F01 CLI retains safe native timeout classification (3973.6391ms)
+✔ F01 CLI retains safe native output overflow classification (3757.8148ms)
+✔ F01 CLI retains safe native spawn failure classification (3420.7289ms)
+✔ F01 CLI retains safe signal classification (3394.3173ms)
+✔ F01 CLI retains safe unrecognized filter failure classification (3012.666ms)
+✔ F01 CLI retains safe unknown child fields classification (3473.7627ms)
+✔ F01 CLI retains safe timeout with whitespace-like output classification (3524.5337ms)
+✔ F01 CLI retains safe overflow with whitespace-like output classification (3491.8544ms)
+✔ F01 CLI separates cleanup failure from original failure (2922.0077ms)
+✔ F01 CLI separates cleanup failure after successful check (3550.9938ms)
+✔ F01 CLI suppresses unsafe parser/filesystem text and retains safe input guidance (5515.3976ms)
+✔ F01 CLI correlates retained owned directories without revealing their sensitive root (4627.9236ms)
+✔ F01 CLI recognizes a native required clean-filter failure, not a missing path (3389.8135ms)
+✔ F02 native filter repeated delimiters (24000) cannot stall receipt or cleanup (4539.8948ms)
+✔ F02 native filter repeated delimiters (349354) cannot stall receipt or cleanup (4423.3925ms)
+✔ F02 final-line recognition handles hostile near-limit shapes without trusting their text (16658.4495ms)
+ℹ tests 52
+ℹ suites 0
+ℹ pass 52
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 270585.4197
+</pre>

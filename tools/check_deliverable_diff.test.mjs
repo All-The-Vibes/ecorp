@@ -120,6 +120,65 @@ function fixture(t) {
   return { owned, repo, scratchRoot, git, write, base, options, snapshot, check, cli }
 }
 
+function windowsShortAlias(f, t, target) {
+  const script = path.join(f.owned, 'short-alias.ps1')
+  writeFileSync(script, `param([string]$Target)
+$ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition @'
+using System;
+using System.Text;
+using System.Runtime.InteropServices;
+public static class DiffShortPath {
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern uint GetShortPathName(string path, StringBuilder output, uint size);
+}
+'@
+$buffer = [Text.StringBuilder]::new(32768)
+$length = [DiffShortPath]::GetShortPathName($Target, $buffer, $buffer.Capacity)
+if (!$length -or $length -ge $buffer.Capacity) { throw 'Native short-path lookup failed.' }
+$buffer.ToString()
+`)
+  const alias = execFileSync('pwsh', ['-NoLogo', '-NoProfile', '-NonInteractive', '-File', script,
+    '-Target', target], { encoding: 'utf8', windowsHide: true, timeout: 15_000 }).trim()
+  if (alias.toLowerCase() === path.resolve(target).toLowerCase()) {
+    t.skip('This volume does not expose a distinct native 8.3 alias')
+    return null
+  }
+  assert.equal(realpathSync.native(alias), realpathSync.native(target), 'the alias denotes the same native object')
+  t.diagnostic('Executed with a distinct native Windows 8.3 alias')
+  return alias
+}
+
+test('Windows short alias repository uses the same native source identity', { skip: process.platform !== 'win32' }, t => {
+  const f = fixture(t)
+  const alias = windowsShortAlias(f, t, f.repo)
+  if (!alias) return
+  f.write('tracked.txt', 'updated source\n')
+  assert.deepEqual(f.check({ repository: alias }), f.check())
+})
+
+test('Windows short alias scratch inside source rejects before creating an index', { skip: process.platform !== 'win32' }, t => {
+  const f = fixture(t)
+  const alias = windowsShortAlias(f, t, f.repo)
+  if (!alias) return
+  const before = f.snapshot()
+  assert.throws(() => checkDeliverableDiff({ ...f.options, scratchRoot: alias }), /outside the source worktree/)
+  assert.deepEqual(f.snapshot(), before, 'no temporary directory, source file or real index may change')
+  assert.deepEqual(readdirSync(f.scratchRoot), [])
+})
+
+test('Windows short alias provider artifact is excluded from the candidate', { skip: process.platform !== 'win32' }, t => {
+  const f = fixture(t)
+  const artifact = path.join(f.repo, 'provider artifact long filename.md')
+  f.write('provider artifact long filename.md', 'provider-only evidence\n')
+  f.write('tracked.txt', 'updated source\n')
+  const alias = windowsShortAlias(f, t, artifact)
+  if (!alias) return
+  const expected = f.check({ providerArtifacts: [artifact] })
+  assert.deepEqual(expected.changes, [{ status: 'M', path: 'tracked.txt' }])
+  assert.deepEqual(f.check({ providerArtifacts: [alias] }), expected)
+})
+
 for (const name of ['GIT_TRACE', 'GIT_TRACE_PERFORMANCE', 'GIT_TRACE_SETUP',
   'GIT_TRACE2', 'GIT_TRACE2_EVENT', 'GIT_TRACE2_PERF']) {
   test(`native ${name} isolation protects source bytes and candidate tree`, (t) => {
