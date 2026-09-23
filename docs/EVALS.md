@@ -155,7 +155,7 @@ checks, signed-object validation, and independent outcome review remain required
 
 ### U1 fresh-fixture preparation (issue #240)
 
-`tools/qa_multiplayer_preflight.ps1` is a read-only Windows prerequisite check, not
+`tools/qa_multiplayer_preflight.ps1` is a Windows prerequisite check, not
 a launcher, sandbox qualification, runtime-readiness receipt or U1 acceptance.
 It reuses the repository's Git/toolchain and native Windows listener inventory;
 it does not replace `local_stack.psm1` process ownership or the existing E2E drivers.
@@ -190,8 +190,14 @@ paths without reparse ancestors, distinct high ports, command presence, Node,
 the effective npm registry, and Docker connectivity. Rust and pnpm shims are not
 executed because they can download toolchains; their required versions are recorded,
 not verified. Registry values and command stderr are never included in diagnostics.
-No directories, containers, credentials, databases, services or packages are created;
-no provider runs, GitHub mutations, database connections or shutdowns are performed.
+Source attestation rejects inherited Git selection/tracing, local includes and filters,
+hidden index flags, gitlinks and staged changes. It creates an owned temporary index
+outside protected and QA roots, populates it from the pinned commit, and checks worktree
+contents without trusting the caller's cached file metadata or recursing into submodules.
+It removes that index and reports the actual temporary-index effects; the source index,
+source bytes and QA root remain unchanged. No containers, credentials, databases, services
+or packages are created; no provider runs, GitHub mutations, database connections or
+shutdowns are performed.
 
 A free-port observation is not a reservation. Recheck source, paths, ports, exact
 runtime/security configuration and ownership immediately before any later launch.

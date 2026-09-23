@@ -153,6 +153,47 @@ function Assert-U1CommandAvailable([string]$Name) {
     Get-Command $Name -CommandType Application -ErrorAction Stop | Out-Null
 }
 
+function Get-U1GitConfigFiles([string]$Product) {
+    # Repository discovery itself can expand config.worktree includes. Locate
+    # the two Git-defined path markers first, using only checked local paths.
+    function Get-GitMetadataFile([string]$File, [bool]$Optional = $false) {
+        Assert-U1NoReparseAncestor (Split-Path -Parent $File)
+        try { $item = Get-Item -LiteralPath $File -Force -ErrorAction Stop }
+        catch [System.Management.Automation.ItemNotFoundException] {
+            if ($Optional) { return $null }
+            throw
+        }
+        if ($item -isnot [IO.FileInfo] -or $item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            throw 'Git metadata must be a regular local file.'
+        }
+        return $item
+    }
+    function Read-GitPathMarker([string]$File, [string]$Parent, [string]$Prefix) {
+        $item = Get-GitMetadataFile $File
+        if ($item.Length -gt 4096) { throw 'Unsupported Git path marker.' }
+        $text = [IO.File]::ReadAllText($File, [Text.UTF8Encoding]::new($false, $true)).TrimEnd([char[]]"`r`n")
+        if (!$text.StartsWith($Prefix, [StringComparison]::Ordinal) -or $text.Contains("`r") -or $text.Contains("`n")) { throw 'Unsupported Git path marker.' }
+        $value = $text.Substring($Prefix.Length)
+        if (!$value) { throw 'Empty Git path marker.' }
+        $path = if ([IO.Path]::IsPathRooted($value)) { Get-U1LocalPath $value } else { Get-U1LocalPath ([IO.Path]::GetFullPath($value, $Parent)) }
+        Assert-U1NoReparseAncestor $path
+        if (!(Test-Path -LiteralPath $path -PathType Container)) { throw 'Missing local Git directory.' }
+        return $path
+    }
+    $marker = Join-Path $Product '.git'
+    Assert-U1NoReparseAncestor $Product
+    $item = Get-Item -LiteralPath $marker -Force -ErrorAction Stop
+    if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Reparse Git directories are not supported.' }
+    $gitDir = if ($item -is [IO.DirectoryInfo]) { $marker } else { Read-GitPathMarker $marker $Product 'gitdir: ' }
+    $commonMarker = Join-Path $gitDir 'commondir'
+    $commonDir = if (Get-GitMetadataFile $commonMarker $true) { Read-GitPathMarker $commonMarker $gitDir '' } else { $gitDir }
+    $local = Join-Path $commonDir 'config'
+    $worktree = Join-Path $gitDir 'config.worktree'
+    Get-GitMetadataFile $local | Out-Null
+    Get-GitMetadataFile $worktree $true | Out-Null
+    return @{ local = $local; worktree = $worktree }
+}
+
 function Invoke-U1SourceGit([string]$Product, [string[]]$Arguments) {
     # Source identity must not depend on machine/user attributes or filters.
     # These process-only settings are restored, including originally absent keys.
@@ -163,7 +204,11 @@ function Invoke-U1SourceGit([string]$Product, [string[]]$Arguments) {
             $saved[$name] = @{ exists = Test-Path -LiteralPath "Env:$name"; value = [Environment]::GetEnvironmentVariable($name, 'Process') }
             [Environment]::SetEnvironmentVariable($name, $isolated[$name], 'Process')
         }
-        return Invoke-U1ReadCommand 'git' (@('--no-replace-objects', '--no-optional-locks', '-c', 'core.attributesFile=', '-C', $Product) + $Arguments)
+        return Invoke-U1ReadCommand 'git' (@('--no-replace-objects', '--no-optional-locks',
+            '-c', 'core.attributesFile=', '-c', 'core.fsmonitor=false',
+            '-c', 'core.untrackedCache=false', '-c', 'core.splitIndex=false',
+            '-c', 'core.sparseCheckout=false', '-c', 'index.sparse=false',
+            '-c', 'core.ignoreStat=false', '-C', $Product) + $Arguments)
     } finally {
         foreach ($name in $saved.Keys) {
             if ($saved[$name].exists) { [Environment]::SetEnvironmentVariable($name, $saved[$name].value, 'Process') }
@@ -218,12 +263,25 @@ function Invoke-U1Preflight {
     } 'Listener inventory failed, fixture plan is invalid, or a requested port is occupied; no port is reserved by preflight.'
     Check 'source' {
         # -C does not override inherited repository, index or configuration selection.
-        if (@(Get-ChildItem Env: | Where-Object Name -match '^GIT_(DIR|WORK_TREE|COMMON_DIR|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|CONFIG.*|ATTR.*|IMPLICIT_WORK_TREE|GRAFT_FILE|NO_REPLACE_OBJECTS|REPLACE_REF_BASE|PREFIX|SHALLOW_FILE|NAMESPACE|CEILING_DIRECTORIES|DISCOVERY_ACROSS_FILESYSTEM)$').Count) {
+        if (@(Get-ChildItem Env: | Where-Object Name -match '^GIT_(DIR|WORK_TREE|COMMON_DIR|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|CONFIG.*|ATTR.*|TRACE.*|IMPLICIT_WORK_TREE|GRAFT_FILE|NO_REPLACE_OBJECTS|REPLACE_REF_BASE|PREFIX|SHALLOW_FILE|NAMESPACE|CEILING_DIRECTORIES|DISCOVERY_ACROSS_FILESYSTEM)$').Count) {
             throw 'Inherited Git selection is not supported.'
         }
         $expectedIdentity = $null
         $expectedRoot = Get-U1LocalPath $Product ([ref]$expectedIdentity)
         Assert-U1NoReparseAncestor $expectedRoot
+        # --local and --worktree perform repository setup before honoring
+        # --no-includes. Explicit --file inventories avoid that early expansion.
+        $configFiles = Get-U1GitConfigFiles $expectedRoot
+        $localKeys = (Invoke-U1SourceGit $Product @('config', '--file', $configFiles.local, '--no-includes', '--null', '--name-only', '--list')).Split([char]0)
+        if (@($localKeys | Where-Object { $_ -match '^(include\.path|includeif\..*\.path)$' }).Count) {
+            throw 'Repository Git includes are not supported for source attestation.'
+        }
+        if ($localKeys -contains 'extensions.worktreeconfig' -and (Test-Path -LiteralPath $configFiles.worktree)) {
+            $worktreeKeys = (Invoke-U1SourceGit $Product @('config', '--file', $configFiles.worktree, '--no-includes', '--null', '--name-only', '--list')).Split([char]0)
+            if (@($worktreeKeys | Where-Object { $_ -match '^(include\.path|includeif\..*\.path)$' }).Count) {
+                throw 'Worktree Git includes are not supported for source attestation.'
+            }
+        }
         $observedIdentity = $null
         $observedRoot = Get-U1LocalPath (Invoke-U1SourceGit $Product @('rev-parse', '--show-toplevel')) ([ref]$observedIdentity)
         if (!$observedIdentity.Equals($expectedIdentity, [StringComparison]::OrdinalIgnoreCase)) {
@@ -255,12 +313,70 @@ function Invoke-U1Preflight {
                 }
             }
         }
-        # Local refs/replace must not substitute a different commit or tree while
-        # HEAD still reports the original object ID that this report attests.
-        $status = Invoke-U1SourceGit $Product @('-c', 'core.fsmonitor=false', 'status', '--porcelain', '--untracked-files=all')
-        if ($status) { throw 'Unrecorded source changes.' }
+        # Reject gitlinks before any status can recurse into child repositories
+        # with their own filters/configuration. Also reject unmerged index stages.
+        $staged = Invoke-U1SourceGit $Product @('ls-files', '--stage', '-z', '--cached')
+        if ($staged) {
+            $records = $staged.Split([char]0)
+            if ($records[-1] -cne '') { throw 'Incomplete source stage inventory.' }
+            foreach ($record in $records[0..($records.Length - 2)]) {
+                if ($record -cnotmatch '^(100644|100755|120000) [0-9a-f]{40}(?:[0-9a-f]{24})? 0\t[\s\S]+$') {
+                    throw 'Gitlinks or unverifiable source index entries are not supported.'
+                }
+            }
+        }
+        $stagedChanges = Invoke-U1SourceGit $Product @('diff-index', '--cached', '--raw', '-z',
+            '--no-ext-diff', '--no-textconv', '--ignore-submodules=all', $head, '--')
+        if ($stagedChanges) { throw 'Staged source changes.' }
+
+        # A real index can cache a false clean result for same-size bytes with a
+        # restored timestamp. Populate a fresh index from the pinned commit so
+        # status must inspect content, without refreshing the caller's index.
+        if (!$report.plan) { throw 'A disjoint fixture plan is required.' }
+        $scratchIdentity = $null
+        $scratch = Get-U1LocalPath (Join-Path ([IO.Path]::GetTempPath()) ('ecorp-u1-index-' + [guid]::NewGuid().ToString('N'))) ([ref]$scratchIdentity)
+        Assert-U1NoReparseAncestor $scratch
+        foreach ($protected in @($report.plan.protected_roots) + @($report.plan.qa_root,
+            (Split-Path -Parent $configFiles.local), (Split-Path -Parent $configFiles.worktree))) {
+            $protectedIdentity = $null
+            Get-U1LocalPath $protected ([ref]$protectedIdentity) | Out-Null
+            if (Test-U1PathOverlap $scratchIdentity $protectedIdentity) { throw 'Temporary index overlaps protected source or fixture paths.' }
+        }
+        New-Item -ItemType Directory -Path $scratch -ErrorAction Stop | Out-Null
+        $report.effects = 'owned-temporary-index-created'
+        $indexPath = Join-Path $scratch 'index'
+        $savedIndex = @{
+            exists = Test-Path -LiteralPath 'Env:GIT_INDEX_FILE'
+            value = [Environment]::GetEnvironmentVariable('GIT_INDEX_FILE', 'Process')
+        }
+        try {
+            [Environment]::SetEnvironmentVariable('GIT_INDEX_FILE', $indexPath, 'Process')
+            Invoke-U1SourceGit $Product @('read-tree', '--no-sparse-checkout', $head) | Out-Null
+            $status = Invoke-U1SourceGit $Product @('status', '--porcelain', '--untracked-files=all', '--ignore-submodules=all')
+            if ($status) { throw 'Unrecorded source changes.' }
+        } finally {
+            if ($savedIndex.exists) {
+                [Environment]::SetEnvironmentVariable('GIT_INDEX_FILE', $savedIndex.value, 'Process')
+            } else {
+                Remove-Item -LiteralPath 'Env:GIT_INDEX_FILE' -ErrorAction SilentlyContinue
+            }
+            $report.effects = 'owned-temporary-index-retained'
+            $cleanupIdentity = $null
+            Get-U1LocalPath $scratch ([ref]$cleanupIdentity) | Out-Null
+            if ($cleanupIdentity -cne $scratchIdentity) { throw 'Temporary index ownership changed.' }
+            Assert-U1NoReparseAncestor $scratch
+            # Remove only our two known files. An unexpected entry preserves the
+            # directory and blocks success instead of triggering recursive cleanup.
+            [IO.File]::Delete($indexPath)
+            [IO.File]::Delete($indexPath + '.lock')
+            [IO.Directory]::Delete($scratch)
+            $report.effects = 'owned-temporary-index-created-and-removed'
+        }
+        if ((Invoke-U1SourceGit $Product @('rev-parse', '--verify', 'HEAD^{commit}')) -cne $head) {
+            throw 'Source commit changed during attestation.'
+        }
         $report.source_commit = $head
-    } 'Source revision, index, attributes or filter configuration could not be verified, or the candidate has tracked/untracked changes; remove local overrides, clear hidden index flags and commit the intended candidate before runtime acceptance.'
+    } 'Source revision, index, attributes or filter configuration could not be verified, the candidate contains gitlinks or changes, or temporary-index isolation failed; remove local overrides, clear hidden flags and commit the intended candidate before runtime acceptance.'
     Check 'rust-commands' {
         Assert-U1CommandAvailable 'rustc'
         Assert-U1CommandAvailable 'cargo'

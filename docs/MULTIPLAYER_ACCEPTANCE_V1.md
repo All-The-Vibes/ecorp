@@ -101,6 +101,9 @@ authentication system or microservice is introduced by this contract.
 
 Use the existing `local_stack.psm1` process-identity helpers and E2E drivers where
 applicable. The current `qa_multiplayer_preflight.ps1` is preparation only.
+Its source check uses an owned temporary index outside the product, protected
+roots and QA root, reports its creation/removal, and preserves the real source
+index. Gitlinks are rejected before status can recurse into child configuration.
 `qa_factory_run_activity.ps1` is a scoped deterministic supervisor, not a generic
 U1/OIDC/M34 launcher; review any extraction instead of copying it blindly.
 `owned_test_stack.mjs` supplies scoped server restart checks, not whole-fixture
