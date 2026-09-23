@@ -736,6 +736,17 @@ pub struct ReceiptEvidence {
     pub raw: Value,
 }
 impl ReceiptEvidence {
+    /// Provider fee metadata may become available after inclusion. Consensus fields
+    /// and an already observed fee must never change or disappear.
+    pub fn ensure_successor_of(&self, previous: &Self) -> Result<()> {
+        if self.receipt != previous.receipt
+            || previous.l1_fee.is_some_and(|fee| self.l1_fee != Some(fee))
+        {
+            return Err(Error::Evidence("receipt changed after inclusion"));
+        }
+        Ok(())
+    }
+
     pub fn parse(raw: Value) -> Result<Self> {
         if raw.get("status") != Some(&json!("0x0")) && raw.get("status") != Some(&json!("0x1")) {
             return Err(Error::Evidence("receipt status missing"));
@@ -1691,6 +1702,43 @@ mod tests {
     use super::*;
     use alloy::sol_types::SolValue;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    #[test]
+    fn receipt_fee_enrichment_preserves_every_canonical_field_and_known_fee() {
+        let mut raw = receipt(json!([]), "0x1");
+        raw.as_object_mut().unwrap().remove("l1Fee");
+        let included = ReceiptEvidence::parse(raw.clone()).unwrap();
+        assert!(included.ensure_successor_of(&included).is_ok());
+        raw["l1Fee"] = json!("0x2a");
+        let enriched = ReceiptEvidence::parse(raw.clone()).unwrap();
+        assert!(enriched.ensure_successor_of(&included).is_ok());
+        assert!(enriched.ensure_successor_of(&enriched).is_ok());
+        assert!(included.ensure_successor_of(&enriched).is_err());
+        raw["l1Fee"] = json!("0x2b");
+        assert!(
+            ReceiptEvidence::parse(raw.clone())
+                .unwrap()
+                .ensure_successor_of(&enriched)
+                .is_err()
+        );
+        for (field, changed) in [
+            ("status", json!("0x0")),
+            ("gasUsed", json!("0x42")),
+            ("effectiveGasPrice", json!("0x42")),
+            ("blockHash", json!(B256::repeat_byte(99))),
+            ("transactionHash", json!(B256::repeat_byte(99))),
+        ] {
+            let mut changed_raw = raw.clone();
+            changed_raw[field] = changed;
+            assert!(
+                ReceiptEvidence::parse(changed_raw)
+                    .unwrap()
+                    .ensure_successor_of(&included)
+                    .is_err(),
+                "{field}"
+            );
+        }
+    }
 
     #[tokio::test]
     async fn fee_history_accepts_unused_finite_ratios_but_rejects_duplicate_and_float_wei() {

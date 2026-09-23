@@ -43,14 +43,21 @@ Before a non-trivial change, read:
 
 Run before committing:
 
+<!-- ecorp:validation-commands -->
 ```powershell
 node tools/check_migrations.mjs
+node tools/check_state_audit_compatibility.mjs
+cargo test -p crony-audit --test ethereum_local_chain
+pnpm check:docs
+pnpm test:unit
+pnpm test:steward
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm build:web
 pnpm lint:web
 ```
+<!-- /ecorp:validation-commands -->
 
 For user-visible behavior, start the complete local stack and exercise the browser-to-server-to-runner
 path. Unit tests alone do not prove the product works.

@@ -1,4 +1,540 @@
 use super::*;
+use anyhow::ensure;
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
+async fn base_v2_finalized_incident_survives_observations_and_wallet_quarantine(
+    pool: PgPool,
+) -> Result<()> {
+    check_terminal_incident(pool, "finalized_contradiction", false).await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
+async fn base_v2_conflicting_incident_survives_observations_and_nonce_conflict(
+    pool: PgPool,
+) -> Result<()> {
+    check_terminal_incident(pool, "conflicting_anchor", true).await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
+async fn base_v2_invalid_evidence_survives_observations_and_wallet_quarantine(
+    pool: PgPool,
+) -> Result<()> {
+    check_terminal_incident(pool, "invalid_evidence", false).await
+}
+
+async fn check_terminal_incident(pool: PgPool, incident: &str, nonce_conflict: bool) -> Result<()> {
+    let (store, ids, input) = base_fixture(pool).await?;
+    let first_claim = archived_claim(&store, &ids, &input).await?;
+    let second = second_destination(&store, &ids, &input).await?;
+    store
+        .request_base_anchor(ids.corp_id, ids.alice_actor_id, second.id, Uuid::new_v4())
+        .await?;
+    let second_claim = store
+        .claim_base_intent(ids.corp_id, second.id, Uuid::new_v4())
+        .await?
+        .context("second stream claim")?;
+    let attempt = BaseAttempt {
+        request: SignRequest {
+            attempt_id: Uuid::new_v4(),
+            intent_id: first_claim.intent.id,
+            corp_id: ids.corp_id,
+            manifest_digest: input.config.manifest_digest,
+            immutable_key_identity: input.config.signer_key_identity.clone(),
+            transaction: FrozenTransaction {
+                chain_id: input.config.chain_id,
+                sender: input.config.publisher,
+                contract: input.config.contract_address,
+                nonce: 0,
+                gas_limit: 100_000,
+                max_fee_per_gas: 5,
+                max_priority_fee_per_gas: 1,
+                call: crony_base::abi::AnchorCall {
+                    stream_id: input.config.stream_id,
+                    sequence: u64::try_from(first_claim.intent.sequence)?,
+                    checkpoint_digest: first_claim.intent.checkpoint_digest.parse()?,
+                    previous_anchor_digest: B256::ZERO,
+                },
+            },
+        },
+        ordinal: 0,
+        created_at: Utc::now(),
+        signed: None,
+    };
+    let (receipt, block) = receipt_fixture(
+        &attempt,
+        B256::repeat_byte(88),
+        true,
+        Some(U256::from(1000)),
+    )?;
+    let event = receipt.exact_event(
+        input.config.contract_address,
+        &attempt.request.transaction.call,
+        input.config.publisher,
+    )?;
+    // Reproduce an already persisted integrity incident in the owned database.
+    // A new valid checkpoint observation would otherwise advance the projection.
+    sqlx::query("UPDATE base_audit_destinations SET status=$2,enabled=false,restore_required=true WHERE id=$1")
+        .bind(input.id).bind(incident).execute(&store.pool).await?;
+    assert_eq!(
+        store
+            .observe_base_event(ids.corp_id, input.id, &event, &receipt, &block)
+            .await?,
+        incident
+    );
+    let before = store
+        .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
+        .await?;
+    assert_eq!(before.verified_sequence, 0);
+    assert_eq!(before.observed_sequence, 0);
+    let paused = store
+        .control_base_destination(
+            ids.corp_id,
+            ids.alice_actor_id,
+            input.id,
+            before.version,
+            false,
+        )
+        .await?;
+    assert_eq!(paused.status, incident);
+    assert!(
+        store
+            .control_base_destination(
+                ids.corp_id,
+                ids.alice_actor_id,
+                input.id,
+                paused.version,
+                true
+            )
+            .await
+            .is_err()
+    );
+    assert!(store.check_base_fence(&first_claim).await.is_err());
+    assert!(
+        store
+            .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, Uuid::new_v4())
+            .await
+            .is_err()
+    );
+    assert!(
+        store
+            .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
+            .await?
+            .is_none()
+    );
+    if nonce_conflict {
+        let error = store
+            .reserve_base_attempt(&second_claim, &quote(), U256::from(9_000_000), 9, false)
+            .await
+            .unwrap_err();
+        assert!(format!("{error:#}").contains("unknown consumed nonce"));
+    } else {
+        store
+            .quarantine_base_wallet(&second_claim, "nonce_conflict")
+            .await?;
+    }
+    let replacement = SealedHeader {
+        hash: B256::repeat_byte(99),
+        ..block
+    };
+    store
+        .record_base_reorg(ids.corp_id, input.id, event.block_hash, &replacement)
+        .await?;
+    assert!(
+        store
+            .complete_base_validation(
+                ids.corp_id,
+                input.id,
+                BaseValidation {
+                    epoch: "test-journal",
+                    cursor: 0,
+                    requests: &[],
+                    pending_nonce: 0,
+                    observation: &json!({}),
+                }
+            )
+            .await
+            .is_err()
+    );
+    let after = store
+        .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
+        .await?;
+    assert_eq!(after.status, incident);
+    assert_eq!(after.verified_sequence, before.verified_sequence);
+    assert_eq!(after.verified_digest, before.verified_digest);
+    assert_eq!(after.observed_sequence, before.observed_sequence);
+    assert!(!after.enabled && after.restore_required);
+    let retained: i64 = sqlx::query_scalar("SELECT count(*) FROM base_audit_evidence WHERE destination_id=$1 AND kind='observed_event'")
+        .bind(input.id).fetch_one(&store.pool).await?;
+    assert_eq!(retained, 1);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
+async fn base_v2_fee_enrichment_at_inclusion_is_monotonic(pool: PgPool) -> Result<()> {
+    check_fee_enrichment(pool, false).await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
+async fn base_v2_fee_enrichment_at_finality_is_atomic_and_replayable(pool: PgPool) -> Result<()> {
+    check_fee_enrichment(pool, true).await
+}
+
+async fn check_fee_enrichment(pool: PgPool, at_finality: bool) -> Result<()> {
+    let (store, ids, input) = base_fixture(pool).await?;
+    let claim = archived_claim(&store, &ids, &input).await?;
+    let attempt = store
+        .reserve_base_attempt(&claim, &quote(), U256::from(9_000_000), 0, false)
+        .await?;
+    let signed = sign_fixture(&attempt).await?;
+    store
+        .persist_base_signed(&claim, &attempt.request, &signed, 1)
+        .await?;
+    let (missing, block) = receipt_fixture(&attempt, signed.hash(), true, None)?;
+    store
+        .record_base_inclusion(&claim, &missing, &block)
+        .await?;
+    let initial: (String, String, bool) = sqlx::query_as(
+        "SELECT settled::text,reservation::text,fee_warning FROM base_audit_intents WHERE id=$1",
+    )
+    .bind(claim.intent.id)
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(initial, ("50000".into(), "570000".into(), true));
+    let original: Value = sqlx::query_scalar(
+        "SELECT evidence FROM base_audit_evidence WHERE intent_id=$1 AND kind='inclusion'",
+    )
+    .bind(claim.intent.id)
+    .fetch_one(&store.pool)
+    .await?;
+    let (known, _) = receipt_fixture(&attempt, signed.hash(), true, Some(U256::from(1000)))?;
+    if at_finality {
+        // A first finalized observation can still lack L1 metadata. A resumed
+        // worker must accept enrichment without rewriting that original proof.
+        store
+            .record_base_spend_finality(&claim, &missing, &block, &finality_fixture(&block))
+            .await?;
+        store
+            .record_base_spend_finality(&claim, &known, &block, &finality_fixture(&block))
+            .await?;
+    } else {
+        store.record_base_inclusion(&claim, &known, &block).await?;
+    }
+    store.record_base_inclusion(&claim, &known, &block).await?;
+    store
+        .record_base_inclusion(&claim, &missing, &block)
+        .await?;
+    store
+        .record_base_spend_finality(&claim, &known, &block, &finality_fixture(&block))
+        .await?;
+    store
+        .record_base_spend_finality(&claim, &missing, &block, &finality_fixture(&block))
+        .await?;
+    let settled: (String, String, bool) = sqlx::query_as(
+        "SELECT settled::text,reservation::text,fee_warning FROM base_audit_intents WHERE id=$1",
+    )
+    .bind(claim.intent.id)
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(settled, ("51000".into(), "0".into(), false));
+    let replayed: Value = sqlx::query_scalar(
+        "SELECT evidence FROM base_audit_evidence WHERE intent_id=$1 AND kind='inclusion'",
+    )
+    .bind(claim.intent.id)
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(original, replayed);
+    let counts: (i64, i64) = sqlx::query_as("SELECT count(*) FILTER(WHERE kind='inclusion_fee_enriched'),count(*) FILTER(WHERE kind='spend_finalized') FROM base_audit_evidence WHERE intent_id=$1")
+        .bind(claim.intent.id).fetch_one(&store.pool).await?;
+    assert_eq!(counts, (1, 1));
+    let (changed_fee, _) = receipt_fixture(&attempt, signed.hash(), true, Some(U256::from(1001)))?;
+    assert!(
+        store
+            .record_base_inclusion(&claim, &changed_fee, &block)
+            .await
+            .is_err()
+    );
+    let mut raw = known.raw.clone();
+    raw["gasUsed"] = json!("0x2711");
+    assert!(
+        store
+            .record_base_inclusion(&claim, &ReceiptEvidence::parse(raw)?, &block)
+            .await
+            .is_err()
+    );
+    let event = missing.exact_event(
+        input.config.contract_address,
+        &attempt.request.transaction.call,
+        input.config.publisher,
+    )?;
+    store
+        .observe_base_event(ids.corp_id, input.id, &event, &missing, &block)
+        .await?;
+    store
+        .observe_base_event(ids.corp_id, input.id, &event, &known, &block)
+        .await?;
+    store
+        .observe_base_event(ids.corp_id, input.id, &event, &missing, &block)
+        .await?;
+    let observations: Vec<(String, Value)> = sqlx::query_as("SELECT kind,evidence->'receipt' FROM base_audit_evidence WHERE destination_id=$1 AND kind IN ('observed_event','observed_event_fee_enriched') ORDER BY id")
+        .bind(input.id).fetch_all(&store.pool).await?;
+    assert_eq!(
+        observations,
+        vec![
+            ("observed_event".into(), serde_json::to_value(&missing)?),
+            (
+                "observed_event_fee_enriched".into(),
+                serde_json::to_value(&known)?
+            )
+        ]
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
+async fn base_v2_archive_witness_must_be_complete_and_bound_before_claim(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, ids, input) = base_fixture(pool).await?;
+    enable_fixture(&store, &ids, &input).await?;
+    let intent = store
+        .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, Uuid::new_v4())
+        .await?;
+    assert_eq!(intent.state, "archive_pending");
+    let github = publish_fixture_archive(&store, &ids).await?;
+    let valid: Value = sqlx::query_scalar("SELECT witness FROM state_audit_anchor_receipts WHERE destination_id=$1 AND checkpoint_digest=$2")
+        .bind(github).bind(&intent.checkpoint_digest).fetch_one(&store.pool).await?;
+    assert!(
+        store
+            .base_audit_preview(ids.corp_id, ids.alice_actor_id, input.id)
+            .await?
+            .archive_ready
+    );
+    let mut invalid = vec![
+        None,
+        Some(json!({})),
+        Some(json!({"provider":"github","archive_publication":null})),
+    ];
+    for (pointer, replacement) in [
+        ("/archive_publication/archive/parts", json!([])),
+        (
+            "/archive_publication/archive/ledger_id",
+            json!(Uuid::new_v4().to_string()),
+        ),
+        (
+            "/archive_publication/archive/checkpoint_digest",
+            json!("a".repeat(64)),
+        ),
+        ("/archive_publication/archive/byte_count", json!(0)),
+        (
+            "/archive_publication/archive/parts/0/path",
+            json!("elsewhere/archive.json"),
+        ),
+        (
+            "/archive_publication/archive/parts/0/sha256",
+            json!("short"),
+        ),
+        ("/archive_publication/index_sha256", json!("0".repeat(64))),
+        (
+            "/archive_publication/index_path",
+            json!("other/archive.json"),
+        ),
+        ("/commit", json!("different-commit")),
+        ("/repository", json!("different/repository")),
+    ] {
+        let mut witness = valid.clone();
+        *witness
+            .pointer_mut(pointer)
+            .context("native fixture witness field missing")? = replacement;
+        invalid.push(Some(witness));
+    }
+    for witness in invalid {
+        // These are historical/corrupt receipts in the SQLx-owned fixture only.
+        sqlx::query("UPDATE state_audit_anchor_receipts SET witness=$3 WHERE destination_id=$1 AND checkpoint_digest=$2")
+            .bind(github).bind(&intent.checkpoint_digest).bind(witness).execute(&store.pool).await?;
+        assert!(
+            !store
+                .base_audit_preview(ids.corp_id, ids.alice_actor_id, input.id)
+                .await?
+                .archive_ready
+        );
+        sqlx::query("UPDATE base_audit_intents SET state='ready' WHERE id=$1")
+            .bind(intent.id)
+            .execute(&store.pool)
+            .await?;
+        assert!(
+            store
+                .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
+                .await?
+                .is_none()
+        );
+        let current = store
+            .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, Uuid::new_v4())
+            .await?;
+        assert_eq!(current.id, intent.id);
+        assert_eq!(current.state, "archive_pending");
+        let state: (Option<i64>, Option<Uuid>) =
+            sqlx::query_as("SELECT nonce,worker_id FROM base_audit_intents WHERE id=$1")
+                .bind(intent.id)
+                .fetch_one(&store.pool)
+                .await?;
+        assert_eq!(state, (None, None));
+    }
+    sqlx::query("UPDATE state_audit_anchor_receipts SET witness=$3 WHERE destination_id=$1 AND checkpoint_digest=$2")
+        .bind(github).bind(&intent.checkpoint_digest).bind(valid).execute(&store.pool).await?;
+    assert!(
+        store
+            .base_audit_preview(ids.corp_id, ids.alice_actor_id, input.id)
+            .await?
+            .archive_ready
+    );
+    assert!(
+        store
+            .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
+            .await?
+            .is_some()
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
+async fn base_v2_configured_destination_is_not_starved_by_unrelated_rows(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, _, input) = base_fixture(pool).await?;
+    sqlx::query("INSERT INTO base_audit_destinations(id,corp_id,customer_id,config,manifest_digest,chain_id,sender,registry,stream_id,next_due,created_at) SELECT gen_random_uuid(),corp_id,customer_id,'{}','unconfigured-'||g,chain_id,sender,registry,stream_id,next_due,created_at-interval '1 day' FROM base_audit_destinations CROSS JOIN generate_series(1,1025) g WHERE id=$1")
+        .bind(input.id).execute(&store.pool).await?;
+    let selected = store.base_worker_destinations(&[input.id]).await?;
+    assert_eq!(selected.len(), 1);
+    assert_eq!(selected[0].input, input);
+    assert!(store.base_worker_destinations(&[]).await?.is_empty());
+    assert!(
+        store
+            .base_worker_destinations(&vec![input.id; 1025])
+            .await
+            .is_err()
+    );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
+async fn base_v2_wallet_operations_wait_for_lane_before_locking_destinations(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, ids, input) = base_fixture(pool).await?;
+    let claim = archived_claim(&store, &ids, &input).await?;
+    let second = second_destination(&store, &ids, &input).await?;
+    for operation in ["reserve", "validation", "reorg", "quarantine", "configure"] {
+        let mut holder = store.pool.begin().await?;
+        let holder_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+            .fetch_one(&mut *holder)
+            .await?;
+        sqlx::query(
+            "SELECT sender FROM base_audit_sender_lanes WHERE chain_id=$1 AND sender=$2 FOR UPDATE",
+        )
+        .bind(i64::try_from(input.config.chain_id)?)
+        .bind(input.config.publisher.as_slice())
+        .fetch_one(&mut *holder)
+        .await?;
+        let worker_store = store.clone();
+        let worker_claim = claim.clone();
+        let worker_input = input.clone();
+        let corp = ids.corp_id;
+        let actor = ids.alice_actor_id;
+        let waiter = tokio::spawn(async move {
+            match operation {
+                "reserve" => {
+                    worker_store
+                        .reserve_base_attempt(
+                            &worker_claim,
+                            &quote(),
+                            U256::from(9_000_000),
+                            0,
+                            false,
+                        )
+                        .await?;
+                }
+                "validation" => {
+                    worker_store
+                        .complete_base_validation(
+                            corp,
+                            worker_input.id,
+                            BaseValidation {
+                                epoch: "test-journal",
+                                cursor: 0,
+                                requests: &[],
+                                pending_nonce: 0,
+                                observation: &json!({}),
+                            },
+                        )
+                        .await?
+                }
+                "reorg" => {
+                    worker_store
+                        .record_base_reorg(
+                            corp,
+                            worker_input.id,
+                            B256::repeat_byte(6),
+                            &SealedHeader {
+                                number: 10,
+                                hash: B256::repeat_byte(7),
+                                parent_hash: B256::repeat_byte(5),
+                                timestamp: 1_788_220_800,
+                            },
+                        )
+                        .await?
+                }
+                "quarantine" => {
+                    worker_store
+                        .quarantine_base_wallet(&worker_claim, "nonce_conflict")
+                        .await?
+                }
+                "configure" => {
+                    worker_store
+                        .configure_base_destination(corp, actor, &worker_input)
+                        .await?;
+                }
+                _ => unreachable!(),
+            }
+            Ok::<_, anyhow::Error>(())
+        });
+        let waited = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            loop {
+                let blocked: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND $1=ANY(pg_blocking_pids(pid)))")
+                    .bind(holder_pid).fetch_one(&store.pool).await?;
+                if blocked { return Ok::<_, anyhow::Error>(()); }
+                ensure!(!waiter.is_finished(), "{operation} completed before waiting on its lane");
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        }).await;
+        // The blocked operation must hold neither destination. This deterministically
+        // fails the old destination-before-lane order without relying on a deadlock timeout.
+        let unlocked = sqlx::query(
+            "SELECT id FROM base_audit_destinations WHERE id=ANY($1) ORDER BY id FOR UPDATE NOWAIT",
+        )
+        .bind(vec![input.id, second.id])
+        .fetch_all(&mut *holder)
+        .await;
+        waiter.abort();
+        let _ = waiter.await;
+        holder.rollback().await?;
+        waited.with_context(|| format!("{operation} did not wait for its lane"))??;
+        assert_eq!(
+            unlocked
+                .with_context(|| format!("{operation} locked a destination before its lane"))?
+                .len(),
+            2
+        );
+    }
+    Ok(())
+}
 
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
@@ -273,16 +809,27 @@ async fn base_v2_observation_paging_covers_large_history(pool: PgPool) -> Result
 async fn base_v2_gateway_authorizer_works_with_select_only_readonly_role(
     pool: PgPool,
 ) -> Result<()> {
-    use sqlx::ConnectOptions;
+    use sqlx::{ConnectOptions, Connection, PgConnection};
     let (store, ids, input) = base_fixture(pool).await?;
     let claim = archived_claim(&store, &ids, &input).await?;
     let attempt = store
         .reserve_base_attempt(&claim, &quote(), U256::from(9_000_000), 0, false)
         .await?;
     let role = format!("base_readonly_{}", Uuid::new_v4().simple());
-    sqlx::query(&format!("CREATE ROLE {role} LOGIN"))
-        .execute(&store.pool)
+    let password = Uuid::new_v4().simple().to_string();
+    // Use an ephemeral login under SCRAM too. PostgreSQL role DDL cannot bind
+    // parameters, so prevent the generated credential from entering SQL logs.
+    let admin_options = store
+        .pool
+        .connect_options()
+        .as_ref()
+        .clone()
+        .disable_statement_logging();
+    let mut admin = PgConnection::connect_with(&admin_options).await?;
+    sqlx::query(&format!("CREATE ROLE {role} LOGIN PASSWORD '{password}'"))
+        .execute(&mut admin)
         .await?;
+    admin.close().await?;
     sqlx::query(&format!(
         "ALTER ROLE {role} SET default_transaction_read_only=on"
     ))
@@ -301,7 +848,8 @@ async fn base_v2_gateway_authorizer_works_with_select_only_readonly_role(
         .connect_options()
         .as_ref()
         .clone()
-        .username(&role);
+        .username(&role)
+        .password(&password);
     let readonly = PgStore::connect(options.to_url_lossy().as_str()).await?;
     let authorized = readonly
         .authorized_base_attempt(ids.corp_id, attempt.request.attempt_id)
@@ -1097,16 +1645,35 @@ async fn archived_claim(
         .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, Uuid::new_v4())
         .await?;
     assert_eq!(intent.state, "archive_pending");
-    // Actual native GitHub publication remains independently covered by V1 tests.
-    let github = Uuid::new_v4();
-    sqlx::query("INSERT INTO state_audit_destinations(id,corp_id,kind,config,interval_seconds) VALUES($1,$2,'github','{}',60)")
-        .bind(github).bind(ids.corp_id).execute(&store.pool).await?;
-    sqlx::query("INSERT INTO state_audit_anchor_receipts(corp_id,destination_id,checkpoint_digest,status) VALUES($1,$2,$3,'published')")
-        .bind(ids.corp_id).bind(github).bind(&intent.checkpoint_digest).execute(&store.pool).await?;
+    publish_fixture_archive(store, ids).await?;
     store
         .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
         .await?
         .context("missing claim")
+}
+
+async fn publish_fixture_archive(store: &PgStore, ids: &DemoIds) -> Result<Uuid> {
+    let github = state_audit::AuditDestination {
+        id: Uuid::new_v4(),
+        corp_id: ids.corp_id,
+        kind: "github".into(),
+        interval_seconds: 60,
+        calendar_schedule: None,
+        overdue_after_seconds: 3600,
+        workflow_gate: "published".into(),
+        config: json!({"repository":"fixture/base-audit","branch":"main","path":"audit"}),
+    };
+    store
+        .configure_audit_destination(ids.alice_actor_id, &github)
+        .await?;
+    let remote = state_audit_tests::PublicationFixture::default();
+    let key = crony_audit::SigningKey::from_bytes(&[7; 32]);
+    assert!(
+        store
+            .publish_audit_destination(github.id, &remote, &key.verifying_key())
+            .await?
+    );
+    Ok(github.id)
 }
 
 fn quote() -> FeeQuote {

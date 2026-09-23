@@ -1,0 +1,42 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 0940308..224adf2 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -48,0 +49,2 @@ node tools/check_migrations.mjs
++node tools/check_state_audit_compatibility.mjs
++cargo test -p crony-audit --test ethereum_local_chain
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index 8ee6174..2f5e849 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -304,0 +305,2 @@ node tools/check_migrations.mjs
++node tools/check_state_audit_compatibility.mjs
++cargo test -p crony-audit --test ethereum_local_chain
+diff --git a/crates/crony-audit/tests/publication.rs b/crates/crony-audit/tests/publication.rs
+index e6146e9..3fd406d 100644
+--- a/crates/crony-audit/tests/publication.rs
++++ b/crates/crony-audit/tests/publication.rs
+@@ -177 +177 @@ fn blob_sha1(bytes: &[u8]) -> String {
+-    hex::encode(sha1::Sha1::digest(git_bytes))
++    hex::encode(<sha1::Sha1 as sha1::Digest>::digest(git_bytes))
+diff --git a/docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md b/docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md
+index 146554c..7b28ecc 100644
+--- a/docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md
++++ b/docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md
+@@ -646,0 +647,2 @@ node tools/check_migrations.mjs
++node tools/check_state_audit_compatibility.mjs
++cargo test -p crony-audit --test ethereum_local_chain
+diff --git a/docs/EVALS.md b/docs/EVALS.md
+index 88ac7bd..e87ac3b 100644
+--- a/docs/EVALS.md
++++ b/docs/EVALS.md
+@@ -332,0 +333,2 @@ node tools/check_migrations.mjs
++node tools/check_state_audit_compatibility.mjs
++cargo test -p crony-audit --test ethereum_local_chain
+diff --git a/docs/USER_AND_DEVELOPER_JOURNEY.md b/docs/USER_AND_DEVELOPER_JOURNEY.md
+index 7d23860..7b865da 100644
+--- a/docs/USER_AND_DEVELOPER_JOURNEY.md
++++ b/docs/USER_AND_DEVELOPER_JOURNEY.md
+@@ -220,0 +221,2 @@ node tools/check_migrations.mjs
++node tools/check_state_audit_compatibility.mjs
++cargo test -p crony-audit --test ethereum_local_chain

@@ -456,13 +456,18 @@ fn spawn_configured_worker(service: Arc<Service>, store: PgStore) -> tokio::task
     tokio::spawn(async move {
         let settings = &service.settings;
         let secrets = &service.secrets;
+        let destination_ids: Vec<_> = settings
+            .connections
+            .iter()
+            .map(|c| c.destination_id)
+            .collect();
         let worker = Uuid::new_v4();
         let mut connections = BTreeMap::new();
         let mut ticker = tokio::time::interval(Duration::from_secs(15));
         ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
         loop {
             ticker.tick().await;
-            let destinations = match store.base_worker_destinations().await {
+            let destinations = match store.base_worker_destinations(&destination_ids).await {
                 Ok(ds) => ds,
                 Err(_) => {
                     tracing::warn!("Base worker persistence unavailable");
@@ -723,7 +728,7 @@ async fn reconcile_events(
         "provider stream heads disagree"
     );
     let refreshed = store
-        .base_worker_destinations()
+        .base_worker_destinations(&[d.id])
         .await?
         .into_iter()
         .find(|x| x.id == d.id && x.corp_id == d.corp_id)
@@ -795,7 +800,7 @@ async fn receipt_finality(
     ancestry: &dyn crony_base::ancestry::AncestryStore,
     receipt: &ReceiptEvidence,
     block: &SealedHeader,
-) -> Result<Option<Vec<FinalityObservation>>> {
+) -> Result<Option<(ReceiptEvidence, Vec<FinalityObservation>)>> {
     let Some(finalized) = c
         .chain
         .verify_receipt_finality_resumable(receipt.receipt.transaction_hash, ancestry)
@@ -803,13 +808,12 @@ async fn receipt_finality(
     else {
         return Ok(None);
     };
+    finalized.receipt.ensure_successor_of(receipt)?;
     ensure!(
-        finalized.receipt.receipt == receipt.receipt
-            && finalized.receipt.l1_fee == receipt.l1_fee
-            && finalized.included == *block,
+        finalized.included == *block,
         "receipt changed between inclusion and finality"
     );
-    Ok(Some(finalized.observations))
+    Ok(Some((finalized.receipt, finalized.observations)))
 }
 
 async fn drive_intent(
@@ -919,7 +923,9 @@ async fn drive_intent(
         };
         if let Some((receipt, block)) = c.chain.receipt_inclusion(signed.hash()).await? {
             store.record_base_inclusion(claim, &receipt, &block).await?;
-            let Some(observations) = receipt_finality(c, &ancestry, &receipt, &block).await? else {
+            let Some((receipt, observations)) =
+                receipt_finality(c, &ancestry, &receipt, &block).await?
+            else {
                 store.release_base_claim(claim, "included").await?;
                 return Ok(());
             };

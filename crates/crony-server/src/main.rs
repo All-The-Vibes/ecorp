@@ -8,6 +8,7 @@ mod factory_connection_tests;
 mod planning;
 mod secrets;
 mod staffing;
+mod startup;
 mod state_audit;
 mod workspace_connections;
 
@@ -28,10 +29,8 @@ use axum::{
         ws::{Message, WebSocket, WebSocketUpgrade},
     },
     http::{
-        HeaderMap, HeaderValue, Method, Request, StatusCode,
-        header::{
-            AUTHORIZATION, CONTENT_DISPOSITION, CONTENT_LENGTH, CONTENT_TYPE, ETAG, HeaderName,
-        },
+        HeaderMap, HeaderValue, Request, StatusCode,
+        header::{CONTENT_DISPOSITION, CONTENT_LENGTH, CONTENT_TYPE, ETAG, HeaderName},
     },
     middleware::{self, Next},
     response::{IntoResponse, Response},
@@ -95,10 +94,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use tokio::sync::{broadcast, mpsc};
-use tower_http::{
-    cors::{Any, CorsLayer},
-    trace::TraceLayer,
-};
+use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
@@ -115,20 +111,32 @@ use secrets::SecretCipher;
 struct Args {
     #[arg(
         long,
+        hide_env_values = true,
+        hide_default_value = true,
         env = "DATABASE_URL",
         default_value = "postgres://crony:crony@127.0.0.1:54329/crony"
     )]
     database_url: String,
 
-    #[arg(long, env = "CRONY_BIND", default_value = "127.0.0.1:8791")]
+    #[arg(
+        long,
+        hide_env_values = true,
+        env = "CRONY_BIND",
+        default_value = "127.0.0.1:8791"
+    )]
     bind: SocketAddr,
 
-    #[arg(long, env = "CRONY_RUNNER_GRACE_SECS", default_value_t = 5)]
+    #[arg(
+        long,
+        hide_env_values = true,
+        env = "CRONY_RUNNER_GRACE_SECS",
+        default_value_t = 5
+    )]
     runner_grace_secs: i64,
 
     #[arg(
         long,
-        env = "CRONY_RUNNER_STARTUP_RECOVERY",
+        hide_env_values = true, env = "CRONY_RUNNER_STARTUP_RECOVERY",
         default_value_t = true,
         action = clap::ArgAction::Set
     )]
@@ -136,23 +144,34 @@ struct Args {
 
     #[arg(
         long,
-        env = "CRONY_MODE",
+        hide_env_values = true, env = "CRONY_MODE",
         value_enum,
         default_value_t = ServerMode::Development
     )]
     mode: ServerMode,
 
-    #[arg(long, env = "CRONY_OIDC_ISSUER")]
+    #[arg(long, hide_env_values = true, env = "CRONY_OIDC_ISSUER")]
     oidc_issuer: Option<String>,
 
-    #[arg(long, env = "CRONY_ALLOW_INSECURE_OIDC", default_value_t = false)]
+    #[arg(
+        long,
+        hide_env_values = true,
+        env = "CRONY_ALLOW_INSECURE_OIDC",
+        default_value_t = false
+    )]
     allow_insecure_oidc: bool,
 
-    #[arg(long, env = "CRONY_CORS_ORIGINS", value_delimiter = ',')]
+    #[arg(
+        long,
+        hide_env_values = true,
+        env = "CRONY_CORS_ORIGINS",
+        value_delimiter = ','
+    )]
     cors_origins: Vec<String>,
 
     #[arg(
         long,
+        hide_env_values = true,
         env = "CRONY_RUNNER_CREDENTIAL_TTL_SECS",
         default_value_t = 86_400
     )]
@@ -160,54 +179,81 @@ struct Args {
 
     #[arg(
         long,
+        hide_env_values = true,
         env = "CRONY_PUBLICATION_PUBLISHER_CREDENTIAL_TTL_SECS",
         default_value_t = 86_400
     )]
     publication_publisher_credential_ttl_secs: i64,
 
-    #[arg(long, env = "CRONY_SECRET_MASTER_KEY_HEX")]
+    #[arg(long, hide_env_values = true, env = "CRONY_SECRET_MASTER_KEY_HEX")]
     secret_master_key_hex: Option<String>,
 
-    #[arg(long, env = "CRONY_OBJECT_STORE_BACKEND", default_value = "local")]
+    #[arg(
+        long,
+        hide_env_values = true,
+        env = "CRONY_OBJECT_STORE_BACKEND",
+        default_value = "local"
+    )]
     object_store_backend: String,
 
     #[arg(
         long,
+        hide_env_values = true,
         env = "CRONY_OBJECT_STORE_LOCAL_ROOT",
         default_value = "./output/artifact-objects"
     )]
     object_store_local_root: PathBuf,
 
-    #[arg(long, env = "CRONY_OBJECT_STORE_ENDPOINT")]
+    #[arg(long, hide_env_values = true, env = "CRONY_OBJECT_STORE_ENDPOINT")]
     object_store_endpoint: Option<String>,
 
-    #[arg(long, env = "CRONY_OBJECT_STORE_BUCKET")]
+    #[arg(long, hide_env_values = true, env = "CRONY_OBJECT_STORE_BUCKET")]
     object_store_bucket: Option<String>,
 
-    #[arg(long, env = "CRONY_OBJECT_STORE_REGION", default_value = "us-east-1")]
+    #[arg(
+        long,
+        hide_env_values = true,
+        env = "CRONY_OBJECT_STORE_REGION",
+        default_value = "us-east-1"
+    )]
     object_store_region: String,
 
-    #[arg(long, env = "CRONY_OBJECT_STORE_ACCESS_KEY")]
+    #[arg(long, hide_env_values = true, env = "CRONY_OBJECT_STORE_ACCESS_KEY")]
     object_store_access_key: Option<String>,
 
-    #[arg(long, env = "CRONY_OBJECT_STORE_SECRET_KEY")]
+    #[arg(long, hide_env_values = true, env = "CRONY_OBJECT_STORE_SECRET_KEY")]
     object_store_secret_key: Option<String>,
 
-    #[arg(long, env = "CRONY_OBJECT_STORE_ALLOW_HTTP", default_value_t = false)]
+    #[arg(
+        long,
+        hide_env_values = true,
+        env = "CRONY_OBJECT_STORE_ALLOW_HTTP",
+        default_value_t = false
+    )]
     object_store_allow_http: bool,
 
-    #[arg(long, env = "CRONY_ARTIFACT_SIGNING_KEY_HEX")]
+    #[arg(long, hide_env_values = true, env = "CRONY_ARTIFACT_SIGNING_KEY_HEX")]
     artifact_signing_key_hex: Option<String>,
 
-    #[arg(long, env = "CRONY_ARTIFACT_MAX_BYTES", default_value_t = 16_777_216)]
+    #[arg(
+        long,
+        hide_env_values = true,
+        env = "CRONY_ARTIFACT_MAX_BYTES",
+        default_value_t = 16_777_216
+    )]
     artifact_max_bytes: usize,
 
-    #[arg(long, env = "CRONY_ARTIFACT_RETENTION_DAYS", default_value_t = 30)]
+    #[arg(
+        long,
+        hide_env_values = true,
+        env = "CRONY_ARTIFACT_RETENTION_DAYS",
+        default_value_t = 30
+    )]
     artifact_retention_days: i64,
 
     #[arg(
         long,
-        env = "CRONY_ARTIFACT_RECOVERY_GRACE_SECS",
+        hide_env_values = true, env = "CRONY_ARTIFACT_RECOVERY_GRACE_SECS",
         default_value_t = 300,
         value_parser = clap::value_parser!(i64).range(0..=3_600)
     )]
@@ -215,7 +261,7 @@ struct Args {
 
     #[arg(
         long,
-        env = "CRONY_ARTIFACT_RECOVERY_INTERVAL_SECS",
+        hide_env_values = true, env = "CRONY_ARTIFACT_RECOVERY_INTERVAL_SECS",
         default_value_t = 60,
         value_parser = clap::value_parser!(u64).range(1..=3_600)
     )]
@@ -336,7 +382,19 @@ struct HealthResponse {
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> std::process::ExitCode {
+    match run_server().await {
+        Ok(()) => std::process::ExitCode::SUCCESS,
+        Err(error) => {
+            // Display only the sanitized top-level message, even when callers
+            // enable anyhow backtraces. Debug formatting includes source chains.
+            eprintln!("Error: {error}");
+            std::process::ExitCode::FAILURE
+        }
+    }
+}
+
+async fn run_server() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
     tracing_subscriber::fmt()
         .with_env_filter(
@@ -344,44 +402,57 @@ async fn main() -> anyhow::Result<()> {
                 .unwrap_or_else(|_| "crony_server=info,tower_http=info".into()),
         )
         .init();
-    let args = Args::parse();
+    let args = match Args::try_parse() {
+        Ok(args) => args,
+        Err(error)
+            if matches!(
+                error.kind(),
+                clap::error::ErrorKind::DisplayHelp | clap::error::ErrorKind::DisplayVersion
+            ) =>
+        {
+            error.exit()
+        }
+        Err(_) => {
+            return Err(anyhow::anyhow!(
+                "invalid startup arguments; use --help for supported options"
+            ));
+        }
+    };
     if base_worker::qualification_mode()? {
         anyhow::ensure!(
             args.bind.ip().is_loopback(),
             "qualification server must bind loopback"
         );
     }
+    let startup::PreparedStartup {
+        auth,
+        secret_cipher,
+        artifacts,
+        cors,
+    } = startup::PreparedStartup::prepare(&args).await?;
 
-    let store = PgStore::connect(&args.database_url).await?;
-    store.migrate().await?;
+    let store = PgStore::connect(&args.database_url)
+        .await
+        .map_err(|_| anyhow::anyhow!("startup failed: database connection"))?;
+    store
+        .migrate()
+        .await
+        .map_err(|_| anyhow::anyhow!("startup failed: database migration"))?;
     let persisted_runner_recovery = if args.runner_startup_recovery {
-        store.runner_records_requiring_recovery().await?
+        store
+            .runner_records_requiring_recovery()
+            .await
+            .map_err(|_| anyhow::anyhow!("startup failed: runner recovery query"))?
     } else {
         Vec::new()
     };
-    let auth = AuthService::initialize(
-        args.mode,
-        args.oidc_issuer.clone(),
-        args.allow_insecure_oidc,
-    )
-    .await?;
-    let secret_cipher = SecretCipher::initialize(args.mode, args.secret_master_key_hex.as_deref())?;
-    let artifacts = ArtifactStore::initialize(
-        &args.object_store_backend,
-        args.object_store_local_root.clone(),
-        args.object_store_endpoint.as_deref(),
-        args.object_store_bucket.as_deref(),
-        Some(&args.object_store_region),
-        args.object_store_access_key.as_deref(),
-        args.object_store_secret_key.as_deref(),
-        args.object_store_allow_http,
-        args.artifact_signing_key_hex.as_deref(),
-        args.artifact_max_bytes,
-        args.mode == ServerMode::Production,
-    )?;
+    let artifacts = artifacts.activate()?;
     let artifact_recovery_grace = ChronoDuration::seconds(args.artifact_recovery_grace_secs);
     let (event_tx, _) = broadcast::channel(2_048);
-    for event in recover_pending_artifacts(&store, &artifacts, artifact_recovery_grace).await? {
+    for event in recover_pending_artifacts(&store, &artifacts, artifact_recovery_grace)
+        .await
+        .map_err(|_| anyhow::anyhow!("startup failed: artifact recovery"))?
+    {
         let _ = event_tx.send(event);
     }
     let recovery_store = store.clone();
@@ -493,7 +564,8 @@ async fn main() -> anyhow::Result<()> {
             let events = state
                 .store
                 .runner_disconnected(&runner.id, runner.connection_epoch, state.runner_grace_secs)
-                .await?;
+                .await
+                .map_err(|_| anyhow::anyhow!("startup failed: runner recovery"))?;
             for event in events {
                 publish(&state, event);
             }
@@ -718,35 +790,9 @@ async fn main() -> anyhow::Result<()> {
             .route(
                 "/api/demo/runners/{runner_id}/disconnect",
                 post(debug_disconnect_runner),
-            )
-            .layer(
-                CorsLayer::new()
-                    .allow_origin(Any)
-                    .allow_headers(Any)
-                    .allow_methods(Any),
             );
-    } else {
-        let origins = args
-            .cors_origins
-            .iter()
-            .map(|value| {
-                HeaderValue::from_str(value)
-                    .with_context(|| format!("invalid CRONY_CORS_ORIGINS entry {value}"))
-            })
-            .collect::<anyhow::Result<Vec<_>>>()?;
-        let mut cors = CorsLayer::new()
-            .allow_methods([Method::GET, Method::POST])
-            .allow_headers([
-                AUTHORIZATION,
-                CONTENT_TYPE,
-                HeaderName::from_static("x-crony-request-id"),
-                HeaderName::from_static("x-crony-publication-publisher-credential"),
-            ]);
-        if !origins.is_empty() {
-            cors = cors.allow_origin(origins).allow_credentials(true);
-        }
-        app = app.layer(cors);
     }
+    let app = app.layer(cors);
     let app = app.with_state(state);
 
     let listener = tokio::net::TcpListener::bind(args.bind)

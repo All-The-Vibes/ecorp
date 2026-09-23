@@ -66,7 +66,12 @@ const mcpTools = await mcp.call({
   method: 'tools/list',
   params: {},
 })
-assert.equal(mcpTools.result.tools.length, 3)
+assert.deepEqual(mcpTools.result.tools.map((tool) => tool.name).sort(), [
+  'crony_create_mission',
+  'crony_factory_recovery_context',
+  'crony_post_room_message',
+  'crony_snapshot',
+])
 const mcpSnapshot = await mcp.call({
   jsonrpc: '2.0',
   id: 3,

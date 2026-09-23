@@ -5,6 +5,36 @@
 The office is a projection of authoritative operational state. Closing a browser or desktop
 window must not terminate an active agent run.
 
+## Architecture at a glance
+
+Reviewed against main `39632b957819012721c90902925d8fa7a9c7e873` on
+September 19, 2026 (UTC). This is a documentation/source review, not a new
+production-acceptance report.
+
+![ECorp's three planes: shared human clients connect to one control server; outbound runners execute mission-shaped task graphs. Built-in provenance links source, contributors, evidence, and acceptance rules.](assets/architecture/ecorp-architecture-multiplayer-v3.svg)
+
+Two cross-cutting capabilities belong in this architecture, not in a separate
+marketing diagram:
+
+- **Multiplayer:** room-scoped shared state, durable discussion, one fenced live
+  controller, queued direction, role-gated decisions, and reconnect/replay. The
+  integrated UI exposes exact mission/run context and distinguishes connection
+  status from snapshot freshness. The
+  [September 17 integration evidence](evidence/2026-09-17-multiplayer-ui-integration.md)
+  has a bounded synthetic-fixture scope; the
+  [U7 parity map](multiplayer/U7_PARITY_MATRIX.md) retains the remaining
+  cross-owner and independently authenticated acceptance work.
+- **Blockchain as fabric:** the built-in weave of pinned source, contributor
+  attribution, SHA-256 evidence digests, HMAC-signed artifact provenance,
+  verified dependency handoffs, and persisted acceptance decisions. It is a
+  cross-cutting provenance/integrity model, not a new server or a product named
+  Fabric. [Trust fabric](TRUST_FABRIC.md) maps each strand to implementation and
+  states the precise limits of the blockchain analogy.
+
+![Multiple human clients share an authoritative mission while the outbound runner remains independent. Steering uses a fenced lease; comments, queued direction and review retain separate authority.](assets/architecture/ecorp-multiplayer-control-v1.svg)
+
+![Source, contributors, evidence and acceptance rules are woven through ECorp's mission, task, run, artifact and review records.](assets/architecture/ecorp-trust-fabric-v1.svg)
+
 ## Three planes
 
 ### Experience plane
@@ -131,6 +161,7 @@ before terminal session reporting. Unknown and duplicate decisions cannot select
 
 ## Copilot runtime compatibility
 
+<!-- ecorp:copilot-runtime -->
 The checked-in Copilot SDK and its verified CLI are one execution dependency pair. Managed
 local processes receive `--no-auto-update`; catalog discovery, new sessions and resume validate
 the connected runtime version before accepting provider work. The current pair is SDK `1.0.11`
@@ -138,6 +169,7 @@ and CLI `1.0.79`. A runtime override is not permission to silently select an unv
 Version checks do not replace worktree capabilities, permissions, process ownership or verifier
 evidence. The native-read regression validates real relative/absolute view results and exact
 readback bytes through the server and runner.
+<!-- /ecorp:copilot-runtime -->
 
 ## Budgets and circuit breaking
 
@@ -416,6 +448,15 @@ or discard events.
 
 Server startup recovery is explicitly single-owner. Secondary replicas and production-auth probes
 disable it so they cannot place another server's healthy runners into grace.
+
+A finished ordinary provider awaiting a durable outcome review no longer has a live process
+claim. Reconnect and grace-expiry loss handling preserve that wait only when the run, task,
+mission and pending review agree, the review gate matches the task policy, and the latest
+same-scope termination/uncertainty receipt positively confirms provider termination. Pending
+tool actions, later teardown uncertainty, protected stops, quarantine and provider-free modes
+receive no ordinary-provider exception. The existing checkpoint-review provenance check stays
+separate. This preserves review state, not decision or recovery authority; the normal reviewer
+role, room and requester-exclusion checks still apply.
 
 ## Worktree lifecycle
 
@@ -757,6 +798,14 @@ classifier or treat requested sandbox configuration as proof of OS enforcement. 
 runner-owned verifier commands execute after the provider has terminated, without duplicating
 routine tests as model-session approval requests.
 
+**September 18, 2026 correction:** the adapter does not write task-specific sandbox policy into
+the account-wide Copilot settings store. A zero-inference probe with the production filesystem
+provider and session configuration found command sandboxing disabled in SDK `1.0.11` / CLI
+`1.0.79`, despite restrictive account settings and the existing launch flags. Removing those
+global writes preserves native home, authentication, history, and the existing ECorp filesystem
+and approval boundaries. No native OS sandbox assurance is claimed for this path; see
+[the security correction](SECURITY.md). Historical execution evidence remains unchanged.
+
 Deterministic app-server fixtures and authenticated real-provider probes cover start, structured
 streaming, steering, interruption, emergency stop, resume, usage, artifacts, and failure behavior.
 
@@ -776,13 +825,23 @@ fencing, lease, and recoverable lifecycle fields can change.
 GitHub owner and repository identities are normalized to lowercase before locking and uniqueness
 checks, preventing case variants from creating duplicate work items.
 
-Before a new claim or an unmaterialized reclaim, the controller sends the exact issue-derived
+Before normal new intake or a materializable unmaterialized reclaim, the controller sends the exact issue-derived
 materialization payload and final policy snapshot to a mutation-free factory preflight endpoint.
 Dry run and execution use this same boundary. The server repeats model and reasoning selection,
 task-graph and budget validation, verifier-policy validation, deliverable and write-scope checks,
 policy narrowing, mission title and description normalization, the 65,536-byte operation-snapshot
 limit, and destination-room authorization. A rejected preflight leaves the GitHub Project item in
 `Todo` and creates no factory item, mission, task, or run.
+
+Pure strategy/cost admission also runs in the CLI before GitHub quota/Project discovery and at
+the store's authoritative new-claim boundary. The shared domain allocator retains existing
+strategy distributions and $10/task, $50/graph limits; it does not widen token or financial
+authority. Historical JSON normalization deliberately stays separate from prospective admission.
+An exact invalid legacy pre-materialization reclaim records terminal `failed`, with the existing
+state-change event and claim-operation journal in one transaction, returns no token and preserves
+source/policy. Broad CLI intake skips these items; an exact issue dry-run explains the explicit
+reconciliation. Materialized historical work and completed operation replays are preserved.
+See [cost admission and legacy claims](DARK_FACTORY_CONTRIBUTOR_GUIDE.md#cost-admission-and-legacy-claims).
 
 Mission and task creation is atomic with the `claimed -> mission_created` transition. Mission
 placement selects the oldest room in the Corp that actually contains the requesting actor rather
@@ -854,10 +913,11 @@ snapshot, work item, and mission remain authoritative even when more recent hist
 have displaced it from the shared snapshot. Claim and reclaim idempotency keys also include the
 normalized lease duration because lease duration is part of the persisted operation request.
 
-ECorp Build GitHub Project #3 and its linked issues remain the planning and status source of truth;
-`docs/BACKLOG.md` is historical seed material only. External status changes must follow durable
-ECorp transitions. Pull-request publication, merge, and deployment are separate effects with
-separate authorization and idempotency boundaries. See ADR 0020.
+ECorp Build GitHub Project #5 and its linked issues are the planning and status source of truth for
+new work. Personal Project #3 retains existing execution lineage, and `docs/BACKLOG.md` is
+historical seed material only. External status changes must follow durable ECorp transitions.
+Pull-request publication, merge, and deployment are separate effects with separate authorization
+and idempotency boundaries. See ADR 0020.
 
 Factory controller configuration and health are persisted separately from individual work-item
 leases. A controller records its Project and repository scope, desired running or paused state,
@@ -1103,8 +1163,8 @@ the durable publication target.
 
 ## Near-term architecture work
 
-These categories are not a live priority list. Use ECorp Build Project #3 and linked issues for
-ordering and status.
+These categories are not a live priority list. Use ECorp Build Project #5 and linked issues for
+new-work ordering and status. Project #3 remains the record for existing execution lineage.
 
 1. Add stronger OS/container isolation for untrusted child processes.
 2. Add artifact retention sweeping and signing-key rotation.

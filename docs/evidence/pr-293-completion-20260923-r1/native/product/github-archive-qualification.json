@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "started_at": "2026-09-23T09:20:57.495Z",
+  "checks": [
+    "Remote index equals native authoritative receipt",
+    "Recovered exact signed checkpoint",
+    "Actual API receipt equals durable native PG receipt",
+    "Recovered archive equals native API export",
+    "Recovered archive equals worker-retained native archive",
+    "Recovered archive equals original qualified native archive"
+  ],
+  "commands": [
+    {
+      "executable": "crony-cli",
+      "arguments": [
+        "base-audit-verify",
+        "C:\\Users\\shyamsridhar\\code\\ecorp-pr293-completion-20260922\\output\\native-qualification\\phase2-r5\\github-native-archive.json",
+        "--manifests",
+        "C:\\Users\\shyamsridhar\\code\\ecorp-pr293-completion-20260922\\output\\native-qualification\\phase2-r5\\manifests.json",
+        "--trust-pin",
+        "C:\\Users\\shyamsridhar\\code\\ecorp-pr293-completion-20260922\\output\\native-qualification\\phase2-r5\\trust-pin.json",
+        "--expected-manifest-version",
+        "1",
+        "--expected-manifest-digest",
+        "0x029cf637750afd0991f5872d36466f7532f9e3b74bae89c0aa60c3cc4f28da90",
+        "--expected-checkpoint",
+        "0xa9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0
+    },
+    {
+      "executable": "crony-cli",
+      "arguments": [
+        "base-audit-verify",
+        "C:\\Users\\shyamsridhar\\code\\ecorp-pr293-completion-20260922\\output\\native-qualification\\phase2-r5\\github-archive-tampered-negative.json",
+        "--manifests",
+        "C:\\Users\\shyamsridhar\\code\\ecorp-pr293-completion-20260922\\output\\native-qualification\\phase2-r5\\manifests.json",
+        "--trust-pin",
+        "C:\\Users\\shyamsridhar\\code\\ecorp-pr293-completion-20260922\\output\\native-qualification\\phase2-r5\\trust-pin.json",
+        "--expected-manifest-version",
+        "1",
+        "--expected-manifest-digest",
+        "0x029cf637750afd0991f5872d36466f7532f9e3b74bae89c0aa60c3cc4f28da90",
+        "--expected-checkpoint",
+        "0xa9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09"
+      ],
+      "exit_code": 1,
+      "expected_exit": 1
+    },
+    {
+      "executable": "crony-cli",
+      "arguments": [
+        "base-audit-verify",
+        "C:\\Users\\shyamsridhar\\code\\ecorp-pr293-completion-20260922\\output\\native-qualification\\phase2-r5\\github-archive-incomplete-negative.json",
+        "--manifests",
+        "C:\\Users\\shyamsridhar\\code\\ecorp-pr293-completion-20260922\\output\\native-qualification\\phase2-r5\\manifests.json",
+        "--trust-pin",
+        "C:\\Users\\shyamsridhar\\code\\ecorp-pr293-completion-20260922\\output\\native-qualification\\phase2-r5\\trust-pin.json",
+        "--expected-manifest-version",
+        "1",
+        "--expected-manifest-digest",
+        "0x029cf637750afd0991f5872d36466f7532f9e3b74bae89c0aa60c3cc4f28da90",
+        "--expected-checkpoint",
+        "0xa9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09"
+      ],
+      "exit_code": 1,
+      "expected_exit": 1
+    }
+  ],
+  "current_attempt": {
+    "attempt_id": "18468e92-2d53-4b45-a0a4-9467d499a888",
+    "identity_sha256": "22a543afd59f97246dbf72f614d3d1f3ad702f918990c379ebaa1398676d8f9f",
+    "status": "succeeded",
+    "finished_at": "2026-09-23T09:21:02.990Z"
+  },
+  "original_evidence_checkpoint": "a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09",
+  "original_trust": {
+    "manifests.json": "399e134e3d9a9d3c2f5349f2f906b05d3cae27072713b8712b15153c61b61d0d",
+    "trust-pin.json": "3cd50c3fe9d3558c8201bfea84c334482ecbd490c9d3a947543eba6aaa348e94"
+  },
+  "initial_complete_publication": {
+    "commit": "38ccbc4abb55cf116d4bb752db082809dd56c360",
+    "archive_index_status": 200
+  },
+  "task_binding": {
+    "resource": "mission/629c597b-6d87-494d-96f2-c479f4b161ad/governance",
+    "revision": 1,
+    "version_hash": "8ea89285c6ac453ec32cb2f7eb10bd933fc1d9354b2462ca1180780e8aa671c0",
+    "content_hash": "295e5010e11b461cd018a62093dda33412c17e988751dae762aa0c3c1485f85e",
+    "mission_id": "629c597b-6d87-494d-96f2-c479f4b161ad",
+    "task": {
+      "allowed_tools": [
+        "filesystem",
+        "shell"
+      ],
+      "budget_cost_microusd": 500000,
+      "budget_tokens": 50000,
+      "contract_digest": "1255666c6e6787b04cc5ee628c53ebd1b7987395a332440ef2bab7f740e15c9d",
+      "contract_version": 1,
+      "task_id": "6f967a87-f469-4558-bc85-fadcac139a40",
+      "verification_digest": "3fe665a3157e79ecdadef1bf08ee241a646ff77de1d6488f3a6b5008561b37be",
+      "write_scope": [
+        "**"
+      ]
+    },
+    "execution_run_not_in_v1_governance_archive": true
+  },
+  "receipt": {
+    "checkpoint_digest": "a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "destination_id": "0096284e-bdf0-4647-9ae2-b98c33a6798e",
+    "status": "published",
+    "updated_at": "2026-09-23T09:19:25.897091+00:00",
+    "witness": {
+      "archive_publication": {
+        "archive": {
+          "byte_count": 11839,
+          "checkpoint_digest": "a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09",
+          "ledger_id": "5f6a9fe6-3d1e-4fb3-8651-915243a58a3f",
+          "parts": [
+            {
+              "byte_count": 11839,
+              "git_blob_sha1": "aa45466ffd901a1cfb1571b324fdf4eeb908bfaa",
+              "path": "audit/5f6a9fe6-3d1e-4fb3-8651-915243a58a3f/00000000000000000001-a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09/archive-00000.json",
+              "sha256": "7cec15549be8cff5a9bb5df712dbe2bab421ed09d1fe2d284c893ca0d24f946a"
+            }
+          ],
+          "schema_version": 1,
+          "sha256": "7cec15549be8cff5a9bb5df712dbe2bab421ed09d1fe2d284c893ca0d24f946a"
+        },
+        "commit": "38ccbc4abb55cf116d4bb752db082809dd56c360",
+        "index_git_blob_sha1": "0415cd7b948fe2444782e49012fe09b8e78e7976",
+        "index_path": "audit/5f6a9fe6-3d1e-4fb3-8651-915243a58a3f/00000000000000000001-a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09/archive.json",
+        "index_sha256": "081d34fe904f7c88e66881d45d88cdafc3cdc2eef84fb7114cea1edc37772001"
+      },
+      "branch": "audit",
+      "commit": "38ccbc4abb55cf116d4bb752db082809dd56c360",
+      "finalized": false,
+      "independently_verified": false,
+      "path": "audit",
+      "previous_destination_checkpoint": null,
+      "provider": "github",
+      "repository": "qualification/native-audit"
+    }
+  },
+  "archive_bytes": 11839,
+  "archive_sha256": "7cec15549be8cff5a9bb5df712dbe2bab421ed09d1fe2d284c893ca0d24f946a",
+  "immutable_objects": {
+    "commit": "38ccbc4abb55cf116d4bb752db082809dd56c360",
+    "entries": [
+      {
+        "path": "audit/5f6a9fe6-3d1e-4fb3-8651-915243a58a3f/00000000000000000001-a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09.cbor",
+        "blob_sha": "ff88d082f89dacb40a6d0e564157df86fe637d00",
+        "bytes": 141
+      },
+      {
+        "path": "audit/5f6a9fe6-3d1e-4fb3-8651-915243a58a3f/00000000000000000001-a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09.ed25519",
+        "blob_sha": "ac7c73ed5c2b8e4b121fced4aefed72565eed871",
+        "bytes": 64
+      },
+      {
+        "path": "audit/5f6a9fe6-3d1e-4fb3-8651-915243a58a3f/00000000000000000001-a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09.json",
+        "blob_sha": "ff7a8cef4a11887354238f7fcf368c00a5aa4001",
+        "bytes": 1065
+      },
+      {
+        "path": "audit/5f6a9fe6-3d1e-4fb3-8651-915243a58a3f/00000000000000000001-a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09/archive-00000.json",
+        "blob_sha": "aa45466ffd901a1cfb1571b324fdf4eeb908bfaa",
+        "bytes": 11839
+      },
+      {
+        "path": "audit/5f6a9fe6-3d1e-4fb3-8651-915243a58a3f/00000000000000000001-a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09/archive.json",
+        "blob_sha": "0415cd7b948fe2444782e49012fe09b8e78e7976",
+        "bytes": 576
+      },
+      {
+        "path": "audit/5f6a9fe6-3d1e-4fb3-8651-915243a58a3f/00000000000000000001.checkpoint",
+        "blob_sha": "2650eb17d2fc7b7ef17a799a1175bf3e40fb2359",
+        "bytes": 64
+      }
+    ],
+    "identity": "Actual immutable Git commit/tree/blob objects; local fixture, not GitHub infrastructure.",
+    "writes": 6
+  },
+  "anchor_transaction": "0xf8c3bb7e384e1f068833e44c9f7a8e42a1f7f4288771b389da11258d3b15d5f7",
+  "checkpoint_digest": "a9011155941879d7531a834d963cbea498c397911144a877dcb4090f10742c09",
+  "signatures": 1,
+  "independent_recovery": "Immutable GitHub objects + original independent trust pin + native offline CLI; no PG/API archive used to reconstruct or verify.",
+  "byte_equality": "Every returned immutable blob and concatenated archive equals the hashes/lengths computed from native selected bytes in the durable receipt; V1 envelope/payload/signature byte equality also proved.",
+  "limits": [
+    "Local GitHub fixture, not real GitHub infrastructure.",
+    "Governance archive resolves task and contract digests; V1 does not include run transcript/artifact contents.",
+    "Original local anchor/finality evidence reused, no additional signing/broadcast.",
+    "Two RPC endpoints share one local Anvil."
+  ],
+  "finished_at": "2026-09-23T09:21:00.343Z"
+}

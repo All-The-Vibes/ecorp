@@ -6,6 +6,16 @@ The current implementation has production authentication, workload identity, and
 boundaries plus durable artifact storage, but it is not yet suitable for fully untrusted child
 processes until stronger OS/container isolation lands.
 
+The product's **blockchain-as-fabric** language refers to built-in, connected
+provenance and integrity controls, not a separate blockchain service. Artifact
+bytes are checked with SHA-256; artifact metadata is authenticated with a
+server-held HMAC-SHA256 key; source, task, run, contributor, verification, and
+review identities retain their links. Postgres remains the operational authority.
+A matching digest or valid signature is not a permission grant, a correctness
+proof, or independently replicated consensus. Signing-key custody, database
+administration, storage authorization, retention, and current reviewer authority
+remain trust boundaries. See [Trust fabric](TRUST_FABRIC.md).
+
 Known development-only shortcuts:
 
 - fixed demo identities
@@ -13,8 +23,10 @@ Known development-only shortcuts:
 - fake process runs with the local user's permissions
 - no network sandbox
 
-These gaps are tracked in ECorp Build GitHub Project #3 and linked issues, not in
-`docs/BACKLOG.md`, which is historical seed material only. They are not production claims.
+New work is tracked in [ECorp Build GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5)
+and linked issues. Personal Project #3 retains existing execution lineage and
+recorded routing; `docs/BACKLOG.md` is historical seed material only. Neither the
+planning board nor these development shortcuts establish production acceptance.
 
 Claude Code is launched in safe mode without user plugins, hooks, MCP servers, browser integration,
 slash commands, or auto-memory. OpenCode uses its plugin-free `--pure` mode. These controls prevent
@@ -37,6 +49,10 @@ Only credential hashes are stored. Replayed, expired, unknown, and revoked crede
 Secrets are encrypted with ChaCha20-Poly1305 and authenticated associated data. The broker checks
 actor, task, run, runner, tool, resource, and expiry scope before dispatch. Events and snapshots
 contain grant metadata only. Environment injection is labeled reduced assurance.
+Production requires a private 32-byte master key and rejects the public built-in development key,
+including equivalent case and surrounding-whitespace representations, before database or storage
+initialization. Development retains its fixture key for local compatibility; it is not a deployment
+credential. The example environment leaves this setting empty.
 Expired grants are rejected before provider start, and the provider is stopped when the earliest
 active grant expires.
 
@@ -44,6 +60,13 @@ Risky action approvals are Corp-scoped, role-gated, expiring, and idempotent. Ap
 transactionally enqueue durable runner commands. Commands remain pending until the runner
 acknowledges application, command IDs fence duplicate delivery, and expiry automatically rejects
 the action and repairs run/task/mission/agent state.
+
+An ordinary provider's finished outcome-review wait is not a live process claim. Runner-loss
+handling preserves only a matching Corp/run/task/mission review and current gate with a positive,
+same-room/mission termination receipt and no later teardown uncertainty. A pending tool action,
+stop/suspend, quarantine or provider-free mode cannot use that exception. Preservation changes no
+policy, spending, source or review decision and grants no checkpoint/recovery capability. The
+existing human role, membership, requester-exclusion and decision checks remain authoritative.
 
 Dark-factory claims use a separate opaque fencing token plus a monotonic work-item version.
 Claim tokens are returned only to the authorized operator and are omitted from shared snapshots,
@@ -60,6 +83,17 @@ The persisted factory policy is enforced again during mission materialization. A
 cannot widen its repository, adapter, strategy, model, reasoning effort, tools, secrets, required
 prohibitions, write scope, token budget, or cost budget. Factory `verified` state requires
 authoritative completed mission and passing task-verification records.
+New claim cost admission uses the same strategy allocation as planning and rejects incompatible
+per-task costs before durable intake. Legacy cost-invalid claimed/blocked records with no mission
+can only reconcile to terminal failure through an exact source/policy reclaim by the current owner
+or, after expiry, another authorized operator. Connection authorization still applies.
+The CLI also checks the requested connection binding and source ref against the persisted policy
+before a legacy preview or reconciliation, repeating the checks after refresh without reading a
+checkout or pinning a source commit. Substituting or omitting a bound connection cannot authorize
+terminal reconciliation under the original connection. The transaction records the existing
+state-change audit and operation, releases the lease, and returns
+no execution token; historical policies, materialized graphs, spend, attempts and source pins are
+not rewritten. This is request-driven reconciliation, not a new sweeper or execution authority.
 An explicit `max_task_attempts` is also prospective, immutable Factory policy.
 The shared ceiling remains three; omitted legacy policy cannot newly authorize
 a third planned attempt. Preflight/materialization requests must preserve the
@@ -174,6 +208,7 @@ path or convert a comment into provider control.
 External CLI failure details are collapsed to bounded single-line text before persistence so
 multi-line stderr cannot bypass the durable blocked transition.
 
+<!-- ecorp:copilot-runtime -->
 Managed local Copilot processes receive `--no-auto-update` during catalog discovery, create, and
 resume. A selected SDK/runtime pair must not silently forward to a downloaded replacement.
 The current verified pair is Rust SDK `1.0.11` with CLI `1.0.79`; the adapter checks the connected
@@ -181,6 +216,7 @@ runtime version before exposing models or starting a session. An incompatible ru
 before provider-backed work, including an explicit CLI or remote-runtime override. This version
 check is a compatibility gate, not proof of operating-system isolation or a substitute for the
 filesystem, approval, environment, and verifier boundaries.
+<!-- /ecorp:copilot-runtime -->
 
 Windows ordinary and extended drive/UNC spellings compare by their drive or server/share
 identity before the existing component-by-component boundary check. This does not canonicalize an
@@ -210,12 +246,25 @@ declaration suppresses a redundant permission prompt for this one guarded primit
 shell or other tools.
 Every shell command remains an explicit ask. Command-family allowlists are not a filesystem
 boundary: interpreters, build tools, and PowerShell commands can write arbitrary host paths when
-the native sandbox is unavailable. Copilot's sandbox configuration therefore remains
-defense-in-depth rather than authorization. Persisted runner verifier policies execute required
+the native sandbox is unavailable. Persisted runner verifier policies execute required
 build and test commands outside the model session. Common ambient credential environment variables
 are removed from the Copilot child process; explicit scoped SDK authentication remains available.
-Credential stores, the user profile, network access, and temporary-directory access are also
-denied through the native sandbox configuration when the installed runtime applies it.
+
+**September 18, 2026 correction:** the pinned Rust SDK `1.0.11` / CLI `1.0.79` path does not
+establish a native operating-system command, filesystem, or network sandbox. A zero-inference
+probe using ECorp's production `ContainedSessionFs`, session configuration, managed permissions,
+directory tool, and launch flags reported command sandboxing disabled and no native policy in
+force, even with restrictive account settings. This is configuration evidence; it does not
+replace the filesystem and permission-boundary tests. The launch flags remain requests to the
+runtime, not proof that credential stores, the user profile, network, or temporary directories
+are inaccessible to an approved shell command.
+
+The adapter no longer writes per-worktree policy through account-wide `user.settings.set`.
+Those writes affected other Copilot clients sharing the native home without establishing the
+claimed session sandbox. Native home, authentication, and session history remain in place;
+the adapter does not reset existing account settings. The capability-scoped filesystem,
+managed permissions, durable approvals, environment filtering, and verifier policy remain the
+execution boundaries. Earlier evidence is retained with its original scope and limitations.
 
 The ECorp handler remains a fail-closed backstop for unresolved requests. It automatically approves
 only native writes inside the assigned worktree, native reads it can prove are worktree-scoped,

@@ -1,0 +1,368 @@
+{
+  "schema_version": 1,
+  "document_status": "completed-assessment-summary",
+  "kind": "completed-codeblend-v3-local-assessment",
+  "run_id": "20260918-133400+0800",
+  "repository": "All-The-Vibes/ecorp",
+  "assessed_source_commit": "9a6ebace9a76d6c0e34cfb45f80d7109bec482b0",
+  "evaluator": {
+    "source_commit": "0a9accccd36446c381c118b783e2e9f623643efa",
+    "executable_sha256": "4229e93d77dce70e4e3493cab6bc5311c2d02551d024de33319c27ae6a323290",
+    "no_cache": true
+  },
+  "result": {
+    "status": "succeeded",
+    "structure": 92,
+    "operations": 68.25,
+    "composite": 79.2,
+    "ai_ready": false,
+    "quadrant": {
+      "id": "Q2",
+      "name": "Verifiable-but-manual"
+    },
+    "rung": {
+      "value": 4,
+      "name": "R4 Delegable"
+    },
+    "requested_mode": "evaluator-observed-local",
+    "evidence_mode": "evaluator-observed-local",
+    "verification": "verified"
+  },
+  "scope": {
+    "assessed_scope": "repository",
+    "verification_scope": "Two actual ECorp web contract failure classes repaired through the pinned native Direct mission server and runner, independently verified on Windows. Local development identity, operator-driven controls, no publication or unattended production automation claim.",
+    "controlled_one_line_faults": true,
+    "development_identity": true,
+    "operator_driven_direct_missions": true,
+    "real_provider_inference": true,
+    "independent_agent_reviews_are_human_approvals": false,
+    "operating_system_isolation_claimed": false,
+    "hosted_ci_or_hosted_observation_claimed": false,
+    "production_factory_or_publication_claimed": false,
+    "unattended_production_autonomy_claimed": false,
+    "judge_environment_authentication_assurance": "reduced assurance; no credential values published"
+  },
+  "timing": {
+    "started_at_utc": "2026-09-18T05:34:00.1600935Z",
+    "finished_at_utc": "2026-09-18T05:42:56.4743748Z",
+    "evaluator_log_total_seconds": 536.313,
+    "evaluator_telemetry_duration_ms": 536312,
+    "launcher_seconds": 538.18,
+    "local_loop_observation_seconds": 417.636,
+    "judge_ensemble_seconds": 104.417,
+    "note": "The evaluator log and integer telemetry differ by one millisecond. Total evaluator time is distinct from the native-loop observation stage."
+  },
+  "judges": {
+    "round_count": 1,
+    "successful_actual_models": [
+      "claude-opus-5",
+      "gpt-6-astra",
+      "grok-4.6"
+    ],
+    "valid_reports": 3,
+    "primary_attempts": 3,
+    "failed_attempts": 0
+  },
+  "native_execution": {
+    "explicit_provider_invocations": 9,
+    "cases": 3,
+    "invocations_per_case": 3,
+    "sdk": "1.0.11",
+    "cli": "1.0.79",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "medium",
+    "judge_cli": "1.0.85",
+    "runner_build_commit": "9a6ebace9a76d6c0e34cfb45f80d7109bec482b0",
+    "runner_binary_sha256": "ad341a3ac20035b5c1e4a8089a5515b01eff5399f55240015a2d291dee31bd4c",
+    "runner_build_receipt_sha256": "9cecfa500fa777dfa764ec866339fe647a35c969e08c5438873fb14421427252",
+    "positives": [
+      {
+        "failure_class": "form-text-trim",
+        "target": "apps/web/src/formText.ts",
+        "proposal_review": "actual-independent-agent",
+        "human_approval": false,
+        "review_sha256": "ddffca14e6f8b6cc6a56c60358598eed3756e46a65a95864ee3f6b484b5a1656",
+        "exact_single_repair_delta": ".map((line) => line) -> .map((line) => line.trim())",
+        "native_verifier_checks_passed": 3,
+        "initial_export": {
+          "physical_passed": 14,
+          "exported_passed": 14,
+          "artifact_sha256": "d1bd5d09d19be6e085a185d62b65a98e32451d070892488cce04d8d79d834ff3",
+          "receipt_sha256": "2158159950867519f652ae790c2ee09c7f49ec5d0ffbddfc332fc5bd376afbd3"
+        },
+        "independent_fresh_export": {
+          "physical_passed": 14,
+          "exported_passed": 14,
+          "artifact_sha256": "d1bd5d09d19be6e085a185d62b65a98e32451d070892488cce04d8d79d834ff3",
+          "receipt_sha256": "e7f90b9e77a8bd00343a0399c30208328bc6260cf93580bf01a56d597d7c0f02"
+        },
+        "physical_export_difference": "CRLF/LF only; exact raw equality was not assumed",
+        "repeated_launch": {
+          "replayed": true,
+          "run_count_before": 2,
+          "run_count_after": 2,
+          "events_and_target_bytes_unchanged": true
+        },
+        "duplicate_consumption": {
+          "exit_codes": [
+            0,
+            0
+          ],
+          "same_receipt_and_native_fingerprint": true,
+          "read_only_no_op": true
+        },
+        "stale_source_control": {
+          "change": "only the prospectively authorized comment appended",
+          "old_receipt_exit_code": 1,
+          "fresh_current_receipt_exit_code": 0,
+          "old_run_observed_nonlatest": true
+        }
+      },
+      {
+        "failure_class": "verifier-limit",
+        "target": "apps/web/src/verificationPolicy.ts",
+        "proposal_review": "actual-independent-agent",
+        "human_approval": false,
+        "review_sha256": "bc0efb73eaea4f51e7d27955afbf9aeb1a34f079e6845d8a563bcb181530f8c5",
+        "exact_single_repair_delta": "policy.checks.length > 32 -> policy.checks.length > 16",
+        "native_verifier_checks_passed": 3,
+        "initial_export": {
+          "physical_passed": 47,
+          "exported_passed": 47,
+          "artifact_sha256": "94086025f714e673c0dcf19b708cb967bc72b374ff82d3d3eb67cac09ae159ee",
+          "receipt_sha256": "686a2ff63a5685bded87c8a6ec99d1c5d1b9b250393116c62806c600126c039d"
+        },
+        "independent_fresh_export": {
+          "physical_passed": 47,
+          "exported_passed": 47,
+          "artifact_sha256": "94086025f714e673c0dcf19b708cb967bc72b374ff82d3d3eb67cac09ae159ee",
+          "receipt_sha256": "2edc148d46ca63f90166e2b0f93827bff6159b24440b4e91c8795b897a72137f"
+        },
+        "physical_export_difference": "CRLF/LF only; exact raw equality was not assumed",
+        "repeated_launch": {
+          "replayed": true,
+          "run_count_before": 2,
+          "run_count_after": 2,
+          "events_and_target_bytes_unchanged": true
+        },
+        "duplicate_consumption": {
+          "exit_codes": [
+            0,
+            0
+          ],
+          "same_receipt_and_native_fingerprint": true,
+          "read_only_no_op": true
+        },
+        "stale_source_control": {
+          "change": "only the prospectively authorized comment appended",
+          "old_receipt_exit_code": 1,
+          "fresh_current_receipt_exit_code": 0,
+          "old_run_observed_nonlatest": true
+        }
+      }
+    ],
+    "negative_control": {
+      "native_states": [
+        "failed",
+        "cancelled",
+        "failed"
+      ],
+      "exact_byte_transitions": [
+        "32 -> 20",
+        "20 -> 24",
+        "24 -> original 32"
+      ],
+      "rejection_review_sha256": "019a1ec0a6e98a6da7462f8ac67e5f984ad2c4514ce716c20bf3c899d7d89cb5",
+      "human_approval": false,
+      "rejected_candidate": {
+        "passed": 46,
+        "failed": 1,
+        "total": 47
+      },
+      "interrupted_candidate": {
+        "verification_status": "pending",
+        "verifier_evidence_count": 0,
+        "artifact": null,
+        "edit_before_interrupt_and_termination_before_cancelled_verified": true
+      },
+      "restored_candidate": {
+        "exact_initial_fault_bytes_restored": true,
+        "passed": 45,
+        "failed": 2,
+        "total": 47
+      },
+      "observer_persisted_acceptance": false,
+      "consumer_exit_code": 1,
+      "consumer_error": "native_acceptance_not_observed",
+      "escalation_is_artifact_not_native_escalated_state": true,
+      "inherited_result_caveat": "Interrupted result.json inherits the rejected candidate native_checks/independent_oracle. The 46/47 is not an interrupted-run result; authoritative terminal evidence is empty. Restoration ends failed; escalation is an artifact, not a native escalated state."
+    }
+  },
+  "accounting": {
+    "units": "Persisted ECorp native provider tokens; excludes standalone judge usage and does not establish provider billing.",
+    "v3_tokens": 522325,
+    "per_case": [
+      {
+        "case": "form-text-trim-positive",
+        "invocations": 3,
+        "tokens": 162848
+      },
+      {
+        "case": "verifier-limit-positive",
+        "invocations": 3,
+        "tokens": 192444
+      },
+      {
+        "case": "verifier-limit-negative",
+        "invocations": 3,
+        "tokens": 167033
+      }
+    ],
+    "prior_native_tokens_preserved": 1484890,
+    "cumulative_native_tokens": 2007215,
+    "prior_runs": 20,
+    "prior_missions": 8,
+    "current_runs": 29,
+    "current_missions": 11,
+    "active_provider_runs_at_audit": 0,
+    "preserved_prior_collection_hashes": 14,
+    "configured_budget_is_not_billing_proof": true
+  },
+  "prior_attempts": [
+    {
+      "label": "Earlier calibration",
+      "native_tokens": 202644,
+      "part_of_v3": false
+    },
+    {
+      "label": "V1",
+      "run_id": "20260918-065854+0800",
+      "assessed_source_commit": "07e090bd43f0f2206f41aefd53605bb19bf89a96",
+      "status": "failed",
+      "failure": "Extra two-byte CRLF violated the exact stale-source append contract.",
+      "native_tokens": 661017,
+      "completed_numeric_score": null,
+      "part_of_v3": false
+    },
+    {
+      "label": "V2",
+      "run_id": "20260918-071738+0800",
+      "assessed_source_commit": "07e090bd43f0f2206f41aefd53605bb19bf89a96",
+      "native_execution_verification": "verified",
+      "overall_status": "failed-at-judge-ensemble",
+      "failure": "Sandbox-denied prompt reads prevented valid judge consensus.",
+      "valid_judge_reports": 0,
+      "native_tokens": 621229,
+      "completed_numeric_score": null,
+      "part_of_v3": false
+    }
+  ],
+  "shared_settings": {
+    "approved_cleanup_preceded_v3": true,
+    "approved_baseline_sha256": "0b11524ecf4adc35b39228ec600ddf5af5ca335f9e170b8dde38628ddd04da93",
+    "before_sha256": "0b11524ecf4adc35b39228ec600ddf5af5ca335f9e170b8dde38628ddd04da93",
+    "after_sha256": "0b11524ecf4adc35b39228ec600ddf5af5ca335f9e170b8dde38628ddd04da93",
+    "unchanged_across_full_qualification_and_judging": true,
+    "equality_is_not_native_os_sandbox_enforcement": true
+  },
+  "structural_coverage_scope": {
+    "lines_covered": 49407,
+    "lines_total": 72899,
+    "line_percent": 67.7745922440637,
+    "compiled_linux_rust_files": 69,
+    "tests_passed": 856,
+    "tests_failed": 0,
+    "runner_stopped_session_probe_unexecuted": true,
+    "scope": "Compiled Linux Rust workspace unit and owned SQLx tests only; not whole-repository, web, provider or hosted CI coverage."
+  },
+  "captured_api_evidence": {
+    "started_at_utc": "2026-09-18T05:34:09.571877Z",
+    "finished_at_utc": "2026-09-18T05:34:14.2971364Z",
+    "later_governance_drift_does_not_replace_snapshot_or_score": true
+  },
+  "artifact_sha256": {
+    "profile.json": {
+      "sha256": "4a191118264eadc7aad1a8e5d5b9154df824f6702265c6b179aed1d28781e9fd",
+      "bytes": 8450
+    },
+    "inputs.json": {
+      "sha256": "4fb2a5bedf2524531e267bcf5b9000c1d676224dbfa6737071f6189909addf1b",
+      "bytes": 49214
+    },
+    "native-ops.mjs": {
+      "sha256": "5af625e451c5163a30c12a0332f093758abecd536f4b5ae90bdaf8b34bab8c75",
+      "bytes": 72706
+    },
+    "verifier.mjs": {
+      "sha256": "6f55d1d2a8d35c1400adfa92a822eb9da45942453b06d56be8a82f341dfc932a",
+      "bytes": 31793
+    },
+    "independent-verify.mjs": {
+      "sha256": "74dc6e05b43d7991c9265c188c9ba24cc9f1791deae2f58b7cf1b2289719cb24",
+      "bytes": 24211
+    },
+    "run.json": {
+      "sha256": "b66f21a4e1c5d9869aa75a4ae0913fdb74c0c154900ecfa1931a5b50fcb56fe0",
+      "bytes": 2431
+    },
+    "cb.json": {
+      "sha256": "ef754961b39aa8efbb432ea5a99051a679e5ded5545e512a19c19d27152b39ef",
+      "bytes": 410228
+    },
+    "pack.json": {
+      "sha256": "d776ec4b392a9439bca7e33ee6e0f10b70ede5a7b9bfb6a05f41ed3c5e7891e6",
+      "bytes": 19676
+    },
+    "consensus.json": {
+      "sha256": "a7898eeb04015c84b0e8b8e43b23bfd4d7b540a805e6a56f6dd5c0c86cc0865c",
+      "bytes": 33434
+    },
+    "composite.json": {
+      "sha256": "4a07055908150897e218e4dd81d7b320a3b642413ab0f672aed543a795507b4e",
+      "bytes": 163781
+    },
+    "composite.md": {
+      "sha256": "85d8c73bcefb73f3bf41497b87a1f9ef7a1ff72c211de51c59d1060a39af0549",
+      "bytes": 60795
+    },
+    "telemetry.json": {
+      "sha256": "6fbdea2ad2b8d616b33ffd5c2e7760a9b051192f5ce134373563593c9bc952d9",
+      "bytes": 8593
+    },
+    "report-claude-opus-5-r1.json": {
+      "sha256": "d211c894318f4c26813355073488db1286a44750e2f84dcef15e741b821c790b",
+      "bytes": 6163
+    },
+    "report-gpt-6-astra-r1.json": {
+      "sha256": "318035697875906666af3cf292877f86f031e4b7f3e7fc2f383d85219fc2bd71",
+      "bytes": 6261
+    },
+    "report-grok-4-6-r1.json": {
+      "sha256": "06a17684674ee231ec2f2c25ab8c15f70e2f2697a01a3cc085c76724aa5c3f3f",
+      "bytes": 5880
+    },
+    "observed-loop.json": {
+      "sha256": "346487d5e0413d46856be7e117f12e2c0568a8f1284812e23657cd5532885879",
+      "bytes": 63555
+    },
+    "launcher-invocation.json": {
+      "sha256": "895c4a2d18b1b4159cc1787bdebb82c3c2f960e44e8e4af266d6f7eeeb120593",
+      "bytes": 2105
+    },
+    "independent-native-acceptance.json": {
+      "sha256": "b9a54aa870b5b3c8732f923558192f670302a1f41a2b6df25280abce9ce2544e",
+      "bytes": 74259
+    },
+    "independent-live-accounting.json": {
+      "sha256": "46e39ba5c95aacef2bf6cb1d64e9f457c0b8a931bc7bb69e21e09e9f59e7e3c8",
+      "bytes": 10021
+    }
+  },
+  "limits": [
+    "Scores belong to the exact assessed commit, frozen profile and captured evidence; a later rebase or PR integration is not a rerun.",
+    "Later governance observations differ from the frozen API capture; this summary does not refresh or replace the original result.",
+    "Native artifact response/signature bindings were checked; no independent client HMAC or benchmark cryptographic attestation is claimed.",
+    "The 90/90 structure/operations objective remains unmet.",
+    "Raw source, native run and local-account artifacts remain separate; this public summary contains selected facts and digest pins only."
+  ]
+}

@@ -174,17 +174,103 @@ pub struct BaseAttempt {
     pub signed: Option<SignedTransaction>,
 }
 
+fn terminal_base_incident(status: &str) -> bool {
+    matches!(
+        status,
+        "finalized_contradiction" | "conflicting_anchor" | "invalid_evidence"
+    )
+}
+
+// Every transaction that can mutate a shared wallet locks its lane before any
+// destination or intent. Destination identity is immutable, so this join needs
+// no destination lock and cannot invert quarantine's lane -> destinations order.
+async fn lock_sender_lane_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    corp: Uuid,
+    destination: Uuid,
+) -> Result<sqlx::postgres::PgRow> {
+    Ok(sqlx::query("SELECT l.* FROM base_audit_sender_lanes l JOIN base_audit_destinations d ON d.chain_id=l.chain_id AND d.sender=l.sender WHERE d.corp_id=$1 AND d.id=$2 FOR UPDATE OF l")
+        .bind(corp).bind(destination).fetch_one(&mut **tx).await?)
+}
+
+async fn lock_configuration_lanes_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    input: &BaseDestinationInput,
+) -> Result<()> {
+    let manifest = &input.trusted_manifest()?.manifest;
+    let current = (
+        i64::try_from(manifest.chain_id)?,
+        input.config.publisher.to_vec(),
+    );
+    let mut streams = std::collections::BTreeSet::from([(
+        manifest.chain_id,
+        manifest.contract_address,
+        manifest.stream_id,
+    )]);
+    if let Some(migration) = &manifest.migration {
+        let old = &migration.old_destination;
+        streams.insert((old.chain_id, old.contract, old.stream_id));
+    }
+    // Enrollment alone changes the set of immutable destinations. Hold both
+    // stream identities during a migration before discovering predecessor lanes.
+    for (chain, registry, stream) in &streams {
+        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))")
+            .bind(format!("base-stream:{chain}:{registry}:{stream}"))
+            .execute(&mut **tx)
+            .await?;
+    }
+    let mut lanes = std::collections::BTreeSet::from([current.clone()]);
+    for (chain, registry, stream) in streams {
+        let rows = sqlx::query("SELECT chain_id,sender FROM base_audit_destinations WHERE id=$1 OR (chain_id=$2 AND registry=$3 AND stream_id=$4)")
+            .bind(input.id).bind(i64::try_from(chain)?).bind(registry.as_slice())
+            .bind(stream.as_slice()).fetch_all(&mut **tx).await?;
+        for row in rows {
+            lanes.insert((
+                row.get::<i64, _>("chain_id"),
+                row.get::<Vec<u8>, _>("sender"),
+            ));
+        }
+    }
+    let policy = input
+        .config
+        .spending_policy
+        .as_ref()
+        .context("spending policy missing")?;
+    // A linked revision may change wallets. Acquire every old/new lane in the
+    // same immutable key order, before any destination (including predecessors).
+    for (chain, sender) in lanes {
+        let is_current = chain == current.0 && sender == current.1;
+        if is_current {
+            sqlx::query("INSERT INTO base_audit_sender_lanes(chain_id,sender,customer_id,monthly_budget) VALUES($1,$2,$3,$4::numeric) ON CONFLICT(chain_id,sender) DO NOTHING")
+                .bind(chain).bind(&sender).bind(manifest.customer_trust_id.as_slice())
+                .bind(policy.monthly_budget.to_string()).execute(&mut **tx).await?;
+        }
+        let lane = sqlx::query("SELECT customer_id,monthly_budget::text FROM base_audit_sender_lanes WHERE chain_id=$1 AND sender=$2 FOR UPDATE")
+            .bind(chain).bind(sender).fetch_one(&mut **tx).await?;
+        if is_current {
+            ensure!(
+                lane.get::<Vec<u8>, _>("customer_id") == manifest.customer_trust_id.as_slice()
+                    && wei(&lane.get::<String, _>("monthly_budget"))? == policy.monthly_budget,
+                "wallet customer boundary or shared-wallet budget differs"
+            );
+        }
+    }
+    Ok(())
+}
+
 async fn fenced_tx(
     tx: &mut Transaction<'_, Postgres>,
     claim: &BaseClaim,
     publication: bool,
 ) -> Result<sqlx::postgres::PgRow> {
-    let d = sqlx::query("SELECT d.enabled,d.restore_required,l.paused FROM base_audit_destinations d JOIN base_audit_sender_lanes l ON l.chain_id=d.chain_id AND l.sender=d.sender WHERE d.corp_id=$1 AND d.id=$2 FOR UPDATE OF d")
+    let lane = lock_sender_lane_tx(tx, claim.intent.corp_id, claim.intent.destination_id).await?;
+    let d = sqlx::query("SELECT enabled,restore_required,status FROM base_audit_destinations WHERE corp_id=$1 AND id=$2 FOR UPDATE")
         .bind(claim.intent.corp_id).bind(claim.intent.destination_id).fetch_one(&mut **tx).await?;
     ensure!(
         (!publication || d.get::<bool, _>("enabled"))
             && !d.get::<bool, _>("restore_required")
-            && !d.get::<bool, _>("paused"),
+            && !lane.get::<bool, _>("paused")
+            && !terminal_base_incident(&d.get::<String, _>("status")),
         "publication paused"
     );
     sqlx::query("SELECT *,reservation::text FROM base_audit_intents WHERE corp_id=$1 AND id=$2 AND worker_id=$3 AND fence=$4 AND lease_until>now() AND NOT terminal FOR UPDATE")
@@ -245,6 +331,155 @@ async fn evidence_tx(
     Ok(())
 }
 
+fn retain_known_receipt_fee(
+    incoming: &ReceiptEvidence,
+    prior: &ReceiptEvidence,
+) -> Result<ReceiptEvidence> {
+    if incoming.l1_fee.is_none() && prior.l1_fee.is_some() {
+        prior.ensure_successor_of(incoming)?;
+        return Ok(prior.clone());
+    }
+    incoming.ensure_successor_of(prior)?;
+    // Preserve the first raw observation when providers change only incidental
+    // metadata. Canonical fields and a known fee remain immutable.
+    Ok(if incoming.l1_fee == prior.l1_fee {
+        prior.clone()
+    } else {
+        incoming.clone()
+    })
+}
+
+async fn record_inclusion_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    claim: &BaseClaim,
+    receipt: &ReceiptEvidence,
+    block: &SealedHeader,
+    require_prior: bool,
+) -> Result<ReceiptEvidence> {
+    ensure!(
+        receipt.receipt.block_hash == Some(block.hash)
+            && receipt.receipt.block_number == Some(block.number),
+        "unsealed or noncanonical receipt"
+    );
+    let known: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM base_audit_signed_results s JOIN base_audit_attempts a ON a.id=s.attempt_id AND a.corp_id=s.corp_id WHERE a.corp_id=$1 AND a.intent_id=$2 AND s.tx_hash=$3)")
+        .bind(claim.intent.corp_id).bind(claim.intent.id).bind(receipt.receipt.transaction_hash.to_string()).fetch_one(&mut **tx).await?;
+    ensure!(known, "receipt does not match any durable signed attempt");
+    let identity = format!("{}:{}", receipt.receipt.transaction_hash, block.hash);
+    let original: Option<Value> = sqlx::query_scalar("SELECT evidence FROM base_audit_evidence WHERE corp_id=$1 AND destination_id=$2 AND intent_id=$3 AND kind='inclusion' AND identity=$4")
+        .bind(claim.intent.corp_id).bind(claim.intent.destination_id).bind(claim.intent.id)
+        .bind(&identity).fetch_optional(&mut **tx).await?;
+    ensure!(
+        !require_prior || original.is_some(),
+        "own canonical inclusion cost must be recorded before finality"
+    );
+    let effective = if let Some(original) = original {
+        let original_receipt: ReceiptEvidence =
+            serde_json::from_value(original["receipt"].clone())?;
+        let original_block: SealedHeader = serde_json::from_value(original["block"].clone())?;
+        ensure!(original_block == *block, "included header changed");
+        let enriched: Option<Value> = sqlx::query_scalar("SELECT evidence->'receipt' FROM base_audit_evidence WHERE corp_id=$1 AND destination_id=$2 AND intent_id=$3 AND kind='inclusion_fee_enriched' AND identity=$4")
+            .bind(claim.intent.corp_id).bind(claim.intent.destination_id).bind(claim.intent.id)
+            .bind(&identity).fetch_optional(&mut **tx).await?;
+        let prior: ReceiptEvidence = enriched
+            .map(serde_json::from_value)
+            .transpose()?
+            .unwrap_or_else(|| original_receipt.clone());
+        let effective = retain_known_receipt_fee(receipt, &prior)?;
+        if original_receipt.l1_fee.is_none() && effective.l1_fee.is_some() {
+            evidence_tx(
+                tx,
+                claim.intent.corp_id,
+                claim.intent.destination_id,
+                Some(claim.intent.id),
+                "inclusion_fee_enriched",
+                &identity,
+                &json!({"receipt":effective,"block":block,"fees":effective.cost()?}),
+            )
+            .await?;
+        }
+        effective
+    } else {
+        evidence_tx(
+            tx,
+            claim.intent.corp_id,
+            claim.intent.destination_id,
+            Some(claim.intent.id),
+            "inclusion",
+            &identity,
+            &json!({"receipt":receipt,"block":block,"fees":receipt.cost()?}),
+        )
+        .await?;
+        receipt.clone()
+    };
+    let cost = effective.cost()?;
+    let settled = cost.total_wei.unwrap_or(cost.execution_wei);
+    let liability: String = sqlx::query_scalar("SELECT COALESCE(max(liability),0)::text FROM base_audit_attempts WHERE corp_id=$1 AND intent_id=$2")
+        .bind(claim.intent.corp_id).bind(claim.intent.id).fetch_one(&mut **tx).await?;
+    let reservation = if cost.total_wei.is_some() {
+        U256::ZERO
+    } else {
+        wei(&liability)?.saturating_sub(cost.execution_wei)
+    };
+    let included_at = DateTime::from_timestamp(i64::try_from(block.timestamp)?, 0)
+        .context("inclusion timestamp outside range")?;
+    let month: NaiveDate = included_at
+        .date_naive()
+        .with_day(1)
+        .context("invalid UTC inclusion month")?;
+    sqlx::query("UPDATE base_audit_intents SET state='included',settled=$3::numeric,inclusion_month=$4,reservation=$5::numeric,fee_warning=$6 WHERE corp_id=$1 AND id=$2")
+        .bind(claim.intent.corp_id).bind(claim.intent.id).bind(settled.to_string()).bind(month)
+        .bind(reservation.to_string()).bind(cost.total_wei.is_none()).execute(&mut **tx).await?;
+    Ok(effective)
+}
+
+async fn complete_base_archive_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    corp: Uuid,
+    digest: &str,
+) -> Result<bool> {
+    let rows = sqlx::query("SELECT r.witness,g.config,c.record,l.ledger_id FROM state_audit_anchor_receipts r JOIN state_audit_destinations g ON g.id=r.destination_id AND g.corp_id=r.corp_id JOIN state_audit_checkpoints c ON c.corp_id=r.corp_id AND c.digest=r.checkpoint_digest JOIN state_audit_ledgers l ON l.corp_id=r.corp_id WHERE r.corp_id=$1 AND r.checkpoint_digest=$2 AND r.status='published' AND g.kind='github'")
+        .bind(corp).bind(digest).fetch_all(&mut **tx).await?;
+    for row in rows {
+        let Some(witness) = row.get::<Option<Value>, _>("witness") else {
+            continue;
+        };
+        let Ok(config) =
+            serde_json::from_value::<state_audit::GitHubDestination>(row.get("config"))
+        else {
+            continue;
+        };
+        let Ok(checkpoint) =
+            serde_json::from_value::<crony_audit::SignedCheckpoint>(row.get("record"))
+        else {
+            continue;
+        };
+        let Some(publication) = witness.get("archive_publication") else {
+            continue;
+        };
+        let Ok(publication) =
+            serde_json::from_value::<crony_audit::PublishedArchive>(publication.clone())
+        else {
+            continue;
+        };
+        if checkpoint.checkpoint.ledger_id == row.get::<Uuid, _>("ledger_id").to_string()
+            && checkpoint.digest == digest
+            && witness.get("provider").and_then(Value::as_str) == Some("github")
+            && witness.get("repository").and_then(Value::as_str) == Some(config.repository.as_str())
+            && witness.get("branch").and_then(Value::as_str) == Some(config.branch.as_str())
+            && witness.get("path").and_then(Value::as_str) == Some(config.path.as_str())
+            && witness.get("commit").and_then(Value::as_str) == Some(publication.commit.as_str())
+            && crony_audit::validate_destination(&config.repository, &config.branch, &config.path)
+                .is_ok()
+            && publication
+                .validate_for_checkpoint(&config.path, &checkpoint)
+                .is_ok()
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 impl PgStore {
     pub async fn configure_base_destination(
         &self,
@@ -256,12 +491,14 @@ impl PgStore {
         let manifest = &signed.manifest;
         let mut tx = self.pool.begin().await?;
         base_authorize(&mut tx, corp, actor, true).await?;
-        let ledger: Uuid = sqlx::query_scalar(
-            "SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE",
-        )
-        .bind(corp)
-        .fetch_one(&mut *tx)
-        .await?;
+        lock_configuration_lanes_tx(&mut tx, input).await?;
+        // Native ledger identity is immutable after initialization. Do not take
+        // the governed-head lock before destinations: enqueue locks them first.
+        let ledger: Uuid =
+            sqlx::query_scalar("SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1")
+                .bind(corp)
+                .fetch_one(&mut *tx)
+                .await?;
         ensure!(
             manifest.ledger_id == ledger.to_string(),
             "manifest ledger is outside Corp"
@@ -294,14 +531,6 @@ impl PgStore {
             customer_authority == input.trust_pin.authority,
             "customer trust ID cannot be claimed by a different authority"
         );
-        let stream_lock = format!(
-            "base-stream:{}:{}:{}",
-            manifest.chain_id, manifest.contract_address, manifest.stream_id
-        );
-        sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))")
-            .bind(stream_lock)
-            .execute(&mut *tx)
-            .await?;
         let previous=sqlx::query("SELECT id,corp_id,customer_id,config,enabled FROM base_audit_destinations WHERE chain_id=$1 AND registry=$2 AND stream_id=$3 ORDER BY created_at,id FOR UPDATE")
             .bind(i64::try_from(manifest.chain_id)?).bind(manifest.contract_address.as_slice()).bind(manifest.stream_id.as_slice()).fetch_all(&mut *tx).await?;
         for prior in previous
@@ -423,21 +652,6 @@ impl PgStore {
             stored.input == *input,
             "immutable Base destination configuration conflict"
         );
-        let policy = input
-            .config
-            .spending_policy
-            .as_ref()
-            .context("spending policy missing")?;
-        sqlx::query("INSERT INTO base_audit_sender_lanes(chain_id,sender,customer_id,monthly_budget) VALUES($1,$2,$3,$4::numeric) ON CONFLICT(chain_id,sender) DO NOTHING")
-            .bind(i64::try_from(manifest.chain_id)?).bind(input.config.publisher.as_slice())
-            .bind(manifest.customer_trust_id.as_slice()).bind(policy.monthly_budget.to_string()).execute(&mut *tx).await?;
-        let lane = sqlx::query("SELECT customer_id,monthly_budget::text FROM base_audit_sender_lanes WHERE chain_id=$1 AND sender=$2 FOR UPDATE")
-            .bind(i64::try_from(manifest.chain_id)?).bind(input.config.publisher.as_slice()).fetch_one(&mut *tx).await?;
-        ensure!(
-            lane.get::<Vec<u8>, _>("customer_id") == manifest.customer_trust_id.as_slice()
-                && wei(&lane.get::<String, _>("monthly_budget"))? == policy.monthly_budget,
-            "wallet customer boundary or shared-wallet budget differs"
-        );
         evidence_tx(
             &mut tx,
             corp,
@@ -556,8 +770,7 @@ impl PgStore {
         let mut archive_ready = false;
         if let Some(checkpoint) = &checkpoint {
             verify_base_archive(&destination.input, &archive)?;
-            archive_ready=sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM state_audit_anchor_receipts r JOIN state_audit_destinations g ON g.id=r.destination_id AND g.corp_id=r.corp_id WHERE r.corp_id=$1 AND r.checkpoint_digest=$2 AND r.status='published' AND g.kind='github')")
-                .bind(corp).bind(&checkpoint.digest).fetch_one(&mut *tx).await?;
+            archive_ready = complete_base_archive_tx(&mut tx, corp, &checkpoint.digest).await?;
         }
         tx.commit().await?;
         Ok(BaseAnchorPreview {
@@ -641,7 +854,7 @@ impl PgStore {
                 "another revision of this public stream has unresolved publication"
             );
         }
-        let result = destination_row(sqlx::query("UPDATE base_audit_destinations SET enabled=$3,version=version+1,status=$4 WHERE corp_id=$1 AND id=$2 RETURNING *")
+        let result = destination_row(sqlx::query("UPDATE base_audit_destinations SET enabled=$3,version=version+1,status=CASE WHEN status IN ('finalized_contradiction','conflicting_anchor','invalid_evidence') THEN status ELSE $4 END WHERE corp_id=$1 AND id=$2 RETURNING *")
             .bind(corp).bind(id).bind(enabled).bind(if enabled {"ready"} else {"paused"}).fetch_one(&mut *tx).await?)?;
         evidence_tx(
             &mut tx,
@@ -709,7 +922,7 @@ impl PgStore {
         scheduled: bool,
     ) -> Result<Option<BaseIntent>> {
         ensure!(
-            d.enabled && !d.restore_required,
+            d.enabled && !d.restore_required && !terminal_base_incident(&d.status),
             "Base publication disabled or restore reconciliation required"
         );
         let pending = sqlx::query("SELECT * FROM base_audit_intents WHERE corp_id=$1 AND destination_id=$2 AND NOT terminal FOR UPDATE")
@@ -753,14 +966,20 @@ impl PgStore {
         }
         verify_base_archive(&d.input, &archive)?;
         let digest = &checkpoint.digest;
+        let ready = complete_base_archive_tx(tx, d.corp_id, digest).await?;
         if let Some(pending) = &pending
             && pending.checkpoint_digest == *digest
         {
-            return Ok(Some(pending.clone()));
+            let row = sqlx::query(
+                "UPDATE base_audit_intents SET state=$3 WHERE corp_id=$1 AND id=$2 RETURNING *",
+            )
+            .bind(d.corp_id)
+            .bind(pending.id)
+            .bind(if ready { "ready" } else { "archive_pending" })
+            .fetch_one(&mut **tx)
+            .await?;
+            return Ok(Some(intent_row(&row)?));
         }
-        let archived: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM state_audit_anchor_receipts r JOIN state_audit_destinations g ON g.id=r.destination_id AND g.corp_id=r.corp_id WHERE r.corp_id=$1 AND r.checkpoint_digest=$2 AND r.status='published' AND g.kind='github')")
-            .bind(d.corp_id).bind(digest).fetch_one(&mut **tx).await?;
-        let ready = archived;
         sqlx::query("INSERT INTO base_audit_retained_history(corp_id,destination_id,checkpoint_digest,archive,retained_until) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING")
             .bind(d.corp_id).bind(d.id).bind(digest).bind(serde_json::to_value(&archive)?)
             .bind(Utc::now()+Duration::days(i64::from(d.input.retention_days))).execute(&mut **tx).await?;
@@ -792,8 +1011,10 @@ impl PgStore {
     }
 
     /// Trusted worker only. Configuration reads include no endpoint credential values.
-    pub async fn base_worker_destinations(&self) -> Result<Vec<BaseDestination>> {
-        sqlx::query("SELECT * FROM base_audit_destinations ORDER BY id LIMIT 1024")
+    pub async fn base_worker_destinations(&self, ids: &[Uuid]) -> Result<Vec<BaseDestination>> {
+        ensure!(ids.len() <= 1024, "too many configured Base destinations");
+        sqlx::query("SELECT * FROM base_audit_destinations WHERE id=ANY($1) ORDER BY id")
+            .bind(ids)
             .fetch_all(&self.pool)
             .await?
             .into_iter()
@@ -834,27 +1055,49 @@ impl PgStore {
     ) -> Result<Option<BaseClaim>> {
         ensure!(!worker.is_nil(), "worker identity required");
         let mut tx = self.pool.begin().await?;
-        let d = sqlx::query("SELECT enabled,restore_required FROM base_audit_destinations WHERE corp_id=$1 AND id=$2 FOR SHARE")
+        let d = sqlx::query("SELECT enabled,restore_required,status FROM base_audit_destinations WHERE corp_id=$1 AND id=$2 FOR SHARE")
             .bind(corp).bind(destination).fetch_one(&mut *tx).await?;
-        if d.get::<bool, _>("restore_required") {
+        if d.get::<bool, _>("restore_required")
+            || terminal_base_incident(&d.get::<String, _>("status"))
+        {
             tx.commit().await?;
             return Ok(None);
         }
-        sqlx::query("UPDATE base_audit_intents i SET state='ready' WHERE i.corp_id=$1 AND i.destination_id=$2 AND i.state='archive_pending' AND EXISTS(SELECT 1 FROM state_audit_anchor_receipts r JOIN state_audit_destinations g ON g.id=r.destination_id AND g.corp_id=r.corp_id WHERE r.corp_id=i.corp_id AND r.checkpoint_digest=i.checkpoint_digest AND r.status='published' AND g.kind='github')")
-            .bind(corp).bind(destination).execute(&mut *tx).await?;
-        let row = sqlx::query("UPDATE base_audit_intents SET worker_id=$3,fence=fence+1,lease_until=now()+interval '120 seconds',updated_at=now() WHERE id=(SELECT id FROM base_audit_intents WHERE corp_id=$1 AND destination_id=$2 AND ($4 OR nonce IS NOT NULL) AND NOT terminal AND state NOT IN ('archive_pending','conflicting_anchor','nonce_conflict','invalid_evidence') AND (lease_until IS NULL OR lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *")
-            .bind(corp).bind(destination).bind(worker).bind(d.get::<bool,_>("enabled")).fetch_optional(&mut *tx).await?;
-        let claim = row
-            .map(|r| -> Result<BaseClaim> {
-                Ok(BaseClaim {
-                    intent: intent_row(&r)?,
-                    worker_id: worker,
-                    fence: r.try_get("fence")?,
-                })
-            })
-            .transpose()?;
+        let pending = sqlx::query("SELECT id,checkpoint_digest FROM base_audit_intents WHERE corp_id=$1 AND destination_id=$2 AND ($3 OR nonce IS NOT NULL) AND NOT terminal AND state NOT IN ('conflicting_anchor','nonce_conflict','invalid_evidence','finalized_contradiction') AND (lease_until IS NULL OR lease_until<now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1")
+            .bind(corp).bind(destination).bind(d.get::<bool,_>("enabled")).fetch_optional(&mut *tx).await?;
+        let Some(pending) = pending else {
+            tx.commit().await?;
+            return Ok(None);
+        };
+        let id: Uuid = pending.get("id");
+        // Recheck even an old "ready" intent: legacy checkpoint-only receipts
+        // never authorize a signer capability or a resumed broadcast.
+        if !complete_base_archive_tx(
+            &mut tx,
+            corp,
+            &pending.get::<String, _>("checkpoint_digest"),
+        )
+        .await?
+        {
+            sqlx::query(
+                "UPDATE base_audit_intents SET state='archive_pending' WHERE corp_id=$1 AND id=$2",
+            )
+            .bind(corp)
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
+            tx.commit().await?;
+            return Ok(None);
+        }
+        let row = sqlx::query("UPDATE base_audit_intents SET worker_id=$3,fence=fence+1,lease_until=now()+interval '120 seconds',updated_at=now(),state=CASE WHEN state='archive_pending' THEN 'ready' ELSE state END WHERE corp_id=$1 AND id=$2 RETURNING *")
+            .bind(corp).bind(id).bind(worker).fetch_one(&mut *tx).await?;
+        let claim = BaseClaim {
+            intent: intent_row(&row)?,
+            worker_id: worker,
+            fence: row.try_get("fence")?,
+        };
         tx.commit().await?;
-        Ok(claim)
+        Ok(Some(claim))
     }
 
     pub async fn release_base_claim(&self, claim: &BaseClaim, state: &str) -> Result<()> {
@@ -972,7 +1215,7 @@ impl PgStore {
             .bind(c.publisher.as_slice())
             .execute(&mut *tx)
             .await?;
-            sqlx::query("UPDATE base_audit_destinations SET restore_required=true,status='nonce_conflict' WHERE chain_id=$1 AND sender=$2")
+            sqlx::query("UPDATE base_audit_destinations SET restore_required=true,status=CASE WHEN status IN ('finalized_contradiction','conflicting_anchor','invalid_evidence') THEN status ELSE 'nonce_conflict' END WHERE chain_id=$1 AND sender=$2")
                 .bind(i64::try_from(c.chain_id)?).bind(c.publisher.as_slice()).execute(&mut *tx).await?;
             evidence_tx(
                 &mut tx,
@@ -1170,6 +1413,7 @@ impl PgStore {
             "invalid complete gateway journal snapshot"
         );
         let mut tx = self.pool.begin().await?;
+        let lane = lock_sender_lane_tx(&mut tx, corp, destination).await?;
         let d = destination_row(
             sqlx::query(
                 "SELECT * FROM base_audit_destinations WHERE corp_id=$1 AND id=$2 FOR UPDATE",
@@ -1187,13 +1431,6 @@ impl PgStore {
             ),
             "terminal integrity incident requires linked recovery"
         );
-        let lane = sqlx::query(
-            "SELECT * FROM base_audit_sender_lanes WHERE chain_id=$1 AND sender=$2 FOR UPDATE",
-        )
-        .bind(i64::try_from(c.chain_id)?)
-        .bind(c.publisher.as_slice())
-        .fetch_one(&mut *tx)
-        .await?;
         ensure!(
             lane.get::<Option<String>, _>("journal_epoch")
                 .is_none_or(|old| old == epoch),
@@ -1325,16 +1562,53 @@ impl PgStore {
             "{}:{}:{}",
             event.transaction_hash, event.log_index, event.block_hash
         );
-        evidence_tx(
-            &mut tx,
-            corp,
-            destination,
-            None,
-            "observed_event",
-            &identity,
-            &json!({"event":event,"receipt":receipt,"block":block}),
-        )
-        .await?;
+        let original: Option<Value> = sqlx::query_scalar("SELECT evidence FROM base_audit_evidence WHERE corp_id=$1 AND destination_id=$2 AND kind='observed_event' AND identity=$3")
+            .bind(corp).bind(destination).bind(&identity).fetch_optional(&mut *tx).await?;
+        if let Some(original) = original {
+            ensure!(
+                original["event"] == serde_json::to_value(event)?
+                    && original["block"] == serde_json::to_value(block)?,
+                "observed event or header changed"
+            );
+            let original_receipt: ReceiptEvidence =
+                serde_json::from_value(original["receipt"].clone())?;
+            let enriched: Option<Value> = sqlx::query_scalar("SELECT evidence->'receipt' FROM base_audit_evidence WHERE corp_id=$1 AND destination_id=$2 AND kind='observed_event_fee_enriched' AND identity=$3")
+                .bind(corp).bind(destination).bind(&identity).fetch_optional(&mut *tx).await?;
+            let prior: ReceiptEvidence = enriched
+                .map(serde_json::from_value)
+                .transpose()?
+                .unwrap_or_else(|| original_receipt.clone());
+            let effective = retain_known_receipt_fee(receipt, &prior)?;
+            if original_receipt.l1_fee.is_none() && effective.l1_fee.is_some() {
+                evidence_tx(
+                    &mut tx,
+                    corp,
+                    destination,
+                    None,
+                    "observed_event_fee_enriched",
+                    &identity,
+                    &json!({"event":event,"receipt":effective,"block":block}),
+                )
+                .await?;
+            }
+        } else {
+            evidence_tx(
+                &mut tx,
+                corp,
+                destination,
+                None,
+                "observed_event",
+                &identity,
+                &json!({"event":event,"receipt":receipt,"block":block}),
+            )
+            .await?;
+        }
+        // New observations are retained even during an incident. Only a linked
+        // destination recovery may replace its status or last verified prefix.
+        if terminal_base_incident(&d.status) {
+            tx.commit().await?;
+            return Ok(d.status);
+        }
         let seq = i64::try_from(event.call.sequence)?;
         let digest = hex::encode(event.call.checkpoint_digest);
         if seq <= d.verified_sequence
@@ -1395,44 +1669,9 @@ impl PgStore {
         receipt: &ReceiptEvidence,
         block: &SealedHeader,
     ) -> Result<()> {
-        ensure!(
-            receipt.receipt.block_hash == Some(block.hash)
-                && receipt.receipt.block_number == Some(block.number),
-            "unsealed or noncanonical receipt"
-        );
         let mut tx = self.pool.begin().await?;
         fenced_tx(&mut tx, claim, false).await?;
-        let known: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM base_audit_signed_results s JOIN base_audit_attempts a ON a.id=s.attempt_id AND a.corp_id=s.corp_id WHERE a.corp_id=$1 AND a.intent_id=$2 AND s.tx_hash=$3)")
-            .bind(claim.intent.corp_id).bind(claim.intent.id).bind(receipt.receipt.transaction_hash.to_string()).fetch_one(&mut *tx).await?;
-        ensure!(known, "receipt does not match any durable signed attempt");
-        let cost = receipt.cost()?;
-        let settled = cost.total_wei.unwrap_or(cost.execution_wei);
-        let liability:String=sqlx::query_scalar("SELECT COALESCE(max(liability),0)::text FROM base_audit_attempts WHERE corp_id=$1 AND intent_id=$2")
-            .bind(claim.intent.corp_id).bind(claim.intent.id).fetch_one(&mut *tx).await?;
-        let reservation = if cost.total_wei.is_some() {
-            U256::ZERO
-        } else {
-            wei(&liability)?.saturating_sub(cost.execution_wei)
-        };
-        let included_at = DateTime::from_timestamp(i64::try_from(block.timestamp)?, 0)
-            .context("inclusion timestamp outside range")?;
-        let month: NaiveDate = included_at
-            .date_naive()
-            .with_day(1)
-            .context("invalid UTC inclusion month")?;
-        evidence_tx(
-            &mut tx,
-            claim.intent.corp_id,
-            claim.intent.destination_id,
-            Some(claim.intent.id),
-            "inclusion",
-            &format!("{}:{}", receipt.receipt.transaction_hash, block.hash),
-            &json!({"receipt":receipt,"block":block,"fees":cost}),
-        )
-        .await?;
-        sqlx::query("UPDATE base_audit_intents SET state='included',settled=$3::numeric,inclusion_month=$4,reservation=$5::numeric,fee_warning=$6 WHERE corp_id=$1 AND id=$2")
-            .bind(claim.intent.corp_id).bind(claim.intent.id).bind(settled.to_string()).bind(month)
-            .bind(reservation.to_string()).bind(cost.total_wei.is_none()).execute(&mut *tx).await?;
+        record_inclusion_tx(&mut tx, claim, receipt, block, false).await?;
         tx.commit().await?;
         Ok(())
     }
@@ -1540,6 +1779,7 @@ impl PgStore {
         replacement: &SealedHeader,
     ) -> Result<()> {
         let mut tx = self.pool.begin().await?;
+        lock_sender_lane_tx(&mut tx, corp, destination).await?;
         let d = destination_row(
             sqlx::query(
                 "SELECT * FROM base_audit_destinations WHERE corp_id=$1 AND id=$2 FOR UPDATE",
@@ -1566,7 +1806,10 @@ impl PgStore {
             &json!({"old_block_hash":old_block_hash,"replacement":replacement}),
         )
         .await?;
-        if finalized {
+        if terminal_base_incident(&d.status) {
+            sqlx::query("UPDATE base_audit_destinations SET enabled=false,restore_required=true,scan_block=NULL,scan_hash=NULL WHERE corp_id=$1 AND id=$2")
+                .bind(corp).bind(destination).execute(&mut *tx).await?;
+        } else if finalized {
             sqlx::query("UPDATE base_audit_destinations SET enabled=false,restore_required=true,status=$3,scan_block=NULL,scan_hash=NULL WHERE corp_id=$1 AND id=$2")
                 .bind(corp).bind(destination).bind(kind).execute(&mut *tx).await?;
         } else {
@@ -1626,23 +1869,34 @@ impl PgStore {
             )
             .await?;
         }
-        let exists:bool=sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM base_audit_evidence WHERE corp_id=$1 AND destination_id=$2 AND intent_id=$3 AND kind='inclusion' AND identity=$4)")
+        // Finality may be the first observation with the L1 fee. Enrich its
+        // immutable receipt evidence and settle the reservation in this same tx.
+        let receipt = record_inclusion_tx(&mut tx, claim, receipt, block, true).await?;
+        let identity = format!("{}:{}", receipt.receipt.transaction_hash, block.hash);
+        let prior: Option<Value> = sqlx::query_scalar("SELECT evidence FROM base_audit_evidence WHERE corp_id=$1 AND destination_id=$2 AND intent_id=$3 AND kind='spend_finalized' AND identity=$4")
             .bind(claim.intent.corp_id).bind(claim.intent.destination_id).bind(claim.intent.id)
-            .bind(format!("{}:{}",receipt.receipt.transaction_hash,block.hash)).fetch_one(&mut *tx).await?;
-        ensure!(
-            exists,
-            "own canonical inclusion cost must be recorded before finality"
-        );
-        evidence_tx(
-            &mut tx,
-            claim.intent.corp_id,
-            claim.intent.destination_id,
-            Some(claim.intent.id),
-            "spend_finalized",
-            &format!("{}:{}", receipt.receipt.transaction_hash, block.hash),
-            &json!({"receipt":receipt,"block":block,"observations":observations}),
-        )
-        .await?;
+            .bind(&identity).fetch_optional(&mut *tx).await?;
+        if let Some(prior) = prior {
+            let prior_receipt: ReceiptEvidence = serde_json::from_value(prior["receipt"].clone())?;
+            receipt.ensure_successor_of(&prior_receipt)?;
+            ensure!(
+                prior["block"] == serde_json::to_value(block)?,
+                "finalized inclusion changed"
+            );
+            // A resumed worker revalidates both providers above. Keep the first
+            // finality proof; a later fee lives in its separate inclusion witness.
+        } else {
+            evidence_tx(
+                &mut tx,
+                claim.intent.corp_id,
+                claim.intent.destination_id,
+                Some(claim.intent.id),
+                "spend_finalized",
+                &identity,
+                &json!({"receipt":receipt,"block":block,"observations":observations}),
+            )
+            .await?;
+        }
         if !receipt.receipt.status() {
             sqlx::query("UPDATE base_audit_intents SET terminal=true,state='reverted',lease_until=NULL WHERE corp_id=$1 AND id=$2")
                 .bind(claim.intent.corp_id).bind(claim.intent.id).execute(&mut *tx).await?;
@@ -1694,7 +1948,7 @@ impl PgStore {
         .bind(d.input.config.publisher.as_slice())
         .execute(&mut *tx)
         .await?;
-        sqlx::query("UPDATE base_audit_destinations SET enabled=false,restore_required=true,status=$3 WHERE chain_id=$1 AND sender=$2")
+        sqlx::query("UPDATE base_audit_destinations SET enabled=false,restore_required=true,status=CASE WHEN status IN ('finalized_contradiction','conflicting_anchor','invalid_evidence') THEN status ELSE $3 END WHERE chain_id=$1 AND sender=$2")
             .bind(i64::try_from(d.input.config.chain_id)?).bind(d.input.config.publisher.as_slice()).bind(reason).execute(&mut *tx).await?;
         evidence_tx(
             &mut tx,

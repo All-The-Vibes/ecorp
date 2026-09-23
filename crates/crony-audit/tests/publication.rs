@@ -174,7 +174,7 @@ fn archive_fixture(row_count: usize, padding: usize) -> (Archive, Vec<TrustedSig
 fn blob_sha1(bytes: &[u8]) -> String {
     let mut git_bytes = format!("blob {}\0", bytes.len()).into_bytes();
     git_bytes.extend_from_slice(bytes);
-    hex::encode(sha1::Sha1::digest(git_bytes))
+    hex::encode(<sha1::Sha1 as sha1::Digest>::digest(git_bytes))
 }
 
 fn reconstruct(fake: &Fake, receipt: &PublishedArchive) -> Archive {

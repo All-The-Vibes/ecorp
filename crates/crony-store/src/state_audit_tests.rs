@@ -1182,7 +1182,7 @@ async fn issue281_legacy_source_commit_upgrade_is_audited_atomically(pool: PgPoo
 }
 
 #[derive(Default)]
-struct PublicationFixture {
+pub(super) struct PublicationFixture {
     files: std::sync::Mutex<std::collections::BTreeMap<String, Vec<u8>>>,
     writes: std::sync::Mutex<usize>,
     fail: std::sync::Mutex<Option<usize>>,

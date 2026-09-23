@@ -1,0 +1,26 @@
+{
+  "pr": 293,
+  "source_head": "89f6f0d9ca0a01771b72941198b256b8df94d01d",
+  "tested_staged_tree": "df9d80c488eee93b00875c8f8e29a4bba1ca892f",
+  "scope": "Two additional branch-specific contributor commands; Ethereum test uses in-memory revm, not a live chain.",
+  "status": "passed",
+  "started_at_utc": "2026-09-23T08:16:00.7484299+00:00",
+  "checks": [
+    {
+      "command": "node tools/check_state_audit_compatibility.mjs",
+      "exit_code": 0,
+      "name": "state-audit-compatibility",
+      "sha256": "3a6aa245627c85508134d0edb03cff089a3eaf70e8f4dff629a528622a4d7c4c",
+      "log": "<private-evidence>\\pr293-extra-gates-r1\\state-audit-compatibility.log"
+    },
+    {
+      "command": "cargo test --locked -p crony-audit --test ethereum_local_chain",
+      "exit_code": 0,
+      "name": "ethereum-local-chain",
+      "sha256": "b5d529a7c95026e6f5ceb82c13b15d8ccaf0ab766fb3941f8805ce8a71b4e090",
+      "log": "<private-evidence>\\pr293-extra-gates-r1\\ethereum-local-chain.log"
+    }
+  ],
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T08:26:52.0321372+00:00"
+}

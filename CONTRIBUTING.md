@@ -17,13 +17,19 @@ Before a non-trivial change, read:
 
 ## Planning source of truth
 
-[ECorp Build GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) is the live
-system for priorities, status, sequencing, ownership, dependencies, and release gates.
+[ECorp Build GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) is the
+source for new-work priorities, status, sequencing, ownership, dependencies, and release gates.
+Personal [Project #3](https://github.com/users/shyamsridhar123/projects/3) preserves existing
+claims, missions, recoveries, and publication history under their recorded authority and identities.
 [`docs/BACKLOG.md`](docs/BACKLOG.md) is historical seed material only. Do not add or maintain an
 active work item in `BACKLOG.md`.
 
-Search the Project and repository issues before creating work. Add every live issue to Project #3,
-record explicit dependencies, and use one independently verifiable outcome per issue.
+Search Project #5 and `All-The-Vibes/ecorp` issues before creating work. Add every new live issue
+to Project #5, record explicit dependencies, and use one independently verifiable outcome per issue.
+Before new intake, verify the operator's configured repository and Project routing. Project metadata
+does not authorize dispatch or unify claim authority across independent control planes; follow the
+[coordination requirements](#coordinate-independent-factories) below. Preserve existing execution
+lineage during recovery.
 
 ## Reuse the harness before building
 
@@ -82,14 +88,14 @@ Database co-location, separate Corps on one server, or a shared GitHub Project a
 claim authority.
 
 Prerequisites are Git, PowerShell 7.4+ on Windows, Rust 1.94 or newer, Node.js, pnpm 11.19.0, Docker with
-Compose, GitHub CLI authenticated for the repository and Project #3, and any provider entitlement
+Compose, GitHub CLI authenticated for `All-The-Vibes/ecorp` and Project #5, and any provider entitlement
 required for real-agent work.
 
 Clone ECorp and give the runner an execution root that is separate from the configured source
 checkout:
 
 ```powershell
-git clone https://github.com/shyamsridhar123/ecorp.git
+git clone https://github.com/All-The-Vibes/ecorp.git
 Set-Location ecorp
 
 $env:CRONY_SOURCE_REPOSITORY = (Get-Location).Path
@@ -180,7 +186,7 @@ Never place the token value in a prompt, command argument, log, issue, worktree,
 Do not share one contributor's Copilot identity with another contributor or with a producing agent.
 
 GitHub Copilot is the recommended real-provider path for contributor factory work. External CLI
-providers can have different isolation and process-lifecycle assurance; check current Project #3
+providers can have different isolation and process-lifecycle assurance; check current Project #5
 issues before treating them as equivalent.
 
 ### Choose attempts when planning new work
@@ -213,8 +219,10 @@ gate, not a conclusion from unit tests.
 
 ### Coordinate independent factories
 
-Personal factory hosts do not create personal backlogs. Every contributor must use the same Project
-#3 issue, status, revision, dependency, and `factory:ready` contract:
+Personal factory hosts do not create personal backlogs. For new work, contributors use the Project
+#5 issue, status, revision, dependency, and `factory:ready` contract. Existing Project #3 claims,
+missions, recoveries, and publications retain their recorded authority and identities; do not
+retarget them during new-work intake. For new work:
 
 - run only open `Todo` issues that are explicitly labeled `factory:ready`;
 - let the controller claim and revalidate the Project item before dispatch;
@@ -228,7 +236,7 @@ GitHub status and labels are not an atomic execution lock. Do not run unattended
 same backlog against independent ECorp databases. Use the same server/control plane, same Corp,
 and same claim namespace with separately enrolled runners, or explicitly partition the eligible
 issue sets. Merely placing databases on one host is not coordination. Automatic enforcement and multi-host
-acceptance remain tracked in [#161](https://github.com/shyamsridhar123/ecorp/issues/161); this guidance
+acceptance remain tracked in [#161](https://github.com/All-The-Vibes/ecorp/issues/161); this guidance
 does not claim that the gap is fixed.
 
 For a shared remote ECorp deployment instead of independent local factories, configure production
@@ -236,6 +244,48 @@ OIDC, Corp membership, runner enrollment, private artifact storage, and the othe
 boundaries in the architecture and security guides.
 
 ## Validate before publishing
+
+### Reproduce the recommended tools
+
+The recommended whole-repository environment is Node.js 24.19.0 (`.node-version`), Rust 1.98.1
+with rustfmt and Clippy (`rust-toolchain.toml`), and pnpm 11.19.0 (`packageManager`). Repo Steward
+requires Node 24; the web/tool regression command remains compatible with Node 22.23.2.
+Use the native Node/version-manager, Rustup and pnpm setup for your host. For Rustup, install the
+declared version and components explicitly before running Cargo:
+
+```powershell
+rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+node tools/verify_toolchain.mjs
+```
+
+The version doctor reads the declarations and queries native tool versions. It never installs
+tools, downloads a package-manager version, builds code, starts services or prints credentials.
+A passing result establishes selected tool versions only. Missing components or unavailable
+registry/network access still need their own successful setup and validation evidence.
+Editor tasks in `.vscode/tasks.json` invoke the existing contributor commands; `.editorconfig`
+keeps new edits consistent with the repository's formatting conventions.
+
+`tools/start_local.ps1` remains the supported application setup/lifecycle entry point. The
+version doctor is not a second installer or runtime supervisor. Do not treat an editor task or
+toolchain pin as evidence that a stack or Dev Container was exercised.
+
+### Linux Dev Container
+
+`.devcontainer/devcontainer.json` provides Linux/amd64 contributor tools from pinned official
+Rust 1.98.1 and Node 24.19.0 images, with pnpm 11.19.0. Open an independent clone through a Dev
+Containers client on a Linux filesystem. A linked worktree can refer to Git metadata outside the
+workspace mount, so it is not a supported shortcut for this configuration. The container
+runs as the `developer` user (UID/GID 1000), so the selected workspace must be writable by that
+user. Creation runs the canonical frozen dependency install and the version doctor.
+
+The image provides build/test tools only. It starts no ECorp server, runner, database, or provider;
+it mounts no Docker socket or host credentials and requires no privileged mode. The SDK's optional
+Copilot CLI download is disabled; provider runtime provisioning and browser/server/runner acceptance
+remain separate, explicitly owned operations. Native Linux external-CLI containment limitations
+in `docs/SECURITY.md` still apply. Run the repository gates below inside the container; a successful
+development build is not production runner-isolation evidence.
+
+### Repository gates
 
 Run targeted tests for the changed behavior. For user-visible behavior, exercise the complete
 browser-to-server-to-runner path; unit tests alone are insufficient.
@@ -249,17 +299,68 @@ prune unrelated containers, volumes, or worktrees as cleanup.
 
 The repository gate is:
 
+<!-- ecorp:validation-commands -->
 ```powershell
 node tools/check_migrations.mjs
+node tools/check_state_audit_compatibility.mjs
+cargo test -p crony-audit --test ethereum_local_chain
+pnpm check:docs
+pnpm test:unit
+pnpm test:steward
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm build:web
 pnpm lint:web
 ```
+<!-- /ecorp:validation-commands -->
 
 `pnpm check` runs the same sequence. Record exact commands, results, commit identity, and any
 unrelated failure truthfully.
+
+Use Node.js 22.23.2 or newer for `pnpm test:unit`. The native Node test runner discovers
+`apps/web/src/**/*.test.mjs` and `tools/*.test.mjs`, including newly added tests, with two
+test files running concurrently and a three-minute per-test timeout. These local regression
+fixtures do not start the complete product stack or replace the separately owned E2E lane.
+The Repository checks workflow runs the same suites on Linux and Windows and retains JUnit
+results on success or failure. Successful jobs establish hosted regression evidence; record
+local runs separately when hosted execution is unavailable.
+
+`pnpm check:docs` compares the marked validation-command blocks in contributor documentation
+with `package.json` and the current Copilot compatibility paragraphs with their Cargo/adapter
+pins. It reads those sources without executing Markdown. Update the relevant current contract
+when an intentional command or supported-version change lands. Historical evidence remains
+historical; this check does not establish semantic, API, or complete documentation coverage.
+
+Dependabot proposes weekly Cargo, pnpm/npm, and Actions updates, capped at three open version
+update PRs per configured ecosystem entry. Minor and patch changes are grouped for review.
+The Copilot SDK is excluded because its pinned CLI must be verified with it as one compatibility
+pair. Every proposed update still needs the applicable checks and human review; scheduling a
+dependency update does not authorize merging it or operating a live Factory/Repo Steward job.
+
+### Optional local hooks and secret scanning
+
+With pre-commit 4.6.2, native Gitleaks 8.30.1, and the recommended Node/Rust tools available,
+run `pre-commit run` after staging your intended changes. The local system hooks scan staged
+changes for secrets, check current documentation contracts, and check Rust formatting when
+Rust files change. They do not install dependencies or replace the full repository gates.
+
+Manual invocation does not install Git hooks. Enable automatic hooks only in an independent
+personal clone; linked worktrees normally share a hooks directory with their source repository.
+Do not install or replace hooks in the shared source checkout or alter global Git settings.
+
+The Secret scan workflow verifies the pinned native scanner download and scans the selected
+commit's complete ancestry with read-only repository access. From a non-shallow checkout, run
+that same scan locally:
+
+```powershell
+gitleaks git . --log-opts=HEAD --redact=100 --no-banner --no-color --ignore-gitleaks-allow --gitleaks-ignore-path .gitleaksignore --timeout 300
+```
+
+`.gitleaksignore` contains only reviewed historical commit/file/rule/line fingerprints with
+rationale. It does not exclude whole fixtures, environment files, or rules. Inspect each new
+finding before adding any exception; newly introduced secrets remain failures. Keep output
+redacted and never publish matched credential values in logs or artifacts.
 
 As of September 3, 2026, GitHub-hosted Actions credits are exhausted for the month. Do not treat an
 unstarted hosted job as a completion gate or remain blocked solely for that reason. Record

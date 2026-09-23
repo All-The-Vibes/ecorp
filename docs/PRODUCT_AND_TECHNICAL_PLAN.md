@@ -6,8 +6,11 @@
 **Research snapshot:** August 29, 2026  
 **Architecture decision:** ECorp is a greenfield modular monolith; neither reviewed source project
 is the primary base.
-**Operational planning:** [ECorp Build GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3)
-and its linked issues are the current source of priorities, dependencies, and status.
+**Operational planning:** [ECorp Build GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5)
+and its linked issues are the current source of new-work priorities, dependencies, and status.
+Personal [Project #3](https://github.com/users/shyamsridhar123/projects/3) retains existing execution
+lineage and its recorded authority and identities. Operators must verify configured routing and
+coordinate through shared claim authority or disjoint eligible issue sets before new intake.
 `docs/BACKLOG.md` is historical seed material only.
 
 The sections below preserve the product contract and original sequencing. Future-tense language
@@ -23,6 +26,34 @@ and linked repository evidence for implemented behavior.
   - Local research checkout: `C:\Users\shyamsridhar\code\_research\buzz3`
   - Reviewed commit: `00e61eafa917d296104006576b7a2ddbfd58bb5a`
 
+### Documentation checkpoint - September 19, 2026 (UTC)
+
+This review uses main `39632b957819012721c90902925d8fa7a9c7e873`. It adds current
+source and evidence pointers without relabeling historical tests as fresh
+acceptance.
+
+- **Workers belong to the mission.** Mission-owned workers and bounded,
+  dependency-aware task graphs are implemented through fixed solo, specialist,
+  and Copilot studio strategy presets. Each preset defines the roles and graph;
+  skill-driven composition and complete crew-management workflows remain
+  separate tracked work. The presets are not a permanent product-wide agent limit.
+- **Multiplayer is part of the operating model.** Shared rooms, durable comments,
+  fenced control leases, queued direction, role-gated decisions, replay, and
+  exact mission/run context connect people to the same authoritative work.
+  The integrated collaboration UI and freshness/error states have
+  [source-bound local evidence](evidence/2026-09-17-multiplayer-ui-integration.md).
+  The [U7 parity map](multiplayer/U7_PARITY_MATRIX.md) identifies what is still
+  required for independent production identities and cross-owner execution.
+- **Blockchain as fabric is a built-in provenance model.** Pinned source,
+  contributors, evidence digests, signed artifact provenance, accepted parent
+  handoffs, and governing verifier/review records form connected strands across
+  a mission. [Trust fabric](TRUST_FABRIC.md) explains the implementation.
+  This is not a separate product named Fabric or a claim of distributed
+  blockchain consensus; Postgres remains operational authority.
+- **The architecture visuals now distinguish the planes and the weave.**
+  Human collaboration and integrity span the system; neither creates a second
+  process supervisor or bypasses explicit authorization.
+
 ### Implementation checkpoint - September 6, 2026
 
 This checkpoint adds to the September 4 baseline below; it does not turn the original delivery
@@ -31,7 +62,7 @@ plan into a claim that every planned surface has shipped.
 - Source-selected missions can now create mission-owned workers atomically with the accepted task
   graph. Unpinned workers retire after terminal missions only when their operational obligations
   are settled, while historical attribution remains. Dedicated crew-management controls remain
-  tracked in [#48](https://github.com/shyamsridhar123/ecorp/issues/48).
+  tracked in [#48](https://github.com/All-The-Vibes/ecorp/issues/48).
 - `studio-swarm` uses three real GitHub Copilot workers for visual, gameplay, and quality handoffs,
   then a fourth task for integration by the gameplay worker. Integration consumes exact signed,
   verified parent artifacts. The [studio report](evidence/2026-09-06-mission-staffing.md) separates
@@ -1038,7 +1069,8 @@ Automerge or Yjs can support collaborative documents. Do not use CRDTs for appro
 - native mobile clients
 - full federation
 - multiple deployable backend microservices
-- a mandatory blockchain or cryptocurrency layer
+- a mandatory external blockchain network or cryptocurrency layer, distinct from
+  the built-in [provenance fabric](TRUST_FABRIC.md)
 
 ---
 
@@ -1162,7 +1194,7 @@ ecorp/
 Assumption: one primary developer using coding agents, with periodic design and security review.
 
 This section preserves the initial sequencing baseline. It is not the live implementation queue;
-use the implementation checkpoint and ECorp Build Project #3 issues for current status.
+use the implementation checkpoint and ECorp Build Project #5 issues for current status.
 
 ## Phase 0: foundation decisions — week 1
 
@@ -1471,9 +1503,12 @@ This scenario proves implementation, multiplayer delivery, agent coordination, h
 
 # 23. Operational planning
 
-ECorp Build GitHub Project #3 and its linked issues are the operational source of truth for current
-priorities, dependencies, and status. This document records the durable product and technical
-contract plus dated implementation checkpoints; it is not a live work queue.
+[ECorp Build GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) and its linked issues
+are the operational source of truth for new-work priorities, dependencies, and status. Existing
+Project #3 claims, missions, recoveries, and publications retain their recorded authority and identities.
+The planning destination does not itself authorize dispatch or provide shared claim authority.
+This document records the durable product and technical contract plus dated implementation
+checkpoints; it is not a live work queue.
 
 `docs/BACKLOG.md` remains historical seed material only. When an older checklist conflicts with a
 linked issue or current repository evidence, verify the implementation and update the Project or

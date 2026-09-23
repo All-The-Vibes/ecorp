@@ -6,7 +6,18 @@ import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { runInNewContext } from 'node:vm'
 import test from 'node:test'
-import * as driver from './e2e_checkpoint_verification.mjs'
+import * as nativeDriver from './e2e_checkpoint_verification.mjs'
+
+// The retained issue195 receipt is a Windows contract on every test host.
+// Inject its path semantics into pure assessments, as configuration already does.
+// Native runtime callers keep their default host paths and unchanged guards.
+const driver = {
+  ...nativeDriver,
+  assessOriginal: (...args) => nativeDriver.assessOriginal(...args, path.win32),
+  assessRecovery: (...args) => nativeDriver.assessRecovery(...args, path.win32),
+  executeSuite: (config, report, io, options = {}) =>
+    nativeDriver.executeSuite(config, report, io, { ...options, pathApi: path.win32 }),
+}
 
 const id = (n) => `00000000-0000-4000-8000-${n.toString(16).padStart(12, '0')}`
 const clone = (value) => structuredClone(value)
@@ -931,7 +942,7 @@ function originalFixture(c = config(), driverId = id(901)) {
     adapter: 'codex', current_run_id: null, status: 'idle', retired_at: null,
   }
   const branch = `crony/task-${taskId.replaceAll('-', '')}/run-${runId.replaceAll('-', '')}`
-  const workspace = path.join(c.runner_root, 'worktrees', taskId.replaceAll('-', ''), runId.replaceAll('-', ''))
+  const workspace = WIN.join(c.runner_root, 'worktrees', taskId.replaceAll('-', ''), runId.replaceAll('-', ''))
   const run = {
     id: runId, corp_id: c.corp_id, task_id: taskId, agent_id: agentId, runner_id: c.runner_id,
     execution_mode: 'provider', status, breaker_stage: stage, workspace_disposition: 'preserved',
@@ -986,6 +997,29 @@ function originalFixture(c = config(), driverId = id(901)) {
   return { c, plan, state, item, mission, task, agent, run, proof, incident,
     replay: { events, through: events.at(-1).seq }, identity: driver.newReport(c, driverId).identity }
 }
+
+test('explicit Windows assessment preserves historical paths on every host', () => {
+  const f = originalFixture()
+  assert.doesNotThrow(() => nativeDriver.assessOriginal(
+    f.state, f.replay, f.c, f.plan, f.identity, WIN))
+  const recovered = recoveryFixture()
+  assert.doesNotThrow(() => nativeDriver.assessRecovery(recovered.state, recovered.replay,
+    recovered.context, recovered.c, recovered.plan, recovered.original, recovered.identity, WIN))
+  assert.throws(() => nativeDriver.parseArgs([...requiredPairs().flat(), '--path-api', 'win32']),
+    { code: 'unknown_or_duplicate_option' })
+})
+
+test('default host assessment still rejects foreign path namespaces', () => {
+  const f = originalFixture()
+  if (process.platform === 'win32') {
+    f.c.runner_root = '/synthetic-posix/runner-workspaces'
+    assert.throws(() => nativeDriver.assessOriginal(f.state, f.replay, f.c, f.plan, f.identity),
+      { code: 'unsafe_windows_path' })
+  } else {
+    assert.throws(() => nativeDriver.assessOriginal(f.state, f.replay, f.c, f.plan, f.identity),
+      { code: 'unsafe_posix_path' })
+  }
+})
 
 for (const tokens of [5000, 6000]) {
   test(`assessOriginal binds native ${tokens === 5000 ? 'stop' : 'suspend'} from full replay, not snapshot.events`, () => {
@@ -1153,7 +1187,7 @@ function memoryHarness(c = config({ timeoutMs: 15_000, pollMs: 250, settleMs: 20
       reads.base += 1
       assert.deepEqual(identity, { task_id: original.task.id, run_id: original.run.id })
       return {
-        path: path.join(original.run.workspace_path, 'base.txt'), bytes: 5,
+        path: WIN.join(original.run.workspace_path, 'base.txt'), bytes: 5,
         sha256: behavior.badBase ? '0'.repeat(64) : BASE_SHA,
       }
     },

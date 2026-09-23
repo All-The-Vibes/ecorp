@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "pr": 293,
+  "attempt": "r4",
+  "recorded_at_utc": "2026-09-23T09:18:21.1154544+00:00",
+  "status": "stopped-and-preserved",
+  "diagnosis": "PowerShell ConvertFrom-Json inferred DateTime values and dropped a trailing fractional zero when serializing restart captures. The final process identity used the original string. The instants are identical. Preserve r4 and rerun a fresh fixture with string-preserving JSON parsing in the external stack/supervisor, with unchanged product and acceptance assertions.",
+  "timestamp_instants_equal": true,
+  "original_acceptance_sha256": "9219891473143c71abcf010c25f114cc0fac4b03481796a693591cac0029feda",
+  "snapshot_sha256": "9fe0470e6103bccb94e8dfde073dc1b377cf37fcb154b5f14584a869a7410025",
+  "product_output": "<reviewed-worktree>\\output\\native-qualification\\phase2-r4",
+  "files_removed": false,
+  "stopped": [
+    "github",
+    "anvilNode",
+    "web",
+    "anvil",
+    "gateway",
+    "server",
+    "runner",
+    "postgres"
+  ],
+  "finished_at_utc": "2026-09-23T09:18:21.4098038+00:00"
+}

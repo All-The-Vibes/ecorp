@@ -46,7 +46,7 @@ engineering contract. Here is what the current alpha can do.
 ## Press START on real work
 
 1. **Drop the mission.** Define the outcome, references, write scope, provider, model, budget, and verifier policy.
-2. **Build the crew.** Choose a solo worker, two specialists followed by synthesis, or a three-worker Copilot studio with verified handoffs before integration.
+2. **Choose a crew for the mission.** The current alpha creates mission-owned workers from fixed, bounded strategy presets: a solo worker, two specialists followed by synthesis, or a three-worker Copilot studio with verified handoffs before integration. Skill-driven team composition remains future work.
 3. **Light up isolated worktrees.** Every write-capable run gets its own branch and linked workspace. Parallel agents never pile into the configured source checkout.
 4. **Keep human hands on the controls.** Watch live state, steer the active session, queue direction, review the run, or hit an audited emergency stop.
 5. **Make proof mandatory.** Files, commands, tests, schemas, screenshots, human approval, and independent review can all block completion.
@@ -56,12 +56,24 @@ Publication never enables auto-merge and does not merge or deploy.
 
 ## How the factory works
 
-[![ECorp architecture: web, desktop, and CLI clients connect to the ECorp Control Server, which owns missions, policies, and events backed by Postgres and private artifact storage. Outbound runners execute and verify work in isolated worktrees before human-authorized pull-request publication.](docs/assets/architecture/ecorp-architecture-retro-v2.jpg)](docs/assets/architecture/ecorp-architecture-retro-v2.jpg)
+[![ECorp architecture: multiple human clients share the control server; outbound runners execute mission-shaped task graphs in isolated worktrees. Source, contributors, evidence and acceptance rules are linked by a built-in trust fabric. Verified delivery still requires human authorization.](docs/assets/architecture/ecorp-architecture-multiplayer-v3.svg)](docs/assets/architecture/ecorp-architecture-multiplayer-v3.svg)
 
 **One company. Three planes.** The **experience plane** is your shared front office. The
 **control plane** owns missions, policy, and durable state. The **execution plane** runs the crew
 in isolated worktrees, verifies the output, and returns the evidence. Human authorization and a
 trusted publisher take verified artifacts to a pull request—not an automatic merge or deployment.
+
+**Multiplayer is how the company works together. Blockchain is fabric woven through
+the work.** People share room-scoped mission context, durable comments, control
+handoffs, and role-gated decisions. Source pins, contributor attribution, evidence
+fingerprints, signed provenance, and acceptance records connect the work from
+brief to reviewed result.
+
+Explore the [multiplayer diagram](docs/assets/architecture/ecorp-multiplayer-control-v1.svg)
+and [trust-fabric diagram](docs/assets/architecture/ecorp-trust-fabric-v1.svg).
+The [implementation guide](docs/TRUST_FABRIC.md) explains what the fabric checks:
+it is not a separate product called Fabric, a token network, or a substitute for
+human authorization.
 
 Click the image for full resolution. This is a logical architecture view; worktrees are not full
 OS sandboxes. Explore the [architecture](docs/ARCHITECTURE.md),
@@ -73,12 +85,18 @@ The floor makes real work visible. Agent activity, mission status, approvals, an
 results are projections of authoritative server, runner, and provider state.
 
 - **State survives the screen.** Missions, messages, task graphs, budgets, approvals, and audit events persist in Postgres. Closing the browser or desktop client does not terminate the run.
+- **People share one mission.** Authorized teammates work from shared room/run context,
+  comment, queue direction, hand off a fenced control lease, and review through
+  distinct role-gated paths. The collaboration UI exposes snapshot freshness and
+  disconnection rather than treating a live socket as proof of fresh data.
 - **Work stays off the source checkout.** An outbound-connected runner owns provider processes, isolated worktrees, verification, and artifact collection. The server never executes agent shell commands.
 - **Proof opens the exit.** A run cannot emit accepted completion until its persisted verifier policy passes. Verified factory results can then enter the separately authorized publication lane.
 
 ### Assemble a studio, not a static cast
 
-ECorp creates mission-owned workers from the connected runner's capabilities. Choose **Studio team ·
+ECorp creates mission-owned workers using the selected strategy and a supported
+connected runtime. Each strategy defines the current roles and bounded task
+graph. For example, choose **Studio team ·
 3 Copilot agents** for visual, gameplay, and quality specialists working in parallel. Their exact
 verified handoff files feed a later integration pass by the gameplay worker.
 
@@ -87,6 +105,11 @@ agent or three agents editing the same checkout. Unpinned mission workers retire
 is terminal and no live control or cleanup obligations remain; their history stays available.
 The [studio implementation and recorded evidence](docs/evidence/2026-09-06-mission-staffing.md)
 spell out the checks and remaining staffing work.
+
+The [integrated multiplayer evidence](docs/evidence/2026-09-17-multiplayer-ui-integration.md)
+and [parity map](docs/multiplayer/U7_PARITY_MATRIX.md) distinguish today's
+collaboration foundation from the remaining independent-identity and cross-owner
+acceptance work.
 
 Want to start later? Expand **Model, limits and output**, choose **Save without starting**, then
 **Save plan**. It is stored on the server as **Awaiting dispatch**.
@@ -113,7 +136,7 @@ auto-memory. Its supported stream-JSON permission requests are bridged into dura
 Windows external-CLI sessions use owned Job Objects and fail-closed descendant teardown. Those
 adapters currently refuse to start on Unix rather than claim equivalent containment. Provider-home
 isolation and stronger sandboxing remain separate work in
-[#51](https://github.com/shyamsridhar123/ecorp/issues/51); see the
+[#51](https://github.com/All-The-Vibes/ecorp/issues/51); see the
 [process-lifecycle evidence](docs/evidence/2026-09-03-external-provider-fail-closed.md).
 
 ECorp is an independent project. Provider names identify integrations, not ownership, sponsorship,
@@ -138,7 +161,7 @@ pnpm/Vite toolchain, pnpm 11.19.0, Docker with Compose, and PowerShell 7.4+ on W
 are optional for the deterministic harness; real-agent work requires the selected provider's access.
 
 ```powershell
-git clone https://github.com/shyamsridhar123/ecorp.git
+git clone https://github.com/All-The-Vibes/ecorp.git
 cd ecorp
 pnpm install --frozen-lockfile
 pwsh -NoProfile -File ./tools/start_local.ps1
@@ -153,7 +176,9 @@ This is your local ECorp console, not the public product-site tour. Use the
 [five-step mission guide](docs/USER_AND_DEVELOPER_JOURNEY.md) for repository confirmation, staffing,
 verification, and review.
 
-To start the configured trusted GitHub Project watcher with the same stack:
+To start the configured trusted GitHub Project watcher with the same stack, first verify its
+repository and Project routing as described [below](#run-a-github-issue-through-the-factory).
+Preserve the recorded routing of existing work; enabling the watcher does not perform a cutover:
 
 ```powershell
 $env:ECORP_FACTORY_WATCH = '1'
@@ -206,13 +231,26 @@ This runs migration checks, Rust formatting, Clippy, the workspace test suite, a
 
 ## Run a GitHub issue through the factory
 
-[GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) is the live planning and status source for **ECorp Build**. `docs/BACKLOG.md` is historical context, not the execution queue.
+[ECorp Build, organization GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) is
+the destination for new work and its live planning and status source. The personal
+[GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) remains historical execution
+lineage for its recorded claims, missions, recoveries, and publications; do not move those records or
+retarget their configured controller. `docs/BACKLOG.md` is historical context, not the execution queue.
+
+Before new intake, verify the operator's configured repository and Project routing. Project #5
+does not create shared claim authority or authorize dispatch. Coordinate through the same
+authenticated server/Corp claim authority or explicitly disjoint eligible issue sets; a Project
+status change is not an atomic cross-machine lock. These examples set new-work routing explicitly
+and do not change runtime defaults.
 
 An issue is eligible when it is open, in `Todo`, labeled `factory:ready`, and has no open `Blocked by` dependency. Preview the exact intake without mutating GitHub:
 
 ```powershell
 cargo run -p crony-cli -- factory `
   <corp-id> <actor-id> `
+  --owner All-The-Vibes `
+  --project-number 5 `
+  --repository All-The-Vibes/ecorp `
   --adapter codex `
   --budget-tokens 500000 `
   --budget-cost-microusd 1000000 `
@@ -258,11 +296,13 @@ Current boundaries:
 - External CLI adapters have platform and assurance limits. Claude's durable stdio permission
   bridge and fail-closed Windows process-tree teardown are implemented. Isolated provider homes,
   inherited-environment allowlisting, and stronger containment remain in
-  [#51](https://github.com/shyamsridhar123/ecorp/issues/51). Unix external-CLI execution is disabled.
+  [#51](https://github.com/All-The-Vibes/ecorp/issues/51). Unix external-CLI execution is disabled.
 - Production deployments require OIDC, deployment-managed keys, explicit runner enrollment, private S3-compatible artifact storage, and an intentional network policy.
 - The public product is **ECorp**. Existing `crony-*` binaries, `CRONY_` environment variables, and `X-Crony-*` headers remain for compatibility during the transition.
 
-The September 1, 2026 enterprise dogfood report captures the gaps found on that date. Use [GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) and linked issues for current status.
+The September 1, 2026 enterprise dogfood report captures the gaps found on that date. Use
+[ECorp Build, organization GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) and
+linked issues for current status.
 
 ## Documentation
 
@@ -281,7 +321,7 @@ future intent are kept separate.
 | Inspect the evidence standard | [Evaluation strategy](docs/EVALS.md) |
 | Understand product intent and technical direction | [Product and technical plan](docs/PRODUCT_AND_TECHNICAL_PLAN.md) |
 | Reuse the approved hero and brand voice | [Brand and product-site guide](docs/BRAND_AND_PRODUCT_SITE.md) |
-| Follow live work | [ECorp Build, GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) |
+| Follow new work | [ECorp Build, organization GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) |
 | Read historical planning context | [Backlog seed](docs/BACKLOG.md) |
 
 ## License

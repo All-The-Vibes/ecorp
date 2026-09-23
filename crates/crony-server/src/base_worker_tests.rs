@@ -30,6 +30,45 @@ const TOKEN: &str = "local-worker-fixture-credential-not-production";
 const ORACLE: &str = "0x420000000000000000000000000000000000000F";
 const ORACLE_CODE: &str = "0x6103e860005260206000f3";
 
+#[derive(Default)]
+struct ArchiveTransport(std::sync::Mutex<BTreeMap<String, Vec<u8>>>);
+
+impl crony_audit::PublicationTransport for ArchiveTransport {
+    fn head(&self) -> futures_util::future::BoxFuture<'_, Result<String>> {
+        async { Ok("worker-fixture-archive-head".into()) }.boxed()
+    }
+    fn descends_from<'a>(
+        &'a self,
+        old: &'a str,
+        new: &'a str,
+    ) -> futures_util::future::BoxFuture<'a, Result<bool>> {
+        async move { Ok(old == new) }.boxed()
+    }
+    fn read<'a>(
+        &'a self,
+        path: &'a str,
+        _head: &'a str,
+    ) -> futures_util::future::BoxFuture<'a, Result<Option<Vec<u8>>>> {
+        async move { Ok(self.0.lock().unwrap().get(path).cloned()) }.boxed()
+    }
+    fn create<'a>(
+        &'a self,
+        path: &'a str,
+        body: &'a [u8],
+    ) -> futures_util::future::BoxFuture<'a, Result<()>> {
+        async move {
+            let mut files = self.0.lock().unwrap();
+            ensure!(
+                !files.contains_key(path),
+                "immutable fixture archive collision"
+            );
+            files.insert(path.into(), body.into());
+            Ok(())
+        }
+        .boxed()
+    }
+}
+
 async fn node(method: &str, params: Value) -> Result<Value> {
     let response: Value = reqwest::Client::builder()
         .no_proxy()
@@ -676,9 +715,13 @@ async fn base_worker_http_gateway_restart_and_finality(pool: PgPool) -> Result<(
         .catch_unwind()
         .await;
     journal_pool.close().await;
-    sqlx::query(&format!("DROP DATABASE {journal_name} WITH (FORCE)"))
-        .execute(&pool)
-        .await?;
+    if matches!(&outcome, Ok(Ok(()))) {
+        sqlx::query(&format!("DROP DATABASE {journal_name} WITH (FORCE)"))
+            .execute(&pool)
+            .await?;
+    } else {
+        eprintln!("retained failed fixture signing journal database={journal_name}");
+    }
     match outcome {
         Ok(result) => result,
         Err(panic) => std::panic::resume_unwind(panic),
@@ -948,12 +991,28 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
         .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, Uuid::new_v4())
         .await?;
     assert_eq!(intent.state, "archive_pending");
-    // The native V1 GitHub worker is independently covered; this local fixture records its prerequisite.
-    let github = Uuid::new_v4();
-    sqlx::query("INSERT INTO state_audit_destinations(id,corp_id,kind,config,interval_seconds) VALUES($1,$2,'github','{}',60)")
-        .bind(github).bind(ids.corp_id).execute(pool).await?;
-    sqlx::query("INSERT INTO state_audit_anchor_receipts(corp_id,destination_id,checkpoint_digest,status) VALUES($1,$2,$3,'published')")
-        .bind(ids.corp_id).bind(github).bind(&intent.checkpoint_digest).execute(pool).await?;
+    let github = crony_store::state_audit::AuditDestination {
+        id: Uuid::new_v4(),
+        corp_id: ids.corp_id,
+        kind: "github".into(),
+        interval_seconds: 60,
+        calendar_schedule: None,
+        overdue_after_seconds: 3600,
+        workflow_gate: "published".into(),
+        config: json!({"repository":"fixture/worker-audit","branch":"main","path":"audit"}),
+    };
+    store
+        .configure_audit_destination(ids.alice_actor_id, &github)
+        .await?;
+    assert!(
+        store
+            .publish_audit_destination(
+                github.id,
+                &ArchiveTransport::default(),
+                &checkpoint_key.verifying_key()
+            )
+            .await?
+    );
     let claim = store
         .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
         .await?

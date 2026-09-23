@@ -1,0 +1,45 @@
+   Compiling crony-audit v0.1.0 (<reviewed-worktree>\crates\crony-audit)
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-base v0.1.0 (<reviewed-worktree>\crates\crony-base)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 59s
+warning: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src\lib.rs (<local-user>\code\ecorp-pr324-completion-20260922\target-validation\debug\deps\crony_store-bf5115a9e433a30a.exe)
+
+running 33 tests
+test base_audit_tests::base_v2_archive_retention_and_concurrent_claim_fences ... ok
+test base_audit_tests::base_v2_archive_witness_must_be_complete_and_bound_before_claim ... ok
+test base_audit_tests::base_v2_atomic_budget_nonce_freeze_and_replacement_max ... ok
+test base_audit_tests::base_v2_authority_immutable_trust_and_enable_ticket ... ok
+test base_audit_tests::base_v2_configured_destination_is_not_starved_by_unrelated_rows ... ok
+test base_audit_tests::base_v2_conflicting_incident_survives_observations_and_nonce_conflict ... ok
+test base_audit_tests::base_v2_durable_schema_defaults_disabled ... ok
+test base_audit_tests::base_v2_fee_enrichment_at_finality_is_atomic_and_replayable ... ok
+test base_audit_tests::base_v2_fee_enrichment_at_inclusion_is_monotonic ... ok
+test base_audit_tests::base_v2_finalized_incident_survives_observations_and_wallet_quarantine ... ok
+test base_audit_tests::base_v2_gateway_authorizer_works_with_select_only_readonly_role ... ok
+test base_audit_tests::base_v2_invalid_evidence_survives_observations_and_wallet_quarantine ... ok
+test base_audit_tests::base_v2_manifest_successor_preserves_history_and_prevents_reenable ... ok
+test base_audit_tests::base_v2_noop_receipt_cannot_release_nonce_without_own_finality ... ok
+test base_audit_tests::base_v2_observation_paging_covers_large_history ... ok
+test base_audit_tests::base_v2_observation_paging_reorg_and_admin_fences ... ok
+test base_audit_tests::base_v2_operator_pause_keeps_receipt_reconciliation_without_publication ... ok
+test base_audit_tests::base_v2_phase3_changed_destination_reused_key_rejected ... ok
+test base_audit_tests::base_v2_phase3_incomplete_room_coverage_rejects_reads_and_requests ... ok
+test base_audit_tests::base_v2_phase3_missing_archive_cannot_claim_freeze_or_authorize_signing ... ok
+test base_audit_tests::base_v2_phase3_same_key_request_replays_once ... ok
+test base_audit_tests::base_v2_prefreeze_coalescing_and_alternate_archive_rejection ... ok
+test base_audit_tests::base_v2_previous_month_unresolved_liability_does_not_free_budget ... ok
+test base_audit_tests::base_v2_recovery_rejects_unknown_pending_nonce_beyond_active_lane ... ok
+test base_audit_tests::base_v2_recovery_requires_retained_last_verified_anchor ... ok
+test base_audit_tests::base_v2_restart_and_rollback_behind_gateway_fail_closed ... ok
+test base_audit_tests::base_v2_retained_ancestry_restarts_cas_and_rejects_tampering ... ok
+test base_audit_tests::base_v2_same_wallet_concurrent_nonce_reservations_are_atomic ... ok
+test base_audit_tests::base_v2_signed_retry_unknown_l1_replay_and_reorg_accounting ... ok
+test base_audit_tests::base_v2_uncertain_nonce_pauses_all_shared_wallet_streams ... ok
+test base_audit_tests::base_v2_unsolicited_unavailable_event_resolves_only_after_private_evidence_restored ... ok
+test base_audit_tests::base_v2_wallet_operations_wait_for_lane_before_locking_destinations ... ok
+test base_audit_tests::base_v2_wallet_pause_fences_existing_claim_before_broadcast ... ok
+
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 424 filtered out; finished in 91.50s

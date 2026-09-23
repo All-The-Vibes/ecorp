@@ -43,6 +43,55 @@ pub struct PublishedArchive {
     pub archive: ArchivePublicationIndex,
 }
 
+impl PublishedArchive {
+    /// Check the complete native readback witness without contacting the remote.
+    /// Publication must read every byte at this commit before saving the witness.
+    pub fn validate_for_checkpoint(&self, root: &str, checkpoint: &SignedCheckpoint) -> Result<()> {
+        let (stem, _) = checkpoint_files(root, checkpoint)?;
+        let archive = &self.archive;
+        ensure!(
+            archive.schema_version == 1
+                && archive.ledger_id == checkpoint.checkpoint.ledger_id
+                && archive.checkpoint_digest == checkpoint.digest
+                && (1..=MAX_ARCHIVE_BYTES).contains(&archive.byte_count)
+                && (1..=128).contains(&archive.parts.len())
+                && self.index_path == format!("{stem}/archive.json")
+                && !self.commit.is_empty()
+                && self.commit.len() <= 256
+                && self.commit.bytes().all(|b| b.is_ascii_graphic()),
+            "incomplete or mismatched native archive witness"
+        );
+        let hex_digest = |value: &str, length: usize| {
+            value.len() == length
+                && value
+                    .bytes()
+                    .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        };
+        ensure!(hex_digest(&archive.sha256, 64), "invalid archive digest");
+        let mut byte_count = 0u64;
+        for (number, part) in archive.parts.iter().enumerate() {
+            ensure!(
+                part.path == format!("{stem}/archive-{number:05}.json")
+                    && (1..=MAX_RECORD_BYTES as u64).contains(&part.byte_count)
+                    && (number + 1 == archive.parts.len()
+                        || part.byte_count == MAX_RECORD_BYTES as u64)
+                    && hex_digest(&part.sha256, 64)
+                    && hex_digest(&part.git_blob_sha1, 40),
+                "incomplete native archive part witness"
+            );
+            byte_count += part.byte_count;
+        }
+        let index_bytes = serde_json::to_vec(archive)?;
+        ensure!(
+            byte_count == archive.byte_count
+                && self.index_git_blob_sha1 == git_blob_sha1(&index_bytes)
+                && self.index_sha256 == hex::encode(Sha256::digest(&index_bytes)),
+            "native archive index witness mismatch"
+        );
+        Ok(())
+    }
+}
+
 pub trait PublicationTransport: Send + Sync {
     fn head(&self) -> BoxFuture<'_, Result<String>>;
     fn descends_from<'a>(&'a self, old: &'a str, new: &'a str) -> BoxFuture<'a, Result<bool>>;
@@ -160,16 +209,20 @@ pub async fn publish_checkpoint_archive<T: PublicationTransport>(
     let index_sha256 = hex::encode(Sha256::digest(&index_bytes));
     files.push((index_path.clone(), index_bytes));
     let commit = publish_files(transport, &files, previous_commit).await?;
-    Ok(PublishedArchive {
+    let publication = PublishedArchive {
         commit,
         index_path,
         index_git_blob_sha1,
         index_sha256,
         archive: index,
-    })
+    };
+    publication.validate_for_checkpoint(root, checkpoint)?;
+    Ok(publication)
 }
 
 fn git_blob_sha1(body: &[u8]) -> String {
+    use sha1::Digest as _;
+
     let mut digest = sha1::Sha1::new();
     digest.update(format!("blob {}\0", body.len()));
     digest.update(body);

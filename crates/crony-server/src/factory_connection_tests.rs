@@ -337,6 +337,74 @@ impl Drop for Fixture {
 
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue79_claim_handler_and_preflight_reject_cost_without_durable_effects(
+    pool: PgPool,
+) -> Result<()> {
+    let f = Fixture::new(pool).await?;
+    let before = f.snapshot().await?;
+    let initial_events = f
+        .state
+        .store
+        .events_after(f.ids.corp_id, f.ids.alice_actor_id, 0, 1000)
+        .await?;
+    for cost in [10_000_001, 20_000_000, i64::MAX] {
+        let mut request = f.preflight();
+        request.budget_cost_microusd = Some(cost);
+        request.policy["budget_cost_microusd"] = json!(cost);
+        let claim = serde_json::from_value(json!({
+            "actor_id": f.ids.alice_actor_id,
+            "source_project_owner": "fixture", "source_project_number": 3,
+            "source_project_item_id": "issue79-item",
+            "source_repository_owner": "fixture", "source_repository_name": "project",
+            "source_issue_number": 79, "source_issue_node_id": "issue79-node",
+            "source_issue_url": "https://github.com/fixture/project/issues/79",
+            "source_title": "Invalid cost claim", "source_revision": "2026-09-16T00:00:00Z",
+            "idempotency_key": format!("issue79-handler-{cost}"),
+            "lease_seconds": 300, "policy": request.policy,
+        }))?;
+        let error = claim_factory_work_item(
+            State(f.state.clone()),
+            Extension(Principal::Development),
+            Path(f.ids.corp_id),
+            Json(claim),
+        )
+        .await
+        .unwrap_err();
+        assert_eq!(error.status, StatusCode::BAD_REQUEST);
+        assert!(error.message.contains("cost budget"), "{}", error.message);
+        assert!(
+            preflight_factory_mission(
+                State(f.state.clone()),
+                Extension(Principal::Development),
+                Path(f.ids.corp_id),
+                Json(request),
+            )
+            .await
+            .is_err()
+        );
+        assert_eq!(f.snapshot().await?, before);
+        let operations: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM factory_operations WHERE corp_id=$1")
+                .bind(f.ids.corp_id)
+                .fetch_one(f.state.store.pool())
+                .await?;
+        assert_eq!(operations, 0);
+        assert_eq!(
+            json!(
+                f.state
+                    .store
+                    .events_after(f.ids.corp_id, f.ids.alice_actor_id, 0, 1000)
+                    .await?
+            ),
+            json!(initial_events)
+        );
+    }
+    f.finish().await;
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
 async fn issue204_handler_bound_only_preflight_and_materialization(pool: PgPool) -> Result<()> {
     let f = Fixture::new(pool).await?;
     let before = f.snapshot().await?;

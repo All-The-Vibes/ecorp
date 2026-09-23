@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "kind": "codeblend-native-coverage-and-copilot-correction",
+  "implementation_commit": "38507abc96b9282689a810e0e3c074fe0a8c8de5",
+  "local_gates_status": "local_gates_passed",
+  "local_gates_receipt_sha256": "5e73155f35ca4dce90e4803e885d88cdbcb20a8a1811ea41c593ad7dfe626324",
+  "checks": [
+    {
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.6317525,
+      "completed_at": "2026-09-18T00:18:58.8166941Z"
+    },
+    {
+      "command": "node tools/check_documentation.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.2980824,
+      "completed_at": "2026-09-18T00:18:59.1422814Z"
+    },
+    {
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 5.4734542,
+      "completed_at": "2026-09-18T00:20:48.6870675Z"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 92.6090818,
+      "completed_at": "2026-09-18T00:22:21.32262Z"
+    },
+    {
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 515.1655712,
+      "completed_at": "2026-09-18T00:30:56.492622Z"
+    },
+    {
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 48.9926583,
+      "completed_at": "2026-09-18T00:19:48.1391539Z"
+    },
+    {
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 22.7487494,
+      "completed_at": "2026-09-18T00:20:12.7146539Z"
+    },
+    {
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 3.0339662,
+      "completed_at": "2026-09-18T00:20:15.7525806Z"
+    },
+    {
+      "command": "actionlint -shellcheck= .github/workflows/repository-checks.yml",
+      "exit_code": 0,
+      "duration_seconds": 0.126838,
+      "completed_at": "2026-09-18T00:20:15.8821933Z"
+    },
+    {
+      "command": "shellcheck --severity=warning tools/coverage_rust_sqlx.sh",
+      "exit_code": 0,
+      "duration_seconds": 0.5823931,
+      "completed_at": null
+    },
+    {
+      "command": "bash -n tools/coverage_rust_sqlx.sh",
+      "exit_code": 0,
+      "duration_seconds": null,
+      "completed_at": null
+    }
+  ],
+  "rust_tests": {
+    "passed": 554,
+    "failed": 0,
+    "ignored": 333,
+    "native_summaries": 14
+  },
+  "node_tests": {
+    "tests": 966,
+    "pass": 947,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 19,
+    "todo": 0
+  },
+  "source_files_verified": 99,
+  "adapter_sha256": "16d364ad6e4ccac0e69e022ee9e357e5ba206d06c2800578cbb61b0832de579a",
+  "filesystem_provider_sha256": "146e9680137b83806b9fcb380ac9722e4e582197cfe9ccb8cc9b4c0cb39d9c80",
+  "native_baseline": {
+    "sdk": "1.0.11",
+    "source_bindings_sha256": "c1953c0627450de7597ab8515d6f2c74b67cf3279b78179c7ce745cd53591251",
+    "result": {
+      "global_settings_unchanged": true,
+      "inference": 0,
+      "options_updates": 0,
+      "permission_handler_calls": 0,
+      "sandbox_policy": {
+        "kind": "text",
+        "text": "Command sandboxing is disabled, so no policy is in force and commands run unrestricted.\n\nUse /sandbox enable to turn it on."
+      },
+      "sandbox_status": {
+        "kind": "text",
+        "text": "Current sandbox status: disabled\n\nUse /sandbox policy to see the effective policy, /sandbox config to change settings, or /sandbox enable / /sandbox disable to turn sandboxing on and off."
+      },
+      "status": "faithful-contained-filesystem-baseline-captured",
+      "tool_executions": 0
+    },
+    "result_sha256": "dd4c572d846a88a88fc91afa51f5d19da1a6123aee2bb86293662a019f40d3cf",
+    "cli": "1.0.79",
+    "scope": "Zero-inference native configuration probe with the production filesystem module and session configuration. A stricter deny-all permission callback received zero requests. No model tools executed.",
+    "source_commit": "07e090bd43f0f2206f41aefd53605bb19bf89a96"
+  },
+  "runtime_acceptance": "pending fresh qualification of the fixed runner",
+  "latest_completed_numeric_assessment": {
+    "composite": 61.7,
+    "run": "20260918-053207+0800",
+    "structure": 87.4,
+    "operations": 43.5
+  },
+  "limits": [
+    "This is not a new complete operational/composite assessment.",
+    "The changed runner still requires fresh real-provider acceptance.",
+    "Linux coverage covers the compiled Rust workspace only, not whole-repository or web coverage; the stopped-session probe remains unexecuted.",
+    "Native OS isolation is not established.",
+    "Hosted CI execution remains unverified."
+  ],
+  "recorded_at": "2026-09-18T00:59:32.1974215Z",
+  "coverage": {
+    "measured_commit": "38507abc96b9282689a810e0e3c074fe0a8c8de5",
+    "floor_policy_commit": "ac32e02fb323f0a79a86a97115911b26d772f2ce",
+    "platform": {
+      "os": "linux",
+      "arch": "x64"
+    },
+    "tests": {
+      "unit": {
+        "passed": 524,
+        "failed": 0,
+        "ignored": 333,
+        "native_summaries": 10
+      },
+      "store": {
+        "passed": 328,
+        "failed": 0,
+        "ignored": 0,
+        "native_summaries": 1
+      },
+      "server": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "native_summaries": 1
+      }
+    },
+    "native_totals": {
+      "branches": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "functions": {
+        "count": 4387,
+        "covered": 3004,
+        "percent": 68.47503989058582
+      },
+      "instantiations": {
+        "count": 9076,
+        "covered": 3671,
+        "percent": 40.44733362714853
+      },
+      "lines": {
+        "count": 72899,
+        "covered": 49407,
+        "percent": 67.7745922440637
+      },
+      "mcdc": {
+        "count": 0,
+        "covered": 0,
+        "notcovered": 0,
+        "percent": 0
+      },
+      "regions": {
+        "count": 93180,
+        "covered": 63028,
+        "notcovered": 30152,
+        "percent": 67.6411247048723
+      }
+    },
+    "reported_source_files": 69,
+    "source_identities_unchanged": 99,
+    "duration_seconds": 1206.331654,
+    "run_receipt_sha256": "ec9dbf95f52dba92f1d12508018c01618329111f2cdfc6f97c305ca931e8033f",
+    "native_lcov_sha256": "dd62afee0dff758414d4ecf271bd37a2f767765e6ab0ce67edc5b44b55db79a3",
+    "measured_invocation_script_sha256": "98df625d8e4fec3462bd0376dbeef3e494989c6fea8d4394b5e6c3896b940d78",
+    "measured_workflow_sha256": "8f207f5b91b0ba8f909a7adb05ff8820bb2c744f30eaa50e0858fe2459f92f02",
+    "original_line_floor_percent": 60,
+    "current_line_floor_percent": 67.0,
+    "threshold_verification": {
+      "floor65_exit": 0,
+      "floor67_exit": 0,
+      "floor100_exit": 1,
+      "json_exit": 0,
+      "tests_executed": 0,
+      "source_commit": "38507abc96b9282689a810e0e3c074fe0a8c8de5",
+      "measured_receipt_sha256": "ec9dbf95f52dba92f1d12508018c01618329111f2cdfc6f97c305ca931e8033f",
+      "raw_profiles_unchanged": true,
+      "profile_count": 12,
+      "native_artifacts_unchanged": true,
+      "instrumented_test_binaries_unchanged": true,
+      "source99_unchanged": true,
+      "reported_totals_identical": true,
+      "native_line_total": 72899,
+      "native_line_covered": 49407,
+      "native_line_percent": 67.7745922440637,
+      "recommended_line_floor_percent": 67.0,
+      "network": "none",
+      "completed_at": "2026-09-17T19:55:44.520358-05:00"
+    },
+    "scope": "Native cargo-llvm-cov Rust workspace unit tests plus all existing ignored crony-store/crony-server SQLx tests on this Linux build; no requested code exclusions. This is not whole-repository, web, provider, or application E2E coverage.",
+    "unexecuted_scope": "Other ignored tests, including the explicit runner stopped-session probe, remain unexecuted.",
+    "fresh_namespace_negative_controls": {
+      "retained_schema_refused": true,
+      "catalog_and_sentinel_bytes_preserved": true,
+      "tests_executed": 0,
+      "profiles_created": 0,
+      "retained_database_refused": true
+    },
+    "cleanup": {
+      "resources_removed": 0,
+      "databases_profiles_binaries_and_reports_retained": true,
+      "owned_containers_stopped": 7
+    }
+  },
+  "substrate_diagnostic": {
+    "kind": "deterministic substrate only; no API collection or judge consensus",
+    "source_commit": "38507abc96b9282689a810e0e3c074fe0a8c8de5",
+    "evaluator_commit": "0a9accccd36446c381c118b783e2e9f623643efa",
+    "evaluator_sha256": "4229e93d77dce70e4e3493cab6bc5311c2d02551d024de33319c27ae6a323290",
+    "source_files": 646,
+    "source_manifest_sha256": "1e14de13e0647463bd5215531f1d5f0daeac675538831a8ebb87d8bbeddb7f1f",
+    "no_cache": true,
+    "scan_excluded_paths": [],
+    "before_current_coverage_score": 87.4,
+    "with_current_coverage_score": 92,
+    "before_test_quality": 45,
+    "with_current_coverage_test_quality": 65,
+    "coverage_bonus": 20,
+    "pillars": [
+      {
+        "pillar": "Style & Validation",
+        "level": 5,
+        "ruleLevel": 4
+      },
+      {
+        "pillar": "Build System",
+        "level": 5,
+        "ruleLevel": 4
+      },
+      {
+        "pillar": "Testing",
+        "level": 5,
+        "ruleLevel": 4
+      },
+      {
+        "pillar": "Documentation",
+        "level": 5,
+        "ruleLevel": 5
+      },
+      {
+        "pillar": "Dev Environment",
+        "level": 5,
+        "ruleLevel": 5
+      },
+      {
+        "pillar": "Code Quality",
+        "level": 3,
+        "ruleLevel": 3
+      },
+      {
+        "pillar": "Security & Governance",
+        "level": 5,
+        "ruleLevel": 4
+      }
+    ],
+    "before_scan_sha256": "d08f64de20796d0067f34ca7596bfde74e6d29b840398adfbe105717f0946897",
+    "after_scan_sha256": "b0c7c61943bf31a9b814d599616094f04b21c15be2737e35eb3a702dc8225811",
+    "additional_artifacts": "The current native coverage directory was copied byte-for-byte to the same complete source snapshot; no historical report was renamed and no scoring rule was changed."
+  }
+}

@@ -60,6 +60,21 @@
 .app-shell .work-result-details p { margin-block: 4px 10px; }
 .app-shell .work-result-notice { margin: 12px 0 0; color: #536059; font-size: 13px; line-height: 1.55; }
 
+/* Run visibility extends the current card, palette and native disclosures. */
+.app-shell .run-activity-details { min-inline-size: 0; }
+.app-shell .run-activity-details .work-result-facts { gap: 14px 24px; }
+.app-shell .run-activity-details .work-result-facts > div { flex-basis: 40%; }
+.app-shell .run-activity-details .work-result-facts small { display: block; margin-block-start: 4px; color: #52635a; font-size: 12px; font-weight: 400; line-height: 1.55; }
+.app-shell .run-activity-notice { padding-inline-start: 10px; border-inline-start: 3px solid #896218; color: #65470f; }
+.app-shell .run-activity-timeline { display: grid; gap: 8px; padding: 0; margin: 12px 0; list-style: none; }
+.app-shell .run-activity-timeline li { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0; min-inline-size: 0; }
+.app-shell .run-activity-timeline time { flex: 0 1 165px; font-variant-numeric: tabular-nums; }
+.app-shell .run-activity-timeline span { flex: 1 1 190px; }
+.app-shell .run-activity-context { margin: 12px 0 0; }
+.app-shell .run-activity-context > div { padding: 6px 0; background: transparent; border: 0; box-shadow: none; }
+.app-shell .run-activity-context dt { font-weight: 650; }
+.app-shell .run-activity-context dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+
 @media (max-width: 480px) {
   .app-shell .work-result-card { padding: 16px 14px; }
   .app-shell .work-result-card h4 { font-size: 20px; }
@@ -67,6 +82,7 @@
   .work-result-actions { align-items: stretch; }
   .work-result-actions :is(a, button) { flex: 1 1 100%; text-align: center; }
   .app-shell .work-result-facts > div { flex-basis: 100%; }
+  .app-shell .run-activity-details .work-result-facts > div { flex-basis: 100%; }
 }
 
 /* The current work remains visible in the app's narrow side pane. */
