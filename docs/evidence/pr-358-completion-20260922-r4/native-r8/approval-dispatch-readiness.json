@@ -1,0 +1,50 @@
+{
+  "attempts": [
+    {
+      "payload": {
+        "error": "no connected runner can staff the selected mission runtime, model, and source"
+      },
+      "status": 400,
+      "at_utc": "2026-09-23T00:22:17.7387129+00:00"
+    },
+    {
+      "payload": {
+        "error": "no connected runner can staff the selected mission runtime, model, and source"
+      },
+      "status": 400,
+      "at_utc": "2026-09-23T00:22:17.8656078+00:00"
+    },
+    {
+      "payload": {
+        "strategy": "single",
+        "budget_tokens": 1000000,
+        "budget_cost_microusd": 1000000,
+        "tasks": [
+          {
+            "key": "deliver",
+            "title": "Produce the mission outcome",
+            "budget_tokens": 1000000,
+            "budget_cost_microusd": 1000000,
+            "depends_on": [],
+            "max_attempts": 2
+          }
+        ]
+      },
+      "status": 200,
+      "at_utc": "2026-09-23T00:22:17.9905089+00:00"
+    }
+  ],
+  "status": "passed",
+  "request": {
+    "source": {
+      "base_commit": "7f6f0f51b12b89fa4a1aae930783533ff9ef4043",
+      "base_ref": "HEAD",
+      "repository": "ecorp-fixture/pr265-run-activity"
+    },
+    "requested_by": "00000000-0000-4000-8000-000000000011",
+    "title": "Observe owned runner dispatch readiness",
+    "strategy": "single",
+    "preferred_adapter": "fake-process"
+  },
+  "read_only": true
+}

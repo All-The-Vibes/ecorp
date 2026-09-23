@@ -9479,7 +9479,8 @@ impl PgStore {
     ) -> Result<RunnerCommandDispatchState> {
         let row = sqlx::query(
             r#"
-            SELECT command.status AS command_status, run.status AS run_status,
+            SELECT command.status AS command_status, command.payload AS command_payload,
+                   run.status AS run_status,
                    run.breaker_stage,
                    COALESCE(command.command_kind='approval_decision'
                      AND command.payload->'approved'='false'::jsonb
@@ -9494,7 +9495,7 @@ impl PgStore {
              AND run.runner_id = command.runner_id
             WHERE command.id = $1 AND command.corp_id = $2
               AND command.run_id = $3 AND command.runner_id = $4
-              AND command.command_kind = $5 AND command.payload = $6
+              AND command.command_kind = $5
             "#,
         )
         .bind(command.id)
@@ -9502,9 +9503,19 @@ impl PgStore {
         .bind(command.run_id)
         .bind(&command.runner_id)
         .bind(&command.command_kind)
-        .bind(&command.payload)
         .fetch_optional(&self.pool)
         .await?;
+        // Collection upload reservation adds one private, non-executable binding.
+        // Only the existing full collection-authority check may accept that delta;
+        // ordinary commands and every executable collection field remain exact.
+        if let Some(row) = row.as_ref()
+            && row.get::<Value, _>("command_payload") != command.payload
+            && !self
+                .retained_provider_receipt_dispatch_authorized(command)
+                .await?
+        {
+            return Ok(RunnerCommandDispatchState::Settled);
+        }
         Ok(match row {
             Some(row)
                 if row.get::<String, _>("command_status") == "pending"
