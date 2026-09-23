@@ -17,7 +17,7 @@ jobs:
   node-regressions:
     name: Node regressions (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -36,6 +36,11 @@ jobs:
           run_install: false
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+      - name: Build native evidence scanner dependencies
+        run: cargo build --locked -p crony-runner --bin crony-evidence-paths
       - name: Prepare test reports
         id: reports
         run: >-

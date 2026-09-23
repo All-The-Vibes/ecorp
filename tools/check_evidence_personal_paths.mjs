@@ -1,21 +1,42 @@
 import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import path, { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
 let binary
 
+function executableDigest(file) {
+  const metadata = lstatSync(file)
+  if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.nlink !== 1) {
+    throw new Error('Native evidence scanner must be a private regular executable')
+  }
+  return createHash('sha256').update(readFileSync(file)).digest('hex')
+}
+
 function nativeScan(request) {
-  // Build from this checkout through Cargo's normal fingerprinting. Never
-  // accept an arbitrary prebuilt binary as proof of the current source.
+  // A unique rustc output forces compilation of this binary even when Cargo's
+  // ordinary target artifact and fingerprints were replaced or left intact.
+  // Dependencies keep their normal Cargo cache; the scanner executable does not.
   if (!binary) {
-    const build = spawnSync('cargo', ['build', '--locked', '--quiet', '-p', 'crony-runner', '--bin', 'crony-evidence-paths'],
+    const directory = realpathSync(mkdtempSync(join(tmpdir(), 'ecorp-evidence-executable-')))
+    const executable = join(directory, `crony-evidence-paths${process.platform === 'win32' ? '.exe' : ''}`)
+    const build = spawnSync('cargo', ['rustc', '--locked', '--quiet', '-p', 'crony-runner', '--bin', 'crony-evidence-paths',
+      '--', `--emit=link=${executable}`],
       { cwd: repository, encoding: 'utf8', windowsHide: true, timeout: 600_000, maxBuffer: 4 * 1024 * 1024 })
     if (build.status !== 0) throw new Error('Unable to build the current native evidence scanner')
-    binary = join(resolve(repository, process.env.CARGO_TARGET_DIR || 'target'), 'debug',
-      `crony-evidence-paths${process.platform === 'win32' ? '.exe' : ''}`)
+    binary = { executable, digest: executableDigest(executable) }
+    process.once('exit', () => {
+      // This private directory contains only outputs of this process's build.
+      try { rmSync(directory, { recursive: true }) } catch { /* preserve on cleanup failure */ }
+    })
   }
-  const result = spawnSync(binary, [], { input: JSON.stringify(request), encoding: 'utf8',
+  if (executableDigest(binary.executable) !== binary.digest) {
+    throw new Error('Native evidence scanner integrity changed after compilation')
+  }
+  const result = spawnSync(binary.executable, [], { input: JSON.stringify(request), encoding: 'utf8',
     windowsHide: true, timeout: 120_000, maxBuffer: 4 * 1024 * 1024 })
   if (result.status !== 0) throw new Error(result.stderr.trim() || 'Native evidence scan did not complete')
   const output = JSON.parse(result.stdout)

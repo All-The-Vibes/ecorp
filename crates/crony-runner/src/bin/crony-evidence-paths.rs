@@ -16,7 +16,61 @@ use serde::Deserialize;
 
 const MAX_FILE_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_ENTRIES: usize = 16_384;
+const MAX_READ_BYTES: u64 = 256 * 1024 * 1024;
+const MAX_OUTPUT_BYTES: usize = 1024 * 1024;
 const REGULAR: &str = "Evidence path check requires regular files and directories";
+
+#[derive(Default)]
+struct Budget {
+    entries: usize,
+    read_bytes: u64,
+    output_bytes: usize,
+}
+
+impl Budget {
+    fn read(&mut self, bytes: u64) -> Result<()> {
+        ensure!(
+            bytes <= MAX_READ_BYTES.saturating_sub(self.read_bytes),
+            "Evidence cumulative read byte limit exceeded"
+        );
+        self.read_bytes += bytes;
+        Ok(())
+    }
+
+    fn output(&mut self, path: &str) -> Result<()> {
+        // Include JSON escaping, separators and the fixed response envelope.
+        let bytes = serde_json::to_string(path)?.len() + 1;
+        ensure!(
+            bytes <= MAX_OUTPUT_BYTES.saturating_sub(self.output_bytes + 64),
+            "Evidence cumulative output byte limit exceeded"
+        );
+        self.output_bytes += bytes;
+        Ok(())
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct Child {
+    name: OsString,
+    device: u64,
+    inode: u64,
+    directory: bool,
+}
+
+impl Child {
+    fn open(&self, parent: &Dir) -> Result<File> {
+        let file = open_entry(parent, &self.name)?;
+        let metadata = file.metadata()?;
+        ensure!(
+            self.inode != 0
+                && metadata.ino() == self.inode
+                && metadata.dev() == self.device
+                && metadata.is_dir() == self.directory,
+            "{REGULAR}; entry changed after enumeration"
+        );
+        Ok(file)
+    }
+}
 
 fn options() -> OpenOptions {
     let mut options = OpenOptions::new();
@@ -182,21 +236,40 @@ fn has_personal_path(text: &str) -> bool {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Stage {
     DirectoryHeld,
+    DirectoryEnumerated,
+    BeforeOpen,
     FileHeld,
 }
 
 #[cfg(not(windows))]
-fn child_names(directory: &Dir, maximum: usize) -> Result<Vec<OsString>> {
+fn child_entries(directory: &Dir, maximum: usize) -> Result<Vec<Child>> {
+    use rustix::fs::DirEntryExt;
+    let device = directory.dir_metadata()?.dev();
     let mut names = Vec::new();
     for entry in directory.entries()? {
         ensure!(names.len() < maximum, "Evidence entry count exceeds limit");
-        names.push(entry?.file_name());
+        let entry = entry?;
+        let kind = entry.file_type()?;
+        ensure!(kind.is_file() || kind.is_dir(), "{REGULAR}");
+        // d_ino belongs to the directory record. A pathname-based metadata
+        // lookup here could already describe a concurrent replacement.
+        names.push(Child {
+            name: entry.file_name(),
+            device,
+            inode: entry.ino(),
+            directory: kind.is_dir(),
+        });
     }
+    names.sort();
+    ensure!(
+        names.windows(2).all(|pair| pair[0].name != pair[1].name),
+        "Duplicate evidence entry"
+    );
     Ok(names)
 }
 
 #[cfg(windows)]
-fn child_names(directory: &Dir, maximum: usize) -> Result<Vec<OsString>> {
+fn child_entries(directory: &Dir, maximum: usize) -> Result<Vec<Child>> {
     use std::os::windows::{ffi::OsStringExt, io::AsRawHandle};
     use windows_sys::Win32::{
         Foundation::ERROR_NO_MORE_FILES,
@@ -210,6 +283,7 @@ fn child_names(directory: &Dir, maximum: usize) -> Result<Vec<OsString>> {
     let header = std::mem::offset_of!(FILE_ID_BOTH_DIR_INFO, FileName);
     let mut class = FileIdBothDirectoryRestartInfo;
     let mut names = Vec::new();
+    let device = directory.dir_metadata()?.dev();
     loop {
         // SAFETY: the retained directory handle and aligned, initialized 64 KiB
         // buffer live throughout this synchronous Windows directory query.
@@ -271,7 +345,13 @@ fn child_names(directory: &Dir, maximum: usize) -> Result<Vec<OsString>> {
                         ),
                     "Invalid directory name"
                 );
-                names.push(name);
+                ensure!(row.FileAttributes & 0x400 == 0, "{REGULAR}");
+                names.push(Child {
+                    name,
+                    device,
+                    inode: row.FileId as u64,
+                    directory: row.FileAttributes & 0x10 != 0,
+                });
             }
             if row.NextEntryOffset == 0 {
                 break;
@@ -284,14 +364,32 @@ fn child_names(directory: &Dir, maximum: usize) -> Result<Vec<OsString>> {
             offset += next;
         }
     }
+    names.sort();
+    ensure!(
+        names.windows(2).all(|pair| pair[0].name != pair[1].name),
+        "Duplicate evidence entry"
+    );
     Ok(names)
+}
+
+fn unchanged_directory(directory: &Dir, before: &Metadata, children: &[Child]) -> Result<()> {
+    let current = child_entries(directory, children.len())?;
+    let after = directory.dir_metadata()?;
+    ensure!(
+        current == children
+            && same_identity(before, &after)
+            && before.modified()? == after.modified()?
+            && same_change_time(before, &after),
+        "Evidence directory changed during scan"
+    );
+    Ok(())
 }
 
 fn visit(
     directory: &Dir,
     relative: &Path,
     findings: &mut Vec<String>,
-    entries: &mut usize,
+    budget: &mut Budget,
     hook: &mut impl FnMut(Stage, &Path, Option<&File>),
 ) -> Result<()> {
     ensure!(
@@ -299,28 +397,35 @@ fn visit(
         "Evidence directory depth exceeds limit"
     );
     hook(Stage::DirectoryHeld, relative, None);
-    ensure!(plain(&directory.dir_metadata()?), "{REGULAR}");
-    for name in child_names(directory, MAX_ENTRIES.saturating_sub(*entries))? {
-        *entries += 1;
+    let directory_before = directory.dir_metadata()?;
+    ensure!(plain(&directory_before), "{REGULAR}");
+    let children = child_entries(directory, MAX_ENTRIES.saturating_sub(budget.entries))?;
+    hook(Stage::DirectoryEnumerated, relative, None);
+    for entry in &children {
+        budget.entries += 1;
         ensure!(
-            *entries <= MAX_ENTRIES,
+            budget.entries <= MAX_ENTRIES,
             "Evidence entry count exceeds limit"
         );
-        let mut file = open_entry(directory, &name)?;
+        let name = &entry.name;
+        let location = relative.join(name);
+        hook(Stage::BeforeOpen, &location, None);
+        let mut file = entry.open(directory)?;
         let before = file.metadata()?;
-        let location = relative.join(&name);
         if before.is_dir() {
             let child = Dir::from_std_file(file.into_std());
-            visit(&child, &location, findings, entries, hook)?;
-            ensure_named(directory, &name, &before)?;
+            visit(&child, &location, findings, budget, hook)?;
+            ensure_named(directory, name, &before)?;
         } else {
             ensure!(before.nlink() == 1, "{REGULAR}");
             ensure!(
                 before.len() <= MAX_FILE_BYTES,
                 "Evidence file exceeds byte limit"
             );
+            // Reserve the look-ahead byte as well, before opening a read window.
+            budget.read(before.len() + 1)?;
             hook(Stage::FileHeld, &location, Some(&file));
-            ensure_named(directory, &name, &before)?;
+            ensure_named(directory, name, &before)?;
             let mut bytes = Vec::with_capacity(before.len() as usize + 1);
             (&mut file).take(before.len() + 1).read_to_end(&mut bytes)?;
             let after = file.metadata()?;
@@ -333,12 +438,15 @@ fn visit(
                     && bytes.len() as u64 == before.len(),
                 "Evidence file changed during scan"
             );
-            ensure_named(directory, &name, &before)?;
+            ensure_named(directory, name, &before)?;
             if has_personal_path(&String::from_utf8_lossy(&bytes)) {
-                findings.push(location.to_string_lossy().replace('\\', "/"));
+                let location = location.to_string_lossy().replace('\\', "/");
+                budget.output(&location)?;
+                findings.push(location);
             }
         }
     }
+    unchanged_directory(directory, &directory_before, &children)?;
     Ok(())
 }
 
@@ -360,40 +468,57 @@ struct Request {
 }
 
 fn scan(request: Request) -> Result<serde_json::Value> {
+    scan_using(request, &mut |_, _, _| {})
+}
+
+fn scan_using(
+    request: Request,
+    hook: &mut impl FnMut(Stage, &Path, Option<&File>),
+) -> Result<serde_json::Value> {
     ensure!(request.directories.len() <= 128, "Too many evidence roots");
     let mut roots = Vec::new();
     let mut findings = Vec::new();
-    let mut entries = 0;
-    let mut hook = |_, _: &Path, _: Option<&File>| {};
+    let mut budget = Budget::default();
     if let Some(parent) = request.discover {
         ensure!(
             request.directories.is_empty(),
             "Choose explicit roots or discovery"
         );
         let root = Root::open(&parent)?;
-        for name in child_names(root.dir(), MAX_ENTRIES)? {
-            entries += 1;
-            ensure!(entries <= MAX_ENTRIES, "Evidence entry count exceeds limit");
+        let directory_before = root.dir().dir_metadata()?;
+        let children = child_entries(root.dir(), MAX_ENTRIES)?;
+        hook(Stage::DirectoryEnumerated, &parent, None);
+        for entry in &children {
+            budget.entries += 1;
+            ensure!(
+                budget.entries <= MAX_ENTRIES,
+                "Evidence entry count exceeds limit"
+            );
+            let name = &entry.name;
             if !name.to_str().is_some_and(packet_name) {
                 continue;
             }
-            let file = open_entry(root.dir(), &name)?;
+            hook(Stage::BeforeOpen, &parent.join(name), None);
+            let file = entry.open(root.dir())?;
             let metadata = file.metadata()?;
             ensure!(metadata.is_dir(), "{REGULAR}");
             let directory = Dir::from_std_file(file.into_std());
-            roots.push(parent.join(&name));
+            let path = parent.join(name);
+            budget.output(&path.to_string_lossy())?;
+            roots.push(path);
             if !request.inventory_only {
                 visit(
                     &directory,
                     Path::new(&name),
                     &mut findings,
-                    &mut entries,
-                    &mut hook,
+                    &mut budget,
+                    hook,
                 )?;
             }
-            ensure_named(root.dir(), &name, &metadata)?;
+            ensure_named(root.dir(), name, &metadata)?;
         }
         ensure!(!roots.is_empty(), "No PR226 evidence packets found");
+        unchanged_directory(root.dir(), &directory_before, &children)?;
         root.unchanged()?;
     } else {
         ensure!(
@@ -411,11 +536,12 @@ fn scan(request: Request) -> Result<serde_json::Value> {
                     root.dir(),
                     Path::new(name),
                     &mut findings,
-                    &mut entries,
-                    &mut hook,
+                    &mut budget,
+                    hook,
                 )?;
             }
             root.unchanged()?;
+            budget.output(&path.to_string_lossy())?;
             roots.push(path);
         }
     }
@@ -479,9 +605,185 @@ mod tests {
     ) -> Result<Vec<String>> {
         let root = Root::open(path)?;
         let mut findings = Vec::new();
-        visit(root.dir(), Path::new("packet"), &mut findings, &mut 0, hook)?;
+        visit(
+            root.dir(),
+            Path::new("packet"),
+            &mut findings,
+            &mut Budget::default(),
+            hook,
+        )?;
         root.unchanged()?;
         Ok(findings)
+    }
+
+    fn replace_before_open(directory: bool) {
+        let fixture = Fixture::new();
+        let packet = fixture.path("packet");
+        fs::create_dir(&packet).unwrap();
+        let target = packet.join("target");
+        let retained = fixture.path("retained");
+        if directory {
+            fs::create_dir(&target).unwrap();
+            fs::write(target.join("original.txt"), "original evidence").unwrap();
+        } else {
+            fs::write(&target, "original evidence").unwrap();
+        }
+        let mut attempted = false;
+        let mut reads = 0;
+        let result = scan_with_hook(&packet, &mut |stage, relative, _| {
+            if stage == Stage::BeforeOpen && relative == Path::new("packet/target") {
+                attempted = true;
+                let replacement = fs::rename(&target, &retained);
+                #[cfg(windows)]
+                assert_eq!(replacement.unwrap_err().raw_os_error(), Some(32));
+                #[cfg(unix)]
+                {
+                    replacement.unwrap();
+                    if directory {
+                        fs::create_dir(&target).unwrap();
+                        fs::write(target.join("replacement.txt"), "replacement evidence").unwrap();
+                    } else {
+                        fs::write(&target, "replacement evidence").unwrap();
+                    }
+                }
+            }
+            if stage == Stage::FileHeld {
+                reads += 1;
+            }
+        });
+        assert!(attempted, "the actual pre-open rename must be attempted");
+        #[cfg(unix)]
+        {
+            assert!(
+                result
+                    .unwrap_err()
+                    .to_string()
+                    .contains("entry changed after enumeration")
+            );
+            assert_eq!(reads, 0, "replacement bytes must never reach a read window");
+        }
+        #[cfg(windows)]
+        {
+            assert!(result.unwrap().is_empty());
+            assert_eq!(reads, 1, "the unchanged original file is still scanned");
+        }
+        let retained = if cfg!(windows) { target } else { retained };
+        let original = if directory {
+            retained.join("original.txt")
+        } else {
+            retained
+        };
+        assert_eq!(fs::read_to_string(original).unwrap(), "original evidence");
+    }
+
+    #[test]
+    fn enumerated_regular_file_replacement_cannot_redirect_read() {
+        replace_before_open(false);
+    }
+
+    #[test]
+    fn enumerated_directory_replacement_cannot_redirect_read() {
+        replace_before_open(true);
+    }
+
+    #[test]
+    fn discovery_rejects_a_packet_added_after_enumeration() {
+        let fixture = Fixture::new();
+        let original = fixture.path("pr-226-completion-original");
+        fs::create_dir(&original).unwrap();
+        fs::write(original.join("safe.txt"), "retained safe evidence").unwrap();
+        let added = fixture.path("pr-226-completion-concurrent");
+        let mut created = false;
+        let result = scan_using(
+            Request {
+                directories: vec![],
+                discover: Some(fixture.0.clone()),
+                inventory_only: false,
+            },
+            &mut |stage, relative, _| {
+                if stage == Stage::DirectoryEnumerated && relative == fixture.0 {
+                    fs::create_dir(&added).unwrap();
+                    fs::write(added.join("private.txt"), r"\Users\concurrent-fixture").unwrap();
+                    created = true;
+                }
+            },
+        );
+        assert!(created);
+        assert!(
+            result.is_err(),
+            "a stale clean discovery result must not escape"
+        );
+        assert_eq!(
+            fs::read_to_string(original.join("safe.txt")).unwrap(),
+            "retained safe evidence"
+        );
+        assert_eq!(
+            fs::read_to_string(added.join("private.txt")).unwrap(),
+            r"\Users\concurrent-fixture"
+        );
+    }
+
+    #[test]
+    fn cumulative_read_budget_is_shared_across_nested_directories() {
+        let fixture = Fixture::new();
+        for name in ["a", "b", "c"] {
+            fs::create_dir(fixture.path(name)).unwrap();
+            fs::write(fixture.path(name).join("file.txt"), "four").unwrap();
+        }
+        let root = Root::open(&fixture.0).unwrap();
+        let mut budget = Budget {
+            read_bytes: MAX_READ_BYTES - 10,
+            ..Budget::default()
+        };
+        let mut findings = Vec::new();
+        let mut reads = 0;
+        let result = visit(
+            root.dir(),
+            Path::new("packet"),
+            &mut findings,
+            &mut budget,
+            &mut |stage, _, _| {
+                if stage == Stage::FileHeld {
+                    reads += 1;
+                }
+            },
+        );
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("cumulative read byte limit")
+        );
+        assert_eq!(reads, 2);
+        assert_eq!(budget.read_bytes, MAX_READ_BYTES);
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn output_budget_rejects_before_appending_an_oversized_finding() {
+        let fixture = Fixture::new();
+        fs::write(fixture.path("private.txt"), r"\Users\fixture-user").unwrap();
+        let root = Root::open(&fixture.0).unwrap();
+        let mut budget = Budget {
+            output_bytes: MAX_OUTPUT_BYTES - 70,
+            ..Budget::default()
+        };
+        let mut findings = Vec::new();
+        let result = visit(
+            root.dir(),
+            Path::new("packet"),
+            &mut findings,
+            &mut budget,
+            &mut |_, _, _| {},
+        );
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("cumulative output byte limit")
+        );
+        assert!(findings.is_empty());
+        assert_eq!(budget.output_bytes, MAX_OUTPUT_BYTES - 70);
     }
 
     #[test]
