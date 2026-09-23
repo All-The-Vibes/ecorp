@@ -1,0 +1,71 @@
+{
+  "started_at_utc": "2026-09-22T16:46:34.283859+00:00",
+  "status": "passed",
+  "description": "Retrospective real subprocess regression using owned copies of all three complete evidence packets and the exact final test module; no product source was modified.",
+  "head": "0ec32db2b18e967590179a09d76620a502e367cd",
+  "staged_tree": "5a15f6dee3f637a7744089ee152fb29383466f7e",
+  "python": "Python 3.12.10",
+  "source": {
+    "tools/test_public_evidence_verifier.py": {
+      "executed_sha256": "22cc645ed0330b8f09fe8c49a3ca97d5498bd36ad81e469bf66304f0a784f6ac",
+      "git_blob_sha256": "22cc645ed0330b8f09fe8c49a3ca97d5498bd36ad81e469bf66304f0a784f6ac"
+    },
+    ".github/workflows/ci.yml": {
+      "executed_sha256": "9f07f3ad531daea5106ec0045d149054cde0645e0d952b6254b6c3467d77fb7a",
+      "git_blob_sha256": "9f07f3ad531daea5106ec0045d149054cde0645e0d952b6254b6c3467d77fb7a"
+    },
+    "docs/evidence/pr362-combined-20260921/verify_public.py": {
+      "executed_sha256": "2316d2ef4fbaed0b48d4aae0a21b11491684172c1ef3467aa688db25f02b9549",
+      "git_blob_sha256": "2316d2ef4fbaed0b48d4aae0a21b11491684172c1ef3467aa688db25f02b9549"
+    },
+    "docs/evidence/pr362-combined-20260921/manifest.json": {
+      "executed_sha256": "eb6e997379fa79693beed3ee25d31e14226e87ef1c84d826c30ae247ee9eff7b",
+      "git_blob_sha256": "f356809d422b4fe91e91485be4540e32d3164bc3e21f1d506843331f38edfe9e"
+    }
+  },
+  "runs": [
+    {
+      "phase": "before",
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools",
+        "-p",
+        "test_public_evidence_verifier.py"
+      ],
+      "working_directory": "<private-evidence>\\pr362-controlled-verifier-fixture-r4",
+      "exit_code": 1,
+      "log": "<private-evidence>\\pr362-verifier-before-r4.log",
+      "log_sha256": "4293cce366c40894900f847c0041da1fd1b8fc6dfcdca34179ef2f72f8ca4e23",
+      "verifier_sha256": "157dbdc24aa2a1c1669875e74943d2808d083b8e5a0f540ebebbb6726010a5ff",
+      "manifest_sha256": "d9737c779a15d064ea3c1181fee893b5a5ac89b77739b19beb81cc2b63fa05d6"
+    },
+    {
+      "phase": "after",
+      "command": [
+        "python",
+        "-X",
+        "utf8",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools",
+        "-p",
+        "test_public_evidence_verifier.py"
+      ],
+      "working_directory": "<private-evidence>\\pr362-controlled-verifier-fixture-r4",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr362-verifier-after-r4.log",
+      "log_sha256": "d57ed948f1fe62774eb4869205732a032f8bb42a21111d78509c5dd8587b4f33",
+      "verifier_sha256": "2316d2ef4fbaed0b48d4aae0a21b11491684172c1ef3467aa688db25f02b9549",
+      "manifest_sha256": "eb6e997379fa79693beed3ee25d31e14226e87ef1c84d826c30ae247ee9eff7b"
+    }
+  ],
+  "finished_at_utc": "2026-09-22T16:46:45.527388+00:00"
+}
