@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "started_at_utc": "2026-09-23T04:19:13.4189069+00:00",
+  "binding_sha256": "3d72ba36af447cd9e2534ac854f26e48eb5b2ed4239e2f9832cb6a39c58191c4",
+  "scope": "One actual saved-room SQLx scenario in two source variants on a fresh authenticated loopback PostgreSQL. No application, runner, provider or browser acceptance rerun.",
+  "cases": [
+    {
+      "variant": "baseline",
+      "staged_tree": "a1309b84b2dc14442f256bd85e09ff84aad96726",
+      "head": "d360d3bd1001d8cb9baff0323408865de6c42a6b",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-server",
+        "factory_connection_tests::issue48_planner_reuses_pins_in_the_saved_connection_room",
+        "--",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 101,
+      "log": "<private-evidence>\\pr359-room-baseline-r1.log",
+      "sha256": "6003ec733d875d90c1ffe08a271a2118df53ceac91748c4018c50889dd12ef29",
+      "started_at_utc": "2026-09-23T04:19:27.9261374+00:00",
+      "finished_at_utc": "2026-09-23T04:20:43.5668117+00:00",
+      "source_unchanged": true
+    },
+    {
+      "variant": "candidate",
+      "staged_tree": "11b0fc7c2d0615cf045a1aeb73701d99d0d7e604",
+      "head": "d360d3bd1001d8cb9baff0323408865de6c42a6b",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-server",
+        "factory_connection_tests::issue48_planner_reuses_pins_in_the_saved_connection_room",
+        "--",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr359-room-candidate-r1.log",
+      "sha256": "9c0488c3551981ffd5dfe28dd74ac14021b36090cb12ca7d6c89f12ad6eda05e",
+      "started_at_utc": "2026-09-23T04:20:45.3457479+00:00",
+      "finished_at_utc": "2026-09-23T04:21:43.3400352+00:00",
+      "source_unchanged": true
+    }
+  ],
+  "cleanup": "Exact owned PostgreSQL stopped and listener released. Database, credentials and source variants retained.",
+  "process": {
+    "role": "postgres",
+    "stdout": "<local-user>\\code\\qa\\pr359-room-retrospective-20260923-r1\\logs\\postgres-20260923T041923705-733ff3a59c924af2b1161054701885f8.stdout.log",
+    "workspace": "<local-user>\\code\\qa\\pr359-room-retrospective-20260923-r1",
+    "started_utc": "2026-09-23T04:19:23.7677537Z",
+    "pid": 43992,
+    "stderr": "<local-user>\\code\\qa\\pr359-room-retrospective-20260923-r1\\logs\\postgres-20260923T041923705-733ff3a59c924af2b1161054701885f8.stderr.log",
+    "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe"
+  },
+  "finished_at_utc": "2026-09-23T04:21:44.6706647+00:00"
+}

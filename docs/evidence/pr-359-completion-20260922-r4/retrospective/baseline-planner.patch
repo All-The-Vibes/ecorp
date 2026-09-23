@@ -1,0 +1,38 @@
+diff --git a/crates/crony-server/src/main.rs b/crates/crony-server/src/main.rs
+index 7a9d063..207925e 100644
+--- a/crates/crony-server/src/main.rs
++++ b/crates/crony-server/src/main.rs
+@@ -2520 +2520 @@ async fn plan_mission(
+-    let (source, destination_room_id) = if let Some(connection_id) = input.workspace_connection_id {
++    let source = if let Some(connection_id) = input.workspace_connection_id {
+@@ -2550,9 +2550,6 @@ async fn plan_mission(
+-        (
+-            Some(resolve_mission_source_in_connection(
+-                state,
+-                corp_id,
+-                requested,
+-                Some(connection_id),
+-            )?),
+-            Some(connection.room_id),
+-        )
++        Some(resolve_mission_source_in_connection(
++            state,
++            corp_id,
++            requested,
++            Some(connection_id),
++        )?)
+@@ -2560,7 +2557,4 @@ async fn plan_mission(
+-        (
+-            input
+-                .source
+-                .map(|source| resolve_mission_source(state, corp_id, source))
+-                .transpose()?,
+-            None,
+-        )
++        input
++            .source
++            .map(|source| resolve_mission_source(state, corp_id, source))
++            .transpose()?
+@@ -2577 +2571 @@ async fn plan_mission(
+-        .agents_for_planning(corp_id, input.actor_id, destination_room_id)
++        .agents_for_planning(corp_id, input.actor_id, None)
