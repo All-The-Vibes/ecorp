@@ -8,7 +8,7 @@ $fixture = Join-Path ([IO.Path]::GetTempPath()) ('ecorp-admission-' + [guid]::Ne
 [IO.Directory]::CreateDirectory($fixture) | Out-Null
 $report = @{ fixture = $fixture; cases = @(); cleanup_verified = $true }
 foreach ($fault in @('metadata', 'metadata-and-stop')) {
-    $state = @{ fault = $fault; launched = $null; observed = $null }
+    $state = @{ fault = $fault; launched = $null; observed = $null; readiness_ms = $null }
     & $module {
         param($State)
         $script:AdmissionTestState = $State
@@ -23,8 +23,33 @@ foreach ($fault in @('metadata', 'metadata-and-stop')) {
             $observed = [Diagnostics.Process]::GetProcessById($process.Id)
             [void]$observed.Handle
             $script:AdmissionTestState.observed = $observed
+            # Process creation can precede Windows module metadata readiness.
+            # Wait only for that metadata; inject faults after identity is known.
+            $readiness = [Diagnostics.Stopwatch]::StartNew()
+            $launchedImage = $null
+            $observedImage = $null
+            do {
+                if ($process.HasExited -or $observed.HasExited) { throw 'Native fixture exited before module metadata was ready.' }
+                try {
+                    $process.Refresh()
+                    $observed.Refresh()
+                    $launchedModule = $process.get_MainModule()
+                    $observedModule = $observed.get_MainModule()
+                    if ($launchedModule -and $observedModule) {
+                        $launchedImage = $launchedModule.get_FileName()
+                        $observedImage = $observedModule.get_FileName()
+                    }
+                } catch { # A loader still publishing its module can reject the getter.
+                    $launchedImage = $null
+                    $observedImage = $null
+                }
+                if ($launchedImage -and $observedImage) { break }
+                if ($readiness.ElapsedMilliseconds -ge 5000) { throw 'Native fixture module metadata did not become ready within five seconds.' }
+                Start-Sleep -Milliseconds 25
+            } while ($true)
+            $script:AdmissionTestState.readiness_ms = $readiness.ElapsedMilliseconds
             if ($observed.StartTime.ToUniversalTime().Ticks -ne $process.StartTime.ToUniversalTime().Ticks -or
-                $observed.MainModule.FileName -cne $process.MainModule.FileName) { throw 'Native fixture identity changed.' }
+                $observedImage -cne $launchedImage) { throw 'Native fixture identity changed.' }
             $process | Add-Member -MemberType ScriptProperty -Name StartTime -Value {
                 throw [InvalidOperationException]::new('Synthetic post-spawn identity failure')
             } -Force
@@ -69,6 +94,7 @@ foreach ($fault in @('metadata', 'metadata-and-stop')) {
             $state.observed.Dispose()
         }
         if ($state.launched) { $state.launched.Dispose() }
+        $case.readiness_ms = $state.readiness_ms
         $report.cases += $case
     }
 }
