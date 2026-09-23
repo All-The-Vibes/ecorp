@@ -94,8 +94,8 @@ status change as an atomic cross-machine fence.
 
 - Git
 - PowerShell 7.4+ (`pwsh`) on Windows, not Windows PowerShell 5.1
-- Rust 1.94 or newer
-- Node.js; the repository does not declare a minimum version
+- Rust 1.98.1, as pinned in `rust-toolchain.toml`
+- Node.js 24.19.0, as pinned in `.node-version`
 - pnpm 11.19.0
 - An independently provisioned PostgreSQL database and its native `psql.exe` client on PATH
 - GitHub CLI authenticated with repository and Project access for live factory operations
@@ -243,8 +243,8 @@ try {
         -Environment @{ DATABASE_URL=$env:DATABASE_URL; CRONY_MODE='development' }
     Save-SetupRecords
     Wait-SetupReady $records.server { (Invoke-RestMethod "$url/health" -TimeoutSec 3).status -eq 'ok' }
-    $demo = Invoke-RestMethod "$url/api/demo/bootstrap" -Method Post `
-        -ContentType 'application/json' -Body '{"seed_agents":false}' -TimeoutSec 10
+    $demo = Invoke-RestMethod "$url/api/demo/bootstrap?seed_crew=false" -Method Post `
+        -ContentType 'application/json' -Body '{}' -TimeoutSec 10
     $env:CRONY_CORP_ID = $demo.corp_id
     $env:CRONY_ACTOR_ID = $demo.alice_actor_id
     [IO.File]::WriteAllText((Join-Path $identity 'setup-identity.json'),

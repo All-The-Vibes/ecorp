@@ -6,15 +6,23 @@ rooms, approvals, and audit history. This is the **actual product UI**, not the 
 
 ## Run the complete product
 
-From the repository root:
+First provision an owned PostgreSQL database and create or restore the existing Corp, actor,
+and enrolled runner using the [initial setup recipe](../../docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md).
+Supply `DATABASE_URL`, `CRONY_CORP_ID`, `CRONY_ACTOR_ID`, and the matching `CRONY_RUNNER_ID`
+through the trusted process environment, with the runner credential at `output/runner/credential.json`.
+Then, from the repository root:
 
 ```powershell
 pnpm install --frozen-lockfile
 ./tools/start_local.ps1
 ```
 
-Open `http://127.0.0.1:5187`. The script starts Postgres, the Rust server, an enrolled outbound
-runner, and this Vite client. Close the stack with `./tools/stop_local.ps1` from the root.
+Open `http://127.0.0.1:5187`. The script starts or reuses the Rust server, the already enrolled
+outbound runner, and this Vite client. This is a startup compatibility change: automatic database
+provisioning, demo bootstrap, and runner enrollment have been removed from Start and Restart.
+They require the separate initial setup above. Existing data, credentials and owned live processes
+are retained. Close the application stack with `./tools/stop_local.ps1` from the root; coordinate
+the separately provisioned database lifecycle with its owner.
 Prerequisites and source-repository selection are in the [root README](../../README.md#start-locally).
 
 Starting Vite alone does not start the control plane, database, runner, or provider. If those

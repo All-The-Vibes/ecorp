@@ -867,6 +867,21 @@ function Invoke-StartupCases {
         Assert-Equal $resolved $commit 'The owned Unicode ref must resolve to the fixture commit.'
         Assert-Equal (Get-LocalSourceCommit $source $ref) $commit 'Generic resolution must not impose the runner-only ASCII contract on Factory.'
     }
+    Invoke-Case 'generic source resolver accepts a real SHA-256 Git commit' {
+        $sha256Source = Join-Path $script:FixtureRoot 'source-sha256'
+        [IO.Directory]::CreateDirectory($sha256Source) | Out-Null
+        & git -C $sha256Source init --quiet --object-format=sha256
+        if ($LASTEXITCODE) { throw 'Could not initialize the owned SHA-256 source.' }
+        Write-FixtureFile (Join-Path $sha256Source 'fixture.txt') 'owned SHA-256 startup fixture'
+        & git -C $sha256Source add fixture.txt
+        if ($LASTEXITCODE) { throw 'Could not stage the owned SHA-256 source.' }
+        & git -C $sha256Source -c user.name=Fixture -c user.email=fixture@example.invalid commit --quiet -m fixture
+        if ($LASTEXITCODE) { throw 'Could not commit the owned SHA-256 source.' }
+        $sha256Commit = & git -C $sha256Source rev-parse --verify HEAD
+        Assert-Equal $LASTEXITCODE 0 'The real SHA-256 fixture must resolve.'
+        Assert-True ($sha256Commit -cmatch '^[0-9a-f]{64}$') 'The fixture must use an actual 64-character commit.'
+        Assert-Equal (Get-LocalSourceCommit $sha256Source HEAD) $sha256Commit 'Startup must accept the native supported SHA-256 commit.'
+    }
     & git -C $source update-ref 'refs/heads/-F02' $commit
     if ($LASTEXITCODE) { throw 'Could not create owned leading-dash ref.' }
     $resolved = & git -C $source rev-parse --verify --end-of-options '-F02^{commit}'
@@ -949,7 +964,15 @@ function Start-LocalOwnedProcess {
     $record.fixture_ready = $ready
     $record
 }
-Export-ModuleMember -Function Start-LocalOwnedProcess
+$script:NativeFixtureStop = ${function:Stop-LocalOwnedProcess}
+function Stop-LocalOwnedProcess {
+    param($Record,$Workspace)
+    if ($Record.role -ceq $env:ECORP_LOCAL_STACK_TEST_STOP_ROLE) {
+        throw 'Synthetic second-stop failure'
+    }
+    & $script:NativeFixtureStop -Record $Record -Workspace $Workspace
+}
+Export-ModuleMember -Function Start-LocalOwnedProcess, Stop-LocalOwnedProcess
 '@
     $modulePath = Join-Path $workspace 'tools\local_stack.psm1'
     Write-FixtureFile $modulePath ([IO.File]::ReadAllText($modulePath) + $mock)
@@ -1004,7 +1027,7 @@ Export-ModuleMember -Function Start-LocalOwnedProcess
             $acl = (Get-Acl -LiteralPath $_.FullName).Sddl
             $_.Refresh()
             [ordered]@{
-                path=$_.FullName;acl=$acl
+                path=$_.FullName;acl=$acl;attributes=[int]$_.Attributes
                 written=$_.LastWriteTimeUtc.Ticks
                 hash=$(if (!$_.PSIsContainer) {
                     $stream=[IO.File]::Open($_.FullName,[IO.FileMode]::Open,[IO.FileAccess]::Read,
@@ -1058,6 +1081,34 @@ Export-ModuleMember -Function Start-LocalOwnedProcess
                 }
             } finally {
                 foreach ($name in $settings.Keys) { [Environment]::SetEnvironmentVariable($name,$old[$name],'Process') }
+            }
+        }
+        Invoke-Case 'saved-connection Factory preflight does not resolve its ref in the legacy checkout' {
+            $settings = @{
+                ECORP_FACTORY_WATCH='1'
+                ECORP_FACTORY_WORKSPACE_CONNECTION_ID='00000000-0000-4000-8000-000000000232'
+                ECORP_FACTORY_SOURCE_BASE_REF='refs/heads/connection-project-only'
+                ECORP_GITHUB_CLI=$script:NodeExecutable
+            }
+            $old = @{}
+            foreach ($name in $settings.Keys) {
+                $old[$name] = [Environment]::GetEnvironmentVariable($name,'Process')
+                [Environment]::SetEnvironmentVariable($name,$settings[$name],'Process')
+            }
+            try {
+                Assert-Throws { Get-LocalSourceCommit $source $settings.ECORP_FACTORY_SOURCE_BASE_REF } 'The selected project ref must genuinely be absent from the legacy checkout.'
+                foreach ($restart in @($false,$true)) {
+                    $before = Get-StartupSnapshot
+                    $result = & $starter -Preflight -Restart:$restart -SkipBuild -SkipInstall
+                    Assert-Equal $result.status 'ready' 'The native controller must resolve the selected connection without a legacy-source fallback.'
+                    Assert-Equal $result.source_commit $commit 'The runner retains its separately configured source.'
+                    Assert-Equal (Get-StartupSnapshot) $before 'Saved-connection preflight changed retained files, attributes or ACLs.'
+                }
+            } finally {
+                foreach ($name in $settings.Keys) {
+                    if ($null -eq $old[$name]) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+                    else { [Environment]::SetEnvironmentVariable($name,$old[$name],'Process') }
+                }
             }
         }
         Invoke-Case 'read-only startup preflight has exact proof fields and no filesystem or ACL effects' {
@@ -1372,6 +1423,112 @@ Export-ModuleMember -Function Start-LocalOwnedProcess
                         foreach ($guard in $guards) { Stop-FixtureHandle $guard.owned }
                     }
                 }
+            }
+        }
+        foreach ($restriction in @('read-only','delete-sharing')) {
+            foreach ($mode in @(
+                @{name='Start';restart=$false;preflight=$false},
+                @{name='Restart';restart=$true;preflight=$false},
+                @{name='Preflight';restart=$false;preflight=$true}
+            )) {
+                Invoke-Case "$restriction ownership target rejects $($mode.name) before effects" {
+                    & $starter -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+                    Register-StartupProcesses
+                    $originalState = [IO.File]::ReadAllText($statePath)
+                    $owned = (Read-LocalStackState $statePath $workspace).processes
+                    $attributes = [IO.File]::GetAttributes($statePath)
+                    $locked = $null
+                    try {
+                        if ($restriction -eq 'read-only') {
+                            [IO.File]::SetAttributes($statePath, $attributes -bor [IO.FileAttributes]::ReadOnly)
+                        } else {
+                            $locked = [IO.File]::Open($statePath,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::ReadWrite)
+                        }
+                        $before = Get-StartupSnapshot
+                        $failure = $null
+                        try { & $starter -Restart:$mode.restart -Preflight:$mode.preflight -SkipBuild -SkipInstall -SkipFactoryController | Out-Null }
+                        catch { $failure = $_.Exception.Message }
+                        $after = Get-StartupSnapshot
+                        $live = @($owned.Values | ForEach-Object { Test-LocalOwnedProcess $_ $workspace })
+                        Write-FixtureFile (Join-Path $script:FixtureRoot "replacement-$restriction-$($mode.name).json") (@{
+                            restriction=$restriction;mode=$mode.name;failure=$failure
+                            before=($before | ConvertFrom-Json);after=($after | ConvertFrom-Json);original_roots_live=$live
+                        } | ConvertTo-Json -Depth 8)
+                        Assert-Equal $after $before 'Rejected ownership output changed retained bytes, attributes, timestamps or ACLs.'
+                        Assert-Equal @($live | Where-Object { !$_ }).Count 0 'A known non-replaceable ownership target must be rejected before stopping any original root.'
+                        Assert-True ($failure -like 'Ownership record cannot be replaced:*') 'Read-only validation must identify the known replacement failure.'
+                    } finally {
+                        if ($locked) { $locked.Dispose() }
+                        [IO.File]::SetAttributes($statePath,$attributes)
+                        Register-StartupProcesses
+                        Write-FixtureFile $statePath $originalState
+                    }
+                }
+            }
+        }
+        Invoke-Case 'partial restart retains old configuration and a subsequent start recovers it' {
+            & $starter -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+            Register-StartupProcesses
+            $originalState = [IO.File]::ReadAllText($statePath)
+            $original = $originalState | ConvertFrom-Json -AsHashtable
+            $newPort = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,0)
+            try { $newPort.Start(); $requestedPort = $newPort.LocalEndpoint.Port }
+            finally { $newPort.Stop() }
+            $settings = @{
+                CRONY_WEB_PORT=[string]$requestedPort
+                CRONY_SOURCE_BASE_REF=$nativeRef
+                ECORP_LOCAL_STACK_TEST_STOP_ROLE='server'
+            }
+            $old = @{}
+            foreach ($name in $settings.Keys) {
+                $old[$name] = [Environment]::GetEnvironmentVariable($name,'Process')
+                [Environment]::SetEnvironmentVariable($name,$settings[$name],'Process')
+            }
+            $recovered = $false
+            try {
+                $failure = $null
+                try { & $starter -Restart -SkipBuild -SkipInstall -SkipFactoryController | Out-Null }
+                catch { $failure = $_.Exception.Message }
+                foreach ($name in $settings.Keys) {
+                    if ($null -eq $old[$name]) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+                    else { [Environment]::SetEnvironmentVariable($name,$old[$name],'Process') }
+                }
+                $partial = Read-LocalStackState $statePath $workspace
+                Write-FixtureFile (Join-Path $script:FixtureRoot 'partial-restart.json') (@{
+                    before=$original;after=$partial;failure=$failure
+                } | ConvertTo-Json -Depth 12)
+                Assert-Equal $failure 'Synthetic second-stop failure' 'The fixture must fail on the second old root, after the first stop was saved.'
+                Assert-False (Test-LocalOwnedProcess $original.processes.runner $workspace) 'The first stop must actually complete.'
+                foreach ($role in @('server','web')) {
+                    Assert-True (Test-LocalOwnedProcess $original.processes[$role] $workspace) 'The remaining original roots must be preserved.'
+                }
+                Assert-Equal $partial.configuration.Count $original.configuration.Count 'Partial restart must preserve the complete old configuration.'
+                foreach ($key in $original.configuration.Keys) {
+                    Assert-Equal $partial.configuration[$key] $original.configuration[$key] 'A partial restart must not attach proposed settings to the remaining old roots.'
+                }
+                Assert-Equal $partial.server_url $original.server_url 'Partial restart must retain the old API URL.'
+                Assert-Equal $partial.web_url $original.web_url 'Partial restart must retain the old web URL.'
+                & $starter -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+                Register-StartupProcesses
+                $current = Read-LocalStackState $statePath $workspace
+                Assert-Equal $current.configuration.Count $original.configuration.Count 'Recovery must preserve the complete old configuration.'
+                foreach ($key in $original.configuration.Keys) {
+                    Assert-Equal $current.configuration[$key] $original.configuration[$key] 'Ordinary recovery must use the old saved configuration.'
+                }
+                foreach ($role in @('server','web')) {
+                    Assert-Equal $current.processes[$role].pid $original.processes[$role].pid 'Recovery must reuse the remaining old roots.'
+                }
+                Assert-True (Test-LocalOwnedProcess $current.processes.runner $workspace) 'Recovery must replace the stopped runner with an owned root.'
+                Assert-True ($current.processes.runner.pid -ne $original.processes.runner.pid) 'The runner recovery must be a new process.'
+                Write-FixtureFile (Join-Path $script:FixtureRoot 'partial-restart-recovered.json') ($current | ConvertTo-Json -Depth 12)
+                $recovered = $true
+            } finally {
+                foreach ($name in $settings.Keys) {
+                    if ($null -eq $old[$name]) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+                    else { [Environment]::SetEnvironmentVariable($name,$old[$name],'Process') }
+                }
+                Register-StartupProcesses
+                if (!$recovered) { Write-FixtureFile $statePath $originalState }
             }
         }
         Invoke-Case 'valid restart replaces only verified owned fixture roots after validation' {

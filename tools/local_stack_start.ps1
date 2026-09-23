@@ -16,6 +16,7 @@ $root = (Resolve-Path -LiteralPath $Workspace).Path
 $output = Join-Path $root 'output'
 $stateFile = Join-Path $output 'local-pids.json'
 Assert-LocalStackPath -Path $stateFile
+Assert-LocalStackStateReplacement -Path $stateFile
 $state = Read-LocalStackState -Path $stateFile -Workspace $root
 if ($state -and ($state.schema_version -ne 2 -or
     !$state.ContainsKey('configuration') -or $state.configuration -isnot [hashtable] -or
@@ -268,9 +269,6 @@ if ($saved.ContainsKey('database_identity') -and $saved.database_identity -cne $
 }
 $configuration.database_identity = $dbIdentity
 $configuration.database_mode = 'external'
-$state.configuration = $configuration
-$state.server_url = $serverUrl
-$state.web_url = $webUrl
 Ensure-FreePort $serverPortValue 'server'
 Ensure-FreePort $webPortValue 'web'
 
@@ -317,7 +315,9 @@ if ($needsServer -or $needsRunner -or $needsController) {
     } else { $null = Get-Command cargo -ErrorAction Stop }
 }
 if ($factoryEnabled -and !$SkipFactoryController) {
-    $null = Get-LocalSourceCommit -Repository $source -Ref $factory.source_base_ref
+    if (!$factory.workspace_connection_id) {
+        $null = Get-LocalSourceCommit -Repository $source -Ref $factory.source_base_ref
+    }
     $null = Get-Command $factory.github_cli -ErrorAction Stop
 }
 Assert-LocalDatabaseIdentity -DatabaseUrl $databaseUrl -CorpId $state.corp_id -ActorId $state.actor_id `
@@ -352,6 +352,11 @@ if ($Restart) {
 }
 Ensure-FreePort $serverPortValue 'server'
 Ensure-FreePort $webPortValue 'web'
+# Keep the old configuration beside any remaining old processes when a stop
+# fails. Only a completed stop phase may install the requested configuration.
+$state.configuration = $configuration
+$state.server_url = $serverUrl
+$state.web_url = $webUrl
 New-Item -ItemType Directory -Path $guardDirectory, $logs, $credentialDirectory, $runnerWorkspace -Force | Out-Null
 if (!(Test-Path -LiteralPath $guard)) { [IO.File]::WriteAllText($guard, '') }
 if ((Get-Item -LiteralPath $guard).Length -ne 0) { throw 'The owned process dotenv guard must stay empty.' }

@@ -439,7 +439,7 @@ function Get-LocalSourceCommit {
         # Native Git stderr can contain configuration values and is not relayed.
         throw "Cannot resolve source ref to an immutable commit in: $Repository"
     }
-    if ([string]$commit -cnotmatch '^[0-9a-f]{40}$') {
+    if ([string]$commit -cnotmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$') {
         throw "Cannot resolve source ref to an immutable commit in: $Repository"
     }
     [string]$commit
@@ -631,6 +631,29 @@ function Read-LocalStackState {
     $state
 }
 
+function Assert-LocalStackStateReplacement {
+    param([Parameter(Mandatory)][string]$Path)
+    if (!(Test-Path -LiteralPath $Path)) { return }
+    $probe = $null
+    try {
+        if ([IO.File]::GetAttributes($Path) -band [IO.FileAttributes]::ReadOnly) {
+            throw 'Read-only ownership record.'
+        }
+        # Ask Windows for the delete access needed by atomic replacement without
+        # changing file bytes, attributes or ACLs. This detects current access and
+        # sharing failures; later races and parent-directory writes can still fail.
+        $probe = [IO.FileSystemAclExtensions]::Create(
+            [IO.FileInfo]::new($Path), [IO.FileMode]::Open,
+            [Security.AccessControl.FileSystemRights]::Delete,
+            ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete),
+            4096, [IO.FileOptions]::None, $null)
+    } catch {
+        throw "Ownership record cannot be replaced: $Path"
+    } finally {
+        if ($probe) { $probe.Dispose() }
+    }
+}
+
 function Save-LocalStackState {
     param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][hashtable]$State,
         [Parameter(Mandatory)][string]$Workspace)
@@ -680,6 +703,6 @@ function Save-LocalStackState {
 Export-ModuleMember -Function Get-LocalFullPath, Test-LocalPathEqual,
     ConvertTo-LocalProcessArgument, Get-LocalProcessIdentity, Test-LocalOwnedProcess,
     Stop-LocalOwnedProcess, New-LocalProcessEnvironment, Start-LocalOwnedProcess,
-    Read-LocalStackState, Save-LocalStackState, Assert-LocalStackPath,
+    Read-LocalStackState, Save-LocalStackState, Assert-LocalStackPath, Assert-LocalStackStateReplacement,
     Get-LocalSourceCommit, Assert-LocalStackProcesses, Get-LocalDatabaseIdentity, Assert-LocalDatabaseIdentity,
     Assert-LocalRunnerIdentity, Assert-LocalRunnerSourceRef
