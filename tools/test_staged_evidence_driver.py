@@ -138,6 +138,30 @@ class StagedEvidenceDriver(unittest.TestCase):
         self.directory_link(alias, repo)
         self.reject_input(alias, validation, root / 'evidence', 'linked evidence path')
 
+    def test_linked_output_ancestor_is_rejected_before_any_write(self):
+        for nested in (False, True):
+            with self.subTest(missing_parent=nested):
+                root, repo, validation, record = self.fixture()
+                self.evidence_source(repo)
+                for name in ('test_staged_evidence_driver.py', 'staged_evidence_inventory.py',
+                             'verify_pr362_staged_evidence.py'):
+                    (repo / 'tools' / name).write_bytes(b'# owned output admission fixture\n')
+                self.stage_and_bind(repo, validation, record)
+                subprocess.run(['git', '-C', str(repo), '-c', 'user.name=Fixture',
+                                '-c', 'user.email=fixture@example.invalid', 'commit',
+                                '--quiet', '-m', 'Owned output admission fixture'],
+                               check=True, capture_output=True, timeout=30)
+                target = root / 'outside-output'
+                target.mkdir()
+                sentinel = target / 'retained.txt'
+                sentinel.write_bytes(b'preserved destination\n')
+                alias = root / 'output-alias'
+                self.directory_link(alias, target)
+                output = alias / 'missing-parent' / 'evidence' if nested else alias / 'evidence'
+                self.reject_input(repo, validation, output, 'linked evidence path')
+                self.assertEqual(list(target.iterdir()), [sentinel])
+                self.assertEqual(sentinel.read_bytes(), b'preserved destination\n')
+
     def test_oversized_staged_blob_is_rejected_before_materialization(self):
         root, repo, validation, record = self.fixture()
         source = repo / 'tools/test_public_evidence_verifier.py'
