@@ -22,7 +22,7 @@ import subprocess
 import zipfile
 from staged_evidence_inventory import require_regression_count, staged_blobs
 
-EXPECTED_REGRESSIONS = 68
+EXPECTED_REGRESSIONS = 69
 
 REQUIRED_GATES = {
     'migrations': ('node', ['tools/check_migrations.mjs']),
@@ -58,7 +58,18 @@ def read_input(path):
 repo = verifier.directory_root(args.repository)
 validation_path = args.validation
 base = args.output_directory.absolute()
-assert not base.exists(), 'Preserve existing evidence output.'
+# Validate lexical ancestors before materializing anything. Missing intermediate
+# directories are allowed only below an existing, unlinked directory root.
+assert '..' not in base.parts, 'unsafe evidence ancestor traversal'
+parent = base.parent
+while True:
+    try:
+        parent.lstat()
+        break
+    except FileNotFoundError:
+        parent = parent.parent
+verifier.directory_root(parent)
+assert not os.path.lexists(base), 'Preserve existing evidence output.'
 fixture = base / 'fixture'
 receipt_path = base / 'receipt.json'
 log = base / 'regressions.log'

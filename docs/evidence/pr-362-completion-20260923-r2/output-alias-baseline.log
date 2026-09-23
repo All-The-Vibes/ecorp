@@ -1,0 +1,32 @@
+test_linked_output_ancestor_is_rejected_before_any_write (test_staged_evidence_driver.StagedEvidenceDriver.test_linked_output_ancestor_is_rejected_before_any_write) ...
+  test_linked_output_ancestor_is_rejected_before_any_write (test_staged_evidence_driver.StagedEvidenceDriver.test_linked_output_ancestor_is_rejected_before_any_write) (missing_parent=False) ... FAIL
+  test_linked_output_ancestor_is_rejected_before_any_write (test_staged_evidence_driver.StagedEvidenceDriver.test_linked_output_ancestor_is_rejected_before_any_write) (missing_parent=True) ... FAIL
+
+======================================================================
+FAIL: test_linked_output_ancestor_is_rejected_before_any_write (test_staged_evidence_driver.StagedEvidenceDriver.test_linked_output_ancestor_is_rejected_before_any_write) (missing_parent=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 161, in test_linked_output_ancestor_is_rejected_before_any_write
+    self.reject_input(repo, validation, output, 'linked evidence path')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 73, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 66, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'linked evidence path' not found in 'Traceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 114, in <module>\n    fixture.mkdir(parents=True)\n  File "<local-user>\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\pathlib.py", line 1311, in mkdir\n    os.mkdir(self, mode)\nFileExistsError: [WinError 183] Cannot create a file when that file already exists: \'<user-home>\\\\AppData\\\\Local\\\\Temp\\\\ecorp-evidence-driver-test-fot021n8\\\\output-alias\\\\evidence\\\\fixture\'\n'
+
+======================================================================
+FAIL: test_linked_output_ancestor_is_rejected_before_any_write (test_staged_evidence_driver.StagedEvidenceDriver.test_linked_output_ancestor_is_rejected_before_any_write) (missing_parent=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 161, in test_linked_output_ancestor_is_rejected_before_any_write
+    self.reject_input(repo, validation, output, 'linked evidence path')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 73, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 66, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'linked evidence path' not found in 'Traceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 114, in <module>\n    fixture.mkdir(parents=True)\n  File "<local-user>\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\pathlib.py", line 1311, in mkdir\n    os.mkdir(self, mode)\nFileExistsError: [WinError 183] Cannot create a file when that file already exists: \'<user-home>\\\\AppData\\\\Local\\\\Temp\\\\ecorp-evidence-driver-test-k6u3e9kj\\\\output-alias\\\\missing-parent\\\\evidence\\\\fixture\'\n'
+
+----------------------------------------------------------------------
+Ran 1 test in 2.935s
+
+FAILED (failures=2)
