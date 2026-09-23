@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url'
 const names = {
   win32: { chromium: ['chrome.exe', 'chromium.exe', 'headless_shell.exe'], chrome: ['chrome.exe'], edge: ['msedge.exe'] },
   linux: { chromium: ['chrome', 'chromium', 'chromium-browser', 'headless_shell'], chrome: ['chrome', 'google-chrome', 'google-chrome-stable'], edge: ['msedge', 'microsoft-edge', 'microsoft-edge-stable'] },
-  darwin: { chromium: ['Chromium', 'chrome-headless-shell', 'headless_shell'], chrome: ['Google Chrome'], edge: ['Microsoft Edge'] },
+  darwin: { chromium: ['Chromium', 'Google Chrome for Testing', 'chrome-headless-shell', 'headless_shell'], chrome: ['Google Chrome'], edge: ['Microsoft Edge'] },
 }
 const fail = (message) => { throw new Error(`Verifier browser: ${message}`) }
 // Unix open('r') can wait indefinitely for a FIFO writer before fstat can run.

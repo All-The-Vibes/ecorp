@@ -73,7 +73,11 @@ $shim = Join-Path $output 'runner-handoff.mjs'
 [IO.File]::WriteAllText($shim, @'
 import { spawnSync } from 'node:child_process';
 import { existsSync, renameSync, writeFileSync } from 'node:fs';
-const [verifier, resultPath, releasePath] = process.argv.slice(2);
+import { setTimeout as delay } from 'node:timers/promises';
+const [verifier, resultPath, releasePath, delayText] = process.argv.slice(2);
+const readinessDelayMilliseconds = Number(delayText);
+const started = Date.now();
+await delay(readinessDelayMilliseconds);
 // Inherited environment models verifier.rs's command (no env_clear/env override).
 // This shim is not the Rust runner or its job-object/verification-policy machinery.
 const child = spawnSync(process.execPath, [verifier, 'arcade'], {
@@ -81,7 +85,9 @@ const child = spawnSync(process.execPath, [verifier, 'arcade'], {
 });
 const policy = process.env.CRONY_VERIFIER_BROWSER_POLICY;
 const result = {
-  pid: process.pid, policyPresent: policy !== undefined, policy: policy ?? null,
+  pid: process.pid, executable: process.execPath,
+  readinessDelayMilliseconds, readyElapsedMilliseconds: Date.now() - started,
+  policyPresent: policy !== undefined, policy: policy ?? null,
   playwright: process.env.CRONY_PLAYWRIGHT_MODULE,
   leakedCanaries: ['GH_TOKEN', 'AZURE_CLIENT_SECRET', 'F01_UNLISTED'].filter(k => process.env[k] !== undefined),
   status: child.status, signal: child.signal, error: child.error?.message ?? null,
@@ -103,9 +109,11 @@ foreach ($name in @('GH_TOKEN', 'AZURE_CLIENT_SECRET', 'F01_UNLISTED')) {
 }
 $cases = [Collections.Generic.List[object]]::new()
 # Both native module routes: ordinary Start-Process and the literal-path launcher.
+# Repeat cold launches, including a delayed child readiness publication.
+foreach ($readinessDelayMilliseconds in @(0, 250)) {
 foreach ($route in @('normal spaces', 'literal [brackets]')) {
     foreach ($kind in @('valid', 'invalid', 'empty', 'absent')) {
-        $workspace = Join-Path $output "$route $kind"
+        $workspace = Join-Path $output "$route $kind delay-$readinessDelayMilliseconds"
         $null = [IO.Directory]::CreateDirectory((Join-Path $workspace 'arcade'))
         # A filesystem marker for the verifier's lstat guard, NOT an actual Git checkout.
         [IO.File]::WriteAllText((Join-Path $workspace '.git'), 'F01 synthetic worktree marker')
@@ -126,29 +134,47 @@ foreach ($route in @('normal spaces', 'literal [brackets]')) {
         $resultPath = Join-Path $workspace 'child.json'
         $releasePath = Join-Path $workspace 'release'
         $record = Start-LocalOwnedProcess -Role 'F01-handoff' -Workspace $workspace -FilePath $node `
-            -ArgumentList @($shim, (Join-Path $PSScriptRoot 'verify_arcade_browser.mjs'), $resultPath, $releasePath) `
+            -ArgumentList @($shim, (Join-Path $PSScriptRoot 'verify_arcade_browser.mjs'), $resultPath, $releasePath, [string]$readinessDelayMilliseconds) `
             -WorkingDirectory $workspace -LogDirectory (Join-Path $workspace 'logs') -Environment $runnerEnvironment
         [IO.File]::WriteAllText((Join-Path $workspace 'ownership.json'), ($record | ConvertTo-Json))
         $process = [Diagnostics.Process]::GetProcessById($record.pid)
         $null = $process.Handle
-        $identity = @{
-            expected_pid = $record.pid; observed_pid = $process.Id
-            expected_ticks = ([DateTimeOffset]$record.started_utc).UtcTicks
-            observed_ticks = $process.StartTime.ToUniversalTime().Ticks
-            expected_executable = $node; observed_executable = $process.Path
-        }
-        [IO.File]::WriteAllText((Join-Path $workspace 'identity.json'), ($identity | ConvertTo-Json))
-        $owned = $identity.observed_ticks -eq $identity.expected_ticks -and
-            [string]::Equals($identity.observed_executable, $node, [StringComparison]::OrdinalIgnoreCase)
-        if (!$owned) { $process.Dispose(); throw 'Owned fixture identity mismatch; no process was controlled.' }
+        $creationTicks = $process.StartTime.ToUniversalTime().Ticks
+        $owned = $false
         $failures = [Collections.Generic.List[string]]::new()
         try {
+            if ($process.Id -ne $record.pid -or $creationTicks -ne ([DateTimeOffset]$record.started_utc).UtcTicks) {
+                throw 'Owned fixture identity mismatch; no process was controlled.'
+            }
             $deadline = [DateTime]::UtcNow.AddSeconds(15)
             while (!(Test-Path -LiteralPath $resultPath) -and [DateTime]::UtcNow -lt $deadline) {
+                if ($process.HasExited) { throw 'Owned fixture exited before publishing readiness.' }
                 Start-Sleep -Milliseconds 25
             }
+            if (!(Test-Path -LiteralPath $resultPath)) { throw 'Owned fixture readiness exceeded 15 seconds.' }
             $observed = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
-            if ($observed.pid -ne $record.pid) { throw 'Child result does not match owned process.' }
+            if ($observed.pid -ne $record.pid -or
+                ![string]::Equals($observed.executable, $node, [StringComparison]::OrdinalIgnoreCase)) {
+                throw 'Child result does not match owned process.'
+            }
+            # Windows can expose a null or loader image before readiness. Keep
+            # the held handle, then refresh and require the exact ready image.
+            $process.Refresh()
+            $image = $process.MainModule
+            $identity = @{
+                expected_pid = $record.pid; observed_pid = $process.Id
+                expected_ticks = ([DateTimeOffset]$record.started_utc).UtcTicks
+                observed_ticks = $process.StartTime.ToUniversalTime().Ticks
+                expected_executable = $node; observed_executable = $image.FileName
+            }
+            [IO.File]::WriteAllText((Join-Path $workspace 'identity.json'), ($identity | ConvertTo-Json))
+            $owned = !$process.HasExited -and $identity.observed_ticks -eq $creationTicks -and
+                [string]::Equals($identity.observed_executable, $node, [StringComparison]::OrdinalIgnoreCase)
+            if (!$owned) { throw 'Ready fixture identity mismatch; no process was controlled.' }
+            if ($observed.readinessDelayMilliseconds -ne $readinessDelayMilliseconds -or
+                $observed.readyElapsedMilliseconds -lt $readinessDelayMilliseconds) {
+                $failures.Add('The child did not observe its configured readiness delay.')
+            }
             if ($observed.policyPresent -ne ($kind -ne 'absent') -or $observed.policy -cne $value) {
                 $failures.Add('Explicit policy presence/value was lost at the native runner handoff.')
             }
@@ -181,20 +207,24 @@ foreach ($route in @('normal spaces', 'literal [brackets]')) {
         } catch {
             $failures.Add($_.Exception.Message)
         } finally {
-            [IO.File]::WriteAllText($releasePath, 'release this owned fixture')
-            if (!$process.WaitForExit(15000)) {
-                $process.Kill() # Exact held and identity-verified fixture handle, never a process tree.
-                $null = $process.WaitForExit(5000)
-                $failures.Add('Owned fixture required forced termination.')
+            if ($owned) {
+                [IO.File]::WriteAllText($releasePath, 'release this owned fixture')
+                if (!$process.WaitForExit(15000)) {
+                    $process.Kill() # Exact held and identity-verified fixture handle, never a process tree.
+                    $null = $process.WaitForExit(5000)
+                    $failures.Add('Owned fixture required forced termination.')
+                }
+                if ($process.ExitCode -ne 0) { $failures.Add("Owned fixture exit: $($process.ExitCode)") }
             }
-            if ($process.ExitCode -ne 0) { $failures.Add("Owned fixture exit: $($process.ExitCode)") }
+            # An unverified child retains its bounded lease and is never controlled.
             $process.Dispose()
         }
-        $case = @{ name = "$route/$kind"; passed = $failures.Count -eq 0; failures = @($failures)
+        $case = @{ name = "$route/$kind/delay-$readinessDelayMilliseconds"; passed = $failures.Count -eq 0; failures = @($failures)
             result = $resultPath; ownership = (Join-Path $workspace 'ownership.json') }
         $cases.Add($case)
         $case | ConvertTo-Json -Compress
     }
+}
 }
 [IO.File]::WriteAllText((Join-Path $output 'cases.json'), (ConvertTo-Json -InputObject @($cases) -Depth 8))
 if (@($cases | Where-Object { !$_.passed }).Count) { exit 1 }

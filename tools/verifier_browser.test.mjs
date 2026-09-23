@@ -45,13 +45,26 @@ test('managed Chromium uses only the supplied native path and authorized hash', 
   f.policy.browser = 'chromium'
   delete f.policy.executable
   await f.save()
-  const managed = path.join(f.root, process.platform === 'win32' ? 'chrome.exe' : process.platform === 'darwin' ? 'Chromium' : 'chrome')
+  const managed = path.join(f.root, process.platform === 'win32' ? 'chrome.exe' : process.platform === 'darwin' ? 'Google Chrome for Testing' : 'chrome')
   await writeFile(managed, await readFile(f.executable))
   await chmod(managed, 0o700)
   const selection = await resolveVerifierBrowser({ ...f, chromiumExecutable: managed })
   assert.equal(selection.launchOptions.executablePath, await realpath(managed))
   assert.equal(selection.evidence.selection, 'playwright-managed')
   await assert.rejects(resolveVerifierBrowser(f), /Chromium is unavailable/u)
+})
+
+test('macOS Chromium admits the pinned Playwright browser basename without broadening executable selection', () => {
+  const policy = { version: 1, host: 'fixture-mac', platform: 'darwin', browser: 'chromium',
+    executable: '/managed/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing',
+    sha256: 'a'.repeat(64) }
+  assert.equal(validateBrowserPolicy(policy, 'darwin', 'fixture-mac'), policy)
+  for (const name of ['Google Chrome for Testing helper', 'google chrome for testing', 'arbitrary-tool']) {
+    assert.throws(() => validateBrowserPolicy({ ...policy, executable: `/managed/${name}` }, 'darwin', 'fixture-mac'),
+      /absolute supported browser/u)
+  }
+  assert.throws(() => validateBrowserPolicy({ ...policy, browser: 'chrome' }, 'darwin', 'fixture-mac'),
+    /absolute supported browser/u)
 })
 
 for (const excluded of [
