@@ -234,7 +234,7 @@ class Server:
         return output
 
 
-def run(binary, root, postgres, oidc, storage, cert, baseline):
+def run(binary, root, postgres, oidc, storage, cert, baseline, *, case_names=None):
     # Synthetic, fixture-owned files outside every application working directory.
     # Invalid startup must neither create runtime files nor modify these inputs.
     audit_inputs = root / 'audit-inputs'
@@ -251,10 +251,19 @@ def run(binary, root, postgres, oidc, storage, cert, baseline):
         'destination_id': str(uuid.uuid4()), 'checkpoint_digest': 'a' * 64,
         'github_commit': 'b' * 64,
     }]), encoding='utf-8')
+    audit_witnesses = audit_inputs / 'empty-witnesses.json'
+    audit_witnesses.write_text('[]', encoding='utf-8')
+    audit_tokens = {}
+    for name, value in [('cr', b'DO_NOT_LOG\rTOKEN'), ('lf', b'DO_NOT_LOG\nTOKEN'),
+                        ('valid', b' \tfixture-not-a-real-token\r\n')]:
+        audit_tokens[name] = audit_inputs / ('token-' + name)
+        audit_tokens[name].write_bytes(value)
     audit_hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
         for p in audit_inputs.iterdir()}
     audit_config = {'CRONY_STATE_AUDIT_SIGNING_KEY_FILE': str(audit_key),
         'CRONY_STATE_AUDIT_KEY_ID': 'startup-fixture'}
+    publication_config = {**audit_config,
+        'CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE': str(audit_witnesses)}
     base = {'CRONY_MODE': 'production', 'CRONY_SECRET_MASTER_KEY_HEX': '42' * 32,
         'CRONY_ARTIFACT_SIGNING_KEY_HEX': '53' * 33, 'CRONY_OBJECT_STORE_BACKEND': 's3',
         'CRONY_OBJECT_STORE_BUCKET': 'fixture', 'CRONY_OBJECT_STORE_ENDPOINT': f'https://127.0.0.1:{storage.server_port}',
@@ -296,7 +305,12 @@ def run(binary, root, postgres, oidc, storage, cert, baseline):
         ('audit_missing_key_id', {**audit_config, 'CRONY_STATE_AUDIT_KEY_ID': None}, 'valid', False),
         ('audit_witness_json', {**audit_config, 'CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE': str(audit_bad_json)}, 'valid', False),
         ('audit_commit_grammar', {**audit_config, 'CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE': str(audit_bad_commit)}, 'valid', False),
+        ('audit_token_cr', {**publication_config, 'CRONY_STATE_AUDIT_GITHUB_TOKEN_FILE': str(audit_tokens['cr'])}, 'valid', False),
+        ('audit_token_lf', {**publication_config, 'CRONY_STATE_AUDIT_GITHUB_TOKEN_FILE': str(audit_tokens['lf'])}, 'valid', False),
     ]
+    if case_names is not None:
+        assert set(case_names) <= {case[0] for case in cases}, 'unknown startup case'
+        cases = [case for case in cases if case[0] in case_names]
     templates = [('empty', None)]
     if not baseline:
         seed = postgres.create()
@@ -385,7 +399,9 @@ def run(binary, root, postgres, oidc, storage, cert, baseline):
     for key_bytes in (32, 33):
         db = postgres.create()
         storage.calls = 0
-        config = {**base, 'DATABASE_URL': postgres.url(db), 'CRONY_ARTIFACT_SIGNING_KEY_HEX': '53'*key_bytes}
+        config = {**base, **publication_config,
+            'CRONY_STATE_AUDIT_GITHUB_TOKEN_FILE': str(audit_tokens['valid']),
+            'DATABASE_URL': postgres.url(db), 'CRONY_ARTIFACT_SIGNING_KEY_HEX': '53'*key_bytes}
         server = Server(binary, root/f'production_{key_bytes}', config)
         try:
             assert server.ready()['mode'] == 'production'

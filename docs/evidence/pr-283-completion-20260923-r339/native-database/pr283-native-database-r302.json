@@ -1,0 +1,39 @@
+{
+  "pr": 283,
+  "purpose": "audit SQLx regressions",
+  "source_head": "63fc5edb8350aedd865b50d588bf70b41f154326",
+  "tested_staged_tree": "ef84c5fbaabc1afd00faab784ce3f5fca7f15933",
+  "qa_root": "<local-user>\\code\\qa\\pr283-audit-store-20260922-r302",
+  "target": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T11:51:33.5299893+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "log": "<private-evidence>\\pr283-native-database-r302-initdb.log",
+      "sha256": "134b1bfb98779eb736959db6d20a7044aa2287878f6b7ae306569d7eef422358",
+      "exit_code": 0
+    },
+    {
+      "name": "workspace-cache-refresh",
+      "log": "<private-evidence>\\pr283-native-database-r302-workspace-cache-refresh.log",
+      "sha256": "66c228ff43c955a53749336a19150d0ae5f6eaf9c3d11ccf3cd8dbb2ed119c6d",
+      "exit_code": 0
+    },
+    {
+      "name": "owned-postgresql-state-audit-regressions",
+      "log": "<private-evidence>\\pr283-native-database-r302-sqlx.log",
+      "sha256": "5c586b11502dfa22f730e185eac1a81b4b560ff6d2e7a59d20ff92b1a7a2215d",
+      "exit_code": 0
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+  "authentication": {
+    "wrong_password_rejected": true,
+    "method": "scram-sha-256",
+    "authenticated_query": true,
+    "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance."
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T11:58:14.5921521+00:00"
+}

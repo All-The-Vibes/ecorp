@@ -1187,6 +1187,7 @@ async fn issue281_legacy_source_commit_upgrade_is_audited_atomically(pool: PgPoo
 #[derive(Default)]
 struct PublicationFixture {
     files: std::sync::Mutex<std::collections::BTreeMap<String, Vec<u8>>>,
+    heads: std::sync::Mutex<usize>,
     writes: std::sync::Mutex<usize>,
     fail: std::sync::Mutex<Option<usize>>,
     rewritten: std::sync::Mutex<bool>,
@@ -1194,7 +1195,10 @@ struct PublicationFixture {
 }
 impl crony_audit::PublicationTransport for PublicationFixture {
     fn head(&self) -> futures_util::future::BoxFuture<'_, Result<String>> {
-        Box::pin(async { Ok("fixture-head".into()) })
+        Box::pin(async {
+            *self.heads.lock().unwrap() += 1;
+            Ok("fixture-head".into())
+        })
     }
     fn descends_from<'a>(
         &'a self,
@@ -1233,6 +1237,293 @@ impl crony_audit::PublicationTransport for PublicationFixture {
             Ok(())
         })
     }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_empty_checkpoint_destinations_do_not_starve_ready_corp(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, ids, mission, _, _) = fixture(pool).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    let key = crony_audit::SigningKey::from_bytes(&[7; 32]);
+    store
+        .audit_checkpoint(ids.corp_id, "ready-key", &key)
+        .await?;
+
+    let empty_corp = Uuid::new_v4();
+    let empty_owner = Uuid::new_v4();
+    sqlx::query("INSERT INTO corps(id,slug,name) VALUES($1,$2,'Empty audit fixture')")
+        .bind(empty_corp)
+        .bind(format!("empty-audit-{empty_corp}"))
+        .execute(&store.pool)
+        .await?;
+    sqlx::query("INSERT INTO actors(id,corp_id,name,kind,role) VALUES($1,$2,'Empty audit owner','human','owner')")
+        .bind(empty_owner).bind(empty_corp).execute(&store.pool).await?;
+    store
+        .initialize_state_audit(empty_corp, empty_owner, Uuid::new_v4())
+        .await?;
+
+    let mut empty_destinations = Vec::new();
+    for _ in 0..16 {
+        let destination = state_audit::AuditDestination {
+            id: Uuid::new_v4(),
+            corp_id: empty_corp,
+            kind: "github".into(),
+            interval_seconds: 60,
+            calendar_schedule: None,
+            overdue_after_seconds: 3600,
+            workflow_gate: "published".into(),
+            config: json!({"repository":"fixture/audit","branch":"main","path":"audit"}),
+        };
+        store
+            .configure_audit_destination(empty_owner, &destination)
+            .await?;
+        empty_destinations.push(destination.id);
+    }
+    sqlx::query("UPDATE state_audit_destinations SET next_due=now()-interval '2 hours',scheduled_due=now()-interval '2 hours' WHERE corp_id=$1")
+        .bind(empty_corp).execute(&store.pool).await?;
+    let ready_destination = state_audit::AuditDestination {
+        id: Uuid::new_v4(),
+        corp_id: ids.corp_id,
+        kind: "github".into(),
+        interval_seconds: 60,
+        calendar_schedule: None,
+        overdue_after_seconds: 3600,
+        workflow_gate: "published".into(),
+        config: json!({"repository":"fixture/audit","branch":"main","path":"audit"}),
+    };
+    store
+        .configure_audit_destination(ids.alice_actor_id, &ready_destination)
+        .await?;
+    let first_page = store.due_audit_destinations().await?;
+    assert_eq!(first_page.len(), 16);
+    let remote = PublicationFixture::default();
+    for destination in first_page {
+        assert!(empty_destinations.contains(&destination.id));
+        assert!(
+            !store
+                .publish_audit_destination(destination.id, &remote, &key.verifying_key(), None)
+                .await?
+        );
+    }
+    assert_eq!(*remote.heads.lock().unwrap(), 0);
+    assert_eq!(*remote.writes.lock().unwrap(), 0);
+    let bounded_retries: bool = sqlx::query_scalar(
+        "SELECT bool_and(next_due > now() AND next_due <= now()+interval '60 seconds') FROM state_audit_destinations WHERE corp_id=$1",
+    )
+    .bind(empty_corp)
+    .fetch_one(&store.pool)
+    .await?;
+    assert!(bounded_retries, "checkpoint absence must remain retryable");
+    let second_page = store.due_audit_destinations().await?;
+    assert_eq!(
+        second_page.len(),
+        1,
+        "empty destinations must leave the next due page"
+    );
+    assert_eq!(second_page[0].id, ready_destination.id);
+    assert!(
+        store
+            .publish_audit_destination(ready_destination.id, &remote, &key.verifying_key(), None)
+            .await?
+    );
+    assert!(*remote.writes.lock().unwrap() > 0);
+    let status = store.audit_status(empty_corp, empty_owner).await?;
+    assert_eq!(status["assurance"]["overdue_destinations"], 16);
+    for destination in status["destinations"].as_array().unwrap() {
+        assert_eq!(destination["publication_disabled"], false);
+        assert_eq!(destination["failures"], 0);
+        assert_eq!(destination["last_published_sequence"], Value::Null);
+        assert_eq!(destination["last_attempted_publication"], Value::Null);
+        assert_eq!(destination["last_successful_publication"], Value::Null);
+    }
+    Ok(())
+}
+
+async fn publication_state(store: &PgStore, destination: Uuid) -> Result<Value> {
+    Ok(sqlx::query_scalar(
+        "SELECT jsonb_build_object('destination',to_jsonb(d),'receipts',(
+            SELECT jsonb_agg(to_jsonb(r) ORDER BY r.checkpoint_digest)
+            FROM state_audit_anchor_receipts r WHERE r.destination_id=d.id
+        )) FROM state_audit_destinations d WHERE d.id=$1",
+    )
+    .bind(destination)
+    .fetch_one(&store.pool)
+    .await?)
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_publication_rejects_partial_key_history_before_remote_effects(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, ids, mission, contract, policy) = fixture(pool).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    let old_key = crony_audit::SigningKey::from_bytes(&[7; 32]);
+    store
+        .audit_checkpoint(ids.corp_id, "old-key", &old_key)
+        .await?;
+    store
+        .create_mission_contract_revision(CreateMissionContractRevisionInput {
+            corp_id: ids.corp_id,
+            actor_id: ids.alice_actor_id,
+            mission_id: mission.mission_id,
+            task_id: mission.task_ids[0],
+            expected_contract_version: 1,
+            next_action: MissionContractRevisionAction::Redispatch,
+            source_run_id: None,
+            reason: "rotate publication signer".into(),
+            idempotency_key: Uuid::new_v4(),
+            description: "Second signed prefix".into(),
+            contract,
+            verification_policy: policy,
+        })
+        .await?;
+    let key = crony_audit::SigningKey::from_bytes(&[8; 32]);
+    let checkpoint = store
+        .audit_checkpoint(ids.corp_id, "current-key", &key)
+        .await?;
+    let destination = state_audit::AuditDestination {
+        id: Uuid::new_v4(),
+        corp_id: ids.corp_id,
+        kind: "github".into(),
+        interval_seconds: 60,
+        calendar_schedule: None,
+        overdue_after_seconds: 3600,
+        workflow_gate: "published".into(),
+        config: json!({"repository":"fixture/audit","branch":"main","path":"audit"}),
+    };
+    store
+        .configure_audit_destination(ids.alice_actor_id, &destination)
+        .await?;
+    // Corrupt only this disposable SQLx database; production history stays immutable.
+    sqlx::query(
+        "ALTER TABLE state_audit_signing_keys DISABLE TRIGGER state_audit_signing_keys_delete_guard",
+    )
+    .execute(&store.pool)
+    .await?;
+    sqlx::query("DELETE FROM state_audit_signing_keys WHERE corp_id=$1 AND key_id='current-key'")
+        .bind(ids.corp_id)
+        .execute(&store.pool)
+        .await?;
+    sqlx::query(
+        "ALTER TABLE state_audit_signing_keys ENABLE TRIGGER state_audit_signing_keys_delete_guard",
+    )
+    .execute(&store.pool)
+    .await?;
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>(
+            "SELECT count(*) FROM state_audit_signing_keys WHERE corp_id=$1",
+        )
+        .bind(ids.corp_id)
+        .fetch_one(&store.pool)
+        .await?,
+        1
+    );
+    let before = publication_state(&store, destination.id).await?;
+    let remote = PublicationFixture::default();
+    let error = store
+        .publish_audit_destination(destination.id, &remote, &key.verifying_key(), None)
+        .await
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("missing from retained key history")
+    );
+    assert_eq!(publication_state(&store, destination.id).await?, before);
+    assert_eq!(*remote.heads.lock().unwrap(), 0);
+    assert_eq!(*remote.writes.lock().unwrap(), 0);
+    assert!(remote.files.lock().unwrap().is_empty());
+
+    // Restoring the retained row permits publication using its key, even when
+    // the configured runtime key is the retired signer.
+    sqlx::query("INSERT INTO state_audit_signing_keys(corp_id,key_id,public_key,activated_sequence) VALUES($1,'current-key',$2,$3)")
+        .bind(ids.corp_id)
+        .bind(key.verifying_key().to_bytes().as_slice())
+        .bind(i64::try_from(checkpoint.checkpoint.last_sequence)?)
+        .execute(&store.pool)
+        .await?;
+    assert!(
+        store
+            .publish_audit_destination(destination.id, &remote, &old_key.verifying_key(), None)
+            .await?
+    );
+    assert!(*remote.writes.lock().unwrap() > 0);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_legacy_publication_requires_valid_runtime_key(pool: PgPool) -> Result<()> {
+    let (store, ids, mission, _, _) = fixture(pool).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    let key = crony_audit::SigningKey::from_bytes(&[7; 32]);
+    store
+        .audit_checkpoint(ids.corp_id, "legacy-key", &key)
+        .await?;
+    sqlx::query(
+        "ALTER TABLE state_audit_signing_keys DISABLE TRIGGER state_audit_signing_keys_delete_guard",
+    )
+    .execute(&store.pool)
+    .await?;
+    sqlx::query("DELETE FROM state_audit_signing_keys WHERE corp_id=$1")
+        .bind(ids.corp_id)
+        .execute(&store.pool)
+        .await?;
+    sqlx::query(
+        "ALTER TABLE state_audit_signing_keys ENABLE TRIGGER state_audit_signing_keys_delete_guard",
+    )
+    .execute(&store.pool)
+    .await?;
+    let destination = state_audit::AuditDestination {
+        id: Uuid::new_v4(),
+        corp_id: ids.corp_id,
+        kind: "github".into(),
+        interval_seconds: 60,
+        calendar_schedule: None,
+        overdue_after_seconds: 3600,
+        workflow_gate: "published".into(),
+        config: json!({"repository":"fixture/audit","branch":"main","path":"audit"}),
+    };
+    store
+        .configure_audit_destination(ids.alice_actor_id, &destination)
+        .await?;
+    let before = publication_state(&store, destination.id).await?;
+    let remote = PublicationFixture::default();
+    let wrong_key = crony_audit::SigningKey::from_bytes(&[8; 32]);
+    assert!(
+        store
+            .publish_audit_destination(destination.id, &remote, &wrong_key.verifying_key(), None)
+            .await
+            .is_err()
+    );
+    assert_eq!(publication_state(&store, destination.id).await?, before);
+    assert_eq!(*remote.heads.lock().unwrap(), 0);
+    assert_eq!(*remote.writes.lock().unwrap(), 0);
+    assert!(
+        store
+            .publish_audit_destination(destination.id, &remote, &key.verifying_key(), None)
+            .await?
+    );
+    assert!(*remote.writes.lock().unwrap() > 0);
+    Ok(())
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]

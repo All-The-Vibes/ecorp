@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "pr": 283,
+  "source_head": "63fc5edb8350aedd865b50d588bf70b41f154326",
+  "tested_staged_tree": "ef84c5fbaabc1afd00faab784ce3f5fca7f15933",
+  "target_main": "1edbf1b5f4d4fe3f12f9177bb72b631d8ce2e819",
+  "started_at_utc": "2026-09-23T11:51:31.4911439+00:00",
+  "finished_at_utc": "2026-09-23T12:21:06.6539740+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "Nine contributor gates plus canonical-format compatibility and the in-process EVM contract checks passed. All 48 native PostgreSQL regressions (10 server, 38 store), real-binary startup assertions, a real native GitHub-SHA TLS test, and the Edge/server/runner audit acceptance passed on the identical source tree. No live chain, live GitHub publication, production identity, or live Azure acceptance is claimed.",
+  "maintainer_changes": "Validate the fixture credential header without logging certificate/key data. Reject a missing checkpoint signing key when any retained key history exists. Defer failed transport construction and postpone an empty checkpoint for sixty seconds so other ledgers can progress. Preserve migration history and collaborator commits.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.2230367,
+      "log": "migrations.log",
+      "original_log_sha256": "6ab6e1da8bb43649c3a1752406dd5b8c6501874b4b32375dd829ffb244389454",
+      "published_log_sha256": "3a8219c7df05d41666cb5f44cbd094c2d4ecfc4a4b0fcd9a643915eca474c63c"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.4160153,
+      "log": "documentation.log",
+      "original_log_sha256": "db7f2a787a57f60760447d557b9ad906e04ae7d1999a76e2cf61bb78fb495da8",
+      "published_log_sha256": "695fe61f6db060a0afdb16b07fac946cd3f81a9a0c6b9c125233363d8e738156"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 3.0340059,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 167.7141186,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "858e1cd1946c478f176f94bd6cfabe505bb9dea69b6095da37a30483edd6554c",
+      "published_log_sha256": "5f842dd77c36feafe367931643c20badb9671382ea10b216afc737b5c33ea1c2"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 762.0708455,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "43545f1469fe7efbadb456b7cbeba6528078223a31f33774952365f623ecd979",
+      "published_log_sha256": "0bbb2cc447fa5e855b2a5a567eb85987b17207d5885b6b17a20d2f97519123c7"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 73.7459518,
+      "log": "node-unit.log",
+      "original_log_sha256": "8ac2624c93d98cf6326f431efbaeaec788509a80c0fae2c695eeb7938fc4d491",
+      "published_log_sha256": "f36d32958804353af1ecdc94caa01bc119c370dacdb3bfd7cdcfe6f74e2481ce"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 135.8514208,
+      "log": "steward.log",
+      "original_log_sha256": "d3e9a372c471297ecf0e470e0857ad58aa215dfd35fd2eda97bf1d45e8b343b0",
+      "published_log_sha256": "14f53f479adc2d3fe1a3ea35a774bfbdcf4f9c546a6f51a045abb5d0cbed2628"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 7.5382978,
+      "log": "web-build.log",
+      "original_log_sha256": "7da2e196b3fd9ac0f354adc967c33fde71b1acf85eb91f247d918ed8061ac7f6",
+      "published_log_sha256": "a8b24c7de67aecfe4e4ade48573cb6796366aa974eed7518dbc89652cc354288"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 4.144211,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "build_preparation": {
+    "workspace_refresh": {
+      "exit_code": 0,
+      "log": "workspace-refresh.log",
+      "original_log_sha256": "a4572c857e06eba3be8736016d2c6a4fba72c71a9fe92ffbbc5dd57b9abde8d5",
+      "published_log_sha256": "2b79b3263b0326c0193128fef3ace733a648242b8baab7aecae08255a9ba43ba"
+    },
+    "native_mcp_build": {
+      "exit_code": 0,
+      "log": "native-mcp-build.log",
+      "original_log_sha256": "568cc65f20045d1c205745b9712b9a73ea23b2676c49ac8f99d5e2a425df6d96",
+      "published_log_sha256": "2c08e655ca6d970c6f226b83ac9ba145e94e80c0d7853bb722089bfac8088c9e",
+      "binary_sha256": "0914786433b08252339bd0312f8bb2ae1427ae4b3bd9643c5ebf7d115d9da30b"
+    }
+  }
+}

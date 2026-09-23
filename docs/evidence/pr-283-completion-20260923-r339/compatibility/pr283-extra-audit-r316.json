@@ -1,0 +1,31 @@
+{
+  "tree": "ef84c5fbaabc1afd00faab784ce3f5fca7f15933",
+  "head": "63fc5edb8350aedd865b50d588bf70b41f154326",
+  "status": "passed",
+  "started_at_utc": "2026-09-23T12:13:50.0433580+00:00",
+  "checks": [
+    {
+      "name": "state-audit-compatibility",
+      "sha256": "0f53897df9ff4a39bc1e830d3887c5e0df48a85526e6eb8cb414b61ccc531bac",
+      "log": "<private-evidence>\\pr283-state-audit-compatibility-r316.log",
+      "command": "pnpm check:state-audit-compatibility",
+      "exit_code": 0
+    },
+    {
+      "name": "state-audit-evm",
+      "sha256": "c4205922d65a3cbf1550149b404af90946c3108f1418181befc52b80ecc0e52c",
+      "log": "<private-evidence>\\pr283-state-audit-evm-r316.log",
+      "command": "pnpm check:state-audit-evm",
+      "exit_code": 0
+    },
+    {
+      "name": "github-sha-native-tls",
+      "sha256": "e9240af55a201f86ee6561e24283f151ab3ebbb5aec297de1938ca5b4b4260c6",
+      "log": "<private-evidence>\\pr283-github-sha-native-tls-r316.log",
+      "command": "cargo test --locked -p crony-audit --test github_sha_identity -- --ignored --exact native_github_sha_identity",
+      "exit_code": 0
+    }
+  ],
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T12:14:20.9632208+00:00"
+}

@@ -32,6 +32,7 @@ impl std::error::Error for AuditWitnessError {}
 pub enum AuditPublicationRetry {
     WitnessUnavailable,
     AttemptTimedOut,
+    TransportUnavailable,
 }
 
 #[derive(Debug)]
@@ -455,6 +456,7 @@ impl PgStore {
         let code = match reason {
             AuditPublicationRetry::WitnessUnavailable => "witness_unavailable",
             AuditPublicationRetry::AttemptTimedOut => "publication_attempt_timed_out",
+            AuditPublicationRetry::TransportUnavailable => "publication_transport_unavailable",
         };
         // A racing successful publication or established divergence wins over
         // this best-effort retry marker. Never reopen a disabled destination.
@@ -743,7 +745,21 @@ impl PgStore {
             workflow_gate: d.get("workflow_gate"),
             config: serde_json::to_value(&config)?,
         };
-        let Some(record)=sqlx::query_scalar::<_,Value>("SELECT record FROM state_audit_checkpoints WHERE corp_id=$1 ORDER BY sequence DESC LIMIT 1").bind(corp).fetch_optional(&mut *tx).await? else {tx.commit().await?;return Ok(false)};
+        let Some(record) = sqlx::query_scalar::<_, Value>(
+            "SELECT record FROM state_audit_checkpoints WHERE corp_id=$1 ORDER BY sequence DESC LIMIT 1",
+        )
+        .bind(corp)
+        .fetch_optional(&mut *tx)
+        .await?
+        else {
+            // Leave room in the bounded discovery page for other Corps. This
+            // is only a retry delay: retain scheduled_due so overdue assurance
+            // stays visible, without claiming a failed or attempted publication.
+            sqlx::query("UPDATE state_audit_destinations SET next_due=now()+interval '60 seconds' WHERE id=$1 AND corp_id=$2")
+                .bind(destination).bind(corp).execute(&mut *tx).await?;
+            tx.commit().await?;
+            return Ok(false);
+        };
         let checkpoint: crony_audit::SignedCheckpoint = serde_json::from_value(record)?;
         let ledger_sequence: i64 =
             sqlx::query_scalar("SELECT last_sequence FROM state_audit_ledgers WHERE corp_id=$1")
@@ -779,6 +795,18 @@ impl PgStore {
             );
             checkpoint.verify(&checkpoint_key, None)?;
         } else {
+            let has_key_history: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM state_audit_signing_keys WHERE corp_id=$1)",
+            )
+            .bind(corp)
+            .fetch_one(&mut *tx)
+            .await?;
+            ensure!(
+                !has_key_history,
+                "checkpoint signing key is missing from retained key history"
+            );
+            // Only pre-history ledgers may rely on the configured runtime key.
+            // A partial retained history must never be repaired by that fallback.
             checkpoint.verify(key, None)?;
         }
         let previous: Option<String> = d.get("last_commit");

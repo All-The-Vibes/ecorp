@@ -53,10 +53,7 @@ impl Service {
                     .context("open configured audit GitHub credential")?
                     .take(4097)
                     .read_to_string(&mut token)?;
-                ensure!(
-                    !token.trim().is_empty() && token.len() <= 4096,
-                    "invalid audit GitHub credential length"
-                );
+                crony_audit::github_credential_header(&token)?;
                 Some(token)
             } else {
                 None
@@ -236,7 +233,21 @@ impl Service {
         futures_util::stream::iter(store.due_audit_destinations().await?)
             .for_each_concurrent(4, |destination| async move {
                 let result = tokio::time::timeout(deadline, async {
-                    let transport = make_transport(&destination)?;
+                    let transport = match make_transport(&destination) {
+                        Ok(transport) => transport,
+                        Err(_) => {
+                            // Construction precedes the store's publication transaction.
+                            let _ = tokio::time::timeout(
+                                StdDuration::from_secs(5),
+                                store.defer_audit_publication(
+                                    destination.id,
+                                    AuditPublicationRetry::TransportUnavailable,
+                                ),
+                            )
+                            .await;
+                            anyhow::bail!("audit publication transport unavailable");
+                        }
+                    };
                     self.publish_destination(store, &destination, &transport).await
                 })
                 .await;
@@ -387,14 +398,6 @@ pub async fn handle(
         .map_err(map_store_error)?;
     let result = match request.command {
         AuditCommand::Status {} => status,
-        AuditCommand::Receipt { request_id } => serde_json::to_value(
-            state
-                .store
-                .audit_receipt(corp, actor, request_id)
-                .await
-                .map_err(map_store_error)?,
-        )
-        .map_err(ApiError::internal)?,
         AuditCommand::Export {} => serde_json::to_value(
             state
                 .store

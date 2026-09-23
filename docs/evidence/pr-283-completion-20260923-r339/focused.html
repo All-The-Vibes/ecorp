@@ -1,0 +1,61 @@
+<!doctype html><meta charset="utf-8"><title>ECorp retained test results</title><style>body{font:16px/1.5 system-ui;margin:32px;color:#142033}pre{font:13px/1.45 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f6f8;padding:16px}</style><h1>PR #283: actual saved focused results</h1><p>Nine contributor gates plus canonical-format compatibility and the in-process EVM contract checks passed. All 48 native PostgreSQL regressions (10 server, 38 store), real-binary startup assertions, a real native GitHub-SHA TLS test, and the Edge/server/runner audit acceptance passed on the identical source tree. No live chain, live GitHub publication, production identity, or live Azure acceptance is claimed.</p><p>Tested source: ef84c5fbaabc1afd00faab784ce3f5fca7f15933</p><h2>native-database/pr283-native-database-r302-initdb.log</h2><pre>selecting dynamic shared memory implementation ... windows
+selecting default &quot;max_connections&quot; ... 100
+selecting default &quot;shared_buffers&quot; ... 128MB
+selecting default time zone ... America/Chicago
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+Success. You can now start the database server using:
+
+    ^&quot;C^:^\Users^\shyamsridhar^\AppData^\Local^\Programs^\ecorp^-tools^\postgresql^-17^.10^\pgsql^\bin^\pg^_ctl^&quot; -D ^&quot;C^:^\Users^\shyamsridhar^\code^\qa^\pr283^-audit^-store^-20260922^-r302^\database^&quot; -l logfile start</pre><h2>native-database/pr283-native-database-r302-workspace-cache-refresh.log</h2><pre>    Blocking waiting for file lock on package cache
+     Removed 571 files, 2.3GiB total</pre><h2>native-database/pr283-native-database-r302-sqlx.log</h2><pre>test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 140 filtered out; finished in 49.38s
+test state_audit_tests::issue281_concurrency_and_failed_audit_insert_rollback ... ok
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 404 filtered out; finished in 107.77s</pre><h2>native-startup/pr283-native-startup-r310-workspace-cache-refresh.log</h2><pre>     Removed 1071 files, 3.1GiB total</pre><h2>native-startup/pr283-native-startup-r310-server-build.log</h2><pre>   Compiling crony-domain v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-domain)
+   Compiling crony-audit v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-audit)
+   Compiling crony-store v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-store)
+   Compiling crony-protocol v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-protocol)
+   Compiling crony-server v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 04s</pre><h2>native-startup/pr283-native-startup-r310-initdb.log</h2><pre>selecting dynamic shared memory implementation ... windows
+selecting default &quot;max_connections&quot; ... 100
+selecting default &quot;shared_buffers&quot; ... 128MB
+selecting default time zone ... America/Chicago
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+Success. You can now start the database server using:
+
+    ^&quot;C^:^\Users^\shyamsridhar^\AppData^\Local^\Programs^\ecorp^-tools^\postgresql^-17^.10^\pgsql^\bin^\pg^_ctl^&quot; -D ^&quot;C^:^\Users^\shyamsridhar^\code^\qa^\pr283^-startup^-20260922^-r310^\database^&quot; -l logfile start</pre><h2>native-startup/pr283-native-startup-r310-assertions.log</h2><pre>PASS seeded endpoint_http
+PASS seeded zero_limit
+PASS seeded bad_limit
+PASS seeded cors
+PASS seeded cors_wildcard
+PASS seeded http_issuer
+PASS seeded bad_issuer
+PASS seeded mismatch
+PASS seeded metadata
+PASS seeded userinfo
+PASS seeded discovery_status
+PASS seeded backtraces
+PASS seeded dev_invalid
+PASS seeded audit_short_key
+PASS seeded audit_interval
+PASS seeded audit_missing_key_id
+PASS seeded audit_witness_json
+PASS seeded audit_commit_grammar
+PASS seeded audit_token_cr
+PASS seeded audit_token_lf
+PASS explicit CLI rejection and secret-safe help
+PASS production startup with TLS storage and signing bytes 32
+PASS production startup with TLS storage and signing bytes 33
+PASS all unchanged startup assertions on the owned native PostgreSQL fixture</pre><h2>compatibility/pr283-state-audit-compatibility-r316.log</h2><pre>V1 canonical bytes, independent Ed25519 signature, and Ethereum static ABI compatibility passed (no chain transaction).</pre><h2>compatibility/pr283-state-audit-evm-r316.log</h2><pre>test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s</pre><h2>compatibility/pr283-github-sha-native-tls-r316.log</h2><pre>test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.78s</pre><h2>browser/pr283-native-20260923-r318-workspace-refresh.log</h2><pre>     Removed 3394 files, 5.1GiB total</pre><h2>browser/pr283-native-20260923-r318-build.log</h2><pre>   Compiling crony-domain v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-domain)
+   Compiling crony-audit v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-audit)
+   Compiling crony-protocol v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-protocol)
+   Compiling crony-store v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-store)
+   Compiling crony-cli v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-cli)
+   Compiling crony-server v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-server)
+   Compiling crony-runner v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-runner)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 43s</pre><h2>browser/pr283-native-20260923-r318-browser.log</h2><pre>{&quot;status&quot;:&quot;passed&quot;,&quot;stage&quot;:&quot;checkpoint and independent offline verification&quot;,&quot;report&quot;:&quot;&lt;local-user&gt;\\code\\qa\\pr283-state-audit-20260923-r318\\evidence\\browser-audit\\report.json&quot;}</pre><h2>browser/offline-verification.log</h2><pre>  &quot;verified&quot;: true</pre><h2>browser/wrong-key-rejection.log</h2><pre>Error: archive uses signing-key rotation; supply the trusted key history</pre>

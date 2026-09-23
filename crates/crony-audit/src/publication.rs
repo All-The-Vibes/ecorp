@@ -105,6 +105,18 @@ pub async fn publish_checkpoint<T: PublicationTransport>(
     Ok(final_head)
 }
 
+/// The same native header validation is used before startup effects and by transport creation.
+pub fn github_credential_header(token: &str) -> Result<HeaderValue> {
+    ensure!(
+        !token.trim().is_empty() && token.len() <= 4096,
+        "invalid GitHub token length"
+    );
+    let mut auth = HeaderValue::from_str(&format!("Bearer {}", token.trim()))
+        .map_err(|_| anyhow::anyhow!("invalid GitHub credential encoding"))?;
+    auth.set_sensitive(true);
+    Ok(auth)
+}
+
 /// Fixed GitHub API origin, bounded reads, no redirects, no shell or ref updates.
 pub struct GitHubTransport {
     client: Client,
@@ -114,15 +126,8 @@ pub struct GitHubTransport {
 impl GitHubTransport {
     pub fn new(repository: &str, branch: &str, token: &str) -> Result<Self> {
         validate_destination(repository, branch, "audit")?;
-        ensure!(
-            !token.trim().is_empty() && token.len() <= 4096,
-            "invalid GitHub token length"
-        );
         let mut headers = HeaderMap::new();
-        let mut auth = HeaderValue::from_str(&format!("Bearer {}", token.trim()))
-            .context("invalid GitHub credential encoding")?;
-        auth.set_sensitive(true);
-        headers.insert(AUTHORIZATION, auth);
+        headers.insert(AUTHORIZATION, github_credential_header(token)?);
         headers.insert(
             "x-github-api-version",
             HeaderValue::from_static("2022-11-28"),
@@ -133,7 +138,8 @@ impl GitHubTransport {
             .redirect(reqwest::redirect::Policy::none())
             .timeout(std::time::Duration::from_secs(30))
             .https_only(true)
-            .build()?;
+            .build()
+            .map_err(|_| anyhow::anyhow!("GitHub transport initialization failed"))?;
         Ok(Self {
             client,
             repository: repository.into(),
@@ -161,6 +167,7 @@ impl GitHubTransport {
         Ok(serde_json::from_slice(&body)?)
     }
 }
+
 pub fn validate_github_commit(value: &str) -> Result<()> {
     ensure!(
         value.len() == 40 && value.bytes().all(|b| b.is_ascii_hexdigit()),
@@ -189,7 +196,7 @@ impl PublicationTransport for GitHubTransport {
         Box::pin(async move {
             validate_github_commit(old)?;
             validate_github_commit(new)?;
-            if old == new {
+            if old.eq_ignore_ascii_case(new) {
                 return Ok(true);
             }
             let value = Self::decode(
@@ -202,7 +209,9 @@ impl PublicationTransport for GitHubTransport {
             .await?;
             Ok(
                 matches!(value["status"].as_str(), Some("ahead" | "identical"))
-                    && value["merge_base_commit"]["sha"] == old,
+                    && value["merge_base_commit"]["sha"]
+                        .as_str()
+                        .is_some_and(|sha| sha.eq_ignore_ascii_case(old)),
             )
         })
     }
@@ -252,5 +261,37 @@ impl PublicationTransport for GitHubTransport {
             Self::decode(response).await?;
             Ok(())
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn github_credentials_use_sensitive_trimmed_bounded_native_headers() {
+        for token in [
+            "fixture-token".to_owned(),
+            "x".repeat(4096),
+            " \tfixture-token\r\n".into(),
+        ] {
+            let header = github_credential_header(&token).unwrap();
+            assert!(header.is_sensitive());
+            assert_eq!(header.to_str().unwrap(), format!("Bearer {}", token.trim()));
+        }
+        for token in [
+            "".to_owned(),
+            " \r\n".into(),
+            "x".repeat(4097),
+            "DO_NOT_LOG\rTOKEN".into(),
+            "DO_NOT_LOG\nTOKEN".into(),
+            "DO_NOT_LOG\0TOKEN".into(),
+        ] {
+            let error = github_credential_header(&token).unwrap_err();
+            assert!(error.to_string().len() <= 64);
+            assert!(!format!("{error:#}").contains("DO_NOT_LOG"));
+            assert_eq!(error.chain().count(), 1);
+            assert!(GitHubTransport::new("fixture/audit", "main", &token).is_err());
+        }
     }
 }
