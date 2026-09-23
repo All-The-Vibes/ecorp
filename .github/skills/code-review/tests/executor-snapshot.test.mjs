@@ -420,3 +420,45 @@ test('EX-MALFORMED-DETAILS: valid optional and nullable GitHub fields remain usa
     }
   }
 })
+
+
+for (const [label, headRef] of [
+  ['omitted', undefined], ['null', null], ['boolean', false], ['number', 1], ['array', []], ['object', {}],
+  ...['', ' ', ' feature', 'feature ', 'feature\n', 'feature\u0000', '-feature', '/feature',
+    'feature/', 'feature//fix', '.feature', 'fix/.feature', 'feature..fix', 'feature.lock',
+    'feature.lock/fix', 'feature.', 'feature@{1}', '@', 'HEAD', 'feature~1', 'feature^',
+    'feature:fix', 'feature?', 'feature*', 'feature[1]', 'feature\\fix']
+    .map((value, index) => ['invalid-git-ref-' + index, value]),
+]) {
+  test('PR304-HEAD-REF: ' + label + ' is rejected before detail requests', () => {
+    const pull = pr(1)
+    pull.head.ref = headRef
+    pull.body = 'synthetic-secret-source-body'
+    const calls = []
+    assert.throws(() => snapshot('team/repo', (args) => {
+      calls.push(args.at(-1))
+      return args.at(-1).includes('/pulls?') ? JSON.stringify([[pull]]) :
+        detailPages(detailOperation(args.at(-1)), [[]])
+    }), (error) => {
+      assert.deepEqual(error.readFailure,
+        { operation: 'inventory', kind: 'INVALID_RESPONSE', exitCode: null, signal: null })
+      assert.equal(error.message, 'Invalid or out-of-scope PR')
+      assert.doesNotMatch(error.message + JSON.stringify(error), /synthetic-secret/)
+      return true
+    })
+    assert.equal(calls.length, 1, 'only the open-PR inventory was requested')
+  })
+}
+
+test('PR304-HEAD-REF: valid source branches preserve their exact spelling', () => {
+  for (const headRef of ['feature', 'release/2026.09', 'Stack/Feature_1', 'rélease/修正']) {
+    const pull = pr(1)
+    pull.head.ref = headRef
+    const result = snapshot('team/repo', (args) => args.at(-1).includes('/pulls?') ?
+      JSON.stringify([[pull]]) : detailPages(detailOperation(args.at(-1)), [[]]))
+    assert.equal(result.complete, true)
+    assert.equal(result.prs[0].branch, headRef)
+    assert.equal(result.prs[0].baseRef, 'main')
+    assert.equal(Object.hasOwn(result.prs[0], 'readError'), false)
+  }
+})

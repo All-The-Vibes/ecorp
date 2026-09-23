@@ -21,6 +21,9 @@ const pr = (number = 1, extra = {}) => ({
   sourceRepo: repo, branch: `fix-${number}`, state: 'open', baseRef: 'main', draft: false,
   url: `https://github.com/${repo}/pull/${number}`, ...extra,
 })
+// Historical journals may omit draft. A new synthetic live observation must
+// supply its current boolean without changing the retained historical bytes.
+const liveHistoricalSnapshot = (previous, extra = {}) => ({ ...previous, draft: false, ...extra })
 const fixture = () => join(mkdtempSync(join(tmpdir(), 'executor-state-test-')), 'state')
 const run = (dir, command, input, ok = true) => {
   const result = spawnSync(process.execPath, [script, dir, command], {
@@ -610,7 +613,7 @@ for (const stoppedFamily of ['completion', 'waiting']) for (const eligibleFamily
       const initial = run(dir, 'show')
       assert.equal(initial.activation.valid, true)
       if (feedback) run(dir, 'sync', { owner, complete: true, prs: Object.values(initial.prs).map((p) =>
-        p.snapshot.number === eligible.number ? { ...p.snapshot, reviewKey: key(909) } : p.snapshot) })
+        liveHistoricalSnapshot(p.snapshot, p.snapshot.number === eligible.number ? { reviewKey: key(909) } : {})) })
       const before = run(dir, 'show'), prefix = journalBytes(dir), frozen = before.prs[stopped.number]
       const route = next(dir)
       assert.equal(route.number, eligible.number, 'exhausted notice must not hide admissible work')
@@ -708,7 +711,7 @@ test('PR304-RECOVERY-FAIRNESS: new ordering is private, versioned and replay-sta
   const before = run(dir, 'show')
   // Keep the waiting claim current but make it visible to old non-recovery replay.
   run(dir, 'sync', { owner, complete: true, prs: Object.values(before.prs).map((p) =>
-    p.snapshot.number === 2 ? { ...p.snapshot, gateKey: key(88) } : p.snapshot) })
+    liveHistoricalSnapshot(p.snapshot, p.snapshot.number === 2 ? { gateKey: key(88) } : {})) })
   const prefix = journalBytes(dir)
   for (const recoveryPriority of [true, false, null, 1]) {
     assert.match(run(dir, 'next', { owner, recoveryPriority }, false).error, /fields/)
@@ -817,7 +820,7 @@ test('PR304-FULL-B15-01: old laundered NICE cannot supply another feedback basis
   assert.equal(p.cycles[0].technicalVerdict, 'NICE', 'historical acceptance is replayed, not rewritten')
   assert.equal(p.blockedClaim, null)
   assert.equal(journalBytes(dir), bytes)
-  run(dir, 'sync', { owner, complete: true, prs: [{ ...p.snapshot, reviewKey: key(100) }] })
+  run(dir, 'sync', { owner, complete: true, prs: [liveHistoricalSnapshot(p.snapshot, { reviewKey: key(100) })] })
   const pending = journalBytes(dir)
   assert.match(run(dir, 'next', { owner, feedbackNumber: 1 }, false).error, /failed review.*retry/)
   assert.equal(journalBytes(dir), pending)
@@ -828,7 +831,7 @@ test('PR304-FULL-B15-01: failed PR2 legacy feedback BLOCKED does not starve PR3 
   const dir = failedFeedbackFixture('otherPr', 'claimed'), before = run(dir, 'show'), gate = before.active
   assert.equal(before.activation.valid, true)
   assert.equal(gate.number, 2)
-  run(dir, 'sync', { owner, complete: true, prs: [before.prs['1'].snapshot, before.prs['2'].snapshot, pr(3)] })
+  run(dir, 'sync', { owner, complete: true, prs: [liveHistoricalSnapshot(before.prs['1'].snapshot), liveHistoricalSnapshot(before.prs['2'].snapshot), pr(3)] })
   const bytes = journalBytes(dir)
   assert.match(run(dir, 'feedback', feedbackInput(gate), false).error, /failed review.*retry/)
   assert.equal(journalBytes(dir), bytes)
@@ -871,7 +874,7 @@ test('PR304-FULL-B15-01: permitted original-claim retry supersedes only its fail
   run(dir, 'save', saveInput(retried, { phase: 'fixing', findings: [finding] }))
   const findings = [{ ...finding, status: 'fixed', evidence: [...finding.evidence, 'correction-green.log'] }]
   run(dir, 'save', saveInput(retried, { phase: 'reviewing', findings }))
-  const snapshot = { ...retried.snapshot, head: sha(13), reviewKey: key(101) }
+  const snapshot = liveHistoricalSnapshot(retried.snapshot, { head: sha(13), reviewKey: key(101) })
   bindRubric(dir, snapshot)
   const receipts = reviewers({ ...retried, head: snapshot.head })
   const push = { repo, branch: snapshot.branch, before: retried.head, head: snapshot.head,
@@ -917,7 +920,7 @@ for (const name of ['direct1', 'nullable1', 'direct2', 'nullable2']) {
       run(dir, 'wake', wakeInput(`failed-completion-${name}-${change}`))
       const old = run(dir, 'show'), snapshot = old.prs['1'].snapshot
       if (change !== 'unchanged') run(dir, 'sync', { owner, complete: true,
-        prs: [{ ...snapshot, [change]: sha(123) }] })
+        prs: [liveHistoricalSnapshot(snapshot, { [change]: sha(123) })] })
       const bytes = journalBytes(dir), before = run(dir, 'show'), c = before.prs['1'].cycles[0]
       assert.equal(c.technicalVerdict, 'NICE', 'old projection remains readable, not silently repaired')
       assert.equal(before.prs['1'].blockedClaim, null)
@@ -956,7 +959,7 @@ for (const change of ['unchanged', 'head', 'base']) {
     run(dir, 'wake', wakeInput(`genuine-completion-${change}`))
     const before = run(dir, 'show'), snapshot = before.prs['1'].snapshot
     if (change !== 'unchanged') run(dir, 'sync', { owner, complete: true,
-      prs: [{ ...snapshot, [change]: sha(123) }] })
+      prs: [liveHistoricalSnapshot(snapshot, { [change]: sha(123) })] })
     const bytes = journalBytes(dir), claim = next(dir)
     if (change === 'unchanged') {
       assert.equal(claim.action, 'none')
@@ -1024,7 +1027,7 @@ test('PR304-FAILED-COMPLETION: same-code bounded re-audit can succeed and earn g
   assert.equal(completed.prs['1'].cycles[0].noProgress, 0)
   assert.equal(completed.prs['1'].cycles[0].completion.claimId, claim.claimId)
   assert.equal(next(dir).action, 'none')
-  run(dir, 'sync', { owner, complete: true, prs: [{ ...claim.snapshot, head: sha(125) }] })
+  run(dir, 'sync', { owner, complete: true, prs: [liveHistoricalSnapshot(claim.snapshot, { head: sha(125) })] })
   assert.equal(start(dir).round, 1, 'fresh successful attempt, not failed historical NICE, earns renewal')
   const after = run(dir, 'show')
   assert.equal(after.prs['1'].cycles.length, 2)
@@ -1067,7 +1070,7 @@ test('PR304-FAILED-COMPLETION: gates cannot consume failed completion or keep ot
   const bytes = journalBytes(dir)
   assert.match(run(dir, 'next', { owner, gateNumber: 2 }, false).error, /pending audit/)
   assert.equal(journalBytes(dir), bytes)
-  run(dir, 'sync', { owner, complete: true, prs: [before.prs['1'].snapshot, before.prs['2'].snapshot, pr(3)] })
+  run(dir, 'sync', { owner, complete: true, prs: [liveHistoricalSnapshot(before.prs['1'].snapshot), liveHistoricalSnapshot(before.prs['2'].snapshot), pr(3)] })
   const other = start(dir)
   assert.equal(other.number, 3, 'pending failure recovery never outranks untouched work')
   run(dir, 'save', saveInput(other))
@@ -1086,14 +1089,14 @@ test('PR304-FAILED-COMPLETION: interrupted admission survives gate changes and d
   const dir = failedFeedbackFixture('otherPr', 'laundered'), claim = next(dir)
   assert.equal(claim.number, 2)
   run(dir, 'save', saveInput(claim, { phase: 'blocked', reason: 'Retain uncharged preparation' }))
-  const state = run(dir, 'show'), changed = { ...state.prs['2'].snapshot, gateKey: key(122) }
-  run(dir, 'sync', { owner, complete: true, prs: [state.prs['1'].snapshot, changed] })
+  const state = run(dir, 'show'), changed = liveHistoricalSnapshot(state.prs['2'].snapshot, { gateKey: key(122) })
+  run(dir, 'sync', { owner, complete: true, prs: [liveHistoricalSnapshot(state.prs['1'].snapshot), changed] })
   const bytes = journalBytes(dir), blocked = next(dir)
   assert.equal(blocked.action, 'blocked')
   assert.equal(blocked.claimId, claim.claimId)
   assert.equal(blocked.recovery, 'resume')
   assert.equal(journalBytes(dir), bytes)
-  run(dir, 'sync', { owner, complete: true, prs: [state.prs['1'].snapshot, changed, pr(3)] })
+  run(dir, 'sync', { owner, complete: true, prs: [liveHistoricalSnapshot(state.prs['1'].snapshot), changed, pr(3)] })
   const other = next(dir)
   assert.equal(other.number, 3)
   run(dir, 'save', saveInput(other, { phase: 'blocked' }))
@@ -3817,6 +3820,70 @@ test('PR304-COMPLETION-AUTHORITY: later historical read-only collision cannot re
 })
 
 const publicationCriteria = ['SOURCE_SCOPE', 'FIX_EVIDENCE', 'NO_NEW_BLOCKERS', 'TRUTHFUL_STATUS']
+const liveDraftFixture = (command, draft = false) => {
+  const dir = setup([pr(1, { draft })])
+  if (command === 'sync') return { dir, input: { owner, complete: true, prs: [pr(1, { draft })] } }
+  const claim = start(dir), candidate = pr(1, { draft, head: sha(12) })
+  bindRubric(dir, candidate)
+  if (command === 'progress-published') {
+    run(dir, 'progress-rubric', progressBinding(claim, candidate))
+    return { dir, input: progressInput(claim, candidate) }
+  }
+  const receipts = reviewers({ ...claim, head: candidate.head })
+  return { dir, input: {
+    ...beginInput(claim), snapshot: candidate, reviewers: receipts,
+    push: { repo, branch: candidate.branch, before: claim.head, head: candidate.head,
+      sourceRef: 'synthetic/live-draft-push.json', pushedAt: new Date().toISOString() },
+  } }
+}
+
+for (const command of ['sync', 'published', 'progress-published']) {
+  for (const [label, draft] of [['omitted', undefined], ['null', null], ['string', 'false'],
+    ['number', 0], ['object', {}], ['array', []]]) {
+    test(`LIVE-DRAFT: ${command} refuses ${label} without changing the journal`, () => {
+      const { dir, input } = liveDraftFixture(command)
+      const candidate = command === 'sync' ? input.prs[0] : input.snapshot
+      if (draft === undefined) delete candidate.draft
+      else candidate.draft = draft
+      const bytes = journalBytes(dir), before = run(dir, 'show')
+      assert.match(run(dir, command, input, false).error, /draft/)
+      assert.equal(journalBytes(dir), bytes)
+      assert.deepEqual(run(dir, 'show'), before, 'rejection preserves claims, charges and publications')
+    })
+  }
+  for (const draft of [false, true]) {
+    test(`LIVE-DRAFT: ${command} accepts explicit ${draft} and retains it`, () => {
+      const { dir, input } = liveDraftFixture(command, draft)
+      run(dir, command, input)
+      assert.equal(run(dir, 'show').prs['1'].snapshot.draft, draft)
+    })
+  }
+  for (const version of [1, 2]) {
+    test(`LIVE-DRAFT: v${version} ${command} with absent historical draft still replays unchanged`, () => {
+      const { dir, input } = liveDraftFixture(command)
+      run(dir, command, input)
+      const events = JSON.parse(journalBytes(dir)).events.map(event => {
+        const copy = structuredClone(event)
+        if (copy.command === 'sync') for (const p of copy.input.prs) delete p.draft
+        if (['published', 'progress-published'].includes(copy.command)) delete copy.input.snapshot.draft
+        if (version === 1) {
+          const { id, at, command: kind, input: value } = copy
+          return { id, at, command: kind, input: value }
+        }
+        return copy
+      })
+      writeJournal(dir, events, version)
+      const bytes = journalBytes(dir), before = run(dir, 'show')
+      assert.equal(before.prs['1'].snapshot.draft, undefined, 'replay does not invent a draft value')
+      assert.equal(journalBytes(dir), bytes, 'legacy journal is not rewritten')
+      const live = { owner, complete: true, prs: [before.prs['1'].snapshot] }
+      assert.match(run(dir, 'sync', live, false).error, /draft/)
+      assert.equal(journalBytes(dir), bytes, 'historical compatibility grants no live admission')
+      assert.deepEqual(run(dir, 'show'), before)
+    })
+  }
+}
+
 const progressBinding = (claim, snapshot) => ({
   owner, base: claim.head, head: snapshot.head, sourceRef: 'synthetic/progress-rubric.json',
   sha256: key(600), criteria: publicationCriteria,

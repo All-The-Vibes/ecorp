@@ -47,8 +47,8 @@
 //   IDs/sourceRefs cannot be rewritten or reused for a new revision/round.
 //   reviewClaim captures the matching active {claimId,round}, or null for policy-only
 //   reviews. A policy-only decision cannot later substitute for a new PR round.
-// sync {owner,complete:true,prs:[{number,base,head,reviewKey,gateKey,sourceRepo,branch,state,baseRef,draft?,url?,readError?,readFailure?}]}
-// New live sync/publication snapshots require a nonempty target branch baseRef.
+// sync {owner,complete:true,prs:[{number,base,head,reviewKey,gateKey,sourceRepo,branch,state,baseRef,draft,url?,readError?,readFailure?}]}
+// New live sync/publication snapshots require a nonempty baseRef and boolean draft.
 // Historical omissions replay unchanged. The first observed target fences a legacy
 // active/blocked claim forward-only, without changing its original snapshot.
 // Effective fences govern live admission, not old accepted event replay.
@@ -1267,6 +1267,8 @@ function main() {
       const snapshots = command === 'sync' ? input.prs : [input.snapshot]
       check(Array.isArray(snapshots) && snapshots.every((p) => text(p?.baseRef)),
         'new live snapshots require baseRef')
+      check(snapshots.every((p) => typeof p?.draft === 'boolean'),
+        'new live snapshots require explicit boolean draft')
     }
     const a = command === 'resume' ? state.prs[input.number]?.blockedClaim?.claim : state?.active
     if (a?.action === 'audit' && a.effectiveBaseRef !== undefined &&
