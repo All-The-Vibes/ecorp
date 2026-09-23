@@ -1,0 +1,433 @@
+{
+  "schema_version": 1,
+  "pr": 293,
+  "reviewed_head": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d",
+  "history_findings": 3,
+  "merge_diff_findings": 32,
+  "exact_packet_files_scanned": 105,
+  "findings": [
+    {
+      "fingerprint": "7f21056dc8693617cb1cf8ad5f0b14d0ce071051:crates/crony-server/src/native_fixture.rs:generic-api-key:329",
+      "classification": "Literal synthetic fixture credential handle; no credential value."
+    },
+    {
+      "fingerprint": "faf703e33b22264fb4a0fef2c1b645098671500c:crates/crony-server/src/base_worker_tests.rs:generic-api-key:322",
+      "classification": "Literal synthetic fixture credential handle; no credential value."
+    },
+    {
+      "fingerprint": "faf703e33b22264fb4a0fef2c1b645098671500c:crates/crony-server/src/base_worker_tests.rs:generic-api-key:797",
+      "classification": "Literal synthetic fixture credential handle; no credential value."
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/acceptance.json:generic-api-key:127",
+      "classification": "public persisted idempotency UUID",
+      "field": "idempotency_key",
+      "json_paths": [
+        "$.base_intent.idempotency_key"
+      ],
+      "file_sha256": "5d07e332651d5951831df2df45567252b6ecb79ff34c294f0ad7a2a520b3b38a"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/acceptance.json:generic-api-key:212",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finality.ancestry[0].key"
+      ],
+      "file_sha256": "5d07e332651d5951831df2df45567252b6ecb79ff34c294f0ad7a2a520b3b38a"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/acceptance.json:generic-api-key:226",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finality.ancestry[1].key"
+      ],
+      "file_sha256": "5d07e332651d5951831df2df45567252b6ecb79ff34c294f0ad7a2a520b3b38a"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/manifests.json:generic-api-key:21",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "local_stream_key",
+      "json_paths": [
+        "$[0].manifest.local_stream_key"
+      ],
+      "file_sha256": "399e134e3d9a9d3c2f5349f2f906b05d3cae27072713b8712b15153c61b61d0d"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:12",
+      "classification": "public persisted idempotency UUID",
+      "field": "idempotency_key",
+      "json_paths": [
+        "$.idempotency_key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:3288",
+      "classification": "literal fixture credential handle; no credential value",
+      "field": "secondary_rpc_secret",
+      "json_paths": [
+        "$.configured.input.config.secondary_rpc_secret",
+        "$.preview.selection.destination.input.config.secondary_rpc_secret",
+        "$.enabled.input.config.secondary_rpc_secret",
+        "$.before_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.before_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:3791",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "local_stream_key",
+      "json_paths": [
+        "$.configured.input.manifests[0].manifest.local_stream_key",
+        "$.preview.selection.destination.input.manifests[0].manifest.local_stream_key",
+        "$.enabled.input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:4214",
+      "classification": "literal fixture credential handle; no credential value",
+      "field": "secondary_rpc_secret",
+      "json_paths": [
+        "$.configured.input.config.secondary_rpc_secret",
+        "$.preview.selection.destination.input.config.secondary_rpc_secret",
+        "$.enabled.input.config.secondary_rpc_secret",
+        "$.before_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.before_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:4717",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "local_stream_key",
+      "json_paths": [
+        "$.configured.input.manifests[0].manifest.local_stream_key",
+        "$.preview.selection.destination.input.manifests[0].manifest.local_stream_key",
+        "$.enabled.input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:4901",
+      "classification": "literal fixture credential handle; no credential value",
+      "field": "secondary_rpc_secret",
+      "json_paths": [
+        "$.configured.input.config.secondary_rpc_secret",
+        "$.preview.selection.destination.input.config.secondary_rpc_secret",
+        "$.enabled.input.config.secondary_rpc_secret",
+        "$.before_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.before_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:5404",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "local_stream_key",
+      "json_paths": [
+        "$.configured.input.manifests[0].manifest.local_stream_key",
+        "$.preview.selection.destination.input.manifests[0].manifest.local_stream_key",
+        "$.enabled.input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:6470",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.retained_ancestry[0].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:6487",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.retained_ancestry[1].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:6607",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.retained_ancestry[0].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:6624",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.retained_ancestry[1].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:6742",
+      "classification": "literal fixture credential handle; no credential value",
+      "field": "secondary_rpc_secret",
+      "json_paths": [
+        "$.configured.input.config.secondary_rpc_secret",
+        "$.preview.selection.destination.input.config.secondary_rpc_secret",
+        "$.enabled.input.config.secondary_rpc_secret",
+        "$.before_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.before_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:7245",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "local_stream_key",
+      "json_paths": [
+        "$.configured.input.manifests[0].manifest.local_stream_key",
+        "$.preview.selection.destination.input.manifests[0].manifest.local_stream_key",
+        "$.enabled.input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:7412",
+      "classification": "literal fixture credential handle; no credential value",
+      "field": "secondary_rpc_secret",
+      "json_paths": [
+        "$.configured.input.config.secondary_rpc_secret",
+        "$.preview.selection.destination.input.config.secondary_rpc_secret",
+        "$.enabled.input.config.secondary_rpc_secret",
+        "$.before_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.before_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:7915",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "local_stream_key",
+      "json_paths": [
+        "$.configured.input.manifests[0].manifest.local_stream_key",
+        "$.preview.selection.destination.input.manifests[0].manifest.local_stream_key",
+        "$.enabled.input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:8088",
+      "classification": "literal fixture credential handle; no credential value",
+      "field": "secondary_rpc_secret",
+      "json_paths": [
+        "$.configured.input.config.secondary_rpc_secret",
+        "$.preview.selection.destination.input.config.secondary_rpc_secret",
+        "$.enabled.input.config.secondary_rpc_secret",
+        "$.before_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.before_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:8591",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "local_stream_key",
+      "json_paths": [
+        "$.configured.input.manifests[0].manifest.local_stream_key",
+        "$.preview.selection.destination.input.manifests[0].manifest.local_stream_key",
+        "$.enabled.input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:8758",
+      "classification": "literal fixture credential handle; no credential value",
+      "field": "secondary_rpc_secret",
+      "json_paths": [
+        "$.configured.input.config.secondary_rpc_secret",
+        "$.preview.selection.destination.input.config.secondary_rpc_secret",
+        "$.enabled.input.config.secondary_rpc_secret",
+        "$.before_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.before_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_status.audit.destinations[0].input.config.secondary_rpc_secret",
+        "$.after_restart_cli.audit.destinations[0].input.config.secondary_rpc_secret"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:9261",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "local_stream_key",
+      "json_paths": [
+        "$.configured.input.manifests[0].manifest.local_stream_key",
+        "$.preview.selection.destination.input.manifests[0].manifest.local_stream_key",
+        "$.enabled.input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.before_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_status.audit.destinations[0].input.manifests[0].manifest.local_stream_key",
+        "$.after_restart_cli.audit.destinations[0].input.manifests[0].manifest.local_stream_key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:9863",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.retained_ancestry[0].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:9880",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.retained_ancestry[1].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:10000",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.retained_ancestry[0].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:10017",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.retained_ancestry[1].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:10219",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[0].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[0].retained_ancestry.key",
+        "$.retained_ancestry[0].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification.json:generic-api-key:10233",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$.finalized.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.finalized.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[14].evidence.observations[1].retained_ancestry.key",
+        "$.after_restart_history.items[15].evidence.observations[1].retained_ancestry.key",
+        "$.retained_ancestry[1].key"
+      ],
+      "file_sha256": "8f51c4e33ec7d6fb86bc4e8b77c689310cd3fe7f582fd8c81b27d662b0178fef"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/retained-finality-headers.json:generic-api-key:3",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$[0].key"
+      ],
+      "file_sha256": "fe47e0cd80c7651ca538a43c267a5cb732c7544fa38b251eb099d7ab62fb8ff8"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:docs/evidence/pr-293-completion-20260923-r1/native/product/retained-finality-headers.json:generic-api-key:7436",
+      "classification": "public chain/stream hash; verify structural JSON path",
+      "field": "key",
+      "json_paths": [
+        "$[1].key"
+      ],
+      "file_sha256": "fe47e0cd80c7651ca538a43c267a5cb732c7544fa38b251eb099d7ab62fb8ff8"
+    },
+    {
+      "fingerprint": "dc67b3ce8e8eeb6e46e65da3b6207ef2e240d51d:tools/e2e_factory_run_activity.py:generic-api-key:221",
+      "classification": "Unchanged PR265 owned fixture idempotency prefix plus runtime UUID, compared with the exact previously reviewed main commit; no authentication credential."
+    }
+  ],
+  "scope": "Complete selected ancestry plus an explicit first-parent patch of the local evidence merge. The latter covers the merge-added source and all 105 new packet files omitted by default merge patch rendering.",
+  "policy": "Only commit/path/rule/line fingerprints; no file, directory, regex, rule or value allowlist. New commits or locations remain subject to scanning.",
+  "original_ignore_sha256": "a352731694a26843c866bdd9d8264e49189314277c7e497493c7043f60c8a980",
+  "updated_ignore_sha256": "2be14c988ba878a9a41e0bc31cedfc7a787f74d83f5bbea9371e48c0c2baf9e8"
+}

@@ -1,0 +1,39 @@
+{
+  "pr": 320,
+  "purpose": "delegated authorization SQLx regressions",
+  "source_head": "765aff1f8dd812cf68620177f77e722860a9ecab",
+  "tested_staged_tree": "23262332f42a2602344df89658f0475a6865b3cc",
+  "qa_root": "<local-user>\\code\\qa\\pr320-delegated-store-20260923-r5",
+  "target": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T06:43:48.8077165+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "log": "<private-evidence>\\pr320-native-database-r5-initdb.log",
+      "sha256": "549ffc4815b5e9e775c635e7241f2ff80db569ef21d0540a5740ab71f90cb4cf",
+      "exit_code": 0
+    },
+    {
+      "name": "workspace-cache-refresh",
+      "log": "<private-evidence>\\pr320-native-database-r5-workspace-cache-refresh.log",
+      "sha256": "ddd210bfe0617ba90dbc48b3577e2622fbb71c3cbe29bc8696ff31269c9ebf7a",
+      "exit_code": 0
+    },
+    {
+      "name": "owned-postgresql-state-audit-regressions",
+      "log": "<private-evidence>\\pr320-native-database-r5-sqlx.log",
+      "sha256": "2834b5f41801a9d01091c1722698583255afaf42a950c6296e7f9d7ef9047a56",
+      "exit_code": 0
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+  "authentication": {
+    "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance.",
+    "authenticated_query": true,
+    "method": "scram-sha-256",
+    "wrong_password_rejected": true
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T06:45:34.2613842+00:00"
+}

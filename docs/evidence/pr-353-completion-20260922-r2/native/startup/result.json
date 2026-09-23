@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "scenario": "actual Windows startup and recovery",
+  "new_run": true,
+  "status": "passed",
+  "product": "<reviewed-worktree>",
+  "source_head": "d74229df9286048cb073e33bb03e31fd537a186f",
+  "tested_staged_tree": "dc498871228bd9a4ee1b8a88ef0dd3ea46d44678",
+  "started_at_utc": "2026-09-22T18:55:57.7858206+00:00",
+  "checks": [
+    {
+      "name": "only provisioning application processes stopped",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "preflight preserves database files ACLs source and credential",
+      "passed": true,
+      "details": {
+        "database": {
+          "sha256": "cc288e80dc683eb62f9d6e7803849e60c52d87e261395f39f76dac998fadeac9",
+          "tables": 42
+        },
+        "files_sha256": "93c23f191de406e490f0ecbcbf8f46494d09789325fee65ae9753b767f9afbcb",
+        "source": {
+          "head": "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5",
+          "refs": "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5 refs/heads/main",
+          "status": "",
+          "index_sha256": "95fa954a97c10a09e8a73985fe422cd232b142799c5c73c19a8a78475448bdbf"
+        },
+        "credential_sha256": "33e650cc48a3965ce08f7b1fee6a15789f26b9bbe9cd4e9ac67be71c7cd5ca58"
+      }
+    },
+    {
+      "name": "preflight-invalid-actor",
+      "passed": true,
+      "details": {
+        "expected": "existing CRONY_ACTOR_ID",
+        "message": "Supply the existing CRONY_ACTOR_ID for <reviewed-worktree>\\output\\local-pids.json. Startup does not bootstrap identities."
+      }
+    },
+    {
+      "name": "preflight-missing-source-ref",
+      "passed": true,
+      "details": {
+        "expected": "source|Git",
+        "message": "Cannot resolve source ref to an immutable commit in: <local-user>\\code\\qa\\pr265-run-activity-pr353-20260922-r4\\source"
+      }
+    },
+    {
+      "name": "preflight-occupied-port",
+      "passed": true,
+      "details": {
+        "expected": "occupied",
+        "message": "Port 57065 is occupied without matching server ownership. Nothing was stopped; no fallback port will be used."
+      }
+    },
+    {
+      "name": "rejected preflights preserve database files ACLs source and credential",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "actual startup owns ready server runner and web",
+      "passed": true,
+      "details": {
+        "server": {
+          "pid": 65496,
+          "started_utc": "2026-09-22T18:56:09.5939888Z",
+          "executable": "<reviewed-worktree>\\target\\debug\\crony-server.exe"
+        },
+        "runner": {
+          "pid": 41632,
+          "started_utc": "2026-09-22T18:56:10.4410233Z",
+          "executable": "<reviewed-worktree>\\target\\debug\\crony-runner.exe"
+        },
+        "web": {
+          "pid": 12152,
+          "started_utc": "2026-09-22T18:56:12.8920804Z",
+          "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+        }
+      }
+    },
+    {
+      "name": "second start retains all three process identities",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "invalid-restart-retains-live-stack",
+      "passed": true,
+      "details": {
+        "expected": "identity mismatch|existing CRONY_ACTOR_ID",
+        "message": "Retained actor identity mismatch in <reviewed-worktree>\\output\\local-pids.json."
+      }
+    },
+    {
+      "name": "invalid restart preserves exact process identities",
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "start recovers only missing web",
+      "passed": true,
+      "details": {
+        "server": {
+          "pid": 65496,
+          "started_utc": "2026-09-22T18:56:09.5939888Z",
+          "executable": "<reviewed-worktree>\\target\\debug\\crony-server.exe"
+        },
+        "runner": {
+          "pid": 41632,
+          "started_utc": "2026-09-22T18:56:10.4410233Z",
+          "executable": "<reviewed-worktree>\\target\\debug\\crony-runner.exe"
+        },
+        "web": {
+          "pid": 36524,
+          "started_utc": "2026-09-22T18:56:24.2804167Z",
+          "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+        }
+      }
+    },
+    {
+      "name": "actual-startup browser server runner policy acceptance",
+      "passed": true,
+      "details": {
+        "setup": "browser-setup.json",
+        "log": "browser.log"
+      }
+    },
+    {
+      "name": "source checkout HEAD index and worktree remain unchanged",
+      "passed": true,
+      "details": {
+        "before": {
+          "head": "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5",
+          "refs": "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5 refs/heads/main",
+          "status": "",
+          "index_sha256": "95fa954a97c10a09e8a73985fe422cd232b142799c5c73c19a8a78475448bdbf"
+        },
+        "after": {
+          "head": "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5",
+          "refs": "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5 refs/heads/crony/task-85f96c8ec8094ac28e59d5952adf834e/run-77225dedadf543ba86d22a59bd75ddcd\nf4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5 refs/heads/crony/task-c0f8311e3a4b4303930835e90b1cc864/run-3f1eaece5d7342d598e270125482c223\nf4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5 refs/heads/main",
+          "status": "",
+          "index_sha256": "95fa954a97c10a09e8a73985fe422cd232b142799c5c73c19a8a78475448bdbf"
+        }
+      }
+    },
+    {
+      "name": "original refs preserved and new refs belong to observed isolated runs",
+      "passed": true,
+      "details": {
+        "observed_run_refs": [
+          "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5 refs/heads/crony/task-85f96c8ec8094ac28e59d5952adf834e/run-77225dedadf543ba86d22a59bd75ddcd",
+          "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5 refs/heads/crony/task-c0f8311e3a4b4303930835e90b1cc864/run-3f1eaece5d7342d598e270125482c223"
+        ],
+        "added_refs": [
+          "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5 refs/heads/crony/task-85f96c8ec8094ac28e59d5952adf834e/run-77225dedadf543ba86d22a59bd75ddcd",
+          "f4cdf2fcf50ba831e0aee6c7bcc94436e1d8a8f5 refs/heads/crony/task-c0f8311e3a4b4303930835e90b1cc864/run-3f1eaece5d7342d598e270125482c223"
+        ]
+      }
+    },
+    {
+      "name": "rotated credential remains scoped to the original authorized enrollment",
+      "passed": true,
+      "details": {
+        "database_token_match": true,
+        "after": {
+          "id": "daee4307-1719-4e58-98e0-cfaebb998dc1",
+          "runner_id": "pr265-activity-qa",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "enrolled_by": "00000000-0000-4000-8000-000000000011",
+          "enrollment_count": 1
+        },
+        "before": {
+          "id": "daee4307-1719-4e58-98e0-cfaebb998dc1",
+          "runner_id": "pr265-activity-qa",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "enrolled_by": "00000000-0000-4000-8000-000000000011",
+          "enrollment_count": 1
+        }
+      }
+    },
+    {
+      "name": "explicit restart replaces all three owned application processes",
+      "passed": true,
+      "details": {
+        "before": {
+          "server": {
+            "pid": 65496,
+            "started_utc": "2026-09-22T18:56:09.5939888Z",
+            "executable": "<reviewed-worktree>\\target\\debug\\crony-server.exe"
+          },
+          "runner": {
+            "pid": 41632,
+            "started_utc": "2026-09-22T18:56:10.4410233Z",
+            "executable": "<reviewed-worktree>\\target\\debug\\crony-runner.exe"
+          },
+          "web": {
+            "pid": 36524,
+            "started_utc": "2026-09-22T18:56:24.2804167Z",
+            "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+          }
+        },
+        "after": {
+          "server": {
+            "pid": 14388,
+            "started_utc": "2026-09-22T18:56:58.2431259Z",
+            "executable": "<reviewed-worktree>\\target\\debug\\crony-server.exe"
+          },
+          "runner": {
+            "pid": 11360,
+            "started_utc": "2026-09-22T18:56:59.0775957Z",
+            "executable": "<reviewed-worktree>\\target\\debug\\crony-runner.exe"
+          },
+          "web": {
+            "pid": 27952,
+            "started_utc": "2026-09-22T18:57:02.4067058Z",
+            "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe"
+          }
+        }
+      }
+    },
+    {
+      "name": "restart retains enrollment and source state",
+      "passed": true,
+      "details": {}
+    }
+  ],
+  "cleanup": "Actual stop_local.ps1 verified application shutdown; outer supervisor retains database and stops its owned PostgreSQL.",
+  "provider": "native deterministic fake-process, no provider calls",
+  "initial_provisioning": "new owned QA database and enrollment; no production identity",
+  "database_authentication": {
+    "delivery": "environment-only reduced assurance; credential file outside synthetic source and runner workspaces",
+    "method": "scram-sha-256"
+  },
+  "finished_at_utc": "2026-09-22T18:57:05.6081022+00:00"
+}

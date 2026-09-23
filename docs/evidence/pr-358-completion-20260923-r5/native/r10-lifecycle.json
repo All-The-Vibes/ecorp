@@ -1,0 +1,67 @@
+{
+  "pr": 358,
+  "validation_source_tree": "452b82634081ab70c903db7da9d0702d2e6286fc",
+  "validation_receipt_sha256": "32496ceda77c4a3eb53a545fa00ddf425c31cfa9ae9039d112fda3214f21fbbc",
+  "tested_staged_tree": "452b82634081ab70c903db7da9d0702d2e6286fc",
+  "source_head": "5db7afa19b1bb17c06feea40043ba8d5005b22b1",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr358-20260923-r10",
+  "started_at_utc": "2026-09-23T08:58:58.1330886+00:00",
+  "status": "failed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "sha256": "d0e383f94b59e367fba98c63d05e947029ad303fe8610c29501529f748dc6351",
+      "name": "workspace-cache-refresh",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-native-r10-workspace-cache-refresh.log"
+    },
+    {
+      "sha256": "f77b86bd93c958e481a1dddd19b252442a2f9f5ef533db15cde377d8d593f2cb",
+      "name": "native-build",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-native-r10-build.log"
+    },
+    {
+      "sha256": "8a0569f9cb7ad5371adb407dc5dee2d606764ade919214ba7db43bc40c103c83",
+      "name": "sqlx-workspace-cache-refresh",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-native-r10-sqlx-workspace-cache-refresh.log"
+    },
+    {
+      "sha256": "e5b26445d102b976e436219f7834331c0dd299c37a1b8c5d3b01e3289c88895a",
+      "name": "owned-postgresql-retained-receipts-regressions",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-native-r10-sqlx-retained-receipts.log"
+    },
+    {
+      "sha256": "2bf136cd1c8ee496939347c59beb4afa885745e2194cd2cb9b41df805255c71b",
+      "name": "owned-postgresql-crony-store-regressions",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-native-r10-sqlx-crony-store.log"
+    },
+    {
+      "sha256": "d099b0ecc8c37f5fd1c68c803b887ebec53ad9f72d43f5ffbb9190cbc2d533fa",
+      "name": "owned-postgresql-crony-server-regressions",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-native-r10-sqlx-crony-server.log"
+    },
+    {
+      "sha256": "64b2c17712e96cc35fa79ed3c621c2e37f99461b223111480dabd84cb68d787c",
+      "name": "focused-native-acceptance",
+      "exit_code": 1,
+      "log": "<private-evidence>\\pr358-native-r10-focused.log"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "8400b49c3476ef82e8ab7eff09fba952f936ed6d56fce9f6441182f50e4c1052",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "1eece3a9c25e9a2f621f4239c5b73723b123a02b0bd8eb35ca4399acf021356f",
+      "file": "crony-runner.exe"
+    }
+  ],
+  "failure": "focused-native-acceptance failed; preserve logs and fixture.",
+  "finished_at_utc": "2026-09-23T09:05:53.5611028+00:00"
+}

@@ -1596,6 +1596,7 @@ mod tests {
     fn request(provider: &str) -> AdapterRunRequest {
         let run_id = uuid::Uuid::new_v4();
         AdapterRunRequest {
+            trusted_assignment: None,
             run_id,
             mission_id: uuid::Uuid::new_v4(),
             task_id: uuid::Uuid::new_v4(),
@@ -2100,10 +2101,13 @@ mod tests {
         let workspace = request.workspace.clone();
         let (_control_tx, control_rx) = mpsc::unbounded_channel();
         let sink = Arc::new(RecordingSink::default());
-        let exit = adapter
-            .execute(request, control_rx, sink.clone())
-            .await
-            .expect("execute adapter");
+        let exit = tokio::time::timeout(
+            Duration::from_secs(8),
+            adapter.execute(request, control_rx, sink.clone()),
+        )
+        .await
+        .expect("permission response failure deadline")
+        .expect("execute adapter");
         assert_eq!(exit, AdapterExit::Failed);
         assert!(sink.events.lock().expect("event lock").iter().any(|event| {
             matches!(

@@ -1,0 +1,139 @@
+   Compiling serde_core v1.0.229
+   Compiling generic-array v0.14.7
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling digest v0.10.7
+   Compiling hmac v0.12.1
+   Compiling sha2 v0.10.9
+   Compiling signature v2.2.0
+   Compiling serde v1.0.229
+   Compiling der v0.7.10
+   Compiling bytes v1.12.1
+   Compiling smallvec v1.15.2
+   Compiling hashbrown v0.15.5
+   Compiling arrayvec v0.7.8
+   Compiling tracing v0.1.44
+   Compiling sec1 v0.7.3
+   Compiling crypto-bigint v0.5.5
+   Compiling spki v0.7.3
+   Compiling rfc6979 v0.4.0
+   Compiling alloy-rlp v0.3.16
+   Compiling const-hex v1.19.1
+   Compiling elliptic-curve v0.13.8
+   Compiling ecdsa v0.16.9
+   Compiling ruint v1.20.0
+   Compiling k256 v0.13.4
+   Compiling alloy-primitives v0.8.26
+   Compiling serde_json v1.0.151
+   Compiling windows-sys v0.61.2
+   Compiling parking_lot_core v0.9.12
+   Compiling parking_lot v0.12.5
+   Compiling either v1.18.0
+   Compiling alloy-sol-macro-expander v0.8.26
+   Compiling socket2 v0.6.5
+   Compiling mio v1.2.2
+   Compiling tokio v1.53.1
+   Compiling alloy-eip7702 v0.4.2
+   Compiling alloy-eip2930 v0.1.0
+   Compiling alloy-serde v0.8.3
+   Compiling nybbles v0.3.4
+   Compiling crossbeam-utils v0.8.22
+   Compiling futures-util v0.3.34
+   Compiling alloy-trie v0.7.9
+   Compiling alloy-eips v0.8.3
+   Compiling alloy-sol-macro v0.8.26
+   Compiling icu_normalizer v2.3.0
+   Compiling alloy-sol-types v0.8.26
+   Compiling idna_adapter v1.2.2
+   Compiling alloy-consensus v0.8.3
+   Compiling http v1.5.0
+   Compiling http-body v1.1.0
+   Compiling crossbeam-queue v0.3.13
+   Compiling idna v1.1.0
+   Compiling rustls v0.23.43
+   Compiling futures-channel v0.3.34
+   Compiling url v2.5.8
+   Compiling alloy-consensus-any v0.8.3
+   Compiling alloy-network-primitives v0.8.3
+   Compiling itertools v0.13.0
+   Compiling alloy-rpc-types-eth v0.8.3
+   Compiling futures-intrusive v0.5.0
+   Compiling tokio-stream v0.1.19
+   Compiling hyper v1.11.1
+   Compiling sqlx-core v0.8.6
+   Compiling hkdf v0.12.4
+   Compiling uuid v1.26.1
+   Compiling md-5 v0.10.6
+   Compiling chrono v0.4.45
+   Compiling tower v0.5.3
+   Compiling hyper-util v0.1.20
+   Compiling alloy-signer v0.8.3
+   Compiling sqlx-postgres v0.8.6
+   Compiling alloy-rpc-types-any v0.8.3
+   Compiling tokio-rustls v0.26.4
+   Compiling alloy-json-rpc v0.8.3
+   Compiling home v0.5.12
+   Compiling hashlink v0.10.0
+   Compiling alloy-network v0.8.3
+   Compiling sqlx-macros-core v0.8.6
+   Compiling serde_urlencoded v0.7.1
+   Compiling curve25519-dalek v4.1.3
+   Compiling etcetera v0.8.0
+   Compiling hyper-rustls v0.27.9
+   Compiling tower-http v0.6.11
+   Compiling http-body-util v0.1.5
+   Compiling ed25519 v2.2.3
+   Compiling blake3 v1.8.7
+   Compiling ed25519-dalek v2.2.0
+   Compiling reqwest v0.12.28
+   Compiling sqlx-macros v0.8.6
+   Compiling alloy-signer-local v0.8.3
+   Compiling alloy-rpc-types v0.8.3
+   Compiling alloy-core v0.8.26
+   Compiling sha1 v0.10.7
+   Compiling crony-audit v0.1.0 (<reviewed-worktree>\crates\crony-audit)
+   Compiling alloy v0.8.3
+   Compiling sqlx v0.8.6
+   Compiling crony-base v0.1.0 (<reviewed-worktree>\crates\crony-base)
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+error[E0061]: this method takes 4 arguments but 3 arguments were supplied
+    --> crates\crony-store\src\state_audit_tests.rs:2295:18
+     |
+2295 |                 .publish_audit_destination(destination.id, remote.as_ref(), &public_key)
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^---------------------------------------------- argument #4 of type `std::option::Option<&str>` is missing
+     |
+note: method defined here
+    --> crates\crony-store\src\state_audit.rs:721:18
+     |
+ 721 |     pub async fn publish_audit_destination<T: crony_audit::PublicationTransport>(
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 726 |         retained_commit: Option<&str>,
+     |         -----------------------------
+help: provide the argument
+     |
+2295 |                 .publish_audit_destination(destination.id, remote.as_ref(), &public_key, /* std::option::Option<&str> */)
+     |                                                                                        +++++++++++++++++++++++++++++++++
+
+error[E0061]: this method takes 4 arguments but 3 arguments were supplied
+    --> crates\crony-store\src\state_audit_tests.rs:2311:19
+     |
+2311 |             store.publish_audit_destination(destination.id, remote.as_ref(), &key.verifying_key()),
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^------------------------------------------------------- argument #4 of type `std::option::Option<&str>` is missing
+     |
+note: method defined here
+    --> crates\crony-store\src\state_audit.rs:721:18
+     |
+ 721 |     pub async fn publish_audit_destination<T: crony_audit::PublicationTransport>(
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+ 726 |         retained_commit: Option<&str>,
+     |         -----------------------------
+help: provide the argument
+     |
+2311 |             store.publish_audit_destination(destination.id, remote.as_ref(), &key.verifying_key(), /* std::option::Option<&str> */),
+     |                                                                                                  +++++++++++++++++++++++++++++++++
+
+For more information about this error, try `rustc --explain E0061`.
+error: could not compile `crony-store` (lib test) due to 2 previous errors

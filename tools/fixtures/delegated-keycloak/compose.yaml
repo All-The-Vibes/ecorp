@@ -1,0 +1,17 @@
+name: taskrabbit-local-obo
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.4
+    command:
+      - start-dev
+      - --import-realm
+      - --hostname=http://127.0.0.1:18880
+      - --features=token-exchange-standard:v2
+      - --http-access-log-enabled=false
+    ports:
+      - "127.0.0.1:18880:8080"
+    volumes:
+      - "./.private/realm.json:/opt/keycloak/data/import/realm.json:ro"
+      - keycloak-data:/opt/keycloak/data
+volumes:
+  keycloak-data:

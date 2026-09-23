@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'">
+<title>PR226 — saved R7/R8 evidence</title><style>
+body{font:16px/1.4 system-ui,sans-serif;margin:24px;color:#162b3d;background:#fff}
+h1{font-size:28px;margin:4px 0}h2{font-size:19px;margin:0 0 8px}p{margin:7px 0}
+code{font:13px/1.4 Consolas,monospace;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid #ccd6df;text-align:left;padding:6px}th{background:#edf2f7}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+section{border:1px solid #879aaa;border-radius:5px;padding:14px}.wide{grid-column:1/-1}
+.red{color:#a32424}.green{color:#136438}.label{font-weight:700;color:#345a77}
+.note{background:#fff3db;padding:12px;border-left:5px solid #91630c}footer{margin-top:12px;font-size:14px}
+</style></head><body>
+<p class="label">SAVED RESULTS · September 22, 2026 · NOT live tests or an application screenshot</p>
+<h1>PR #226 — correction, current-main validation &amp; provenance</h1>
+<p>R8 HEAD <code>91a5b4e58a13eb0128f3f69beedcb9bd174fbb23</code><br>
+Tested staged tree <code>2cf0ea4851f09cbdb7cf3f08a6c3422abda416a8</code><br>
+Pending main <code>08b0b89b2dd16c1906c9dd3468c5ddecca24c4ce</code></p>
+<div class="cards">
+<section><h2 class="red">1 · Actual ordered R7 coverage RED → GREEN</h2>
+<p>Missing r3 default: <b>0 passed / 1 failed · exit 1</b><br>
+Default added, actual retained leak: <b>0 / 1 · exit 1</b><br>
+Public path correction: <b class="green">6 passed / 0 failed · exit 0</b></p>
+<p>Raw TAP logs + contemporaneous R7 handoff retained. No per-RED source SHA or timestamp invented.</p>
+<p><code>scanner-coverage-red.log → scanner-covered-leak-red.log → scanner-green.log</code></p></section>
+<section><h2 class="green">2 · Focused GREEN — distinct lane</h2>
+<p><b>16 passed / 0 failed / 0 skipped</b>, exit 0.<br>
+Canary status, exact Git bytes and recursive personal-path scanner.</p>
+<p>R7 focused receipt retained; R8 <code>10-focused</code> ran again on the exact tested tree above. Packaging does not rerun it.</p></section>
+<section class="wide"><h2 class="green">3 · R8 fresh nine — actual new-main source</h2>
+<table><thead><tr><th>Executed required command</th><th>Exit</th><th>Complete result summary</th></tr></thead><tbody>
+<tr><td><code>node tools/check_migrations.mjs</code></td><td>0</td><td>41 immutable migrations</td></tr>
+<tr><td><code>pnpm check:docs</code></td><td>0</td><td>5 validation / 2 runtime documents; 9 marked commands</td></tr>
+<tr><td><code>pnpm test:unit</code></td><td>0</td><td>1,259 passed; 0 failed / skipped</td></tr>
+<tr><td><code>pnpm test:steward</code></td><td>0</td><td>227 passed; 0 failed / skipped</td></tr>
+<tr><td><code>cargo fmt --check</code></td><td>0</td><td>format check passed</td></tr>
+<tr><td><code>cargo clippy --workspace --all-targets -- -D warnings</code></td><td>0</td><td>all targets; warnings denied</td></tr>
+<tr><td><code>cargo test --workspace</code></td><td>0</td><td>571 passed; 0 failed; 343 ignored; 0 filtered</td></tr>
+<tr><td><code>pnpm build:web</code></td><td>0</td><td>TypeScript + Vite; 57 modules</td></tr>
+<tr><td><code>pnpm lint:web</code></td><td>0</td><td>58 files; 0 warnings / errors</td></tr></tbody></table>
+<p>Native MCP build passed; exact binary hash bound before Node. <b>43 native cases</b> are included in 1,259.
+All five new-main upload-binding cases passed inside the full Rust run.</p></section>
+<section><h2>4 · R7 Rust failure and real full rerun</h2>
+<p class="red"><b>Original 8/9: Rust exit 101</b><br>366 passed / 9 failed / 1 ignored in reached suites.</p>
+<p>Selected diagnostics retained: exits <b>101 / 101 / 0</b>.<br>
+Later short owned-TEMP diagnostic: <b>1 passed</b>, exit 0.<br>
+Then unfiltered full rerun: <b class="green">566 / 0 / 343 ignored</b>, exit 0.</p>
+<p>R7 tree <code>c71eec9d7617d5879c596f646615167a6633a566</code><br>
+HEAD <code>9d79db02c814497f93eed4b8d7c842cb2518d153</code><br>
+Target <code>de12261d045ddfccf790bcfd04a7fa254563d456</code><br>
+Not R8 proof. Original failed Rust stays failed.</p></section>
+<section><h2 class="green">5 · Author review / source &amp; tool provenance</h2>
+<p><b>AUTHOR-DELEGATE: 387 passed assertions</b><br>
+276 contribution files / 5,943,365 bytes actually reviewed.</p>
+<p>R8 driver, source/index/merge snapshots, tools, native MCP, complete raw streams and original/public hashes retained.
+Separate final readback: <b>197 bounded checks</b>.</p>
+<p><b>Not independent, human, Santa/NICE or SAFE approval.</b><br>
+Evidence-only packaging descendant; no new nine-gate claim.</p></section>
+<section class="wide"><h2>6 · NEW retrospective effectiveness pair — not original R7 TDD chronology</h2>
+<p><b>September 22, 2026:</b> both fixture inventories, source/blob identities, Node 24.19.0 and driver hashes/argv bound before either invocation.
+Same unchanged current regression in both; no mocks or default-root override.</p>
+<p><b class="red">OLD: exit 1 · 0 passed / 1 failed</b> — actual “default scan must include the r3 completion packet” assertion.<br>
+Original commit <code>9d79db02c814497f93eed4b8d7c842cb2518d153</code> · helper blob <code>48c8a593e23ca122e16f2ada5db0e73d4d036d5f</code></p>
+<p><b class="green">CURRENT: exit 0 · 1 passed / 0 failed</b> — real default-root check and recursive scan, including normalized r3.<br>
+Candidate index helper blob <code>9b77198637139fff907cc0a20d245c4a071487e1</code> · exact copied inputs and native CRLF/index equivalence recorded.</p>
+<p>Shared current test blob <code>61839dfbfc30adc8adabbafeee73c021264553c6</code> was introduced after baseline.<br>
+<b>Each run: 1 selected; 5 excluded by name pattern; 0 reported skipped.</b> Not a six-case or nine-gate rerun.
+Original ordered R7 receipts unchanged; no original per-RED timestamp/source identity recovered.</p></section>
+</div>
+<p class="note"><b>Preserved global-ref audit FAIL; overall preservation PARTIAL.</b> Unrelated PR362 branch and Codex metadata refs changed.
+Exact PR226 source/index/merge and selected local refs were preserved. This is not a product-test failure or full-global-preservation claim.</p>
+<footer><b>343 ignored Rust cases remain unexecuted:</b> 342 database cases + one stopped-session probe.
+Issue #225 remains nonclosing; no live application, provider, DB or Factory/native acceptance.<br>
+Read <a href="README.md">scope</a>, <a href="manifest.json">original/public manifest</a> and <a href="receipts.zip">selected receipts ZIP</a>.
+Public path-only derivatives; original private artifacts untouched. Parent retains independent review, remote fence and publication.</footer>
+</body></html>

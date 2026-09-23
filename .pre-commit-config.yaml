@@ -24,3 +24,15 @@ repos:
         entry: cargo fmt --all -- --check
         files: '\.rs$'
         pass_filenames: false
+      - id: generated-validation-contract
+        name: Check generated validation documentation
+        entry: node tools/check_docs.mjs
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: readiness-tool-tests
+        name: Check validation and evidence tooling
+        entry: node --test tools/readiness_contract.test.mjs
+        language: system
+        pass_filenames: false
+        files: '^(tools/(run_checks|check_docs|readiness_contract\.test)\.mjs|test\.config\.json)$'

@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "group": "full",
+  "startedAt": "2026-09-18T05:48:29.340Z",
+  "source": {
+    "commit": "6119296d475e94a45b643534a3a0bbd581b130f2",
+    "branch": "codex/ai-readiness-improvements",
+    "dirty": true,
+    "trackedDiffSha256": "01e2bfba851b6d2e7715eb322265c10ddee4df324dee1cc26365daa562e1cc0e",
+    "untrackedDigests": [
+      [
+        "docs/reports/ai-readiness-portability-followup-2026-09-18.md",
+        "3bd3d63ee6ddbd3cbb7b4453ec4ad9394ce1636ece2cd75df890990403ee5a4c"
+      ]
+    ]
+  },
+  "node": "24.19.0",
+  "checks": [
+    {
+      "name": "migrations",
+      "argv": [
+        "node",
+        "tools/check_migrations.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 117,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "docs",
+      "argv": [
+        "node",
+        "tools/check_docs.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 103,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "node-tests",
+      "argv": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/evidenceSelection.test.mjs",
+        "apps/web/src/factoryCheckpointRecovery.test.mjs",
+        "apps/web/src/factoryControllerSelection.test.mjs",
+        "apps/web/src/factoryPolling.test.mjs",
+        "apps/web/src/missionCollaboration.test.mjs",
+        "apps/web/src/missionComposer.test.mjs",
+        "apps/web/src/missionOriginContext.test.mjs",
+        "apps/web/src/missionPreview.test.mjs",
+        "apps/web/src/missionProjection.test.mjs",
+        "apps/web/src/missionResultContext.test.mjs",
+        "apps/web/src/missionRuntime.test.mjs",
+        "apps/web/src/office/officeModel.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "apps/web/src/workflowContext.test.mjs",
+        "apps/web/src/workspaceConnections.test.mjs",
+        "scenarios/repo-steward/actions.test.mjs",
+        "scenarios/repo-steward/steward.test.mjs",
+        "scenarios/repo-steward/teams-host.test.mjs",
+        "tests/readiness/cli.test.js",
+        "tools/checkpoint_application_fixture.test.mjs",
+        "tools/copilot_fs_wire_observer.test.mjs",
+        "tools/copilot_fs_wire_process.test.mjs",
+        "tools/copilot_probe_boundaries.test.mjs",
+        "tools/copilot_probe_environment.test.mjs",
+        "tools/copilot_probe_native_read.test.mjs",
+        "tools/copilot_probe_process.test.mjs",
+        "tools/e2e_checkpoint_verification.test.mjs",
+        "tools/e2e_evidence_selection.test.mjs",
+        "tools/e2e_external_adapters.test.mjs",
+        "tools/e2e_late_termination.test.mjs",
+        "tools/e2e_stopped_source_checkpoint.test.mjs",
+        "tools/fake_codex_budget_stream.test.mjs",
+        "tools/fake_github_quota.test.mjs",
+        "tools/fixture_source_identity.test.mjs",
+        "tools/local_stack_lifecycle.test.mjs",
+        "tools/local_stack_operation.test.mjs",
+        "tools/office_model.test.mjs",
+        "tools/owned_test_stack.test.mjs",
+        "tools/readiness_contract.test.mjs",
+        "tools/runner_ack_fault_relay.test.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 51383,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 1054,
+          "passed": 1054,
+          "failed": 0,
+          "skipped": 0,
+          "todo": 0,
+          "cancelled": 0
+        }
+      },
+      "errorCode": null
+    },
+    {
+      "name": "format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 1237,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 1061,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "rust-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 57168,
+      "counts": {
+        "rust": {
+          "passed": 554,
+          "failed": 0,
+          "ignored": 343,
+          "summaries": 14
+        },
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "pnpm",
+        "build:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 7586,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "web-lint",
+      "argv": [
+        "pnpm",
+        "lint:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 1930,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    }
+  ],
+  "status": "passed",
+  "assurance": "Local validation only. Ignored tests are not passes. No hosted CI, browser, provider or production claim.",
+  "finishedAt": "2026-09-18T05:50:30.018Z",
+  "sourceChangedDuringValidation": false,
+  "notRun": []
+}

@@ -1371,10 +1371,10 @@ mod tests {
             );
         }
         let error = store.create_resume_run(CORP, RUN, OWNER).await.unwrap_err();
-        assert!(
-            error
-                .to_string()
-                .contains("mission has no remaining authorized budget")
+        assert_eq!(exhausted["runs"][0]["breaker_stage"], "stop");
+        assert_eq!(
+            error.to_string(),
+            "source run reached a stop-stage breaker and cannot be resumed"
         );
         assert_eq!(state(&store).await, exhausted);
     }

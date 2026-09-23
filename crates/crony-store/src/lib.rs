@@ -9,25 +9,40 @@ use crony_domain::{
     FactoryWorkItem, FactoryWorkItemState, ManualVerificationGate, Mission, MissionBudgetRevision,
     MissionContractRevision, MissionContractRevisionAction, MissionStatus, NewEvent,
     PullRequestPublication, PullRequestPublicationAttempt, PullRequestPublicationState,
-    QueuedMessage, Room, RoomMessage, Run, RunStatus, SourceDeliverable, Task, TaskContract,
-    TaskGraphPlan, TaskSecretReference, TaskStatus, VerificationEvidence, VerificationPolicy,
-    VerificationRequest, VerifierCheck, factory_workspace_connection_id,
+    QueuedMessage, Room, RoomMessage, Run, RunFailureKind, RunStatus, SourceDeliverable, Task,
+    TaskContract, TaskGraphPlan, TaskSecretReference, TaskStatus, VerificationEvidence,
+    VerificationPolicy, VerificationRequest, VerifierCheck, factory_workspace_connection_id,
     repository_relative_path_is_valid, write_scope_allows_path, write_scope_is_valid,
 };
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
-use sqlx::{PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
+use sqlx::{Acquire, PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
 use uuid::Uuid;
 
+mod agent_pinning;
+mod aggregate_breaker;
+use crate::state_audit::native_policy;
+
+pub mod base_ancestry;
+pub mod base_audit;
+#[cfg(test)]
+mod base_audit_tests;
+pub mod base_observations;
 mod budget_checkpoint;
+pub use agent_pinning::{SetAgentPinInput, SetAgentPinOutcome};
 mod budget_revision;
 mod checkpoint_cancellation;
 mod checkpoint_correction;
 mod checkpoint_publication;
 mod checkpoint_retention;
+pub mod state_audit;
+#[cfg(test)]
+mod state_audit_tests;
 pub use checkpoint_cancellation::ReconcileCheckpointCancellationInput;
 mod contract_revision;
 mod factory_attempt_policy;
+mod factory_authority;
 mod factory_controller;
 mod factory_run_failure;
 mod mission_context;
@@ -43,7 +58,11 @@ pub use workspace_connections::{
 };
 
 #[cfg(test)]
+mod aggregate_breaker_tests;
+#[cfg(test)]
 mod budget_checkpoint_tests;
+#[cfg(test)]
+mod deliverable_failure_tests;
 #[cfg(test)]
 mod factory_recovery_loss_tests;
 #[cfg(test)]
@@ -113,7 +132,7 @@ pub struct CreateMissionContractRevisionInput {
     pub verification_policy: VerificationPolicy,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MissionContractRevisionOutcome {
     pub revision: MissionContractRevision,
     pub event: Option<DomainEvent>,
@@ -289,7 +308,7 @@ pub struct CreateFactoryVerificationRecoveryInput {
     pub expected_head_commit: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FactoryWorkItemOutcome {
     pub work_item: FactoryWorkItem,
     pub claim_token: Option<Uuid>,
@@ -331,6 +350,7 @@ pub struct FactoryVerificationRecoveryContext {
 pub struct RunnerEventOutcome {
     pub event: Option<DomainEvent>,
     pub related_events: Vec<DomainEvent>,
+    pub breaker_commands: Vec<PendingRunnerCommand>,
 }
 
 #[derive(Debug, Clone)]
@@ -500,6 +520,7 @@ pub struct LaunchRecord {
 #[derive(Debug, Clone)]
 pub struct SchedulableTask {
     pub task_id: Uuid,
+    pub requires_dependency_files: bool,
     pub required_adapter: String,
     pub required_model: Option<String>,
     pub required_reasoning_effort: Option<String>,
@@ -507,6 +528,8 @@ pub struct SchedulableTask {
     pub required_source_base_ref: Option<String>,
     pub required_source_base_commit: Option<String>,
     pub workspace_connection_id: Option<Uuid>,
+    // Decode per candidate so one invalid policy cannot abort a mission sweep.
+    pub verification_policy: serde_json::Value,
 }
 
 #[derive(Debug, Clone)]
@@ -710,6 +733,14 @@ pub enum RunnerCommandDispatchState {
     Obsolete,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RunnerCommandDispatchOutcome {
+    Sent,
+    Disconnected,
+    Settled,
+    Obsolete,
+}
+
 fn runner_command_dispatch_state(
     command_status: &str,
     run_status: Option<&str>,
@@ -734,10 +765,10 @@ fn runner_command_dispatch_state(
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct CircuitBreakerOutcome {
-    pub command: Option<PendingRunnerCommand>,
-    pub event: Option<DomainEvent>,
+    pub commands: Vec<PendingRunnerCommand>,
+    pub events: Vec<DomainEvent>,
 }
 
 #[derive(Debug, Clone)]
@@ -1157,33 +1188,49 @@ impl PgStore {
         Ok((grants, events))
     }
 
-    pub async fn agents_for_planning(&self, corp_id: Uuid, actor_id: Uuid) -> Result<Vec<Agent>> {
-        sqlx::query(
+    pub async fn agents_for_planning(
+        &self,
+        corp_id: Uuid,
+        actor_id: Uuid,
+        destination_room_id: Option<Uuid>,
+    ) -> Result<Vec<Agent>> {
+        let mut tx = self.pool.begin().await?;
+        let room_id = match destination_room_id {
+            Some(room_id) => {
+                assert_room_membership_tx(&mut tx, corp_id, room_id, actor_id).await?;
+                room_id
+            }
+            None => mission_room_for_actor_tx(&mut tx, corp_id, actor_id).await?,
+        };
+        let agents = sqlx::query(
             r#"
             SELECT id, corp_id, actor_id, name, role, adapter, status, station,
-                   current_run_id, accent, created_at, mission_id, pinned, retired_at
+                   current_run_id, accent, created_at, mission_id, pinned, retired_at,
+                   COALESCE((SELECT MAX(e.aggregate_version) FROM events e
+                     WHERE e.corp_id = agents.corp_id AND e.aggregate_id = agents.id
+                       AND e.aggregate_type = 'agent'
+                       AND e.type IN ('agent.pinned', 'agent.unpinned')), 0) AS pin_version
             FROM agents
             WHERE corp_id = $1
               AND retired_at IS NULL AND (mission_id IS NULL OR pinned)
               AND (mission_id IS NULL OR EXISTS (
                 SELECT 1 FROM missions m JOIN room_memberships rm ON rm.room_id = m.room_id
                 WHERE m.id = agents.mission_id AND m.corp_id = agents.corp_id AND rm.actor_id = $2
-                  AND m.room_id = (
-                    SELECT r.id FROM rooms r JOIN room_memberships mine ON mine.room_id = r.id
-                    WHERE r.corp_id = $1 AND mine.actor_id = $2
-                    ORDER BY r.created_at, r.id LIMIT 1
-                  )
+                  AND m.room_id = $3
               ))
             ORDER BY role, adapter, name, id
             "#,
         )
         .bind(corp_id)
         .bind(actor_id)
-        .fetch_all(&self.pool)
+        .bind(room_id)
+        .fetch_all(&mut *tx)
         .await?
         .into_iter()
         .map(map_agent)
-        .collect()
+        .collect::<Result<Vec<_>>>()?;
+        tx.commit().await?;
+        Ok(agents)
     }
 
     pub async fn bootstrap_demo(&self) -> Result<(DemoIds, Option<DomainEvent>)> {
@@ -1486,11 +1533,13 @@ impl PgStore {
             .execute(&mut *tx)
             .await?;
         let corp = map_corp(
-            sqlx::query("SELECT id, slug, name, created_at FROM corps WHERE id = $1")
-                .bind(corp_id)
-                .fetch_one(&mut *tx)
-                .await
-                .context("corp not found")?,
+            sqlx::query(
+                "SELECT id, slug, name, claim_authority_id, created_at FROM corps WHERE id = $1",
+            )
+            .bind(corp_id)
+            .fetch_one(&mut *tx)
+            .await
+            .context("corp not found")?,
         );
 
         let actors = sqlx::query(
@@ -1523,7 +1572,11 @@ impl PgStore {
         let agents = sqlx::query(
             r#"
             SELECT a.id, a.corp_id, a.actor_id, a.name, a.role, a.adapter, a.status, a.station,
-                   a.current_run_id, a.accent, a.created_at, a.mission_id, a.pinned, a.retired_at
+                   a.current_run_id, a.accent, a.created_at, a.mission_id, a.pinned, a.retired_at,
+                   COALESCE((SELECT MAX(e.aggregate_version) FROM events e
+                     WHERE e.corp_id = a.corp_id AND e.aggregate_id = a.id
+                       AND e.aggregate_type = 'agent'
+                       AND e.type IN ('agent.pinned', 'agent.unpinned')), 0) AS pin_version
             FROM agents a
             WHERE a.corp_id = $1
               AND (a.mission_id IS NULL OR EXISTS (
@@ -3011,6 +3064,7 @@ impl PgStore {
         normalize_mission_description(&input.description)?;
         let operation_request = normalize_factory_operation_request(input.request)?;
         factory_attempt_policy::validate_request(&input.policy, &operation_request)?;
+        let authority_policy = input.policy.clone();
         let constrained_plan = preflight_factory_plan(
             &input.source_repository_owner,
             &input.source_repository_name,
@@ -3020,6 +3074,7 @@ impl PgStore {
 
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
+        factory_authority::validate_tx(&mut tx, input.corp_id, &authority_policy).await?;
         if workspace_connections::plan_room_tx(
             &mut tx,
             input.corp_id,
@@ -3039,10 +3094,22 @@ impl PgStore {
         &self,
         input: ClaimFactoryWorkItemInput,
     ) -> Result<FactoryWorkItemOutcome> {
+        self.claim_factory_work_item_with_authority(input, false)
+            .await
+    }
+
+    /// Production admission requires a pin for new items; existing lineage is retained.
+    pub async fn claim_factory_work_item_with_authority(
+        &self,
+        input: ClaimFactoryWorkItemInput,
+        require_new_pin: bool,
+    ) -> Result<FactoryWorkItemOutcome> {
         let source = normalize_factory_source(input.source)?;
         let idempotency_key = normalize_factory_idempotency_key(&input.idempotency_key)?;
         let lease_seconds = validate_factory_lease_seconds(input.lease_seconds)?;
         let policy = normalize_factory_policy(input.policy)?;
+        let claim_authority_id =
+            crony_domain::factory_claim_authority_id(&policy).map_err(anyhow::Error::msg)?;
         let workspace_connection_id =
             factory_workspace_connection_id(&policy).map_err(anyhow::Error::msg)?;
         let operation_request = json!({
@@ -3064,6 +3131,7 @@ impl PgStore {
 
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
+        factory_authority::validate_tx(&mut tx, input.corp_id, &policy).await?;
         lock_factory_keys_tx(
             &mut tx,
             &[
@@ -3341,6 +3409,11 @@ impl PgStore {
             (map_factory_work_item(row)?, "factory.work_item_reclaimed")
         } else {
             ensure_new_factory_policy_is_pinned(&policy)?;
+            if require_new_pin && claim_authority_id.is_none() {
+                return Err(anyhow!(
+                    "factory claim_authority_id is required for new production claims; inspect and pin the approved shared authority"
+                ));
+            }
             crony_domain::validate_factory_cost_policy(&policy).map_err(anyhow::Error::msg)?;
             let work_item_id = Uuid::new_v4();
             let row = sqlx::query(
@@ -3583,6 +3656,69 @@ impl PgStore {
         &self,
         input: UpgradeFactorySourceCommitInput,
     ) -> Result<FactoryWorkItemOutcome> {
+        let mission_id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT mission_id FROM factory_work_items WHERE id = $1 AND corp_id = $2",
+        )
+        .bind(input.work_item_id)
+        .bind(input.corp_id)
+        .fetch_optional(&self.pool)
+        .await?
+        .flatten();
+        let Some(mission_id) = mission_id else {
+            let mut tx = self.pool.begin().await?;
+            let outcome = self
+                .upgrade_factory_source_commit_audit_inner(input, &mut tx)
+                .await?;
+            tx.commit().await?;
+            return Ok(outcome);
+        };
+        let canonical_key = normalize_factory_idempotency_key(&input.idempotency_key)?;
+        let request_id = state_audit::derived_request_id(
+            "factory-source-commit-upgrade",
+            input.corp_id,
+            input.actor_id,
+            &canonical_key,
+        )?;
+        let raw_request_id = state_audit::derived_request_id(
+            "factory-source-commit-upgrade",
+            input.corp_id,
+            input.actor_id,
+            &input.idempotency_key,
+        )?;
+        let identity = state_audit::FactoryAuditIdentity {
+            raw_request_id,
+            canonical_key,
+            work_item_id: input.work_item_id,
+            claim_token: input.claim_token,
+        };
+        let op = state_audit::Operation {
+            corp: input.corp_id,
+            actor: input.actor_id,
+            mission: mission_id,
+            request_id,
+            name: "source_commit_upgrade",
+            request: json!({
+                "work_item_id": input.work_item_id,
+                "expected_version": input.expected_version,
+                "source_base_commit": input.source_base_commit.trim().to_ascii_lowercase()
+            }),
+        };
+        let store = self.clone();
+        self.audited_factory(op, identity, move |tx| {
+            Box::pin(async move {
+                store
+                    .upgrade_factory_source_commit_audit_inner(input, tx)
+                    .await
+            })
+        })
+        .await
+    }
+
+    async fn upgrade_factory_source_commit_audit_inner(
+        &self,
+        input: UpgradeFactorySourceCommitInput,
+        outer: &mut Transaction<'_, Postgres>,
+    ) -> Result<FactoryWorkItemOutcome> {
         if input.expected_version <= 0 {
             return Err(anyhow!(
                 "expected factory work-item version must be positive"
@@ -3597,7 +3733,7 @@ impl PgStore {
             "source_base_commit": source_base_commit
         });
         let now = Utc::now();
-        let mut tx = self.pool.begin().await?;
+        let mut tx = outer.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
         lock_factory_keys_tx(
             &mut tx,
@@ -3638,6 +3774,17 @@ impl PgStore {
             factory_work_item_tx(&mut tx, input.corp_id, input.work_item_id, true)
                 .await?
                 .context("factory work item not found")?;
+        if !factory_state_is_terminal(current.state)
+            && current.claim_owner_id == input.actor_id
+            && current_token == input.claim_token
+            && current.version != input.expected_version
+        {
+            return Err(native_policy!(
+                "conflict: factory work item version is {}, not {}",
+                current.version,
+                input.expected_version
+            ));
+        }
         ensure_active_factory_control(
             &current,
             current_token,
@@ -3656,7 +3803,7 @@ impl PgStore {
             .and_then(Value::as_str)
             .is_some()
         {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "factory source policy already has an immutable base commit"
             ));
         }
@@ -3665,7 +3812,7 @@ impl PgStore {
             .and_then(Value::as_bool)
             != Some(true)
         {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "factory source policy is not marked for an authorized legacy upgrade"
             ));
         }
@@ -3692,7 +3839,7 @@ impl PgStore {
             .fetch_one(&mut *tx)
             .await?;
             if has_run {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "legacy source commit cannot be freshly pinned after a run exists"
                 ));
             }
@@ -3720,7 +3867,7 @@ impl PgStore {
             .fetch_one(&mut *tx)
             .await?;
             if incompatible_task {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "legacy mission tasks do not preserve the claimed repository and base ref"
                 ));
             }
@@ -6011,6 +6158,20 @@ impl PgStore {
         Ok(outcome)
     }
 
+    /// Reuses mission admission while allowing a trusted caller to atomically
+    /// persist the additional authority needed before dispatch.
+    pub async fn create_mission_in_transaction(
+        &self,
+        tx: &mut Transaction<'_, Postgres>,
+        corp_id: Uuid,
+        requested_by: Uuid,
+        title: &str,
+        description: &str,
+        plan: &TaskGraphPlan,
+    ) -> Result<(MissionPlanIds, Vec<DomainEvent>)> {
+        create_mission_tx(tx, corp_id, requested_by, title, description, plan).await
+    }
+
     pub async fn mission_launch_runs(
         &self,
         corp_id: Uuid,
@@ -6122,13 +6283,20 @@ impl PgStore {
         sqlx::query(
             r#"
             SELECT t.id AS task_id,
+                   EXISTS (
+                       SELECT 1 FROM task_dependencies d
+                       JOIN tasks p ON p.id = d.depends_on_task_id
+                       WHERE d.task_id = t.id
+                         AND p.contract #>> '{deliverable,form}' = 'typed_artifact_set'
+                   ) AS requires_dependency_files,
                    COALESCE(t.required_adapter, a.adapter) AS required_adapter,
                    t.contract->>'model' AS required_model,
                    t.contract->>'reasoning_effort' AS required_reasoning_effort,
                    t.contract->>'source_repository' AS required_source_repository,
                    t.contract->>'source_base_ref' AS required_source_base_ref,
                    t.contract->>'source_base_commit' AS required_source_base_commit,
-                   (t.contract->>'workspace_connection_id')::uuid AS workspace_connection_id
+                   (t.contract->>'workspace_connection_id')::uuid AS workspace_connection_id,
+                   t.verification_policy
             FROM tasks t
             JOIN missions m ON m.id = t.mission_id
             JOIN agents a ON a.id = t.assigned_agent_id
@@ -6167,6 +6335,8 @@ impl PgStore {
         .map(|row| {
             Ok(SchedulableTask {
                 task_id: row.get("task_id"),
+                verification_policy: row.get("verification_policy"),
+                requires_dependency_files: row.get("requires_dependency_files"),
                 required_adapter: row.get("required_adapter"),
                 required_model: row.get("required_model"),
                 required_reasoning_effort: row.get("required_reasoning_effort"),
@@ -6188,12 +6358,14 @@ impl PgStore {
         runner_id: &str,
     ) -> Result<(LaunchRecord, DomainEvent)> {
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         if let Some(actor_id) = requested_by {
             assert_mission_operator_tx(&mut tx, corp_id, actor_id).await?;
         }
         let row = sqlx::query(
             r#"
             SELECT m.room_id, m.title AS mission_title, m.status AS mission_status,
+                   m.requested_by, m.budget_tokens, m.budget_cost_microusd,
                    t.title AS task_title, t.contract, t.verification_policy,
                    t.status AS task_status,
                    t.assigned_agent_id, t.attempt_count, t.max_attempts,
@@ -6298,6 +6470,26 @@ impl PgStore {
             return Err(anyhow!("task exhausted its retry limit"));
         }
         let attempt = attempt_count + 1;
+        let (used_tokens, used_cost) =
+            budget_revision::mission_usage_tx(&mut tx, corp_id, mission_id).await?;
+        if used_tokens >= row.get::<i64, _>("budget_tokens")
+            || used_cost >= row.get::<i64, _>("budget_cost_microusd")
+        {
+            return Err(anyhow!(
+                "mission has no remaining authorized budget for dispatch"
+            ));
+        }
+        let rolling =
+            rolling_budget_remaining_tx(&mut tx, corp_id, row.get("requested_by")).await?;
+        if rolling.actor_tokens <= 0
+            || rolling.actor_cost_microusd <= 0
+            || rolling.corp_tokens <= 0
+            || rolling.corp_cost_microusd <= 0
+        {
+            return Err(anyhow!(
+                "requester or Corp rolling budget has no remaining authority for dispatch"
+            ));
+        }
         let contract: TaskContract =
             serde_json::from_value(row.get("contract")).context("decode task contract")?;
         let verification_policy: VerificationPolicy =
@@ -6922,6 +7114,8 @@ impl PgStore {
             .bind(corp_id)
             .execute(&mut *tx)
             .await?;
+            let expired_secret_access_grant_count =
+                expire_run_secret_access_grants_tx(&mut tx, corp_id, run_id).await?;
             if let Some(event) = append_event_tx(
                 &mut tx,
                 NewEvent {
@@ -6934,7 +7128,8 @@ impl PgStore {
                         "run",
                         run_id,
                         format!("run:{run_id}:dispatch-failed"),
-                        json!({"error": reason, "dispatch_not_started": true}),
+                        json!({"error": reason, "dispatch_not_started": true,
+                            "expired_secret_access_grant_count": expired_secret_access_grant_count}),
                     )
                 },
             )
@@ -7118,6 +7313,8 @@ impl PgStore {
         .bind(run_id)
         .execute(&mut *tx)
         .await?;
+        let expired_secret_access_grant_count =
+            expire_run_secret_access_grants_tx(&mut tx, corp_id, run_id).await?;
         let run_event = append_event_tx(
             &mut tx,
             NewEvent {
@@ -7133,6 +7330,7 @@ impl PgStore {
                     json!({
                         "error": reason,
                         "dispatch_not_started": true,
+                        "expired_secret_access_grant_count": expired_secret_access_grant_count,
                     }),
                 )
             },
@@ -7222,6 +7420,7 @@ impl PgStore {
         }
 
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, input.corp_id).await?;
         let retained_upload =
             retained_provider_receipt::prepare_tx(&mut tx, &input, &artifact).await?;
         let RunnerEventInput {
@@ -7362,6 +7561,7 @@ impl PgStore {
         artifact_id: Uuid,
     ) -> Result<Option<DomainEvent>> {
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let scope = sqlx::query(
             "SELECT run_id,artifact_role,metadata FROM artifacts WHERE id=$1 AND corp_id=$2",
         )
@@ -7404,7 +7604,7 @@ impl PgStore {
                    artifact.artifact_role, artifact.file_name, artifact.metadata,
                    artifact.provenance_signature, artifact.retention_until,
                    artifact.status, artifact.staging_key,
-                   run.status AS run_status, run.agent_id,
+                   run.status AS run_status, run.agent_id, run.breaker_stage,
                    task.mission_id, mission.room_id
             FROM artifacts artifact
             JOIN runs run ON run.id = artifact.run_id
@@ -7428,6 +7628,7 @@ impl PgStore {
         let agent_id: Uuid = row.get("agent_id");
         let mission_id: Uuid = row.get("mission_id");
         let room_id: Uuid = row.get("room_id");
+        let breaker_stage: String = row.get("breaker_stage");
         let artifact = map_stored_artifact(row);
         let authority = if retained_upload {
             retained_provider_receipt::validate_artifact_tx(&mut tx, &artifact, false).await
@@ -7450,6 +7651,14 @@ impl PgStore {
             tx.commit().await?;
             return Ok(None);
         }
+        ensure_run_not_hard_blocked_tx(
+            &mut tx,
+            corp_id,
+            run_id,
+            &breaker_stage,
+            "artifact finalization",
+        )
+        .await?;
         let ready_event_type = if artifact.artifact_role == "source_deliverable" {
             "run.deliverable"
         } else {
@@ -8011,36 +8220,12 @@ impl PgStore {
             mut payload,
         } = input;
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let factory_scope = if factory_run_failure::event_reconciles_factory(&event_type) {
             Some(factory_run_failure::RunScope::lock_tx(&mut tx, corp_id, run_id).await?)
         } else {
             None
         };
-        if event_type == "run.usage" {
-            let requester: Uuid = sqlx::query_scalar(
-                r#"
-                SELECT mission.requested_by
-                FROM runs run
-                JOIN tasks task ON task.id = run.task_id
-                JOIN missions mission ON mission.id = task.mission_id
-                WHERE run.id = $1 AND run.corp_id = $2 AND run.agent_id = $3
-                  AND run.runner_id = $4 AND run.assignment_token = $5
-                  AND run.status IN (
-                    'provisioning', 'starting', 'running',
-                    'waiting_for_input', 'waiting_for_approval', 'verifying'
-                  )
-                "#,
-            )
-            .bind(run_id)
-            .bind(corp_id)
-            .bind(agent_id)
-            .bind(&runner_id)
-            .bind(assignment_token)
-            .fetch_one(&mut *tx)
-            .await
-            .context("runner usage event does not match an active run")?;
-            lock_factory_keys_tx(&mut tx, &budget_scope_lock_keys(corp_id, requester)).await?;
-        }
         let row = sqlx::query(
             r#"
             SELECT r.task_id, r.verification_status AS run_verification_status,
@@ -8178,6 +8363,7 @@ impl PgStore {
             return Ok(RunnerEventOutcome {
                 event: None,
                 related_events: Vec::new(),
+                breaker_commands: Vec::new(),
             });
         };
         let mut related_events = Vec::new();
@@ -9008,6 +9194,11 @@ impl PgStore {
                 .await?;
             }
             "run.failed" => {
+                let failure_kind = payload
+                    .get("failure_kind")
+                    .map(|value| serde_json::from_value::<RunFailureKind>(value.clone()))
+                    .transpose()
+                    .context("invalid runner failure kind")?;
                 let summary = payload
                     .get("error")
                     .and_then(Value::as_str)
@@ -9049,8 +9240,12 @@ impl PgStore {
                     .bind(run_id)
                     .execute(&mut *tx)
                     .await?;
-                    let retry =
-                        should_retry_runner_failure(&breaker_stage, attempt_count, max_attempts);
+                    let retry = should_retry_runner_failure(
+                        &breaker_stage,
+                        attempt_count,
+                        max_attempts,
+                        failure_kind,
+                    );
                     sqlx::query("UPDATE tasks SET status = $1, updated_at = now() WHERE id = $2")
                         .bind(if retry { "ready" } else { "failed" })
                         .bind(task_id)
@@ -9143,10 +9338,17 @@ impl PgStore {
             _ => {}
         }
 
+        let breaker = if matches!(event_type.as_str(), "run.usage" | "run.tool_activity") {
+            aggregate_breaker::evaluate_tx(&mut tx, corp_id, run_id).await?
+        } else {
+            CircuitBreakerOutcome::default()
+        };
+        related_events.extend(breaker.events);
         tx.commit().await?;
         Ok(RunnerEventOutcome {
             event: Some(event),
             related_events,
+            breaker_commands: breaker.commands,
         })
     }
 
@@ -9167,6 +9369,7 @@ impl PgStore {
             ));
         }
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let row = sqlx::query(
             r#"
             SELECT approval.run_id, approval.room_id, approval.status, approval.expires_at,
@@ -9419,16 +9622,27 @@ impl PgStore {
         &self,
         runner_id: &str,
     ) -> Result<Vec<PendingRunnerCommand>> {
+        self.pending_runner_commands_excluding_runs(runner_id, &[])
+            .await
+    }
+
+    pub async fn pending_runner_commands_excluding_runs(
+        &self,
+        runner_id: &str,
+        blocked_runs: &[Uuid],
+    ) -> Result<Vec<PendingRunnerCommand>> {
         Ok(sqlx::query(
             r#"
             SELECT id, corp_id, runner_id, run_id, command_kind, payload
             FROM runner_commands
             WHERE runner_id = $1 AND status = 'pending'
+              AND NOT (run_id = ANY($2))
             ORDER BY created_at, id
             LIMIT 100
             "#,
         )
         .bind(runner_id)
+        .bind(blocked_runs)
         .fetch_all(&self.pool)
         .await?
         .into_iter()
@@ -9449,99 +9663,69 @@ impl PgStore {
     ) -> Result<RunnerCommandDispatchState> {
         let row = sqlx::query(
             r#"
-            SELECT command.status AS command_status, run.status AS run_status
+            SELECT command.status AS command_status, command.payload AS command_payload,
+                   run.status AS run_status,
+                   run.breaker_stage,
+                   COALESCE(command.command_kind='approval_decision'
+                     AND command.payload->'approved'='false'::jsonb
+                     AND EXISTS(SELECT 1 FROM action_approvals approval
+                       WHERE approval.id::text=command.payload->>'approval_id'
+                         AND approval.corp_id=command.corp_id
+                         AND approval.run_id=command.run_id
+                         AND approval.status IN ('rejected','expired')),false) AS negative_cleanup
             FROM runner_commands command
             LEFT JOIN runs run
               ON run.id = command.run_id AND run.corp_id = command.corp_id
              AND run.runner_id = command.runner_id
             WHERE command.id = $1 AND command.corp_id = $2
               AND command.run_id = $3 AND command.runner_id = $4
+              AND command.command_kind = $5
             "#,
         )
         .bind(command.id)
         .bind(command.corp_id)
         .bind(command.run_id)
         .bind(&command.runner_id)
+        .bind(&command.command_kind)
         .fetch_optional(&self.pool)
         .await?;
+        // Collection upload reservation adds one private, non-executable binding.
+        // Only the existing full collection-authority check may accept that delta;
+        // ordinary commands and every executable collection field remain exact.
+        if let Some(row) = row.as_ref()
+            && row.get::<Value, _>("command_payload") != command.payload
+            && !self
+                .retained_provider_receipt_dispatch_authorized(command)
+                .await?
+        {
+            return Ok(RunnerCommandDispatchState::Settled);
+        }
         Ok(match row {
+            Some(row)
+                if row.get::<String, _>("command_status") == "pending"
+                    && row.get::<Option<String>, _>("run_status").is_some()
+                    && row.get::<bool, _>("negative_cleanup") =>
+            {
+                RunnerCommandDispatchState::Pending
+            }
+            Some(row)
+                if row.get::<String, _>("command_status") == "pending"
+                    && matches!(
+                        command.command_kind.as_str(),
+                        "approval_decision" | "control_message"
+                    )
+                    && row
+                        .get::<Option<String>, _>("breaker_stage")
+                        .is_some_and(|stage| breaker_is_hard(&stage)) =>
+            {
+                RunnerCommandDispatchState::Obsolete
+            }
             Some(row) => runner_command_dispatch_state(
                 &row.get::<String, _>("command_status"),
                 row.get::<Option<String>, _>("run_status").as_deref(),
             ),
             None => RunnerCommandDispatchState::Settled,
         })
-    }
-
-    pub async fn control_command_lease_token(
-        &self,
-        command: &PendingRunnerCommand,
-    ) -> Result<Option<Uuid>> {
-        if command.command_kind != "control_message" {
-            return Ok(None);
-        }
-        let message_id = command
-            .payload
-            .get("message_id")
-            .and_then(Value::as_str)
-            .context("control message command omitted message_id")
-            .and_then(|value| Uuid::parse_str(value).context("control message id is invalid"))?;
-        let agent_id = command
-            .payload
-            .get("agent_id")
-            .and_then(Value::as_str)
-            .context("control message command omitted agent_id")
-            .and_then(|value| Uuid::parse_str(value).context("control agent id is invalid"))?;
-        let actor_id = command
-            .payload
-            .get("actor_id")
-            .and_then(Value::as_str)
-            .context("control message command omitted actor_id")
-            .and_then(|value| Uuid::parse_str(value).context("control actor id is invalid"))?;
-        let lease_version = command
-            .payload
-            .get("lease_version")
-            .and_then(Value::as_i64)
-            .context("control message command omitted lease_version")?;
-        sqlx::query_scalar(
-            r#"
-            SELECT lease.token
-            FROM runner_commands command
-            JOIN queued_messages message
-              ON message.command_id = command.id
-             AND message.id = $3
-             AND message.agent_id = $4
-             AND message.actor_id = $5
-            JOIN control_leases lease
-              ON lease.corp_id = command.corp_id
-             AND lease.agent_id = message.agent_id
-             AND lease.actor_id = message.actor_id
-             AND lease.lease_version = $6
-             AND lease.expires_at > now()
-            JOIN runs run
-              ON run.id = command.run_id
-             AND run.agent_id = message.agent_id
-             AND run.runner_id = command.runner_id
-             AND run.status IN ('starting', 'running', 'waiting_for_input',
-                                'waiting_for_approval', 'verifying')
-            WHERE command.id = $1
-              AND command.runner_id = $2
-              AND command.corp_id = $7
-              AND command.run_id = $8
-              AND command.status = 'pending'
-            "#,
-        )
-        .bind(command.id)
-        .bind(&command.runner_id)
-        .bind(message_id)
-        .bind(agent_id)
-        .bind(actor_id)
-        .bind(lease_version)
-        .bind(command.corp_id)
-        .bind(command.run_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(Into::into)
     }
 
     pub async fn fail_runner_command(
@@ -9830,247 +10014,10 @@ impl PgStore {
         run_id: Uuid,
     ) -> Result<CircuitBreakerOutcome> {
         let mut tx = self.pool.begin().await?;
-        let row = sqlx::query(
-            r#"
-            SELECT run.task_id, run.runner_id, run.breaker_stage,
-                   run.input_tokens + run.output_tokens AS run_tokens,
-                   run.cost_microusd AS run_cost,
-                   run.budget_tokens_limit AS run_token_limit,
-                   run.budget_cost_microusd_limit AS run_cost_limit,
-                   run.no_progress_events, run.repeated_tool_count,
-                   task.mission_id, mission.room_id, mission.requested_by,
-                   mission.budget_tokens AS mission_token_limit,
-                   mission.budget_cost_microusd AS mission_cost_limit,
-                   COALESCE(policy.actor_tokens_per_24h, 4000000) AS actor_token_limit,
-                   COALESCE(policy.actor_cost_microusd_per_24h, 10000000) AS actor_cost_limit,
-                   COALESCE(policy.corp_tokens_per_24h, 20000000) AS corp_token_limit,
-                   COALESCE(policy.corp_cost_microusd_per_24h, 100000000) AS corp_cost_limit,
-                   COALESCE(policy.no_progress_event_limit, 8) AS no_progress_limit,
-                   COALESCE(policy.repeated_tool_limit, 5) AS repeated_tool_limit
-            FROM runs run
-            JOIN tasks task ON task.id = run.task_id
-            JOIN missions mission ON mission.id = task.mission_id
-            LEFT JOIN corp_budget_policies policy ON policy.corp_id = run.corp_id
-            WHERE run.id = $1 AND run.corp_id = $2
-              AND run.status IN ('starting', 'running', 'waiting_for_input',
-                                 'waiting_for_approval', 'verifying')
-            FOR UPDATE OF run
-            "#,
-        )
-        .bind(run_id)
-        .bind(corp_id)
-        .fetch_optional(&mut *tx)
-        .await?;
-        let Some(row) = row else {
-            tx.commit().await?;
-            return Ok(CircuitBreakerOutcome {
-                command: None,
-                event: None,
-            });
-        };
-        let task_id: Uuid = row.get("task_id");
-        let mission_id: Uuid = row.get("mission_id");
-        let room_id: Uuid = row.get("room_id");
-        let requester: Uuid = row.get("requested_by");
-        let runner_id: String = row.get("runner_id");
-        let current_stage: String = row.get("breaker_stage");
-
-        let mission_usage = sqlx::query(
-            r#"
-            SELECT COALESCE(SUM(run.input_tokens + run.output_tokens), 0)::BIGINT AS tokens,
-                   COALESCE(SUM(run.cost_microusd), 0)::BIGINT AS cost
-            FROM runs run
-            JOIN tasks task ON task.id = run.task_id
-            WHERE task.mission_id = $1
-            "#,
-        )
-        .bind(mission_id)
-        .fetch_one(&mut *tx)
-        .await?;
-        let actor_usage = sqlx::query(
-            r#"
-            SELECT COALESCE(SUM(run.input_tokens + run.output_tokens), 0)::BIGINT AS tokens,
-                   COALESCE(SUM(run.cost_microusd), 0)::BIGINT AS cost
-            FROM runs run
-            JOIN tasks task ON task.id = run.task_id
-            JOIN missions mission ON mission.id = task.mission_id
-            WHERE mission.corp_id = $1 AND mission.requested_by = $2
-              AND run.created_at >= now() - interval '24 hours'
-            "#,
-        )
-        .bind(corp_id)
-        .bind(requester)
-        .fetch_one(&mut *tx)
-        .await?;
-        let corp_usage = sqlx::query(
-            r#"
-            SELECT COALESCE(SUM(input_tokens + output_tokens), 0)::BIGINT AS tokens,
-                   COALESCE(SUM(cost_microusd), 0)::BIGINT AS cost
-            FROM runs
-            WHERE corp_id = $1 AND created_at >= now() - interval '24 hours'
-            "#,
-        )
-        .bind(corp_id)
-        .fetch_one(&mut *tx)
-        .await?;
-
-        let inputs = [
-            (
-                "run_tokens",
-                row.get::<i64, _>("run_tokens"),
-                row.get::<i64, _>("run_token_limit"),
-            ),
-            (
-                "run_cost",
-                row.get::<i64, _>("run_cost"),
-                row.get::<i64, _>("run_cost_limit"),
-            ),
-            (
-                "mission_tokens",
-                mission_usage.get::<i64, _>("tokens"),
-                row.get::<i64, _>("mission_token_limit"),
-            ),
-            (
-                "mission_cost",
-                mission_usage.get::<i64, _>("cost"),
-                row.get::<i64, _>("mission_cost_limit"),
-            ),
-            (
-                "actor_tokens_24h",
-                actor_usage.get::<i64, _>("tokens"),
-                row.get::<i64, _>("actor_token_limit"),
-            ),
-            (
-                "actor_cost_24h",
-                actor_usage.get::<i64, _>("cost"),
-                row.get::<i64, _>("actor_cost_limit"),
-            ),
-            (
-                "corp_tokens_24h",
-                corp_usage.get::<i64, _>("tokens"),
-                row.get::<i64, _>("corp_token_limit"),
-            ),
-            (
-                "corp_cost_24h",
-                corp_usage.get::<i64, _>("cost"),
-                row.get::<i64, _>("corp_cost_limit"),
-            ),
-            (
-                "no_progress",
-                i64::from(row.get::<i32, _>("no_progress_events")),
-                i64::from(row.get::<i32, _>("no_progress_limit")),
-            ),
-            (
-                "repeated_tool",
-                i64::from(row.get::<i32, _>("repeated_tool_count")),
-                i64::from(row.get::<i32, _>("repeated_tool_limit")),
-            ),
-        ];
-        let Some((stage, reason, used, limit)) = strongest_breaker_stage(&inputs) else {
-            tx.commit().await?;
-            return Ok(CircuitBreakerOutcome {
-                command: None,
-                event: None,
-            });
-        };
-        if breaker_rank(stage) <= breaker_rank(&current_stage) {
-            tx.commit().await?;
-            return Ok(CircuitBreakerOutcome {
-                command: None,
-                event: None,
-            });
-        }
-        sqlx::query("UPDATE runs SET breaker_stage = $1, updated_at = now() WHERE id = $2")
-            .bind(stage)
-            .bind(run_id)
-            .execute(&mut *tx)
-            .await?;
-        if stage == "suspend" {
-            sqlx::query(
-                "UPDATE runs SET status = 'waiting_for_input' WHERE id = $1 AND status = 'running'",
-            )
-            .bind(run_id)
-            .execute(&mut *tx)
-            .await?;
-            sqlx::query("UPDATE tasks SET status = 'blocked' WHERE id = $1 AND status = 'running'")
-                .bind(task_id)
-                .execute(&mut *tx)
-                .await?;
-        }
-        let incident_id = Uuid::new_v4();
-        let input = json!({"metric": reason, "used": used, "limit": limit});
-        sqlx::query(
-            r#"
-            INSERT INTO circuit_breaker_incidents
-                (id, corp_id, mission_id, task_id, run_id, stage, reason, input)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            "#,
-        )
-        .bind(incident_id)
-        .bind(corp_id)
-        .bind(mission_id)
-        .bind(task_id)
-        .bind(run_id)
-        .bind(stage)
-        .bind(format!("{reason} reached {used} of {limit}"))
-        .bind(input.clone())
-        .execute(&mut *tx)
-        .await?;
-        let command_id = Uuid::new_v4();
-        let command = PendingRunnerCommand {
-            id: command_id,
-            corp_id,
-            runner_id: runner_id.clone(),
-            run_id,
-            command_kind: "circuit_breaker".to_owned(),
-            payload: json!({
-                "stage": stage,
-                "reason": format!("{reason} reached {used} of {limit}"),
-            }),
-        };
-        sqlx::query(
-            r#"
-            INSERT INTO runner_commands
-                (id, corp_id, runner_id, run_id, command_kind, payload, idempotency_key)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            "#,
-        )
-        .bind(command.id)
-        .bind(corp_id)
-        .bind(&command.runner_id)
-        .bind(run_id)
-        .bind(&command.command_kind)
-        .bind(&command.payload)
-        .bind(format!("breaker:{run_id}:{stage}"))
-        .execute(&mut *tx)
-        .await?;
-        let event = append_event_tx(
-            &mut tx,
-            NewEvent {
-                room_id: Some(room_id),
-                correlation_id: Some(mission_id),
-                ..NewEvent::new(
-                    corp_id,
-                    None,
-                    "run.breaker_transition",
-                    "run",
-                    run_id,
-                    format!("breaker-event:{run_id}:{stage}"),
-                    json!({
-                        "stage": stage,
-                        "reason": format!("{reason} reached {used} of {limit}"),
-                        "input": input,
-                        "command_id": command_id,
-                    }),
-                )
-            },
-        )
-        .await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
+        let outcome = aggregate_breaker::evaluate_tx(&mut tx, corp_id, run_id).await?;
         tx.commit().await?;
-        Ok(CircuitBreakerOutcome {
-            command: Some(command),
-            event,
-        })
+        Ok(outcome)
     }
 
     pub async fn decide_verification(
@@ -10089,6 +10036,7 @@ impl PgStore {
             ));
         }
         let mut tx = self.pool.begin().await?;
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let factory_scope =
             factory_run_failure::RunScope::lock_tx(&mut tx, corp_id, run_id).await?;
         let row = sqlx::query(
@@ -10452,11 +10400,14 @@ impl PgStore {
     ) -> Result<LeaseMutationOutcome> {
         let mut tx = self.pool.begin().await?;
         assert_actor_agent_scope_tx(&mut tx, corp_id, actor_id, agent_id).await?;
+        // Retain the version fence: deleting this row would let reacquisition
+        // reuse version 1 and revive an older queued command by the same actor.
         let released = sqlx::query(
             r#"
-            DELETE FROM control_leases
+            UPDATE control_leases
+            SET expires_at = clock_timestamp(), lease_version = lease_version + 1
             WHERE agent_id = $1 AND corp_id = $2 AND actor_id = $3
-              AND token = $4 AND expires_at > now()
+              AND token = $4 AND expires_at > clock_timestamp()
             RETURNING agent_id
             "#,
         )
@@ -11040,6 +10991,26 @@ impl PgStore {
 
         let mut tx = self.pool.begin().await?;
         assert_actor_agent_scope_tx(&mut tx, corp_id, actor_id, agent_id).await?;
+        // Lock the run before its lease, as queueing and final dispatch do.
+        let row = sqlx::query(
+            r#"
+            SELECT r.id, r.runner_id, t.mission_id, m.room_id
+            FROM runs r
+            JOIN tasks t ON t.id = r.task_id
+            JOIN missions m ON m.id = t.mission_id
+            WHERE r.agent_id = $1 AND r.corp_id = $2
+              AND r.status IN ('provisioning', 'starting', 'running',
+                               'waiting_for_input', 'waiting_for_approval', 'verifying')
+            ORDER BY r.created_at DESC
+            LIMIT 1
+            FOR UPDATE OF r
+            "#,
+        )
+        .bind(agent_id)
+        .bind(corp_id)
+        .fetch_optional(&mut *tx)
+        .await?
+        .context("agent has no active run to interrupt")?;
         let lease = sqlx::query(
             r#"
             SELECT agent_id, corp_id, actor_id, token, lease_version, expires_at
@@ -11061,25 +11032,6 @@ impl PgStore {
             return Err(anyhow!("stale or unauthorized control lease token"));
         }
 
-        let row = sqlx::query(
-            r#"
-            SELECT r.id, r.runner_id, t.mission_id, m.room_id
-            FROM runs r
-            JOIN tasks t ON t.id = r.task_id
-            JOIN missions m ON m.id = t.mission_id
-            WHERE r.agent_id = $1 AND r.corp_id = $2
-              AND r.status IN ('provisioning', 'starting', 'running',
-                               'waiting_for_input', 'waiting_for_approval', 'verifying')
-            ORDER BY r.created_at DESC
-            LIMIT 1
-            FOR UPDATE OF r
-            "#,
-        )
-        .bind(agent_id)
-        .bind(corp_id)
-        .fetch_optional(&mut *tx)
-        .await?
-        .context("agent has no active run to interrupt")?;
         let run_id: Uuid = row.get("id");
         let runner_id: String = row.get("runner_id");
         let mission_id: Uuid = row.get("mission_id");
@@ -12433,6 +12385,8 @@ fn normalize_factory_policy(policy: Value) -> Result<Value> {
         _ => return Err(anyhow!("factory policy snapshot must be a JSON object")),
     };
     let connection_id = factory_workspace_connection_id(&policy).map_err(anyhow::Error::msg)?;
+    let claim_authority_id =
+        crony_domain::factory_claim_authority_id(&policy).map_err(anyhow::Error::msg)?;
     crony_domain::factory_max_task_attempts(&policy).map_err(anyhow::Error::msg)?;
     let policy_object = policy
         .as_object_mut()
@@ -12441,6 +12395,12 @@ fn normalize_factory_policy(policy: Value) -> Result<Value> {
         policy_object.insert(
             "workspace_connection_id".to_owned(),
             Value::String(connection_id.to_string()),
+        );
+    }
+    if let Some(authority_id) = claim_authority_id {
+        policy_object.insert(
+            "claim_authority_id".to_owned(),
+            Value::String(authority_id.to_string()),
         );
     }
     let source_base_ref = factory_policy_required_string(policy_object, "source_base_ref", 240)?;
@@ -12725,11 +12685,13 @@ async fn factory_work_item_tx(
         .bind(corp_id)
         .fetch_optional(&mut **tx)
         .await?;
-    row.map(|row| {
-        let claim_token = row.get("claim_token");
-        Ok((map_factory_work_item(row)?, claim_token))
-    })
-    .transpose()
+    let Some(row) = row else {
+        return Ok(None);
+    };
+    let claim_token = row.get("claim_token");
+    let item = map_factory_work_item(row)?;
+    factory_authority::validate_tx(tx, corp_id, &item.policy).await?;
+    Ok(Some((item, claim_token)))
 }
 
 async fn workspace_lineage_tx(
@@ -13407,7 +13369,7 @@ fn ensure_factory_recovery_verification_policy_not_weakened(
     replacement: &VerificationPolicy,
 ) -> Result<()> {
     if previous.manual_gate != replacement.manual_gate {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "factory recovery cannot remove or change the persisted manual verification gate"
         ));
     }
@@ -13418,7 +13380,7 @@ fn ensure_factory_recovery_verification_policy_not_weakened(
             .zip(&replacement.checks)
             .any(|(left, right)| left.kind() != right.kind())
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "factory recovery verifier revisions must preserve check count and kinds"
         ));
     }
@@ -14744,6 +14706,7 @@ fn parse_id(value: &str) -> Result<Uuid> {
 fn map_corp(row: sqlx::postgres::PgRow) -> Corp {
     Corp {
         id: row.get("id"),
+        claim_authority_id: Some(row.get("claim_authority_id")),
         slug: row.get("slug"),
         name: row.get("name"),
         created_at: row.get("created_at"),
@@ -14786,6 +14749,7 @@ fn map_agent(row: sqlx::postgres::PgRow) -> Result<Agent> {
         created_at: row.get("created_at"),
         mission_id: row.get("mission_id"),
         pinned: row.get("pinned"),
+        pin_version: row.get("pin_version"),
         retired_at: row.get("retired_at"),
     })
 }
@@ -14850,7 +14814,7 @@ pub struct DecideMissionBudgetRevisionInput {
     pub decision_key: Uuid,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct MissionBudgetRevisionOutcome {
     pub revision: MissionBudgetRevision,
     pub event: Option<DomainEvent>,
@@ -15532,6 +15496,25 @@ fn parse_pull_request_publication_state(value: &str) -> Result<PullRequestPublic
     }
 }
 
+// Caller holds the run lock and has accepted a fresh pre-dispatch failure.
+// Preserve grant rows and the original grant audit. This is metadata expiry,
+// not revocation of secret values that may already have left the server.
+async fn expire_run_secret_access_grants_tx(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    corp_id: Uuid,
+    run_id: Uuid,
+) -> Result<u64> {
+    Ok(sqlx::query(
+        "UPDATE secret_access_grants SET expires_at = now()
+         WHERE corp_id = $1 AND run_id = $2 AND expires_at > now()",
+    )
+    .bind(corp_id)
+    .bind(run_id)
+    .execute(&mut **tx)
+    .await?
+    .rows_affected())
+}
+
 fn breaker_rank(stage: &str) -> u8 {
     match stage {
         "steer" => 1,
@@ -15550,8 +15533,13 @@ fn mission_allows_dispatch(status: &str, explicit_dispatch: bool) -> bool {
     status == "running" || (explicit_dispatch && status == "ready")
 }
 
-fn should_retry_runner_failure(stage: &str, attempt_count: i32, max_attempts: i32) -> bool {
-    attempt_count < max_attempts && !breaker_is_hard(stage)
+fn should_retry_runner_failure(
+    stage: &str,
+    attempt_count: i32,
+    max_attempts: i32,
+    failure_kind: Option<RunFailureKind>,
+) -> bool {
+    failure_kind.is_none() && attempt_count < max_attempts && !breaker_is_hard(stage)
 }
 
 fn ensure_breaker_allows_human_progress(stage: &str, action: &str) -> Result<()> {
@@ -15563,11 +15551,10 @@ fn ensure_breaker_allows_human_progress(stage: &str, action: &str) -> Result<()>
     Ok(())
 }
 
-fn budget_scope_lock_keys(corp_id: Uuid, requester: Uuid) -> Vec<String> {
-    vec![
-        format!("budget:actor:{corp_id}:{requester}"),
-        format!("budget:corp:{corp_id}"),
-    ]
+fn budget_scope_lock_keys(corp_id: Uuid, _requester: Uuid) -> Vec<String> {
+    // The Corp gate already serializes requester budgets. A separate actor gate
+    // would invert lock order when verifier ingestion reenters budget authority.
+    vec![format!("budget:corp:{corp_id}")]
 }
 
 fn lineage_run_is_pre_dispatch_failure(
@@ -15886,6 +15873,9 @@ mod tests {
                 station TEXT, current_run_id UUID);
             CREATE TABLE queued_messages (id UUID PRIMARY KEY, corp_id UUID,
                 run_id UUID, status TEXT);
+            -- Empty grants still participate in the pre-dispatch failure transaction.
+            CREATE TABLE secret_access_grants (id UUID PRIMARY KEY, corp_id UUID NOT NULL,
+                run_id UUID NOT NULL, expires_at TIMESTAMPTZ NOT NULL);
             CREATE TABLE factory_work_items (id UUID PRIMARY KEY, corp_id UUID,
                 mission_id UUID UNIQUE, state TEXT, version BIGINT DEFAULT 1,
                 failure_detail TEXT, updated_at TIMESTAMPTZ DEFAULT now());
@@ -15926,6 +15916,161 @@ mod tests {
         .await
         .expect("isolated pre-dispatch fixture");
         super::PgStore { pool }
+    }
+
+    #[sqlx::test(migrations = false)]
+    #[ignore = "requires an explicitly owned PostgreSQL test database"]
+    async fn issue297_dependency_receipt_replay_preserves_active_run_history(pool: sqlx::PgPool) {
+        let store = predispatch_failure_fixture(pool).await;
+        let corp = Uuid::from_u128(1);
+        let run = Uuid::from_u128(4);
+        let digest = "a".repeat(64);
+        let handoffs = vec![json!({"artifact_id": Uuid::new_v4(), "sha256": "verified"})];
+        sqlx::query("UPDATE runs SET status = 'starting' WHERE id = $1")
+            .bind(run)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        let event = store
+            .record_dependency_context(corp, run, &digest, handoffs.clone())
+            .await
+            .unwrap()
+            .unwrap();
+        for status in [
+            "starting",
+            "running",
+            "waiting_for_input",
+            "waiting_for_approval",
+            "verifying",
+        ] {
+            sqlx::query("UPDATE runs SET status = $1 WHERE id = $2")
+                .bind(status)
+                .bind(run)
+                .execute(&store.pool)
+                .await
+                .unwrap();
+            assert!(
+                store
+                    .record_dependency_context(corp, run, &digest, handoffs.clone())
+                    .await
+                    .unwrap()
+                    .is_none(),
+                "{status}"
+            );
+            assert!(
+                store
+                    .record_dependency_context(corp, run, &"b".repeat(64), handoffs.clone())
+                    .await
+                    .is_err(),
+                "{status}: changed content must fail"
+            );
+            assert!(
+                store
+                    .record_dependency_context(
+                        corp,
+                        run,
+                        &digest,
+                        vec![json!({"artifact_id": Uuid::new_v4()})]
+                    )
+                    .await
+                    .is_err(),
+                "{status}: changed authority must fail"
+            );
+        }
+        assert!(
+            store
+                .record_dependency_context(Uuid::new_v4(), run, &digest, handoffs.clone())
+                .await
+                .is_err()
+        );
+        let missing = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO runs (id, corp_id, task_id, status) VALUES ($1, $2, $3, 'running')",
+        )
+        .bind(missing)
+        .bind(corp)
+        .bind(Uuid::from_u128(3))
+        .execute(&store.pool)
+        .await
+        .unwrap();
+        assert!(
+            store
+                .record_dependency_context(corp, missing, &digest, handoffs.clone())
+                .await
+                .is_err()
+        );
+        sqlx::query("UPDATE runs SET status = 'failed' WHERE id = $1")
+            .bind(run)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        assert!(
+            store
+                .record_dependency_context(corp, run, &digest, handoffs)
+                .await
+                .is_err()
+        );
+        let payloads: Vec<serde_json::Value> = sqlx::query_scalar("SELECT payload FROM events")
+            .fetch_all(&store.pool)
+            .await
+            .unwrap();
+        assert_eq!(payloads, vec![event.payload]);
+    }
+
+    #[sqlx::test(migrations = false)]
+    #[ignore = "requires an explicitly owned PostgreSQL test database"]
+    async fn issue297_incompatible_recovery_cannot_hide_other_runs_after_a_full_page(
+        pool: sqlx::PgPool,
+    ) {
+        sqlx::raw_sql(
+            "CREATE TABLE runner_commands (
+                id UUID PRIMARY KEY, corp_id UUID, runner_id TEXT, run_id UUID,
+                command_kind TEXT, payload JSONB, status TEXT, created_at TIMESTAMPTZ);",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        let store = super::PgStore { pool };
+        let blocked = Uuid::new_v4();
+        let ready = Uuid::new_v4();
+        let corp = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO runner_commands
+             SELECT gen_random_uuid(), $1, 'fixture', $2, 'factory_verification_recovery',
+                    '{}'::jsonb, 'pending', '2000-01-01'::timestamptz
+             FROM generate_series(1, 101)",
+        )
+        .bind(corp)
+        .bind(blocked)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO runner_commands VALUES
+             ($1, $2, 'fixture', $3, 'approval_decision', '{}'::jsonb,
+              'pending', '2001-01-01'::timestamptz)",
+        )
+        .bind(Uuid::new_v4())
+        .bind(corp)
+        .bind(ready)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+        let first = store.pending_runner_commands("fixture").await.unwrap();
+        assert_eq!(first.len(), 100);
+        assert!(first.iter().all(|command| command.run_id == blocked));
+        let next = store
+            .pending_runner_commands_excluding_runs("fixture", &[blocked])
+            .await
+            .unwrap();
+        assert_eq!(next.len(), 1);
+        assert_eq!(next[0].run_id, ready);
+        let pending: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM runner_commands WHERE status = 'pending'")
+                .fetch_one(&store.pool)
+                .await
+                .unwrap();
+        assert_eq!(pending, 102, "capability fencing must not consume commands");
     }
 
     async fn predispatch_fixture_state(store: &super::PgStore) -> serde_json::Value {
@@ -16336,102 +16481,145 @@ mod tests {
         assert!(!text.chars().any(char::is_control));
     }
 
-    // These opt-in SQL regressions use only SQLx's disposable test database and
-    // exercise the real selection method, not a second implementation of its query.
+    include!("dependency_artifact_test_fixture.rs");
+
+    // SQLx owns these opt-in test databases. The server's combined fixture uses
+    // the same schema only after its separate pre-connection ownership guard.
     async fn dependency_artifact_fixture(pool: sqlx::PgPool) -> super::PgStore {
+        initialize_dependency_artifact_fixture(&pool).await;
+        super::PgStore { pool }
+    }
+
+    #[sqlx::test(migrations = false)]
+    #[ignore = "requires an explicitly owned PostgreSQL test database"]
+    async fn issue297_typed_handoffs_never_fall_back_to_provider_receipts(pool: sqlx::PgPool) {
+        let store = dependency_artifact_fixture(pool).await;
         let corp = Uuid::from_u128(1);
-        let mission = Uuid::from_u128(2);
-        let parent = Uuid::from_u128(3);
         let child = Uuid::from_u128(4);
-        let provider = Uuid::from_u128(5);
-        let recovered = Uuid::from_u128(6);
-        let artifact = Uuid::from_u128(7);
-        let agent = Uuid::from_u128(8);
-        let recovery = Uuid::from_u128(9);
-        let item = Uuid::from_u128(10);
-        let peer = Uuid::from_u128(11);
-        let peer_run = Uuid::from_u128(12);
-        let peer_artifact = Uuid::from_u128(13);
-        sqlx::raw_sql(&format!(
-            r#"
-            CREATE TABLE tasks (
-                id UUID PRIMARY KEY, corp_id UUID DEFAULT '{corp}',
-                mission_id UUID DEFAULT '{mission}', plan_key TEXT, title TEXT DEFAULT 'handoff',
-                contract JSONB DEFAULT '{{}}', status TEXT DEFAULT 'completed',
-                verification_status TEXT DEFAULT 'passed'
-            );
-            CREATE TABLE task_dependencies (task_id UUID, depends_on_task_id UUID);
-            CREATE TABLE runs (
-                id UUID PRIMARY KEY, corp_id UUID DEFAULT '{corp}', task_id UUID,
-                agent_id UUID DEFAULT '{agent}', runner_id TEXT DEFAULT 'fixture-runner',
-                workspace_run_id UUID DEFAULT '{provider}', resumed_from_run_id UUID,
-                source_repository TEXT DEFAULT 'fixture/repo', source_base_ref TEXT DEFAULT 'main',
-                source_base_commit TEXT DEFAULT 'base', workspace_base_commit TEXT DEFAULT 'base',
-                status TEXT DEFAULT 'completed', verification_status TEXT DEFAULT 'passed',
-                execution_mode TEXT DEFAULT 'provider', summary TEXT,
-                artifact_id UUID, artifact_sha256 TEXT DEFAULT 'digest',
-                artifact_media_type TEXT DEFAULT 'text/plain',
-                artifact_signature TEXT DEFAULT 'fixture-signature',
-                verification_sha256 TEXT DEFAULT 'verification', deliverable_sha256 TEXT,
-                created_at TIMESTAMPTZ DEFAULT '2000-01-01 00:00:00+00'
-            );
-            CREATE TABLE artifacts (
-                id UUID PRIMARY KEY, corp_id UUID DEFAULT '{corp}', task_id UUID, run_id UUID,
-                producer_agent_id UUID DEFAULT '{agent}',
-                producer_runner_id TEXT DEFAULT 'fixture-runner', verifier TEXT DEFAULT 'runner',
-                object_key TEXT DEFAULT 'fixture', uri TEXT DEFAULT 'fixture',
-                sha256 TEXT DEFAULT 'digest', media_type TEXT DEFAULT 'text/plain',
-                bytes BIGINT DEFAULT 1, artifact_role TEXT DEFAULT 'provider_evidence',
-                file_name TEXT DEFAULT 'result.md', metadata JSONB DEFAULT '{{}}',
-                provenance_signature TEXT DEFAULT 'fixture-signature',
-                retention_until TIMESTAMPTZ DEFAULT (now() + interval '1 day'),
-                status TEXT DEFAULT 'ready'
-            );
-            CREATE TABLE source_deliverables (
-                run_id UUID, task_id UUID, corp_id UUID, artifact_id UUID, form TEXT,
-                base_commit TEXT, verification_sha256 TEXT
-            );
-            CREATE TABLE factory_work_items (
-                id UUID PRIMARY KEY, corp_id UUID DEFAULT '{corp}', mission_id UUID DEFAULT '{mission}'
-            );
-            CREATE TABLE factory_verification_recoveries (
-                id UUID PRIMARY KEY, corp_id UUID DEFAULT '{corp}',
-                mission_id UUID DEFAULT '{mission}', task_id UUID DEFAULT '{parent}',
-                factory_work_item_id UUID DEFAULT '{item}', source_run_id UUID,
-                replacement_run_id UUID, mode TEXT DEFAULT 'verifier_only',
-                status TEXT DEFAULT 'completed'
-            );
-            INSERT INTO tasks (id, plan_key) VALUES
-                ('{parent}', 'specialist-a'), ('{peer}', 'specialist-b'), ('{child}', 'synthesis');
-            INSERT INTO task_dependencies VALUES ('{child}', '{parent}'), ('{child}', '{peer}');
-            INSERT INTO runs (id, task_id, artifact_id, status, verification_status)
-                VALUES ('{provider}', '{parent}', '{artifact}', 'failed', 'failed');
-            INSERT INTO runs (id, task_id, artifact_id, execution_mode, resumed_from_run_id, created_at)
-                VALUES ('{recovered}', '{parent}', '{artifact}', 'verification_only',
-                        '{provider}', '2000-01-03 00:00:00+00');
-            INSERT INTO runs (id, task_id, artifact_id, workspace_run_id)
-                VALUES ('{peer_run}', '{peer}', '{peer_artifact}', '{peer_run}');
-            INSERT INTO artifacts (id, task_id, run_id)
-                VALUES ('{artifact}', '{parent}', '{provider}'), ('{peer_artifact}', '{peer}', '{peer_run}');
-            INSERT INTO factory_work_items (id) VALUES ('{item}');
-            INSERT INTO factory_verification_recoveries (id, source_run_id, replacement_run_id)
-                VALUES ('{recovery}', '{provider}', '{recovered}');
-            "#
-        ))
-        .execute(&pool)
+        let parent = Uuid::from_u128(11);
+        let run = Uuid::from_u128(12);
+        let artifact = Uuid::from_u128(13);
+        sqlx::query(
+            "UPDATE tasks SET contract = jsonb_set(contract, '{deliverable}', $1) WHERE id = $2",
+        )
+        .bind(
+            json!({"form":"typed_artifact_set","commit_after_verification":false,
+                "paths":["handoffs/research.md"]}),
+        )
+        .bind(parent)
+        .execute(&store.pool)
         .await
-        .expect("create isolated dependency metadata fixture");
-        sqlx::query("UPDATE tasks SET contract = $1")
-            .bind(json!({
-                "objective": "handoff", "expected_output": "result.md",
-                "acceptance_tests": ["verified artifact"], "allowed_tools": ["filesystem"],
-                "prohibited_actions": [], "references": [], "write_scope": ["result.md"],
-                "budget_tokens": 100, "deadline_at": null, "escalation": "stop"
-            }))
-            .execute(&pool)
+        .unwrap();
+        sqlx::query("UPDATE runs SET deliverable_sha256 = 'digest' WHERE id = $1")
+            .bind(run)
+            .execute(&store.pool)
             .await
             .unwrap();
-        super::PgStore { pool }
+        sqlx::query("UPDATE artifacts SET artifact_role = 'source_deliverable' WHERE id = $1")
+            .bind(artifact)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+        // A passing provider receipt is not a substitute for the declared source.
+        assert!(store.dependency_artifacts(corp, child).await.is_err());
+        sqlx::query(
+            "INSERT INTO source_deliverables (run_id, task_id, corp_id, artifact_id, form,
+             base_commit, verification_sha256) VALUES ($1,$2,$3,$4,'typed_artifact_set','base','verification')",
+        )
+        .bind(run).bind(parent).bind(corp).bind(artifact).execute(&store.pool).await.unwrap();
+        assert_eq!(
+            store.dependency_artifacts(corp, child).await.unwrap()[1]
+                .artifact
+                .id,
+            artifact
+        );
+        for (table, key, id, column, value) in [
+            ("tasks", "id", parent, "status", "'cancelled'"),
+            ("tasks", "id", parent, "status", "'failed'"),
+            ("tasks", "id", parent, "verification_status", "'failed'"),
+            ("runs", "id", run, "status", "'cancelled'"),
+            ("runs", "id", run, "verification_status", "'pending'"),
+            ("runs", "id", run, "deliverable_sha256", "'changed'"),
+            (
+                "artifacts",
+                "id",
+                artifact,
+                "run_id",
+                "'00000000-0000-0000-0000-000000000005'",
+            ),
+            (
+                "artifacts",
+                "id",
+                artifact,
+                "corp_id",
+                "'00000000-0000-0000-0000-000000000099'",
+            ),
+            (
+                "artifacts",
+                "id",
+                artifact,
+                "task_id",
+                "'00000000-0000-0000-0000-000000000003'",
+            ),
+            ("artifacts", "id", artifact, "status", "'staged'"),
+            (
+                "artifacts",
+                "id",
+                artifact,
+                "artifact_role",
+                "'provider_evidence'",
+            ),
+            ("source_deliverables", "run_id", run, "artifact_id", "NULL"),
+            (
+                "source_deliverables",
+                "run_id",
+                run,
+                "base_commit",
+                "'wrong-base'",
+            ),
+            (
+                "source_deliverables",
+                "run_id",
+                run,
+                "verification_sha256",
+                "'wrong-verifier'",
+            ),
+            (
+                "source_deliverables",
+                "run_id",
+                run,
+                "task_id",
+                "'00000000-0000-0000-0000-000000000003'",
+            ),
+        ] {
+            let original: String = sqlx::query_scalar(&format!(
+                "SELECT quote_nullable({column}) FROM {table} WHERE {key} = $1"
+            ))
+            .bind(id)
+            .fetch_one(&store.pool)
+            .await
+            .unwrap();
+            sqlx::query(&format!(
+                "UPDATE {table} SET {column} = {value} WHERE {key} = $1"
+            ))
+            .bind(id)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+            let result = store.dependency_artifacts(corp, child).await;
+            sqlx::query(&format!(
+                "UPDATE {table} SET {column} = {original} WHERE {key} = $1"
+            ))
+            .bind(id)
+            .execute(&store.pool)
+            .await
+            .unwrap();
+            assert!(result.is_err(), "{table}.{column}: {value}");
+            assert_eq!(
+                store.dependency_artifacts(corp, child).await.unwrap().len(),
+                2
+            );
+        }
     }
 
     #[sqlx::test(migrations = false)]
@@ -16875,11 +17063,11 @@ mod tests {
     #[test]
     fn hard_breakers_block_retries_and_human_completion_paths() {
         for stage in ["suspend", "stop"] {
-            assert!(!should_retry_runner_failure(stage, 1, 3));
+            assert!(!should_retry_runner_failure(stage, 1, 3, None));
             assert!(ensure_breaker_allows_human_progress(stage, "decision").is_err());
         }
-        assert!(should_retry_runner_failure("healthy", 1, 3));
-        assert!(!should_retry_runner_failure("healthy", 3, 3));
+        assert!(should_retry_runner_failure("healthy", 1, 3, None));
+        assert!(!should_retry_runner_failure("healthy", 3, 3, None));
         assert!(ensure_breaker_allows_human_progress("constrain", "decision").is_ok());
         assert!(lineage_run_is_pre_dispatch_failure(
             "failed",
@@ -16899,6 +17087,24 @@ mod tests {
             Some("preserved"),
             Some("dispatch_not_started")
         ));
+    }
+
+    #[test]
+    fn issue89_deliverable_export_failure_never_retries_in_a_fresh_workspace() {
+        for stage in ["healthy", "steer", "constrain", "suspend", "stop"] {
+            for attempt in 1..=3 {
+                assert!(!should_retry_runner_failure(
+                    stage,
+                    attempt,
+                    3,
+                    Some(crony_domain::RunFailureKind::DeliverableExport),
+                ));
+                assert_eq!(
+                    should_retry_runner_failure(stage, attempt, 3, None),
+                    attempt < 3 && !matches!(stage, "suspend" | "stop"),
+                );
+            }
+        }
     }
 
     #[test]

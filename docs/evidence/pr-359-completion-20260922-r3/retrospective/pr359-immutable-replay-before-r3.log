@@ -1,0 +1,71 @@
+✖ Pin reports readFails before issuing a mutation (2.6729ms)
+✖ Pin reports writeFails before issuing a mutation (0.6609ms)
+✔ Pin retries a lost response with the same saved request key and clears only after success (1.1812ms)
+node:internal/modules/package_json_reader:331
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from <reviewed-worktree>\tools\e2e_agent_pinning.test.mjs
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)
+    at packageResolve (node:internal/modules/esm/resolve:784:25)
+    at moduleResolve (node:internal/modules/esm/resolve:873:18)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.21.0
+✖ tools\e2e_agent_pinning.test.mjs (143.7934ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1259.536
+
+✖ failing tests:
+
+test at apps\web\src\agentPinOperation.test.mjs:42:3
+✖ Pin reports readFails before issuing a mutation (2.6729ms)
+  AssertionError [ERR_ASSERTION]: No request may use a key that cannot be persisted
+
+  1 !== 0
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/apps/web/src/agentPinOperation.test.mjs:45:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\web\src\agentPinOperation.test.mjs:42:3
+✖ Pin reports writeFails before issuing a mutation (0.6609ms)
+  AssertionError [ERR_ASSERTION]: No request may use a key that cannot be persisted
+
+  1 !== 0
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/apps/web/src/agentPinOperation.test.mjs:45:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\e2e_agent_pinning.test.mjs:1:1
+✖ tools\e2e_agent_pinning.test.mjs (143.7934ms)
+  'test failed'

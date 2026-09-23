@@ -1,0 +1,60 @@
+{
+  "pr": 355,
+  "tested_staged_tree": "4d03d8222e77b90d375c9886bf13e9bab844c9af",
+  "source_head": "2a419712f224f317329cadb66fa33d3dfb729309",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr355-20260922-r2",
+  "started_at_utc": "2026-09-22T17:16:04.4313114+00:00",
+  "status": "failed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "log": "<private-evidence>\\pr355-native-r2-focused.log",
+      "name": "focused-native-acceptance",
+      "exit_code": 1,
+      "sha256": "aacac76bb34b0437c58071986ec0c6f19a577ba3af25c006f027285e8d923748"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "05bae612d688b3866759bacd6275433e3e46a6e12cbcc809221f46031c41cecd",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "15cc3a3168607e73a41f4f0ea1756bd1fc40e369631bcd4aefabcf601c07b655",
+      "file": "crony-runner.exe"
+    }
+  ],
+  "reused_verification": {
+    "receipt": "<private-evidence>\\pr355-native-r1-lifecycle.json",
+    "receipt_sha256": "e61dce63a3bbd206fb89734fab5bbebfe6f2c4b5e85606dc994f9c60dd11055a",
+    "checks": [
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr355-native-r1-workspace-cache-refresh.log",
+        "name": "workspace-cache-refresh",
+        "sha256": "32ce4dd47cc7d35d4919f8db5b23be5292b2df57b8e455b23908a1ead8a25575"
+      },
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr355-native-r1-build.log",
+        "name": "native-build",
+        "sha256": "e7954de57fdf5996942ae8ab90fe5ffffd855f7da9ef9ebfb0f406c7b7772dcf"
+      },
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr355-native-r1-sqlx-workspace-cache-refresh.log",
+        "name": "sqlx-workspace-cache-refresh",
+        "sha256": "dca9cf349b5d0f91ef3086b1993543303000e4091bbc43af1f6284ac739b7790"
+      },
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr355-native-r1-sqlx.log",
+        "name": "owned-postgresql-regressions",
+        "sha256": "656deb9b13f2b84faa6550b44b0d30e8fc88803acb0878082e27d5a17c54e7df"
+      }
+    ],
+    "reason": "Source and binary hashes match. Successful build/database checks are reused explicitly; only the corrected private acceptance driver runs again on a new owned fixture."
+  },
+  "failure": "focused-native-acceptance failed; preserve logs and fixture.",
+  "finished_at_utc": "2026-09-22T17:16:27.9863146+00:00"
+}

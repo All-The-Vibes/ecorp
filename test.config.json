@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "nodeTestRoots": ["tools/", "apps/web/src/", "scenarios/repo-steward/", "tests/readiness/", ".github/skills/"],
+  "nodeTestSuffixes": [".test.mjs", ".test.js"],
+  "nodeTestExcludes": ["tools/fixtures/delegated-keycloak/test/live.test.mjs", "tools/fixtures/pr226-evidence-baseline/"],
+  "rustCommand": ["cargo", "test", "--workspace", "--locked"],
+  "ignoredTests": "Opt-in SQLx/native probes are not passes. Use only explicitly owned fixtures; never supply a retained application database. The delegated Keycloak live suite runs through its owned setup and test:live command. The PR226 baseline runs through tools/replay_pr226_evidence_baseline.py, which verifies its expected historical failures. Their unit-test exclusions are not passes."
+}

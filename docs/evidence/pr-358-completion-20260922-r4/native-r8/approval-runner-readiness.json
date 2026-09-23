@@ -1,0 +1,136 @@
+{
+  "runner": {
+    "id": "pr265-activity-qa",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "hostname": "CPC-shyam-9UD55",
+    "os": "windows",
+    "capabilities": [
+      {
+        "name": "claude-code",
+        "available": false,
+        "detail": "Anthropic Claude Code; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes; model discovery failed: Anthropic Claude Code availability probe failed: The system cannot find the file specified. (os error 2)",
+        "models": []
+      },
+      {
+        "name": "codex",
+        "available": false,
+        "detail": "OpenAI Codex app-server; spawn=no, stream=no, steer=no, interrupt=no, stop=no, resume=no, usage=no, artifacts=no",
+        "models": []
+      },
+      {
+        "name": "fake-process",
+        "available": true,
+        "detail": "Deterministic process; spawn=yes, stream=yes, steer=yes, interrupt=no, stop=yes, resume=no, usage=no, artifacts=yes",
+        "models": []
+      },
+      {
+        "name": "github-copilot",
+        "available": true,
+        "detail": "GitHub Copilot SDK; spawn=yes, stream=yes, steer=yes, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes",
+        "models": [
+          {
+            "id": "copilot-test-fast",
+            "name": "Copilot Test Fast",
+            "policy_state": "enabled",
+            "policy_terms": null,
+            "supports_vision": false,
+            "supports_reasoning_effort": false,
+            "max_prompt_tokens": null,
+            "max_context_window_tokens": 64000,
+            "supported_reasoning_efforts": [],
+            "default_reasoning_effort": null,
+            "billing_multiplier": 1.0
+          },
+          {
+            "id": "copilot-test-reasoning",
+            "name": "Copilot Test Reasoning",
+            "policy_state": "enabled",
+            "policy_terms": null,
+            "supports_vision": true,
+            "supports_reasoning_effort": true,
+            "max_prompt_tokens": 120000,
+            "max_context_window_tokens": 128000,
+            "supported_reasoning_efforts": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "default_reasoning_effort": "medium",
+            "billing_multiplier": 1.5
+          },
+          {
+            "id": "copilot-test-disabled",
+            "name": "Copilot Test Disabled",
+            "policy_state": "disabled",
+            "policy_terms": "fixture policy",
+            "supports_vision": false,
+            "supports_reasoning_effort": false,
+            "max_prompt_tokens": null,
+            "max_context_window_tokens": 32000,
+            "supported_reasoning_efforts": [],
+            "default_reasoning_effort": null,
+            "billing_multiplier": null
+          }
+        ]
+      },
+      {
+        "name": "opencode",
+        "available": false,
+        "detail": "OpenCode; spawn=yes, stream=yes, steer=no, interrupt=yes, stop=yes, resume=yes, usage=yes, artifacts=yes; model discovery failed: OpenCode availability probe failed: The system cannot find the file specified. (os error 2)",
+        "models": []
+      },
+      {
+        "name": "workspace-isolation",
+        "available": true,
+        "detail": "root=<local-user>\\code\\qa\\pr265-run-activity-pr358-20260922-r8\\runner; repository=<local-user>\\code\\qa\\pr265-run-activity-pr358-20260922-r8\\source; remote=ecorp-fixture/pr265-run-activity; base=HEAD; commit=7f6f0f51b12b89fa4a1aae930783533ff9ef4043",
+        "models": [],
+        "source_repository": "ecorp-fixture/pr265-run-activity",
+        "source_base_ref": "HEAD",
+        "source_base_commit": "7f6f0f51b12b89fa4a1aae930783533ff9ef4043"
+      },
+      {
+        "name": "durable-control-v1",
+        "available": true,
+        "detail": "control messages use command ids, runner deduplication, and explicit acknowledgment",
+        "models": []
+      },
+      {
+        "name": "verification-artifact-transfer-v1",
+        "available": true,
+        "detail": "bounded, digest-checked provider evidence isolated from source and check snapshots",
+        "models": []
+      },
+      {
+        "name": "checkpoint-verification-v1",
+        "available": true,
+        "detail": "exact stopped-source admission and runner-owned verification commit without a provider",
+        "models": []
+      },
+      {
+        "name": "retained-provider-receipt-v1",
+        "available": true,
+        "detail": "explicit historical receipt collection from sealed source with a new durable artifact acknowledgment",
+        "models": []
+      },
+      {
+        "name": "secret-delivery",
+        "available": true,
+        "detail": "task-scoped, expiring broker grants; environment injection is reduced assurance",
+        "models": []
+      },
+      {
+        "name": "workspace-setup-v1",
+        "available": true,
+        "detail": "Native repository and coding-agent connections with runner-private state",
+        "models": []
+      }
+    ],
+    "connected": true,
+    "status": "connected",
+    "last_seen_at": "2026-09-22T19:22:16.869077-05:00",
+    "grace_expires_at": null
+  },
+  "status": "passed",
+  "observed_at_utc": "2026-09-23T00:22:17.7232461+00:00",
+  "source_commit": "7f6f0f51b12b89fa4a1aae930783533ff9ef4043"
+}

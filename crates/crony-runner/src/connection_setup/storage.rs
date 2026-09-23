@@ -270,6 +270,82 @@ foreach($sid in @($owner,[System.Security.Principal.SecurityIdentifier]::new('S-
 mod tests {
     use super::*;
 
+    #[cfg(windows)]
+    #[tokio::test]
+    async fn windows_private_root_primary_path_enforces_acl() {
+        use std::{collections::BTreeMap, ffi::OsString, time::Instant};
+
+        let path = std::env::temp_dir().join(format!("ecorp-primary-acl-{}", Uuid::new_v4()));
+        fs::create_dir(&path).expect("create unique owned ACL fixture");
+        eprintln!(
+            "primary ACL fixture (retained on failure): {}",
+            path.display()
+        );
+        // No native host or ACL-type warm-up before this production entry point.
+        // CI runs this test alone first; local runs do not prove a cold OS image.
+        let started = Instant::now();
+        let source = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(Path::parent)
+            .unwrap();
+        let root = PrivateRoot::open(path.clone(), &[source.to_owned()])
+            .await
+            .expect("primary PrivateRoot::open must establish its ACL within the native deadline");
+        eprintln!("primary PrivateRoot::open elapsed: {:?}", started.elapsed());
+
+        // Read back the actual descriptor only after the primary operation.
+        // Reuse the native owned-process boundary; never repair the ACL here.
+        let script = r#"
+$ErrorActionPreference='Stop'
+$owner=[System.Security.Principal.WindowsIdentity]::GetCurrent().User
+$actual=[System.IO.Directory]::GetAccessControl($env:ECORP_CONNECTION_ACL_TARGET)
+if (!$actual.AreAccessRulesProtected -or $actual.GetOwner([System.Security.Principal.SecurityIdentifier]).Value -ne $owner.Value) { throw 'ACL owner or inheritance verification failed.' }
+$rules=@($actual.GetAccessRules($true,$true,[System.Security.Principal.SecurityIdentifier]))
+$expectedSids=@($owner.Value,'S-1-5-18' | Sort-Object -Unique)
+$actualSids=@($rules | ForEach-Object { $_.IdentityReference.Value } | Sort-Object)
+if ($rules.Count -ne $expectedSids.Count -or ($actualSids -join ',') -ne ($expectedSids -join ',')) { throw 'ACL principal verification failed.' }
+foreach($rule in $rules) {
+  if ($rule.IsInherited -or $rule.AccessControlType -ne [System.Security.AccessControl.AccessControlType]::Allow -or $rule.FileSystemRights -ne [System.Security.AccessControl.FileSystemRights]::FullControl -or $rule.InheritanceFlags -ne ([System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit) -or $rule.PropagationFlags -ne [System.Security.AccessControl.PropagationFlags]::None) { throw 'ACL permission verification failed.' }
+}
+Write-Output 'primary ACL verified'
+"#;
+        let executable = PathBuf::from(
+            std::env::var_os("SystemRoot").unwrap_or_else(|| OsString::from(r"C:\Windows")),
+        )
+        .join(r"System32\WindowsPowerShell\v1.0\powershell.exe");
+        let args = [
+            "-NoLogo",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            script,
+        ]
+        .map(OsString::from);
+        let environment = BTreeMap::from([(
+            "ECORP_CONNECTION_ACL_TARGET".to_owned(),
+            root.path().as_os_str().to_owned(),
+        )]);
+        let output = super::super::process::run_owned(
+            &executable,
+            &[],
+            &args,
+            root.path(),
+            &environment,
+            &[],
+            chrono::Utc::now() + chrono::Duration::seconds(10),
+            None,
+        )
+        .await
+        .expect("read actual ACL through an owned native process");
+        assert!(output.success, "primary ACL descriptor must remain private");
+        assert_eq!(
+            String::from_utf8(output.stdout).unwrap().trim(),
+            "primary ACL verified"
+        );
+        // Nonrecursive: preserve anything unexpected, including failed fixtures.
+        fs::remove_dir(&path).expect("remove empty owned ACL fixture");
+    }
+
     #[test]
     fn browser_paths_cannot_use_traversal_or_windows_device_names() {
         assert!(reject_user_path(Path::new("relative/repository")).is_err());

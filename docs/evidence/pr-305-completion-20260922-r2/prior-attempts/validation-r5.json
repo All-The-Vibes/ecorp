@@ -1,0 +1,158 @@
+{
+  "started_at_utc": "2026-09-23T00:38:50.2314388+00:00",
+  "repository": "<reviewed-worktree>",
+  "head": "bafe6e88c84444213f461292997cf0413191c2d0",
+  "staged_tree": "9b21d05ed3340a2bfc24dc82339749f72d1ebb74",
+  "unstaged_diff": [],
+  "target_main": "08b0b89b2dd16c1906c9dd3468c5ddecca24c4ce",
+  "diff_before": [
+    "M  crates/crony-server/src/issue297_native_fixture.rs",
+    "M  crates/crony-server/src/main.rs",
+    "M  tools/coverage_rust_sqlx.sh",
+    "M  tools/research_handoff_native_catalog.mjs"
+  ],
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "test_threads": "1",
+  "cargo_target": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation",
+  "git_core_longpaths": "process-only true",
+  "checks": [
+    {
+      "name": "migrations",
+      "program": "node",
+      "arguments": [
+        "tools/check_migrations.mjs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T00:38:51.6459970+00:00",
+      "duration_seconds": 0.3349235,
+      "log": "<private-evidence>\\pr305-validation-r5\\migrations.log",
+      "sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823"
+    },
+    {
+      "name": "documentation",
+      "program": "pnpm",
+      "arguments": [
+        "check:docs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T00:38:52.0052031+00:00",
+      "duration_seconds": 0.911985,
+      "log": "<private-evidence>\\pr305-validation-r5\\documentation.log",
+      "sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406"
+    },
+    {
+      "name": "rust-format",
+      "program": "cargo",
+      "arguments": [
+        "fmt",
+        "--check"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T00:38:55.1023066+00:00",
+      "duration_seconds": 2.0996152,
+      "log": "<private-evidence>\\pr305-validation-r5\\rust-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "program": "cargo",
+      "arguments": [
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 101,
+      "started_at_utc": "2026-09-23T00:38:57.2065148+00:00",
+      "duration_seconds": 37.949028,
+      "log": "<private-evidence>\\pr305-validation-r5\\rust-clippy.log",
+      "sha256": "82533d71380bbe11ebd54fdba991b94c008fe3636d6e4b4edae8b6a8f0d06527"
+    },
+    {
+      "name": "rust-workspace",
+      "program": "cargo",
+      "arguments": [
+        "test",
+        "--workspace"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T00:39:36.5355962+00:00",
+      "duration_seconds": 612.7432911,
+      "log": "<private-evidence>\\pr305-validation-r5\\rust-workspace.log",
+      "sha256": "05c979b998e62d638c7ee9b6b63bf29d9dcc2eae00f9fae8eebfeea1d12db6ab"
+    },
+    {
+      "name": "node-unit",
+      "program": "pnpm",
+      "arguments": [
+        "test:unit"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T00:50:07.9462055+00:00",
+      "duration_seconds": 73.8078441,
+      "log": "<private-evidence>\\pr305-validation-r5\\node-unit.log",
+      "sha256": "65c348f38f53bbd002a082e3326e53cf99b8694f00e920758316a0d55594d8bf"
+    },
+    {
+      "name": "steward",
+      "program": "pnpm",
+      "arguments": [
+        "test:steward"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T00:51:22.1579817+00:00",
+      "duration_seconds": 87.3616113,
+      "log": "<private-evidence>\\pr305-validation-r5\\steward.log",
+      "sha256": "d099a65d52e377f429dffed5c7a77c520714cc63cd7b31adf8759bfd62b75dcf"
+    },
+    {
+      "name": "web-build",
+      "program": "pnpm",
+      "arguments": [
+        "build:web"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T00:52:49.7233555+00:00",
+      "duration_seconds": 5.5613137,
+      "log": "<private-evidence>\\pr305-validation-r5\\web-build.log",
+      "sha256": "5b59b080cd0e455cd59dd781600364123b2a27e434d180f5f766118790cad17b"
+    },
+    {
+      "name": "web-lint",
+      "program": "pnpm",
+      "arguments": [
+        "lint:web"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T00:52:55.4842624+00:00",
+      "duration_seconds": 2.5546912,
+      "log": "<private-evidence>\\pr305-validation-r5\\web-lint.log",
+      "sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c"
+    }
+  ],
+  "status": "failed",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "workspace_refresh": {
+    "exit_code": 0,
+    "log": "<private-evidence>\\pr305-validation-r5\\workspace-cache-refresh.log",
+    "sha256": "5b584a26f11d7c9a11b9e275ac8e73931f337b19ab0a5b574d5cfc40a9101920"
+  },
+  "native_mcp_build": {
+    "exit_code": 0,
+    "log": "<private-evidence>\\pr305-validation-r5\\native-mcp-build.log",
+    "sha256": "0f539f2c6fcaead2d179489a8fd1bb0cecb32d6a68c4c8c1e5714bbe4bb13abd",
+    "binary_sha256": "a68e8749028dd5ddfef3be5d3d6b997d2ea9272d508ed865abeae7d160900a02"
+  },
+  "finished_at_utc": "2026-09-23T00:52:58.1922279+00:00",
+  "diff_after": [
+    "M  crates/crony-server/src/issue297_native_fixture.rs",
+    "M  crates/crony-server/src/main.rs",
+    "M  tools/coverage_rust_sqlx.sh",
+    "M  tools/research_handoff_native_catalog.mjs"
+  ],
+  "source_unchanged": true
+}

@@ -1,0 +1,127 @@
+{
+  "finding": "PR255-BREAKING-CLASSIFICATION",
+  "source_findings": [
+    "A-003",
+    "PR255-B-003"
+  ],
+  "status": "Prose correction prepared; parent owns final verification and publication",
+  "verified_at": "2026-09-21T14:51:23.1776303Z",
+  "head": "690ee80e692d848c4c3a371ddb31388a78b9ddf3",
+  "applicability": "Prose-only correction: behavioral RED/GREEN is not applicable. No behavioral RED was fabricated and no runtime tests were run. Before/after checks validate factual classification and unchanged enforcement, not deployment or product acceptance.",
+  "checks": {
+    "before_classification": "- [x] New feature (bounded, non-breaking authority foundation)",
+    "after_classification": "- [x] Breaking change (production new-claim and controller-registration admission)",
+    "before_label_present": true,
+    "after_old_label_absent": true,
+    "after_breaking_label_present": true,
+    "document_preexisting_text_preserved": true,
+    "body_exactly_reversible_to_current_pr_json_body": true,
+    "historical_source_test_approval_sections_unchanged": true,
+    "source_json_unchanged": true,
+    "document_whitespace_exit_code": 0,
+    "enforcement_unchanged": true
+  },
+  "document": {
+    "path": "docs/FACTORY_CLAIM_AUTHORITY.md",
+    "before_sha256": "4391977fd0f57ea445d03f97be99522d7fe07f526d4b64a176a2c71b9926dcaa",
+    "after_sha256": "b6d59f08c988a6afa936e63336b274a01910b269fd13e3868a52242202d3e043"
+  },
+  "source_json": {
+    "path": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-255\\current-pr.json",
+    "sha256": "776a84f07fe96c5a717fb2554a1a73e12e8cfd303f9987b3ff276ca8f43f3573"
+  },
+  "enforcement": [
+    {
+      "path": "crates/crony-server/src/factory_authority.rs",
+      "before_sha256": "c05dd5d281bad4c03ffc1123fbd973ff5e3556d3ffb430e4258054d3e8f08d99",
+      "after_sha256": "c05dd5d281bad4c03ffc1123fbd973ff5e3556d3ffb430e4258054d3e8f08d99",
+      "unchanged": true
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "before_sha256": "2995bb5422b9ec5b531cceb5967508f8ca16603e359b51692543d70a9187a734",
+      "after_sha256": "2995bb5422b9ec5b531cceb5967508f8ca16603e359b51692543d70a9187a734",
+      "unchanged": true
+    },
+    {
+      "path": "crates/crony-store/src/factory_authority.rs",
+      "before_sha256": "32513ce3d9441ba911e9e73c086501a8df762472c8dc775691fed6a434421eaf",
+      "after_sha256": "32513ce3d9441ba911e9e73c086501a8df762472c8dc775691fed6a434421eaf",
+      "unchanged": true
+    },
+    {
+      "path": "crates/crony-store/src/lib.rs",
+      "before_sha256": "e79fa4e054815daf6bcb07f586210cec10e3595c8d7130c7a0935a877d25e569",
+      "after_sha256": "e79fa4e054815daf6bcb07f586210cec10e3595c8d7130c7a0935a877d25e569",
+      "unchanged": true
+    },
+    {
+      "path": "crates/crony-cli/src/factory.rs",
+      "before_sha256": "61b31725ec1a06c880929a435becc2f460f68c58d1d0054971963cf7814c8083",
+      "after_sha256": "61b31725ec1a06c880929a435becc2f460f68c58d1d0054971963cf7814c8083",
+      "unchanged": true
+    },
+    {
+      "path": "crates/crony-cli/src/factory/authority.rs",
+      "before_sha256": "f902716cb53cabe080f3890a0713036ceb93c4517b31da13cf0538487e3e2e5c",
+      "after_sha256": "f902716cb53cabe080f3890a0713036ceb93c4517b31da13cf0538487e3e2e5c",
+      "unchanged": true
+    },
+    {
+      "path": "crates/crony-domain/src/factory_authority.rs",
+      "before_sha256": "d2ac3979f8ac6586a62795aa8998b0971a6552fc94d308fa5aba51f6cbd5f8b3",
+      "after_sha256": "d2ac3979f8ac6586a62795aa8998b0971a6552fc94d308fa5aba51f6cbd5f8b3",
+      "unchanged": true
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "doc-before.md",
+      "sha256": "4391977fd0f57ea445d03f97be99522d7fe07f526d4b64a176a2c71b9926dcaa"
+    },
+    {
+      "path": "pr-body-before.md",
+      "sha256": "acc7355b5a7e08255de5120c88a3b42ce55bea59f5d14876e1302de68f3fe102"
+    },
+    {
+      "path": "pr-body-candidate.md",
+      "sha256": "0a2a5c6cb77f46fab35290068d5cbb640ad5488473c4ccd0d02ed236eff22c3e"
+    },
+    {
+      "path": "document.diff",
+      "sha256": "c09b96328f59ec13b841b79c47e558815dd2250abc025eaa38225454301cd0a1"
+    },
+    {
+      "path": "pr-body.diff",
+      "sha256": "efd4962d1467a48a3ab6490b8437414a0ff03e4e9796e3d8cac281983f05f499"
+    }
+  ],
+  "status_after": [
+    " M apps/web/src/App.tsx",
+    " M apps/web/src/factoryAuthority.ts",
+    " M apps/web/src/snapshotRefresh.test.mjs",
+    " M docs/FACTORY_CLAIM_AUTHORITY.md",
+    " M tools/issue161/qa-api.mjs",
+    " M tools/issue161/qa-host.ps1",
+    " M tools/local_stack.psm1",
+    "?? apps/web/src/factoryAuthorityConnection.test.mjs",
+    "?? tools/issue161/qa-api-provenance.test.mjs",
+    "?? tools/issue161/qa-helper-binding.md",
+    "?? tools/local_stack_identity.test.ps1"
+  ],
+  "limits": [
+    "No production code, tests, other docs, commits, GitHub/state writes, agents or service actions.",
+    "No new code examples or commands added; existing CLI examples were not executed.",
+    "Historical counts and identities retained verbatim, not correction-run evidence.",
+    "Parent will prepend distinct current-correction status; no claim of current review completion.",
+    "Partial non-closing scope only; no merge, production or multi-host acceptance."
+  ],
+  "source_references": [
+    "crates/crony-server/src/factory_authority.rs:37-61",
+    "crates/crony-server/src/main.rs:3053-3092,3132-3162",
+    "crates/crony-store/src/lib.rs:3051-3145,3171-3201,3360-3370",
+    "crates/crony-store/src/factory_authority.rs:27-45",
+    "crates/crony-cli/src/factory.rs:44-46,388-399,1271-1318,1550-1557",
+    "crates/crony-cli/src/factory/authority.rs:28-42,69-99"
+  ]
+}

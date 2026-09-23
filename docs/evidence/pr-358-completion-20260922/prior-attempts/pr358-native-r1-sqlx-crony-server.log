@@ -1,0 +1,33 @@
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 54.37s
+     Running unittests src\main.rs (<local-user>\code\ecorp-pr-completion-20260922\target\debug\deps\crony_server-05dbe3038b00ba36.exe)
+
+running 2 tests
+test factory_connection_tests::issue56_dispatcher_retires_fenced_approval_and_control_once ... FAILED
+test factory_connection_tests::issue56_dispatcher_sends_healthy_progress_only_to_current_epoch ... FAILED
+
+failures:
+
+---- factory_connection_tests::issue56_dispatcher_retires_fenced_approval_and_control_once stdout ----
+Error: error returned from database: null value in column "contract" of relation "tasks" violates not-null constraint
+
+Caused by:
+    null value in column "contract" of relation "tasks" violates not-null constraint
+
+---- factory_connection_tests::issue56_dispatcher_sends_healthy_progress_only_to_current_epoch stdout ----
+Error: error returned from database: null value in column "contract" of relation "tasks" violates not-null constraint
+
+Caused by:
+    null value in column "contract" of relation "tasks" violates not-null constraint
+
+
+failures:
+    factory_connection_tests::issue56_dispatcher_retires_fenced_approval_and_control_once
+    factory_connection_tests::issue56_dispatcher_sends_healthy_progress_only_to_current_epoch
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 135 filtered out; finished in 3.58s
+
+error: test failed, to rerun pass `-p crony-server --bin crony-server`

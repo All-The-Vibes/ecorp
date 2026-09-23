@@ -1,0 +1,56 @@
+{
+  "scope": "Retrospective native Windows replacement-ref regression on unchanged test bytes; this does not claim original TDD chronology.",
+  "source_head": "5fc94979862dc7f2d0c051e3ac4515f0c9ed5a79",
+  "staged_tree": "c7addc5c7ad71a5b7928de21460175e8eebff15c",
+  "baseline_source_sha256": "1e7eb3d002c1c33a76049dfce4f3b53f2794fde9683db85685ce4c0b78d3bd03",
+  "candidate_source_sha256": "58d83c3167012f67abc9c7f81dd043e554837adf41be404d0a8f22563b33b2c9",
+  "tests_sha256": "2844676a4b0679ae915bc0145ecd6826c0595c36e7aeaf4142ec3635f1bd042c",
+  "checks": [
+    {
+      "name": "baseline",
+      "exit_code": 1,
+      "log": "<private-evidence>\\pr319-replacement-refs-r1\\baseline.log",
+      "sha256": "5fabbd52d435915f7ef2d93769f0ad9a72079beae5c4970f91126e49525b270b",
+      "replacement_cases": [
+        {
+          "kind": "commit",
+          "source_status": "passed",
+          "event": "replacement-source-change",
+          "rejected": false,
+          "original_head_unchanged": true
+        },
+        {
+          "kind": "tree",
+          "source_status": "passed",
+          "event": "replacement-source-change",
+          "rejected": false,
+          "original_head_unchanged": true
+        }
+      ]
+    },
+    {
+      "name": "candidate",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr319-replacement-refs-r1\\candidate.log",
+      "sha256": "8dbf24f6b158f7ca69433386f518235ae004bfae0e1a953f2117b94dc7e94570",
+      "replacement_cases": [
+        {
+          "original_head_unchanged": true,
+          "kind": "commit",
+          "source_status": "blocked",
+          "event": "replacement-source-change",
+          "rejected": true
+        },
+        {
+          "original_head_unchanged": true,
+          "kind": "tree",
+          "source_status": "blocked",
+          "event": "replacement-source-change",
+          "rejected": true
+        }
+      ]
+    }
+  ],
+  "status": "passed",
+  "source_unchanged": true
+}

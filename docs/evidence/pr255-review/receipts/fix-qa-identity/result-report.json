@@ -1,0 +1,58 @@
+{
+  "full_pr_acceptance": false,
+  "completed_utc": "2026-09-21T14:36:52.6709178Z",
+  "status": "scoped_fix_locally_verified",
+  "commits_or_pushes": false,
+  "external_services_used": false,
+  "finding": "PR255-QA-IDENTITY (A-001)",
+  "changed_paths": [
+    "tools/local_stack.psm1",
+    "tools/issue161/qa-host.ps1",
+    "tools/local_stack_identity.test.ps1"
+  ],
+  "runs": [
+    {
+      "name": "red",
+      "command": "pwsh -NoProfile -File tools/local_stack_identity.test.ps1 -EvidenceRoot \"C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-255/round-2/fix-qa-identity/red\"",
+      "exit_status": 1,
+      "passed": 19,
+      "failed": 27,
+      "raw_log": "red.log"
+    },
+    {
+      "name": "green",
+      "command": "pwsh -NoProfile -File tools/local_stack_identity.test.ps1 -EvidenceRoot \"C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-255/round-2/fix-qa-identity/green\"",
+      "exit_status": 0,
+      "passed": 46,
+      "failed": 0,
+      "raw_log": "green.log"
+    },
+    {
+      "name": "green-final",
+      "command": "pwsh -NoProfile -File tools/local_stack_identity.test.ps1 -EvidenceRoot \"C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-255/round-2/fix-qa-identity/green-final\"",
+      "exit_status": 0,
+      "passed": 46,
+      "failed": 0,
+      "raw_log": "green-final.log"
+    },
+    {
+      "name": "lifecycle-module",
+      "command": "pwsh -NoProfile -File tools/local_stack_lifecycle.test.ps1 -Suite Module -NodePath \"C:\\nvm4w\\nodejs\\node.exe\"",
+      "exit_status": 0,
+      "passed": 20,
+      "failed": 0,
+      "raw_log": "lifecycle-module.log"
+    },
+    {
+      "name": "lifecycle-source",
+      "command": "pwsh -NoProfile -File tools/local_stack_lifecycle.test.ps1 -Suite Source -NodePath \"C:\\nvm4w\\nodejs\\node.exe\"",
+      "exit_status": 0,
+      "passed": 10,
+      "failed": 0,
+      "raw_log": "lifecycle-source.log"
+    }
+  ],
+  "final_hashes_verified": true,
+  "unique_passing_cases": 76,
+  "head": "690ee80e692d848c4c3a371ddb31388a78b9ddf3"
+}

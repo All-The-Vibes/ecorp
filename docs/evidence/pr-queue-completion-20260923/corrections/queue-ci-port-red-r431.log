@@ -1,0 +1,244 @@
+✖ all CI restart fixtures consume the same explicit ownership manifest without numeric-PID fallbacks (3.4452ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 175.2375
+
+✖ failing tests:
+
+test at tools\ci_owned_test_server.test.mjs:65:1
+✖ all CI restart fixtures consume the same explicit ownership manifest without numeric-PID fallbacks (3.4452ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /8791|54329|server-ci\.pid|--database-url|target\/debug\/crony-server \\/u. Input:
+
+  '\n' +
+    '    runs-on: ubuntu-latest\n' +
+    '    timeout-minutes: 30\n' +
+    '    env:\n' +
+    "      ECORP_CI_OWNED_SERVER: '1'\n" +
+    '      CRONY_SERVER_HTTP: http://127.0.0.1:18471\n' +
+    '      CRONY_TEST_SERVER_BINARY: ${{ github.workspace }}/target/debug/crony-server\n' +
+    '      CRONY_TEST_SERVER_PID_FILE: ${{ github.workspace }}/output/server-ci.json\n' +
+    '      DATABASE_URL: postgres://crony:crony@127.0.0.1:55471/crony\n' +
+    '    services:\n' +
+    '      postgres:\n' +
+    '        image: postgres:17-alpine\n' +
+    '        env:\n' +
+    '          POSTGRES_USER: crony\n' +
+    '          POSTGRES_PASSWORD: crony\n' +
+    '          POSTGRES_DB: crony\n' +
+    '        ports:\n' +
+    '          - 55471:5432\n' +
+    '        options: >-\n' +
+    '          --health-cmd "pg_isready -U crony -d crony"\n' +
+    '          --health-interval 2s\n' +
+    '          --health-timeout 3s\n' +
+    '          --health-retries 30\n' +
+    '    steps:\n' +
+    '      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n' +
+    '        with:\n' +
+    '          persist-credentials: false\n' +
+    '          fetch-depth: 0\n' +
+    '      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable\n' +
+    '        with:\n' +
+    '          toolchain: 1.98.1\n' +
+    '      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0\n' +
+    '        with:\n' +
+    '          version: 11.19.0\n' +
+    '      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0\n' +
+    '        with:\n' +
+    '          node-version-file: .node-version\n' +
+    '          cache: pnpm\n' +
+    '      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2\n' +
+    '      - run: pnpm install --frozen-lockfile\n' +
+    '      - run: cargo build --locked -p crony-server -p crony-runner -p crony-cli -p crony-gateways\n' +
+    '      - name: Verify native read-only MCP protocol and probe\n' +
+    '        env:\n' +
+    '          CRONY_MCP_TEST_BINARY: ${{ github.workspace }}/target/debug/crony-mcp\n' +
+    '        run: node --test tools/probe_mcp.test.mjs tools/operation_receipt.test.mjs tools/consume_operation_receipt.test.mjs\n' +
+    '      - name: Start control and execution planes\n' +
+    '        shell: bash\n' +
+    '        run: |\n' +
+    '          mkdir -p output\n' +
+    '          node tools/ci_owned_test_server.mjs --dry-run\n' +
+    '          node tools/ci_owned_test_server.mjs --start\n' +
+    '          DEMO_JSON="$(curl --fail --silent -X POST \\\n' +
+    "            -H 'content-type: application/json' \\\n" +
+    "            -d '{}' \\\n" +
+    '            http://127.0.0.1:18471/api/demo/bootstrap)"\n' +
+    `          CORP_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).corp_id)' "$DEMO_JSON")"\n` +
+    `          ALICE_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).alice_actor_id)' "$DEMO_JSON")"\n` +
+    '          ENROLLMENT_JSON="$(curl --fail --silent -X POST \\\n' +
+    "            -H 'content-type: application/json' \\\n" +
+    '            -d "{\\"actor_id\\":\\"$ALICE_ID\\",\\"runner_id\\":\\"runner-local\\",\\"expires_in_seconds\\":600}" \\\n' +
+    '            "http://127.0.0.1:18471/api/corps/$CORP_ID/runners/enroll")"\n' +
+    '          mkdir -p output/runner\n' +
+    "          node -e 'process.stdout.write(JSON.parse(process.argv[1]).enrollment_token)' \\\n" +
+    '            "$ENROLLMENT_JSON" > output/runner/enrollment.token\n' +
+    '          chmod 600 output/runner/enrollment.token\n' +
+    '          target/debug/crony-runner \\\n' +
+    '            --server-ws ws://127.0.0.1:18471/ws/runner \\\n' +
+    '            --runner-id runner-local \\\n' +
+    '            --corp-id "$CORP_ID" \\\n' +
+    '            --credential-file "$PWD/output/runner/credential.json" \\\n' +
+    '            --enrollment-token-file "$PWD/output/runner/enrollment.token" \\\n' +
+    '            --workspace "$PWD/output/runner" \\\n' +
+    '            --source-repository "$PWD" \\\n' +
+    '            --source-base-ref HEAD \\\n' +
+    '            --fake-agent-script "$PWD/scripts/fake-agent.mjs" \\\n' +
+    '            --codex-command node \\\n' +
+    '            --codex-command-arg "$PWD/scripts/fake-codex-app-server.mjs" \\\n' +
+    '            --claude-command node \\\n' +
+    '            --claude-command-arg "$PWD/scripts/fake-external-agent.mjs" \\\n' +
+    '            --opencode-command node \\\n' +
+    '            --opencode-command-arg "$PWD/scripts/fake-external-agent.mjs" \\\n' +
+    '            --copilot-fixture \\\n' +
+    '            > output/runner-ci.log 2>&1 &\n' +
+    '          echo $! > output/runner-ci.pid\n' +
+    '      - name: Wait for runner\n' +
+    '        shell: bash\n' +
+    '        run: |\n' +
+    '          for attempt in $(seq 1 60); do\n' +
+    `            if curl --fail --silent http://127.0.0.1:18471/health | grep -q '"runners":1'; then\n` +
+    '              exit 0\n' +
+    '            fi\n' +
+    '            sleep 1\n' +
+    '          done\n' +
+    '          cat output/server-ci.stdout.log output/server-ci.stderr.log || true\n' +
+    '          cat output/runner-ci.log || true\n' +
+    '          exit 1\n' +
+    '      - name: Race demo bootstrap and reset lifecycle\n' +
+    '        run: node tools/e2e_demo_lifecycle.mjs\n' +
+    '      - name: Exercise the real server-to-runner path\n' +
+    '        shell: pwsh\n' +
+    '        run: ./tools/e2e_smoke.ps1 -Server $env:CRONY_SERVER_HTTP\n' +
+    '      - name: Verify content-addressed artifacts, provenance, and Corp-scoped download\n' +
+    '        run: node tools/e2e_artifacts.mjs\n' +
+    '      - name: Verify portable source deliverables, exact linkage, and cleanup acknowledgment\n' +
+    '        run: node tools/e2e_portable_deliverables.mjs\n' +
+    '      - name: Verify Codex start, steer, resume, interrupt, stop, usage, and evidence\n' +
+    '        run: node tools/e2e_codex.mjs\n' +
+    '      - name: Verify external CLI providers fail closed on Unix\n' +
+    '        env:\n' +
+    "          CRONY_EXTERNAL_ADAPTER_TEST: '1'\n" +
+    '          CRONY_SERVER_HTTP: http://127.0.0.1:18471\n' +
+    '        run: |\n' +
+    '          node tools/e2e_external_adapters.mjs --expect-unix --dry-run\n' +
+    '          node tools/e2e_external_adapters.mjs --expect-unix\n' +
+    '      - name: Verify GitHub Copilot harness, model discovery, selection, and resume\n' +
+    '        run: node tools/e2e_copilot.mjs\n' +
+    '      - name: Verify MCP, ACP, and A2A gateway conformance\n' +
+    '        run: node tools/e2e_gateways.mjs\n' +
+    '      - name: Verify parallel worktree isolation and source-checkout preservation\n' +
+    '        run: node tools/e2e_worktrees.mjs\n' +
+    '      - name: Verify bounded task-graph planning, scheduling, and retries\n' +
+    '        env:\n' +
+    "          CRONY_TASK_GRAPH_TEST: '1'\n" +
+    '          CRONY_SERVER_HTTP: http://127.0.0.1:18471\n' +
+    '        run: |\n' +
+    '          node tools/e2e_task_graph.mjs --dry-run\n' +
+    '          node tools/e2e_task_graph.mjs\n' +
+    '      - name: Verify automated, failed, human, and independent evidence gates\n' +
+    '        run: node tools/e2e_verification.mjs\n' +
+    '      - name: Verify resumable event replay\n' +
+    '        run: node tools/e2e_replay.mjs\n' +
+    '      - name: Verify control fencing and emergency stop\n' +
+    '        run: node tools/e2e_leases.mjs\n' +
+    '      - name: Verify room threads and membership isolation\n' +
+    '        run: node tools/e2e_rooms.mjs\n' +
+    '      - name: Verify cache-policy recovery and resume admission with real SQL\n' +
+    '        env:\n' +
+    '          DATABASE_URL: postgres://crony:crony@127.0.0.1:54329/crony\n' +
+    '        run: cargo test -p crony-server cache_admission_lifecycle_tests --locked -- --ignored --test-threads=1\n' +
+    '      - name: Verify runner grace and reconciliation\n' +
+    '        run: node tools/e2e_runner_reconnect.mjs\n' +
+    '      - name: Verify duplicate runner delivery is idempotent\n' +
+    '        run: node tools/e2e_idempotency.mjs\n' +
+    '      - name: Verify atomic artifact staging, cleanup, and restart recovery\n' +
+    '        env:\n' +
+    "          CRONY_ARTIFACT_STAGING_TEST: '1'\n" +
+    '          CRONY_SERVER_HTTP: http://127.0.0.1:18471\n' +
+    '        run: |\n' +
+    '          node tools/e2e_artifact_staging.mjs --dry-run\n' +
+    '          node tools/e2e_artifact_staging.mjs\n' +
+    '      - name: Verify fenced factory claims, restart recovery, and one linked mission\n' +
+    '        run: node tools/e2e_factory_claims.mjs\n' +
+    '      - name: Verify Project eligibility, dry run, dispatch, status sync, and replay\n' +
+    '        run: node tools/e2e_factory_controller.mjs\n' +
+    '      - name: Verify idempotent branch and pull-request publication with recovery\n' +
+    '        run: node tools/e2e_factory_publication.mjs\n' +
+    '      - name: Verify OIDC, Corp RBAC, runner enrollment, rotation, replay defense, and revocation\n' +
+    '        env:\n' +
+    "          CRONY_IDENTITY_TEST: '1'\n" +
+    "          CRONY_AUTH_TEST_PORT: '18473'\n" +
+    "          FAKE_OIDC_PORT: '18472'\n" +
+    '        run: |\n' +
+    '          node tools/e2e_identity.mjs --dry-run\n' +
+    '          node tools/e2e_identity.mjs\n' +
+    '      - name: Verify scoped secret brokering without plaintext leakage\n' +
+    '        run: node tools/e2e_secrets.mjs\n' +
+    '      - name: Verify durable risky-action approvals and exactly-once decision effects\n' +
+    '        run: node tools/e2e_approvals.mjs\n' +
+    '      - name: Verify budget and loop circuit-breaker stages\n' +
+    '        env:\n' +
+    "          CRONY_BUDGET_TEST: '1'\n" +
+    '          CRONY_BUDGET_RUNNER_ID: runner-local\n' +
+    '          CRONY_BUDGET_OUTPUT: ${{ github.workspace }}/output/e2e-budgets.json\n' +
+    '        run: |\n' +
+    '          node tools/e2e_budgets.mjs --dry-run\n' +
+    '          node tools/e2e_budgets.mjs\n' +
+    '      - name: Verify terminal provider cleanup and off-shift agent state\n' +
+    '        run: node tools/e2e_idle_cleanup.mjs\n' +
+    '      - name: Run the versioned 100-scenario deterministic evaluation lane\n' +
+    '        run: node tools/run_evals.mjs\n' +
+    '      - name: Consolidate chaos and restart evidence\n' +
+    '        run: node tools/e2e_chaos_report.mjs\n' +
+    '      - name: Stop the ownership-verified CI server\n' +
+    '        if: always()\n' +
+    '        run: node tools/ci_owned_test_server.mjs --stop\n' +
+    '      - name: Upload runtime evidence\n' +
+    '        if: always()\n' +
+    '        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2\n' +
+    '        with:\n' +
+    '          name: integration-evidence\n' +
+    '          path: |\n' +
+    '            output/e2e-smoke.json\n' +
+    '            output/e2e-artifacts.json\n' +
+    '            output/e2e-portable-deliverables.json\n' +
+    '            output/e2e-artifact-staging.json\n' +
+    '            output/e2e-demo-lifecycle.json\n' +
+    '            output/e2e-codex.json\n' +
+    '            output/e2e-external-adapters.json\n' +
+    '            output/e2e-copilot.json\n' +
+    '            output/e2e-gateways.json\n' +
+    '            output/e2e-worktrees.json\n' +
+    '            output/e2e-task-graph.json\n' +
+    '            output/e2e-verification.json\n' +
+    '            output/e2e-identity.json\n' +
+    '            output/e2e-secrets.json\n' +
+    '            output/e2e-approvals.json\n' +
+    '            output/e2e-budgets.json\n' +
+    '            output/e2e-idle-cleanup.json\n' +
+    '            output/e2e-chaos.json\n' +
+    '            output/eval-report.json\n' +
+    '            output/e2e-runner-reconnect.json\n' +
+    '            output/e2e-idempotency.json\n' +
+    '            output/e2e-factory-claims.json\n' +
+    '            output/e2e-factory-controller.json\n' +
+    '            output/e2e-factory-publicat'... 911 more characters
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/ci_owned_test_server.test.mjs:75:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '\n    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    env:\n      ECORP_CI_OWNED_SERVER: \'1\'\n      CRONY_SERVER_HTTP: http://127.0.0.1:18471\n      CRONY_TEST_SERVER_BINARY: ${{ github.workspace }}/target/debug/crony-server\n      CRONY_TEST_SERVER_PID_FILE: ${{ github.workspace }}/output/server-ci.json\n      DATABASE_URL: postgres://crony:crony@127.0.0.1:55471/crony\n    services:\n      postgres:\n        image: postgres:17-alpine\n        env:\n          POSTGRES_USER: crony\n          POSTGRES_PASSWORD: crony\n          POSTGRES_DB: crony\n        ports:\n          - 55471:5432\n        options: >-\n          --health-cmd "pg_isready -U crony -d crony"\n          --health-interval 2s\n          --health-timeout 3s\n          --health-retries 30\n    steps:\n      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n        with:\n          persist-credentials: false\n          fetch-depth: 0\n      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable\n        with:\n          toolchain: 1.98.1\n      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0\n        with:\n          version: 11.19.0\n      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0\n        with:\n          node-version-file: .node-version\n          cache: pnpm\n      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2\n      - run: pnpm install --frozen-lockfile\n      - run: cargo build --locked -p crony-server -p crony-runner -p crony-cli -p crony-gateways\n      - name: Verify native read-only MCP protocol and probe\n        env:\n          CRONY_MCP_TEST_BINARY: ${{ github.workspace }}/target/debug/crony-mcp\n        run: node --test tools/probe_mcp.test.mjs tools/operation_receipt.test.mjs tools/consume_operation_receipt.test.mjs\n      - name: Start control and execution planes\n        shell: bash\n        run: |\n          mkdir -p output\n          node tools/ci_owned_test_server.mjs --dry-run\n          node tools/ci_owned_test_server.mjs --start\n          DEMO_JSON="$(curl --fail --silent -X POST \\\n            -H \'content-type: application/json\' \\\n            -d \'{}\' \\\n            http://127.0.0.1:18471/api/demo/bootstrap)"\n          CORP_ID="$(node -e \'console.log(JSON.parse(process.argv[1]).corp_id)\' "$DEMO_JSON")"\n          ALICE_ID="$(node -e \'console.log(JSON.parse(process.argv[1]).alice_actor_id)\' "$DEMO_JSON")"\n          ENROLLMENT_JSON="$(curl --fail --silent -X POST \\\n            -H \'content-type: application/json\' \\\n            -d "{\\"actor_id\\":\\"$ALICE_ID\\",\\"runner_id\\":\\"runner-local\\",\\"expires_in_seconds\\":600}" \\\n            "http://127.0.0.1:18471/api/corps/$CORP_ID/runners/enroll")"\n          mkdir -p output/runner\n          node -e \'process.stdout.write(JSON.parse(process.argv[1]).enrollment_token)\' \\\n            "$ENROLLMENT_JSON" > output/runner/enrollment.token\n          chmod 600 output/runner/enrollment.token\n          target/debug/crony-runner \\\n            --server-ws ws://127.0.0.1:18471/ws/runner \\\n            --runner-id runner-local \\\n            --corp-id "$CORP_ID" \\\n            --credential-file "$PWD/output/runner/credential.json" \\\n            --enrollment-token-file "$PWD/output/runner/enrollment.token" \\\n            --workspace "$PWD/output/runner" \\\n            --source-repository "$PWD" \\\n            --source-base-ref HEAD \\\n            --fake-agent-script "$PWD/scripts/fake-agent.mjs" \\\n            --codex-command node \\\n            --codex-command-arg "$PWD/scripts/fake-codex-app-server.mjs" \\\n            --claude-command node \\\n            --claude-command-arg "$PWD/scripts/fake-external-agent.mjs" \\\n            --opencode-command node \\\n            --opencode-command-arg "$PWD/scripts/fake-external-agent.mjs" \\\n            --copilot-fixture \\\n            > output/runner-ci.log 2>&1 &\n          echo $! > output/runner-ci.pid\n      - name: Wait for runner\n        shell: bash\n        run: |\n          for attempt in $(seq 1 60); do\n            if curl --fail --silent http://127.0.0.1:18471/health | grep -q \'"runners":1\'; then\n              exit 0\n            fi\n            sleep 1\n          done\n          cat output/server-ci.stdout.log output/server-ci.stderr.log || true\n          cat output/runner-ci.log || true\n          exit 1\n      - name: Race demo bootstrap and reset lifecycle\n        run: node tools/e2e_demo_lifecycle.mjs\n      - name: Exercise the real server-to-runner path\n        shell: pwsh\n        run: ./tools/e2e_smoke.ps1 -Server $env:CRONY_SERVER_HTTP\n      - name: Verify content-addressed artifacts, provenance, and Corp-scoped download\n        run: node tools/e2e_artifacts.mjs\n      - name: Verify portable source deliverables, exact linkage, and cleanup acknowledgment\n        run: node tools/e2e_portable_deliverables.mjs\n      - name: Verify Codex start, steer, resume, interrupt, stop, usage, and evidence\n        run: node tools/e2e_codex.mjs\n      - name: Verify external CLI providers fail closed on Unix\n        env:\n          CRONY_EXTERNAL_ADAPTER_TEST: \'1\'\n          CRONY_SERVER_HTTP: http://127.0.0.1:18471\n        run: |\n          node tools/e2e_external_adapters.mjs --expect-unix --dry-run\n          node tools/e2e_external_adapters.mjs --expect-unix\n      - name: Verify GitHub Copilot harness, model discovery, selection, and resume\n        run: node tools/e2e_copilot.mjs\n      - name: Verify MCP, ACP, and A2A gateway conformance\n        run: node tools/e2e_gateways.mjs\n      - name: Verify parallel worktree isolation and source-checkout preservation\n        run: node tools/e2e_worktrees.mjs\n      - name: Verify bounded task-graph planning, scheduling, and retries\n        env:\n          CRONY_TASK_GRAPH_TEST: \'1\'\n          CRONY_SERVER_HTTP: http://127.0.0.1:18471\n        run: |\n          node tools/e2e_task_graph.mjs --dry-run\n          node tools/e2e_task_graph.mjs\n      - name: Verify automated, failed, human, and independent evidence gates\n        run: node tools/e2e_verification.mjs\n      - name: Verify resumable event replay\n        run: node tools/e2e_replay.mjs\n      - name: Verify control fencing and emergency stop\n        run: node tools/e2e_leases.mjs\n      - name: Verify room threads and membership isolation\n        run: node tools/e2e_rooms.mjs\n      - name: Verify cache-policy recovery and resume admission with real SQL\n        env:\n          DATABASE_URL: postgres://crony:crony@127.0.0.1:54329/crony\n        run: cargo test -p crony-server cache_admission_lifecycle_tests --locked -- --ignored --test-threads=1\n      - name: Verify runner grace and reconciliation\n        run: node tools/e2e_runner_reconnect.mjs\n      - name: Verify duplicate runner delivery is idempotent\n        run: node tools/e2e_idempotency.mjs\n      - name: Verify atomic artifact staging, cleanup, and restart recovery\n        env:\n          CRONY_ARTIFACT_STAGING_TEST: \'1\'\n          CRONY_SERVER_HTTP: http://127.0.0.1:18471\n        run: |\n          node tools/e2e_artifact_staging.mjs --dry-run\n          node tools/e2e_artifact_staging.mjs\n      - name: Verify fenced factory claims, restart recovery, and one linked mission\n        run: node tools/e2e_factory_claims.mjs\n      - name: Verify Project eligibility, dry run, dispatch, status sync, and replay\n        run: node tools/e2e_factory_controller.mjs\n      - name: Verify idempotent branch and pull-request publication with recovery\n        run: node tools/e2e_factory_publication.mjs\n      - name: Verify OIDC, Corp RBAC, runner enrollment, rotation, replay defense, and revocation\n        env:\n          CRONY_IDENTITY_TEST: \'1\'\n          CRONY_AUTH_TEST_PORT: \'18473\'\n          FAKE_OIDC_PORT: \'18472\'\n        run: |\n          node tools/e2e_identity.mjs --dry-run\n          node tools/e2e_identity.mjs\n      - name: Verify scoped secret brokering without plaintext leakage\n        run: node tools/e2e_secrets.mjs\n      - name: Verify durable risky-action approvals and exactly-once decision effects\n        run: node tools/e2e_approvals.mjs\n      - name: Verify budget and loop circuit-breaker stages\n        env:\n          CRONY_BUDGET_TEST: \'1\'\n          CRONY_BUDGET_RUNNER_ID: runner-local\n          CRONY_BUDGET_OUTPUT: ${{ github.workspace }}/output/e2e-budgets.json\n        run: |\n          node tools/e2e_budgets.mjs --dry-run\n          node tools/e2e_budgets.mjs\n      - name: Verify terminal provider cleanup and off-shift agent state\n        run: node tools/e2e_idle_cleanup.mjs\n      - name: Run the versioned 100-scenario deterministic evaluation lane\n        run: node tools/run_evals.mjs\n      - name: Consolidate chaos and restart evidence\n        run: node tools/e2e_chaos_report.mjs\n      - name: Stop the ownership-verified CI server\n        if: always()\n        run: node tools/ci_owned_test_server.mjs --stop\n      - name: Upload runtime evidence\n        if: always()\n        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2\n        with:\n          name: integration-evidence\n          path: |\n            output/e2e-smoke.json\n            output/e2e-artifacts.json\n            output/e2e-portable-deliverables.json\n            output/e2e-artifact-staging.json\n            output/e2e-demo-lifecycle.json\n            output/e2e-codex.json\n            output/e2e-external-adapters.json\n            output/e2e-copilot.json\n            output/e2e-gateways.json\n            output/e2e-worktrees.json\n            output/e2e-task-graph.json\n            output/e2e-verification.json\n            output/e2e-identity.json\n            output/e2e-secrets.json\n            output/e2e-approvals.json\n            output/e2e-budgets.json\n            output/e2e-idle-cleanup.json\n            output/e2e-chaos.json\n            output/eval-report.json\n            output/e2e-runner-reconnect.json\n            output/e2e-idempotency.json\n            output/e2e-factory-claims.json\n            output/e2e-factory-controller.json\n            output/e2e-factory-publicat'... 911 more characters,
+    expected: /8791|54329|server-ci\.pid|--database-url|target\/debug\/crony-server \\/u,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }

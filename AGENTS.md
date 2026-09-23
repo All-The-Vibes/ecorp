@@ -45,15 +45,7 @@ Run before committing:
 
 <!-- ecorp:validation-commands -->
 ```powershell
-node tools/check_migrations.mjs
-pnpm check:docs
-pnpm test:unit
-pnpm test:steward
-cargo fmt --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-pnpm build:web
-pnpm lint:web
+pnpm check
 ```
 <!-- /ecorp:validation-commands -->
 

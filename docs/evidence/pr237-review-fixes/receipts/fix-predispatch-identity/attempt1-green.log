@@ -1,0 +1,689 @@
+▶ predispatch ownership uses the native receipt contract
+  ✖ matching native receipt passes the actual caller (613.4003ms)
+  ✖ one native tick changed is denied (567.3597ms)
+  ✖ native ticks missing is denied (510.5705ms)
+  ✖ native ticks rounded to number is denied (462.8472ms)
+  ✖ PID changed is denied (512.5328ms)
+  ✖ PID missing is denied (490.2019ms)
+  ✖ platform changed is denied (469.3366ms)
+  ✖ platform missing is denied (566.9159ms)
+  ✖ executable changed is denied (475.2419ms)
+  ✖ listener not owned is denied (485.9327ms)
+✖ predispatch ownership uses the native receipt contract (5168.5039ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 0
+ℹ fail 11
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5305.2664
+
+✖ failing tests:
+
+test at tools\e2e_predispatch_failure.test.mjs:66:13
+✖ matching native receipt passes the actual caller (613.4003ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted rejection.
+  Actual message: "Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+  $processId = [int]$env:ECORP_QA_PROCESS_ID
+  $port = [int]$env:ECORP_QA_PROCESS_PORT
+  $process = Get-Process -Id $processId -ErrorAction Stop
+  try {
+  [void]$process.Handle
+  if ($process.HasExited) { throw 'Recorded QA server is absent' }
+  $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+  if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+  $creation = $process.StartTime.ToUniversalTime()
+  @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+  port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+  } finally { $process.Dispose() }
+  Get-Process : Cannot find a process with the process identifier 4242.
+  At line:4 char:12
+  + $process = Get-Process -Id $processId -ErrorAction Stop
+  +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+      + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+   
+  "
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:67:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:66:5)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: undefined,
+    operator: 'doesNotReject',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:80:15
+✖ one native tick changed is denied (567.3597ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ownership changed or is unverifiable; refusing/u. Input:
+  
+  "Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'\n" +
+    '$processId = [int]$env:ECORP_QA_PROCESS_ID\n' +
+    '$port = [int]$env:ECORP_QA_PROCESS_PORT\n' +
+    '$process = Get-Process -Id $processId -ErrorAction Stop\n' +
+    'try {\n' +
+    '[void]$process.Handle\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }\n" +
+    '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }\n" +
+    '$creation = $process.StartTime.ToUniversalTime()\n' +
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();\n" +
+    'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress\n' +
+    '} finally { $process.Dispose() }\n' +
+    'Get-Process : Cannot find a process with the process identifier 4242.\r\n' +
+    'At line:4 char:12\r\n' +
+    '+ $process = Get-Process -Id $processId -ErrorAction Stop\r\n' +
+    '+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n' +
+    '    + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException\r\n' +
+    '    + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand\r\n' +
+    ' \r\n'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:80:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: /ownership changed or is unverifiable; refusing/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:80:15
+✖ native ticks missing is denied (510.5705ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ownership changed or is unverifiable; refusing/u. Input:
+  
+  "Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'\n" +
+    '$processId = [int]$env:ECORP_QA_PROCESS_ID\n' +
+    '$port = [int]$env:ECORP_QA_PROCESS_PORT\n' +
+    '$process = Get-Process -Id $processId -ErrorAction Stop\n' +
+    'try {\n' +
+    '[void]$process.Handle\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }\n" +
+    '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }\n" +
+    '$creation = $process.StartTime.ToUniversalTime()\n' +
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();\n" +
+    'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress\n' +
+    '} finally { $process.Dispose() }\n' +
+    'Get-Process : Cannot find a process with the process identifier 4242.\r\n' +
+    'At line:4 char:12\r\n' +
+    '+ $process = Get-Process -Id $processId -ErrorAction Stop\r\n' +
+    '+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n' +
+    '    + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException\r\n' +
+    '    + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand\r\n' +
+    ' \r\n'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:80:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: /ownership changed or is unverifiable; refusing/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:80:15
+✖ native ticks rounded to number is denied (462.8472ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ownership changed or is unverifiable; refusing/u. Input:
+  
+  "Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'\n" +
+    '$processId = [int]$env:ECORP_QA_PROCESS_ID\n' +
+    '$port = [int]$env:ECORP_QA_PROCESS_PORT\n' +
+    '$process = Get-Process -Id $processId -ErrorAction Stop\n' +
+    'try {\n' +
+    '[void]$process.Handle\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }\n" +
+    '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }\n" +
+    '$creation = $process.StartTime.ToUniversalTime()\n' +
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();\n" +
+    'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress\n' +
+    '} finally { $process.Dispose() }\n' +
+    'Get-Process : Cannot find a process with the process identifier 4242.\r\n' +
+    'At line:4 char:12\r\n' +
+    '+ $process = Get-Process -Id $processId -ErrorAction Stop\r\n' +
+    '+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n' +
+    '    + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException\r\n' +
+    '    + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand\r\n' +
+    ' \r\n'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:80:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: /ownership changed or is unverifiable; refusing/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:80:15
+✖ PID changed is denied (512.5328ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ownership changed or is unverifiable; refusing/u. Input:
+  
+  "Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'\n" +
+    '$processId = [int]$env:ECORP_QA_PROCESS_ID\n' +
+    '$port = [int]$env:ECORP_QA_PROCESS_PORT\n' +
+    '$process = Get-Process -Id $processId -ErrorAction Stop\n' +
+    'try {\n' +
+    '[void]$process.Handle\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }\n" +
+    '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }\n" +
+    '$creation = $process.StartTime.ToUniversalTime()\n' +
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();\n" +
+    'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress\n' +
+    '} finally { $process.Dispose() }\n' +
+    'Get-Process : Cannot find a process with the process identifier 4242.\r\n' +
+    'At line:4 char:12\r\n' +
+    '+ $process = Get-Process -Id $processId -ErrorAction Stop\r\n' +
+    '+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n' +
+    '    + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException\r\n' +
+    '    + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand\r\n' +
+    ' \r\n'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:80:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: /ownership changed or is unverifiable; refusing/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:80:15
+✖ PID missing is denied (490.2019ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ownership changed or is unverifiable; refusing/u. Input:
+  
+  "Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'\n" +
+    '$processId = [int]$env:ECORP_QA_PROCESS_ID\n' +
+    '$port = [int]$env:ECORP_QA_PROCESS_PORT\n' +
+    '$process = Get-Process -Id $processId -ErrorAction Stop\n' +
+    'try {\n' +
+    '[void]$process.Handle\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }\n" +
+    '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }\n" +
+    '$creation = $process.StartTime.ToUniversalTime()\n' +
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();\n" +
+    'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress\n' +
+    '} finally { $process.Dispose() }\n' +
+    'Get-Process : Cannot find a process with the process identifier 4242.\r\n' +
+    'At line:4 char:12\r\n' +
+    '+ $process = Get-Process -Id $processId -ErrorAction Stop\r\n' +
+    '+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n' +
+    '    + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException\r\n' +
+    '    + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand\r\n' +
+    ' \r\n'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:80:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: /ownership changed or is unverifiable; refusing/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:80:15
+✖ platform changed is denied (469.3366ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ownership changed or is unverifiable; refusing/u. Input:
+  
+  "Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'\n" +
+    '$processId = [int]$env:ECORP_QA_PROCESS_ID\n' +
+    '$port = [int]$env:ECORP_QA_PROCESS_PORT\n' +
+    '$process = Get-Process -Id $processId -ErrorAction Stop\n' +
+    'try {\n' +
+    '[void]$process.Handle\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }\n" +
+    '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }\n" +
+    '$creation = $process.StartTime.ToUniversalTime()\n' +
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();\n" +
+    'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress\n' +
+    '} finally { $process.Dispose() }\n' +
+    'Get-Process : Cannot find a process with the process identifier 4242.\r\n' +
+    'At line:4 char:12\r\n' +
+    '+ $process = Get-Process -Id $processId -ErrorAction Stop\r\n' +
+    '+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n' +
+    '    + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException\r\n' +
+    '    + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand\r\n' +
+    ' \r\n'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:80:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: /ownership changed or is unverifiable; refusing/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:80:15
+✖ platform missing is denied (566.9159ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ownership changed or is unverifiable; refusing/u. Input:
+  
+  "Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'\n" +
+    '$processId = [int]$env:ECORP_QA_PROCESS_ID\n' +
+    '$port = [int]$env:ECORP_QA_PROCESS_PORT\n' +
+    '$process = Get-Process -Id $processId -ErrorAction Stop\n' +
+    'try {\n' +
+    '[void]$process.Handle\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }\n" +
+    '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }\n" +
+    '$creation = $process.StartTime.ToUniversalTime()\n' +
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();\n" +
+    'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress\n' +
+    '} finally { $process.Dispose() }\n' +
+    'Get-Process : Cannot find a process with the process identifier 4242.\r\n' +
+    'At line:4 char:12\r\n' +
+    '+ $process = Get-Process -Id $processId -ErrorAction Stop\r\n' +
+    '+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n' +
+    '    + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException\r\n' +
+    '    + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand\r\n' +
+    ' \r\n'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:80:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: /ownership changed or is unverifiable; refusing/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:80:15
+✖ executable changed is denied (475.2419ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ownership changed or is unverifiable; refusing/u. Input:
+  
+  "Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'\n" +
+    '$processId = [int]$env:ECORP_QA_PROCESS_ID\n' +
+    '$port = [int]$env:ECORP_QA_PROCESS_PORT\n' +
+    '$process = Get-Process -Id $processId -ErrorAction Stop\n' +
+    'try {\n' +
+    '[void]$process.Handle\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }\n" +
+    '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }\n" +
+    '$creation = $process.StartTime.ToUniversalTime()\n' +
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();\n" +
+    'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress\n' +
+    '} finally { $process.Dispose() }\n' +
+    'Get-Process : Cannot find a process with the process identifier 4242.\r\n' +
+    'At line:4 char:12\r\n' +
+    '+ $process = Get-Process -Id $processId -ErrorAction Stop\r\n' +
+    '+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n' +
+    '    + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException\r\n' +
+    '    + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand\r\n' +
+    ' \r\n'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:80:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: /ownership changed or is unverifiable; refusing/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:80:15
+✖ listener not owned is denied (485.9327ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ownership changed or is unverifiable; refusing/u. Input:
+  
+  "Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'\n" +
+    '$processId = [int]$env:ECORP_QA_PROCESS_ID\n' +
+    '$port = [int]$env:ECORP_QA_PROCESS_PORT\n' +
+    '$process = Get-Process -Id $processId -ErrorAction Stop\n' +
+    'try {\n' +
+    '[void]$process.Handle\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server is absent' }\n" +
+    '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)\n' +
+    "if ($process.HasExited) { throw 'Recorded QA server exited during verification' }\n" +
+    '$creation = $process.StartTime.ToUniversalTime()\n' +
+    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();\n" +
+    'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress\n' +
+    '} finally { $process.Dispose() }\n' +
+    'Get-Process : Cannot find a process with the process identifier 4242.\r\n' +
+    'At line:4 char:12\r\n' +
+    '+ $process = Get-Process -Id $processId -ErrorAction Stop\r\n' +
+    '+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n' +
+    '    + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException\r\n' +
+    '    + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand\r\n' +
+    ' \r\n'
+  
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:82:9)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:80:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: Command failed: powershell.exe -NoProfile -NonInteractive -Command $ErrorActionPreference = 'Stop'
+    $processId = [int]$env:ECORP_QA_PROCESS_ID
+    $port = [int]$env:ECORP_QA_PROCESS_PORT
+    $process = Get-Process -Id $processId -ErrorAction Stop
+    try {
+    [void]$process.Handle
+    if ($process.HasExited) { throw 'Recorded QA server is absent' }
+    $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+    if ($process.HasExited) { throw 'Recorded QA server exited during verification' }
+    $creation = $process.StartTime.ToUniversalTime()
+    @{ platform='win32'; pid=$processId; executable=$process.Path; creation=$creation.ToString('o'); native_creation_ticks=$creation.Ticks.ToString();
+    port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress
+    } finally { $process.Dispose() }
+    Get-Process : Cannot find a process with the process identifier 4242.
+    At line:4 char:12
+    + $process = Get-Process -Id $processId -ErrorAction Stop
+    +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        + CategoryInfo          : ObjectNotFound: (4242:Int32) [Get-Process], ProcessCommandException
+        + FullyQualifiedErrorId : NoProcessFoundForGivenId,Microsoft.PowerShell.Commands.GetProcessCommand
+     
+    
+        at genericNodeError (node:internal/errors:985:15)
+        at wrappedFn (node:internal/errors:539:14)
+        at ChildProcess.exithandler (node:child_process:417:12)
+        at ChildProcess.emit (node:events:509:28)
+        at maybeClose (node:internal/child_process:1124:16)
+        at ChildProcess._handle.onexit (node:internal/child_process:306:5),
+    expected: /ownership changed or is unverifiable; refusing/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_predispatch_failure.test.mjs:10:1
+✖ predispatch ownership uses the native receipt contract (5168.5039ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 10
+  
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:85:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 10,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "pr": 226,
+  "source_head": "4e1b0f46e672e8f7b27ce9aa1cf9dfedbbee6f37",
+  "tested_staged_tree": "0ba8fe4a7eed6ac9a9b1d331cd09b4cfd615334b",
+  "target_main": "1edbf1b5f4d4fe3f12f9177bb72b631d8ce2e819",
+  "started_at_utc": "2026-09-23T08:08:57.7459047+00:00",
+  "finished_at_utc": "2026-09-23T08:24:56.5323329+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "All nine contributor gates passed on the bound staged source. The native Rust suite executed 21 cases, including pre-open file/directory replacement, concurrent packet discovery and cumulative budgets. The real cached-artifact poison regression confirms ordinary Cargo fingerprinting retains a substituted executable, while the wrapper recompiles from source and rejects subsequent private-executable tampering. These tests also run in the passing workspace/Node gates.",
+  "maintainer_changes": "Bind enumerated files and directories to the identity of the subsequently opened handle; re-enumerate each directory and the discovery parent before accepting results. Enforce scan-wide 256 MiB read and 1 MiB escaped-JSON output budgets. Compile the scanner into a unique private executable and verify its digest before invocation, so an intact Cargo fingerprint cannot bless a replaced executable. Provision pinned Rust 1.98.1 in both Node-regression CI jobs and build scanner dependencies before tests.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.3415247,
+      "log": "migrations.log",
+      "original_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823",
+      "published_log_sha256": "647fc92ef827bdde2d804ae951c78304f0522f35f9832dde27b39840b8263757"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.103401,
+      "log": "documentation.log",
+      "original_log_sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406",
+      "published_log_sha256": "f7c1081b3ad5e5b322c890127d287c1cef53b868efc7b40d1b7b2eef7b9aeb18"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 2.1306369,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 92.5489149,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "c93b9947630e622e9a07596ec1dd9e93cb2f758f8dd4c4fa05036f4dc6a1929f",
+      "published_log_sha256": "a4a5cd87522a74b49ddc94b09cfd05e897b47ed6e01d1e043895cf10af9e5de3"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 637.9145169,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "3b6e8a8f7e2ee6a012f715c4ac89a807fb42097304fba50af248d09ff2922919",
+      "published_log_sha256": "b2ea7f38597d802d46e0d05ad8d63dc9bfe148ddcbde0b695e01fcd178908480"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 89.2317951,
+      "log": "node-unit.log",
+      "original_log_sha256": "c39363db0e6dbf179891108622034c5487e45f057772e6dc53b03b69ecc5a200",
+      "published_log_sha256": "33c529db01eee8849377decee204b9653187aa4dcf974ca78a9ab313c66e693e"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 93.9859341,
+      "log": "steward.log",
+      "original_log_sha256": "8e10cdff8b762489b970a2ada6fd6387d57e3b436c1fddd77e8af18f7ff3c25e",
+      "published_log_sha256": "6dc0ef4d06d5486e24ccc72fea8614183de22f44e4342c84fbe91e0f76810abe"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 8.8587459,
+      "log": "web-build.log",
+      "original_log_sha256": "9ef2382c997734009900db7913efee0071ab4daea73763f2503796d4c589de09",
+      "published_log_sha256": "8b6519714db68f892626cc0b064d417c041b02c8350346248fcc1f003b542319"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 3.2787822,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "build_preparation": {
+    "workspace_refresh": {
+      "exit_code": 0,
+      "log": "workspace-refresh.log",
+      "original_log_sha256": "3fcc5d0516c0206b4d4318c22a09a9c398880c1f60dca9d932047a73870ab2e6",
+      "published_log_sha256": "3e7930ba414c8cabb51d74c79b6293f7b7d694cb858511e77d6f960e80645390"
+    },
+    "native_mcp_build": {
+      "exit_code": 0,
+      "log": "native-mcp-build.log",
+      "original_log_sha256": "1969d225c5353a47b7c2d3f2300975345cf3ef399ae9d5244a6eba6ef5e619a2",
+      "published_log_sha256": "63294a127b6a657e0e7fe52043f37ede568d16fa175bf4de18a3eb7a1af13d12",
+      "binary_sha256": "b99257532646fe47556b9ef67e0cef8323e9238fac81110d6d9e5ddd1a9505dd"
+    }
+  }
+}

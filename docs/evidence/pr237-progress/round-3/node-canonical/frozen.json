@@ -1,0 +1,89 @@
+{
+  "at": "2026-09-21T12:42:19.000Z",
+  "baseline": "e2f0e6507abed718b116064b3a9fb3cb95e9fb57",
+  "worktree": "C:\\Users\\sschofield\\repos\\ecorp-pr237-progress-correction",
+  "finding": "PR237-PROGRESS-A-001",
+  "claim": "7dbe1edd-8c6b-4f46-89a1-198dde6fcf94",
+  "round": 3,
+  "ownedFiles": [
+    {
+      "path": "tools/e2e_factory_budget_recovery.mjs",
+      "sha256": "6c4e5a01d156b35a3b2e20ee45f29c6cfc9473cf43085b010b7bcc8a7ceba16b"
+    },
+    {
+      "path": "tools/factory_budget_provenance.test.mjs",
+      "sha256": "c044439e4c6d00958bf3790e4c1e9ba3490881dfd9e9869c99ad63b2567f5d49"
+    }
+  ],
+  "unchangedHelpers": [
+    {
+      "path": "tools/e2e_checkpoint_verification.mjs",
+      "sha256": "fda45d5fbd9411f9ebdd59859c56e4016d57594c6ebaa3294bb0bd2fde4cdd3c"
+    },
+    {
+      "path": "tools/e2e_stopped_source_checkpoint.mjs",
+      "sha256": "63a4c1ceb1be767e677bfd7a1aeed1348778341a87d689971571f09acc4d8d62"
+    },
+    {
+      "path": "tools/factory_budget_process.mjs",
+      "sha256": "92b2a12c916cfac7b568a38a69669138ca5277a761ebc661379102676f5b7af6"
+    },
+    {
+      "path": "tools/local_stack.psm1",
+      "sha256": "342118dd4ccabca013fa8bf83cd50aaace666fb64bc5c3b7a8820c18c41e2444"
+    },
+    {
+      "path": "tools/local_stack_identity.test.ps1",
+      "sha256": "1ec19b5e9990d74dd28b5950bb85bb4daf562f073388783a301c335853cbb2d0"
+    },
+    {
+      "path": "tools/qa_hold_checkpoint_file.ps1",
+      "sha256": "d309264afe807dc104717a3a7610838208e7fc7b3d298c28632739a6719d0e16"
+    }
+  ],
+  "selectedNode": "C:\\Users\\sschofield\\AppData\\Local\\nvm\\v24.16.0\\node.exe",
+  "nodeSha256": "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3",
+  "red": {
+    "passed": 8,
+    "failed": 2,
+    "exitCode": 1,
+    "error": "canonical_owned_directory_required"
+  },
+  "green": {
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0
+  },
+  "adjacent": {
+    "passed": 89,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0
+  },
+  "checks": [
+    {
+      "command": "node --check tools/e2e_factory_budget_recovery.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node --check tools/factory_budget_provenance.test.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check -- tools/e2e_factory_budget_recovery.mjs tools/factory_budget_provenance.test.mjs",
+      "exitCode": 0
+    }
+  ],
+  "allOtherProductionBytesUnchanged": true,
+  "sameRegressionBytesRedGreen": true,
+  "testedInputsStillFrozen": true,
+  "limits": [
+    "Launch argument selection exercised with inert callbacks, not Factory/services.",
+    "Adjacent Windows ownership checks launch only their own inert children.",
+    "No repository commit/push, live journal, GitHub, database, provider, settings or manual-stack operation.",
+    "Other fixer owns CI/test-selector changes; untouched here.",
+    "Original full native reports remain unavailable; no full NICE/native acceptance.",
+    "Combined verification and fresh two delta reviewers remain with parent."
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "checks": [
+    {
+      "name": "syntax-driver",
+      "exit": 0
+    },
+    {
+      "name": "syntax-test",
+      "exit": 0
+    },
+    {
+      "name": "affected-pure",
+      "exit": 0
+    },
+    {
+      "name": "scope-whitespace",
+      "exit": 0
+    },
+    {
+      "name": "scoped-diff",
+      "exit": 0
+    },
+    {
+      "name": "head-readback",
+      "exit": 0
+    },
+    {
+      "name": "status-readback",
+      "exit": 0
+    }
+  ],
+  "changed": [
+    {
+      "path": "tools/issue161/qa-api.mjs",
+      "bytes": 3547,
+      "sha256": "5745d69d38ee470db2668f8648acf88398c4e6b38b19cb4b9b129178e63a7d82"
+    },
+    {
+      "path": "tools/issue161/qa-api-provenance.test.mjs",
+      "bytes": 4251,
+      "sha256": "a2f7ee74d59417ba012e53fd9439acf05676731d0fb3574552806a7118be8c16"
+    },
+    {
+      "path": "tools/issue161/qa-helper-binding.md",
+      "bytes": 2764,
+      "sha256": "3721bd850b4e616a11d6a57a6069943eb088e1fa1f7521b1129cdd6353b621e1"
+    }
+  ],
+  "allPreservedUnchanged": false
+}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Protected files changed; inspect concurrent ownership before proceeding
+    at file:///C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-255/round-2/fix-qa-pin/verify.mjs:55:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:633:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.16.0

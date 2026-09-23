@@ -1,0 +1,32 @@
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.9
+   Compiling hmac v0.12.1
+   Compiling hkdf v0.12.4
+   Compiling md-5 v0.10.6
+   Compiling sqlx-core v0.8.6
+   Compiling sqlx-postgres v0.8.6
+   Compiling sqlx-macros-core v0.8.6
+   Compiling sqlx-macros v0.8.6
+   Compiling sqlx v0.8.6
+   Compiling crony-domain v0.1.0 (<local-user>\code\ecorp-pr358-regression-aggregate-before-20260923-r1\crates\crony-domain)
+   Compiling crony-store v0.1.0 (<local-user>\code\ecorp-pr358-regression-aggregate-before-20260923-r1\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 59s
+     Running unittests src\lib.rs (<local-user>\code\ecorp-pr362-completion-20260922\target-validation\debug\deps\crony_store-557c218ede97d5be.exe)
+
+running 1 test
+
+thread 'pr358_retrospective_aggregate::issue56_mission_hard_budget_fences_all_active_runs' (58792) panicked at crates\crony-store\src\pr358_retrospective_aggregate.rs:147:5:
+assertion `left == right` failed
+  left: ["suspend", "healthy"]
+ right: ["suspend", "suspend"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test pr358_retrospective_aggregate::issue56_mission_hard_budget_fences_all_active_runs ... FAILED
+
+failures:
+
+failures:
+    pr358_retrospective_aggregate::issue56_mission_hard_budget_fences_all_active_runs
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 398 filtered out; finished in 1.92s
+
+error: test failed, to rerun pass `-p crony-store --lib`

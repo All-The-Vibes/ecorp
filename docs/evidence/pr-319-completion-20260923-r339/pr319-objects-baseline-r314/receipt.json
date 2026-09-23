@@ -1,0 +1,150 @@
+{
+  "status": "failed",
+  "started_at_utc": "2026-09-23T12:12:59.4133885+00:00",
+  "head": "b690103f4df127ecddabde75d943348e8a2ad131",
+  "staged_tree": "8b14d302efd0fa9615a13a21a6e9986cfa3c9d96",
+  "inputs": [
+    {
+      "index_blob": "efd5101b51debc440820f700ad4fc34b2c52126b",
+      "path": "tools/qa_multiplayer_preflight.ps1",
+      "sha256": "cd2b7e5853b40eb930fe74b9a349aea4363ed3f1c25a537a56f7f852ddaac56a"
+    },
+    {
+      "index_blob": "79a4cd8497bea21211345bfebe52b2249e4e0706",
+      "path": "tools/qa_multiplayer_object_sources.test.ps1",
+      "sha256": "f26b25c077d0ff0bf4abf806175dce445bfd8849047b997e513d23d55745ba40"
+    },
+    {
+      "index_blob": "d0940b93ea58f6fa02a511e45771b64a4b3253ed",
+      "path": "tools/qa_multiplayer_object_sources.test.mjs",
+      "sha256": "cf312d40c84ad3b8c2b9a965e4b7613131b1ef3627b0a118f3220b6f276771db"
+    }
+  ],
+  "scope": "Native Windows source preflight with real local promisor and alternate object stores; no network transport or product runtime acceptance",
+  "native_exit": 1,
+  "log_sha256": "5564eda064350a5824ad97b74efc53af2719a4a6af26a9387d994ad8173f50bd",
+  "events": [
+    {
+      "event": "object-source-case",
+      "name": "clean source; inherited lazy setting [0]",
+      "details": {
+        "every_command_isolated": false,
+        "source_preserved": true,
+        "environment_restored": true,
+        "git_calls": 11
+      },
+      "passed": false
+    },
+    {
+      "event": "object-source-case",
+      "name": "clean source; inherited lazy setting []",
+      "details": {
+        "every_command_isolated": false,
+        "source_preserved": true,
+        "environment_restored": true,
+        "git_calls": 11
+      },
+      "passed": false
+    },
+    {
+      "event": "object-source-case",
+      "name": "native local promisor fetch control",
+      "details": {
+        "objects_materialized": true,
+        "network_transport_allowed": false,
+        "missing_tree": "124ddf09e8414c9a3b1efe33969052ed5bb4432d"
+      },
+      "passed": true
+    },
+    {
+      "event": "object-source-case",
+      "name": "preflight-inherited-zero",
+      "details": {
+        "blocked": true,
+        "entire_source_preserved": false,
+        "source_commit": null,
+        "every_command_isolated": false,
+        "environment_restored": true,
+        "git_calls": 8
+      },
+      "passed": false
+    },
+    {
+      "event": "object-source-case",
+      "name": "preflight-absent",
+      "details": {
+        "blocked": true,
+        "entire_source_preserved": false,
+        "source_commit": null,
+        "every_command_isolated": false,
+        "environment_restored": true,
+        "git_calls": 8
+      },
+      "passed": false
+    },
+    {
+      "event": "object-source-case",
+      "name": "alternates; owned source",
+      "details": {
+        "metadata_preserved": true,
+        "blocked": true,
+        "git_calls": 8
+      },
+      "passed": false
+    },
+    {
+      "event": "object-source-case",
+      "name": "alternates; linked-source",
+      "details": {
+        "metadata_preserved": true,
+        "blocked": true,
+        "git_calls": 8
+      },
+      "passed": false
+    },
+    {
+      "event": "object-source-case",
+      "name": "http-alternates; owned source",
+      "details": {
+        "metadata_preserved": true,
+        "blocked": false,
+        "git_calls": 11
+      },
+      "passed": false
+    },
+    {
+      "event": "object-source-case",
+      "name": "http-alternates; linked-source",
+      "details": {
+        "metadata_preserved": true,
+        "blocked": false,
+        "git_calls": 11
+      },
+      "passed": false
+    },
+    {
+      "event": "object-source-case",
+      "name": "object info junction",
+      "details": {
+        "owned_target_preserved": true,
+        "blocked": false,
+        "git_calls": 11
+      },
+      "passed": false
+    },
+    {
+      "event": "object-source-summary",
+      "cases": 10,
+      "failed": 9,
+      "fixture": "<local-user>\\AppData\\Local\\Temp\\ecorp-u1-objects-5bda8e63074b414cb6eb3a2c478bd95b",
+      "passed": 1
+    },
+    {
+      "event": "retained-object-source-fixture",
+      "path": "<local-user>\\AppData\\Local\\Temp\\ecorp-u1-objects-5bda8e63074b414cb6eb3a2c478bd95b",
+      "recursive_cleanup": false
+    }
+  ],
+  "finished_at_utc": "2026-09-23T12:13:24.3658804+00:00",
+  "source_unchanged": true
+}

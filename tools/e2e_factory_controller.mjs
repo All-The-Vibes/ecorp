@@ -831,6 +831,7 @@ assert.deepEqual(dryRun.mutations, [])
 assert.deepEqual(dryRun.verification_policy, explicitVerificationPolicy)
 assert.deepEqual(dryRun.preflight, {
   valid: true,
+  dispatch_readiness: { status: 'ready' },
   strategy: 'single',
   task_count: 1,
   budget_tokens: 20_000,
@@ -1889,29 +1890,22 @@ try {
   repositoryMismatch = error
 }
 assert.ok(repositoryMismatch, 'repository mismatch did not fail the controller')
+const mismatchFailureDetail = [repositoryMismatch.message, repositoryMismatch.stdout, repositoryMismatch.stderr]
+  .filter(Boolean).join('\n')
+assert.match(
+  mismatchFailureDetail,
+  /factory plan is valid but dispatch is not ready/i,
+)
+for (const detail of ['acme/widget', 'HEAD', sourceBaseCommit, 'immutable checkout']) {
+  assert.ok(mismatchFailureDetail.includes(detail), `readiness omitted the expected source detail: ${detail}`)
+}
 const mismatchState = await snapshot(mismatchDemo)
-const mismatchItem = mismatchState.snapshot.factory_work_items.find(
-  (item) => item.source_issue_number === 9006,
-)
-assert.equal(mismatchItem.state, 'blocked')
-assert.match(mismatchItem.failure_detail, /repository|runner|dispatch/i)
-const mismatchTasks = mismatchState.snapshot.tasks.filter(
-  (task) => task.mission_id === mismatchItem.mission_id,
-)
-assert.ok(mismatchTasks.length > 0)
-assert.ok(
-  mismatchTasks.every(
-    (task) =>
-      task.contract.source_repository === 'acme/widget' &&
-      task.contract.source_base_ref === 'HEAD' &&
-      task.contract.source_base_commit === sourceBaseCommit,
-  ),
-)
-const mismatchTaskIds = new Set(mismatchTasks.map((task) => task.id))
-assert.equal(
-  mismatchState.snapshot.runs.filter((run) => mismatchTaskIds.has(run.task_id)).length,
-  0,
-)
+for (const collection of ['factory_work_items', 'missions', 'tasks', 'runs']) {
+  assert.equal(mismatchState.snapshot[collection].length, 0, `${collection} changed before dispatch readiness`)
+}
+const mismatchProject = JSON.parse(await readFile(statePath, 'utf8'))
+assert.equal(mismatchProject.item_edits, 0)
+assert.equal(mismatchProject.items[0].status, 'Todo')
 
 const sourceChangeDemo = await post('/api/demo/reset', {})
 const sourceChangedIssue = {
@@ -2253,14 +2247,17 @@ const report = {
   },
   repository_routing: {
     issue_number: 9006,
-    factory_work_item_id: mismatchItem.id,
-    mission_id: mismatchItem.mission_id,
+    factory_work_item_id: null,
+    mission_id: null,
     required_repository: 'acme/widget',
     required_base_ref: 'HEAD',
     required_base_commit: sourceBaseCommit,
     mismatched_runner_rejected: true,
+    rejected_before_claim: true,
+    task_count: mismatchState.snapshot.tasks.length,
+    project_mutations: mismatchProject.item_edits,
     run_count: 0,
-    factory_state: mismatchItem.state,
+    factory_state: null,
   },
   source_revalidation: {
     source_change_before_project_status: {

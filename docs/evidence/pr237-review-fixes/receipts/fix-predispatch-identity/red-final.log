@@ -1,0 +1,48 @@
+▶ predispatch ownership uses the native receipt contract
+  ✖ matching native receipt passes the actual caller (3.0626ms)
+  ✔ one native tick changed is denied (0.7069ms)
+  ✔ native ticks missing is denied (0.301ms)
+  ✔ native ticks rounded to number is denied (0.3315ms)
+  ✔ PID changed is denied (0.2626ms)
+  ✔ PID missing is denied (0.2269ms)
+  ✔ platform changed is denied (0.2788ms)
+  ✔ platform missing is denied (0.3447ms)
+  ✔ executable changed is denied (0.4183ms)
+  ✔ listener not owned is denied (0.3982ms)
+✖ predispatch ownership uses the native receipt contract (18.8568ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 9
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 151.0772
+
+✖ failing tests:
+
+test at tools\e2e_predispatch_failure.test.mjs:72:13
+✖ matching native receipt passes the actual caller (3.0626ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted rejection.
+  Actual message: "QA process ownership changed or is unverifiable; refusing server restart."
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:73:7)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:72:5)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: Error: QA process ownership changed or is unverifiable; refusing server restart.
+        at assertOwnedRestart (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/owned_test_stack.mjs:51:11)
+        at processOwnership (evalmachine.<anonymous>:20:3)
+        at async waitForActual (node:assert:646:5)
+        at async strict.doesNotReject (node:assert:789:33)
+        at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:73:7)
+        at async Test.run (node:internal/test_runner/test:1313:7)
+        at async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/e2e_predispatch_failure.test.mjs:72:5)
+        at async Test.run (node:internal/test_runner/test:1313:7)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3),
+    expected: undefined,
+    operator: 'doesNotReject',
+    diff: 'simple'
+  }

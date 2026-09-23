@@ -1,0 +1,274 @@
+{
+  "runs": [],
+  "tasks": [],
+  "events": [
+    {
+      "id": "a442f00f-4930-45ae-b6a1-61936e1eb1e6",
+      "seq": 1,
+      "type": "corp.demo_bootstrapped",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "payload": {
+        "name": "ECorp Operations Network",
+        "actors": [
+          "Alice",
+          "Bob",
+          "Eve"
+        ],
+        "seed_crew": false
+      },
+      "room_id": null,
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "created_at": "2026-09-23T13:10:38.558856-05:00",
+      "visibility": "corp",
+      "aggregate_id": "00000000-0000-4000-8000-000000000001",
+      "causation_id": null,
+      "aggregate_type": "corp",
+      "correlation_id": null,
+      "schema_version": 1,
+      "idempotency_key": "demo-bootstrap-v1",
+      "aggregate_version": 1
+    },
+    {
+      "id": "a6487117-9761-41d8-8ec6-326dc2b5518e",
+      "seq": 2,
+      "type": "runner.enrollment_created",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "payload": {
+        "runner_id": "pr265-activity-qa",
+        "expires_at": "2026-09-23T18:25:38.583630600Z"
+      },
+      "room_id": null,
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "created_at": "2026-09-23T13:10:38.584064-05:00",
+      "visibility": "corp",
+      "aggregate_id": "51728224-8e4d-4b51-8a5a-48719a304185",
+      "causation_id": null,
+      "aggregate_type": "runner_enrollment",
+      "correlation_id": null,
+      "schema_version": 1,
+      "idempotency_key": "runner-enrollment-created:51728224-8e4d-4b51-8a5a-48719a304185",
+      "aggregate_version": 1
+    },
+    {
+      "id": "c13663af-5f1d-45a8-8935-171d90bf19b0",
+      "seq": 5,
+      "type": "factory.work_item_claimed",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "payload": {
+        "state": "claimed",
+        "claim_owner_id": "00000000-0000-4000-8000-000000000011",
+        "lease_expires_at": "2026-09-23T18:18:32.705805Z"
+      },
+      "room_id": null,
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "created_at": "2026-09-23T13:13:32.706154-05:00",
+      "visibility": "corp",
+      "aggregate_id": "97fd864c-f1d5-4b70-86b2-f6da00cea970",
+      "causation_id": null,
+      "aggregate_type": "factory_work_item",
+      "correlation_id": null,
+      "schema_version": 1,
+      "idempotency_key": "factory:97fd864c-f1d5-4b70-86b2-f6da00cea970:claim:1",
+      "aggregate_version": 1
+    },
+    {
+      "id": "db0cfe8f-64fa-4588-907c-834b5f845190",
+      "seq": 3,
+      "type": "runner.enrolled",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "payload": {
+        "runner_id": "pr265-activity-qa",
+        "credential_expires_at": {
+          "redacted": "sha256",
+          "digest": "ac9c7c6b04a514851804c3052ee499a6cd927c33ad0a23d49bb8dcb7f44d5e4d"
+        }
+      },
+      "room_id": null,
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "created_at": "2026-09-23T13:10:41.174816-05:00",
+      "visibility": "corp",
+      "aggregate_id": "b234239e-8eb0-4c59-b897-4ca49cccf503",
+      "causation_id": null,
+      "aggregate_type": "runner",
+      "correlation_id": null,
+      "schema_version": 1,
+      "idempotency_key": "runner.enrolled:b234239e-8eb0-4c59-b897-4ca49cccf503:0ce2e95b-90be-447c-aaf4-2001f1abb9d0",
+      "aggregate_version": 1
+    }
+  ],
+  "missions": [],
+  "factory_operations": [
+    {
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "request": {
+        "policy": {
+          "model": null,
+          "auto_merge": false,
+          "secret_ids": {
+            "redacted": "sha256",
+            "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          "publication": {
+            "merge": false,
+            "deploy": false,
+            "allowed": true,
+            "base_ref": "HEAD",
+            "auto_merge": false,
+            "branch_prefix": "ecorp/",
+            "review_status": "In Review",
+            "status_before": "In Progress",
+            "repository_allowlist": [
+              "ecorp-fixture/pr265-run-activity"
+            ]
+          },
+          "write_scope": [
+            "result.md"
+          ],
+          "dependencies": [],
+          "allowed_tools": [
+            "filesystem",
+            "shell"
+          ],
+          "budget_tokens": 1000,
+          "project_owner": "acme",
+          "project_number": 7,
+          "project_status": "Todo",
+          "required_label": "factory:ready",
+          "schema_version": 1,
+          "source_base_ref": "HEAD",
+          "source_of_truth": "github_project",
+          "deliverable_form": "commit_branch",
+          "reasoning_effort": null,
+          "adapter_allowlist": [
+            "fake-process"
+          ],
+          "prohibited_actions": [
+            "modify files outside the assigned worktree",
+            "use undeclared long-lived credentials",
+            "merge or deploy without a separate current authorization"
+          ],
+          "source_base_commit": "03db73df09ea7e1694c7b17fea814ca14097cd8d",
+          "strategy_allowlist": [
+            "single"
+          ],
+          "verification_policy": null,
+          "budget_cost_microusd": 1000000,
+          "repository_allowlist": [
+            "ecorp-fixture/pr265-run-activity"
+          ],
+          "verification_required": true,
+          "source_commit_upgrade_required": false
+        },
+        "source_title": "PR354 bounded readiness issue 7102",
+        "lease_seconds": 300,
+        "source_revision": "2026-09-22T00:00:00Z",
+        "source_issue_url": "https://github.com/ecorp-fixture/pr265-run-activity/issues/7102",
+        "source_issue_number": 7102,
+        "source_issue_node_id": "I_PR354_7102",
+        "source_project_owner": "acme",
+        "source_project_number": 7,
+        "source_project_item_id": "PVTI_PR354_7102",
+        "source_repository_name": "pr265-run-activity",
+        "source_repository_owner": "ecorp-fixture"
+      },
+      "actor_id": "00000000-0000-4000-8000-000000000011",
+      "operation": "claim",
+      "created_at": "2026-09-23T13:13:32.706154-05:00",
+      "claim_token": {
+        "redacted": "sha256",
+        "digest": "c13dd1f51146dcc5a115fffa58452cbae2e92a91bfb791b6ac74c466ce07da9b"
+      },
+      "work_item_id": "97fd864c-f1d5-4b70-86b2-f6da00cea970",
+      "idempotency_key": "pr354-owned-legacy-claim",
+      "resulting_version": 1
+    }
+  ],
+  "factory_work_items": [
+    {
+      "id": "97fd864c-f1d5-4b70-86b2-f6da00cea970",
+      "state": "claimed",
+      "policy": {
+        "model": null,
+        "auto_merge": false,
+        "secret_ids": {
+          "redacted": "sha256",
+          "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "publication": {
+          "merge": false,
+          "deploy": false,
+          "allowed": true,
+          "base_ref": "HEAD",
+          "auto_merge": false,
+          "branch_prefix": "ecorp/",
+          "review_status": "In Review",
+          "status_before": "In Progress",
+          "repository_allowlist": [
+            "ecorp-fixture/pr265-run-activity"
+          ]
+        },
+        "write_scope": [
+          "result.md"
+        ],
+        "dependencies": [],
+        "allowed_tools": [
+          "filesystem",
+          "shell"
+        ],
+        "budget_tokens": 1000,
+        "project_owner": "acme",
+        "project_number": 7,
+        "project_status": "Todo",
+        "required_label": "factory:ready",
+        "schema_version": 1,
+        "source_base_ref": "HEAD",
+        "source_of_truth": "github_project",
+        "deliverable_form": "commit_branch",
+        "reasoning_effort": null,
+        "adapter_allowlist": [
+          "fake-process"
+        ],
+        "prohibited_actions": [
+          "modify files outside the assigned worktree",
+          "use undeclared long-lived credentials",
+          "merge or deploy without a separate current authorization"
+        ],
+        "strategy_allowlist": [
+          "single"
+        ],
+        "verification_policy": null,
+        "budget_cost_microusd": 1000000,
+        "repository_allowlist": [
+          "ecorp-fixture/pr265-run-activity"
+        ],
+        "verification_required": true,
+        "source_commit_upgrade_required": true
+      },
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "version": 1,
+      "created_at": "2026-09-23T13:13:32.706154-05:00",
+      "mission_id": null,
+      "updated_at": "2026-09-23T13:13:32.706154-05:00",
+      "claim_token": {
+        "redacted": "sha256",
+        "digest": "c13dd1f51146dcc5a115fffa58452cbae2e92a91bfb791b6ac74c466ce07da9b"
+      },
+      "source_kind": "github_project_issue",
+      "source_title": "PR354 bounded readiness issue 7102",
+      "claim_owner_id": "00000000-0000-4000-8000-000000000011",
+      "failure_detail": null,
+      "source_revision": "2026-09-22T00:00:00Z",
+      "lease_expires_at": "2026-09-23T13:13:31.860125-05:00",
+      "source_issue_url": "https://github.com/ecorp-fixture/pr265-run-activity/issues/7102",
+      "source_issue_number": 7102,
+      "source_issue_node_id": "I_PR354_7102",
+      "source_project_owner": "acme",
+      "source_project_number": 7,
+      "source_project_item_id": "PVTI_PR354_7102",
+      "source_repository_name": "pr265-run-activity",
+      "source_repository_owner": "ecorp-fixture"
+    }
+  ],
+  "factory_controllers": [],
+  "factory_controller_operations": []
+}

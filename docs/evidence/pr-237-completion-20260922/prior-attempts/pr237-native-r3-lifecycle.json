@@ -1,0 +1,65 @@
+{
+  "pr": 237,
+  "tested_staged_tree": "f84de1392537d50da94e97eab417f67f19c43ddc",
+  "source_head": "d0f6711c37ba7758884d52770c70d076aafd0a51",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr237-20260922-r3",
+  "started_at_utc": "2026-09-22T17:58:59.4319339+00:00",
+  "status": "failed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "exit_code": 1,
+      "log": "<private-evidence>\\pr237-native-r3-focused.log",
+      "sha256": "3c9eb807a2b62d088f33bce949c734a6122f4d24bc1851dd4b7f4d97a81ea049",
+      "name": "focused-native-acceptance"
+    }
+  ],
+  "native_source_binding": {
+    "permitted_non_native_paths": [
+      "tools/e2e_factory_budget_recovery.mjs",
+      "tools/factory_budget_provenance.test.mjs"
+    ],
+    "native_inputs_unchanged": true,
+    "current_tree": "f84de1392537d50da94e97eab417f67f19c43ddc",
+    "original_tree": "9255d011f0e3bcf80846c71936c63f463bf03468",
+    "all_changed_paths": [
+      "tools/e2e_factory_budget_recovery.mjs",
+      "tools/factory_budget_provenance.test.mjs"
+    ]
+  },
+  "binaries": [
+    {
+      "file": "crony-server.exe",
+      "sha256": "e0c03ab55f931db012e5912cb63b0f2ad0ed1ed909ab098839c895c7dcf3a945"
+    },
+    {
+      "file": "crony-runner.exe",
+      "sha256": "9c8e4f725383a5ca13a6993165dcfdf74eb4b6c53bbe15825bd9a4790112ad1c"
+    },
+    {
+      "file": "crony-cli.exe",
+      "sha256": "8ac5dfca02fc7d2e45a83edf5a199240f10347aec7d5b3f8e0d3b111ba6e6e38"
+    }
+  ],
+  "reused_verification": {
+    "receipt_sha256": "04bc22783314ffeca3d7af3d30566ae24fb19cb860c3e4cd7399c51f33a18ac7",
+    "checks": [
+      {
+        "name": "workspace-cache-refresh",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr237-native-r1-workspace-cache-refresh.log",
+        "sha256": "686ffff69400e55c79d7337326218861df048eaafcbed5d4c067bbd01b946496"
+      },
+      {
+        "name": "native-build",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr237-native-r1-build.log",
+        "sha256": "f4e6408a6100b85bc12652a7ca9f083145940ee3150c4bb0ea573b68d2f95676"
+      }
+    ],
+    "receipt": "<private-evidence>\\pr237-native-r1-lifecycle.json",
+    "reason": "All native build inputs are identical to the original source tree and binary hashes match. The complete source comparison permits only explicitly reviewed JavaScript/PowerShell acceptance changes and evidence documents. New acceptance runs on the current source; the original native build is reused explicitly."
+  },
+  "failure": "focused-native-acceptance failed; preserve logs and fixture.",
+  "finished_at_utc": "2026-09-22T18:03:26.1906267+00:00"
+}

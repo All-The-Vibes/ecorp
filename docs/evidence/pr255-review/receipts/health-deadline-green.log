@@ -1,0 +1,42 @@
+✔ authority endpoint never displays credentials, query or fragment (1.485ms)
+✔ missing, nil, malformed and mismatched authority stays unverified (0.8739ms)
+✔ production health, failed snapshot, then development retry replaces the old mode (11.0567ms)
+✔ development health, failed snapshot, then production retry records production without demo bootstrap (2.8053ms)
+✔ each pending attempt and failed snapshot clears previously verified mode (2.5346ms)
+▶ unavailable or malformed health cannot retain authentication assurance or bootstrap
+  ✔ network failure (2.8927ms)
+  ✔ HTTP failure with production body (2.1698ms)
+  ✔ invalid JSON (2.0944ms)
+  ✔ null (1.5891ms)
+  ✔ {} (1.6744ms)
+  ✔ [] (1.683ms)
+  ✔ "production" (1.8853ms)
+  ✔ {"status":"ok"} (1.8854ms)
+  ✔ {"status":"ok","mode":null} (1.6871ms)
+  ✔ {"status":"ok","mode":42} (1.5585ms)
+  ✔ {"status":"ok","mode":"Production"} (2.2706ms)
+  ✔ {"status":"ok","mode":"unknown"} (1.5184ms)
+  ✔ {"mode":"production"} (1.7038ms)
+  ✔ {"mode":"production","status":"failed"} (1.4995ms)
+✔ unavailable or malformed health cannot retain authentication assurance or bootstrap (30.0086ms)
+✔ cancelled health cannot overwrite a newer successful development attempt (2.7171ms)
+✔ production form retry clears failed assurance and revalidates health on success (3.049ms)
+✔ health validation without a caller signal still has a bounded deadline (1.0548ms)
+✔ a burst of 1000 streamed events schedules one snapshot instead of 1000 requests (2.0317ms)
+✔ events arriving during a request produce exactly one trailing snapshot (6.9009ms)
+✔ the final event during the trailing request is not dropped (1.0085ms)
+✔ disposing before a scheduled refresh prevents any fetch (0.386ms)
+✔ disposing an actor/Corp scope aborts its request and drops trailing work (2.1597ms)
+✔ refresh failures are handled and a later event can still refresh (1.0165ms)
+✔ a disposed scope does not report an obsolete aborted read as a new UI error (1.2415ms)
+✔ websocket events use the coalescer and cleanup cancels its read scope (10.5547ms)
+✔ initial connection is bounded, cancellable and offers retry rather than mission restart (3.7275ms)
+✔ actual App presence polling only runs for open connection-dependent views, without reconnecting the event socket (261.7618ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 846.4463

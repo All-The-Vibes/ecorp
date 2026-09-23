@@ -1,0 +1,37 @@
+✔ Windows runner tests are serialized without filtering tests or changing Unix scheduling (3.7788ms)
+✖ Windows primary ACL path runs before explicit prewarming and the complete serial suite (2.8364ms)
+✔ Windows warm-up remains bounded and leaves native ACL enforcement unchanged (1.6699ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 137.2237
+
+✖ failing tests:
+
+test at tools\ci_runner_tests.test.mjs:19:1
+✖ Windows primary ACL path runs before explicit prewarming and the complete serial suite (2.8364ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+    "if: runner.os == 'Windows'\n" +
+  +   '        run: cargo test --locked -p crony-runner connection_setup::storage::tests::windows_private_root_primary_path_enforces_acl -- --exact --nocapture'
+  -   '        run: cargo test --locked -p crony-runner connections::storage::tests::windows_private_root_primary_path_enforces_acl -- --exact --nocapture'
+  
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/ci_runner_tests.test.mjs:31:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "if: runner.os == 'Windows'\n        run: cargo test --locked -p crony-runner connection_setup::storage::tests::windows_private_root_primary_path_enforces_acl -- --exact --nocapture",
+    expected: "if: runner.os == 'Windows'\n        run: cargo test --locked -p crony-runner connections::storage::tests::windows_private_root_primary_path_enforces_acl -- --exact --nocapture",
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

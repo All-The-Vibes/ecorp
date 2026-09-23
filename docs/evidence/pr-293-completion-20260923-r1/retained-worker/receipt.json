@@ -1,0 +1,54 @@
+{
+  "pr": 293,
+  "purpose": "Base V2 owned PostgreSQL and Anvil HTTP gateway worker acceptance",
+  "source_head": "89f6f0d9ca0a01771b72941198b256b8df94d01d",
+  "tested_staged_tree": "cc92da1a2d52fa724c5a35c8ee2e871a5a7da7ed",
+  "qa_root": "<local-user>\\code\\qa\\pr293-base-worker-20260923-r1",
+  "target": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T07:37:38.4126148+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "sha256": "b34be9950bdd87c757a5b3a4474dcb08b979838fafaa457c01a3fe13316a549c",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr293-native-worker-r1-initdb.log",
+      "name": "owned-postgresql-initialization"
+    },
+    {
+      "sha256": "d19304a956a28b3a6a7d002d492a443cb4a9444dabb3296792168b8cca908941",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr293-native-worker-r1-anvil-version.log",
+      "name": "pinned-anvil-version"
+    },
+    {
+      "sha256": "8842f7532ded0845ecbbfa7346be25a159854d137cd25440700d1d970a4bb8c5",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr293-native-worker-r1-workspace-cache-refresh.log",
+      "name": "workspace-cache-refresh"
+    },
+    {
+      "sha256": "6ca5529bad3815d6707edf92acccd75f3831dca57a3f6624bd76ac3e7dc217e6",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr293-native-worker-r1-http-gateway.log",
+      "name": "owned-anvil-http-gateway-restart-and-finality"
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+  "authentication": {
+    "method": "scram-sha-256",
+    "wrong_password_rejected": true,
+    "authenticated_query": true,
+    "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance."
+  },
+  "anvil": {
+    "commit": "4072e48705af9d93e3c0f6e29e93b5e9a40caed8",
+    "sha256": "5c2217d266135a6fbe5faaccccb1e9eb2ddc1d06f8aabeef5fdb16d9846e4880",
+    "live_chain": false,
+    "owned_listener": true,
+    "version": "1.7.1",
+    "chain_id": 84532
+  },
+  "source_unchanged": true,
+  "anvil_cleanup": "Exact owned Anvil stopped; cache and logs retained.",
+  "finished_at_utc": "2026-09-23T07:48:10.0222706+00:00"
+}

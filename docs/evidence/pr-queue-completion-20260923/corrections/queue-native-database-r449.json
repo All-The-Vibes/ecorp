@@ -1,0 +1,46 @@
+{
+  "pr": 293,
+  "purpose": "Base V2 owned PostgreSQL regressions",
+  "source_head": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "tested_staged_tree": "3318d00b53cbb655d74889c4f0b36d292c68e735",
+  "qa_root": "<local-user>\\code\\qa\\queue-audit-store-20260923-r449",
+  "target": "<local-user>\\code\\ecorp-pr-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T15:58:37.9490001+00:00",
+  "status": "failed",
+  "checks": [
+    {
+      "sha256": "c0d1cec670dc8a99ca5421d29e69860c8c805e7be2d1e610aea3839181adaf67",
+      "exit_code": 0,
+      "name": "owned-postgresql-initialization",
+      "log": "<private-evidence>\\queue-native-database-r449-initdb.log"
+    },
+    {
+      "sha256": "417ed02504563010ce48e48e8e77dc673812123ddc1b98971ca694a89b5be11f",
+      "exit_code": 0,
+      "name": "workspace-cache-refresh",
+      "log": "<private-evidence>\\queue-native-database-r449-workspace-cache-refresh.log"
+    },
+    {
+      "sha256": "d9b59d8ce359ae784a0996c59f0eeaac2993bfb85006c1fce6a529e770d03a3d",
+      "exit_code": 0,
+      "name": "owned-postgresql-base-v2",
+      "passed_tests": 34,
+      "log": "<private-evidence>\\queue-native-database-r449-base-v2.log"
+    },
+    {
+      "sha256": "b5abf2ba6c9cac106555572dba9fe91d4ca2b3b47a1a677026eefd0978229275",
+      "exit_code": 101,
+      "name": "owned-postgresql-worker-observation",
+      "log": "<private-evidence>\\queue-native-database-r449-worker-observation.log"
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+  "authentication": {
+    "authenticated_query": true,
+    "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance.",
+    "wrong_password_rejected": true,
+    "method": "scram-sha-256"
+  },
+  "failure": "owned-postgresql-worker-observation failed; retained the fixture and logs.",
+  "finished_at_utc": "2026-09-23T16:05:20.2458382+00:00"
+}

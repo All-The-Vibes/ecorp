@@ -1,3 +1,19 @@
+# Migration checksums use canonical Git blob bytes, not native working-tree newlines.
 db/migrations/*.sql text eol=lf
+# Preserve immutable receipt bytes, including native log whitespace.
+/docs/evidence/pr237-review-fixes/** -text -whitespace
+/docs/evidence/pr237-progress/** -text -whitespace
+# Preserve byte-exact diagnostic receipts, not application source.
+docs/evidence/pr255-review/receipts/** -text -whitespace
 tools/coverage_rust_sqlx.sh text eol=lf
 
+# Issue #225 pins literal CRLF Git bytes, not just a CRLF working copy.
+/scenarios/factory-live-canary/status.mjs -text whitespace=cr-at-eol
+/scenarios/factory-live-canary/README.md -text whitespace=cr-at-eol
+
+contracts/ECorpCheckpointRegistryV1.compiled.json text eol=lf
+db/migrations/manifest.json text eol=lf
+contracts/StateAuditAnchor.sol text eol=lf
+contracts/StateAuditAnchor.compiled.json text eol=lf
+# Preserve exact archived evidence and patch context; executable source keeps normal checks.
+/tools/issue161/pr237-native-time.patch -whitespace

@@ -1,0 +1,27 @@
+✖ native start retains diagnostics and stops its child after identity failure (1912.7165ms)
+ℹ Retained owned launch failure fixture C:\Users\SHYAMS~1\AppData\Local\Temp\ecorp-owned-test-r6N54L
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2087.303
+
+✖ failing tests:
+
+test at tools\owned_test_stack.test.mjs:187:5
+✖ native start retains diagnostics and stops its child after identity failure (1912.7165ms)
+  AssertionError [ERR_ASSERTION]: the exact child has exited before failure returns
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/owned_test_stack.test.mjs:239:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

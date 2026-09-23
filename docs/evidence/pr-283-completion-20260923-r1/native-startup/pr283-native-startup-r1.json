@@ -1,0 +1,47 @@
+{
+  "pr": 283,
+  "purpose": "real-binary startup assertions on owned native PostgreSQL",
+  "source_head": "2b276332e3944aa38ce1d980698180dff6caaf68",
+  "tested_staged_tree": "71e638bea477547c4f1775da2941776ef9fd2062",
+  "driver_sha256": "9aa01f61cd3291b62fdeb106e94f27146c19ba5ca059db0e442b041c68092413",
+  "adapter_sha256": "09020ac6aaecca301b1634ded834ea2f7afcbd381c2a14fc3c8b22c1681c3fd4",
+  "qa_root": "<local-user>\\code\\qa\\pr283-startup-20260922-r1",
+  "target": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T04:01:02.9203733+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "sha256": "4c3b12660869169c4443c3f241f1154bd3e0135d8960a19ab11e015e6829bf12",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr283-native-startup-r1-workspace-cache-refresh.log",
+      "name": "workspace-cache-refresh"
+    },
+    {
+      "sha256": "46d047b66df82a50ce5357c3223f4c12ead0ab2260305ffe1639a390f74d1b0a",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr283-native-startup-r1-server-build.log",
+      "name": "standalone-server-build"
+    },
+    {
+      "sha256": "d63b2e10e6d72295d196745022bc398c3c6812ca474ec18d173ebb78a7e10d5d",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr283-native-startup-r1-initdb.log",
+      "name": "owned-postgresql-initialization"
+    },
+    {
+      "sha256": "8e6cbdb612d47a46c8c34575cd403870d81612f3d2aaf5c2f5cf275a0abefa78",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr283-native-startup-r1-assertions.log",
+      "name": "unchanged-startup-assertions-native-transport"
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; database, credentials, binaries, cases and logs retained.",
+  "binary_sha256": "de69df8403fddc22180e644d1575fcb2050efefd744aa81069b8bcde6bde8bf4",
+  "authentication": {
+    "delivery": "Native clients use private PGPASSFILE; isolated server child environment delivery is reduced assurance.",
+    "method": "scram-sha-256",
+    "wrong_password_rejected": true
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T04:06:15.2505164+00:00"
+}

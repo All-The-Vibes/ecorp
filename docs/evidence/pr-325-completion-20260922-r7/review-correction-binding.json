@@ -1,0 +1,789 @@
+{
+  "tested_staged_tree": "4398a8b5a7d01e02afce88172b112250d7943039",
+  "source_head": "1a98eabd1a462d0e522fbc960d5d22735aa56c05",
+  "target_main": "08b0b89b2dd16c1906c9dd3468c5ddecca24c4ce",
+  "files": [
+    {
+      "path": "tools/local_stack_browser_policy_handoff.test.ps1",
+      "git_blob_sha256": "d34c321e5d1f9237a36a7c6281db1d43cff292aeabca5592e5af1f8fcc124312",
+      "checkout_sha256": "6b863107064e394a1abd55e247d53cbde208516407689b9a6473558a8eaf5248"
+    },
+    {
+      "path": "tools/verifier_browser.mjs",
+      "git_blob_sha256": "a4313576de9a7b23d105d1956a4599ad5748659c041ca495b4846fdb177cc902",
+      "checkout_sha256": "e7e03bc9aad5bf486fb77977972d10356d5ea7d2f199d8d7860eb2eb654adaae"
+    },
+    {
+      "path": "tools/verifier_browser.test.mjs",
+      "git_blob_sha256": "ed67a77ff44f7b085b507e7c6ccf18b3a10090e9133cff42581b05005f79bab0",
+      "checkout_sha256": "b59eaf4c93ea08a36960de1daa1e4ba4d5371968c50953b4bb99c256b881d786"
+    },
+    {
+      "path": "tools/local_stack.psm1",
+      "git_blob_sha256": "c7a3c1c408e6b042947bed8518e63dd1beb86f905e777f5b653cc96d6a162042",
+      "checkout_sha256": "271cbd26222bddc3eb60b7563c7c40e75e837c2f14a283ac228e551de09b810d"
+    },
+    {
+      "path": "tools/local_stack_start.ps1",
+      "git_blob_sha256": "8b69e235af47a8779850c37411605d0286ae049e0836b3e84c09663b86a076d5",
+      "checkout_sha256": "37008894acc6f6e308590e002cae81c00936b9b8f7f6e6499df87afd9467f83f"
+    },
+    {
+      "path": "tools/e2e_verifier_browser.mjs",
+      "git_blob_sha256": "5e3232471cb5cbcd2ebb618c366897c717eecfa06753d176517c3e355172bb12",
+      "checkout_sha256": "3e2262e967d937d66398baa74bddf8dc11b59648ac4f1b529760779021971071"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "git_blob_sha256": "e717f1d0c908e676d774073faf282cd03d3049bce6554d75c658be88f60050d6",
+      "checkout_sha256": "c8c14cac19c397727a55287ab686871cb40fe8ad2019efbcaeb3cbbe37fc543e"
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "pr325-browser-receipt-r8.json",
+      "original_sha256": "5618e9a7fe395b651a7edfe3898d679a3f43c670fc40f8b98977e81751a6e7c0",
+      "published_sha256": "12f40690f23d89fb71bb3146fc3f1117623410f56574ca65dd0b9396669fb6cc",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "pr325-browser-r8.log",
+      "original_sha256": "ed9d3a4119a2bdda34ed10f41dc8f12d66946bbf99a2eea46ba355d422359fda",
+      "published_sha256": "56db3368a074dded1cbabf2e750adc9c385764294e67b3055b394cba0e16b38c",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "run-pr325-browser-r8.ps1",
+      "original_sha256": "dfe5e60af462b38750c125d90aa8b1ff8bd32c2360a11fe78f611ca661d536c9",
+      "published_sha256": "0ee43d380302993bca1ee9d281c309267d915af1255bf59ff4ef12020d8af5c7",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "pr325-handoff-candidate-r7.log",
+      "original_sha256": "72ac8e4ee8f6177a46196ffec58d254ea883352ac8a73ec96a76ffe49c79bca6",
+      "published_sha256": "0de93d7fe30064796a562d1f9d01243abbff89bac055177cb34cb8389df9d522",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "pr325-browser-candidate-r7.log",
+      "original_sha256": "f597bd54ce9807f4d7aa182c17462f38073c4f3abc2e6473f1566b263d22676c",
+      "published_sha256": "d8198d75d7f32a661c89e4377c87b364e82fb29f83ec14b51c832eb7c7724ef5",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/cases.json",
+      "original_sha256": "a5cb26037b946610966eaaf9983755ad8dc6c120f180754b4d87e3136fbf208c",
+      "published_sha256": "b645e2f4edfc9bd05d713876fd7c30afbcb662a3f7a91392fc7428249a9874d1",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/invalid policy.json",
+      "original_sha256": "28409e64d03bb85acfdcfe5cd5d1e564956ba8ab5927608191a308c9de8ea638",
+      "published_sha256": "300da724d184807d1499b3b7851867a33a730613074962a8692999f1bdba3fc4",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] absent delay-0/child.json",
+      "original_sha256": "58570c7a504c81d9da187c292b6f991f47467e91858c30a4452352e06273c67c",
+      "published_sha256": "bc42b2953a9ab16a13d1b0512ba3f3d72a1163a1a04b804d518da1787a3cabd0",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] absent delay-0/identity.json",
+      "original_sha256": "81cbdbc97f0be416b132093d45fee9e61f3ecd28f4d4e6a9aeccb7fec7ccf140",
+      "published_sha256": "2105d8a4c4674898a71c63f5caed5e2d2e672bc6277bc28e636149b3f3ad1942",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] absent delay-0/ownership.json",
+      "original_sha256": "fe6e7e90b9a0f9b6bef455e862a6a89a94459923d8adf333bff36e83ed9f554a",
+      "published_sha256": "ee5dae792eeed8de824530739d3b2a2f5eb7a56f1090173a007b8fcb3db7acc5",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] absent delay-250/child.json",
+      "original_sha256": "c1eea8dc350e4c05e5f50766a5322219891f8be06ca1d3dc718bd345fc4299bb",
+      "published_sha256": "3a1d98598ef95b98088bcb7f27c534e5c2cfc9b9933c9c3c73df4ac4a0eac90e",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] absent delay-250/identity.json",
+      "original_sha256": "98a6ad17e7262339f8d58948dd7f35d4b896a7d1bd910d1061c5fc73d5246b76",
+      "published_sha256": "55f107bc4c7e400ffadab590cb086a7cae026a20675df09c2512f09aa4cd4def",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] absent delay-250/ownership.json",
+      "original_sha256": "5ad278c4a58f61241fe9fc7bd43451c671c982d4e01af4e858b7ac13e11bbda5",
+      "published_sha256": "7bcc0174ab30685adfe3d9fb692664607e29be4756475c56cf99d3e112787434",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] empty delay-0/child.json",
+      "original_sha256": "010027b1e7df11f62b4ce3638135b08710874e80ce3702b0eacb6eb8384adbd3",
+      "published_sha256": "21b38c8a0a157b21abe5cfdfbbf7c2cdbd3ff3cff60f6ce4a50b66fce07c3b4f",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] empty delay-0/identity.json",
+      "original_sha256": "2c0d7fd71b9955560636efdd96dbe87ee64747167420a42e3206f793961b4e7f",
+      "published_sha256": "24e129b8fa7e26e6bf1b6c7f829e81df3677ca197edc233343235f9798f5d635",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] empty delay-0/ownership.json",
+      "original_sha256": "34b9e69a4adea223c8201d8a7244335986e54442f144663c8404177dbcefb02d",
+      "published_sha256": "a3839c4eb4d44a2b9de157ca9f9f5fd8ae0fc016ce48bfe465bc79de70c5a974",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] empty delay-250/child.json",
+      "original_sha256": "8657e848ba2299a26bbeeac24be5b9fdceacb71738e8d44c1a2d11f6f3c4783e",
+      "published_sha256": "6787f9adfee42a192d69da0378f3d737c5bb43af35713cdb0697506e21d58879",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] empty delay-250/identity.json",
+      "original_sha256": "a47d3b3dce279a4f784151259520808162118f2e84a0e06160021abb397419f7",
+      "published_sha256": "ee847027b006ed503d3e51749ca44fca394558ff779d449275971b658bcd55e4",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] empty delay-250/ownership.json",
+      "original_sha256": "7501a8196c95242bf4a1c84f94e62a2457298720fc3b0683fffe94670784bffc",
+      "published_sha256": "f67b4d8423acb45b81b8d2500680da9a544d198d2824d46eb83551a3cffcd3a8",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] invalid delay-0/child.json",
+      "original_sha256": "0867838d1af281b4eac47b833e611d8eea8278a5d285227eeef98303cce82ba9",
+      "published_sha256": "5cb9ecc28baff8640c2209e2ca10f3489f50eca37c709978ad6446a64df9ec86",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] invalid delay-0/identity.json",
+      "original_sha256": "97e55c30061359dd735661a46a6a4d11ac6d09ab8154f642331cdfbb48d73039",
+      "published_sha256": "4a31070afd5ff05b97d52a5c6c50354e333951d74f9d4e5872b4f82451a09966",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] invalid delay-0/ownership.json",
+      "original_sha256": "1f4503746215dd18bb235e820200b8a0418e3e5a9a1a4f1e3647e43a739228ed",
+      "published_sha256": "419a895d6721580763df0f9590f8c9f355bacc4c1da869c9cad55f22fa3c0381",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] invalid delay-250/child.json",
+      "original_sha256": "ec62136f089d98f9c5fd0c6a66eedcd40ebdeb9b02e72a21979c8ead0a429fd2",
+      "published_sha256": "859932519dfcc483e0feb61729566c71e5c4bb33b90199fdd7da39cb86aafa6a",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] invalid delay-250/identity.json",
+      "original_sha256": "01f007b4ec86ab9d71417d5ee04ed13d4d9664a80e8c44b09429ffb4d715719d",
+      "published_sha256": "a811578b9a16c2831a39729688c5b86b2a1aedfdb54e923b8b680c7627d400f2",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] invalid delay-250/ownership.json",
+      "original_sha256": "9c48fe6c884b641b0252e685f300c87285458bb14dc551cffc2584c4fd7b5207",
+      "published_sha256": "5d9e2fb44dc8f480e5d4cc3beff40db30fa6bbc856ac7a415288f562d298b78b",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] valid delay-0/child.json",
+      "original_sha256": "ecf016a18753d22190d20c8f5b2626184d86faaf54bea3a1285d2df4ff41107c",
+      "published_sha256": "30600de5d3997a9a5581baf50631a4221dac1e0d9c1f81feb1090616182583c6",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] valid delay-0/identity.json",
+      "original_sha256": "f885a1d78ad1396aaee584e979ff438b11bc7baf4da02e4cf0b0cea6013e85e7",
+      "published_sha256": "95e4a5505cd5bd23f952d4c05c95c1f350e2cd2c303a9c67cbf7af89e0c23783",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] valid delay-0/ownership.json",
+      "original_sha256": "0ec2e3454a59322ffde262c5368eb759c00a0e645134d1eb062ac240952db670",
+      "published_sha256": "16aff14427ae3f36f8a73fae462d493c7a6cfcca72777c5b6cd07ae9b1e4333a",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] valid delay-250/child.json",
+      "original_sha256": "71cddba108ef3a2d89bb8d792429690d18a19df061437b91d762fa6333f367ce",
+      "published_sha256": "4287082fb9ce12a3b5b5213167f3c64b85878c79f4dbeb8b893b3467f497ae7e",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] valid delay-250/identity.json",
+      "original_sha256": "50e927bf47d235456e7baf72f3ccecc46482a490a2289ba096b93e0e73182671",
+      "published_sha256": "7d4afa0a7c185b4456798153e2d04cb802c3f8250f54796e2da2aed4e74fb8e6",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/literal [brackets] valid delay-250/ownership.json",
+      "original_sha256": "12c64548b5a5b23d3b238caf9741bb0113f3915688e78ab9f9c4b3e07611cea4",
+      "published_sha256": "fd9628980276592695cd90dfb2fa272da0916298561705b791dc70d071ab701b",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces absent delay-0/child.json",
+      "original_sha256": "5f19314aac6a888f57f817d026f0e6f1a06c21f5b717200200f48e782f42a783",
+      "published_sha256": "6a05ee2c5aedf21c167c59b4987ac3b7951ecf85ebc31902958efa80c0a81d5c",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces absent delay-0/identity.json",
+      "original_sha256": "2cac1931db87d31d7c30695700eb2adc61acc9080dbb79f8670c872a8ace67c7",
+      "published_sha256": "d8335c975828b44d5bbfdd08dd772b3ba8e17f3fa645896bee75fb97c3aca5ac",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces absent delay-0/ownership.json",
+      "original_sha256": "30a826cd713f7c73abf078bf2293a025bf07240f9a00ec0d9e62410e942fefb6",
+      "published_sha256": "d79a12cd8d2b08e7b8d8961e15824ed088ddb4f75c0c112f3458712464713b33",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces absent delay-250/child.json",
+      "original_sha256": "ef6b24a9a01300725e7d883c6052abfe69b95fe48c6995336cc39ff637b02373",
+      "published_sha256": "aa45311f96e7697e819bad49f87564f2b52e32e5a1a5908101bb6f99a75d447b",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces absent delay-250/identity.json",
+      "original_sha256": "a40e155fb55f7555920a6aa2eea4b15e37839d518296bba5847d5fba1eb45aa3",
+      "published_sha256": "ce81b2fcdd3badc2c060ff79a64b0336332a17bb6943ea1f449be09e945933d6",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces absent delay-250/ownership.json",
+      "original_sha256": "c76f0f4cce8bd0b927e2c527c535ead716289fc1d4a7ad98a6e3857ba8657702",
+      "published_sha256": "372f5c4dc5ddc559a4c727c21fcaaabc9517d2d9be0cb60d90a803fd87435e6f",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces empty delay-0/child.json",
+      "original_sha256": "5e4e3adc50771c4db51b968637be86ddff9f9feef537daf06772ceaec2afda5f",
+      "published_sha256": "5ad045b69566878e0a8dfb07b11f2ee6475cd09d1778d2d65ac9bfa47e79c153",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces empty delay-0/identity.json",
+      "original_sha256": "e249948640aa4159a18c4ef2c7ecc5f94e21d192a5339583dc8636fbf9ce1cf5",
+      "published_sha256": "01afa72dde504d6543f479a2d6fe5fa72416f131470574ed66aa3abeb8ccabd2",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces empty delay-0/ownership.json",
+      "original_sha256": "00968d0fc4595994fe2e4a654459f2af2124b082f8bc637b6242aadabae3ccc5",
+      "published_sha256": "56d4c97c877e8b7d55110c620f794aa3cb3a69464598bff2952ce2c19ea8acd1",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces empty delay-250/child.json",
+      "original_sha256": "85dd784e04e8f759d91183355107b11aba5db1968ac995902a9b64a44ca61972",
+      "published_sha256": "1383f10bb7d5a2e023d1882de854b0818cabbe8439384ea17435de48b6b356ee",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces empty delay-250/identity.json",
+      "original_sha256": "876150bed8ffafc222f4d53ece9aee15281e19a6f122981841e4a3647de9d0b9",
+      "published_sha256": "34734276291815af9c36870aae3f7838fdf143b164e63207bc39b188cbcb7f85",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces empty delay-250/ownership.json",
+      "original_sha256": "0bbd01667f6c5655ffcd94a2816badd8a0b1fcca935df5ef8e3f82354f864cf5",
+      "published_sha256": "0df0743f70e01abbe3057e4c04ea0ba19b9a41377b94fbacc4c91fa5bd8c99bd",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces invalid delay-0/child.json",
+      "original_sha256": "563d1c043b3792c5b4f7fd8c3700ae9750ba949a86bf99ec05bca0ca5e40443f",
+      "published_sha256": "1bd71085e33cae8b6b7742a1de06513a129b26dfae0da06d9d5464e24fcf6ba0",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces invalid delay-0/identity.json",
+      "original_sha256": "473959f2c0db939f70709eaf9a1b26fbbec4595c512909e445082a83870468b3",
+      "published_sha256": "44133bb590b7fe107042baeb82fee40e81cf193a9ee778bfa94217ac7f7832cd",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces invalid delay-0/ownership.json",
+      "original_sha256": "73d88bffb265a39035f95855e13ae273d49db3873369d8827a61bad51eeebd83",
+      "published_sha256": "3e2115a6921b514c51e36eb7bda589ac2e0b55665eea8643aef73e1203fe6324",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces invalid delay-250/child.json",
+      "original_sha256": "a6ac2bd473fe158520b875ad18447b4141a94dc3fb02214cb04ff0dbf30cb0d5",
+      "published_sha256": "ebe848a4b87a945e4c894fe87286576bb791204aa0b00c27a116f0619618b1b3",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces invalid delay-250/identity.json",
+      "original_sha256": "b40030c2492838e97e09493697051f29b8c74a71028680349b762995d3beb134",
+      "published_sha256": "e234d2e9c0155cce91129e1175dee3a5c6007fa77df816773355b23149d6c2f5",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces invalid delay-250/ownership.json",
+      "original_sha256": "9b2040324ff2afa67510f9375e5a27c9d4a449e69a9bd4ca9008ff23b0ebd06a",
+      "published_sha256": "512386d70f64d6e2a313ffc3cc27bff6c5481e0001e848f81118c630762f22b3",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces valid delay-0/child.json",
+      "original_sha256": "036faeeefbd2dd6a77e62c7fae500c64170b66ba2fc197fa19859abc813b594c",
+      "published_sha256": "2d406c57da198ae79288313e9e012c82f18ad78daccb719d27384d1cc3b83478",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces valid delay-0/identity.json",
+      "original_sha256": "15c8346daa336ff093d1361698f6ee51af665d859be73a16264280fd7d0103fb",
+      "published_sha256": "8db30a6fdeedf84b26ca607d266d5e1df9b9b19bb754553a77e79eded0b0bf0c",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces valid delay-0/ownership.json",
+      "original_sha256": "e4891755ee95759e21924d83a36557137b6980db3469322d33c4cc74458ece8c",
+      "published_sha256": "25fdda922341bf3ee3f10a16171e874392df97a36c5e7c9396a4a52591a0cb05",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces valid delay-250/child.json",
+      "original_sha256": "986b25767e5d44f5248ffff53abf7f29d2b2941e74683f1086a86e11e7c1b849",
+      "published_sha256": "08db349eedc5ae1547c83268f160b86c662b1c4b795ad8382633a904d334963f",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces valid delay-250/identity.json",
+      "original_sha256": "9cdea9c89c0f46853ec0252888be4e377ca94d43c02f55f22a31c5c7c6395f1c",
+      "published_sha256": "1c5715eaf69561f3e7deee49a456bd650f602d96255e036ede98d7c7a4497fbc",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/normal spaces valid delay-250/ownership.json",
+      "original_sha256": "b4146d99b4fe0170852780f829acab6b1ca12dee5a23f6a117d29453faa0c329",
+      "published_sha256": "753d34fffb2b9a7eb21d53489ed68561e5b0ce654bd1ad29f6c334af561d2ac4",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "cold-launch-handoff/valid policy.json",
+      "original_sha256": "244f4a48f71cd60663f3cd24fcbbafe2aaea11de1b380483ecde65c18dd99087",
+      "published_sha256": "672c6812480b926945c3c15b094c853c77d3b5ebf47114b8cb712cdd3e5c0371",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/cli-selection/browser-verification.json",
+      "original_sha256": "12461001a0d221f3199dd39c59d0090a591b4f675aa0ed651efbbbce2f69336f",
+      "published_sha256": "12461001a0d221f3199dd39c59d0090a591b4f675aa0ed651efbbbce2f69336f",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/cli-selection/desktop.png",
+      "original_sha256": "affabab7182d6266091a7c4e1f1d9dd29ce7ae66efe87ea29fc7895d1a691b39",
+      "published_sha256": "affabab7182d6266091a7c4e1f1d9dd29ce7ae66efe87ea29fc7895d1a691b39",
+      "normalization": "none"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/cli-selection/mobile.png",
+      "original_sha256": "33fe96484f16102f2e62d9f2fc1c10e9acca72adf9c6d8b96736b9202c4e3e60",
+      "published_sha256": "33fe96484f16102f2e62d9f2fc1c10e9acca72adf9c6d8b96736b9202c4e3e60",
+      "normalization": "none"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/missing-executable.json",
+      "original_sha256": "ec419e8c1cd71798712bd0be28b7370465f674edfa1c02f04303715fe1d8cf86",
+      "published_sha256": "e511510e40d6727d928fb3fe2a35e331910ea02c42e78823b698b11e77ceee4e",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/module/browser-verification.json",
+      "original_sha256": "12461001a0d221f3199dd39c59d0090a591b4f675aa0ed651efbbbce2f69336f",
+      "published_sha256": "12461001a0d221f3199dd39c59d0090a591b4f675aa0ed651efbbbce2f69336f",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/module/desktop.png",
+      "original_sha256": "affabab7182d6266091a7c4e1f1d9dd29ce7ae66efe87ea29fc7895d1a691b39",
+      "published_sha256": "affabab7182d6266091a7c4e1f1d9dd29ce7ae66efe87ea29fc7895d1a691b39",
+      "normalization": "none"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/module/mobile.png",
+      "original_sha256": "33fe96484f16102f2e62d9f2fc1c10e9acca72adf9c6d8b96736b9202c4e3e60",
+      "published_sha256": "33fe96484f16102f2e62d9f2fc1c10e9acca72adf9c6d8b96736b9202c4e3e60",
+      "normalization": "none"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/result.json",
+      "original_sha256": "2cdfe92a98f3f53e90bc64b0db32f5c825f14e0f816e78a61c0a453fe1be081c",
+      "published_sha256": "76c9cb00ad30c8ed91f2c1009c5aaeb71c9c34d67ecef27822202fb502e85ca1",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/wrong-hash.json",
+      "original_sha256": "0bcb767115f5f220549b2e5a4bdc84361743d014ec3a2afb91d93ee981a4b0c0",
+      "published_sha256": "10aca34e5d3b20b3e995edaf43533da239cabe26ab31760cd318cdbbf17eb51d",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "native-browser/native-browser-K4z3XO/wrong-host.json",
+      "original_sha256": "8ccc7a8df1217ad308961f2007dc51c78f9efab222023e144057eabc1514bd96",
+      "published_sha256": "ac028725d9b18bb0c12c731be1917dbaf6c07154d455d2be1b3e79676aa98dc6",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/workflow-checkout.yml",
+      "original_sha256": "c8c14cac19c397727a55287ab686871cb40fe8ad2019efbcaeb3cbbe37fc543e",
+      "published_sha256": "c8c14cac19c397727a55287ab686871cb40fe8ad2019efbcaeb3cbbe37fc543e",
+      "normalization": "none"
+    },
+    {
+      "file": "exact-workflow-step/workflow-git-blob.yml",
+      "original_sha256": "e717f1d0c908e676d774073faf282cd03d3049bce6554d75c658be88f60050d6",
+      "published_sha256": "e717f1d0c908e676d774073faf282cd03d3049bce6554d75c658be88f60050d6",
+      "normalization": "none"
+    },
+    {
+      "file": "exact-workflow-step/extracted-step.ps1",
+      "original_sha256": "b2528c8a69d40e2e6bf8c92e9144b885e495e049629c28b621693725217e73f3",
+      "published_sha256": "b2528c8a69d40e2e6bf8c92e9144b885e495e049629c28b621693725217e73f3",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/invoke-step.ps1",
+      "original_sha256": "df8f64834f1405f0cd458a27da7b2378a91439ef7053dac06d5adebd443c8f32",
+      "published_sha256": "cd28479c60313b67f82b32dfd2a3f11f5728e0c23a6dbef5dd2704e95471d421",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/receipt.json",
+      "original_sha256": "5fd525f40a526a0807fbd944f25e62e1602e75a6e1f7259d4e39d1b3e277a6b4",
+      "published_sha256": "93529790adf4a07075f24196e1ed6bbb11a6aa79cad050460085c2dd370aa702",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/step.log",
+      "original_sha256": "9cc989715e2240742f190f40745bfa66b38125911b4695e949970286e682bbaf",
+      "published_sha256": "e6b9c1cc9bb9bb2f84f2bf9d88e201e60c7394f12f5f6f3530f417f757ed15bc",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/cases.json",
+      "original_sha256": "4ba808745453b7787c6473fbce9057a0febecd16bb85b2f954534c2474d9e9c7",
+      "published_sha256": "e921606fcb0121748ccd4316976e6609050df74fc8a8781aac207da1f5048e59",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/invalid policy.json",
+      "original_sha256": "28409e64d03bb85acfdcfe5cd5d1e564956ba8ab5927608191a308c9de8ea638",
+      "published_sha256": "300da724d184807d1499b3b7851867a33a730613074962a8692999f1bdba3fc4",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] absent delay-0/child.json",
+      "original_sha256": "a8068417c04a874f55263cc2efb65e5eba88b1091f62f76fde5a33cbaac0c0e3",
+      "published_sha256": "e6523f73cd4a0501cb41ae4c634b3ccb2e52b9e2e43a69b04716c3e4ecc0a176",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] absent delay-0/identity.json",
+      "original_sha256": "014632ec28763b03c20448fcf6f73209eb42c2dd22b33c5f12faeb3e9513975d",
+      "published_sha256": "6dc5900c0dccc2791ab0ab31a0cc094ab3e5eecea050e0b2ec7a164c5db4245b",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] absent delay-0/ownership.json",
+      "original_sha256": "561d5ea505641cb9cee7dc504f818fd7e797757b05df27bf92abe203cd6dfb75",
+      "published_sha256": "82dc4b61f33fcd8b6b60f32919300fd7d58a26cf542d735ba1d7e5ff00ca978f",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] absent delay-250/child.json",
+      "original_sha256": "4e4df50b5b99a423410fbb08d0a5f6d3b4bd3c657a30ab4b63ffcb0f72c9e65a",
+      "published_sha256": "1fe1b31883fa1b6f68b37602e9b6ea33753fa9c3e64486073f484db176ee108d",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] absent delay-250/identity.json",
+      "original_sha256": "e1d7857a8a8aae4b928a9e708add9a67b71cb9fbff4f9a54266e05dc1662fe53",
+      "published_sha256": "69d2040904e0902bbf987c73759963d2821debd1fe311d418327ccd63e386af5",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] absent delay-250/ownership.json",
+      "original_sha256": "b5a3f245f8b4b64a2a83d2eb366d0ee00bcff44afe12f3dd2e545ebf937e6d1f",
+      "published_sha256": "8badd0d5b669502f0703a106df50b809e1590f09c06c3f625aa7ed278f845e9a",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] empty delay-0/child.json",
+      "original_sha256": "5cc21b8e17b901291a5160d3fdcf66c79ea5d996588b59775649fdb193b3ea10",
+      "published_sha256": "6e738e40a14750fb0c1011795faca23881c9658ee5d179e62271de4da77b6f8b",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] empty delay-0/identity.json",
+      "original_sha256": "88a223b60e45c3179b65727233ea31a3a21834c7205ff9b0a25359bc7e652b4b",
+      "published_sha256": "fe360be66c56e41a78e1532e325f96fd1ce7bb178a93ad18536cefc5fb48c2e5",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] empty delay-0/ownership.json",
+      "original_sha256": "ec5600c58e8d3ba069d59ca55cced69c61de9812b7fa3f74ad9afce42e3b32dd",
+      "published_sha256": "d12e3756e5f1596a95e0a2518ee63e8d957a7f2e3fdeb2eca30ad38f4a7289ff",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] empty delay-250/child.json",
+      "original_sha256": "f763ab4bf6c586f17f3331c82413e13cf97bb6becdcd6dced9c1dfde22277571",
+      "published_sha256": "7ac2ed6baa0789d717c311274fa06e6f3469c32206332e3c037abefd9570aa06",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] empty delay-250/identity.json",
+      "original_sha256": "c4c0ce37b1f09b97d406d1a6fcaa094392c2fa3e6881e31bbfc96f032eecdbdd",
+      "published_sha256": "1a47f86f5feaf683da406fb23f0d288bbebe1175723efdc631b5d727e0b3bd96",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] empty delay-250/ownership.json",
+      "original_sha256": "a947c618625ce6b3a5c3e061d55e8e795e629256dba2298220e780cbe9b6c8f0",
+      "published_sha256": "c71dc2f0fc960fdec32185181eec3e72b8ea58bdef0f9884eb07a60a80a0df25",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] invalid delay-0/child.json",
+      "original_sha256": "3be63a3a9563db0b6b5a8972df768ced78456a0aa42ae1fd16f95db695e3289e",
+      "published_sha256": "f78822409630940b1aa2e9de59c6d8d71617e318653548abc83d101ab01c143a",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] invalid delay-0/identity.json",
+      "original_sha256": "8b208e69125615409b69132ce32ed012a9162a52134c7a5a9be88cc7958e89e9",
+      "published_sha256": "e143ce537d2a1f8106ca8051987d722bfbe7f77f89023091258ddd6cc3b0aa76",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] invalid delay-0/ownership.json",
+      "original_sha256": "55ba49b45e28cc2c17ed3a6af6c934c9d97d90f9d11e0f66276f942cf7d90ae5",
+      "published_sha256": "3d1f4d0ef42b1b7beb9b9f2e70547f7b8d56fdf2d5c7b1eba207bedf937eee64",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] invalid delay-250/child.json",
+      "original_sha256": "2847b8761598425939c4b97817fa19af8b760902e2b5fab52b07147799a0d8eb",
+      "published_sha256": "f5b32abb061482305626c77a9388f7c630d8d3c7b074f0a5677582a5163051e2",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] invalid delay-250/identity.json",
+      "original_sha256": "345b58ee08ae469583c1859c791c346283f7640725f13b5c6cf1a9860c0f3ad5",
+      "published_sha256": "49af801e06d4879ac09940711aa4b2947d828eac436417ad0c22b71d403944ac",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] invalid delay-250/ownership.json",
+      "original_sha256": "8e21f638e2f91fe94ae7d28527023c3d2ce4b816a16a13a3ac0d69a2c453de78",
+      "published_sha256": "7fc2410028bba84ae96c2d8b3ebf52ab648550979eeccb2c808e81d6dfc1a854",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] valid delay-0/child.json",
+      "original_sha256": "6b787aafe12bc5dcdfd8ac4cca85a187e8eef98e5c86f9b12e815a7ecab2e821",
+      "published_sha256": "faae56500a68810711e52bce38c68115bf3d003eb10b8d66a884ec2265d38333",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] valid delay-0/identity.json",
+      "original_sha256": "2674010f649ebc2b38b2846bfcde591b96f3f1e9ce9651710c5acb51407a0773",
+      "published_sha256": "72c32b52702e2750d0eddfec2226ed04d63cd457dc129a9871e99215d828de73",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] valid delay-0/ownership.json",
+      "original_sha256": "9912601098f343472fa73d685e33c586d66c2b586022f527a25d7d11689391d8",
+      "published_sha256": "4b91082ddac887015b4937d206f5a4246ca1019b562e4be510e3e5adb263c692",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] valid delay-250/child.json",
+      "original_sha256": "10410e82f9c1ca2ef76c638009989f9b494e7b84a52075cf9ada895b32cc1ed5",
+      "published_sha256": "b9d4cddfc1a588a1913949bead55146dc26668bcafeadb704612e3c566cc109c",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] valid delay-250/identity.json",
+      "original_sha256": "42362ba9001f0accc581a655668f7c2a774cabd7225033ba210b5361e26d92de",
+      "published_sha256": "bce6001b042f0314373d57b4717fb4c935c60dcc0c73f415a5a3cf61463e7ee5",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/literal [brackets] valid delay-250/ownership.json",
+      "original_sha256": "4883c58cbbc4e62398621267af7bdf02ea7ae4fbef263fa42a3d07605f41aaea",
+      "published_sha256": "ea7b0a25a90b20c058fa9be107ff630c02889b1ed64c5b89df691d2bfb4cfc93",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces absent delay-0/child.json",
+      "original_sha256": "de98ce2cd3894b28ab660d9f8293231f86eada181a979a49ab9aa81e12bbb879",
+      "published_sha256": "8058c3b5f809606256207313e5f8ce4be78b7c8732add1d03cb59f4524fe36b8",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces absent delay-0/identity.json",
+      "original_sha256": "f3d42cbc1e548927147ac491af69e0b396c3f13d84e0248e497b47f8e3cbcad6",
+      "published_sha256": "102d0cc082e7a2347920e16d2a34368ff107ce2125b790d3eec9b09f31ff70d8",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces absent delay-0/ownership.json",
+      "original_sha256": "3a0843f475c6472f7fcf716255415995c44fbd368cc9bb4c5722955461fba960",
+      "published_sha256": "695fd5d50f32ead946b75933ec0c45980e7e78ef5c3b221bba274a1762e78044",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces absent delay-250/child.json",
+      "original_sha256": "0fcd9cbe6920879d01c7c995b96876c96ab28646faf0465e09febae4bf522764",
+      "published_sha256": "8fb512dc3850bae62a854436207b6091cafd85a538772330ca63c75d621e5280",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces absent delay-250/identity.json",
+      "original_sha256": "f734ab4d8048e4f88f76dd9db0782ec0c8fa9daf01548c5d30ea8b4631450f1b",
+      "published_sha256": "d516ea721a1739def8f8cca1395ba2f17bebed0396cf39159393041b8c258004",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces absent delay-250/ownership.json",
+      "original_sha256": "ac8cb7dd02a8b66cd239a7c870709ecdb83b3ac803dc173d4cf34794f6af03e1",
+      "published_sha256": "11706b7d2f1d95f59dd9205386297b911be89f84e58fea62784fba7d26340fed",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces empty delay-0/child.json",
+      "original_sha256": "2522c70f0d503646031ae3a05648e908ba743d5f6afc974f55b4203ed19185af",
+      "published_sha256": "f0d04fc29c2d4fe6a20f2d82950b467b1c42ebee48537b8c76f9e08d46805ec4",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces empty delay-0/identity.json",
+      "original_sha256": "6ace44225ecd0339ae4bcdb0f0fa9ba321576fdcc190c79cc4803daa783d20c3",
+      "published_sha256": "a17dd2d328296d9ced656479e3133e56600a79dd2a08430ae1faf80b483567ec",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces empty delay-0/ownership.json",
+      "original_sha256": "c372eba3f3ab9757ef331b53d20f16d66538f6225df1b64f92a25646f9c10460",
+      "published_sha256": "1fb4b86149d806b8966b6ba5f8f5e8d4c4c4ebe490f8630d65329114485e5bbb",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces empty delay-250/child.json",
+      "original_sha256": "18852f1a241b82963d46177913a48953ddb75a8c512265640b3042f19661d785",
+      "published_sha256": "292edd2fc954f28d60cae57d7ef13a3520ad8e8011a5a2fb939e6e448826f8b3",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces empty delay-250/identity.json",
+      "original_sha256": "cf439c9d2f45d4833a65094e3ad131f08455ae5fc7843640b95ebb9ebef33efa",
+      "published_sha256": "c7a0446c25ff9298d6154a32bdef895adadcbf520852767a6201859632a26185",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces empty delay-250/ownership.json",
+      "original_sha256": "a37584a8229159485c6561d555f35ea722c84caa48abed2ea21f89e67fc33599",
+      "published_sha256": "d6730e249cec2c7b68cdc6de768f4e8e1c42d31ea6fed9ef25d1b1d4b5cef92d",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces invalid delay-0/child.json",
+      "original_sha256": "6910d00ca139b4c138a1b346383283c3e83d28e0fcaa0886963750d25c14ec75",
+      "published_sha256": "12413fd18b2abd682a09d39e4d338cd3914f1006e5b6abb24911a4814ec6edca",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces invalid delay-0/identity.json",
+      "original_sha256": "b84c10e3f21d6b070f51b37d8156d893a00519926d93c62f876d0862e6690f90",
+      "published_sha256": "1fd90136478c44cd2675802777b2269a3f706d8807945c80ffec29cec3a9c7af",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces invalid delay-0/ownership.json",
+      "original_sha256": "1f9b5944f8186a118d82dd31f1a0b0029960583595c8284f4199d42b744db222",
+      "published_sha256": "a4b47156a7c6dce241ff62117ae3a9566fe55ed1cb75e449619f419694dc9725",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces invalid delay-250/child.json",
+      "original_sha256": "bc767401ea7622dbf1c2b90109773f5f91062e626dd9cc90576049e57fa18d0e",
+      "published_sha256": "4b2b9a4fe53f5cde21d06106ccd2ae0b367cd6f662a0330b23688e0b73e03767",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces invalid delay-250/identity.json",
+      "original_sha256": "af89688bc1089c84a028672705e23b2ff8c26e301f42b436ac7e1ae19082d1fd",
+      "published_sha256": "45a7e144689536ceca75df88493925bd58d7d155ecf49675d2f50f49b6de7ce3",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces invalid delay-250/ownership.json",
+      "original_sha256": "06618b6fc8913080415d68534cda5bd2c03f0cd6c754eacb17614d0cde3a14f4",
+      "published_sha256": "b3395984d9a35ca690364796d75788174f749f95e3cb6ac652964ef467025b5e",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces valid delay-0/child.json",
+      "original_sha256": "7c8e73053fba5c9c97ec4b8945f4b9cfe15ae198e6d7310909428258eb8361f8",
+      "published_sha256": "aaec7393a6658f02c4f02776a4e23f5595ff95f2a448007e70192aca59e720f2",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces valid delay-0/identity.json",
+      "original_sha256": "cffe94d125e1462c98d224d05567b843a851bdbe2585156cb3c58591bc061f91",
+      "published_sha256": "6585ac4c6e9481a336236eee9a1e1c3bc6060d87736edb9815e5c73b40ac4a64",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces valid delay-0/ownership.json",
+      "original_sha256": "8ab8f122a0d45311c4d63258cbacabdb721587e2eec18c0dac92ad4e9d8f197c",
+      "published_sha256": "e0c88decd86ad2694cbebf4fedbfbb873345eb69c6bc26405717b183305f3afc",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces valid delay-250/child.json",
+      "original_sha256": "9d671f2ca3125c9c28f05062c819c648006a5e1e22e2b658fb5b35f6af87251e",
+      "published_sha256": "715ec52bb32f68c435b049c9cadeb0be4177da42b84f1e2f4184d331d9d11332",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces valid delay-250/identity.json",
+      "original_sha256": "4f6553124f3b71c520937448db9eeba2011d6a26746af7c7679cef8909d4d990",
+      "published_sha256": "21fff00d93ac57a9c267e5faa71de3b74d10b1adf8a9e9cbd8248ef13dff30d9",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/normal spaces valid delay-250/ownership.json",
+      "original_sha256": "60ba9e6b1b3783e264fbef31158d4a1f61426abdc5a5c3669aaaf6e9f419a92f",
+      "published_sha256": "ad48c1ad7f59787ca694e79749232d954aeb699d5b7275b510940e9be0d89617",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "exact-workflow-step/output/runner-platform-browser-policy-handoff/valid policy.json",
+      "original_sha256": "4bb0aad1c3d20ca47920e4409b1e9a624b830a7d8abf5c13afc3e8a7f1e529ae",
+      "published_sha256": "1a2438aaca15ba38097e387e6fb886494a07f521c3dd7da5935dff5825835982",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    },
+    {
+      "file": "prior-workflow-receipt-r7.json",
+      "original_sha256": "a67fa575a861a9c098b6bdbdfaa646721b440b2c76bc7022f5f2ace6b295dada",
+      "published_sha256": "3f341598c8f90e73edaa0cf732c2aee3a731f4988c318c93fd43634140807773",
+      "normalization": "local-root placeholders, LF, trailing whitespace"
+    }
+  ],
+  "chronology": "Current correction validation and explicitly retrospective baseline evidence; historical packets are unchanged."
+}

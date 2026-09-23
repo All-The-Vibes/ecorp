@@ -1,0 +1,42 @@
+F02 component regressions passed: 124 invalid/reserved cases across all three plan inputs and forward separators.
+{"fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-d70460edeba0402fb231fa4548f7f459","event":"alias-before","mapping":null,"drive":"Q:"}
+{"sameSentinel":true,"event":"alias-created","target":"\\??\\<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-d70460edeba0402fb231fa4548f7f459\\retained-office","drive":"Q:"}
+F01 native alias rejected in Root.
+F01 native alias rejected in Product.
+F01 native alias rejected in Protected.
+{"removedTarget":"\\??\\<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-d70460edeba0402fb231fa4548f7f459\\retained-office","event":"alias-cleanup","mapping":null,"drive":"Q:"}
+{"distinctAlias":true,"event":"short-path","accepted":true}
+F01 native short-path overlap rejected: short fixture ancestor.
+F01 native short-path overlap rejected: short product.
+F01 native short-path overlap rejected: short protected ancestor.
+F01 native short-path overlap rejected: multiple missing descendants.
+F01 native SUBST/unmapped-drive and simulated mapped/unknown-drive regressions passed.
+{"fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-d70460edeba0402fb231fa4548f7f459","target":"\\Device\\HarddiskVolume4","event":"volume-before","mapping":null,"drive":"Q:"}
+{"sameSentinel":true,"event":"volume-created","target":"\\Device\\HarddiskVolume4","drive":"Q:"}
+F01 native same-volume disjoint control passed: Root.
+F01 native same-volume disjoint control passed: Product.
+F01 native same-volume disjoint control passed: Protected.
+F01 native same-volume overlap rejected: Root.
+F01 native same-volume overlap rejected: Protected.
+F01 native same-volume overlap rejected: Product.
+F01 native same-volume overlap rejected: protected drive root.
+F01 native same-volume overlap rejected: aliased protected drive root.
+{"exactMatch":true,"removedTarget":"\\Device\\HarddiskVolume4","event":"volume-cleanup","mapping":null,"drive":"Q:"}
+F01 native same-volume aliases, disjoint DOS-path controls and drive-root ancestry regressions passed.
+F03 native clean control passed with distinct candidate/foreign identities.
+F03 native tracked/untracked dirty controls passed; source bytes preserved.
+F03 native selection rejected: GIT_DIR+GIT_WORK_TREE
+F03 native selection rejected: GIT_DIR
+F03 native selection rejected: GIT_WORK_TREE
+F03 native selection rejected: GIT_COMMON_DIR
+F03 native selection rejected: GIT_INDEX_FILE
+F03 native selection rejected: GIT_CONFIG
+F03 native selection rejected: GIT_CONFIG_GLOBAL
+F03 native selection rejected: GIT_CONFIG_SYSTEM
+F03 native selection rejected: GIT_CONFIG_PARAMETERS
+F03 native selection rejected: GIT_CONFIG_COUNT+GIT_CONFIG_KEY_0+GIT_CONFIG_VALUE_0
+F03 native selection rejected: GIT_CONFIG_VALUE_77
+F03 native selection rejected: GIT_OBJECT_DIRECTORY
+F03 native selection rejected: GIT_ALTERNATE_OBJECT_DIRECTORIES
+F03 native Git selection, identity binding, value non-disclosure and preservation regressions passed.
+U1 preflight path, port, tool, source, registry, report and read-only regressions passed.

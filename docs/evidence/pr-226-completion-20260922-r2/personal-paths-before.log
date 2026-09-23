@@ -1,0 +1,46 @@
+✔ personal paths include drive-relative, prefixed, escaped and alternate separators (1.9523ms)
+✔ normalized placeholders and ordinary prose remain valid (0.2416ms)
+✔ recursive packet scan and CLI reject a leak without printing its value (295.6137ms)
+✖ both retained PR226 packets contain no personal user paths (1365.5525ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1807.9699
+
+✖ failing tests:
+
+test at tools\check_evidence_personal_paths.test.mjs:45:1
+✖ both retained PR226 packets contain no personal user paths (1365.5525ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+  + [
+  +   'pr226-integration-20260921/capture-environment-v1.json',
+  +   'pr226-integration-20260921/prior-attempts/provision-environment.json',
+  +   'pr226-integration-20260921/prior-attempts/rust-diagnostic-environment.json',
+  +   'pr226-integration-20260921/prior-attempts/rust-environment.json',
+  +   'pr226-integration-20260921/prior-attempts/rust-exact-binary-environment.json',
+  +   'pr226-integration-20260921/prior-attempts/rust-longpaths-diagnostic-environment.json',
+  +   'pr226-integration-20260921/prior-attempts/rust-longpaths-environment.json',
+  +   'pr226-integration-20260921/prior-attempts/rust-retry-environment.json'
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:46:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'pr226-integration-20260921/capture-environment-v1.json', 'pr226-integration-20260921/prior-attempts/provision-environment.json', 'pr226-integration-20260921/prior-attempts/rust-diagnostic-environment.json', 'pr226-integration-20260921/prior-attempts/rust-environment.json', 'pr226-integration-20260921/prior-attempts/rust-exact-binary-environment.json', 'pr226-integration-20260921/prior-attempts/rust-longpaths-diagnostic-environment.json', 'pr226-integration-20260921/prior-attempts/rust-longpaths-environment.json', 'pr226-integration-20260921/prior-attempts/rust-retry-environment.json' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,74 @@
+   Compiling tokio v1.53.1
+   Compiling alloy-eip2930 v0.1.0
+   Compiling alloy-eips v0.8.3
+   Compiling alloy-sol-types v0.8.26
+   Compiling tokio-util v0.7.19
+   Compiling alloy-consensus v0.8.3
+   Compiling h2 v0.4.19
+   Compiling alloy-network-primitives v0.8.3
+   Compiling alloy-consensus-any v0.8.3
+   Compiling alloy-rpc-types-eth v0.8.3
+   Compiling hyper v1.11.1
+   Compiling tower v0.5.3
+   Compiling hyper-util v0.1.20
+   Compiling sqlx-core v0.8.6
+   Compiling rustls-native-certs v0.8.4
+   Compiling tokio-rustls v0.26.4
+   Compiling sqlx-postgres v0.8.6
+   Compiling hyper-rustls v0.27.9
+   Compiling tower-http v0.6.11
+   Compiling alloy-rpc-types-any v0.8.3
+   Compiling alloy-json-rpc v0.8.3
+   Compiling tokio-stream v0.1.19
+   Compiling alloy-network v0.8.3
+   Compiling sqlx-macros-core v0.8.6
+   Compiling reqwest v0.12.28
+   Compiling blake3 v1.8.7
+   Compiling sqlx-macros v0.8.6
+   Compiling alloy-signer-local v0.8.3
+   Compiling tokio-tungstenite v0.29.0
+   Compiling alloy-rpc-types v0.8.3
+   Compiling alloy-core v0.8.26
+   Compiling axum v0.8.9
+   Compiling crony-audit v0.1.0 (<reviewed-worktree>\crates\crony-audit)
+   Compiling alloy v0.8.3
+   Compiling sqlx v0.8.6
+   Compiling num-bigint-dig v0.8.6
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling rsa v0.9.10
+   Compiling crony-base v0.1.0 (<reviewed-worktree>\crates\crony-base)
+   Compiling object_store v0.12.5
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling tracing-subscriber v0.3.23
+   Compiling jsonwebtoken v10.4.0
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+error[E0061]: this method takes 4 arguments but 3 arguments were supplied
+   --> crates\crony-server\src\base_worker_tests.rs:661:14
+    |
+661 |               .publish_audit_destination(
+    |  ______________^^^^^^^^^^^^^^^^^^^^^^^^^-
+662 | |                 archive.id,
+663 | |                 &ArchiveTransport::default(),
+664 | |                 &crony_audit::SigningKey::from_bytes(&[7; 32]).verifying_key()
+665 | |             )
+    | |_____________- argument #4 of type `std::option::Option<&str>` is missing
+    |
+note: method defined here
+   --> crates\crony-store\src\state_audit.rs:721:18
+    |
+721 |     pub async fn publish_audit_destination<T: crony_audit::PublicationTransport>(
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+help: provide the argument
+    |
+661 |             .publish_audit_destination(
+662 |                 archive.id,
+663 |                 &ArchiveTransport::default(),
+664 ~                 &crony_audit::SigningKey::from_bytes(&[7; 32]).verifying_key(),
+665 +                 /* std::option::Option<&str> */,
+    |
+
+For more information about this error, try `rustc --explain E0061`.
+error: could not compile `crony-server` (bin "crony-base-worker" test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `crony-server` (bin "crony-server" test) due to 1 previous error

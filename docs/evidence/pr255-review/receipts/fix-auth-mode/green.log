@@ -1,0 +1,143 @@
+TAP version 13
+# Subtest: authority endpoint never displays credentials, query or fragment
+ok 1 - authority endpoint never displays credentials, query or fragment
+  ---
+  duration_ms: 1.0732
+  type: 'test'
+  ...
+# Subtest: missing, nil, malformed and mismatched authority stays unverified
+ok 2 - missing, nil, malformed and mismatched authority stays unverified
+  ---
+  duration_ms: 0.5477
+  type: 'test'
+  ...
+# Subtest: production health, failed snapshot, then development retry replaces the old mode
+ok 3 - production health, failed snapshot, then development retry replaces the old mode
+  ---
+  duration_ms: 8.3142
+  type: 'test'
+  ...
+# Subtest: development health, failed snapshot, then production retry records production without demo bootstrap
+ok 4 - development health, failed snapshot, then production retry records production without demo bootstrap
+  ---
+  duration_ms: 2.6325
+  type: 'test'
+  ...
+# Subtest: each pending attempt and failed snapshot clears previously verified mode
+ok 5 - each pending attempt and failed snapshot clears previously verified mode
+  ---
+  duration_ms: 2.492
+  type: 'test'
+  ...
+# Subtest: unavailable or malformed health cannot retain authentication assurance or bootstrap
+    # Subtest: network failure
+    ok 1 - network failure
+      ---
+      duration_ms: 2.5203
+      type: 'test'
+      ...
+    # Subtest: HTTP failure with production body
+    ok 2 - HTTP failure with production body
+      ---
+      duration_ms: 2.3083
+      type: 'test'
+      ...
+    # Subtest: invalid JSON
+    ok 3 - invalid JSON
+      ---
+      duration_ms: 2.4852
+      type: 'test'
+      ...
+    # Subtest: null
+    ok 4 - null
+      ---
+      duration_ms: 2.0173
+      type: 'test'
+      ...
+    # Subtest: {}
+    ok 5 - {}
+      ---
+      duration_ms: 1.8866
+      type: 'test'
+      ...
+    # Subtest: []
+    ok 6 - []
+      ---
+      duration_ms: 1.7104
+      type: 'test'
+      ...
+    # Subtest: "production"
+    ok 7 - "production"
+      ---
+      duration_ms: 1.8106
+      type: 'test'
+      ...
+    # Subtest: {"status":"ok"}
+    ok 8 - {"status":"ok"}
+      ---
+      duration_ms: 1.4854
+      type: 'test'
+      ...
+    # Subtest: {"status":"ok","mode":null}
+    ok 9 - {"status":"ok","mode":null}
+      ---
+      duration_ms: 1.4205
+      type: 'test'
+      ...
+    # Subtest: {"status":"ok","mode":42}
+    ok 10 - {"status":"ok","mode":42}
+      ---
+      duration_ms: 1.5591
+      type: 'test'
+      ...
+    # Subtest: {"status":"ok","mode":"Production"}
+    ok 11 - {"status":"ok","mode":"Production"}
+      ---
+      duration_ms: 1.9595
+      type: 'test'
+      ...
+    # Subtest: {"status":"ok","mode":"unknown"}
+    ok 12 - {"status":"ok","mode":"unknown"}
+      ---
+      duration_ms: 1.7152
+      type: 'test'
+      ...
+    # Subtest: {"mode":"production"}
+    ok 13 - {"mode":"production"}
+      ---
+      duration_ms: 2.1071
+      type: 'test'
+      ...
+    # Subtest: {"mode":"production","status":"failed"}
+    ok 14 - {"mode":"production","status":"failed"}
+      ---
+      duration_ms: 1.6035
+      type: 'test'
+      ...
+    1..14
+ok 6 - unavailable or malformed health cannot retain authentication assurance or bootstrap
+  ---
+  duration_ms: 30.9309
+  type: 'test'
+  ...
+# Subtest: cancelled health cannot overwrite a newer successful development attempt
+ok 7 - cancelled health cannot overwrite a newer successful development attempt
+  ---
+  duration_ms: 2.7199
+  type: 'test'
+  ...
+# Subtest: production form retry clears failed assurance and revalidates health on success
+ok 8 - production form retry clears failed assurance and revalidates health on success
+  ---
+  duration_ms: 2.1312
+  type: 'test'
+  ...
+1..8
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 928.0231

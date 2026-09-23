@@ -1,0 +1,31 @@
+✔ Windows runner tests are serialized without filtering tests or changing Unix scheduling (2.9698ms)
+✖ Windows primary ACL path runs before explicit prewarming and the complete serial suite (1.46ms)
+✔ Windows warm-up remains bounded and leaves native ACL enforcement unchanged (1.2465ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 2
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 156.1415
+
+✖ failing tests:
+
+test at tools\ci_runner_tests.test.mjs:19:1
+✖ Windows primary ACL path runs before explicit prewarming and the complete serial suite (1.46ms)
+  AssertionError [ERR_ASSERTION]: exercise PrivateRoot::open before paying the native ACL startup cost
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-review-fixes/tools/ci_runner_tests.test.mjs:27:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

@@ -1,0 +1,36 @@
+{
+  "files": [
+    {
+      "source": "<private-evidence>\\qa-pr358-aggregate-r4.ps1",
+      "source_sha256": "268680852b2eebf673a27a03a1dbc4d78b2bc9ec3111b9b71155ae8f88b74ec0",
+      "adapted": "<private-evidence>\\qa-pr358-aggregate-r11.ps1",
+      "adapted_sha256": "c2884196cc661afa96da8dc3709bdfa7f26dc0391b511c4124a5331eba949e4f",
+      "changes": [
+        "Bind the existing exact fixture ownership guard to the fresh September 23 r11 root. Product assertions unchanged."
+      ]
+    },
+    {
+      "source": "<reviewed-worktree>\\tools\\e2e_approvals.mjs",
+      "source_sha256": "ff68e98dce8b77bc5907323853bd9b50919e936e796ad6c46aaae88210ff0750",
+      "adapted": "<private-evidence>\\e2e-approvals-pr358-r11.mjs",
+      "adapted_sha256": "ec0d3a27864244e39b9549e8b6261c83135c9f3cfc477296aabacf11205f5e97",
+      "changes": [
+        "Absolute unchanged product helper and root.",
+        "Write this attempt to the fresh owned QA root, preserving the original product output/e2e-approvals.json. All approval/expiry/ACK assertions unchanged."
+      ]
+    },
+    {
+      "source": "<private-evidence>\\run-pr358-native-first-run-r10.ps1",
+      "source_sha256": "e55303249b8b6bc035c13597289274c37ee55a8af03e0fc798112300cd2b8702",
+      "adapted": "<private-evidence>\\run-pr358-native-first-run-r11.ps1",
+      "adapted_sha256": "b59d629a6772b892ba90c81ccf3a8700005be9c17c7a6a257cdb90b0ba2ce050",
+      "changes": [
+        "Fresh owned r11 root supplied explicitly.",
+        "Reuse exact source-bound binaries and 48 passed native PostgreSQL regressions without relabeling them as newly executed.",
+        "Adapt only the dated aggregate guard and fresh approval-report output path. Preserve mandatory aggregate/approval/browser sequence and all assertions."
+      ]
+    }
+  ],
+  "qualification_assertions_modified": false,
+  "previous_failed_attempt": "pr358-native-r10-lifecycle.json"
+}

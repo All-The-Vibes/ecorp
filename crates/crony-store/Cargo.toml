@@ -8,8 +8,12 @@ repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+async-trait.workspace = true
 chrono.workspace = true
 crony-domain = { path = "../crony-domain" }
+crony-audit = { path = "../crony-audit" }
+crony-base = { path = "../crony-base" }
+futures-util.workspace = true
 hex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -19,4 +23,5 @@ uuid.workspace = true
 url.workspace = true
 
 [dev-dependencies]
+alloy = { version = "=0.8.3", default-features = false, features = ["signer-local"] }
 tokio.workspace = true

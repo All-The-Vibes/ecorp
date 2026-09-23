@@ -1,0 +1,82 @@
+   Compiling crony-audit v0.1.0 (<reviewed-worktree>\crates\crony-audit)
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-base v0.1.0 (<reviewed-worktree>\crates\crony-base)
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 32s
+warning: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src\base_worker.rs (<local-user>\code\ecorp-pr324-completion-20260922\target-validation\debug\deps\crony_base_worker-954374bc6dd353d1.exe)
+
+running 1 test
+worker fixture stage=local_prerequisites elapsed_ms=0
+worker fixture stage=initial_validation elapsed_ms=740
+worker fixture stage=injected_lost_sign_reply elapsed_ms=1044
+worker fixture stage=reconnect_after_journal_commit elapsed_ms=1336
+worker fixture stage=recover_and_broadcast elapsed_ms=1493
+worker fixture stage=tentative_inclusion elapsed_ms=1636
+worker fixture stage=resume_scanner_tail elapsed_ms=1844
+worker fixture stage=revert_tentative_inclusion elapsed_ms=1978
+worker fixture stage=rebroadcast_after_reorg elapsed_ms=2127
+worker fixture stage=mine_long_ancestry elapsed_ms=2142
+worker fixture stage=historical_reconciliation elapsed_ms=90291
+worker fixture stage=bounded_finality elapsed_ms=90511
+worker fixture finality_tick=0 terminal=false
+worker fixture finality_tick=1 terminal=false
+worker fixture finality_tick=2 terminal=false
+worker fixture finality_tick=3 terminal=false
+worker fixture finality_tick=4 terminal=false
+worker fixture finality_tick=5 terminal=false
+worker fixture finality_tick=6 terminal=false
+worker fixture finality_tick=7 terminal=false
+worker fixture finality_tick=8 terminal=false
+worker fixture finality_tick=9 terminal=false
+worker fixture finality_tick=10 terminal=false
+worker fixture finality_tick=11 terminal=false
+worker fixture finality_tick=12 terminal=false
+worker fixture finality_tick=13 terminal=false
+worker fixture finality_tick=14 terminal=false
+worker fixture finality_tick=15 terminal=false
+worker fixture stage=retained_finality_history elapsed_ms=208767
+test tests::base_worker_http_gateway_restart_and_finality ... worker HTTP acceptance: intent=da51b1e3-9a3a-4868-af81-a88bb941eec1, tx=0x0e8d9096929418466123632b3321e3cc1f10e5c3860f9dcae49e08bdf95d911e, journal_cursor=1, sign_calls=1, terminal=true, tentative_reorg_recovered=true, tail_deferred_then_resumed=true, retained_headers=16770
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 212.96s
+
+     Running unittests src\main.rs (<local-user>\code\ecorp-pr324-completion-20260922\target-validation\debug\deps\crony_server-d9301b19f397c9a9.exe)
+
+running 1 test
+worker fixture stage=local_prerequisites elapsed_ms=0
+worker fixture stage=initial_validation elapsed_ms=2388
+worker fixture stage=injected_lost_sign_reply elapsed_ms=2802
+worker fixture stage=reconnect_after_journal_commit elapsed_ms=3215
+worker fixture stage=recover_and_broadcast elapsed_ms=3441
+worker fixture stage=tentative_inclusion elapsed_ms=3586
+worker fixture stage=resume_scanner_tail elapsed_ms=3881
+worker fixture stage=revert_tentative_inclusion elapsed_ms=4112
+worker fixture stage=rebroadcast_after_reorg elapsed_ms=4396
+worker fixture stage=mine_long_ancestry elapsed_ms=4410
+worker fixture stage=historical_reconciliation elapsed_ms=190130
+worker fixture stage=bounded_finality elapsed_ms=190369
+worker fixture finality_tick=0 terminal=false
+worker fixture finality_tick=1 terminal=false
+worker fixture finality_tick=2 terminal=false
+worker fixture finality_tick=3 terminal=false
+worker fixture finality_tick=4 terminal=false
+worker fixture finality_tick=5 terminal=false
+worker fixture finality_tick=6 terminal=false
+worker fixture finality_tick=7 terminal=false
+worker fixture finality_tick=8 terminal=false
+worker fixture finality_tick=9 terminal=false
+worker fixture finality_tick=10 terminal=false
+worker fixture finality_tick=11 terminal=false
+worker fixture finality_tick=12 terminal=false
+worker fixture finality_tick=13 terminal=false
+worker fixture finality_tick=14 terminal=false
+worker fixture finality_tick=15 terminal=false
+worker fixture stage=retained_finality_history elapsed_ms=298192
+test base_worker::tests::base_worker_http_gateway_restart_and_finality ... worker HTTP acceptance: intent=4a3a7015-a122-4b1f-ba33-82b134f3b884, tx=0xfa7a5850cea279a1bc607d5bfd4c823df7cb11a693f2ff2dfe5b53198b91f2be, journal_cursor=1, sign_calls=1, terminal=true, tentative_reorg_recovered=true, tail_deferred_then_resumed=true, retained_headers=16770
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 147 filtered out; finished in 301.80s

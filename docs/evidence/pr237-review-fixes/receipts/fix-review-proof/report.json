@@ -1,0 +1,241 @@
+{
+  "finding": "QA237-01",
+  "pr": 237,
+  "round": 2,
+  "status": "implemented_guard_logic_validated",
+  "base_commit": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "workspace": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+  "finished_at": "2026-09-20T19:40:03.4688484-05:00",
+  "write_scope": [
+    "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\e2e_factory_budget_recovery.mjs",
+    "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\e2e_factory_budget_recovery.test.mjs"
+  ],
+  "changes": {
+    "driver_lines": "308,359-402,431-530",
+    "test_lines": "1-227",
+    "summary": "Require pending independent-review request, 403 requester denial with unchanged pending state, distinct eligible human reviewer and bound approved response, then persisted completion/decision/per-check evidence. Compare source tuple, verifier, approved finish contract/budgets and original run/events/breaker incidents; hard-stop remains separate."
+  },
+  "model": {
+    "configured_model_source": "developer OMX Agent Metadata",
+    "runtime_confirmation": "Not independently exposed to this leaf; no alternate model invoked",
+    "requested": "native Astra",
+    "configured_model": "gpt-6-astra"
+  },
+  "tdd": {
+    "green_result": {
+      "skipped": 0,
+      "fail": 0,
+      "tests": 64,
+      "existing_config_cases": 4,
+      "pass": 64,
+      "focused_guard_cases": 60
+    },
+    "red_result": {
+      "tests": 60,
+      "fail": 52,
+      "pass": 8,
+      "failure_type": "Missing expected rejection (AssertionError), not setup failures"
+    },
+    "green": {
+      "source_sha256": "CCF339037F778ADA4C377F9E010177B9C2BF53F218E0E13EE3C253F6D17B2F83",
+      "test_sha256": "7EC764BD10CABAB5F2500DFA826A812A5B6B32482417AA144F73F56B6D0871A3",
+      "captured_at": "2026-09-20T19:40:03.2283141-05:00",
+      "exit_code": 0,
+      "command": "node --test tools/e2e_factory_budget_recovery.test.mjs tools/factory_budget_fixture_config.test.mjs"
+    },
+    "method": "Read source and extract actual stableState/review/final assertion bodies into controlled functions. No full-driver import/execution, external APIs or DB.",
+    "initial_red": {
+      "captured_at": "2026-09-20T19:34:08.9068454-05:00",
+      "test_sha256": "ED97006577DF9D53A7986A3BDFA02C8320E121FDCBB78F896FAA8327B6E99497",
+      "exit_code": 1,
+      "source_sha256": "ED127289F6DE7AD15E2D515A168929B759FD6DE1E64560D78C65BE6A588CA88D",
+      "command": "node --test tools/e2e_factory_budget_recovery.test.mjs"
+    },
+    "final_test_replay_red": {
+      "exit_code": 1,
+      "command": "node --test \"C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-review-proof\\red-replay.test.mjs\"",
+      "captured_at": "2026-09-20T19:40:02.9201309-05:00",
+      "method": "Final tests with only source read path replaced; actual pre-fix assertion bodies, never driver import",
+      "source_sha256": "ED127289F6DE7AD15E2D515A168929B759FD6DE1E64560D78C65BE6A588CA88D",
+      "test_sha256": "48760B8102DA372924865A2FF529BB2F31961301DC5374C549F23A9178BA3C71"
+    }
+  },
+  "checks": [
+    {
+      "command": "node --check tools/e2e_factory_budget_recovery.mjs",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check tools/e2e_factory_budget_recovery.test.mjs",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check -- tools/e2e_factory_budget_recovery.mjs tools/e2e_factory_budget_recovery.test.mjs",
+      "exit_code": 0
+    },
+    {
+      "exit_code": 0,
+      "result": {
+        "sections": [
+          {
+            "name": "setup/path/process admission",
+            "unchanged": true,
+            "comparison": "exact bytes",
+            "before_sha256": "7199fee7b8c85b3219098ce8d27d4e73216af86342d72bf426f8fb987c281c5c",
+            "after_sha256": "7199fee7b8c85b3219098ce8d27d4e73216af86342d72bf426f8fb987c281c5c"
+          },
+          {
+            "name": "budget proposal and resume flow",
+            "unchanged": true,
+            "comparison": "CRLF/LF normalized",
+            "before_sha256": "b949e381680b3d132eca57d87cd5e2d354f82dd26b576aa54d4f956930e5cdd7",
+            "after_sha256": "d5998770dd87f8f899b527af38d097df5e7aeae1f0cb0e61d1514b62ec9099ca"
+          },
+          {
+            "name": "terminal wait and hard-stop flow",
+            "unchanged": true,
+            "comparison": "CRLF/LF normalized",
+            "before_sha256": "c313acbbd6be7a8f60e625ac1dc2bda8995de18d198f924164ce1eab1b55aa2f",
+            "after_sha256": "c313acbbd6be7a8f60e625ac1dc2bda8995de18d198f924164ce1eab1b55aa2f"
+          },
+          {
+            "name": "exception/cleanup/path/process handling",
+            "unchanged": true,
+            "comparison": "exact bytes",
+            "before_sha256": "8bbe15c61b5207cdba932a7441b14ca072ca66386d7843ce6477bb21d1cf8139",
+            "after_sha256": "8bbe15c61b5207cdba932a7441b14ca072ca66386d7843ce6477bb21d1cf8139"
+          }
+        ],
+        "status": "passed"
+      },
+      "command": "node \"C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-review-proof\\verify-scope.mjs\""
+    }
+  ],
+  "schema_trace": [
+    "crates/crony-domain/src/lib.rs:300-318,381-405,511-541,795-873,913-940,1059-1070,1138-1169",
+    "crates/crony-store/src/lib.rs:1670-1706,1751-1790,1928-1949,2059-2074,6495-6749,8614-8731,10076-10275",
+    "crates/crony-store/src/budget_revision.rs:188-240,473-535",
+    "crates/crony-server/src/main.rs:5398-5434",
+    "db/migrations/0009_evidence_verification.sql",
+    "db/migrations/0028_mission_budget_revisions.sql",
+    "db/migrations/0012_approvals_and_budgets.sql:52 (healthy breaker-stage default)"
+  ],
+  "source_hashes": [
+    {
+      "sha256": "b33af5640c08cd5e951b14d3a1c54dd3c309e6b0f64870f8cb3415a938ac68ca",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\AGENTS.md"
+    },
+    {
+      "sha256": "bf13c6ff3ac6b7ec609b3235e24d5fb74737e0a2b06050c9ef2433d3fcf17b5e",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\docs\\PRODUCT_AND_TECHNICAL_PLAN.md"
+    },
+    {
+      "sha256": "f52d0ffca8100747f93e7c219fccc8ec57dfde2bb126f7c37be6cf985ebf08a0",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\docs\\ARCHITECTURE.md"
+    },
+    {
+      "sha256": "177a711907120c45749b35e47b4ddd96154e834c56ce42e231706aa0ddcfc3ee",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\docs\\SECURITY.md"
+    },
+    {
+      "sha256": "0bbaab171f8b89321b9e68f62e395cf8d0cfb3130cab4feb378925d79d8e4d16",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\docs\\EVALS.md"
+    },
+    {
+      "sha256": "730430e236172edab94d371ac95824dbd5ae21cbee1f371b18a086d323000f5a",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\crates\\crony-domain\\src\\lib.rs"
+    },
+    {
+      "sha256": "00db46632350537a5b8abb1f48e561278873098d85abc8b142331c31ad2497f2",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\crates\\crony-store\\src\\lib.rs"
+    },
+    {
+      "sha256": "ac1b4cca4ca84a5d6470df93ff1a75e0c5a0c6d4e768fff7b559cb4c01f6930a",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\crates\\crony-store\\src\\budget_revision.rs"
+    },
+    {
+      "sha256": "320c981514f6622e8a7e36158a7ad013640d1cf89b88778be05568a30baf1668",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\crates\\crony-server\\src\\main.rs"
+    },
+    {
+      "sha256": "7af14c54224b2648aae57daeeb6ee685e0624c6f106797490f8fdc8ec32db02e",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\db\\migrations\\0009_evidence_verification.sql"
+    },
+    {
+      "sha256": "2bc9ecc537569f2c4e1c79866107f21253a97c56642b0ed635c5709d615ca187",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\db\\migrations\\0028_mission_budget_revisions.sql"
+    },
+    {
+      "sha256": "ccf339037f778ada4c377f9e010177b9c2bf53f218e0e13ee3c253f6d17b2f83",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\e2e_factory_budget_recovery.mjs"
+    },
+    {
+      "sha256": "7ec764bd10cabab5f2500dfa826a812a5b6b32482417aa144f73f56b6d0871a3",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\e2e_factory_budget_recovery.test.mjs"
+    },
+    {
+      "sha256": "4b64047dece94f3363a0a6c46913fd7a9716fec935fb86670fc7259994ddfa78",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\tools\\factory_budget_fixture_config.test.mjs"
+    },
+    {
+      "sha256": "ed127289f6de7ad15e2d515a168929b759fd6de1e64560d78c65be6a588ca88d",
+      "path": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-2\\fix-review-proof\\driver.before.mjs"
+    },
+    {
+      "sha256": "d288418d6b055c418bc892a5b740195b178b22ce3c575c34523df359262a024a",
+      "path": "C:\\Users\\sschofield\\.codex\\review-executors\\ecorp\\receipts\\pr-237\\round-1\\audits.json"
+    },
+    {
+      "sha256": "fd63d7a467ba5b1cda5dbaca428c458fa97f0ac2d98ea8e3ccccf4c3571300f1",
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-review-candidate-80f32b7\\.github\\skills\\code-review\\references\\remediation.md"
+    },
+    {
+      "path": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes\\db\\migrations\\0012_approvals_and_budgets.sql",
+      "sha256": "1dc3eb95baf2f02088b8a714b5047cb1bd7f8b99da34a015ef829310847183c9"
+    }
+  ],
+  "preservation": {
+    "receipt": "scope-preservation.json",
+    "path_process_sections": "exact byte equality",
+    "dependencies": "hashes.after.json",
+    "peer_files": "CI/storage and other concurrent work not edited by this fixer",
+    "predispatch_and_db_query_guard_files": "Captured dependency hashes unchanged",
+    "budget_resume_section": "identical after CRLF/LF normalization; apply_patch context changed one boundary newline",
+    "initial_scope_check": "scope-check.initial.json retains initial newline-only strict-comparison failure"
+  },
+  "effects": {
+    "github_effects": 0,
+    "database_access": false,
+    "factory_activation": false,
+    "commit": false,
+    "provider_calls": 0,
+    "push": false,
+    "services_started": false
+  },
+  "limits": [
+    "Guard logic only, NOT native acceptance or production-identity/room-authorization proof. Existing broader native acceptance remains pending.",
+    "No full driver, Factory dry-run/execution, service, DB, provider or GitHub command was run.",
+    "Rust/clippy/workspace and web build/lint suites not run: no Rust/web change and this assignment is explicitly assertion-only. JavaScript syntax checks passed.",
+    "Snapshot history comparison is fail-closed: required original events and breaker incidents must remain in the bounded snapshot (store limits 200 events/500 incidents); no journal pagination added.",
+    "Independent post-fix reviewer/Santa approval not claimed; one issue-specific TDD cycle completed."
+  ],
+  "receipts": [
+    "scope.json",
+    "driver.before.mjs",
+    "driver.after.mjs",
+    "preexisting-driver.diff",
+    "issue-only.diff",
+    "regression.test.source.mjs",
+    "red.json",
+    "red.log",
+    "red-replay.test.mjs",
+    "red-replay.json",
+    "red-replay.log",
+    "green.json",
+    "green.log",
+    "checks.json",
+    "scope-preservation.json",
+    "hashes.before.json",
+    "hashes.after.json"
+  ]
+}

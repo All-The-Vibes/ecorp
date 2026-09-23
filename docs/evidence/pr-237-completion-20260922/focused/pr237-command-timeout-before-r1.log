@@ -1,0 +1,27 @@
+✖ Windows bounded fixture command retains both streams after terminating its timed-out child (3924.9378ms)
+ℹ Retained bounded-command timeout evidence C:\Users\SHYAMS~1\AppData\Local\Temp\ecorp-fixture-timeout-ADEtfv
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4068.9804
+
+✖ failing tests:
+
+test at tools\ci_external_adapters_windows.test.mjs:32:1
+✖ Windows bounded fixture command retains both streams after terminating its timed-out child (3924.9378ms)
+  Error: ENOENT: no such file or directory, open 'C:\Users\SHYAMS~1\AppData\Local\Temp\ecorp-fixture-timeout-ADEtfv\timeout.stdout.log'
+      at readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/ci_external_adapters_windows.test.mjs:65:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -4058,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: 'C:\\Users\\SHYAMS~1\\AppData\\Local\\Temp\\ecorp-fixture-timeout-ADEtfv\\timeout.stdout.log'
+  }

@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "docker_executed": false,
+  "database_fixture": "Owned portable PostgreSQL 17.10, loopback 55483, fresh data directory, local trust authentication (reduced assurance). The fresh PostgreSQL server uses timezone=UTC to match the original Docker fixture timestamp rendering; no acceptance assertion is changed.",
+  "qualification_assertions_modified": false,
+  "files": [
+    {
+      "source": "tools/e2e_native_qualification.mjs",
+      "source_sha256": "1e332c4b8f6b8647122bb5a4a87715c8c3b912a233b05833d2a73947e6614c70",
+      "adapted": "e2e_native_qualification.mjs",
+      "adapted_sha256": "6826bc90bdcfbe1e46c8fc9604e48a52c518bd5991aaef3006fc21c062268346",
+      "changes": [
+        "Route the fresh qualification fixture to phase2-r5 and retain the original acceptance assertions.",
+        "Import the unchanged product helper native_qualification_finality.mjs by its exact absolute URI.",
+        "Read-only psql evidence queries use the owned portable PostgreSQL cluster on loopback 55483; Docker is unavailable.",
+        "Bind the unchanged product driver to the combined PR source and a fresh queue fixture; original acceptance assertions retained.",
+        "Fresh r466 output root after a missing local Anvil installation; every acceptance assertion is retained.",
+        "Fresh r471 output and helper import URI, correcting r466's stale r412 helper URI; exact path substitutions only, all assertions retained."
+      ],
+      "previous_adapted_sha256": "70effa9d76544fe36db117e1e3900da30392414874296599ddcb0d9b626aced2",
+      "retry_parent_sha256": "6c653eb2c02e4782b491d19d59648fd9b780b735b5535e80b05e4584463fe8cf"
+    },
+    {
+      "source": "tools/e2e_native_archive.mjs",
+      "source_sha256": "6b3dacc581ba2f79b7452193a405a003c0562d9043009bea9a40b66713c461bc",
+      "adapted": "e2e_native_archive.mjs",
+      "adapted_sha256": "272da8c939057c720008cbea78da73bfed3b84ee263803356dcb3c9450221f6f",
+      "changes": [
+        "Route the fresh qualification fixture to phase2-r5 and retain the original acceptance assertions.",
+        "Import the unchanged product helper native_qualification_trust.mjs by its exact absolute URI.",
+        "Read-only psql evidence queries use the owned portable PostgreSQL cluster on loopback 55483; Docker is unavailable.",
+        "Bind the unchanged product driver to the combined PR source and a fresh queue fixture; original acceptance assertions retained.",
+        "Fresh r466 output root after a missing local Anvil installation; every acceptance assertion is retained.",
+        "Fresh r471 output and helper import URI, correcting r466's stale r412 helper URI; exact path substitutions only, all assertions retained."
+      ],
+      "previous_adapted_sha256": "e75d368878d579328040591fc9a8ae69f73a16af2be97b43aa1c74f335a85052",
+      "retry_parent_sha256": "d8c8915d4f82c3df1c5b07e763a357f986a989330901fc2da4a53516464839a4"
+    },
+    {
+      "source": "tools/e2e_native_qualification_browser.mjs",
+      "source_sha256": "1bc904cbe9a970c0135dca032f44bbdfb6407b3858bc8379228407e5768561ba",
+      "adapted": "e2e_native_qualification_browser.mjs",
+      "adapted_sha256": "3cb57bd3c3d50734f82f77fcc2cc404d0398f5be5d0eef4afa2382513bbd0fcd",
+      "changes": [
+        "Route the fresh qualification fixture to phase2-r5 and retain the original acceptance assertions.",
+        "Import the unchanged product helper artifact_client.mjs by its exact absolute URI.",
+        "Bind the unchanged product driver to the combined PR source and a fresh queue fixture; original acceptance assertions retained.",
+        "Fresh r466 output root after a missing local Anvil installation; every acceptance assertion is retained.",
+        "Fresh r471 output and helper import URI, correcting r466's stale r412 helper URI; exact path substitutions only, all assertions retained."
+      ],
+      "previous_adapted_sha256": "235879039787563c09940fb2b3ab841eae41bf106b34e26fbd57c52e82e538b5",
+      "retry_parent_sha256": "3673b9911861638311c9d7d283e44a7e56e43505df15466562bab93576aa1eac"
+    },
+    {
+      "source": "tools/native_qualification_attempt.mjs",
+      "source_sha256": "25eb44e342981a692a86c4d46d8ad3cb882c47ad5b1d2c896d710382794b27ab",
+      "adapted": "native_qualification_attempt.mjs",
+      "adapted_sha256": "311456f2de1f3ffb762346f7c12466cb3198668fbdef57d777cf06f513b5cb15",
+      "changes": [
+        "Route the fresh qualification fixture to phase2-r5 and retain the original acceptance assertions.",
+        "Bind the unchanged product driver to the combined PR source and a fresh queue fixture; original acceptance assertions retained.",
+        "Fresh r466 output root after a missing local Anvil installation; every acceptance assertion is retained.",
+        "Fresh r471 output and helper import URI, correcting r466's stale r412 helper URI; exact path substitutions only, all assertions retained."
+      ],
+      "previous_adapted_sha256": "74fd6dd30899a4626fa3eb6b9cb920ac8fe8e442c3aed4a7754472c456bd993f",
+      "retry_parent_sha256": "0e1bd204f6a1af9a79350676dbed22e9725d0341c6506062fb94b1f174da055c"
+    },
+    {
+      "source": "tools/native_qualification_acceptance.mjs",
+      "source_sha256": "541152928f10319ada38f6fd1076234db8be51ee1e4605b5713b5afb8d701080",
+      "adapted": "native_qualification_acceptance.mjs",
+      "adapted_sha256": "6b4ca677a7a4bec07b5bb742a15913e4fccc413777e3d2ecdcf1ff5ba7521bf1",
+      "changes": [
+        "Route the fresh qualification fixture to phase2-r5 and retain the original acceptance assertions.",
+        "Bind the unchanged product driver to the combined PR source and a fresh queue fixture; original acceptance assertions retained.",
+        "Fresh r466 output root after a missing local Anvil installation; every acceptance assertion is retained.",
+        "Fresh r471 output and helper import URI, correcting r466's stale r412 helper URI; exact path substitutions only, all assertions retained."
+      ],
+      "previous_adapted_sha256": "cde8a9631a34d040b8d87ac68ebd9d73c1443dcdf8cbc523540830f624d03e8c",
+      "retry_parent_sha256": "d32fe1e5ceda8448dba5d85c4c538916f66acec1192e7ca1a5b06b22a17ac8c8"
+    },
+    {
+      "source": "tools/native_qualification_stack.ps1",
+      "source_sha256": "d1c3fd6e4c7dccdf89a3745f93c75b586fd36eecc58f1db95bfbe226347300b3",
+      "adapted": "native_qualification_stack.ps1",
+      "adapted_sha256": "4ddc9eb6087b696015558dd1b16e1f3353cb6d10fe75217e7b0d074350297625",
+      "changes": [
+        "Use the real worktree tools path and separate phase2-r5 output.",
+        "Create exact fixture databases on the fresh owned portable PostgreSQL cluster.",
+        "Clone without initial checkout, then enable core.longpaths only in the new synthetic clone before selecting the unchanged fixture commit. Product/global Git configuration is untouched.",
+        "PowerShell 7.5+ DateKind String retains exact process timestamp strings through JSON roundtrips; process ownership checks and acceptance assertions are unchanged.",
+        "Bind the unchanged product driver to the combined PR source and a fresh queue fixture; original acceptance assertions retained.",
+        "Fresh r466 output root after a missing local Anvil installation; every acceptance assertion is retained.",
+        "Fresh r471 output and helper import URI, correcting r466's stale r412 helper URI; exact path substitutions only, all assertions retained."
+      ],
+      "previous_adapted_sha256": "3237380a8b35529d7a4ab413497d13b52bcfce23ee04e1d6f2f77988b5bcc9ee",
+      "retry_parent_sha256": "d647ac499477fb9ecc218b1ee0a871a0978ede6f1b825b6968583016a25331aa"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+Owned fixture identity/label/loopback verified. Credential delivery: ephemeral environment-only reduced assurance.
+Inherited provider/application credentials removed by environment allowlist.
+Command: <review-host>\.cargo\bin\cargo.exe test -p crony-store --lib --locked --offline -j 2 issue283_reconciliation_and_configuration_lock_ledger_first -- --ignored --test-threads=1 --nocapture
+   Compiling crony-store v0.1.0 (<review-host>\repos\ecorp-pr283-review-fixes\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 48s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-c43d8b35d717387f.exe)
+
+running 1 test
+test state_audit_tests::issue283_reconciliation_and_configuration_lock_ledger_first ... Observed configure PID 149 waiting behind destination gate 148; reconciliation PID 151: SELECT ledger_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 409 filtered out; finished in 3.58s
+
+
+Exit code: 0

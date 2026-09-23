@@ -1,3 +1,5 @@
+mod base_audit;
+mod base_verify;
 mod factory;
 mod publish;
 mod transport;
@@ -8,7 +10,8 @@ use crony_domain::{DeliverableForm, DeliverableSpec, EntityLink, MAX_TASK_ATTEMP
 use crony_protocol::{
     ClaimLeaseRequest, CreateMissionRequest, CreateRoomMessageRequest, EmergencyStopRequest,
     InterruptRunRequest, LaunchMissionRequest, MissionSource, QueueMessageRequest,
-    ReleaseLeaseRequest, ResumeRunRequest, TransferLeaseRequest, VerificationDecisionRequest,
+    ReleaseLeaseRequest, ResumeRunRequest, SetAgentPinRequest, TransferLeaseRequest,
+    VerificationDecisionRequest,
 };
 use reqwest::{Client, Method};
 use serde_json::Value;
@@ -33,7 +36,39 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Verify a complete V1 archive against separately pinned Base trust, without RPC.
+    BaseAuditVerify {
+        #[command(flatten)]
+        args: base_verify::BaseVerifyArgs,
+    },
+    /// Administer optional Base anchoring independently from V1/GitHub publication.
+    BaseAudit {
+        #[command(flatten)]
+        args: base_audit::BaseAuditArgs,
+    },
+    /// Verify exported history using a trusted raw key or trusted JSON key history.
+    AuditVerify {
+        archive: std::path::PathBuf,
+        #[arg(long)]
+        trusted_key_file: std::path::PathBuf,
+        #[arg(long)]
+        expected_checkpoint: Option<String>,
+    },
+    /// Submit a typed audit operation JSON file through the authenticated native API.
+    AuditRequest {
+        corp_id: Uuid,
+        actor_id: Uuid,
+        operation: std::path::PathBuf,
+    },
     Health,
+    /// Read the Corp's non-secret claim authority before configuring shared intake.
+    FactoryAuthority {
+        corp_id: Uuid,
+        actor_id: Uuid,
+        /// Compare with an independently approved ledger without creating work.
+        #[arg(long)]
+        claim_authority_id: Option<Uuid>,
+    },
     Bootstrap,
     Snapshot {
         corp_id: Uuid,
@@ -112,6 +147,16 @@ enum Command {
         agent_id: Uuid,
         actor_id: Uuid,
     },
+    /// Keep an active identity reusable; never reactivate a retired identity.
+    Pin {
+        #[command(flatten)]
+        args: AgentPinArgs,
+    },
+    /// Remove retention preference without cancelling work or releasing authority.
+    Unpin {
+        #[command(flatten)]
+        args: AgentPinArgs,
+    },
     ReleaseLease {
         corp_id: Uuid,
         agent_id: Uuid,
@@ -156,6 +201,19 @@ enum Command {
     },
 }
 
+#[derive(Debug, clap::Args)]
+struct AgentPinArgs {
+    corp_id: Uuid,
+    agent_id: Uuid,
+    actor_id: Uuid,
+    /// The agent's pin_version from an authorized snapshot.
+    #[arg(long, value_parser = clap::value_parser!(i64).range(0..))]
+    expected_version: i64,
+    /// Reuse this UUID and the exact arguments after a lost response.
+    #[arg(long)]
+    operation_key: Uuid,
+}
+
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum DeliverableArg {
     CommitBranch,
@@ -183,6 +241,82 @@ async fn main() -> Result<()> {
     let (server, client) = transport::api_client(&args.server, args.access_token.as_deref())?;
     args.server = server;
     let response = match args.command {
+        Command::FactoryAuthority {
+            corp_id,
+            actor_id,
+            claim_authority_id,
+        } => {
+            factory::authority::inspect(
+                &client,
+                &args.server,
+                corp_id,
+                actor_id,
+                claim_authority_id,
+                false,
+            )
+            .await?
+        }
+        Command::BaseAuditVerify { args } => base_verify::run(args)?,
+        Command::BaseAudit { args: base } => base_audit::run(&client, &args.server, base).await?,
+        Command::AuditVerify {
+            archive,
+            trusted_key_file,
+            expected_checkpoint,
+        } => {
+            use std::io::Read;
+            let mut bytes = Vec::new();
+            std::fs::File::open(archive)?
+                .take(crony_audit::MAX_ARCHIVE_BYTES + 1)
+                .read_to_end(&mut bytes)?;
+            anyhow::ensure!(
+                bytes.len() <= crony_audit::MAX_ARCHIVE_BYTES as usize,
+                "audit archive exceeds bound"
+            );
+            let archive: crony_audit::Archive = crony_audit::parse_json(&bytes)?;
+            let mut trusted = Vec::new();
+            std::fs::File::open(trusted_key_file)?
+                .take(crony_audit::MAX_RECORD_BYTES as u64 + 1)
+                .read_to_end(&mut trusted)?;
+            anyhow::ensure!(
+                trusted.len() <= crony_audit::MAX_RECORD_BYTES,
+                "trusted audit key history exceeds bound"
+            );
+            if trusted.len() == 32 {
+                let key_bytes: [u8; 32] = trusted
+                    .try_into()
+                    .map_err(|_| anyhow::anyhow!("trusted public key must be exactly 32 bytes"))?;
+                let key = crony_audit::VerifyingKey::from_bytes(&key_bytes)?;
+                archive.verify(&key, expected_checkpoint.as_deref())?;
+            } else {
+                let keys: Vec<crony_audit::TrustedSigningKey> =
+                    crony_audit::parse_json(&trusted)
+                        .context("trusted key file must be raw 32-byte Ed25519 or JSON history")?;
+                archive.verify_with_key_history(&keys, expected_checkpoint.as_deref())?;
+            }
+            serde_json::json!({"verified":true,"ledger_id":archive.ledger_id,"last_sequence":archive.rows.last().map(|r|r.decision.sequence),
+                "checkpoint_digest":archive.checkpoints.last().map(|c|&c.digest),"prior_to_baseline":"not attested",
+                "external_witness_checked":expected_checkpoint.is_some(),"signing_key_count":archive.signing_keys.len()})
+        }
+        Command::AuditRequest {
+            corp_id,
+            actor_id,
+            operation,
+        } => {
+            use std::io::Read;
+            let mut bytes = Vec::new();
+            std::fs::File::open(operation)?
+                .take(262145)
+                .read_to_end(&mut bytes)?;
+            anyhow::ensure!(bytes.len() <= 262144, "audit operation exceeds bound");
+            let command: Value = crony_audit::parse_json(&bytes)?;
+            request(
+                &client,
+                Method::POST,
+                format!("{}/api/corps/{corp_id}/state-audit", args.server),
+                Some(serde_json::json!({"actor_id":actor_id,"command":command})),
+            )
+            .await?
+        }
         Command::Health => {
             request(
                 &client,
@@ -338,6 +472,8 @@ async fn main() -> Result<()> {
             )
             .await?
         }
+        Command::Pin { args: pin } => set_agent_pin(&client, &args.server, pin, true).await?,
+        Command::Unpin { args: pin } => set_agent_pin(&client, &args.server, pin, false).await?,
         Command::Lease {
             corp_id,
             agent_id,
@@ -489,6 +625,29 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+async fn set_agent_pin(
+    client: &Client,
+    server: &str,
+    args: AgentPinArgs,
+    pinned: bool,
+) -> Result<Value> {
+    request(
+        client,
+        Method::POST,
+        format!(
+            "{server}/api/corps/{}/agents/{}/pin",
+            args.corp_id, args.agent_id
+        ),
+        Some(serde_json::to_value(SetAgentPinRequest {
+            actor_id: args.actor_id,
+            pinned,
+            expected_version: args.expected_version,
+            idempotency_key: args.operation_key,
+        })?),
+    )
+    .await
+}
+
 async fn request(
     client: &Client,
     method: Method,
@@ -513,6 +672,114 @@ async fn request(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn base_v2_cli_exposes_separate_explicit_admin_operations() {
+        let prefix = [
+            "crony",
+            "base-audit",
+            "00000000-0000-4000-8000-000000000001",
+            "00000000-0000-4000-8000-000000000002",
+        ];
+        for operation in [
+            vec!["status"],
+            vec!["configure", "destination.json"],
+            vec!["validate", "00000000-0000-4000-8000-000000000003"],
+            vec!["preview", "00000000-0000-4000-8000-000000000003"],
+            vec!["history", "00000000-0000-4000-8000-000000000003"],
+            vec![
+                "enable",
+                "00000000-0000-4000-8000-000000000003",
+                "--expected-version",
+                "1",
+            ],
+            vec![
+                "pause",
+                "00000000-0000-4000-8000-000000000003",
+                "--expected-version",
+                "1",
+            ],
+            vec![
+                "request",
+                "00000000-0000-4000-8000-000000000003",
+                "--idempotency-key",
+                "00000000-0000-4000-8000-000000000004",
+            ],
+        ] {
+            assert!(
+                Args::try_parse_from(prefix.into_iter().chain(operation)).is_ok(),
+                "missing explicit Base administration command"
+            );
+        }
+    }
+
+    #[test]
+    fn base_v2_cli_cannot_spend_or_enable_without_explicit_concurrency_identity() {
+        for operation in ["enable", "pause", "request"] {
+            assert!(
+                Args::try_parse_from([
+                    "crony",
+                    "base-audit",
+                    "00000000-0000-4000-8000-000000000001",
+                    "00000000-0000-4000-8000-000000000002",
+                    operation,
+                    "00000000-0000-4000-8000-000000000003",
+                ])
+                .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn base_v2_offline_verify_requires_separate_trust_and_expected_commitments() {
+        let complete = [
+            "crony",
+            "base-audit-verify",
+            "archive.json",
+            "--manifests",
+            "manifests.json",
+            "--trust-pin",
+            "trusted.json",
+            "--expected-manifest-version",
+            "1",
+            "--expected-manifest-digest",
+            "0x1111111111111111111111111111111111111111111111111111111111111111",
+            "--expected-checkpoint",
+            "0x2222222222222222222222222222222222222222222222222222222222222222",
+        ];
+        assert!(Args::try_parse_from(complete).is_ok());
+        for start in [3, 5, 7, 9, 11] {
+            let mut missing = complete.to_vec();
+            missing.drain(start..start + 2);
+            assert!(Args::try_parse_from(missing).is_err());
+        }
+    }
+
+    #[test]
+    fn issue281_offline_verify_requires_an_external_trusted_key() {
+        assert!(
+            super::Args::try_parse_from([
+                "crony",
+                "audit-verify",
+                "history.json",
+                "--trusted-key-file",
+                "trusted.pub",
+                "--expected-checkpoint",
+                &"11".repeat(32)
+            ])
+            .is_ok()
+        );
+        assert!(super::Args::try_parse_from(["crony", "audit-verify", "history.json"]).is_err());
+        assert!(
+            super::Args::try_parse_from([
+                "crony",
+                "audit-request",
+                "00000000-0000-4000-8000-000000000001",
+                "00000000-0000-4000-8000-000000000002",
+                "operation.json"
+            ])
+            .is_ok()
+        );
+    }
     use std::path::PathBuf;
 
     use clap::Parser;
@@ -520,6 +787,50 @@ mod tests {
 
     use super::{Args, Command};
     use crate::factory::VerificationRecoveryModeArg;
+
+    #[test]
+    fn issue48_pin_and_unpin_require_explicit_replay_authority() {
+        let id = "00000000-0000-4000-8000-000000000011";
+        for command in ["pin", "unpin"] {
+            assert!(Args::try_parse_from(["crony", command, id, id, id]).is_err());
+            assert!(
+                Args::try_parse_from(["crony", command, id, id, id, "--expected-version", "0",])
+                    .is_err()
+            );
+            let parsed = Args::try_parse_from([
+                "crony",
+                command,
+                id,
+                id,
+                id,
+                "--expected-version",
+                "7",
+                "--operation-key",
+                id,
+            ])
+            .unwrap();
+            let pin = match parsed.command {
+                Command::Pin { args } | Command::Unpin { args } => args,
+                _ => panic!("wrong command"),
+            };
+            assert_eq!(pin.expected_version, 7);
+            assert_eq!(pin.operation_key, Uuid::parse_str(id).unwrap());
+            assert!(
+                Args::try_parse_from([
+                    "crony",
+                    command,
+                    id,
+                    id,
+                    id,
+                    "--expected-version",
+                    "-1",
+                    "--operation-key",
+                    id,
+                ])
+                .is_err()
+            );
+        }
+    }
 
     fn copied_recovery_command(mode: &str) -> Vec<String> {
         [

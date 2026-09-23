@@ -1,0 +1,65 @@
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-audit v0.1.0 (<reviewed-worktree>\crates\crony-audit)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 39s
+     Running unittests src\main.rs (<local-user>\code\ecorp-pr324-completion-20260922\target-validation\debug\deps\crony_server-3c64260e4e349b5f.exe)
+
+running 10 tests
+test state_audit::retained_pin_tests::b02_descendant_replay_bootstrap_and_database_fence ... ok
+test state_audit::retained_pin_tests::b02_destination_pin_cannot_authorize_another_destination ... ok
+test state_audit::retained_pin_tests::b02_publication_checks_pin_on_its_initial_head_and_rejects_later_rewrite ... ok
+test state_audit::retained_pin_tests::b02_retained_remote_pin_fences_null_and_old_database_commit ... ok
+test state_audit::retained_pin_tests::checkpoint_cursor_passes_sixteen_persistently_invalid_ledgers ... ok
+test state_audit::retained_pin_tests::f02_transport_constructor_failure_is_durable_and_recovers ... ok
+test state_audit::retained_pin_tests::slow_destination_does_not_block_another_corp_or_local_checkpoint ... ok
+test state_audit::retained_pin_tests::unavailable_witness_recovers_without_an_integrity_incident ... ok
+test state_audit::tests::issue281_publisher_missing_witness_is_durably_disabled ... ok
+test state_audit::tests::issue281_publisher_other_corp_witness_is_not_authority ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 140 filtered out; finished in 49.38s
+
+     Running unittests src\lib.rs (<local-user>\code\ecorp-pr324-completion-20260922\target-validation\debug\deps\crony_store-7664b3053d947581.exe)
+
+running 38 tests
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_changed_gate_refusal ... ok
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_check_count_refusal ... ok
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_check_kind_refusal ... ok
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_internal_error_rolls_back ... ok
+test contract_revision::state_audit_refusal_tests::issue283_factory_resume_removed_gate_refusal ... ok
+test state_audit_tests::factory_replay::issue283_conflicting_historical_refusals_do_not_choose_an_identity ... ok
+test state_audit_tests::factory_replay::issue283_historical_padded_acceptance_replays_trimmed ... ok
+test state_audit_tests::factory_replay::issue283_historical_padded_refusal_requires_original_once ... ok
+test state_audit_tests::factory_replay::issue283_historical_trimmed_acceptance_replays_padded ... ok
+test state_audit_tests::factory_replay::issue283_historical_trimmed_refusal_replays_padded ... ok
+test state_audit_tests::factory_replay::issue283_new_padded_factory_key_replays_trimmed ... ok
+test state_audit_tests::factory_replay::issue283_new_padded_refusal_replays_trimmed ... ok
+test state_audit_tests::factory_replay::issue283_new_trimmed_factory_key_replays_padded ... ok
+test state_audit_tests::factory_replay::issue283_new_trimmed_refusal_replays_padded ... ok
+test state_audit_tests::factory_replay::issue283_precoverage_factory_replay_is_not_adopted ... ok
+test state_audit_tests::issue281_atomic_revision_retry_refusal_and_rollback ... ok
+test state_audit_tests::issue281_authority_checks_lock_actor_role_against_demotion ... ok
+test state_audit_tests::issue281_budget_proposal_retry_returns_original_after_approval ... ok
+test state_audit_tests::issue281_capacity_and_sql_index_corruption_fail_closed ... ok
+test state_audit_tests::issue281_checkpoint_export_is_complete_and_replays_exactly ... ok
+test state_audit_tests::issue281_concurrency_and_failed_audit_insert_rollback ... ok
+test state_audit_tests::issue281_covered_task_cannot_escape_by_reparenting ... ok
+test state_audit_tests::issue281_durable_independent_anchor_schedules ... ok
+test state_audit_tests::issue281_durable_publisher_interruption_and_covering_catchup ... ok
+test state_audit_tests::issue281_existing_checkpoint_key_is_adopted_after_schema_upgrade ... ok
+test state_audit_tests::issue281_ledger_identity_is_immutable ... ok
+test state_audit_tests::issue281_legacy_source_commit_upgrade_is_audited_atomically ... ok
+test state_audit_tests::issue281_nonpolicy_error_is_not_fabricated_as_refusal ... ok
+test state_audit_tests::issue281_precoverage_native_retry_is_not_retroactively_audited ... ok
+test state_audit_tests::issue281_restore_divergence_disables_until_explicit_reconciliation ... ok
+test state_audit_tests::issue283_additive_guard_upgrades_existing_foundation ... ok
+test state_audit_tests::issue283_coverage_identity_survives_governance_mutations ... ok
+test state_audit_tests::issue283_empty_checkpoint_destinations_do_not_starve_ready_corp ... ok
+test state_audit_tests::issue283_legacy_publication_requires_valid_runtime_key ... ok
+test state_audit_tests::issue283_midpublication_ancestry_rewrite_disables_destination ... ok
+test state_audit_tests::issue283_nonmonotonic_budget_refusal_is_audited_and_replayed ... ok
+test state_audit_tests::issue283_publication_rejects_partial_key_history_before_remote_effects ... ok
+test state_audit_tests::issue283_reconciliation_and_configuration_lock_ledger_first ... ok
+
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 404 filtered out; finished in 107.77s

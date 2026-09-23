@@ -294,6 +294,7 @@ impl WorkspaceManager {
                 &[
                     OsString::from("status"),
                     OsString::from("--porcelain=v1"),
+                    OsString::from("-z"),
                     OsString::from("--untracked-files=all"),
                 ],
             )
@@ -326,15 +327,11 @@ impl WorkspaceManager {
                 )));
             }
         };
-        let dirty = !status.trim().is_empty() || !ignored.is_empty();
+        let dirty = !status.is_empty() || !ignored.is_empty();
         if dirty {
             return Ok(WorkspaceCleanup {
                 disposition: WorkspaceDisposition::Preserved,
-                detail: if ignored.is_empty() {
-                    "working tree contains uncommitted or untracked changes".to_owned()
-                } else {
-                    "working tree contains ignored files that cleanup must not discard".to_owned()
-                },
+                detail: dirty_file_detail(&status, &ignored),
                 dirty: Some(true),
                 commits_ahead: None,
                 branch_deleted: false,
@@ -1500,6 +1497,33 @@ fn display_args(args: &[OsString]) -> String {
         .join(" ")
 }
 
+// Porcelain -z has a second path after rename/copy entries. Paths may contain newlines.
+fn dirty_file_detail(status: &str, ignored: &str) -> String {
+    let mut entries = status.split('\0').filter(|entry| !entry.is_empty());
+    let (mut tracked, mut untracked) = (0, 0);
+    while let Some(entry) = entries.next() {
+        if entry.starts_with("?? ") {
+            untracked += 1;
+        } else {
+            tracked += 1;
+            if entry
+                .as_bytes()
+                .get(..2)
+                .is_some_and(|xy| xy.contains(&b'R') || xy.contains(&b'C'))
+            {
+                entries.next();
+            }
+        }
+    }
+    let ignored_count = ignored
+        .split('\0')
+        .filter(|entry| !entry.is_empty())
+        .count();
+    format!(
+        "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes={tracked}; untracked_files={untracked}; ignored_files={ignored_count}; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately"
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use std::ffi::OsStr;
@@ -2157,6 +2181,100 @@ mod tests {
                 .contains("escapes the preserved workspace")
         );
         std::fs::remove_file(outside).expect("remove outside file");
+        cleanup_fixture(&root, &repository);
+    }
+
+    #[test]
+    fn issue140_disposition_counts_mixed_paths_without_claiming_ownership() {
+        let detail = dirty_file_detail(
+            " M tracked\0?? new\nfile\0R  renamed\0original\0",
+            "cache.pyc\0valuable.log\0",
+        );
+        assert!(detail.contains("tracked_changes=2"));
+        assert!(detail.contains("untracked_files=1"));
+        assert!(detail.contains("ignored_files=2"));
+        assert!(detail.contains("ignored_ownership=unattributed"));
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Python 3; run explicitly"]
+    async fn issue140_python_verifier_avoids_caches_and_preserves_existing_ignored_files() {
+        let (root, repository, managed) = fixture();
+        std::fs::write(repository.join("cache_probe.py"), "value = 42\n").unwrap();
+        std::fs::write(repository.join(".gitignore"), "*.log\n__pycache__/\n").unwrap();
+        command(&repository, &[OsStr::new("add"), OsStr::new(".")]);
+        command(
+            &repository,
+            &[
+                OsStr::new("-c"),
+                OsStr::new("user.name=Fixture"),
+                OsStr::new("-c"),
+                OsStr::new("user.email=fixture@example.invalid"),
+                OsStr::new("commit"),
+                OsStr::new("-m"),
+                OsStr::new("Python fixture"),
+            ],
+        );
+        let manager = WorkspaceManager::initialize(managed, repository.clone(), "main".to_owned())
+            .await
+            .unwrap();
+        let program = if cfg!(windows) { "python" } else { "python3" };
+        for flags in [vec![], vec!["-E"], vec!["-I"], vec!["-IE"]] {
+            let clean = manager
+                .prepare(Uuid::new_v4(), Uuid::new_v4(), None, None)
+                .await
+                .unwrap();
+            let mut args: Vec<String> = flags.iter().map(|s| (*s).to_owned()).collect();
+            args.extend(["-c".to_owned(), "import sys; sys.path.insert(0, '.'); import cache_probe; assert cache_probe.value == 42; assert sys.dont_write_bytecode".to_owned()]);
+            let check = crony_domain::VerifierCheck::Test {
+                program: program.to_owned(),
+                args,
+                timeout_ms: 10_000,
+                cache_suppression: None,
+            };
+            let result = crate::verifier::run_check(0, &check, &clean.path, &[]).await;
+            assert!(result.passed, "{result:?}");
+            assert_eq!(
+                result.payload["cache_suppression"]["policy"],
+                "python_interpreter"
+            );
+            assert!(!clean.path.join("__pycache__").exists());
+            let cleanup = manager.finalize(&clean).await.unwrap();
+            assert_eq!(cleanup.disposition, WorkspaceDisposition::Removed);
+        }
+        let retained = manager
+            .prepare(Uuid::new_v4(), Uuid::new_v4(), None, None)
+            .await
+            .unwrap();
+        std::fs::create_dir(retained.path.join("__pycache__")).unwrap();
+        std::fs::write(
+            retained.path.join("__pycache__/valuable.pyc"),
+            b"preexisting bytes",
+        )
+        .unwrap();
+        std::fs::write(retained.path.join("valuable.log"), b"valuable log").unwrap();
+        let check = crony_domain::VerifierCheck::Command {
+            program: program.to_owned(),
+            args: vec!["-c".to_owned(), "import cache_probe".to_owned()],
+            timeout_ms: 10_000,
+            cache_suppression: None,
+        };
+        assert!(
+            crate::verifier::run_check(0, &check, &retained.path, &[])
+                .await
+                .passed
+        );
+        let cleanup = manager.finalize(&retained).await.unwrap();
+        assert_eq!(cleanup.disposition, WorkspaceDisposition::Preserved);
+        assert!(cleanup.detail.contains("ignored_files=2"));
+        assert_eq!(
+            std::fs::read(retained.path.join("__pycache__/valuable.pyc")).unwrap(),
+            b"preexisting bytes"
+        );
+        assert_eq!(
+            std::fs::read(retained.path.join("valuable.log")).unwrap(),
+            b"valuable log"
+        );
         cleanup_fixture(&root, &repository);
     }
 

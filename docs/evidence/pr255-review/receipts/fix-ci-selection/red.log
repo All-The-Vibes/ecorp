@@ -1,0 +1,110 @@
+✖ quality selects existing contracts and PR255 pure frontend/QA regressions (1.7763ms)
+✖ quality provisions the exact QA source before the provenance test, outside test code (0.3178ms)
+✖ identity regression runs only in the existing Windows matrix lane before lifecycle checks (0.8195ms)
+✖ remote actions use immutable SHAs under the repository Actions policy (0.6527ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 132.6603
+
+✖ failing tests:
+
+test at tools\ci_runner_tests.test.mjs:12:1
+✖ quality selects existing contracts and PR255 pure frontend/QA regressions (1.7763ms)
+  AssertionError [ERR_ASSERTION]: tools/ci_runner_tests.test.mjs must run in quality
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/tools/ci_runner_tests.test.mjs:25:13)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\ci_runner_tests.test.mjs:28:1
+✖ quality provisions the exact QA source before the provenance test, outside test code (0.3178ms)
+  AssertionError [ERR_ASSERTION]: shallow checkout needs an explicit native fetch of the pinned QA commit
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/tools/ci_runner_tests.test.mjs:31:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\ci_runner_tests.test.mjs:39:1
+✖ identity regression runs only in the existing Windows matrix lane before lifecycle checks (0.8195ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /if: runner\.os == 'Windows'\r?\n        shell: pwsh\r?\n        run: \.\/tools\/local_stack_identity\.test\.ps1/. Input:
+  
+  '    strategy:\r\n' +
+    '      fail-fast: false\r\n' +
+    '      matrix:\r\n' +
+    '        os: [ubuntu-latest, windows-latest, macos-latest]\r\n' +
+    '    runs-on: ${{ matrix.os }}\r\n' +
+    '    permissions:\r\n' +
+    '      contents: read\r\n' +
+    '    steps:\r\n' +
+    '      - uses: actions/checkout@v4\r\n' +
+    '      - uses: dtolnay/rust-toolchain@stable\r\n' +
+    '      - uses: actions/setup-node@v4\r\n' +
+    '        with:\r\n' +
+    '          node-version: 22\r\n' +
+    '      - uses: Swatinem/rust-cache@v2\r\n' +
+    '      - run: cargo test -p crony-runner\r\n' +
+    '      - run: node tools/platform_runner_contract.mjs\r\n' +
+    '      - uses: actions/upload-artifact@v4\r\n' +
+    '        with:\r\n' +
+    '          name: runner-platform-${{ matrix.os }}\r\n' +
+    '          path: output/platform/*\r\n' +
+    '\r\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/tools/ci_runner_tests.test.mjs:42:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '    strategy:\r\n      fail-fast: false\r\n      matrix:\r\n        os: [ubuntu-latest, windows-latest, macos-latest]\r\n    runs-on: ${{ matrix.os }}\r\n    permissions:\r\n      contents: read\r\n    steps:\r\n      - uses: actions/checkout@v4\r\n      - uses: dtolnay/rust-toolchain@stable\r\n      - uses: actions/setup-node@v4\r\n        with:\r\n          node-version: 22\r\n      - uses: Swatinem/rust-cache@v2\r\n      - run: cargo test -p crony-runner\r\n      - run: node tools/platform_runner_contract.mjs\r\n      - uses: actions/upload-artifact@v4\r\n        with:\r\n          name: runner-platform-${{ matrix.os }}\r\n          path: output/platform/*\r\n\r\n',
+    expected: /if: runner\.os == 'Windows'\r?\n        shell: pwsh\r?\n        run: \.\/tools\/local_stack_identity\.test\.ps1/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tools\ci_runner_tests.test.mjs:47:1
+✖ remote actions use immutable SHAs under the repository Actions policy (0.6527ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^[\w./-]+@[a-f0-9]{40}$/. Input:
+  
+  'actions/checkout@v4'
+  
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/tools/ci_runner_tests.test.mjs:50:44)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'actions/checkout@v4',
+    expected: /^[\w./-]+@[a-f0-9]{40}$/,
+    operator: 'match',
+    diff: 'simple'
+  }

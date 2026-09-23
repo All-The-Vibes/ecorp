@@ -1,8 +1,10 @@
+export type VerifierCacheSuppression = 'python_interpreter' | 'python_environment' | 'node_compile_cache'
+
 export type VerifierCheck =
   | { type: 'artifact'; min_bytes: number }
   | { type: 'file'; path: string; min_bytes: number }
-  | { type: 'command'; program: string; args: string[]; timeout_ms: number }
-  | { type: 'test'; program: string; args: string[]; timeout_ms: number }
+  | { type: 'command'; program: string; args: string[]; timeout_ms: number; cache_suppression?: VerifierCacheSuppression | null }
+  | { type: 'test'; program: string; args: string[]; timeout_ms: number; cache_suppression?: VerifierCacheSuppression | null }
   | { type: 'json_schema'; path: string; required_keys: string[] }
   | { type: 'screenshot'; path: string; min_bytes: number }
 
@@ -45,7 +47,14 @@ export function verifierCheckSummary(check: VerifierCheck): string {
   if (check.type === 'json_schema') {
     return `JSON ${check.path} · keys: ${JSON.stringify(check.required_keys)}`
   }
-  return `${check.type === 'test' ? 'Test' : 'Command'} · ${JSON.stringify([check.program, ...check.args])} · ${Math.round(check.timeout_ms / 1_000)}s`
+  const summary = `${check.type === 'test' ? 'Test' : 'Command'} · ${JSON.stringify([check.program, ...check.args])} · ${Math.round(check.timeout_ms / 1_000)}s`
+  if (check.cache_suppression == null) return summary
+  const labels: Record<VerifierCacheSuppression, string> = {
+    python_interpreter: 'Python interpreter (-B)',
+    python_environment: 'Python environment',
+    node_compile_cache: 'Node compile cache',
+  }
+  return `${summary} · Requested cache control: ${labels[check.cache_suppression]} (requires a compatible runner)`
 }
 
 export function verificationPolicyErrors(policy: VerificationPolicy): string[] {

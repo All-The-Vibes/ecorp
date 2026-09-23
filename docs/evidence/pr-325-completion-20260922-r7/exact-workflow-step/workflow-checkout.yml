@@ -1,0 +1,348 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+          components: rustfmt, clippy
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - run: pnpm install --frozen-lockfile
+      - run: node tools/check_migrations.mjs
+      - name: Verify external-adapter E2E expectations cannot hide runtime failures
+        run: node --test tools/e2e_external_adapters.test.mjs tools/fixture_source_identity.test.mjs tools/owned_test_stack.test.mjs
+      - name: Verify host-scoped browser selection without browser downloads
+        run: node --test tools/verifier_browser.test.mjs
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - run: cargo test --locked --workspace
+      - run: pnpm build:web
+      - run: pnpm lint:web
+
+  integration:
+    runs-on: ubuntu-latest
+    env:
+      CRONY_SERVER_HTTP: http://127.0.0.1:18791
+      CRONY_TEST_SERVER_BIND: 127.0.0.1:18791
+      CRONY_TEST_SERVER_BINARY: ${{ github.workspace }}/target/debug/crony-server
+      CRONY_TEST_SERVER_PID_FILE: ${{ github.workspace }}/output/server-ci.json
+      CRONY_TEST_SERVER_LOG_DIR: ${{ github.workspace }}/output
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: crony
+          POSTGRES_PASSWORD: crony
+          POSTGRES_DB: crony
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U crony -d crony"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - run: pnpm install --frozen-lockfile
+      - run: cargo build --locked -p crony-server -p crony-runner -p crony-cli -p crony-gateways
+      - name: Verify native read-only MCP protocol and probe
+        env:
+          CRONY_MCP_TEST_BINARY: ${{ github.workspace }}/target/debug/crony-mcp
+        run: node --test tools/probe_mcp.test.mjs tools/operation_receipt.test.mjs tools/consume_operation_receipt.test.mjs
+      - name: Start control and execution planes
+        shell: bash
+        run: |
+          DATABASE_URL=postgres://crony:crony@127.0.0.1:54329/crony \
+          "$CRONY_TEST_SERVER_BINARY" \
+            --bind "$CRONY_TEST_SERVER_BIND" \
+            > output/server-ci.log 2>&1 &
+          SERVER_PID=$!
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent "$CRONY_SERVER_HTTP/health" | grep -q '"status":"ok"'; then
+              break
+            fi
+            sleep 1
+          done
+          ECORP_CI_SERVER_PID="$SERVER_PID" node --input-type=module -e '
+            import { captureOwnedTestServerManifest } from "./tools/owned_test_stack.mjs";
+            await captureOwnedTestServerManifest({
+              root: process.cwd(), server: process.env.CRONY_SERVER_HTTP,
+              binary: process.env.CRONY_TEST_SERVER_BINARY,
+              pidPath: process.env.CRONY_TEST_SERVER_PID_FILE,
+              pid: Number(process.env.ECORP_CI_SERVER_PID)
+            });
+          '
+          DEMO_JSON="$(curl --fail --silent -X POST \
+            -H 'content-type: application/json' \
+            -d '{}' \
+            "$CRONY_SERVER_HTTP/api/demo/bootstrap")"
+          CORP_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).corp_id)' "$DEMO_JSON")"
+          ALICE_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).alice_actor_id)' "$DEMO_JSON")"
+          ENROLLMENT_JSON="$(curl --fail --silent -X POST \
+            -H 'content-type: application/json' \
+            -d "{\"actor_id\":\"$ALICE_ID\",\"runner_id\":\"runner-local\",\"expires_in_seconds\":600}" \
+            "$CRONY_SERVER_HTTP/api/corps/$CORP_ID/runners/enroll")"
+          mkdir -p output/runner
+          node -e 'process.stdout.write(JSON.parse(process.argv[1]).enrollment_token)' \
+            "$ENROLLMENT_JSON" > output/runner/enrollment.token
+          chmod 600 output/runner/enrollment.token
+          target/debug/crony-runner \
+            --server-ws ws://127.0.0.1:18791/ws/runner \
+            --runner-id runner-local \
+            --corp-id "$CORP_ID" \
+            --credential-file "$PWD/output/runner/credential.json" \
+            --enrollment-token-file "$PWD/output/runner/enrollment.token" \
+            --workspace "$PWD/output/runner" \
+            --source-repository "$PWD" \
+            --source-base-ref HEAD \
+            --fake-agent-script "$PWD/scripts/fake-agent.mjs" \
+            --codex-command node \
+            --codex-command-arg "$PWD/scripts/fake-codex-app-server.mjs" \
+            --claude-command node \
+            --claude-command-arg "$PWD/scripts/fake-external-agent.mjs" \
+            --opencode-command node \
+            --opencode-command-arg "$PWD/scripts/fake-external-agent.mjs" \
+            --copilot-fixture \
+            > output/runner-ci.log 2>&1 &
+          echo $! > output/runner-ci.pid
+      - name: Wait for runner
+        shell: bash
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent "$CRONY_SERVER_HTTP/health" | grep -q '"runners":1'; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat output/server-ci.log || true
+          cat output/runner-ci.log || true
+          exit 1
+      - name: Race demo bootstrap and reset lifecycle
+        run: node tools/e2e_demo_lifecycle.mjs
+      - name: Exercise the real server-to-runner path
+        shell: pwsh
+        run: ./tools/e2e_smoke.ps1 -Server $env:CRONY_SERVER_HTTP
+      - name: Verify content-addressed artifacts, provenance, and Corp-scoped download
+        run: node tools/e2e_artifacts.mjs
+      - name: Verify portable source deliverables, exact linkage, and cleanup acknowledgment
+        run: node tools/e2e_portable_deliverables.mjs
+      - name: Verify Codex start, steer, resume, interrupt, stop, usage, and evidence
+        run: node tools/e2e_codex.mjs
+      - name: Verify external-CLI platform admission and supported lifecycle evidence
+        run: node tools/e2e_external_adapters.mjs
+      - name: Verify GitHub Copilot harness, model discovery, selection, and resume
+        run: node tools/e2e_copilot.mjs
+      - name: Verify MCP, ACP, and A2A gateway conformance
+        run: node tools/e2e_gateways.mjs
+      - name: Verify parallel worktree isolation and source-checkout preservation
+        run: node tools/e2e_worktrees.mjs
+      - name: Verify bounded task-graph planning, scheduling, and retries
+        run: node tools/e2e_task_graph.mjs
+      - name: Verify automated, failed, human, and independent evidence gates
+        run: node tools/e2e_verification.mjs
+      - name: Verify resumable event replay
+        run: node tools/e2e_replay.mjs
+      - name: Verify control fencing and emergency stop
+        run: node tools/e2e_leases.mjs
+      - name: Verify room threads and membership isolation
+        run: node tools/e2e_rooms.mjs
+      - name: Verify runner grace and reconciliation
+        run: node tools/e2e_runner_reconnect.mjs
+      - name: Verify duplicate runner delivery is idempotent
+        run: node tools/e2e_idempotency.mjs
+      - name: Verify atomic artifact staging, cleanup, and restart recovery
+        env:
+          CRONY_TEST_SERVER_PID_FILE: ${{ github.workspace }}/output/server-ci.json
+          DATABASE_URL: postgres://crony:crony@127.0.0.1:54329/crony
+        run: node tools/e2e_artifact_staging.mjs
+      - name: Verify fenced factory claims, restart recovery, and one linked mission
+        env:
+          CRONY_TEST_SERVER_PID_FILE: ${{ github.workspace }}/output/server-ci.json
+          CRONY_TEST_SERVER_LOG_DIR: ${{ github.workspace }}/output
+          CRONY_TEST_SERVER_BIND: 127.0.0.1:18791
+          DATABASE_URL: postgres://crony:crony@127.0.0.1:54329/crony
+        run: node tools/e2e_factory_claims.mjs
+      - name: Verify Project eligibility, dry run, dispatch, status sync, and replay
+        run: node tools/e2e_factory_controller.mjs
+      - name: Verify idempotent branch and pull-request publication with recovery
+        env:
+          CRONY_TEST_SERVER_PID_FILE: ${{ github.workspace }}/output/server-ci.json
+          CRONY_TEST_SERVER_LOG_DIR: ${{ github.workspace }}/output
+          DATABASE_URL: postgres://crony:crony@127.0.0.1:54329/crony
+        run: node tools/e2e_factory_publication.mjs
+      - name: Verify OIDC, Corp RBAC, runner enrollment, rotation, replay defense, and revocation
+        run: node tools/e2e_identity.mjs
+      - name: Verify scoped secret brokering without plaintext leakage
+        run: node tools/e2e_secrets.mjs
+      - name: Verify durable risky-action approvals and exactly-once decision effects
+        env:
+          CRONY_TEST_SERVER_PID_FILE: ${{ github.workspace }}/output/server-ci.json
+          CRONY_TEST_SERVER_LOG_DIR: ${{ github.workspace }}/output
+          CRONY_TEST_SERVER_BIND: 127.0.0.1:18791
+          DATABASE_URL: postgres://crony:crony@127.0.0.1:54329/crony
+        run: node tools/e2e_approvals.mjs
+      - name: Verify budget and loop circuit-breaker stages
+        run: node tools/e2e_budgets.mjs
+      - name: Verify terminal provider cleanup and off-shift agent state
+        run: node tools/e2e_idle_cleanup.mjs
+      - name: Run the versioned 100-scenario deterministic evaluation lane
+        run: node tools/run_evals.mjs
+      - name: Consolidate chaos and restart evidence
+        run: node tools/e2e_chaos_report.mjs
+      - name: Upload runtime evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: integration-evidence
+          path: |
+            output/e2e-smoke.json
+            output/e2e-artifacts.json
+            output/e2e-portable-deliverables.json
+            output/e2e-artifact-staging.json
+            output/e2e-demo-lifecycle.json
+            output/e2e-codex.json
+            output/e2e-external-adapters.json
+            output/e2e-copilot.json
+            output/e2e-gateways.json
+            output/e2e-worktrees.json
+            output/e2e-task-graph.json
+            output/e2e-verification.json
+            output/e2e-identity.json
+            output/e2e-secrets.json
+            output/e2e-approvals.json
+            output/e2e-budgets.json
+            output/e2e-idle-cleanup.json
+            output/e2e-chaos.json
+            output/eval-report.json
+            output/e2e-runner-reconnect.json
+            output/e2e-idempotency.json
+            output/e2e-factory-claims.json
+            output/e2e-factory-controller.json
+            output/e2e-factory-publication.json
+            output/fake-github-factory-state.json
+            output/fake-github-publication-*.json
+            output/publication-server-restart.stdout.log
+            output/publication-server-restart.stderr.log
+            output/e2e-replay.json
+            output/e2e-leases.json
+            output/server-ci.log
+            output/server-ci.json
+            output/*restart*.stdout.log
+            output/*restart*.stderr.log
+            output/artifact-recovery-server.stdout.log
+            output/artifact-recovery-server.stderr.log
+            output/runner-ci.log
+            output/runner/**/result.md
+            output/runner/**/evidence/*.json
+
+  runner-platforms:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Compile Windows runner tests before native host readiness
+        if: runner.os == 'Windows'
+        run: cargo test --locked -p crony-runner --no-run
+      - name: Verify Windows PowerShell connection ACL readiness
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/windows_connection_acl_readiness.ps1 -ReportDirectory (Join-Path $env:GITHUB_WORKSPACE 'output/runner-platform-windows-readiness')
+      - name: Verify Windows browser policy environment handoff
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $nodePath = (Get-Command node -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          pwsh -NoProfile -File ./tools/local_stack_browser_policy_handoff.test.ps1 -NodePath $nodePath -OutputDirectory (Join-Path $env:GITHUB_WORKSPACE 'output/runner-platform-browser-policy-handoff')
+      - run: cargo test --locked -p crony-runner ${{ runner.os == 'Windows' && '-- --test-threads=1' || '' }}
+      - run: node tools/platform_runner_contract.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: runner-platform-${{ matrix.os }}
+          path: output/platform/*
+      - name: Preserve Windows connection ACL readiness receipts
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: runner-platform-windows-readiness-${{ github.run_attempt }}
+          path: output/runner-platform-windows-readiness/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve Windows browser policy handoff receipts
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: runner-platform-browser-policy-handoff-${{ github.run_attempt }}
+          path: output/runner-platform-browser-policy-handoff/
+          if-no-files-found: warn
+          retention-days: 14
+
+  desktop-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:web
+      - run: cargo install tauri-cli --version 2.11.4 --locked
+      - run: cargo tauri build --debug --no-bundle -- --locked
+        working-directory: apps/desktop

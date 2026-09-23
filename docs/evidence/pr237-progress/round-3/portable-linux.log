@@ -1,0 +1,345 @@
+v24.19.0
+✔ direct completion cannot bypass pending independent review (missing checkpoint: false) (9.682501ms)
+✔ complete persisted proof is accepted (missing checkpoint: false) (1.940341ms)
+✔ direct completion cannot bypass pending independent review (missing checkpoint: true) (0.778957ms)
+✔ complete persisted proof is accepted (missing checkpoint: true) (0.863262ms)
+✔ pending review requires requester denial followed by distinct reviewer approval (1.448505ms)
+✔ pending gate rejects missing review (0.616344ms)
+✔ pending gate rejects non-independent gate (0.475034ms)
+✔ pending gate rejects requester allowed (1.567914ms)
+✔ pending gate rejects already decided gate (0.805258ms)
+✔ pending gate rejects same actor (0.669649ms)
+✔ pending gate rejects unauthorized role (7.893172ms)
+✔ pending gate rejects producer reviewing (1.013974ms)
+✔ pending gate rejects requester accepted (1.307094ms)
+✔ pending gate rejects reviewer denied (1.3836ms)
+✔ pending gate rejects reviewer response for another run (1.152383ms)
+✔ pending gate rejects requester denial changes gate (2.090352ms)
+✔ final recovery rejects no pending observation (1.126882ms)
+✔ final recovery rejects no requester denial (1.035775ms)
+✔ final recovery rejects requester non-403 (2.999518ms)
+✔ final recovery rejects no independent response (0.676449ms)
+✔ final recovery rejects no independent proof flag (0.741053ms)
+✔ final recovery rejects no persisted decision (0.587143ms)
+✔ final recovery rejects decision by requester (0.517438ms)
+✔ final recovery rejects decision still pending (0.518538ms)
+✔ final recovery rejects decision gate drift (0.708352ms)
+✔ final recovery rejects foreign decision (0.774256ms)
+✔ final recovery rejects missing decision timestamp (1.51621ms)
+✔ final recovery rejects missing automated evidence (1.140782ms)
+✔ final recovery rejects failed file check (1.422203ms)
+✔ final recovery rejects foreign proof (1.704424ms)
+✔ final recovery rejects wrong proof kind (1.135983ms)
+✔ final recovery rejects wrong proof task (0.896865ms)
+✔ final recovery rejects wrong proof Corp (0.908066ms)
+✔ final recovery rejects wrong proof index (1.892637ms)
+✔ final recovery rejects missing artifact (1.124682ms)
+✔ final recovery rejects failed verification (0.932668ms)
+✔ final recovery rejects changed source ref (0.843961ms)
+✔ final recovery rejects changed source repository (0.867663ms)
+✔ final recovery rejects changed source commit (2.975115ms)
+✔ final recovery rejects changed source connection (0.627245ms)
+✔ final recovery rejects changed provider session (0.344825ms)
+✔ final recovery rejects changed workspace lineage (0.898865ms)
+✔ final recovery rejects changed resume ancestor (1.041776ms)
+✔ final recovery rejects changed verifier (0.778756ms)
+✔ final recovery rejects changed finish tokens (0.598943ms)
+✔ final recovery rejects changed finish cost (0.608544ms)
+✔ final recovery rejects changed revision task (0.96607ms)
+✔ final recovery rejects missing approved revision (0.800058ms)
+✔ final recovery rejects unapproved revision (0.688549ms)
+✔ final recovery rejects rewritten prior contract (0.921467ms)
+✔ final recovery rejects rewritten prior policy (1.027375ms)
+✔ final recovery rejects changed current mission budget (0.796058ms)
+✔ final recovery rejects changed original budget (0.508837ms)
+✔ final recovery rejects rewritten original fingerprint (0.602544ms)
+✔ final recovery rejects rewritten original spend (0.449833ms)
+✔ final recovery rejects rewritten suspension history (0.784757ms)
+✔ final recovery rejects missing original event (0.544939ms)
+✔ final recovery rejects rewritten breaker incident (0.898665ms)
+✔ final recovery rejects missing breaker incident (0.870963ms)
+✔ hard-stop lane needs no successful review (0.634246ms)
+✖ same HEAD with different dirty tracked bytes has a different binding (27.202971ms)
+✖ nonignored untracked test input changes, additions and deletion are bound (8.70343ms)
+✖ actual executable bytes, not name or HEAD, are hashed and drift fails finalization (9.601796ms)
+✖ unchanged input finalizes; source drift and missing executables fail closed (9.776609ms)
+✖ ignored contents and unrelated private directories are never hashed (11.491033ms)
+✖ tracked parent junction escape and executable symlink are rejected (11.532536ms)
+✖ source hard links and unsafe Git path listings fail without outside reads (10.325048ms)
+✖ owned Node directory alias is resolved once and pinned for binding and every launch (8.359606ms)
+﹣ actual selected Windows Node passes the real read-only digest and before/after binding (4.820949ms) # SKIP
+✔ native admission binds before effects; dry-run does not require executables (4.153401ms)
+ℹ tests 70
+ℹ suites 0
+ℹ pass 61
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 312.277128
+
+✖ failing tests:
+
+test at tools/factory_budget_provenance.test.mjs:58:1
+✖ same HEAD with different dirty tracked bytes has a different binding (27.202971ms)
+  Error: spawnSync git ENOENT
+      at Object.spawnSync (node:internal/child_process:1160:20)
+      at spawnSync (node:child_process:928:24)
+      at execFileSync (node:child_process:971:15)
+      at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+      at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+      at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:59:13)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'spawnSync git',
+    path: 'git',
+    spawnargs: [ '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/tmp/ecorp-source-binding-MtEMIC/no-hooks', 'init', '--initial-branch=main' ],
+    error: Error: spawnSync git ENOENT
+        at Object.spawnSync (node:internal/child_process:1160:20)
+        at spawnSync (node:child_process:928:24)
+        at execFileSync (node:child_process:971:15)
+        at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+        at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+        at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:59:13)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3),
+    status: null,
+    signal: null,
+    output: null,
+    pid: 0,
+    stdout: undefined,
+    stderr: undefined
+  }
+
+test at tools/factory_budget_provenance.test.mjs:70:1
+✖ nonignored untracked test input changes, additions and deletion are bound (8.70343ms)
+  Error: spawnSync git ENOENT
+      at Object.spawnSync (node:internal/child_process:1160:20)
+      at spawnSync (node:child_process:928:24)
+      at execFileSync (node:child_process:971:15)
+      at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+      at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+      at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:71:13)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'spawnSync git',
+    path: 'git',
+    spawnargs: [ '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/tmp/ecorp-source-binding-zXiRMG/no-hooks', 'init', '--initial-branch=main' ],
+    error: Error: spawnSync git ENOENT
+        at Object.spawnSync (node:internal/child_process:1160:20)
+        at spawnSync (node:child_process:928:24)
+        at execFileSync (node:child_process:971:15)
+        at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+        at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+        at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:71:13)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:960:7),
+    status: null,
+    signal: null,
+    output: null,
+    pid: 0,
+    stdout: undefined,
+    stderr: undefined
+  }
+
+test at tools/factory_budget_provenance.test.mjs:86:1
+✖ actual executable bytes, not name or HEAD, are hashed and drift fails finalization (9.601796ms)
+  Error: spawnSync git ENOENT
+      at Object.spawnSync (node:internal/child_process:1160:20)
+      at spawnSync (node:child_process:928:24)
+      at execFileSync (node:child_process:971:15)
+      at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+      at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+      at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:87:13)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'spawnSync git',
+    path: 'git',
+    spawnargs: [ '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/tmp/ecorp-source-binding-1RAeDl/no-hooks', 'init', '--initial-branch=main' ],
+    error: Error: spawnSync git ENOENT
+        at Object.spawnSync (node:internal/child_process:1160:20)
+        at spawnSync (node:child_process:928:24)
+        at execFileSync (node:child_process:971:15)
+        at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+        at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+        at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:87:13)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:960:7),
+    status: null,
+    signal: null,
+    output: null,
+    pid: 0,
+    stdout: undefined,
+    stderr: undefined
+  }
+
+test at tools/factory_budget_provenance.test.mjs:112:1
+✖ unchanged input finalizes; source drift and missing executables fail closed (9.776609ms)
+  Error: spawnSync git ENOENT
+      at Object.spawnSync (node:internal/child_process:1160:20)
+      at spawnSync (node:child_process:928:24)
+      at execFileSync (node:child_process:971:15)
+      at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+      at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+      at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:113:13)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'spawnSync git',
+    path: 'git',
+    spawnargs: [ '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/tmp/ecorp-source-binding-1JCDLT/no-hooks', 'init', '--initial-branch=main' ],
+    error: Error: spawnSync git ENOENT
+        at Object.spawnSync (node:internal/child_process:1160:20)
+        at spawnSync (node:child_process:928:24)
+        at execFileSync (node:child_process:971:15)
+        at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+        at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+        at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:113:13)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:960:7),
+    status: null,
+    signal: null,
+    output: null,
+    pid: 0,
+    stdout: undefined,
+    stderr: undefined
+  }
+
+test at tools/factory_budget_provenance.test.mjs:123:1
+✖ ignored contents and unrelated private directories are never hashed (11.491033ms)
+  Error: spawnSync git ENOENT
+      at Object.spawnSync (node:internal/child_process:1160:20)
+      at spawnSync (node:child_process:928:24)
+      at execFileSync (node:child_process:971:15)
+      at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+      at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+      at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:124:13)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'spawnSync git',
+    path: 'git',
+    spawnargs: [ '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/tmp/ecorp-source-binding-LeUAL5/no-hooks', 'init', '--initial-branch=main' ],
+    error: Error: spawnSync git ENOENT
+        at Object.spawnSync (node:internal/child_process:1160:20)
+        at spawnSync (node:child_process:928:24)
+        at execFileSync (node:child_process:971:15)
+        at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+        at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+        at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:124:13)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:960:7),
+    status: null,
+    signal: null,
+    output: null,
+    pid: 0,
+    stdout: undefined,
+    stderr: undefined
+  }
+
+test at tools/factory_budget_provenance.test.mjs:137:1
+✖ tracked parent junction escape and executable symlink are rejected (11.532536ms)
+  Error: spawnSync git ENOENT
+      at Object.spawnSync (node:internal/child_process:1160:20)
+      at spawnSync (node:child_process:928:24)
+      at execFileSync (node:child_process:971:15)
+      at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+      at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+      at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:138:13)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'spawnSync git',
+    path: 'git',
+    spawnargs: [ '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/tmp/ecorp-source-binding-KKU0cT/no-hooks', 'init', '--initial-branch=main' ],
+    error: Error: spawnSync git ENOENT
+        at Object.spawnSync (node:internal/child_process:1160:20)
+        at spawnSync (node:child_process:928:24)
+        at execFileSync (node:child_process:971:15)
+        at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+        at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+        at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:138:13)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:960:7),
+    status: null,
+    signal: null,
+    output: null,
+    pid: 0,
+    stdout: undefined,
+    stderr: undefined
+  }
+
+test at tools/factory_budget_provenance.test.mjs:157:1
+✖ source hard links and unsafe Git path listings fail without outside reads (10.325048ms)
+  Error: spawnSync git ENOENT
+      at Object.spawnSync (node:internal/child_process:1160:20)
+      at spawnSync (node:child_process:928:24)
+      at execFileSync (node:child_process:971:15)
+      at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+      at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+      at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:158:13)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'spawnSync git',
+    path: 'git',
+    spawnargs: [ '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/tmp/ecorp-source-binding-WIhps3/no-hooks', 'init', '--initial-branch=main' ],
+    error: Error: spawnSync git ENOENT
+        at Object.spawnSync (node:internal/child_process:1160:20)
+        at spawnSync (node:child_process:928:24)
+        at execFileSync (node:child_process:971:15)
+        at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+        at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+        at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:158:13)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:960:7),
+    status: null,
+    signal: null,
+    output: null,
+    pid: 0,
+    stdout: undefined,
+    stderr: undefined
+  }
+
+test at tools/factory_budget_provenance.test.mjs:171:1
+✖ owned Node directory alias is resolved once and pinned for binding and every launch (8.359606ms)
+  Error: spawnSync git ENOENT
+      at Object.spawnSync (node:internal/child_process:1160:20)
+      at spawnSync (node:child_process:928:24)
+      at execFileSync (node:child_process:971:15)
+      at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+      at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+      at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:172:13)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'spawnSync git',
+    path: 'git',
+    spawnargs: [ '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/tmp/ecorp-source-binding-LnKAzB/no-hooks', 'init', '--initial-branch=main' ],
+    error: Error: spawnSync git ENOENT
+        at Object.spawnSync (node:internal/child_process:1160:20)
+        at spawnSync (node:child_process:928:24)
+        at execFileSync (node:child_process:971:15)
+        at git (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:45:28)
+        at fixture (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:48:3)
+        at async TestContext.<anonymous> (file:///tmp/repo/tools/factory_budget_provenance.test.mjs:172:13)
+        at async Test.run (node:internal/test_runner/test:1389:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:960:7),
+    status: null,
+    signal: null,
+    output: null,
+    pid: 0,
+    stdout: undefined,
+    stderr: undefined
+  }

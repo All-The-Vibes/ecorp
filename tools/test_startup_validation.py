@@ -77,8 +77,16 @@ class FixtureHandler(http.server.BaseHTTPRequestHandler):
             status = 200
         else:
             issuer = f'http://127.0.0.1:{self.server.server_port}'
+            if self.server.delegated:
+                issuer += '/realms/fixture'
             scenario = self.server.scenario
             document = {'issuer': issuer, 'userinfo_endpoint': issuer + '/userinfo'}
+            if self.server.delegated:
+                document.update({
+                    'authorization_endpoint': issuer + '/protocol/openid-connect/auth',
+                    'token_endpoint': issuer + '/protocol/openid-connect/token',
+                    'jwks_uri': issuer + '/protocol/openid-connect/certs',
+                })
             if scenario == 'mismatch':
                 document['issuer'] = issuer + '/DO_NOT_LOG_DISCOVERY_SECRET'
             if scenario == 'userinfo':
@@ -94,10 +102,11 @@ class FixtureHandler(http.server.BaseHTTPRequestHandler):
 
 
 @contextlib.contextmanager
-def http_fixture(storage=False, tls=None):
+def http_fixture(storage=False, tls=None, delegated=False):
     server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), FixtureHandler)
     server.daemon_threads = True
     server.storage, server.scenario, server.calls = storage, 'valid', 0
+    server.delegated = delegated
     if tls:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.minimum_version = ssl.TLSVersion.TLSv1_2
@@ -251,7 +260,91 @@ class Server:
         return output
 
 
-def run(binary, root, postgres, oidc, storage, cert, baseline):
+def delegated_rejections(binary, root, postgres, oidc, storage, base, templates):
+    """Reject delegated configuration/discovery before any activation effects."""
+    with http_fixture(delegated=True) as provider:
+        config = {**base, 'CRONY_MODE': 'development', 'CRONY_OIDC_ISSUER': None,
+            'CRONY_OBJECT_STORE_BACKEND': 'local', 'CRONY_DELEGATED_PROVIDER': 'keycloak-test',
+            'CRONY_DELEGATED_ISSUER': f'http://127.0.0.1:{provider.server_port}/realms/fixture',
+            'CRONY_DELEGATED_INTERACTIVE_CLIENT_ID': 'interactive',
+            'CRONY_DELEGATED_BROKER_CLIENT_ID': 'connector',
+            'CRONY_DELEGATED_BROKER_CLIENT_SECRET': 'DO_NOT_LOG_DELEGATED_SECRET',
+            'CRONY_DELEGATED_REDIRECT_URI': 'http://127.0.0.1:59981/api/delegated/callback',
+            'CRONY_DELEGATED_INITIAL_SCOPES': 'openid profile',
+            'CRONY_DELEGATED_DOWNSTREAM_SCOPE': 'flag.read',
+            'CRONY_DELEGATED_DOWNSTREAM_AUDIENCE': 'flag-api',
+            'CRONY_DELEGATED_RESOURCE_URL': 'http://127.0.0.1:59982/flag',
+            'CRONY_DELEGATED_EXPECTED_SHA256': '71'*32,
+            'CRONY_DELEGATED_BROWSER_BASE': 'http://127.0.0.1:59981',
+            'CRONY_DELEGATED_UI_URL': 'http://127.0.0.1:59983/'}
+        cases = [
+            ('unknown', {'CRONY_DELEGATED_PROVIDER': 'DO_NOT_LOG_PROVIDER'}, 'valid', False),
+            ('incomplete_entra', {'CRONY_DELEGATED_PROVIDER': 'entra'}, 'valid', False),
+            ('missing_secret', {'CRONY_DELEGATED_BROKER_CLIENT_SECRET': None}, 'valid', False),
+            ('missing_digest', {'CRONY_DELEGATED_EXPECTED_SHA256': None}, 'valid', False),
+            ('bad_digest', {'CRONY_DELEGATED_EXPECTED_SHA256': 'DO_NOT_LOG_DIGEST'}, 'valid', False),
+            ('short_digest', {'CRONY_DELEGATED_EXPECTED_SHA256': '71'*31}, 'valid', False),
+            ('url', {'CRONY_DELEGATED_RESOURCE_URL': 'DO_NOT_LOG_RESOURCE'}, 'valid', False),
+            ('url_credentials', {'CRONY_DELEGATED_RESOURCE_URL': 'https://secret:DO_NOT_LOG_PASSWORD@example.invalid/flag'}, 'valid', False),
+            ('url_query', {'CRONY_DELEGATED_BROWSER_BASE': 'https://example.invalid/?DO_NOT_LOG_QUERY'}, 'valid', False),
+            ('url_http', {'CRONY_DELEGATED_UI_URL': 'http://example.invalid/'}, 'valid', False),
+            ('production_test_provider', {'CRONY_MODE': 'production',
+                'CRONY_OBJECT_STORE_BACKEND': 's3', 'CRONY_OIDC_ISSUER': base['CRONY_OIDC_ISSUER']}, 'valid', False),
+            ('discovery_body', {}, 'malformed', True),
+            ('discovery_status', {}, 'unavailable', True),
+            ('discovery_issuer', {}, 'mismatch', True),
+        ]
+        for state, template in templates:
+            for name, patch, scenario, discovery in cases:
+                db = postgres.create(template)
+                provider.scenario, provider.calls = scenario, 0
+                oidc.scenario, oidc.calls, storage.calls = 'valid', 0, 0
+                env = {**config, **patch, 'DATABASE_URL': postgres.url(db)}
+                env = {key: value for key, value in env.items() if value is not None}
+                before = postgres.fingerprint(db)
+                server = Server(binary, root/f'{state}_delegated_{name}', env)
+                try:
+                    diagnostic = server.rejected()
+                    assert b'invalid delegated configuration or provider discovery' in diagnostic
+                finally:
+                    server.close()
+                assert postgres.fingerprint(db) == before, f'delegated/{state}/{name}: database changed'
+                assert bool(provider.calls) == discovery, f'delegated/{name}: unexpected provider discovery'
+                assert bool(oidc.calls) == (name == 'production_test_provider')
+                assert storage.calls == 0, f'delegated/{name}: storage accessed before rejection'
+                print('PASS', state, 'delegated_'+name, flush=True)
+
+
+def run(binary, root, postgres, oidc, storage, cert, baseline, *, case_names=None):
+    # Synthetic, fixture-owned files outside every application working directory.
+    # Invalid startup must neither create runtime files nor modify these inputs.
+    audit_inputs = root / 'audit-inputs'
+    audit_inputs.mkdir()
+    audit_key = audit_inputs / 'signer.bin'
+    audit_key.write_bytes(bytes([19]) * 32)
+    audit_short_key = audit_inputs / 'short-signer.bin'
+    audit_short_key.write_bytes(bytes([19]) * 31)
+    audit_bad_json = audit_inputs / 'malformed.json'
+    audit_bad_json.write_text('DO_NOT_LOG_AUDIT_WITNESS', encoding='utf-8')
+    audit_bad_commit = audit_inputs / 'unsupported-commit.json'
+    audit_bad_commit.write_text(json.dumps([{
+        'corp_id': str(uuid.uuid4()), 'ledger_id': str(uuid.uuid4()),
+        'destination_id': str(uuid.uuid4()), 'checkpoint_digest': 'a' * 64,
+        'github_commit': 'b' * 64,
+    }]), encoding='utf-8')
+    audit_witnesses = audit_inputs / 'empty-witnesses.json'
+    audit_witnesses.write_text('[]', encoding='utf-8')
+    audit_tokens = {}
+    for name, value in [('cr', b'DO_NOT_LOG\rTOKEN'), ('lf', b'DO_NOT_LOG\nTOKEN'),
+                        ('valid', b' \tfixture-not-a-real-token\r\n')]:
+        audit_tokens[name] = audit_inputs / ('token-' + name)
+        audit_tokens[name].write_bytes(value)
+    audit_hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in audit_inputs.iterdir()}
+    audit_config = {'CRONY_STATE_AUDIT_SIGNING_KEY_FILE': str(audit_key),
+        'CRONY_STATE_AUDIT_KEY_ID': 'startup-fixture'}
+    publication_config = {**audit_config,
+        'CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE': str(audit_witnesses)}
     base = {'CRONY_MODE': 'production', 'CRONY_SECRET_MASTER_KEY_HEX': '42' * 32,
         'CRONY_ARTIFACT_SIGNING_KEY_HEX': '53' * 33, 'CRONY_OBJECT_STORE_BACKEND': 's3',
         'CRONY_OBJECT_STORE_BUCKET': 'fixture', 'CRONY_OBJECT_STORE_ENDPOINT': f'https://127.0.0.1:{storage.server_port}',
@@ -288,7 +381,17 @@ def run(binary, root, postgres, oidc, storage, cert, baseline):
         ('discovery_status', {}, 'unavailable', True),
         ('backtraces', {'CRONY_SECRET_MASTER_KEY_HEX': 'DO_NOT_LOG_MASTER', 'RUST_BACKTRACE': 'full', 'RUST_LIB_BACKTRACE': 'full'}, 'valid', False),
         ('dev_invalid', {'CRONY_MODE': 'development', 'CRONY_OBJECT_STORE_BACKEND': 'local', 'CRONY_SECRET_MASTER_KEY_HEX': 'DO_NOT_LOG_MASTER'}, 'valid', False),
+        ('audit_short_key', {**audit_config, 'CRONY_STATE_AUDIT_SIGNING_KEY_FILE': str(audit_short_key)}, 'valid', False),
+        ('audit_interval', {**audit_config, 'CRONY_STATE_AUDIT_CHECKPOINT_SECONDS': 'DO_NOT_LOG_AUDIT_INTERVAL'}, 'valid', False),
+        ('audit_missing_key_id', {**audit_config, 'CRONY_STATE_AUDIT_KEY_ID': None}, 'valid', False),
+        ('audit_witness_json', {**audit_config, 'CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE': str(audit_bad_json)}, 'valid', False),
+        ('audit_commit_grammar', {**audit_config, 'CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE': str(audit_bad_commit)}, 'valid', False),
+        ('audit_token_cr', {**publication_config, 'CRONY_STATE_AUDIT_GITHUB_TOKEN_FILE': str(audit_tokens['cr'])}, 'valid', False),
+        ('audit_token_lf', {**publication_config, 'CRONY_STATE_AUDIT_GITHUB_TOKEN_FILE': str(audit_tokens['lf'])}, 'valid', False),
     ]
+    if case_names is not None:
+        assert set(case_names) <= {case[0] for case in cases}, 'unknown startup case'
+        cases = [case for case in cases if case[0] in case_names]
     templates = [('empty', None)]
     if not baseline:
         seed = postgres.create()
@@ -344,7 +447,11 @@ def run(binary, root, postgres, oidc, storage, cert, baseline):
             assert postgres.fingerprint(db) == before, f'{state}/{name}: database changed'
             assert bool(oidc.calls) == discovery, f'{name}: unexpected discovery requests'
             assert storage.calls == 0, f'{name}: storage accessed before rejection'
+            assert {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                for p in audit_inputs.iterdir()} == audit_hashes, 'startup changed audit inputs'
             print('PASS', state, name, flush=True)
+    if not baseline and case_names is None:
+        delegated_rejections(binary, root, postgres, oidc, storage, base, templates)
     cli_db = postgres.create()
     cli_config = {**base, 'DATABASE_URL': postgres.url(cli_db)}
     before = postgres.fingerprint(cli_db)
@@ -375,7 +482,9 @@ def run(binary, root, postgres, oidc, storage, cert, baseline):
     for key_bytes in (32, 33):
         db = postgres.create()
         storage.calls = 0
-        config = {**base, 'DATABASE_URL': postgres.url(db), 'CRONY_ARTIFACT_SIGNING_KEY_HEX': '53'*key_bytes}
+        config = {**base, **publication_config,
+            'CRONY_STATE_AUDIT_GITHUB_TOKEN_FILE': str(audit_tokens['valid']),
+            'DATABASE_URL': postgres.url(db), 'CRONY_ARTIFACT_SIGNING_KEY_HEX': '53'*key_bytes}
         server = Server(binary, root/f'production_{key_bytes}', config)
         try:
             assert server.ready()['mode'] == 'production'

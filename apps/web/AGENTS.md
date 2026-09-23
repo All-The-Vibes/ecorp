@@ -16,3 +16,10 @@ and accepted verification in the existing API/server contracts.
 Use root `pnpm test:unit`, `pnpm build:web` and `pnpm lint:web` for contributor checks. For a
 browser/server/runner claim, use an explicitly owned fixture and record persisted policy and
 verification IDs; browser-only rendering is a narrower result.
+
+`pnpm test:js` from the root discovers the web, tooling, steward and readiness suites;
+see `docs/VALIDATION.md` for the complete source-bound validation command.
+Keep server, Corp, actor, room/mission and selected source explicit in state. Missing or
+denied context stays unknown, and comments do not authorize approvals or steering.
+Keep producer and verifier identities distinct, and preserve reconnect and 390px behavior
+when exercising an owned browser/server/runner stack.

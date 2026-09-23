@@ -1,0 +1,101 @@
+TAP version 13
+# Subtest: dry run executes no checks, creates no receipt and leaves source unchanged
+ok 1 - dry run executes no checks, creates no receipt and leaves source unchanged
+  ---
+  duration_ms: 1114.0612
+  type: 'test'
+  ...
+# Subtest: unknown arguments cannot become commands
+ok 2 - unknown arguments cannot become commands
+  ---
+  duration_ms: 846.3288
+  type: 'test'
+  ...
+# Subtest: successful native tests produce observed counts and stable-source evidence
+ok 3 - successful native tests produce observed counts and stable-source evidence
+  ---
+  duration_ms: 1968.9898
+  type: 'test'
+  ...
+# Subtest: failing Node tests retain TAP diagnostics and complete long assertions
+ok 4 - failing Node tests retain TAP diagnostics and complete long assertions
+  ---
+  duration_ms: 1869.7078
+  type: 'test'
+  ...
+# Subtest: failing gates retain complete stdout and stderr beyond the compact limit
+ok 5 - failing gates retain complete stdout and stderr beyond the compact limit
+  ---
+  duration_ms: 1687.1354
+  type: 'test'
+  ...
+# Subtest: native capture overflow is disclosed and remains failed evidence
+ok 6 - native capture overflow is disclosed and remains failed evidence
+  ---
+  duration_ms: 1845.0476
+  type: 'test'
+  ...
+# Subtest: failing first gate stops execution and marks later gates not run
+ok 7 - failing first gate stops execution and marks later gates not run
+  ---
+  duration_ms: 1797.5638
+  type: 'test'
+  ...
+# Subtest: a passing test cannot certify source it modified during validation
+ok 8 - a passing test cannot certify source it modified during validation
+  ---
+  duration_ms: 1606.1698
+  type: 'test'
+  ...
+# Subtest: a test added between discovery and source capture cannot be certified without execution
+ok 9 - a test added between discovery and source capture cannot be certified without execution
+  ---
+  duration_ms: 1617.4278
+  type: 'test'
+  ...
+# Subtest: postflight Git failure retains completed counts and pending gates (gate failed: false)
+ok 10 - postflight Git failure retains completed counts and pending gates (gate failed: false)
+  ---
+  duration_ms: 1649.7559
+  type: 'test'
+  ...
+# Subtest: postflight Git failure retains completed counts and pending gates (gate failed: true)
+ok 11 - postflight Git failure retains completed counts and pending gates (gate failed: true)
+  ---
+  duration_ms: 1948.6005
+  type: 'test'
+  ...
+# Subtest: executing gates see incomplete receipts and completed checkpoints without overwriting prior attempts
+ok 12 - executing gates see incomplete receipts and completed checkpoints without overwriting prior attempts
+  ---
+  duration_ms: 3228.668
+  type: 'test'
+  ...
+# Subtest: large tracked diff is fully bound across validation (tail mutation: false)
+ok 13 - large tracked diff is fully bound across validation (tail mutation: false)
+  ---
+  duration_ms: 3221.2307
+  type: 'test'
+  ...
+# Subtest: large tracked diff is fully bound across validation (tail mutation: true)
+ok 14 - large tracked diff is fully bound across validation (tail mutation: true)
+  ---
+  duration_ms: 3531.3959
+  type: 'test'
+  ...
+# {"status":"passed","platform":"win32","checks":["trusted image executes with inherited request/output pipes","digest mismatch rejects executable before its first instruction","multiply linked executable rejected","writer after final digest denied by retained read/execute handle","replacement after final digest denied","pre-existing data writer rejects launch","pre-existing writable mapping rejects launch","wrong mapped image killed while suspended without running poison","real ancestor reparse retarget before CreateProcess rejects wrong image","retarget after mapped-image verification executes the already verified image"]}
+# Subtest: native evidence launch admits only the verified executable across filesystem races
+ok 15 - native evidence launch admits only the verified executable across filesystem races
+  ---
+  duration_ms: 2129.2961
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30402.2587

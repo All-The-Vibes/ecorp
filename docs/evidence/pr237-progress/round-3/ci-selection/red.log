@@ -1,0 +1,57 @@
+✖ quality runs the recovery regressions on their supported platform without filtering (3.7271ms)
+✖ external-adapters-windows runs the recovery regressions on their supported platform without filtering (0.7964ms)
+✔ CI remote actions use the accepted target immutable SHA pins (1.6235ms)
+✔ every pinned Rust action explicitly retains toolchain 1.98.1 (0.7771ms)
+✔ Windows runner tests are serialized without filtering tests or changing Unix scheduling (0.7257ms)
+✔ Windows primary ACL path runs before explicit prewarming and the complete serial suite (2.9356ms)
+✔ Windows warm-up remains bounded and leaves native ACL enforcement unchanged (1.155ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 5
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 139.0263
+
+✖ failing tests:
+
+test at tools\ci_runner_tests.test.mjs:12:3
+✖ quality runs the recovery regressions on their supported platform without filtering (3.7271ms)
+  AssertionError [ERR_ASSERTION]: e2e_factory_budget_recovery
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-progress-correction/tools/ci_runner_tests.test.mjs:27:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\ci_runner_tests.test.mjs:12:3
+✖ external-adapters-windows runs the recovery regressions on their supported platform without filtering (0.7964ms)
+  AssertionError [ERR_ASSERTION]: e2e_predispatch_failure
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr237-progress-correction/tools/ci_runner_tests.test.mjs:27:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

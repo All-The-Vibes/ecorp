@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "pr": 353,
+  "source_head": "53092fef0c766a70d896ac7495b69a2a16ca497c",
+  "tested_staged_tree": "ae0d9fd0d6f82b17b5ba9f6000f5332f613bf958",
+  "target_main": "08b0b89b2dd16c1906c9dd3468c5ddecca24c4ce",
+  "started_at_utc": "2026-09-23T01:13:45.4402616+00:00",
+  "finished_at_utc": "2026-09-23T01:32:10.0360247+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "All nine contributor gates pass on the current staged tree. The expanded synthetic Windows startup suite passes 79/79 cases after reproducing nine failures against the earlier implementation. Fresh rebuilt native server/runner startup, recovery and actual Edge browser verifier acceptance pass on the same staged tree.",
+  "maintainer_changes": "Preserve recoverable local stack state across rejected preflight and partial restart. Check ownership-record replacement before lifecycle effects, retain the old configuration if a stop fails, support SHA-256 Git IDs, and resolve saved-connection Factory refs in their native connection context. Correct provisioning to use the seed_crew query parameter and the pinned toolchain, and integrate current main.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.3595716,
+      "log": "migrations.log",
+      "original_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823",
+      "published_log_sha256": "647fc92ef827bdde2d804ae951c78304f0522f35f9832dde27b39840b8263757"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 0.90956,
+      "log": "documentation.log",
+      "original_log_sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406",
+      "published_log_sha256": "f7c1081b3ad5e5b322c890127d287c1cef53b868efc7b40d1b7b2eef7b9aeb18"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 4.0202175,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 106.3183247,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "afc204e7b286abc705ba098534828c7d6e010815f5f99a519c24fcdf1083df74",
+      "published_log_sha256": "f3cfb57fea89fe8f449086366547a2ade278478ed804edc794254713bcd16661"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 605.8574646,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "69734eca4cb7b436c4fefc93e63819ce66147b797a3e9b2ec7e1337722b78cc7",
+      "published_log_sha256": "5c301cfe494740e2a610c567320e16aecd339934c6fc4f1d2372be097f29ffc1"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 272.4600043,
+      "log": "node-unit.log",
+      "original_log_sha256": "39191873bdeb33ddd96fa52b0faa4b92e12f126c10a296a6ce94417826a060fd",
+      "published_log_sha256": "1771155e90258765f5ab8999c91aec006564e6938b27a9685bffbb1fa4470e9d"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 81.8996474,
+      "log": "steward.log",
+      "original_log_sha256": "da41c161589f1534751476c39b3f91ba8391487d8cf001432fb17f04bb4fabc2",
+      "published_log_sha256": "9ab043b5ec214a94059209d5e5211e8649edad4e3b7291938f79399503f5ae54"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 5.0995744,
+      "log": "web-build.log",
+      "original_log_sha256": "f38647a40976b3718b00125af1ecb6d188577909c58a67fb63223f3d39995400",
+      "published_log_sha256": "48c17ceb66edb131ff47665b8b3c4e79c7efd91d297bde9f7ce9c87ef56cccdc"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 2.2866363,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "build_preparation": {
+    "workspace_refresh": {
+      "exit_code": 0,
+      "log": "workspace-refresh.log",
+      "original_log_sha256": "0f0cc8a73524b04e65970845a00ba747bed33e9231d9c920227dd30952779af1",
+      "published_log_sha256": "80ca335cb474a21a755c9d5b034ce4eaf35f64b5d286b1eb11d686f6b212394d"
+    },
+    "native_mcp_build": {
+      "exit_code": 0,
+      "log": "native-mcp-build.log",
+      "original_log_sha256": "0d4c4be2647dea7276809c1e5f98334b3a2fe3bc645e8929578357d5f07bed80",
+      "published_log_sha256": "55fa3e49db048405e45273e7a48d8bb205e20623c5da600ca5420fe3385e97b1",
+      "binary_sha256": "d622d9a43dbeeac678fd5dadc2391f77cce2ccee0cb1b83dc09542cba6891d4c"
+    }
+  }
+}

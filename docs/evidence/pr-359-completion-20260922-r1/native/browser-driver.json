@@ -1,0 +1,83 @@
+{
+  "status": "passed",
+  "started_at": "2026-09-22T17:15:18.747Z",
+  "scope": "Actual native Edge office controls and owned development-principal server/runner/CLI fixture; deterministic provider, no external effects.",
+  "phases": [
+    {
+      "name": "prepare",
+      "exit_code": 0,
+      "stdout_sha256": "c05784ba5469fd0952e4420606687d5c7fa71fd4e231978200bd1ff5c4a4d5e0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "start",
+      "exit_code": 0,
+      "stdout_sha256": "58a4152ef6d0573e434660a5d6307ff2ec94e162985c5a93d20c182c7f0fc2e1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "complete",
+      "exit_code": 0,
+      "stdout_sha256": "cf8cdd222717bf22a2158a37da628a2735976b53ecb5af9ba307a2a0e4fc05c2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "captures": [
+    {
+      "file": "alice-before-pin.png",
+      "sha256": "2496cc5215444ded9273f201d09791dc175b5b0b946722b0062f90f450c45140"
+    },
+    {
+      "file": "alice-pinned.png",
+      "sha256": "fde1d46dd8e9ab783378982c8a5d22999efbc6846a32f4d0e345d072cb575f8c"
+    },
+    {
+      "file": "bob-before-unpin.png",
+      "sha256": "6fcb9452a20918066e16c2cfa9597bfc41dc3ee6a92269285818cd8ffeaac24b"
+    },
+    {
+      "file": "bob-unpinned-active-obligations.png",
+      "sha256": "dd6aabf0d7644f1c643fd429e1260ae59be0937df04125f31d533a6e84e804e8"
+    },
+    {
+      "file": "completed-retention-history.png",
+      "sha256": "e925045bdc1112884987012a8ec13ae2481c11488ac51058fd20f78fc56ca439"
+    }
+  ],
+  "requests": [
+    {
+      "actor": "Alice",
+      "request": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 0,
+        "idempotency_key": "b3e1f440-75e8-4ed4-996d-634f2e6466cb"
+      },
+      "response": {
+        "agent_id": "6b86d92d-2355-4f5a-b919-ece944b45410",
+        "pinned": true,
+        "pin_version": 1,
+        "replayed": false
+      }
+    },
+    {
+      "actor": "Bob",
+      "request": {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "pinned": false,
+        "expected_version": 1,
+        "idempotency_key": "53d17644-ed80-426c-a30a-f96b7e65732a"
+      },
+      "response": {
+        "agent_id": "6b86d92d-2355-4f5a-b919-ece944b45410",
+        "pinned": false,
+        "pin_version": 2,
+        "replayed": false
+      }
+    }
+  ],
+  "browser_errors": [],
+  "blocked_requests": [],
+  "browser": "153.0.4234.48",
+  "finished_at": "2026-09-22T17:15:48.810Z"
+}

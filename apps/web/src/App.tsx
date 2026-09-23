@@ -9,6 +9,9 @@ import './OperationsUx.css'
 import { OfficeFloor, OfficePortrait } from './OfficeFloor'
 import { OfficeInspector } from './OfficeInspector'
 import { FactoryPollingNotice } from './FactoryPollingNotice'
+import { FactoryAuthorityNotice } from './FactoryAuthorityNotice'
+import { fetchServerMode } from './factoryAuthority'
+import type { ClaimAuthorityCorp } from './factoryAuthority'
 import { factoryControllerState } from './factoryPolling'
 import { selectFactoryController } from './factoryControllerSelection'
 import type { FactoryPolling } from './factoryPolling'
@@ -34,6 +37,8 @@ import type { DiscussionScope } from './missionProjection'
 import { createSnapshotRefresher } from './snapshotRefresh'
 import { evidenceSelectionKey, readEvidenceSelection, rememberEvidenceSelection } from './evidenceSelection'
 import { ConnectionsPanel } from './ConnectionsPanel'
+import { AuditEvidencePanel } from './AuditEvidencePanel'
+import { DelegatedPanel } from './DelegatedPanel'
 import { MissionOriginText } from './MissionOriginDetails'
 import { useMissionOriginContext } from './useMissionOriginContext'
 import { useMissionResultContext } from './useMissionResultContext'
@@ -52,6 +57,7 @@ import { defaultVerifierCheck, verificationPolicyErrors } from './verificationPo
 import type { VerificationPolicy } from './verificationPolicy'
 import { VerificationPolicyEditor, VerificationPolicyPreview } from './VerificationPolicyEditor'
 import { MissionCollaborationPanel } from './MissionCollaborationPanel'
+import { AgentPinControl } from './AgentPinControl'
 import { collaborationSnapshotIsCurrent, createDiscussionDraftStore, selectCollaborationMission } from './missionCollaboration'
 import type { CollaborationInput, DiscussionDraft } from './missionCollaboration'
 
@@ -561,7 +567,7 @@ type WorkspaceView = 'floor' | 'factory' | 'missions' | 'room' | 'activity'
 
 type SnapshotResponse = {
   snapshot: {
-    corp: { id: string; name: string }
+    corp: ClaimAuthorityCorp & { name: string }
     actors: Actor[]
     rooms: { id: string; name: string; purpose: string }[]
     agents: Agent[]
@@ -611,13 +617,6 @@ type LaunchMissionResponse = {
   runner_id: string
   run_ids: string[]
   runner_ids: string[]
-}
-
-type HealthResponse = {
-  status: 'ok'
-  service: string
-  runners: number
-  mode: 'development' | 'production'
 }
 
 const API_URL = import.meta.env.VITE_CRONY_SERVER_HTTP ?? 'http://127.0.0.1:8791'
@@ -859,7 +858,7 @@ function browserOperationKey(storageKey: string, payload: string): string {
     window.sessionStorage.setItem(storageKey, JSON.stringify({ payload, key }))
     return key
   } catch {
-    return crypto.randomUUID()
+    throw new Error('Browser storage could not preserve the retry key. Restore session storage before trying again; no request was sent.')
   }
 }
 
@@ -1151,6 +1150,8 @@ function ContractRevisionPanel({
 }
 
 function FactoryPanel({
+  authorityCorp,
+  serverMode,
   items,
   missions,
   publications,
@@ -1187,6 +1188,8 @@ function FactoryPanel({
   snapshotReceivedAt = null,
   snapshotFailed = false,
 }: {
+  authorityCorp: ClaimAuthorityCorp
+  serverMode: string
   items: FactoryWorkItem[]
   missions: Mission[]
   publications: PullRequestPublication[]
@@ -1233,6 +1236,7 @@ function FactoryPanel({
 }) {
   const [commentBody, setCommentBody] = useState('')
   const [steerText, setSteerText] = useState('')
+  const [operationError, setOperationError] = useState<string | null>(null)
   const stateTone = (state: FactoryWorkItem['state']) => {
     if (['verified', 'published'].includes(state)) return 'completed'
     if (['blocked', 'verification_failed', 'failed', 'cancelled'].includes(state)) {
@@ -1310,6 +1314,7 @@ function FactoryPanel({
       data-testid="factory-panel"
       tabIndex={-1}
     >
+      {operationError ? <p className="error-banner" role="alert">{operationError}</p> : null}
       <div className="panel-heading factory-heading">
         <div>
           <span className="section-code">Factory</span>
@@ -1325,6 +1330,11 @@ function FactoryPanel({
           <span>auto-merge off</span>
         </div>
       </div>
+      <FactoryAuthorityNotice corp={authorityCorp} endpoint={API_URL} mode={serverMode}
+        hasWorkItem={Boolean(selected)}
+        pin={selected?.policy?.claim_authority_id}
+        namespace={controller ? `${controller.source_project_owner}/${controller.source_project_number}`
+          : selected ? `${selected.source_project_owner}/${selected.source_project_number}` : 'No Project selected'} />
       <section
         className={`factory-controller-strip factory-controller-${controllerState}`}
         aria-label="Factory controller status"
@@ -1713,10 +1723,14 @@ function FactoryPanel({
                               })
                               const operationStorageKey =
                                 `ecorp:factory-comment:${discussionScopeKey(scope)}:${selected.id}`
-                              const idempotencyKey = browserOperationKey(
-                                operationStorageKey,
-                                payload,
-                              )
+                              let idempotencyKey: string
+                              setOperationError(null)
+                              try {
+                                idempotencyKey = browserOperationKey(operationStorageKey, payload)
+                              } catch (caught) {
+                                setOperationError(caught instanceof Error ? caught.message : String(caught))
+                                return
+                              }
                               void onPostComment({
                                 source: 'factory',
                                 scope,
@@ -1790,21 +1804,26 @@ function FactoryPanel({
                                 onSubmit={(event) => {
                                   event.preventDefault()
                                   if (!steerText.trim()) return
+                                  let idempotencyKey: string
+                                  setOperationError(null)
+                                  try {
+                                    idempotencyKey = browserOperationKey(
+                                      `ecorp:factory-steer:${activeRun.id}:${selectedActor.id}`,
+                                      JSON.stringify({
+                                        agentId: activeAgent.id,
+                                        actorId: selectedActor.id,
+                                        text: steerText.trim(),
+                                      }),
+                                    )
+                                  } catch (caught) {
+                                    setOperationError(caught instanceof Error ? caught.message : String(caught))
+                                    return
+                                  }
                                   void onSteer(
                                     activeAgent,
                                     steerText.trim(),
                                     activeLeaseToken,
-                                    (() => {
-                                      const payload = JSON.stringify({
-                                        agentId: activeAgent.id,
-                                        actorId: selectedActor.id,
-                                        text: steerText.trim(),
-                                      })
-                                      return browserOperationKey(
-                                        `ecorp:factory-steer:${activeRun.id}:${selectedActor.id}`,
-                                        payload,
-                                      )
-                                    })(),
+                                    idempotencyKey,
                                   ).then((saved) => {
                                     if (saved) {
                                       clearBrowserOperation(
@@ -1900,6 +1919,7 @@ function AgentDesk({
   onInterrupt,
   onEmergencyStop,
   onMessage,
+  onPin,
 }: {
   agent: Agent
   capability: RunnerCapability | undefined
@@ -1919,9 +1939,11 @@ function AgentDesk({
     token: string | undefined,
     idempotencyKey: string,
   ) => Promise<boolean>
+  onPin: (agent: OfficeAgent, pinned: boolean) => Promise<void>
 }) {
   const [text, setText] = useState('')
   const [transferActorId, setTransferActorId] = useState('')
+  const [operationError, setOperationError] = useState<string | null>(null)
   const ownsLease = lease?.actor_id === actor.id
   const live = Boolean(agent.current_run_id) && agent.status !== 'idle' && agent.status !== 'offline'
   const operator = canOperate(actor.role)
@@ -1953,16 +1975,21 @@ function AgentDesk({
       text: normalized,
     })
     const operationStorageKey = `ecorp:agent-message:${agent.id}:${actor.id}`
-    const idempotencyKey = browserOperationKey(operationStorageKey, payload)
-    const saved = await onMessage(
-      agent,
-      normalized,
-      messageToken,
-      idempotencyKey,
-    )
-    if (saved) {
-      clearBrowserOperation(operationStorageKey)
-      setText('')
+    setOperationError(null)
+    try {
+      const idempotencyKey = browserOperationKey(operationStorageKey, payload)
+      const saved = await onMessage(
+        agent,
+        normalized,
+        messageToken,
+        idempotencyKey,
+      )
+      if (saved) {
+        clearBrowserOperation(operationStorageKey, idempotencyKey)
+        setText('')
+      }
+    } catch (caught) {
+      setOperationError(caught instanceof Error ? caught.message : String(caught))
     }
   }
 
@@ -1997,6 +2024,7 @@ function AgentDesk({
             ? `${agent.name} is off shift. No provider process is running; the identity remains available for future ${adapterLabel(agent.adapter)} missions.`
           : `${agent.name} reports ${agent.status}. No current provider run is reported.`}
       </p>
+      <AgentPinControl agent={agent} canOperate={operator && actor.kind === 'human'} onPin={onPin} />
       <div className="desk-actions">
         {canClaim ? (
           <button type="button" className="button button-secondary" onClick={() => onClaim(agent)}>
@@ -2056,6 +2084,7 @@ function AgentDesk({
         </button>
       ) : null}
       <form className="agent-message" onSubmit={submit}>
+        {operationError ? <p className="error-banner" role="alert">{operationError}</p> : null}
         <input
           aria-label={`Message ${agent.name}`}
           value={text}
@@ -4082,6 +4111,7 @@ function RoomPanel({
   const setBody = (value: string) => changeDraft({ body: value })
   const setReplyToId = (value: string | null) => changeDraft({ replyToId: value })
   const [posting, setPosting] = useState(false)
+  const [operationError, setOperationError] = useState<string | null>(null)
   const contextMissionId = scope.missionId
   const context = roomWorkContext({ missions, tasks, runs }, room?.id, contextMissionId)
   const contextMission = missions.find((mission) => mission.id === contextMissionId)
@@ -4163,10 +4193,12 @@ function RoomPanel({
       link,
     })
     const operationStorageKey = `ecorp:room-message:${discussionScopeKey(scope)}`
-    const idempotencyKey = browserOperationKey(operationStorageKey, payload)
     setPosting(true)
+    setOperationError(null)
     let saved = false
+    let idempotencyKey: string | undefined
     try {
+      idempotencyKey = browserOperationKey(operationStorageKey, payload)
       saved = await onPost({
         source,
         scope,
@@ -4177,10 +4209,12 @@ function RoomPanel({
         link,
         idempotencyKey,
       })
+    } catch (caught) {
+      setOperationError(caught instanceof Error ? caught.message : String(caught))
     } finally {
       setPosting(false)
     }
-    if (saved) {
+    if (saved && idempotencyKey) {
       clearBrowserOperation(operationStorageKey, idempotencyKey)
       drafts.complete(draftKey, draft)
     }
@@ -4254,6 +4288,7 @@ function RoomPanel({
           )}
         </ol>
         <form className="room-composer" onSubmit={submit} aria-busy={posting}>
+          {operationError ? <p className="error-banner" role="alert">{operationError}</p> : null}
           <label htmlFor="room-message">Post as {selectedActor.name}</label>
           {composerError ? (
             <div className="room-denied" role="alert">
@@ -4417,6 +4452,7 @@ function App() {
   const [commitDeliverable, setCommitDeliverable] = useState(false)
   const [pauseAfterPlanning, setPauseAfterPlanning] = useState(false)
   const [developerMode, setDeveloperMode] = useState(false)
+  const [serverMode, setServerMode] = useState('unknown')
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [showRegisteredCrew, setShowRegisteredCrew] = useState(false)
   const [floorInspectorOpen, setFloorInspectorOpen] = useState(false)
@@ -4644,10 +4680,11 @@ function App() {
       controller.abort()
     }, 30_000)
     void (async () => {
-      const health = await fetch(`${API_URL}/health`, { signal: controller.signal }).then((response) =>
-        response.json() as Promise<HealthResponse>,
-      )
-      if (health.mode === 'production') {
+      setServerMode('unknown')
+      const mode = await fetchServerMode(API_URL, controller.signal)
+      if (cancelled) return
+      setServerMode(mode)
+      if (mode === 'production') {
         const corpId = window.sessionStorage.getItem('ecorp_corp_id')
         const actorId = window.sessionStorage.getItem('ecorp_actor_id')
         if (!corpId || !actorId || !storedAccessToken()) {
@@ -4693,6 +4730,7 @@ function App() {
     })()
       .catch((caught: unknown) => {
         if (cancelled) return
+        setServerMode('unknown')
         setError(timedOut
           ? 'ECorp did not finish connecting within 30 seconds. Agent runs are independent of this tab. Retry the connection; do not restart the mission.'
           : caught instanceof Error ? caught.message : String(caught))
@@ -5297,13 +5335,13 @@ function App() {
     const operationStorageKey =
       `ecorp:approval-decision:${bootstrap.corp_id}:${selectedActor.id}:` +
       `${approval.id}:${approved ? 'approve' : 'reject'}`
-    const decisionKey = browserOperationKey(
-      operationStorageKey,
-      JSON.stringify({ approvalId: approval.id, approved, note }),
-    )
     setBusy(true)
     setError(null)
     try {
+      const decisionKey = browserOperationKey(
+        operationStorageKey,
+        JSON.stringify({ approvalId: approval.id, approved, note }),
+      )
       await api(
         `/api/corps/${bootstrap.corp_id}/approvals/${approval.id}/decision`,
         {
@@ -5322,6 +5360,37 @@ function App() {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
       setBusy(false)
+    }
+  }
+
+  const setAgentPin = async (agent: OfficeAgent, pinned: boolean) => {
+    if (!bootstrap || !selectedActor || !Number.isSafeInteger(agent.pin_version)) return
+    const storageKey = `ecorp:agent-pin:${bootstrap.corp_id}:${selectedActor.id}:${agent.id}`
+    const payload = {
+      actor_id: selectedActor.id,
+      pinned,
+      expected_version: agent.pin_version,
+    }
+    let idempotencyKey: string | undefined
+    setError(null)
+    try {
+      idempotencyKey = browserOperationKey(storageKey, JSON.stringify(payload))
+      await api(`/api/corps/${bootstrap.corp_id}/agents/${agent.id}/pin`, {
+        method: 'POST',
+        body: JSON.stringify({ ...payload, idempotency_key: idempotencyKey }),
+      })
+      clearBrowserOperation(storageKey, idempotencyKey)
+      await refresh(bootstrap.corp_id, selectedActor.id)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught))
+      if (idempotencyKey && caught instanceof ApiRequestError && caught.status === 409) {
+        clearBrowserOperation(storageKey, idempotencyKey)
+        try {
+          await refresh(bootstrap.corp_id, selectedActor.id)
+        } catch {
+          setError(`${caught.message} The refresh also failed; reconnect before trying again.`)
+        }
+      }
     }
   }
 
@@ -5639,6 +5708,7 @@ function App() {
     const actorId = connectionActorId.trim()
     const token = connectionToken.trim()
     if (!corpId || !actorId || !token) return
+    setServerMode('unknown')
     currentViewer.current = { corpId, actorId }
     currentComments.current = null
     setBusy(true)
@@ -5647,6 +5717,8 @@ function App() {
     window.sessionStorage.setItem('ecorp_actor_id', actorId)
     window.sessionStorage.setItem('ecorp_access_token', token)
     try {
+      const mode = await fetchServerMode(API_URL)
+      if (mode !== 'production') throw new Error('The control plane is not in production mode.')
       const result: BootstrapResponse = {
         corp_id: corpId,
         room_id: '',
@@ -5658,12 +5730,14 @@ function App() {
         codex_agent_id: '',
       }
       await refresh(corpId, actorId)
+      setServerMode(mode)
       setBootstrap(result)
       setSelectedActorId(actorId)
       setConnectionToken('')
       setRequiresConnection(false)
       setAnnouncement('Authenticated production connection established.')
     } catch (caught) {
+      setServerMode('unknown')
       window.sessionStorage.removeItem('ecorp_access_token')
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
@@ -6094,8 +6168,13 @@ function App() {
         </div>
       ) : null}
 
+      <AuditEvidencePanel key={`audit:${data.snapshot.corp.id}:${selectedActor.id}`}
+        corpId={data.snapshot.corp.id} actorId={selectedActor.id} api={api} />
+
       <div className="workspace-surface" hidden={activeWorkspaceView !== 'factory'}>
         <FactoryPanel
+          authorityCorp={data.snapshot.corp}
+          serverMode={serverMode}
           key={`factory:${discussionScopeKey(factoryScope)}:${factorySelection?.id ?? ''}`}
           items={data.snapshot.factory_work_items}
           missions={data.snapshot.missions}
@@ -6213,6 +6292,7 @@ function App() {
                     onInterrupt={interruptRun}
                     onEmergencyStop={emergencyStop}
                     onMessage={sendMessage}
+                    onPin={setAgentPin}
                   />
               </OfficeInspector>
             ) : null}
@@ -7140,6 +7220,11 @@ function App() {
           ))}
         </ol>
       </section>
+      {bootstrap && selectedActor && connectionRoom && (
+        <DelegatedPanel corpId={bootstrap.corp_id} roomId={connectionRoom.id}
+          actorId={selectedActor.id} api={api} serverUrl={API_URL}
+          onRefresh={() => { void refresh(bootstrap.corp_id, selectedActor.id) }} />
+      )}
       {connectionsOpen && bootstrap && selectedActor && connectionRoom && (
         <ConnectionsPanel
           key={savedConnectionScope}

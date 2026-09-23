@@ -1,0 +1,11 @@
+# Reproduce PR #359 correction acceptance
+
+Use a fresh isolated checkout and new QA directory on Windows, with the recorded Node, pnpm, Rust, PostgreSQL and Edge versions. Install dependencies and run the nine commands in validation.json to produce a fresh private validation receipt containing staged_tree. The recorded drivers are normalized records of the actual run, not portable scripts with implicit host authorization. Replace <local-user>, <private-evidence> and <reviewed-worktree> with explicit owned paths, retaining the filenames in recorded-drivers/. Use a new revision so previous directories and receipts cannot be overwritten.
+
+Invoke run-pr359-native-r2.ps1 with -Number 359, a new -Revision, -ValidationDirectory pointing to that fresh private receipt, and -FocusedScript pointing to qa-pr359-browser-r2.mjs. Supply -FocusedCompletesBrowser. The driver builds fresh source-bound native binaries; preserve any previously recorded binaries before rerunning.
+
+The recorded driver deliberately checks the complete fresh staged tree before adding evidence. The published validation.json records that tree as tested_staged_tree; it is an archival receipt, not the new private run receipt. The corrected legacy PR354 reproduction driver accepts both schema names. Never rewrite historical results to imply they were rerun.
+
+The new PostgreSQL fixture uses SCRAM with a random ephemeral password in ACL-private files outside the synthetic source and runner workspaces. An incorrect-password probe fails before authenticated creation. PSQL uses PGPASSFILE; native server/SQLx environment-only credential delivery is explicitly reduced assurance. Child launch environments are cleared and the runner/browser do not receive the database credential. The fixture does not establish OS isolation between processes owned by the same user.
+
+All captured PNGs are original bytes. Native tests use deterministic providers and owned state; no external provider inference, production identity or external publication is claimed. Only owned processes are stopped afterward; source, database, credentials, workspaces and logs are preserved. Historical attempts retain their original scope.

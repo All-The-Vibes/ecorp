@@ -1,0 +1,47 @@
+{
+  "validation_scope": "Diagnostic browser iteration; final complete gate receipt required before publication.",
+  "prior_gate_tree": "57e6c44dc5163eab1a700a0cb1903972eb4c7826",
+  "source_delta": [
+    "tools/e2e_research_handoff.mjs",
+    "tools/research_handoff_browser.mjs"
+  ],
+  "pr": 305,
+  "tested_staged_tree": "684001c8e1a3957e83c60611334af238686e1c9e",
+  "head": "155dc9cc4df91f2d9a5372de0c2cc9446c58c89c",
+  "started_at_utc": "2026-09-22T23:28:41.9772674+00:00",
+  "status": "failed",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr305-20260922-browser-r5",
+  "checks": [
+    {
+      "sha256": "99f48d60d99443dee06de558cea58e2a359bbf59a114e88c8eed6d3e766c5088",
+      "name": "current-source-native-build",
+      "log": "<private-evidence>\\pr305-browser-r5-build.log",
+      "exit_code": 0
+    },
+    {
+      "sha256": "0a948712dfa2ab5fe53771dafdf97e888200a9f56fa9303fc30e587d7a897355",
+      "name": "owned-static-app-admission",
+      "log": "<private-evidence>\\pr305-browser-r5-context.log",
+      "exit_code": 0
+    },
+    {
+      "sha256": "1f429938f8b63e642061677e26cd98d78490dfcc053d665b011b2d42fc0f6613",
+      "name": "actual-browser-native-handoff-consumption",
+      "log": "<private-evidence>\\pr305-browser-r5-browser.log",
+      "exit_code": 1
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "3f46826db95dd9878b90c2b87c95fbedf1a70532e9d7cd22049a659623741b6c",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "40f36bdb71f3ec16aee6d7305ee93abde1cc499d96fbbb5a332cacf825285f7a",
+      "file": "crony-runner.exe"
+    }
+  ],
+  "failure": "actual-browser-native-handoff-consumption failed; preserve the fixture and recorded IDs.",
+  "cleanup": "Only owned processes stopped; all source, database, workspaces and evidence retained.",
+  "finished_at_utc": "2026-09-22T23:30:41.8189778+00:00"
+}

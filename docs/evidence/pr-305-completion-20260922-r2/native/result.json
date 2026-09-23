@@ -1,0 +1,1960 @@
+{
+  "schema_version": 1,
+  "accepted": false,
+  "manifest": {
+    "schema_version": 1,
+    "source": "<reviewed-worktree>",
+    "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+    "head": "bafe6e88c84444213f461292997cf0413191c2d0",
+    "runner": {
+      "path": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "build_receipt": "<private-evidence>\\pr305-native-r2-build\\cargo-test.jsonl",
+      "build_receipt_sha256": "045f5b9c486e4c4528ca4ddf7fec8bf56128afe30f0a8855d41484919a0a00a4"
+    },
+    "server": {
+      "path": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "build_receipt": "<private-evidence>\\pr305-native-r2-build\\cargo-test.jsonl",
+      "build_receipt_sha256": "045f5b9c486e4c4528ca4ddf7fec8bf56128afe30f0a8855d41484919a0a00a4"
+    },
+    "postgres": {
+      "initdb": {
+        "path": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\initdb.exe",
+        "sha256": "f775e03d6dc6c67f115d7e688c6933573fff7ac7285f6b1f5809354223cfb9e1"
+      },
+      "postgres": {
+        "path": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+        "sha256": "db14ddb0efc10b72b57dc29dbce5a719e2755dcd0ae54297d0ea4bbfc75f79a0"
+      },
+      "psql": {
+        "path": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\psql.exe",
+        "sha256": "e0113742a0520185e6dcaf90dafbfd15b02633218d311715f3400613c206d1dc"
+      },
+      "pg_ctl": {
+        "path": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\pg_ctl.exe",
+        "sha256": "9e1c3375f47116eef8d04c1f67cc79f03c7c3cca99172511c4464cb9c6b8116f"
+      }
+    }
+  },
+  "rows": [
+    {
+      "case_id": "missing-file",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-verifier",
+      "status": "native_rejection_observed",
+      "nonce": "166d3591-f0bd-4d08-9147-4d1fe405a33e",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"missing-file\",\"nonce\":\"166d3591-f0bd-4d08-9147-4d1fe405a33e\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"native_verifier_unchanged_control\",\"exact_6144_byte_note_control\"],\"rejection_assertions\":[\"real_fake_process_fault\",\"signed_download_not_claimed\",\"native_verifier_exact_check_rejected\",\"four_native_verifier_assertions\",\"provider_artifact_present\"],\"evidence_scope\":\"native-runner-verifier\",\"platform\":\"windows\",\"qualification\":\"Real deterministic subprocess outputs and native verify() file/command checks. Assignment positive control is separate. No signed store, scheduling, browser, live rejection or owner acceptance.\",\"observations\":{\"checks\":[{\"check_index\":0,\"kind\":\"artifact\",\"passed\":true,\"payload\":{\"bytes\":709,\"media_type\":\"text/plain\",\"path\":\"C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\evidence\\\\fake-clean-ed9ea856-dac5-4ec0-ac7f-bb6ccbc844c8.md\",\"sha256\":\"2de8d6a159bea38b42460e836e8718f09738fa350c9ad4699e9240a5820e2f93\"},\"summary\":\"artifact C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\evidence\\\\fake-clean-ed9ea856-dac5-4ec0-ac7f-bb6ccbc844c8.md exists with 709 verified bytes\"},{\"check_index\":1,\"kind\":\"file\",\"passed\":false,\"payload\":{\"error\":\"handoffs/specialist-a.md does not exist: The system cannot find the file specified. (os error 2)\"},\"summary\":\"handoffs/specialist-a.md does not exist\"},{\"check_index\":2,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":147,\"path\":\"handoffs/specialist-a-probe.json\",\"sha256\":\"842a2dcdb7c09baaea2cda57dc4f0c4fed7e378e7a653ed50850fedc9feff629\"},\"summary\":\"handoffs/specialist-a-probe.json exists with 147 bytes\"},{\"check_index\":3,\"kind\":\"command\",\"passed\":false,\"payload\":{\"args\":[\"-e\",\"const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}\",\"handoffs/specialist-a.md\",\"handoffs/specialist-a-probe.json\"],\"error\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:fs:621\\r\\n  return binding.open(\\r\\n                 ^\\r\\n\\r\\nError: ENOENT: no such file or directory, open 'C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\workspaces\\\\runs\\\\child\\\\handoffs\\\\specialist-a.md'\\r\\n    at Object.openSync (node:fs:621:18)\\r\\n    at Object.readFileSync (node:fs:487:35)\\r\\n    at [eval]:1:78\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3 {\\r\\n  errno: -4058,\\r\\n  code: 'ENOENT',\\r\\n  syscall: 'open',\\r\\n  path: 'C:\\\\\\\\Users\\\\\\\\shyamsridhar\\\\\\\\code\\\\\\\\ecorp\\\\\\\\output\\\\\\\\pr-completion\\\\\\\\20260922T123548Z\\\\\\\\pr305-native-r2\\\\\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\\\\\missing-file\\\\\\\\workspaces\\\\\\\\runs\\\\\\\\child\\\\\\\\handoffs\\\\\\\\specialist-a.md'\\r\\n}\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"exit_code\":1,\"program\":\"node\",\"requested_program\":\"node\",\"resolution_mode\":\"path_pathext\",\"resolved_executable\":{\"canonical_path_sha256\":\"f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69\",\"file_name\":\"node.exe\"},\"stderr\":\"node:fs:621\\r\\n  return binding.open(\\r\\n                 ^\\r\\n\\r\\nError: ENOENT: no such file or directory, open 'C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\workspaces\\\\runs\\\\child\\\\handoffs\\\\specialist-a.md'\\r\\n    at Object.openSync (node:fs:621:18)\\r\\n    at Object.readFileSync (node:fs:487:35)\\r\\n    at [eval]:1:78\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3 {\\r\\n  errno: -4058,\\r\\n  code: 'ENOENT',\\r\\n  syscall: 'open',\\r\\n  path: 'C:\\\\\\\\Users\\\\\\\\shyamsridhar\\\\\\\\code\\\\\\\\ecorp\\\\\\\\output\\\\\\\\pr-completion\\\\\\\\20260922T123548Z\\\\\\\\pr305-native-r2\\\\\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\\\\\missing-file\\\\\\\\workspaces\\\\\\\\runs\\\\\\\\child\\\\\\\\handoffs\\\\\\\\specialist-a.md'\\r\\n}\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"stdout\":\"\"},\"summary\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:fs:621\\r\\n  return binding.open(\\r\\n                 ^\\r\\n\\r\\nError: ENOENT: no such file or directory, open 'C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\workspaces\\\\runs\\\\child\\\\handoffs\\\\specialist-a.md'\\r\\n    at Object.openSync (node:fs:621:18)\\r\\n    at Object.readFileSync (node:fs:487:35)\\r\\n    at [eval]:1:78\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3 {\\r\\n  errno: -4058,\\r\\n  code: 'ENOENT',\\r\\n  syscall: 'open',\\r\\n  path: 'C:\\\\\\\\Users\\\\\\\\shyamsridhar\\\\\\\\code\\\\\\\\ecorp\\\\\\\\output\\\\\\\\pr-completion\\\\\\\\20260922T123548Z\\\\\\\\pr305-native-r2\\\\\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\\\\\missing-file\\\\\\\\workspaces\\\\\\\\runs\\\\\\\\child\\\\\\\\handoffs\\\\\\\\specialist-a.md'\\r\\n}\\r\\n\\r\\nNode.js v24.21.0\\r\\n\"}],\"manual_gate\":null,\"passed\":false,\"summary\":\"2 of 4 verifier checks failed\"}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 14.61s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "missing-file",
+        "nonce": "166d3591-f0bd-4d08-9147-4d1fe405a33e",
+        "status": "native_rejection_observed",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "native_verifier_unchanged_control",
+          "exact_6144_byte_note_control"
+        ],
+        "rejection_assertions": [
+          "real_fake_process_fault",
+          "signed_download_not_claimed",
+          "native_verifier_exact_check_rejected",
+          "four_native_verifier_assertions",
+          "provider_artifact_present"
+        ],
+        "evidence_scope": "native-runner-verifier",
+        "platform": "windows",
+        "qualification": "Real deterministic subprocess outputs and native verify() file/command checks. Assignment positive control is separate. No signed store, scheduling, browser, live rejection or owner acceptance.",
+        "observations": {
+          "checks": [
+            {
+              "check_index": 0,
+              "kind": "artifact",
+              "passed": true,
+              "payload": {
+                "bytes": 709,
+                "media_type": "text/plain",
+                "path": "<private-evidence>\\pr305-native-r2\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\missing-file\\evidence\\fake-clean-ed9ea856-dac5-4ec0-ac7f-bb6ccbc844c8.md",
+                "sha256": "2de8d6a159bea38b42460e836e8718f09738fa350c9ad4699e9240a5820e2f93"
+              },
+              "summary": "artifact <private-evidence>\\pr305-native-r2\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\missing-file\\evidence\\fake-clean-ed9ea856-dac5-4ec0-ac7f-bb6ccbc844c8.md exists with 709 verified bytes"
+            },
+            {
+              "check_index": 1,
+              "kind": "file",
+              "passed": false,
+              "payload": {
+                "error": "handoffs/specialist-a.md does not exist: The system cannot find the file specified. (os error 2)"
+              },
+              "summary": "handoffs/specialist-a.md does not exist"
+            },
+            {
+              "check_index": 2,
+              "kind": "file",
+              "passed": true,
+              "payload": {
+                "bytes": 147,
+                "path": "handoffs/specialist-a-probe.json",
+                "sha256": "842a2dcdb7c09baaea2cda57dc4f0c4fed7e378e7a653ed50850fedc9feff629"
+              },
+              "summary": "handoffs/specialist-a-probe.json exists with 147 bytes"
+            },
+            {
+              "check_index": 3,
+              "kind": "command",
+              "passed": false,
+              "payload": {
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}",
+                  "handoffs/specialist-a.md",
+                  "handoffs/specialist-a-probe.json"
+                ],
+                "error": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:fs:621\r\n  return binding.open(\r\n                 ^\r\n\r\nError: ENOENT: no such file or directory, open '<private-evidence>\\pr305-native-r2\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\missing-file\\workspaces\\runs\\child\\handoffs\\specialist-a.md'\r\n    at Object.openSync (node:fs:621:18)\r\n    at Object.readFileSync (node:fs:487:35)\r\n    at [eval]:1:78\r\n    at runScriptInThisContext (node:internal/vm:219:10)\r\n    at node:internal/process/execution:451:12\r\n    at [eval]-wrapper:6:24\r\n    at runScriptInContext (node:internal/process/execution:449:60)\r\n    at evalFunction (node:internal/process/execution:283:30)\r\n    at evalTypeScript (node:internal/process/execution:295:3)\r\n    at node:internal/main/eval_string:71:3 {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'open',\r\n  path: 'C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\workspaces\\\\runs\\\\child\\\\handoffs\\\\specialist-a.md'\r\n}\r\n\r\nNode.js v24.21.0\r\n",
+                "exit_code": 1,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "node:fs:621\r\n  return binding.open(\r\n                 ^\r\n\r\nError: ENOENT: no such file or directory, open '<private-evidence>\\pr305-native-r2\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\missing-file\\workspaces\\runs\\child\\handoffs\\specialist-a.md'\r\n    at Object.openSync (node:fs:621:18)\r\n    at Object.readFileSync (node:fs:487:35)\r\n    at [eval]:1:78\r\n    at runScriptInThisContext (node:internal/vm:219:10)\r\n    at node:internal/process/execution:451:12\r\n    at [eval]-wrapper:6:24\r\n    at runScriptInContext (node:internal/process/execution:449:60)\r\n    at evalFunction (node:internal/process/execution:283:30)\r\n    at evalTypeScript (node:internal/process/execution:295:3)\r\n    at node:internal/main/eval_string:71:3 {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'open',\r\n  path: 'C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\workspaces\\\\runs\\\\child\\\\handoffs\\\\specialist-a.md'\r\n}\r\n\r\nNode.js v24.21.0\r\n",
+                "stdout": ""
+              },
+              "summary": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:fs:621\r\n  return binding.open(\r\n                 ^\r\n\r\nError: ENOENT: no such file or directory, open '<private-evidence>\\pr305-native-r2\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\missing-file\\workspaces\\runs\\child\\handoffs\\specialist-a.md'\r\n    at Object.openSync (node:fs:621:18)\r\n    at Object.readFileSync (node:fs:487:35)\r\n    at [eval]:1:78\r\n    at runScriptInThisContext (node:internal/vm:219:10)\r\n    at node:internal/process/execution:451:12\r\n    at [eval]-wrapper:6:24\r\n    at runScriptInContext (node:internal/process/execution:449:60)\r\n    at evalFunction (node:internal/process/execution:283:30)\r\n    at evalTypeScript (node:internal/process/execution:295:3)\r\n    at node:internal/main/eval_string:71:3 {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'open',\r\n  path: 'C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\workspaces\\\\runs\\\\child\\\\handoffs\\\\specialist-a.md'\r\n}\r\n\r\nNode.js v24.21.0\r\n"
+            }
+          ],
+          "manual_gate": null,
+          "passed": false,
+          "summary": "2 of 4 verifier checks failed"
+        }
+      }
+    },
+    {
+      "case_id": "altered-content",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"altered-content\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_object_digest_mismatch_rejected\",\"signed_envelope_inner_digest_mismatch_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.49s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "altered-content",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "signed_object_digest_mismatch_rejected",
+          "signed_envelope_inner_digest_mismatch_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "undeclared-file",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"undeclared-file\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_undeclared_file_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.46s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "undeclared-file",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "signed_undeclared_file_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "cross-corp",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-corp\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_cross_corp_lineage_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.44s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "cross-corp",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "signed_cross_corp_lineage_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "cross-task",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-task\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_cross_task_lineage_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.45s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "cross-task",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "signed_cross_task_lineage_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "cross-run",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-run\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_cross_run_lineage_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.51s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "cross-run",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "signed_cross_run_lineage_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "cross-recovery",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-recovery\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_cross_recovery_edge_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.44s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "cross-recovery",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "signed_cross_recovery_edge_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "cross-room",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-room\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"cross_room_download_selector_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.44s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "cross-room",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "cross_room_download_selector_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "traversal",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"traversal\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_traversal_path_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.46s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "traversal",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "signed_traversal_path_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "destination-symlink",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-assignment-materialization",
+      "status": "native_rejection_observed",
+      "nonce": "cc15a27d-af13-4ed2-882a-f6b19214301c",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"destination-symlink\",\"nonce\":\"cc15a27d-af13-4ed2-882a-f6b19214301c\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"same_destination_plain_file_control\",\"native_destination_link_resolves_exact_target\",\"relative_internal_symlink_checkpoint\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance. A relative file symlink within the retained owned child worktree was checkpointed legitimately before dispatch; native OS link creation capability was present.\",\"observations\":{}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 8.19s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "destination-symlink",
+        "nonce": "cc15a27d-af13-4ed2-882a-f6b19214301c",
+        "status": "native_rejection_observed",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "same_destination_plain_file_control",
+          "native_destination_link_resolves_exact_target",
+          "relative_internal_symlink_checkpoint"
+        ],
+        "rejection_assertions": [
+          "native_materializer_rejection",
+          "no_adapter_entry",
+          "no_provider_start",
+          "workspace_preserved",
+          "owned_sentinel_unchanged",
+          "no_dependency_writes"
+        ],
+        "evidence_scope": "native-runner-assignment-materialization",
+        "platform": "windows",
+        "qualification": "Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance. A relative file symlink within the retained owned child worktree was checkpointed legitimately before dispatch; native OS link creation capability was present.",
+        "observations": {}
+      }
+    },
+    {
+      "case_id": "destination-reparse",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-assignment-materialization",
+      "status": "native_rejection_observed",
+      "nonce": "a8eb3fa1-f93c-4b03-8269-12ce2dce53a1",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"destination-reparse\",\"nonce\":\"a8eb3fa1-f93c-4b03-8269-12ce2dce53a1\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"same_destination_plain_file_control\",\"native_destination_link_resolves_exact_target\",\"fresh_owned_worktree_base_and_head\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance. Windows junction constructed before dispatch in a freshly owned task worktree; checkpoint hashes were not fabricated or bypassed. Fresh assignment head/base checks pass before native materializer rejection.\",\"observations\":{}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.27s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "destination-reparse",
+        "nonce": "a8eb3fa1-f93c-4b03-8269-12ce2dce53a1",
+        "status": "native_rejection_observed",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "same_destination_plain_file_control",
+          "native_destination_link_resolves_exact_target",
+          "fresh_owned_worktree_base_and_head"
+        ],
+        "rejection_assertions": [
+          "native_materializer_rejection",
+          "no_adapter_entry",
+          "no_provider_start",
+          "workspace_preserved",
+          "owned_sentinel_unchanged",
+          "no_dependency_writes"
+        ],
+        "evidence_scope": "native-runner-assignment-materialization",
+        "platform": "windows",
+        "qualification": "Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance. Windows junction constructed before dispatch in a freshly owned task worktree; checkpoint hashes were not fabricated or bypassed. Fresh assignment head/base checks pass before native materializer rejection.",
+        "observations": {}
+      }
+    },
+    {
+      "case_id": "file-count-limit",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-assignment-materialization",
+      "status": "native_rejection_observed",
+      "nonce": "462a3364-fec9-4bf9-9aad-04ace1b7bb06",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"file-count-limit\",\"nonce\":\"462a3364-fec9-4bf9-9aad-04ace1b7bb06\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"exact_file_count_limit\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.\",\"observations\":{}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.45s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "file-count-limit",
+        "nonce": "462a3364-fec9-4bf9-9aad-04ace1b7bb06",
+        "status": "native_rejection_observed",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "exact_file_count_limit"
+        ],
+        "rejection_assertions": [
+          "native_materializer_rejection",
+          "no_adapter_entry",
+          "no_provider_start",
+          "workspace_preserved",
+          "owned_sentinel_unchanged",
+          "no_dependency_writes"
+        ],
+        "evidence_scope": "native-runner-assignment-materialization",
+        "platform": "windows",
+        "qualification": "Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.",
+        "observations": {}
+      }
+    },
+    {
+      "case_id": "oversized-file",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-verifier",
+      "status": "native_rejection_observed",
+      "nonce": "bd746ac9-a103-4bbd-affc-2049e7451236",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"oversized-file\",\"nonce\":\"bd746ac9-a103-4bbd-affc-2049e7451236\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"native_verifier_unchanged_control\",\"exact_6144_byte_note_control\"],\"rejection_assertions\":[\"real_fake_process_fault\",\"signed_download_not_claimed\",\"native_verifier_exact_check_rejected\",\"four_native_verifier_assertions\",\"provider_artifact_present\"],\"evidence_scope\":\"native-runner-verifier\",\"platform\":\"windows\",\"qualification\":\"Real deterministic subprocess outputs and native verify() file/command checks. Assignment positive control is separate. No signed store, scheduling, browser, live rejection or owner acceptance.\",\"observations\":{\"checks\":[{\"check_index\":0,\"kind\":\"artifact\",\"passed\":true,\"payload\":{\"bytes\":713,\"media_type\":\"text/plain\",\"path\":\"C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\bd746ac9-a103-4bbd-affc-2049e7451236\\\\oversized-file\\\\evidence\\\\fake-clean-14bbfe0b-de8e-4534-b331-cbd336ca694d.md\",\"sha256\":\"9d28da288f3ba0e6ee2e55ea6c9885575cd4479d37472030b3945a21ba102a7b\"},\"summary\":\"artifact C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\bd746ac9-a103-4bbd-affc-2049e7451236\\\\oversized-file\\\\evidence\\\\fake-clean-14bbfe0b-de8e-4534-b331-cbd336ca694d.md exists with 713 verified bytes\"},{\"check_index\":1,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":6145,\"path\":\"handoffs/specialist-a.md\",\"sha256\":\"c8aec9c5cbf859d404c79c34f8000da05947114956ef788551c8cbe703c2a3b2\"},\"summary\":\"handoffs/specialist-a.md exists with 6145 bytes\"},{\"check_index\":2,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":147,\"path\":\"handoffs/specialist-a-probe.json\",\"sha256\":\"e608144c02961546ddceac5b6a87e448b7e14ab3429b54a751596c6c298fb9fc\"},\"summary\":\"handoffs/specialist-a-probe.json exists with 147 bytes\"},{\"check_index\":3,\"kind\":\"command\",\"passed\":false,\"payload\":{\"args\":[\"-e\",\"const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}\",\"handoffs/specialist-a.md\",\"handoffs/specialist-a-probe.json\"],\"error\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=\",\"exit_code\":1,\"program\":\"node\",\"requested_program\":\"node\",\"resolution_mode\":\"path_pathext\",\"resolved_executable\":{\"canonical_path_sha256\":\"f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69\",\"file_name\":\"node.exe\"},\"stderr\":\"\",\"stdout\":\"\"},\"summary\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=\"}],\"manual_gate\":null,\"passed\":false,\"summary\":\"1 of 4 verifier checks failed\"}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 14.57s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "oversized-file",
+        "nonce": "bd746ac9-a103-4bbd-affc-2049e7451236",
+        "status": "native_rejection_observed",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "native_verifier_unchanged_control",
+          "exact_6144_byte_note_control"
+        ],
+        "rejection_assertions": [
+          "real_fake_process_fault",
+          "signed_download_not_claimed",
+          "native_verifier_exact_check_rejected",
+          "four_native_verifier_assertions",
+          "provider_artifact_present"
+        ],
+        "evidence_scope": "native-runner-verifier",
+        "platform": "windows",
+        "qualification": "Real deterministic subprocess outputs and native verify() file/command checks. Assignment positive control is separate. No signed store, scheduling, browser, live rejection or owner acceptance.",
+        "observations": {
+          "checks": [
+            {
+              "check_index": 0,
+              "kind": "artifact",
+              "passed": true,
+              "payload": {
+                "bytes": 713,
+                "media_type": "text/plain",
+                "path": "<private-evidence>\\pr305-native-r2\\bd746ac9-a103-4bbd-affc-2049e7451236\\oversized-file\\evidence\\fake-clean-14bbfe0b-de8e-4534-b331-cbd336ca694d.md",
+                "sha256": "9d28da288f3ba0e6ee2e55ea6c9885575cd4479d37472030b3945a21ba102a7b"
+              },
+              "summary": "artifact <private-evidence>\\pr305-native-r2\\bd746ac9-a103-4bbd-affc-2049e7451236\\oversized-file\\evidence\\fake-clean-14bbfe0b-de8e-4534-b331-cbd336ca694d.md exists with 713 verified bytes"
+            },
+            {
+              "check_index": 1,
+              "kind": "file",
+              "passed": true,
+              "payload": {
+                "bytes": 6145,
+                "path": "handoffs/specialist-a.md",
+                "sha256": "c8aec9c5cbf859d404c79c34f8000da05947114956ef788551c8cbe703c2a3b2"
+              },
+              "summary": "handoffs/specialist-a.md exists with 6145 bytes"
+            },
+            {
+              "check_index": 2,
+              "kind": "file",
+              "passed": true,
+              "payload": {
+                "bytes": 147,
+                "path": "handoffs/specialist-a-probe.json",
+                "sha256": "e608144c02961546ddceac5b6a87e448b7e14ab3429b54a751596c6c298fb9fc"
+              },
+              "summary": "handoffs/specialist-a-probe.json exists with 147 bytes"
+            },
+            {
+              "check_index": 3,
+              "kind": "command",
+              "passed": false,
+              "payload": {
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}",
+                  "handoffs/specialist-a.md",
+                  "handoffs/specialist-a-probe.json"
+                ],
+                "error": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=",
+                "exit_code": 1,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "summary": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr="
+            }
+          ],
+          "manual_gate": null,
+          "passed": false,
+          "summary": "1 of 4 verifier checks failed"
+        }
+      }
+    },
+    {
+      "case_id": "wire-file-byte-limit",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-assignment-materialization",
+      "status": "native_rejection_observed",
+      "nonce": "a48e9a13-a9d4-4282-8649-e440b2da9269",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"wire-file-byte-limit\",\"nonce\":\"a48e9a13-a9d4-4282-8649-e440b2da9269\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"exact_utf8_file_byte_limit\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.\",\"observations\":{}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.95s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "wire-file-byte-limit",
+        "nonce": "a48e9a13-a9d4-4282-8649-e440b2da9269",
+        "status": "native_rejection_observed",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "exact_utf8_file_byte_limit"
+        ],
+        "rejection_assertions": [
+          "native_materializer_rejection",
+          "no_adapter_entry",
+          "no_provider_start",
+          "workspace_preserved",
+          "owned_sentinel_unchanged",
+          "no_dependency_writes"
+        ],
+        "evidence_scope": "native-runner-assignment-materialization",
+        "platform": "windows",
+        "qualification": "Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.",
+        "observations": {}
+      }
+    },
+    {
+      "case_id": "aggregate-byte-limit",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-assignment-materialization",
+      "status": "native_rejection_observed",
+      "nonce": "08099fee-efa4-4b9b-a2e3-f4ec3065a57a",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"aggregate-byte-limit\",\"nonce\":\"08099fee-efa4-4b9b-a2e3-f4ec3065a57a\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"exact_file_count_limit\",\"exact_file_byte_limit\",\"exact_serialized_aggregate_limit\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.\",\"observations\":{\"aggregate_wire_limit\":65536,\"file_byte_limit\":12288,\"file_count_limit\":8,\"rejected_wire_bytes\":65537}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.85s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "aggregate-byte-limit",
+        "nonce": "08099fee-efa4-4b9b-a2e3-f4ec3065a57a",
+        "status": "native_rejection_observed",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "exact_file_count_limit",
+          "exact_file_byte_limit",
+          "exact_serialized_aggregate_limit"
+        ],
+        "rejection_assertions": [
+          "native_materializer_rejection",
+          "no_adapter_entry",
+          "no_provider_start",
+          "workspace_preserved",
+          "owned_sentinel_unchanged",
+          "no_dependency_writes"
+        ],
+        "evidence_scope": "native-runner-assignment-materialization",
+        "platform": "windows",
+        "qualification": "Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.",
+        "observations": {
+          "aggregate_wire_limit": 65536,
+          "file_byte_limit": 12288,
+          "file_count_limit": 8,
+          "rejected_wire_bytes": 65537
+        }
+      }
+    },
+    {
+      "case_id": "prompt-byte-limit",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"prompt-byte-limit\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"exact_parent_prompt_bound_accepted_plus_one_rejected\",\"exact_combined_prompt_bound_accepted_plus_one_rejected\",\"typed_source_before_text_receipt_combined_bound_rejected\",\"legacy_only_combined_prompt_bound_rejected\",\"final_resumed_prompt_exact_bytes_accepted_instruction_and_notes_overflow_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.47s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "prompt-byte-limit",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "exact_parent_prompt_bound_accepted_plus_one_rejected",
+          "exact_combined_prompt_bound_accepted_plus_one_rejected",
+          "typed_source_before_text_receipt_combined_bound_rejected",
+          "legacy_only_combined_prompt_bound_rejected",
+          "final_resumed_prompt_exact_bytes_accepted_instruction_and_notes_overflow_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "envelope-byte-limit",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"envelope-byte-limit\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"exact_envelope_bound_accepted_plus_one_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.54s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "envelope-byte-limit",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "exact_envelope_bound_accepted_plus_one_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "exact-limit-control",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-assignment-materialization",
+      "status": "native_control_observed",
+      "nonce": "d4cd5216-ef52-4c0c-890a-7b68b58c6c58",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"exact-limit-control\",\"nonce\":\"d4cd5216-ef52-4c0c-890a-7b68b58c6c58\",\"status\":\"native_control_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"exact_file_count_limit\",\"exact_file_byte_limit\",\"exact_serialized_aggregate_limit\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.\",\"observations\":{\"aggregate_wire_limit\":65536,\"file_byte_limit\":12288,\"file_count_limit\":8,\"rejected_wire_bytes\":65537}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.67s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "exact-limit-control",
+        "nonce": "d4cd5216-ef52-4c0c-890a-7b68b58c6c58",
+        "status": "native_control_observed",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "exact_file_count_limit",
+          "exact_file_byte_limit",
+          "exact_serialized_aggregate_limit"
+        ],
+        "rejection_assertions": [
+          "native_materializer_rejection",
+          "no_adapter_entry",
+          "no_provider_start",
+          "workspace_preserved",
+          "owned_sentinel_unchanged",
+          "no_dependency_writes"
+        ],
+        "evidence_scope": "native-runner-assignment-materialization",
+        "platform": "windows",
+        "qualification": "Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.",
+        "observations": {
+          "aggregate_wire_limit": 65536,
+          "file_byte_limit": 12288,
+          "file_count_limit": 8,
+          "rejected_wire_bytes": 65537
+        }
+      }
+    },
+    {
+      "case_id": "parent-tree-isolation",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-assignment-materialization",
+      "status": "unqualified",
+      "nonce": "53fbe4c6-d59d-42b2-8a48-971516c7fcd3",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 101,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"parent-tree-isolation\",\"nonce\":\"53fbe4c6-d59d-42b2-8a48-971516c7fcd3\",\"status\":\"unqualified\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"owned_parent_native_read_attempt\",\"parent_checkpoint_unchanged\"],\"rejection_assertions\":[],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"The actual fake-process child read the owned sibling-parent sentinel with exact bytes. The current native runner does not supply OS filesystem isolation (docs/SECURITY.md; adapter/fake.rs). A worktree, native tool scope or Windows job object is not a filesystem ACL boundary. Qualifying this case needs an authorized production isolation design (separate OS identity/ACLs or container/sandbox), not fixture chmod or additional runtime provisioning. No full-stack isolation acceptance.\",\"observations\":{\"exact_bytes\":true,\"files_read\":1,\"nonce\":\"53fbe4c6-d59d-42b2-8a48-971516c7fcd3\",\"parent\":{\"attempted\":true,\"denied\":false,\"exact\":true,\"readable\":true},\"read_write_permissions\":true}}\nFAILED\n\nfailures:\n\nfailures:\n    issue297_native_fixtures::issue297_native_fixture_dispatch\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 240 filtered out; finished in 6.84s\n\n",
+        "stderr": "\nthread 'issue297_native_fixtures::issue297_native_fixture_dispatch' (44988) panicked at crates\\crony-runner\\src\\issue297_native_fixtures.rs:928:5:\nassertion `left != right` failed: native case is explicitly unqualified; see bounded receipt\n  left: \"unqualified\"\n right: \"unqualified\"\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "parent-tree-isolation",
+        "nonce": "53fbe4c6-d59d-42b2-8a48-971516c7fcd3",
+        "status": "unqualified",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "owned_parent_native_read_attempt",
+          "parent_checkpoint_unchanged"
+        ],
+        "rejection_assertions": [],
+        "evidence_scope": "native-runner-assignment-materialization",
+        "platform": "windows",
+        "qualification": "The actual fake-process child read the owned sibling-parent sentinel with exact bytes. The current native runner does not supply OS filesystem isolation (docs/SECURITY.md; adapter/fake.rs). A worktree, native tool scope or Windows job object is not a filesystem ACL boundary. Qualifying this case needs an authorized production isolation design (separate OS identity/ACLs or container/sandbox), not fixture chmod or additional runtime provisioning. No full-stack isolation acceptance.",
+        "observations": {
+          "exact_bytes": true,
+          "files_read": 1,
+          "nonce": "53fbe4c6-d59d-42b2-8a48-971516c7fcd3",
+          "parent": {
+            "attempted": true,
+            "denied": false,
+            "exact": true,
+            "readable": true
+          },
+          "read_write_permissions": true
+        }
+      }
+    },
+    {
+      "case_id": "invalid-probe",
+      "implemented": true,
+      "executor": "issue297_native_fixtures::issue297_native_fixture_dispatch",
+      "lane": "runner",
+      "evidence_scope": "native-runner-verifier",
+      "status": "native_rejection_observed",
+      "nonce": "9572a47b-c004-4c2c-9811-24b0d8f8b6cd",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+        "args": [
+          "issue297_native_fixtures::issue297_native_fixture_dispatch",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"invalid-probe\",\"nonce\":\"9572a47b-c004-4c2c-9811-24b0d8f8b6cd\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"native_verifier_unchanged_control\",\"exact_6144_byte_note_control\"],\"rejection_assertions\":[\"real_fake_process_fault\",\"signed_download_not_claimed\",\"native_verifier_exact_check_rejected\",\"four_native_verifier_assertions\",\"provider_artifact_present\"],\"evidence_scope\":\"native-runner-verifier\",\"platform\":\"windows\",\"qualification\":\"Real deterministic subprocess outputs and native verify() file/command checks. Assignment positive control is separate. No signed store, scheduling, browser, live rejection or owner acceptance.\",\"observations\":{\"checks\":[{\"check_index\":0,\"kind\":\"artifact\",\"passed\":true,\"payload\":{\"bytes\":711,\"media_type\":\"text/plain\",\"path\":\"C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\9572a47b-c004-4c2c-9811-24b0d8f8b6cd\\\\invalid-probe\\\\evidence\\\\fake-clean-dc53d87e-bf5a-447f-95c8-f2157ec87058.md\",\"sha256\":\"1ba0466ff38470bab928aac47775693ac77a78aaa4e75d507590bcde658b07d1\"},\"summary\":\"artifact C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\9572a47b-c004-4c2c-9811-24b0d8f8b6cd\\\\invalid-probe\\\\evidence\\\\fake-clean-dc53d87e-bf5a-447f-95c8-f2157ec87058.md exists with 711 verified bytes\"},{\"check_index\":1,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":122,\"path\":\"handoffs/specialist-a.md\",\"sha256\":\"72f041b6715b0953b9bac6f3a90bc43ec153ca2fc4d375d5f655faa8e95272e2\"},\"summary\":\"handoffs/specialist-a.md exists with 122 bytes\"},{\"check_index\":2,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":12,\"path\":\"handoffs/specialist-a-probe.json\",\"sha256\":\"181ae4b86047d8222d10c4620963bac2cf9bc929909697738cd42c09e901b987\"},\"summary\":\"handoffs/specialist-a-probe.json exists with 12 bytes\"},{\"check_index\":3,\"kind\":\"command\",\"passed\":false,\"payload\":{\"args\":[\"-e\",\"const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}\",\"handoffs/specialist-a.md\",\"handoffs/specialist-a-probe.json\"],\"error\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=<anonymous_script>:1\\r\\n{\\\"observed\\\":\\r\\n\\r\\nSyntaxError: Unexpected end of JSON input\\r\\n    at JSON.parse (<anonymous>)\\r\\n    at [eval]:1:222\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"exit_code\":1,\"program\":\"node\",\"requested_program\":\"node\",\"resolution_mode\":\"path_pathext\",\"resolved_executable\":{\"canonical_path_sha256\":\"f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69\",\"file_name\":\"node.exe\"},\"stderr\":\"<anonymous_script>:1\\r\\n{\\\"observed\\\":\\r\\n\\r\\nSyntaxError: Unexpected end of JSON input\\r\\n    at JSON.parse (<anonymous>)\\r\\n    at [eval]:1:222\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"stdout\":\"\"},\"summary\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=<anonymous_script>:1\\r\\n{\\\"observed\\\":\\r\\n\\r\\nSyntaxError: Unexpected end of JSON input\\r\\n    at JSON.parse (<anonymous>)\\r\\n    at [eval]:1:222\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3\\r\\n\\r\\nNode.js v24.21.0\\r\\n\"}],\"manual_gate\":null,\"passed\":false,\"summary\":\"1 of 4 verifier checks failed\"}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 14.24s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "9b08d02ff10185ac01780985078be9c9c028804ed97a563cd2713f0de599f1fb",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "schema_version": 1,
+        "case_id": "invalid-probe",
+        "nonce": "9572a47b-c004-4c2c-9811-24b0d8f8b6cd",
+        "status": "native_rejection_observed",
+        "positive_controls": [
+          "native_assignment_provider_started",
+          "native_exact_byte_readback",
+          "native_read_write_permissions",
+          "legitimate_retained_checkpoint",
+          "native_verifier_unchanged_control",
+          "exact_6144_byte_note_control"
+        ],
+        "rejection_assertions": [
+          "real_fake_process_fault",
+          "signed_download_not_claimed",
+          "native_verifier_exact_check_rejected",
+          "four_native_verifier_assertions",
+          "provider_artifact_present"
+        ],
+        "evidence_scope": "native-runner-verifier",
+        "platform": "windows",
+        "qualification": "Real deterministic subprocess outputs and native verify() file/command checks. Assignment positive control is separate. No signed store, scheduling, browser, live rejection or owner acceptance.",
+        "observations": {
+          "checks": [
+            {
+              "check_index": 0,
+              "kind": "artifact",
+              "passed": true,
+              "payload": {
+                "bytes": 711,
+                "media_type": "text/plain",
+                "path": "<private-evidence>\\pr305-native-r2\\9572a47b-c004-4c2c-9811-24b0d8f8b6cd\\invalid-probe\\evidence\\fake-clean-dc53d87e-bf5a-447f-95c8-f2157ec87058.md",
+                "sha256": "1ba0466ff38470bab928aac47775693ac77a78aaa4e75d507590bcde658b07d1"
+              },
+              "summary": "artifact <private-evidence>\\pr305-native-r2\\9572a47b-c004-4c2c-9811-24b0d8f8b6cd\\invalid-probe\\evidence\\fake-clean-dc53d87e-bf5a-447f-95c8-f2157ec87058.md exists with 711 verified bytes"
+            },
+            {
+              "check_index": 1,
+              "kind": "file",
+              "passed": true,
+              "payload": {
+                "bytes": 122,
+                "path": "handoffs/specialist-a.md",
+                "sha256": "72f041b6715b0953b9bac6f3a90bc43ec153ca2fc4d375d5f655faa8e95272e2"
+              },
+              "summary": "handoffs/specialist-a.md exists with 122 bytes"
+            },
+            {
+              "check_index": 2,
+              "kind": "file",
+              "passed": true,
+              "payload": {
+                "bytes": 12,
+                "path": "handoffs/specialist-a-probe.json",
+                "sha256": "181ae4b86047d8222d10c4620963bac2cf9bc929909697738cd42c09e901b987"
+              },
+              "summary": "handoffs/specialist-a-probe.json exists with 12 bytes"
+            },
+            {
+              "check_index": 3,
+              "kind": "command",
+              "passed": false,
+              "payload": {
+                "args": [
+                  "-e",
+                  "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}",
+                  "handoffs/specialist-a.md",
+                  "handoffs/specialist-a-probe.json"
+                ],
+                "error": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=<anonymous_script>:1\r\n{\"observed\":\r\n\r\nSyntaxError: Unexpected end of JSON input\r\n    at JSON.parse (<anonymous>)\r\n    at [eval]:1:222\r\n    at runScriptInThisContext (node:internal/vm:219:10)\r\n    at node:internal/process/execution:451:12\r\n    at [eval]-wrapper:6:24\r\n    at runScriptInContext (node:internal/process/execution:449:60)\r\n    at evalFunction (node:internal/process/execution:283:30)\r\n    at evalTypeScript (node:internal/process/execution:295:3)\r\n    at node:internal/main/eval_string:71:3\r\n\r\nNode.js v24.21.0\r\n",
+                "exit_code": 1,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "<anonymous_script>:1\r\n{\"observed\":\r\n\r\nSyntaxError: Unexpected end of JSON input\r\n    at JSON.parse (<anonymous>)\r\n    at [eval]:1:222\r\n    at runScriptInThisContext (node:internal/vm:219:10)\r\n    at node:internal/process/execution:451:12\r\n    at [eval]-wrapper:6:24\r\n    at runScriptInContext (node:internal/process/execution:449:60)\r\n    at evalFunction (node:internal/process/execution:283:30)\r\n    at evalTypeScript (node:internal/process/execution:295:3)\r\n    at node:internal/main/eval_string:71:3\r\n\r\nNode.js v24.21.0\r\n",
+                "stdout": ""
+              },
+              "summary": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=<anonymous_script>:1\r\n{\"observed\":\r\n\r\nSyntaxError: Unexpected end of JSON input\r\n    at JSON.parse (<anonymous>)\r\n    at [eval]:1:222\r\n    at runScriptInThisContext (node:internal/vm:219:10)\r\n    at node:internal/process/execution:451:12\r\n    at [eval]-wrapper:6:24\r\n    at runScriptInContext (node:internal/process/execution:449:60)\r\n    at evalFunction (node:internal/process/execution:283:30)\r\n    at evalTypeScript (node:internal/process/execution:295:3)\r\n    at node:internal/main/eval_string:71:3\r\n\r\nNode.js v24.21.0\r\n"
+            }
+          ],
+          "manual_gate": null,
+          "passed": false,
+          "summary": "1 of 4 verifier checks failed"
+        }
+      }
+    },
+    {
+      "case_id": "failed-parent",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"failed-parent\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"persisted_failed_parent_task_rejected\",\"persisted_failed_parent_run_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.52s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "failed-parent",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "persisted_failed_parent_task_rejected",
+          "persisted_failed_parent_run_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "cancelled-parent",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cancelled-parent\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"persisted_cancelled_parent_task_rejected\",\"persisted_cancelled_parent_run_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.53s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "cancelled-parent",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "persisted_cancelled_parent_task_rejected",
+          "persisted_cancelled_parent_run_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    },
+    {
+      "case_id": "unauthorized-artifact",
+      "implemented": true,
+      "executor": "artifacts::tests::issue297_native_adversarial_fixture",
+      "lane": "server",
+      "evidence_scope": "native-integrated-fixture",
+      "status": "native_rejection_observed",
+      "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+      "execution": {
+        "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+        "args": [
+          "artifacts::tests::issue297_native_adversarial_fixture",
+          "--exact",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "status": 0,
+        "signal": null,
+        "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"unauthorized-artifact\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"nonmember_signed_download_selector_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.41s\n\n",
+        "stderr": "",
+        "error": null
+      },
+      "binary_sha256": "e07a249f6b79caf6286326f0d7b825bae9cb31955fea2f179bfb1c7e91dff052",
+      "source_sha256": "54c0cf95f3ec2c3e90fc2871eb1175cc4f86cdef769189da9c938431182983d9",
+      "receipt": {
+        "case_id": "unauthorized-artifact",
+        "evidence_scope": "native-integrated-fixture",
+        "fixture_schema_removed": true,
+        "full_stack": false,
+        "native_rejection_assertions": [
+          "nonmember_signed_download_selector_rejected"
+        ],
+        "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+        "nonvacuity_controls": [
+          "exactly_one_persisted_dependency_receipt",
+          "rejection_preserves_persisted_receipt",
+          "restored_replay_is_idempotent"
+        ],
+        "positive_controls": [
+          "real_signed_artifacts_read_verified",
+          "persisted_two_parent_selection",
+          "native_resolver_exact_declared_bytes",
+          "recovered_provider_and_verifier_runs_distinct",
+          "restored_control_resolves_identically"
+        ],
+        "provider_inference": false,
+        "schema_version": 1
+      }
+    }
+  ],
+  "commands": [
+    {
+      "label": "initdb",
+      "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\initdb.exe",
+      "args": [
+        "-D",
+        "<private-evidence>\\pr305-native-r2\\postgres-data",
+        "-U",
+        "fixture",
+        "--auth=trust",
+        "--encoding=UTF8",
+        "--no-locale",
+        "--no-sync"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "The files belonging to this database system will be owned by user \"shyamsridhar\".\r\nThis user must also own the server process.\r\n\r\nThe database cluster will be initialized with locale \"C\".\r\nThe default text search configuration will be set to \"english\".\r\n\r\nData page checksums are disabled.\r\n\r\ncreating directory <private-evidence>/pr305-native-r2/postgres-data ... ok\r\ncreating subdirectories ... ok\r\nselecting dynamic shared memory implementation ... windows\r\nselecting default \"max_connections\" ... 100\r\nselecting default \"shared_buffers\" ... 128MB\r\nselecting default time zone ... America/Chicago\r\ncreating configuration files ... ok\r\nrunning bootstrap script ... ok\r\nperforming post-bootstrap initialization ... ok\r\n\r\nSync to disk skipped.\r\nThe data directory might become corrupt if the operating system crashes.\r\n\r\nSuccess. You can now start the database server using:\r\n\r\n    ^\"C^:^\\Users^\\shyamsridhar^\\AppData^\\Local^\\Programs^\\ecorp^-tools^\\postgresql^-17^.10^\\pgsql^\\bin^\\pg^_ctl^\" -D ^\"C^:^\\Users^\\shyamsridhar^\\code^\\ecorp^\\output^\\pr^-completion^\\20260922T123548Z^\\pr305^-native^-r2^\\postgres^-data^\" -l logfile start\r\n\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "ready-1",
+      "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\psql.exe",
+      "args": [
+        "-X",
+        "-w",
+        "-h",
+        "127.0.0.1",
+        "-p",
+        "59861",
+        "-U",
+        "fixture",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-At",
+        "-c",
+        "SELECT current_setting('data_directory')"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "<private-evidence>/pr305-native-r2/postgres-data\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "create-database",
+      "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\psql.exe",
+      "args": [
+        "-X",
+        "-w",
+        "-h",
+        "127.0.0.1",
+        "-p",
+        "59861",
+        "-U",
+        "fixture",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-At",
+        "-c",
+        "CREATE DATABASE ecorp_issue297_d6066eff78084773a630904bd0f281fa OWNER fixture"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "CREATE DATABASE\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "mark-database",
+      "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\psql.exe",
+      "args": [
+        "-X",
+        "-w",
+        "-h",
+        "127.0.0.1",
+        "-p",
+        "59861",
+        "-U",
+        "fixture",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-At",
+        "-c",
+        "COMMENT ON DATABASE ecorp_issue297_d6066eff78084773a630904bd0f281fa IS 'ecorp-issue297:d6066eff-7808-4773-a630-904bd0f281fa'"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "COMMENT\r\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "missing-file",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"missing-file\",\"nonce\":\"166d3591-f0bd-4d08-9147-4d1fe405a33e\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"native_verifier_unchanged_control\",\"exact_6144_byte_note_control\"],\"rejection_assertions\":[\"real_fake_process_fault\",\"signed_download_not_claimed\",\"native_verifier_exact_check_rejected\",\"four_native_verifier_assertions\",\"provider_artifact_present\"],\"evidence_scope\":\"native-runner-verifier\",\"platform\":\"windows\",\"qualification\":\"Real deterministic subprocess outputs and native verify() file/command checks. Assignment positive control is separate. No signed store, scheduling, browser, live rejection or owner acceptance.\",\"observations\":{\"checks\":[{\"check_index\":0,\"kind\":\"artifact\",\"passed\":true,\"payload\":{\"bytes\":709,\"media_type\":\"text/plain\",\"path\":\"C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\evidence\\\\fake-clean-ed9ea856-dac5-4ec0-ac7f-bb6ccbc844c8.md\",\"sha256\":\"2de8d6a159bea38b42460e836e8718f09738fa350c9ad4699e9240a5820e2f93\"},\"summary\":\"artifact C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\evidence\\\\fake-clean-ed9ea856-dac5-4ec0-ac7f-bb6ccbc844c8.md exists with 709 verified bytes\"},{\"check_index\":1,\"kind\":\"file\",\"passed\":false,\"payload\":{\"error\":\"handoffs/specialist-a.md does not exist: The system cannot find the file specified. (os error 2)\"},\"summary\":\"handoffs/specialist-a.md does not exist\"},{\"check_index\":2,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":147,\"path\":\"handoffs/specialist-a-probe.json\",\"sha256\":\"842a2dcdb7c09baaea2cda57dc4f0c4fed7e378e7a653ed50850fedc9feff629\"},\"summary\":\"handoffs/specialist-a-probe.json exists with 147 bytes\"},{\"check_index\":3,\"kind\":\"command\",\"passed\":false,\"payload\":{\"args\":[\"-e\",\"const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}\",\"handoffs/specialist-a.md\",\"handoffs/specialist-a-probe.json\"],\"error\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:fs:621\\r\\n  return binding.open(\\r\\n                 ^\\r\\n\\r\\nError: ENOENT: no such file or directory, open 'C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\workspaces\\\\runs\\\\child\\\\handoffs\\\\specialist-a.md'\\r\\n    at Object.openSync (node:fs:621:18)\\r\\n    at Object.readFileSync (node:fs:487:35)\\r\\n    at [eval]:1:78\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3 {\\r\\n  errno: -4058,\\r\\n  code: 'ENOENT',\\r\\n  syscall: 'open',\\r\\n  path: 'C:\\\\\\\\Users\\\\\\\\shyamsridhar\\\\\\\\code\\\\\\\\ecorp\\\\\\\\output\\\\\\\\pr-completion\\\\\\\\20260922T123548Z\\\\\\\\pr305-native-r2\\\\\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\\\\\missing-file\\\\\\\\workspaces\\\\\\\\runs\\\\\\\\child\\\\\\\\handoffs\\\\\\\\specialist-a.md'\\r\\n}\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"exit_code\":1,\"program\":\"node\",\"requested_program\":\"node\",\"resolution_mode\":\"path_pathext\",\"resolved_executable\":{\"canonical_path_sha256\":\"f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69\",\"file_name\":\"node.exe\"},\"stderr\":\"node:fs:621\\r\\n  return binding.open(\\r\\n                 ^\\r\\n\\r\\nError: ENOENT: no such file or directory, open 'C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\workspaces\\\\runs\\\\child\\\\handoffs\\\\specialist-a.md'\\r\\n    at Object.openSync (node:fs:621:18)\\r\\n    at Object.readFileSync (node:fs:487:35)\\r\\n    at [eval]:1:78\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3 {\\r\\n  errno: -4058,\\r\\n  code: 'ENOENT',\\r\\n  syscall: 'open',\\r\\n  path: 'C:\\\\\\\\Users\\\\\\\\shyamsridhar\\\\\\\\code\\\\\\\\ecorp\\\\\\\\output\\\\\\\\pr-completion\\\\\\\\20260922T123548Z\\\\\\\\pr305-native-r2\\\\\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\\\\\missing-file\\\\\\\\workspaces\\\\\\\\runs\\\\\\\\child\\\\\\\\handoffs\\\\\\\\specialist-a.md'\\r\\n}\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"stdout\":\"\"},\"summary\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:fs:621\\r\\n  return binding.open(\\r\\n                 ^\\r\\n\\r\\nError: ENOENT: no such file or directory, open 'C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\missing-file\\\\workspaces\\\\runs\\\\child\\\\handoffs\\\\specialist-a.md'\\r\\n    at Object.openSync (node:fs:621:18)\\r\\n    at Object.readFileSync (node:fs:487:35)\\r\\n    at [eval]:1:78\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3 {\\r\\n  errno: -4058,\\r\\n  code: 'ENOENT',\\r\\n  syscall: 'open',\\r\\n  path: 'C:\\\\\\\\Users\\\\\\\\shyamsridhar\\\\\\\\code\\\\\\\\ecorp\\\\\\\\output\\\\\\\\pr-completion\\\\\\\\20260922T123548Z\\\\\\\\pr305-native-r2\\\\\\\\166d3591-f0bd-4d08-9147-4d1fe405a33e\\\\\\\\missing-file\\\\\\\\workspaces\\\\\\\\runs\\\\\\\\child\\\\\\\\handoffs\\\\\\\\specialist-a.md'\\r\\n}\\r\\n\\r\\nNode.js v24.21.0\\r\\n\"}],\"manual_gate\":null,\"passed\":false,\"summary\":\"2 of 4 verifier checks failed\"}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 14.61s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "altered-content",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"altered-content\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_object_digest_mismatch_rejected\",\"signed_envelope_inner_digest_mismatch_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.49s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "undeclared-file",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"undeclared-file\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_undeclared_file_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.46s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "cross-corp",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-corp\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_cross_corp_lineage_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.44s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "cross-task",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-task\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_cross_task_lineage_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.45s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "cross-run",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-run\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_cross_run_lineage_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.51s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "cross-recovery",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-recovery\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_cross_recovery_edge_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.44s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "cross-room",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cross-room\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"cross_room_download_selector_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.44s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "traversal",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"traversal\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"signed_traversal_path_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.46s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "destination-symlink",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"destination-symlink\",\"nonce\":\"cc15a27d-af13-4ed2-882a-f6b19214301c\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"same_destination_plain_file_control\",\"native_destination_link_resolves_exact_target\",\"relative_internal_symlink_checkpoint\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance. A relative file symlink within the retained owned child worktree was checkpointed legitimately before dispatch; native OS link creation capability was present.\",\"observations\":{}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 8.19s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "destination-reparse",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"destination-reparse\",\"nonce\":\"a8eb3fa1-f93c-4b03-8269-12ce2dce53a1\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"same_destination_plain_file_control\",\"native_destination_link_resolves_exact_target\",\"fresh_owned_worktree_base_and_head\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance. Windows junction constructed before dispatch in a freshly owned task worktree; checkpoint hashes were not fabricated or bypassed. Fresh assignment head/base checks pass before native materializer rejection.\",\"observations\":{}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.27s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "file-count-limit",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"file-count-limit\",\"nonce\":\"462a3364-fec9-4bf9-9aad-04ace1b7bb06\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"exact_file_count_limit\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.\",\"observations\":{}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.45s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "oversized-file",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"oversized-file\",\"nonce\":\"bd746ac9-a103-4bbd-affc-2049e7451236\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"native_verifier_unchanged_control\",\"exact_6144_byte_note_control\"],\"rejection_assertions\":[\"real_fake_process_fault\",\"signed_download_not_claimed\",\"native_verifier_exact_check_rejected\",\"four_native_verifier_assertions\",\"provider_artifact_present\"],\"evidence_scope\":\"native-runner-verifier\",\"platform\":\"windows\",\"qualification\":\"Real deterministic subprocess outputs and native verify() file/command checks. Assignment positive control is separate. No signed store, scheduling, browser, live rejection or owner acceptance.\",\"observations\":{\"checks\":[{\"check_index\":0,\"kind\":\"artifact\",\"passed\":true,\"payload\":{\"bytes\":713,\"media_type\":\"text/plain\",\"path\":\"C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\bd746ac9-a103-4bbd-affc-2049e7451236\\\\oversized-file\\\\evidence\\\\fake-clean-14bbfe0b-de8e-4534-b331-cbd336ca694d.md\",\"sha256\":\"9d28da288f3ba0e6ee2e55ea6c9885575cd4479d37472030b3945a21ba102a7b\"},\"summary\":\"artifact C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\bd746ac9-a103-4bbd-affc-2049e7451236\\\\oversized-file\\\\evidence\\\\fake-clean-14bbfe0b-de8e-4534-b331-cbd336ca694d.md exists with 713 verified bytes\"},{\"check_index\":1,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":6145,\"path\":\"handoffs/specialist-a.md\",\"sha256\":\"c8aec9c5cbf859d404c79c34f8000da05947114956ef788551c8cbe703c2a3b2\"},\"summary\":\"handoffs/specialist-a.md exists with 6145 bytes\"},{\"check_index\":2,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":147,\"path\":\"handoffs/specialist-a-probe.json\",\"sha256\":\"e608144c02961546ddceac5b6a87e448b7e14ab3429b54a751596c6c298fb9fc\"},\"summary\":\"handoffs/specialist-a-probe.json exists with 147 bytes\"},{\"check_index\":3,\"kind\":\"command\",\"passed\":false,\"payload\":{\"args\":[\"-e\",\"const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}\",\"handoffs/specialist-a.md\",\"handoffs/specialist-a-probe.json\"],\"error\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=\",\"exit_code\":1,\"program\":\"node\",\"requested_program\":\"node\",\"resolution_mode\":\"path_pathext\",\"resolved_executable\":{\"canonical_path_sha256\":\"f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69\",\"file_name\":\"node.exe\"},\"stderr\":\"\",\"stdout\":\"\"},\"summary\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=\"}],\"manual_gate\":null,\"passed\":false,\"summary\":\"1 of 4 verifier checks failed\"}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 14.57s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "wire-file-byte-limit",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"wire-file-byte-limit\",\"nonce\":\"a48e9a13-a9d4-4282-8649-e440b2da9269\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"exact_utf8_file_byte_limit\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.\",\"observations\":{}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.95s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "aggregate-byte-limit",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"aggregate-byte-limit\",\"nonce\":\"08099fee-efa4-4b9b-a2e3-f4ec3065a57a\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"exact_file_count_limit\",\"exact_file_byte_limit\",\"exact_serialized_aggregate_limit\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.\",\"observations\":{\"aggregate_wire_limit\":65536,\"file_byte_limit\":12288,\"file_count_limit\":8,\"rejected_wire_bytes\":65537}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.85s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "prompt-byte-limit",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"prompt-byte-limit\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"exact_parent_prompt_bound_accepted_plus_one_rejected\",\"exact_combined_prompt_bound_accepted_plus_one_rejected\",\"typed_source_before_text_receipt_combined_bound_rejected\",\"legacy_only_combined_prompt_bound_rejected\",\"final_resumed_prompt_exact_bytes_accepted_instruction_and_notes_overflow_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.47s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "envelope-byte-limit",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"envelope-byte-limit\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"exact_envelope_bound_accepted_plus_one_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.54s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "exact-limit-control",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"exact-limit-control\",\"nonce\":\"d4cd5216-ef52-4c0c-890a-7b68b58c6c58\",\"status\":\"native_control_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"exact_file_count_limit\",\"exact_file_byte_limit\",\"exact_serialized_aggregate_limit\"],\"rejection_assertions\":[\"native_materializer_rejection\",\"no_adapter_entry\",\"no_provider_start\",\"workspace_preserved\",\"owned_sentinel_unchanged\",\"no_dependency_writes\"],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance.\",\"observations\":{\"aggregate_wire_limit\":65536,\"file_byte_limit\":12288,\"file_count_limit\":8,\"rejected_wire_bytes\":65537}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 7.67s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "parent-tree-isolation",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 101,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"parent-tree-isolation\",\"nonce\":\"53fbe4c6-d59d-42b2-8a48-971516c7fcd3\",\"status\":\"unqualified\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"owned_parent_native_read_attempt\",\"parent_checkpoint_unchanged\"],\"rejection_assertions\":[],\"evidence_scope\":\"native-runner-assignment-materialization\",\"platform\":\"windows\",\"qualification\":\"The actual fake-process child read the owned sibling-parent sentinel with exact bytes. The current native runner does not supply OS filesystem isolation (docs/SECURITY.md; adapter/fake.rs). A worktree, native tool scope or Windows job object is not a filesystem ACL boundary. Qualifying this case needs an authorized production isolation design (separate OS identity/ACLs or container/sandbox), not fixture chmod or additional runtime provisioning. No full-stack isolation acceptance.\",\"observations\":{\"exact_bytes\":true,\"files_read\":1,\"nonce\":\"53fbe4c6-d59d-42b2-8a48-971516c7fcd3\",\"parent\":{\"attempted\":true,\"denied\":false,\"exact\":true,\"readable\":true},\"read_write_permissions\":true}}\nFAILED\n\nfailures:\n\nfailures:\n    issue297_native_fixtures::issue297_native_fixture_dispatch\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 240 filtered out; finished in 6.84s\n\n",
+      "stderr": "\nthread 'issue297_native_fixtures::issue297_native_fixture_dispatch' (44988) panicked at crates\\crony-runner\\src\\issue297_native_fixtures.rs:928:5:\nassertion `left != right` failed: native case is explicitly unqualified; see bounded receipt\n  left: \"unqualified\"\n right: \"unqualified\"\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n",
+      "error": null
+    },
+    {
+      "label": "invalid-probe",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_runner-87f899cdec9d59fe.exe",
+      "args": [
+        "issue297_native_fixtures::issue297_native_fixture_dispatch",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest issue297_native_fixtures::issue297_native_fixture_dispatch ... \nISSUE297_NATIVE_FIXTURE: {\"schema_version\":1,\"case_id\":\"invalid-probe\",\"nonce\":\"9572a47b-c004-4c2c-9811-24b0d8f8b6cd\",\"status\":\"native_rejection_observed\",\"positive_controls\":[\"native_assignment_provider_started\",\"native_exact_byte_readback\",\"native_read_write_permissions\",\"legitimate_retained_checkpoint\",\"native_verifier_unchanged_control\",\"exact_6144_byte_note_control\"],\"rejection_assertions\":[\"real_fake_process_fault\",\"signed_download_not_claimed\",\"native_verifier_exact_check_rejected\",\"four_native_verifier_assertions\",\"provider_artifact_present\"],\"evidence_scope\":\"native-runner-verifier\",\"platform\":\"windows\",\"qualification\":\"Real deterministic subprocess outputs and native verify() file/command checks. Assignment positive control is separate. No signed store, scheduling, browser, live rejection or owner acceptance.\",\"observations\":{\"checks\":[{\"check_index\":0,\"kind\":\"artifact\",\"passed\":true,\"payload\":{\"bytes\":711,\"media_type\":\"text/plain\",\"path\":\"C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\9572a47b-c004-4c2c-9811-24b0d8f8b6cd\\\\invalid-probe\\\\evidence\\\\fake-clean-dc53d87e-bf5a-447f-95c8-f2157ec87058.md\",\"sha256\":\"1ba0466ff38470bab928aac47775693ac77a78aaa4e75d507590bcde658b07d1\"},\"summary\":\"artifact C:\\\\Users\\\\shyamsridhar\\\\code\\\\ecorp\\\\output\\\\pr-completion\\\\20260922T123548Z\\\\pr305-native-r2\\\\9572a47b-c004-4c2c-9811-24b0d8f8b6cd\\\\invalid-probe\\\\evidence\\\\fake-clean-dc53d87e-bf5a-447f-95c8-f2157ec87058.md exists with 711 verified bytes\"},{\"check_index\":1,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":122,\"path\":\"handoffs/specialist-a.md\",\"sha256\":\"72f041b6715b0953b9bac6f3a90bc43ec153ca2fc4d375d5f655faa8e95272e2\"},\"summary\":\"handoffs/specialist-a.md exists with 122 bytes\"},{\"check_index\":2,\"kind\":\"file\",\"passed\":true,\"payload\":{\"bytes\":12,\"path\":\"handoffs/specialist-a-probe.json\",\"sha256\":\"181ae4b86047d8222d10c4620963bac2cf9bc929909697738cd42c09e901b987\"},\"summary\":\"handoffs/specialist-a-probe.json exists with 12 bytes\"},{\"check_index\":3,\"kind\":\"command\",\"passed\":false,\"payload\":{\"args\":[\"-e\",\"const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}\",\"handoffs/specialist-a.md\",\"handoffs/specialist-a-probe.json\"],\"error\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=<anonymous_script>:1\\r\\n{\\\"observed\\\":\\r\\n\\r\\nSyntaxError: Unexpected end of JSON input\\r\\n    at JSON.parse (<anonymous>)\\r\\n    at [eval]:1:222\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"exit_code\":1,\"program\":\"node\",\"requested_program\":\"node\",\"resolution_mode\":\"path_pathext\",\"resolved_executable\":{\"canonical_path_sha256\":\"f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69\",\"file_name\":\"node.exe\"},\"stderr\":\"<anonymous_script>:1\\r\\n{\\\"observed\\\":\\r\\n\\r\\nSyntaxError: Unexpected end of JSON input\\r\\n    at JSON.parse (<anonymous>)\\r\\n    at [eval]:1:222\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3\\r\\n\\r\\nNode.js v24.21.0\\r\\n\",\"stdout\":\"\"},\"summary\":\"\\\"node\\\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=<anonymous_script>:1\\r\\n{\\\"observed\\\":\\r\\n\\r\\nSyntaxError: Unexpected end of JSON input\\r\\n    at JSON.parse (<anonymous>)\\r\\n    at [eval]:1:222\\r\\n    at runScriptInThisContext (node:internal/vm:219:10)\\r\\n    at node:internal/process/execution:451:12\\r\\n    at [eval]-wrapper:6:24\\r\\n    at runScriptInContext (node:internal/process/execution:449:60)\\r\\n    at evalFunction (node:internal/process/execution:283:30)\\r\\n    at evalTypeScript (node:internal/process/execution:295:3)\\r\\n    at node:internal/main/eval_string:71:3\\r\\n\\r\\nNode.js v24.21.0\\r\\n\"}],\"manual_gate\":null,\"passed\":false,\"summary\":\"1 of 4 verifier checks failed\"}}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 14.24s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "failed-parent",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"failed-parent\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"persisted_failed_parent_task_rejected\",\"persisted_failed_parent_run_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.52s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "cancelled-parent",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"cancelled-parent\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"persisted_cancelled_parent_task_rejected\",\"persisted_cancelled_parent_run_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.53s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "unauthorized-artifact",
+      "executable": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation\\debug\\deps\\crony_server-11ad740620358583.exe",
+      "args": [
+        "artifacts::tests::issue297_native_adversarial_fixture",
+        "--exact",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "\nrunning 1 test\ntest artifacts::tests::issue297_native_adversarial_fixture ... \nISSUE297_NATIVE_FIXTURE:{\"case_id\":\"unauthorized-artifact\",\"evidence_scope\":\"native-integrated-fixture\",\"fixture_schema_removed\":true,\"full_stack\":false,\"native_rejection_assertions\":[\"nonmember_signed_download_selector_rejected\"],\"nonce\":\"d6066eff-7808-4773-a630-904bd0f281fa\",\"nonvacuity_controls\":[\"exactly_one_persisted_dependency_receipt\",\"rejection_preserves_persisted_receipt\",\"restored_replay_is_idempotent\"],\"positive_controls\":[\"real_signed_artifacts_read_verified\",\"persisted_two_parent_selection\",\"native_resolver_exact_declared_bytes\",\"recovered_provider_and_verifier_runs_distinct\",\"restored_control_resolves_identically\"],\"provider_inference\":false,\"schema_version\":1}\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 0.41s\n\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "label": "stop-owned-postgres",
+      "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\pg_ctl.exe",
+      "args": [
+        "-D",
+        "<private-evidence>\\pr305-native-r2\\postgres-data",
+        "-m",
+        "fast",
+        "-w",
+        "-t",
+        "20",
+        "stop"
+      ],
+      "status": 0,
+      "signal": null,
+      "stdout": "waiting for server to shut down..... done\r\nserver stopped\r\n",
+      "stderr": "",
+      "error": null
+    }
+  ],
+  "failures": [
+    {
+      "case_id": "parent-tree-isolation",
+      "error": "The actual fake-process child read the owned sibling-parent sentinel with exact bytes. The current native runner does not supply OS filesystem isolation (docs/SECURITY.md; adapter/fake.rs). A worktree, native tool scope or Windows job object is not a filesystem ACL boundary. Qualifying this case needs an authorized production isolation design (separate OS identity/ACLs or container/sandbox), not fixture chmod or additional runtime provisioning. No full-stack isolation acceptance."
+    }
+  ],
+  "nonce": "d6066eff-7808-4773-a630-904bd0f281fa",
+  "port": 59861,
+  "database": "ecorp_issue297_d6066eff78084773a630904bd0f281fa",
+  "postgres_pid": 19520,
+  "postgres_exit": {
+    "code": 0,
+    "signal": null
+  },
+  "coverage": {
+    "accepted": false,
+    "full_stack": false,
+    "browser": false,
+    "r4": false,
+    "owner_acceptance": false,
+    "native_observed": [
+      "missing-file",
+      "altered-content",
+      "undeclared-file",
+      "cross-corp",
+      "cross-task",
+      "cross-run",
+      "cross-recovery",
+      "cross-room",
+      "traversal",
+      "destination-symlink",
+      "destination-reparse",
+      "file-count-limit",
+      "oversized-file",
+      "wire-file-byte-limit",
+      "aggregate-byte-limit",
+      "prompt-byte-limit",
+      "envelope-byte-limit",
+      "exact-limit-control",
+      "invalid-probe",
+      "failed-parent",
+      "cancelled-parent",
+      "unauthorized-artifact"
+    ],
+    "incomplete_cases": [
+      "parent-tree-isolation"
+    ],
+    "reason": "Offline fixtures do not satisfy live browser/full-stack/R4/owner acceptance."
+  }
+}

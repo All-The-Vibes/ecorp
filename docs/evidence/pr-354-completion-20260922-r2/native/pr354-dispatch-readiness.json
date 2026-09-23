@@ -1,0 +1,101 @@
+{
+  "pr": 354,
+  "started_at": "2026-09-22T18:25:34.261Z",
+  "status": "passed",
+  "scope": "Real HTTP server and reconciled native runner on a new owned PostgreSQL fixture; no claims, dispatch, external publication, or vendor inference.",
+  "source": {
+    "repository": "ecorp-fixture/pr265-run-activity",
+    "base_ref": "HEAD",
+    "base_commit": "24df66159d1a58ff7bb302286a38f616b50bb16f"
+  },
+  "assertions": [
+    {
+      "name": "Valid plan remains available with a source mismatch",
+      "response": {
+        "status": 200,
+        "payload": {
+          "valid": true,
+          "dispatch_readiness": {
+            "status": "not_ready",
+            "reason": "task deliver requires source repository ecorp-fixture/pr265-run-activity at HEAD (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) but no connected runner advertises that immutable checkout"
+          },
+          "strategy": "single",
+          "task_count": 1,
+          "budget_tokens": 1000,
+          "budget_cost_microusd": 1000000,
+          "tasks": [
+            {
+              "key": "deliver",
+              "title": "Produce the mission outcome",
+              "budget_tokens": 1000,
+              "budget_cost_microusd": 1000000,
+              "depends_on": [],
+              "max_attempts": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Execution intent fails before claim or dispatch",
+      "response": {
+        "status": 409,
+        "payload": {
+          "error": "factory plan is valid but dispatch is not ready: task deliver requires source repository ecorp-fixture/pr265-run-activity at HEAD (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) but no connected runner advertises that immutable checkout"
+        }
+      }
+    },
+    {
+      "name": "Matching immutable source and reconciled native runner are ready",
+      "response": {
+        "status": 200,
+        "payload": {
+          "valid": true,
+          "dispatch_readiness": {
+            "status": "ready"
+          },
+          "strategy": "single",
+          "task_count": 1,
+          "budget_tokens": 1000,
+          "budget_cost_microusd": 1000000,
+          "tasks": [
+            {
+              "key": "deliver",
+              "title": "Produce the mission outcome",
+              "budget_tokens": 1000,
+              "budget_cost_microusd": 1000000,
+              "depends_on": [],
+              "max_attempts": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Observer cannot acquire execution authority through preflight",
+      "response": {
+        "status": 403,
+        "payload": {
+          "error": "Corp role guest is not allowed to perform this action"
+        }
+      }
+    }
+  ],
+  "fixture_setup": "Deterministic crew seeded before all ledger measurements",
+  "ledger": {
+    "tables": [
+      "runs",
+      "tasks",
+      "events",
+      "missions",
+      "factory_operations",
+      "factory_work_items",
+      "factory_controllers",
+      "factory_controller_operations"
+    ],
+    "before_sha256": "da5537cc1f7c0d3b38c3bc61dbc6e4e60142a33311cda946fb8e5f2d55dae601",
+    "after_sha256": "da5537cc1f7c0d3b38c3bc61dbc6e4e60142a33311cda946fb8e5f2d55dae601",
+    "exact_rows_unchanged": true
+  },
+  "finished_at": "2026-09-22T18:25:35.403Z"
+}

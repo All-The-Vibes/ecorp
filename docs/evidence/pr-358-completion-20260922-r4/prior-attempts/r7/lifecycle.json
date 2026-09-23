@@ -1,0 +1,81 @@
+{
+  "pr": 358,
+  "validation_source_tree": "adc64781851d12aa01ff9f4536156460980791c8",
+  "validation_receipt_sha256": "a0bb59f1c102054db0a54b2220ea523fb70eeee108d8464fe93cb779effec83e",
+  "tested_staged_tree": "adc64781851d12aa01ff9f4536156460980791c8",
+  "source_head": "af3a66abbc42a34aa84daa4793551dd125bd1b36",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr358-20260922-r7",
+  "started_at_utc": "2026-09-23T00:16:59.7645721+00:00",
+  "status": "failed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "sha256": "628766182f633e8e928825bf2bc88b73ad21b15f35dbfc46d760bc190bc88b96",
+      "log": "<private-evidence>\\pr358-native-r7-approval-expiry.log",
+      "name": "native-approval-decision-rejection-expiry",
+      "exit_code": 1
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "3fd02d20c914b590a7dbc65446e223a70cb05679e676e2ea056d81179eb878f4",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "d20d8a151838bb2e3531471ceb6384707069bbc3b7bd6a18c3ea43a8c4d99f0f",
+      "file": "crony-runner.exe"
+    }
+  ],
+  "reused_verification": {
+    "receipt_sha256": "ccfb40c9d88f49aec189887a0b325c1a96d1a6a73aff7b97cc52535fdf4d4dd5",
+    "checks": [
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r6-workspace-cache-refresh.log",
+        "sha256": "5edd32af9365ab6911fe2a79f5741c10fde5ed6400e5190b3faa7e44b5ac5678",
+        "name": "workspace-cache-refresh"
+      },
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r6-build.log",
+        "sha256": "39fc5bf387cde545082804579ddf11e4bc2b7bc67e1cb5259aa4e9b20c45ff2c",
+        "name": "native-build"
+      },
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r6-sqlx-workspace-cache-refresh.log",
+        "sha256": "8a0569f9cb7ad5371adb407dc5dee2d606764ade919214ba7db43bc40c103c83",
+        "name": "sqlx-workspace-cache-refresh"
+      },
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r6-sqlx-retained-receipts.log",
+        "sha256": "944803059135ef400a119a53fea18c901cfe9156afbb56bda987af6dc72b3e3f",
+        "name": "owned-postgresql-retained-receipts-regressions"
+      },
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r6-sqlx-crony-store.log",
+        "sha256": "4843b200659b088093df864762bd19d030cc5e9ac2d1687bd8eae8912fc67cde",
+        "name": "owned-postgresql-crony-store-regressions"
+      },
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r6-sqlx-crony-server.log",
+        "sha256": "c3653c6d8307a361c0082479bdca5939fa942f1a51185a2e5c5419df56b96a02",
+        "name": "owned-postgresql-crony-server-regressions"
+      },
+      {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r6-focused.log",
+        "sha256": "3c72f6630199a55e2b54781008de87dfed6e9f51de028917547b496cddcac8e5",
+        "name": "focused-native-acceptance"
+      }
+    ],
+    "receipt": "<private-evidence>\\pr358-native-r6-lifecycle.json",
+    "source_tree": "adc64781851d12aa01ff9f4536156460980791c8",
+    "reason": "Identical complete source tree and verified original log and binary hashes. Named passing checks are reused explicitly, not represented as rerun. A fresh owned fixture runs the remaining acceptance."
+  },
+  "failure": "native-approval-decision-rejection-expiry failed; preserve logs and fixture.",
+  "finished_at_utc": "2026-09-23T00:17:22.1198100+00:00"
+}

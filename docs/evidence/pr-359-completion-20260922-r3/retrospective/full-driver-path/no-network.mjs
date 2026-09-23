@@ -1,0 +1,1 @@
+import { appendFileSync } from 'node:fs'; globalThis.fetch = async () => { appendFileSync(process.env.PATH_REPLAY_NETWORK_LOG, 'fetch intercepted before network\n'); throw new Error('OWNED_PATH_REPLAY_NO_NETWORK'); };

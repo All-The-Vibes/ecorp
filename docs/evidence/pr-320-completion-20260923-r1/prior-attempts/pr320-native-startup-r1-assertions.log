@@ -1,0 +1,98 @@
+PASS runner and orphan-artifact startup recovery on a disposable clone
+PASS development startup, migration, demo persistence and restart
+PASS empty missing_issuer
+PASS empty missing_master
+PASS empty bad_master
+PASS empty short_master
+PASS empty long_master
+PASS empty missing_signing
+PASS empty bad_signing
+PASS empty short_signing
+PASS empty backend
+PASS empty local
+PASS empty http_flag
+PASS empty bucket
+PASS empty empty_bucket
+PASS empty access_only
+PASS empty secret_only
+PASS empty endpoint
+PASS empty endpoint_http
+PASS empty zero_limit
+PASS empty bad_limit
+PASS empty cors
+PASS empty cors_wildcard
+PASS empty http_issuer
+PASS empty bad_issuer
+PASS empty mismatch
+PASS empty metadata
+PASS empty userinfo
+PASS empty discovery_status
+PASS empty backtraces
+PASS empty dev_invalid
+PASS seeded missing_issuer
+PASS seeded missing_master
+PASS seeded bad_master
+PASS seeded short_master
+PASS seeded long_master
+PASS seeded missing_signing
+PASS seeded bad_signing
+PASS seeded short_signing
+PASS seeded backend
+PASS seeded local
+PASS seeded http_flag
+PASS seeded bucket
+PASS seeded empty_bucket
+PASS seeded access_only
+PASS seeded secret_only
+PASS seeded endpoint
+PASS seeded endpoint_http
+PASS seeded zero_limit
+PASS seeded bad_limit
+PASS seeded cors
+PASS seeded cors_wildcard
+PASS seeded http_issuer
+PASS seeded bad_issuer
+PASS seeded mismatch
+PASS seeded metadata
+PASS seeded userinfo
+PASS seeded discovery_status
+PASS seeded backtraces
+PASS seeded dev_invalid
+PASS empty delegated_unknown
+PASS empty delegated_incomplete_entra
+PASS empty delegated_missing_secret
+PASS empty delegated_missing_digest
+PASS empty delegated_bad_digest
+PASS empty delegated_short_digest
+PASS empty delegated_url
+PASS empty delegated_url_credentials
+PASS empty delegated_url_query
+PASS empty delegated_url_http
+PASS empty delegated_production_test_provider
+PASS empty delegated_discovery_body
+PASS empty delegated_discovery_status
+PASS empty delegated_discovery_issuer
+PASS seeded delegated_unknown
+PASS seeded delegated_incomplete_entra
+PASS seeded delegated_missing_secret
+PASS seeded delegated_missing_digest
+PASS seeded delegated_bad_digest
+PASS seeded delegated_short_digest
+PASS seeded delegated_url
+PASS seeded delegated_url_credentials
+PASS seeded delegated_url_query
+PASS seeded delegated_url_http
+PASS seeded delegated_production_test_provider
+PASS seeded delegated_discovery_body
+PASS seeded delegated_discovery_status
+PASS seeded delegated_discovery_issuer
+PASS explicit CLI rejection and secret-safe help
+Traceback (most recent call last):
+  File "<private-evidence>\pr320-native-startup.py", line 117, in <module>
+    main()
+  File "<private-evidence>\pr320-native-startup.py", line 108, in main
+    module.run(binary, root, postgres, oidc, storage, ca, False)
+  File "<reviewed-worktree>\tools\test_startup_validation.py", line 433, in run
+    assert int(postgres.sql(db, 'SELECT count(*) FROM _sqlx_migrations;')) == expected
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -311,13 +311,19 @@ async function runClaude() {
   if (mission.includes('[permission:malformed]')) {
     delete request.input
   }
-  output({ type: 'control_request', request_id: requestId, request })
-
   if (mission.includes('[permission:response-write-failure]')) {
     inputInterface.close()
-    process.stdin.destroy()
-    return
+    // Flush the pending request, then close every native input handle by exiting.
+    // Destroying Node's stdin stream alone leaves an inherited Windows pipe open.
+    await new Promise((resolve, reject) => {
+      process.stdout.write(
+        `${JSON.stringify({ type: 'control_request', request_id: requestId, request })}\n`,
+        error => error ? reject(error) : resolve(),
+      )
+    })
+    process.exit(0)
   }
+  output({ type: 'control_request', request_id: requestId, request })
   if (mission.includes('[permission:cancelled]')) {
     output({ type: 'control_cancel_request', request_id: requestId })
     await finishClaude(input, inputInterface, mission)

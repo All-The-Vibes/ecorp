@@ -1,0 +1,83 @@
+{
+  "pr": 358,
+  "purpose": "Retrospective aggregate fan-out and lease wait/reacquisition RED/GREEN",
+  "source_head": "5db7afa19b1bb17c06feea40043ba8d5005b22b1",
+  "tested_staged_tree": "049fbec36ff5b39084b052ff88e84bc6cbec3ea2",
+  "qa_root": "<local-user>\\code\\qa\\pr358-retrospective-store-20260923-r2",
+  "target": "<local-user>\\code\\ecorp-pr362-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T08:27:55.4480158+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-retrospective-native-r2-initdb.log",
+      "sha256": "fd805beed6aa640cf8d710078a972ab8faa828df67870ba5285af3940c0be05e"
+    },
+    {
+      "name": "workspace-cache-refresh-aggregate-before",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-retrospective-native-r2-aggregate-before-workspace-cache-refresh.log",
+      "sha256": "841bd294ec71077ee3b57545da8ac726022e86e8dac55805830b6c0c38fd094b"
+    },
+    {
+      "exit_code": 101,
+      "source_commit": "39632b957819012721c90902925d8fa7a9c7e873",
+      "expected_executed_tests": 1,
+      "expected_behavior_observed": true,
+      "sha256": "385e942af3681eefd7b5525519876c21b5148c2fe854795c0dfd9c9c1a70ed9f",
+      "expected_exit": 101,
+      "test_tree": "1726a3cd795c2565dd6e9b73f8bbb082b6dea583",
+      "name": "aggregate-before",
+      "log": "<private-evidence>\\pr358-retrospective-native-r2-aggregate-before.log",
+      "command": "cargo test --locked -p crony-store pr358_retrospective_ -- --ignored --test-threads=1 --nocapture"
+    },
+    {
+      "name": "workspace-cache-refresh-lease-before",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-retrospective-native-r2-lease-before-workspace-cache-refresh.log",
+      "sha256": "686ffff69400e55c79d7337326218861df048eaafcbed5d4c067bbd01b946496"
+    },
+    {
+      "exit_code": 101,
+      "source_commit": "2e02c95a44fe4b1f7b103ac68c51e8c18476bca8",
+      "expected_executed_tests": 2,
+      "expected_behavior_observed": true,
+      "sha256": "2e45b3977095b1f77e8e818e6f914c7f3dfa7a4bea5df4a6d2a34f05d99ac051",
+      "expected_exit": 101,
+      "test_tree": "61d61984edf0f8fc7731b7f29be9c47631bc95ab",
+      "name": "lease-before",
+      "log": "<private-evidence>\\pr358-retrospective-native-r2-lease-before.log",
+      "command": "cargo test --locked -p crony-store pr358_retrospective_ -- --ignored --test-threads=1 --nocapture"
+    },
+    {
+      "name": "workspace-cache-refresh-current",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-retrospective-native-r2-current-workspace-cache-refresh.log",
+      "sha256": "e5336e2048b4369e0e368a407997acd113f9ba842762e73b81e63bae891300d2"
+    },
+    {
+      "exit_code": 0,
+      "source_commit": "e99301229873fcf1a68566715afe159f5bb3662f",
+      "expected_executed_tests": 3,
+      "expected_behavior_observed": true,
+      "sha256": "8e4fcdc1c1278faffaa70cf6846ee467c4a733fda5d43fed28d48e0617583ea4",
+      "expected_exit": 0,
+      "test_tree": "5e19038e482a4f512ee0856845b8bfeb157f7027",
+      "name": "current",
+      "log": "<private-evidence>\\pr358-retrospective-native-r2-current.log",
+      "command": "cargo test --locked -p crony-store pr358_retrospective_ -- --ignored --test-threads=1 --nocapture"
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+  "authentication": {
+    "authenticated_query": true,
+    "wrong_password_rejected": true,
+    "method": "scram-sha-256",
+    "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance."
+  },
+  "preparation_sha256": "9e4f924f0a5b8564621b046cda2fbff9f8a1b0e4b820c470eb2eb8bfef8d71ce",
+  "method": "Retrospective execution, not original TDD. Historical product source is unchanged. Shared tests retain current fixtures and assertions; renewal and reacquisition run separately so a first failure cannot hide the other case. Only the old callback shape is bridged in a separate test-only adapter.",
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T08:35:43.8033306+00:00"
+}

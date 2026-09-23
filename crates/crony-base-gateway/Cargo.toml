@@ -1,0 +1,22 @@
+[package]
+name = "crony-base-gateway"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+aws-config = { version = "=1.6.3", default-features = false, features = ["rt-tokio", "rustls"] }
+aws-sdk-kms = { version = "=1.77.0", default-features = false, features = ["rt-tokio", "rustls"] }
+aws-sdk-sts = { version = "=1.69.0", default-features = false, features = ["rt-tokio", "rustls"] }
+axum.workspace = true
+crony-audit = { path = "../crony-audit" }
+crony-base = { path = "../crony-base", features = ["aws-kms", "gateway-service"] }
+crony-store = { path = "../crony-store" }
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true
+uuid.workspace = true

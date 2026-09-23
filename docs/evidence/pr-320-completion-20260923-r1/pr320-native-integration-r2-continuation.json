@@ -1,0 +1,106 @@
+{
+  "pr": 320,
+  "purpose": "Resume exact owned delegated acceptance after exited launcher left its caller waiting on inherited output",
+  "source_head": "765aff1f8dd812cf68620177f77e722860a9ecab",
+  "tested_staged_tree": "d9cc0a13ac2d3b670a077a15d803f29918241c68",
+  "qa_root": "<owned-keycloak-fixture>",
+  "prior_receipt_sha256": "06d1dde947cc21e03d4b285c2a1ece09440096b30a2b37bd1dc249f27bad2719",
+  "started_at_utc": "2026-09-23T07:23:09.8267152+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "exit_code": 0,
+      "sha256": "38bcc71ab067b015588922bce99129589593d03af19c0a8aae40168c5479d5bb",
+      "name": "owned-browser-server-runner-delegated-acceptance",
+      "log": "<private-evidence>\\pr320-native-integration-r2-continuation-browser-driver.log"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "f0e5068c1154003deb07cd04bacd3b19bbc4dd4f47461fd112922ae6296b3acb",
+      "name": "crony-server"
+    },
+    {
+      "sha256": "cbcdd97a87ed0b5346c2a0093faca78bca78fe5b99f09f36ba06deaab3647d5c",
+      "name": "crony-runner"
+    }
+  ],
+  "live_azure": "NOT_EXECUTED",
+  "scope": "Synthetic Keycloak 26.7.4; development principals; not production OIDC or OS isolation.",
+  "cleanup": "Only exact owned fixture processes stopped; private data, credentials, source, worktrees, binaries and prior evidence retained.",
+  "interrupted_wrapper": {
+    "started_utc": "2026-09-23T07:07:11.4492036Z",
+    "reason": "Launcher printed verified readiness and exited, but its caller remained blocked before browser driver.",
+    "descendants_stopped": false,
+    "pid": 51912
+  },
+  "source_unchanged": true,
+  "acceptance": {
+    "kind": "AUTOMATED_SYNTHETIC_NOT_HUMAN_ACCEPTANCE",
+    "live_azure": "NOT_EXECUTED",
+    "checks": [
+      "protected-resource-denies-anonymous",
+      "original-assignment-denied-before-auth",
+      "cross-task-run-epoch-assignment-denied",
+      "cross-human-authorize-cancel-release-preview-denied",
+      "pkce-then-keycloak-exchange-protected-read-independent-digest-private-release-gate",
+      "single-use-browser-ticket-and-callback-replay-denied",
+      "same-original-run-native-artifact-verifier-completion-no-secret-in-shared-state",
+      "independent-authenticated-artifact-download-sha256-and-exact-receipt",
+      "provider-subject-mismatch-denied",
+      "cancel-denies-read-and-unopened-auth-ticket",
+      "expired-operation-cannot-read-or-reopen",
+      "expired-downstream-grant-cannot-read-or-release-clock-fault",
+      "browser-start-login-private-preview-release-original-run-verifier-completion",
+      "real-browser-cancellation-fences-delayed-authorize-response-and-closes-popup"
+    ],
+    "jobs": [
+      {
+        "mission_id": "f157fe35-63ad-42ad-a89c-66c76945eb7f",
+        "task_id": "182e14ac-6d20-4822-806f-a895596808ea",
+        "operation_id": "7c38dda9-d399-4004-b7ff-c177f30cb975",
+        "run_id": "6b7a485b-87f5-42c6-924b-fcc503298a48"
+      },
+      {
+        "mission_id": "c1d4988f-8ffc-4c4c-81eb-a88ede644277",
+        "task_id": "9350c867-fedf-4042-bc0d-a4658c91812c",
+        "operation_id": "794bc58a-f12f-4424-ae10-0837ebfc5719",
+        "run_id": "911285e4-a370-49e6-981c-195733cfa354"
+      },
+      {
+        "mission_id": "42588929-aa6e-452a-beb5-8b15d3a4579f",
+        "task_id": "1d8aff29-f4a3-422b-bfc7-1b5039c85683",
+        "operation_id": "281d2d0d-6d38-4ab4-8eb6-40f5ed4b7c92",
+        "run_id": "a503dc1c-5afd-41ec-a499-639e84fc2578"
+      },
+      {
+        "mission_id": "8afd3987-07a3-4480-957d-6fbef6b33791",
+        "task_id": "e5fa2379-d59b-4c50-98b2-3c69ad95e70a",
+        "operation_id": "521fcdff-f986-489a-9225-f0abd667d6d3",
+        "run_id": "b82e79a9-e5db-42c8-a37c-6defa4266872"
+      },
+      {
+        "mission_id": "27717545-a8eb-47ca-a86d-080f42d735ee",
+        "task_id": "dd80c94d-e4c6-4231-9472-4565fe539ef3",
+        "operation_id": "4683fd00-4861-4639-868e-89879af9e726",
+        "run_id": "508374ac-be0b-44b5-b7f3-dbb06b7fc59c"
+      },
+      {
+        "mission_id": "50a308d2-d8ad-4ec7-9a9d-34558e99ca0e",
+        "task_id": "2dac0c26-2be7-453f-ba36-51a2caa0f052",
+        "operation_id": "16364f5d-4f25-40d3-8cd0-e568b77f0030",
+        "run_id": "62fc63b6-5a7e-496a-bff4-d41e49c2f384",
+        "via": "browser"
+      },
+      {
+        "mission_id": "5b2f5dc0-eeca-479d-9353-a1c9e0a4e6b7",
+        "task_id": "7e16af51-cfe2-4878-aeba-4def4f0c9aab",
+        "operation_id": "fdf088b9-6b5b-4ae8-af92-652c6c4a7108",
+        "run_id": "06535f39-4813-4d8b-bdcb-04ecd7923784",
+        "via": "browser-cancellation-race"
+      }
+    ],
+    "outcome": "PASSED"
+  },
+  "finished_at_utc": "2026-09-23T07:24:46.3679717+00:00"
+}

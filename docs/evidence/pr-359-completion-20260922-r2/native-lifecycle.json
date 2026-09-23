@@ -1,0 +1,67 @@
+{
+  "pr": 359,
+  "tested_staged_tree": "d9ee7add48137f1891244cfc27a22774d9dc8af7",
+  "source_head": "063d2940c5c086bfeac13bba71a9e7a295b26dcc",
+  "qa_root": "<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r2",
+  "started_at_utc": "2026-09-22T18:30:06.2248916+00:00",
+  "status": "passed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "name": "workspace-cache-refresh",
+      "sha256": "80ca335cb474a21a755c9d5b034ce4eaf35f64b5d286b1eb11d686f6b212394d",
+      "log": "native-workspace-cache-refresh.log",
+      "exit_code": 0,
+      "original_log": "pr359-native-r2-workspace-cache-refresh.log",
+      "original_sha256": "0f0cc8a73524b04e65970845a00ba747bed33e9231d9c920227dd30952779af1"
+    },
+    {
+      "name": "native-build",
+      "sha256": "c9d729d611cb75d14f893d38f9209bb288299fb4bd8323f01dcb21f5d586add8",
+      "log": "native-native-build.log",
+      "exit_code": 0,
+      "original_log": "pr359-native-r2-build.log",
+      "original_sha256": "dc5f71a09a4ed773071a4aa6c53d6473522787cd3b0d7cd09de31141e7b8ad57"
+    },
+    {
+      "name": "sqlx-workspace-cache-refresh",
+      "sha256": "1ae767f9a5ccaf664b9c79f92f83d46030b08fc1b538968c18b5a7fd6d865445",
+      "log": "native-sqlx-workspace-cache-refresh.log",
+      "exit_code": 0,
+      "original_log": "pr359-native-r2-sqlx-workspace-cache-refresh.log",
+      "original_sha256": "662abf958b4b3b597a9ce58287edf970c6fe44468c9907956684d5a10d2a756d"
+    },
+    {
+      "name": "owned-postgresql-regressions",
+      "sha256": "845cc1f4f5c9ccb73158bc6b4c87b3c77bc446cf0f58b2f2e2ef1cc96fdfbcc7",
+      "log": "native-owned-postgresql-regressions.log",
+      "exit_code": 0,
+      "original_log": "pr359-native-r2-sqlx.log",
+      "original_sha256": "62e1e3f97ca0ff9f0103b2ac9ae608ef36a8712e6cc4ba0e57a8582af6be23b1"
+    },
+    {
+      "name": "focused-native-acceptance",
+      "sha256": "186c06f4570f7534688f7ef5bb6bae7e2cb91b26149511c16fe41febd214252e",
+      "log": "native-focused-native-acceptance.log",
+      "exit_code": 0,
+      "original_log": "pr359-native-r2-focused.log",
+      "original_sha256": "356d7236a9052540a7b64367dfea6b1c2cbad8c6a9e06fb8c23df63f5d54228e"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "21faa6a0f0f9e81b08efbd65149a80b0a814ecec454370f9630accded03cde20",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "ea70aa0f3bcd5ca6ecf50716b92faa462f7b6fc2d18b86407968e0dbc4dc032d",
+      "file": "crony-runner.exe"
+    },
+    {
+      "sha256": "35762868d9412b363a801cead3e02202ff58c7043b46fe7a785d718f17ba7c75",
+      "file": "crony-cli.exe"
+    }
+  ],
+  "finished_at_utc": "2026-09-22T18:35:44.7440911+00:00",
+  "published_reference_note": "checks[].log and sha256 identify the published bytes. original_log and original_sha256 identify the retained private run. Historical reused_verification is a normalized original record, with copies under original-build/."
+}

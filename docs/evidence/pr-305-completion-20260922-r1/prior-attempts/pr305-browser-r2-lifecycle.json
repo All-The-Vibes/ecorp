@@ -1,0 +1,41 @@
+{
+  "pr": 305,
+  "tested_staged_tree": "93a5374d211eb9eb0fbb8e8cc61356e1e18b35fe",
+  "head": "155dc9cc4df91f2d9a5372de0c2cc9446c58c89c",
+  "started_at_utc": "2026-09-22T22:56:00.8444804+00:00",
+  "status": "failed",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr305-20260922-browser-r2",
+  "checks": [
+    {
+      "sha256": "881f0656ccc23ad77cd913cb1e60530e5fe59e45a87f9175049165054505e786",
+      "log": "<private-evidence>\\pr305-browser-r2-build.log",
+      "name": "current-source-native-build",
+      "exit_code": 0
+    },
+    {
+      "sha256": "a670cdc3e8dc904b342d80533080c9dd8a8a8f59ebc9d2bdad85e29f36187f85",
+      "log": "<private-evidence>\\pr305-browser-r2-context.log",
+      "name": "owned-static-app-admission",
+      "exit_code": 0
+    },
+    {
+      "sha256": "010c30ab363aca4802f8e8f8a057fc55fed3512158567c0713e40cfe8baa68d2",
+      "log": "<private-evidence>\\pr305-browser-r2-browser.log",
+      "name": "actual-browser-native-handoff-consumption",
+      "exit_code": 1
+    }
+  ],
+  "binaries": [
+    {
+      "file": "crony-server.exe",
+      "sha256": "99541ed8b3fdc09c719812b88b070bdcdcf4b0128faab9aff2a5d4b0cd627de1"
+    },
+    {
+      "file": "crony-runner.exe",
+      "sha256": "7672cc475effedbf15ef759a9c02188586360f0c8713776316a180e22d6fd0d2"
+    }
+  ],
+  "failure": "actual-browser-native-handoff-consumption failed; preserve the fixture and recorded IDs.",
+  "cleanup": "Only owned processes stopped; all source, database, workspaces and evidence retained.",
+  "finished_at_utc": "2026-09-22T22:57:03.8386865+00:00"
+}

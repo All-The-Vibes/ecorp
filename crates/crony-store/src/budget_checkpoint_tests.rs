@@ -322,7 +322,7 @@ async fn fixture_with_profile(
             .await
             .unwrap();
     }
-    store
+    let usage = store
         .apply_runner_event(event(
             SOURCE,
             TOKEN,
@@ -332,8 +332,7 @@ async fn fixture_with_profile(
         ))
         .await
         .unwrap();
-    let breaker = store.evaluate_circuit_breaker(CORP, SOURCE).await.unwrap();
-    if let Some(event) = breaker.event {
+    if let Some(event) = usage.related_events.first() {
         assert_eq!(event.payload["stage"], profile.expected_stage);
     } else {
         assert_eq!(profile.expected_stage, "healthy");
@@ -2019,6 +2018,135 @@ fn publication_renewal(
         idempotency_key: Uuid::new_v4().to_string(),
         lease_seconds: 300,
     }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue283_publication_gate_precedes_governance_locks(pool: PgPool) {
+    let (store, command, _, input) = publication_fixture(pool).await;
+    let (mission_id, task_id): (Uuid, Uuid) = sqlx::query_as(
+        "SELECT t.mission_id,t.id FROM tasks t JOIN runs r ON r.task_id=t.id WHERE r.id=$1",
+    )
+    .bind(command.run_id)
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    store
+        .initialize_state_audit(CORP, OWNER, Uuid::new_v4())
+        .await
+        .unwrap();
+    store.cover_mission(CORP, OWNER, mission_id).await.unwrap();
+    let started = store
+        .start_pull_request_publication(input.clone())
+        .await
+        .unwrap();
+    let renewal = publication_renewal(&input, &started);
+    for replay in [false, true] {
+        let mut governance = store.pool.begin().await.unwrap();
+        sqlx::query("SELECT corp_id FROM state_audit_ledgers WHERE corp_id=$1 FOR UPDATE")
+            .bind(CORP)
+            .execute(&mut *governance)
+            .await
+            .unwrap();
+        let operation = {
+            let store = store.clone();
+            let renewal = renewal.clone();
+            tokio::spawn(async move { store.renew_pull_request_publication(renewal).await })
+        };
+        tokio::time::timeout(std::time::Duration::from_secs(10), async {
+            loop {
+                let waiting: bool = sqlx::query_scalar(
+                    "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE 'SELECT last_sequence FROM state_audit_ledgers%')",
+                ).fetch_one(&store.pool).await.unwrap();
+                if waiting { break; }
+                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            }
+        }).await.expect("renewal must reach its audit ledger gate");
+        let mission_lock = sqlx::query("SELECT id FROM missions WHERE id=$1 FOR UPDATE NOWAIT")
+            .bind(mission_id)
+            .execute(&mut *governance)
+            .await;
+        if let Err(error) = mission_lock {
+            governance.rollback().await.unwrap();
+            operation.await.unwrap().unwrap();
+            panic!("renewal locked governance before its audit gate: {error}");
+        }
+        sqlx::query("SELECT id FROM tasks WHERE id=$1 FOR UPDATE NOWAIT")
+            .bind(task_id)
+            .execute(&mut *governance)
+            .await
+            .unwrap();
+        governance.commit().await.unwrap();
+        let renewed = tokio::time::timeout(std::time::Duration::from_secs(10), operation)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap();
+        assert_eq!(renewed.replayed, replay);
+        assert_eq!(renewed.publication.version, started.publication.version + 1);
+        assert_eq!(renewed.publisher_token, started.publisher_token);
+    }
+
+    store
+        .configure_audit_destination(
+            OWNER,
+            &state_audit::AuditDestination {
+                id: Uuid::new_v4(),
+                corp_id: CORP,
+                kind: "github".into(),
+                interval_seconds: 60,
+                calendar_schedule: None,
+                overdue_after_seconds: 3600,
+                workflow_gate: "published".into(),
+                config: json!({"repository":"fixture/audit","branch":"main","path":"audit"}),
+            },
+        )
+        .await
+        .unwrap();
+    assert!(
+        store
+            .renew_pull_request_publication(renewal.clone())
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains("audit assurance workflow gate")
+    );
+    reject_publication(&store, &input, Some(&renewal)).await;
+    let failure = RecordPullRequestPublicationCheckpointInput {
+        corp_id: CORP,
+        publication_id: started.publication.id,
+        actor_id: OWNER,
+        publisher_id: input.publisher_id.clone(),
+        publisher_credential_hash: input.publisher_credential_hash.clone(),
+        publisher_token: started.publisher_token.unwrap(),
+        expected_version: started.publication.version + 1,
+        idempotency_key: Uuid::new_v4().to_string(),
+        checkpoint: PullRequestPublicationCheckpointInput::Failed {
+            failure_detail: "Audit assurance no longer permits publication".into(),
+        },
+    };
+    let recorded = store
+        .record_pull_request_publication_checkpoint(failure.clone())
+        .await
+        .unwrap();
+    assert!(recorded.publisher_token.is_none());
+    assert!(
+        store
+            .record_pull_request_publication_checkpoint(failure)
+            .await
+            .unwrap()
+            .replayed
+    );
+    let mut recovery = input.clone();
+    recovery.idempotency_key = Uuid::new_v4().to_string();
+    assert!(
+        store
+            .start_pull_request_publication(recovery)
+            .await
+            .unwrap_err()
+            .to_string()
+            .contains("audit assurance workflow gate")
+    );
 }
 
 async fn publication_state(store: &PgStore) -> Value {

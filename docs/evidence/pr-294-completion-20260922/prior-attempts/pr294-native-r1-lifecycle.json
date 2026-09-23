@@ -1,0 +1,53 @@
+{
+  "pr": 294,
+  "tested_staged_tree": "29c59aa86469db2e21880c140fc1ca119cc3276b",
+  "source_head": "be187e5072223e3bd7dbc147293bfc18ecdac822",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r1",
+  "started_at_utc": "2026-09-22T21:51:16.3725078+00:00",
+  "status": "failed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr294-native-r1-workspace-cache-refresh.log",
+      "sha256": "6cca5668479778048ddbf1f25a5bad24d8efec984bcd68b30f38813b2b78d5e8",
+      "name": "workspace-cache-refresh"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr294-native-r1-build.log",
+      "sha256": "b46a99143b84009341e25b4e121a1bbf162a4e86a4accaa726875207adbbe94c",
+      "name": "native-build"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr294-native-r1-sqlx-workspace-cache-refresh.log",
+      "sha256": "32ce4dd47cc7d35d4919f8db5b23be5292b2df57b8e455b23908a1ead8a25575",
+      "name": "sqlx-workspace-cache-refresh"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr294-native-r1-sqlx-crony-server.log",
+      "sha256": "95bf290742e173f3cb00117d61bf96622bd6e86c6c663c32e0a916771d22ef73",
+      "name": "owned-postgresql-crony-server-regressions"
+    },
+    {
+      "exit_code": 1,
+      "log": "<private-evidence>\\pr294-native-r1-browser.log",
+      "sha256": "eb0a57d1c7d11a3ee0f932edec94a800d631570a66412641944bd6235c4b196e",
+      "name": "browser-server-runner-policy-acceptance"
+    }
+  ],
+  "binaries": [
+    {
+      "file": "crony-server.exe",
+      "sha256": "29ffcfbcfea8f8c752deba2e1620132d470ed6837cfb0f0cc5a23bc7a66097ec"
+    },
+    {
+      "file": "crony-runner.exe",
+      "sha256": "b7179629640f3b1cb4007cae88aa88c784e9513edecf5d0eb4fb9ed3715dfde0"
+    }
+  ],
+  "failure": "browser-server-runner-policy-acceptance failed; preserve logs and fixture.",
+  "finished_at_utc": "2026-09-22T21:56:08.2560552+00:00"
+}

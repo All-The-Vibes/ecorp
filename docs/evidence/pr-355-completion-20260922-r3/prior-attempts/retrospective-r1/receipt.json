@@ -1,0 +1,71 @@
+{
+  "status": "failed",
+  "started_at_utc": "2026-09-22T23:55:16.1228777+00:00",
+  "source_manifest_sha256": "b7224a5ec3f061300d684c7aef5040a8d1674017fb1cb6ac8b17835122946247",
+  "scope": "Retrospective behavioral comparison on a new, owned loopback SCRAM PostgreSQL instance. Not original TDD chronology.",
+  "driver_sha256": "3a6e1120b8e441c8552a57727aedbe7f6c2f1764ce492f24cafc1a145af20d9d",
+  "baseline_tested_tree": "5c0dd2d3570c3492c53543b9501eb2c34e93c035",
+  "candidate_tested_tree": "5bbcd7f113748ca222ce3e0b2e3310b44baa184e",
+  "commands": [
+    {
+      "program": "cargo",
+      "exit_code": 0,
+      "expected": "one-pass",
+      "expected_behavior_observed": true,
+      "repository": "<local-user>\\code\\ecorp-pr355-retrospective-20260922-r1",
+      "name": "baseline-ordinary-failure-control",
+      "log": "<private-evidence>\\pr355-retrospective-r1\\baseline-ordinary-failure-control.log",
+      "arguments": [
+        "test",
+        "--locked",
+        "-p",
+        "crony-store",
+        "deliverable_failure_tests::issue89_untyped_execution_failure_keeps_existing_retry_policy",
+        "--",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1",
+        "--exact"
+      ],
+      "sha256": "def6053f8560929177b3522839ad08d0b51b1c3d49c71dd77b9d3b1a1c866ad7",
+      "tested_tree": "5c0dd2d3570c3492c53543b9501eb2c34e93c035"
+    },
+    {
+      "program": "cargo",
+      "exit_code": 101,
+      "expected": "behavioral-red",
+      "expected_behavior_observed": false,
+      "repository": "<local-user>\\code\\ecorp-pr355-retrospective-20260922-r1",
+      "name": "baseline-export-failure-regression",
+      "log": "<private-evidence>\\pr355-retrospective-r1\\baseline-export-failure-regression.log",
+      "arguments": [
+        "test",
+        "--locked",
+        "-p",
+        "crony-store",
+        "deliverable_failure_tests::issue89_export_failure_retains_history_and_cannot_schedule_fresh_retry",
+        "--",
+        "--ignored",
+        "--nocapture",
+        "--test-threads=1",
+        "--exact"
+      ],
+      "sha256": "c8780ed10a6420f8c73109999080e50fe6509f5bd129775d37d12ab072ff822e",
+      "tested_tree": "5c0dd2d3570c3492c53543b9501eb2c34e93c035"
+    }
+  ],
+  "cleanup": "Exact owned PostgreSQL stopped; listener absent. Private data, credentials, source overlays and logs preserved.",
+  "postgres_version": "postgres (PostgreSQL) 17.10",
+  "initdb_exit": 0,
+  "process": {
+    "pid": 38676,
+    "stderr": "<local-user>\\code\\qa\\pr355-retrospective-20260922-r1\\logs\\postgres-20260923T000226595-673848838f4d455b9bdbde161a787235.stderr.log",
+    "workspace": "<local-user>\\code\\qa\\pr355-retrospective-20260922-r1",
+    "role": "postgres",
+    "started_utc": "2026-09-23T00:02:26.7049249Z",
+    "stdout": "<local-user>\\code\\qa\\pr355-retrospective-20260922-r1\\logs\\postgres-20260923T000226595-673848838f4d455b9bdbde161a787235.stdout.log",
+    "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe"
+  },
+  "error": "baseline-export-failure-regression did not establish its expected behavioral result; logs retained.",
+  "finished_at_utc": "2026-09-23T00:06:27.8979629+00:00"
+}

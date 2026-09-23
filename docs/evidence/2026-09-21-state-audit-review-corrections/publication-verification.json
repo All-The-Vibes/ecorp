@@ -1,0 +1,170 @@
+{
+  "date": "2026-09-21",
+  "scope": "Four-fix corrective proposal; B04 OPEN; NOT full-PR NICE or merge-ready",
+  "priorUnpublishedCandidate": "dad4e76a91ee9caecb8a246cfeddd004853137b6",
+  "startingRemoteHead": "ab84f5aa72649fad2e323fac95d3e8755ebd6e96",
+  "currentNineCommandGate": "BLOCKED: six pass, three named scripts absent",
+  "sourceInputsUnchangedDuringRun": true,
+  "commands": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "status": "PASS",
+      "log": "logs/withdrawal_1-migrations.txt",
+      "startedAt": "2026-09-21T22:05:04.030675+00:00",
+      "finishedAt": "2026-09-21T22:05:04.168863+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 1,
+      "status": "UNAVAILABLE_SCRIPT_NOT_FOUND",
+      "log": "logs/withdrawal_1-docs.txt",
+      "startedAt": "2026-09-21T22:05:04.169866+00:00",
+      "finishedAt": "2026-09-21T22:05:05.034567+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "unit",
+      "exitCode": 1,
+      "status": "UNAVAILABLE_SCRIPT_NOT_FOUND",
+      "log": "logs/withdrawal_1-unit.txt",
+      "startedAt": "2026-09-21T22:05:05.035570+00:00",
+      "finishedAt": "2026-09-21T22:05:05.803607+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "steward",
+      "exitCode": 1,
+      "status": "UNAVAILABLE_SCRIPT_NOT_FOUND",
+      "log": "logs/withdrawal_1-steward.txt",
+      "startedAt": "2026-09-21T22:05:05.805606+00:00",
+      "finishedAt": "2026-09-21T22:05:06.609513+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "fmt",
+      "exitCode": 0,
+      "status": "PASS",
+      "log": "logs/withdrawal_1-fmt.txt",
+      "startedAt": "2026-09-21T22:05:06.610515+00:00",
+      "finishedAt": "2026-09-21T22:05:08.887529+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "status": "PASS",
+      "log": "logs/withdrawal_1-clippy.txt",
+      "startedAt": "2026-09-21T22:05:08.889525+00:00",
+      "finishedAt": "2026-09-21T22:06:09.199072+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "workspace",
+      "exitCode": 0,
+      "status": "PASS",
+      "log": "logs/withdrawal_1-workspace.txt",
+      "startedAt": "2026-09-21T22:06:09.200062+00:00",
+      "finishedAt": "2026-09-21T22:13:36.994440+00:00",
+      "testTotals": {
+        "passed": 561,
+        "failed": 0,
+        "ignored": 367
+      }
+    },
+    {
+      "name": "build_web",
+      "exitCode": 0,
+      "status": "PASS",
+      "log": "logs/withdrawal_1-build_web.txt",
+      "startedAt": "2026-09-21T22:13:36.995441+00:00",
+      "finishedAt": "2026-09-21T22:13:50.482932+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "lint_web",
+      "exitCode": 0,
+      "status": "PASS",
+      "log": "logs/withdrawal_1-lint_web.txt",
+      "startedAt": "2026-09-21T22:13:50.483926+00:00",
+      "finishedAt": "2026-09-21T22:13:52.434790+00:00",
+      "testTotals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    }
+  ],
+  "supportingPriorSqlxEvidence": {
+    "includedFindings": [
+      "B01",
+      "B02",
+      "B03",
+      "B05"
+    ],
+    "withheldFinding": "B04 OPEN; proposal regression withdrawn, not a forward fix",
+    "sourceEvidence": [
+      {
+        "path": "crates/crony-store/src/state_audit.rs",
+        "priorTestedSha256": "76c078c058c4d98f7abd8621cb460a96f723757d9b8ef5ba572bad41f2b9f5a9",
+        "currentRawSha256": "76c078c058c4d98f7abd8621cb460a96f723757d9b8ef5ba572bad41f2b9f5a9",
+        "proof": "Exact raw-byte match against actual B05 GREEN source binding"
+      },
+      {
+        "path": "crates/crony-server/src/main.rs",
+        "priorTestedSha256": "dfa5a66563a15d4f00a48e53c1442d60c32d0fe2d50f7c3c8c309b67eae3382e",
+        "currentRawSha256": "dfa5a66563a15d4f00a48e53c1442d60c32d0fe2d50f7c3c8c309b67eae3382e",
+        "proof": "Exact raw-byte match against actual B05 GREEN source binding"
+      },
+      {
+        "path": "crates/crony-server/src/factory_source_audit_tests.rs",
+        "priorTestedSha256": "a5a7f6d693bf37112ea35d28355b334c6f9fd3518735637f94476ca99f19b8df",
+        "currentRawSha256": "a5a7f6d693bf37112ea35d28355b334c6f9fd3518735637f94476ca99f19b8df",
+        "proof": "Exact raw-byte match against actual B05 GREEN source binding"
+      },
+      {
+        "path": "crates/crony-store/src/lib.rs",
+        "priorTestedSha256": "6417d6f88418ff29f21b40464fd9211355e38540fd94ae644040517bbe44f312",
+        "currentRawSha256": "1ad26b6ce40701b806e9efc06d528d8baa3991cf4fbc73a8d800b8f57893f387",
+        "proof": "Exact content after CRLF/LF normalization against retained pre-B04 source whose raw hash matches actual B05 GREEN source binding"
+      },
+      {
+        "path": "crates/crony-store/src/contract_revision.rs",
+        "priorTestedSha256": "6e2e52bc0495bce373a1b3c08d7c2a6204f9e08bdba3cc9f85f8f088fd44bdc5",
+        "currentRawSha256": "6e2e52bc0495bce373a1b3c08d7c2a6204f9e08bdba3cc9f85f8f088fd44bdc5",
+        "proof": "Exact raw-byte match against actual B05 GREEN source binding"
+      }
+    ],
+    "scope": "These source-equality checks support reuse of specific actual prior native tests; not a claim that all post-withdrawal SQLx tests were rerun."
+  },
+  "dbReexecution": "Not performed after withdrawal. Existing engine unavailable after one bounded native detached recovery attempt; no fixture recreated/reset. Do not report current SQLx success."
+}

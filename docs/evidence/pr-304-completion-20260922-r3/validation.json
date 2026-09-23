@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "pr": 304,
+  "source_head": "8f9d76c24eea69038ea25b4f39a5f475f8b46011",
+  "tested_staged_tree": "ea803db5e705a70a88378e075d0c92e623f3f592",
+  "target_main": "08b0b89b2dd16c1906c9dd3468c5ddecca24c4ce",
+  "started_at_utc": "2026-09-23T02:59:25.5151661+00:00",
+  "finished_at_utc": "2026-09-23T03:15:44.8012669+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "Nine contributor gates and 566 separate package/snapshot/executor-state tests passed on the same staged source. This is local CLI and policy-tooling validation, including immutable historical journal replay. It does not authenticate reviewers or claim application-runtime/provider acceptance.",
+  "maintainer_changes": "Require explicit boolean draft state for every new live sync and publication snapshot while preserving historical v1/v2 replay. Validate source and target Git refs before processing inventory details; reject malformed/missing source refs without discarding valid nested or Unicode branch names. This fresh packet supersedes older packets for current-source validation; historical evidence remains unchanged and is not reused as proof of this source.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.3712238,
+      "log": "migrations.log",
+      "original_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823",
+      "published_log_sha256": "647fc92ef827bdde2d804ae951c78304f0522f35f9832dde27b39840b8263757"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.1386297,
+      "log": "documentation.log",
+      "original_log_sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406",
+      "published_log_sha256": "f7c1081b3ad5e5b322c890127d287c1cef53b868efc7b40d1b7b2eef7b9aeb18"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 3.8484446,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 97.1313276,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "75e3b60ab19255286ee596776fa883c4420b01cd7b38a76d1d733d2b255445e3",
+      "published_log_sha256": "df0a58eb7e4b049b6910a88339449195dfae89965fd9d34ed068d61ca1330568"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 669.0751292,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "a836791435521bfcfab1b612925df9686f999cdc4adff845f8dd94024f42daa5",
+      "published_log_sha256": "07e7e93838ed3cbeb5507ba3f5e811e60084f538964191ff305d5e109245e647"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 63.8244805,
+      "log": "node-unit.log",
+      "original_log_sha256": "47f37e20fc6863ccb59dd29a43805b6d30b78da777c60806be3664d1ceea22d3",
+      "published_log_sha256": "b3fea21c0f3b47405708d30219ac06d3729375a588fd7cf2da1d8b442a1a9b58"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 108.4804073,
+      "log": "steward.log",
+      "original_log_sha256": "653c519341bbbf5a879a404a7430aefe1492230ce99a95930af36f86f5d88db9",
+      "published_log_sha256": "335c047a0d2ea03bd345152023d5e086671b7fe3d561167061aa0e17bc90f37c"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 5.2682798,
+      "log": "web-build.log",
+      "original_log_sha256": "03c33770e88e2ccb6b0c412c176fe46815cc0b2284d8aecdb78e4873f0c0bd5c",
+      "published_log_sha256": "83c3448e946e034d479678b86f263f02a466443d4fe74512c07b4ad203dad518"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 2.5475106,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "build_preparation": {
+    "workspace_refresh": {
+      "exit_code": 0,
+      "log": "workspace-refresh.log",
+      "original_log_sha256": "0f0cc8a73524b04e65970845a00ba747bed33e9231d9c920227dd30952779af1",
+      "published_log_sha256": "80ca335cb474a21a755c9d5b034ce4eaf35f64b5d286b1eb11d686f6b212394d"
+    },
+    "native_mcp_build": {
+      "exit_code": 0,
+      "log": "native-mcp-build.log",
+      "original_log_sha256": "aa522fa516e361a3b6c14a4193e651d4d31c574cab5193051b798851d459570b",
+      "published_log_sha256": "888a64e9f26e0e8202412c7994390480029d16f1a863a941624f13e5ae924ddc",
+      "binary_sha256": "ab3eb9e64027a6e9228d692857b6b4789a9a8d0fe8f14fe8229fef1673913a78"
+    }
+  }
+}

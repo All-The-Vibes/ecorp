@@ -1,0 +1,51 @@
+{
+  "pr": 293,
+  "purpose": "Base V2 owned PostgreSQL regressions",
+  "source_head": "89f6f0d9ca0a01771b72941198b256b8df94d01d",
+  "tested_staged_tree": "cc92da1a2d52fa724c5a35c8ee2e871a5a7da7ed",
+  "qa_root": "<local-user>\\code\\qa\\pr293-audit-store-20260923-r3",
+  "target": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T07:21:32.7881218+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr293-native-database-r3-initdb.log",
+      "name": "owned-postgresql-initialization",
+      "sha256": "1d0feeda9406f2749aeebe1d3a0ff339d60131852319ed8ea42cd9268e2b0dba"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr293-native-database-r3-workspace-cache-refresh.log",
+      "name": "workspace-cache-refresh",
+      "sha256": "c0ade33c2a3423a3d65dd736d09b2b72c8dabb1e9bc7715f3242d6ffed3b5a0f"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr293-native-database-r3-base-v2.log",
+      "name": "owned-postgresql-base-v2",
+      "sha256": "a4230aee1cc47bdbfbf920e982f52d48fb3521e5194fd623f3015c9c4cf1e7d1"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr293-native-database-r3-worker-observation.log",
+      "name": "owned-postgresql-worker-observation",
+      "sha256": "721c31f416576018924958031e7c17001499c1a480e4bfc2b3ce90affb881c9e"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr293-native-database-r3-native-archive.log",
+      "name": "owned-postgresql-native-archive",
+      "sha256": "15fdbd766b46f775204a50b045eae073e4a7381242bfe0ff94c1b1d9b8ea444d"
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+  "authentication": {
+    "method": "scram-sha-256",
+    "authenticated_query": true,
+    "wrong_password_rejected": true,
+    "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance."
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T07:34:56.6441390+00:00"
+}

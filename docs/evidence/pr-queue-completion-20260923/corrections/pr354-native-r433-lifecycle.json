@@ -1,0 +1,53 @@
+{
+  "pr": 354,
+  "validation_source_tree": "67e9c956ad29ed0ffdb10b165d6320a506a3eb5b",
+  "validation_receipt_sha256": "5c18e0319b0d9568d7452a77672dfabff968571104540e702aff9c1bd7fb14ae",
+  "tested_staged_tree": "67e9c956ad29ed0ffdb10b165d6320a506a3eb5b",
+  "source_head": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr354-20260922-r433",
+  "started_at_utc": "2026-09-23T18:00:17.7658904+00:00",
+  "status": "failed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr354-native-r433-workspace-cache-refresh.log",
+      "sha256": "21e6235ba9ab274ac81fbdee8a9aef74a30c138e59eccd322169009acbb12aac",
+      "name": "workspace-cache-refresh"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr354-native-r433-build.log",
+      "sha256": "874b44b40c848771788866301a8f0328316eff6662ac36c65239762641d190a7",
+      "name": "native-build"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr354-native-r433-sqlx-workspace-cache-refresh.log",
+      "sha256": "57ef4bd3b8b2eda379a82cd55725cf84074c18646333afaf630a7af9a6289241",
+      "name": "sqlx-workspace-cache-refresh"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr354-native-r433-sqlx-factory-connection.log",
+      "sha256": "50710a8520496f554430f27f2d8c4640c9ea8fa08a876d81357d6974febb0ce1",
+      "name": "owned-postgresql-factory-connection-regressions"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "52aeb775b42e90338e8a06ab567b026bb6faa40d6227588067efb6de235566e1",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "f08f4bb22cc6ffd8482ebe7318db5941b5a5034bfc0fb9dd5e206f1592b337dc",
+      "file": "crony-runner.exe"
+    },
+    {
+      "sha256": "5c6332979281a0870981928716607838c021dd716f60e2b2cb2efe7c780dab47",
+      "file": "crony-cli.exe"
+    }
+  ],
+  "failure": "The factory-connection suite did not execute all 9 expected PostgreSQL regressions.",
+  "finished_at_utc": "2026-09-23T18:06:10.3794878+00:00"
+}

@@ -156,3 +156,43 @@ test('verification labels retain their current wording and fallback formatting',
   assert.equal(verificationTypeLabel('independent_review'), 'Independent Review')
   assert.equal(verificationTypeLabel('future_gate'), 'Future Gate')
 })
+
+
+test('policy edits preserve explicit cache controls and legacy omission on the wire', () => {
+  for (const type of ['command', 'test']) {
+    for (const value of [undefined, null, 'python_interpreter', 'python_environment', 'node_compile_cache']) {
+      const check = defaultVerifierCheck(type)
+      if (value !== undefined) check.cache_suppression = value
+      const original = policy([check])
+      const before = JSON.stringify(original)
+      let draft = appendVerifierCheck(original)
+      draft = replaceVerifierCheck(draft, 1, { type: 'file', path: 'result.txt', min_bytes: 10 })
+      draft = setManualVerificationGate(draft, 'human_approval')
+      draft = removeVerifierCheck(draft, 1)
+      assert.deepEqual(verificationPolicyErrors(draft), [])
+      const wire = JSON.parse(JSON.stringify(draft)).checks[0]
+      assert.deepEqual(wire, check)
+      assert.equal(Object.hasOwn(wire, 'cache_suppression'), value !== undefined)
+      assert.equal(JSON.stringify(original), before)
+    }
+  }
+})
+
+
+test('completion summaries distinguish explicit cache requests and preserve null or omitted policies', () => {
+  const labels = {
+    python_interpreter: 'Python interpreter (-B)',
+    python_environment: 'Python environment',
+    node_compile_cache: 'Node compile cache',
+  }
+  for (const type of ['command', 'test']) {
+    const check = { type, program: 'python3', args: ['one two'], timeout_ms: 1499 }
+    const legacy = `${type === 'test' ? 'Test' : 'Command'} · ["python3","one two"] · 1s`
+    assert.equal(verifierCheckSummary(check), legacy)
+    assert.equal(verifierCheckSummary({ ...check, cache_suppression: null }), legacy)
+    for (const [cache_suppression, label] of Object.entries(labels)) {
+      assert.equal(verifierCheckSummary({ ...check, cache_suppression }),
+        `${legacy} · Requested cache control: ${label} (requires a compatible runner)`)
+    }
+  }
+})

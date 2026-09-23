@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "pr": 237,
+  "source_head": "c54d2c509cf4862bf8a2adc16fa4419f7970c920",
+  "tested_staged_tree": "dfbe00b6a12493cdb70132c8ce685d544ea9f7d3",
+  "target_main": "08b0b89b2dd16c1906c9dd3468c5ddecca24c4ce",
+  "started_at_utc": "2026-09-23T04:25:58.9000454+00:00",
+  "finished_at_utc": "2026-09-23T04:42:33.8006108+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "Nine current contributor gates; 207 focused process/Git/recovery tests with native owned-process cases enabled and zero skips; retrospective admission and hostile-Git baseline/candidate results; complete-ancestry Gitleaks 8.30.1 scan of the final product-source commit. Existing four-scenario/native/browser acceptance retains its original historical scope.",
+  "maintainer_changes": "Roll back post-spawn identity and receipt failures through the exact retained child capability, retain unconfirmed rollback evidence, isolate synthetic Git configuration, and canonicalize the trusted Node executable in native ownership tests.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.572515,
+      "log": "migrations.log",
+      "original_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823",
+      "published_log_sha256": "647fc92ef827bdde2d804ae951c78304f0522f35f9832dde27b39840b8263757"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.4148469,
+      "log": "documentation.log",
+      "original_log_sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406",
+      "published_log_sha256": "f7c1081b3ad5e5b322c890127d287c1cef53b868efc7b40d1b7b2eef7b9aeb18"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 4.7786992,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 119.8337087,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "3988629ea7da1cd1dfa4b753e7bff3a481ea4d392592726e8e8b5ebec6217646",
+      "published_log_sha256": "cb20e353cec34becca33431e9bb536c44dc6c552885ea46f558f94bad848bc8d"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 624.1226864,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "6749c641a0f041bf0204bad506f646b1d33ee326759deeca783dddabad0f12fc",
+      "published_log_sha256": "60ae69d923a5c055bf3a9306768efe16c9e965dfb68da7b1473bedf847b0a15c"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 86.9399389,
+      "log": "node-unit.log",
+      "original_log_sha256": "78211e0142c2b8ee43e8f59a7246517d93a5d347cba72bf412c2d8cddf9436a1",
+      "published_log_sha256": "9713c4447087ba1f63b5a40edca59cf6dae81772b4958b60400edd0e070f07e6"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 85.86812,
+      "log": "steward.log",
+      "original_log_sha256": "781dd092a8f5930f33a0d3bbd937d26c58515ccd58efb8bf037b2f2f3ab4e8ff",
+      "published_log_sha256": "792e8772cc3f1e67e6a791575a471b15ce0a5d3308c23c9f0c8fa79c904d0ef7"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 8.0260691,
+      "log": "web-build.log",
+      "original_log_sha256": "928bee3acf92fad9cf60103c1af4d57d7b5d797bde8da6ae31fad7363aceb83e",
+      "published_log_sha256": "dca5e5584464ed8d0fe5d3a71142a3c0fc7bbad21114b6c08449afb621d7284e"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 2.8229036,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "build_preparation": {
+    "workspace_refresh": {
+      "exit_code": 0,
+      "log": "workspace-refresh.log",
+      "original_log_sha256": "32ce4dd47cc7d35d4919f8db5b23be5292b2df57b8e455b23908a1ead8a25575",
+      "published_log_sha256": "412afb30733a6378779fc23bbe4835b312ae2e2d5d9756260352f669a199fc6c"
+    },
+    "native_mcp_build": {
+      "exit_code": 0,
+      "log": "native-mcp-build.log",
+      "original_log_sha256": "6e62b05fbf82edca0c9a46bffc43bb2628f403736d2ed96a509e746cf7e6e976",
+      "published_log_sha256": "3aa44dc3441d0bc581a4d849c2d28c39183789a105a283706d259c63ec0f13ce",
+      "binary_sha256": "7184a10c7afe2095767f9bf9aadd19e3d99babefacc35b902854427f073f19cf"
+    }
+  }
+}

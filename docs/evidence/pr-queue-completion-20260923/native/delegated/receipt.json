@@ -1,0 +1,131 @@
+{
+  "pr": 320,
+  "purpose": "Owned native Keycloak browser/server/runner delegated acceptance",
+  "source_head": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "tested_staged_tree": "67e9c956ad29ed0ffdb10b165d6320a506a3eb5b",
+  "qa_root": "<local-user>\\code\\qa\\delegated-keycloak-pr320-20260923-r433",
+  "target": "<local-user>\\code\\ecorp-pr-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T17:52:56.4080229+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "sha256": "9ebea9891b361f1e18b970738b05ff8a2269c1cbc66ee8f31e71ce5b01a8a6e4",
+      "exit_code": 0,
+      "name": "workspace-cache-refresh",
+      "log": "<private-evidence>\\queue-delegated-native-r433-workspace-cache-refresh.log"
+    },
+    {
+      "sha256": "e8ec89f2df155f67d4268be07b4ea2674a33f4a00b5817bb50a524d94277aa5b",
+      "exit_code": 0,
+      "name": "crony-server-build",
+      "log": "<private-evidence>\\queue-delegated-native-r433-crony-server-build.log"
+    },
+    {
+      "sha256": "b58952ea1b5fceb700ca591dd97ca7e9edb3dbcceb9f5fbc74d179c673ae6605",
+      "exit_code": 0,
+      "name": "crony-runner-build",
+      "log": "<private-evidence>\\queue-delegated-native-r433-crony-runner-build.log"
+    },
+    {
+      "sha256": "58f8c5a4e457529047df3d509ff6a694f81965f4fb06633d3e7192f4a49c1902",
+      "exit_code": 0,
+      "name": "owned-native-stack-start-and-ownership-proof",
+      "log": "<private-evidence>\\queue-delegated-native-r433-start.log"
+    },
+    {
+      "sha256": "78b4cd3a66cb688483fa96cbce54420f165d24d63f6537bbb4f1d4a9ee3f67ff",
+      "exit_code": 0,
+      "name": "owned-browser-server-runner-delegated-acceptance",
+      "log": "<private-evidence>\\queue-delegated-native-r433-browser-driver.log"
+    }
+  ],
+  "cleanup": "Only exact owned fixture processes stopped; private data, credentials, source, worktrees, binaries and evidence retained.",
+  "live_azure": "NOT_EXECUTED",
+  "scope": "Synthetic Keycloak 26.7.4; development principals; not production OIDC or OS isolation.",
+  "binaries": [
+    {
+      "name": "crony-server",
+      "sha256": "2cad79904676b5594c538283ce6bf90a217178318ce761bfea036d52b8054ae1"
+    },
+    {
+      "name": "crony-runner",
+      "sha256": "5ae42cb0b6c899dc5f53c9c247042518106ce4f2de607eec6bf97000ba298f16"
+    }
+  ],
+  "source_unchanged": true,
+  "acceptance": {
+    "kind": "AUTOMATED_SYNTHETIC_NOT_HUMAN_ACCEPTANCE",
+    "live_azure": "NOT_EXECUTED",
+    "checks": [
+      "protected-resource-denies-anonymous",
+      "original-assignment-denied-before-auth",
+      "cross-task-run-epoch-assignment-denied",
+      "cross-human-authorize-cancel-release-preview-denied",
+      "pkce-then-keycloak-exchange-protected-read-independent-digest-private-release-gate",
+      "single-use-browser-ticket-and-callback-replay-denied",
+      "same-original-run-native-artifact-verifier-completion-no-secret-in-shared-state",
+      "independent-authenticated-artifact-download-sha256-and-exact-receipt",
+      "provider-subject-mismatch-denied",
+      "cancel-denies-read-and-unopened-auth-ticket",
+      "expired-operation-cannot-read-or-reopen",
+      "expired-downstream-grant-cannot-read-or-release-clock-fault",
+      "browser-lost-create-response-reload-recovers-one-job-and-completed-replay-preserves-one-run",
+      "browser-start-login-private-preview-release-original-run-verifier-completion",
+      "real-browser-cancellation-fences-delayed-authorize-response-and-closes-popup"
+    ],
+    "jobs": [
+      {
+        "mission_id": "39956b74-0148-454d-ad77-6cbf84cde65f",
+        "task_id": "a9e25451-ba9d-439a-9d38-3143cd184be0",
+        "operation_id": "c9462609-dbcd-4bd6-9383-cfb34d2fe01e",
+        "run_id": "de6f3bfd-33d8-4a52-8b99-8e688e26820d",
+        "idempotent_replay": true
+      },
+      {
+        "mission_id": "f2360880-3302-4396-8a3f-3858dd30546a",
+        "task_id": "0d1bab0d-ea42-4922-97c1-6a46764f61c3",
+        "operation_id": "db284107-e31d-4012-905c-a3c38e91b72c",
+        "run_id": "5b74507b-f7dd-4cd7-9d62-03a92246af2f",
+        "idempotent_replay": true
+      },
+      {
+        "mission_id": "980cab46-f2b2-41fd-b7a0-a369ffe2df8d",
+        "task_id": "ed1547b7-8bbe-4ca5-80c3-c67a0fa9688d",
+        "operation_id": "ef8ace2c-9acc-4bdc-b935-822e06f4ee52",
+        "run_id": "b051ce53-c1a1-4e72-af3f-065976841bd5",
+        "idempotent_replay": true
+      },
+      {
+        "mission_id": "7593edd3-574b-4b17-96cb-f519c8fff0b4",
+        "task_id": "d8258fc6-f86b-43f4-8f66-9060f3617c76",
+        "operation_id": "c835721d-18d1-4cb6-b627-d34b987f073b",
+        "run_id": "f428ae29-39ad-4853-8828-bdbdb8cd7a1f",
+        "idempotent_replay": true
+      },
+      {
+        "mission_id": "914ed830-ec83-49a9-a450-e5193f07f631",
+        "task_id": "07257560-f8f3-40dc-b294-02703c4f0120",
+        "operation_id": "4ac6ea5a-154a-4934-82d8-37a6d4c13bdb",
+        "run_id": "a2d15c77-cbef-4b01-8bb7-4189353a4996",
+        "idempotent_replay": true
+      },
+      {
+        "mission_id": "4a30b69d-1424-41f8-99a9-fea069bb185b",
+        "task_id": "403b7781-7755-47fd-9ad1-cd0acb9416ca",
+        "operation_id": "61529db6-6e76-4e56-8292-4fb6379a3b8b",
+        "run_id": "65598386-ef68-43a2-8a8a-bd9fc0d421a4",
+        "via": "browser"
+      },
+      {
+        "mission_id": "5c0371f8-92d9-4f10-8abe-9a6a8ce5707e",
+        "task_id": "b084e963-61d7-4da8-bce5-98a8fd83df3f",
+        "operation_id": "4f3bacf8-cbc6-4f45-ba2f-85c11a6c5142",
+        "run_id": "266c7ad1-cb0f-4305-8249-569dca943833",
+        "via": "browser-cancellation-race"
+      }
+    ],
+    "outcome": "PASSED"
+  },
+  "stop_exit_code": 0,
+  "finished_at_utc": "2026-09-23T18:00:15.5098419+00:00"
+}
