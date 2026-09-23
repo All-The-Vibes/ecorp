@@ -63,9 +63,9 @@ Both the read-only gateway and probe require HTTPS except for normalized `localh
 tools before any HTTP request. The unrestricted CLI behavior remains available for existing
 explicitly authorized integrations; the repository inspection configuration does not select it.
 Protocol startup and tool listing do not launch agent work.
-Read-only API requests reject every redirect, including same-origin redirects, so inspection
-cannot silently move to a different endpoint. Configure the canonical API origin when a proxy
-redirects a request. Existing unrestricted integrations retain their prior transport behavior.
+All gateway API requests reject every redirect, including same-origin redirects, and require
+HTTPS outside explicit loopback development origins. Configure the canonical API origin when
+a proxy redirects a request. These transport boundaries also apply to unrestricted integrations.
 
 Use `tools/probe_mcp.mjs` with its explicit binary and routing configuration to verify initialization,
 the read-only tool list, and an authorized snapshot or selected recovery context. The probe is bounded, reads only the selected

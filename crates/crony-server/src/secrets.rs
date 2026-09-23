@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use chacha20poly1305::{
     ChaCha20Poly1305, Key, KeyInit, Nonce,
-    aead::{Aead, Payload},
+    aead::{Aead, AeadCore, OsRng, Payload},
 };
 use uuid::Uuid;
 
@@ -58,21 +58,19 @@ impl SecretCipher {
         name: &str,
         plaintext: &[u8],
     ) -> Result<(Vec<u8>, Vec<u8>)> {
-        let random = Uuid::new_v4();
-        let mut nonce_bytes = [0_u8; 12];
-        nonce_bytes.copy_from_slice(&random.as_bytes()[..12]);
+        let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng);
         let aad = associated_data(corp_id, secret_id, name);
         let ciphertext = self
             .cipher
             .encrypt(
-                Nonce::from_slice(&nonce_bytes),
+                &nonce,
                 Payload {
                     msg: plaintext,
                     aad: aad.as_bytes(),
                 },
             )
             .map_err(|_| anyhow!("encrypt secret"))?;
-        Ok((ciphertext, nonce_bytes.to_vec()))
+        Ok((ciphertext, nonce.to_vec()))
     }
 
     pub fn decrypt(
@@ -186,6 +184,54 @@ mod tests {
     fn production_still_requires_a_well_formed_32_byte_key() {
         for configured in [None, Some(""), Some(" \t\r\n"), Some("not-hex"), Some("ab")] {
             assert!(SecretCipher::initialize(ServerMode::Production, configured).is_err());
+        }
+    }
+
+    #[test]
+    fn nonces_are_not_constrained_to_uuid_v4_fixed_bits() {
+        let cipher = SecretCipher::initialize(ServerMode::Development, None).unwrap();
+        let corp_id = Uuid::new_v4();
+        let secret_id = Uuid::new_v4();
+        let mut non_v4_version = false;
+        let mut non_uuid_variant = false;
+        // Detect the historical truncated-UUID pattern, not entropy quality.
+        // Random samples can still match either fixed field by chance.
+        for _ in 0..32 {
+            let (_, nonce) = cipher
+                .encrypt(corp_id, secret_id, "fixture", b"same plaintext")
+                .unwrap();
+            assert_eq!(nonce.len(), 12);
+            non_v4_version |= nonce[6] & 0xf0 != 0x40;
+            non_uuid_variant |= nonce[8] & 0xc0 != 0x80;
+        }
+        assert!(
+            non_v4_version && non_uuid_variant,
+            "nonce samples retain UUID fixed fields: non_v4_version={non_v4_version}, non_uuid_variant={non_uuid_variant}"
+        );
+    }
+
+    #[test]
+    fn repeated_plaintext_uses_fresh_authenticated_nonces() {
+        let cipher = SecretCipher::initialize(ServerMode::Development, None).unwrap();
+        let corp_id = Uuid::new_v4();
+        let secret_id = Uuid::new_v4();
+        let first = cipher
+            .encrypt(corp_id, secret_id, "fixture", b"same plaintext")
+            .unwrap();
+        let second = cipher
+            .encrypt(corp_id, secret_id, "fixture", b"same plaintext")
+            .unwrap();
+        assert_eq!(first.1.len(), 12);
+        assert_eq!(second.1.len(), 12);
+        assert_ne!(first.1, second.1);
+        assert_ne!(first.0, second.0);
+        for (ciphertext, nonce) in [first, second] {
+            assert_eq!(
+                cipher
+                    .decrypt(corp_id, secret_id, "fixture", &ciphertext, &nonce)
+                    .unwrap(),
+                b"same plaintext"
+            );
         }
     }
 

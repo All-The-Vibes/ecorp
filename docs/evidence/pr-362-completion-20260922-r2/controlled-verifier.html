@@ -1,0 +1,135 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>PR 362 retained verifier regression</title><style>body{font:16px/1.5 system-ui;margin:32px;max-width:1380px}pre{font:13px/1.45 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f6f8;padding:16px}</style><h1>PR #362: optimized-Python verifier regression</h1><p>Actual saved subprocess output, rendered after execution. Previous verifier: four expected failures. Final verifier: six passes. This is a saved-results report, not a live terminal or application screenshot.</p><h2>verifier-before.log</h2><pre>FFFF..
+======================================================================
+FAIL: test_dash_o_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_dash_o_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File &quot;&lt;private-evidence&gt;\pr362-controlled-verifier-fixture-r4\tools\test_public_evidence_verifier.py&quot;, line 60, in test_dash_o_is_refused
+    self.assert_optimization_refused(options=(&quot;-O&quot;,))
+  File &quot;&lt;private-evidence&gt;\pr362-controlled-verifier-fixture-r4\tools\test_public_evidence_verifier.py&quot;, line 55, in assert_optimization_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  &quot;result&quot;: &quot;PASS&quot;,
+  &quot;checks&quot;: [
+    {
+      &quot;package&quot;: &quot;pr362-startup-20260921&quot;,
+      &quot;archive_members&quot;: 38,
+      &quot;images&quot;: 3
+    },
+    {
+      &quot;package&quot;: &quot;pr362-regressions-20260921&quot;,
+      &quot;archive_members&quot;: 88,
+      &quot;images&quot;: 8
+    },
+    {
+      &quot;package&quot;: &quot;pr362-combined-20260921&quot;,
+      &quot;archive_members&quot;: 107,
+      &quot;images&quot;: 14
+    }
+  ],
+  &quot;limit&quot;: &quot;Public integrity, not independent raw/capture/acceptance proof&quot;
+}
+
+
+======================================================================
+FAIL: test_dash_oo_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_dash_oo_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File &quot;&lt;private-evidence&gt;\pr362-controlled-verifier-fixture-r4\tools\test_public_evidence_verifier.py&quot;, line 63, in test_dash_oo_is_refused
+    self.assert_optimization_refused(options=(&quot;-OO&quot;,))
+  File &quot;&lt;private-evidence&gt;\pr362-controlled-verifier-fixture-r4\tools\test_public_evidence_verifier.py&quot;, line 55, in assert_optimization_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  &quot;result&quot;: &quot;PASS&quot;,
+  &quot;checks&quot;: [
+    {
+      &quot;package&quot;: &quot;pr362-startup-20260921&quot;,
+      &quot;archive_members&quot;: 38,
+      &quot;images&quot;: 3
+    },
+    {
+      &quot;package&quot;: &quot;pr362-regressions-20260921&quot;,
+      &quot;archive_members&quot;: 88,
+      &quot;images&quot;: 8
+    },
+    {
+      &quot;package&quot;: &quot;pr362-combined-20260921&quot;,
+      &quot;archive_members&quot;: 107,
+      &quot;images&quot;: 14
+    }
+  ],
+  &quot;limit&quot;: &quot;Public integrity, not independent raw/capture/acceptance proof&quot;
+}
+
+
+======================================================================
+FAIL: test_environment_level_one_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_environment_level_one_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File &quot;&lt;private-evidence&gt;\pr362-controlled-verifier-fixture-r4\tools\test_public_evidence_verifier.py&quot;, line 66, in test_environment_level_one_is_refused
+    self.assert_optimization_refused(optimize=&quot;1&quot;)
+  File &quot;&lt;private-evidence&gt;\pr362-controlled-verifier-fixture-r4\tools\test_public_evidence_verifier.py&quot;, line 55, in assert_optimization_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  &quot;result&quot;: &quot;PASS&quot;,
+  &quot;checks&quot;: [
+    {
+      &quot;package&quot;: &quot;pr362-startup-20260921&quot;,
+      &quot;archive_members&quot;: 38,
+      &quot;images&quot;: 3
+    },
+    {
+      &quot;package&quot;: &quot;pr362-regressions-20260921&quot;,
+      &quot;archive_members&quot;: 88,
+      &quot;images&quot;: 8
+    },
+    {
+      &quot;package&quot;: &quot;pr362-combined-20260921&quot;,
+      &quot;archive_members&quot;: 107,
+      &quot;images&quot;: 14
+    }
+  ],
+  &quot;limit&quot;: &quot;Public integrity, not independent raw/capture/acceptance proof&quot;
+}
+
+
+======================================================================
+FAIL: test_environment_level_two_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_environment_level_two_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File &quot;&lt;private-evidence&gt;\pr362-controlled-verifier-fixture-r4\tools\test_public_evidence_verifier.py&quot;, line 69, in test_environment_level_two_is_refused
+    self.assert_optimization_refused(optimize=&quot;2&quot;)
+  File &quot;&lt;private-evidence&gt;\pr362-controlled-verifier-fixture-r4\tools\test_public_evidence_verifier.py&quot;, line 55, in assert_optimization_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  &quot;result&quot;: &quot;PASS&quot;,
+  &quot;checks&quot;: [
+    {
+      &quot;package&quot;: &quot;pr362-startup-20260921&quot;,
+      &quot;archive_members&quot;: 38,
+      &quot;images&quot;: 3
+    },
+    {
+      &quot;package&quot;: &quot;pr362-regressions-20260921&quot;,
+      &quot;archive_members&quot;: 88,
+      &quot;images&quot;: 8
+    },
+    {
+      &quot;package&quot;: &quot;pr362-combined-20260921&quot;,
+      &quot;archive_members&quot;: 107,
+      &quot;images&quot;: 14
+    }
+  ],
+  &quot;limit&quot;: &quot;Public integrity, not independent raw/capture/acceptance proof&quot;
+}
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 5.866s
+
+FAILED (failures=4)
+</pre><h2>verifier-after.log</h2><pre>......
+----------------------------------------------------------------------
+Ran 6 tests in 3.519s
+
+OK
+</pre>

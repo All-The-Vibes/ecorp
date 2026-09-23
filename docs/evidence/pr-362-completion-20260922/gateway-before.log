@@ -1,0 +1,28 @@
+   Compiling crony-gateways v0.1.0 (<reviewed-worktree>\crates\crony-gateways)
+warning: useless assignment of variable of type `ClientBuilder` to itself
+  --> crates\crony-gateways\src\lib.rs:63:13
+   |
+63 |             transport = transport;
+   |             ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `crony-gateways` (lib test) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.35s
+     Running unittests src\lib.rs (target-validation\debug\deps\crony_gateways-b75f55159892b228.exe)
+
+running 1 test
+test tests::loopback_gateway_bypasses_environment_proxies ...
+thread 'tests::loopback_gateway_bypasses_environment_proxies' (57948) panicked at crates\crony-gateways\src\lib.rs:726:13:
+loopback bearer request connected to the environment proxy
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    tests::loopback_gateway_bypasses_environment_proxies
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 10.03s
+
+error: test failed, to rerun pass `-p crony-gateways --lib`

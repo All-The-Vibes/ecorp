@@ -1,0 +1,109 @@
+test_hardlinked_gate_log_is_rejected_even_with_matching_digest (staged_driver_tests.StagedEvidenceDriver.test_hardlinked_gate_log_is_rejected_even_with_matching_digest) ... FAIL
+test_hardlinked_validation_is_rejected_before_materialization (staged_driver_tests.StagedEvidenceDriver.test_hardlinked_validation_is_rejected_before_materialization) ... FAIL
+test_linked_gate_log_ancestor_is_rejected_before_resolution (staged_driver_tests.StagedEvidenceDriver.test_linked_gate_log_ancestor_is_rejected_before_resolution) ... FAIL
+test_linked_repository_ancestor_is_rejected_before_resolution (staged_driver_tests.StagedEvidenceDriver.test_linked_repository_ancestor_is_rejected_before_resolution) ... FAIL
+test_linked_validation_ancestor_is_rejected_before_resolution (staged_driver_tests.StagedEvidenceDriver.test_linked_validation_ancestor_is_rejected_before_resolution) ... FAIL
+test_oversized_gate_log_is_rejected_even_with_matching_digest (staged_driver_tests.StagedEvidenceDriver.test_oversized_gate_log_is_rejected_even_with_matching_digest) ... FAIL
+test_oversized_staged_blob_is_rejected_before_materialization (staged_driver_tests.StagedEvidenceDriver.test_oversized_staged_blob_is_rejected_before_materialization) ... FAIL
+test_oversized_validation_is_rejected_before_materialization (staged_driver_tests.StagedEvidenceDriver.test_oversized_validation_is_rejected_before_materialization) ... FAIL
+
+======================================================================
+FAIL: test_hardlinked_gate_log_is_rejected_even_with_matching_digest (staged_driver_tests.StagedEvidenceDriver.test_hardlinked_gate_log_is_rejected_even_with_matching_digest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 97, in test_hardlinked_gate_log_is_rejected_even_with_matching_digest
+    self.reject_input(repo, validation, root / 'evidence', 'hard-linked evidence entry')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 58, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 51, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'hard-linked evidence entry' not found in 'Traceback (most recent call last):\n  File "<private-evidence>\\pr362-driver-before-bounded-r1.py", line 54, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_hardlinked_validation_is_rejected_before_materialization (staged_driver_tests.StagedEvidenceDriver.test_hardlinked_validation_is_rejected_before_materialization)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 91, in test_hardlinked_validation_is_rejected_before_materialization
+    self.reject_input(repo, validation, root / 'evidence', 'hard-linked evidence entry')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 58, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 51, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'hard-linked evidence entry' not found in 'Traceback (most recent call last):\n  File "<private-evidence>\\pr362-driver-before-bounded-r1.py", line 54, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_linked_gate_log_ancestor_is_rejected_before_resolution (staged_driver_tests.StagedEvidenceDriver.test_linked_gate_log_ancestor_is_rejected_before_resolution)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 118, in test_linked_gate_log_ancestor_is_rejected_before_resolution
+    self.reject_input(repo, validation, root / 'evidence', 'linked evidence path')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 58, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 51, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'linked evidence path' not found in 'Traceback (most recent call last):\n  File "<private-evidence>\\pr362-driver-before-bounded-r1.py", line 54, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_linked_repository_ancestor_is_rejected_before_resolution (staged_driver_tests.StagedEvidenceDriver.test_linked_repository_ancestor_is_rejected_before_resolution)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 124, in test_linked_repository_ancestor_is_rejected_before_resolution
+    self.reject_input(alias, validation, root / 'evidence', 'linked evidence path')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 58, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 51, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'linked evidence path' not found in 'Traceback (most recent call last):\n  File "<private-evidence>\\pr362-driver-before-bounded-r1.py", line 54, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_linked_validation_ancestor_is_rejected_before_resolution (staged_driver_tests.StagedEvidenceDriver.test_linked_validation_ancestor_is_rejected_before_resolution)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 106, in test_linked_validation_ancestor_is_rejected_before_resolution
+    self.reject_input(repo, alias / validation.name, root / 'evidence', 'linked evidence path')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 58, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 51, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'linked evidence path' not found in 'Traceback (most recent call last):\n  File "<private-evidence>\\pr362-driver-before-bounded-r1.py", line 54, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_oversized_gate_log_is_rejected_even_with_matching_digest (staged_driver_tests.StagedEvidenceDriver.test_oversized_gate_log_is_rejected_even_with_matching_digest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 85, in test_oversized_gate_log_is_rejected_even_with_matching_digest
+    self.reject_input(repo, validation, root / 'evidence', 'evidence file exceeds byte limit')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 58, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 51, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'evidence file exceeds byte limit' not found in 'Traceback (most recent call last):\n  File "<private-evidence>\\pr362-driver-before-bounded-r1.py", line 54, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_oversized_staged_blob_is_rejected_before_materialization (staged_driver_tests.StagedEvidenceDriver.test_oversized_staged_blob_is_rejected_before_materialization)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 139, in test_oversized_staged_blob_is_rejected_before_materialization
+    self.reject_input(repo, validation, root / 'evidence', 'Staged evidence blob exceeds byte limit')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 58, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 51, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'Staged evidence blob exceeds byte limit' not found in 'fatal: ambiguous argument \'HEAD\': unknown revision or path not in the working tree.\nUse \'--\' to separate paths from revisions, like this:\n\'git <command> [<revision>...] -- [<file>...]\'\nTraceback (most recent call last):\n  File "<private-evidence>\\pr362-driver-before-bounded-r1.py", line 58, in <module>\n    \'source_head\': git(\'rev-parse\', \'HEAD\').decode().strip(),\n                   ^^^^^^^^^^^^^^^^^^^^^^^^\n  File "<private-evidence>\\pr362-driver-before-bounded-r1.py", line 37, in <lambda>\n    git = lambda *args: subprocess.check_output([\'git\', \'-C\', str(repo), *args])\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "<local-user>\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\subprocess.py", line 466, in check_output\n    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "<local-user>\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\subprocess.py", line 571, in run\n    raise CalledProcessError(retcode, process.args,\nsubprocess.CalledProcessError: Command \'[\'git\', \'-C\', \'<user-root>\\\\AppData\\\\Local\\\\Temp\\\\ecorp-evidence-driver-test-tom4_v90\\\\source\', \'rev-parse\', \'HEAD\']\' returned non-zero exit status 128.\n'
+
+======================================================================
+FAIL: test_oversized_validation_is_rejected_before_materialization (staged_driver_tests.StagedEvidenceDriver.test_oversized_validation_is_rejected_before_materialization)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 75, in test_oversized_validation_is_rejected_before_materialization
+    self.reject_input(repo, validation, root / 'evidence', 'evidence file exceeds byte limit')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 58, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 51, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'evidence file exceeds byte limit' not found in 'Traceback (most recent call last):\n  File "<private-evidence>\\pr362-driver-before-bounded-r1.py", line 54, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+----------------------------------------------------------------------
+Ran 8 tests in 8.898s
+
+FAILED (failures=8)

@@ -1,0 +1,76 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>PR362 native security regressions</title><style>body{font:16px/1.5 system-ui;margin:40px;max-width:1360px;color:#142033;background:white}pre,code{font:13px/1.4 Consolas,monospace}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f6f8;padding:12px;border:1px solid #ccd4df}h2{font-size:20px}</style><h1>PR #362: actual retained native security regression results</h1><p>This is a saved-results report, not a live terminal or application screenshot. The before/after commands were actually executed, and the source was restored byte-for-byte. This experiment is retrospective.</p><h2>cli / before / exit 101</h2><p><code>cargo test --locked -p crony-cli --bin crony-cli transport::tests::loopback_client_bypasses_environment_proxies -- --exact --nocapture --test-threads=1</code></p><pre>   Compiling crony-protocol v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-protocol)
+   Compiling sha2 v0.11.0
+   Compiling crony-cli v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-cli)
+warning: useless assignment of variable of type `ClientBuilder` to itself
+  --&gt; crates\crony-cli\src\transport.rs:34:9
+   |
+34 |         builder = builder;
+   |         ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `crony-cli` (bin &quot;crony-cli&quot; test) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 00s
+     Running unittests src\main.rs (target-validation\debug\deps\crony_cli-0714e9684f0f2b59.exe)
+
+running 1 test
+test transport::tests::loopback_client_bypasses_environment_proxies ...
+thread &#x27;transport::tests::loopback_client_bypasses_environment_proxies&#x27; (60052) panicked at crates\crony-cli\src\transport.rs:187:13:
+loopback bearer request connected to the environment proxy
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    transport::tests::loopback_client_bypasses_environment_proxies
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 121 filtered out; finished in 10.03s
+
+error: test failed, to rerun pass `-p crony-cli --bin crony-cli`</pre><h2>gateway / before / exit 101</h2><p><code>cargo test --locked -p crony-gateways --lib tests::loopback_gateway_bypasses_environment_proxies -- --exact --nocapture --test-threads=1</code></p><pre>   Compiling crony-gateways v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-gateways)
+warning: useless assignment of variable of type `ClientBuilder` to itself
+  --&gt; crates\crony-gateways\src\lib.rs:63:13
+   |
+63 |             transport = transport;
+   |             ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `crony-gateways` (lib test) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.35s
+     Running unittests src\lib.rs (target-validation\debug\deps\crony_gateways-b75f55159892b228.exe)
+
+running 1 test
+test tests::loopback_gateway_bypasses_environment_proxies ...
+thread &#x27;tests::loopback_gateway_bypasses_environment_proxies&#x27; (57948) panicked at crates\crony-gateways\src\lib.rs:726:13:
+loopback bearer request connected to the environment proxy
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    tests::loopback_gateway_bypasses_environment_proxies
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 10.03s
+
+error: test failed, to rerun pass `-p crony-gateways --lib`</pre><h2>cli / after / exit 0</h2><p><code>cargo test --locked -p crony-cli --bin crony-cli transport::tests::loopback_client_bypasses_environment_proxies -- --exact --nocapture --test-threads=1</code></p><pre>   Compiling crony-cli v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.03s
+     Running unittests src\main.rs (target-validation\debug\deps\crony_cli-0714e9684f0f2b59.exe)
+
+running 1 test
+test transport::tests::loopback_client_bypasses_environment_proxies ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 121 filtered out; finished in 0.94s</pre><h2>gateway / after / exit 0</h2><p><code>cargo test --locked -p crony-gateways --lib tests::loopback_gateway_bypasses_environment_proxies -- --exact --nocapture --test-threads=1</code></p><pre>   Compiling crony-gateways v0.1.0 (&lt;reviewed-worktree&gt;\crates\crony-gateways)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.68s
+     Running unittests src\lib.rs (target-validation\debug\deps\crony_gateways-b75f55159892b228.exe)
+
+running 1 test
+test tests::loopback_gateway_bypasses_environment_proxies ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 1.57s</pre><h2>Windows startup harness: five passing tests</h2><pre>.....
+----------------------------------------------------------------------
+Ran 5 tests in 1.285s
+
+OK
+</pre></html>

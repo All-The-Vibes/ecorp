@@ -1,0 +1,221 @@
+test_archive_aggregate_boundary_and_plus_one_member (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_archive_aggregate_boundary_and_plus_one_member) ...
+  test_archive_aggregate_boundary_and_plus_one_member (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_archive_aggregate_boundary_and_plus_one_member) (count=17) ... FAIL
+test_archive_member_byte_boundary_and_plus_one (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_archive_member_byte_boundary_and_plus_one) ...
+  test_archive_member_byte_boundary_and_plus_one (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_archive_member_byte_boundary_and_plus_one) (size=1048577) ... FAIL
+test_archive_member_count_boundary_and_plus_one (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_archive_member_count_boundary_and_plus_one) ...
+  test_archive_member_count_boundary_and_plus_one (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_archive_member_count_boundary_and_plus_one) (count=513) ... FAIL
+test_compressed_archive_file_is_capped_before_zip_parsing (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_compressed_archive_file_is_capped_before_zip_parsing) ... ERROR
+test_dash_o_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_dash_o_is_refused) ... ok
+test_dash_oo_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_dash_oo_is_refused) ... ok
+test_duplicate_archive_manifest_rows_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_duplicate_archive_manifest_rows_are_rejected) ... FAIL
+test_duplicate_delivered_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_duplicate_delivered_manifest_paths_are_rejected) ... ok
+test_environment_level_one_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_environment_level_one_is_refused) ... ok
+test_environment_level_two_is_refused (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_environment_level_two_is_refused) ... ok
+test_file_at_absolute_byte_limit_is_accepted (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_file_at_absolute_byte_limit_is_accepted) ... ok
+test_file_over_absolute_byte_limit_is_rejected_before_open (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_file_over_absolute_byte_limit_is_rejected_before_open) ... FAIL
+test_file_read_is_bounded_even_after_the_size_precheck (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_file_read_is_bounded_even_after_the_size_precheck) ... FAIL
+test_hard_linked_manifest_and_delivered_file_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_hard_linked_manifest_and_delivered_file_are_rejected) ... ok
+test_image_path_cannot_escape_manifest_inventory (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_image_path_cannot_escape_manifest_inventory) ... ok
+test_intact_copy_under_linked_temporary_parent_is_accepted (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_intact_copy_under_linked_temporary_parent_is_accepted) ... ok
+test_linked_delivered_file_is_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_delivered_file_is_rejected) ... ok
+test_linked_packet_is_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_packet_is_rejected) ... ok
+test_linked_root_and_ancestor_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_linked_root_and_ancestor_are_rejected) ... ok
+test_normal_interpreter_accepts_intact_packet (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_normal_interpreter_accepts_intact_packet) ... ok
+test_normal_interpreter_rejects_corrupted_packet (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_normal_interpreter_rejects_corrupted_packet) ... ok
+test_oversized_zip_member_is_refused_before_decompression (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_oversized_zip_member_is_refused_before_decompression) ... ERROR
+test_readme_link_cannot_escape_the_verified_packets (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_readme_link_cannot_escape_the_verified_packets) ... ok
+test_unlisted_nested_directory_is_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unlisted_nested_directory_is_rejected) ... ok
+test_unsafe_manifest_paths_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_unsafe_manifest_paths_are_rejected) ... ok
+
+======================================================================
+ERROR: test_compressed_archive_file_is_capped_before_zip_parsing (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_compressed_archive_file_is_capped_before_zip_parsing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 213, in test_compressed_archive_file_is_capped_before_zip_parsing
+    verifier.verify(base)
+  File "<reviewed-worktree>\docs\evidence\pr362-combined-20260921\verify_public.py", line 119, in verify
+    with zipfile.ZipFile(io.BytesIO(read_file(directory, 'receipts.zip'))) as archive:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: ZIP was parsed
+
+======================================================================
+ERROR: test_oversized_zip_member_is_refused_before_decompression (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_oversized_zip_member_is_refused_before_decompression)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 221, in test_oversized_zip_member_is_refused_before_decompression
+    verifier.verify(base)
+  File "<reviewed-worktree>\docs\evidence\pr362-combined-20260921\verify_public.py", line 121, in verify
+    assert archive.testzip() is None
+           ^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\zipfile\__init__.py", line 1526, in testzip
+    with self.open(zinfo.filename, "r") as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: ZIP payload was decompressed
+
+======================================================================
+FAIL: test_archive_aggregate_boundary_and_plus_one_member (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_archive_aggregate_boundary_and_plus_one_member) (count=17)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 193, in test_archive_aggregate_boundary_and_plus_one_member
+    self.assert_refused(base, "archive expansion exceeds byte limit")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 73, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 17,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_archive_member_byte_boundary_and_plus_one (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_archive_member_byte_boundary_and_plus_one) (size=1048577)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 183, in test_archive_member_byte_boundary_and_plus_one
+    self.assert_refused(base, "archive member exceeds byte limit")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 73, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 1,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_archive_member_count_boundary_and_plus_one (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_archive_member_count_boundary_and_plus_one) (count=513)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 203, in test_archive_member_count_boundary_and_plus_one
+    self.assert_refused(base, "archive exceeds member limit")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 73, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 513,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_duplicate_archive_manifest_rows_are_rejected (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_duplicate_archive_manifest_rows_are_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 226, in test_duplicate_archive_manifest_rows_are_rejected
+    self.assert_refused(base, "duplicate archive path")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 73, in assert_refused
+    self.assertNotEqual(result.returncode, 0, result.stdout)
+AssertionError: 0 == 0 : {
+  "result": "PASS",
+  "checks": [
+    {
+      "package": "pr362-startup-20260921",
+      "archive_members": 39,
+      "images": 3
+    },
+    {
+      "package": "pr362-regressions-20260921",
+      "archive_members": 88,
+      "images": 8
+    },
+    {
+      "package": "pr362-combined-20260921",
+      "archive_members": 107,
+      "images": 14
+    }
+  ],
+  "limit": "Public integrity, not independent raw/capture/acceptance proof"
+}
+
+
+======================================================================
+FAIL: test_file_over_absolute_byte_limit_is_rejected_before_open (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_file_over_absolute_byte_limit_is_rejected_before_open)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 145, in test_file_over_absolute_byte_limit_is_rejected_before_open
+    with self.assertRaisesRegex(AssertionError, "evidence file exceeds byte limit"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_file_read_is_bounded_even_after_the_size_precheck (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_file_read_is_bounded_even_after_the_size_precheck)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 173, in test_file_read_is_bounded_even_after_the_size_precheck
+    self.assertEqual(verifier.read_file(base, "small.txt"), b"bounded read")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<reviewed-worktree>\docs\evidence\pr362-combined-20260921\verify_public.py", line 67, in read_file
+    data = stream.read()
+           ^^^^^^^^^^^^^
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 163, in read
+    owner.assertGreater(size, 0, "unbounded evidence read requested")
+AssertionError: -1 not greater than 0 : unbounded evidence read requested
+
+----------------------------------------------------------------------
+Ran 25 tests in 25.359s
+
+FAILED (failures=6, errors=2)
