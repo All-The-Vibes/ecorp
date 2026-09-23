@@ -284,12 +284,7 @@ struct SigningKey {
 impl DelegatedProvider {
     pub async fn new(config: ProviderConfig) -> Result<Self, ProviderError> {
         config.validate()?;
-        let client = Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .timeout(Duration::from_secs(10))
-            .connect_timeout(Duration::from_secs(5))
-            .build()
-            .map_err(|_| ProviderError::Transport)?;
+        let client = client_for_endpoint(&config.issuer)?;
         let discovery = format!("{}/.well-known/openid-configuration", config.issuer);
         let metadata: Metadata = read_json(client.get(discovery)).await?;
         let expected_issuer = match config.kind {
@@ -755,6 +750,25 @@ fn is_loopback(url: &Url) -> bool {
     url.scheme() == "http" && matches!(url.host_str(), Some("127.0.0.1") | Some("[::1]"))
 }
 
+/// Callers validate the allowed origin before selecting its transport. Local
+/// credentials must stay on loopback even when the host configures a proxy;
+/// remote providers retain reqwest's native system/environment proxy support.
+pub(super) fn client_for_endpoint(endpoint: &str) -> Result<Client, ProviderError> {
+    let endpoint = safe_url(endpoint)?;
+    let mut builder = Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .timeout(Duration::from_secs(10))
+        .connect_timeout(Duration::from_secs(5));
+    if endpoint.host_str().is_some_and(|host| {
+        host.trim_matches(['[', ']'])
+            .parse::<std::net::IpAddr>()
+            .is_ok_and(|address| address.is_loopback())
+    }) {
+        builder = builder.no_proxy();
+    }
+    builder.build().map_err(|_| ProviderError::Transport)
+}
+
 fn validate_endpoint(config: &ProviderConfig, endpoint: &str) -> Result<(), ProviderError> {
     let endpoint = safe_url(endpoint)?;
     let issuer = safe_url(&config.issuer)?;
@@ -1131,6 +1145,140 @@ pub(super) mod tests {
                 self.provider.config.downstream_scope.clone(),
             )
         }
+    }
+
+    #[tokio::test]
+    async fn loopback_credentials_bypass_environment_proxy_but_remote_requests_use_it() {
+        const CHILD: &str = "ECORP_DELEGATED_PROXY_TEST_CHILD";
+        if std::env::var(CHILD).as_deref() == Ok("1") {
+            let mut fixture = Fixture::new(ProviderKind::KeycloakTest).await;
+            fixture.provider = DelegatedProvider::new(fixture.adapter().config)
+                .await
+                .expect("native discovery must stay on loopback");
+            let (id, assertion) = fixture.initial_claims();
+            fixture.initial_reply(&id, &assertion);
+            let initial = fixture.redeem().await.expect("loopback code redemption");
+            fixture.downstream_reply(&fixture.downstream());
+            fixture
+                .provider
+                .exchange(&initial)
+                .await
+                .expect("loopback token exchange");
+            assert_eq!(fixture.request_count(), 2);
+
+            let credential = super::super::delegated::random();
+            let expected = format!("Bearer {credential}");
+            let resource = Router::new().route(
+                "/flag",
+                get(move |headers: HeaderMap| async move {
+                    assert!(
+                        headers
+                            .get("authorization")
+                            .is_some_and(|value| value == expected.as_str()),
+                        "resource credential mismatch"
+                    );
+                    StatusCode::NO_CONTENT
+                }),
+            );
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let endpoint = format!("http://{}/flag", listener.local_addr().unwrap());
+            let server =
+                tokio::spawn(async move { axum::serve(listener, resource).await.unwrap() });
+            let response = client_for_endpoint(&endpoint)
+                .unwrap()
+                .get(&endpoint)
+                .bearer_auth(credential)
+                .send()
+                .await
+                .expect("broker resource credential must stay on loopback");
+            assert_eq!(response.status(), StatusCode::NO_CONTENT);
+            // The previous default transport does use the proxy for this same
+            // loopback URL. Probe it without credentials to establish the defect.
+            assert_eq!(
+                Client::new().get(&endpoint).send().await.unwrap().status(),
+                StatusCode::BAD_GATEWAY
+            );
+            server.abort();
+
+            // Both controls must contact the owned proxy, without DNS or a real
+            // remote authority. They prove that disabling all proxies is not a fix.
+            let remote = "http://delegated-proxy-control.invalid/control";
+            assert_eq!(
+                client_for_endpoint(remote)
+                    .unwrap()
+                    .get(remote)
+                    .send()
+                    .await
+                    .unwrap()
+                    .status(),
+                StatusCode::BAD_GATEWAY
+            );
+            let remote = "https://delegated-proxy-control.invalid/control";
+            assert!(
+                client_for_endpoint(remote)
+                    .unwrap()
+                    .get(remote)
+                    .send()
+                    .await
+                    .is_err()
+            );
+            return;
+        }
+
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let proxy_url = format!("http://{}", listener.local_addr().unwrap());
+        let requests = Arc::new(AtomicUsize::new(0));
+        let observed = requests.clone();
+        let proxy = tokio::spawn(async move {
+            loop {
+                let (mut socket, _) = listener.accept().await.unwrap();
+                let mut request = [0_u8; 8192];
+                let count = tokio::time::timeout(Duration::from_secs(5), socket.read(&mut request))
+                    .await
+                    .unwrap()
+                    .unwrap();
+                assert!(count > 0);
+                observed.fetch_add(1, Ordering::SeqCst);
+                socket.write_all(b"HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").await.unwrap();
+            }
+        });
+        let mut command = tokio::process::Command::new(std::env::current_exe().unwrap());
+        command
+            .arg("--exact")
+            .arg("delegated_provider::tests::loopback_credentials_bypass_environment_proxy_but_remote_requests_use_it")
+            .arg("--nocapture")
+            .env(CHILD, "1")
+            .env_remove("NO_PROXY")
+            .env_remove("no_proxy")
+            .kill_on_drop(true);
+        for name in [
+            "HTTP_PROXY",
+            "http_proxy",
+            "HTTPS_PROXY",
+            "https_proxy",
+            "ALL_PROXY",
+            "all_proxy",
+        ] {
+            command.env(name, &proxy_url);
+        }
+        let output = tokio::time::timeout(Duration::from_secs(60), command.output())
+            .await
+            .expect("isolated proxy regression deadline")
+            .expect("isolated proxy regression process");
+        proxy.abort();
+        assert!(
+            output.status.success(),
+            "isolated proxy regression failed: {}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            requests.load(Ordering::SeqCst),
+            3,
+            "only the credential-free default client and two remote controls may reach the proxy"
+        );
     }
 
     #[test]

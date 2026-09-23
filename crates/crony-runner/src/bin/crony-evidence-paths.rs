@@ -1150,12 +1150,47 @@ mod tests {
 
     #[cfg(any(unix, windows))]
     #[test]
+    fn nonunicode_completion_names_are_recognized_but_not_serialized() {
+        let name = nonunicode_name("pr-226-completion-");
+        assert!(name.to_str().is_none());
+        assert!(packet_name(&name));
+        assert_eq!(
+            utf8_path(Path::new(&name)).unwrap_err().to_string(),
+            "Evidence result paths must be valid UTF-8"
+        );
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn nonunicode_explicit_roots_fail_before_filesystem_access() {
+        let fixture = Fixture::new();
+        // No native entry is needed: validation must precede opening the root.
+        let packet = fixture.0.join(nonunicode_name("packet-"));
+        for inventory_only in [true, false] {
+            let error = scan(Request {
+                directories: vec![packet.clone()],
+                discover: None,
+                inventory_only,
+            })
+            .unwrap_err();
+            assert_eq!(
+                error.to_string(),
+                "Evidence result paths must be valid UTF-8"
+            );
+        }
+        assert_eq!(fs::read_dir(&fixture.0).unwrap().count(), 0);
+    }
+
+    #[cfg(any(unix, windows))]
+    #[cfg_attr(
+        target_os = "macos",
+        ignore = "macOS rejects the invalid UTF-8 directory fixture with EILSEQ before discovery"
+    )]
+    #[test]
     fn discovery_rejects_nonunicode_completion_packet_instead_of_skipping_it() {
         let fixture = Fixture::new();
         fs::create_dir(fixture.path("pr226-local-validation")).unwrap();
         let name = nonunicode_name("pr-226-completion-");
-        assert!(name.to_str().is_none());
-        assert!(packet_name(&name));
         let packet = fixture.0.join(&name);
         fs::create_dir(&packet).unwrap();
         let evidence = packet.join("receipt.txt");
@@ -1179,28 +1214,44 @@ mod tests {
     }
 
     #[cfg(any(unix, windows))]
+    #[cfg_attr(
+        target_os = "macos",
+        ignore = "macOS rejects the invalid UTF-8 file fixture with EILSEQ before traversal"
+    )]
     #[test]
-    fn nonunicode_result_paths_return_errors_without_lossy_names_or_json_panics() {
+    fn nonunicode_child_paths_return_errors_without_lossy_names_or_json_panics() {
         let fixture = Fixture::new();
-        let packet = fixture.0.join(nonunicode_name("packet-"));
-        fs::create_dir(&packet).unwrap();
-        for inventory_only in [true, false] {
-            assert!(
-                scan(Request {
-                    directories: vec![packet.clone()],
-                    discover: None,
-                    inventory_only,
-                })
-                .is_err()
-            );
-        }
         let evidence = fixture.0.join(nonunicode_name("evidence-"));
         fs::write(&evidence, r"\Users\nonunicode-file-sentinel").unwrap();
-        assert!(scan_with_hook(&fixture.0, &mut |_, _, _| {}).is_err());
+        assert_eq!(
+            scan_with_hook(&fixture.0, &mut |_, _, _| {})
+                .unwrap_err()
+                .to_string(),
+            "Evidence result paths must be valid UTF-8"
+        );
         assert_eq!(
             fs::read_to_string(evidence).unwrap(),
             r"\Users\nonunicode-file-sentinel"
         );
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn native_filesystem_rejects_nonunicode_evidence_entries() {
+        let fixture = Fixture::new();
+        let packet = fixture.0.join(nonunicode_name("pr-226-completion-"));
+        let evidence = fixture.0.join(nonunicode_name("evidence-"));
+        // This proves the native fixture limitation separately from scanner
+        // traversal, which remains explicitly ignored on this platform.
+        assert_eq!(
+            fs::create_dir(packet).unwrap_err().raw_os_error(),
+            Some(libc::EILSEQ)
+        );
+        assert_eq!(
+            fs::write(evidence, "sentinel").unwrap_err().raw_os_error(),
+            Some(libc::EILSEQ)
+        );
+        assert_eq!(fs::read_dir(&fixture.0).unwrap().count(), 0);
     }
 
     #[cfg(windows)]

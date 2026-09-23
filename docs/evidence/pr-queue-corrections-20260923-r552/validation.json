@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+  "source_head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+  "trusted_base": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "source_unchanged": true,
+  "execution_limits": "This execution precedes PR #323 commit 592ab11c2a733579d46e990a0685524b3a6684d4. The aggregate Node command retains explicit test-specific timeouts but omitted the inherited 180-second default. The separate pnpm test:unit command is not among these eleven gates. Both are addressed and validated in the later reconciliation packet; these results keep their actual source and commands.",
+  "original_receipt_sha256": "e29bb0407e505937e74a4295d43de5e494ea5574d11da569108173d4f477bbb8",
+  "started_at_utc": "2026-09-23T15:28:34.2019764-05:00",
+  "finished_at_utc": "2026-09-23T22:16:34.2947890+00:00",
+  "tool_versions": {
+    "node": "v24.21.0",
+    "pnpm": "11.19.0",
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
+  },
+  "rust_test_threads": "1",
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T15:28:37.0313917-05:00",
+      "duration_seconds": 0.1925655,
+      "log": "gates/migrations.log",
+      "original_log_sha256": "e072a9f1c44e3592772411a96d57ea3d6c5f42507f8a93abeac1c15fdf936bcd",
+      "published_log_sha256": "e0c2f15cea3dd8c554af2802de061ce01c5ca9fef6fbb11c4e8eeddeaf7e537b",
+      "counts": null
+    },
+    {
+      "name": "state-audit-compatibility",
+      "command": "pnpm check:state-audit-compatibility",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T15:28:37.2559715-05:00",
+      "duration_seconds": 0.8365017,
+      "log": "gates/state-audit-compatibility.log",
+      "original_log_sha256": "0f53897df9ff4a39bc1e830d3887c5e0df48a85526e6eb8cb414b61ccc531bac",
+      "published_log_sha256": "9f811af000a8ef259cc02015935744ac019939a42ac2e248d8ae10c87093f09d",
+      "counts": null
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T15:28:38.108018-05:00",
+      "duration_seconds": 1.1071502,
+      "log": "gates/documentation.log",
+      "original_log_sha256": "01432084f5a9f7b2fac65e10454b3ee1977a20948a22216b52f1bd2334d2dbd3",
+      "published_log_sha256": "26bf938737ecae9455a78c364b28619436c4152da4a9b9b448e177ac162dd09b",
+      "counts": null
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T15:30:39.7728979-05:00",
+      "duration_seconds": 7.330024,
+      "log": "gates/rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "counts": null
+    },
+    {
+      "name": "state-audit-evm",
+      "command": "pnpm check:state-audit-evm",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T15:30:47.1084272-05:00",
+      "duration_seconds": 30.2041374,
+      "log": "gates/state-audit-evm.log",
+      "original_log_sha256": "61bfe69c299b928660500c7f25b07c933a49c373bf78ca238cf5090635860acc",
+      "published_log_sha256": "fe34939e668dbcd3b910cfca68af9b988cb33e28c9882c26ddb89d2a071ef29a",
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "summaries": 1
+      }
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets --locked -- -D warnings",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T15:31:17.3297994-05:00",
+      "duration_seconds": 130.6349798,
+      "log": "gates/rust-clippy.log",
+      "original_log_sha256": "ca80223b0a7d4ecc2442a03d016b1a9aaeb4fe40bb3e9b5762fe41714aef8621",
+      "published_log_sha256": "5df1e2a98c15b88b0e5d5db06eb97dc46f48bec73ccf9b4090996d9318da812b",
+      "counts": null
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace --locked",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T15:33:27.9803067-05:00",
+      "duration_seconds": 968.8626204,
+      "log": "gates/rust-workspace.log",
+      "original_log_sha256": "a84c0ded0063438fe4f30de32d2606980b8f1b7982a7d432d5671652853f5ae8",
+      "published_log_sha256": "92f8c6631474fcdc77c7a964da5b55c1d5aeb0907937a95fc2e82451fc535982",
+      "counts": {
+        "passed": 818,
+        "failed": 0,
+        "ignored": 546,
+        "summaries": 41
+      }
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:js",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T21:36:17.4348728+00:00",
+      "duration_seconds": 2414.4553894,
+      "log": "gates/node-unit.log",
+      "original_log_sha256": "722334df479bf8091b60434b75f5e5b3d30b5296c02639b883e4296ffc942097",
+      "published_log_sha256": "f54ff943235e8ef86b810c2567b8e2c81fb11a1450152e35b7bcafaa041ebca3",
+      "counts": {
+        "tests": 3052,
+        "passed": 3031,
+        "failed": 0,
+        "skipped": 21,
+        "cancelled": 0
+      }
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T16:31:37.834775-05:00",
+      "duration_seconds": 82.5051143,
+      "log": "gates/steward.log",
+      "original_log_sha256": "845c180b1b14edede71099cc97b42a890427cdeac22ba630fc390f7d4a1108e6",
+      "published_log_sha256": "39060e8ba7d7bd0d00aa1d4a1d5c01830219f0b6897559218d6d781cd32c726a",
+      "counts": {
+        "tests": 227,
+        "passed": 227,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T16:33:00.3568969-05:00",
+      "duration_seconds": 9.8512047,
+      "log": "gates/web-build.log",
+      "original_log_sha256": "13d29239c605c3b46a7d3bc4fa469c226e4e27361db4937f91a78c70c39029a5",
+      "published_log_sha256": "c0cc5ef5246e58699ab324df858669679833d2a6454d12519603e32c3e03eb0f",
+      "counts": null
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T16:33:10.2228743-05:00",
+      "duration_seconds": 4.3617811,
+      "log": "gates/web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928",
+      "counts": null
+    }
+  ],
+  "build_preparation": [
+    {
+      "name": "workspace_refresh",
+      "exit_code": 0,
+      "binary_sha256": null,
+      "file": "build/workspace-refresh.log",
+      "original_sha256": "21e6235ba9ab274ac81fbdee8a9aef74a30c138e59eccd322169009acbb12aac",
+      "published_sha256": "639bf525b51903fe694b0976c2fad1e2c50aff06d91b2803914c97bc315e9a88",
+      "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+    },
+    {
+      "name": "native_mcp_build",
+      "exit_code": 0,
+      "binary_sha256": "cce823ff7338d60563a4a2bba19e00046c14a54450d1f02e1232af7fbc5f2b3d",
+      "file": "build/native-mcp-build.log",
+      "original_sha256": "aa205e7b69d083e581fc9806e51d6d458a968968e399a5e0f0443347d2042a54",
+      "published_sha256": "0ef9a9def792299c0f63c8f1af5fa4d1add7ab2de2f019e588a8985dad95cdea",
+      "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+    }
+  ],
+  "retry_provenance": {
+    "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+    "source_head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+    "unchanged_source_verified": true,
+    "previous_receipt_sha256": "43410ca73e04b8fa4f294304cb29b45cc0e5c9b14d4316ab25ea77987c38d882",
+    "original_validation_status": "failed",
+    "original_started_at_utc": "2026-09-23T20:28:34.2019764+00:00",
+    "original_finished_at_utc": "2026-09-23T21:33:14.5904366+00:00",
+    "retry_started_at_utc": "2026-09-23T21:36:16.1313693+00:00",
+    "retry_finished_at_utc": "2026-09-23T22:16:34.2947890+00:00",
+    "reason": "The first full Node lane recorded 3030 passes, zero failed assertions, one cancelled native Teams authentication test and 21 skips. SDK initialization took about 91 seconds against that test's 15-second deadline. The unchanged 18-test Teams file then passed alone, with SDK initialization about 12.5 seconds. Retry the complete Node lane once with the original tests and timeout after the other heavy validations have finished. The cause of the slow initialization is not established.",
+    "retained_passed_checks": [
+      "migrations",
+      "state-audit-compatibility",
+      "documentation",
+      "rust-format",
+      "state-audit-evm",
+      "rust-clippy",
+      "rust-workspace",
+      "steward",
+      "web-build",
+      "web-lint"
+    ],
+    "scope": "Ten passing gates retain their original execution times and byte-identical logs. Only the complete pnpm test:js lane was repeated once on unchanged source, using the original tests, timeout and matching-source native MCP binary. The cause of the initial Teams SDK initialization delay is not established.",
+    "initial_node_attempt": {
+      "exit_code": 1,
+      "command": "pnpm test:js",
+      "started_at_utc": "2026-09-23T20:50:04.5553869+00:00",
+      "duration_seconds": 2493.2616502,
+      "counts": {
+        "tests": 3052,
+        "passed": 3030,
+        "failed": 0,
+        "skipped": 21,
+        "cancelled": 1
+      },
+      "file": "validation-history/initial-node-unit.log",
+      "original_sha256": "f8eddcef9e4efc26b19f6b9d16998ab85e8081fcbb71de93b68176b29910280b",
+      "published_sha256": "74e4cf85d184513f5feb2fd80e79da54867478d3a2cc1eff86ec8a28f15c0a34",
+      "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+    },
+    "teams_diagnostic": {
+      "status": "passed",
+      "exit_code": 0,
+      "command": "node --test --test-reporter=tap scenarios/repo-steward/teams-host.test.mjs",
+      "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+      "source_head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+      "source_unchanged": true,
+      "scope": "Complete native Teams host test file on unchanged source with its original timeout and authentication assertions.",
+      "started_at_utc": "2026-09-23T21:34:26.8514368+00:00",
+      "finished_at_utc": "2026-09-23T21:34:40.6215205+00:00",
+      "original_receipt_sha256": "e8762bbe3217c31676d611ebbdbc33a1cce1b1de019831af76cfdf44467dc996",
+      "counts": {
+        "tests": 18,
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "file": "validation-history/teams-host-diagnostic.log",
+      "original_sha256": "7374d40a1513caa593c84b084f3b4938bd2698a6f74a63c929588bcdb5276a4b",
+      "published_sha256": "824b87c3ea91dec6cbf43d2a483ed8a18d9d7e26518c8ebd4de98ce9ff70e2c7",
+      "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+    }
+  }
+}

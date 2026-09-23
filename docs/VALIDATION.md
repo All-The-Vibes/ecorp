@@ -13,6 +13,8 @@ framework or renamed tests are needed to make its existing regression suite disc
 `pnpm test:js` runs the configured Node suites, including the web's TypeScript regressions.
 `pnpm test` adds the Cargo workspace suite. `pnpm check` also runs Clippy, web build and lint.
 The Node test runner uses one file worker to avoid competing ownership fixtures.
+Every discovered Node group retains the native 180-second per-test default; individual tests
+can still set their existing, narrower deadlines.
 Install local hooks with `pre-commit install` only if you want them; CI does not rely on this.
 
 <!-- BEGIN GENERATED VALIDATION CONTRACT -->
@@ -46,6 +48,8 @@ Opt-in SQLx/native probes are not passes. Use only explicitly owned fixtures; ne
 
 The check driver emits a unique `output/readiness/*-{group}.json` receipt with command exit
 codes, durations, source HEAD, dirty state, tracked-diff digest and untracked-file digests.
+`source.testConfigSha256` hashes the exact configuration bytes used to build the plan,
+not a later reload. A final byte-hash mismatch prevents `passed` even if Git evidence is unchanged.
 It stops after the first failing check and lists the remaining checks as not run.
 After initial source capture, an incomplete receipt is atomically saved before execution
 and checkpointed before and after each gate. `runningCheck` distinguishes an in-flight
@@ -53,6 +57,12 @@ gate from `notRun`; completed results remain available if the process is interru
 Each attempt has its own receipt. Only successful final source verification can produce
 `passed`; an evidence-read error yields `source_unknown`, a null
 `sourceChangedDuringValidation`, and `sourceEvidenceError`, retaining counts and pending gates.
+Git failures retain the operation, native error code (null for an ordinary nonzero exit), exit
+status and signal in both CLI diagnostics and `sourceEvidenceError`. Raw native stderr and error
+messages are withheld, not truncated or regex-redacted; only captured UTF-8 stderr byte length
+and SHA-256 are reported, which may describe incomplete output after a capture failure.
+The streamed tracked diff uses the same diagnostic contract and incrementally hashes stderr;
+neither a large diff nor large native diagnostics require retaining their full text in memory.
 Receipt-write errors stop execution; the last published checkpoint remains incomplete.
 Missing test output is unknown, never zero failures. Ignored/skipped tests are not passes.
 Receipts exclude raw logs and environment values; inspect the terminal for a failing command.

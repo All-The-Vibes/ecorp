@@ -108,6 +108,7 @@ impl Fixture {
             .unwrap();
         });
         let (audience, scope) = provider.audience_scope();
+        let client = client_for_endpoint(&resource_url).unwrap();
         let artifacts = ArtifactStore::initialize(
             "local",
             std::env::temp_dir().join(format!("ecorp-delegated-test-{}", Uuid::new_v4())),
@@ -148,7 +149,7 @@ impl Fixture {
                 scope,
                 browser_base: "http://127.0.0.1:1".into(),
                 ui_url: "http://127.0.0.1:2".into(),
-                client: reqwest::Client::builder().no_proxy().build().unwrap(),
+                client,
             })),
         };
         Self {

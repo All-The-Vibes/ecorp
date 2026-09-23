@@ -1,0 +1,37 @@
+diff --git a/tests/readiness/cli.test.js b/tests/readiness/cli.test.js
+index 7efc8d5c701657b7f7619af8ebc8f65b18b03023..d2431568792e972e04213e159af7d38bdaa4f6ae 100644
+--- a/tests/readiness/cli.test.js
++++ b/tests/readiness/cli.test.js
+@@ -404,14 +404,19 @@ for (const phase of ['initial', 'postflight']) {
+   test(`streamed Git diff failure retains ${phase} native diagnostics without raw text`, t => {
+     const f = fixture(t)
+     const head = f.git(['rev-parse', 'HEAD']), index = readFileSync(path.join(f.root, '.git/index'))
+-    const marker = 'F03_STREAMED_SYNTHETIC_PRIVATE_PATH'
+-    const invalidGitDir = path.join(f.root, 'output', marker)
++    const marker = 'F03_STREAMED_SYNTHETIC_PRIVATE_VALUE'
+     const env = { ...process.env }
+     delete env.NODE_TEST_CONTEXT
++    const configCount = Number(env.GIT_CONFIG_COUNT ?? 0)
++    const faultEnv = {
++      GIT_CONFIG_COUNT: String(configCount + 1),
++      [`GIT_CONFIG_KEY_${configCount}`]: 'core.quotePath',
++      [`GIT_CONFIG_VALUE_${configCount}`]: marker,
++    }
+     const native = spawnSync('git', ['diff', '--binary', '--no-ext-diff', '--no-textconv', 'HEAD'],
+-      { cwd: f.root, env: { ...env, GIT_DIR: invalidGitDir }, encoding: 'utf8' })
++      { cwd: f.root, env: { ...env, ...faultEnv }, encoding: 'utf8' })
+     assert.equal(native.status, 128)
+-    assert.ok(native.stderr.includes(marker), 'native Git emits the synthetic private path')
++    assert.ok(native.stderr.includes(marker), 'native Git emits the synthetic private configuration value')
+     mkdirSync(path.join(f.root, 'output'))
+     const preload = path.join(f.root, 'output/streamed-git-fault.cjs')
+     writeFileSync(preload, `
+@@ -421,7 +426,7 @@ for (const phase of ['initial', 'postflight']) {
+       cp.spawn = function (command, args, options) {
+         if (command === 'git' && args[0] === 'diff' && ++diffs === ${phase === 'initial' ? 1 : 2}) {
+           return nativeSpawn(command, args, { ...options,
+-            env: { ...process.env, ...options.env, GIT_DIR: ${JSON.stringify(invalidGitDir)} } })
++            env: { ...process.env, ...options.env, ...${JSON.stringify(faultEnv)} } })
+         }
+         return nativeSpawn(command, args, options)
+       }

@@ -2,7 +2,9 @@ use super::*;
 use axum::response::Redirect;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use crony_domain::{PlannedAgent, PlannedTask, TaskContract, VerifierCheck};
-use delegated_provider::{DelegatedProvider, ExpectedIdentity, ProviderConfig, ProviderKind};
+use delegated_provider::{
+    DelegatedProvider, ExpectedIdentity, ProviderConfig, ProviderKind, client_for_endpoint,
+};
 use sqlx::Row;
 
 pub(super) struct Broker {
@@ -43,6 +45,7 @@ impl Broker {
             &browser_base,
             &ui_url,
         )?;
+        let client = client_for_endpoint(&resource_url)?;
         let audience = config.downstream_audience.clone();
         let scope = config.downstream_scope.clone();
         Ok(Some(Arc::new(Self {
@@ -53,10 +56,7 @@ impl Broker {
             scope,
             browser_base,
             ui_url,
-            client: reqwest::Client::builder()
-                .redirect(reqwest::redirect::Policy::none())
-                .timeout(StdDuration::from_secs(10))
-                .build()?,
+            client,
         })))
     }
 }

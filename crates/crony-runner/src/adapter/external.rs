@@ -2397,12 +2397,25 @@ mod tests {
         let workspace = request.workspace.clone();
         let (_control_tx, control_rx) = mpsc::unbounded_channel();
         let sink = Arc::new(RecordingSink::default());
-        let task = tokio::spawn(async move { adapter.execute(request, control_rx, sink).await });
-        let pids = wait_for_tree_pids(&workspace).await;
+        let task_sink = sink.clone();
+        // JoinSet also aborts the adapter on a readiness panic. A detached task
+        // would otherwise retain its provider scope until the test process exits.
+        let mut tasks = tokio::task::JoinSet::new();
+        tasks.spawn(async move { adapter.execute(request, control_rx, task_sink).await });
+        let pids = tokio::select! {
+            pids = wait_for_tree_pids(&workspace) => pids,
+            result = tasks.join_next() => panic!(
+                "adapter exited before fixture PID evidence: {result:?}; events: {:?}",
+                sink.events.lock().expect("event lock")
+            ),
+        };
 
-        task.abort();
+        tasks.abort_all();
         assert!(
-            task.await
+            tasks
+                .join_next()
+                .await
+                .expect("adapter task must be present")
                 .expect_err("adapter task must be cancelled")
                 .is_cancelled()
         );

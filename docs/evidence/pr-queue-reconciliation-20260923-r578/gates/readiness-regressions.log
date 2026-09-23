@@ -1,0 +1,208 @@
+TAP version 13
+# Subtest: dry run executes no checks, creates no receipt and leaves source unchanged
+ok 1 - dry run executes no checks, creates no receipt and leaves source unchanged
+  ---
+  duration_ms: 953.0483
+  type: 'test'
+  ...
+# Subtest: unknown arguments cannot become commands
+ok 2 - unknown arguments cannot become commands
+  ---
+  duration_ms: 629.3008
+  type: 'test'
+  ...
+# Subtest: successful native tests produce observed counts and stable-source evidence
+ok 3 - successful native tests produce observed counts and stable-source evidence
+  ---
+  duration_ms: 1872.0317
+  type: 'test'
+  ...
+# Subtest: failing Node tests retain TAP diagnostics and complete long assertions
+ok 4 - failing Node tests retain TAP diagnostics and complete long assertions
+  ---
+  duration_ms: 1786.8038
+  type: 'test'
+  ...
+# Subtest: failing gates retain complete stdout and stderr beyond the compact limit
+ok 5 - failing gates retain complete stdout and stderr beyond the compact limit
+  ---
+  duration_ms: 1693.5878
+  type: 'test'
+  ...
+# Subtest: native capture overflow is disclosed and remains failed evidence
+ok 6 - native capture overflow is disclosed and remains failed evidence
+  ---
+  duration_ms: 1795.8809
+  type: 'test'
+  ...
+# Subtest: failing first gate stops execution and marks later gates not run
+ok 7 - failing first gate stops execution and marks later gates not run
+  ---
+  duration_ms: 1730.5322
+  type: 'test'
+  ...
+# Subtest: a passing test cannot certify source it modified during validation
+ok 8 - a passing test cannot certify source it modified during validation
+  ---
+  duration_ms: 1578.4244
+  type: 'test'
+  ...
+# Subtest: a test added between discovery and source capture cannot be certified without execution
+ok 9 - a test added between discovery and source capture cannot be certified without execution
+  ---
+  duration_ms: 1569.7942
+  type: 'test'
+  ...
+# Subtest: a config-only save after module load cannot certify tests selected by the old config
+ok 10 - a config-only save after module load cannot certify tests selected by the old config
+  ---
+  duration_ms: 2470.1077
+  type: 'test'
+  ...
+# Subtest: postflight Git failure retains completed counts and pending gates (gate failed: false)
+ok 11 - postflight Git failure retains completed counts and pending gates (gate failed: false)
+  ---
+  duration_ms: 1591.3255
+  type: 'test'
+  ...
+# Subtest: postflight Git failure retains completed counts and pending gates (gate failed: true)
+ok 12 - postflight Git failure retains completed counts and pending gates (gate failed: true)
+  ---
+  duration_ms: 1721.072
+  type: 'test'
+  ...
+# Subtest: native Git diagnostics survive initial missing-git without disclosing raw text
+ok 13 - native Git diagnostics survive initial missing-git without disclosing raw text
+  ---
+  duration_ms: 992.0759
+  type: 'test'
+  ...
+# Subtest: native Git diagnostics survive initial invalid-git-dir without disclosing raw text
+ok 14 - native Git diagnostics survive initial invalid-git-dir without disclosing raw text
+  ---
+  duration_ms: 1107.9788
+  type: 'test'
+  ...
+# Subtest: native Git diagnostics survive postflight missing-git without disclosing raw text
+ok 15 - native Git diagnostics survive postflight missing-git without disclosing raw text
+  ---
+  duration_ms: 1814.647
+  type: 'test'
+  ...
+# Subtest: native Git diagnostics survive postflight invalid-git-dir without disclosing raw text
+ok 16 - native Git diagnostics survive postflight invalid-git-dir without disclosing raw text
+  ---
+  duration_ms: 1888.6625
+  type: 'test'
+  ...
+# Subtest: streamed Git diff failure retains initial native diagnostics without raw text
+ok 17 - streamed Git diff failure retains initial native diagnostics without raw text
+  ---
+  duration_ms: 1348.203
+  type: 'test'
+  ...
+# Subtest: streamed Git diff failure retains postflight native diagnostics without raw text
+ok 18 - streamed Git diff failure retains postflight native diagnostics without raw text
+  ---
+  duration_ms: 2314.4148
+  type: 'test'
+  ...
+# Subtest: executing gates see incomplete receipts and completed checkpoints without overwriting prior attempts
+ok 19 - executing gates see incomplete receipts and completed checkpoints without overwriting prior attempts
+  ---
+  duration_ms: 3106.9851
+  type: 'test'
+  ...
+# Subtest: large tracked diff is fully bound across validation (tail mutation: false)
+ok 20 - large tracked diff is fully bound across validation (tail mutation: false)
+  ---
+  duration_ms: 3075.1466
+  type: 'test'
+  ...
+# Subtest: large tracked diff is fully bound across validation (tail mutation: true)
+ok 21 - large tracked diff is fully bound across validation (tail mutation: true)
+  ---
+  duration_ms: 3126.3025
+  type: 'test'
+  ...
+# Subtest: native test discovery covers existing web, tooling and steward suites
+ok 22 - native test discovery covers existing web, tooling and steward suites
+  ---
+  duration_ms: 2.8847
+  type: 'test'
+  ...
+# Subtest: standalone live and historical replays stay separate while adjacent unit suites remain enrolled
+ok 23 - standalone live and historical replays stay separate while adjacent unit suites remain enrolled
+  ---
+  duration_ms: 0.2153
+  type: 'test'
+  ...
+# Subtest: empty discovery, invalid config and unknown groups fail closed
+ok 24 - empty discovery, invalid config and unknown groups fail closed
+  ---
+  duration_ms: 0.7414
+  type: 'test'
+  ...
+# Subtest: CommonJS CLI integration tests join the same native Node runner
+ok 25 - CommonJS CLI integration tests join the same native Node runner
+  ---
+  duration_ms: 0.2124
+  type: 'test'
+  ...
+# Subtest: review skill package tests remain enrolled when the independently reviewed skill lands
+ok 26 - review skill package tests remain enrolled when the independently reviewed skill lands
+  ---
+  duration_ms: 0.1827
+  type: 'test'
+  ...
+# Subtest: Windows package-manager execution uses an explicit argument vector, never a shell
+ok 27 - Windows package-manager execution uses an explicit argument vector, never a shell
+  ---
+  duration_ms: 0.5194
+  type: 'test'
+  ...
+# Subtest: full gate retains Rust, web and migration checks and adds Node/docs validation
+ok 28 - full gate retains Rust, web and migration checks and adds Node/docs validation
+  ---
+  duration_ms: 0.3894
+  type: 'test'
+  ...
+# Subtest: every Node test group retains the native 180-second per-test deadline
+ok 29 - every Node test group retains the native 180-second per-test deadline
+  ---
+  duration_ms: 0.3582
+  type: 'test'
+  ...
+# Subtest: test results distinguish failed, passed, ignored and not-observed
+ok 30 - test results distinguish failed, passed, ignored and not-observed
+  ---
+  duration_ms: 0.7426
+  type: 'test'
+  ...
+# Subtest: generated docs follow canonical command and version changes
+ok 31 - generated docs follow canonical command and version changes
+  ---
+  duration_ms: 0.7751
+  type: 'test'
+  ...
+# Subtest: repair preserves authored prose, is idempotent, and refuses ambiguous blocks
+ok 32 - repair preserves authored prose, is idempotent, and refuses ambiguous blocks
+  ---
+  duration_ms: 0.4478
+  type: 'test'
+  ...
+# Subtest: Windows CRLF checkout is not mistaken for documentation drift
+ok 33 - Windows CRLF checkout is not mistaken for documentation drift
+  ---
+  duration_ms: 0.1857
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 38449.3412

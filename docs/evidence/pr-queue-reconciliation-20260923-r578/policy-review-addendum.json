@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "status": "policy-delta-accepted-subject-to-hosted-validation",
+  "trusted_base": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "published_parent": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+  "reviewed_staged_tree": "85d872ede83d697950674d891e16d6da15f2cd9f",
+  "incoming_head": "592ab11c2a733579d46e990a0685524b3a6684d4",
+  "historical_policy_sha256": "8d50d683680c0115258333ff070896f1622eed495405ca94b03f067084a28f3b",
+  "policy_diff_sha256": "6f19079dcb15468bbb9817bb459ad1035c55c99e4fcd9c69458474505208b6e4",
+  "policy_file_count": 35,
+  "supporting_source": [
+    {
+      "path": "package.json",
+      "blob": {
+        "bytes": 1951,
+        "sha256": "21ccc17847dcb2869cf0fab618dcdaac35bcbb0f02b942ee89f5c7cd2c8c19b3"
+      }
+    },
+    {
+      "path": "test.config.json",
+      "blob": {
+        "bytes": 770,
+        "sha256": "3050c4013cba04ca192efa1e6b0e0ba53c9c1f83f181064c3e4a692eb84002e9"
+      }
+    },
+    {
+      "path": "tools/run_checks.mjs",
+      "blob": {
+        "bytes": 12865,
+        "sha256": "3fb464216e65d4e8f25e231d8bfab599f9e9c09653e34120def85419bd224493"
+      }
+    },
+    {
+      "path": "tools/check_docs.mjs",
+      "blob": {
+        "bytes": 3968,
+        "sha256": "2af0b85be5831195aabf0c4d92fbbff693debc9d007a253f02b1bd01c972d09e"
+      }
+    },
+    {
+      "path": "docs/VALIDATION.md",
+      "blob": {
+        "bytes": 6433,
+        "sha256": "4a5d8b9f34c0ef81f58991eddaecc2b2dab8af97c67aa3007cc17eabf40c949a"
+      }
+    },
+    {
+      "path": "tools/gitleaks-snapshot.toml",
+      "blob": {
+        "bytes": 13890,
+        "sha256": "7e26f150e721cb6b4725be619a2f27b5bef2f146c04bd1d4d0b4d1b04ec0b01e"
+      }
+    },
+    {
+      "path": "tools/security_canary.mjs",
+      "blob": {
+        "bytes": 4450,
+        "sha256": "7f82210cd0c0994da64678d69e5e51954bacf3b84b530c892fa1ac3488f7f68b"
+      }
+    },
+    {
+      "path": "tools/coverage_rust_sqlx.sh",
+      "blob": {
+        "bytes": 12693,
+        "sha256": "ab2ed02a044d1c8186400dcc3f98056ec30ef8987489b30bcc4422024e0b10bd"
+      }
+    }
+  ],
+  "assessment": "The 35 policy files remain byte-identical to the separately reviewed historical correction. The existing main contracts supply review authority; proposed PR-head instructions are reviewed content. Only two supporting blobs changed: run_checks retains the native 180-second deadline, hashes the exact loaded configuration and preserves bounded diagnostic metadata for synchronous and streamed Git failures; VALIDATION documents those semantics. Existing discovery, eleven gates, audit checks, streaming diff hashing, tenant/Corp scope, native runner ownership, source preservation and evidence-gated completion remain intact. All four reconciled readiness files and their native regressions were reviewed. This is an agent assessment under explicit owner authorization, not an independent human approval."
+}

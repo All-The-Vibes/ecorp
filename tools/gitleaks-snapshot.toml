@@ -23,3 +23,333 @@ paths = [
 ]
 regexTarget = "match"
 regexes = ['''(idempotency_key|fixture_key)["']?\s*:\s*["']''']
+
+# Individually reviewed public queue artifacts. Each exception requires BOTH
+# its exact repository path and its complete, anchored non-secret match.
+# New values, fields, paths and provider-token rules remain detectable.
+
+[[rules.allowlists]]
+description = "synthetic-fixture-reference"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^crates/crony-server/src/base_worker_tests\.rs$''']
+regexes = [
+  '''^\Qsecondary_rpc_secret: "fixture/secondary"\E$''',
+]
+
+[[rules.allowlists]]
+description = "synthetic-fixture-reference"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^crates/crony-server/src/native_fixture\.rs$''']
+regexes = [
+  '''^\Qsecondary_rpc_secret: "fixture/secondary"\E$''',
+]
+
+[[rules.allowlists]]
+description = "ordinary-prose"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/MULTIPLAYER_ACCEPTANCE_V1\.md$''']
+regexes = [
+  '''^\Qaccess, dirty/unverifiable \E$''',
+]
+
+[[rules.allowlists]]
+description = "public-audit-identifier; public-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-293-completion-20260923-r1/native/product/acceptance\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "8d497810-3fc8-4da3-a5e1-fac16d54110d"\E$''',
+  '''^\Qkey": "0x517b6a24fb039fac7682adf3df89753d9c89791b8f45828aeb0511753a39ed24"\E$''',
+  '''^\Qkey": "0xb284e36a816747ae42290a29163ae55d246758a6db4569ff2ff89872712e0337"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-audit-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-293-completion-20260923-r1/native/product/manifests\.json$''']
+regexes = [
+  '''^\Qlocal_stream_key": "0x4694790ef2d641a880d975cda85517534694790ef2d641a880d975cda8551753"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-audit-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-293-completion-20260923-r1/native/product/retained-finality-headers\.json$''']
+regexes = [
+  '''^\Qkey": "517b6a24fb039fac7682adf3df89753d9c89791b8f45828aeb0511753a39ed24"\E$''',
+  '''^\Qkey": "b284e36a816747ae42290a29163ae55d246758a6db4569ff2ff89872712e0337"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-audit-identifier; public-idempotency-identifier; synthetic-fixture-reference"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-293-completion-20260923-r1/native/product/runtime-qualification\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "8d497810-3fc8-4da3-a5e1-fac16d54110d"\E$''',
+  '''^\Qkey": "0x517b6a24fb039fac7682adf3df89753d9c89791b8f45828aeb0511753a39ed24"\E$''',
+  '''^\Qkey": "0xb284e36a816747ae42290a29163ae55d246758a6db4569ff2ff89872712e0337"\E$''',
+  '''^\Qlocal_stream_key": "0x4694790ef2d641a880d975cda85517534694790ef2d641a880d975cda8551753"\E$''',
+  '''^\Qsecondary_rpc_secret": "fixture/secondary"\E$''',
+]
+
+[[rules.allowlists]]
+description = "test-file-checksum"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-353-completion-20260922-r1/native/startup/result\.json$''']
+regexes = [
+  '''^\Qcredential_sha256": "2d92632016e4d44dc82fed57dc3a9d8db8fff08fc144bf768bb25dd879988d9d"\E$''',
+]
+
+[[rules.allowlists]]
+description = "test-file-checksum"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-353-completion-20260922-r2/native/startup/result\.json$''']
+regexes = [
+  '''^\Qcredential_sha256": "33e650cc48a3965ce08f7b1fee6a15789f26b9bbe9cd4e9ac67be71c7cd5ca58"\E$''',
+]
+
+[[rules.allowlists]]
+description = "test-file-checksum"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-353-completion-20260922-r3/native/startup/result\.json$''']
+regexes = [
+  '''^\Qcredential_sha256": "8bebf6ea21103d97cb4004be2f0bc0d55e2f5861045f9fe3c93b2844e621edbc"\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/archived-drivers/recorded-drivers/qa-pr354-readiness-r3\.mjs\.txt$''']
+regexes = [
+  '''^\Qidempotency_key:'pr354-owned-legacy-claim'\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/archived-drivers/recorded-drivers/qa-pr354-readiness-r6\.mjs\.txt$''']
+regexes = [
+  '''^\Qidempotency_key:'pr354-owned-legacy-claim'\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/archived-drivers/recorded-drivers/qa-pr354-readiness-r7\.mjs\.txt$''']
+regexes = [
+  '''^\Qidempotency_key:'pr354-owned-legacy-claim'\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/archived-drivers/replay/qa-pr354-readiness-r7\.mjs\.txt$''']
+regexes = [
+  '''^\Qidempotency_key:'pr354-owned-legacy-claim'\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/native-fixture/pr354-ledger-after\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "pr354-owned-legacy-claim"\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/native-fixture/pr354-ledger-before\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "pr354-owned-legacy-claim"\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/proxy-r9/native-fixture/pr354-ledger-after\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "pr354-owned-legacy-claim"\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/proxy-r9/native-fixture/pr354-ledger-before\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "pr354-owned-legacy-claim"\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/recorded-drivers/pre-review-correction/qa-pr354-readiness-r9\.mjs\.txt$''']
+regexes = [
+  '''^\Qidempotency_key:'pr354-owned-legacy-claim'\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-354-completion-20260922-r3/replay/qa-pr354-readiness-r9\.mjs$''']
+regexes = [
+  '''^\Qidempotency_key:'pr354-owned-legacy-claim'\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-359-completion-20260922-r1/native/browser-driver\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "53d17644-ed80-426c-a30a-f96b7e65732a"\E$''',
+  '''^\Qidempotency_key": "b3e1f440-75e8-4ed4-996d-634f2e6466cb"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-cli-operation-identifier; public-decision-identifier; public-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-359-completion-20260922-r1/native/native-agent-pinning\.json$''']
+regexes = [
+  '''^\Qdecision_key": "c0efdc5d-3bd8-4df6-bfb1-ee0c2fc72ad0"\E$''',
+  '''^\Qidempotency_key": "47a7897b-6a1a-455c-967b-cc13dc523810"\E$''',
+  '''^\Qidempotency_key": "51cdbdcb-fb5a-43c0-8976-16204e05df82"\E$''',
+  '''^\Qidempotency_key": "6fb0784e-496c-4c67-9675-137a792c57a1"\E$''',
+  '''^\Qidempotency_key": "b3e1f440-75e8-4ed4-996d-634f2e6466cb"\E$''',
+  '''^\Qidempotency_key": "d42cf07d-e47f-40e4-9061-12d33752cca7"\E$''',
+  '''^\Qidempotency_key": "e02a5b49-e94c-4a98-bca6-da722261624e"\E$''',
+  '''^\Qkey": "3b1e13cf-f18a-4c09-9f8c-a7b6b852d716"\E$''',
+  '''^\Qkey": "cc92818a-8e48-47f8-b8bc-7a84f00a53fd"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-359-completion-20260922-r2/native/browser-driver\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "4d7bbf0d-b5a5-4baa-ac2c-b8c10f09c2a4"\E$''',
+  '''^\Qidempotency_key": "e9fb2392-aab1-4e51-b6d2-f628fb718445"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-cli-operation-identifier; public-decision-identifier; public-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-359-completion-20260922-r2/native/native-agent-pinning\.json$''']
+regexes = [
+  '''^\Qdecision_key": "91243b54-c6de-412b-b81f-e4c9bf664a8d"\E$''',
+  '''^\Qidempotency_key": "82acb7c4-840e-48a0-bc6a-ad003f9ef699"\E$''',
+  '''^\Qidempotency_key": "849551f0-4f11-45d2-b626-af7b9953f943"\E$''',
+  '''^\Qidempotency_key": "cecdf097-ff41-4096-b44c-7c3c5bd86826"\E$''',
+  '''^\Qidempotency_key": "d96804ce-2520-4338-9928-71850f91e277"\E$''',
+  '''^\Qidempotency_key": "e9fb2392-aab1-4e51-b6d2-f628fb718445"\E$''',
+  '''^\Qkey": "70ca0836-bcae-49ed-a9c2-12976e7041cd"\E$''',
+  '''^\Qkey": "ad0a23a6-0bf0-4055-8b88-8b75005119db"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-359-completion-20260922-r3/native/browser-driver\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "3921bbfa-cdd0-4b32-96b1-025738e7e8c9"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-cli-operation-identifier; public-decision-identifier; public-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-359-completion-20260922-r3/native/native-agent-pinning\.json$''']
+regexes = [
+  '''^\Qdecision_key": "ca07e2fd-2322-4b96-9a7b-373bc38825ce"\E$''',
+  '''^\Qidempotency_key": "3921bbfa-cdd0-4b32-96b1-025738e7e8c9"\E$''',
+  '''^\Qidempotency_key": "46b5b22d-7503-47ab-9c95-800e25dd310c"\E$''',
+  '''^\Qidempotency_key": "80d50bdb-52f9-4884-9271-f3ffd45403d9"\E$''',
+  '''^\Qidempotency_key": "caff73ed-2034-460e-a000-1b2204f45f4f"\E$''',
+  '''^\Qidempotency_key": "df68051f-9908-45c6-acbf-fc21d3c78640"\E$''',
+  '''^\Qidempotency_key": "ebe7b272-d628-4002-ad47-f12120dfe7c3"\E$''',
+  '''^\Qkey": "4631df7d-a9d7-4095-a5ad-2d4d1e03d730"\E$''',
+  '''^\Qkey": "a3d62cb4-266f-49d1-b932-0346d3cdd6e4"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-screenshot-checksum"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-362-completion-20260923-r294/source-binding\.json$''']
+regexes = [
+  '''^\Q05-secrets-suite.png": "bfce9ea7da3977ab423e23e306742b3f770de74f6a801364dbf06c7b4d72ea62"\E$''',
+  '''^\Q10-secrets.png": "5bd2e53b5dd6b95e78ec06cdf8262a426a12811dc97f40299e60a9a07f605318"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-audit-identifier; public-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-queue-completion-20260923/native/audit/acceptance\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "b663e050-1204-482b-936a-e0d48d96c6ce"\E$''',
+  '''^\Qkey": "0x83abed7ec7589418407589f40395debb3ebc1ac24c0388c7aba60b539ed32f76"\E$''',
+  '''^\Qkey": "0xef02ce07001e0dbd23a3e61b8425d149491004dcfd214cba63feec0210805c3f"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-run-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-queue-completion-20260923/native/audit/browser-qualification\.json$''']
+regexes = [
+  '''^\Qverification_request_key": "20e11e4b-6a2f-4be2-9bb9-dd6889fc6a50"\E$''',
+]
+
+[[rules.allowlists]]
+description = "public-audit-identifier; public-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-queue-completion-20260923/native/audit/runtime-qualification\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "b663e050-1204-482b-936a-e0d48d96c6ce"\E$''',
+  '''^\Qkey": "0x83abed7ec7589418407589f40395debb3ebc1ac24c0388c7aba60b539ed32f76"\E$''',
+  '''^\Qkey": "0xef02ce07001e0dbd23a3e61b8425d149491004dcfd214cba63feec0210805c3f"\E$''',
+  '''^\Qlocal_stream_key": "0x92a11679ad4d4726964e3a8059fe2a5792a11679ad4d4726964e3a8059fe2a57"\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-queue-completion-20260923/native/factory-readiness/pr354-ledger-after\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "pr354-owned-legacy-claim"\E$''',
+]
+
+[[rules.allowlists]]
+description = "fixed-fixture-idempotency-identifier"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^docs/evidence/pr-queue-completion-20260923/native/factory-readiness/pr354-ledger-before\.json$''']
+regexes = [
+  '''^\Qidempotency_key": "pr354-owned-legacy-claim"\E$''',
+]
