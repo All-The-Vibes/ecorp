@@ -1,0 +1,253 @@
+TAP version 13
+# Subtest: personal paths include drive-relative, prefixed, escaped and alternate separators
+ok 1 - personal paths include drive-relative, prefixed, escaped and alternate separators
+  ---
+  duration_ms: 2.1139
+  type: 'test'
+  ...
+# Subtest: normalized placeholders and ordinary prose remain valid
+ok 2 - normalized placeholders and ordinary prose remain valid
+  ---
+  duration_ms: 0.1978
+  type: 'test'
+  ...
+# Subtest: recursive packet scan and CLI reject a leak without printing its value
+ok 3 - recursive packet scan and CLI reject a leak without printing its value
+  ---
+  duration_ms: 268.4461
+  type: 'test'
+  ...
+# Subtest: retained PR226 packets including r3 are scanned for personal user paths
+ok 4 - retained PR226 packets including r3 are scanned for personal user paths
+  ---
+  duration_ms: 239.831
+  type: 'test'
+  ...
+# Subtest: root and ancestor directory links cannot redirect an evidence scan
+ok 5 - root and ancestor directory links cannot redirect an evidence scan
+  ---
+  duration_ms: 15.6125
+  type: 'test'
+  ...
+# Subtest: nested and dangling directory links fail closed
+ok 6 - nested and dangling directory links fail closed
+  ---
+  duration_ms: 9.171
+  type: 'test'
+  ...
+# Subtest: canonical containment rejects absolute cross-drive and UNC relative results
+not ok 7 - canonical containment rejects absolute cross-drive and UNC relative results
+  ---
+  duration_ms: 1.3184
+  type: 'test'
+  location: '<private-evidence>\\pr226-immutable-baseline-20260923-r1\\fixture\\tools\\check_evidence_personal_paths.test.mjs:88:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+
+    + 'undefined'
+    - 'function'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'function'
+  actual: 'undefined'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<private-evidence>/pr226-immutable-baseline-20260923-r1/fixture/tools/check_evidence_personal_paths.test.mjs:90:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: actual Windows short alias succeeds while a linked ancestor still fails
+ok 8 - actual Windows short alias succeeds while a linked ancestor still fails
+  ---
+  duration_ms: 428.5595
+  type: 'test'
+  ...
+# Subtest: file replacement before-open with regular fails without reading outside bytes
+not ok 9 - file replacement before-open with regular fails without reading outside bytes
+  ---
+  duration_ms: 27.9682
+  type: 'test'
+  location: '<private-evidence>\\pr226-immutable-baseline-20260923-r1\\fixture\\tools\\check_evidence_personal_paths.test.mjs:128:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    no outside file content may be read
+
+    true !== false
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<private-evidence>/pr226-immutable-baseline-20260923-r1/fixture/tools/check_evidence_personal_paths.test.mjs:177:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: file replacement before-open with symlink fails without reading outside bytes
+not ok 10 - file replacement before-open with symlink fails without reading outside bytes
+  ---
+  duration_ms: 13.8758
+  type: 'test'
+  location: '<private-evidence>\\pr226-immutable-baseline-20260923-r1\\fixture\\tools\\check_evidence_personal_paths.test.mjs:128:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    no outside file content may be read
+
+    true !== false
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<private-evidence>/pr226-immutable-baseline-20260923-r1/fixture/tools/check_evidence_personal_paths.test.mjs:177:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: file replacement during-read with regular fails without reading outside bytes
+not ok 11 - file replacement during-read with regular fails without reading outside bytes
+  ---
+  duration_ms: 18.4876
+  type: 'test'
+  location: '<private-evidence>\\pr226-immutable-baseline-20260923-r1\\fixture\\tools\\check_evidence_personal_paths.test.mjs:128:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    no outside file content may be read
+
+    true !== false
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<private-evidence>/pr226-immutable-baseline-20260923-r1/fixture/tools/check_evidence_personal_paths.test.mjs:177:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: file replacement during-read with symlink fails without reading outside bytes
+not ok 12 - file replacement during-read with symlink fails without reading outside bytes
+  ---
+  duration_ms: 14.5945
+  type: 'test'
+  location: '<private-evidence>\\pr226-immutable-baseline-20260923-r1\\fixture\\tools\\check_evidence_personal_paths.test.mjs:128:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    no outside file content may be read
+
+    true !== false
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<private-evidence>/pr226-immutable-baseline-20260923-r1/fixture/tools/check_evidence_personal_paths.test.mjs:177:16)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: oversize sparse evidence fails before a content read
+not ok 13 - oversize sparse evidence fails before a content read
+  ---
+  duration_ms: 41.3981
+  type: 'test'
+  location: '<private-evidence>\\pr226-immutable-baseline-20260923-r1\\fixture\\tools\\check_evidence_personal_paths.test.mjs:190:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///<private-evidence>/pr226-immutable-baseline-20260923-r1/fixture/tools/check_evidence_personal_paths.test.mjs:202:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: empty evidence and a file at the byte limit are accepted
+ok 14 - empty evidence and a file at the byte limit are accepted
+  ---
+  duration_ms: 50.9576
+  type: 'test'
+  ...
+# Subtest: hard-linked evidence is rejected without reading the shared file
+not ok 15 - hard-linked evidence is rejected without reading the shared file
+  ---
+  duration_ms: 11.9455
+  type: 'test'
+  location: '<private-evidence>\\pr226-immutable-baseline-20260923-r1\\fixture\\tools\\check_evidence_personal_paths.test.mjs:221:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///<private-evidence>/pr226-immutable-baseline-20260923-r1/fixture/tools/check_evidence_personal_paths.test.mjs:234:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: file growth during a descriptor read fails instead of accepting a prefix
+not ok 16 - file growth during a descriptor read fails instead of accepting a prefix
+  ---
+  duration_ms: 16.0473
+  type: 'test'
+  location: '<private-evidence>\\pr226-immutable-baseline-20260923-r1\\fixture\\tools\\check_evidence_personal_paths.test.mjs:244:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///<private-evidence>/pr226-immutable-baseline-20260923-r1/fixture/tools/check_evidence_personal_paths.test.mjs:257:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 8
+# fail 8
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1307.2041

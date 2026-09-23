@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
-import { syncBuiltinESMExports } from 'node:module'
 import { tmpdir } from 'node:os'
-import { join, win32 } from 'node:path'
+import { basename, join, win32 } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
@@ -16,6 +15,7 @@ test('personal paths include drive-relative, prefixed, escaped and alternate sep
     String.raw`D:\\Users\\fixture-user`, String.raw`\\Users\\fixture-user`,
     '/Users/fixture-user', 'd:/users/fixture-user/source',
     String.raw`c:\uSeRs/fixture-user`, JSON.stringify({ HOMEPATH: String.raw`\Users\fixture-user` }),
+    '/Users/\u0085name',
   ]) assert.equal(hasPersonalUserPath(path), true, 'personal path was not detected')
 })
 
@@ -23,6 +23,7 @@ test('normalized placeholders and ordinary prose remain valid', () => {
   for (const text of [
     '<original-user>', '<local-user>/source', String.raw`C:\Users\<original-user>\source`,
     'Users can review evidence.', 'source/users.test.mjs', 'C:/Users/',
+    '/Users/\ufeffname', '/Users/\u00a0name', '/Users/\u2003name',
   ]) assert.equal(hasPersonalUserPath(text), false)
 })
 
@@ -45,10 +46,12 @@ test('recursive packet scan and CLI reject a leak without printing its value', t
   assert.equal(JSON.parse(passed.stdout).status, 'passed')
 })
 
-test('retained PR226 packets including r3 are scanned for personal user paths', () => {
-  assert(defaultEvidenceDirectories.includes(
-    fileURLToPath(new URL('../docs/evidence/pr-226-completion-20260922-r3/', import.meta.url)),
-  ), 'default scan must include the r3 completion packet')
+test('every retained PR226 packet including the latest correction is scanned', () => {
+  const parent = fileURLToPath(new URL('../docs/evidence/', import.meta.url))
+  const expected = fs.readdirSync(parent).filter(name => name.startsWith('pr-226-completion-')
+    || name === 'pr226-integration-20260921' || name === 'pr226-local-validation').sort()
+  assert(expected.includes('pr-226-completion-20260922-r4'), 'retain the latest correction packet')
+  assert.deepEqual(defaultEvidenceDirectories().map(name => basename(name)).sort(), expected)
   assert.deepEqual(findPersonalPathFiles(), [])
 })
 
@@ -123,89 +126,14 @@ test('actual Windows short alias succeeds while a linked ancestor still fails', 
   assert.throws(() => findPersonalPathFiles([link]), /regular files and directories/)
 })
 
-for (const stage of ['before-open', 'during-read']) {
-  for (const replacement of ['regular', 'symlink']) {
-    test(`file replacement ${stage} with ${replacement} fails without reading outside bytes`, t => {
-      const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'ecorp-evidence-race-')))
-      t.after(() => rmSync(root, { recursive: true, force: true }))
-      const packet = join(root, 'packet'), retained = join(root, 'retained.txt'), outside = join(root, 'outside.txt')
-      mkdirSync(packet)
-      const target = join(packet, 'safe.txt')
-      writeFileSync(target, 'inside fixture\n')
-      writeFileSync(outside, 'outside bytes must never be scanned\n')
-      const original = Object.fromEntries(['openSync', 'readSync', 'readFileSync', 'closeSync'].map(name => [name, fs[name]]))
-      const outsideIdentity = fs.statSync(outside, { bigint: true })
-      let switched = false, handle, closed = false, outsideRead = false
-      const replace = () => {
-        if (switched) return
-        switched = true
-        fs.renameSync(target, retained)
-        if (replacement === 'symlink') fs.symlinkSync(outside, target, 'file')
-        else fs.copyFileSync(outside, target)
-      }
-      const markRead = fd => {
-        const entry = fs.fstatSync(fd, { bigint: true })
-        if (entry.dev === outsideIdentity.dev && entry.ino === outsideIdentity.ino) outsideRead = true
-      }
-      fs.openSync = (...args) => {
-        if (args[0] === target && stage === 'before-open') replace()
-        const fd = original.openSync(...args)
-        if (args[0] === target) handle = fd
-        return fd
-      }
-      fs.readSync = (...args) => {
-        if (args[0] === handle) {
-          if (stage === 'during-read') replace()
-          markRead(args[0])
-        }
-        return original.readSync(...args)
-      }
-      fs.readFileSync = (...args) => {
-        if (args[0] === target) { replace(); outsideRead = true }
-        else if (args[0] === handle) markRead(args[0])
-        return original.readFileSync(...args)
-      }
-      fs.closeSync = fd => {
-        if (fd === handle) closed = true
-        return original.closeSync(fd)
-      }
-      syncBuiltinESMExports()
-      try {
-        let failure
-        try { findPersonalPathFiles([packet]) } catch (error) { failure = error }
-        assert.equal(switched, true, 'the replacement window must actually execute')
-        assert.equal(outsideRead, false, 'no outside file content may be read')
-        assert.match(failure?.message ?? '', /regular files and directories|changed|ELOOP/)
-        if (handle !== undefined) assert.equal(closed, true, 'opened descriptor must close after rejection')
-      } finally {
-        Object.assign(fs, original)
-        syncBuiltinESMExports()
-      }
-      assert.equal(readFileSync(retained, 'utf8'), 'inside fixture\n')
-      assert.equal(readFileSync(outside, 'utf8'), 'outside bytes must never be scanned\n')
-    })
-  }
-}
-
-test('oversize sparse evidence fails before a content read', t => {
+// Native replacement-window and read-admission controls live beside the Rust scanner.
+test('native scanner rejects oversize sparse evidence', t => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'ecorp-evidence-size-')))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   const file = join(root, 'oversize.bin')
   writeFileSync(file, '')
   fs.truncateSync(file, 16 * 1024 * 1024 + 1)
-  const originalRead = fs.readSync, originalFileRead = fs.readFileSync
-  let reads = 0
-  fs.readSync = (...args) => { reads++; return originalRead(...args) }
-  fs.readFileSync = (...args) => { reads++; return originalFileRead(...args) }
-  syncBuiltinESMExports()
-  try {
-    assert.throws(() => findPersonalPathFiles([root]), /byte limit/)
-    assert.equal(reads, 0)
-  } finally {
-    fs.readSync = originalRead
-    fs.readFileSync = originalFileRead
-    syncBuiltinESMExports()
-  }
+  assert.throws(() => findPersonalPathFiles([root]), /byte limit/)
 })
 
 test('empty evidence and a file at the byte limit are accepted', t => {
@@ -218,46 +146,13 @@ test('empty evidence and a file at the byte limit are accepted', t => {
   assert.deepEqual(findPersonalPathFiles([root]), [])
 })
 
-test('hard-linked evidence is rejected without reading the shared file', t => {
+test('native scanner rejects hard-linked evidence and preserves the shared file', t => {
   const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'ecorp-evidence-hardlink-')))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   const packet = join(root, 'packet'), outside = join(root, 'outside.txt')
   mkdirSync(packet)
   writeFileSync(outside, 'owned outside fixture\n')
   fs.linkSync(outside, join(packet, 'alias.txt'))
-  const originalRead = fs.readSync, originalFileRead = fs.readFileSync
-  let reads = 0
-  fs.readSync = (...args) => { reads++; return originalRead(...args) }
-  fs.readFileSync = (...args) => { reads++; return originalFileRead(...args) }
-  syncBuiltinESMExports()
-  try {
-    assert.throws(() => findPersonalPathFiles([packet]), /regular files and directories/)
-    assert.equal(reads, 0)
-  } finally {
-    fs.readSync = originalRead
-    fs.readFileSync = originalFileRead
-    syncBuiltinESMExports()
-  }
+  assert.throws(() => findPersonalPathFiles([packet]), /regular files and directories/)
   assert.equal(readFileSync(outside, 'utf8'), 'owned outside fixture\n')
-})
-
-test('file growth during a descriptor read fails instead of accepting a prefix', t => {
-  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'ecorp-evidence-grow-')))
-  t.after(() => rmSync(root, { recursive: true, force: true }))
-  const file = join(root, 'growing.txt')
-  writeFileSync(file, 'original\n')
-  const originalRead = fs.readSync
-  let grew = false
-  fs.readSync = (...args) => {
-    if (!grew) { grew = true; fs.appendFileSync(file, 'new bytes\n') }
-    return originalRead(...args)
-  }
-  syncBuiltinESMExports()
-  try {
-    assert.throws(() => findPersonalPathFiles([root]), /changed|byte limit/)
-    assert.equal(grew, true)
-  } finally {
-    fs.readSync = originalRead
-    syncBuiltinESMExports()
-  }
 })
