@@ -1,0 +1,2034 @@
+{
+  "test_results": [
+    {
+      "name": "tests.test_gaps.test_json_format_basic",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_stream_json_format",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_stream_basic_multiline",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.085
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_values_extraction",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.086
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_nested_json_format",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.084
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_colorize_json_output_ungron",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.303,
+        "message": "assert '{\\n  \"a\": 1,... \"hello\"\\n}\\n' == '\\x1b[35m{\\x1...35m}\\x1b[0m\\n'\n  \n  - #x1B[35m{#x1B[0m#x1B[34;1m\"#x1B[0;22m#x1B[34;1ma#x1B[0;22m#x1B[34;1m\"#x1B[0;22m#x1B[1m:#x1B[22m#x1B[31m1#x1B[0m#x1B[1m,#x1B[22m#x1B[34;1m\"#x1B[0;22m#x1B[34;1mb#x1B[0;22m#x1B[34;1m\"#x1B[0;22m#x1B[1m:#x1B[22m#x1B[32m\"#x1B[0m#x1B[33mhello#x1B[0m#x1B[32m\"#x1B[0m#x1B[35m}#x1B[0m\n  + {\n  +   \"a\": 1,\n  +   \"b\": \"hello\"\n  + }",
+        "text": "tests/test_gaps.py:119: in test_colorize_json_output_ungron\n    assert output == (RESOURCES / \"ungron_color.golden\").read_text()\nE   assert '{\\n  \"a\": 1,... \"hello\"\\n}\\n' == '\\x1b[35m{\\x1...35m}\\x1b[0m\\n'\nE     \nE     - #x1B[35m{#x1B[0m#x1B[34;1m\"#x1B[0;22m#x1B[34;1ma#x1B[0;22m#x1B[34;1m\"#x1B[0;22m#x1B[1m:#x1B[22m#x1B[31m1#x1B[0m#x1B[1m,#x1B[22m#x1B[34;1m\"#x1B[0;22m#x1B[34;1mb#x1B[0;22m#x1B[34;1m\"#x1B[0;22m#x1B[1m:#x1B[22m#x1B[32m\"#x1B[0m#x1B[33mhello#x1B[0m#x1B[32m\"#x1B[0m#x1B[35m}#x1B[0m\nE     + {\nE     +   \"a\": 1,\nE     +   \"b\": \"hello\"\nE     + }"
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_colorize_gron_output",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.409,
+        "message": "assert 'json = {};\\n...b = \"test\";\\n' == '\\x1b[34;1mjs...st\"\\x1b[0m;\\n'\n  \n  - #x1B[34;1mjson#x1B[0;22m = #x1B[35m{}#x1B[0m;\n  - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1ma#x1B[0;22m = #x1B[31m1#x1B[0m;\n  - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1mb#x1B[0;22m = #x1B[33m\"test\"#x1B[0m;\n  + json = {};\n  + json.a = 1;\n  + json.b = \"test\";",
+        "text": "tests/test_gaps.py:156: in test_colorize_gron_output\n    assert output == (RESOURCES / \"gron_color.golden\").read_text()\nE   assert 'json = {};\\n...b = \"test\";\\n' == '\\x1b[34;1mjs...st\"\\x1b[0m;\\n'\nE     \nE     - #x1B[34;1mjson#x1B[0;22m = #x1B[35m{}#x1B[0m;\nE     - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1ma#x1B[0;22m = #x1B[31m1#x1B[0m;\nE     - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1mb#x1B[0;22m = #x1B[33m\"test\"#x1B[0m;\nE     + json = {};\nE     + json.a = 1;\nE     + json.b = \"test\";"
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_invalid_json_statement_array_length",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.087
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_invalid_json_statement_type_assertion",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.072
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_values_with_array_indices",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.068
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_empty_arrays_and_objects_json_format",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.076
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_numeric_keys_in_json_format",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.071
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_invalid_quoted_key_in_ungron",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.264,
+        "message": "AssertionError: assert 'invalid quoted key' in 'ungron failed for `json[`: invalid statement\\n'\n +  where 'ungron failed for `json[`: invalid statement\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json[`: invalid statement\\n').stderr",
+        "text": "tests/test_gaps.py:284: in test_invalid_quoted_key_in_ungron\n    assert \"invalid quoted key\" in result.stderr\nE   AssertionError: assert 'invalid quoted key' in 'ungron failed for `json[`: invalid statement\\n'\nE    +  where 'ungron failed for `json[`: invalid statement\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json[`: invalid statement\\n').stderr"
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_invalid_numeric_key_in_ungron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.083
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_stream_with_monochrome_flag",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.106
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_large_nested_json_format",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.102
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_values_extraction_with_escaped_strings",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_gaps.test_stream_mode_with_empty_lines",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.075
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_basic_data_types",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_string_escaping_unicode_emoji",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.078
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_number_formats_negative_zero_scientific",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.069
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_nested_structures_empty_containers",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_arrays_simple_and_nested",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.072
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_special_keys_requiring_bracket_notation",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.071
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_array_of_objects",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.083
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_no_sort_flag_preserves_insertion_order",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.135
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_invalid_json_syntax_error",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_empty_input_error",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_truncated_json_error",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_read_from_file",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.069
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_nonexistent_file_error",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_deep_nesting_six_levels",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_large_array_100_elements",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_object_with_25_keys",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.074
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_mixed_nesting_objects_in_arrays_and_vice_versa",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_very_long_string_value_2kb",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_control_characters_and_unicode_separators",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_boolean_values_true_and_false",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.072
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_javascript_reserved_word_keys",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_identifier_rules_underscores_unicode_numbers",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.081
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_empty_string_key",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.085
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_top_level_string",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.082
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_top_level_number",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.091
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_top_level_boolean",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.095
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_top_level_null",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.078
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_array_index_numeric_sorting",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.074
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_very_deep_nesting_10_levels",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.076
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_stdin_explicit_dash_argument",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.085
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_monochrome_flag_suppresses_ansi_codes",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.074
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_colorize_flag_produces_ansi_codes",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.206,
+        "message": "AssertionError: No ANSI escape codes (CSI sequence \\x1b[) found in colorize output\nassert '\\x1b[' in 'json = {};\\njson.test = \"value\";\\n'\n +  where 'json = {};\\njson.test = \"value\";\\n' = CompletedProcess(args=['/workspace/executable', '-c'], returncode=0, stdout='json = {};\\njson.test = \"value\";\\n', stderr='').stdout",
+        "text": "tests/test_gron_core.py:407: in test_colorize_flag_produces_ansi_codes\n    assert '\\x1b[' in result.stdout, \"No ANSI escape codes (CSI sequence \\\\x1b[) found in colorize output\"\nE   AssertionError: No ANSI escape codes (CSI sequence \\x1b[) found in colorize output\nE   assert '\\x1b[' in 'json = {};\\njson.test = \"value\";\\n'\nE    +  where 'json = {};\\njson.test = \"value\";\\n' = CompletedProcess(args=['/workspace/executable', '-c'], returncode=0, stdout='json = {};\\njson.test = \"value\";\\n', stderr='').stdout"
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_stream_mode_treats_each_line_as_separate_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_stream_mode_with_no_sort",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_stream_mode_error_on_invalid_line",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_values_mode_extracts_only_values",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.143
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_values_mode_with_array",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_json_mode_output_format",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_json_mode_with_nested_structures",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.068
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_version_flag",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.068
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_stream_mode_with_json_output",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_multiple_invocations_are_stateless",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.19
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_large_deeply_nested_structure",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.062
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_keys_with_quotes_and_escapes_in_names",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_float_precision_preservation",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_empty_top_level_object_and_array",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.129
+      }
+    },
+    {
+      "name": "tests.test_gron_core.test_long_key_names",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_one_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_two_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_three_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_github_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_stream_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_scalar_stream_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.062
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_long_stream_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.141
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_one_gron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_two_gron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_three_gron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_grep_separators_gron",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.203,
+        "message": "AssertionError: assert 5 == 0\n +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode",
+        "text": "tests/test_harvest.py:153: in test_ungron_grep_separators_gron\n    assert result.returncode == 0\nE   AssertionError: assert 5 == 0\nE    +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode"
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_github_gron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_large_line_gron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.105
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_json_one_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.077
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_json_two_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.068
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_json_three_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_json_github_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_stream_json_stream_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_gron_stream_json_scalar_stream_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_json_one_jgron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.078
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_json_two_jgron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_json_three_jgron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.068
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_json_github_jgron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.074
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_invalid_type_mismatch",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_harvest.test_ungron_invalid_value",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.207,
+        "message": "AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'\n +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/invalid-value.gron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr",
+        "text": "tests/test_harvest.py:351: in test_ungron_invalid_value\n    assert \"ungron failed for `json.likes = [;`: invalid value `[`\" in result.stderr\nE   AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'\nE    +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/invalid-value.gron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr"
+      }
+    },
+    {
+      "name": "tests.test_integration.test_gron_grep_ungron_workflow_filter_by_email",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.131
+      }
+    },
+    {
+      "name": "tests.test_integration.test_gron_grep_ungron_workflow_filter_complete_user",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.123
+      }
+    },
+    {
+      "name": "tests.test_integration.test_deep_nesting_50_levels_round_trip",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.139
+      }
+    },
+    {
+      "name": "tests.test_integration.test_stream_mode_with_mixed_valid_invalid_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.069
+      }
+    },
+    {
+      "name": "tests.test_integration.test_json_mode_output_format_and_ungron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.122
+      }
+    },
+    {
+      "name": "tests.test_integration.test_multiple_monochrome_flags",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.19
+      }
+    },
+    {
+      "name": "tests.test_integration.test_values_mode_extracts_from_gron_statements",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.137
+      }
+    },
+    {
+      "name": "tests.test_integration.test_stdin_vs_file_vs_explicit_dash",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.22
+      }
+    },
+    {
+      "name": "tests.test_integration.test_colorize_monochrome_flag_precedence",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.227,
+        "message": "AssertionError: assert 'json = {};\\njson.test = 1;\\n' == '\\x1b[34;1mjs...1m1\\x1b[0m;\\n'\n  \n  - #x1B[34;1mjson#x1B[0;22m = #x1B[35m{}#x1B[0m;\n  - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1mtest#x1B[0;22m = #x1B[31m1#x1B[0m;\n  + json = {};\n  + json.test = 1;",
+        "text": "tests/test_integration.py:244: in test_colorize_monochrome_flag_precedence\n    assert result_color.stdout == (RESOURCES / \"colorized.golden\").read_text()\nE   AssertionError: assert 'json = {};\\njson.test = 1;\\n' == '\\x1b[34;1mjs...1m1\\x1b[0m;\\n'\nE     \nE     - #x1B[34;1mjson#x1B[0;22m = #x1B[35m{}#x1B[0m;\nE     - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1mtest#x1B[0;22m = #x1B[31m1#x1B[0m;\nE     + json = {};\nE     + json.test = 1;"
+      }
+    },
+    {
+      "name": "tests.test_integration.test_large_json_1000_array_elements",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.119
+      }
+    },
+    {
+      "name": "tests.test_integration.test_gron_ungron_with_json_mode_roundtrip",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.144
+      }
+    },
+    {
+      "name": "tests.test_integration.test_stream_mode_multiple_objects_per_file",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.071
+      }
+    },
+    {
+      "name": "tests.test_integration.test_values_mode_on_regular_gron_output",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.137
+      }
+    },
+    {
+      "name": "tests.test_integration.test_ungron_conflicting_type_assignments_last_wins",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_integration.test_ungron_sparse_array_with_gap",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.071
+      }
+    },
+    {
+      "name": "tests.test_integration.test_ungron_negative_array_index_error",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_integration.test_ungron_empty_string_key",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_integration.test_ungron_silently_skips_invalid_statements",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.194,
+        "message": "AssertionError: assert 5 == 0\n +  where 5 = CompletedProcess(args=['/workspace/executable', '-u', '-m'], returncode=5, stdout='', stderr='ungron failed for `this is not a valid statement`: statement has no value\\n').returncode",
+        "text": "tests/test_integration.py:416: in test_ungron_silently_skips_invalid_statements\n    assert result.returncode == 0\nE   AssertionError: assert 5 == 0\nE    +  where 5 = CompletedProcess(args=['/workspace/executable', '-u', '-m'], returncode=5, stdout='', stderr='ungron failed for `this is not a valid statement`: statement has no value\\n').returncode"
+      }
+    },
+    {
+      "name": "tests.test_integration.test_stream_and_ungron_flags_incompatible",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_integration.test_gron_output_statement_order_deterministic",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.182
+      }
+    },
+    {
+      "name": "tests.test_integration.test_large_deeply_nested_combined",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.158
+      }
+    },
+    {
+      "name": "tests.test_integration.test_gron_ungron_preserves_unicode_in_keys",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.125
+      }
+    },
+    {
+      "name": "tests.test_integration.test_values_mode_with_nested_structures",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.14
+      }
+    },
+    {
+      "name": "tests.test_integration.test_no_sort_with_complex_structure",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.132
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_extracts_only_values",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_types_preserved",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.068
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_string_unescaping",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_output_format",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.062
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_matches_jgron_golden",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.139
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_with_stream",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.071
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_scalar_stream",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_ungron_with_json_mode",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_empty_object",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_empty_array",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_nested_structures",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_unsorted_output",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_invalid_statement_error",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.202,
+        "message": "AssertionError: assert 0 == 5\n +  where 0 = CompletedProcess(args=['/workspace/executable', '-v', '-m'], returncode=0, stdout='', stderr='').returncode",
+        "text": "tests/test_output_modes.py:194: in test_values_mode_invalid_statement_error\n    assert result.returncode == 5  # exitParseStatements\nE   AssertionError: assert 0 == 5\nE    +  where 0 = CompletedProcess(args=['/workspace/executable', '-v', '-m'], returncode=0, stdout='', stderr='').returncode"
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_invalid_json_error",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_preserves_unicode",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_with_monochrome",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.081
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_with_monochrome",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.075
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_large_values",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.086
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_deeply_nested_structures",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_nested_arrays_roundtrip",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.149
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_numeric_edge_cases",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_github_data",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_extracts_from_stream_gron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.135
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_empty_string_value",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.078
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_empty_string_extraction",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_boolean_false_not_omitted",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_only_scalars_no_containers",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_special_keys_with_dots_brackets",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.069
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_with_null_values",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_values_mode_with_null_values",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_output_modes.test_json_mode_array_with_mixed_types",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.062
+      }
+    },
+    {
+      "name": "tests.test_smoke.test_basic_gron",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_smoke.test_help_flag",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.071
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_basic_two_objects",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.069
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_scalar_values",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_three_simple_objects",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_single_line",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_empty_line_fails",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_invalid_json_line_fails",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.072
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_arrays_as_lines",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_scalar_numbers",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.069
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_scalar_strings",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.068
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_with_no_sort_flag",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_with_json_mode",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_mixed_types_per_line",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_empty_input",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.069
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_whitespace_only_line_fails",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.06
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_long_flag_works",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.061
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_nested_objects",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_special_values",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_many_lines_head_tail",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.116
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_very_long_line",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.22
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_deeply_nested_structures",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_nested_arrays",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_objects_with_arrays",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.073
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_arrays_with_nulls",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.073
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_line_with_trailing_tab",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.066
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_tab_only_line_fails",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_empty_object_and_array",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_stream.test_stream_float_values",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_simple_object",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.083
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_short_flag",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.063
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_type_inference",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.079
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_nested_structures",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.073
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_unicode_and_special_chars",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_array_with_gaps",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.067
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_roundtrip_complex",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.127
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_error_type_mismatch_object_to_array",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_error_type_mismatch_array_to_object",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.062
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_error_missing_semicolon",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_error_malformed_value",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.205,
+        "message": "AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'\n +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr",
+        "text": "tests/test_ungron.py:152: in test_ungron_error_malformed_value\n    assert \"ungron failed for `json.likes = [;`: invalid value `[`\" in result.stderr\nE   AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'\nE    +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr"
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_error_empty_input",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_error_whitespace_only",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.071
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_scalar_override",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.083
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_from_file",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.076
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_with_monochrome_flag",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.062
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_grep_separators",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.194,
+        "message": "AssertionError: ungron failed for ``: invalid statement\n  \nassert 5 == 0\n +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode",
+        "text": "tests/test_ungron.py:204: in test_ungron_grep_separators\n    assert result.returncode == 0, result.stderr\nE   AssertionError: ungron failed for ``: invalid statement\nE     \nE   assert 5 == 0\nE    +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode"
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_top_level_array",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_large_values",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.122
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_numeric_precision",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.068
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_json_escape_sequences",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_error_invalid_identifier",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.073
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_error_invalid_bracket_content",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_roundtrip_preserves_types",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.15
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_object_merge_preserves_all_keys",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.093
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_array_merge_extends_correctly",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.084
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_deep_nested_merge",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.077
+      }
+    },
+    {
+      "name": "tests.test_ungron.test_ungron_via_symlink",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.214,
+        "message": "AssertionError: failed to form statements: invalid character 'j' looking for beginning of value\n  \nassert 3 == 0\n +  where 3 = CompletedProcess(args=['/workspace/ungron', '/workspace/testdata/one.gron'], returncode=3, stdout='', stderr=\"failed to form statements: invalid character 'j' looking for beginning of value\\n\").returncode",
+        "text": "tests/test_ungron.py:410: in test_ungron_via_symlink\n    assert result.returncode == 0, result.stderr\nE   AssertionError: failed to form statements: invalid character 'j' looking for beginning of value\nE     \nE   assert 3 == 0\nE    +  where 3 = CompletedProcess(args=['/workspace/ungron', '/workspace/testdata/one.gron'], returncode=3, stdout='', stderr=\"failed to form statements: invalid character 'j' looking for beginning of value\\n\").returncode"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_simple_http_url",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.584
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_large_json_http",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_empty_json",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.065
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_url_with_query_params",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_http_redirect_301",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.074
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_nonexistent_domain",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.341,
+        "message": "assert 'Get \"http://nonexistent.domain.invalid.test/test.json\": dial tcp:' in 'Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n'\n +  where 'Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', 'http://nonexistent.domain.invalid.test/test.json'], returncode=4, stdout='', stderr='Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n').stderr",
+        "text": "/workspace/eval/tests/test_url_fetch.py:174: in test_fetch_nonexistent_domain\n    assert 'Get \"http://nonexistent.domain.invalid.test/test.json\": dial tcp:' in result.stderr\nE   assert 'Get \"http://nonexistent.domain.invalid.test/test.json\": dial tcp:' in 'Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n'\nE    +  where 'Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', 'http://nonexistent.domain.invalid.test/test.json'], returncode=4, stdout='', stderr='Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n').stderr"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_connection_refused",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.208,
+        "message": "assert 'connection refused' in 'Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n'\n +  where 'Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n' = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:19999/test.json'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n').stderr",
+        "text": "/workspace/eval/tests/test_url_fetch.py:187: in test_fetch_connection_refused\n    assert \"connection refused\" in result.stderr\nE   assert 'connection refused' in 'Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n'\nE    +  where 'Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n' = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:19999/test.json'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n').stderr"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_https_self_signed_cert_fails_without_insecure",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.932,
+        "message": "assert 'tls: failed to verify certificate' in 'Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n'\n +  where 'Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n' = CompletedProcess(args=['/workspace/executable', 'https://127.0.0.1:40369/simple.json'], returncode=4, stdout='', stderr='Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n').stderr",
+        "text": "/workspace/eval/tests/test_url_fetch.py:201: in test_https_self_signed_cert_fails_without_insecure\n    assert \"tls: failed to verify certificate\" in result.stderr\nE   assert 'tls: failed to verify certificate' in 'Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n'\nE    +  where 'Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n' = CompletedProcess(args=['/workspace/executable', 'https://127.0.0.1:40369/simple.json'], returncode=4, stdout='', stderr='Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n').stderr"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_https_insecure_flag_long",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.072
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_https_insecure_flag_short",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.071
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_http_404_not_found",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.068
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_http_500_server_error",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.07
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_non_json_response",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.071
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_invalid_url_protocol_treated_as_file",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.064
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_url_case_insensitive_protocol",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.2,
+        "message": "AssertionError: Expected exit code 0, got 1: open HTTP://127.0.0.1:39237/simple.json: no such file or directory\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/workspace/executable', 'HTTP://127.0.0.1:39237/simple.json'], returncode=1, stdout='', stderr='open HTTP://127.0.0.1:39237/simple.json: no such file or directory\\n').returncode",
+        "text": "/workspace/eval/tests/test_url_fetch.py:286: in test_fetch_url_case_insensitive_protocol\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 1: open HTTP://127.0.0.1:39237/simple.json: no such file or directory\nE     \nE   assert 1 == 0\nE    +  where 1 = CompletedProcess(args=['/workspace/executable', 'HTTP://127.0.0.1:39237/simple.json'], returncode=1, stdout='', stderr='open HTTP://127.0.0.1:39237/simple.json: no such file or directory\\n').returncode"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_https_uppercase",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.205,
+        "message": "AssertionError: Expected exit code 0, got 1: open HTTPS://127.0.0.1:40369/simple.json: no such file or directory\n  \nassert 1 == 0\n +  where 1 = CompletedProcess(args=['/workspace/executable', '-k', 'HTTPS://127.0.0.1:40369/simple.json'], returncode=1, stdout='', stderr='open HTTPS://127.0.0.1:40369/simple.json: no such file or directory\\n').returncode",
+        "text": "/workspace/eval/tests/test_url_fetch.py:297: in test_fetch_https_uppercase\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 1: open HTTPS://127.0.0.1:40369/simple.json: no such file or directory\nE     \nE   assert 1 == 0\nE    +  where 1 = CompletedProcess(args=['/workspace/executable', '-k', 'HTTPS://127.0.0.1:40369/simple.json'], returncode=1, stdout='', stderr='open HTTPS://127.0.0.1:40369/simple.json: no such file or directory\\n').returncode"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_with_proxy_flag_long",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 1.582
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_with_proxy_flag_short",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 1.571
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_with_noproxy_flag",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 3.733,
+        "message": "AssertionError: Proxy should have been bypassed\nassert not True\n +  where True = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_flag2/proxy_log.txt')\n +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\n +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path",
+        "text": "/workspace/eval/tests/test_url_fetch.py:407: in test_fetch_with_noproxy_flag\n    assert not os.path.exists(log_file), \"Proxy should have been bypassed\"\nE   AssertionError: Proxy should have been bypassed\nE   assert not True\nE    +  where True = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_flag2/proxy_log.txt')\nE    +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\nE    +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_with_noproxy_multiple_hosts",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 3.737,
+        "message": "AssertionError: Proxy should have been bypassed\nassert not True\n +  where True = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_multip2/proxy_log.txt')\n +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\n +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path",
+        "text": "/workspace/eval/tests/test_url_fetch.py:429: in test_fetch_with_noproxy_multiple_hosts\n    assert not os.path.exists(log_file), \"Proxy should have been bypassed\"\nE   AssertionError: Proxy should have been bypassed\nE   assert not True\nE    +  where True = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_multip2/proxy_log.txt')\nE    +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\nE    +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_with_http_proxy_env_var",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 3.654,
+        "message": "AssertionError: Proxy was not used\nassert False\n +  where False = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_http_proxy_env2/proxy_log.txt')\n +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\n +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path",
+        "text": "/workspace/eval/tests/test_url_fetch.py:456: in test_fetch_with_http_proxy_env_var\n    assert os.path.exists(log_file), \"Proxy was not used\"\nE   AssertionError: Proxy was not used\nE   assert False\nE    +  where False = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_http_proxy_env2/proxy_log.txt')\nE    +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\nE    +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_with_no_proxy_env_var",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 1.509
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_proxy_flag_overrides_env_var",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 1.569
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_with_noproxy_wildcard_suffix",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 3.731,
+        "message": "AssertionError: Proxy should have been bypassed by wildcard pattern\nassert not True\n +  where True = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_wildca2/proxy_log.txt')\n +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\n +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path",
+        "text": "/workspace/eval/tests/test_url_fetch.py:539: in test_fetch_with_noproxy_wildcard_suffix\n    assert not os.path.exists(log_file), \"Proxy should have been bypassed by wildcard pattern\"\nE   AssertionError: Proxy should have been bypassed by wildcard pattern\nE   assert not True\nE    +  where True = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_wildca2/proxy_log.txt')\nE    +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\nE    +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_with_invalid_proxy_url_causes_error",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.287,
+        "message": "assert 'proxyconnect tcp: dial tcp :0: connect: connection refused' in 'Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n'\n +  where 'Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', '--proxy', 'not-a-valid-url', 'http://127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n').stderr",
+        "text": "/workspace/eval/tests/test_url_fetch.py:552: in test_fetch_with_invalid_proxy_url_causes_error\n    assert \"proxyconnect tcp: dial tcp :0: connect: connection refused\" in result.stderr\nE   assert 'proxyconnect tcp: dial tcp :0: connect: connection refused' in 'Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n'\nE    +  where 'Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', '--proxy', 'not-a-valid-url', 'http://127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n').stderr"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_timeout_on_slow_response",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 75.314,
+        "message": "AssertionError: Expected exit code 4 (exitFetchURL), got 0\nassert 0 == 4\n +  where 0 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/slow'], returncode=0, stdout='json = {};\\njson.slow = \"response\";\\n', stderr='').returncode",
+        "text": "/workspace/eval/tests/test_url_fetch.py:565: in test_timeout_on_slow_response\n    assert result.returncode == 4, f\"Expected exit code 4 (exitFetchURL), got {result.returncode}\"\nE   AssertionError: Expected exit code 4 (exitFetchURL), got 0\nE   assert 0 == 4\nE    +  where 0 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/slow'], returncode=0, stdout='json = {};\\njson.slow = \"response\";\\n', stderr='').returncode"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_url_with_fragment",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.073
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_url_with_userinfo",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.21,
+        "message": "AssertionError: Expected exit code 0, got 4: Get \"http://user:pass@127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\n  \nassert 4 == 0\n +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://user:pass@127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get \"http://user:pass@127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n').returncode",
+        "text": "/workspace/eval/tests/test_url_fetch.py:594: in test_fetch_url_with_userinfo\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 4: Get \"http://user:pass@127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\nE     \nE   assert 4 == 0\nE    +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://user:pass@127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get \"http://user:pass@127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n').returncode"
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_combined_flags_insecure_and_proxy",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 1.065
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_very_long_url_path",
+      "branch": "bc90bea37ab6",
+      "status": "passed",
+      "extra": {
+        "time": 0.072
+      }
+    },
+    {
+      "name": "tests.test_url_fetch.test_fetch_url_with_unicode_in_query",
+      "branch": "bc90bea37ab6",
+      "status": "failure",
+      "extra": {
+        "time": 0.958,
+        "message": "AssertionError: Expected exit code 0, got 4: Get \"http://127.0.0.1:39237/simple.json?name=café&emoji=☕\": ordinal not in range(128)\n  \nassert 4 == 0\n +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/simple.json?name=café&emoji=☕'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:39237/simple.json?name=café&emoji=☕\": ordinal not in range(128)\\n').returncode",
+        "text": "/workspace/eval/tests/test_url_fetch.py:640: in test_fetch_url_with_unicode_in_query\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 4: Get \"http://127.0.0.1:39237/simple.json?name=café&emoji=☕\": ordinal not in range(128)\nE     \nE   assert 4 == 0\nE    +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/simple.json?name=café&emoji=☕'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:39237/simple.json?name=café&emoji=☕\": ordinal not in range(128)\\n').returncode"
+      }
+    }
+  ],
+  "error_code": null,
+  "error_details": null,
+  "log": [
+    {
+      "step": "wipe_workspace",
+      "command": "rm -rf /workspace/* /workspace/.[!.]*",
+      "wall_time": 0.403574904999914,
+      "output": "",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "clear_stale_executable",
+      "command": "rm -f ./executable",
+      "wall_time": 0.3764007810000294,
+      "output": "",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "seed_git",
+      "command": "if [ ! -d .git ]; then GIT_AUTHOR_DATE='2000-01-01T00:00:00Z' GIT_COMMITTER_DATE='2000-01-01T00:00:00Z' git -c init.defaultBranch=gold init -q && git -c user.email=gold@local -c user.name=gold -c commit.gpgsign=false add -A && GIT_AUTHOR_DATE='2000-01-01T00:00:00Z' GIT_COMMITTER_DATE='2000-01-01T00:00:00Z' git -c user.email=gold@local -c user.name=gold -c commit.gpgsign=false commit -q --allow-empty -m gold; fi",
+      "wall_time": 0.4337977199998022,
+      "output": "",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "compile",
+      "command": "chmod +x ./compile.sh && ./compile.sh",
+      "wall_time": 0.35290252699996927,
+      "output": "",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "copy_executable",
+      "command": "mv ./executable /opt/programbench-stashed-executable-do-not-modify",
+      "wall_time": 0.34912058100007926,
+      "output": "",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "hash_executable",
+      "command": "sha256sum /opt/programbench-stashed-executable-do-not-modify",
+      "wall_time": 0.3212087580000116,
+      "output": "f7dd485b65c01e3f0984636484771fcaa80831e6fdaa77d346d587015817ed25  /opt/programbench-stashed-executable-do-not-modify\n",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "install_rerunfailures",
+      "command": "pip3 install -q --disable-pip-version-check pytest-rerunfailures==16.4",
+      "wall_time": 2.158009618000051,
+      "output": "WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv\n",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "restore_executable",
+      "command": "rm -f ./executable && mv /opt/programbench-stashed-executable-do-not-modify ./executable && chmod +x ./executable",
+      "wall_time": 0.3401465389997611,
+      "output": "",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "verify_executable_hash",
+      "command": "sha256sum ./executable",
+      "wall_time": 0.3319382859999678,
+      "output": "f7dd485b65c01e3f0984636484771fcaa80831e6fdaa77d346d587015817ed25  ./executable\n",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "clean_stale_results",
+      "command": "rm -f eval/results.xml results.xml",
+      "wall_time": 0.33950378500003353,
+      "output": "",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "patch_timeout_method",
+      "command": "test -f eval/run.sh && sed -i 's/--timeout-method=thread/--timeout-method=signal/g' eval/run.sh || true",
+      "wall_time": 0.3512454239998988,
+      "output": "",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "run_tests",
+      "command": "export PYTEST_ADDOPTS=\"$PYTEST_ADDOPTS --reruns=2 --reruns-delay=1\" && chmod +x ./eval/run.sh && ./eval/run.sh",
+      "wall_time": 178.92669570800035,
+      "output": "============================= test session starts ==============================\nplatform linux -- Python 3.10.12, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3\ncachedir: .pytest_cache\nrootdir: /workspace/eval\nplugins: timeout-2.4.0, rerunfailures-16.4, libtmux-0.58.0, xdist-3.8.0, dependency-0.6.1\ntimeout: 30.0s\ntimeout method: signal\ntimeout func_only: False\ncreated: 1/1 worker\n1 worker [233 items]\n\nscheduling tests via LoadScheduling\n\ntests/test_gaps.py::test_json_format_basic \n[gw0] [  0%] PASSED tests/test_gaps.py::test_json_format_basic \ntests/test_gaps.py::test_stream_json_format \n[gw0] [  0%] PASSED tests/test_gaps.py::test_stream_json_format \ntests/test_gaps.py::test_stream_basic_multiline \n[gw0] [  1%] PASSED tests/test_gaps.py::test_stream_basic_multiline \ntests/test_gaps.py::test_values_extraction \n[gw0] [  1%] PASSED tests/test_gaps.py::test_values_extraction \ntests/test_gaps.py::test_nested_json_format \n[gw0] [  2%] PASSED tests/test_gaps.py::test_nested_json_format \ntests/test_gaps.py::test_colorize_json_output_ungron \n[gw0] [  2%] RERUN tests/test_gaps.py::test_colorize_json_output_ungron \ntests/test_gaps.py::test_colorize_json_output_ungron \n[gw0] [  2%] RERUN tests/test_gaps.py::test_colorize_json_output_ungron \ntests/test_gaps.py::test_colorize_json_output_ungron \n[gw0] [  2%] FAILED tests/test_gaps.py::test_colorize_json_output_ungron \ntests/test_gaps.py::test_colorize_gron_output \n[gw0] [  3%] RERUN tests/test_gaps.py::test_colorize_gron_output \ntests/test_gaps.py::test_colorize_gron_output \n[gw0] [  3%] RERUN tests/test_gaps.py::test_colorize_gron_output \ntests/test_gaps.py::test_colorize_gron_output \n[gw0] [  3%] FAILED tests/test_gaps.py::test_colorize_gron_output \ntests/test_gaps.py::test_invalid_json_statement_array_length \n[gw0] [  3%] PASSED tests/test_gaps.py::test_invalid_json_statement_array_length \ntests/test_gaps.py::test_invalid_json_statement_type_assertion \n[gw0] [  3%] PASSED tests/test_gaps.py::test_invalid_json_statement_type_assertion \ntests/test_gaps.py::test_values_with_array_indices \n[gw0] [  4%] PASSED tests/test_gaps.py::test_values_with_array_indices \ntests/test_gaps.py::test_empty_arrays_and_objects_json_format \n[gw0] [  4%] PASSED tests/test_gaps.py::test_empty_arrays_and_objects_json_format \ntests/test_gaps.py::test_numeric_keys_in_json_format \n[gw0] [  5%] PASSED tests/test_gaps.py::test_numeric_keys_in_json_format \ntests/test_gaps.py::test_invalid_quoted_key_in_ungron \n[gw0] [  5%] RERUN tests/test_gaps.py::test_invalid_quoted_key_in_ungron \ntests/test_gaps.py::test_invalid_quoted_key_in_ungron \n[gw0] [  5%] RERUN tests/test_gaps.py::test_invalid_quoted_key_in_ungron \ntests/test_gaps.py::test_invalid_quoted_key_in_ungron \n[gw0] [  5%] FAILED tests/test_gaps.py::test_invalid_quoted_key_in_ungron \ntests/test_gaps.py::test_invalid_numeric_key_in_ungron \n[gw0] [  6%] PASSED tests/test_gaps.py::test_invalid_numeric_key_in_ungron \ntests/test_gaps.py::test_stream_with_monochrome_flag \n[gw0] [  6%] PASSED tests/test_gaps.py::test_stream_with_monochrome_flag \ntests/test_gaps.py::test_large_nested_json_format \n[gw0] [  6%] PASSED tests/test_gaps.py::test_large_nested_json_format \ntests/test_gaps.py::test_values_extraction_with_escaped_strings \n[gw0] [  7%] PASSED tests/test_gaps.py::test_values_extraction_with_escaped_strings \ntests/test_gaps.py::test_stream_mode_with_empty_lines \n[gw0] [  7%] PASSED tests/test_gaps.py::test_stream_mode_with_empty_lines \ntests/test_gron_core.py::test_basic_data_types \n[gw0] [  8%] PASSED tests/test_gron_core.py::test_basic_data_types \ntests/test_gron_core.py::test_string_escaping_unicode_emoji \n[gw0] [  8%] PASSED tests/test_gron_core.py::test_string_escaping_unicode_emoji \ntests/test_gron_core.py::test_number_formats_negative_zero_scientific \n[gw0] [  9%] PASSED tests/test_gron_core.py::test_number_formats_negative_zero_scientific \ntests/test_gron_core.py::test_nested_structures_empty_containers \n[gw0] [  9%] PASSED tests/test_gron_core.py::test_nested_structures_empty_containers \ntests/test_gron_core.py::test_arrays_simple_and_nested \n[gw0] [  9%] PASSED tests/test_gron_core.py::test_arrays_simple_and_nested \ntests/test_gron_core.py::test_special_keys_requiring_bracket_notation \n[gw0] [ 10%] PASSED tests/test_gron_core.py::test_special_keys_requiring_bracket_notation \ntests/test_gron_core.py::test_array_of_objects \n[gw0] [ 10%] PASSED tests/test_gron_core.py::test_array_of_objects \ntests/test_gron_core.py::test_no_sort_flag_preserves_insertion_order \n[gw0] [ 11%] PASSED tests/test_gron_core.py::test_no_sort_flag_preserves_insertion_order \ntests/test_gron_core.py::test_invalid_json_syntax_error \n[gw0] [ 11%] PASSED tests/test_gron_core.py::test_invalid_json_syntax_error \ntests/test_gron_core.py::test_empty_input_error \n[gw0] [ 12%] PASSED tests/test_gron_core.py::test_empty_input_error \ntests/test_gron_core.py::test_truncated_json_error \n[gw0] [ 12%] PASSED tests/test_gron_core.py::test_truncated_json_error \ntests/test_gron_core.py::test_read_from_file \n[gw0] [ 12%] PASSED tests/test_gron_core.py::test_read_from_file \ntests/test_gron_core.py::test_nonexistent_file_error \n[gw0] [ 13%] PASSED tests/test_gron_core.py::test_nonexistent_file_error \ntests/test_gron_core.py::test_deep_nesting_six_levels \n[gw0] [ 13%] PASSED tests/test_gron_core.py::test_deep_nesting_six_levels \ntests/test_gron_core.py::test_large_array_100_elements \n[gw0] [ 14%] PASSED tests/test_gron_core.py::test_large_array_100_elements \ntests/test_gron_core.py::test_object_with_25_keys \n[gw0] [ 14%] PASSED tests/test_gron_core.py::test_object_with_25_keys \ntests/test_gron_core.py::test_mixed_nesting_objects_in_arrays_and_vice_versa \n[gw0] [ 15%] PASSED tests/test_gron_core.py::test_mixed_nesting_objects_in_arrays_and_vice_versa \ntests/test_gron_core.py::test_very_long_string_value_2kb \n[gw0] [ 15%] PASSED tests/test_gron_core.py::test_very_long_string_value_2kb \ntests/test_gron_core.py::test_control_characters_and_unicode_separators \n[gw0] [ 15%] PASSED tests/test_gron_core.py::test_control_characters_and_unicode_separators \ntests/test_gron_core.py::test_boolean_values_true_and_false \n[gw0] [ 16%] PASSED tests/test_gron_core.py::test_boolean_values_true_and_false \ntests/test_gron_core.py::test_javascript_reserved_word_keys \n[gw0] [ 16%] PASSED tests/test_gron_core.py::test_javascript_reserved_word_keys \ntests/test_gron_core.py::test_identifier_rules_underscores_unicode_numbers \n[gw0] [ 17%] PASSED tests/test_gron_core.py::test_identifier_rules_underscores_unicode_numbers \ntests/test_gron_core.py::test_empty_string_key \n[gw0] [ 17%] PASSED tests/test_gron_core.py::test_empty_string_key \ntests/test_gron_core.py::test_top_level_string \n[gw0] [ 18%] PASSED tests/test_gron_core.py::test_top_level_string \ntests/test_gron_core.py::test_top_level_number \n[gw0] [ 18%] PASSED tests/test_gron_core.py::test_top_level_number \ntests/test_gron_core.py::test_top_level_boolean \n[gw0] [ 18%] PASSED tests/test_gron_core.py::test_top_level_boolean \ntests/test_gron_core.py::test_top_level_null \n[gw0] [ 19%] PASSED tests/test_gron_core.py::test_top_level_null \ntests/test_gron_core.py::test_array_index_numeric_sorting \n[gw0] [ 19%] PASSED tests/test_gron_core.py::test_array_index_numeric_sorting \ntests/test_gron_core.py::test_very_deep_nesting_10_levels \n[gw0] [ 20%] PASSED tests/test_gron_core.py::test_very_deep_nesting_10_levels \ntests/test_gron_core.py::test_stdin_explicit_dash_argument \n[gw0] [ 20%] PASSED tests/test_gron_core.py::test_stdin_explicit_dash_argument \ntests/test_gron_core.py::test_monochrome_flag_suppresses_ansi_codes \n[gw0] [ 21%] PASSED tests/test_gron_core.py::test_monochrome_flag_suppresses_ansi_codes \ntests/test_gron_core.py::test_colorize_flag_produces_ansi_codes \n[gw0] [ 21%] RERUN tests/test_gron_core.py::test_colorize_flag_produces_ansi_codes \ntests/test_gron_core.py::test_colorize_flag_produces_ansi_codes \n[gw0] [ 21%] RERUN tests/test_gron_core.py::test_colorize_flag_produces_ansi_codes \ntests/test_gron_core.py::test_colorize_flag_produces_ansi_codes \n[gw0] [ 21%] FAILED tests/test_gron_core.py::test_colorize_flag_produces_ansi_codes \ntests/test_gron_core.py::test_stream_mode_treats_each_line_as_separate_json \n[gw0] [ 21%] PASSED tests/test_gron_core.py::test_stream_mode_treats_each_line_as_separate_json \ntests/test_gron_core.py::test_stream_mode_with_no_sort \n[gw0] [ 22%] PASSED tests/test_gron_core.py::test_stream_mode_with_no_sort \ntests/test_gron_core.py::test_stream_mode_error_on_invalid_line \n[gw0] [ 22%] PASSED tests/test_gron_core.py::test_stream_mode_error_on_invalid_line \ntests/test_gron_core.py::test_values_mode_extracts_only_values \n[gw0] [ 23%] PASSED tests/test_gron_core.py::test_values_mode_extracts_only_values \ntests/test_gron_core.py::test_values_mode_with_array \n[gw0] [ 23%] PASSED tests/test_gron_core.py::test_values_mode_with_array \ntests/test_gron_core.py::test_json_mode_output_format \n[gw0] [ 24%] PASSED tests/test_gron_core.py::test_json_mode_output_format \ntests/test_gron_core.py::test_json_mode_with_nested_structures \n[gw0] [ 24%] PASSED tests/test_gron_core.py::test_json_mode_with_nested_structures \ntests/test_gron_core.py::test_version_flag \n[gw0] [ 24%] PASSED tests/test_gron_core.py::test_version_flag \ntests/test_gron_core.py::test_stream_mode_with_json_output \n[gw0] [ 25%] PASSED tests/test_gron_core.py::test_stream_mode_with_json_output \ntests/test_gron_core.py::test_multiple_invocations_are_stateless \n[gw0] [ 25%] PASSED tests/test_gron_core.py::test_multiple_invocations_are_stateless \ntests/test_gron_core.py::test_large_deeply_nested_structure \n[gw0] [ 26%] PASSED tests/test_gron_core.py::test_large_deeply_nested_structure \ntests/test_gron_core.py::test_keys_with_quotes_and_escapes_in_names \n[gw0] [ 26%] PASSED tests/test_gron_core.py::test_keys_with_quotes_and_escapes_in_names \ntests/test_gron_core.py::test_float_precision_preservation \n[gw0] [ 27%] PASSED tests/test_gron_core.py::test_float_precision_preservation \ntests/test_gron_core.py::test_empty_top_level_object_and_array \n[gw0] [ 27%] PASSED tests/test_gron_core.py::test_empty_top_level_object_and_array \ntests/test_gron_core.py::test_long_key_names \n[gw0] [ 27%] PASSED tests/test_gron_core.py::test_long_key_names \ntests/test_harvest.py::test_gron_one_json \n[gw0] [ 28%] PASSED tests/test_harvest.py::test_gron_one_json \ntests/test_harvest.py::test_gron_two_json \n[gw0] [ 28%] PASSED tests/test_harvest.py::test_gron_two_json \ntests/test_harvest.py::test_gron_three_json \n[gw0] [ 29%] PASSED tests/test_harvest.py::test_gron_three_json \ntests/test_harvest.py::test_gron_github_json \n[gw0] [ 29%] PASSED tests/test_harvest.py::test_gron_github_json \ntests/test_harvest.py::test_gron_stream_json \n[gw0] [ 30%] PASSED tests/test_harvest.py::test_gron_stream_json \ntests/test_harvest.py::test_gron_scalar_stream_json \n[gw0] [ 30%] PASSED tests/test_harvest.py::test_gron_scalar_stream_json \ntests/test_harvest.py::test_gron_long_stream_json \n[gw0] [ 30%] PASSED tests/test_harvest.py::test_gron_long_stream_json \ntests/test_harvest.py::test_ungron_one_gron \n[gw0] [ 31%] PASSED tests/test_harvest.py::test_ungron_one_gron \ntests/test_harvest.py::test_ungron_two_gron \n[gw0] [ 31%] PASSED tests/test_harvest.py::test_ungron_two_gron \ntests/test_harvest.py::test_ungron_three_gron \n[gw0] [ 32%] PASSED tests/test_harvest.py::test_ungron_three_gron \ntests/test_harvest.py::test_ungron_grep_separators_gron \n[gw0] [ 32%] RERUN tests/test_harvest.py::test_ungron_grep_separators_gron \ntests/test_harvest.py::test_ungron_grep_separators_gron \n[gw0] [ 32%] RERUN tests/test_harvest.py::test_ungron_grep_separators_gron \ntests/test_harvest.py::test_ungron_grep_separators_gron \n[gw0] [ 32%] FAILED tests/test_harvest.py::test_ungron_grep_separators_gron \ntests/test_harvest.py::test_ungron_github_gron \n[gw0] [ 33%] PASSED tests/test_harvest.py::test_ungron_github_gron \ntests/test_harvest.py::test_ungron_large_line_gron \n[gw0] [ 33%] PASSED tests/test_harvest.py::test_ungron_large_line_gron \ntests/test_harvest.py::test_gron_json_one_json \n[gw0] [ 33%] PASSED tests/test_harvest.py::test_gron_json_one_json \ntests/test_harvest.py::test_gron_json_two_json \n[gw0] [ 34%] PASSED tests/test_harvest.py::test_gron_json_two_json \ntests/test_harvest.py::test_gron_json_three_json \n[gw0] [ 34%] PASSED tests/test_harvest.py::test_gron_json_three_json \ntests/test_harvest.py::test_gron_json_github_json \n[gw0] [ 35%] PASSED tests/test_harvest.py::test_gron_json_github_json \ntests/test_harvest.py::test_gron_stream_json_stream_json \n[gw0] [ 35%] PASSED tests/test_harvest.py::test_gron_stream_json_stream_json \ntests/test_harvest.py::test_gron_stream_json_scalar_stream_json \n[gw0] [ 36%] PASSED tests/test_harvest.py::test_gron_stream_json_scalar_stream_json \ntests/test_harvest.py::test_ungron_json_one_jgron \n[gw0] [ 36%] PASSED tests/test_harvest.py::test_ungron_json_one_jgron \ntests/test_harvest.py::test_ungron_json_two_jgron \n[gw0] [ 36%] PASSED tests/test_harvest.py::test_ungron_json_two_jgron \ntests/test_harvest.py::test_ungron_json_three_jgron \n[gw0] [ 37%] PASSED tests/test_harvest.py::test_ungron_json_three_jgron \ntests/test_harvest.py::test_ungron_json_github_jgron \n[gw0] [ 37%] PASSED tests/test_harvest.py::test_ungron_json_github_jgron \ntests/test_harvest.py::test_ungron_invalid_type_mismatch \n[gw0] [ 38%] PASSED tests/test_harvest.py::test_ungron_invalid_type_mismatch \ntests/test_harvest.py::test_ungron_invalid_value \n[gw0] [ 38%] RERUN tests/test_harvest.py::test_ungron_invalid_value \ntests/test_harvest.py::test_ungron_invalid_value \n[gw0] [ 38%] RERUN tests/test_harvest.py::test_ungron_invalid_value \ntests/test_harvest.py::test_ungron_invalid_value \n[gw0] [ 38%] FAILED tests/test_harvest.py::test_ungron_invalid_value \ntests/test_integration.py::test_gron_grep_ungron_workflow_filter_by_email \n[gw0] [ 39%] PASSED tests/test_integration.py::test_gron_grep_ungron_workflow_filter_by_email \ntests/test_integration.py::test_gron_grep_ungron_workflow_filter_complete_user \n[gw0] [ 39%] PASSED tests/test_integration.py::test_gron_grep_ungron_workflow_filter_complete_user \ntests/test_integration.py::test_deep_nesting_50_levels_round_trip \n[gw0] [ 39%] PASSED tests/test_integration.py::test_deep_nesting_50_levels_round_trip \ntests/test_integration.py::test_stream_mode_with_mixed_valid_invalid_json \n[gw0] [ 40%] PASSED tests/test_integration.py::test_stream_mode_with_mixed_valid_invalid_json \ntests/test_integration.py::test_json_mode_output_format_and_ungron \n[gw0] [ 40%] PASSED tests/test_integration.py::test_json_mode_output_format_and_ungron \ntests/test_integration.py::test_multiple_monochrome_flags \n[gw0] [ 41%] PASSED tests/test_integration.py::test_multiple_monochrome_flags \ntests/test_integration.py::test_values_mode_extracts_from_gron_statements \n[gw0] [ 41%] PASSED tests/test_integration.py::test_values_mode_extracts_from_gron_statements \ntests/test_integration.py::test_stdin_vs_file_vs_explicit_dash \n[gw0] [ 42%] PASSED tests/test_integration.py::test_stdin_vs_file_vs_explicit_dash \ntests/test_integration.py::test_colorize_monochrome_flag_precedence \n[gw0] [ 42%] RERUN tests/test_integration.py::test_colorize_monochrome_flag_precedence \ntests/test_integration.py::test_colorize_monochrome_flag_precedence \n[gw0] [ 42%] RERUN tests/test_integration.py::test_colorize_monochrome_flag_precedence \ntests/test_integration.py::test_colorize_monochrome_flag_precedence \n[gw0] [ 42%] FAILED tests/test_integration.py::test_colorize_monochrome_flag_precedence \ntests/test_integration.py::test_large_json_1000_array_elements \n[gw0] [ 42%] PASSED tests/test_integration.py::test_large_json_1000_array_elements \ntests/test_integration.py::test_gron_ungron_with_json_mode_roundtrip \n[gw0] [ 43%] PASSED tests/test_integration.py::test_gron_ungron_with_json_mode_roundtrip \ntests/test_integration.py::test_stream_mode_multiple_objects_per_file \n[gw0] [ 43%] PASSED tests/test_integration.py::test_stream_mode_multiple_objects_per_file \ntests/test_integration.py::test_values_mode_on_regular_gron_output \n[gw0] [ 44%] PASSED tests/test_integration.py::test_values_mode_on_regular_gron_output \ntests/test_integration.py::test_ungron_conflicting_type_assignments_last_wins \n[gw0] [ 44%] PASSED tests/test_integration.py::test_ungron_conflicting_type_assignments_last_wins \ntests/test_integration.py::test_ungron_sparse_array_with_gap \n[gw0] [ 45%] PASSED tests/test_integration.py::test_ungron_sparse_array_with_gap \ntests/test_integration.py::test_ungron_negative_array_index_error \n[gw0] [ 45%] PASSED tests/test_integration.py::test_ungron_negative_array_index_error \ntests/test_integration.py::test_ungron_empty_string_key \n[gw0] [ 45%] PASSED tests/test_integration.py::test_ungron_empty_string_key \ntests/test_integration.py::test_ungron_silently_skips_invalid_statements \n[gw0] [ 46%] RERUN tests/test_integration.py::test_ungron_silently_skips_invalid_statements \ntests/test_integration.py::test_ungron_silently_skips_invalid_statements \n[gw0] [ 46%] RERUN tests/test_integration.py::test_ungron_silently_skips_invalid_statements \ntests/test_integration.py::test_ungron_silently_skips_invalid_statements \n[gw0] [ 46%] FAILED tests/test_integration.py::test_ungron_silently_skips_invalid_statements \ntests/test_integration.py::test_stream_and_ungron_flags_incompatible \n[gw0] [ 46%] PASSED tests/test_integration.py::test_stream_and_ungron_flags_incompatible \ntests/test_integration.py::test_gron_output_statement_order_deterministic \n[gw0] [ 47%] PASSED tests/test_integration.py::test_gron_output_statement_order_deterministic \ntests/test_integration.py::test_large_deeply_nested_combined \n[gw0] [ 47%] PASSED tests/test_integration.py::test_large_deeply_nested_combined \ntests/test_integration.py::test_gron_ungron_preserves_unicode_in_keys \n[gw0] [ 48%] PASSED tests/test_integration.py::test_gron_ungron_preserves_unicode_in_keys \ntests/test_integration.py::test_values_mode_with_nested_structures \n[gw0] [ 48%] PASSED tests/test_integration.py::test_values_mode_with_nested_structures \ntests/test_integration.py::test_no_sort_with_complex_structure \n[gw0] [ 48%] PASSED tests/test_integration.py::test_no_sort_with_complex_structure \ntests/test_output_modes.py::test_values_mode_extracts_only_values \n[gw0] [ 49%] PASSED tests/test_output_modes.py::test_values_mode_extracts_only_values \ntests/test_output_modes.py::test_values_mode_types_preserved \n[gw0] [ 49%] PASSED tests/test_output_modes.py::test_values_mode_types_preserved \ntests/test_output_modes.py::test_values_mode_string_unescaping \n[gw0] [ 50%] PASSED tests/test_output_modes.py::test_values_mode_string_unescaping \ntests/test_output_modes.py::test_json_mode_output_format \n[gw0] [ 50%] PASSED tests/test_output_modes.py::test_json_mode_output_format \ntests/test_output_modes.py::test_json_mode_matches_jgron_golden \n[gw0] [ 51%] PASSED tests/test_output_modes.py::test_json_mode_matches_jgron_golden \ntests/test_output_modes.py::test_json_mode_with_stream \n[gw0] [ 51%] PASSED tests/test_output_modes.py::test_json_mode_with_stream \ntests/test_output_modes.py::test_json_mode_scalar_stream \n[gw0] [ 51%] PASSED tests/test_output_modes.py::test_json_mode_scalar_stream \ntests/test_output_modes.py::test_ungron_with_json_mode \n[gw0] [ 52%] PASSED tests/test_output_modes.py::test_ungron_with_json_mode \ntests/test_output_modes.py::test_json_mode_empty_object \n[gw0] [ 52%] PASSED tests/test_output_modes.py::test_json_mode_empty_object \ntests/test_output_modes.py::test_json_mode_empty_array \n[gw0] [ 53%] PASSED tests/test_output_modes.py::test_json_mode_empty_array \ntests/test_output_modes.py::test_values_mode_nested_structures \n[gw0] [ 53%] PASSED tests/test_output_modes.py::test_values_mode_nested_structures \ntests/test_output_modes.py::test_json_mode_unsorted_output \n[gw0] [ 54%] PASSED tests/test_output_modes.py::test_json_mode_unsorted_output \ntests/test_output_modes.py::test_values_mode_invalid_statement_error \n[gw0] [ 54%] RERUN tests/test_output_modes.py::test_values_mode_invalid_statement_error \ntests/test_output_modes.py::test_values_mode_invalid_statement_error \n[gw0] [ 54%] RERUN tests/test_output_modes.py::test_values_mode_invalid_statement_error \ntests/test_output_modes.py::test_values_mode_invalid_statement_error \n[gw0] [ 54%] FAILED tests/test_output_modes.py::test_values_mode_invalid_statement_error \ntests/test_output_modes.py::test_json_mode_invalid_json_error \n[gw0] [ 54%] PASSED tests/test_output_modes.py::test_json_mode_invalid_json_error \ntests/test_output_modes.py::test_json_mode_preserves_unicode \n[gw0] [ 55%] PASSED tests/test_output_modes.py::test_json_mode_preserves_unicode \ntests/test_output_modes.py::test_values_mode_with_monochrome \n[gw0] [ 55%] PASSED tests/test_output_modes.py::test_values_mode_with_monochrome \ntests/test_output_modes.py::test_json_mode_with_monochrome \n[gw0] [ 56%] PASSED tests/test_output_modes.py::test_json_mode_with_monochrome \ntests/test_output_modes.py::test_json_mode_large_values \n[gw0] [ 56%] PASSED tests/test_output_modes.py::test_json_mode_large_values \ntests/test_output_modes.py::test_json_mode_deeply_nested_structures \n[gw0] [ 57%] PASSED tests/test_output_modes.py::test_json_mode_deeply_nested_structures \ntests/test_output_modes.py::test_json_mode_nested_arrays_roundtrip \n[gw0] [ 57%] PASSED tests/test_output_modes.py::test_json_mode_nested_arrays_roundtrip \ntests/test_output_modes.py::test_values_mode_numeric_edge_cases \n[gw0] [ 57%] PASSED tests/test_output_modes.py::test_values_mode_numeric_edge_cases \ntests/test_output_modes.py::test_json_mode_github_data \n[gw0] [ 58%] PASSED tests/test_output_modes.py::test_json_mode_github_data \ntests/test_output_modes.py::test_values_mode_extracts_from_stream_gron \n[gw0] [ 58%] PASSED tests/test_output_modes.py::test_values_mode_extracts_from_stream_gron \ntests/test_output_modes.py::test_json_mode_empty_string_value \n[gw0] [ 59%] PASSED tests/test_output_modes.py::test_json_mode_empty_string_value \ntests/test_output_modes.py::test_values_mode_empty_string_extraction \n[gw0] [ 59%] PASSED tests/test_output_modes.py::test_values_mode_empty_string_extraction \ntests/test_output_modes.py::test_json_mode_boolean_false_not_omitted \n[gw0] [ 60%] PASSED tests/test_output_modes.py::test_json_mode_boolean_false_not_omitted \ntests/test_output_modes.py::test_values_mode_only_scalars_no_containers \n[gw0] [ 60%] PASSED tests/test_output_modes.py::test_values_mode_only_scalars_no_containers \ntests/test_output_modes.py::test_json_mode_special_keys_with_dots_brackets \n[gw0] [ 60%] PASSED tests/test_output_modes.py::test_json_mode_special_keys_with_dots_brackets \ntests/test_output_modes.py::test_json_mode_with_null_values \n[gw0] [ 61%] PASSED tests/test_output_modes.py::test_json_mode_with_null_values \ntests/test_output_modes.py::test_values_mode_with_null_values \n[gw0] [ 61%] PASSED tests/test_output_modes.py::test_values_mode_with_null_values \ntests/test_output_modes.py::test_json_mode_array_with_mixed_types \n[gw0] [ 62%] PASSED tests/test_output_modes.py::test_json_mode_array_with_mixed_types \ntests/test_smoke.py::test_basic_gron \n[gw0] [ 62%] PASSED tests/test_smoke.py::test_basic_gron \ntests/test_smoke.py::test_help_flag \n[gw0] [ 63%] PASSED tests/test_smoke.py::test_help_flag \ntests/test_stream.py::test_stream_basic_two_objects \n[gw0] [ 63%] PASSED tests/test_stream.py::test_stream_basic_two_objects \ntests/test_stream.py::test_stream_scalar_values \n[gw0] [ 63%] PASSED tests/test_stream.py::test_stream_scalar_values \ntests/test_stream.py::test_stream_three_simple_objects \n[gw0] [ 64%] PASSED tests/test_stream.py::test_stream_three_simple_objects \ntests/test_stream.py::test_stream_single_line \n[gw0] [ 64%] PASSED tests/test_stream.py::test_stream_single_line \ntests/test_stream.py::test_stream_empty_line_fails \n[gw0] [ 65%] PASSED tests/test_stream.py::test_stream_empty_line_fails \ntests/test_stream.py::test_stream_invalid_json_line_fails \n[gw0] [ 65%] PASSED tests/test_stream.py::test_stream_invalid_json_line_fails \ntests/test_stream.py::test_stream_arrays_as_lines \n[gw0] [ 66%] PASSED tests/test_stream.py::test_stream_arrays_as_lines \ntests/test_stream.py::test_stream_scalar_numbers \n[gw0] [ 66%] PASSED tests/test_stream.py::test_stream_scalar_numbers \ntests/test_stream.py::test_stream_scalar_strings \n[gw0] [ 66%] PASSED tests/test_stream.py::test_stream_scalar_strings \ntests/test_stream.py::test_stream_with_no_sort_flag \n[gw0] [ 67%] PASSED tests/test_stream.py::test_stream_with_no_sort_flag \ntests/test_stream.py::test_stream_with_json_mode \n[gw0] [ 67%] PASSED tests/test_stream.py::test_stream_with_json_mode \ntests/test_stream.py::test_stream_mixed_types_per_line \n[gw0] [ 68%] PASSED tests/test_stream.py::test_stream_mixed_types_per_line \ntests/test_stream.py::test_stream_empty_input \n[gw0] [ 68%] PASSED tests/test_stream.py::test_stream_empty_input \ntests/test_stream.py::test_stream_whitespace_only_line_fails \n[gw0] [ 69%] PASSED tests/test_stream.py::test_stream_whitespace_only_line_fails \ntests/test_stream.py::test_stream_long_flag_works \n[gw0] [ 69%] PASSED tests/test_stream.py::test_stream_long_flag_works \ntests/test_stream.py::test_stream_nested_objects \n[gw0] [ 69%] PASSED tests/test_stream.py::test_stream_nested_objects \ntests/test_stream.py::test_stream_special_values \n[gw0] [ 70%] PASSED tests/test_stream.py::test_stream_special_values \ntests/test_stream.py::test_stream_many_lines_head_tail \n[gw0] [ 70%] PASSED tests/test_stream.py::test_stream_many_lines_head_tail \ntests/test_stream.py::test_stream_very_long_line \n[gw0] [ 71%] PASSED tests/test_stream.py::test_stream_very_long_line \ntests/test_stream.py::test_stream_deeply_nested_structures \n[gw0] [ 71%] PASSED tests/test_stream.py::test_stream_deeply_nested_structures \ntests/test_stream.py::test_stream_nested_arrays \n[gw0] [ 72%] PASSED tests/test_stream.py::test_stream_nested_arrays \ntests/test_stream.py::test_stream_objects_with_arrays \n[gw0] [ 72%] PASSED tests/test_stream.py::test_stream_objects_with_arrays \ntests/test_stream.py::test_stream_arrays_with_nulls \n[gw0] [ 72%] PASSED tests/test_stream.py::test_stream_arrays_with_nulls \ntests/test_stream.py::test_stream_line_with_trailing_tab \n[gw0] [ 73%] PASSED tests/test_stream.py::test_stream_line_with_trailing_tab \ntests/test_stream.py::test_stream_tab_only_line_fails \n[gw0] [ 73%] PASSED tests/test_stream.py::test_stream_tab_only_line_fails \ntests/test_stream.py::test_stream_empty_object_and_array \n[gw0] [ 74%] PASSED tests/test_stream.py::test_stream_empty_object_and_array \ntests/test_stream.py::test_stream_float_values \n[gw0] [ 74%] PASSED tests/test_stream.py::test_stream_float_values \ntests/test_ungron.py::test_ungron_simple_object \n[gw0] [ 75%] PASSED tests/test_ungron.py::test_ungron_simple_object \ntests/test_ungron.py::test_ungron_short_flag \n[gw0] [ 75%] PASSED tests/test_ungron.py::test_ungron_short_flag \ntests/test_ungron.py::test_ungron_type_inference \n[gw0] [ 75%] PASSED tests/test_ungron.py::test_ungron_type_inference \ntests/test_ungron.py::test_ungron_nested_structures \n[gw0] [ 76%] PASSED tests/test_ungron.py::test_ungron_nested_structures \ntests/test_ungron.py::test_ungron_unicode_and_special_chars \n[gw0] [ 76%] PASSED tests/test_ungron.py::test_ungron_unicode_and_special_chars \ntests/test_ungron.py::test_ungron_array_with_gaps \n[gw0] [ 77%] PASSED tests/test_ungron.py::test_ungron_array_with_gaps \ntests/test_ungron.py::test_ungron_roundtrip_complex \n[gw0] [ 77%] PASSED tests/test_ungron.py::test_ungron_roundtrip_complex \ntests/test_ungron.py::test_ungron_error_type_mismatch_object_to_array \n[gw0] [ 78%] PASSED tests/test_ungron.py::test_ungron_error_type_mismatch_object_to_array \ntests/test_ungron.py::test_ungron_error_type_mismatch_array_to_object \n[gw0] [ 78%] PASSED tests/test_ungron.py::test_ungron_error_type_mismatch_array_to_object \ntests/test_ungron.py::test_ungron_error_missing_semicolon \n[gw0] [ 78%] PASSED tests/test_ungron.py::test_ungron_error_missing_semicolon \ntests/test_ungron.py::test_ungron_error_malformed_value \n[gw0] [ 79%] RERUN tests/test_ungron.py::test_ungron_error_malformed_value \ntests/test_ungron.py::test_ungron_error_malformed_value \n[gw0] [ 79%] RERUN tests/test_ungron.py::test_ungron_error_malformed_value \ntests/test_ungron.py::test_ungron_error_malformed_value \n[gw0] [ 79%] FAILED tests/test_ungron.py::test_ungron_error_malformed_value \ntests/test_ungron.py::test_ungron_error_empty_input \n[gw0] [ 79%] PASSED tests/test_ungron.py::test_ungron_error_empty_input \ntests/test_ungron.py::test_ungron_error_whitespace_only \n[gw0] [ 80%] PASSED tests/test_ungron.py::test_ungron_error_whitespace_only \ntests/test_ungron.py::test_ungron_scalar_override \n[gw0] [ 80%] PASSED tests/test_ungron.py::test_ungron_scalar_override \ntests/test_ungron.py::test_ungron_from_file \n[gw0] [ 81%] PASSED tests/test_ungron.py::test_ungron_from_file \ntests/test_ungron.py::test_ungron_with_monochrome_flag \n[gw0] [ 81%] PASSED tests/test_ungron.py::test_ungron_with_monochrome_flag \ntests/test_ungron.py::test_ungron_grep_separators \n[gw0] [ 81%] RERUN tests/test_ungron.py::test_ungron_grep_separators \ntests/test_ungron.py::test_ungron_grep_separators \n[gw0] [ 81%] RERUN tests/test_ungron.py::test_ungron_grep_separators \ntests/test_ungron.py::test_ungron_grep_separators \n[gw0] [ 81%] FAILED tests/test_ungron.py::test_ungron_grep_separators \ntests/test_ungron.py::test_ungron_top_level_array \n[gw0] [ 82%] PASSED tests/test_ungron.py::test_ungron_top_level_array \ntests/test_ungron.py::test_ungron_large_values \n[gw0] [ 82%] PASSED tests/test_ungron.py::test_ungron_large_values \ntests/test_ungron.py::test_ungron_numeric_precision \n[gw0] [ 83%] PASSED tests/test_ungron.py::test_ungron_numeric_precision \ntests/test_ungron.py::test_ungron_json_escape_sequences \n[gw0] [ 83%] PASSED tests/test_ungron.py::test_ungron_json_escape_sequences \ntests/test_ungron.py::test_ungron_error_invalid_identifier \n[gw0] [ 84%] PASSED tests/test_ungron.py::test_ungron_error_invalid_identifier \ntests/test_ungron.py::test_ungron_error_invalid_bracket_content \n[gw0] [ 84%] PASSED tests/test_ungron.py::test_ungron_error_invalid_bracket_content \ntests/test_ungron.py::test_ungron_roundtrip_preserves_types \n[gw0] [ 84%] PASSED tests/test_ungron.py::test_ungron_roundtrip_preserves_types \ntests/test_ungron.py::test_ungron_object_merge_preserves_all_keys \n[gw0] [ 85%] PASSED tests/test_ungron.py::test_ungron_object_merge_preserves_all_keys \ntests/test_ungron.py::test_ungron_array_merge_extends_correctly \n[gw0] [ 85%] PASSED tests/test_ungron.py::test_ungron_array_merge_extends_correctly \ntests/test_ungron.py::test_ungron_deep_nested_merge \n[gw0] [ 86%] PASSED tests/test_ungron.py::test_ungron_deep_nested_merge \ntests/test_ungron.py::test_ungron_via_symlink \n[gw0] [ 86%] RERUN tests/test_ungron.py::test_ungron_via_symlink \ntests/test_ungron.py::test_ungron_via_symlink \n[gw0] [ 86%] RERUN tests/test_ungron.py::test_ungron_via_symlink \ntests/test_ungron.py::test_ungron_via_symlink \n[gw0] [ 86%] FAILED tests/test_ungron.py::test_ungron_via_symlink \ntests/test_url_fetch.py::test_fetch_simple_http_url \n[gw0] [ 87%] PASSED tests/test_url_fetch.py::test_fetch_simple_http_url \ntests/test_url_fetch.py::test_fetch_large_json_http \n[gw0] [ 87%] PASSED tests/test_url_fetch.py::test_fetch_large_json_http \ntests/test_url_fetch.py::test_fetch_empty_json \n[gw0] [ 87%] PASSED tests/test_url_fetch.py::test_fetch_empty_json \ntests/test_url_fetch.py::test_fetch_url_with_query_params \n[gw0] [ 88%] PASSED tests/test_url_fetch.py::test_fetch_url_with_query_params \ntests/test_url_fetch.py::test_fetch_http_redirect_301 \n[gw0] [ 88%] PASSED tests/test_url_fetch.py::test_fetch_http_redirect_301 \ntests/test_url_fetch.py::test_fetch_nonexistent_domain \n[gw0] [ 89%] RERUN tests/test_url_fetch.py::test_fetch_nonexistent_domain \ntests/test_url_fetch.py::test_fetch_nonexistent_domain \n[gw0] [ 89%] RERUN tests/test_url_fetch.py::test_fetch_nonexistent_domain \ntests/test_url_fetch.py::test_fetch_nonexistent_domain \n[gw0] [ 89%] FAILED tests/test_url_fetch.py::test_fetch_nonexistent_domain \ntests/test_url_fetch.py::test_fetch_connection_refused \n[gw0] [ 89%] RERUN tests/test_url_fetch.py::test_fetch_connection_refused \ntests/test_url_fetch.py::test_fetch_connection_refused \n[gw0] [ 89%] RERUN tests/test_url_fetch.py::test_fetch_connection_refused \ntests/test_url_fetch.py::test_fetch_connection_refused \n[gw0] [ 89%] FAILED tests/test_url_fetch.py::test_fetch_connection_refused \ntests/test_url_fetch.py::test_https_self_signed_cert_fails_without_insecure \n[gw0] [ 90%] RERUN tests/test_url_fetch.py::test_https_self_signed_cert_fails_without_insecure \ntests/test_url_fetch.py::test_https_self_signed_cert_fails_without_insecure \n[gw0] [ 90%] RERUN tests/test_url_fetch.py::test_https_self_signed_cert_fails_without_insecure \ntests/test_url_fetch.py::test_https_self_signed_cert_fails_without_insecure \n[gw0] [ 90%] FAILED tests/test_url_fetch.py::test_https_self_signed_cert_fails_without_insecure \ntests/test_url_fetch.py::test_https_insecure_flag_long \n[gw0] [ 90%] PASSED tests/test_url_fetch.py::test_https_insecure_flag_long \ntests/test_url_fetch.py::test_https_insecure_flag_short \n[gw0] [ 90%] PASSED tests/test_url_fetch.py::test_https_insecure_flag_short \ntests/test_url_fetch.py::test_fetch_http_404_not_found \n[gw0] [ 91%] PASSED tests/test_url_fetch.py::test_fetch_http_404_not_found \ntests/test_url_fetch.py::test_fetch_http_500_server_error \n[gw0] [ 91%] PASSED tests/test_url_fetch.py::test_fetch_http_500_server_error \ntests/test_url_fetch.py::test_fetch_non_json_response \n[gw0] [ 92%] PASSED tests/test_url_fetch.py::test_fetch_non_json_response \ntests/test_url_fetch.py::test_invalid_url_protocol_treated_as_file \n[gw0] [ 92%] PASSED tests/test_url_fetch.py::test_invalid_url_protocol_treated_as_file \ntests/test_url_fetch.py::test_fetch_url_case_insensitive_protocol \n[gw0] [ 93%] RERUN tests/test_url_fetch.py::test_fetch_url_case_insensitive_protocol \ntests/test_url_fetch.py::test_fetch_url_case_insensitive_protocol \n[gw0] [ 93%] RERUN tests/test_url_fetch.py::test_fetch_url_case_insensitive_protocol \ntests/test_url_fetch.py::test_fetch_url_case_insensitive_protocol \n[gw0] [ 93%] FAILED tests/test_url_fetch.py::test_fetch_url_case_insensitive_protocol \ntests/test_url_fetch.py::test_fetch_https_uppercase \n[gw0] [ 93%] RERUN tests/test_url_fetch.py::test_fetch_https_uppercase \ntests/test_url_fetch.py::test_fetch_https_uppercase \n[gw0] [ 93%] RERUN tests/test_url_fetch.py::test_fetch_https_uppercase \ntests/test_url_fetch.py::test_fetch_https_uppercase \n[gw0] [ 93%] FAILED tests/test_url_fetch.py::test_fetch_https_uppercase \ntests/test_url_fetch.py::test_fetch_with_proxy_flag_long \n[gw0] [ 93%] PASSED tests/test_url_fetch.py::test_fetch_with_proxy_flag_long \ntests/test_url_fetch.py::test_fetch_with_proxy_flag_short \n[gw0] [ 94%] PASSED tests/test_url_fetch.py::test_fetch_with_proxy_flag_short \ntests/test_url_fetch.py::test_fetch_with_noproxy_flag \n[gw0] [ 94%] RERUN tests/test_url_fetch.py::test_fetch_with_noproxy_flag \ntests/test_url_fetch.py::test_fetch_with_noproxy_flag \n[gw0] [ 94%] RERUN tests/test_url_fetch.py::test_fetch_with_noproxy_flag \ntests/test_url_fetch.py::test_fetch_with_noproxy_flag \n[gw0] [ 94%] FAILED tests/test_url_fetch.py::test_fetch_with_noproxy_flag \ntests/test_url_fetch.py::test_fetch_with_noproxy_multiple_hosts \n[gw0] [ 95%] RERUN tests/test_url_fetch.py::test_fetch_with_noproxy_multiple_hosts \ntests/test_url_fetch.py::test_fetch_with_noproxy_multiple_hosts \n[gw0] [ 95%] RERUN tests/test_url_fetch.py::test_fetch_with_noproxy_multiple_hosts \ntests/test_url_fetch.py::test_fetch_with_noproxy_multiple_hosts \n[gw0] [ 95%] FAILED tests/test_url_fetch.py::test_fetch_with_noproxy_multiple_hosts \ntests/test_url_fetch.py::test_fetch_with_http_proxy_env_var \n[gw0] [ 95%] RERUN tests/test_url_fetch.py::test_fetch_with_http_proxy_env_var \ntests/test_url_fetch.py::test_fetch_with_http_proxy_env_var \n[gw0] [ 95%] RERUN tests/test_url_fetch.py::test_fetch_with_http_proxy_env_var \ntests/test_url_fetch.py::test_fetch_with_http_proxy_env_var \n[gw0] [ 95%] FAILED tests/test_url_fetch.py::test_fetch_with_http_proxy_env_var \ntests/test_url_fetch.py::test_fetch_with_no_proxy_env_var \n[gw0] [ 96%] PASSED tests/test_url_fetch.py::test_fetch_with_no_proxy_env_var \ntests/test_url_fetch.py::test_proxy_flag_overrides_env_var \n[gw0] [ 96%] PASSED tests/test_url_fetch.py::test_proxy_flag_overrides_env_var \ntests/test_url_fetch.py::test_fetch_with_noproxy_wildcard_suffix \n[gw0] [ 96%] RERUN tests/test_url_fetch.py::test_fetch_with_noproxy_wildcard_suffix \ntests/test_url_fetch.py::test_fetch_with_noproxy_wildcard_suffix \n[gw0] [ 96%] RERUN tests/test_url_fetch.py::test_fetch_with_noproxy_wildcard_suffix \ntests/test_url_fetch.py::test_fetch_with_noproxy_wildcard_suffix \n[gw0] [ 96%] FAILED tests/test_url_fetch.py::test_fetch_with_noproxy_wildcard_suffix \ntests/test_url_fetch.py::test_fetch_with_invalid_proxy_url_causes_error \n[gw0] [ 97%] RERUN tests/test_url_fetch.py::test_fetch_with_invalid_proxy_url_causes_error \ntests/test_url_fetch.py::test_fetch_with_invalid_proxy_url_causes_error \n[gw0] [ 97%] RERUN tests/test_url_fetch.py::test_fetch_with_invalid_proxy_url_causes_error \ntests/test_url_fetch.py::test_fetch_with_invalid_proxy_url_causes_error \n[gw0] [ 97%] FAILED tests/test_url_fetch.py::test_fetch_with_invalid_proxy_url_causes_error \ntests/test_url_fetch.py::test_timeout_on_slow_response \n[gw0] [ 97%] RERUN tests/test_url_fetch.py::test_timeout_on_slow_response \ntests/test_url_fetch.py::test_timeout_on_slow_response \n[gw0] [ 97%] RERUN tests/test_url_fetch.py::test_timeout_on_slow_response \ntests/test_url_fetch.py::test_timeout_on_slow_response \n[gw0] [ 97%] FAILED tests/test_url_fetch.py::test_timeout_on_slow_response \ntests/test_url_fetch.py::test_fetch_url_with_fragment \n[gw0] [ 98%] PASSED tests/test_url_fetch.py::test_fetch_url_with_fragment \ntests/test_url_fetch.py::test_fetch_url_with_userinfo \n[gw0] [ 98%] RERUN tests/test_url_fetch.py::test_fetch_url_with_userinfo \ntests/test_url_fetch.py::test_fetch_url_with_userinfo \n[gw0] [ 98%] RERUN tests/test_url_fetch.py::test_fetch_url_with_userinfo \ntests/test_url_fetch.py::test_fetch_url_with_userinfo \n[gw0] [ 98%] FAILED tests/test_url_fetch.py::test_fetch_url_with_userinfo \ntests/test_url_fetch.py::test_combined_flags_insecure_and_proxy \n[gw0] [ 99%] PASSED tests/test_url_fetch.py::test_combined_flags_insecure_and_proxy \ntests/test_url_fetch.py::test_very_long_url_path \n[gw0] [ 99%] PASSED tests/test_url_fetch.py::test_very_long_url_path \ntests/test_url_fetch.py::test_fetch_url_with_unicode_in_query \n[gw0] [100%] RERUN tests/test_url_fetch.py::test_fetch_url_with_unicode_in_query \ntests/test_url_fetch.py::test_fetch_url_with_unicode_in_query \n[gw0] [100%] RERUN tests/test_url_fetch.py::test_fetch_url_with_unicode_in_query \ntests/test_url_fetch.py::test_fetch_url_with_unicode_in_query \n[gw0] [100%] FAILED tests/test_url_fetch.py::test_fetch_url_with_unicode_in_query \n\n=================================== FAILURES ===================================\n_______________________ test_colorize_json_output_ungron _______________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_gaps.py:119: in test_colorize_json_output_ungron\n    assert output == (RESOURCES / \"ungron_color.golden\").read_text()\nE   assert '{\\n  \"a\": 1,... \"hello\"\\n}\\n' == '\\x1b[35m{\\x1...35m}\\x1b[0m\\n'\nE     \nE     - \u001b[35m{\u001b[0m\u001b[34;1m\"\u001b[0;22m\u001b[34;1ma\u001b[0;22m\u001b[34;1m\"\u001b[0;22m\u001b[1m:\u001b[22m\u001b[31m1\u001b[0m\u001b[1m,\u001b[22m\u001b[34;1m\"\u001b[0;22m\u001b[34;1mb\u001b[0;22m\u001b[34;1m\"\u001b[0;22m\u001b[1m:\u001b[22m\u001b[32m\"\u001b[0m\u001b[33mhello\u001b[0m\u001b[32m\"\u001b[0m\u001b[35m}\u001b[0m\nE     + {\nE     +   \"a\": 1,\nE     +   \"b\": \"hello\"\nE     + }\n__________________________ test_colorize_gron_output ___________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_gaps.py:156: in test_colorize_gron_output\n    assert output == (RESOURCES / \"gron_color.golden\").read_text()\nE   assert 'json = {};\\n...b = \"test\";\\n' == '\\x1b[34;1mjs...st\"\\x1b[0m;\\n'\nE     \nE     - \u001b[34;1mjson\u001b[0;22m = \u001b[35m{}\u001b[0m;\nE     - \u001b[34;1mjson\u001b[0;22m.\u001b[34;1ma\u001b[0;22m = \u001b[31m1\u001b[0m;\nE     - \u001b[34;1mjson\u001b[0;22m.\u001b[34;1mb\u001b[0;22m = \u001b[33m\"test\"\u001b[0m;\nE     + json = {};\nE     + json.a = 1;\nE     + json.b = \"test\";\n______________________ test_invalid_quoted_key_in_ungron _______________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_gaps.py:284: in test_invalid_quoted_key_in_ungron\n    assert \"invalid quoted key\" in result.stderr\nE   AssertionError: assert 'invalid quoted key' in 'ungron failed for `json[`: invalid statement\\n'\nE    +  where 'ungron failed for `json[`: invalid statement\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json[`: invalid statement\\n').stderr\n____________________ test_colorize_flag_produces_ansi_codes ____________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_gron_core.py:407: in test_colorize_flag_produces_ansi_codes\n    assert '\\x1b[' in result.stdout, \"No ANSI escape codes (CSI sequence \\\\x1b[) found in colorize output\"\nE   AssertionError: No ANSI escape codes (CSI sequence \\x1b[) found in colorize output\nE   assert '\\x1b[' in 'json = {};\\njson.test = \"value\";\\n'\nE    +  where 'json = {};\\njson.test = \"value\";\\n' = CompletedProcess(args=['/workspace/executable', '-c'], returncode=0, stdout='json = {};\\njson.test = \"value\";\\n', stderr='').stdout\n_______________________ test_ungron_grep_separators_gron _______________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_harvest.py:153: in test_ungron_grep_separators_gron\n    assert result.returncode == 0\nE   AssertionError: assert 5 == 0\nE    +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode\n__________________________ test_ungron_invalid_value ___________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_harvest.py:351: in test_ungron_invalid_value\n    assert \"ungron failed for `json.likes = [;`: invalid value `[`\" in result.stderr\nE   AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'\nE    +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/invalid-value.gron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr\n___________________ test_colorize_monochrome_flag_precedence ___________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_integration.py:244: in test_colorize_monochrome_flag_precedence\n    assert result_color.stdout == (RESOURCES / \"colorized.golden\").read_text()\nE   AssertionError: assert 'json = {};\\njson.test = 1;\\n' == '\\x1b[34;1mjs...1m1\\x1b[0m;\\n'\nE     \nE     - \u001b[34;1mjson\u001b[0;22m = \u001b[35m{}\u001b[0m;\nE     - \u001b[34;1mjson\u001b[0;22m.\u001b[34;1mtest\u001b[0;22m = \u001b[31m1\u001b[0m;\nE     + json = {};\nE     + json.test = 1;\n________________ test_ungron_silently_skips_invalid_statements _________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_integration.py:416: in test_ungron_silently_skips_invalid_statements\n    assert result.returncode == 0\nE   AssertionError: assert 5 == 0\nE    +  where 5 = CompletedProcess(args=['/workspace/executable', '-u', '-m'], returncode=5, stdout='', stderr='ungron failed for `this is not a valid statement`: statement has no value\\n').returncode\n___________________ test_values_mode_invalid_statement_error ___________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_output_modes.py:194: in test_values_mode_invalid_statement_error\n    assert result.returncode == 5  # exitParseStatements\nE   AssertionError: assert 0 == 5\nE    +  where 0 = CompletedProcess(args=['/workspace/executable', '-v', '-m'], returncode=0, stdout='', stderr='').returncode\n______________________ test_ungron_error_malformed_value _______________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_ungron.py:152: in test_ungron_error_malformed_value\n    assert \"ungron failed for `json.likes = [;`: invalid value `[`\" in result.stderr\nE   AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'\nE    +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr\n_________________________ test_ungron_grep_separators __________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_ungron.py:204: in test_ungron_grep_separators\n    assert result.returncode == 0, result.stderr\nE   AssertionError: ungron failed for ``: invalid statement\nE     \nE   assert 5 == 0\nE    +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode\n___________________________ test_ungron_via_symlink ____________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\ntests/test_ungron.py:410: in test_ungron_via_symlink\n    assert result.returncode == 0, result.stderr\nE   AssertionError: failed to form statements: invalid character 'j' looking for beginning of value\nE     \nE   assert 3 == 0\nE    +  where 3 = CompletedProcess(args=['/workspace/ungron', '/workspace/testdata/one.gron'], returncode=3, stdout='', stderr=\"failed to form statements: invalid character 'j' looking for beginning of value\\n\").returncode\n________________________ test_fetch_nonexistent_domain _________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:174: in test_fetch_nonexistent_domain\n    assert 'Get \"http://nonexistent.domain.invalid.test/test.json\": dial tcp:' in result.stderr\nE   assert 'Get \"http://nonexistent.domain.invalid.test/test.json\": dial tcp:' in 'Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n'\nE    +  where 'Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', 'http://nonexistent.domain.invalid.test/test.json'], returncode=4, stdout='', stderr='Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n').stderr\n________________________ test_fetch_connection_refused _________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:187: in test_fetch_connection_refused\n    assert \"connection refused\" in result.stderr\nE   assert 'connection refused' in 'Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n'\nE    +  where 'Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n' = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:19999/test.json'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n').stderr\n______________ test_https_self_signed_cert_fails_without_insecure ______________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:201: in test_https_self_signed_cert_fails_without_insecure\n    assert \"tls: failed to verify certificate\" in result.stderr\nE   assert 'tls: failed to verify certificate' in 'Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n'\nE    +  where 'Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n' = CompletedProcess(args=['/workspace/executable', 'https://127.0.0.1:40369/simple.json'], returncode=4, stdout='', stderr='Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n').stderr\n___________________ test_fetch_url_case_insensitive_protocol ___________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:286: in test_fetch_url_case_insensitive_protocol\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 1: open HTTP://127.0.0.1:39237/simple.json: no such file or directory\nE     \nE   assert 1 == 0\nE    +  where 1 = CompletedProcess(args=['/workspace/executable', 'HTTP://127.0.0.1:39237/simple.json'], returncode=1, stdout='', stderr='open HTTP://127.0.0.1:39237/simple.json: no such file or directory\\n').returncode\n__________________________ test_fetch_https_uppercase __________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:297: in test_fetch_https_uppercase\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 1: open HTTPS://127.0.0.1:40369/simple.json: no such file or directory\nE     \nE   assert 1 == 0\nE    +  where 1 = CompletedProcess(args=['/workspace/executable', '-k', 'HTTPS://127.0.0.1:40369/simple.json'], returncode=1, stdout='', stderr='open HTTPS://127.0.0.1:40369/simple.json: no such file or directory\\n').returncode\n_________________________ test_fetch_with_noproxy_flag _________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:407: in test_fetch_with_noproxy_flag\n    assert not os.path.exists(log_file), \"Proxy should have been bypassed\"\nE   AssertionError: Proxy should have been bypassed\nE   assert not True\nE    +  where True = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_flag2/proxy_log.txt')\nE    +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\nE    +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path\n____________________ test_fetch_with_noproxy_multiple_hosts ____________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:429: in test_fetch_with_noproxy_multiple_hosts\n    assert not os.path.exists(log_file), \"Proxy should have been bypassed\"\nE   AssertionError: Proxy should have been bypassed\nE   assert not True\nE    +  where True = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_multip2/proxy_log.txt')\nE    +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\nE    +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path\n______________________ test_fetch_with_http_proxy_env_var ______________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:456: in test_fetch_with_http_proxy_env_var\n    assert os.path.exists(log_file), \"Proxy was not used\"\nE   AssertionError: Proxy was not used\nE   assert False\nE    +  where False = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_http_proxy_env2/proxy_log.txt')\nE    +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\nE    +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path\n___________________ test_fetch_with_noproxy_wildcard_suffix ____________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:539: in test_fetch_with_noproxy_wildcard_suffix\n    assert not os.path.exists(log_file), \"Proxy should have been bypassed by wildcard pattern\"\nE   AssertionError: Proxy should have been bypassed by wildcard pattern\nE   assert not True\nE    +  where True = <function exists at 0x74123a515f30>('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_wildca2/proxy_log.txt')\nE    +    where <function exists at 0x74123a515f30> = <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'>.exists\nE    +      where <module 'posixpath' from '/usr/lib/python3.10/posixpath.py'> = <module 'os' from '/usr/lib/python3.10/os.py'>.path\n________________ test_fetch_with_invalid_proxy_url_causes_error ________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:552: in test_fetch_with_invalid_proxy_url_causes_error\n    assert \"proxyconnect tcp: dial tcp :0: connect: connection refused\" in result.stderr\nE   assert 'proxyconnect tcp: dial tcp :0: connect: connection refused' in 'Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n'\nE    +  where 'Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', '--proxy', 'not-a-valid-url', 'http://127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n').stderr\n________________________ test_timeout_on_slow_response _________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:565: in test_timeout_on_slow_response\n    assert result.returncode == 4, f\"Expected exit code 4 (exitFetchURL), got {result.returncode}\"\nE   AssertionError: Expected exit code 4 (exitFetchURL), got 0\nE   assert 0 == 4\nE    +  where 0 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/slow'], returncode=0, stdout='json = {};\\njson.slow = \"response\";\\n', stderr='').returncode\n_________________________ test_fetch_url_with_userinfo _________________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:594: in test_fetch_url_with_userinfo\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 4: Get \"http://user:pass@127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\nE     \nE   assert 4 == 0\nE    +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://user:pass@127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get \"http://user:pass@127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n').returncode\n_____________________ test_fetch_url_with_unicode_in_query _____________________\n[gw0] linux -- Python 3.10.12 /usr/bin/python3\n/workspace/eval/tests/test_url_fetch.py:640: in test_fetch_url_with_unicode_in_query\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 4: Get \"http://127.0.0.1:39237/simple.json?name=café&emoji=☕\": ordinal not in range(128)\nE     \nE   assert 4 == 0\nE    +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/simple.json?name=café&emoji=☕'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:39237/simple.json?name=café&emoji=☕\": ordinal not in range(128)\\n').returncode\n--------------- generated xml file: /workspace/eval/results.xml ----------------\n=========================== short test summary info ============================\nFAILED tests/test_gaps.py::test_colorize_json_output_ungron - assert '{\\n  \"a...\nFAILED tests/test_gaps.py::test_colorize_gron_output - assert 'json = {};\\n.....\nFAILED tests/test_gaps.py::test_invalid_quoted_key_in_ungron - AssertionError...\nFAILED tests/test_gron_core.py::test_colorize_flag_produces_ansi_codes - Asse...\nFAILED tests/test_harvest.py::test_ungron_grep_separators_gron - AssertionErr...\nFAILED tests/test_harvest.py::test_ungron_invalid_value - AssertionError: ass...\nFAILED tests/test_integration.py::test_colorize_monochrome_flag_precedence - ...\nFAILED tests/test_integration.py::test_ungron_silently_skips_invalid_statements\nFAILED tests/test_output_modes.py::test_values_mode_invalid_statement_error\nFAILED tests/test_ungron.py::test_ungron_error_malformed_value - AssertionErr...\nFAILED tests/test_ungron.py::test_ungron_grep_separators - AssertionError: un...\nFAILED tests/test_ungron.py::test_ungron_via_symlink - AssertionError: failed...\nFAILED tests/test_url_fetch.py::test_fetch_nonexistent_domain - assert 'Get \"...\nFAILED tests/test_url_fetch.py::test_fetch_connection_refused - assert 'conne...\nFAILED tests/test_url_fetch.py::test_https_self_signed_cert_fails_without_insecure\nFAILED tests/test_url_fetch.py::test_fetch_url_case_insensitive_protocol - As...\nFAILED tests/test_url_fetch.py::test_fetch_https_uppercase - AssertionError: ...\nFAILED tests/test_url_fetch.py::test_fetch_with_noproxy_flag - AssertionError...\nFAILED tests/test_url_fetch.py::test_fetch_with_noproxy_multiple_hosts - Asse...\nFAILED tests/test_url_fetch.py::test_fetch_with_http_proxy_env_var - Assertio...\nFAILED tests/test_url_fetch.py::test_fetch_with_noproxy_wildcard_suffix - Ass...\nFAILED tests/test_url_fetch.py::test_fetch_with_invalid_proxy_url_causes_error\nFAILED tests/test_url_fetch.py::test_timeout_on_slow_response - AssertionErro...\nFAILED tests/test_url_fetch.py::test_fetch_url_with_userinfo - AssertionError...\nFAILED tests/test_url_fetch.py::test_fetch_url_with_unicode_in_query - Assert...\n============= 25 failed, 208 passed, 50 rerun in 176.77s (0:02:56) =============\n",
+      "returncode": 0,
+      "exception_info": ""
+    },
+    {
+      "step": "results_read",
+      "command": "docker cp abfc60db60c78b74f3df42be88e4b97e61185c94de404a075f295f4d4579ca24:/workspace/eval/results.xml /tmp/tmp3mawllxs.xml",
+      "wall_time": 0.30479147999994893,
+      "output": "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"25\" skipped=\"0\" tests=\"233\" time=\"176.759\" timestamp=\"2026-09-14T15:18:22.292017+00:00\" hostname=\"abfc60db60c7\"><testcase classname=\"tests.test_gaps\" name=\"test_json_format_basic\" time=\"0.065\" /><testcase classname=\"tests.test_gaps\" name=\"test_stream_json_format\" time=\"0.066\" /><testcase classname=\"tests.test_gaps\" name=\"test_stream_basic_multiline\" time=\"0.085\" /><testcase classname=\"tests.test_gaps\" name=\"test_values_extraction\" time=\"0.086\" /><testcase classname=\"tests.test_gaps\" name=\"test_nested_json_format\" time=\"0.084\" /><testcase classname=\"tests.test_gaps\" name=\"test_colorize_json_output_ungron\" time=\"0.303\"><failure message=\"assert '{\\n  &quot;a&quot;: 1,... &quot;hello&quot;\\n}\\n' == '\\x1b[35m{\\x1...35m}\\x1b[0m\\n'&#10;  &#10;  - #x1B[35m{#x1B[0m#x1B[34;1m&quot;#x1B[0;22m#x1B[34;1ma#x1B[0;22m#x1B[34;1m&quot;#x1B[0;22m#x1B[1m:#x1B[22m#x1B[31m1#x1B[0m#x1B[1m,#x1B[22m#x1B[34;1m&quot;#x1B[0;22m#x1B[34;1mb#x1B[0;22m#x1B[34;1m&quot;#x1B[0;22m#x1B[1m:#x1B[22m#x1B[32m&quot;#x1B[0m#x1B[33mhello#x1B[0m#x1B[32m&quot;#x1B[0m#x1B[35m}#x1B[0m&#10;  + {&#10;  +   &quot;a&quot;: 1,&#10;  +   &quot;b&quot;: &quot;hello&quot;&#10;  + }\">tests/test_gaps.py:119: in test_colorize_json_output_ungron\n    assert output == (RESOURCES / \"ungron_color.golden\").read_text()\nE   assert '{\\n  \"a\": 1,... \"hello\"\\n}\\n' == '\\x1b[35m{\\x1...35m}\\x1b[0m\\n'\nE     \nE     - #x1B[35m{#x1B[0m#x1B[34;1m\"#x1B[0;22m#x1B[34;1ma#x1B[0;22m#x1B[34;1m\"#x1B[0;22m#x1B[1m:#x1B[22m#x1B[31m1#x1B[0m#x1B[1m,#x1B[22m#x1B[34;1m\"#x1B[0;22m#x1B[34;1mb#x1B[0;22m#x1B[34;1m\"#x1B[0;22m#x1B[1m:#x1B[22m#x1B[32m\"#x1B[0m#x1B[33mhello#x1B[0m#x1B[32m\"#x1B[0m#x1B[35m}#x1B[0m\nE     + {\nE     +   \"a\": 1,\nE     +   \"b\": \"hello\"\nE     + }</failure></testcase><testcase classname=\"tests.test_gaps\" name=\"test_colorize_gron_output\" time=\"0.409\"><failure message=\"assert 'json = {};\\n...b = &quot;test&quot;;\\n' == '\\x1b[34;1mjs...st&quot;\\x1b[0m;\\n'&#10;  &#10;  - #x1B[34;1mjson#x1B[0;22m = #x1B[35m{}#x1B[0m;&#10;  - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1ma#x1B[0;22m = #x1B[31m1#x1B[0m;&#10;  - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1mb#x1B[0;22m = #x1B[33m&quot;test&quot;#x1B[0m;&#10;  + json = {};&#10;  + json.a = 1;&#10;  + json.b = &quot;test&quot;;\">tests/test_gaps.py:156: in test_colorize_gron_output\n    assert output == (RESOURCES / \"gron_color.golden\").read_text()\nE   assert 'json = {};\\n...b = \"test\";\\n' == '\\x1b[34;1mjs...st\"\\x1b[0m;\\n'\nE     \nE     - #x1B[34;1mjson#x1B[0;22m = #x1B[35m{}#x1B[0m;\nE     - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1ma#x1B[0;22m = #x1B[31m1#x1B[0m;\nE     - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1mb#x1B[0;22m = #x1B[33m\"test\"#x1B[0m;\nE     + json = {};\nE     + json.a = 1;\nE     + json.b = \"test\";</failure></testcase><testcase classname=\"tests.test_gaps\" name=\"test_invalid_json_statement_array_length\" time=\"0.087\" /><testcase classname=\"tests.test_gaps\" name=\"test_invalid_json_statement_type_assertion\" time=\"0.072\" /><testcase classname=\"tests.test_gaps\" name=\"test_values_with_array_indices\" time=\"0.068\" /><testcase classname=\"tests.test_gaps\" name=\"test_empty_arrays_and_objects_json_format\" time=\"0.076\" /><testcase classname=\"tests.test_gaps\" name=\"test_numeric_keys_in_json_format\" time=\"0.071\" /><testcase classname=\"tests.test_gaps\" name=\"test_invalid_quoted_key_in_ungron\" time=\"0.264\"><failure message=\"AssertionError: assert 'invalid quoted key' in 'ungron failed for `json[`: invalid statement\\n'&#10; +  where 'ungron failed for `json[`: invalid statement\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json[`: invalid statement\\n').stderr\">tests/test_gaps.py:284: in test_invalid_quoted_key_in_ungron\n    assert \"invalid quoted key\" in result.stderr\nE   AssertionError: assert 'invalid quoted key' in 'ungron failed for `json[`: invalid statement\\n'\nE    +  where 'ungron failed for `json[`: invalid statement\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json[`: invalid statement\\n').stderr</failure></testcase><testcase classname=\"tests.test_gaps\" name=\"test_invalid_numeric_key_in_ungron\" time=\"0.083\" /><testcase classname=\"tests.test_gaps\" name=\"test_stream_with_monochrome_flag\" time=\"0.106\" /><testcase classname=\"tests.test_gaps\" name=\"test_large_nested_json_format\" time=\"0.102\" /><testcase classname=\"tests.test_gaps\" name=\"test_values_extraction_with_escaped_strings\" time=\"0.070\" /><testcase classname=\"tests.test_gaps\" name=\"test_stream_mode_with_empty_lines\" time=\"0.075\" /><testcase classname=\"tests.test_gron_core\" name=\"test_basic_data_types\" time=\"0.067\" /><testcase classname=\"tests.test_gron_core\" name=\"test_string_escaping_unicode_emoji\" time=\"0.078\" /><testcase classname=\"tests.test_gron_core\" name=\"test_number_formats_negative_zero_scientific\" time=\"0.069\" /><testcase classname=\"tests.test_gron_core\" name=\"test_nested_structures_empty_containers\" time=\"0.065\" /><testcase classname=\"tests.test_gron_core\" name=\"test_arrays_simple_and_nested\" time=\"0.072\" /><testcase classname=\"tests.test_gron_core\" name=\"test_special_keys_requiring_bracket_notation\" time=\"0.071\" /><testcase classname=\"tests.test_gron_core\" name=\"test_array_of_objects\" time=\"0.083\" /><testcase classname=\"tests.test_gron_core\" name=\"test_no_sort_flag_preserves_insertion_order\" time=\"0.135\" /><testcase classname=\"tests.test_gron_core\" name=\"test_invalid_json_syntax_error\" time=\"0.065\" /><testcase classname=\"tests.test_gron_core\" name=\"test_empty_input_error\" time=\"0.065\" /><testcase classname=\"tests.test_gron_core\" name=\"test_truncated_json_error\" time=\"0.065\" /><testcase classname=\"tests.test_gron_core\" name=\"test_read_from_file\" time=\"0.069\" /><testcase classname=\"tests.test_gron_core\" name=\"test_nonexistent_file_error\" time=\"0.063\" /><testcase classname=\"tests.test_gron_core\" name=\"test_deep_nesting_six_levels\" time=\"0.070\" /><testcase classname=\"tests.test_gron_core\" name=\"test_large_array_100_elements\" time=\"0.063\" /><testcase classname=\"tests.test_gron_core\" name=\"test_object_with_25_keys\" time=\"0.074\" /><testcase classname=\"tests.test_gron_core\" name=\"test_mixed_nesting_objects_in_arrays_and_vice_versa\" time=\"0.064\" /><testcase classname=\"tests.test_gron_core\" name=\"test_very_long_string_value_2kb\" time=\"0.066\" /><testcase classname=\"tests.test_gron_core\" name=\"test_control_characters_and_unicode_separators\" time=\"0.064\" /><testcase classname=\"tests.test_gron_core\" name=\"test_boolean_values_true_and_false\" time=\"0.072\" /><testcase classname=\"tests.test_gron_core\" name=\"test_javascript_reserved_word_keys\" time=\"0.067\" /><testcase classname=\"tests.test_gron_core\" name=\"test_identifier_rules_underscores_unicode_numbers\" time=\"0.081\" /><testcase classname=\"tests.test_gron_core\" name=\"test_empty_string_key\" time=\"0.085\" /><testcase classname=\"tests.test_gron_core\" name=\"test_top_level_string\" time=\"0.082\" /><testcase classname=\"tests.test_gron_core\" name=\"test_top_level_number\" time=\"0.091\" /><testcase classname=\"tests.test_gron_core\" name=\"test_top_level_boolean\" time=\"0.095\" /><testcase classname=\"tests.test_gron_core\" name=\"test_top_level_null\" time=\"0.078\" /><testcase classname=\"tests.test_gron_core\" name=\"test_array_index_numeric_sorting\" time=\"0.074\" /><testcase classname=\"tests.test_gron_core\" name=\"test_very_deep_nesting_10_levels\" time=\"0.076\" /><testcase classname=\"tests.test_gron_core\" name=\"test_stdin_explicit_dash_argument\" time=\"0.085\" /><testcase classname=\"tests.test_gron_core\" name=\"test_monochrome_flag_suppresses_ansi_codes\" time=\"0.074\" /><testcase classname=\"tests.test_gron_core\" name=\"test_colorize_flag_produces_ansi_codes\" time=\"0.206\"><failure message=\"AssertionError: No ANSI escape codes (CSI sequence \\x1b[) found in colorize output&#10;assert '\\x1b[' in 'json = {};\\njson.test = &quot;value&quot;;\\n'&#10; +  where 'json = {};\\njson.test = &quot;value&quot;;\\n' = CompletedProcess(args=['/workspace/executable', '-c'], returncode=0, stdout='json = {};\\njson.test = &quot;value&quot;;\\n', stderr='').stdout\">tests/test_gron_core.py:407: in test_colorize_flag_produces_ansi_codes\n    assert '\\x1b[' in result.stdout, \"No ANSI escape codes (CSI sequence \\\\x1b[) found in colorize output\"\nE   AssertionError: No ANSI escape codes (CSI sequence \\x1b[) found in colorize output\nE   assert '\\x1b[' in 'json = {};\\njson.test = \"value\";\\n'\nE    +  where 'json = {};\\njson.test = \"value\";\\n' = CompletedProcess(args=['/workspace/executable', '-c'], returncode=0, stdout='json = {};\\njson.test = \"value\";\\n', stderr='').stdout</failure></testcase><testcase classname=\"tests.test_gron_core\" name=\"test_stream_mode_treats_each_line_as_separate_json\" time=\"0.067\" /><testcase classname=\"tests.test_gron_core\" name=\"test_stream_mode_with_no_sort\" time=\"0.063\" /><testcase classname=\"tests.test_gron_core\" name=\"test_stream_mode_error_on_invalid_line\" time=\"0.063\" /><testcase classname=\"tests.test_gron_core\" name=\"test_values_mode_extracts_only_values\" time=\"0.143\" /><testcase classname=\"tests.test_gron_core\" name=\"test_values_mode_with_array\" time=\"0.061\" /><testcase classname=\"tests.test_gron_core\" name=\"test_json_mode_output_format\" time=\"0.063\" /><testcase classname=\"tests.test_gron_core\" name=\"test_json_mode_with_nested_structures\" time=\"0.068\" /><testcase classname=\"tests.test_gron_core\" name=\"test_version_flag\" time=\"0.068\" /><testcase classname=\"tests.test_gron_core\" name=\"test_stream_mode_with_json_output\" time=\"0.064\" /><testcase classname=\"tests.test_gron_core\" name=\"test_multiple_invocations_are_stateless\" time=\"0.190\" /><testcase classname=\"tests.test_gron_core\" name=\"test_large_deeply_nested_structure\" time=\"0.062\" /><testcase classname=\"tests.test_gron_core\" name=\"test_keys_with_quotes_and_escapes_in_names\" time=\"0.061\" /><testcase classname=\"tests.test_gron_core\" name=\"test_float_precision_preservation\" time=\"0.065\" /><testcase classname=\"tests.test_gron_core\" name=\"test_empty_top_level_object_and_array\" time=\"0.129\" /><testcase classname=\"tests.test_gron_core\" name=\"test_long_key_names\" time=\"0.070\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_one_json\" time=\"0.063\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_two_json\" time=\"0.064\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_three_json\" time=\"0.066\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_github_json\" time=\"0.067\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_stream_json\" time=\"0.066\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_scalar_stream_json\" time=\"0.062\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_long_stream_json\" time=\"0.141\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_one_gron\" time=\"0.067\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_two_gron\" time=\"0.065\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_three_gron\" time=\"0.061\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_grep_separators_gron\" time=\"0.203\"><failure message=\"AssertionError: assert 5 == 0&#10; +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode\">tests/test_harvest.py:153: in test_ungron_grep_separators_gron\n    assert result.returncode == 0\nE   AssertionError: assert 5 == 0\nE    +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode</failure></testcase><testcase classname=\"tests.test_harvest\" name=\"test_ungron_github_gron\" time=\"0.063\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_large_line_gron\" time=\"0.105\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_json_one_json\" time=\"0.077\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_json_two_json\" time=\"0.068\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_json_three_json\" time=\"0.061\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_json_github_json\" time=\"0.065\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_stream_json_stream_json\" time=\"0.066\" /><testcase classname=\"tests.test_harvest\" name=\"test_gron_stream_json_scalar_stream_json\" time=\"0.064\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_json_one_jgron\" time=\"0.078\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_json_two_jgron\" time=\"0.065\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_json_three_jgron\" time=\"0.068\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_json_github_jgron\" time=\"0.074\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_invalid_type_mismatch\" time=\"0.066\" /><testcase classname=\"tests.test_harvest\" name=\"test_ungron_invalid_value\" time=\"0.207\"><failure message=\"AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'&#10; +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/invalid-value.gron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr\">tests/test_harvest.py:351: in test_ungron_invalid_value\n    assert \"ungron failed for `json.likes = [;`: invalid value `[`\" in result.stderr\nE   AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'\nE    +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron', '-m', '/workspace/testdata/invalid-value.gron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr</failure></testcase><testcase classname=\"tests.test_integration\" name=\"test_gron_grep_ungron_workflow_filter_by_email\" time=\"0.131\" /><testcase classname=\"tests.test_integration\" name=\"test_gron_grep_ungron_workflow_filter_complete_user\" time=\"0.123\" /><testcase classname=\"tests.test_integration\" name=\"test_deep_nesting_50_levels_round_trip\" time=\"0.139\" /><testcase classname=\"tests.test_integration\" name=\"test_stream_mode_with_mixed_valid_invalid_json\" time=\"0.069\" /><testcase classname=\"tests.test_integration\" name=\"test_json_mode_output_format_and_ungron\" time=\"0.122\" /><testcase classname=\"tests.test_integration\" name=\"test_multiple_monochrome_flags\" time=\"0.190\" /><testcase classname=\"tests.test_integration\" name=\"test_values_mode_extracts_from_gron_statements\" time=\"0.137\" /><testcase classname=\"tests.test_integration\" name=\"test_stdin_vs_file_vs_explicit_dash\" time=\"0.220\" /><testcase classname=\"tests.test_integration\" name=\"test_colorize_monochrome_flag_precedence\" time=\"0.227\"><failure message=\"AssertionError: assert 'json = {};\\njson.test = 1;\\n' == '\\x1b[34;1mjs...1m1\\x1b[0m;\\n'&#10;  &#10;  - #x1B[34;1mjson#x1B[0;22m = #x1B[35m{}#x1B[0m;&#10;  - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1mtest#x1B[0;22m = #x1B[31m1#x1B[0m;&#10;  + json = {};&#10;  + json.test = 1;\">tests/test_integration.py:244: in test_colorize_monochrome_flag_precedence\n    assert result_color.stdout == (RESOURCES / \"colorized.golden\").read_text()\nE   AssertionError: assert 'json = {};\\njson.test = 1;\\n' == '\\x1b[34;1mjs...1m1\\x1b[0m;\\n'\nE     \nE     - #x1B[34;1mjson#x1B[0;22m = #x1B[35m{}#x1B[0m;\nE     - #x1B[34;1mjson#x1B[0;22m.#x1B[34;1mtest#x1B[0;22m = #x1B[31m1#x1B[0m;\nE     + json = {};\nE     + json.test = 1;</failure></testcase><testcase classname=\"tests.test_integration\" name=\"test_large_json_1000_array_elements\" time=\"0.119\" /><testcase classname=\"tests.test_integration\" name=\"test_gron_ungron_with_json_mode_roundtrip\" time=\"0.144\" /><testcase classname=\"tests.test_integration\" name=\"test_stream_mode_multiple_objects_per_file\" time=\"0.071\" /><testcase classname=\"tests.test_integration\" name=\"test_values_mode_on_regular_gron_output\" time=\"0.137\" /><testcase classname=\"tests.test_integration\" name=\"test_ungron_conflicting_type_assignments_last_wins\" time=\"0.066\" /><testcase classname=\"tests.test_integration\" name=\"test_ungron_sparse_array_with_gap\" time=\"0.071\" /><testcase classname=\"tests.test_integration\" name=\"test_ungron_negative_array_index_error\" time=\"0.063\" /><testcase classname=\"tests.test_integration\" name=\"test_ungron_empty_string_key\" time=\"0.065\" /><testcase classname=\"tests.test_integration\" name=\"test_ungron_silently_skips_invalid_statements\" time=\"0.194\"><failure message=\"AssertionError: assert 5 == 0&#10; +  where 5 = CompletedProcess(args=['/workspace/executable', '-u', '-m'], returncode=5, stdout='', stderr='ungron failed for `this is not a valid statement`: statement has no value\\n').returncode\">tests/test_integration.py:416: in test_ungron_silently_skips_invalid_statements\n    assert result.returncode == 0\nE   AssertionError: assert 5 == 0\nE    +  where 5 = CompletedProcess(args=['/workspace/executable', '-u', '-m'], returncode=5, stdout='', stderr='ungron failed for `this is not a valid statement`: statement has no value\\n').returncode</failure></testcase><testcase classname=\"tests.test_integration\" name=\"test_stream_and_ungron_flags_incompatible\" time=\"0.070\" /><testcase classname=\"tests.test_integration\" name=\"test_gron_output_statement_order_deterministic\" time=\"0.182\" /><testcase classname=\"tests.test_integration\" name=\"test_large_deeply_nested_combined\" time=\"0.158\" /><testcase classname=\"tests.test_integration\" name=\"test_gron_ungron_preserves_unicode_in_keys\" time=\"0.125\" /><testcase classname=\"tests.test_integration\" name=\"test_values_mode_with_nested_structures\" time=\"0.140\" /><testcase classname=\"tests.test_integration\" name=\"test_no_sort_with_complex_structure\" time=\"0.132\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_extracts_only_values\" time=\"0.070\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_types_preserved\" time=\"0.068\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_string_unescaping\" time=\"0.061\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_output_format\" time=\"0.062\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_matches_jgron_golden\" time=\"0.139\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_with_stream\" time=\"0.071\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_scalar_stream\" time=\"0.067\" /><testcase classname=\"tests.test_output_modes\" name=\"test_ungron_with_json_mode\" time=\"0.061\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_empty_object\" time=\"0.065\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_empty_array\" time=\"0.061\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_nested_structures\" time=\"0.061\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_unsorted_output\" time=\"0.065\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_invalid_statement_error\" time=\"0.202\"><failure message=\"AssertionError: assert 0 == 5&#10; +  where 0 = CompletedProcess(args=['/workspace/executable', '-v', '-m'], returncode=0, stdout='', stderr='').returncode\">tests/test_output_modes.py:194: in test_values_mode_invalid_statement_error\n    assert result.returncode == 5  # exitParseStatements\nE   AssertionError: assert 0 == 5\nE    +  where 0 = CompletedProcess(args=['/workspace/executable', '-v', '-m'], returncode=0, stdout='', stderr='').returncode</failure></testcase><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_invalid_json_error\" time=\"0.065\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_preserves_unicode\" time=\"0.070\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_with_monochrome\" time=\"0.081\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_with_monochrome\" time=\"0.075\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_large_values\" time=\"0.086\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_deeply_nested_structures\" time=\"0.066\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_nested_arrays_roundtrip\" time=\"0.149\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_numeric_edge_cases\" time=\"0.061\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_github_data\" time=\"0.070\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_extracts_from_stream_gron\" time=\"0.135\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_empty_string_value\" time=\"0.078\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_empty_string_extraction\" time=\"0.063\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_boolean_false_not_omitted\" time=\"0.067\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_only_scalars_no_containers\" time=\"0.067\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_special_keys_with_dots_brackets\" time=\"0.069\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_with_null_values\" time=\"0.063\" /><testcase classname=\"tests.test_output_modes\" name=\"test_values_mode_with_null_values\" time=\"0.061\" /><testcase classname=\"tests.test_output_modes\" name=\"test_json_mode_array_with_mixed_types\" time=\"0.062\" /><testcase classname=\"tests.test_smoke\" name=\"test_basic_gron\" time=\"0.061\" /><testcase classname=\"tests.test_smoke\" name=\"test_help_flag\" time=\"0.071\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_basic_two_objects\" time=\"0.069\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_scalar_values\" time=\"0.063\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_three_simple_objects\" time=\"0.066\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_single_line\" time=\"0.064\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_empty_line_fails\" time=\"0.063\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_invalid_json_line_fails\" time=\"0.072\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_arrays_as_lines\" time=\"0.066\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_scalar_numbers\" time=\"0.069\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_scalar_strings\" time=\"0.068\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_with_no_sort_flag\" time=\"0.066\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_with_json_mode\" time=\"0.064\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_mixed_types_per_line\" time=\"0.065\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_empty_input\" time=\"0.069\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_whitespace_only_line_fails\" time=\"0.060\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_long_flag_works\" time=\"0.061\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_nested_objects\" time=\"0.067\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_special_values\" time=\"0.064\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_many_lines_head_tail\" time=\"0.116\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_very_long_line\" time=\"0.220\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_deeply_nested_structures\" time=\"0.067\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_nested_arrays\" time=\"0.066\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_objects_with_arrays\" time=\"0.073\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_arrays_with_nulls\" time=\"0.073\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_line_with_trailing_tab\" time=\"0.066\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_tab_only_line_fails\" time=\"0.065\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_empty_object_and_array\" time=\"0.067\" /><testcase classname=\"tests.test_stream\" name=\"test_stream_float_values\" time=\"0.070\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_simple_object\" time=\"0.083\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_short_flag\" time=\"0.063\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_type_inference\" time=\"0.079\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_nested_structures\" time=\"0.073\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_unicode_and_special_chars\" time=\"0.067\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_array_with_gaps\" time=\"0.067\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_roundtrip_complex\" time=\"0.127\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_error_type_mismatch_object_to_array\" time=\"0.064\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_error_type_mismatch_array_to_object\" time=\"0.062\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_error_missing_semicolon\" time=\"0.064\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_error_malformed_value\" time=\"0.205\"><failure message=\"AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'&#10; +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr\">tests/test_ungron.py:152: in test_ungron_error_malformed_value\n    assert \"ungron failed for `json.likes = [;`: invalid value `[`\" in result.stderr\nE   AssertionError: assert 'ungron failed for `json.likes = [;`: invalid value `[`' in 'ungron failed for `json.likes = [`: statement has no value\\n'\nE    +  where 'ungron failed for `json.likes = [`: statement has no value\\n' = CompletedProcess(args=['/workspace/executable', '--ungron'], returncode=5, stdout='', stderr='ungron failed for `json.likes = [`: statement has no value\\n').stderr</failure></testcase><testcase classname=\"tests.test_ungron\" name=\"test_ungron_error_empty_input\" time=\"0.064\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_error_whitespace_only\" time=\"0.071\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_scalar_override\" time=\"0.083\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_from_file\" time=\"0.076\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_with_monochrome_flag\" time=\"0.062\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_grep_separators\" time=\"0.194\"><failure message=\"AssertionError: ungron failed for ``: invalid statement&#10;  &#10;assert 5 == 0&#10; +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode\">tests/test_ungron.py:204: in test_ungron_grep_separators\n    assert result.returncode == 0, result.stderr\nE   AssertionError: ungron failed for ``: invalid statement\nE     \nE   assert 5 == 0\nE    +  where 5 = CompletedProcess(args=['/workspace/executable', '--ungron', '/workspace/testdata/grep-separators.gron'], returncode=5, stdout='', stderr='ungron failed for ``: invalid statement\\n').returncode</failure></testcase><testcase classname=\"tests.test_ungron\" name=\"test_ungron_top_level_array\" time=\"0.070\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_large_values\" time=\"0.122\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_numeric_precision\" time=\"0.068\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_json_escape_sequences\" time=\"0.070\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_error_invalid_identifier\" time=\"0.073\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_error_invalid_bracket_content\" time=\"0.070\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_roundtrip_preserves_types\" time=\"0.150\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_object_merge_preserves_all_keys\" time=\"0.093\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_array_merge_extends_correctly\" time=\"0.084\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_deep_nested_merge\" time=\"0.077\" /><testcase classname=\"tests.test_ungron\" name=\"test_ungron_via_symlink\" time=\"0.214\"><failure message=\"AssertionError: failed to form statements: invalid character 'j' looking for beginning of value&#10;  &#10;assert 3 == 0&#10; +  where 3 = CompletedProcess(args=['/workspace/ungron', '/workspace/testdata/one.gron'], returncode=3, stdout='', stderr=&quot;failed to form statements: invalid character 'j' looking for beginning of value\\n&quot;).returncode\">tests/test_ungron.py:410: in test_ungron_via_symlink\n    assert result.returncode == 0, result.stderr\nE   AssertionError: failed to form statements: invalid character 'j' looking for beginning of value\nE     \nE   assert 3 == 0\nE    +  where 3 = CompletedProcess(args=['/workspace/ungron', '/workspace/testdata/one.gron'], returncode=3, stdout='', stderr=\"failed to form statements: invalid character 'j' looking for beginning of value\\n\").returncode</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_simple_http_url\" time=\"0.584\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_large_json_http\" time=\"0.070\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_empty_json\" time=\"0.065\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_url_with_query_params\" time=\"0.064\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_http_redirect_301\" time=\"0.074\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_nonexistent_domain\" time=\"0.341\"><failure message=\"assert 'Get &quot;http://nonexistent.domain.invalid.test/test.json&quot;: dial tcp:' in 'Get &quot;http://nonexistent.domain.invalid.test/test.json&quot;: [Errno -2] Name or service not known\\n'&#10; +  where 'Get &quot;http://nonexistent.domain.invalid.test/test.json&quot;: [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', 'http://nonexistent.domain.invalid.test/test.json'], returncode=4, stdout='', stderr='Get &quot;http://nonexistent.domain.invalid.test/test.json&quot;: [Errno -2] Name or service not known\\n').stderr\">/workspace/eval/tests/test_url_fetch.py:174: in test_fetch_nonexistent_domain\n    assert 'Get \"http://nonexistent.domain.invalid.test/test.json\": dial tcp:' in result.stderr\nE   assert 'Get \"http://nonexistent.domain.invalid.test/test.json\": dial tcp:' in 'Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n'\nE    +  where 'Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', 'http://nonexistent.domain.invalid.test/test.json'], returncode=4, stdout='', stderr='Get \"http://nonexistent.domain.invalid.test/test.json\": [Errno -2] Name or service not known\\n').stderr</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_connection_refused\" time=\"0.208\"><failure message=\"assert 'connection refused' in 'Get &quot;http://127.0.0.1:19999/test.json&quot;: [Errno 111] Connection refused\\n'&#10; +  where 'Get &quot;http://127.0.0.1:19999/test.json&quot;: [Errno 111] Connection refused\\n' = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:19999/test.json'], returncode=4, stdout='', stderr='Get &quot;http://127.0.0.1:19999/test.json&quot;: [Errno 111] Connection refused\\n').stderr\">/workspace/eval/tests/test_url_fetch.py:187: in test_fetch_connection_refused\n    assert \"connection refused\" in result.stderr\nE   assert 'connection refused' in 'Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n'\nE    +  where 'Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n' = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:19999/test.json'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:19999/test.json\": [Errno 111] Connection refused\\n').stderr</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_https_self_signed_cert_fails_without_insecure\" time=\"0.932\"><failure message=\"assert 'tls: failed to verify certificate' in 'Get &quot;https://127.0.0.1:40369/simple.json&quot;: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n'&#10; +  where 'Get &quot;https://127.0.0.1:40369/simple.json&quot;: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n' = CompletedProcess(args=['/workspace/executable', 'https://127.0.0.1:40369/simple.json'], returncode=4, stdout='', stderr='Get &quot;https://127.0.0.1:40369/simple.json&quot;: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n').stderr\">/workspace/eval/tests/test_url_fetch.py:201: in test_https_self_signed_cert_fails_without_insecure\n    assert \"tls: failed to verify certificate\" in result.stderr\nE   assert 'tls: failed to verify certificate' in 'Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n'\nE    +  where 'Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n' = CompletedProcess(args=['/workspace/executable', 'https://127.0.0.1:40369/simple.json'], returncode=4, stdout='', stderr='Get \"https://127.0.0.1:40369/simple.json\": [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1007)\\n').stderr</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_https_insecure_flag_long\" time=\"0.072\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_https_insecure_flag_short\" time=\"0.071\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_http_404_not_found\" time=\"0.068\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_http_500_server_error\" time=\"0.070\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_non_json_response\" time=\"0.071\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_invalid_url_protocol_treated_as_file\" time=\"0.064\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_url_case_insensitive_protocol\" time=\"0.200\"><failure message=\"AssertionError: Expected exit code 0, got 1: open HTTP://127.0.0.1:39237/simple.json: no such file or directory&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/workspace/executable', 'HTTP://127.0.0.1:39237/simple.json'], returncode=1, stdout='', stderr='open HTTP://127.0.0.1:39237/simple.json: no such file or directory\\n').returncode\">/workspace/eval/tests/test_url_fetch.py:286: in test_fetch_url_case_insensitive_protocol\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 1: open HTTP://127.0.0.1:39237/simple.json: no such file or directory\nE     \nE   assert 1 == 0\nE    +  where 1 = CompletedProcess(args=['/workspace/executable', 'HTTP://127.0.0.1:39237/simple.json'], returncode=1, stdout='', stderr='open HTTP://127.0.0.1:39237/simple.json: no such file or directory\\n').returncode</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_https_uppercase\" time=\"0.205\"><failure message=\"AssertionError: Expected exit code 0, got 1: open HTTPS://127.0.0.1:40369/simple.json: no such file or directory&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['/workspace/executable', '-k', 'HTTPS://127.0.0.1:40369/simple.json'], returncode=1, stdout='', stderr='open HTTPS://127.0.0.1:40369/simple.json: no such file or directory\\n').returncode\">/workspace/eval/tests/test_url_fetch.py:297: in test_fetch_https_uppercase\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 1: open HTTPS://127.0.0.1:40369/simple.json: no such file or directory\nE     \nE   assert 1 == 0\nE    +  where 1 = CompletedProcess(args=['/workspace/executable', '-k', 'HTTPS://127.0.0.1:40369/simple.json'], returncode=1, stdout='', stderr='open HTTPS://127.0.0.1:40369/simple.json: no such file or directory\\n').returncode</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_with_proxy_flag_long\" time=\"1.582\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_with_proxy_flag_short\" time=\"1.571\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_with_noproxy_flag\" time=\"3.733\"><failure message=\"AssertionError: Proxy should have been bypassed&#10;assert not True&#10; +  where True = &lt;function exists at 0x74123a515f30&gt;('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_flag2/proxy_log.txt')&#10; +    where &lt;function exists at 0x74123a515f30&gt; = &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt;.exists&#10; +      where &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt; = &lt;module 'os' from '/usr/lib/python3.10/os.py'&gt;.path\">/workspace/eval/tests/test_url_fetch.py:407: in test_fetch_with_noproxy_flag\n    assert not os.path.exists(log_file), \"Proxy should have been bypassed\"\nE   AssertionError: Proxy should have been bypassed\nE   assert not True\nE    +  where True = &lt;function exists at 0x74123a515f30&gt;('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_flag2/proxy_log.txt')\nE    +    where &lt;function exists at 0x74123a515f30&gt; = &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt;.exists\nE    +      where &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt; = &lt;module 'os' from '/usr/lib/python3.10/os.py'&gt;.path</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_with_noproxy_multiple_hosts\" time=\"3.737\"><failure message=\"AssertionError: Proxy should have been bypassed&#10;assert not True&#10; +  where True = &lt;function exists at 0x74123a515f30&gt;('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_multip2/proxy_log.txt')&#10; +    where &lt;function exists at 0x74123a515f30&gt; = &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt;.exists&#10; +      where &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt; = &lt;module 'os' from '/usr/lib/python3.10/os.py'&gt;.path\">/workspace/eval/tests/test_url_fetch.py:429: in test_fetch_with_noproxy_multiple_hosts\n    assert not os.path.exists(log_file), \"Proxy should have been bypassed\"\nE   AssertionError: Proxy should have been bypassed\nE   assert not True\nE    +  where True = &lt;function exists at 0x74123a515f30&gt;('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_multip2/proxy_log.txt')\nE    +    where &lt;function exists at 0x74123a515f30&gt; = &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt;.exists\nE    +      where &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt; = &lt;module 'os' from '/usr/lib/python3.10/os.py'&gt;.path</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_with_http_proxy_env_var\" time=\"3.654\"><failure message=\"AssertionError: Proxy was not used&#10;assert False&#10; +  where False = &lt;function exists at 0x74123a515f30&gt;('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_http_proxy_env2/proxy_log.txt')&#10; +    where &lt;function exists at 0x74123a515f30&gt; = &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt;.exists&#10; +      where &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt; = &lt;module 'os' from '/usr/lib/python3.10/os.py'&gt;.path\">/workspace/eval/tests/test_url_fetch.py:456: in test_fetch_with_http_proxy_env_var\n    assert os.path.exists(log_file), \"Proxy was not used\"\nE   AssertionError: Proxy was not used\nE   assert False\nE    +  where False = &lt;function exists at 0x74123a515f30&gt;('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_http_proxy_env2/proxy_log.txt')\nE    +    where &lt;function exists at 0x74123a515f30&gt; = &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt;.exists\nE    +      where &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt; = &lt;module 'os' from '/usr/lib/python3.10/os.py'&gt;.path</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_with_no_proxy_env_var\" time=\"1.509\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_proxy_flag_overrides_env_var\" time=\"1.569\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_with_noproxy_wildcard_suffix\" time=\"3.731\"><failure message=\"AssertionError: Proxy should have been bypassed by wildcard pattern&#10;assert not True&#10; +  where True = &lt;function exists at 0x74123a515f30&gt;('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_wildca2/proxy_log.txt')&#10; +    where &lt;function exists at 0x74123a515f30&gt; = &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt;.exists&#10; +      where &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt; = &lt;module 'os' from '/usr/lib/python3.10/os.py'&gt;.path\">/workspace/eval/tests/test_url_fetch.py:539: in test_fetch_with_noproxy_wildcard_suffix\n    assert not os.path.exists(log_file), \"Proxy should have been bypassed by wildcard pattern\"\nE   AssertionError: Proxy should have been bypassed by wildcard pattern\nE   assert not True\nE    +  where True = &lt;function exists at 0x74123a515f30&gt;('/tmp/pytest-of-root/pytest-0/popen-gw0/test_fetch_with_noproxy_wildca2/proxy_log.txt')\nE    +    where &lt;function exists at 0x74123a515f30&gt; = &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt;.exists\nE    +      where &lt;module 'posixpath' from '/usr/lib/python3.10/posixpath.py'&gt; = &lt;module 'os' from '/usr/lib/python3.10/os.py'&gt;.path</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_with_invalid_proxy_url_causes_error\" time=\"0.287\"><failure message=\"assert 'proxyconnect tcp: dial tcp :0: connect: connection refused' in 'Get &quot;http://127.0.0.1:39237/simple.json&quot;: [Errno -2] Name or service not known\\n'&#10; +  where 'Get &quot;http://127.0.0.1:39237/simple.json&quot;: [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', '--proxy', 'not-a-valid-url', 'http://127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get &quot;http://127.0.0.1:39237/simple.json&quot;: [Errno -2] Name or service not known\\n').stderr\">/workspace/eval/tests/test_url_fetch.py:552: in test_fetch_with_invalid_proxy_url_causes_error\n    assert \"proxyconnect tcp: dial tcp :0: connect: connection refused\" in result.stderr\nE   assert 'proxyconnect tcp: dial tcp :0: connect: connection refused' in 'Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n'\nE    +  where 'Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n' = CompletedProcess(args=['/workspace/executable', '--proxy', 'not-a-valid-url', 'http://127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n').stderr</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_timeout_on_slow_response\" time=\"75.314\"><failure message=\"AssertionError: Expected exit code 4 (exitFetchURL), got 0&#10;assert 0 == 4&#10; +  where 0 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/slow'], returncode=0, stdout='json = {};\\njson.slow = &quot;response&quot;;\\n', stderr='').returncode\">/workspace/eval/tests/test_url_fetch.py:565: in test_timeout_on_slow_response\n    assert result.returncode == 4, f\"Expected exit code 4 (exitFetchURL), got {result.returncode}\"\nE   AssertionError: Expected exit code 4 (exitFetchURL), got 0\nE   assert 0 == 4\nE    +  where 0 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/slow'], returncode=0, stdout='json = {};\\njson.slow = \"response\";\\n', stderr='').returncode</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_url_with_fragment\" time=\"0.073\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_url_with_userinfo\" time=\"0.210\"><failure message=\"AssertionError: Expected exit code 0, got 4: Get &quot;http://user:pass@127.0.0.1:39237/simple.json&quot;: [Errno -2] Name or service not known&#10;  &#10;assert 4 == 0&#10; +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://user:pass@127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get &quot;http://user:pass@127.0.0.1:39237/simple.json&quot;: [Errno -2] Name or service not known\\n').returncode\">/workspace/eval/tests/test_url_fetch.py:594: in test_fetch_url_with_userinfo\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 4: Get \"http://user:pass@127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\nE     \nE   assert 4 == 0\nE    +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://user:pass@127.0.0.1:39237/simple.json'], returncode=4, stdout='', stderr='Get \"http://user:pass@127.0.0.1:39237/simple.json\": [Errno -2] Name or service not known\\n').returncode</failure></testcase><testcase classname=\"tests.test_url_fetch\" name=\"test_combined_flags_insecure_and_proxy\" time=\"1.065\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_very_long_url_path\" time=\"0.072\" /><testcase classname=\"tests.test_url_fetch\" name=\"test_fetch_url_with_unicode_in_query\" time=\"0.958\"><failure message=\"AssertionError: Expected exit code 0, got 4: Get &quot;http://127.0.0.1:39237/simple.json?name=café&amp;emoji=☕&quot;: ordinal not in range(128)&#10;  &#10;assert 4 == 0&#10; +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/simple.json?name=café&amp;emoji=☕'], returncode=4, stdout='', stderr='Get &quot;http://127.0.0.1:39237/simple.json?name=café&amp;emoji=☕&quot;: ordinal not in range(128)\\n').returncode\">/workspace/eval/tests/test_url_fetch.py:640: in test_fetch_url_with_unicode_in_query\n    assert result.returncode == 0, f\"Expected exit code 0, got {result.returncode}: {result.stderr}\"\nE   AssertionError: Expected exit code 0, got 4: Get \"http://127.0.0.1:39237/simple.json?name=café&amp;emoji=☕\": ordinal not in range(128)\nE     \nE   assert 4 == 0\nE    +  where 4 = CompletedProcess(args=['/workspace/executable', 'http://127.0.0.1:39237/simple.json?name=café&amp;emoji=☕'], returncode=4, stdout='', stderr='Get \"http://127.0.0.1:39237/simple.json?name=café&amp;emoji=☕\": ordinal not in range(128)\\n').returncode</failure></testcase></testsuite></testsuites>",
+      "returncode": 0,
+      "exception_info": "",
+      "branch": "bc90bea37ab6"
+    }
+  ],
+  "solution_branch": "submission",
+  "test_branches": [
+    "bc90bea37ab6"
+  ],
+  "test_branch_errors": {},
+  "executable_hash": "f7dd485b65c01e3f0984636484771fcaa80831e6fdaa77d346d587015817ed25",
+  "warnings": []
+}

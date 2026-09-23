@@ -1467,7 +1467,10 @@ Export-ModuleMember -Function Start-LocalOwnedProcess, Stop-LocalOwnedProcess
             }
         }
         Invoke-Case 'partial restart retains old configuration and a subsequent start recovers it' {
-            & $starter -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+            # Earlier cases can consume almost the entire 45-second fixture TTL.
+            # Begin this recovery scenario with newly owned roots so expiry in a
+            # previous scenario cannot replace the roots whose reuse we assert.
+            & $starter -Restart -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
             Register-StartupProcesses
             $originalState = [IO.File]::ReadAllText($statePath)
             $original = $originalState | ConvertFrom-Json -AsHashtable
