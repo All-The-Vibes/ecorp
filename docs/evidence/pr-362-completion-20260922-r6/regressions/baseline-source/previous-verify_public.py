@@ -18,13 +18,6 @@ if not __debug__:
 
 H = lambda data: hashlib.sha256(data).hexdigest()
 PACKETS = ('pr362-startup-20260921', 'pr362-regressions-20260921', 'pr362-combined-20260921')
-# Absolute resource limits do not come from the untrusted evidence manifest.
-# Current packets are below 1 MiB each; these ceilings leave room for replay.
-MAX_FILE_BYTES = 8 * 1024 * 1024
-MAX_ARCHIVE_BYTES = 4 * 1024 * 1024
-MAX_ARCHIVE_MEMBER_BYTES = 1024 * 1024
-MAX_ARCHIVE_TOTAL_BYTES = 16 * 1024 * 1024
-MAX_ARCHIVE_MEMBERS = 512
 
 
 def unlinked_path(path):
@@ -61,20 +54,17 @@ def regular_file(root, relative):
     return canonical
 
 
-def read_file(root, relative, *, max_bytes=MAX_FILE_BYTES):
-    assert isinstance(max_bytes, int) and 0 <= max_bytes <= MAX_FILE_BYTES, 'invalid evidence byte limit'
+def read_file(root, relative):
     path = regular_file(root, relative)
     before = path.lstat()
     assert stat.S_ISREG(before.st_mode) and before.st_nlink == 1, 'evidence file changed before open'
-    assert 0 <= before.st_size <= max_bytes, 'evidence file exceeds byte limit'
     flags = os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NOFOLLOW', 0)
     descriptor = os.open(path, flags)
     with os.fdopen(descriptor, 'rb') as stream:
         opened = os.fstat(stream.fileno())
         assert stat.S_ISREG(opened.st_mode) and opened.st_nlink == 1 and (opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns) == (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns), 'evidence file changed before read'
         assert regular_file(root, relative) == path, 'evidence path changed before read'
-        data = stream.read(max_bytes + 1)
-        assert len(data) <= max_bytes, 'evidence file exceeds byte limit'
+        data = stream.read()
         after = os.fstat(stream.fileno())
         assert after.st_nlink == 1 and len(data) == opened.st_size and (after.st_size, after.st_mtime_ns) == (opened.st_size, opened.st_mtime_ns), 'evidence file changed during read'
         assert regular_file(root, relative) == path, 'evidence path changed during read'
@@ -88,31 +78,6 @@ def safe(names):
         path = PurePosixPath(name)
         assert not path.is_absolute() and '..' not in path.parts
         assert '\\' not in name and ':' not in name
-
-def checked_archive_members(archive):
-    """Validate the entire central-directory budget before decompressing data."""
-    members = archive.infolist()
-    assert len(members) <= MAX_ARCHIVE_MEMBERS, 'archive exceeds member limit'
-    safe([member.filename for member in members])
-    compressed = expanded = 0
-    for member in members:
-        assert not member.is_dir(), 'archive directory is not evidence'
-        assert 0 <= member.file_size <= MAX_ARCHIVE_MEMBER_BYTES, 'archive member exceeds byte limit'
-        assert 0 <= member.compress_size <= MAX_ARCHIVE_BYTES, 'archive compressed size exceeds byte limit'
-        compressed += member.compress_size
-        expanded += member.file_size
-        assert compressed <= MAX_ARCHIVE_BYTES, 'archive compressed size exceeds byte limit'
-        assert expanded <= MAX_ARCHIVE_TOTAL_BYTES, 'archive expansion exceeds byte limit'
-    return {member.filename: member for member in members}
-
-def read_archive_member(archive, member):
-    assert 0 <= member.file_size <= MAX_ARCHIVE_MEMBER_BYTES, 'archive member exceeds byte limit'
-    with archive.open(member) as stream:
-        data = stream.read(MAX_ARCHIVE_MEMBER_BYTES + 1)
-    assert len(data) <= MAX_ARCHIVE_MEMBER_BYTES, 'archive member exceeds byte limit'
-    assert len(data) == member.file_size, 'archive member size mismatch'
-    # Reading to EOF also verifies CRC; avoid testzip's unbounded second pass.
-    return data
 
 def text_check(name, data):
     assert not re.search(rb'(?i)C:(?:\\+|/)Users(?:\\+|/)', data), name
@@ -147,22 +112,16 @@ def verify(base, source=None):
         directory = directories[name]
         manifest = manifests[name]
         for row in manifest['delivered_files']:
-            limit = MAX_ARCHIVE_BYTES if row['path'].endswith('.zip') else MAX_FILE_BYTES
-            data = read_file(directory, filename(row['path']), max_bytes=limit)
+            data = read_file(directory, filename(row['path']))
             assert (H(data) == row['sha256'] and len(data) == row['bytes']) or ('canonical_lf_sha256' in row and H(data.replace(b'\r\n', b'\n')) == row['canonical_lf_sha256']), row['path']
             if not row['path'].endswith(('.png', '.zip')):
                 text_check(row['path'], data)
-        with zipfile.ZipFile(io.BytesIO(read_file(directory, 'receipts.zip', max_bytes=MAX_ARCHIVE_BYTES))) as archive:
-            members = checked_archive_members(archive)
-            rows = manifest['archive_members']
-            assert isinstance(rows, list) and len(rows) <= MAX_ARCHIVE_MEMBERS, 'archive manifest exceeds member limit'
-            safe([row['member'] for row in rows])
-            assert set(members) == {row['member'] for row in rows}
-            expanded = 0
-            for row in rows:
-                data = read_archive_member(archive, members[row['member']])
-                expanded += len(data)
-                assert expanded <= MAX_ARCHIVE_TOTAL_BYTES, 'archive expansion exceeds byte limit'
+        with zipfile.ZipFile(io.BytesIO(read_file(directory, 'receipts.zip'))) as archive:
+            safe(archive.namelist())
+            assert archive.testzip() is None
+            assert set(archive.namelist()) == {r['member'] for r in manifest['archive_members']}
+            for row in manifest['archive_members']:
+                data = archive.read(row['member'])
                 assert H(data) == row['public_sha256'] and len(data) == row['public_bytes'], row['member']
                 if row['representation'] == 'unchanged bytes':
                     assert row['public_sha256'] == row['raw_sha256']

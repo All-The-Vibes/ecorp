@@ -1,0 +1,82 @@
+{
+  "status": "passed",
+  "started_at_utc": "2026-09-22T15:59:15.563262+00:00",
+  "head": "856b04a8ef5c7d18e354b586a740d54241c34648",
+  "staged_tree": "703d977075284a90324cdec12df272a3350fd758",
+  "description": "Retrospective Rust 1.94 strict-Clippy RED/GREEN, with unchanged behavior tests passing on both predicates. Not a reconstruction of original development chronology.",
+  "toolchain": "rustc 1.94.0 (4a4ef493e 2026-03-02)",
+  "original_source_sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15",
+  "baseline_source_sha256": "3bc66a715b43fce9c711118f35901af1159c86dbaeac63c9ecef7f5c3d039edc",
+  "runs": [
+    {
+      "name": "msrv-clippy-before",
+      "command": [
+        "cargo",
+        "+1.94.0",
+        "clippy",
+        "--locked",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "source_sha256": "3bc66a715b43fce9c711118f35901af1159c86dbaeac63c9ecef7f5c3d039edc",
+      "exit_code": 101,
+      "log": "<private-evidence>\\pr338-msrv-clippy-before-r2.log",
+      "sha256": "f90406b87e8f5a60fbd429f3cfaaffad27c513062d265211c6c392081cc7cd53"
+    },
+    {
+      "name": "msrv-behavior-before",
+      "command": [
+        "cargo",
+        "+1.94.0",
+        "test",
+        "--locked",
+        "-p",
+        "crony-store",
+        "retained_provider_receipt"
+      ],
+      "source_sha256": "3bc66a715b43fce9c711118f35901af1159c86dbaeac63c9ecef7f5c3d039edc",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr338-msrv-behavior-before-r2.log",
+      "sha256": "22dd3e108e064fc1f0437b3d59fb051b9cafc8baa206b176b16f82bcccca42c7"
+    },
+    {
+      "name": "msrv-clippy-after",
+      "command": [
+        "cargo",
+        "+1.94.0",
+        "clippy",
+        "--locked",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "source_sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr338-msrv-clippy-after-r2.log",
+      "sha256": "23fac8602d22ab6b8c8600cf7f576e09150b925a0089da2372532f17109ae36e"
+    },
+    {
+      "name": "msrv-behavior-after",
+      "command": [
+        "cargo",
+        "+1.94.0",
+        "test",
+        "--locked",
+        "-p",
+        "crony-store",
+        "retained_provider_receipt"
+      ],
+      "source_sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr338-msrv-behavior-after-r2.log",
+      "sha256": "cb70738658a75a4e53889f27d5b7da10ec351961a0775e0f07e254dfea2cc1e1"
+    }
+  ],
+  "restored_sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15",
+  "finished_at_utc": "2026-09-22T16:10:14.724627+00:00"
+}
