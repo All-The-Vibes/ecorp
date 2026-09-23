@@ -107,6 +107,16 @@ U1/OIDC/M34 launcher; review any extraction instead of copying it blindly.
 ownership. No new implementation may adopt a process or database from a PID or
 healthy endpoint alone.
 
+The Windows preflight regression defaults to `-ShortAliasMode Required`: its
+native 8.3 cases need a distinct short name and fail if the volume cannot supply
+one. Hosted CI uses `-ShortAliasMode ReportUnavailable` to run the portable
+guards while explicitly reporting the native alias cases as blocked and not
+executed. This mode does not qualify the missing native lane. The separate
+`tools/qa_multiplayer_preflight_modes.test.ps1` injects failed lookup and unchanged
+spelling observations to verify both modes, including the later Git identity
+check. Its synthetic cases are not actual native alias coverage. Provisioned
+native acceptance must still run the default Required mode successfully.
+
 Before a runtime test, record explicitly owned API/web/database ports, database
 identity, private artifact backend/namespace, runner roots and enrollment identities,
 disposable source repositories, browser profiles, identity-provider fixture,

@@ -1,4 +1,9 @@
 #requires -Version 7.4
+[CmdletBinding()]
+param(
+    [ValidateSet('Required', 'ReportUnavailable')]
+    [string]$ShortAliasMode = 'Required'
+)
 $ErrorActionPreference = 'Stop'
 if (!$IsWindows) { throw 'Run the U1 preflight regression on Windows.' }
 . (Join-Path $PSScriptRoot 'qa_multiplayer_preflight.ps1')
@@ -138,25 +143,32 @@ public static class U1AliasProbe {
     }
     $shortBuffer = [Text.StringBuilder]::new(32768)
     $shortLength = [U1AliasProbe]::GetShortPathName($product, $shortBuffer, $shortBuffer.Capacity)
-    Assert ($shortLength -gt 0 -and $shortLength -lt $shortBuffer.Capacity) 'Native short-path lookup failed.'
     $shortProduct = $shortBuffer.ToString()
-    $valid = $planArgs.Clone(); $valid.Product = $shortProduct
-    Assert ((Get-U1FixturePlan @valid).product -eq [IO.Path]::GetFullPath($shortProduct)) 'Ordinary short paths must remain supported.'
-    Write-Output (@{ event = 'short-path'; distinctAlias = ($shortProduct -ne $product); accepted = $true } | ConvertTo-Json -Compress)
-    Assert (!$shortProduct.Equals($product, [StringComparison]::OrdinalIgnoreCase)) 'This regression requires an actual distinct Windows short alias; unchanged spelling is not coverage.'
-    Assert ([IO.Path]::GetFullPath($shortProduct).Equals([IO.Path]::GetFullPath($product), [StringComparison]::OrdinalIgnoreCase)) 'The supported Windows runtime must expand the existing short alias.'
-    foreach ($case in @(
-        @{ name = 'short fixture ancestor'; Product = $product; Root = "$shortProduct\qa\u1-short"; Protected = @($office) },
-        @{ name = 'short product'; Product = $shortProduct; Root = "$product\qa\u1-long"; Protected = @($office) },
-        @{ name = 'short protected ancestor'; Product = $office; Root = "$product\qa\u1-long"; Protected = @($shortProduct) },
-        @{ name = 'multiple missing descendants'; Product = $product; Root = "$shortProduct\missing\deeper\qa\u1-short"; Protected = @($office) }
-    )) {
-        $bad = $planArgs.Clone()
-        foreach ($field in @('Root', 'Product', 'Protected')) { $bad[$field] = $case[$field] }
-        Reject { Get-U1FixturePlan @bad } 'disjoint'
-        Write-Output "F01 native short-path overlap rejected: $($case.name)."
+    $shortAvailable = $shortLength -gt 0 -and $shortLength -lt $shortBuffer.Capacity -and
+        !$shortProduct.Equals($product, [StringComparison]::OrdinalIgnoreCase)
+    $shortAliasStatus = 'blocked'
+    if ($shortAvailable) {
+        $valid = $planArgs.Clone(); $valid.Product = $shortProduct
+        Assert ((Get-U1FixturePlan @valid).product -eq [IO.Path]::GetFullPath($shortProduct)) 'Ordinary short paths must remain supported.'
+        Assert ([IO.Path]::GetFullPath($shortProduct).Equals([IO.Path]::GetFullPath($product), [StringComparison]::OrdinalIgnoreCase)) 'The supported Windows runtime must expand the existing short alias.'
+        foreach ($case in @(
+            @{ name = 'short fixture ancestor'; Product = $product; Root = "$shortProduct\qa\u1-short"; Protected = @($office) },
+            @{ name = 'short product'; Product = $shortProduct; Root = "$product\qa\u1-long"; Protected = @($office) },
+            @{ name = 'short protected ancestor'; Product = $office; Root = "$product\qa\u1-long"; Protected = @($shortProduct) },
+            @{ name = 'multiple missing descendants'; Product = $product; Root = "$shortProduct\missing\deeper\qa\u1-short"; Protected = @($office) }
+        )) {
+            $bad = $planArgs.Clone()
+            foreach ($field in @('Root', 'Product', 'Protected')) { $bad[$field] = $case[$field] }
+            Reject { Get-U1FixturePlan @bad } 'disjoint'
+            Write-Output "F01 native short-path overlap rejected: $($case.name)."
+        }
+        Assert (!(Test-Path -LiteralPath "$product\qa") -and !(Test-Path -LiteralPath "$product\missing")) 'Short-path planning must not create directories.'
+        $shortAliasStatus = 'passed'
+    } else {
+        Write-Warning 'Native 8.3 alias cases BLOCKED: the fixture volume did not supply a distinct short name. These cases were not executed and are not passing coverage.'
     }
-    Assert (!(Test-Path -LiteralPath "$product\qa") -and !(Test-Path -LiteralPath "$product\missing")) 'Short-path planning must not create directories.'
+    Write-Output (@{ event = 'native-short-alias'; status = $shortAliasStatus; mode = $ShortAliasMode; distinctAlias = $shortAvailable; executed = $shortAvailable } | ConvertTo-Json -Compress)
+    Assert ($shortAvailable -or $ShortAliasMode -eq 'ReportUnavailable') 'An explicitly provisioned Windows volume with distinct 8.3 names is required for this native lane.'
     $bad = $planArgs.Clone(); $bad.Protected = @([IO.Path]::GetPathRoot($office))
     Reject { Get-U1FixturePlan @bad } 'disjoint'
     Reject { Get-U1LocalPath "$drive\qa\u1-new" } 'Substituted, mapped or unverifiable drives'
@@ -316,8 +328,13 @@ public static class U1AliasProbe {
             Assert (!(Invoke-FixtureGit $other @('status', '--porcelain', '--untracked-files=all'))) 'Foreign control must be clean.'
             $control = Invoke-U1Preflight -Product $product -Options $gitOptions
             Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Real clean Product must attest its own commit.'
-            $shortControl = Invoke-U1Preflight -Product $shortProduct -Options $gitOptions
-            Assert ($shortControl.status -eq 'preparation-checks-passed' -and $shortControl.source_commit -eq $candidateHead) 'An actual short alias must bind to the same clean Git source.'
+            if ($shortAvailable) {
+                $shortControl = Invoke-U1Preflight -Product $shortProduct -Options $gitOptions
+                Assert ($shortControl.status -eq 'preparation-checks-passed' -and $shortControl.source_commit -eq $candidateHead) 'An actual short alias must bind to the same clean Git source.'
+                Write-Output 'F03 native short-alias Git identity passed.'
+            } else {
+                Write-Output 'F03 native short-alias Git identity BLOCKED: no distinct alias; not executed.'
+            }
             Write-Output 'F03 native clean control passed with distinct candidate/foreign identities.'
             $untracked = Join-Path $product 'untracked.txt'
             [IO.File]::WriteAllText($untracked, 'preserve untracked source')
@@ -456,7 +473,7 @@ public static class U1AliasProbe {
     Assert (!(Test-Path -LiteralPath $options.QaRoot)) 'Preflight must remain read-only on success and failure.'
     Assert ((Get-Content -LiteralPath (Join-Path $office 'sentinel') -Raw) -eq 'untouched') 'Retained office sentinel changed.'
     $completed = $true
-    Write-Output 'U1 preflight path, port, tool, source, registry, report and read-only regressions passed.'
+    Write-Output "U1 portable preflight path, port, tool, source, registry, report and read-only regressions passed. Native 8.3 alias lane: $shortAliasStatus."
 } finally {
     if ($completed) {
         $resolved = (Get-Item -LiteralPath $fixture -Force).FullName

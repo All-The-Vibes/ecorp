@@ -286,10 +286,17 @@ jobs:
         with:
           node-version-file: .node-version
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-      - name: Verify read-only U1 fixture preflight guards
+      - name: Verify portable read-only U1 fixture preflight guards
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./tools/qa_multiplayer_preflight.test.ps1
+        # Hosted temp volumes do not guarantee distinct 8.3 names. The native
+        # sub-lane reports BLOCKED explicitly when that prerequisite is absent;
+        # Required mode remains the default for a provisioned native fixture.
+        run: ./tools/qa_multiplayer_preflight.test.ps1 -ShortAliasMode ReportUnavailable
+      - name: Verify unavailable native preflight coverage is reported honestly
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/qa_multiplayer_preflight_modes.test.ps1
       - name: Compile Windows runner tests before native host readiness
         if: runner.os == 'Windows'
         run: cargo test --locked -p crony-runner --no-run
