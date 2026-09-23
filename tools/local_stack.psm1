@@ -349,13 +349,35 @@ function Start-LocalOwnedProcess {
     } else {
         $process = Start-Process @parameters
     }
+    $retainProcess = $false
     try {
         @{
             role = $Role; workspace = $scope; pid = $process.Id; executable = $exe
             started_utc = $process.StartTime.ToUniversalTime().ToString('o')
             stdout = $stdout; stderr = $stderr
         }
-    } finally { $process.Dispose() }
+    } catch {
+        $failure = $_.Exception
+        $failure.Data['LocalStackRollbackStdout'] = $stdout
+        $failure.Data['LocalStackRollbackStderr'] = $stderr
+        try {
+            # Admission owns this returned native process even when inspecting
+            # its metadata fails. Never reacquire a numeric PID for rollback.
+            [void]$process.Handle
+            if (!$process.HasExited) { $process.Kill() }
+            if (!$process.WaitForExit(15000)) { throw 'Owned launch rollback did not confirm exit.' }
+            $failure.Data['LocalStackRollbackVerified'] = $true
+        } catch {
+            $retainProcess = $true
+            $failure.Data['LocalStackRollbackVerified'] = $false
+            $failure.Data['LocalStackRollbackError'] = $_.Exception
+            $failure.Data['LocalStackRollbackProcess'] = $process
+            Write-Warning -WarningAction Continue 'Owned launch rollback is unverified; the exception retains the exact process and diagnostic logs.'
+        }
+        throw $failure
+    } finally {
+        if (!$retainProcess) { $process.Dispose() }
+    }
 }
 
 function Read-LocalStackState {

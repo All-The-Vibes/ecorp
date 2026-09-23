@@ -7,6 +7,7 @@ import path from 'node:path'
 import { promisify } from 'node:util'
 import { fixtureMode, referenceSnapshotUrl } from './factory_budget_fixture_config.mjs'
 import { factoryBudgetProcessIdentity, stopFactoryBudgetProcess } from './factory_budget_process.mjs'
+import { stopLaunchedChild } from './owned_test_stack.mjs'
 // Both modules guard their native entrypoints; these imports only reuse read checks.
 import { checkContainedFile } from './e2e_stopped_source_checkpoint.mjs'
 import { readTrustedExecutableDigest } from './e2e_checkpoint_verification.mjs'
@@ -36,6 +37,18 @@ const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
   ['path', 'systemroot', 'windir', 'comspec', 'pathext', 'temp', 'tmp', 'userprofile',
     'homedrive', 'homepath', 'localappdata', 'appdata', 'programfiles', 'programfiles(x86)',
     'programdata', 'systemdrive', 'number_of_processors', 'processor_architecture'].includes(key.toLowerCase())))
+// These process-local Git settings also reach the fixture runner's Git children.
+// All referenced files/directories belong to this exclusively admitted attempt.
+Object.assign(env, {
+  GIT_CONFIG_GLOBAL: path.join(attempt, 'empty.gitconfig'), GIT_CONFIG_NOSYSTEM: '1',
+  GIT_CONFIG_COUNT: '6',
+  GIT_CONFIG_KEY_0: 'core.hooksPath', GIT_CONFIG_VALUE_0: path.join(attempt, 'empty-git-hooks'),
+  GIT_CONFIG_KEY_1: 'init.templateDir', GIT_CONFIG_VALUE_1: path.join(attempt, 'empty-git-template'),
+  GIT_CONFIG_KEY_2: 'commit.gpgSign', GIT_CONFIG_VALUE_2: 'false',
+  GIT_CONFIG_KEY_3: 'tag.gpgSign', GIT_CONFIG_VALUE_3: 'false',
+  GIT_CONFIG_KEY_4: 'core.fsmonitor', GIT_CONFIG_VALUE_4: 'false',
+  GIT_CONFIG_KEY_5: 'core.longpaths', GIT_CONFIG_VALUE_5: 'true',
+})
 const children = []
 const report = { suite, started_at: new Date().toISOString(), api, postgres_port: pgPort,
   qa_root: qa, attempt, scenario:missingCheckpoint?'native-missing-checkpoint':overrun?'revised-budget-hard-stop':'bounded-recovery',
@@ -71,19 +84,36 @@ async function identity(pid) {
   return factoryBudgetProcessIdentity(pid, { workspace: qa, environment: env })
 }
 async function start(name, program, args, extraEnv = {}) {
-  const out = openSync(path.join(attempt, `${name}.stdout.log`), 'a')
-  const err = openSync(path.join(attempt, `${name}.stderr.log`), 'a')
-  const child = spawn(program, args, { cwd: qa, env: { ...env, ...extraEnv }, windowsHide: true,
-    stdio: ['ignore', out, err] })
-  closeSync(out); closeSync(err)
-  await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject) })
-  const owned = { name, program, child, receipt: null }
-  children.push(owned)
-  owned.receipt = await identity(child.pid)
-  assert.ok(owned.receipt, `${name} exited before ownership could be verified`)
-  assert.equal(path.resolve(owned.receipt.executable).toLowerCase(), path.resolve(program).toLowerCase())
-  await json(path.join(attempt, 'processes.json'), children.map(c => ({name:c.name,...c.receipt})))
-  return child
+  let out, err, child, owned
+  try {
+    out = openSync(path.join(attempt, `${name}.stdout.log`), 'a')
+    err = openSync(path.join(attempt, `${name}.stderr.log`), 'a')
+    child = spawn(program, args, { cwd: qa, env: { ...env, ...extraEnv }, windowsHide: true,
+      stdio: ['ignore', out, err] })
+    owned = { name, program, child, receipt: null }
+    children.push(owned)
+    await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject) })
+    owned.receipt = await identity(child.pid)
+    assert.ok(owned.receipt, `${name} exited before ownership could be verified`)
+    assert.equal(path.resolve(owned.receipt.executable).toLowerCase(), path.resolve(program).toLowerCase())
+    await json(path.join(attempt, 'processes.json'), children.map(c => ({name:c.name,...c.receipt})))
+    return child
+  } catch (error) {
+    let rollbackError
+    try { await stopLaunchedChild(child) } catch (failure) { rollbackError = failure }
+    if (owned) {
+      owned.launchRollback = rollbackError ? 'unconfirmed' : 'stopped'
+      // Diagnostic only. A failed identity lookup never becomes PID authority.
+      report.cleanup.push({ name, status: rollbackError ? 'launch_cleanup_unconfirmed' : 'launch_failed_stopped',
+        observed_child_pid: child.pid ?? null })
+    }
+    if (rollbackError) throw new AggregateError([error, rollbackError],
+      'Owned launch failed and cleanup is unconfirmed; preserve the retained child and logs.')
+    throw error
+  } finally {
+    try { if (out !== undefined) closeSync(out) }
+    finally { if (err !== undefined) closeSync(err) }
+  }
 }
 async function stopVerifiedChild(owned) {
   await stopFactoryBudgetProcess(owned.receipt, { workspace: qa, environment: env })
@@ -301,6 +331,9 @@ try {
   assert.equal((await readFile(path.join(pgData,'PG_VERSION'),'utf8')).trim(), '17')
   assert.equal((await realpath(pgData)).toLowerCase(),path.resolve(pgData).toLowerCase())
   assert.equal(await exists(path.join(pgData,'postmaster.pid')), false, 'Retained QA postmaster receipt exists; inspect before reuse')
+  await writeFile(env.GIT_CONFIG_GLOBAL, '', { flag: 'wx' })
+  await mkdir(env.GIT_CONFIG_VALUE_0)
+  await mkdir(env.GIT_CONFIG_VALUE_1)
   if (!(await exists(source))) {
     await mkdir(source)
     await writeFile(path.join(source,'README.md'), sourceReadme)
@@ -690,6 +723,7 @@ try {
     }
   }
   for (const owned of [...children].reverse()) {
+    if (owned.launchRollback) continue
     try {
       const current=await identity(owned.child.pid)
       if(current===null) {report.cleanup.push({name:owned.name,status:'already_exited'});continue}

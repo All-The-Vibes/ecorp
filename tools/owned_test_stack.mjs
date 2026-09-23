@@ -285,7 +285,7 @@ function sameDatabase(context, manifest) {
   if (process.platform === 'linux' && !manifest.database_target) throw new Error(refusal)
 }
 
-async function stopLaunchedChild(child) {
+export async function stopLaunchedChild(child) {
   if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return
   // Keep the original ChildProcess referenced throughout admission. Its native
   // handle (and unreaped child on Unix) is the rollback authority, not a saved

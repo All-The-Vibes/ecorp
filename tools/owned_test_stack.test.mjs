@@ -9,6 +9,8 @@ import { syncBuiltinESMExports } from 'node:module'
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { assertOwnedRestart, assertTestEndpoint, captureOwnedTestServerManifest, parseOwnedTestServerManifest, ownedServerEnvironment, restartOwnedTestServer, startOwnedTestServer, stopOwnedTestServer } from './owned_test_stack.mjs'
 
+const trustedNode = realpathSync(process.execPath)
+
 // Pure fixtures: no process discovery, signals, services, or filesystem mutation.
 const root = 'C:\\fixture-root'
 const binary = `${root}\\crony-server.exe`
@@ -42,7 +44,7 @@ test('read-only manifest parsing retains ownership scope for existing evidence d
 
 test('database query options are refused before filesystem or lifecycle effects', async t => {
   const folder = path.resolve(os.tmpdir(), 'ecorp-owned-query-fixture')
-  const settings = { root: folder, server, binary: process.execPath,
+  const settings = { root: folder, server, binary: trustedNode,
     manifestPath: path.join(folder, 'server.json') }
   const refusal = 'PostgreSQL test database query options are not supported; refusing lifecycle operation.'
   // Block the first lifecycle write even on the unfixed helper: no real files,
@@ -183,7 +185,7 @@ test('Linux receipts require exact kernel identity and case-sensitive executable
 test('legacy PID files and pre-existing locks are preserved without signalling or starting a process', async () => {
   const folder = mkdtempSync(path.join(os.tmpdir(), 'ecorp-owned-test-'))
   const manifestPath = path.join(folder, 'server.json')
-  const settings = { root: folder, server, binary: process.execPath, manifestPath,
+  const settings = { root: folder, server, binary: trustedNode, manifestPath,
     databaseUrl: 'postgres://fixture:sentinel@127.0.0.1:55471/fixture' }
   try {
     writeFileSync(manifestPath, '4242\n')
@@ -214,7 +216,7 @@ for (const operation of ['start', 'restart']) {
       await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve))
       const endpoint = `http://127.0.0.1:${probe.address().port}`
       await new Promise(resolve => probe.close(resolve))
-      const settings = { root: folder, server: endpoint, binary: process.execPath, manifestPath,
+      const settings = { root: folder, server: endpoint, binary: trustedNode, manifestPath,
         args: [path.join(import.meta.dirname, 'fixtures', 'owned_test_server.mjs')],
         databaseUrl: 'postgres://fixture:private-diagnostic-canary@127.0.0.1:55471/fixture',
         minimumRunners: 0 }
@@ -306,7 +308,7 @@ test('native owned child startup, two restarts, refusal of database drift and id
   const listener = net.createServer()
   await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve))
   const endpoint = `http://127.0.0.1:${listener.address().port}`
-  const settings = { root: folder, server: endpoint, binary: process.execPath, manifestPath,
+  const settings = { root: folder, server: endpoint, binary: trustedNode, manifestPath,
     args: [path.join(import.meta.dirname, 'fixtures', 'owned_test_server.mjs')],
     databaseUrl: 'postgres://fixture:sentinel@127.0.0.1:55471/fixture' }
   let stopped = false

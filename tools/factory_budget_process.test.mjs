@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { execFile as execFileCallback, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { constants } from 'node:fs'
+import { constants, realpathSync } from 'node:fs'
 import { mkdtemp, readFile, mkdir, writeFile, access, realpath, symlink, lstat, readdir, rmdir, unlink, open } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -13,6 +13,7 @@ import { checkContainedFile } from './e2e_stopped_source_checkpoint.mjs'
 import { readTrustedExecutableDigest } from './e2e_checkpoint_verification.mjs'
 
 const execFile = promisify(execFileCallback)
+const trustedNode = realpathSync(process.execPath)
 const inertEnvironment = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
   ['path', 'systemroot', 'windir', 'pathext', 'temp', 'tmp'].includes(key.toLowerCase())))
 
@@ -44,7 +45,7 @@ test('recovery cleanup preserves live uncertain or mismatched children and recei
   })()`)
   const workspace = await mkdtemp(path.join(process.env.ECORP_PROCESS_TEST_EVIDENCE_ROOT ?? os.tmpdir(), 'ecorp-cleanup-'))
   const options = { workspace, environment: inertEnvironment }
-  const child = spawn(process.execPath, ['-e', 'setTimeout(()=>{},60000)'],
+  const child = spawn(trustedNode, ['-e', 'setTimeout(()=>{},60000)'],
     { cwd: workspace, env: inertEnvironment, windowsHide: true, stdio: 'ignore' })
   await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject) })
   const exited = new Promise(resolve => child.once('exit', resolve))
@@ -185,14 +186,14 @@ test('actual Windows budget-fixture child stop preserves mismatches and terminat
   const workspace = await mkdtemp(path.join(os.tmpdir(), 'ecorp-budget-process-'))
   const options = { workspace, environment: inertEnvironment }
   // Inert bounded child, not an existing process. Retain the tiny diagnostic root.
-  const child = spawn(process.execPath, ['-e', 'setTimeout(()=>{},45000)'], { cwd: workspace, env: inertEnvironment, windowsHide: true, stdio: 'ignore' })
+  const child = spawn(trustedNode, ['-e', 'setTimeout(()=>{},45000)'], { cwd: workspace, env: inertEnvironment, windowsHide: true, stdio: 'ignore' })
   await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject) })
   const exited = new Promise(resolve => child.once('exit', resolve))
   let receipt
   try {
     receipt = await factoryBudgetProcessIdentity(child.pid, options)
     assert.equal(receipt.pid, child.pid)
-    assert.equal(path.resolve(receipt.executable).toLowerCase(), path.resolve(process.execPath).toLowerCase())
+    assert.equal(path.resolve(receipt.executable).toLowerCase(), path.resolve(trustedNode).toLowerCase())
     assert.match(receipt.started_utc, /\.\d{7}(?:Z|\+00:00)$/)
     assert.deepEqual(await factoryBudgetProcessIdentity(child.pid, options), receipt)
     for (const invalid of [
