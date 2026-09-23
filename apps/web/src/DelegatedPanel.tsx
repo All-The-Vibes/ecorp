@@ -73,6 +73,9 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
   const owned = useRef<OwnedJob | null>(null)
   const reserved = useRef(new Set<Window>())
   const invalidated = useRef(new Set<string>())
+  const authorizationEpoch = useRef(new Map<string, number>())
+  const recoverAfter = useRef(new Map<string, number>())
+  const refreshSequence = useRef(0)
   const released = useRef(new Set<string>())
   const tickets = useRef(new Map<string, string>())
   const locks = useRef(new Set<string>())
@@ -143,6 +146,7 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
 
   const authorize = useCallback(async (operation: Operation, popup: Window | null, manual: boolean) => {
     const generation = lifecycle.current.generation
+    const epoch = authorizationEpoch.current.get(operation.id) ?? 0
     const lock = `authorize:${operation.id}`
     if (locks.current.has(lock) || !needsSignIn(operation) || !current.current?.enabled) {
       closePopup(popup)
@@ -158,6 +162,11 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
         `${base}/${encodeURIComponent(operation.id)}/authorize`, {},
       )).browser_url, serverUrl)
       if (!isCurrent(generation)) return
+      // A post-cancellation refresh can restore controls, never an old ticket.
+      if (epoch !== (authorizationEpoch.current.get(operation.id) ?? 0)) {
+        closePopup(popup)
+        return
+      }
       const live = current.current?.operations.find((candidate) => candidate.id === operation.id)
       if (!live || !needsSignIn(live) || invalidated.current.has(operation.id) || !current.current?.enabled) {
         closePopup(popup)
@@ -191,6 +200,7 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
   const refresh = useCallback((): Promise<void> => {
     if (loading.current) return loading.current
     const generation = lifecycle.current.generation
+    const sequence = ++refreshSequence.current
     const request = (async () => {
       try {
         const next = await latest.current.api<DelegatedState>(
@@ -204,6 +214,13 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
           if (terminal(operation) || elapsed(operation)) {
             invalidated.current.add(operation.id)
             tickets.current.delete(operation.id)
+            recoverAfter.current.delete(operation.id)
+          } else {
+            const after = recoverAfter.current.get(operation.id)
+            if (after !== undefined && sequence > after && !locks.current.has(`cancel:${operation.id}`)) {
+              invalidated.current.delete(operation.id)
+              recoverAfter.current.delete(operation.id)
+            }
           }
         }
         setInvalidIds(new Set(invalidated.current))
@@ -295,11 +312,14 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
     setLock(key, true)
     setError('')
     if (action === 'cancel') {
+      authorizationEpoch.current.set(operation.id, (authorizationEpoch.current.get(operation.id) ?? 0) + 1)
+      recoverAfter.current.delete(operation.id)
       invalidated.current.add(operation.id)
       setInvalidIds(new Set(invalidated.current))
       tickets.current.delete(operation.id)
       const assignment = owned.current
       if (assignment?.mission_id === operation.mission_id && assignment.task_id === operation.task_id) {
+        assignment.attempted = true
         closePopup(assignment.popup)
       }
     }
@@ -312,7 +332,7 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
       }
       setNotice(action === 'release' ? 'Private receipt released.' : 'Cancellation requested.')
       latest.current.onRefresh()
-      await refresh()
+      if (action === 'release') await refresh()
     } catch {
       if (isCurrent(generation)) {
         setError(action === 'release'
@@ -320,7 +340,15 @@ function ScopedDelegatedPanel({ corpId, roomId, actorId, api, serverUrl, onRefre
           : 'Could not confirm cancellation. Refresh the durable status before trying again.')
       }
     } finally {
-      if (isCurrent(generation)) setLock(key, false)
+      if (isCurrent(generation)) {
+        setLock(key, false)
+        if (action === 'cancel') {
+          // Only a GET started after the POST settled can undo optimism. A GET
+          // already in flight may still contain the pre-cancellation snapshot.
+          recoverAfter.current.set(operation.id, refreshSequence.current)
+          void refresh()
+        }
+      }
     }
   }
 

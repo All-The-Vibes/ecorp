@@ -1,0 +1,52 @@
+{
+  "pr": 320,
+  "purpose": "Owned native Keycloak browser/server/runner delegated acceptance",
+  "source_head": "765aff1f8dd812cf68620177f77e722860a9ecab",
+  "tested_staged_tree": "1bc53b77f798c23dce223f99dfdce033dc6f8669",
+  "qa_root": "<local-user>\\code\\qa\\delegated-keycloak-pr320-20260923-r1",
+  "target": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T06:57:15.8476106+00:00",
+  "status": "failed",
+  "checks": [
+    {
+      "name": "workspace-cache-refresh",
+      "log": "<private-evidence>\\pr320-native-integration-r1-workspace-cache-refresh.log",
+      "sha256": "a205fb8d42db573236d897f20aa5bb5e16e39d75cd59eb93df8f5c0cb2b70568",
+      "exit_code": 0
+    },
+    {
+      "name": "crony-server-build",
+      "log": "<private-evidence>\\pr320-native-integration-r1-crony-server-build.log",
+      "sha256": "fe944b0ef7436ffa05c9f9b809215dcf28d19592bb7604de92cddac6ca5ae8cb",
+      "exit_code": 0
+    },
+    {
+      "name": "crony-runner-build",
+      "log": "<private-evidence>\\pr320-native-integration-r1-crony-runner-build.log",
+      "sha256": "24ad6c3c10b6be68a71c2bb81c925ef465fbb2a91c8397bdcac106aa40fa3b55",
+      "exit_code": 0
+    },
+    {
+      "name": "owned-native-stack-start-and-ownership-proof",
+      "log": "<private-evidence>\\pr320-native-integration-r1-start.log",
+      "sha256": "5d9f6d570abfe0324f329a9f2803fdf282226694b7c179739e9b7bdf5a0cc243",
+      "exit_code": 1
+    }
+  ],
+  "cleanup": "Only exact owned fixture processes stopped; private data, credentials, source, worktrees, binaries and evidence retained.",
+  "live_azure": "NOT_EXECUTED",
+  "scope": "Synthetic Keycloak 26.7.4; development principals; not production OIDC or OS isolation.",
+  "binaries": [
+    {
+      "sha256": "005ef33a0182b380b0504d8665e4a6416811b9df41e6bebb61da23a8152d3213",
+      "name": "crony-server"
+    },
+    {
+      "sha256": "b563d3be1872f784e743d1a70b64e5e7c6879c25c88eb78adaf1f331f8577c62",
+      "name": "crony-runner"
+    }
+  ],
+  "failure": "owned-native-stack-start-and-ownership-proof failed; exact fixture and logs retained.",
+  "stop_exit_code": 0,
+  "finished_at_utc": "2026-09-23T07:02:04.2347032+00:00"
+}

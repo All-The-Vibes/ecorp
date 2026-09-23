@@ -11,7 +11,8 @@ if (process.platform === 'win32') {
   const account = execFileSync('whoami', { encoding: 'utf8' }).trim();
   execFileSync('icacls', ['.private', '/inheritance:r', '/grant:r', `${account}:(OI)(CI)F`], { stdio: 'pipe' });
 }
-for (const port of [18880, 18881, 18882, 18883]) {
+const prepareOnly = process.argv.includes('--prepare-only');
+for (const port of prepareOnly ? [] : [18880, 18881, 18882, 18883]) {
   await new Promise((resolve, reject) => {
     const server = createServer();
     server.once('error', () => reject(new Error(`Required loopback port ${port} unavailable; nothing changed.`)));
@@ -59,7 +60,7 @@ if (!exists) {
     eventsEnabled: false, adminEventsEnabled: false,
     clients: [
       { ...client('interactive'), publicClient: true, standardFlowEnabled: true,
-        redirectUris: [config.redirectUri], webOrigins: [],
+        redirectUris: [config.redirectUri, ...(config.additionalRedirectUris ?? [])], webOrigins: [],
         attributes: { 'pkce.code.challenge.method': 'S256', 'use.refresh.tokens': 'false' },
         protocolMappers: [subject, audience('connector')] },
       { ...client('connector'), secret: connectorSecret,
@@ -76,6 +77,7 @@ if (!exists) {
   };
   await writeFile('.private/realm.json', JSON.stringify(realm, null, 2), { mode: 0o600 });
 }
+if (prepareOnly) process.exit(0);
 if (process.argv.includes('--reimport')) {
   execFileSync('docker', ['compose', 'run', '--rm', '--no-deps', 'keycloak',
     'import', '--file=/opt/keycloak/data/import/realm.json', '--override=true'], { stdio: 'inherit' });

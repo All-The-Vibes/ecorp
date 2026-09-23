@@ -14,7 +14,6 @@ use github_copilot_sdk::{
     MessageOptions, ResumeSessionConfig, SessionConfig, SessionId, SystemMessageConfig, Tool,
     ToolResult, ToolSet, Transport,
     handler::{PermissionHandler, PermissionResult},
-    rpc::UserSettingsSetRequest,
     session_fs::SessionFsProvider,
     tool::ToolHandler,
     types::{
@@ -403,7 +402,6 @@ impl CopilotSdkAdapter {
         let state_directory = self.state_directory(&request.workspace);
         tokio::fs::create_dir_all(&state_directory).await?;
         let client = self.checked_client(&request.workspace).await?;
-        configure_native_sandbox(&client, &request.workspace).await?;
         let pending = Arc::new(DashMap::new());
         let session_fs = Arc::new(ContainedSessionFs::new(
             request.workspace.clone(),
@@ -793,129 +791,6 @@ fn apply_session_config(config: &mut SessionConfig, request: &AdapterRunRequest)
     config.enable_config_discovery = Some(false);
     config.enable_session_store = Some(true);
     config.managed_settings = Some(copilot_native_managed_settings());
-}
-
-async fn configure_native_sandbox(client: &Client, workspace: &Path) -> Result<(), AdapterError> {
-    let denied_paths = copilot_sandbox_denied_paths(workspace);
-    let result = client
-        .rpc()
-        .user()
-        .settings()
-        .set(UserSettingsSetRequest {
-            settings: json!({
-                "sandbox": {
-                    "enabled": true,
-                    "addCurrentWorkingDirectory": true,
-                    "allowDevToolAccess": true,
-                    "allowBypass": false,
-                    "auth": {
-                        "gh": false,
-                        "git": false
-                    },
-                    "sandboxMcpServers": true,
-                    "sandboxLspServers": true,
-                    "userPolicy": {
-                        "filesystem": {
-                            "clearPolicyOnExit": true,
-                            "deniedPaths": denied_paths,
-                            "readonlyPaths": [],
-                            "readwritePaths": [workspace.to_string_lossy()]
-                        },
-                        "network": {
-                            "allowLocalNetwork": false,
-                            "allowOutbound": false
-                        }
-                    }
-                }
-            }),
-        })
-        .await
-        .map_err(sdk_error)?;
-    if result
-        .shadowed_keys
-        .iter()
-        .any(|key| key.eq_ignore_ascii_case("sandbox"))
-    {
-        return Err(AdapterError::Runtime(anyhow!(
-            "GitHub Copilot sandbox settings are shadowed by legacy configuration"
-        )));
-    }
-    client
-        .rpc()
-        .user()
-        .settings()
-        .reload()
-        .await
-        .map_err(sdk_error)?;
-    let settings = client
-        .rpc()
-        .user()
-        .settings()
-        .get()
-        .await
-        .map_err(sdk_error)?;
-    let sandbox = settings
-        .settings
-        .get("sandbox")
-        .map(|metadata| &metadata.value)
-        .context("GitHub Copilot omitted the required sandbox setting")
-        .map_err(AdapterError::Runtime)?;
-    if sandbox.pointer("/enabled").and_then(Value::as_bool) != Some(true)
-        || sandbox.pointer("/allowBypass").and_then(Value::as_bool) != Some(false)
-        || sandbox
-            .pointer("/userPolicy/network/allowOutbound")
-            .and_then(Value::as_bool)
-            != Some(false)
-        || sandbox
-            .pointer("/userPolicy/network/allowLocalNetwork")
-            .and_then(Value::as_bool)
-            != Some(false)
-    {
-        return Err(AdapterError::Runtime(anyhow!(
-            "GitHub Copilot did not retain the required native sandbox restrictions"
-        )));
-    }
-    Ok(())
-}
-
-fn copilot_sandbox_denied_paths(workspace: &Path) -> Vec<String> {
-    let Some(home) = std::env::var_os("USERPROFILE")
-        .or_else(|| std::env::var_os("HOME"))
-        .map(PathBuf::from)
-    else {
-        return Vec::new();
-    };
-    let mut denied = vec![home.to_string_lossy().into_owned()];
-    let candidates = [
-        ".ssh",
-        ".aws",
-        ".azure",
-        ".kube",
-        ".docker",
-        ".gnupg",
-        ".mcp-auth",
-        ".copilot",
-        ".claude",
-        ".npmrc",
-        ".git-credentials",
-        ".cargo/credentials",
-        ".cargo/credentials.toml",
-        ".config/gh",
-        ".codex/auth.json",
-        "AppData/Roaming/GitHub CLI/hosts.yml",
-    ];
-    denied.extend(
-        candidates
-            .into_iter()
-            .map(|relative| {
-                relative
-                    .split('/')
-                    .fold(home.clone(), |path, component| path.join(component))
-            })
-            .filter(|path| path != workspace)
-            .map(|path| path.to_string_lossy().into_owned()),
-    );
-    denied
 }
 
 fn apply_resume_config(config: &mut ResumeSessionConfig, request: &AdapterRunRequest) {
@@ -1452,7 +1327,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn local_cli_launch_preserves_runtime_and_sandbox_policy() {
+    async fn local_cli_launch_preserves_runtime_flags() {
         let root = std::env::temp_dir().join("ecorp-client-options-only");
         let adapter = CopilotSdkAdapter::new(CopilotSdkConfig {
             cli_path: None,
@@ -1470,7 +1345,7 @@ mod tests {
             let options = adapter
                 .client_options(&root.join(name))
                 .await
-                .expect("local client policy");
+                .expect("local client options");
             assert_eq!(
                 options.extra_args,
                 vec![
@@ -1513,21 +1388,6 @@ mod tests {
             !names.contains(&"COPILOT_SDK_AUTH_TOKEN"),
             "the SDK must retain its scoped authentication channel"
         );
-    }
-
-    #[test]
-    fn sandbox_denies_the_user_profile_and_sensitive_stores() {
-        let workspace = std::env::temp_dir()
-            .join("crony-copilot-sandbox")
-            .join("worktree");
-        let denied = copilot_sandbox_denied_paths(&workspace);
-        let home = std::env::var_os("USERPROFILE")
-            .or_else(|| std::env::var_os("HOME"))
-            .map(PathBuf::from)
-            .expect("test home");
-        assert!(denied.contains(&home.to_string_lossy().into_owned()));
-        assert!(denied.iter().any(|path| path.ends_with(".ssh")));
-        assert!(denied.iter().any(|path| path.ends_with(".npmrc")));
     }
 
     #[test]

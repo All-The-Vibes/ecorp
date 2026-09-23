@@ -64,8 +64,8 @@ $env:CRONY_DELEGATED_EXPECTED_SHA256=[Convert]::ToHexString(
 $env:CRONY_DELEGATED_BROWSER_BASE='http://127.0.0.1:8791'
 $env:CRONY_DELEGATED_UI_URL='http://127.0.0.1:5187'
 $env:PATH="$(Join-Path $root 'output\tool-bin');$env:PATH"
-# A development actor link is explicit fixture provisioning, never callback first-login binding.
-$link=@{actor_id='00000000-0000-4000-8000-000000000011';issuer=$config.issuer;subject=$config.reader.subject}
+# Provision the delegated subject separately from the normal login identity.
+$link=@{corp_id='00000000-0000-4000-8000-000000000001';actor_id='00000000-0000-4000-8000-000000000011';issuer=$config.issuer;subject=$config.reader.subject}
 $secretKeyPath=Join-Path $private 'master-key.txt'
 if (!(Test-Path $secretKeyPath)) {
     [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant() |
@@ -77,7 +77,7 @@ if ($LASTEXITCODE) { throw 'Delegated database configuration unavailable' }
 $db = $compose.services.postgres.environment
 $env:DATABASE_URL="postgres://$([uri]::EscapeDataString($db.POSTGRES_USER)):$([uri]::EscapeDataString($db.POSTGRES_PASSWORD))@127.0.0.1:54330/$($db.POSTGRES_DB)"
     & (Join-Path $PSScriptRoot 'start_local.ps1') -SkipInstall -SkipBuild -SkipFactoryController -Restart:$Restart -ServerPort 8791 -WebPort 5187
-    $null=Invoke-RestMethod 'http://127.0.0.1:8791/api/demo/oidc-link' -Method Post -ContentType 'application/json' -Body ($link|ConvertTo-Json)
+    $null=Invoke-RestMethod 'http://127.0.0.1:8791/api/demo/delegated-link' -Method Post -ContentType 'application/json' -Body ($link|ConvertTo-Json)
     Write-Output 'Delegated fixture configured. Human credentials remain in the existing lab .private\config.json.'
 } finally {
     Get-ChildItem Env: | Where-Object Name -like 'CRONY_DELEGATED_*' | ForEach-Object { Remove-Item "Env:$($_.Name)" }

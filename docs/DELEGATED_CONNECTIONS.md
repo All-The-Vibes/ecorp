@@ -14,9 +14,10 @@ browser window automatically navigates to a one-use server ticket. Browser
 blocking has an explicit Resume sign-in fallback. The human performs login.
 PKCE/state/nonce transactions survive server process restarts in Postgres;
 state and cookie hashes are single-use, and PKCE material is encrypted.
-Production identity must already be linked to the exact human actor; a callback
-cannot establish its own identity binding. For Entra this link uses tenant
-`oid`, not an email or the interactive application's pairwise `sub`.
+Production identity must already be linked to the exact human actor in
+`delegated_identities`; a callback cannot establish its own identity binding.
+For Entra this separate link uses the tenant's stable `oid`. Normal ECorp login
+continues to use the issuer and pairwise `sub` in `human_identities`.
 
 The provider validates signed JWTs using bounded, issuer-pinned JWKS requests.
 Initial public-client **authorization code + PKCE is not OBO**. The Entra adapter
@@ -31,8 +32,13 @@ the existing `SecretCipher` implementation. Every protected read rechecks Corp,
 human identity and room membership, task, run, enrolled runner, connection epoch,
 assignment token, adapter/tool, expiry, and live non-terminal task authority.
 The target URL is server-configured, not supplied by the runner or prompt.
-Cancellation serializes with the bounded protected effect. Stored tokens are
-erased after the read, cancellation, or expiry.
+Browser admission, code redemption, token exchange, protected reads and receipt
+release all revalidate the original assignment and lock current authority through
+their bounded effects. Cancellation and revocation serialize with those effects.
+Stored tokens are erased after the read, cancellation, or expiry. A server-owned
+five-second sweep handles abandoned operations and scrubs expired, consumed or
+superseded browser material in batches of at most 128 records per statement,
+without requiring a browser, runner or API poll.
 
 The supported connector performs one bounded GET of `{ "flag": "<value>" }`.
 An independently configured SHA-256 expectation verifies the actual response.
@@ -78,6 +84,27 @@ Keycloak is rejected in production mode. Use the existing
 without migrating existing encrypted records. Tokens cannot be decoded by the
 runner. Ordinary environment-delivered provider client configuration retains the
 existing trusted-process/reduced-assurance limitation.
+
+Before allowing an Entra job, an administrator must independently verify the
+Corp, existing human actor, exact tenant issuer and that human's stable Entra
+object ID, then provision `(corp_id, actor_id, issuer, subject)` in
+`delegated_identities` through the deployment's privileged database migration or
+identity provisioning process. `subject` is that verified `oid`; do not copy the
+login application's pairwise `sub`, use an email address, or infer the mapping
+from an incoming callback. Uniqueness prevents one provider identity from mapping
+to multiple actors in the same Corp. Removing or changing the mapping revokes
+existing delegated authority. The development-only `/api/demo/delegated-link`
+route admits only the explicitly configured Keycloak test issuer, preserves login
+identity rows, and accepts repeat provisioning only for an identical mapping.
+This route is absent in production.
+
+Migration `0044_delegated_authority.sql` keeps existing operation and audit
+history but fails unfinished operations that predate the distinct identity and
+original runner binding. It erases their bearer material and consumes prior
+browser transactions. After independently provisioning the new mapping, start a
+new job; an old operation cannot acquire authority by being migrated. Provider
+configuration and discovery are validated before database connection, migrations,
+artifact activation or recovery effects.
 
 ## Local fixture and restart
 
@@ -161,16 +188,27 @@ corepack pnpm lint:web
 node tools\check_migrations.mjs
 # Optional SQLx-owned disposable DB regression (never use the application DB):
 # Set DATABASE_URL privately to the owned maintenance database, then:
-cargo test -p crony-server delegated_job_room_rejection -- --ignored
+cargo test -p crony-server delegated -- --ignored --test-threads=1
+# First start a fresh owned native fixture with tools/qa_delegated.ps1.
+# Supply the pinned Keycloak 26.7.4 directory, Java 21, PostgreSQL tools,
+# matching-source server/runner binaries, Node and Playwright directories.
+$env:ECORP_DELEGATED_QA_ROOT='C:\qa\delegated-keycloak-acceptance'
 $env:ECORP_SYNTHETIC_OBO_TEST='1'
 node --test tools\e2e_delegated.mjs
 ```
 
 The synthetic integrated lane uses a separate headless Edge session and explicitly
 synthetic accounts, exercises real ECorp jobs, and records only non-secret
-evidence in `output\delegated-evidence\synthetic-integration.json`. The test-only
-database probe captures original assignment scope in memory, never command
-arguments or evidence. It does not substitute for the requested human login.
+evidence under the fixture's `evidence` directory. `tools/qa_delegated.ps1`
+copies the provider and lab into a new private QA root, creates an independent
+source repository and SCRAM database, and records exact process identities.
+`-Phase Stop -QaRoot <root>` stops only those owned processes and retains all
+data. The driver verifies every process, listener and database before HTTP or
+private configuration access and again before every test-admin SQL statement.
+The database probe captures original assignment scope in memory, never command
+arguments or evidence. The browser lane covers start, login, private preview,
+release, original-run completion and cancellation with a delayed authorization
+response. It does not substitute for the requested human login.
 
 **Live Azure / Entra: NOT_EXECUTED.** No Azure SQL, Cosmos DB, Graph connector or
 Azure resource was provisioned or live-qualified. This change implements the

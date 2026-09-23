@@ -1,11 +1,31 @@
 import http from 'node:http';
 import { randomBytes, createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createOAuth } from './oauth.mjs';
 import { bearer, authorize, bindSubject, consumeTransaction, Denied } from './security.mjs';
 
 process.chdir(import.meta.dirname);
+const identity = process.platform === 'win32' ? JSON.parse(execFileSync('pwsh.exe', [
+  '-NoLogo', '-NoProfile', '-NonInteractive', '-File',
+  path.join(import.meta.dirname, 'process-identity.ps1'), '-ProcessId', String(process.pid),
+], { encoding: 'utf8', windowsHide: true, timeout: 15000, stdio: ['ignore', 'pipe', 'pipe'],
+  env: Object.fromEntries(Object.entries(process.env).filter(([name]) =>
+    /^(SystemRoot|WINDIR|PATH|PATHEXT|TEMP|TMP|PSModulePath|ProgramFiles|ProgramFiles\(x86\)|ProgramW6432)$/iu.test(name))),
+})) : null;
+if (identity && (identity.pid !== process.pid ||
+    identity.executable.toLowerCase() !== process.execPath.toLowerCase())) {
+  throw new Error('The fixture process identity changed before startup.');
+}
 const config = JSON.parse(await readFile('.private/config.json', 'utf8'));
+const ports = config.ports ?? [18881, 18882, 18883];
+if (!Array.isArray(ports) || ports.length !== 3 || new Set(ports).size !== 3 ||
+    !ports.every(port => Number.isInteger(port) && port > 1024 && port <= 65535)) {
+  throw new Error('Invalid synthetic fixture ports.');
+}
+const [interactivePort, connectorPort, resourcePort] = ports;
 const oauth = await createOAuth(config);
 const transactions = new Map();
 const results = new Map();
@@ -37,13 +57,13 @@ function serve(port, handler) {
   });
 }
 
-await serve(18883, async (request, response, url) => {
+await serve(resourcePort, async (request, response, url) => {
   if (url.pathname !== '/flag') throw new Denied(404);
   const claims = await oauth.validate(bearer(request.headers.authorization), 'flag-api', 'connector');
   authorize(claims, config.reader.subject, request.method);
   send(response, 200, { flag: config.flag });
 });
-await serve(18882, async (request, response, url) => {
+await serve(connectorPort, async (request, response, url) => {
   if (url.pathname !== '/read') throw new Denied(404);
   if (request.method !== 'GET') throw new Denied(403);
   const token = bearer(request.headers.authorization);
@@ -51,7 +71,7 @@ await serve(18882, async (request, response, url) => {
   const exchangedToken = await oauth.exchange(token);
   const outgoing = await oauth.validate(exchangedToken, 'flag-api', 'connector');
   bindSubject(incoming, outgoing);
-  const resource = await fetch('http://127.0.0.1:18883/flag', {
+  const resource = await fetch(`http://127.0.0.1:${resourcePort}/flag`, {
     headers: { Authorization: `Bearer ${exchangedToken}` }, signal: AbortSignal.timeout(10_000),
   });
   if (!resource.ok) throw new Denied(resource.status === 403 ? 403 : 502);
@@ -60,7 +80,7 @@ await serve(18882, async (request, response, url) => {
   send(response, 200, { read: true, flagSha256: hash(data.flag), subjectPreserved: true,
     incomingAudience: 'connector', exchangedAudience: 'flag-api', readerBound: outgoing.sub === config.reader.subject });
 });
-await serve(18881, async (request, response, url) => {
+await serve(interactivePort, async (request, response, url) => {
   if (request.method !== 'GET') throw new Denied(405);
   if (url.pathname === '/') {
     response.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
@@ -86,7 +106,7 @@ await serve(18881, async (request, response, url) => {
       }
       throw error;
     }
-    const connector = await fetch('http://127.0.0.1:18882/read', {
+    const connector = await fetch(`http://127.0.0.1:${connectorPort}/read`, {
       headers: { Authorization: `Bearer ${tokens.token}` }, signal: AbortSignal.timeout(10_000),
     });
     const data = await connector.json();
@@ -107,10 +127,10 @@ await serve(18881, async (request, response, url) => {
   throw new Denied(404);
 });
 await writeFile('.private/server-runtime.json', JSON.stringify({
-  pid: process.pid, startedAt: new Date().toISOString(), ports: [18881, 18882, 18883],
-  root: import.meta.dirname,
+  ...identity, pid: process.pid, ports, root: import.meta.dirname,
+  entrypoint: fileURLToPath(import.meta.url), platform: process.platform,
 }, null, 2));
-console.log(`Local OAuth proof ready at http://127.0.0.1:18881 (PID ${process.pid})`);
+console.log(`Local OAuth proof ready at http://127.0.0.1:${interactivePort} (PID ${process.pid})`);
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => { for (const server of servers) server.close(); });
 }

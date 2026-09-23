@@ -824,7 +824,7 @@ async fn read_json<T: serde::de::DeserializeOwned>(
 }
 
 #[cfg(test)]
-mod tests {
+pub(super) mod tests {
     use super::*;
     use axum::{
         Json, Router,
@@ -897,9 +897,15 @@ mod tests {
         requests: Mutex<Vec<(HeaderMap, std::collections::HashMap<String, String>)>>,
         keys: Mutex<Value>,
         metadata: Mutex<Value>,
+        gate: Mutex<Option<Arc<TokenGate>>>,
     }
 
-    struct Fixture {
+    pub(crate) struct TokenGate {
+        pub(crate) entered: tokio::sync::Notify,
+        pub(crate) release: tokio::sync::Semaphore,
+    }
+
+    pub(crate) struct Fixture {
         provider: DelegatedProvider,
         state: Arc<MockState>,
         task: tokio::task::JoinHandle<()>,
@@ -914,13 +920,18 @@ mod tests {
     }
 
     impl Fixture {
-        async fn new(kind: ProviderKind) -> Self {
+        pub(crate) async fn new(kind: ProviderKind) -> Self {
             async fn token(
                 State(state): State<Arc<MockState>>,
                 headers: HeaderMap,
                 axum::Form(form): axum::Form<std::collections::HashMap<String, String>>,
             ) -> impl IntoResponse {
                 state.requests.lock().unwrap().push((headers, form));
+                let gate = state.gate.lock().unwrap().take();
+                if let Some(gate) = gate {
+                    gate.entered.notify_one();
+                    gate.release.acquire().await.unwrap().forget();
+                }
                 let reply = state.replies.lock().unwrap().pop_front().unwrap_or((
                     StatusCode::BAD_REQUEST,
                     json!({"error":"unexpected_request"}),
@@ -1006,7 +1017,7 @@ mod tests {
             }
         }
 
-        fn expected(&self) -> ExpectedIdentity {
+        pub(crate) fn expected(&self) -> ExpectedIdentity {
             ExpectedIdentity {
                 issuer: self.provider.config.issuer.clone(),
                 subject: if self.provider.config.kind == ProviderKind::Entra {
@@ -1018,7 +1029,7 @@ mod tests {
             }
         }
 
-        fn initial_claims(&self) -> (Value, Value) {
+        pub(crate) fn initial_claims(&self) -> (Value, Value) {
             let config = &self.provider.config;
             (
                 claims(
@@ -1036,13 +1047,13 @@ mod tests {
             )
         }
 
-        fn initial_reply(&self, id: &Value, assertion: &Value) {
+        pub(crate) fn initial_reply(&self, id: &Value, assertion: &Value) {
             self.reply(StatusCode::OK, json!({
                 "access_token":sign(assertion),"id_token":sign(id),"token_type":"Bearer","expires_in":300
             }));
         }
 
-        fn reply(&self, status: StatusCode, body: Value) {
+        pub(crate) fn reply(&self, status: StatusCode, body: Value) {
             self.state.replies.lock().unwrap().push_back((status, body));
         }
 
@@ -1057,7 +1068,7 @@ mod tests {
                 .await
         }
 
-        fn downstream(&self) -> Value {
+        pub(crate) fn downstream(&self) -> Value {
             claims(
                 &self.provider.config,
                 &self.provider.config.downstream_audience,
@@ -1066,10 +1077,59 @@ mod tests {
             )
         }
 
-        fn downstream_reply(&self, claims: &Value) {
+        pub(crate) fn downstream_reply(&self, claims: &Value) {
             self.reply(StatusCode::OK, json!({
                 "access_token":sign(claims),"token_type":"Bearer","expires_in":300,"issued_token_type":ACCESS_TOKEN_TYPE
             }));
+        }
+
+        pub(crate) fn request_count(&self) -> usize {
+            self.state.requests.lock().unwrap().len()
+        }
+
+        pub(crate) fn gate_next_request(&self) -> Arc<TokenGate> {
+            let gate = Arc::new(TokenGate {
+                entered: tokio::sync::Notify::new(),
+                release: tokio::sync::Semaphore::new(0),
+            });
+            *self.state.gate.lock().unwrap() = Some(gate.clone());
+            gate
+        }
+
+        // Test-only copy of the same adapter and local signed-token authority.
+        // No alternate endpoints or construction path exist in production.
+        pub(crate) fn adapter(&self) -> DelegatedProvider {
+            let c = &self.provider.config;
+            let m = &self.provider.metadata;
+            DelegatedProvider {
+                config: ProviderConfig {
+                    kind: c.kind,
+                    issuer: c.issuer.clone(),
+                    tenant_id: c.tenant_id.clone(),
+                    interactive_client_id: c.interactive_client_id.clone(),
+                    broker_client_id: c.broker_client_id.clone(),
+                    broker_client_secret: c.broker_client_secret.clone(),
+                    redirect_uri: c.redirect_uri.clone(),
+                    initial_scopes: c.initial_scopes.clone(),
+                    downstream_scope: c.downstream_scope.clone(),
+                    downstream_audience: c.downstream_audience.clone(),
+                },
+                metadata: Metadata {
+                    issuer: m.issuer.clone(),
+                    authorization_endpoint: m.authorization_endpoint.clone(),
+                    token_endpoint: m.token_endpoint.clone(),
+                    jwks_uri: m.jwks_uri.clone(),
+                },
+                client: self.provider.client.clone(),
+                instance: self.provider.instance,
+            }
+        }
+
+        pub(crate) fn audience_scope(&self) -> (String, String) {
+            (
+                self.provider.config.downstream_audience.clone(),
+                self.provider.config.downstream_scope.clone(),
+            )
         }
     }
 

@@ -29,7 +29,7 @@ impl Broker {
             std::env::var(name).map_err(|_| anyhow::anyhow!("delegated configuration missing"))
         };
         let resource_url = read("CRONY_DELEGATED_RESOURCE_URL")?;
-        let expected_digest = read("CRONY_DELEGATED_EXPECTED_SHA256")?;
+        let expected_digest = read("CRONY_DELEGATED_EXPECTED_SHA256")?.to_ascii_lowercase();
         let browser_base = read("CRONY_DELEGATED_BROWSER_BASE")?;
         let ui_url = read("CRONY_DELEGATED_UI_URL")?;
         anyhow::ensure!(
@@ -166,6 +166,49 @@ struct JobRequest {
     room_id: Uuid,
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct DebugIdentityRequest {
+    corp_id: Uuid,
+    actor_id: Uuid,
+    issuer: String,
+    subject: String,
+}
+
+// Registered only in development, and only the explicitly configured loopback
+// provider can be provisioned. Login identities are never changed here.
+pub(super) async fn debug_link_identity(
+    State(state): State<AppState>,
+    Json(request): Json<DebugIdentityRequest>,
+) -> Result<StatusCode, ApiError> {
+    let b = broker(&state)?;
+    if b.provider.kind() != ProviderKind::KeycloakTest
+        || request.issuer != b.provider.issuer()
+        || request.subject.trim().is_empty()
+        || request.subject.len() > 256
+        || request.subject.chars().any(char::is_control)
+    {
+        return Err(deny());
+    }
+    let changed = sqlx::query(
+        "INSERT INTO delegated_identities(corp_id,actor_id,issuer,subject)
+         SELECT a.corp_id,a.id,$3,$4 FROM actors a WHERE a.id=$2 AND a.corp_id=$1 AND a.kind='human'
+         ON CONFLICT (corp_id,actor_id,issuer) DO UPDATE SET subject=EXCLUDED.subject
+         WHERE delegated_identities.subject=EXCLUDED.subject",
+    )
+    .bind(request.corp_id)
+    .bind(request.actor_id)
+    .bind(request.issuer)
+    .bind(request.subject)
+    .execute(state.store.pool())
+    .await
+    .map_err(db)?;
+    if changed.rows_affected() != 1 {
+        return Err(deny());
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
 async fn require_owner(
     state: &AppState,
     principal: &Principal,
@@ -191,26 +234,147 @@ async fn require_owner(
     Ok(())
 }
 
-async fn expire(state: &AppState) -> Result<(), ApiError> {
+// Existing store paths acquire run/mission/credential locks in different orders.
+// NOWAIT plus bounded transaction retries prevents a delegated effect from
+// introducing a wait cycle. Every mutable authority row remains locked until
+// the effect and its admission commit, including role/membership revocation.
+async fn authority<'a>(
+    pool: &'a sqlx::PgPool,
+    operation: Option<Uuid>,
+    assignment: Option<&RunnerRead>,
+) -> Result<(sqlx::Transaction<'a, sqlx::Postgres>, sqlx::postgres::PgRow), ApiError> {
+    for attempt in 0..20 {
+        let mut tx = pool.begin().await.map_err(db)?;
+        let result = sqlx::query(
+            "SELECT o.*, LEAST(o.expires_at,rc.expires_at) AS authority_expires_at
+             FROM delegated_operations o
+             JOIN runs r ON r.task_id=o.task_id AND r.corp_id=o.corp_id
+             JOIN tasks t ON t.id=o.task_id AND t.corp_id=o.corp_id AND t.assigned_agent_id=r.agent_id
+             JOIN missions m ON m.id=o.mission_id AND m.id=t.mission_id AND m.corp_id=o.corp_id
+                 AND m.requested_by=o.actor_id
+             JOIN rooms room ON room.id=m.room_id AND room.corp_id=o.corp_id
+             JOIN room_memberships rm ON rm.room_id=room.id AND rm.actor_id=o.actor_id
+             JOIN actors a ON a.id=o.actor_id AND a.corp_id=o.corp_id AND a.kind='human'
+                 AND a.role IN ('owner','admin','manager','member')
+             JOIN delegated_identities di ON di.actor_id=o.actor_id AND di.corp_id=o.corp_id
+                 AND di.issuer=o.issuer AND di.subject=o.subject
+             JOIN runner_nodes n ON n.id=r.runner_id AND n.corp_id=o.corp_id
+             JOIN runner_credentials rc ON rc.runner_id=n.id AND rc.corp_id=o.corp_id
+             WHERE ($1::uuid IS NULL OR o.id=$1)
+             AND ($2::uuid IS NULL OR (r.id=$2 AND t.id=$3 AND r.runner_id=$4
+                 AND n.connection_epoch=$5 AND r.assignment_token=$6))
+             AND ((o.run_id=r.id AND o.runner_id=r.runner_id AND o.connection_epoch=n.connection_epoch
+                 AND o.assignment_token=r.assignment_token) OR ($2 IS NOT NULL AND o.run_id IS NULL))
+             AND o.status IN ('waiting_for_authentication','authenticating','authorized')
+             AND o.expires_at>clock_timestamp() AND n.status='connected'
+             AND rc.revoked_at IS NULL AND rc.expires_at>clock_timestamp()
+             AND r.status IN ('starting','running','waiting_for_input')
+             AND r.breaker_stage NOT IN ('stop','suspend')
+             AND t.required_adapter='delegated-resource' AND t.contract->'allowed_tools' ? 'delegated.read'
+             AND t.status IN ('claimed','running') AND m.status IN ('ready','running')
+             FOR UPDATE OF o,r NOWAIT FOR SHARE OF t,m,room,rm,a,di,n,rc NOWAIT",
+        )
+        .bind(operation)
+        .bind(assignment.map(|a| a.run_id))
+        .bind(assignment.map(|a| a.task_id))
+        .bind(assignment.map(|a| a.runner_id.as_str()))
+        .bind(assignment.map(|a| a.connection_epoch))
+        .bind(assignment.map(|a| a.assignment_token))
+        .fetch_optional(&mut *tx)
+        .await;
+        match result {
+            Ok(Some(row)) => return Ok((tx, row)),
+            Ok(None) => return Err(deny()),
+            Err(error)
+                if error.as_database_error().and_then(|e| e.code()).as_deref() == Some("55P03") =>
+            {
+                tx.rollback().await.map_err(db)?;
+                if attempt < 19 {
+                    tokio::time::sleep(StdDuration::from_millis(25)).await;
+                }
+            }
+            Err(error) => return Err(db(error)),
+        }
+    }
+    Err(ApiError::conflict(
+        "Delegated authority is busy; retry after refreshing status",
+    ))
+}
+
+fn authority_budget(row: &sqlx::postgres::PgRow) -> Result<StdDuration, ApiError> {
+    let expiry: chrono::DateTime<Utc> = row.get("authority_expires_at");
+    let remaining = (expiry - Utc::now()).to_std().map_err(|_| deny())?;
+    if remaining.is_zero() {
+        return Err(deny());
+    }
+    Ok(remaining.min(StdDuration::from_secs(30)))
+}
+
+async fn expire(pool: &sqlx::PgPool) -> Result<(), ApiError> {
+    // Separate bounded statements also scrub abandoned browser transactions.
+    // SKIP LOCKED avoids waiting behind a currently authorized bounded effect.
     sqlx::query(
-        "UPDATE delegated_operations o SET status=CASE WHEN r.status='completed' THEN 'completed'
-        WHEN r.status='cancelled' THEN 'cancelled' ELSE 'failed' END,
-        token_ciphertext=NULL,token_nonce=NULL,run_id=r.id FROM runs r
-        WHERE o.task_id=r.task_id AND (o.run_id=r.id OR o.run_id IS NULL)
-        AND r.status IN ('completed','cancelled','failed','lost')
-        AND o.status NOT IN ('completed','cancelled','expired','failed')",
+        "WITH due AS (
+            SELECT o.id, CASE
+                WHEN r.status='completed' AND o.released THEN 'completed'
+                WHEN r.status='cancelled' OR t.status='cancelled' OR m.status='cancelled' THEN 'cancelled'
+                WHEN o.expires_at<=clock_timestamp() OR (o.token_expires_at<=clock_timestamp()
+                    AND o.preview IS NULL) THEN 'expired' ELSE 'failed' END AS terminal_status
+            FROM delegated_operations o
+            JOIN tasks t ON t.id=o.task_id JOIN missions m ON m.id=o.mission_id
+            LEFT JOIN runs r ON r.id=o.run_id
+            LEFT JOIN runner_nodes n ON n.id=o.runner_id AND n.corp_id=o.corp_id
+            LEFT JOIN runner_credentials rc ON rc.runner_id=o.runner_id AND rc.corp_id=o.corp_id
+            WHERE o.status NOT IN ('completed','cancelled','expired','failed') AND (
+                o.expires_at<=clock_timestamp() OR (o.token_expires_at<=clock_timestamp() AND o.preview IS NULL)
+                OR r.status IN ('completed','cancelled','failed','lost')
+                OR r.breaker_stage IN ('stop','suspend')
+                OR t.status IN ('cancelled','failed') OR m.status IN ('cancelled','failed')
+                OR NOT EXISTS(SELECT 1 FROM delegated_identities di JOIN actors a ON a.id=di.actor_id
+                    JOIN room_memberships rm ON rm.actor_id=a.id AND rm.room_id=m.room_id
+                    WHERE di.corp_id=o.corp_id AND di.actor_id=o.actor_id AND di.issuer=o.issuer AND di.subject=o.subject
+                    AND a.corp_id=o.corp_id AND a.kind='human' AND a.role IN ('owner','admin','manager','member'))
+                OR (o.run_id IS NOT NULL AND (r.runner_id IS DISTINCT FROM o.runner_id
+                    OR r.assignment_token IS DISTINCT FROM o.assignment_token
+                    OR n.connection_epoch IS DISTINCT FROM o.connection_epoch
+                    OR n.status IS DISTINCT FROM 'connected' OR rc.runner_id IS NULL
+                    OR rc.revoked_at IS NOT NULL OR rc.expires_at<=clock_timestamp())))
+            ORDER BY o.expires_at,o.id LIMIT 128 FOR UPDATE OF o SKIP LOCKED)
+         UPDATE delegated_operations o SET status=due.terminal_status,
+            token_ciphertext=NULL,token_nonce=NULL,token_expires_at=NULL
+         FROM due WHERE o.id=due.id",
+    ).execute(pool).await.map_err(db)?;
+    sqlx::query(
+        "WITH due AS (
+            SELECT t.id FROM delegated_auth_transactions t
+            JOIN delegated_operations o ON o.id=t.operation_id
+            WHERE (octet_length(t.pkce_ciphertext)>0 OR t.cookie_hash IS NOT NULL)
+              AND (t.consumed OR t.expires_at<=clock_timestamp()
+                  OR o.status IN ('completed','cancelled','expired','failed')
+                  OR o.authentication_id IS DISTINCT FROM t.id)
+            ORDER BY t.expires_at,t.id LIMIT 128 FOR UPDATE OF t SKIP LOCKED)
+         UPDATE delegated_auth_transactions t SET consumed=true,pkce_ciphertext=''::bytea,
+            pkce_nonce=''::bytea,cookie_hash=NULL FROM due WHERE t.id=due.id",
     )
-    .execute(state.store.pool())
+    .execute(pool)
     .await
     .map_err(db)?;
-    sqlx::query(
-        "UPDATE delegated_operations SET status='expired',token_ciphertext=NULL,token_nonce=NULL
-        WHERE status NOT IN ('cancelled','expired','failed','completed')
-        AND (expires_at<=now() OR (token_expires_at<=now() AND preview IS NULL))",
-    )
-    .execute(state.store.pool())
-    .await
-    .map_err(db)?;
+    Ok(())
+}
+
+pub(super) async fn start_expiry_sweep(pool: sqlx::PgPool) -> Result<(), ApiError> {
+    expire(&pool).await?;
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(StdDuration::from_secs(5));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        interval.tick().await;
+        loop {
+            interval.tick().await;
+            if expire(&pool).await.is_err() {
+                warn!("periodic delegated expiry sweep failed");
+            }
+        }
+    });
     Ok(())
 }
 
@@ -228,7 +392,6 @@ async fn list(
         Permission::Operate,
     )
     .await?;
-    expire(&state).await?;
     let rows = sqlx::query(
         "SELECT o.*,r.status AS run_status FROM delegated_operations o
         JOIN missions m ON m.id=o.mission_id
@@ -242,8 +405,7 @@ async fn list(
     .await
     .map_err(db)?;
     let operations: Vec<_> = rows.iter().map(|r| {
-        let mut status: String = r.get("status");
-        if r.get::<Option<String>,_>("run_status").as_deref() == Some("completed") { status="completed".into() }
+        let status: String = r.get("status");
         json!({"id":r.get::<Uuid,_>("id"),"mission_id":r.get::<Uuid,_>("mission_id"),
             "task_id":r.get::<Uuid,_>("task_id"),"run_id":r.get::<Option<Uuid>,_>("run_id"),
             "status":status,"expires_at":r.get::<chrono::DateTime<Utc>,_>("expires_at"),
@@ -272,9 +434,9 @@ async fn create_job(
     )
     .await?;
     let subject: Option<String> = sqlx::query_scalar(
-        "SELECT hi.subject FROM human_identities hi JOIN actors a ON a.id=hi.actor_id
+        "SELECT di.subject FROM delegated_identities di JOIN actors a ON a.id=di.actor_id AND a.corp_id=di.corp_id
          JOIN room_memberships rm ON rm.actor_id=a.id JOIN rooms room ON room.id=rm.room_id
-         WHERE hi.actor_id=$1 AND hi.issuer=$2 AND a.corp_id=$3 AND room.id=$4 AND room.corp_id=$3",
+         WHERE di.actor_id=$1 AND di.issuer=$2 AND di.corp_id=$3 AND room.id=$4 AND room.corp_id=$3",
     )
     .bind(actor)
     .bind(b.provider.issuer())
@@ -338,6 +500,25 @@ async fn persist_job(
     if room != room_id {
         return Err(ApiError::conflict("Select the canonical mission room"));
     }
+    let binding: Option<Uuid> = sqlx::query_scalar(
+        "SELECT di.actor_id FROM delegated_identities di
+         JOIN actors a ON a.id=di.actor_id AND a.corp_id=di.corp_id
+         JOIN room_memberships rm ON rm.actor_id=a.id AND rm.room_id=$5
+         WHERE di.corp_id=$1 AND di.actor_id=$2 AND di.issuer=$3 AND di.subject=$4
+         AND a.kind='human' AND a.role IN ('owner','admin','manager','member')
+         FOR SHARE OF di,a,rm NOWAIT",
+    )
+    .bind(corp)
+    .bind(actor)
+    .bind(issuer)
+    .bind(subject)
+    .bind(room_id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(db)?;
+    if binding.is_none() {
+        return Err(deny());
+    }
     let id = Uuid::new_v4();
     sqlx::query("INSERT INTO delegated_operations(id,corp_id,actor_id,mission_id,task_id,issuer,subject,status,expires_at)
         VALUES($1,$2,$3,$4,$5,$6,$7,'waiting_for_authentication',now()+interval '15 minutes')")
@@ -380,15 +561,17 @@ async fn authorize(
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let b = broker(&state)?;
     require_owner(&state, &principal, corp, request.actor_id, id).await?;
-    let mut tx = state.store.pool().begin().await.map_err(db)?;
-    let active: Option<Uuid>=sqlx::query_scalar("SELECT o.id FROM delegated_operations o JOIN runs r ON r.id=o.run_id
-        WHERE o.id=$1 AND o.expires_at>now() AND o.status IN ('waiting_for_authentication','authenticating')
-        AND r.status IN ('starting','running','waiting_for_input') AND r.breaker_stage NOT IN ('stop','suspend') FOR UPDATE OF o")
-        .bind(id).fetch_optional(&mut *tx).await.map_err(db)?;
-    if active.is_none() {
+    let (mut tx, active) = authority(state.store.pool(), Some(id), None).await?;
+    if active.get::<Uuid, _>("corp_id") != corp
+        || active.get::<Uuid, _>("actor_id") != request.actor_id
+        || !matches!(
+            active.get::<String, _>("status").as_str(),
+            "waiting_for_authentication" | "authenticating"
+        )
+    {
         return Err(deny());
     }
-    sqlx::query("UPDATE delegated_auth_transactions SET consumed=true WHERE operation_id=$1")
+    sqlx::query("UPDATE delegated_auth_transactions SET consumed=true,pkce_ciphertext=''::bytea,pkce_nonce=''::bytea,cookie_hash=NULL WHERE operation_id=$1")
         .bind(id)
         .execute(&mut *tx)
         .await
@@ -415,11 +598,14 @@ async fn authorize(
         VALUES($1,$2,$3,$4,$5,$6,$7,now()+interval '10 minutes')")
         .bind(transaction).bind(id).bind(hash(&ticket)).bind(hash(&csrf_state)).bind(encrypted).bind(iv).bind(nonce)
         .execute(&mut *tx).await.map_err(db)?;
-    sqlx::query("UPDATE delegated_operations SET status='authenticating' WHERE id=$1")
-        .bind(id)
-        .execute(&mut *tx)
-        .await
-        .map_err(db)?;
+    sqlx::query(
+        "UPDATE delegated_operations SET status='authenticating',authentication_id=$2 WHERE id=$1",
+    )
+    .bind(id)
+    .bind(transaction)
+    .execute(&mut *tx)
+    .await
+    .map_err(db)?;
     tx.commit().await.map_err(db)?;
     Ok(Json(
         json!({"browser_url":format!("{}/api/delegated/browser/{ticket}",b.browser_base.trim_end_matches('/'))}),
@@ -431,12 +617,22 @@ async fn open_browser(
     Path(ticket): Path<String>,
 ) -> Result<Response, ApiError> {
     let b = broker(&state)?;
+    let operation: Option<Uuid> = sqlx::query_scalar(
+        "SELECT operation_id FROM delegated_auth_transactions WHERE ticket_hash=$1",
+    )
+    .bind(hash(&ticket))
+    .fetch_optional(state.store.pool())
+    .await
+    .map_err(db)?;
+    let (mut tx, authority) =
+        authority(state.store.pool(), Some(operation.ok_or_else(deny)?), None).await?;
     let cookie = random();
     let row=sqlx::query("UPDATE delegated_auth_transactions t SET opened=true,cookie_hash=$2
         FROM delegated_operations o WHERE t.ticket_hash=$1 AND t.operation_id=o.id AND NOT t.opened AND NOT t.consumed
-        AND t.expires_at>now() AND o.expires_at>now() AND o.status='authenticating'
+        AND t.expires_at>clock_timestamp() AND o.expires_at>clock_timestamp() AND o.status='authenticating'
+        AND o.authentication_id=t.id
         RETURNING t.*,o.corp_id")
-        .bind(hash(&ticket)).bind(hash(&cookie)).fetch_optional(state.store.pool()).await.map_err(db)?.ok_or_else(deny)?;
+        .bind(hash(&ticket)).bind(hash(&cookie)).fetch_optional(&mut *tx).await.map_err(db)?.ok_or_else(deny)?;
     let bytes = state
         .secret_cipher
         .decrypt(
@@ -467,6 +663,8 @@ async fn open_browser(
     let mut response = Redirect::to(&url).into_response();
     response.headers_mut().insert("set-cookie",HeaderValue::from_str(&format!(
         "delegated_flow={cookie}; HttpOnly; SameSite=Lax; Path=/api/delegated; Max-Age=600{secure}")).map_err(provider_error)?);
+    authority_budget(&authority)?;
+    tx.commit().await.map_err(db)?;
     Ok(response)
 }
 
@@ -512,47 +710,71 @@ async fn finish_callback(
         .and_then(|h| h.to_str().ok())
         .and_then(browser_cookie)
         .ok_or_else(deny)?;
-    // Consume BEFORE network requests: replay and concurrent callbacks cannot redeem twice.
-    let row=sqlx::query("UPDATE delegated_auth_transactions t SET consumed=true FROM delegated_operations o
-        WHERE t.operation_id=o.id AND t.state_hash=$1 AND t.cookie_hash=$2 AND t.opened AND NOT t.consumed
-        AND t.expires_at>now() AND o.expires_at>now() AND o.status='authenticating'
-        RETURNING t.*,o.corp_id,o.actor_id,o.issuer,o.subject,o.run_id")
+    let operation: Option<Uuid> = sqlx::query_scalar(
+        "SELECT operation_id FROM delegated_auth_transactions WHERE state_hash=$1 AND cookie_hash=$2 AND NOT consumed",
+    ).bind(hash(query.state.as_deref().ok_or_else(deny)?)).bind(hash(cookie))
+        .fetch_optional(state.store.pool()).await.map_err(db)?;
+    let (mut tx, _) =
+        authority(state.store.pool(), Some(operation.ok_or_else(deny)?), None).await?;
+    let row=sqlx::query("SELECT t.*,o.corp_id,o.actor_id,o.issuer,o.subject,o.run_id
+        FROM delegated_auth_transactions t JOIN delegated_operations o ON t.operation_id=o.id
+        WHERE t.state_hash=$1 AND t.cookie_hash=$2 AND t.opened AND NOT t.consumed
+        AND t.expires_at>clock_timestamp() AND o.expires_at>clock_timestamp() AND o.status='authenticating'
+        AND o.authentication_id=t.id FOR UPDATE OF t")
         .bind(hash(query.state.as_deref().ok_or_else(deny)?)).bind(hash(cookie))
-        .fetch_optional(state.store.pool()).await.map_err(db)?.ok_or_else(deny)?;
+        .fetch_optional(&mut *tx).await.map_err(db)?.ok_or_else(deny)?;
     let id: Uuid = row.get("operation_id");
     let corp: Uuid = row.get("corp_id");
+    let authentication_id: Uuid = row.get("id");
+    // Commit consumption before any provider call. Only this request retains
+    // PKCE in memory; crashes and concurrent callbacks cannot redeem it again.
+    sqlx::query("UPDATE delegated_auth_transactions SET consumed=true,pkce_ciphertext=''::bytea,pkce_nonce=''::bytea,cookie_hash=NULL WHERE id=$1")
+        .bind(authentication_id).execute(&mut *tx).await.map_err(db)?;
+    tx.commit().await.map_err(db)?;
     let work=async {
         if query.error.is_some(){return Err(deny())}
+        // A cancellation or a fresh authorize between consumption and this
+        // transaction wins before redemption. Hold current authority through
+        // PKCE, OBO/exchange and admission; timeout also bounds natural expiry.
+        let (mut tx, live) = authority(state.store.pool(), Some(id), None).await?;
+        if live.get::<String,_>("status") != "authenticating"
+            || live.get::<Option<Uuid>,_>("authentication_id") != Some(authentication_id) {
+            return Err(deny())
+        }
+        let budget = authority_budget(&live)?;
         let bytes=state.secret_cipher.decrypt(corp,row.get("id"),"delegated-pkce",
             &row.get::<Vec<u8>,_>("pkce_ciphertext"),&row.get::<Vec<u8>,_>("pkce_nonce")).map_err(provider_error)?;
         let secrets:serde_json::Value=serde_json::from_slice(&bytes).map_err(provider_error)?;
         let expected=ExpectedIdentity{issuer:row.get("issuer"),subject:row.get("subject")};
-        let initial=b.provider.redeem_code(query.code.as_deref().ok_or_else(deny)?,
-            secrets["verifier"].as_str().ok_or_else(deny)?,&row.get::<String,_>("oidc_nonce"),&expected).await.map_err(provider_error)?;
-        let token=b.provider.exchange(&initial).await.map_err(provider_error)?;
+        let (initial, token) = tokio::time::timeout(budget, async {
+            let initial=b.provider.redeem_code(query.code.as_deref().ok_or_else(deny)?,
+                secrets["verifier"].as_str().ok_or_else(deny)?,&row.get::<String,_>("oidc_nonce"),&expected).await.map_err(provider_error)?;
+            authority_budget(&live)?;
+            let token=b.provider.exchange(&initial).await.map_err(provider_error)?;
+            Ok::<_,ApiError>((initial,token))
+        }).await.map_err(|_| deny())??;
+        authority_budget(&live)?;
         if initial.identity()!=&expected || initial.expires_at()<=Utc::now().timestamp() as u64
+            || token.expires_at()<=Utc::now().timestamp() as u64
             || token.identity()!=&expected || token.audience()!=b.audience || token.scope()!=b.scope {
             return Err(deny())
         }
         let token_expiry=chrono::DateTime::<Utc>::from_timestamp(token.expires_at() as i64,0).ok_or_else(deny)?;
         let (encrypted,iv)=state.secret_cipher.encrypt(corp,id,"delegated-token",token.expose_token().as_bytes()).map_err(provider_error)?;
-        let changed=sqlx::query("UPDATE delegated_operations o SET status='authorized',token_ciphertext=$2,token_nonce=$3,token_expires_at=$4
-            WHERE o.id=$1 AND o.status='authenticating' AND o.expires_at>now()
-            AND EXISTS(SELECT 1 FROM runs r JOIN tasks t ON t.id=r.task_id JOIN missions m ON m.id=t.mission_id
-                JOIN room_memberships rm ON rm.room_id=m.room_id AND rm.actor_id=o.actor_id
-                JOIN human_identities hi ON hi.actor_id=o.actor_id AND hi.issuer=o.issuer AND hi.subject=o.subject
-                WHERE r.id=o.run_id AND r.status IN ('starting','running','waiting_for_input')
-                AND r.breaker_stage NOT IN ('stop','suspend') AND m.requested_by=o.actor_id)")
-            .bind(id).bind(encrypted).bind(iv).bind(token_expiry).execute(state.store.pool()).await.map_err(db)?;
+        let changed=sqlx::query("UPDATE delegated_operations SET status='authorized',token_ciphertext=$2,token_nonce=$3,token_expires_at=$4
+            WHERE id=$1 AND status='authenticating' AND authentication_id=$5 AND expires_at>clock_timestamp()")
+            .bind(id).bind(encrypted).bind(iv).bind(token_expiry).bind(authentication_id).execute(&mut *tx).await.map_err(db)?;
         if changed.rows_affected()!=1{return Err(deny())}
+        tx.commit().await.map_err(db)?;
         Ok(())
     }.await;
     if work.is_err() {
         sqlx::query(
-            "UPDATE delegated_operations SET status='failed',token_ciphertext=NULL,token_nonce=NULL
-            WHERE id=$1 AND status='authenticating'",
+            "UPDATE delegated_operations SET status='failed',token_ciphertext=NULL,token_nonce=NULL,token_expires_at=NULL
+            WHERE id=$1 AND status='authenticating' AND authentication_id=$2",
         )
         .bind(id)
+        .bind(authentication_id)
         .execute(state.store.pool())
         .await
         .map_err(db)?;
@@ -567,7 +789,7 @@ async fn cancel(
     Json(request): Json<ActorRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     require_owner(&state, &principal, corp, request.actor_id, id).await?;
-    sqlx::query("UPDATE delegated_operations SET status='cancelled',token_ciphertext=NULL,token_nonce=NULL,preview=NULL
+    sqlx::query("UPDATE delegated_operations SET status='cancelled',token_ciphertext=NULL,token_nonce=NULL,token_expires_at=NULL,preview=NULL
         WHERE id=$1 AND status NOT IN ('completed','cancelled','expired','failed') AND NOT released")
         .bind(id).execute(state.store.pool()).await.map_err(db)?;
     let assignment=sqlx::query("SELECT r.id,r.runner_id FROM runs r JOIN delegated_operations o ON o.run_id=r.id
@@ -593,12 +815,19 @@ async fn release(
     Json(request): Json<ActorRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     require_owner(&state, &principal, corp, request.actor_id, id).await?;
+    let (mut tx, live) = authority(state.store.pool(), Some(id), None).await?;
+    if live.get::<Uuid, _>("corp_id") != corp || live.get::<Uuid, _>("actor_id") != request.actor_id
+    {
+        return Err(deny());
+    }
     let count=sqlx::query("UPDATE delegated_operations SET released=true,released_at=COALESCE(released_at,now())
-        WHERE id=$1 AND actor_id=$2 AND status='authorized' AND expires_at>now() AND preview IS NOT NULL")
-        .bind(id).bind(request.actor_id).execute(state.store.pool()).await.map_err(db)?;
+        WHERE id=$1 AND actor_id=$2 AND status='authorized' AND expires_at>clock_timestamp() AND preview IS NOT NULL")
+        .bind(id).bind(request.actor_id).execute(&mut *tx).await.map_err(db)?;
     if count.rows_affected() != 1 {
         return Err(deny());
     }
+    authority_budget(&live)?;
+    tx.commit().await.map_err(db)?;
     Ok(Json(json!({"released":true})))
 }
 
@@ -617,27 +846,20 @@ async fn runner_read(
     Json(request): Json<RunnerRead>,
 ) -> Result<(StatusCode, Json<serde_json::Value>), ApiError> {
     let b = broker(&state)?;
-    expire(&state).await?;
     // Operation and original assignment are locked for the bounded read. Cancellation
     // serializes with the effect, not just a preflight check. No arbitrary target URL.
-    let mut tx = state.store.pool().begin().await.map_err(db)?;
-    let row=sqlx::query("SELECT o.*,r.corp_id AS run_corp FROM runs r
-        JOIN tasks t ON t.id=r.task_id AND t.corp_id=r.corp_id
-        JOIN missions m ON m.id=t.mission_id AND m.corp_id=r.corp_id
-        JOIN delegated_operations o ON o.task_id=t.id AND o.corp_id=r.corp_id AND o.actor_id=m.requested_by
-        JOIN room_memberships rm ON rm.room_id=m.room_id AND rm.actor_id=o.actor_id
-        JOIN actors a ON a.id=o.actor_id AND a.kind='human' AND a.role IN ('owner','admin','manager','member')
-        JOIN human_identities hi ON hi.actor_id=o.actor_id AND hi.issuer=o.issuer AND hi.subject=o.subject
-        JOIN runner_nodes n ON n.id=r.runner_id AND n.corp_id=r.corp_id
-        JOIN runner_credentials rc ON rc.runner_id=n.id AND rc.corp_id=n.corp_id
-        WHERE r.id=$1 AND t.id=$2 AND r.runner_id=$3 AND n.connection_epoch=$4 AND r.assignment_token=$5
-        AND n.status='connected' AND rc.revoked_at IS NULL AND rc.expires_at>now()
-        AND r.status IN ('starting','running','waiting_for_input') AND r.breaker_stage NOT IN ('stop','suspend')
-        AND t.required_adapter='delegated-resource' AND t.contract->'allowed_tools' ? 'delegated.read'
-        AND t.status NOT IN ('cancelled','failed','completed') AND m.status NOT IN ('cancelled','failed','completed')
-        AND (o.run_id IS NULL OR o.run_id=r.id) FOR UPDATE OF o,r")
-        .bind(request.run_id).bind(request.task_id).bind(&request.runner_id).bind(request.connection_epoch).bind(request.assignment_token)
-        .fetch_optional(&mut *tx).await.map_err(db)?.ok_or_else(deny)?;
+    let (mut tx, row) = match authority(state.store.pool(), None, Some(&request)).await {
+        Ok(locked) => locked,
+        Err(error) if error.status == StatusCode::CONFLICT => {
+            // Lock contention is not a new assignment or a provider retry. The
+            // native adapter already polls 202 under its bounded auth deadline.
+            return Ok((
+                StatusCode::ACCEPTED,
+                Json(json!({"status":"waiting_for_authentication"})),
+            ));
+        }
+        Err(error) => return Err(error),
+    };
     let id: Uuid = row.get("id");
     let corp: Uuid = row.get("corp_id");
     let status: String = row.get("status");
@@ -645,9 +867,12 @@ async fn runner_read(
     if expiry <= Utc::now() || matches!(status.as_str(), "cancelled" | "expired" | "failed") {
         return Err(deny());
     }
-    sqlx::query("UPDATE delegated_operations SET run_id=$2 WHERE id=$1")
+    sqlx::query("UPDATE delegated_operations SET run_id=$2,runner_id=$3,connection_epoch=$4,assignment_token=$5 WHERE id=$1 AND run_id IS NULL")
         .bind(id)
         .bind(request.run_id)
+        .bind(&request.runner_id)
+        .bind(request.connection_epoch)
+        .bind(request.assignment_token)
         .execute(&mut *tx)
         .await
         .map_err(db)?;
@@ -684,10 +909,20 @@ async fn runner_read(
             )
             .map_err(provider_error)?;
         let token = String::from_utf8(token).map_err(provider_error)?;
+        let remaining = (token_expiry.ok_or_else(deny)? - Utc::now())
+            .to_std()
+            .map_err(|_| deny())?;
+        let timeout = remaining
+            .min(authority_budget(&row)?)
+            .min(StdDuration::from_secs(10));
+        if timeout.is_zero() {
+            return Err(deny());
+        }
         let mut response = b
             .client
             .get(&b.resource_url)
             .bearer_auth(token)
+            .timeout(timeout)
             .send()
             .await
             .map_err(provider_error)?;
@@ -704,6 +939,10 @@ async fn runner_read(
         let value: serde_json::Value = serde_json::from_slice(&bytes).map_err(provider_error)?;
         let result =
             verified_receipt(value["flag"].as_str().ok_or_else(deny)?, &b.expected_digest)?;
+        authority_budget(&row)?;
+        if token_expiry.ok_or_else(deny)? <= Utc::now() {
+            return Err(deny());
+        }
         sqlx::query("UPDATE delegated_operations SET preview=$2,token_ciphertext=NULL,token_nonce=NULL WHERE id=$1")
             .bind(id).bind(&result).execute(&mut *tx).await.map_err(db)?;
         preview = Some(result);
@@ -722,12 +961,17 @@ async fn runner_read(
     object.insert("run_id".into(), json!(request.run_id));
     object.insert("task_id".into(), json!(request.task_id));
     object.insert("resource".into(), json!("protected-flag"));
+    authority_budget(&row)?;
     tx.commit().await.map_err(db)?;
     Ok((
         StatusCode::OK,
         Json(json!({"status":"ready","receipt":receipt})),
     ))
 }
+
+#[cfg(test)]
+#[path = "delegated_tests.rs"]
+mod authority_tests;
 
 #[cfg(test)]
 mod tests {
@@ -760,6 +1004,16 @@ mod tests {
             .await
             .unwrap()
         };
+        sqlx::query(
+            "INSERT INTO delegated_identities(corp_id,actor_id,issuer,subject) VALUES($1,$2,$3,$4)",
+        )
+        .bind(ids.corp_id)
+        .bind(ids.alice_actor_id)
+        .bind("http://127.0.0.1:18880/realms/local-obo")
+        .bind("synthetic-subject")
+        .execute(&pool)
+        .await
+        .unwrap();
         let baseline = counts().await;
         let source = RunnerCapability {
             name: "delegated-resource".into(),

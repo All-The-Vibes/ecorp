@@ -421,6 +421,7 @@ async fn run_server() -> anyhow::Result<()> {
         secret_cipher,
         artifacts,
         cors,
+        delegated,
     } = startup::PreparedStartup::prepare(&args).await?;
 
     let store = PgStore::connect(&args.database_url)
@@ -487,8 +488,11 @@ async fn run_server() -> anyhow::Result<()> {
         artifacts,
         artifact_retention_days: args.artifact_retention_days.clamp(1, 3_650),
         workspace_sign_in: Arc::new(DashMap::new()),
-        delegated: delegated::Broker::from_env(args.mode).await?,
+        delegated,
     };
+    delegated::start_expiry_sweep(state.store.pool().clone())
+        .await
+        .map_err(|_| anyhow::anyhow!("startup failed: delegated expiry recovery"))?;
     let retirement_state = state.clone();
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(StdDuration::from_secs(3));
@@ -774,6 +778,10 @@ async fn run_server() -> anyhow::Result<()> {
             .route("/api/demo/bootstrap", post(bootstrap_demo))
             .route("/api/demo/reset", post(reset_demo))
             .route("/api/demo/oidc-link", post(debug_link_oidc_identity))
+            .route(
+                "/api/demo/delegated-link",
+                post(delegated::debug_link_identity),
+            )
             .route(
                 "/api/demo/runners/{runner_id}/disconnect",
                 post(debug_disconnect_runner),

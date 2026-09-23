@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "pr": 320,
+  "source_head": "765aff1f8dd812cf68620177f77e722860a9ecab",
+  "tested_staged_tree": "f1a91739839dca0edbf994af3c66c2780a5518a3",
+  "target_main": "1edbf1b5f4d4fe3f12f9177bb72b631d8ce2e819",
+  "started_at_utc": "2026-09-23T07:28:02.7993417+00:00",
+  "finished_at_utc": "2026-09-23T07:47:19.6107047+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "All nine contributor gates passed. Owned PostgreSQL executed all nine delegated authorization regressions, including distinct login sub/provider oid, revocation-before-effect, serialized cancellation/release and callback replay. Real-binary startup checks passed against both empty and seeded owned storage. Fourteen owned Keycloak browser/server/runner checks passed, including original-run verifier completion, protected artifact digest, private preview/release and delayed-authorization cancellation.",
+  "maintainer_changes": "Keep delegated provider identities separate from production login identities. Hold live execution, room, identity and authorization-generation authority through ticket consumption, provider effects and release. Make cancellation reflect durable state, reconcile failed-cancel UI controls without reviving stale responses, and erase expired credentials through bounded server-owned recovery. Prepare provider configuration before persistent startup effects, normalize accepted digests, and use retained process handles and explicit owned-stack admission in native acceptance.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.4378852,
+      "log": "migrations.log",
+      "original_log_sha256": "b2929d3fd65a38177dc164db89514132fe614488530b1b0c77f4a7a231e1e69a",
+      "published_log_sha256": "ebc8b5f1b412af6127ac2868fd08e358708a3e2f5e7babb9c9877b0a6d5eed0b"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.2478687,
+      "log": "documentation.log",
+      "original_log_sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406",
+      "published_log_sha256": "f7c1081b3ad5e5b322c890127d287c1cef53b868efc7b40d1b7b2eef7b9aeb18"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 4.4396345,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 163.7523154,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "3cac4946e4bd39e5a2ea5568bbd3a55f63f0782799dd0299a470782f142d5ac2",
+      "published_log_sha256": "cdbe5635ef824743f933c317f80ff510a481d7ee4043478f52e2368e0d6ef64d"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 808.64965,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "b96f168c1187f2af09b9b3959e0e8d3d382843ed5c223721e1bd366073f77428",
+      "published_log_sha256": "1e96b7730e900d8671632b942163881b67f1b84793202d917dfd784117470131"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 60.9866254,
+      "log": "node-unit.log",
+      "original_log_sha256": "a705f16a5dbbf8cc70f67b83756f15dde562f23aa689ec137e88620ffa8a1d68",
+      "published_log_sha256": "7bc7c83084a79425e765980f3090ac0da25520a407dc0c87463410ebb99e2470"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 83.3282888,
+      "log": "steward.log",
+      "original_log_sha256": "1d35a351e5012b03314e2fa19c5f2e14d7df3da0eb2b2f0de4fadee59402e176",
+      "published_log_sha256": "ad026f5970e154c14f5a6af7e45f02ea026c19782ef6d8c80c58eeee0551f313"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 4.3221844,
+      "log": "web-build.log",
+      "original_log_sha256": "27d17f264e50f728f1964fda5fd6076096a38206257b9b8bd728e53d6fac7c49",
+      "published_log_sha256": "d3c67add13cb5b1493e57494834238a5c60ab9f9133a19da7c2e293c86daa06c"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 2.1106316,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "build_preparation": {
+    "workspace_refresh": {
+      "exit_code": 0,
+      "log": "workspace-refresh.log",
+      "original_log_sha256": "0f0cc8a73524b04e65970845a00ba747bed33e9231d9c920227dd30952779af1",
+      "published_log_sha256": "80ca335cb474a21a755c9d5b034ce4eaf35f64b5d286b1eb11d686f6b212394d"
+    },
+    "native_mcp_build": {
+      "exit_code": 0,
+      "log": "native-mcp-build.log",
+      "original_log_sha256": "089436b5fe5ff3112b4581b40e6115ac341cce6d2b496d7c809b8d921b9b42f5",
+      "published_log_sha256": "d4b604c5823c4487ada5fa736226f6aa75c93b801a2436ae2c2a9ed401d3f216",
+      "binary_sha256": "b640b66453a68120bf328c1b2c788c06517fe498c5785fe575cb2898fd6b737a"
+    }
+  }
+}

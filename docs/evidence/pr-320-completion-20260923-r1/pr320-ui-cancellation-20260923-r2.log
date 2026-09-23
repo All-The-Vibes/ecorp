@@ -1,0 +1,27 @@
+✔ reserves browser synchronously, starts the actual job, then automatically authorizes once (47.1805ms)
+✔ durable callback state is read without reopening historical sign-ins or releasing receipts (13.1071ms)
+✔ popup blocking exposes explicit resume without repeated authorization on polls (9.2713ms)
+✔ only the exact newly assigned mission and task can automatically open sign-in (7.2571ms)
+✔ actor, corp, room and server changes fence delayed responses and discard private state (21.0966ms)
+✔ cancel is explicit, fences an in-flight authorization and does not retry terminal work (8.5047ms)
+✔ terminal and elapsed operations never authorize automatically or offer a retry (16.253ms)
+✔ failed cancellation restores active controls only after a fresh durable read (6.8863ms)
+✔ a read started before cancellation settles cannot restore active controls (7.1005ms)
+✔ recovering from cancellation never revives an earlier authorization response (9.8675ms)
+✔ an ambiguous cancellation response follows the durable terminal result without retry (21.4078ms)
+✔ cancelling before automatic sign-in permanently consumes that automatic attempt (9.9947ms)
+✔ no provider and polling failures fail closed with a visible explanation (5.9187ms)
+✔ job and authorization failures are visible and never automatically resubmitted (7.3553ms)
+✔ only same-server ticket URLs may navigate, never IdP, credentials or unrelated routes (28.6665ms)
+✔ manual foreground resume claims the owned assignment and cannot be followed by automatic reopening (6.4808ms)
+✔ a consumed ticket is never reused by a later explicit resume (6.8185ms)
+✔ StrictMode replay, focus and changing callback identities keep one live polling loop (3.2593ms)
+✔ late job creation from a prior actor cannot claim an operation in a later scope (5.149ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1032.3452
