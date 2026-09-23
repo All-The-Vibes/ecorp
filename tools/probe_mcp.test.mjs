@@ -409,7 +409,7 @@ test('compiled probe withholds API error content and enforces its whole-probe ti
   assert.equal(stalled.requests.length, 1)
 })
 
-test('compiled read-only inspection rejects redirects without contacting a second origin', nativeOptions, async (t) => {
+test('compiled MCP rejects redirects in both modes without contacting a second origin', nativeOptions, async (t) => {
   const destination = await fixture(t, (_request, response) => {
     response.setHeader('content-type', 'application/json')
     response.end(JSON.stringify(snapshot()))
@@ -428,8 +428,9 @@ test('compiled read-only inspection rejects redirects without contacting a secon
   const compatible = await nativeFrames(configuration(source.origin), [
     { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'crony_snapshot', arguments: {} } },
   ], false)
-  assert.equal(compatible[0].result.structuredContent.snapshot.corp.id, CORP_ID)
-  assert.equal(destination.requests.length, 1)
+  assert.equal(compatible[0].error.code, -32000)
+  assert.equal(source.requests.length, 2)
+  assert.equal(destination.requests.length, 0)
 })
 
 test('compiled read-only startup requires every routing variable before serving even initialization', nativeOptions, async (t) => {

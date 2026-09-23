@@ -1,0 +1,110 @@
+{
+  "description": "Retrospective mutation check of the reviewed loopback proxy regressions; not original development TDD.",
+  "started_at_utc": "2026-09-22T15:56:43.490920+00:00",
+  "runs": [
+    {
+      "name": "cli",
+      "phase": "before",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-cli",
+        "--bin",
+        "crony-cli",
+        "transport::tests::loopback_client_bypasses_environment_proxies",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 101,
+      "log": "cli-before.log",
+      "private_log_sha256": "f001b470149cae6d8334af9b7c827890e723bca519fbb33e030d8a583e452161",
+      "published_log_sha256": "92841e00b4ccccb1497ef13eb0aa34628ed797a66fe5958197ad0609222f708a"
+    },
+    {
+      "name": "gateway",
+      "phase": "before",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-gateways",
+        "--lib",
+        "tests::loopback_gateway_bypasses_environment_proxies",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 101,
+      "log": "gateway-before.log",
+      "private_log_sha256": "4a4ff9607d2265035ae0679e603f415d6e38284364ccc3e14a8317cfbf3dd5c7",
+      "published_log_sha256": "b0cd610028ef32777a67368942bc1f0dc6a0ed65994ba344b898136414b85703"
+    },
+    {
+      "name": "cli",
+      "phase": "after",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-cli",
+        "--bin",
+        "crony-cli",
+        "transport::tests::loopback_client_bypasses_environment_proxies",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "cli-after.log",
+      "private_log_sha256": "9cf1d210b23e8a58bcca8bf82a76965fa511d629e82402623c6611f94d052377",
+      "published_log_sha256": "4ffd5c4055d245f47dbebecdc6a871dc7280e27a71cf76fa76db47b62828ca7e"
+    },
+    {
+      "name": "gateway",
+      "phase": "after",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "crony-gateways",
+        "--lib",
+        "tests::loopback_gateway_bypasses_environment_proxies",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "log": "gateway-after.log",
+      "private_log_sha256": "5a83ac9874d9731ae070f49fb8293d9eef5b8d1253bf8899a552efd310c5fe84",
+      "published_log_sha256": "7a1129841f9a1c09577b89717e437498f683c4caec7d18686e429e752cd6f20a"
+    }
+  ],
+  "source": {
+    "crates/crony-cli/src/transport.rs": {
+      "original_sha256": "2a2e8d69924789aa7341e1c1ce84357a4725243bea4b400b2cbc08d2a1392a72",
+      "mutated_sha256": "ed41f8cac6d5331f9a0d366b6545fea05d58b000a6d72342bb955fc96d1a4eaa",
+      "mutation": "Remove only the production builder no_proxy call.",
+      "restored_sha256": "2a2e8d69924789aa7341e1c1ce84357a4725243bea4b400b2cbc08d2a1392a72"
+    },
+    "crates/crony-gateways/src/lib.rs": {
+      "original_sha256": "88019b12eb252235c0ae06c0e9ce2a99cc0c5888123b2bd3f3145f170c4cc784",
+      "mutated_sha256": "88c01b4a72891f3d9b25ee01e4a011d83bd551ae2881cfc7197a260434f4cc01",
+      "mutation": "Remove only the production builder no_proxy call.",
+      "restored_sha256": "88019b12eb252235c0ae06c0e9ce2a99cc0c5888123b2bd3f3145f170c4cc784"
+    }
+  },
+  "status": "passed",
+  "restored_exact_source": true,
+  "finished_at_utc": "2026-09-22T15:58:27.325839+00:00",
+  "original_receipt_sha256": "e3200af6cc2de174ae5e351e6a3c528f84ace9e1b32f1a753b95458b566b18e9"
+}

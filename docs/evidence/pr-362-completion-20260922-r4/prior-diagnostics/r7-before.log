@@ -1,0 +1,26 @@
+test_intact_copy_under_linked_temporary_parent_is_accepted (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_intact_copy_under_linked_temporary_parent_is_accepted) ... ERROR
+
+======================================================================
+ERROR: test_intact_copy_under_linked_temporary_parent_is_accepted (test_public_evidence_verifier.PublicEvidenceVerifierTests.test_intact_copy_under_linked_temporary_parent_is_accepted)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 102, in test_intact_copy_under_linked_temporary_parent_is_accepted
+    with self.packet_copy() as base:
+         ^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 30, in packet_copy
+    shutil.copytree(EVIDENCE / packet, base / packet)
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\shutil.py", line 600, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\shutil.py", line 498, in _copytree
+    os.makedirs(dst, exist_ok=dirs_exist_ok)
+  File "<frozen os>", line 225, in makedirs
+FileExistsError: [WinError 183] Cannot create a file when that file already exists: '<local-user>\\AppData\\Local\\Temp\\ecorp-public-evidence-temp-parent-0_f54r9n\\system-temp-alias\\evidence\\pr362-startup-20260921'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.095s
+
+FAILED (errors=1)

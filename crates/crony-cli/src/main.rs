@@ -1,5 +1,6 @@
 mod factory;
 mod publish;
+mod transport;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
@@ -9,10 +10,7 @@ use crony_protocol::{
     InterruptRunRequest, LaunchMissionRequest, MissionSource, QueueMessageRequest,
     ReleaseLeaseRequest, ResumeRunRequest, TransferLeaseRequest, VerificationDecisionRequest,
 };
-use reqwest::{
-    Client, Method,
-    header::{AUTHORIZATION, HeaderMap, HeaderValue},
-};
+use reqwest::{Client, Method};
 use serde_json::Value;
 use uuid::Uuid;
 
@@ -181,16 +179,9 @@ impl From<DeliverableArg> for DeliverableForm {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let args = Args::parse();
-    let mut headers = HeaderMap::new();
-    if let Some(token) = args.access_token.as_deref() {
-        headers.insert(
-            AUTHORIZATION,
-            HeaderValue::from_str(&format!("Bearer {token}"))
-                .context("access token cannot be encoded as an HTTP header")?,
-        );
-    }
-    let client = Client::builder().default_headers(headers).build()?;
+    let mut args = Args::parse();
+    let (server, client) = transport::api_client(&args.server, args.access_token.as_deref())?;
+    args.server = server;
     let response = match args.command {
         Command::Health => {
             request(

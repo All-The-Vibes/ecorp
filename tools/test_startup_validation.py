@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import socket
 import ssl
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -27,6 +28,19 @@ def command(args, data=None):
     if result.returncode:
         raise RuntimeError(f"fixture command failed: {Path(args[0]).name}")
     return result.stdout.strip()
+
+
+def openssl(args):
+    executable = shutil.which('openssl')
+    if not executable and os.name == 'nt':
+        git = shutil.which('git')
+        if git:
+            candidate = Path(git).resolve().parents[1] / 'usr' / 'bin' / 'openssl.exe'
+            if candidate.is_file():
+                executable = str(candidate)
+    if not executable:
+        raise RuntimeError('OpenSSL is required for the TLS fixture; install it or put it on PATH')
+    return command([executable, *args])
 
 
 def port():
@@ -86,6 +100,7 @@ def http_fixture(storage=False, tls=None):
     server.storage, server.scenario, server.calls = storage, 'valid', 0
     if tls:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         ctx.load_cert_chain(*tls)
         server.socket = ctx.wrap_socket(server.socket, server_side=True)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -183,6 +198,8 @@ class Server:
         self.objects = directory / 'objects'
         self.env = {'PATH': os.defpath, 'HOME': str(directory), 'TMPDIR': str(directory),
                     'CRONY_BIND': f'127.0.0.1:{self.port}', 'CRONY_OBJECT_STORE_LOCAL_ROOT': str(self.objects), **env}
+        if os.name == 'nt':
+            self.env['SystemRoot'] = os.environ['SystemRoot']
         if prepare:
             prepare(self.objects)
         self.log = tempfile.TemporaryFile()
@@ -383,13 +400,13 @@ def main():
         root = Path(directory)
         ca, ca_key = root/'ca.pem', root/'ca-key.pem'
         cert, key, csr = root/'cert.pem', root/'key.pem', root/'request.pem'
-        command(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', str(ca_key),
+        openssl(['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', str(ca_key),
             '-out', str(ca), '-days', '1', '-subj', '/CN=ECorp disposable test CA',
             '-addext', 'basicConstraints=critical,CA:TRUE'])
-        command(['openssl', 'req', '-new', '-newkey', 'rsa:2048', '-nodes', '-keyout', str(key),
+        openssl(['req', '-new', '-newkey', 'rsa:2048', '-nodes', '-keyout', str(key),
             '-out', str(csr), '-subj', '/CN=localhost', '-addext', 'subjectAltName=IP:127.0.0.1',
             '-addext', 'basicConstraints=critical,CA:FALSE'])
-        command(['openssl', 'x509', '-req', '-in', str(csr), '-CA', str(ca), '-CAkey', str(ca_key),
+        openssl(['x509', '-req', '-in', str(csr), '-CA', str(ca), '-CAkey', str(ca_key),
             '-CAcreateserial', '-out', str(cert), '-days', '1', '-copy_extensions', 'copy'])
         with Postgres() as postgres, http_fixture() as oidc, http_fixture(True, (cert, key)) as storage:
             # Exercise the fixture counter for methods other than GET.

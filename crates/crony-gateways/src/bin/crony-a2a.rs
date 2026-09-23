@@ -1,6 +1,6 @@
 use std::{convert::Infallible, net::SocketAddr};
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 use axum::{
     Json, Router,
     extract::State,
@@ -54,8 +54,9 @@ struct AppState {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
+    validate_bind(args.bind)?;
     let state = AppState {
-        client: GatewayClient::new(args.server, args.corp_id, args.actor_id, args.access_token),
+        client: GatewayClient::new(args.server, args.corp_id, args.actor_id, args.access_token)?,
         public_url: args.public_url,
     };
     let app = Router::new()
@@ -66,6 +67,13 @@ async fn main() -> Result<()> {
         .with_state(state);
     let listener = tokio::net::TcpListener::bind(args.bind).await?;
     axum::serve(listener, app).await?;
+    Ok(())
+}
+
+fn validate_bind(bind: SocketAddr) -> Result<()> {
+    if !bind.ip().is_loopback() {
+        bail!("A2A requires a loopback bind until authenticated incoming callers are supported");
+    }
     Ok(())
 }
 
@@ -166,6 +174,16 @@ mod tests {
     use crony_domain::MAX_TASK_ATTEMPTS;
 
     #[test]
+    fn unauthenticated_a2a_cannot_bind_to_external_interfaces() {
+        for bind in ["0.0.0.0:8794", "[::]:8794", "192.0.2.1:8794"] {
+            assert!(validate_bind(bind.parse().unwrap()).is_err());
+        }
+        for bind in ["127.0.0.1:8794", "[::1]:8794"] {
+            assert!(validate_bind(bind.parse().unwrap()).is_ok());
+        }
+    }
+
+    #[test]
     fn issue224_a2a_creation_keeps_legacy_shape_and_forwards_attempt_choice() {
         let actor = Uuid::from_u128(1);
         for mut params in [
@@ -190,11 +208,12 @@ mod tests {
     #[tokio::test]
     async fn issue224_a2a_invalid_or_postplanning_attempt_fields_fail_before_api_calls() {
         let client = GatewayClient::new(
-            "invalid-unused-server".to_owned(),
+            "http://127.0.0.1:1".to_owned(),
             Uuid::from_u128(1),
             Uuid::from_u128(2),
             None,
-        );
+        )
+        .expect("gateway client");
         for (method, value) in [
             ("message/send", json!(MAX_TASK_ATTEMPTS + 1)),
             ("tasks/get", Value::Null),

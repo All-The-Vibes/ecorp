@@ -36,7 +36,7 @@ struct Session {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-    let client = GatewayClient::new(args.server, args.corp_id, args.actor_id, args.access_token);
+    let client = GatewayClient::new(args.server, args.corp_id, args.actor_id, args.access_token)?;
     let mut sessions = HashMap::<Uuid, Session>::new();
     let mut lines = BufReader::new(tokio::io::stdin()).lines();
     while let Some(line) = lines.next_line().await? {
@@ -214,11 +214,12 @@ mod tests {
     #[tokio::test]
     async fn issue224_acp_invalid_or_postplanning_attempt_fields_leave_sessions_unchanged() {
         let client = GatewayClient::new(
-            "invalid-unused-server".to_owned(),
+            "http://127.0.0.1:1".to_owned(),
             Uuid::from_u128(1),
             Uuid::from_u128(2),
             None,
-        );
+        )
+        .expect("gateway client");
         let session_id = Uuid::from_u128(3);
         let mut sessions = HashMap::from([(session_id, Session::default())]);
         for (method, value) in [

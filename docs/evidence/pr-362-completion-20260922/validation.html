@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>PR 362 retained validation results</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;margin:40px;color:#142033;background:white;max-width:1320px}h1{font-size:28px}h2{font-size:18px;margin-top:26px}code,pre{font:13px/1.45 Consolas,monospace}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f6f8;padding:14px;border:1px solid #cbd4df}table{border-collapse:collapse;width:100%}td,th{border:1px solid #cbd4df;text-align:left;padding:8px}.label{color:#315372;font-weight:600}</style>
+<p class="label">Actual saved command results · September 22, 2026 · Windows x64</p><h1>ECorp PR #362: validation receipt</h1>
+<p>This is a browser capture of a report rendered from retained test logs. It is not an application runtime screenshot or a claim of production acceptance.</p>
+<p>Native proxy-bypass regressions and Windows startup-harness coverage on the existing security remediation; fresh source-bound local validation, not production-identity or real-provider acceptance.</p><p>Source head <code>a6fe80fdd111e277b8ed286b9ad0e82b0c2a5c0a</code><br>Tested tree <code>6a3dcda7b8e28c5c7a5179885882590073450df6</code><br>Target main <code>5f65e536f80e206082a8a819f2675c9b16210fce</code></p>
+<p>v24.21.0 · pnpm 11.19.0 · rustc 1.98.1 (48a229cea 2026-09-01) · Rust test threads: 1</p>
+<table><tr><th>Command</th><th>Actual result</th><th>Duration</th></tr><tr><td>node tools/check_migrations.mjs</td><td>PASS / exit 0</td><td>0.2s</td></tr><tr><td>pnpm check:docs</td><td>PASS / exit 0</td><td>1.0s</td></tr><tr><td>cargo fmt --check</td><td>PASS / exit 0</td><td>2.1s</td></tr><tr><td>cargo clippy --workspace --all-targets -- -D warnings</td><td>PASS / exit 0</td><td>285.5s</td></tr><tr><td>cargo test --workspace</td><td>PASS / exit 0</td><td>799.9s</td></tr><tr><td>pnpm test:unit</td><td>PASS / exit 0</td><td>60.0s</td></tr><tr><td>pnpm test:steward</td><td>PASS / exit 0</td><td>90.4s</td></tr><tr><td>pnpm build:web</td><td>PASS / exit 0</td><td>9.4s</td></tr><tr><td>pnpm lint:web</td><td>PASS / exit 0</td><td>4.6s</td></tr></table>
+<p>Opt-in Rust tests marked ignored are not counted as executed integration coverage. See the complete retained logs and separate native acceptance receipts.</p>
+<h2>migrations</h2><pre>{
+  &quot;schema_version&quot;: 1,
+  &quot;migration_count&quot;: 41,
+  &quot;latest_version&quot;: 41,
+  &quot;immutable_checksums&quot;: true
+}</pre><h2>documentation</h2><pre>  &quot;errors&quot;: []</pre><h2>rust-format</h2><pre></pre><h2>rust-clippy</h2><pre>    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4m 45s</pre><h2>rust-workspace</h2><pre>test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test adapter::tests::unsupported_features_return_typed_errors ... ok
+test connections::tests::receipt_cap_preserves_live_unacked_unfinished_and_unexpired_operations ... ok
+test result: ok. 212 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 379.96s
+test tests::checkpoint_denial_retires_only_the_command_and_store_errors_remain_retryable ... ok
+test result: ok. 132 passed; 0 failed; 5 ignored; 0 measured; 0 filtered out; finished in 0.30s
+test finished_review_tests::issue265_finished_review_survives_grace_expiry_with_epoch_fencing ... ignored, requires explicitly owned SQLx maintenance database
+test finished_review_tests::issue265_finished_review_survives_reconnect_and_keeps_independent_decision ... ignored, requires explicitly owned SQLx maintenance database
+test finished_review_tests::issue265_incomplete_or_unsafe_review_still_follows_native_loss ... ignored, requires explicitly owned SQLx maintenance database
+test finished_review_tests::issue265_later_teardown_uncertainty_prevents_finished_review_exception ... ignored, requires explicitly owned SQLx maintenance database
+test result: ok. 61 passed; 0 failed; 337 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s</pre><h2>node-unit</h2><pre>✔ issue210 editor loading, errors, stale context and denied correction cannot fall back or submit (246.474ms)
+✔ old endpoints, denied authorization and transport failures stay unavailable without raw errors (1.0679ms)
+✔ Corp, actor, room and mission changes hide old success and errors before effect cleanup (11.1644ms)
+✔ late success and errors from a replaced request cannot update the current component (9.8468ms)
+✔ late errors after actor/Corp change or unmount cannot replace the new preview (1.0712ms)
+✔ denials, missing endpoints and sync/async transport failures stay unavailable without raw errors (0.8784ms)
+✔ refuses unfinished job (0.6127ms)
+✔ missing-file errors and successful-but-wrong content remain failures (0.6389ms)
+✔ HTTP errors with sensitive bodies are not retried or exposed (0.6718ms)
+✔ errors and observation logs never echo credentials, headers, query text or variables (670.3894ms)
+ℹ tests 1249
+ℹ pass 1249
+ℹ fail 0
+ℹ skipped 0</pre><h2>steward</h2><pre>✔ GraphQL errors do not become accepted partial data (1.3941ms)
+ℹ tests 227
+ℹ pass 227
+ℹ fail 0
+ℹ skipped 0</pre><h2>web-build</h2><pre>✓ built in 2.87s</pre><h2>web-lint</h2><pre>$ pnpm --dir apps/web lint
+$ oxlint</pre></html>
