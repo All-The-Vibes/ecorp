@@ -20,7 +20,9 @@ import os
 import re
 import subprocess
 import zipfile
-from staged_evidence_inventory import staged_blobs
+from staged_evidence_inventory import require_regression_count, staged_blobs
+
+EXPECTED_REGRESSIONS = 63
 
 REQUIRED_GATES = {
     'migrations': ('node', ['tools/check_migrations.mjs']),
@@ -73,6 +75,7 @@ def unchanged_worktree():
 
 tree = git('write-tree').decode().strip()
 validation_bytes = read_input(validation_path)
+validation_root = verifier.directory_root(validation_path.absolute().parent)
 validation = json.loads(validation_bytes.decode('utf-8-sig'))
 assert validation['status'] == 'passed' and validation['source_unchanged'] is True, 'Nine passing gates are required.'
 checks = validation['checks']
@@ -83,8 +86,19 @@ names = [row.get('name') for row in checks]
 assert all(isinstance(name, str) for name in names) and len(set(names)) == 9 and set(names) == set(REQUIRED_GATES), 'Nine canonical unique gate commands are required.'
 for row in checks:
     assert (row.get('program'), row.get('arguments')) == REQUIRED_GATES[row['name']], 'Nine canonical unique gate commands are required.'
+    name = row.get('log')
+    assert isinstance(name, str) and name, 'Gate logs must use receipt-relative paths.'
+    path = PurePosixPath(name)
+    # Admit the complete inventory lexically before any log lookup. Windows
+    # drive-relative names, UNC paths and alternate streams are unsafe even
+    # when this receipt is being replayed on another operating system.
+    assert (name == path.as_posix() and path.parts and not path.is_absolute() and
+            '..' not in path.parts and not re.search(r'[\\:<>"|?*\x00-\x1f\x7f]', name)), 'Gate logs must use receipt-relative paths.'
+    for part in path.parts:
+        assert (part.rstrip(' .') == part and not re.fullmatch(
+            r'(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?', part, re.IGNORECASE)), 'Gate logs must use receipt-relative paths.'
 for row in validation['checks']:
-    assert hashlib.sha256(read_input(row['log'])).hexdigest() == row['sha256'], 'Gate log changed.'
+    assert hashlib.sha256(verifier.read_file(validation_root, row['log'])).hexdigest() == row['sha256'], 'Gate log changed.'
 assert validation['staged_tree'] == tree, 'Source differs from passing validation.'
 assert unchanged_worktree(), 'Unstaged source changes are not validated.'
 report_name = 'docs/evidence/2026-09-21-pr362-gauntlet-remediation.md'
@@ -96,7 +110,7 @@ prefixes = ['tools/test_public_evidence_verifier.py', 'tools/test_staged_evidenc
         'pr362-combined-20260921', 'pr362-gauntlet-20260921')]
 blobs = staged_blobs(repo, tree, prefixes, verifier.MAX_FILE_BYTES)
 names = list(blobs)
-assert prefixes[0] in names and report_name in names
+assert all(name in names for name in prefixes[:5]), 'Required staged replay source or discovery file is missing.'
 fixture.mkdir(parents=True)
 sha = lambda raw: hashlib.sha256(raw).hexdigest()
 receipt = {'pr': 362, 'tested_staged_tree': tree,
@@ -140,8 +154,8 @@ regression_text = regression_log.decode('utf-8')
 receipt['log'] = {'file': str(log), 'sha256': sha(regression_log), 'exit_code': result.returncode}
 receipt_path.write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf-8')
 assert result.returncode == 0, regression_text
-assert re.search(r'Ran [1-9][0-9]* tests', regression_text), 'No regression tests ran.'
-assert 'skipped=' not in regression_text
+require_regression_count(regression_text, EXPECTED_REGRESSIONS)
+receipt['regression_count'] = EXPECTED_REGRESSIONS
 
 gauntlet = fixture/'docs/evidence/pr362-gauntlet-20260921'
 manifest_bytes = verifier.read_file(gauntlet, 'manifest.json')

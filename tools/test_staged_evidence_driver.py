@@ -55,7 +55,7 @@ class StagedEvidenceDriver(unittest.TestCase):
         validation = root / 'validation.json'
         record = {'status': 'passed', 'source_unchanged': True, 'staged_tree': tree,
                   'checks': [{'name': name, 'program': program, 'arguments': list(arguments),
-                              'exit_code': 0, 'log': str(gate_log),
+                              'exit_code': 0, 'log': gate_log.name,
                               'sha256': hashlib.sha256(gate_log.read_bytes()).hexdigest()}
                              for name, program, arguments in GATES]}
         validation.write_text(json.dumps(record), encoding='utf-8')
@@ -128,7 +128,7 @@ class StagedEvidenceDriver(unittest.TestCase):
         alias = root / 'input-alias'
         self.directory_link(alias, inputs)
         for row in record['checks']:
-            row['log'] = str(alias / 'gate.log')
+            row['log'] = 'input-alias/gate.log'
         validation.write_text(json.dumps(record), encoding='utf-8')
         self.reject_input(repo, validation, root / 'evidence', 'linked evidence path')
 
@@ -357,6 +357,44 @@ class StagedEvidenceDriver(unittest.TestCase):
         output = root / 'evidence'
         result = self.invoke('--repository', repo, '--validation', validation, '--output-directory', output)
         self.assert_no_receipt(result, output, 'Gate log changed')
+
+    def test_gate_log_paths_cannot_escape_the_validation_directory(self):
+        for path in ('/outside.log', 'C:/outside.log', '../outside.log', 'nested/../../outside.log',
+                     'C:outside.log', '\\\\host\\share\\outside.log', 'gate.log:stream', '.',
+                     'nested//gate.log', 'nested/./gate.log', 'NUL', 'nested./gate.log', '', None):
+            with self.subTest(path=path):
+                root, repo, validation, record = self.fixture()
+                record['checks'][0]['log'] = path
+                validation.write_text(json.dumps(record), encoding='utf-8')
+                result = self.invoke('--repository', repo, '--validation', validation,
+                                     '--output-directory', root / 'evidence')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse((root / 'evidence').exists())
+                self.assertIn('Gate logs must use receipt-relative paths.', result.stderr)
+                self.assertNotIn('FileNotFoundError', result.stderr,
+                                 'Unsafe names must be rejected before opening an unrelated file.')
+
+    def test_regression_summary_requires_the_exact_complete_suite(self):
+        module = self.inventory_module()
+        module.require_regression_count('test_case ... ok\n\nRan 63 tests in 1.0s\n\nOK\n', 63)
+        module.require_regression_count('test_case ... ok\r\n\r\nRan 63 tests in 1.0s\r\n\r\nOK\r\n', 63)
+        for output in ('Ran 0 tests in 1.0s\nOK\n', 'Ran 60 tests in 1.0s\nOK\n',
+                       'Ran 62 tests in 1.0s\nOK\n', 'Ran 64 tests in 1.0s\nOK\n',
+                       'Ran 63 tests in 1.0s\nOK (skipped=1)\n',
+                       'Ran 63 tests in 1.0s\nFAILED (failures=1)\n',
+                       'Ran 63 tests in 1.0s\nOK\nRan 63 tests in 1.0s\nOK\n', ''):
+            with self.subTest(output=output):
+                with self.assertRaises(AssertionError):
+                    module.require_regression_count(output, 63)
+
+    def test_missing_discovery_file_is_rejected_before_materialization(self):
+        root, repo, validation, record = self.fixture()
+        self.evidence_source(repo)
+        for name in ('staged_evidence_inventory.py', 'verify_pr362_staged_evidence.py'):
+            (repo / 'tools' / name).write_text('# owned admission fixture\n', encoding='utf-8')
+        self.stage_and_bind(repo, validation, record)
+        self.reject_input(repo, validation, root / 'evidence',
+                          'Required staged replay source or discovery file is missing')
 
     def test_existing_evidence_is_preserved(self):
         root, repo, validation, _ = self.fixture()

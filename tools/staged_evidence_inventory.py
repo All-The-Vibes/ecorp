@@ -12,6 +12,13 @@ MAX_STAGED_TOTAL_BYTES = 64 * 1024 * 1024
 MAX_TREE_RECORD_BYTES = MAX_STAGED_PATH_BYTES + 128
 
 
+def require_regression_count(output, expected):
+    """A partial or skipped discovery run cannot attest the complete suite."""
+    summaries = re.findall(r'(?m)^Ran ([0-9]+) tests? in [^\r\n]+\r?$', output)
+    assert summaries == [str(expected)], 'Incomplete regression suite.'
+    assert re.search(r'(?m)^OK\r?$', output) and 'skipped=' not in output, 'Regression suite did not pass without skips.'
+
+
 def staged_blobs(repo, tree, prefixes, file_limit):
     """Stream NUL records with sizes; reject the entire inventory before reads."""
     process = subprocess.Popen(
