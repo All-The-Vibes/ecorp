@@ -145,3 +145,18 @@ errors or external requests. The copied HTML retains the verified SHA-256
 `publication-validation.json` records checks for this results-only branch.
 `SHA256SUMS` identifies the exact published evidence bytes. Hosted CI status is
 reported on the review pull request separately from these local checks.
+
+
+### Original gate receipt availability
+
+The original gate receipt named only by digest in the earlier publication summary
+has not been recovered and is unavailable in this packet. Its previously reported
+digest is unverified; it must not be read as a published, independently inspectable
+receipt. The publication summary now records that limitation explicitly. Its prior
+bytes and prior checksum inventory are preserved under provenance/, and the current
+SHA256SUMS covers those historical records as well as the qualified summary.
+
+This correction does not rerun the benchmark or authenticate missing historical
+logs. The frozen candidate, report and official results remain unchanged: 200
+passing cases, 24 failing cases, and coverage of 1 of 200 benchmark tasks. Fresh
+ECorp contributor checks remain separately recorded in the PR completion packets.
