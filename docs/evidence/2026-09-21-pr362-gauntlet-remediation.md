@@ -183,3 +183,43 @@ edit, review dismissal, merge, provider call, or policy waiver is performed by t
 
 
 September 22, 2026 publication correction: the report and retained receipt text now use `<original-user>` for personal home prefixes. The public archive is a path-normalized copy; private original bytes are retained. The manifest records separate original and published hashes, and hashes inside historical receipt payloads continue to describe the original execution bytes. Screenshot bytes, recorded results and historical source bindings are unchanged.
+
+## September 22, 2026 — R9 F03 public image privacy correction
+
+The preceding text-only correction is historical. Two images now have explicitly labelled
+**PUBLIC REDACTED DERIVATIVE** representations: `13-python-harness.png` and
+`proxy-retrospective-red.png` in `pr362-gauntlet-20260921/screenshots/`. Only their visible
+personal user-root rectangles are masked; a disclosure occupies previously empty background.
+These are not new runtime captures. All test/result/failure pixels outside those declared
+rectangles remain identical, including the retrospective failure and exit 1.
+
+Before editing, both originals were copied to the private R9 `image-privacy/private-originals`
+operator packet and verified byte-for-byte against Git
+`77278c4cad5cdcd1c19ad586b4dd002e4ec630dd:docs/evidence/pr362-gauntlet-20260921/screenshots/<filename>`.
+The [manifest](pr362-gauntlet-20260921/manifest.json) records exact original Git pointers,
+raw/public digests and lengths, dimensions, mask/disclosure rectangles and tool binding.
+
+| Image | Original SHA-256 | Current public SHA-256 |
+| --- | --- | --- |
+| `13-python-harness.png` | `88fdafdfc0afb1fd9d369d6800c001d7b5542f68a5ea16bcf060285b6cca9ede` | `886586fbe837c334e011437f77d60b81187416e4cc0cb4a26eeb6245bb9eac1f` |
+| `proxy-retrospective-red.png` | `31810bbdd82756fd1b52eb5bd914daaf55f9a17fa1b93a372a5d87b45e027399` | `9395b14051bdedca6ab02027bead80990a162b37851a4fd84b44f85107e3d6c9` |
+
+Existing capture timestamps, routes, source identities, log hashes and archived image
+provenance remain historical. In particular, `captures.sha256` hashes the log, not the PNG.
+The proxy archive's original image hash remains unchanged; current image hashes are separate.
+Earlier combined/R3–R5 source bindings still describe their recorded trees, not this correction.
+No ZIP member or historical receipt was rewritten. The manifest's `original_manifest_sha256`
+is the preserved CRLF working-file digest; the immutable Git manifest uses LF and has SHA-256
+`0059026c8abd659e9d850ce3231edbd6499ce4026ad359188b3931fedacb1bcc`.
+
+The pre-bound private `privacy_derivative.py` driver
+(`0f3d1452d6a3c755108d9c505897a83971543ef8b15de1f1b63bf1b5d9871af7`),
+bundled Python 3.12.14 and Pillow 12.3.0 verified preserved originals, exact mask/disclosure
+pixels, unchanged dimensions, 111 inventory rows, 14 capture-log hashes, 87 ZIP members
+and 38 earlier text corrections. Both images reject a one-pixel RGB mutation and a one-pixel
+alpha mutation outside the allowed rectangles. Original and resulting images were visually
+inspected. This is scoped privacy/provenance proof, not OCR, general DLP or a credential-leak claim.
+
+Only these two PNGs, their first-packet manifest and this additive report changed. The parent
+must integrate the other workers' changes, run the combined nine gates and obtain fresh
+independent reviews. No author approval, Santa verdict or publication-safety claim is made.

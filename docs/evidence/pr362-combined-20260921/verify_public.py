@@ -138,6 +138,9 @@ def verify(base, source=None):
         delivered = [filename(row['path']) for row in manifest['delivered_files']]
         assert len(delivered) == len(set(path.casefold() for path in delivered)), 'duplicate packet filename'
         assert 'manifest.json' not in delivered, 'manifest cannot hash itself'
+        assert isinstance(manifest['images'], list) and len(manifest['images']) < MAX_PACKET_FILES, 'image manifest exceeds file limit'
+        images = [filename(row['path']) for row in manifest['images']]
+        assert len(images) == len(set(path.casefold() for path in images)), 'duplicate image path'
         actual = set()
         sizes = {}
         # scandir streams entries; Path.iterdir may first allocate every name.
@@ -197,7 +200,18 @@ def verify(base, source=None):
             if not row['rectangles']:
                 assert row['raw_sha256'] == row['public_sha256']
                 assert row['raw_bytes'] == row['public_bytes']
-        for link in re.findall(r'\]\(([^)]+)\)', payload(name, 'README.md').decode('utf-8-sig')):
+        readme = payload(name, 'README.md').decode('utf-8-sig')
+        # Count even empty/external/unmatched markers before any reference lookup.
+        assert readme.count('](') <= MAX_PACKET_FILES, 'README exceeds reference limit'
+        position = 0
+        while (start := readme.find('](', position)) != -1:
+            end = readme.find(')', start + 2)
+            if end == -1:
+                break
+            link = readme[start + 2:end]
+            position = end + 1
+            if not link:
+                continue
             if '://' not in link:
                 local = link.split('#')[0]
                 if not local:
