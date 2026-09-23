@@ -43,6 +43,8 @@ Opt-in SQLx/native probes are not passes. Use only explicitly owned fixtures; ne
 
 The check driver emits a unique `output/readiness/*-{group}.json` receipt with command exit
 codes, durations, source HEAD, dirty state, tracked-diff digest and untracked-file digests.
+`source.testConfigSha256` hashes the exact configuration bytes used to build the plan,
+not a later reload. A final byte-hash mismatch prevents `passed` even if Git evidence is unchanged.
 It stops after the first failing check and lists the remaining checks as not run.
 After initial source capture, an incomplete receipt is atomically saved before execution
 and checkpointed before and after each gate. `runningCheck` distinguishes an in-flight
@@ -50,6 +52,10 @@ gate from `notRun`; completed results remain available if the process is interru
 Each attempt has its own receipt. Only successful final source verification can produce
 `passed`; an evidence-read error yields `source_unknown`, a null
 `sourceChangedDuringValidation`, and `sourceEvidenceError`, retaining counts and pending gates.
+Git failures retain the operation, native error code (null for an ordinary nonzero exit), exit
+status and signal in both CLI diagnostics and `sourceEvidenceError`. Raw native stderr and error
+messages are withheld, not truncated or regex-redacted; only captured UTF-8 stderr byte length
+and SHA-256 are reported, which may describe incomplete output after a capture failure.
 Receipt-write errors stop execution; the last published checkpoint remains incomplete.
 Missing test output is unknown, never zero failures. Ignored/skipped tests are not passes.
 Receipts exclude raw logs and environment values; inspect the terminal for a failing command.

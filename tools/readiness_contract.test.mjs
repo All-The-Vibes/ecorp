@@ -34,6 +34,15 @@ test('full gate retains Rust, web and migration checks and adds Node/docs valida
   assert.deepEqual(plan.find(check => check.name === 'repository-docs').argv, ['node', 'tools/check_documentation.mjs'])
   assert.deepEqual(checkPlan('docs', ['tools/a.test.mjs']).map(check => check.name), ['docs', 'repository-docs'])
 })
+test('every Node test group retains the native 180-second per-test deadline', () => {
+  for (const group of ['node', 'test', 'full']) {
+    const [command, ...argv] = checkPlan(group, ['tools/a.test.mjs']).find(check => check.name === 'node-tests').argv
+    assert.deepEqual(invocationFor(command, argv), {
+      program: process.execPath,
+      args: ['--test', '--test-concurrency=1', '--test-timeout=180000', '--test-reporter=tap', 'tools/a.test.mjs'],
+    })
+  }
+})
 test('test results distinguish failed, passed, ignored and not-observed', () => {
   assert.deepEqual(summarizeTests('compile error'), { rust: null, node: null })
   const counts = summarizeTests('test result: ok. 2 passed; 0 failed; 3 ignored;\ntest result: FAILED. 1 passed; 2 failed; 1 ignored;\n# tests 9\n# pass 6\n# fail 1\n# skipped 2\n# todo 0\n')

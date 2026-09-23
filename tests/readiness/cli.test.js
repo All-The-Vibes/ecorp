@@ -2,12 +2,13 @@
 const assert = require('node:assert/strict')
 const test = require('node:test')
 const { spawnSync } = require('node:child_process')
+const { createHash } = require('node:crypto')
 const { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, readdirSync, rmSync } = require('node:fs')
 const { tmpdir } = require('node:os')
 const path = require('node:path')
 const source = path.resolve(__dirname, '../..')
 
-function fixture(t, testBody = "import test from 'node:test'; test('owned fixture', () => {})") {
+function fixture(t, testBody = "import test from 'node:test'; test('owned fixture', () => {})", extraFiles = {}) {
   const root = mkdtempSync(path.join(tmpdir(), 'ecorp-readiness-cli-'))
   t.after(() => {
     const relative = path.relative(tmpdir(), root)
@@ -21,6 +22,10 @@ function fixture(t, testBody = "import test from 'node:test'; test('owned fixtur
   writeFileSync(path.join(root, '.gitignore'), 'output/\n')
   writeFileSync(path.join(root, 'tools/fixture.test.mjs'), testBody)
   writeFileSync(path.join(root, 'tools/check_migrations.mjs'), "console.error('synthetic gate rejection'); process.exit(1)")
+  for (const [file, body] of Object.entries(extraFiles)) {
+    mkdirSync(path.dirname(path.join(root, file)), { recursive: true })
+    writeFileSync(path.join(root, file), body)
+  }
   const git = args => {
     const result = spawnSync('git', args, { cwd: root, encoding: 'utf8' })
     assert.equal(result.status, 0, result.stderr)
@@ -40,6 +45,16 @@ function receipt(root) {
   const files = readdirSync(directory).filter(file => file.endsWith('.json'))
   assert.equal(files.length, 1)
   return JSON.parse(readFileSync(path.join(directory, files[0]), 'utf8'))
+}
+
+function assertGitDiagnostic(detail, native) {
+  assert.equal(detail.code, native.error?.code ?? null, 'retain the actual native error code')
+  assert.equal(detail.exitCode, native.status, 'retain the actual native Git exit status')
+  assert.equal(detail.signal, native.signal)
+  assert.equal(detail.operation, 'ls-files')
+  assert.equal(detail.diagnostic.stderrBytes, Buffer.byteLength(native.stderr ?? ''))
+  assert.equal(detail.diagnostic.stderrSha256, createHash('sha256').update(native.stderr ?? '').digest('hex'))
+  assert.match(detail.diagnostic.text, /withheld/)
 }
 
 test('dry run executes no checks, creates no receipt and leaves source unchanged', t => {
@@ -199,6 +214,61 @@ test('a test added between discovery and source capture cannot be certified with
   assert.ok(!report.source.files.includes(lateTest))
 })
 
+test('a config-only save after module load cannot certify tests selected by the old config', t => {
+  const extraTest = 'additional-tests/config-only.test.mjs'
+  const f = fixture(t, undefined, {
+    [extraTest]: "import test from 'node:test'; test('new root failure', () => { throw new Error('F02_CONFIG_MUST_RUN') })",
+  })
+  const configPath = path.join(f.root, 'test.config.json')
+  const before = readFileSync(configPath, 'utf8'), changed = JSON.parse(before)
+  changed.nodeTestRoots.push('additional-tests/')
+  const after = JSON.stringify(changed, null, 2) + '\n'
+  const inventory = f.git(['ls-files', '-z', '--cached', '--others', '--exclude-standard'])
+  const head = f.git(['rev-parse', 'HEAD']).trim()
+  assert.equal(f.git(['status', '--porcelain']), '')
+  assert.ok(inventory.split('\0').includes(extraTest))
+  mkdirSync(path.join(f.root, 'output'))
+  const preload = path.join(f.root, 'output/config-race.cjs')
+  writeFileSync(preload, `
+    const childProcess = require('node:child_process')
+    const { writeFileSync } = require('node:fs')
+    const { syncBuiltinESMExports } = require('node:module')
+    const nativeSpawn = childProcess.spawnSync
+    let injected = false
+    childProcess.spawnSync = function (command, args, options) {
+      const result = nativeSpawn(command, args, options)
+      if (!injected && command === 'git' && args[0] === 'ls-files' && args.includes('--cached') && result.status === 0) {
+        injected = true
+        writeFileSync(${JSON.stringify(configPath)}, ${JSON.stringify(after)})
+      }
+      return result
+    }
+    syncBuiltinESMExports()
+  `)
+  const env = { ...process.env }
+  delete env.NODE_TEST_CONTEXT
+  const argv = ['--require', preload, 'tools/run_checks.mjs', '--group', 'node']
+  const result = spawnSync(process.execPath, argv, { cwd: f.root, env, encoding: 'utf8', timeout: 20000 })
+  assert.equal(result.error, undefined)
+  const report = receipt(f.root)
+  writeFileSync(path.join(f.root, 'output/config-race-observation.json'), JSON.stringify({
+    argv, exitCode: result.status, stdout: result.stdout, stderr: result.stderr, before, after, report,
+  }, null, 2))
+  assert.equal(readFileSync(configPath, 'utf8'), after)
+  assert.equal(f.git(['status', '--porcelain']).trim(), 'M test.config.json')
+  assert.equal(f.git(['ls-files', '-z', '--cached', '--others', '--exclude-standard']), inventory)
+  assert.equal(f.git(['rev-parse', 'HEAD']).trim(), head)
+  assert.equal(report.source.commit, head)
+  assert.deepEqual(report.source.files, inventory.split('\0').filter(Boolean))
+  assert.equal(report.source.trackedDiffSha256, createHash('sha256').update(f.git(['diff', '--binary', 'HEAD'])).digest('hex'))
+  assert.deepEqual(report.source.untrackedDigests, [])
+  assert.equal(report.checks[0].counts.node.passed, 1)
+  assert.ok(!report.checks[0].argv.includes(extraTest))
+  assert.equal(result.status, 1, 'must reject the old false pass for config-only test selection changes')
+  assert.equal(report.status, 'source_changed')
+  assert.equal(report.sourceChangedDuringValidation, true)
+})
+
 for (const failingGate of [false, true]) {
   test(`postflight Git failure retains completed counts and pending gates (gate failed: ${failingGate})`, t => {
     const body = `
@@ -233,7 +303,101 @@ for (const failingGate of [false, true]) {
     assert.equal(report.runningCheck, null)
     assert.deepEqual(report.notRun, failingGate ? ['docs', 'repository-docs', 'format'] : [])
     assert.ok(report.finishedAt)
+    const native = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+      { cwd: f.root, encoding: 'utf8' })
+    assert.equal(native.status, 128)
+    assertGitDiagnostic(report.sourceEvidenceError, native)
+    assert.ok(!result.stderr.includes(native.stderr.trim()), 'raw native diagnostic is withheld, not truncated')
   })
+}
+
+for (const phase of ['initial', 'postflight']) {
+  for (const fault of ['missing-git', 'invalid-git-dir']) {
+    test(`native Git diagnostics survive ${phase} ${fault} without disclosing raw text`, t => {
+      const f = fixture(t)
+      const head = f.git(['rev-parse', 'HEAD']), index = readFileSync(path.join(f.root, '.git/index'))
+      const marker = 'F03_SYNTHETIC_PRIVATE_PATH_AND_SECRET'
+      const faultEnv = fault === 'missing-git'
+        ? { PATH: path.join(f.root, 'output/empty-path') }
+        : { GIT_DIR: path.join(f.root, 'output', marker) }
+      const env = { ...process.env }
+      delete env.NODE_TEST_CONTEXT
+      const applyFault = target => {
+        for (const key of Object.keys(target)) if (key.toUpperCase() === 'PATH' && fault === 'missing-git') delete target[key]
+        Object.assign(target, faultEnv)
+      }
+      const probeEnv = { ...env }
+      applyFault(probeEnv)
+      // Real native failures; neither the process result nor its diagnostics are fabricated.
+      const native = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+        { cwd: f.root, env: probeEnv, encoding: 'utf8' })
+      if (fault === 'missing-git') assert.equal(native.error?.code, 'ENOENT')
+      else {
+        assert.equal(native.status, 128)
+        assert.ok(native.stderr.includes(marker), 'native Git really emitted the synthetic sensitive path')
+      }
+      mkdirSync(path.join(f.root, 'output'))
+      const argv = ['tools/run_checks.mjs', '--group', 'node']
+      if (phase === 'initial') applyFault(env)
+      else {
+        const preload = path.join(f.root, 'output/git-fault.cjs')
+        writeFileSync(preload, `
+          const cp = require('node:child_process'), fs = require('node:fs')
+          const nativeSpawn = cp.spawnSync
+          cp.spawnSync = function (command, args, options) {
+            const result = nativeSpawn(command, args, options)
+            if (command === process.execPath && args.includes('--test')) {
+              const file = fs.readdirSync('output/readiness').find(file => file.endsWith('.json'))
+              fs.copyFileSync('output/readiness/' + file, 'output/f03-checkpoint.json')
+              if (${JSON.stringify(fault)} === 'missing-git') {
+                for (const key of Object.keys(process.env)) if (key.toUpperCase() === 'PATH') delete process.env[key]
+              }
+              Object.assign(process.env, ${JSON.stringify(faultEnv)})
+            }
+            return result
+          }
+          require('node:module').syncBuiltinESMExports()
+        `)
+        argv.unshift('--require', preload)
+      }
+      const result = spawnSync(process.execPath, argv, { cwd: f.root, env, encoding: 'utf8', timeout: 20000 })
+      assert.equal(result.error, undefined)
+      assert.equal(result.status, 1)
+      const report = phase === 'postflight' ? receipt(f.root) : null
+      writeFileSync(path.join(f.root, 'output/f03-observation.json'), JSON.stringify({
+        phase, fault, exitCode: result.status, stdout: result.stdout, stderr: result.stderr, report,
+        native: { code: native.error?.code ?? null, exitCode: native.status, signal: native.signal,
+          stderrBytes: Buffer.byteLength(native.stderr ?? ''),
+          stderrSha256: createHash('sha256').update(native.stderr ?? '').digest('hex') },
+      }, null, 2))
+      const diagnosticOutput = result.stderr + JSON.stringify(report?.sourceEvidenceError)
+      for (const withheld of [marker, f.root, f.root.replaceAll('\\', '/'), JSON.stringify(f.root).slice(1, -1)]) {
+        assert.ok(!diagnosticOutput.includes(withheld), 'Git error output must not reveal sensitive text')
+      }
+      assert.equal(f.git(['rev-parse', 'HEAD']), head)
+      assert.deepEqual(readFileSync(path.join(f.root, '.git/index')), index)
+      assert.equal(f.git(['status', '--porcelain']), '')
+      if (report) {
+        assert.equal(report.status, 'source_unknown')
+        assert.equal(report.sourceChangedDuringValidation, null)
+        assert.equal(report.checks.length, 1)
+        assert.equal(report.checks[0].counts.node.passed, 1)
+        assert.equal(report.runningCheck, null)
+        assert.deepEqual(report.notRun, [])
+        const checkpoint = JSON.parse(readFileSync(path.join(f.root, 'output/f03-checkpoint.json')))
+        assert.equal(checkpoint.status, 'running')
+        assert.equal(checkpoint.runningCheck, 'node-tests')
+        assert.deepEqual(checkpoint.checks, [])
+        assertGitDiagnostic(report.sourceEvidenceError, native)
+      } else {
+        assert.equal(result.stdout, '')
+        assert.ok(!readdirSync(path.join(f.root, 'output')).includes('readiness'))
+      }
+      assert.match(result.stderr, /Git evidence unavailable: ls-files; \{/)
+      const detail = JSON.parse(result.stderr.trim().slice(result.stderr.indexOf('; ') + 2))
+      assertGitDiagnostic(detail, native)
+    })
+  }
 }
 
 test('executing gates see incomplete receipts and completed checkpoints without overwriting prior attempts', t => {

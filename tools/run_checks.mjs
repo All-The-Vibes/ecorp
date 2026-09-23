@@ -5,7 +5,9 @@ import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const config = JSON.parse(readFileSync(new URL('../test.config.json', import.meta.url), 'utf8'))
+const configPath = new URL('../test.config.json', import.meta.url)
+const configBytes = readFileSync(configPath)
+const config = JSON.parse(configBytes.toString('utf8'))
 
 export function selectNodeTests(files, settings = config) {
   if (settings.schemaVersion !== 1 || !Array.isArray(settings.nodeTestSuffixes) || !settings.nodeTestSuffixes.length ||
@@ -37,7 +39,7 @@ export function checkPlan(group, files) {
     migrations: ['node', 'tools/check_migrations.mjs'],
     docs: ['node', 'tools/check_docs.mjs'],
     'repository-docs': ['node', 'tools/check_documentation.mjs'],
-    'node-tests': ['node', '--test', '--test-concurrency=1', '--test-reporter=tap', ...tests],
+    'node-tests': ['node', '--test', '--test-concurrency=1', '--test-timeout=180000', '--test-reporter=tap', ...tests],
     format: ['cargo', 'fmt', '--check'],
     clippy: ['cargo', 'clippy', '--workspace', '--all-targets', '--locked', '--', '-D', 'warnings'],
     'rust-tests': config.rustCommand,
@@ -73,7 +75,18 @@ export function summarizeTests(stdout) {
 
 function git(args) {
   const result = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })
-  if (result.status !== 0) throw new Error(`Git evidence unavailable: ${args[0]}`)
+  if (result.error || result.status !== 0) {
+    const stderr = result.stderr ?? ''
+    const evidence = {
+      operation: args[0], code: result.error?.code ?? null, exitCode: result.status, signal: result.signal,
+      diagnostic: {
+        text: 'Native stderr and error message withheld; metadata covers captured UTF-8 stderr only and may be incomplete.',
+        stderrBytes: Buffer.byteLength(stderr), stderrSha256: createHash('sha256').update(stderr).digest('hex'),
+      },
+    }
+    throw Object.assign(new Error(`Git evidence unavailable: ${args[0]}; ${JSON.stringify(evidence)}`),
+      { code: evidence.code, gitEvidence: evidence })
+  }
   return result.stdout
 }
 
@@ -97,7 +110,8 @@ export function main(args = process.argv.slice(2)) {
   const report = {
     schemaVersion: 1, group: args[1], startedAt: started,
     source: { files, commit: git(['rev-parse', 'HEAD']).trim(), branch: git(['branch', '--show-current']).trim(),
-      dirty: status.length > 0, trackedDiffSha256: createHash('sha256').update(changes).digest('hex'), untrackedDigests },
+      dirty: status.length > 0, trackedDiffSha256: createHash('sha256').update(changes).digest('hex'), untrackedDigests,
+      testConfigSha256: createHash('sha256').update(configBytes).digest('hex') },
     node: process.versions.node, checks: [], status: 'running',
     runningCheck: null, notRun: plan.map(check => check.name), sourceChangedDuringValidation: null,
     assurance: 'Local validation only. Ignored tests are not passes. No hosted CI, browser, provider or production claim.',
@@ -159,11 +173,12 @@ export function main(args = process.argv.slice(2)) {
       git(['rev-parse', 'HEAD']).trim() !== report.source.commit ||
       createHash('sha256').update(git(['diff', '--binary', 'HEAD'])).digest('hex') !== report.source.trackedDiffSha256 ||
       JSON.stringify(git(['ls-files', '-z', '--others', '--exclude-standard']).split('\0').filter(Boolean)
-        .map(file => [file, createHash('sha256').update(readFileSync(path.join(ROOT, file))).digest('hex')])) !== JSON.stringify(untrackedDigests)
+        .map(file => [file, createHash('sha256').update(readFileSync(path.join(ROOT, file))).digest('hex')])) !== JSON.stringify(untrackedDigests) ||
+      createHash('sha256').update(readFileSync(configPath)).digest('hex') !== report.source.testConfigSha256
     if (report.status === 'running') report.status = report.sourceChangedDuringValidation ? 'source_changed' : 'passed'
   } catch (error) {
     report.status = 'source_unknown'
-    report.sourceEvidenceError = { code: error.code ?? null, message: error.message }
+    report.sourceEvidenceError = { code: error.code ?? null, message: error.message, ...error.gitEvidence }
     console.error(error.message)
   }
   report.finishedAt = new Date().toISOString()
