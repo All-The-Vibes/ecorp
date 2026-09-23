@@ -1432,10 +1432,15 @@ Export-ModuleMember -Function Start-LocalOwnedProcess, Stop-LocalOwnedProcess
                 @{name='Preflight';restart=$false;preflight=$true}
             )) {
                 Invoke-Case "$restriction ownership target rejects $($mode.name) before effects" {
-                    & $starter -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+                    # Each scenario needs a full fixture lifetime. Reusing roots
+                    # from earlier cases can hit their hard TTL during validation.
+                    & $starter -Restart -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
                     Register-StartupProcesses
                     $originalState = [IO.File]::ReadAllText($statePath)
                     $owned = (Read-LocalStackState $statePath $workspace).processes
+                    foreach ($record in $owned.Values) {
+                        Assert-True (Test-LocalOwnedProcess $record $workspace) 'Restriction scenario must begin with live owned roots.'
+                    }
                     $attributes = [IO.File]::GetAttributes($statePath)
                     $locked = $null
                     try {

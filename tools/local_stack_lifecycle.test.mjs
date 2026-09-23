@@ -20,9 +20,11 @@ for (const name of [
 const directory = path.dirname(fileURLToPath(import.meta.url))
 const script = path.join(directory, 'local_stack_lifecycle.test.ps1')
 const resultPrefix = 'ECORP_LOCAL_STACK_TEST_RESULT='
-// Module includes Startup: 82 cases took 184s under concurrent validation.
-// Allow bounded scheduling headroom without changing Source or fixture TTLs.
-const moduleWatchdogMs = 300_000
+// Module includes all Startup cases and their fresh owned process roots. The
+// expanded suite exceeded the old five-minute wrapper budget on Windows.
+// Bound the whole suite at ten minutes; individual waits and fixture TTLs stay
+// unchanged, as does the separate two-minute Source watchdog.
+const moduleWatchdogMs = 600_000
 const moduleTestOptions = {
   skip: process.platform !== 'win32' ? 'Requires Windows and PowerShell 7.4+' : false,
   timeout: moduleWatchdogMs + 30_000,
@@ -70,7 +72,7 @@ async function runSuite(t, suite, spawn = spawnSync) {
 
 test('local stack wrapper watchdog contract is bounded and suite-local', async () => {
   const context = { test: async (_name, check) => check(), diagnostic: () => {} }
-  for (const [suite, expectedWatchdog] of [['Module', 300_000], ['Source', 120_000]]) {
+  for (const [suite, expectedWatchdog] of [['Module', 600_000], ['Source', 120_000]]) {
     // Contract-only double: this checks actual wrapper options, not fixture behavior.
     await runSuite(context, suite, (executable, args, options) => {
       assert.equal(executable, 'pwsh.exe')
@@ -78,7 +80,7 @@ test('local stack wrapper watchdog contract is bounded and suite-local', async (
       assert.equal(options.timeout, expectedWatchdog)
       if (suite === 'Module') {
         assert.equal(moduleTestOptions.timeout, options.timeout + 30_000)
-        assert.equal(moduleTestOptions.timeout, 330_000)
+        assert.equal(moduleTestOptions.timeout, 630_000)
       }
       return {
         status: 0,
