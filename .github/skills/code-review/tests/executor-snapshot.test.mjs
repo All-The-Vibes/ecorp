@@ -6,6 +6,7 @@ import { snapshot } from '../scripts/executor-snapshot.mjs'
 const pr = (number) => ({
   number, head: { sha: 'a'.repeat(40), ref: 'feature', repo: { full_name: 'team/repo' } },
   base: { sha: 'b'.repeat(40), ref: 'main', repo: { full_name: 'team/repo' } }, state: 'open', draft: false,
+  title: 'Ready change', body: null, html_url: `https://github.com/team/repo/pull/${number}`,
 })
 
 // GitHub response fields used by the fingerprints; unrelated response fields are omitted.
@@ -23,6 +24,45 @@ const detailOperation = (endpoint) => endpoint.includes('/reviews?') ? 'reviews'
     endpoint.includes('/check-runs?') ? 'check_runs' : 'statuses'
 const detailPages = (operation, pages) => JSON.stringify(operation === 'check_runs' ?
   pages.map((check_runs) => ({ check_runs })) : pages)
+
+test('F03: inventory rejects malformed review text and out-of-scope PR URLs before detail reads', () => {
+  const invalid = [
+    ...[undefined, null, false, 7, [], {}].map((title) => ({ title })),
+    ...[undefined, false, 7, [], {}].map((body) => ({ body })),
+    ...[undefined, null, 7, {}, '', 'https://github.com/team/repo/pull/2',
+      'https://github.com/other/repo/pull/1', 'https://example.test/team/repo/pull/1',
+      'https://github.com@evil.test/team/repo/pull/1', 'http://github.com/team/repo/pull/1',
+      'https://github.com/team/repo/pull/1?extra=1', 'https://github.com/team/repo/pull/1#fragment',
+    ].map((html_url) => ({ html_url })),
+  ]
+  for (const change of invalid) {
+    let calls = 0
+    assert.throws(() => snapshot('team/repo', () => {
+      calls++
+      return JSON.stringify([[{ ...pr(1), ...change }]])
+    }), (error) => {
+      assert.equal(error.message, 'Invalid or out-of-scope PR')
+      assert.deepEqual(error.readFailure,
+        { operation: 'inventory', kind: 'INVALID_RESPONSE', exitCode: null, signal: null })
+      return true
+    })
+    assert.equal(calls, 1, 'invalid review inputs cannot acquire successful fingerprints')
+  }
+})
+
+test('F03: string titles and nullable string bodies retain exact review fingerprints', () => {
+  const read = (change) => snapshot('TEAM/REPO', (args) => args.at(-1).includes('/pulls?') ?
+    JSON.stringify([[{ ...pr(1), ...change }]]) : detailPages(detailOperation(args.at(-1)), [[]])).prs[0]
+  const original = read({})
+  assert.deepEqual(read({}), original)
+  assert.equal(original.url, 'https://github.com/team/repo/pull/1')
+  for (const change of [{ title: '' }, { title: 'Changed title' }, { body: '' }, { body: 'New scope' }]) {
+    const observed = read(change)
+    assert.notEqual(observed.reviewKey, original.reviewKey)
+    assert.equal(observed.gateKey, original.gateKey)
+    assert.deepEqual(read(change), observed)
+  }
+})
 
 test('same-SHA target retarget changes only gate freshness and target identity, including blocked PRs', () => {
   for (const blocked of [false, true]) {

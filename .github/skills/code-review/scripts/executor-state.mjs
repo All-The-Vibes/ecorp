@@ -244,6 +244,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
+import { branchRef } from './git-ref.mjs'
 
 const check = (ok, message) => { if (!ok) throw new Error(message) }
 const text = (s) => typeof s === 'string' && s.trim().length > 0
@@ -1267,6 +1268,8 @@ function main() {
       const snapshots = command === 'sync' ? input.prs : [input.snapshot]
       check(Array.isArray(snapshots) && snapshots.every((p) => text(p?.baseRef)),
         'new live snapshots require baseRef')
+      check(snapshots.every((p) => branchRef(p?.branch) && branchRef(p?.baseRef)),
+        'new live snapshots require valid Git branch refs')
       check(snapshots.every((p) => typeof p?.draft === 'boolean'),
         'new live snapshots require explicit boolean draft')
     }

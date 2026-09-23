@@ -1,12 +1,10 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { pathToFileURL } from 'node:url'
+import { branchRef } from './git-ref.mjs'
 
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex')
 const fields = (value, names) => Object.fromEntries(names.map((name) => [name, value[name] ?? null]))
-const branchRef = (ref) => typeof ref === 'string' && ref !== '@' && ref !== 'HEAD' &&
-  !/[\x00-\x20\x7f~^:?*[\\]|\.\.|@\{|^-|\.$/.test(ref) &&
-  ref.split('/').every((part) => part.length > 0 && !part.startsWith('.') && !part.endsWith('.lock'))
 
 function validDetail(row, operation) {
   if (!Number.isSafeInteger(row.id) || row.id < 1) return false
@@ -79,6 +77,9 @@ export function snapshot(repo, invoke = (args) => execFileSync('gh', args, {
   const pulls = pages(`${root}/pulls?state=open&per_page=100`, 'inventory')
   const prs = pulls.map((pr) => {
     if (!Number.isSafeInteger(pr.number) || pr.number < 1 ||
+        typeof pr.title !== 'string' || !(pr.body === null || typeof pr.body === 'string') ||
+        typeof pr.html_url !== 'string' ||
+        pr.html_url.toLowerCase() !== `https://github.com/${repo.toLowerCase()}/pull/${pr.number}` ||
         !/^[a-f0-9]{40}$/.test(pr.head?.sha) || !/^[a-f0-9]{40}$/.test(pr.base?.sha) ||
         !branchRef(pr.base?.ref) || !branchRef(pr.head?.ref) || typeof pr.draft !== 'boolean' ||
         pr.base?.repo?.full_name?.toLowerCase() !== repo.toLowerCase() || pr.state !== 'open') {

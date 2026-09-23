@@ -132,6 +132,10 @@ sessions, failed tests and original receipts.
    An incomplete open-PR listing stops synchronization. A PR with `readError`
    is individually BLOCKED; other PRs still proceed. Unresolved pagination or
    inaccessible evidence is never a clean result.
+   Inventory requires a string title, a nullable string body, and the expected
+   GitHub URL for that repository and PR number before computing fingerprints.
+   The snapshot reader and new live journal admissions share the same literal
+   Git branch validator. Historical journal replay retains its original rules.
    Diagnose failures using the bounded `readFailure` metadata, not raw secret-
    bearing errors. The snapshot includes the target `baseRef`, not just its SHA.
    A failed detail read records an unavailable observation, not a processed audit

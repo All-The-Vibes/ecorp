@@ -4770,7 +4770,8 @@ test('B03: same-SHA retarget from snapshot to CLI queues only a gate check', () 
   const inventory = (baseRef) => snapshot(repo, (args) => {
     if (args.at(-1).includes('/pulls?')) return JSON.stringify([[
       { number: 1, base: { sha: sha(10), ref: baseRef, repo: { full_name: repo } },
-        head: { sha: sha(11), ref: 'fix-1', repo: { full_name: repo } }, state: 'open', draft: false },
+        head: { sha: sha(11), ref: 'fix-1', repo: { full_name: repo } }, state: 'open', draft: false,
+        title: 'Ready change', body: null, html_url: `https://github.com/${repo}/pull/1` },
     ]])
     return args.at(-1).includes('/check-runs?') ? '[{"check_runs":[]}]' : '[[]]'
   })
@@ -4786,6 +4787,48 @@ test('B03: same-SHA retarget from snapshot to CLI queues only a gate check', () 
   assert.equal(next(dir).action, 'none')
   for (const baseRef of [null, '', 7, [], {}]) {
     run(dir, 'sync', { owner, complete: true, prs: [pr(1, { baseRef })] }, false)
+  }
+})
+
+for (const command of ['sync', 'published', 'progress-published']) {
+  test(`F03: ${command} rejects invalid live refs while preserving historical identity`, () => {
+    for (const field of ['branch', 'baseRef']) for (const ref of ['--force', 'foo..bar', 'name.lock']) {
+      const dir = historicalSetup([pr(1, { [field]: ref })], 2)
+      let input = { owner, complete: true, prs: [pr(1, { [field]: ref })] }
+      if (command !== 'sync') {
+        const claim = start(dir), candidate = { ...claim.snapshot, head: sha(12) }
+        bindRubric(dir, candidate)
+        if (command === 'progress-published') {
+          run(dir, 'progress-rubric', progressBinding(claim, candidate))
+          input = progressInput(claim, candidate)
+        } else {
+          input = { ...beginInput(claim), snapshot: candidate, reviewers: reviewers({ ...claim, head: candidate.head }),
+            push: { repo, branch: candidate.branch, before: claim.head, head: candidate.head,
+              sourceRef: 'synthetic/live-ref-push.json', pushedAt: new Date().toISOString() } }
+        }
+      }
+      const bytes = journalBytes(dir), before = run(dir, 'show')
+      assert.equal(before.prs['1'].snapshot[field], ref)
+      assert.match(run(dir, command, input, false).error, /valid Git branch refs/)
+      assert.equal(journalBytes(dir), bytes)
+      assert.deepEqual(run(dir, 'show'), before, 'rejected live input must preserve old decisions')
+    }
+  })
+}
+
+test('F03: v1 refs keep their replay contract and valid live branch names are preserved exactly', () => {
+  const dir = historicalSetup([pr(1, { branch: '--force', baseRef: 'name.lock' })], 1)
+  const bytes = journalBytes(dir), before = run(dir, 'show')
+  assert.equal(before.prs['1'].snapshot.branch, '--force')
+  assert.equal(before.prs['1'].snapshot.baseRef, 'name.lock')
+  assert.equal(journalBytes(dir), bytes)
+  assert.match(run(dir, 'sync', { owner, complete: true, prs: [before.prs['1'].snapshot] }, false).error,
+    /valid Git branch refs/)
+  assert.equal(journalBytes(dir), bytes)
+  for (const ref of ['main', 'release/2026.09', 'Stack/Feature_1', 'rélease/修正']) {
+    const observed = setup([pr(1, { branch: ref, baseRef: ref })])
+    assert.equal(run(observed, 'show').prs['1'].snapshot.branch, ref)
+    assert.equal(run(observed, 'show').prs['1'].snapshot.baseRef, ref)
   }
 })
 
