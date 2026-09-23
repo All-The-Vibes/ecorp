@@ -30,7 +30,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: node tools/check_migrations.mjs
       - run: python3 -m unittest discover -s tools -p test_startup_validation_harness.py
-      - run: python3 -m unittest discover -s tools -p test_public_evidence_verifier.py
+      - run: python3 -m unittest discover -s tools -p 'test_*evidence*.py'
       - name: Verify external-adapter E2E expectations cannot hide runtime failures
         run: node --test tools/e2e_external_adapters.test.mjs tools/fixture_source_identity.test.mjs tools/owned_test_stack.test.mjs
       - run: cargo fmt --all -- --check
@@ -294,9 +294,9 @@ jobs:
       - name: Verify Windows startup TLS harness and child environment
         if: runner.os == 'Windows'
         run: python -m unittest discover -s tools -p test_startup_validation_harness.py
-      - name: Verify public evidence rejects optimized Python
+      - name: Verify public evidence and staged replay admission
         shell: pwsh
-        run: python -m unittest discover -s tools -p test_public_evidence_verifier.py
+        run: python -m unittest discover -s tools -p 'test_*evidence*.py'
       - name: Verify Windows PowerShell connection ACL readiness
         if: runner.os == 'Windows'
         shell: pwsh

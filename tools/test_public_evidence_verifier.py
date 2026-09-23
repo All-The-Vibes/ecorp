@@ -34,8 +34,27 @@ class PublicEvidenceVerifierTests(unittest.TestCase):
     def verifier_module():
         spec = importlib.util.spec_from_file_location("public_evidence_verifier", VERIFIER)
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        # Importing retained evidence must not create an unlisted __pycache__
+        # directory in the packet, including when the caller allows bytecode.
+        with patch.object(sys, "dont_write_bytecode", True):
+            spec.loader.exec_module(module)
         return module
+
+    def test_module_import_preserves_packet_when_bytecode_is_enabled(self):
+        with self.packet_copy() as base:
+            packet = base / PACKETS[-1]
+            before = {str(path.relative_to(packet)): path.read_bytes()
+                      for path in packet.rglob("*") if path.is_file()}
+            with patch.dict(self.verifier_module.__globals__, {"VERIFIER": packet / "verify_public.py"}):
+                with patch.object(sys, "dont_write_bytecode", False):
+                    self.verifier_module()
+                    self.assertFalse(sys.dont_write_bytecode, "caller setting was not restored")
+            self.assertFalse((packet / "__pycache__").exists())
+            after = {str(path.relative_to(packet)): path.read_bytes()
+                     for path in packet.rglob("*") if path.is_file()}
+            self.assertEqual(after, before)
+            result = self.invoke(packet / "verify_public.py")
+            self.assertEqual(result.returncode, 0, result.stderr)
 
     def replace_archive(self, base, members, compression=zipfile.ZIP_DEFLATED):
         archive_path = base / PACKETS[0] / "receipts.zip"

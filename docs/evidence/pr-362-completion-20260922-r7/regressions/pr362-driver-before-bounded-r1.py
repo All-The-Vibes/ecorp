@@ -26,22 +26,8 @@ parser.add_argument('--repository', required=True, type=Path)
 parser.add_argument('--validation', required=True, type=Path)
 parser.add_argument('--output-directory', required=True, type=Path)
 args = parser.parse_args()
-# Reuse the reader shipped beside this vetted driver, never Python selected by
-# --repository. Inspect lexical input ancestors before canonicalizing aliases.
-reader_path = Path(__file__).resolve().parents[1] / 'docs/evidence/pr362-combined-20260921/verify_public.py'
-spec = importlib.util.spec_from_file_location('local_public_packet_reader', reader_path)
-verifier = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(verifier)
-
-
-def read_input(path):
-    path = Path(path).absolute()
-    root = verifier.directory_root(path.parent)
-    return verifier.read_file(root, path.name)
-
-
-repo = verifier.directory_root(args.repository)
-validation_path = args.validation
+repo = args.repository.resolve(strict=True)
+validation_path = args.validation.resolve(strict=True)
 base = args.output_directory.absolute()
 assert not base.exists(), 'Preserve existing evidence output.'
 fixture = base / 'fixture'
@@ -50,12 +36,12 @@ log = base / 'regressions.log'
 
 git = lambda *args: subprocess.check_output(['git', '-C', str(repo), *args])
 tree = git('write-tree').decode().strip()
-validation_bytes = read_input(validation_path)
+validation_bytes = validation_path.read_bytes()
 validation = json.loads(validation_bytes.decode('utf-8-sig'))
 assert validation['status'] == 'passed' and validation['source_unchanged'], 'Nine passing gates are required.'
 assert len(validation['checks']) == 9 and all(row['exit_code'] == 0 for row in validation['checks']), 'Nine passing gates are required.'
 for row in validation['checks']:
-    assert hashlib.sha256(read_input(row['log'])).hexdigest() == row['sha256'], 'Gate log changed.'
+    assert hashlib.sha256(Path(row['log']).read_bytes()).hexdigest() == row['sha256'], 'Gate log changed.'
 assert validation['staged_tree'] == tree, 'Source differs from passing validation.'
 assert not git('diff', '--name-only').strip(), 'Unstaged source changes are not validated.'
 report_name = 'docs/evidence/2026-09-21-pr362-gauntlet-remediation.md'
@@ -64,17 +50,7 @@ prefixes = ['tools/test_public_evidence_verifier.py', 'tools/test_staged_evidenc
     'docs/evidence/' + name for name in (
         'pr362-startup-20260921', 'pr362-regressions-20260921',
         'pr362-combined-20260921', 'pr362-gauntlet-20260921')]
-entries = git('ls-tree', '-r', '-z', tree, '--', *prefixes).split(b'\0')
-blobs = {}
-for entry in filter(None, entries):
-    metadata, raw_name = entry.split(b'\t', 1)
-    mode, kind, oid = metadata.decode().split()
-    assert mode in ('100644', '100755') and kind == 'blob', 'Staged evidence must be regular files.'
-    name = raw_name.decode()
-    size = int(git('cat-file', '-s', oid))
-    assert 0 <= size <= verifier.MAX_FILE_BYTES, 'Staged evidence blob exceeds byte limit.'
-    blobs[name] = (oid, size)
-names = list(blobs)
+names = git('ls-tree', '-r', '--name-only', tree, '--', *prefixes).decode().splitlines()
 assert prefixes[0] in names and report_name in names
 fixture.mkdir(parents=True)
 sha = lambda raw: hashlib.sha256(raw).hexdigest()
@@ -87,17 +63,14 @@ receipt = {'pr': 362, 'tested_staged_tree': tree,
 for name in names:
     target = fixture/name
     assert target.resolve().is_relative_to(fixture.resolve())
-    oid, size = blobs[name]
-    raw = git('cat-file', 'blob', oid)
-    assert len(raw) == size, 'Staged evidence blob size changed.'
+    raw = git('show', f'{tree}:{name}')
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(raw)
-    executed = verifier.read_file(fixture, name)
-    assert executed == raw
+    assert target.read_bytes() == raw
     receipt['files'].append({'path': name, 'git_blob_sha256': sha(raw),
-                             'executed_sha256': sha(executed)})
-worktree_report = verifier.read_file(repo, report_name)
-git_report = verifier.read_file(fixture, report_name)
+                             'executed_sha256': sha(target.read_bytes())})
+worktree_report = (repo/report_name).read_bytes()
+git_report = (fixture/report_name).read_bytes()
 receipt['report_representation'] = {
     'worktree_sha256': sha(worktree_report), 'git_blob_sha256': sha(git_report),
     'canonical_lf_sha256': sha(worktree_report.replace(b'\r\n', b'\n')),
@@ -114,18 +87,18 @@ with log.open('wb') as output:
     result = subprocess.run(command, cwd=fixture, env=environment,
                             stdout=output, stderr=subprocess.STDOUT, timeout=240)
 receipt['command'] = command
-regression_log = read_input(log)
-regression_text = regression_log.decode('utf-8')
-receipt['log'] = {'file': str(log), 'sha256': sha(regression_log), 'exit_code': result.returncode}
+receipt['log'] = {'file': str(log), 'sha256': sha(log.read_bytes()), 'exit_code': result.returncode}
 receipt_path.write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf-8')
-assert result.returncode == 0, regression_text
-assert re.search(r'Ran [1-9][0-9]* tests', regression_text), 'No regression tests ran.'
-assert 'skipped=' not in regression_text
+assert result.returncode == 0, log.read_text(encoding='utf-8')
+assert re.search(r'Ran [1-9][0-9]* tests', log.read_text(encoding='utf-8')), 'No regression tests ran.'
+assert 'skipped=' not in log.read_text(encoding='utf-8')
 
 gauntlet = fixture/'docs/evidence/pr362-gauntlet-20260921'
-manifest_bytes = verifier.read_file(gauntlet, 'manifest.json')
-manifest = json.loads(manifest_bytes)
+manifest = json.loads((gauntlet/'manifest.json').read_bytes())
 archive_info = manifest['receipt_archive']
+spec = importlib.util.spec_from_file_location('verified_public_packet', fixture/'docs/evidence/pr362-combined-20260921/verify_public.py')
+verifier = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(verifier)
 archive_bytes = verifier.read_file(gauntlet, archive_info['path'], max_bytes=verifier.MAX_ARCHIVE_BYTES)
 assert sha(archive_bytes) == archive_info['sha256'] and len(archive_bytes) == archive_info['bytes']
 home_pattern = re.compile(rb'(?i)[a-z]:(?:\\+|/)Users(?:\\+|/)[A-Za-z0-9._-]+')
@@ -150,6 +123,8 @@ with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
             assert row['archive'] == archive_info['path']
             raw = payloads[row['path']]
         else:
+            target = gauntlet/row['path']
+            assert target.resolve().is_relative_to(gauntlet.resolve())
             raw = verifier.read_file(gauntlet, row['path'])
         assert sha(raw) == row['sha256'] and len(raw) == row['bytes'], row['path']
     for capture in manifest['captures']:
@@ -161,13 +136,13 @@ with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
     receipt['gauntlet'] = {'archive_members': len(members), 'verified_file_rows': len(manifest['files']),
                            'verified_capture_logs': len(manifest['captures']),
                            'corrected_archive_members': len(manifest['publication_correction']['changed_members']),
-                           'archive_sha256': sha(archive_bytes), 'manifest_git_sha256': sha(manifest_bytes),
+                           'archive_sha256': sha(archive_bytes), 'manifest_git_sha256': sha((gauntlet/'manifest.json').read_bytes()),
                            'personal_path_scan': 'passed for public gauntlet metadata, report and archive text; screenshots unchanged'}
-no_personal_path('gauntlet manifest', manifest_bytes)
+no_personal_path('gauntlet manifest', (gauntlet/'manifest.json').read_bytes())
 no_personal_path('gauntlet report', git_report)
 receipt['source_unchanged'] = (tree == git('write-tree').decode().strip() and
     not git('diff', '--name-only').strip() and
-    all(sha(verifier.read_file(fixture, row['path'])) == row['executed_sha256'] for row in receipt['files']))
+    all(sha((fixture/row['path']).read_bytes()) == row['executed_sha256'] for row in receipt['files']))
 assert receipt['source_unchanged']
 receipt.update(status='passed', finished_at_utc=datetime.now(timezone.utc).isoformat())
 receipt_path.write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf-8')

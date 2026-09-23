@@ -9,6 +9,7 @@ import tempfile
 import unittest
 
 DRIVER = Path(__file__).resolve().with_name('verify_pr362_staged_evidence.py')
+FILE_LIMIT = 8 * 1024 * 1024
 
 
 class StagedEvidenceDriver(unittest.TestCase):
@@ -50,6 +51,92 @@ class StagedEvidenceDriver(unittest.TestCase):
         self.assertIn(message, result.stderr)
         self.assertNotIn('"status": "passed"', result.stdout)
         self.assertFalse(output.exists(), 'Rejected admission created evidence output.')
+
+    def reject_input(self, repo, validation, output, message):
+        result = self.invoke('--repository', repo, '--validation', validation,
+                             '--output-directory', output)
+        self.assert_no_receipt(result, output, message)
+
+    def directory_link(self, link, target):
+        if os.name == 'nt':
+            result = subprocess.run(['cmd', '/d', '/c', 'mklink', '/J', str(link), str(target)],
+                                    capture_output=True, text=True, timeout=30, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+            self.addCleanup(os.rmdir, link)
+        else:
+            link.symlink_to(target, target_is_directory=True)
+            self.addCleanup(link.unlink)
+
+    def test_oversized_validation_is_rejected_before_materialization(self):
+        root, repo, validation, _ = self.fixture()
+        # Still valid JSON: rejection must be the byte boundary, not parsing.
+        with validation.open('ab') as stream:
+            stream.write(b' ' * FILE_LIMIT)
+        self.reject_input(repo, validation, root / 'evidence', 'evidence file exceeds byte limit')
+
+    def test_oversized_gate_log_is_rejected_even_with_matching_digest(self):
+        root, repo, validation, record = self.fixture()
+        gate_log = root / 'gate.log'
+        gate_log.write_bytes(b'x' * (FILE_LIMIT + 1))
+        digest = hashlib.sha256(gate_log.read_bytes()).hexdigest()
+        for row in record['checks']:
+            row['sha256'] = digest
+        validation.write_text(json.dumps(record), encoding='utf-8')
+        self.reject_input(repo, validation, root / 'evidence', 'evidence file exceeds byte limit')
+
+    def test_hardlinked_validation_is_rejected_before_materialization(self):
+        root, repo, validation, _ = self.fixture()
+        os.link(validation, root / 'validation-alias.json')
+        self.assertEqual(validation.stat().st_nlink, 2)
+        self.reject_input(repo, validation, root / 'evidence', 'hard-linked evidence entry')
+
+    def test_hardlinked_gate_log_is_rejected_even_with_matching_digest(self):
+        root, repo, validation, _ = self.fixture()
+        os.link(root / 'gate.log', root / 'gate-alias.log')
+        self.assertEqual((root / 'gate.log').stat().st_nlink, 2)
+        self.reject_input(repo, validation, root / 'evidence', 'hard-linked evidence entry')
+
+    def test_linked_validation_ancestor_is_rejected_before_resolution(self):
+        root, repo, validation, _ = self.fixture()
+        inputs = root / 'inputs'
+        inputs.mkdir()
+        validation.rename(inputs / validation.name)
+        alias = root / 'input-alias'
+        self.directory_link(alias, inputs)
+        self.reject_input(repo, alias / validation.name, root / 'evidence', 'linked evidence path')
+
+    def test_linked_gate_log_ancestor_is_rejected_before_resolution(self):
+        root, repo, validation, record = self.fixture()
+        inputs = root / 'inputs'
+        inputs.mkdir()
+        (root / 'gate.log').rename(inputs / 'gate.log')
+        alias = root / 'input-alias'
+        self.directory_link(alias, inputs)
+        for row in record['checks']:
+            row['log'] = str(alias / 'gate.log')
+        validation.write_text(json.dumps(record), encoding='utf-8')
+        self.reject_input(repo, validation, root / 'evidence', 'linked evidence path')
+
+    def test_linked_repository_ancestor_is_rejected_before_resolution(self):
+        root, repo, validation, _ = self.fixture()
+        alias = root / 'source-alias'
+        self.directory_link(alias, repo)
+        self.reject_input(alias, validation, root / 'evidence', 'linked evidence path')
+
+    def test_oversized_staged_blob_is_rejected_before_materialization(self):
+        root, repo, validation, record = self.fixture()
+        source = repo / 'tools/test_public_evidence_verifier.py'
+        source.parent.mkdir()
+        source.write_bytes(b'#' * (FILE_LIMIT + 1))
+        report = repo / 'docs/evidence/2026-09-21-pr362-gauntlet-remediation.md'
+        report.parent.mkdir(parents=True)
+        report.write_bytes(b'Owned source-admission fixture.\n')
+        subprocess.run(['git', '-C', str(repo), 'add', '--', str(source), str(report)],
+                       check=True, capture_output=True, timeout=30)
+        record['staged_tree'] = subprocess.check_output(
+            ['git', '-C', str(repo), 'write-tree'], timeout=30).decode().strip()
+        validation.write_text(json.dumps(record), encoding='utf-8')
+        self.reject_input(repo, validation, root / 'evidence', 'Staged evidence blob exceeds byte limit')
 
     def reject_optimized(self, **kwargs):
         with tempfile.TemporaryDirectory(prefix='ecorp-evidence-optimized-test-') as temporary:
