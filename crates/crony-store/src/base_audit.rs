@@ -351,7 +351,7 @@ fn retain_known_receipt_fee(
 
 async fn record_inclusion_tx(
     tx: &mut Transaction<'_, Postgres>,
-    claim: &BaseClaim,
+    intent: &BaseIntent,
     receipt: &ReceiptEvidence,
     block: &SealedHeader,
     require_prior: bool,
@@ -362,11 +362,11 @@ async fn record_inclusion_tx(
         "unsealed or noncanonical receipt"
     );
     let known: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM base_audit_signed_results s JOIN base_audit_attempts a ON a.id=s.attempt_id AND a.corp_id=s.corp_id WHERE a.corp_id=$1 AND a.intent_id=$2 AND s.tx_hash=$3)")
-        .bind(claim.intent.corp_id).bind(claim.intent.id).bind(receipt.receipt.transaction_hash.to_string()).fetch_one(&mut **tx).await?;
+        .bind(intent.corp_id).bind(intent.id).bind(receipt.receipt.transaction_hash.to_string()).fetch_one(&mut **tx).await?;
     ensure!(known, "receipt does not match any durable signed attempt");
     let identity = format!("{}:{}", receipt.receipt.transaction_hash, block.hash);
     let original: Option<Value> = sqlx::query_scalar("SELECT evidence FROM base_audit_evidence WHERE corp_id=$1 AND destination_id=$2 AND intent_id=$3 AND kind='inclusion' AND identity=$4")
-        .bind(claim.intent.corp_id).bind(claim.intent.destination_id).bind(claim.intent.id)
+        .bind(intent.corp_id).bind(intent.destination_id).bind(intent.id)
         .bind(&identity).fetch_optional(&mut **tx).await?;
     ensure!(
         !require_prior || original.is_some(),
@@ -378,7 +378,7 @@ async fn record_inclusion_tx(
         let original_block: SealedHeader = serde_json::from_value(original["block"].clone())?;
         ensure!(original_block == *block, "included header changed");
         let enriched: Option<Value> = sqlx::query_scalar("SELECT evidence->'receipt' FROM base_audit_evidence WHERE corp_id=$1 AND destination_id=$2 AND intent_id=$3 AND kind='inclusion_fee_enriched' AND identity=$4")
-            .bind(claim.intent.corp_id).bind(claim.intent.destination_id).bind(claim.intent.id)
+            .bind(intent.corp_id).bind(intent.destination_id).bind(intent.id)
             .bind(&identity).fetch_optional(&mut **tx).await?;
         let prior: ReceiptEvidence = enriched
             .map(serde_json::from_value)
@@ -388,9 +388,9 @@ async fn record_inclusion_tx(
         if original_receipt.l1_fee.is_none() && effective.l1_fee.is_some() {
             evidence_tx(
                 tx,
-                claim.intent.corp_id,
-                claim.intent.destination_id,
-                Some(claim.intent.id),
+                intent.corp_id,
+                intent.destination_id,
+                Some(intent.id),
                 "inclusion_fee_enriched",
                 &identity,
                 &json!({"receipt":effective,"block":block,"fees":effective.cost()?}),
@@ -401,9 +401,9 @@ async fn record_inclusion_tx(
     } else {
         evidence_tx(
             tx,
-            claim.intent.corp_id,
-            claim.intent.destination_id,
-            Some(claim.intent.id),
+            intent.corp_id,
+            intent.destination_id,
+            Some(intent.id),
             "inclusion",
             &identity,
             &json!({"receipt":receipt,"block":block,"fees":receipt.cost()?}),
@@ -414,7 +414,7 @@ async fn record_inclusion_tx(
     let cost = effective.cost()?;
     let settled = cost.total_wei.unwrap_or(cost.execution_wei);
     let liability: String = sqlx::query_scalar("SELECT COALESCE(max(liability),0)::text FROM base_audit_attempts WHERE corp_id=$1 AND intent_id=$2")
-        .bind(claim.intent.corp_id).bind(claim.intent.id).fetch_one(&mut **tx).await?;
+        .bind(intent.corp_id).bind(intent.id).fetch_one(&mut **tx).await?;
     let reservation = if cost.total_wei.is_some() {
         U256::ZERO
     } else {
@@ -426,8 +426,8 @@ async fn record_inclusion_tx(
         .date_naive()
         .with_day(1)
         .context("invalid UTC inclusion month")?;
-    sqlx::query("UPDATE base_audit_intents SET state='included',settled=$3::numeric,inclusion_month=$4,reservation=$5::numeric,fee_warning=$6 WHERE corp_id=$1 AND id=$2")
-        .bind(claim.intent.corp_id).bind(claim.intent.id).bind(settled.to_string()).bind(month)
+    sqlx::query("UPDATE base_audit_intents SET state=CASE WHEN terminal THEN state ELSE 'included' END,settled=$3::numeric,inclusion_month=$4,reservation=$5::numeric,fee_warning=$6 WHERE corp_id=$1 AND id=$2")
+        .bind(intent.corp_id).bind(intent.id).bind(settled.to_string()).bind(month)
         .bind(reservation.to_string()).bind(cost.total_wei.is_none()).execute(&mut **tx).await?;
     Ok(effective)
 }
@@ -1023,7 +1023,7 @@ impl PgStore {
     }
 
     pub async fn base_has_unresolved_attempt(&self, corp: Uuid, destination: Uuid) -> Result<bool> {
-        Ok(sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM base_audit_intents WHERE corp_id=$1 AND destination_id=$2 AND NOT terminal AND nonce IS NOT NULL)")
+        Ok(sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM base_audit_intents WHERE corp_id=$1 AND destination_id=$2 AND nonce IS NOT NULL AND (NOT terminal OR fee_warning))")
             .bind(corp).bind(destination).fetch_one(&self.pool).await?)
     }
 
@@ -1671,7 +1671,64 @@ impl PgStore {
     ) -> Result<()> {
         let mut tx = self.pool.begin().await?;
         fenced_tx(&mut tx, claim, false).await?;
-        record_inclusion_tx(&mut tx, claim, receipt, block, false).await?;
+        record_inclusion_tx(&mut tx, &claim.intent, receipt, block, false).await?;
+        tx.commit().await?;
+        Ok(())
+    }
+
+    /// Revisit terminal spend receipts within the existing bounded observation sweep.
+    /// Unlike event scanning this also finds reverted and successful no-op transactions.
+    pub async fn base_terminal_fee_receipts(
+        &self,
+        corp: Uuid,
+        destination: Uuid,
+        evidence_ids: &[i64],
+    ) -> Result<Vec<(i64, ReceiptEvidence)>> {
+        ensure!(
+            evidence_ids.len() <= crate::base_observations::OBSERVATION_PAGE_ROWS as usize,
+            "terminal fee page exceeds observation bound"
+        );
+        let rows = sqlx::query("SELECT e.id,e.evidence->'receipt' AS receipt FROM base_audit_evidence e JOIN base_audit_intents i ON i.corp_id=e.corp_id AND i.id=e.intent_id AND i.destination_id=e.destination_id WHERE e.corp_id=$1 AND e.destination_id=$2 AND e.id=ANY($3) AND e.kind='spend_finalized' AND i.terminal AND i.fee_warning ORDER BY e.id")
+            .bind(corp).bind(destination).bind(evidence_ids).fetch_all(&self.pool).await?;
+        rows.into_iter()
+            .map(|row| Ok((row.get("id"), serde_json::from_value(row.get("receipt"))?)))
+            .collect()
+    }
+
+    /// Trusted scanner only, after both providers corroborate the retained canonical receipt.
+    /// No claim is minted: terminal status, leases, nonce and publication authority stay closed.
+    pub async fn reconcile_base_terminal_fee(
+        &self,
+        corp: Uuid,
+        destination: Uuid,
+        evidence_id: i64,
+        receipt: &ReceiptEvidence,
+        block: &SealedHeader,
+    ) -> Result<()> {
+        ensure!(receipt.l1_fee.is_some(), "terminal L1 fee remains unknown");
+        let mut tx = self.pool.begin().await?;
+        lock_sender_lane_tx(&mut tx, corp, destination).await?;
+        let status: String = sqlx::query_scalar(
+            "SELECT status FROM base_audit_destinations WHERE corp_id=$1 AND id=$2 FOR UPDATE",
+        )
+        .bind(corp)
+        .bind(destination)
+        .fetch_one(&mut *tx)
+        .await?;
+        ensure!(
+            !terminal_base_incident(&status),
+            "terminal integrity incident requires linked recovery"
+        );
+        let row = sqlx::query("SELECT i.*,e.evidence FROM base_audit_intents i JOIN base_audit_evidence e ON e.corp_id=i.corp_id AND e.intent_id=i.id AND e.destination_id=i.destination_id WHERE i.corp_id=$1 AND i.destination_id=$2 AND e.id=$3 AND e.kind='spend_finalized' AND i.terminal AND i.state IN ('finalized','reverted') FOR UPDATE OF i")
+            .bind(corp).bind(destination).bind(evidence_id).fetch_one(&mut *tx).await?;
+        let prior: Value = row.get("evidence");
+        let prior_receipt: ReceiptEvidence = serde_json::from_value(prior["receipt"].clone())?;
+        receipt.ensure_successor_of(&prior_receipt)?;
+        ensure!(
+            prior["block"] == serde_json::to_value(block)?,
+            "finalized inclusion changed"
+        );
+        record_inclusion_tx(&mut tx, &intent_row(&row)?, receipt, block, true).await?;
         tx.commit().await?;
         Ok(())
     }
@@ -1871,7 +1928,7 @@ impl PgStore {
         }
         // Finality may be the first observation with the L1 fee. Enrich its
         // immutable receipt evidence and settle the reservation in this same tx.
-        let receipt = record_inclusion_tx(&mut tx, claim, receipt, block, true).await?;
+        let receipt = record_inclusion_tx(&mut tx, &claim.intent, receipt, block, true).await?;
         let identity = format!("{}:{}", receipt.receipt.transaction_hash, block.hash);
         let prior: Option<Value> = sqlx::query_scalar("SELECT evidence FROM base_audit_evidence WHERE corp_id=$1 AND destination_id=$2 AND intent_id=$3 AND kind='spend_finalized' AND identity=$4")
             .bind(claim.intent.corp_id).bind(claim.intent.destination_id).bind(claim.intent.id)

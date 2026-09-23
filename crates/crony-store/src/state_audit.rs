@@ -667,8 +667,10 @@ impl PgStore {
         sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
             .execute(&mut *tx)
             .await?;
-        // Network work holds only the destination row, never the governed head.
-        let Some(d)=sqlx::query("SELECT corp_id,config,last_commit,last_checkpoint_digest,interval_seconds,calendar_schedule,overdue_after_seconds,workflow_gate FROM state_audit_destinations WHERE id=$1 AND kind='github' AND publication_disabled=false AND next_due<=now() FOR UPDATE SKIP LOCKED").bind(destination).fetch_optional(&mut *tx).await? else {tx.commit().await?;return Ok(false)};
+        // Serialize destination updates without blocking the key-share locks
+        // taken by a new checkpoint's outbox foreign keys. Publication never
+        // changes the destination identity or holds the governed ledger head.
+        let Some(d)=sqlx::query("SELECT corp_id,config,last_commit,last_checkpoint_digest,interval_seconds,calendar_schedule,overdue_after_seconds,workflow_gate FROM state_audit_destinations WHERE id=$1 AND kind='github' AND publication_disabled=false AND next_due<=now() FOR NO KEY UPDATE SKIP LOCKED").bind(destination).fetch_optional(&mut *tx).await? else {tx.commit().await?;return Ok(false)};
         let corp: Uuid = d.get("corp_id");
         let config: GitHubDestination = serde_json::from_value(d.get("config"))?;
         let schedule = AuditDestination {

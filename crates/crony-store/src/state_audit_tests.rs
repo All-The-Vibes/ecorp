@@ -1188,10 +1188,25 @@ pub(super) struct PublicationFixture {
     fail: std::sync::Mutex<Option<usize>>,
     rewritten: std::sync::Mutex<bool>,
     rewrite_after_writes: Option<usize>,
+    head_gate: std::sync::Mutex<
+        Option<(
+            tokio::sync::oneshot::Sender<()>,
+            tokio::sync::oneshot::Receiver<()>,
+        )>,
+    >,
 }
 impl crony_audit::PublicationTransport for PublicationFixture {
     fn head(&self) -> futures_util::future::BoxFuture<'_, Result<String>> {
-        Box::pin(async { Ok("fixture-head".into()) })
+        Box::pin(async {
+            let gate = self.head_gate.lock().unwrap().take();
+            if let Some((entered, release)) = gate {
+                entered
+                    .send(())
+                    .map_err(|_| anyhow!("transport observer dropped"))?;
+                release.await.context("transport release dropped")?;
+            }
+            Ok("fixture-head".into())
+        })
     }
     fn descends_from<'a>(
         &'a self,
@@ -1230,6 +1245,204 @@ impl crony_audit::PublicationTransport for PublicationFixture {
             Ok(())
         })
     }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn pr293_f01_publication_does_not_block_checkpoint_or_governance(pool: PgPool) -> Result<()> {
+    use std::time::Duration;
+    use tokio::time::{sleep, timeout};
+
+    let (store, ids, mission, contract, policy) = fixture(pool).await?;
+    store
+        .initialize_state_audit(ids.corp_id, ids.alice_actor_id, Uuid::new_v4())
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    let key = crony_audit::SigningKey::from_bytes(&[7; 32]);
+    let old = store
+        .audit_checkpoint(ids.corp_id, "fixture-key", &key)
+        .await?;
+    let destination = state_audit::AuditDestination {
+        id: Uuid::new_v4(),
+        corp_id: ids.corp_id,
+        kind: "github".into(),
+        interval_seconds: 60,
+        calendar_schedule: None,
+        overdue_after_seconds: 3600,
+        workflow_gate: "published".into(),
+        config: json!({"repository":"fixture/audit","branch":"main","path":"audit"}),
+    };
+    store
+        .configure_audit_destination(ids.alice_actor_id, &destination)
+        .await?;
+    let (entered_tx, entered_rx) = tokio::sync::oneshot::channel();
+    let (release_tx, release_rx) = tokio::sync::oneshot::channel();
+    let remote = std::sync::Arc::new(PublicationFixture {
+        head_gate: std::sync::Mutex::new(Some((entered_tx, release_rx))),
+        ..Default::default()
+    });
+    let publisher = {
+        let store = store.clone();
+        let remote = remote.clone();
+        let public_key = key.verifying_key();
+        tokio::spawn(async move {
+            store
+                .publish_audit_destination(destination.id, remote.as_ref(), &public_key)
+                .await
+        })
+    };
+    timeout(Duration::from_secs(10), entered_rx).await??;
+    let publisher_pid: i32 = sqlx::query_scalar(
+        "SELECT pid FROM pg_stat_activity WHERE datname=current_database()
+         AND state='idle in transaction' AND query LIKE '%FROM state_audit_signing_keys%'",
+    )
+    .fetch_one(&store.pool)
+    .await?;
+
+    // A competing real publisher must skip the held destination, not enter transport.
+    assert!(
+        !timeout(
+            Duration::from_secs(5),
+            store.publish_audit_destination(destination.id, remote.as_ref(), &key.verifying_key()),
+        )
+        .await??
+    );
+    assert_eq!(*remote.writes.lock().unwrap(), 0);
+    let mut input = CreateMissionContractRevisionInput {
+        corp_id: ids.corp_id,
+        actor_id: ids.alice_actor_id,
+        mission_id: mission.mission_id,
+        task_id: mission.task_ids[0],
+        expected_contract_version: 1,
+        next_action: MissionContractRevisionAction::Redispatch,
+        source_run_id: None,
+        reason: "reviewed".into(),
+        idempotency_key: Uuid::new_v4(),
+        description: "Changed while publication is in transport".into(),
+        contract,
+        verification_policy: policy,
+    };
+    timeout(
+        Duration::from_secs(5),
+        store.create_mission_contract_revision(input.clone()),
+    )
+    .await??;
+    let checkpoint = {
+        let store = store.clone();
+        tokio::spawn(async move {
+            store
+                .audit_checkpoint(ids.corp_id, "fixture-key", &key)
+                .await
+        })
+    };
+    // Start the next mutation only after checkpoint completion or its actual FK wait.
+    timeout(Duration::from_secs(10), async {
+        loop {
+            if checkpoint.is_finished()
+                || sqlx::query_scalar::<_, bool>(
+                    "SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database()
+                     AND query LIKE 'INSERT INTO state_audit_checkpoints%'
+                     AND $1=ANY(pg_blocking_pids(pid)))",
+                )
+                .bind(publisher_pid)
+                .fetch_one(&store.pool)
+                .await?
+            {
+                return Ok::<_, anyhow::Error>(());
+            }
+            sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await??;
+    input.expected_contract_version = 2;
+    input.idempotency_key = Uuid::new_v4();
+    input.description = "Governance after concurrent checkpoint".into();
+    let request_id = input.idempotency_key;
+    let mutation = {
+        let store = store.clone();
+        tokio::spawn(async move { store.create_mission_contract_revision(input).await })
+    };
+    let progressed = timeout(Duration::from_secs(5), async {
+        while !checkpoint.is_finished() || !mutation.is_finished() {
+            sleep(Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .is_ok();
+    let waits: Vec<(i32, String, Vec<i32>)> = sqlx::query_as(
+        "SELECT pid,query,pg_blocking_pids(pid) FROM pg_stat_activity
+         WHERE datname=current_database() AND wait_event_type='Lock' ORDER BY pid",
+    )
+    .fetch_all(&store.pool)
+    .await?;
+    eprintln!(
+        "F01 before transport release: publisher_pid={publisher_pid}, progressed={progressed}, waits={waits:?}"
+    );
+    let transitive_wait = waits.iter().any(|(checkpoint_pid, query, blockers)| {
+        query.starts_with("INSERT INTO state_audit_checkpoints")
+            && blockers.contains(&publisher_pid)
+            && waits.iter().any(|(_, query, blockers)| {
+                query.contains("FROM state_audit_ledgers") && blockers.contains(checkpoint_pid)
+            })
+    });
+    assert!(!publisher.is_finished(), "transport must still be held");
+    release_tx
+        .send(())
+        .map_err(|_| anyhow!("publisher dropped transport"))?;
+    let (published, checkpoint, mutation) = timeout(Duration::from_secs(10), async {
+        tokio::join!(publisher, checkpoint, mutation)
+    })
+    .await?;
+    assert!(published??);
+    let checkpoint = checkpoint??;
+    mutation??;
+    assert_eq!(checkpoint.checkpoint.last_sequence, 2);
+    assert_eq!(
+        checkpoint.checkpoint.previous_checkpoint_digest,
+        Some(old.digest.clone())
+    );
+    let receipt = store
+        .audit_receipt(ids.corp_id, ids.alice_actor_id, request_id)
+        .await?
+        .context("missing concurrent mutation receipt")?;
+    assert_eq!(receipt.sequence, 3);
+    assert_eq!(receipt.decision, "accepted");
+    let receipts: Vec<(String, String)> = sqlx::query_as(
+        "SELECT checkpoint_digest,status FROM state_audit_anchor_receipts WHERE destination_id=$1",
+    )
+    .bind(destination.id)
+    .fetch_all(&store.pool)
+    .await?;
+    assert!(receipts.contains(&(old.digest, "published".into())));
+    assert!(receipts.contains(&(checkpoint.digest, "pending".into())));
+    assert!(
+        !store
+            .audit_workflow_gate_satisfied(ids.corp_id, destination.id, 3)
+            .await?
+    );
+    let row = sqlx::query(
+        "SELECT corp_id,config,last_published_sequence FROM state_audit_destinations WHERE id=$1",
+    )
+    .bind(destination.id)
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(row.get::<Uuid, _>("corp_id"), ids.corp_id);
+    assert_eq!(row.get::<Value, _>("config"), destination.config);
+    assert_eq!(row.get::<i64, _>("last_published_sequence"), 1);
+    eprintln!(
+        "F01 after release: publication=1, checkpoint=2, accepted mutation=3; competing publisher skipped; newer receipt pending; gate remains closed; transitive_wait={transitive_wait}"
+    );
+    assert!(
+        progressed,
+        "F01: held publisher blocked checkpoint and governed mutation; observed_transitive_fk_wait={transitive_wait}"
+    );
+    assert!(
+        waits.is_empty(),
+        "successful concurrent operations left lock waiters"
+    );
+    Ok(())
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]

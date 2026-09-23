@@ -184,6 +184,194 @@ async fn base_v2_fee_enrichment_at_finality_is_atomic_and_replayable(pool: PgPoo
     check_fee_enrichment(pool, true).await
 }
 
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL; run base_v2_ with --ignored"]
+async fn base_v2_terminal_fee_settlement_is_scoped_serialized_and_monotonic(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, ids, input) = base_fixture(pool).await?;
+    let claim = archived_claim(&store, &ids, &input).await?;
+    let attempt = store
+        .reserve_base_attempt(&claim, &quote(), U256::from(9_000_000), 0, false)
+        .await?;
+    let signed = sign_fixture(&attempt).await?;
+    store
+        .persist_base_signed(&claim, &attempt.request, &signed, 1)
+        .await?;
+    let (missing, block) = receipt_fixture(&attempt, signed.hash(), false, None)?;
+    let mut raw = missing.raw;
+    raw["status"] = json!("0x0");
+    let missing = ReceiptEvidence::parse(raw.clone())?;
+    store
+        .record_base_inclusion(&claim, &missing, &block)
+        .await?;
+    store
+        .record_base_spend_finality(&claim, &missing, &block, &finality_fixture(&block))
+        .await?;
+    let evidence_id: i64 = sqlx::query_scalar(
+        "SELECT id FROM base_audit_evidence WHERE intent_id=$1 AND kind='spend_finalized'",
+    )
+    .bind(claim.intent.id)
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(
+        store
+            .base_terminal_fee_receipts(ids.corp_id, input.id, &[evidence_id])
+            .await?
+            .len(),
+        1
+    );
+    assert!(
+        store
+            .base_terminal_fee_receipts(Uuid::new_v4(), input.id, &[evidence_id])
+            .await?
+            .is_empty()
+    );
+    assert!(
+        store
+            .base_terminal_fee_receipts(ids.corp_id, input.id, &[evidence_id; 65])
+            .await
+            .is_err()
+    );
+    let before: Value = sqlx::query_scalar("SELECT to_jsonb(i)-'settled'-'reservation'-'fee_warning' FROM base_audit_intents i WHERE id=$1")
+        .bind(claim.intent.id).fetch_one(&store.pool).await?;
+    let lane: Value = sqlx::query_scalar(
+        "SELECT to_jsonb(l) FROM base_audit_sender_lanes l WHERE chain_id=$1 AND sender=$2",
+    )
+    .bind(i64::try_from(input.config.chain_id)?)
+    .bind(input.config.publisher.as_slice())
+    .fetch_one(&store.pool)
+    .await?;
+    raw["l1Fee"] = json!("0x3e8");
+    let known = ReceiptEvidence::parse(raw.clone())?;
+    assert!(
+        store
+            .reconcile_base_terminal_fee(Uuid::new_v4(), input.id, evidence_id, &known, &block)
+            .await
+            .is_err()
+    );
+    assert!(
+        store
+            .reconcile_base_terminal_fee(ids.corp_id, Uuid::new_v4(), evidence_id, &known, &block)
+            .await
+            .is_err()
+    );
+    assert!(
+        store
+            .reconcile_base_terminal_fee(ids.corp_id, input.id, -1, &known, &block)
+            .await
+            .is_err()
+    );
+    assert!(
+        store
+            .reconcile_base_terminal_fee(ids.corp_id, input.id, evidence_id, &missing, &block)
+            .await
+            .is_err()
+    );
+    // Accounting must serialize with signing/budget admission on the same wallet.
+    let mut holder = store.pool.begin().await?;
+    sqlx::query(
+        "SELECT chain_id FROM base_audit_sender_lanes WHERE chain_id=$1 AND sender=$2 FOR UPDATE",
+    )
+    .bind(i64::try_from(input.config.chain_id)?)
+    .bind(input.config.publisher.as_slice())
+    .execute(&mut *holder)
+    .await?;
+    let writer = store.clone();
+    let receipt = known.clone();
+    let header = block.clone();
+    let mut settlement = tokio::spawn(async move {
+        writer
+            .reconcile_base_terminal_fee(ids.corp_id, input.id, evidence_id, &receipt, &header)
+            .await
+    });
+    assert!(
+        tokio::time::timeout(std::time::Duration::from_millis(100), &mut settlement)
+            .await
+            .is_err()
+    );
+    holder.commit().await?;
+    settlement.await??;
+    let (first, second) = tokio::join!(
+        store.reconcile_base_terminal_fee(ids.corp_id, input.id, evidence_id, &known, &block),
+        store.reconcile_base_terminal_fee(ids.corp_id, input.id, evidence_id, &known, &block),
+    );
+    first?;
+    second?;
+    for (field, value) in [
+        ("l1Fee", json!("0x3e9")),
+        ("gasUsed", json!("0x2711")),
+        ("status", json!("0x1")),
+        ("transactionHash", json!(B256::repeat_byte(99))),
+    ] {
+        let mut changed = raw.clone();
+        changed[field] = value;
+        assert!(
+            store
+                .reconcile_base_terminal_fee(
+                    ids.corp_id,
+                    input.id,
+                    evidence_id,
+                    &ReceiptEvidence::parse(changed)?,
+                    &block
+                )
+                .await
+                .is_err(),
+            "{field}"
+        );
+    }
+    let after: Value = sqlx::query_scalar("SELECT to_jsonb(i)-'settled'-'reservation'-'fee_warning' FROM base_audit_intents i WHERE id=$1")
+        .bind(claim.intent.id).fetch_one(&store.pool).await?;
+    assert_eq!(before, after, "only accounting columns may change");
+    let after_lane: Value = sqlx::query_scalar(
+        "SELECT to_jsonb(l) FROM base_audit_sender_lanes l WHERE chain_id=$1 AND sender=$2",
+    )
+    .bind(i64::try_from(input.config.chain_id)?)
+    .bind(input.config.publisher.as_slice())
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(lane, after_lane);
+    let account: (String, String, bool) = sqlx::query_as(
+        "SELECT settled::text,reservation::text,fee_warning FROM base_audit_intents WHERE id=$1",
+    )
+    .bind(claim.intent.id)
+    .fetch_one(&store.pool)
+    .await?;
+    assert_eq!(account, ("51000".into(), "0".into(), false));
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM base_audit_evidence WHERE intent_id=$1 AND kind='inclusion_fee_enriched'")
+        .bind(claim.intent.id).fetch_one(&store.pool).await?;
+    assert_eq!(count, 1);
+    // Destination is still enabled/validated: rejection must come from terminal authority.
+    assert!(
+        store
+            .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
+            .await?
+            .is_none()
+    );
+    assert!(store.check_base_fence(&claim).await.is_err());
+    assert!(
+        store
+            .authorized_base_attempt(ids.corp_id, attempt.request.attempt_id)
+            .await
+            .is_err()
+    );
+    assert!(
+        store
+            .reserve_base_attempt(&claim, &quote(), U256::from(9_000_000), 1, false)
+            .await
+            .is_err()
+    );
+    sqlx::query("UPDATE base_audit_destinations SET status='finalized_contradiction',enabled=false,restore_required=true WHERE id=$1")
+        .bind(input.id).execute(&store.pool).await?;
+    assert!(
+        store
+            .reconcile_base_terminal_fee(ids.corp_id, input.id, evidence_id, &known, &block)
+            .await
+            .is_err()
+    );
+    Ok(())
+}
+
 async fn check_fee_enrichment(pool: PgPool, at_finality: bool) -> Result<()> {
     let (store, ids, input) = base_fixture(pool).await?;
     let claim = archived_claim(&store, &ids, &input).await?;

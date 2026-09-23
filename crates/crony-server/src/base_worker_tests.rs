@@ -177,6 +177,8 @@ struct ObservationRpc {
     blocks: Arc<std::sync::Mutex<Vec<u64>>>,
     forks: Arc<std::sync::Mutex<BTreeMap<u64, B256>>>,
     event: Arc<std::sync::Mutex<Option<ObservationEvent>>>,
+    receipts: Arc<AtomicUsize>,
+    unexpected_effects: Arc<AtomicUsize>,
 }
 
 #[derive(Clone)]
@@ -276,23 +278,40 @@ async fn observation_rpc(
             )
             .unwrap();
             match state.event.lock().unwrap().as_ref() {
-                Some(event) if (from..=to).contains(&event.number) => json!([event.log]),
+                Some(event) if !event.log.is_null() && (from..=to).contains(&event.number) => {
+                    json!([event.log])
+                }
                 _ => json!([]),
             }
         }
         "eth_getTransactionReceipt" => {
+            state.receipts.fetch_add(1, Ordering::SeqCst);
             let event = state.event.lock().unwrap();
-            let event = event.as_ref().expect("fixture receipt");
-            assert_eq!(request["params"][0], event.receipt["transactionHash"]);
-            event.receipt.clone()
+            match event.as_ref() {
+                Some(event) => {
+                    assert_eq!(request["params"][0], event.receipt["transactionHash"]);
+                    event.receipt.clone()
+                }
+                None => Value::Null,
+            }
         }
         "eth_call" => match state.event.lock().unwrap().as_ref() {
             Some(event) => json!(event.head),
             None => json!(format!("0x{}", "0".repeat(64 * 9))),
         },
-        other => panic!("unexpected paging RPC: {other}"),
+        other => {
+            state.unexpected_effects.fetch_add(1, Ordering::SeqCst);
+            panic!("unexpected paging RPC: {other}")
+        }
     };
     axum::Json(json!({"jsonrpc":"2.0","id":request["id"],"result":result}))
+}
+
+async fn observation_unexpected_route(
+    axum::extract::State(state): axum::extract::State<ObservationRpc>,
+) -> axum::http::StatusCode {
+    state.unexpected_effects.fetch_add(1, Ordering::SeqCst);
+    axum::http::StatusCode::FORBIDDEN
 }
 
 async fn observation_connection(
@@ -326,11 +345,16 @@ async fn observation_connection(
     })
 }
 
-#[sqlx::test(migrations = "../../db/migrations")]
-#[ignore = "requires owned PostgreSQL; HTTP fixture binds fresh loopback ports, no Anvil"]
-async fn base_worker_observation_paging_http_restart_and_finalized_boundary(
-    pool: PgPool,
-) -> Result<()> {
+async fn observation_fixture(
+    pool: &PgPool,
+) -> Result<(
+    PgStore,
+    crony_store::DemoIds,
+    BaseDestinationInput,
+    FileSecrets,
+    Vec<ObservationRpc>,
+    Vec<AbortTask>,
+)> {
     let store = PgStore::connect(pool.connect_options().to_url_lossy().as_str()).await?;
     let (ids, ledger) = source_fixture(&store).await?;
     let fixture: Value = serde_json::from_str(include_str!(
@@ -357,7 +381,7 @@ async fn base_worker_observation_paging_http_restart_and_finalized_boundary(
             manifest_digest: signed.digest,
             contract_address: signed.manifest.contract_address,
             stream_id: signed.manifest.stream_id,
-            publisher: Address::repeat_byte(17),
+            publisher: PrivateKeySigner::from_bytes(&B256::repeat_byte(17))?.address(),
             primary_rpc_secret: "fixture/primary".into(),
             secondary_rpc_secret: "fixture/secondary".into(),
             primary_operator: "fixture-one".into(),
@@ -400,6 +424,7 @@ async fn base_worker_observation_paging_http_restart_and_finalized_boundary(
         providers.push(state.clone());
         let router = axum::Router::new()
             .route("/", axum::routing::post(observation_rpc))
+            .fallback(observation_unexpected_route)
             .with_state(state);
         servers.push(AbortTask(tokio::spawn(async move {
             axum::serve(listener, router).await.unwrap()
@@ -414,6 +439,15 @@ async fn base_worker_observation_paging_http_restart_and_finalized_boundary(
         },
     );
     let secrets = FileSecrets(secret_values);
+    Ok((store, ids, input, secrets, providers, servers))
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned PostgreSQL; HTTP fixture binds fresh loopback ports, no Anvil"]
+async fn base_worker_observation_paging_http_restart_and_finalized_boundary(
+    pool: PgPool,
+) -> Result<()> {
+    let (store, ids, input, secrets, providers, _servers) = observation_fixture(&pool).await?;
     let tip = observation_header(20_000);
     sqlx::query("INSERT INTO base_audit_evidence(corp_id,destination_id,kind,identity,evidence) SELECT $1,$2,'inclusion','paging-'||g,jsonb_build_object('block',jsonb_build_object('number',g,'hash','0x'||lpad(to_hex(g+1),64,'0'),'parent_hash','0x'||lpad(to_hex(g),64,'0'),'timestamp',g)) FROM generate_series(1,1056) g")
         .bind(ids.corp_id).bind(input.id).execute(&pool).await?;
@@ -573,6 +607,372 @@ async fn base_worker_observation_paging_http_restart_and_finalized_boundary(
             .status,
         "finalized_contradiction"
     );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports"]
+async fn base_worker_terminal_fee_success_after_restart(pool: PgPool) -> Result<()> {
+    terminal_fee_after_restart(pool, true).await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports"]
+async fn base_worker_terminal_fee_reverted_after_restart(pool: PgPool) -> Result<()> {
+    terminal_fee_after_restart(pool, false).await
+}
+
+async fn terminal_fee_after_restart(pool: PgPool, success: bool) -> Result<()> {
+    let (store, ids, input, secrets, providers, _servers) = observation_fixture(&pool).await?;
+    store
+        .complete_base_validation(
+            ids.corp_id,
+            input.id,
+            crony_store::base_audit::BaseValidation {
+                epoch: "terminal-fee-fixture",
+                cursor: 0,
+                requests: &[],
+                pending_nonce: 0,
+                observation: &json!({"synthetic":true}),
+            },
+        )
+        .await?;
+    store
+        .control_base_destination(ids.corp_id, ids.alice_actor_id, input.id, 1, true)
+        .await?;
+    store
+        .request_base_anchor(ids.corp_id, ids.alice_actor_id, input.id, Uuid::new_v4())
+        .await?;
+    let archive = crony_store::state_audit::AuditDestination {
+        id: Uuid::new_v4(),
+        corp_id: ids.corp_id,
+        kind: "github".into(),
+        interval_seconds: 60,
+        calendar_schedule: None,
+        overdue_after_seconds: 3600,
+        workflow_gate: "published".into(),
+        config: json!({"repository":"fixture/terminal-fee","branch":"main","path":"audit"}),
+    };
+    store
+        .configure_audit_destination(ids.alice_actor_id, &archive)
+        .await?;
+    assert!(
+        store
+            .publish_audit_destination(
+                archive.id,
+                &ArchiveTransport::default(),
+                &crony_audit::SigningKey::from_bytes(&[7; 32]).verifying_key()
+            )
+            .await?
+    );
+    let claim = store
+        .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
+        .await?
+        .context("claim")?;
+    let quote = crony_base::fees::FeeQuote {
+        gas_limit: 100_000,
+        max_fee_per_gas: 5,
+        max_priority_fee_per_gas: 1,
+        l1_data_fee: U256::from(100_000),
+        observed_at: chrono::Utc::now(),
+        fee_model_qualified: true,
+    };
+    let attempt = store
+        .reserve_base_attempt(&claim, &quote, U256::from(9_000_000), 0, false)
+        .await?;
+    let mut transaction = attempt.request.transaction.unsigned()?;
+    let signer = PrivateKeySigner::from_bytes(&B256::repeat_byte(17))?;
+    let signature = signer.sign_transaction(&mut transaction).await?;
+    let raw = TxEnvelope::Eip1559(transaction.into_signed(signature)).encoded_2718();
+    let signed = SignedTransaction::validate(&attempt.request, &raw)?;
+    store
+        .persist_base_signed(&claim, &attempt.request, &signed, 1)
+        .await?;
+    // Older than the scanner's overlap: reverted receipts have no event to discover.
+    let block = observation_header(10);
+    let call = &attempt.request.transaction.call;
+    let data = ECorpCheckpointRegistryV1::Anchored {
+        streamId: call.stream_id,
+        sequence: call.sequence,
+        checkpointDigest: call.checkpoint_digest,
+        previousAnchorDigest: call.previous_anchor_digest,
+        anchorOrdinal: 1,
+        publisher: input.config.publisher,
+    }
+    .encode_log_data();
+    let log = json!({"address":input.config.contract_address,"topics":data.topics(),"data":data.data,
+        "blockHash":block.hash,"blockNumber":"0xa","transactionHash":signed.hash(),
+        "transactionIndex":"0x0","logIndex":"0x0","removed":false});
+    let missing = ReceiptEvidence::parse(json!({
+        "type":"0x2","status":if success {"0x1"} else {"0x0"},
+        "transactionHash":signed.hash(),"transactionIndex":"0x0",
+        "blockHash":block.hash,"blockNumber":"0xa","from":input.config.publisher,
+        "to":input.config.contract_address,"cumulativeGasUsed":"0x2710","gasUsed":"0x2710",
+        "effectiveGasPrice":"0x5","logsBloom":format!("0x{}", "00".repeat(256)),
+        "logs":if success {vec![log.clone()]} else {vec![]},"contractAddress":null,
+    }))?;
+    let observations: Vec<_> = ["fixture-one", "fixture-two"]
+        .into_iter()
+        .map(|provider| FinalityObservation {
+            provider_identity: provider.into(),
+            observed_at: chrono::Utc::now(),
+            finalized: block.clone(),
+            ancestry: vec![],
+            retained_ancestry: None,
+        })
+        .collect();
+    store
+        .record_base_inclusion(&claim, &missing, &block)
+        .await?;
+    store
+        .record_base_spend_finality(&claim, &missing, &block, &observations)
+        .await?;
+    if success {
+        let event =
+            missing.exact_event(input.config.contract_address, call, input.config.publisher)?;
+        store
+            .finalize_base_anchor(
+                &claim,
+                &crony_base::rpc::FinalizedAnchor {
+                    receipt: missing.clone(),
+                    included: block.clone(),
+                    event,
+                    observations,
+                    assurance: Assurance::ProviderObservedFinalized,
+                },
+            )
+            .await?;
+    }
+    let state = if success { "finalized" } else { "reverted" };
+    let account = || async {
+        sqlx::query_as::<_, (String, String, bool, bool, String)>(
+            "SELECT settled::text,reservation::text,fee_warning,terminal,state FROM base_audit_intents WHERE id=$1")
+            .bind(claim.intent.id).fetch_one(&pool).await
+    };
+    let unresolved = ("50000".into(), "570000".into(), true, true, state.into());
+    assert_eq!(account().await?, unresolved);
+    let original: Vec<(i64, Value)> = sqlx::query_as(
+        "SELECT id,evidence FROM base_audit_evidence WHERE intent_id=$1 ORDER BY id",
+    )
+    .bind(claim.intent.id)
+    .fetch_all(&pool)
+    .await?;
+    let d = store
+        .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
+        .await?;
+    store
+        .control_base_destination(ids.corp_id, ids.alice_actor_id, input.id, d.version, false)
+        .await?;
+    store.begin_base_recovery(ids.corp_id, input.id).await?;
+    store
+        .record_base_scan(ids.corp_id, input.id, &observation_header(20_000))
+        .await?;
+    let head = if success {
+        (
+            true,
+            input.manifests[0].manifest.registering_owner,
+            Address::ZERO,
+            input.config.publisher,
+            false,
+            call.sequence,
+            call.checkpoint_digest,
+            call.previous_anchor_digest,
+            1_u64,
+        )
+            .abi_encode_params()
+    } else {
+        vec![0; 32 * 9]
+    };
+    let mut known = missing.raw.clone();
+    known["l1Fee"] = json!("0x3e8");
+    let event = ObservationEvent {
+        number: 10,
+        log: if success { log } else { Value::Null },
+        receipt: known.clone(),
+        head: head.into(),
+    };
+    // Both agreeing providers, fresh connection and pool: actual production scanner.
+    for provider in &providers {
+        *provider.event.lock().unwrap() = Some(event.clone());
+    }
+    let restarted = PgStore::connect(pool.connect_options().to_url_lossy().as_str()).await?;
+    let connection = observation_connection(&input, &secrets).await?;
+    let d = restarted
+        .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
+        .await?;
+    let discoverable = restarted
+        .base_has_unresolved_attempt(ids.corp_id, input.id)
+        .await?;
+    // Disagreement, single-provider and contradictory consensus bytes must not settle.
+    let mut negative_reads = Vec::new();
+    for mode in 0..3 {
+        let mut bad = event.clone();
+        if mode == 0 {
+            bad.receipt["l1Fee"] = json!("0x3e9");
+        }
+        if mode == 2 {
+            bad.receipt["gasUsed"] = json!("0x2711");
+        }
+        *providers[0].event.lock().unwrap() = Some(if mode == 2 {
+            bad.clone()
+        } else {
+            event.clone()
+        });
+        *providers[1].event.lock().unwrap() = if mode == 1 { None } else { Some(bad) };
+        // Original production can skip these receipts entirely; accounting must still be unchanged.
+        let before: Vec<_> = providers
+            .iter()
+            .map(|p| p.receipts.load(Ordering::SeqCst))
+            .collect();
+        let rejected = reconcile_events(&restarted, &d, &connection).await.is_err();
+        negative_reads.push((
+            rejected,
+            providers
+                .iter()
+                .zip(before)
+                .map(|(p, before)| p.receipts.load(Ordering::SeqCst) - before)
+                .collect::<Vec<_>>(),
+        ));
+        assert_eq!(account().await?, unresolved);
+    }
+    for provider in &providers {
+        *provider.event.lock().unwrap() = Some(event.clone());
+    }
+    // A completed prior sweep resets its cursor; allow a bounded second tick.
+    for _ in 0..2 {
+        assert_eq!(
+            reconcile_events(&restarted, &d, &connection).await?,
+            Reconciliation::Complete
+        );
+    }
+    assert_eq!(
+        account().await?,
+        ("51000".into(), "0".into(), false, true, state.into()),
+        "post-terminal L1 fee must settle retained liability without reopening the intent"
+    );
+    assert!(
+        negative_reads
+            .iter()
+            .all(|(rejected, reads)| *rejected && reads == &[1, 1]),
+        "each negative must actually read both providers and reject their receipt data"
+    );
+    // Discovery must retain disabled destinations across restart while fees are unresolved,
+    // and remove this accounting-only obligation once settled.
+    assert!(
+        discoverable,
+        "disabled restart must discover retained fee liability"
+    );
+    assert!(
+        !restarted
+            .base_has_unresolved_attempt(ids.corp_id, input.id)
+            .await?
+    );
+    let settled = account().await?;
+    for receipt in [
+        known.clone(),
+        missing.raw.clone(),
+        {
+            let mut changed = known.clone();
+            changed["l1Fee"] = json!("0x3e9");
+            changed
+        },
+        {
+            let mut changed = known;
+            changed["gasUsed"] = json!("0x2711");
+            changed
+        },
+    ] {
+        for provider in &providers {
+            *provider.event.lock().unwrap() = Some(ObservationEvent {
+                receipt: receipt.clone(),
+                ..event.clone()
+            });
+        }
+        let _ = reconcile_events(&restarted, &d, &connection).await;
+        assert_eq!(account().await?, settled);
+    }
+    for (id, evidence) in original {
+        let retained: Value =
+            sqlx::query_scalar("SELECT evidence FROM base_audit_evidence WHERE id=$1")
+                .bind(id)
+                .fetch_one(&pool)
+                .await?;
+        assert_eq!(retained, evidence);
+    }
+    let enrichments: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM base_audit_evidence WHERE intent_id=$1 AND kind='inclusion_fee_enriched'")
+        .bind(claim.intent.id).fetch_one(&pool).await?;
+    assert_eq!(enrichments, 1);
+    assert!(
+        restarted
+            .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
+            .await?
+            .is_none()
+    );
+    assert!(
+        restarted
+            .authorized_base_attempt(ids.corp_id, attempt.request.attempt_id)
+            .await
+            .is_err()
+    );
+    assert!(
+        restarted
+            .reserve_base_attempt(&claim, &quote, U256::from(9_000_000), 1, false)
+            .await
+            .is_err()
+    );
+    assert!(
+        restarted
+            .persist_base_signed(&claim, &attempt.request, &signed, 2)
+            .await
+            .is_err()
+    );
+    assert!(
+        drive_intent(&restarted, &d, &connection, &claim)
+            .await
+            .is_err()
+    );
+    assert!(
+        restarted
+            .record_base_inclusion(&claim, &missing, &block)
+            .await
+            .is_err()
+    );
+    let after = restarted
+        .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
+        .await?;
+    assert!(!after.enabled && after.restore_required);
+    assert!(
+        restarted
+            .control_base_destination(
+                ids.corp_id,
+                ids.alice_actor_id,
+                input.id,
+                after.version,
+                true
+            )
+            .await
+            .is_err()
+    );
+    assert_eq!(after.version, d.version);
+    assert_eq!(after.status, d.status);
+    let lane: (i64, Option<Uuid>) = sqlx::query_as(
+        "SELECT next_nonce,active_intent FROM base_audit_sender_lanes WHERE chain_id=$1 AND sender=$2")
+        .bind(i64::try_from(input.config.chain_id)?).bind(input.config.publisher.as_slice()).fetch_one(&pool).await?;
+    assert_eq!(lane, (1, None));
+    let attempts: i64 =
+        sqlx::query_scalar("SELECT count(*) FROM base_audit_attempts WHERE intent_id=$1")
+            .bind(claim.intent.id)
+            .fetch_one(&pool)
+            .await?;
+    assert_eq!(attempts, 1);
+    assert!(
+        providers
+            .iter()
+            .all(|p| p.unexpected_effects.load(Ordering::SeqCst) == 0),
+        "terminal reconciliation must not attempt signing, broadcast, or another gateway effect"
+    );
+    restarted.pool().close().await;
     Ok(())
 }
 

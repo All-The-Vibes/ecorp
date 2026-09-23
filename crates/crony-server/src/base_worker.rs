@@ -792,6 +792,24 @@ async fn reconcile_retained_observations(
                 == *tip,
         "canonical observation tip changed while checking page"
     );
+    // Terminal intents are deliberately unclaimable. Their retained spend proof
+    // supplies accounting identity without restoring any signing/broadcast authority.
+    for (evidence_id, prior) in store
+        .base_terminal_fee_receipts(d.corp_id, d.id, &page.evidence_ids)
+        .await?
+    {
+        let (receipt, block) = c
+            .chain
+            .receipt_inclusion(prior.receipt.transaction_hash)
+            .await?
+            .context("terminal finalized receipt unavailable")?;
+        receipt.ensure_successor_of(&prior)?;
+        if receipt.l1_fee.is_some() {
+            store
+                .reconcile_base_terminal_fee(d.corp_id, d.id, evidence_id, &receipt, &block)
+                .await?;
+        }
+    }
     store.acknowledge_base_observation_page(&page, tip).await
 }
 
