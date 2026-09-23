@@ -13,6 +13,8 @@ real missions. The public tour is illustrative; it is not connected to your runn
 | Run my first mission | [User and developer journey](USER_AND_DEVELOPER_JOURNEY.md) |
 | Understand the product and its direction | [Product and technical plan](PRODUCT_AND_TECHNICAL_PLAN.md) |
 | Understand where state and execution live | [Architecture](ARCHITECTURE.md) |
+| Understand the built-in blockchain-as-fabric model | [Trust fabric](TRUST_FABRIC.md) |
+| Understand multiplayer's current foundation and remaining acceptance | [Multiplayer parity and evidence map](multiplayer/U7_PARITY_MATRIX.md) |
 | Review the trust boundary | [Security](SECURITY.md) and [threat model](THREAT_MODEL.md) |
 | Work on ECorp safely | [Contributing](../CONTRIBUTING.md) and [contributor contract](../AGENTS.md) |
 | Operate GitHub issue intake, recovery, and publication | [Dark-factory contributor guide](DARK_FACTORY_CONTRIBUTOR_GUIDE.md) |
@@ -24,7 +26,14 @@ real missions. The public tour is illustrative; it is not connected to your runn
 
 ## Current implementation highlights
 
-- **Mission-owned studios:** three Copilot specialists produce verified handoffs before integration.
+- **Mission-owned teams:** fixed solo, specialist, and Copilot studio strategy
+  presets define roles and bounded task graphs. Skill-driven composition remains
+  future work; the presets are not a permanent product-wide crew limit.
+- **Shared human control:** rooms, durable comments, fenced control leases,
+  queued direction, role-gated decisions, exact-run context, and reconnect/replay.
+- **Trust woven into the work:** source pins, contributor attribution, SHA-256
+  evidence fingerprints, signed provenance, and acceptance records form ECorp's
+  built-in blockchain-as-fabric model.
 - **Explicit launch:** a saved plan stays held until an authorized dispatch, even across restart.
 - **Governed execution:** immutable source selection, isolated task worktrees, human decisions,
   budget limits, and evidence-gated completion.
@@ -38,6 +47,7 @@ Read the security guide before using real workloads.
 
 | Topic | Dated record |
 | --- | --- |
+| Integrated multiplayer UI, freshness, disconnects, exact runs, and development-actor review | [September 17 integration report](evidence/2026-09-17-multiplayer-ui-integration.md) and [remaining parity requirements](multiplayer/U7_PARITY_MATRIX.md) |
 | Mission staffing, real Copilot studio, handoffs, and review limits | [September 6 studio report](evidence/2026-09-06-mission-staffing.md) |
 | Held plans and explicit launch | [September 6 launch-admission report](evidence/2026-09-06-mission-launch-admission.md) |
 | Copilot native filesystem and remaining negative-case coverage | [September 6 filesystem report](evidence/2026-09-06-copilot-native-filesystem.md) |
@@ -53,8 +63,11 @@ evidence scopes.
 
 ## Planning without competing backlogs
 
-[ECorp Build, GitHub Project #3](https://github.com/users/shyamsridhar123/projects/3) and its linked
-issues are the operational source for priorities, ownership, dependencies, and status.
+[ECorp Build, GitHub Project #5](https://github.com/orgs/All-The-Vibes/projects/5) and its linked
+issues are the operational source for new-work priorities, ownership, dependencies, and status.
+Personal [Project #3](https://github.com/users/shyamsridhar123/projects/3) retains existing execution
+lineage and recorded authority. Operators must verify configured routing and follow the
+[shared-authority requirements](DARK_FACTORY_CONTRIBUTOR_GUIDE.md#operating-model) before intake.
 [BACKLOG.md](BACKLOG.md) is historical seed material. The product plan preserves original design
 intent alongside dated implementation checkpoints; future-tense sections are not shipped-feature
 claims.

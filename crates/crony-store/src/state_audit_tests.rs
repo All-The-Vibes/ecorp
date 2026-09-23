@@ -1,6 +1,9 @@
 use super::*;
 use crony_domain::MissionContractRevisionAction;
 
+#[path = "state_audit_factory_replay_tests.rs"]
+mod factory_replay;
+
 async fn fixture(
     pool: PgPool,
 ) -> Result<(

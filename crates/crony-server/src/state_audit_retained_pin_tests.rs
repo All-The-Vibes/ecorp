@@ -1,12 +1,35 @@
 use super::*;
 use crony_audit::PublicationTransport;
 use futures_util::future::BoxFuture;
+use serde_json::Value;
 use sqlx::{ConnectOptions, PgPool};
 use std::{collections::BTreeMap, sync::Mutex};
 
 const PIN: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const OLD: &str = "1111111111111111111111111111111111111111";
 const HEAD: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
+#[test]
+fn retained_witnesses_use_the_transport_commit_grammar() {
+    for (commit, accepted) in [
+        ("a".repeat(40), true),
+        ("A".repeat(40), true),
+        ("a".repeat(39), false),
+        ("a".repeat(41), false),
+        ("a".repeat(64), false),
+        ("z".repeat(40), false),
+        (String::new(), false),
+    ] {
+        let witness = RetainedWitness {
+            corp_id: Uuid::new_v4(),
+            ledger_id: Uuid::new_v4(),
+            checkpoint_digest: "a".repeat(64),
+            github_commit: Some(commit),
+            destination_id: Some(Uuid::new_v4()),
+        };
+        assert_eq!(Service::validate_witnesses(&[witness]).is_ok(), accepted);
+    }
+}
 
 // Same additive, in-memory transport fixture as the publication regressions,
 // with explicit ancestors so an older DB fence cannot stand in for the pin.
@@ -67,8 +90,55 @@ impl PublicationTransport for PublicationFixture {
 async fn fixture(
     pool: &PgPool,
 ) -> anyhow::Result<(PgStore, crony_store::DemoIds, Service, AuditDestination)> {
+    scoped_fixture(pool, false).await
+}
+
+async fn scoped_fixture(
+    pool: &PgPool,
+    distinct_corp: bool,
+) -> anyhow::Result<(PgStore, crony_store::DemoIds, Service, AuditDestination)> {
     let store = PgStore::connect(pool.connect_options().to_url_lossy().as_str()).await?;
-    let (ids, _) = store.bootstrap_demo().await?;
+    let ids = if distinct_corp {
+        let ids = crony_store::DemoIds {
+            corp_id: Uuid::new_v4(),
+            room_id: Uuid::new_v4(),
+            alice_actor_id: Uuid::new_v4(),
+            bob_actor_id: Uuid::new_v4(),
+            eve_actor_id: Uuid::new_v4(),
+            manager_agent_id: Uuid::new_v4(),
+            worker_agent_id: Uuid::new_v4(),
+            codex_agent_id: Uuid::new_v4(),
+        };
+        sqlx::query("INSERT INTO corps(id,slug,name) VALUES($1,$2,'Independent audit Corp')")
+            .bind(ids.corp_id)
+            .bind(format!("audit-fixture-{}", ids.corp_id))
+            .execute(pool)
+            .await?;
+        let worker_actor = Uuid::new_v4();
+        for (actor, kind, role) in [
+            (ids.alice_actor_id, "human", "owner"),
+            (worker_actor, "agent", "engineer"),
+        ] {
+            sqlx::query("INSERT INTO actors(id,corp_id,name,kind,role) VALUES($1,$2,'Audit fixture actor',$3,$4)")
+                .bind(actor).bind(ids.corp_id).bind(kind).bind(role).execute(pool).await?;
+        }
+        sqlx::query("INSERT INTO rooms(id,corp_id,name,purpose) VALUES($1,$2,'Audit fixture','Independent progress')")
+            .bind(ids.room_id).bind(ids.corp_id).execute(pool).await?;
+        for actor in [ids.alice_actor_id, worker_actor] {
+            sqlx::query(
+                "INSERT INTO room_memberships(room_id,actor_id,role) VALUES($1,$2,'member')",
+            )
+            .bind(ids.room_id)
+            .bind(actor)
+            .execute(pool)
+            .await?;
+        }
+        sqlx::query("INSERT INTO agents(id,corp_id,actor_id,name,role,adapter,accent) VALUES($1,$2,$3,'Audit fixture worker','engineer','fake-process','cobalt')")
+            .bind(ids.worker_agent_id).bind(ids.corp_id).bind(worker_actor).execute(pool).await?;
+        ids
+    } else {
+        store.bootstrap_demo().await?.0
+    };
     let ledger = Uuid::new_v4();
     store
         .initialize_state_audit(ids.corp_id, ids.alice_actor_id, ledger)
@@ -168,6 +238,254 @@ async fn assert_disabled(
             .audit_workflow_gate_satisfied(ids.corp_id, destination, 1)
             .await?
     );
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn unavailable_witness_recovers_without_an_integrity_incident(
+    pool: PgPool,
+) -> anyhow::Result<()> {
+    let (store, ids, service, destination) = fixture(&pool).await?;
+    let remote = PublicationFixture {
+        ancestors: vec![PIN.into()],
+        ..Default::default()
+    };
+    // Interrupt one real archive read in this test's private database. Restore
+    // the original table before inspecting the outcome, including on failure.
+    sqlx::query("ALTER TABLE state_audit_objects RENAME TO fixture_unavailable_objects")
+        .execute(&pool)
+        .await?;
+    let result = service
+        .publish_destination(&store, &destination, &remote)
+        .await;
+    sqlx::query("ALTER TABLE fixture_unavailable_objects RENAME TO state_audit_objects")
+        .execute(&pool)
+        .await?;
+    assert_eq!(
+        result.unwrap_err().downcast_ref::<AuditWitnessError>(),
+        Some(&AuditWitnessError::Unavailable)
+    );
+    assert_eq!(*remote.writes.lock().unwrap(), 0);
+    assert_eq!(
+        *remote.heads.lock().unwrap(),
+        0,
+        "no remote access before verification"
+    );
+    let state: (bool, Option<String>, Option<String>, bool) = sqlx::query_as(
+        "SELECT publication_disabled,reconciliation_error,last_error,next_due>now() FROM state_audit_destinations WHERE id=$1")
+        .bind(destination.id).fetch_one(&pool).await?;
+    assert_eq!(
+        state,
+        (false, None, Some("witness_unavailable".into()), true)
+    );
+    sqlx::query("UPDATE state_audit_destinations SET next_due=now() WHERE id=$1")
+        .bind(destination.id)
+        .execute(&pool)
+        .await?;
+    assert!(
+        service
+            .publish_destination(&store, &destination, &remote)
+            .await?
+    );
+    assert!(*remote.writes.lock().unwrap() > 0);
+    assert!(
+        store
+            .audit_workflow_gate_satisfied(ids.corp_id, destination.id, 1)
+            .await?
+    );
+    Ok(())
+}
+
+async fn add_pending_checkpoint(
+    store: &PgStore,
+    pool: &PgPool,
+    ids: &crony_store::DemoIds,
+) -> anyhow::Result<()> {
+    let (contract, verification): (Value, Value) = sqlx::query_as(
+        "SELECT contract,verification_policy FROM tasks WHERE corp_id=$1 ORDER BY id LIMIT 1",
+    )
+    .bind(ids.corp_id)
+    .fetch_one(pool)
+    .await?;
+    let plan: TaskGraphPlan = serde_json::from_value(serde_json::json!({
+        "strategy":"single","max_nodes":1,"max_depth":0,"budget_tokens":1000,
+        "budget_cost_microusd":100000,"staffing":[],
+        "tasks":[{"key":"next","title":"next checkpoint","assigned_agent_id":ids.worker_agent_id,
+            "required_adapter":"fake-process","depends_on":[],"depth":0,"max_attempts":1,
+            "contract":contract,"verification_policy":verification}]
+    }))?;
+    let (mission, _) = store
+        .create_mission(
+            ids.corp_id,
+            ids.alice_actor_id,
+            "Next checkpoint",
+            "Retained governance",
+            &plan,
+        )
+        .await?;
+    store
+        .cover_mission(ids.corp_id, ids.alice_actor_id, mission.mission_id)
+        .await?;
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn checkpoint_cursor_passes_sixteen_persistently_invalid_ledgers(
+    pool: PgPool,
+) -> anyhow::Result<()> {
+    let (store, ids, service, _) = fixture(&pool).await?;
+    add_pending_checkpoint(&store, &pool, &ids).await?;
+    for n in 1..=16 {
+        let corp = Uuid::from_u128(n);
+        assert!(corp < ids.corp_id);
+        sqlx::query("INSERT INTO corps(id,slug,name) VALUES($1,$2,'corrupt checkpoint fixture')")
+            .bind(corp)
+            .bind(format!("invalid-checkpoint-{n}"))
+            .execute(&pool)
+            .await?;
+        // Deliberately inconsistent retained state must fail verification.
+        sqlx::query("INSERT INTO state_audit_ledgers(corp_id,ledger_id,last_sequence,last_row_hash) VALUES($1,$2,1,$3)")
+            .bind(corp).bind(Uuid::new_v4()).bind("a".repeat(64)).execute(&pool).await?;
+    }
+    let mut cursor = None;
+    service.checkpoint_batch(&store, &mut cursor).await?;
+    assert_eq!(cursor, Some(Uuid::from_u128(16)));
+    let before: i64 =
+        sqlx::query_scalar("SELECT max(sequence) FROM state_audit_checkpoints WHERE corp_id=$1")
+            .bind(ids.corp_id)
+            .fetch_one(&pool)
+            .await?;
+    assert_eq!(before, 1);
+    service.checkpoint_batch(&store, &mut cursor).await?;
+    let after: i64 =
+        sqlx::query_scalar("SELECT max(sequence) FROM state_audit_checkpoints WHERE corp_id=$1")
+            .bind(ids.corp_id)
+            .fetch_one(&pool)
+            .await?;
+    assert_eq!(
+        after, 2,
+        "a healthy Corp beyond the first page makes progress"
+    );
+    service.checkpoint_batch(&store, &mut cursor).await?;
+    assert_eq!(
+        cursor,
+        Some(Uuid::from_u128(16)),
+        "the cursor wraps for retries"
+    );
+    Ok(())
+}
+
+struct ControlledPublication {
+    inner: Arc<PublicationFixture>,
+    stalled: bool,
+    started: Arc<tokio::sync::Notify>,
+}
+
+impl PublicationTransport for ControlledPublication {
+    fn head(&self) -> BoxFuture<'_, anyhow::Result<String>> {
+        Box::pin(async {
+            if self.stalled {
+                self.started.notify_one();
+                std::future::pending::<()>().await;
+            }
+            self.inner.head().await
+        })
+    }
+    fn descends_from<'a>(
+        &'a self,
+        old: &'a str,
+        new: &'a str,
+    ) -> BoxFuture<'a, anyhow::Result<bool>> {
+        self.inner.descends_from(old, new)
+    }
+    fn read<'a>(
+        &'a self,
+        path: &'a str,
+        head: &'a str,
+    ) -> BoxFuture<'a, anyhow::Result<Option<Vec<u8>>>> {
+        self.inner.read(path, head)
+    }
+    fn create<'a>(&'a self, path: &'a str, body: &'a [u8]) -> BoxFuture<'a, anyhow::Result<()>> {
+        self.inner.create(path, body)
+    }
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn slow_destination_does_not_block_another_corp_or_local_checkpoint(
+    pool: PgPool,
+) -> anyhow::Result<()> {
+    let (store, ids, mut service, slow) = fixture(&pool).await?;
+    let (_, fast_ids, fast_service, fast) = scoped_fixture(&pool, true).await?;
+    assert_ne!(ids.corp_id, fast_ids.corp_id);
+    service.witnesses.extend(fast_service.witnesses);
+    let slow_remote = Arc::new(PublicationFixture::default());
+    let fast_remote = Arc::new(PublicationFixture {
+        ancestors: vec![PIN.into()],
+        ..Default::default()
+    });
+    let started = Arc::new(tokio::sync::Notify::new());
+    let publication = service.publish_batch(
+        &store,
+        |destination| {
+            Ok(ControlledPublication {
+                inner: if destination.id == slow.id {
+                    slow_remote.clone()
+                } else {
+                    fast_remote.clone()
+                },
+                stalled: destination.id == slow.id,
+                started: started.clone(),
+            })
+        },
+        StdDuration::from_secs(4),
+    );
+    let progress = async {
+        tokio::time::timeout(StdDuration::from_secs(2), started.notified()).await?;
+        tokio::time::timeout(StdDuration::from_secs(2), async {
+            loop {
+                let published: bool = sqlx::query_scalar("SELECT last_successful_publication IS NOT NULL FROM state_audit_destinations WHERE id=$1")
+                    .bind(fast.id).fetch_one(&pool).await?;
+                if published { break }
+                tokio::time::sleep(StdDuration::from_millis(10)).await;
+            }
+            anyhow::Ok(())
+        }).await??;
+        add_pending_checkpoint(&store, &pool, &ids).await?;
+        add_pending_checkpoint(&store, &pool, &fast_ids).await?;
+        let mut cursor = None;
+        tokio::time::timeout(
+            StdDuration::from_secs(2),
+            service.checkpoint_batch(&store, &mut cursor),
+        )
+        .await??;
+        for corp in [ids.corp_id, fast_ids.corp_id] {
+            let sequence: i64 = sqlx::query_scalar(
+                "SELECT max(sequence) FROM state_audit_checkpoints WHERE corp_id=$1",
+            )
+            .bind(corp)
+            .fetch_one(&pool)
+            .await?;
+            assert_eq!(
+                sequence, 2,
+                "both Corps checkpoint while publication stalls"
+            );
+        }
+        anyhow::Ok(())
+    };
+    let (publication, progress) = tokio::join!(publication, progress);
+    publication?;
+    progress?;
+    let state: (bool, Option<String>, Option<String>) = sqlx::query_as("SELECT publication_disabled,reconciliation_error,last_error FROM state_audit_destinations WHERE id=$1")
+        .bind(slow.id).fetch_one(&pool).await?;
+    assert_eq!(
+        state,
+        (false, None, Some("publication_attempt_timed_out".into()))
+    );
+    assert_eq!(*slow_remote.writes.lock().unwrap(), 0);
+    assert!(*fast_remote.writes.lock().unwrap() > 0);
     Ok(())
 }
 

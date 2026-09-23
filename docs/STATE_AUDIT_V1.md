@@ -44,6 +44,25 @@ returns the original native outcome and stable audit receipt even after later
 revisions. Current authorization is rechecked. Reusing a request UUID with
 different semantic inputs fails. Replays do not re-emit native events.
 
+Factory source-commit upgrades normalize the idempotency key with the native
+Factory grammar before deriving the audit request UUID. An immutable private
+alias added by migration 0051 binds that canonical UUID to the original audit
+decision; public history and receipts are never rewritten. Historical accepted
+upgrades can be recovered only through the matching native operation, including
+its Corp, actor, item, claim token, semantic request and resulting version.
+Current native replay checks still reject a wrong token or changed inputs.
+Pre-coverage operations cannot be adopted as audited history.
+
+Historical refusals did not retain the original key spelling. Where there is
+one unbound refusal for the actor and Corp, retrying its original spelling can
+establish the alias; subsequent padded or trimmed retries retain the same
+receipt. Multiple unknown historical refusals or conflicting identities fail
+closed, even if they might be unrelated. This can block new Factory upgrade
+keys for that actor and Corp until their original identities are explicitly
+reconciled. No automatic reconciliation API is provided: preserve the original
+requests and receipts for an operator-reviewed data reconciliation; do not
+delete decisions, reset the ledger or guess an alias from matching inputs.
+
 ## Server configuration
 
 All audit key management is outside the runner. The existing `crony-server`
@@ -56,7 +75,14 @@ key/token command-line arguments or API inputs:
 | `CRONY_STATE_AUDIT_KEY_ID` | Required nonempty identifier, at most 128 bytes |
 | `CRONY_STATE_AUDIT_CHECKPOINT_SECONDS` | Local checkpoint schedule, default 300; range 1..31,536,000 |
 | `CRONY_STATE_AUDIT_GITHUB_TOKEN_FILE` | Optional UTF-8 GitHub token file, at most 4,096 bytes; absent means no GitHub network publication |
-| `CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE` | JSON array of independently retained `{ "corp_id": UUID, "ledger_id": UUID, "checkpoint_digest": lowercase_hex, "destination_id": UUID, "github_commit": lowercase_hex }`; required with a GitHub credential, at most 256 KiB. A nonnull `github_commit` requires the immutable `destination_id`; both are required for explicit GitHub reconciliation. |
+| `CRONY_STATE_AUDIT_RETAINED_WITNESSES_FILE` | JSON array of independently retained `{ "corp_id": UUID, "ledger_id": UUID, "checkpoint_digest": lowercase_hex, "destination_id": UUID, "github_commit": ascii_hex }`; required with a GitHub credential, at most 256 KiB. A nonnull `github_commit` must contain exactly 40 ASCII hexadecimal characters (either case) and requires the immutable `destination_id`; both are required for explicit GitHub reconciliation. |
+
+The server prepares and validates the audit configuration before OIDC discovery,
+database connection, migrations, artifact creation, recovery or worker activation.
+Audit configuration errors use bounded diagnostics without input values. The
+same 40-character GitHub commit grammar applies to retained witnesses,
+transport ancestry checks and store reconciliation; a 64-character value is
+not accepted as a GitHub commit.
 
 Retain a separate entry per exact Corp/destination. Automatic publication and
 reconciliation select that same association; neither infers it from restored
@@ -92,7 +118,17 @@ record rather than deleting history.
 The static `[7;32]` seed in the public compatibility fixture is test material,
 never a production key.
 
-The service starts its checkpoint/publisher worker with the server. Durable
+The service starts separate checkpoint and publication workers with the server.
+Checkpoint discovery uses a UUID cursor, considers at most 16 Corps per tick,
+advances after failures, and wraps after the last eligible Corp. Each checkpoint
+attempt has a 30-second deadline. The configured interval is a polling cadence,
+not a per-Corp freshness guarantee: the 16 sequential attempt deadlines alone
+allow eight minutes, before discovery overhead, and larger fleets require
+multiple ticks. Monitor unsigned age and capacity.
+Publication runs independently with at most four concurrent destination
+attempts, a 90-second whole-attempt deadline, and a 60-second polling cadence.
+Busy batches can delay the next poll; a slow destination does not hold the
+checkpoint worker or another available publication slot. Durable
 destination state and pending receipts survive restarts. Without the signer,
 existing explicitly covered store mutations still append history, while
 manual signing/coverage API commands are unavailable. Operators must avoid
@@ -195,8 +231,8 @@ monthly schedule is not overdue until its own next due time plus configured
 threshold.
 
 `{"action":"publish","destination_id":"<UUID>"}` makes an existing GitHub
-destination due now. It queues work, not a success claim. The worker polls at
-most 60 seconds apart; tokenless services do not execute publication.
+destination due now. It queues work, not a success claim. The worker uses the
+bounded publication schedule above; tokenless services do not execute publication.
 
 Publication uses bounded, authenticated HTTPS requests to GitHub's API, not
 shell execution. Files are additive and deterministic:
@@ -287,6 +323,15 @@ Remote branch rewrites and same-sequence conflicting checkpoint files
 also disable publication. Newer valid local history is allowed. Configure the
 first pin after independently
 verifying the first checkpoint; without a pin no publication occurs.
+
+A database or archive-read failure is classified as temporarily unavailable,
+not proof of divergence. No remote publication occurs on that failed check.
+When the database is writable, the destination remains enabled with a bounded
+`witness_unavailable` retry reason and a 60-second delay. If that retry record
+cannot be persisted, the original pending state remains for a later poll.
+Whole-attempt timeouts similarly retain pending work and a `publication_attempt_timed_out`
+retry reason where persistence is available. Integrity or independently
+retained-witness mismatches still require explicit reconciliation.
 
 The witness file is read at startup. Keep it outside the database backup
 failure domain, protect it against rollback, and update it to the latest

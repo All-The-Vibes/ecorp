@@ -400,7 +400,7 @@ function oneEvent(events, type) {
   return matches[0]
 }
 
-export function assessOriginal(state, replay, config, plan, identity) {
+export function assessOriginal(state, replay, config, plan, identity, pathApi = path) {
   replaySummary(replay.events, replay.through, config.corp_id)
   const rows = ownedRows(state, config, plan, identity)
   ensure(rows?.run && rows.runs.length === 1, 'one_original_provider_run_required')
@@ -484,9 +484,9 @@ export function assessOriginal(state, replay, config, plan, identity) {
   equal(preserved.payload.source_checkpoint, checkpoint, 'physical_checkpoint_source_or_policy_mismatch')
   ensure(run.workspace_branch === branch && run.workspace_base_commit === PIN.source_commit &&
     run.workspace_base_ref === 'HEAD' &&
-    samePath(run.workspace_path, expectedWorkspace(config, task.id, run.id)), 'original_workspace_lineage_mismatch')
+    samePath(run.workspace_path, expectedWorkspace(config, task.id, run.id, pathApi), pathApi), 'original_workspace_lineage_mismatch')
   for (const event of [started, preserved]) {
-    ensure(samePath(event.payload.workspace, run.workspace_path) &&
+    ensure(samePath(event.payload.workspace, run.workspace_path, pathApi) &&
       event.payload.workspace_branch === branch && event.payload.workspace_base_ref === 'HEAD' &&
       event.payload.workspace_base_commit === PIN.source_commit, 'native_workspace_event_mismatch')
   }
@@ -519,7 +519,7 @@ function assertOriginalUnchanged(rows, replay, state, original) {
       original.incidents_sha256, 'original_policy_attempts_or_incidents_changed')
 }
 
-export function assessRecovery(state, replay, context, config, plan, original, identity) {
+export function assessRecovery(state, replay, context, config, plan, original, identity, pathApi = path) {
   replaySummary(replay.events, replay.through, config.corp_id)
   const rows = ownedRows(state, config, plan, identity)
   assertOriginalUnchanged(rows, replay, state, original)
@@ -552,7 +552,7 @@ export function assessRecovery(state, replay, context, config, plan, original, i
     run.source_base_commit === PIN.source_commit &&
     run.workspace_base_commit === PIN.source_commit && run.workspace_base_ref === 'HEAD' &&
     run.workspace_branch === rows.run.workspace_branch &&
-    samePath(run.workspace_path, rows.run.workspace_path) && run.workspace_disposition === 'preserved' &&
+    samePath(run.workspace_path, rows.run.workspace_path, pathApi) && run.workspace_disposition === 'preserved' &&
     run.workspace_fingerprint === original.source_checkpoint.workspace_fingerprint,
   'not_exact_provider_free_workspace_lineage')
   for (const field of ['budget_tokens_limit', 'budget_cost_microusd_limit', 'input_tokens',
@@ -577,7 +577,7 @@ export function assessRecovery(state, replay, context, config, plan, original, i
   const started = oneEvent(events, 'run.started')
   const verifying = oneEvent(events, 'run.verification_started')
   ensure(started.payload.execution_mode === 'verification_only' &&
-    samePath(started.payload.workspace, rows.run.workspace_path) &&
+    samePath(started.payload.workspace, rows.run.workspace_path, pathApi) &&
     verifying.payload.check_count === plan.policy.checks.length &&
     requested.seq < started.seq && started.seq < verifying.seq, 'native_verify_run_not_observed')
   const ack = events.filter((event) => event.type === 'runner.command_acknowledged' &&
@@ -611,7 +611,7 @@ export function assessRecovery(state, replay, context, config, plan, original, i
       request.payload.expected_head_commit === delivered?.head_commit,
     'checkpoint_reattest_authority_mismatch')
     const proof = preserved[0].payload
-    ensure(samePath(proof.workspace, run.workspace_path) && proof.workspace_branch === run.workspace_branch &&
+    ensure(samePath(proof.workspace, run.workspace_path, pathApi) && proof.workspace_branch === run.workspace_branch &&
       proof.workspace_base_ref === 'HEAD' && proof.workspace_base_commit === PIN.source_commit &&
       proof.workspace_fingerprint === original.source_checkpoint.workspace_fingerprint &&
       proof.head_commit === request.payload.expected_head_commit && proof.branch_deleted === false &&
@@ -989,7 +989,7 @@ function admissionView(context, report) {
 }
 
 /** All effects are injectable. Tests use ONLY memory, never a fake service. */
-export async function executeSuite(config, report, io, { continuation = false, serverUpgrade = null } = {}) {
+export async function executeSuite(config, report, io, { continuation = false, serverUpgrade = null, pathApi = path } = {}) {
   ensure(!serverUpgrade || continuation, 'server_upgrade_requires_continue')
   validateSavedReport(report, config, serverUpgrade)
   const plan = buildPlan(config, report.driver_id)
@@ -1096,7 +1096,7 @@ export async function executeSuite(config, report, io, { continuation = false, s
       await poll('original_checkpoint', ({ rows }) => rows?.run &&
         ['failed', 'cancelled'].includes(rows.run.status) && rows.run.workspace_disposition === 'preserved')
       const current = await quiet('original_quiet')
-      report.original = assessOriginal(current.state, current.replay, config, plan, report.identity)
+      report.original = assessOriginal(current.state, current.replay, config, plan, report.identity, pathApi)
       report.original.base_file = await io.readBase({
         task_id: report.identity.task_id, run_id: report.identity.original_run_id,
       })
@@ -1123,7 +1123,7 @@ export async function executeSuite(config, report, io, { continuation = false, s
       (TERMINAL.has(replacement.status) || replacement.status === 'waiting_for_approval'))
     let current = await quiet('native_verifier_quiet')
     let result = assessRecovery(current.state, current.replay, report.original.admission,
-      config, plan, report.original, report.identity)
+      config, plan, report.original, report.identity, pathApi)
     report.replacement = result
     await save()
     if (!config.missing_artifact && !result.verified) {
@@ -1153,7 +1153,7 @@ export async function executeSuite(config, report, io, { continuation = false, s
     }
     const final = await observe('final')
     report.replacement = assessRecovery(final.state, final.replay, report.original.admission,
-      config, plan, report.original, report.identity)
+      config, plan, report.original, report.identity, pathApi)
     const base = await io.readBase({ task_id: report.identity.task_id, run_id: report.identity.original_run_id })
     equal(base, report.original.base_file, 'original_physical_base_file_changed')
     report.status = config.missing_artifact ? 'expected_missing_artifact_rejection' : 'verified_and_downloaded'

@@ -160,7 +160,7 @@ ECorp preserves the identity and resumable session metadata without leaving an o
 process alive. Unpinned mission workers retire after terminal missions only when there is no active
 run, control lease, queued message, approval, durable command, or teardown uncertainty. An
 authorized resume can reactivate the preserved worker. Dedicated Pin/Unpin, Clear crew, and manual
-Retire controls remain tracked in [#48](https://github.com/shyamsridhar123/ecorp/issues/48).
+Retire controls remain tracked in [#48](https://github.com/All-The-Vibes/ecorp/issues/48).
 
 Risky commands create durable approval records. After verification passes, the mission card exposes
 provider evidence, verification evidence, the signed source deliverable, and integration state as
@@ -215,14 +215,21 @@ and streams normalized lifecycle events back.
 
 ### Verification loop
 
+<!-- ecorp:validation-commands -->
 ```powershell
 node tools/check_migrations.mjs
+pnpm check:state-audit-compatibility
+pnpm check:state-audit-evm
+pnpm check:docs
+pnpm test:unit
+pnpm test:steward
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm build:web
 pnpm lint:web
 ```
+<!-- /ecorp:validation-commands -->
 
 For user-visible changes, also start the complete local stack and exercise the browser-to-server-to-
 runner path. A static build or unit test does not prove the product journey works.

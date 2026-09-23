@@ -8,6 +8,32 @@ use serde::{Deserialize, Serialize};
 
 const EVALUATOR: &str = "native-mission-governance-v1";
 
+/// A failed database read is not evidence that a retained witness diverged.
+/// These diagnostics intentionally omit database details and audit contents.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AuditWitnessError {
+    Unavailable,
+    Diverged,
+}
+
+impl std::fmt::Display for AuditWitnessError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Unavailable => {
+                "audit witness verification unavailable; publication remains pending"
+            }
+            Self::Diverged => "audit witness diverged; explicit witness reconciliation required",
+        })
+    }
+}
+impl std::error::Error for AuditWitnessError {}
+
+#[derive(Clone, Copy)]
+pub enum AuditPublicationRetry {
+    WitnessUnavailable,
+    AttemptTimedOut,
+}
+
 #[derive(Debug)]
 pub(crate) struct NativePolicyRefusal(pub String);
 impl std::fmt::Display for NativePolicyRefusal {
@@ -193,6 +219,13 @@ pub(crate) struct Operation {
     pub request: Value,
 }
 
+pub(crate) struct FactoryAuditIdentity {
+    pub raw_request_id: Uuid,
+    pub canonical_key: String,
+    pub work_item_id: Uuid,
+    pub claim_token: Uuid,
+}
+
 pub(crate) trait AuditOutcome: Serialize + serde::de::DeserializeOwned {
     fn replay(self) -> Self;
     fn was_replayed(&self) -> bool;
@@ -256,14 +289,7 @@ impl PgStore {
         transport: &impl crony_audit::PublicationTransport,
         key: &crony_audit::VerifyingKey,
     ) -> Result<()> {
-        ensure!(
-            (40..=64).contains(&witness.github_commit.len())
-                && witness
-                    .github_commit
-                    .bytes()
-                    .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c)),
-            "invalid retained GitHub commit"
-        );
+        crony_audit::validate_github_commit(witness.github_commit)?;
         let current_head = transport.head().await?;
         ensure!(
             transport
@@ -345,6 +371,24 @@ impl PgStore {
         ledger: Uuid,
         expected: &str,
         key: &crony_audit::VerifyingKey,
+    ) -> std::result::Result<(), AuditWitnessError> {
+        self.validate_audit_witness_inner(corp, ledger, expected, key)
+            .await
+            .map_err(|error| {
+                if error.chain().any(|cause| cause.is::<sqlx::Error>()) {
+                    AuditWitnessError::Unavailable
+                } else {
+                    AuditWitnessError::Diverged
+                }
+            })
+    }
+
+    async fn validate_audit_witness_inner(
+        &self,
+        corp: Uuid,
+        ledger: Uuid,
+        expected: &str,
+        key: &crony_audit::VerifyingKey,
     ) -> Result<()> {
         let mut tx = self.pool.begin().await?;
         ensure!(
@@ -399,8 +443,24 @@ impl PgStore {
         tx.commit().await?;
         Ok(())
     }
-    pub async fn audit_ledgers_needing_checkpoint(&self) -> Result<Vec<Uuid>> {
-        Ok(sqlx::query_scalar("SELECT l.corp_id FROM state_audit_ledgers l WHERE l.last_sequence>COALESCE((SELECT max(sequence) FROM state_audit_checkpoints c WHERE c.corp_id=l.corp_id),0) ORDER BY l.created_at LIMIT 16").fetch_all(&self.pool).await?)
+    pub async fn audit_ledgers_needing_checkpoint(&self, after: Option<Uuid>) -> Result<Vec<Uuid>> {
+        Ok(sqlx::query_scalar("SELECT l.corp_id FROM state_audit_ledgers l WHERE ($1::uuid IS NULL OR l.corp_id>$1) AND l.last_sequence>COALESCE((SELECT max(sequence) FROM state_audit_checkpoints c WHERE c.corp_id=l.corp_id),0) ORDER BY l.corp_id LIMIT 16").bind(after).fetch_all(&self.pool).await?)
+    }
+
+    pub async fn defer_audit_publication(
+        &self,
+        destination: Uuid,
+        reason: AuditPublicationRetry,
+    ) -> Result<()> {
+        let code = match reason {
+            AuditPublicationRetry::WitnessUnavailable => "witness_unavailable",
+            AuditPublicationRetry::AttemptTimedOut => "publication_attempt_timed_out",
+        };
+        // A racing successful publication or established divergence wins over
+        // this best-effort retry marker. Never reopen a disabled destination.
+        sqlx::query("UPDATE state_audit_destinations SET failures=failures+1,last_error=$2,last_attempted_publication=now(),next_due=now()+interval '60 seconds' WHERE id=$1 AND publication_disabled=false AND next_due<=now()")
+            .bind(destination).bind(code).execute(&self.pool).await?;
+        Ok(())
     }
     pub async fn configure_audit_destination(
         &self,
@@ -664,8 +724,10 @@ impl PgStore {
         retained_commit: Option<&str>,
     ) -> Result<bool> {
         let mut tx = self.pool.begin().await?;
-        // Network work holds only the destination row, never the governed head.
-        let Some(d)=sqlx::query("SELECT corp_id,config,last_commit,last_checkpoint_digest,interval_seconds,calendar_schedule,overdue_after_seconds,workflow_gate FROM state_audit_destinations WHERE id=$1 AND kind='github' AND publication_disabled=false AND next_due<=now() FOR UPDATE SKIP LOCKED").bind(destination).fetch_optional(&mut *tx).await? else {tx.commit().await?;return Ok(false)};
+        // Serialize destination updates without blocking the key-share locks
+        // taken by a new checkpoint's outbox foreign keys. Publication never
+        // changes the destination identity or holds the governed ledger head.
+        let Some(d)=sqlx::query("SELECT corp_id,config,last_commit,last_checkpoint_digest,interval_seconds,calendar_schedule,overdue_after_seconds,workflow_gate FROM state_audit_destinations WHERE id=$1 AND kind='github' AND publication_disabled=false AND next_due<=now() FOR NO KEY UPDATE SKIP LOCKED").bind(destination).fetch_optional(&mut *tx).await? else {tx.commit().await?;return Ok(false)};
         let corp: Uuid = d.get("corp_id");
         let config: GitHubDestination = serde_json::from_value(d.get("config"))?;
         let schedule = AuditDestination {
@@ -1147,7 +1209,7 @@ impl PgStore {
     ) -> Result<Option<AuditReceipt>> {
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, corp, actor).await?;
-        let row=sqlx::query("SELECT mission_id,receipt,decision->>'operation' AS operation FROM state_audit_decisions WHERE corp_id=$1 AND actor_id=$2 AND request_id=$3")
+        let row=sqlx::query("SELECT mission_id,receipt,decision->>'operation' AS operation FROM state_audit_decisions WHERE corp_id=$1 AND actor_id=$2 AND request_id=COALESCE((SELECT request_id FROM state_audit_factory_replay_aliases WHERE corp_id=$1 AND actor_id=$2 AND canonical_request_id=$3),$3)")
             .bind(corp).bind(actor).bind(request).fetch_optional(&mut *tx).await?;
         let Some(row) = row else {
             tx.commit().await?;
@@ -1171,6 +1233,33 @@ impl PgStore {
         O: AuditOutcome,
         F: for<'a> FnOnce(&'a mut Transaction<'static, Postgres>) -> BoxFuture<'a, Result<O>>,
     {
+        self.audited_inner(op, None, action).await
+    }
+
+    pub(crate) async fn audited_factory<F>(
+        &self,
+        op: Operation,
+        identity: FactoryAuditIdentity,
+        action: F,
+    ) -> Result<FactoryWorkItemOutcome>
+    where
+        F: for<'a> FnOnce(
+            &'a mut Transaction<'static, Postgres>,
+        ) -> BoxFuture<'a, Result<FactoryWorkItemOutcome>>,
+    {
+        self.audited_inner(op, Some(identity), action).await
+    }
+
+    async fn audited_inner<O, F>(
+        &self,
+        mut op: Operation,
+        factory: Option<FactoryAuditIdentity>,
+        action: F,
+    ) -> Result<O>
+    where
+        O: AuditOutcome,
+        F: for<'a> FnOnce(&'a mut Transaction<'static, Postgres>) -> BoxFuture<'a, Result<O>>,
+    {
         let mut tx = self.pool.begin().await?;
         // Every opted-in mutation shares the Corp head lock, before native locks.
         let covered: bool = sqlx::query_scalar(
@@ -1190,6 +1279,11 @@ impl PgStore {
             .await?
             .context("covered mission missing ledger")?;
         let request_digest = request_digest(&op)?;
+        let canonical_request_id = op.request_id;
+        if let Some(identity) = &factory {
+            op.request_id =
+                resolve_factory_audit_identity(&mut tx, &op, identity, &request_digest).await?;
+        }
         let prior=sqlx::query("SELECT request_digest,receipt,mission_id FROM state_audit_decisions WHERE corp_id=$1 AND actor_id=$2 AND request_id=$3")
             .bind(op.corp).bind(op.actor).bind(op.request_id).fetch_optional(&mut *tx).await?;
         if let Some(prior) = &prior {
@@ -1201,6 +1295,9 @@ impl PgStore {
             let receipt: AuditReceipt = serde_json::from_value(prior.get("receipt"))?;
             let value:Value=sqlx::query_scalar("SELECT result FROM state_audit_local_results WHERE corp_id=$1 AND actor_id=$2 AND request_id=$3")
                 .bind(op.corp).bind(op.actor).bind(op.request_id).fetch_one(&mut *tx).await?;
+            if factory.is_some() {
+                bind_factory_audit_identity(&mut tx, &op, canonical_request_id).await?;
+            }
             if receipt.decision == "refused" {
                 let message = value
                     .get("audit_refusal")
@@ -1257,6 +1354,9 @@ impl PgStore {
             };
             sqlx::query("INSERT INTO state_audit_local_results(corp_id,actor_id,request_id,result) VALUES($1,$2,$3,$4)")
                 .bind(op.corp).bind(op.actor).bind(op.request_id).bind(local_result).execute(&mut *tx).await?;
+            if factory.is_some() {
+                bind_factory_audit_identity(&mut tx, &op, canonical_request_id).await?;
+            }
             sqlx::query("UPDATE state_audit_coverage SET fingerprint=state_audit_fingerprint(mission_id) WHERE corp_id=$1 AND mission_id=$2")
                 .bind(op.corp).bind(op.mission).execute(&mut *tx).await?;
             if let Err(error) = result {
@@ -1271,6 +1371,104 @@ impl PgStore {
         tx.commit().await?;
         result
     }
+}
+
+async fn resolve_factory_audit_identity(
+    tx: &mut Transaction<'_, Postgres>,
+    op: &Operation,
+    identity: &FactoryAuditIdentity,
+    request_digest: &str,
+) -> Result<Uuid> {
+    // The caller holds the Corp ledger first. Acquire both native locks in
+    // their native sorted order before inspecting the canonical operation.
+    super::lock_factory_keys_tx(
+        tx,
+        &[
+            format!("factory:idempotency:{}:{}", op.corp, identity.canonical_key),
+            format!("factory:item:{}:{}", op.corp, identity.work_item_id),
+        ],
+    )
+    .await?;
+    let alias: Option<Uuid> = sqlx::query_scalar(
+        "SELECT request_id FROM state_audit_factory_replay_aliases WHERE corp_id=$1 AND actor_id=$2 AND canonical_request_id=$3",
+    )
+    .bind(op.corp).bind(op.actor).bind(op.request_id)
+    .fetch_optional(&mut **tx).await?;
+    let mut candidates: std::collections::BTreeSet<Uuid> = sqlx::query_scalar(
+        "SELECT request_id FROM state_audit_decisions WHERE corp_id=$1 AND actor_id=$2 AND (request_id=$3 OR request_id=$4 OR request_id=$5)",
+    )
+    .bind(op.corp).bind(op.actor).bind(op.request_id)
+    .bind(identity.raw_request_id).bind(alias)
+    .fetch_all(&mut **tx).await?.into_iter().collect();
+
+    if let Some(native) = super::factory_operation_tx(tx, op.corp, &identity.canonical_key).await? {
+        super::ensure_factory_operation_matches(
+            &native,
+            "upgrade_source_commit",
+            op.actor,
+            Some(identity.work_item_id),
+            Some(identity.claim_token),
+            &op.request,
+        )?;
+        // Raw historical keys cannot be recovered from their UUID hashes.
+        // An accepted operation has an independent native identity: its Corp,
+        // actor, item, claim, semantic request and unique resulting version.
+        // Never identify an old request by matching semantic inputs alone.
+        let retained: Vec<Uuid> = sqlx::query_scalar(
+            "SELECT d.request_id FROM state_audit_decisions d JOIN state_audit_local_results r USING(corp_id,actor_id,request_id) WHERE d.corp_id=$1 AND d.actor_id=$2 AND d.mission_id=$3 AND d.request_digest=$4 AND d.decision->>'operation'='source_commit_upgrade' AND d.receipt->>'decision'='accepted' AND r.result->'work_item'->>'id'=$5 AND r.result->'work_item'->>'version'=$6 ORDER BY d.request_id LIMIT 2",
+        )
+        .bind(op.corp).bind(op.actor).bind(op.mission).bind(request_digest)
+        .bind(native.work_item_id.to_string()).bind(native.resulting_version.to_string())
+        .fetch_all(&mut **tx).await?;
+        ensure!(
+            retained.len() == 1,
+            "native idempotency result has no unique retained audit decision; pre-coverage or ambiguous history cannot be adopted"
+        );
+        candidates.extend(retained);
+    }
+    ensure!(
+        candidates.len() <= 1,
+        "conflicting historical Factory replay identities require explicit reconciliation"
+    );
+    // Old refusals have no native operation and did not retain the raw key.
+    // Even different semantic inputs may be a changed-input retry of that key.
+    // A direct canonical match cannot disprove another padded legacy refusal.
+    // Before creating an alias, require every other historical refusal to be
+    // bound; otherwise choosing one record could silently hide a conflict.
+    // Multiple ambiguous old refusals require explicit reconciliation. Neither
+    // matching semantic inputs nor an unrelated new key proves their spelling.
+    let unbound_refusal: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM state_audit_decisions d WHERE d.corp_id=$1 AND d.actor_id=$2 AND d.decision->>'operation'='source_commit_upgrade' AND d.receipt->>'decision'='refused' AND ($3::uuid IS NULL OR d.request_id<>$3) AND NOT EXISTS(SELECT 1 FROM state_audit_factory_replay_aliases a WHERE a.corp_id=d.corp_id AND a.actor_id=d.actor_id AND a.request_id=d.request_id))",
+    )
+    .bind(op.corp).bind(op.actor).bind(candidates.first().copied())
+    .fetch_one(&mut **tx).await?;
+    ensure!(
+        alias.is_some() || !unbound_refusal,
+        "legacy Factory refusal requires its original idempotency-key spelling or explicit reconciliation before canonical replay"
+    );
+    Ok(candidates.first().copied().unwrap_or(op.request_id))
+}
+
+async fn bind_factory_audit_identity(
+    tx: &mut Transaction<'_, Postgres>,
+    op: &Operation,
+    canonical_request_id: Uuid,
+) -> Result<()> {
+    sqlx::query(
+        "INSERT INTO state_audit_factory_replay_aliases(corp_id,actor_id,canonical_request_id,request_id) VALUES($1,$2,$3,$4) ON CONFLICT(corp_id,actor_id,canonical_request_id) DO NOTHING",
+    )
+    .bind(op.corp).bind(op.actor).bind(canonical_request_id).bind(op.request_id)
+    .execute(&mut **tx).await?;
+    let retained: Uuid = sqlx::query_scalar(
+        "SELECT request_id FROM state_audit_factory_replay_aliases WHERE corp_id=$1 AND actor_id=$2 AND canonical_request_id=$3",
+    )
+    .bind(op.corp).bind(op.actor).bind(canonical_request_id)
+    .fetch_one(&mut **tx).await?;
+    ensure!(
+        retained == op.request_id,
+        "conflicting immutable Factory replay alias"
+    );
+    Ok(())
 }
 
 fn request_digest(op: &Operation) -> Result<String> {

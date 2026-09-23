@@ -94,11 +94,8 @@ fn assert_success(result: ExecutionResult) {
 
 fn assert_revert(result: ExecutionResult) {
     assert!(
-        matches!(
-            result,
-            ExecutionResult::Revert { .. } | ExecutionResult::Halt { .. }
-        ),
-        "expected EVM rejection, got {result:?}"
+        matches!(result, ExecutionResult::Revert { .. }),
+        "expected EVM revert, got {result:?}"
     );
 }
 

@@ -857,7 +857,7 @@ fn validate_deliverable_document(
     let bundle = BASE64
         .decode(&document.git_bundle_base64)
         .context("decode portable Git bundle")?;
-    let digest = format!("{:x}", Sha256::digest(&bundle));
+    let digest = hex::encode(Sha256::digest(&bundle));
     if digest != document.git_bundle_sha256 {
         bail!("portable Git bundle digest does not match the deliverable");
     }
@@ -1733,7 +1733,7 @@ fn stable_start_idempotency_key(
 
 fn stable_start_idempotency_key_for_request(actor_id: Uuid, request: &Value) -> Result<String> {
     let encoded = serde_json::to_vec(&request).context("encode publication start identity")?;
-    let digest = format!("{:x}", Sha256::digest(encoded));
+    let digest = hex::encode(Sha256::digest(encoded));
     Ok(format!("publication-start:{actor_id}:{}", &digest[..32]))
 }
 
@@ -1746,7 +1746,7 @@ fn stable_recovery_idempotency_key(
     let mut digest = Sha256::new();
     digest.update(b"ecorp-publication-recovery-v1\0");
     digest.update(start_idempotency_key.as_bytes());
-    let digest = format!("{:x}", digest.finalize());
+    let digest = hex::encode(digest.finalize());
     format!(
         "publication-recover:{actor_id}:{version}:{attempt}:{}",
         &digest[..16]

@@ -161,7 +161,7 @@ impl GitHubTransport {
         Ok(serde_json::from_slice(&body)?)
     }
 }
-fn sha(value: &str) -> Result<()> {
+pub fn validate_github_commit(value: &str) -> Result<()> {
     ensure!(
         value.len() == 40 && value.bytes().all(|b| b.is_ascii_hexdigit()),
         "invalid GitHub commit SHA"
@@ -181,14 +181,14 @@ impl PublicationTransport for GitHubTransport {
             let hash = value["commit"]["sha"]
                 .as_str()
                 .context("missing branch commit")?;
-            sha(hash)?;
+            validate_github_commit(hash)?;
             Ok(hash.into())
         })
     }
     fn descends_from<'a>(&'a self, old: &'a str, new: &'a str) -> BoxFuture<'a, Result<bool>> {
         Box::pin(async move {
-            sha(old)?;
-            sha(new)?;
+            validate_github_commit(old)?;
+            validate_github_commit(new)?;
             if old == new {
                 return Ok(true);
             }
@@ -209,7 +209,7 @@ impl PublicationTransport for GitHubTransport {
     fn read<'a>(&'a self, path: &'a str, head: &'a str) -> BoxFuture<'a, Result<Option<Vec<u8>>>> {
         Box::pin(async move {
             validate_destination(&self.repository, &self.branch, path)?;
-            sha(head)?;
+            validate_github_commit(head)?;
             let response = self
                 .client
                 .get(self.url(&format!("contents/{path}")))

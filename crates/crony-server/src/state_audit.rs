@@ -1,6 +1,10 @@
 use super::*;
 use anyhow::{Context, ensure};
-use crony_store::state_audit::{AuditDestination, AuditReconciliation, GitHubDestination};
+use crony_store::state_audit::{
+    AuditDestination, AuditPublicationRetry, AuditReconciliation, AuditWitnessError,
+    GitHubDestination,
+};
+use futures_util::StreamExt;
 use std::io::Read;
 
 pub struct Service {
@@ -118,12 +122,10 @@ impl Service {
                         .checkpoint_digest
                         .bytes()
                         .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
-                    && witness.github_commit.as_ref().is_none_or(|commit| {
-                        (40..=64).contains(&commit.len())
-                            && commit
-                                .bytes()
-                                .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
-                    }),
+                    && witness
+                        .github_commit
+                        .as_ref()
+                        .is_none_or(|commit| crony_audit::validate_github_commit(commit).is_ok()),
                 "invalid or duplicate retained audit witness"
             );
         }
@@ -161,12 +163,27 @@ impl Service {
             )
             .await
         {
-            store
-                .disable_audit_destination_for_divergence(destination.id)
-                .await?;
-            return Err(
-                error.context("publication disabled pending explicit witness reconciliation")
-            );
+            match error {
+                AuditWitnessError::Diverged => {
+                    store
+                        .disable_audit_destination_for_divergence(destination.id)
+                        .await?;
+                }
+                AuditWitnessError::Unavailable => {
+                    // The database may still be unavailable. Preserve the
+                    // sanitized failure class even if a retry marker cannot
+                    // be saved; the worker itself also has a bounded cadence.
+                    let _ = tokio::time::timeout(
+                        StdDuration::from_secs(5),
+                        store.defer_audit_publication(
+                            destination.id,
+                            AuditPublicationRetry::WitnessUnavailable,
+                        ),
+                    )
+                    .await;
+                }
+            }
+            return Err(error.into());
         }
         store
             .publish_audit_destination(
@@ -178,66 +195,117 @@ impl Service {
             .await
     }
 
+    async fn checkpoint_batch(
+        &self,
+        store: &PgStore,
+        cursor: &mut Option<Uuid>,
+    ) -> anyhow::Result<()> {
+        let mut corps = store.audit_ledgers_needing_checkpoint(*cursor).await?;
+        if corps.is_empty() && cursor.take().is_some() {
+            corps = store.audit_ledgers_needing_checkpoint(None).await?;
+        }
+        for corp in corps {
+            // Advance even on failure. Persistent failures in the first page
+            // must not hide another tenant's pending checkpoint indefinitely.
+            *cursor = Some(corp);
+            if !matches!(
+                tokio::time::timeout(
+                    StdDuration::from_secs(30),
+                    store.audit_checkpoint(corp, &self.key_id, &self.key),
+                )
+                .await,
+                Ok(Ok(_))
+            ) {
+                warn!(%corp, "state audit checkpoint failed; unsigned state remains unpublished");
+            }
+        }
+        Ok(())
+    }
+
+    async fn publish_batch<T, F>(
+        &self,
+        store: &PgStore,
+        make_transport: F,
+        deadline: StdDuration,
+    ) -> anyhow::Result<()>
+    where
+        T: crony_audit::PublicationTransport,
+        F: Fn(&AuditDestination) -> anyhow::Result<T> + Sync,
+    {
+        let make_transport = &make_transport;
+        futures_util::stream::iter(store.due_audit_destinations().await?)
+            .for_each_concurrent(4, |destination| async move {
+                let result = tokio::time::timeout(deadline, async {
+                    let transport = make_transport(&destination)?;
+                    self.publish_destination(store, &destination, &transport).await
+                })
+                .await;
+                if result.is_err() {
+                    // Cancellation rolls back the destination transaction.
+                    // A retry reads any immutable files written before timeout.
+                    let _ = tokio::time::timeout(
+                        StdDuration::from_secs(5),
+                        store.defer_audit_publication(
+                            destination.id,
+                            AuditPublicationRetry::AttemptTimedOut,
+                        ),
+                    )
+                    .await;
+                }
+                if !matches!(result, Ok(Ok(_))) {
+                    warn!(destination_id=%destination.id, "state audit publication remains pending; inspect audit status");
+                }
+            })
+            .await;
+        Ok(())
+    }
+
     pub fn start(self: Arc<Self>, store: PgStore) {
+        let checkpoint_service = self.clone();
+        let checkpoint_store = store.clone();
         tokio::spawn(async move {
-            let mut timer =
-                tokio::time::interval(StdDuration::from_secs(self.checkpoint_seconds.min(60)));
+            let mut timer = tokio::time::interval(StdDuration::from_secs(
+                checkpoint_service.checkpoint_seconds,
+            ));
             timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-            let mut last_checkpoint: Option<tokio::time::Instant> = None;
+            let mut cursor = None;
             loop {
                 timer.tick().await;
-                if last_checkpoint.is_none_or(|t| t.elapsed().as_secs() >= self.checkpoint_seconds)
+                if checkpoint_service
+                    .checkpoint_batch(&checkpoint_store, &mut cursor)
+                    .await
+                    .is_err()
                 {
-                    let checkpoint_pass_succeeded = match store
-                        .audit_ledgers_needing_checkpoint()
-                        .await
-                    {
-                        Ok(corps) => {
-                            let mut succeeded = true;
-                            for corp in corps {
-                                if store
-                                    .audit_checkpoint(corp, &self.key_id, &self.key)
-                                    .await
-                                    .is_err()
-                                {
-                                    succeeded = false;
-                                    warn!(%corp,"state audit checkpoint failed; no publication attempted for unsigned state");
-                                }
-                            }
-                            succeeded
-                        }
-                        Err(_) => {
-                            warn!("state audit checkpoint work discovery failed");
-                            false
-                        }
-                    };
-                    if checkpoint_pass_succeeded {
-                        last_checkpoint = Some(tokio::time::Instant::now());
-                    }
+                    warn!("state audit checkpoint discovery unavailable");
                 }
-                if let Some(token) = &self.github_token {
-                    match store.due_audit_destinations().await {
-                        Ok(destinations) => {
-                            for destination in destinations {
-                                let result = async {
-                                    let config: GitHubDestination =
-                                        serde_json::from_value(destination.config.clone())?;
-                                    let transport = crony_audit::GitHubTransport::new(
-                                        &config.repository,
-                                        &config.branch,
-                                        token,
-                                    )?;
-                                    self.publish_destination(&store, &destination, &transport)
-                                        .await
-                                }
-                                .await;
-                                if result.is_err() {
-                                    warn!(destination_id=%destination.id,"state audit publication remains pending; inspect audit status");
-                                }
-                            }
-                        }
-                        Err(_) => warn!("state audit publisher discovery failed"),
-                    }
+            }
+        });
+        tokio::spawn(async move {
+            let Some(token) = &self.github_token else {
+                return;
+            };
+            let mut timer = tokio::time::interval(StdDuration::from_secs(60));
+            timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+            loop {
+                timer.tick().await;
+                if self
+                    .publish_batch(
+                        &store,
+                        |destination| {
+                            let config: GitHubDestination =
+                                serde_json::from_value(destination.config.clone())?;
+                            crony_audit::GitHubTransport::new(
+                                &config.repository,
+                                &config.branch,
+                                token,
+                            )
+                        },
+                        StdDuration::from_secs(90),
+                    )
+                    .await
+                    .is_err()
+                {
+                    warn!("state audit publisher discovery unavailable");
                 }
             }
         });
