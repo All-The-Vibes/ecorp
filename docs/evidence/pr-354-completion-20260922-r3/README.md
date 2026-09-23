@@ -17,8 +17,8 @@ All subsequent failed attempts are retained. r3/r4 failed on an inherited empty 
 Use an isolated Windows checkout, frozen dependencies, pinned toolchain, PostgreSQL, Edge and Playwright. Create a fresh output directory and choose a new `qa/pr265-run-activity-*` directory outside the checkout and dedicated Cargo target. Preserve any old native binaries and evidence; a fresh checkout must have no `target/debug/crony-server.exe`, `crony-runner.exe` or `crony-cli.exe`. Keep all four `replay/` files adjacent.
 
 ```powershell
-& ./docs/evidence/pr-354-completion-20260922-r3/replay/run-pr354-native-first-run-r8.ps1 `
-  -Revision r8 -ValidationDirectory ./docs/evidence/pr-354-completion-20260922-r3 `
+& ./docs/evidence/pr-354-completion-20260922-r3/replay/run-pr354-native-first-run-r9.ps1 `
+  -Revision r9 -ValidationDirectory ./docs/evidence/pr-354-completion-20260922-r3 `
   -Repository $reviewCheckout -QaRoot $newOwnedQaDirectory `
   -PostgresBin $postgresBin -CargoTargetDirectory $ownedCargoCache `
   -NodeDirectory $nodeBin -PlaywrightModule $playwrightModule `
@@ -28,3 +28,23 @@ Use an isolated Windows checkout, frozen dependencies, pinned toolchain, Postgre
 This first-run composition builds all three binaries, provisions SCRAM PostgreSQL, requires all nine factory-connection and four readiness SQLx tests, then runs native intake and browser acceptance. It needs no private reuse receipt. It accepts either `staged_tree` or `tested_staged_tree`, validates all nine gate names and requires all non-packet source to match. Default ports are 29354, 26354 and 25354. The recorded r3 build block and r7 acceptance block were executed; the combined first-run r8 script is supplied for replay and is not itself claimed as the producer of these results.
 
 Local Node 24.21.0 differs from the repository 24.19.0 pin. Rust 1.98.1 and PostgreSQL 17.10 were used. Real product screenshots are the PNGs under `native-fixture/`; the validation and retrospective HTML/PNG files render saved results. Development identity and deterministic providers do not establish external-provider or production acceptance. All owned services stopped; databases, source, credentials, logs and workspaces were preserved.
+
+
+## Proxy error correction, revision 9
+
+The active replay proxy returns a constant JSON 502 with explicit content type,
+nosniff and no-store headers. It never returns exception text. The revised driver
+probes the live listener with a non-API path containing a hostile marker and an
+API request containing invalid JSON; both must return exactly the generic error,
+make no upstream request and leave the ledger unchanged.
+
+Historical readiness drivers and the superseded first-run composition are retained
+byte-for-byte under archived-drivers/ with .txt extensions. These are historical
+evidence, not runnable replay entry points. Their former paths and original hashes
+are recorded in provenance/proxy-r9-derivation.json; the entire previous binding
+is preserved in provenance/source-binding-before-proxy-correction-r9.json.
+Only the current replay/ drivers are intended for execution. Prior test results
+remain unchanged. The complete revision 9 first-run composition passed; its fresh
+build, thirteen SQLx regressions, three CLI cases, both proxy failure probes and
+browser/server/runner acceptance are retained separately under proxy-r9/. No prior
+build or SQLx result was reused for this execution.
