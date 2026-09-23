@@ -1,17 +1,25 @@
-# Web contribution context
+# Web contributor notes
 
-The root AGENTS.md and product/security contracts still apply.
+This client projects server state. Keep mutation authority, budget decisions, runner lifecycle
+and accepted verification in the existing API/server contracts.
 
-- Start with the relevant pure projection/reader beside App.tsx, not the entire UI file.
-- Run `pnpm test:js` from the repository root; Node 24 executes the existing `.test.mjs`
-  suites and their TypeScript imports. `pnpm build:web` type-checks and builds;
-  `pnpm lint:web` checks the web source. See `docs/VALIDATION.md` at the repo root.
-- Server snapshots, exact context readers and persisted run IDs are authoritative.
-  Missing/denied/incomplete context stays unknown; do not substitute another run or viewer.
-- Scope state by server, Corp, actor, room/mission and selected source where applicable.
-  A remembered run ID grants no authority. Comments are not approvals or steering commands.
-- Keep mission, task, run, producer and verifier identities distinct in evidence views.
-- For changed user-visible behavior, verify the browser-to-server-to-runner path in an owned
-  isolated stack, including reconnect and 390px layout. SSR/unit success is not that proof.
-- Coordinate changes to App.tsx with active UI work; extract a bounded responsibility only
-  with regression coverage. Do not rewrite shared schemas or lockfiles incidentally.
+- `src/App.tsx` owns mission/recovery state and wires the operational screens. Prefer a leaf
+  component or pure model when behavior has a controlled input/callback boundary.
+- `src/verificationPolicy.ts` owns draft policy transformations and client validation;
+  `VerificationPolicyEditor.tsx` owns its fields, tabs and preview. The server and runner still
+  validate the complete persisted contract. Draft editing must not publish a decision or launch.
+- The `*.test.mjs` suites use native Node testing and actual TypeScript/React code. Some recovery
+  regressions intentionally extract production ASTs; inspect those tests before moving callers.
+- Preserve keyboard selection, selected-tab state, accessible labels, focus after removal and
+  narrow-screen overflow. UI refactors require actual browser evidence as well as model tests.
+
+Use root `pnpm test:unit`, `pnpm build:web` and `pnpm lint:web` for contributor checks. For a
+browser/server/runner claim, use an explicitly owned fixture and record persisted policy and
+verification IDs; browser-only rendering is a narrower result.
+
+`pnpm test:js` from the root discovers the web, tooling, steward and readiness suites;
+see `docs/VALIDATION.md` for the complete source-bound validation command.
+Keep server, Corp, actor, room/mission and selected source explicit in state. Missing or
+denied context stays unknown, and comments do not authorize approvals or steering.
+Keep producer and verifier identities distinct, and preserve reconnect and 390px behavior
+when exercising an owned browser/server/runner stack.

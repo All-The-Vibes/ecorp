@@ -1074,6 +1074,29 @@ test('suite path override rejects incompatible fixture paths before recovery', a
   assert.equal(h.downloads.length, 0)
 })
 
+test('explicit Windows assessment preserves historical paths on every host', () => {
+  const f = originalFixture()
+  assert.doesNotThrow(() => nativeDriver.assessOriginal(
+    f.state, f.replay, f.c, f.plan, f.identity, WIN))
+  const recovered = recoveryFixture()
+  assert.doesNotThrow(() => nativeDriver.assessRecovery(recovered.state, recovered.replay,
+    recovered.context, recovered.c, recovered.plan, recovered.original, recovered.identity, WIN))
+  assert.throws(() => nativeDriver.parseArgs([...requiredPairs().flat(), '--path-api', 'win32']),
+    { code: 'unknown_or_duplicate_option' })
+})
+
+test('default host assessment still rejects foreign path namespaces', () => {
+  const f = originalFixture()
+  if (process.platform === 'win32') {
+    f.c.runner_root = '/synthetic-posix/runner-workspaces'
+    assert.throws(() => nativeDriver.assessOriginal(f.state, f.replay, f.c, f.plan, f.identity),
+      { code: 'unsafe_windows_path' })
+  } else {
+    assert.throws(() => nativeDriver.assessOriginal(f.state, f.replay, f.c, f.plan, f.identity),
+      { code: 'unsafe_posix_path' })
+  }
+})
+
 for (const tokens of [5000, 6000]) {
   test(`assessOriginal binds native ${tokens === 5000 ? 'stop' : 'suspend'} from full replay, not snapshot.events`, () => {
     const fixture = originalFixture(config({ tokens }))

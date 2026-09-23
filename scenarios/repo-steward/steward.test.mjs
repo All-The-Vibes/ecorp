@@ -2,8 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { lstatSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { audit, createSteward, prose, renderReport, suggestWorkstreams, textDependencies } from './lib/steward.mjs';
 import { collectSnapshot, completeConnection, createGithubReader } from './lib/github.mjs';
+import { collectorPolicy, readCollectorProfile } from './lib/collector-profile.mjs';
 import { loadPolicy, safeText, SCOPE, validateSnapshot } from './lib/common.mjs';
 import { prepareTestChatReply, validateTestBinding } from './lib/teams.mjs';
 import { fixtureIssue, fixturePr, fixtureSnapshot } from './fixtures/demo.mjs';
@@ -200,6 +205,71 @@ test('collector rejects inaccessible connection entries', () => assert.throws(()
 test('read client verifies Bakar404 and never switches accounts', async () => {
   const calls = []; const reader = createGithubReader({ run: async args => { calls.push(args); return JSON.stringify({ login: 'someone-else' }); } });
   await assert.rejects(reader.account(), { code: 'ACCOUNT' }); assert.equal(calls.length, 1); assert.deepEqual(calls[0], ['api', '--hostname', 'github.com', '--method', 'GET', 'user']);
+});
+
+function localCollectorProfile(t, overrides = {}, raw = null) {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'ecorp-collector-profile-'));
+  t.after(() => {
+    assert.equal(path.dirname(path.resolve(directory)), path.resolve(os.tmpdir()));
+    assert.ok(path.basename(directory).startsWith('ecorp-collector-profile-'));
+    assert.equal(lstatSync(directory).isSymbolicLink(), false);
+    rmSync(directory, { recursive: true });
+  });
+  const profile = { schema_version: 1, kind: 'repo-steward-readonly-collector-profile', ...SCOPE, ...overrides };
+  const bytes = Buffer.from(raw ?? JSON.stringify(profile));
+  const reference = { path: path.join(directory, 'profile.json'), sha256: createHash('sha256').update(bytes).digest('hex') };
+  writeFileSync(reference.path, bytes, { flag: 'wx' });
+  return { profile, reference };
+}
+
+test('explicit hash-pinned read principal does not change the pilot or read allowlist', async t => {
+  const { reference } = localCollectorProfile(t, { collector_login: 'rajesh-ms' });
+  assert.equal(readCollectorProfile(reference).collector_login, 'rajesh-ms');
+  assert.equal(collectorPolicy().collector_login, 'Bakar404');
+  assert.equal(loadPolicy().collector_login, 'Bakar404');
+  const calls = [], run = async args => { calls.push(args); return JSON.stringify({ login: 'rajesh-ms' }); };
+  const reader = createGithubReader({ collectorProfile: reference, run });
+  assert.equal(await reader.account(), 'rajesh-ms');
+  assert.deepEqual(calls, [['api', '--hostname', 'github.com', '--method', 'GET', 'user']]);
+  await assert.rejects(createGithubReader({ run }).account(), { code: 'ACCOUNT' });
+  await assert.rejects(reader.graphql('mutation'), { code: 'READ_ONLY' });
+  assert.equal(calls.length, 2);
+});
+
+for (const change of [{ repository: 'elsewhere/private' }, { project_id: 'other-project' }, { project_number: 3 },
+  { token: 'not-a-credential' }, { url: 'https://elsewhere.invalid' }, { collector_login: 'login\nflags' }]) {
+  test(`collector profile rejects changed scope or unsupported fields: ${Object.keys(change)[0]}`, t => {
+    const { reference } = localCollectorProfile(t, change);
+    assert.throws(() => createGithubReader({ collectorProfile: reference, run: () => { throw Error('Must not invoke'); } }));
+  });
+}
+
+test('collector profile rejects wrong hashes, changed bytes and duplicate keys', t => {
+  const { reference } = localCollectorProfile(t);
+  assert.throws(() => readCollectorProfile({ ...reference, sha256: '0'.repeat(64) }), { code: 'COLLECTOR_PROFILE_CHANGED' });
+  writeFileSync(reference.path, '{}');
+  assert.throws(() => readCollectorProfile(reference), { code: 'COLLECTOR_PROFILE_CHANGED' });
+  const valid = { schema_version: 1, kind: 'repo-steward-readonly-collector-profile', ...SCOPE };
+  const duplicate = JSON.stringify(valid).replace('"schema_version":1', '"schema_version":1,"schema_version":1');
+  assert.throws(() => readCollectorProfile(localCollectorProfile(t, {}, duplicate).reference), { code: 'COLLECTOR_PROFILE' });
+  const invalidUtf8 = Buffer.concat([Buffer.from('{"collector_login":"'), Buffer.from([255]), Buffer.from('"}')]);
+  assert.throws(() => readCollectorProfile(localCollectorProfile(t, {}, invalidUtf8).reference), { code: 'COLLECTOR_PROFILE' });
+});
+
+test('profiled collection records the actual principal and rejects identity or profile drift', async t => {
+  const { reference } = localCollectorProfile(t, { collector_login: 'rajesh-ms' });
+  const successful = mockReader(); successful.account = async () => 'rajesh-ms';
+  const observed = await collectSnapshot({ reader: successful, collectorProfile: reference, now: () => now });
+  assert.equal(observed.collection.authenticated_login, 'rajesh-ms');
+  assert.equal(observed.collection.collector_profile_sha256, reference.sha256);
+  assert.equal(observed.collection.writes, 0);
+  await assert.rejects(collectSnapshot({ reader: mockReader(), collectorProfile: reference, now: () => now }), { code: 'ACCOUNT' });
+  let accounts = 0; const changed = mockReader();
+  changed.account = async () => ++accounts === 1 ? 'rajesh-ms' : 'Bakar404';
+  await assert.rejects(collectSnapshot({ reader: changed, collectorProfile: reference, now: () => now }), { code: 'ACCOUNT' });
+  accounts = 0; const edited = mockReader();
+  edited.account = async () => { if (++accounts === 2) writeFileSync(reference.path, '{}'); return 'rajesh-ms'; };
+  await assert.rejects(collectSnapshot({ reader: edited, collectorProfile: reference, now: () => now }), { code: 'COLLECTOR_PROFILE_CHANGED' });
 });
 test('read client exposes no arbitrary query or write operation', async () => {
   let calls = 0; const reader = createGithubReader({ run: async () => { calls++; return '{}'; } });

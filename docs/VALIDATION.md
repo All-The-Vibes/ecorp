@@ -21,14 +21,17 @@ Node: **24.19.0**. Rust: **1.98.1**. Package manager: **pnpm@11.19.0**.
 | Entry point | Implementation |
 | --- | --- |
 | `pnpm check:migrations` | `node tools/check_migrations.mjs` |
+| `pnpm check:docs` | `node tools/check_documentation.mjs && node tools/check_docs.mjs` |
+| `pnpm check:observation` | `node tools/consume_operation_receipt.mjs` |
+| `pnpm test:unit` | `node --test --test-concurrency=2 --test-timeout=180000 "apps/web/src/**/*.test.mjs" "tools/*.test.mjs"` |
+| `pnpm test:steward` | `node --test --test-concurrency=2 --test-timeout=180000 scenarios/repo-steward/steward.test.mjs scenarios/repo-steward/actions.test.mjs scenarios/repo-steward/recurring-audit.test.mjs scenarios/repo-steward/feedback.test.mjs scenarios/repo-steward/maintenance.test.mjs scenarios/repo-steward/feedback-cli.test.mjs` |
+| `pnpm check` | `node tools/run_checks.mjs --group full` |
 | `pnpm test` | `node tools/run_checks.mjs --group test` |
 | `pnpm test:js` | `node tools/run_checks.mjs --group node` |
 | `pnpm check:fast` | `node tools/run_checks.mjs --group fast` |
 | `pnpm check:preview` | `node tools/run_checks.mjs --group full --dry-run` |
-| `pnpm check:docs` | `node tools/check_docs.mjs` |
 | `pnpm check:docs:preview` | `node tools/check_docs.mjs --dry-run` |
 | `pnpm check:docs:write` | `node tools/check_docs.mjs --write` |
-| `pnpm check` | `node tools/run_checks.mjs --group full` |
 
 Node test roots: `tools/`, `apps/web/src/`, `scenarios/repo-steward/`, `tests/readiness/`, `.github/skills/`.
 Rust suite: `cargo test --workspace --locked`.

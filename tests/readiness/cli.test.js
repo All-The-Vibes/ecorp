@@ -49,7 +49,7 @@ test('dry run executes no checks, creates no receipt and leaves source unchanged
   const preview = JSON.parse(result.stdout)
   assert.equal(preview.dry_run, true)
   assert.deepEqual(preview.writes, [])
-  assert.equal(preview.checks.length, 8)
+  assert.equal(preview.checks.length, 9)
   assert.equal(f.git(['status', '--porcelain']), before)
   assert.ok(!readdirSync(f.root).includes('output'))
 })
@@ -118,7 +118,7 @@ test('failing gates retain complete stdout and stderr beyond the compact limit',
   assert.equal(report.status, 'failed')
   assert.equal(report.checks[0].exitCode, 7)
   assert.equal(report.checks[0].passed, false)
-  assert.deepEqual(report.notRun, ['docs', 'format'])
+  assert.deepEqual(report.notRun, ['docs', 'repository-docs', 'format'])
 })
 test('native capture overflow is disclosed and remains failed evidence', t => {
   const f = fixture(t)
@@ -139,7 +139,7 @@ test('native capture overflow is disclosed and remains failed evidence', t => {
   assert.equal(report.status, 'failed')
   assert.equal(report.checks[0].passed, false)
   assert.equal(report.checks[0].errorCode, 'ENOBUFS')
-  assert.deepEqual(report.notRun, ['docs', 'format'])
+  assert.deepEqual(report.notRun, ['docs', 'repository-docs', 'format'])
 })
 test('failing first gate stops execution and marks later gates not run', t => {
   const f = fixture(t), result = f.invoke(['--group', 'fast'])
@@ -148,7 +148,7 @@ test('failing first gate stops execution and marks later gates not run', t => {
   assert.equal(report.status, 'failed')
   assert.equal(report.checks.length, 1)
   assert.equal(report.checks[0].name, 'migrations')
-  assert.deepEqual(report.notRun, ['docs', 'format'])
+  assert.deepEqual(report.notRun, ['docs', 'repository-docs', 'format'])
 })
 test('a passing test cannot certify source it modified during validation', t => {
   const f = fixture(t, "import test from 'node:test'; import { writeFileSync } from 'node:fs'; test('mutation fixture', () => writeFileSync('new-source.txt', 'changed'))")
@@ -231,7 +231,7 @@ for (const failingGate of [false, true]) {
     assert.equal(report.checks[0].counts.node.tests, 1)
     assert.equal(report.checks[0].counts.node.failed, failingGate ? 1 : 0)
     assert.equal(report.runningCheck, null)
-    assert.deepEqual(report.notRun, failingGate ? ['docs', 'format'] : [])
+    assert.deepEqual(report.notRun, failingGate ? ['docs', 'repository-docs', 'format'] : [])
     assert.ok(report.finishedAt)
   })
 }
@@ -255,8 +255,8 @@ test('executing gates see incomplete receipts and completed checkpoints without 
     writeFileSync('output/${name}-checkpoint.json', JSON.stringify(report))
     process.exitCode = ${name === 'docs' ? 7 : 0}
   `
-  writeFileSync(path.join(f.root, 'tools/check_migrations.mjs'), gate('migrations', [], ['docs', 'format']))
-  writeFileSync(path.join(f.root, 'tools/check_docs.mjs'), gate('docs', ['migrations'], ['format']))
+  writeFileSync(path.join(f.root, 'tools/check_migrations.mjs'), gate('migrations', [], ['docs', 'repository-docs', 'format']))
+  writeFileSync(path.join(f.root, 'tools/check_docs.mjs'), gate('docs', ['migrations'], ['repository-docs', 'format']))
   const result = f.invoke(['--group', 'fast'])
   assert.equal(result.error, undefined)
   assert.equal(result.status, 1)
@@ -267,7 +267,7 @@ test('executing gates see incomplete receipts and completed checkpoints without 
   assert.equal(report.runningCheck, null)
   assert.equal(report.checks.length, 2)
   assert.equal(report.checks[1].exitCode, 7)
-  assert.deepEqual(report.notRun, ['format'])
+  assert.deepEqual(report.notRun, ['repository-docs', 'format'])
   for (const name of ['migrations', 'docs']) {
     assert.equal(JSON.parse(readFileSync(path.join(f.root, `output/${name}-checkpoint.json`))).runningCheck, name)
   }

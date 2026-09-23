@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "pr": 323,
+  "source_head": "74c78857b8e0ac6536f875532176e3e4074d2319",
+  "tested_staged_tree": "48f9e29e2e65fdcacd3f1c2d879db6e87cf2d96d",
+  "target_main": "08b0b89b2dd16c1906c9dd3468c5ddecca24c4ce",
+  "started_at_utc": "2026-09-23T03:06:21.8915054+00:00",
+  "finished_at_utc": "2026-09-23T03:22:24.5210302+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "Maintainer integration with current main. Repository validation and security tooling changed; the nine required validation gates passed, including the native MCP unit path. The readiness CLI regression suite, real fast-group CLI invocation, and synthetic secret-detection canary passed separately on the same staged source. This packet does not claim a new readiness benchmark score, live provider acceptance, or a production/browser runtime run.",
+  "maintainer_changes": "Merged main 08b0b89b2dd16c1906c9dd3468c5ddecca24c4ce without rewriting collaborator history. Reconciled the validation entry point with existing repository documentation checks, steward tests, native platform/owned-fixture checks, dependency pins and Actions hardening. The security snapshot configuration is now explicitly selected from tools/gitleaks-snapshot.toml; snapshot-only exclusions do not become the default history/staged secret-scanner configuration. Historical readiness reports retain their original scope and limitations.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.7304621,
+      "log": "migrations.log",
+      "original_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823",
+      "published_log_sha256": "647fc92ef827bdde2d804ae951c78304f0522f35f9832dde27b39840b8263757"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.6930599,
+      "log": "documentation.log",
+      "original_log_sha256": "01432084f5a9f7b2fac65e10454b3ee1977a20948a22216b52f1bd2334d2dbd3",
+      "published_log_sha256": "26bf938737ecae9455a78c364b28619436c4152da4a9b9b448e177ac162dd09b"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 2.5443892,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 110.6018789,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "8cb18fae3d2977fbad3cffa6688fff31166b108e7be829dc0939e840f8efb6d2",
+      "published_log_sha256": "909d270937da22c17dabfed6112c7bf4a54f1cb4927e28b8f4051a0e18971384"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 667.9087947,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "0c3f92654fd913c135311f11d2e38ce8ed48b0f09eff4a784cb85f055adceb25",
+      "published_log_sha256": "477ee1555120c95fb677aecd89e7c8aff7901d194f8f3a74b3ab5b78ab4a0dae"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 58.5610261,
+      "log": "node-unit.log",
+      "original_log_sha256": "5bb87b80df25b0271832fb7441ce19af3df0dd9ad096230e74cd034f76d1e272",
+      "published_log_sha256": "13028af3d46df1b381f2e5fc7111bd6ebaf81fabb726e7907daa746a926ffb5a"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 87.7636308,
+      "log": "steward.log",
+      "original_log_sha256": "6d70c5d691ceb11241c8d1eda9f40f5b35b121aa7cc45c3b945f63f5f33a84ea",
+      "published_log_sha256": "98580eef4b9b7d1fb5f275ae2cc28fdf8175a9ef854f51f78b35bf0f84595d9b"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 3.9546333,
+      "log": "web-build.log",
+      "original_log_sha256": "f6b4594c9d5dfb83cf93e51d87af7528913f5d4e0216d6c517795bbc91eaa721",
+      "published_log_sha256": "82d0dbf1823acad789aa89ef5fe1f05ec1fb470ced066986d07e789129c127fe"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 2.4010021,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "build_preparation": {
+    "workspace_refresh": {
+      "exit_code": 0,
+      "log": "workspace-refresh.log",
+      "original_log_sha256": "c6bbc3e59ebaeef0038f84c617ca774fbd437b3e0b097296b33c483615dc987e",
+      "published_log_sha256": "5947934024bb607fe3ea5d88e9cbef223875192c41611f6701218ff2e3dfee62"
+    },
+    "native_mcp_build": {
+      "exit_code": 0,
+      "log": "native-mcp-build.log",
+      "original_log_sha256": "9620cd5040db7d6c94b7bdfe694b94248c1256bca743de899776b6de810e2f82",
+      "published_log_sha256": "172d74a879861decbfc356be02ae8fe60c2d37ba030c16b1dd64e1877f638e47",
+      "binary_sha256": "667b2c5b48881d173846fb314a4c0b2c4d46f114e5ac79d1c5dcf12a31c3c116"
+    }
+  }
+}

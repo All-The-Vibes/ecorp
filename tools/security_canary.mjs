@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 // Detector verification, never a real credential or provider call.
 const binary = process.argv[2]
 if (!binary || !path.isAbsolute(binary) || process.argv.length !== 3) throw new Error('Supply one absolute Gitleaks executable path')
-const config = fileURLToPath(new URL('../.gitleaks.toml', import.meta.url))
+const config = fileURLToPath(new URL('./gitleaks-snapshot.toml', import.meta.url))
 const fixture = mkdtempSync(path.join(tmpdir(), 'ecorp-secret-canary-'))
 const canary = ['gh', 'p_', randomBytes(27).toString('base64url').replaceAll('-', 'x').replaceAll('_', 'y')].join('')
 try {

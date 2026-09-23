@@ -36,6 +36,7 @@ export function checkPlan(group, files) {
   const checks = {
     migrations: ['node', 'tools/check_migrations.mjs'],
     docs: ['node', 'tools/check_docs.mjs'],
+    'repository-docs': ['node', 'tools/check_documentation.mjs'],
     'node-tests': ['node', '--test', '--test-concurrency=1', '--test-reporter=tap', ...tests],
     format: ['cargo', 'fmt', '--check'],
     clippy: ['cargo', 'clippy', '--workspace', '--all-targets', '--locked', '--', '-D', 'warnings'],
@@ -44,8 +45,8 @@ export function checkPlan(group, files) {
     'web-lint': ['pnpm', 'lint:web'],
   }
   const groups = {
-    fast: ['migrations', 'docs', 'format'],
-    docs: ['docs'],
+    fast: ['migrations', 'docs', 'repository-docs', 'format'],
+    docs: ['docs', 'repository-docs'],
     node: ['node-tests'],
     test: ['node-tests', 'rust-tests'],
     full: Object.keys(checks),

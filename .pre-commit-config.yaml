@@ -1,19 +1,35 @@
-# Optional local feedback. CI executes the same checks without relying on hook installation.
+# Optional local feedback. Install pre-commit and the native tools separately;
+# this configuration does not install tools or enroll hooks in any checkout.
+# Gitleaks 8.30.1 and the repository's recommended Node/Rust pins are prerequisites.
+minimum_pre_commit_version: '4.0.0'
+default_stages: [pre-commit]
 repos:
   - repo: local
     hooks:
-      - id: documentation-contract
-        name: Check documented validation contract
+      - id: gitleaks-staged
+        name: Scan staged changes for secrets
+        language: system
+        entry: gitleaks git --pre-commit --staged --redact=100 --no-banner --no-color --ignore-gitleaks-allow --gitleaks-ignore-path .gitleaksignore --timeout 60
+        pass_filenames: false
+        always_run: true
+      - id: documentation-contracts
+        name: Check current documentation contracts
+        language: system
+        entry: node tools/check_documentation.mjs
+        pass_filenames: false
+        always_run: true
+      - id: rust-format
+        name: Check Rust formatting
+        language: system
+        entry: cargo fmt --all -- --check
+        files: '\.rs$'
+        pass_filenames: false
+      - id: generated-validation-contract
+        name: Check generated validation documentation
         entry: node tools/check_docs.mjs
         language: system
         pass_filenames: false
         always_run: true
-      - id: rust-format
-        name: Check Rust formatting without editing files
-        entry: cargo fmt --check
-        language: system
-        pass_filenames: false
-        types: [rust]
       - id: readiness-tool-tests
         name: Check validation and evidence tooling
         entry: node --test tools/readiness_contract.test.mjs

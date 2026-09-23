@@ -1,5 +1,19 @@
 # AI-readiness improvement ledger
 
+## Integration with current main (September 22, 2026)
+
+The integration preserves main's current dependency lock, pinned Actions, native
+Windows validation, checkpoint driver, repository documentation checks and staged
+secret scan. The generated validation contract supplements those checks; the full
+driver now includes both repository documentation and generated-contract checks.
+The snapshot detector explicitly selects `tools/gitleaks-snapshot.toml`. Keeping
+that configuration out of root auto-discovery preserves the existing history and
+staged scanners' default rules and separately reviewed fingerprint exceptions.
+Snapshot-only generated-path exclusions do not apply to the full Git history scan.
+
+The benchmark runs and source fingerprints below are historical. Integration with
+current main does not establish a new benchmark score or complete issue #317.
+
 Branch: `codex/ai-readiness-improvements`. Source base: `0b1ad59da398e3dbd6a696d0264bcb6ebd620219`.
 This is local engineering/measurement work, not approval to push, merge, deploy or alter
 GitHub policy. Hourly main synchronization is held during active changes and measurement.

@@ -29,8 +29,10 @@ test('Windows package-manager execution uses an explicit argument vector, never 
 })
 test('full gate retains Rust, web and migration checks and adds Node/docs validation', () => {
   const plan = checkPlan('full', ['tools/a.test.mjs'])
-  assert.deepEqual(plan.map(check => check.name), ['migrations', 'docs', 'node-tests', 'format', 'clippy', 'rust-tests', 'web-build', 'web-lint'])
+  assert.deepEqual(plan.map(check => check.name), ['migrations', 'docs', 'repository-docs', 'node-tests', 'format', 'clippy', 'rust-tests', 'web-build', 'web-lint'])
   assert.deepEqual(plan.find(check => check.name === 'rust-tests').argv, ['cargo', 'test', '--workspace', '--locked'])
+  assert.deepEqual(plan.find(check => check.name === 'repository-docs').argv, ['node', 'tools/check_documentation.mjs'])
+  assert.deepEqual(checkPlan('docs', ['tools/a.test.mjs']).map(check => check.name), ['docs', 'repository-docs'])
 })
 test('test results distinguish failed, passed, ignored and not-observed', () => {
   assert.deepEqual(summarizeTests('compile error'), { rust: null, node: null })

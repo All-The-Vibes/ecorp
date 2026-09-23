@@ -484,8 +484,7 @@ export function assessOriginal(state, replay, config, plan, identity, pathApi = 
   equal(preserved.payload.source_checkpoint, checkpoint, 'physical_checkpoint_source_or_policy_mismatch')
   ensure(run.workspace_branch === branch && run.workspace_base_commit === PIN.source_commit &&
     run.workspace_base_ref === 'HEAD' &&
-    samePath(run.workspace_path, expectedWorkspace(config, task.id, run.id, pathApi), pathApi),
-  'original_workspace_lineage_mismatch')
+    samePath(run.workspace_path, expectedWorkspace(config, task.id, run.id, pathApi), pathApi), 'original_workspace_lineage_mismatch')
   for (const event of [started, preserved]) {
     ensure(samePath(event.payload.workspace, run.workspace_path, pathApi) &&
       event.payload.workspace_branch === branch && event.payload.workspace_base_ref === 'HEAD' &&
@@ -990,10 +989,7 @@ function admissionView(context, report) {
 }
 
 /** All effects are injectable. Tests use ONLY memory, never a fake service. */
-// Offline callers can select fixture path semantics; native execution keeps the host default.
-export async function executeSuite(config, report, io, {
-  continuation = false, serverUpgrade = null, pathApi = path,
-} = {}) {
+export async function executeSuite(config, report, io, { continuation = false, serverUpgrade = null, pathApi = path } = {}) {
   ensure(!serverUpgrade || continuation, 'server_upgrade_requires_continue')
   validateSavedReport(report, config, serverUpgrade)
   const plan = buildPlan(config, report.driver_id)
