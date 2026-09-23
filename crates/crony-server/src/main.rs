@@ -4947,12 +4947,10 @@ async fn resolve_dependency_context(
             "artifact_role": dependency.artifact.artifact_role, "files": source_files,
         }));
     }
-    if !materialized_files.is_empty() {
-        anyhow::ensure!(
-            context.len().saturating_add(record.mission_title.len()) <= 64 * 1024,
-            "task prompt and verified dependency contents exceed 64 KiB"
-        );
-    }
+    anyhow::ensure!(
+        context.len().saturating_add(record.mission_title.len()) <= 64 * 1024,
+        "task prompt and verified dependency contents exceed 64 KiB"
+    );
     if let Some(event) = state
         .store
         .record_dependency_context(
@@ -4994,6 +4992,25 @@ fn append_operator_notes(prompt: &mut String, messages: &[QueuedRunMessage]) {
             message.id, message.actor_id, message.text
         ));
     }
+}
+
+fn assemble_resume_prompt(
+    task_prompt: &str,
+    instruction: &str,
+    dependency_prompt: &str,
+    messages: &[QueuedRunMessage],
+) -> anyhow::Result<String> {
+    let mut prompt = format!(
+        "{task_prompt}\n\nRESUME INSTRUCTION:\n{}",
+        instruction.trim()
+    );
+    prompt.push_str(dependency_prompt);
+    append_operator_notes(&mut prompt, messages);
+    anyhow::ensure!(
+        prompt.len() <= 64 * 1024,
+        "resumed task prompt, instruction, verified dependencies and operator notes exceed 64 KiB"
+    );
+    Ok(prompt)
 }
 
 async fn resolve_run_secrets(
@@ -5458,13 +5475,19 @@ async fn resume_run(
         secret_refs: record.secret_refs.clone(),
         queued_messages: record.queued_messages.clone(),
     };
-    let mut resume_prompt = format!(
-        "{}\n\nRESUME INSTRUCTION:\n{}",
-        record.task_prompt,
-        prompt.trim()
-    );
-    let dependencies = match resolve_dependency_context(&state, &launch_record).await {
-        Ok(context) => context,
+    let resolved = resolve_dependency_context(&state, &launch_record)
+        .await
+        .and_then(|context| {
+            let resume_prompt = assemble_resume_prompt(
+                &record.task_prompt,
+                prompt,
+                &context.prompt,
+                &record.queued_messages,
+            )?;
+            Ok((context, resume_prompt))
+        });
+    let (dependencies, resume_prompt) = match resolved {
+        Ok(resolved) => resolved,
         Err(error) => {
             let failure = state
                 .store
@@ -5483,8 +5506,6 @@ async fn resume_run(
             ));
         }
     };
-    resume_prompt.push_str(&dependencies.prompt);
-    append_operator_notes(&mut resume_prompt, &record.queued_messages);
     let secrets = match resolve_run_secrets(&state, &launch_record, &record.runner_id).await {
         Ok(secrets) => secrets,
         Err(error) => {
@@ -7254,6 +7275,91 @@ mod tests {
         schedule_after_runner_commands, select_ready_runner, send_command_to_current_runner,
         validate_verification_artifact_reference,
     };
+
+    #[test]
+    fn resumed_prompt_preserves_instruction_dependencies_and_notes_in_order() {
+        let note = crony_store::QueuedRunMessage {
+            id: Uuid::from_u128(1),
+            actor_id: Uuid::from_u128(2),
+            text: "Review the signed evidence".to_owned(),
+        };
+        let prompt = super::assemble_resume_prompt(
+            "Original task",
+            "  Continue safely \n",
+            "\nVerified dependency",
+            std::slice::from_ref(&note),
+        )
+        .unwrap();
+        assert_eq!(
+            prompt,
+            format!(
+                "Original task\n\nRESUME INSTRUCTION:\nContinue safely\nVerified dependency\n\n\
+                 QUEUED OPERATOR NOTES:\n\
+                 These durable notes were queued while the agent was off shift. Address each note in this turn.\n\
+                 - message {} from actor {}: {}\n",
+                note.id, note.actor_id, note.text
+            )
+        );
+    }
+
+    #[test]
+    fn resumed_prompt_enforces_final_utf8_byte_limit() {
+        let instruction = "é".repeat(1_000);
+        let dependencies = "源".repeat(1_000);
+        let note = crony_store::QueuedRunMessage {
+            id: Uuid::from_u128(1),
+            actor_id: Uuid::from_u128(2),
+            text: "🙂".repeat(1_000),
+        };
+        let messages = std::slice::from_ref(&note);
+        let overhead = super::assemble_resume_prompt("", &instruction, &dependencies, messages)
+            .unwrap()
+            .len();
+        let task = "t".repeat(64 * 1024 - overhead);
+        let exact =
+            super::assemble_resume_prompt(&task, &instruction, &dependencies, messages).unwrap();
+        assert_eq!(exact.len(), 64 * 1024);
+        assert!(exact.chars().count() < exact.len());
+        for (task, instruction, dependencies, note) in [
+            (
+                format!("{task}x"),
+                instruction.clone(),
+                dependencies.clone(),
+                note.clone(),
+            ),
+            (
+                task.clone(),
+                format!("{instruction}x"),
+                dependencies.clone(),
+                note.clone(),
+            ),
+            (
+                task.clone(),
+                instruction.clone(),
+                format!("{dependencies}x"),
+                note.clone(),
+            ),
+            (
+                task,
+                instruction,
+                dependencies,
+                crony_store::QueuedRunMessage {
+                    text: format!("{}x", note.text),
+                    ..note
+                },
+            ),
+        ] {
+            let error = super::assemble_resume_prompt(
+                &task,
+                &instruction,
+                &dependencies,
+                std::slice::from_ref(&note),
+            )
+            .unwrap_err();
+            assert!(error.to_string().contains("exceed 64 KiB"));
+        }
+        assert!(super::assemble_resume_prompt(&"t".repeat(64 * 1024), "resume", "", &[]).is_err());
+    }
 
     fn retained_receipt_command_fixture() -> crony_store::PendingRunnerCommand {
         let corp = Uuid::from_u128(1);

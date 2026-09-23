@@ -889,6 +889,39 @@ async fn issue297_exercise(fixture: &Issue297Fixture, case_id: &str) -> Vec<&'st
                 .await
                 .unwrap();
             assertions.push("typed_source_before_text_receipt_combined_bound_rejected");
+
+            // A legacy-only dependency must fail at the prompt boundary, before
+            // trying to replace this run's persisted two-parent dispatch receipt.
+            assert_eq!(
+                sqlx::query("DELETE FROM task_dependencies WHERE task_id=$1 AND depends_on_task_id=$2")
+                    .bind(launch.task_id)
+                    .bind(fixture.source.task_id)
+                    .execute(pool).await.unwrap().rows_affected(),
+                1
+            );
+            launch.mission_title = "é".repeat(32 * 1024);
+            let legacy_error = crate::resolve_dependency_context(&fixture.state, &launch)
+                .await.err().expect("legacy-only dependency must count toward the combined limit");
+            sqlx::query("INSERT INTO task_dependencies (task_id,depends_on_task_id) VALUES ($1,$2)")
+                .bind(launch.task_id).bind(fixture.source.task_id)
+                .execute(pool).await.unwrap();
+            assert!(legacy_error.to_string().contains("task prompt and verified dependency contents exceed 64 KiB"));
+            assertions.push("legacy_only_combined_prompt_bound_rejected");
+
+            let note = crony_store::QueuedRunMessage {
+                id: Uuid::from_u128(24), actor_id: Uuid::from_u128(21),
+                text: "確認".to_owned(),
+            };
+            let notes = std::slice::from_ref(&note);
+            let overhead = crate::assemble_resume_prompt("", "é", &positive.prompt, notes)
+                .unwrap().len();
+            let task = "x".repeat(64 * 1024 - overhead);
+            let exact = crate::assemble_resume_prompt(&task, "é", &positive.prompt, notes).unwrap();
+            assert_eq!(exact.len(), 64 * 1024);
+            assert!(crate::assemble_resume_prompt(&task, "éx", &positive.prompt, notes).is_err());
+            let oversized_note = crony_store::QueuedRunMessage { text: format!("{}x", note.text), ..note };
+            assert!(crate::assemble_resume_prompt(&task, "é", &positive.prompt, &[oversized_note]).is_err());
+            assertions.push("final_resumed_prompt_exact_bytes_accepted_instruction_and_notes_overflow_rejected");
         }
         "envelope-byte-limit" => {
             assert_eq!(

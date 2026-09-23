@@ -110,8 +110,8 @@ const receipt = { schema_version: 1, status: status === 0 ? 'passed' : 'incomple
   line_floor_percent: Number(process.env.ECORP_COVERAGE_LINE_FLOOR),
   platform: { os: process.platform, arch: process.arch }, tests, native_totals: native?.data?.[0]?.totals ?? null,
   reported_source_files: native?.data?.flatMap(data => data.files?.map(file => file.filename) ?? []) ?? [],
-  scope: 'Native cargo-llvm-cov Rust workspace unit tests plus all existing ignored crony-store/crony-server SQLx tests on this Linux build; no requested code exclusions. This is not whole-repository, web, provider, or application E2E coverage.',
-  unexecuted_scope: 'Other ignored tests, including the explicit runner stopped-session probe, remain unexecuted.',
+  scope: 'Native cargo-llvm-cov Rust workspace unit tests plus ignored crony-store/crony-server SQLx tests on this Linux build. The standalone issue297_native_adversarial_fixture requires a separately owned nonce-qualified database and is not selected by this shared SQLx lane. No source files are excluded from coverage. This is not whole-repository, web, provider, or application E2E coverage.',
+  unexecuted_scope: 'The standalone issue297_native_adversarial_fixture and other ignored tests, including the explicit runner stopped-session probe, remain unexecuted in this coverage lane.',
   database: { role: process.env.PGUSER, database: process.env.PGDATABASE, host: process.env.PGHOST, port: process.env.PGPORT,
     ownership: 'Caller-provided disposable PostgreSQL service; SQLx owns its per-test databases.' },
   artifacts: files.map(file => ({ file, sha256: digest(`coverage/${file}`) })),
@@ -134,7 +134,9 @@ psql --no-password --no-psqlrc --set=ON_ERROR_STOP=1 --tuples-only --no-align \
 cargo +1.98.1 llvm-cov test --workspace --locked --no-report 2>&1 | tee "$reports/unit-tests.log"
 # In 0.9.1, --no-report already retains profiles and conflicts with --no-clean.
 cargo +1.98.1 llvm-cov test -p crony-store --locked --no-report -- --ignored --test-threads=1 2>&1 | tee "$reports/store-sqlx-tests.log"
-cargo +1.98.1 llvm-cov test -p crony-server --locked --no-report -- --ignored --test-threads=1 2>&1 | tee "$reports/server-sqlx-tests.log"
+# This native adversarial entrypoint rejects ordinary DATABASE_URL ownership:
+# its separate driver supplies a nonce-qualified service and per-case schema.
+cargo +1.98.1 llvm-cov test -p crony-server --locked --no-report -- --ignored --skip artifacts::tests::issue297_native_adversarial_fixture --test-threads=1 2>&1 | tee "$reports/server-sqlx-tests.log"
 cargo +1.98.1 llvm-cov report --locked --json --output-path "$reports/native-summary.json" 2>&1 | tee "$reports/json-report.log"
 cargo +1.98.1 llvm-cov report --locked --lcov --output-path "$reports/lcov.info" 2>&1 | tee "$reports/lcov-report.log"
 cargo +1.98.1 llvm-cov report --locked --fail-under-lines "$line_floor" 2>&1 | tee "$reports/line-guard.log"
