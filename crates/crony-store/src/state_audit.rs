@@ -32,6 +32,7 @@ impl std::error::Error for AuditWitnessError {}
 pub enum AuditPublicationRetry {
     WitnessUnavailable,
     AttemptTimedOut,
+    TransportUnavailable,
 }
 
 #[derive(Debug)]
@@ -455,6 +456,7 @@ impl PgStore {
         let code = match reason {
             AuditPublicationRetry::WitnessUnavailable => "witness_unavailable",
             AuditPublicationRetry::AttemptTimedOut => "publication_attempt_timed_out",
+            AuditPublicationRetry::TransportUnavailable => "publication_transport_unavailable",
         };
         // A racing successful publication or established divergence wins over
         // this best-effort retry marker. Never reopen a disabled destination.

@@ -1069,13 +1069,13 @@ fixture. It uses no operator database URL, retained runtime or provider account.
 Cleanup verifies the exact container name and ownership label. Do not run Python
 with assertions disabled. The cleanup guards also run independently without Docker.
 
-The 68 rejection cases compare public schema, all table contents (including the
+The 72 rejection cases compare public schema, all table contents (including the
 migration ledger) and sequences on empty and recovery-sensitive populated
 databases. They also check filesystem writes, observed listeners, fixture
 requests and secret-safe diagnostics. The audit cases cover a short signing seed,
-an invalid checkpoint interval, a missing key ID, malformed retained-witness JSON
-and an unsupported 64-character GitHub commit; fixture-owned audit input hashes
-must remain unchanged. CLI/help cases use their own disposable
+an invalid checkpoint interval, a missing key ID, malformed retained-witness JSON,
+an unsupported 64-character GitHub commit and internal CR/LF in GitHub credentials;
+fixture-owned audit input hashes must remain unchanged. CLI/help cases use their own disposable
 database and prove no mutation or fixture request. Positive cases cover migration,
 demo persistence/restart, runner grace recovery, orphan staging cleanup and
 production startup with 32- and 33-byte signing keys against TLS storage.

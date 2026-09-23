@@ -297,6 +297,90 @@ async fn unavailable_witness_recovers_without_an_integrity_incident(
     Ok(())
 }
 
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn f02_transport_constructor_failure_is_durable_and_recovers(
+    pool: PgPool,
+) -> anyhow::Result<()> {
+    let (store, ids, service, destination) = fixture(&pool).await?;
+    service
+        .publish_batch(
+            &store,
+            |_| crony_audit::GitHubTransport::new("fixture/audit", "main", "DO_NOT_LOG\rTOKEN"),
+            StdDuration::from_secs(5),
+        )
+        .await?;
+    let reopened = PgStore::connect(pool.connect_options().to_url_lossy().as_str()).await?;
+    let status = reopened
+        .audit_status(ids.corp_id, ids.alice_actor_id)
+        .await?;
+    let retained = &status["destinations"][0];
+    assert_eq!(retained["last_error"], "publication_transport_unavailable");
+    assert_eq!(retained["failures"], 1);
+    assert_eq!(retained["publication_disabled"], false);
+    assert!(retained["reconciliation_error"].is_null());
+    assert!(!retained["last_attempted_publication"].is_null());
+    assert!(retained["last_successful_publication"].is_null());
+    assert_eq!(status["assurance"]["publication_errors"], 1);
+    assert!(!status.to_string().contains("DO_NOT_LOG"));
+    assert!(reopened.due_audit_destinations().await?.is_empty());
+    assert!(
+        !reopened
+            .audit_workflow_gate_satisfied(ids.corp_id, destination.id, 1)
+            .await?
+    );
+    // Recovery still goes through both the retained pin and normal publication.
+    reopened
+        .request_audit_publication(ids.corp_id, ids.alice_actor_id, destination.id)
+        .await?;
+    service
+        .publish_batch(
+            &reopened,
+            |_| {
+                Ok(PublicationFixture {
+                    ancestors: vec![PIN.into()],
+                    ..Default::default()
+                })
+            },
+            StdDuration::from_secs(5),
+        )
+        .await?;
+    let status = reopened
+        .audit_status(ids.corp_id, ids.alice_actor_id)
+        .await?;
+    assert!(status["destinations"][0]["last_error"].is_null());
+    assert_eq!(status["destinations"][0]["failures"], 0);
+    assert_eq!(status["destinations"][0]["last_commit"], HEAD);
+    assert!(
+        reopened
+            .audit_workflow_gate_satisfied(ids.corp_id, destination.id, 1)
+            .await?
+    );
+
+    // A constructor racing established divergence must not reopen or relabel it.
+    reopened
+        .request_audit_publication(ids.corp_id, ids.alice_actor_id, destination.id)
+        .await?;
+    sqlx::query("UPDATE state_audit_destinations SET publication_disabled=true,reconciliation_error='retained_witness_divergence',last_error='retained_witness_divergence' WHERE id=$1")
+        .bind(destination.id).execute(&pool).await?;
+    service
+        .publish_batch::<PublicationFixture, _>(
+            &reopened,
+            |_| anyhow::bail!("DO_NOT_LOG"),
+            StdDuration::from_secs(5),
+        )
+        .await?;
+    let status = reopened
+        .audit_status(ids.corp_id, ids.alice_actor_id)
+        .await?;
+    assert_eq!(status["destinations"][0]["publication_disabled"], true);
+    assert_eq!(
+        status["destinations"][0]["last_error"],
+        "retained_witness_divergence"
+    );
+    Ok(())
+}
+
 async fn add_pending_checkpoint(
     store: &PgStore,
     pool: &PgPool,
