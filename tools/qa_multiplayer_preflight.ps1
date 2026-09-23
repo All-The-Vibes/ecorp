@@ -187,6 +187,16 @@ function Get-U1GitConfigFiles([string]$Product) {
     $gitDir = if ($item -is [IO.DirectoryInfo]) { $marker } else { Read-GitPathMarker $marker $Product 'gitdir: ' }
     $commonMarker = Join-Path $gitDir 'commondir'
     $commonDir = if (Get-GitMetadataFile $commonMarker $true) { Read-GitPathMarker $commonMarker $gitDir '' } else { $gitDir }
+    # Git also follows pack/loose-object aliases without an alternates file.
+    # Native enumeration lists links without descending into them (no
+    # -FollowSymlink). Reject directory and file aliases before any source Git.
+    $objects = Join-Path $commonDir 'objects'
+    Assert-U1NoReparseAncestor $objects
+    Get-ChildItem -LiteralPath $objects -Recurse -Force -ErrorAction Stop | ForEach-Object {
+        if ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            throw 'Reparse Git object paths are not supported for source attestation.'
+        }
+    }
     # Object-source pointers can redirect even read-only Git to remote storage.
     # Reject the checked files before Git setup, without reading their targets.
     foreach ($name in @('alternates', 'http-alternates')) {
@@ -212,7 +222,7 @@ function Invoke-U1SourceGit([string]$Product, [string[]]$Arguments) {
             [Environment]::SetEnvironmentVariable($name, $isolated[$name], 'Process')
         }
         return Invoke-U1ReadCommand 'git' (@('--no-replace-objects', '--no-optional-locks',
-            '-c', 'core.attributesFile=', '-c', 'core.fsmonitor=false',
+            '-c', 'core.attributesFile=', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=/dev/null',
             '-c', 'core.untrackedCache=false', '-c', 'core.splitIndex=false',
             '-c', 'core.sparseCheckout=false', '-c', 'index.sparse=false',
             '-c', 'core.ignoreStat=false', '-C', $Product) + $Arguments)

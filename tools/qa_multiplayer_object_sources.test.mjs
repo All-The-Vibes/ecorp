@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 
-test('native Windows source preflight cannot fetch or use repository object alternates', {
+test('native Windows source preflight cannot fetch or use repository object alternates or aliases', {
   skip: process.platform !== 'win32',
   timeout: 170_000,
 }, () => {
@@ -16,6 +16,6 @@ test('native Windows source preflight cannot fetch or use repository object alte
   const summary = result.stdout.split(/\r?\n/).filter(line => line.startsWith('{'))
     .map(line => JSON.parse(line)).find(row => row.event === 'object-source-summary')
   assert.ok(summary, 'Native fixture summary is required')
-  assert.equal(summary.cases, 10)
+  assert.equal(summary.cases, 21)
   assert.equal(summary.failed, 0)
 })

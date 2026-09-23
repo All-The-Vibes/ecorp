@@ -333,6 +333,71 @@ public static class U1AliasProbe {
             $control = Invoke-U1Preflight -Product $product -Options $gitOptions
             Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Real clean Product must attest its own commit.'
             Assert (!(Test-Path -LiteralPath 'Env:GIT_INDEX_FILE')) 'Source attestation must restore an originally absent index override, not an empty override.'
+            # A mandatory temporary-index write invokes post-index-change even
+            # with --no-optional-locks. Only harmless owned sentinel writes run.
+            $hookConfig = Join-Path $product '.git/config'
+            $hookConfigBytes = [IO.File]::ReadAllBytes($hookConfig)
+            $hookWorktreeConfig = Join-Path $product '.git/config.worktree'
+            $hookResults = @()
+            foreach ($selection in @('default', 'repository', 'worktree')) {
+                $hookRoot = Join-Path $fixture "hook-$selection"
+                [IO.Directory]::CreateDirectory($hookRoot) | Out-Null
+                $sentinel = Join-Path $hookRoot 'outside-product-sentinel'
+                $hookDirectory = if ($selection -eq 'default') { Join-Path $product '.git/hooks' } else { Join-Path $hookRoot 'redirected-hooks' }
+                [IO.Directory]::CreateDirectory($hookDirectory) | Out-Null
+                $hook = Join-Path $hookDirectory 'post-index-change'
+                Assert (!(Test-Path -LiteralPath $hook) -and !(Test-Path -LiteralPath $hookWorktreeConfig)) 'Hook fixture paths must start absent.'
+                Assert ($sentinel.StartsWith($fixture + '\', [StringComparison]::OrdinalIgnoreCase) -and
+                    !(Test-U1PathOverlap $product $sentinel) -and !$sentinel.Contains("'")) 'Hook may write only its owned external sentinel.'
+                [IO.File]::WriteAllText($sentinel, "untouched`n")
+                [IO.File]::WriteAllText($hook, "#!/bin/sh`nprintf 'hook-executed\n' >> '$($sentinel.Replace('\', '/'))'`n")
+                try {
+                    if ($selection -eq 'repository') {
+                        Invoke-FixtureGit $product @('config', '--local', 'core.hooksPath', $hookDirectory.Replace('\', '/')) | Out-Null
+                    } elseif ($selection -eq 'worktree') {
+                        Invoke-FixtureGit $product @('config', '--local', 'extensions.worktreeConfig', 'true') | Out-Null
+                        # A lower-priority empty path proves the worktree setting wins.
+                        Invoke-FixtureGit $product @('config', '--local', 'core.hooksPath', $emptyTemplate.Replace('\', '/')) | Out-Null
+                        Invoke-FixtureGit $product @('config', '--worktree', 'core.hooksPath', $hookDirectory.Replace('\', '/')) | Out-Null
+                    }
+                    Assert (!(Invoke-FixtureGit $product @('status', '--porcelain', '--untracked-files=all'))) 'Hook source must otherwise be clean.'
+                    $before = @(Get-ChildItem -LiteralPath $product -Recurse -Force -File | Get-FileHash | Select-Object Path, Hash) | ConvertTo-Json -Compress
+                    # Bypass only the source helper for this native positive control.
+                    # Setup's hook-disabling wrapper must not mask the actual hook.
+                    $env:GIT_INDEX_FILE = Join-Path $hookRoot 'positive-control-index'
+                    try {
+                        & $nativeReadCommand 'git' @('--no-replace-objects', '--no-optional-locks', '-c', 'core.fsmonitor=false',
+                            '-C', $product, 'read-tree', '--no-sparse-checkout', $candidateHead) | Out-Null
+                    } finally { Remove-Item -LiteralPath Env:GIT_INDEX_FILE }
+                    Assert ([IO.File]::ReadAllText($sentinel) -ceq "untouched`nhook-executed`n") 'Native positive control must really execute the owned hook; setup failure is not RED.'
+                    Copy-Item -LiteralPath $sentinel -Destination (Join-Path $hookRoot 'positive-control-sentinel')
+                    [IO.File]::WriteAllText($sentinel, "untouched`n")
+                    $environmentBefore = @(Get-ChildItem Env: | Sort-Object Name | Select-Object Name, Value) | ConvertTo-Json -Compress
+                    $nativeGitCalls.Clear()
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $after = @(Get-ChildItem -LiteralPath $product -Recurse -Force -File | Get-FileHash | Select-Object Path, Hash) | ConvertTo-Json -Compress
+                    $environmentAfter = @(Get-ChildItem Env: | Sort-Object Name | Select-Object Name, Value) | ConvertTo-Json -Compress
+                    Assert ($observed.status -eq 'preparation-checks-passed' -and $observed.source_commit -ceq $candidateHead) 'An otherwise clean source with hooks must still attest its own commit.'
+                    Assert ($before -ceq $after -and $environmentBefore -ceq $environmentAfter) 'Hook attestation must preserve every source/index/HEAD/config byte and the process environment.'
+                    Assert (!(Test-Path -LiteralPath $gitOptions.QaRoot)) 'Hook attestation must not provision the QA root.'
+                    $hookRan = [IO.File]::ReadAllText($sentinel) -cne "untouched`n"
+                    $result = @{ event = 'post-index-change-preflight'; selection = $selection; positive_control_ran = $true;
+                        hook_ran = $hookRan; status = $observed.status; source_commit = $observed.source_commit;
+                        source_and_environment_preserved = $true; git_calls = $nativeGitCalls.Count; fixture = $hookRoot }
+                    $hookResults += $result
+                    Write-Output ($result | ConvertTo-Json -Compress)
+                } finally {
+                    [IO.File]::WriteAllBytes($hookConfig, $hookConfigBytes)
+                    # Retain hook/config bytes and all marker effects, including failures.
+                    if (Test-Path -LiteralPath $hookWorktreeConfig) {
+                        Move-Item -LiteralPath $hookWorktreeConfig -Destination (Join-Path $hookRoot 'retained-config.worktree')
+                    }
+                    if ($selection -eq 'default') {
+                        Move-Item -LiteralPath $hook -Destination (Join-Path $hookRoot 'retained-post-index-change')
+                    }
+                }
+            }
+            Assert (@($hookResults | Where-Object hook_ran).Count -eq 0) 'Native post-index-change hooks executed during preparation-only source attestation; owned effects retained.'
             $sourcePath = Join-Path $product 'source.txt'
             $originalSource = [IO.File]::ReadAllBytes($sourcePath)
             # A supported Git setting can ignore ctime changes. Set it explicitly

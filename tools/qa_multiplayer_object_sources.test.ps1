@@ -156,6 +156,68 @@ try {
     $report = Invoke-U1Preflight -Product $junctionSource -Options $options
     $blocked = ($report.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $report.source_commit
     Record 'object info junction' ($blocked -and $gitCalls.Count -eq 0 -and (Snapshot $junctionTarget) -ceq $targetBefore) @{ blocked = $blocked; git_calls = $gitCalls.Count; owned_target_preserved = ((Snapshot $junctionTarget) -ceq $targetBefore) }
+    # Native object aliases without alternates: first prove the object disappears
+    # without the alias, then that real Git reads it through the owned alias.
+    foreach ($kind in @('pack-directory', 'loose-directory', 'pack-file', 'index-file', 'loose-file')) {
+        $aliasSource = if ($kind -eq 'loose-directory') { $product } else { Join-Path $fixture $kind }
+        if ($aliasSource -ne $product) {
+            FixtureGit $fixture @('clone', '--no-hardlinks', "--template=$template", '--', $remote, $aliasSource) | Out-Null
+        }
+        if ($kind -in @('pack-directory', 'pack-file', 'index-file')) {
+            FixtureGit $aliasSource @('repack', '-a', '-d') | Out-Null
+        }
+        $expectedTree = FixtureGit $aliasSource @('cat-file', '-p', $tree)
+        $before = Snapshot $aliasSource
+        $gitCalls.Clear()
+        $report = Invoke-U1Preflight -Product $aliasSource -Options $options
+        Record "$kind regular control" ($report.status -eq 'preparation-checks-passed' -and
+            $report.source_commit -ceq $head -and (Snapshot $aliasSource) -ceq $before) @{
+            status = $report.status; source_commit = $report.source_commit; git_calls = $gitCalls.Count
+        }
+        $objects = Join-Path $aliasSource '.git/objects'
+        $alias = switch ($kind) {
+            'pack-directory' { Join-Path $objects 'pack' }
+            'loose-directory' { Join-Path $objects $tree.Substring(0, 2) }
+            'pack-file' { (Get-ChildItem -LiteralPath (Join-Path $objects 'pack') -Filter '*.pack' -ErrorAction Stop).FullName }
+            'index-file' { (Get-ChildItem -LiteralPath (Join-Path $objects 'pack') -Filter '*.idx' -ErrorAction Stop).FullName }
+            'loose-file' { Join-Path $objects ($tree.Substring(0, 2) + '/' + $tree.Substring(2)) }
+        }
+        $target = Join-Path $fixture "$kind-owned-target"
+        Assert (!(Test-U1PathOverlap $aliasSource $target)) 'Object alias target must be outside Product, inside the owned fixture.'
+        RetainMove $alias $target
+        $env:GIT_NO_LAZY_FETCH = '1'
+        & $nativeGit --no-optional-locks -c "core.hooksPath=$template" -C $aliasSource cat-file -e $tree 2>$null
+        $missingExit = $LASTEXITCODE
+        Assert ($missingExit -ne 0) 'Native Git must actually lose the tree without the object path; setup failure is not RED.'
+        if ($kind.EndsWith('-directory')) {
+            New-Item -ItemType Junction -Path $alias -Target $target -ErrorAction Stop | Out-Null
+        } else {
+            # Native .NET requests unprivileged symlink creation. No elevation or
+            # simulated fallback: unavailable host support is a setup failure.
+            [IO.File]::CreateSymbolicLink($alias, $target) | Out-Null
+        }
+        Assert ((Get-Item -LiteralPath $alias -Force -ErrorAction Stop).Attributes -band [IO.FileAttributes]::ReparsePoint) 'The actual native object reparse point is required.'
+        $targetBefore = if ($kind.EndsWith('-directory')) { Snapshot $target } else { (Get-FileHash -LiteralPath $target).Hash }
+        Assert ((FixtureGit $aliasSource @('cat-file', '-p', $tree)) -ceq $expectedTree) 'Native positive control must read the exact tree through the alias.'
+        Remove-Item -LiteralPath Env:GIT_NO_LAZY_FETCH
+        $sources = @($aliasSource)
+        if ($kind -eq 'loose-directory') { $sources += $linked }
+        foreach ($source in $sources) {
+            $gitCalls.Clear()
+            $before = Snapshot $aliasSource
+            $environmentBefore = @(Get-ChildItem Env: | Sort-Object Name | Select-Object Name, Value) | ConvertTo-Json -Compress
+            $report = Invoke-U1Preflight -Product $source -Options $options
+            $environmentAfter = @(Get-ChildItem Env: | Sort-Object Name | Select-Object Name, Value) | ConvertTo-Json -Compress
+            $targetAfter = if ($kind.EndsWith('-directory')) { Snapshot $target } else { (Get-FileHash -LiteralPath $target).Hash }
+            $blocked = ($report.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $report.source_commit
+            $preserved = (Snapshot $aliasSource) -ceq $before -and $targetAfter -ceq $targetBefore -and $environmentBefore -ceq $environmentAfter
+            Record "$kind alias; $([IO.Path]::GetFileName($source))" ($blocked -and $gitCalls.Count -eq 0 -and $preserved -and $report.effects -eq 'none') @{
+                blocked = $blocked; status = $report.status; source_commit = $report.source_commit; git_calls = $gitCalls.Count
+                missing_object_exit = $missingExit; native_alias_read = $true; source_target_environment_preserved = $preserved
+                alias = $alias; target = $target; source = $source; effects = $report.effects
+            }
+        }
+    }
     Assert (!(Test-Path -LiteralPath $options.QaRoot)) 'Source inspection must not provision a QA root.'
     Assert ([IO.File]::ReadAllText((Join-Path $office 'sentinel')) -ceq 'preserved') 'Protected office changed.'
     $failed = @($cases | Where-Object { !$_.passed })
