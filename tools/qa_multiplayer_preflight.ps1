@@ -43,8 +43,9 @@ function Get-U1LocalPath([string]$Value, [ref]$Identity) {
         }
     }
     $full = [IO.Path]::GetFullPath($Value)
-    # ponytail: direct volumes only; comparison keys unify drive letters, not all aliases.
-    # This observation must be repeated before any future launch; it reserves nothing.
+    # Supported Windows .NET expands existing short-name ancestors in GetFullPath.
+    # The drive target also unifies direct drive-letter aliases of one volume.
+    # This read-only observation must be repeated before any future launch; it reserves nothing.
     $driveTarget = Get-U1DriveTarget $full.Substring(0, 2)
     if ($driveTarget -notmatch '^\\Device\\HarddiskVolume[0-9]+$') {
         throw 'Substituted, mapped or unverifiable drives are not supported.'
@@ -167,7 +168,7 @@ function Invoke-U1Preflight {
         required_toolchain = @{ rust = '>=1.94.0'; node = '>=22.12.0'; pnpm = $null }
         checks = $checks
         remaining_gates = @(
-            'Recover the reviewed R1-R14 / M01-M37 handoff or adopt the replacement in docs/MULTIPLAYER_ACCEPTANCE_V1.md.',
+            'Inventory the retained original R1-R14 / M01-M37 artifacts with source hashes, reconcile and review their crosswalk and differences against MP1, then record adoption and bounded scopes for G0; adoption alone is insufficient.',
             'Verify pinned toolchain versions and approved package acquisition; command presence is not version validation.',
             'Provision private database/artifacts and independent identities under explicit ownership.',
             'Run current-source OIDC, sandboxed-browser and owner-only full-stack acceptance.',
@@ -201,10 +202,12 @@ function Invoke-U1Preflight {
         if (@(Get-ChildItem Env: | Where-Object Name -match '^GIT_(DIR|WORK_TREE|COMMON_DIR|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|CONFIG.*|IMPLICIT_WORK_TREE|GRAFT_FILE|NO_REPLACE_OBJECTS|REPLACE_REF_BASE|PREFIX|SHALLOW_FILE|NAMESPACE|CEILING_DIRECTORIES|DISCOVERY_ACROSS_FILESYSTEM)$').Count) {
             throw 'Inherited Git selection is not supported.'
         }
-        $expectedRoot = Get-U1LocalPath $Product
+        $expectedIdentity = $null
+        $expectedRoot = Get-U1LocalPath $Product ([ref]$expectedIdentity)
         Assert-U1NoReparseAncestor $expectedRoot
-        $observedRoot = Get-U1LocalPath (Invoke-U1ReadCommand 'git' @('-C', $Product, 'rev-parse', '--show-toplevel'))
-        if (!$observedRoot.Equals($expectedRoot, [StringComparison]::OrdinalIgnoreCase)) {
+        $observedIdentity = $null
+        $observedRoot = Get-U1LocalPath (Invoke-U1ReadCommand 'git' @('-C', $Product, 'rev-parse', '--show-toplevel')) ([ref]$observedIdentity)
+        if (!$observedIdentity.Equals($expectedIdentity, [StringComparison]::OrdinalIgnoreCase)) {
             throw 'Git repository root does not match Product.'
         }
         $head = Invoke-U1ReadCommand 'git' @('-C', $Product, 'rev-parse', 'HEAD')

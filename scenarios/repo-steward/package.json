@@ -6,8 +6,10 @@
   "description": "Read-only repository steward with a manual GitHub audit workflow and an optional disabled Teams adapter",
   "engines": { "node": ">=24" },
   "scripts": {
-    "test": "node --test steward.test.mjs actions.test.mjs teams-host.test.mjs",
-    "test:core": "node --test steward.test.mjs actions.test.mjs",
+    "test": "node --test steward.test.mjs actions.test.mjs recurring-audit.test.mjs feedback.test.mjs maintenance.test.mjs feedback-cli.test.mjs teams-host.test.mjs",
+    "test:core": "node --test steward.test.mjs actions.test.mjs recurring-audit.test.mjs feedback.test.mjs maintenance.test.mjs feedback-cli.test.mjs",
+    "maintenance": "node maintenance.mjs",
+    "feedback": "node feedback.mjs",
     "preview:live": "node steward.mjs audit --live --dry-run",
     "audit:live": "node steward.mjs audit --live --format markdown",
     "actions:preview": "node actions.mjs --dry-run",

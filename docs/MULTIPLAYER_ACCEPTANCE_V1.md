@@ -2,17 +2,21 @@
 
 **Status: proposed replacement, not accepted runtime evidence.**
 
-This specification was requested on September 17, 2026 (US Central) because the
-reviewed R1-R14 / M01-M37 handoff referenced by issues #239-#249 is unavailable.
-It is grounded in their published acceptance criteria, related issues #51, #161,
+This specification was requested on September 17, 2026 (US Central) when the
+R1-R14 / M01-M37 handoff referenced by issues #239-#249 was not available to its
+contributor. The September 18 update to #318 establishes that original artifacts
+are retained locally, although they are not a published canonical contract.
+G0 requires their source-bound inventory and a reviewed crosswalk with MP1,
+explicit differences and exact adopted bytes; adoption alone is insufficient.
+The initial MP1 proposal is grounded in published acceptance criteria, related issues #51, #161,
 #213, #253 and #254, and source baseline
 `30ec3fab6acd566cc1fc1e574c8a6343d0ce0596`.
 
 The `MP1-Rxx` and `MP1-Txx` identifiers below are **new requirements and test
 families**. They do not reconstruct the contents, numbering or approval history
-of the missing plan. The intentional exception in subject matter is MP1-T34,
+of the retained original plan. The intentional exception in subject matter is MP1-T34,
 which covers the hostile-boundary obligation explicitly described as M34 in
-#240 and #249; it does not claim to reproduce that missing matrix.
+#240 and #249; its correspondence to the original matrix must be reviewed in the crosswalk.
 
 No test family is accepted by writing this document. All initially have verdict
 `not_run`. A family expands into multiple executable cases, not one green checkbox.
@@ -21,14 +25,14 @@ configuration, scope and assertions are reconciled.
 
 ## Decision: separate development dependencies from activation gates
 
-The missing document should not prevent contract design, implementation or
+Reconciliation work should not prevent contract design, implementation or
 isolated deterministic testing. It also must not become an excuse to enable
 unqualified shared execution. Replace the single all-or-nothing U1 dependency
 with the following gate semantics **when this replacement is adopted**:
 
 | Gate | Required outcome | What it permits | What it does not permit |
 | --- | --- | --- | --- |
-| G0: development entry | Adopt this version, record the source baseline and bounded write scopes; assign each implementation slice a test family and explicit disabled/unavailable behavior. | U2 schema/API implementation and independently reviewable U3-U10 preparatory work in isolated branches. Real isolated database tests may run under their own fixture ownership. | Shared execution, production migration, deployment, credentials/spend, or a claim that U1 passed. |
+| G0: development entry | Inventory source-bound original artifacts with distinct original/publication hashes; review the crosswalk and differences against MP1; adopt exact reviewed bytes, record the source baseline and bounded write scopes; assign each implementation slice a test family and explicit disabled/unavailable behavior. | U2 schema/API implementation and independently reviewable U3-U10 preparatory work in isolated branches. Real isolated database tests may run under their own fixture ownership. | Shared execution, production migration, deployment, credentials/spend, or a claim that U1 passed. |
 | G1: owned baseline | MP1-T01-T10 pass on the candidate, including actual owner-only browser/server/runner/database operation; publish the initial MP1-T36 parity inventory and all missing cells. | Integrating the demonstrated owner-only baseline and building further integration tests in an owned QA environment. | Cross-owner execution, production sign-in claims based on synthetic OIDC, or U1 closure without its other criteria. |
 | G2: shared-execution admission | G1 plus current identity/grant/source/scheduler/compatibility and governance cases for the proposed operation, MP1-T34/T35 for every enabled cell, and configuration-bound admission enforced at the actual server/runner boundaries. | Only the qualified, explicitly scoped shared operations in the selected QA environment. | Other providers/platforms/surfaces, unbounded spend, production deployment, or unsupported clients. |
 | G3: release | Every applicable family passes on the integrated candidate, full repository gates pass, and #248/#249 production, independent-identity, physical-device and external-effect verdicts pass separately. | A separately reviewed release decision for the tested scope. | Automatic merge, deployment or migration of the existing office. |
@@ -197,7 +201,7 @@ requirement links provide traceability; they are not proof of implementation.
 | MP1-T36 | Publish and execute the operation-by-client-by-role parity inventory, restart/chaos and bounded-load fixture; no regression in supported single-user operations or unbounded startup/snapshot work. Missing cells remain visible. | R01-R14 | U7/U10 |
 | MP1-T37 | Independent members and enrolled runners on three physical devices complete governed work and recovery; verify selected real providers and authorized GitHub effects separately, then publish distinct release verdicts and exact shutdown evidence. | R01-R14 | U10 |
 
-In this table `Rxx` abbreviates `MP1-Rxx` only. It never refers to the missing
+In this table `Rxx` abbreviates `MP1-Rxx` only. It never refers to the retained
 original `R1-R14` text.
 
 ### MP1-T34 and MP1-T35 executable expansion
@@ -274,9 +278,10 @@ For the U1 harness, build in this order:
 #240 may close only when its applicable runtime criteria are actually satisfied
 against this adopted replacement, with required review. #249 still requires the
 integrated repeat on the release candidate; earlier owner-only/component passes
-are not enough. If the original plan is later recovered, compare requirements and
-evidence explicitly, record differences in a new spec revision and retain the
-historical identifiers/results. Do not silently renumber cases or discard failures.
+are not enough. Reconcile the retained original artifacts before G0 adoption:
+compare requirements and evidence explicitly, record differences in the reviewed
+crosswalk and retain historical identifiers/results. Later discovered revisions
+require a new explicit comparison. Do not silently renumber cases or discard failures.
 
 ## Source and scope references
 

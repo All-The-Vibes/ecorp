@@ -143,6 +143,20 @@ public static class U1AliasProbe {
     $valid = $planArgs.Clone(); $valid.Product = $shortProduct
     Assert ((Get-U1FixturePlan @valid).product -eq [IO.Path]::GetFullPath($shortProduct)) 'Ordinary short paths must remain supported.'
     Write-Output (@{ event = 'short-path'; distinctAlias = ($shortProduct -ne $product); accepted = $true } | ConvertTo-Json -Compress)
+    Assert (!$shortProduct.Equals($product, [StringComparison]::OrdinalIgnoreCase)) 'This regression requires an actual distinct Windows short alias; unchanged spelling is not coverage.'
+    Assert ([IO.Path]::GetFullPath($shortProduct).Equals([IO.Path]::GetFullPath($product), [StringComparison]::OrdinalIgnoreCase)) 'The supported Windows runtime must expand the existing short alias.'
+    foreach ($case in @(
+        @{ name = 'short fixture ancestor'; Product = $product; Root = "$shortProduct\qa\u1-short"; Protected = @($office) },
+        @{ name = 'short product'; Product = $shortProduct; Root = "$product\qa\u1-long"; Protected = @($office) },
+        @{ name = 'short protected ancestor'; Product = $office; Root = "$product\qa\u1-long"; Protected = @($shortProduct) },
+        @{ name = 'multiple missing descendants'; Product = $product; Root = "$shortProduct\missing\deeper\qa\u1-short"; Protected = @($office) }
+    )) {
+        $bad = $planArgs.Clone()
+        foreach ($field in @('Root', 'Product', 'Protected')) { $bad[$field] = $case[$field] }
+        Reject { Get-U1FixturePlan @bad } 'disjoint'
+        Write-Output "F01 native short-path overlap rejected: $($case.name)."
+    }
+    Assert (!(Test-Path -LiteralPath "$product\qa") -and !(Test-Path -LiteralPath "$product\missing")) 'Short-path planning must not create directories.'
     $bad = $planArgs.Clone(); $bad.Protected = @([IO.Path]::GetPathRoot($office))
     Reject { Get-U1FixturePlan @bad } 'disjoint'
     Reject { Get-U1LocalPath "$drive\qa\u1-new" } 'Substituted, mapped or unverifiable drives'
@@ -302,6 +316,8 @@ public static class U1AliasProbe {
             Assert (!(Invoke-FixtureGit $other @('status', '--porcelain', '--untracked-files=all'))) 'Foreign control must be clean.'
             $control = Invoke-U1Preflight -Product $product -Options $gitOptions
             Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Real clean Product must attest its own commit.'
+            $shortControl = Invoke-U1Preflight -Product $shortProduct -Options $gitOptions
+            Assert ($shortControl.status -eq 'preparation-checks-passed' -and $shortControl.source_commit -eq $candidateHead) 'An actual short alias must bind to the same clean Git source.'
             Write-Output 'F03 native clean control passed with distinct candidate/foreign identities.'
             $untracked = Join-Path $product 'untracked.txt'
             [IO.File]::WriteAllText($untracked, 'preserve untracked source')
@@ -411,7 +427,9 @@ public static class U1AliasProbe {
     Assert ($report.acceptance -eq 'not-run' -and $report.effects -eq 'none') 'Preflight is not acceptance.'
     Assert ($report.required_toolchain.pnpm -eq '11.19.0') 'Record the repository pin without executing a package-manager shim.'
     Assert ($report.remaining_gates.Count -eq 6) 'Do not omit deferred U1 gates.'
-    Assert ($report.remaining_gates[0] -match 'or adopt the replacement') 'Unavailable historical plans must allow a reviewed replacement, not an acceptance bypass.'
+    foreach ($requirement in @('Inventory', 'source hashes', 'crosswalk and differences', 'adoption alone is insufficient')) {
+        Assert ($report.remaining_gates[0].Contains($requirement)) 'G0 requires the retained-original inventory, reviewed reconciliation and exact adoption together.'
+    }
     Assert (@($script:commands | Where-Object { $_ -match 'install|rustup|^pnpm|^cargo|^rustc' }).Count -eq 0) 'No install-capable shim may be run.'
     Assert (@($script:commands | Where-Object { $_ -match 'core.fsmonitor=false' }).Count -eq 1) 'Source status must disable fsmonitor hooks.'
     foreach ($name in @('rustc', 'cargo', 'pnpm')) {

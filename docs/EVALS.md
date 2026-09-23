@@ -4,6 +4,27 @@ The [September 12 scheduler acceptance](evidence/2026-09-12-scheduler-standalone
 records PR #179's main-based source gate separately from the combined recovery
 and two-runner runtime acceptance. Earlier failed attempts remain retained.
 
+## Multiplayer and the built-in trust fabric
+
+The [September 17 multiplayer integration report](evidence/2026-09-17-multiplayer-ui-integration.md)
+is the relevant bounded local UI/server/runner evidence for shared mission/run
+context, comments, control, review, freshness, disconnect, and recovery.
+The [U7 parity matrix](multiplayer/U7_PARITY_MATRIX.md) keeps independent
+authentication, shared-machine admission, cross-owner effects, and release
+acceptance separate. A connected tab is not proof of complete multiplayer parity.
+
+[Blockchain as fabric](TRUST_FABRIC.md) names the existing weave of source
+identity, attribution, evidence integrity, and acceptance records. Its claims
+must be verified through the actual artifact, dependency, source-deliverable,
+contract, review, and publication boundaries below—not through a new unsupported
+claim of blockchain consensus. Check changed bytes, tampered signed metadata,
+wrong source/run/room, stale or expired evidence, and unauthorized review at the
+relevant existing boundary.
+
+The September 19, 2026 documentation refresh reviewed main
+`39632b957819012721c90902925d8fa7a9c7e873`; it did not itself run a new
+production-identity, cross-owner, or ledger-network acceptance exercise.
+
 ## Evidence rule
 
 An implementation claim needs evidence at the same scope:
@@ -134,12 +155,16 @@ checks, signed-object validation, and independent outcome review remain required
 a launcher, sandbox qualification, runtime-readiness receipt or U1 acceptance.
 It reuses the repository's Git/toolchain and native Windows listener inventory;
 it does not replace `local_stack.psm1` process ownership or the existing E2E drivers.
-The original R1-R14/M01-M37 handoff is unavailable. The proposed
+The September 18 update to #318 establishes that original R1-R14/M01-M37
+artifacts are retained locally, although they are not a published canonical contract. The proposed
 [replacement multiplayer contract](MULTIPLAYER_ACCEPTANCE_V1.md) defines new
 requirements/test families and separates development entry from runtime acceptance.
-Recover and reconcile the original handoff **or adopt a reviewed replacement**
-before claiming U1 acceptance; the historical document is not a prerequisite for
-drafting contracts or building isolated tests.
+G0 requires a source-bound inventory of those original artifacts, a reviewed
+crosswalk to MP1 with explicit differences, and adoption of the exact reviewed
+bytes. Adoption alone does not satisfy G0. Original and sanitized publication
+hashes remain distinct; filenames and historical review cannot transfer approval.
+Isolated contract/test development may proceed, while U1 runtime and release
+acceptance retain the separate G1/G2/G3 requirements.
 
 Select a **new** `qa\u1-*` root outside the product and every retained office/source
 root. Supply all protected roots and any additional occupied-office port assignments,
@@ -353,14 +378,118 @@ or real-provider performance.
 
 ### Workspace validation commands
 
+<!-- ecorp:validation-commands -->
 ```powershell
 node tools/check_migrations.mjs
+pnpm check:docs
+pnpm test:unit
+pnpm test:steward
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 pnpm build:web
 pnpm lint:web
 ```
+<!-- /ecorp:validation-commands -->
+
+`pnpm test:unit` runs the native Node regression suites under `apps/web/src` and the top-level
+`tools/*.test.mjs` files, using Node.js 22.23.2 or newer. The separate Repository checks PR
+workflow runs Linux and Windows jobs and preserves JUnit results even when a test fails.
+
+`pnpm test:steward` adds the dependency-free Repo Steward auditor, local recurrence,
+advisory feedback and CLI regressions to the same contributor gate. It uses no live
+GitHub credential, provider inference, Teams connection or native mission. Run the
+separate process acceptance against a new owned directory:
+
+```powershell
+node tools/e2e_steward_maintenance.mjs --output C:\ecorp-qa\steward-new-run
+```
+
+The parent directory must exist and the result directory must be new. The driver
+starts real CLI processes with explicit synthetic snapshots, checks persisted
+receipt/review bindings and retains failure evidence. It does not install a
+scheduler or prove live/production operational cadence. See the
+[versioned local contract](specs/recurring-audit-v1.md).
+Bare `e2e_*.mjs` drivers, output directories, scenario applications, and real-provider probes
+are outside this discovery scope; their acceptance still needs the explicitly owned E2E lanes.
+
+`pnpm check:docs` checks five marked repository-validation sequences against `package.json`
+and two current Copilot-version paragraphs against the Cargo SDK pin and adapter runtime
+constant. Mutation fixtures prove changed commands, changed pins, missing/duplicate markers,
+and invalid/cyclic aliases fail; updated current documentation restores passing. This is a
+deterministic check for those contracts, not semantic or repository-wide documentation proof.
+
+### Native Rust unit and SQLx coverage on Linux
+
+The `rust-sqlx-coverage-ubuntu` job in `.github/workflows/repository-checks.yml`
+uses its own pinned PostgreSQL 17 service and the existing SQLx test harness.
+`tools/coverage_rust_sqlx.sh` first runs native workspace unit tests, then all
+existing ignored tests in `crony-store` and `crony-server`, accumulating profiles
+with cargo-llvm-cov 0.9.1 and Rust 1.98.1. It requests no code exclusions. Other
+ignored tests, including the runner's stopped-session probe, remain unexecuted.
+The existing Windows unit-only coverage job remains a separate platform lane.
+
+Local execution requires Linux x86_64, Node 22.23.2 with npm, the pinned Rust and
+coverage tools, `psql`, a valid Git checkout, and an explicitly owned disposable
+PostgreSQL service. `DATABASE_URL` and the matching `PGHOST`, `PGPORT`, `PGUSER`,
+`PGPASSWORD`, and `PGDATABASE` must select the `ecorp_coverage` role/database on
+loopback or the isolated `postgres` service. The caller declares ownership with
+`ECORP_COVERAGE_OWNED_DATABASE=1`. A read-only preflight rejects an existing
+`_sqlx_test` schema or any `_sqlx_test_*` child database before SQLx can clean or
+reuse its deterministic names. Use a fresh service after an incomplete run;
+preserve the old database and evidence for inspection.
+
+From that prepared checkout, set `CARGO_TARGET_DIR` to a new absolute directory
+and run `bash tools/coverage_rust_sqlx.sh`. The script refuses an existing target
+or `coverage/` directory. The native reporter writes `coverage/lcov.info`
+directly; no older report is copied or renamed. `native-summary.json`, test logs,
+tool versions/hashes, before/after source hashes and Git blobs, and `run.json`
+retain the actual platform, test counts, measured source-file set, totals and
+outcome. The receipt also binds the invocation script and workflow. CI uploads
+these artifacts for 14 days, including incomplete runs. The native line floor
+is 67.0%, enforced separately from test success, and source changes fail the lane.
+
+The September 18, 2026 isolated Linux run at
+`38507abc96b9282689a810e0e3c074fe0a8c8de5` passed 524 workspace unit tests,
+328 store SQLx tests, and four server SQLx tests: 856 passed, zero failed.
+Native JSON and LCOV agreed on 49,407 covered lines out of 72,899 (67.7746%)
+across 69 compiled source files. All 99 tracked Rust source and manifest
+identities matched before and after the run. The unit stage listed 333 ignored
+tests; the two SQLx stages executed 332 of those, leaving the runner's explicit
+stopped-session probe unexecuted.
+
+That measurement used a provisional 60.0% floor. Separate native report-only
+checks against its preserved profiles passed at 67.0% and failed at 100%, with
+no test rerun or changes to the profiles, binaries, source, or original reports.
+The checked-in 67.0% floor is a policy follow-up to that measurement, approximately
+0.775 percentage points below the observed Linux baseline. It does not relabel
+the original invocation or extend its measured scope.
+
+This is coverage of the native Rust workspace under the compiled Linux
+configuration. It is not whole-repository coverage, web coverage, provider
+inference, or browser/server/runner acceptance. Those lanes retain their own
+tests, source scopes and evidence. Local execution does not establish hosted
+GitHub Actions success.
+
+### Production web-model coverage
+
+`pnpm coverage:web-models` uses native Node 24 coverage for all 18 declared framework-independent
+TypeScript model modules, including run activity and mission collaboration. Every module is
+preloaded, including uninvoked modules, and the LCOV file set must exactly match the declared
+production scope. New TypeScript files require explicit classification before the command can
+pass. The two React hooks, TSX rendering, Rust and other tools are outside this coverage lane;
+their test results must be reported separately.
+
+Native thresholds are 99% lines, 95% functions and 97% branches for that scope. The command also
+requires passing tests, completed LCOV records and unchanged source/test inputs. Each invocation
+writes a new directory beneath `output/coverage`; existing evidence is never overwritten.
+`run.json`, `coverage.json`, `summary.json`, `lcov.info` and the test log preserve the exact
+runtime, inputs, numerator/denominator and result. Native V8 can reveal additional nested
+functions/branches when previously uncalled code runs, so compare raw counts as well as percentages.
+
+The Repository checks workflow runs this lane separately from the Linux/Windows Node regressions.
+A high model-coverage percentage is not whole-application or repository coverage and does not
+replace browser/server/runner acceptance.
 
 The repository also contains `tools/e2e_smoke.ps1`, which exercises the actual running stack.
 `tools/e2e_demo_lifecycle.mjs` races bootstrap and reset requests to prove the demo lifecycle lock
