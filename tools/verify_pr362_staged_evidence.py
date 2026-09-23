@@ -20,6 +20,19 @@ import os
 import re
 import subprocess
 import zipfile
+from staged_evidence_inventory import staged_blobs
+
+REQUIRED_GATES = {
+    'migrations': ('node', ['tools/check_migrations.mjs']),
+    'documentation': ('pnpm', ['check:docs']),
+    'node-unit': ('pnpm', ['test:unit']),
+    'steward': ('pnpm', ['test:steward']),
+    'rust-format': ('cargo', ['fmt', '--check']),
+    'rust-clippy': ('cargo', ['clippy', '--workspace', '--all-targets', '--', '-D', 'warnings']),
+    'rust-workspace': ('cargo', ['test', '--workspace']),
+    'web-build': ('pnpm', ['build:web']),
+    'web-lint': ('pnpm', ['lint:web']),
+}
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--repository', required=True, type=Path)
@@ -49,31 +62,39 @@ receipt_path = base / 'receipt.json'
 log = base / 'regressions.log'
 
 git = lambda *args: subprocess.check_output(['git', '-C', str(repo), *args])
+
+
+def unchanged_worktree():
+    result = subprocess.run(['git', '-C', str(repo), 'diff', '--quiet', '--exit-code'],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30)
+    assert result.returncode in (0, 1), 'Unable to verify source worktree.'
+    return result.returncode == 0
+
+
 tree = git('write-tree').decode().strip()
 validation_bytes = read_input(validation_path)
 validation = json.loads(validation_bytes.decode('utf-8-sig'))
-assert validation['status'] == 'passed' and validation['source_unchanged'], 'Nine passing gates are required.'
-assert len(validation['checks']) == 9 and all(row['exit_code'] == 0 for row in validation['checks']), 'Nine passing gates are required.'
+assert validation['status'] == 'passed' and validation['source_unchanged'] is True, 'Nine passing gates are required.'
+checks = validation['checks']
+assert isinstance(checks, list) and len(checks) == 9 and all(
+    isinstance(row, dict) and type(row.get('exit_code')) is int and row['exit_code'] == 0
+    for row in checks), 'Nine passing gates are required.'
+names = [row.get('name') for row in checks]
+assert all(isinstance(name, str) for name in names) and len(set(names)) == 9 and set(names) == set(REQUIRED_GATES), 'Nine canonical unique gate commands are required.'
+for row in checks:
+    assert (row.get('program'), row.get('arguments')) == REQUIRED_GATES[row['name']], 'Nine canonical unique gate commands are required.'
 for row in validation['checks']:
     assert hashlib.sha256(read_input(row['log'])).hexdigest() == row['sha256'], 'Gate log changed.'
 assert validation['staged_tree'] == tree, 'Source differs from passing validation.'
-assert not git('diff', '--name-only').strip(), 'Unstaged source changes are not validated.'
+assert unchanged_worktree(), 'Unstaged source changes are not validated.'
 report_name = 'docs/evidence/2026-09-21-pr362-gauntlet-remediation.md'
 prefixes = ['tools/test_public_evidence_verifier.py', 'tools/test_staged_evidence_driver.py',
+            'tools/staged_evidence_inventory.py',
             'tools/verify_pr362_staged_evidence.py', report_name] + [
     'docs/evidence/' + name for name in (
         'pr362-startup-20260921', 'pr362-regressions-20260921',
         'pr362-combined-20260921', 'pr362-gauntlet-20260921')]
-entries = git('ls-tree', '-r', '-z', tree, '--', *prefixes).split(b'\0')
-blobs = {}
-for entry in filter(None, entries):
-    metadata, raw_name = entry.split(b'\t', 1)
-    mode, kind, oid = metadata.decode().split()
-    assert mode in ('100644', '100755') and kind == 'blob', 'Staged evidence must be regular files.'
-    name = raw_name.decode()
-    size = int(git('cat-file', '-s', oid))
-    assert 0 <= size <= verifier.MAX_FILE_BYTES, 'Staged evidence blob exceeds byte limit.'
-    blobs[name] = (oid, size)
+blobs = staged_blobs(repo, tree, prefixes, verifier.MAX_FILE_BYTES)
 names = list(blobs)
 assert prefixes[0] in names and report_name in names
 fixture.mkdir(parents=True)
@@ -166,7 +187,7 @@ with zipfile.ZipFile(io.BytesIO(archive_bytes)) as archive:
 no_personal_path('gauntlet manifest', manifest_bytes)
 no_personal_path('gauntlet report', git_report)
 receipt['source_unchanged'] = (tree == git('write-tree').decode().strip() and
-    not git('diff', '--name-only').strip() and
+    unchanged_worktree() and
     all(sha(verifier.read_file(fixture, row['path'])) == row['executed_sha256'] for row in receipt['files']))
 assert receipt['source_unchanged']
 receipt.update(status='passed', finished_at_utc=datetime.now(timezone.utc).isoformat())

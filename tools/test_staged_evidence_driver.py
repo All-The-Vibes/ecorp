@@ -1,15 +1,29 @@
 """Admission regressions for the runnable PR362 staged-evidence driver."""
 from pathlib import Path
 import hashlib
+import importlib.util
+import io
 import json
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 DRIVER = Path(__file__).resolve().with_name('verify_pr362_staged_evidence.py')
 FILE_LIMIT = 8 * 1024 * 1024
+GATES = (
+    ('migrations', 'node', ['tools/check_migrations.mjs']),
+    ('documentation', 'pnpm', ['check:docs']),
+    ('node-unit', 'pnpm', ['test:unit']),
+    ('steward', 'pnpm', ['test:steward']),
+    ('rust-format', 'cargo', ['fmt', '--check']),
+    ('rust-clippy', 'cargo', ['clippy', '--workspace', '--all-targets', '--', '-D', 'warnings']),
+    ('rust-workspace', 'cargo', ['test', '--workspace']),
+    ('web-build', 'pnpm', ['build:web']),
+    ('web-lint', 'pnpm', ['lint:web']),
+)
 
 
 class StagedEvidenceDriver(unittest.TestCase):
@@ -40,9 +54,10 @@ class StagedEvidenceDriver(unittest.TestCase):
         gate_log.write_bytes(b'fixture gate passed\n')
         validation = root / 'validation.json'
         record = {'status': 'passed', 'source_unchanged': True, 'staged_tree': tree,
-                  'checks': [{'name': str(index), 'exit_code': 0, 'log': str(gate_log),
+                  'checks': [{'name': name, 'program': program, 'arguments': list(arguments),
+                              'exit_code': 0, 'log': str(gate_log),
                               'sha256': hashlib.sha256(gate_log.read_bytes()).hexdigest()}
-                             for index in range(9)]}
+                             for name, program, arguments in GATES]}
         validation.write_text(json.dumps(record), encoding='utf-8')
         return root, repo, validation, record
 
@@ -171,6 +186,155 @@ class StagedEvidenceDriver(unittest.TestCase):
         output = root / 'evidence'
         result = self.invoke('--repository', repo, '--validation', validation, '--output-directory', output)
         self.assert_no_receipt(result, output, 'Nine passing gates are required')
+
+    def test_duplicate_gate_cannot_replace_a_required_command(self):
+        root, repo, validation, record = self.fixture()
+        record['checks'][-1] = dict(record['checks'][0])
+        validation.write_text(json.dumps(record), encoding='utf-8')
+        self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+
+    def test_substituted_gate_name_program_and_arguments_are_rejected(self):
+        for field, value in (('name', 'invented-gate'), ('program', 'echo'),
+                             ('arguments', ['--version'])):
+            with self.subTest(field=field):
+                root, repo, validation, record = self.fixture()
+                record['checks'][0][field] = value
+                validation.write_text(json.dumps(record), encoding='utf-8')
+                self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+
+    def test_missing_gate_command_metadata_is_rejected(self):
+        for field in ('name', 'program', 'arguments'):
+            with self.subTest(field=field):
+                root, repo, validation, record = self.fixture()
+                del record['checks'][0][field]
+                validation.write_text(json.dumps(record), encoding='utf-8')
+                self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+
+    def stage_and_bind(self, repo, validation, record):
+        subprocess.run(['git', '-C', str(repo), 'add', '--all'], check=True,
+                       capture_output=True, timeout=30)
+        record['staged_tree'] = subprocess.check_output(
+            ['git', '-C', str(repo), 'write-tree'], timeout=30).decode().strip()
+        validation.write_text(json.dumps(record), encoding='utf-8')
+
+    def evidence_source(self, repo):
+        source = repo / 'tools/test_public_evidence_verifier.py'
+        source.parent.mkdir()
+        source.write_bytes(b'# owned admission fixture\n')
+        report = repo / 'docs/evidence/2026-09-21-pr362-gauntlet-remediation.md'
+        report.parent.mkdir(parents=True)
+        report.write_bytes(b'Owned admission fixture.\n')
+        packet = repo / 'docs/evidence/pr362-combined-20260921'
+        packet.mkdir()
+        return packet
+
+    def test_staged_entry_limit_rejects_before_materialization(self):
+        root, repo, validation, record = self.fixture()
+        packet = self.evidence_source(repo)
+        for number in range(1023):
+            (packet / f'entry-{number}.bin').touch()
+        self.stage_and_bind(repo, validation, record)
+        self.reject_input(repo, validation, root / 'evidence', 'Staged evidence exceeds entry limit')
+
+    def test_staged_total_bytes_rejects_before_materialization(self):
+        root, repo, validation, record = self.fixture()
+        packet = self.evidence_source(repo)
+        for number in range(8):
+            with (packet / f'entry-{number}.bin').open('wb') as stream:
+                stream.truncate(FILE_LIMIT)
+        self.stage_and_bind(repo, validation, record)
+        self.reject_input(repo, validation, root / 'evidence', 'Staged evidence exceeds total byte limit')
+
+    @staticmethod
+    def inventory_module():
+        spec = importlib.util.spec_from_file_location('staged_evidence_inventory',
+            DRIVER.with_name('staged_evidence_inventory.py'))
+        module = importlib.util.module_from_spec(spec)
+        with patch.object(sys, 'dont_write_bytecode', True):
+            spec.loader.exec_module(module)
+        return module
+
+    @staticmethod
+    def tree_record(name, size=0, mode='100644'):
+        return f'{mode} blob {"a" * 40} {size}\t{name}\0'.encode('utf-8')
+
+    def check_inventory_stream(self, data, message=None, exit_code=0):
+        module = self.inventory_module()
+        reads = []
+        stopped = []
+
+        class Stream(io.BytesIO):
+            def read1(self, size):
+                reads.append(size)
+                return super().read1(size)
+
+        class Child:
+            stdout = Stream(data)
+            returncode = None
+
+            def poll(self):
+                return self.returncode
+
+            def wait(self, timeout):
+                self.returncode = -9 if stopped else exit_code
+                return self.returncode
+
+            def kill(self):
+                stopped.append(self)
+
+        child = Child()
+        with patch.object(module.subprocess, 'Popen', return_value=child) as spawned:
+            if message:
+                with self.assertRaisesRegex(AssertionError, message):
+                    module.staged_blobs('owned-source', 'a' * 40, ['docs/evidence'], FILE_LIMIT)
+                if exit_code == 0:
+                    self.assertEqual(stopped, [child], 'Only the exact retained child must be stopped.')
+                result = None
+            else:
+                result = module.staged_blobs('owned-source', 'a' * 40, ['docs/evidence'], FILE_LIMIT)
+                self.assertEqual(stopped, [])
+            self.assertIn('-l', spawned.call_args.args[0])
+            self.assertIn('-z', spawned.call_args.args[0])
+        self.assertTrue(child.stdout.closed)
+        self.assertTrue(reads)
+        self.assertTrue(all(0 < size <= 4096 for size in reads))
+        return result
+
+    def test_staged_entry_exact_boundary_is_accepted(self):
+        rows = b''.join(self.tree_record(f'docs/evidence/item-{n}') for n in range(1024))
+        self.assertEqual(len(self.check_inventory_stream(rows)), 1024)
+        self.check_inventory_stream(rows + self.tree_record('docs/evidence/extra'),
+                                    'Staged evidence exceeds entry limit')
+
+    def test_staged_total_exact_boundary_is_accepted(self):
+        rows = b''.join(self.tree_record(f'item-{n}', FILE_LIMIT) for n in range(8))
+        self.assertEqual(len(self.check_inventory_stream(rows)), 8)
+        self.check_inventory_stream(rows + self.tree_record('extra', 1),
+                                    'Staged evidence exceeds total byte limit')
+
+    def test_staged_path_byte_boundary_and_plus_one(self):
+        name = 'a/' * 500 + 'x' * 24
+        self.assertEqual(len(name.encode('utf-8')), 1024)
+        self.assertEqual(list(self.check_inventory_stream(self.tree_record(name))), [name])
+        self.check_inventory_stream(self.tree_record(name + 'x'), 'Staged evidence path exceeds byte limit')
+
+    def test_staged_paths_reject_aliases_and_file_directory_collisions(self):
+        for name in ('../escape', '/absolute', 'C:/absolute', 'a\\b', 'a//b', './a',
+                     'a/../b', 'a/CON.txt', 'a/trailing.', 'a/new\nline', 'a/question?'):
+            with self.subTest(name=name):
+                self.check_inventory_stream(self.tree_record(name), 'Unsafe staged evidence path')
+        for names in (('A.txt', 'a.txt'), ('a', 'a/file'), ('a/file', 'A')):
+            with self.subTest(names=names):
+                self.check_inventory_stream(b''.join(self.tree_record(name) for name in names),
+                                            'Colliding staged evidence path')
+
+    def test_staged_unterminated_record_is_bounded(self):
+        self.check_inventory_stream(b'x' * 8192, 'Staged evidence record exceeds byte limit')
+        self.check_inventory_stream(self.tree_record('a')[:-1], 'Incomplete staged evidence inventory')
+
+    def test_staged_git_failure_and_non_regular_modes_are_rejected(self):
+        self.check_inventory_stream(self.tree_record('a'), 'Git staged evidence inventory failed', exit_code=1)
+        self.check_inventory_stream(self.tree_record('a', mode='120000'), 'Staged evidence must be regular files')
 
     def test_different_staged_tree_cannot_produce_a_fixture(self):
         root, repo, validation, record = self.fixture()

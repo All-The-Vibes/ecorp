@@ -19,8 +19,10 @@ if not __debug__:
 H = lambda data: hashlib.sha256(data).hexdigest()
 PACKETS = ('pr362-startup-20260921', 'pr362-regressions-20260921', 'pr362-combined-20260921')
 # Absolute resource limits do not come from the untrusted evidence manifest.
-# Current packets are below 1 MiB each; these ceilings leave room for replay.
+# The delivered packets fit comfortably below these independent replay ceilings.
 MAX_FILE_BYTES = 8 * 1024 * 1024
+MAX_PACKET_FILES = 128  # Includes the packet's manifest.
+MAX_PACKET_TOTAL_BYTES = 32 * 1024 * 1024  # Across all three packets, manifests included.
 MAX_ARCHIVE_BYTES = 4 * 1024 * 1024
 MAX_ARCHIVE_MEMBER_BYTES = 1024 * 1024
 MAX_ARCHIVE_TOTAL_BYTES = 16 * 1024 * 1024
@@ -125,34 +127,53 @@ def verify(base, source=None):
     manifests = {}
     inventories = {}
     directories = {}
+    admitted_sizes = {}
+    total_bytes = 0
     for name in PACKETS:
         directory = directory_root(base / name)
         assert directory.is_relative_to(base), 'packet escaped evidence root'
         manifest_data = read_file(directory, 'manifest.json')
         manifest = json.loads(manifest_data)
+        assert isinstance(manifest['delivered_files'], list) and len(manifest['delivered_files']) < MAX_PACKET_FILES, 'packet manifest exceeds file limit'
         delivered = [filename(row['path']) for row in manifest['delivered_files']]
         assert len(delivered) == len(set(path.casefold() for path in delivered)), 'duplicate packet filename'
         assert 'manifest.json' not in delivered, 'manifest cannot hash itself'
         actual = set()
-        for entry in directory.iterdir():
-            regular_file(directory, entry.name)
-            actual.add(entry.name)
+        sizes = {}
+        # scandir streams entries; Path.iterdir may first allocate every name.
+        # Admit every packet before hashing or decompressing any payload.
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                assert len(actual) < MAX_PACKET_FILES, 'packet directory exceeds file limit'
+                path = regular_file(directory, entry.name)
+                size = path.lstat().st_size
+                limit = MAX_ARCHIVE_BYTES if entry.name.endswith('.zip') else MAX_FILE_BYTES
+                assert 0 <= size <= limit, 'evidence file exceeds byte limit'
+                total_bytes += size
+                assert total_bytes <= MAX_PACKET_TOTAL_BYTES, 'evidence packets exceed total byte limit'
+                sizes[entry.name] = size
+                actual.add(entry.name)
         expected = set(delivered) | {'manifest.json'}
         assert actual == expected, (name, 'unmanifested/missing files')
         directories[name] = directory
         manifests[name] = manifest
         inventories[name] = expected
+        admitted_sizes[name] = sizes
         text_check('manifest.json', manifest_data)
+
+    def payload(packet, relative):
+        # A later replacement or growth cannot increase the admitted byte budget.
+        return read_file(directories[packet], relative, max_bytes=admitted_sizes[packet][relative])
+
     for name in PACKETS:
         directory = directories[name]
         manifest = manifests[name]
         for row in manifest['delivered_files']:
-            limit = MAX_ARCHIVE_BYTES if row['path'].endswith('.zip') else MAX_FILE_BYTES
-            data = read_file(directory, filename(row['path']), max_bytes=limit)
+            data = payload(name, filename(row['path']))
             assert (H(data) == row['sha256'] and len(data) == row['bytes']) or ('canonical_lf_sha256' in row and H(data.replace(b'\r\n', b'\n')) == row['canonical_lf_sha256']), row['path']
             if not row['path'].endswith(('.png', '.zip')):
                 text_check(row['path'], data)
-        with zipfile.ZipFile(io.BytesIO(read_file(directory, 'receipts.zip', max_bytes=MAX_ARCHIVE_BYTES))) as archive:
+        with zipfile.ZipFile(io.BytesIO(payload(name, 'receipts.zip'))) as archive:
             members = checked_archive_members(archive)
             rows = manifest['archive_members']
             assert isinstance(rows, list) and len(rows) <= MAX_ARCHIVE_MEMBERS, 'archive manifest exceeds member limit'
@@ -170,13 +191,13 @@ def verify(base, source=None):
         for row in manifest['images']:
             image = filename(row['path'])
             assert image in inventories[name] and image.endswith('.png'), 'image absent from verified inventory'
-            data = read_file(directory, image)
+            data = payload(name, image)
             assert data.startswith(b'\x89PNG\r\n\x1a\n')
             assert H(data) == row['public_sha256'] and len(data) == row['public_bytes']
             if not row['rectangles']:
                 assert row['raw_sha256'] == row['public_sha256']
                 assert row['raw_bytes'] == row['public_bytes']
-        for link in re.findall(r'\]\(([^)]+)\)', read_file(directory, 'README.md').decode('utf-8-sig')):
+        for link in re.findall(r'\]\(([^)]+)\)', payload(name, 'README.md').decode('utf-8-sig')):
             if '://' not in link:
                 local = link.split('#')[0]
                 if not local:
@@ -193,7 +214,7 @@ def verify(base, source=None):
         checked.append({'package': name, 'archive_members': len(manifest['archive_members']), 'images': len(manifest['images'])})
     if source:
         source = directory_root(source)
-        binding = json.loads(read_file(directories[PACKETS[-1]], 'source-bindings.json'))
+        binding = json.loads(payload(PACKETS[-1], 'source-bindings.json'))
         owned = tuple('docs/evidence/' + n + '/' for n in ('pr362-startup-20260921', 'pr362-regressions-20260921', 'pr362-combined-20260921'))
         entries = subprocess.check_output(['git', '-C', str(source), 'ls-files', '-s'], text=True).splitlines()
         index = {line.split('\t')[1]: line.split()[1] for line in entries if not line.split('\t')[1].startswith(owned)}

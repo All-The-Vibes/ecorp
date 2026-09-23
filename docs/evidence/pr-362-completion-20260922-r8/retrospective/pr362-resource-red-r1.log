@@ -1,0 +1,212 @@
+test_packet_file_count_boundary_and_plus_one (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_packet_file_count_boundary_and_plus_one) ... FAIL
+test_directory_entry_limit_is_streamed_before_payload (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_directory_entry_limit_is_streamed_before_payload) ... ERROR
+test_packet_total_uses_all_actual_sizes_before_payload (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_packet_total_uses_all_actual_sizes_before_payload) ... FAIL
+test_admitted_file_growth_cannot_expand_payload_read (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_admitted_file_growth_cannot_expand_payload_read) ... FAIL
+test_duplicate_gate_cannot_replace_a_required_command (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_duplicate_gate_cannot_replace_a_required_command) ... FAIL
+test_substituted_gate_name_program_and_arguments_are_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_substituted_gate_name_program_and_arguments_are_rejected) ...
+  test_substituted_gate_name_program_and_arguments_are_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_substituted_gate_name_program_and_arguments_are_rejected) (field='name') ... FAIL
+  test_substituted_gate_name_program_and_arguments_are_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_substituted_gate_name_program_and_arguments_are_rejected) (field='program') ... FAIL
+  test_substituted_gate_name_program_and_arguments_are_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_substituted_gate_name_program_and_arguments_are_rejected) (field='arguments') ... FAIL
+test_missing_gate_command_metadata_is_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_missing_gate_command_metadata_is_rejected) ...
+  test_missing_gate_command_metadata_is_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_missing_gate_command_metadata_is_rejected) (field='name') ... FAIL
+  test_missing_gate_command_metadata_is_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_missing_gate_command_metadata_is_rejected) (field='program') ... FAIL
+  test_missing_gate_command_metadata_is_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_missing_gate_command_metadata_is_rejected) (field='arguments') ... FAIL
+test_staged_entry_limit_rejects_before_materialization (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_staged_entry_limit_rejects_before_materialization) ... ERROR
+test_staged_total_bytes_rejects_before_materialization (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_staged_total_bytes_rejects_before_materialization) ... FAIL
+
+======================================================================
+ERROR: test_directory_entry_limit_is_streamed_before_payload (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_directory_entry_limit_is_streamed_before_payload)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 187, in test_directory_entry_limit_is_streamed_before_payload
+    verifier.verify(base)
+  File "<reviewed-worktree>\docs\evidence\pr362-combined-20260921\verify_public.py", line 137, in verify
+    for entry in directory.iterdir():
+                 ^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: unbounded directory inventory
+
+======================================================================
+ERROR: test_staged_entry_limit_rejects_before_materialization (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_staged_entry_limit_rejects_before_materialization)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 234, in test_staged_entry_limit_rejects_before_materialization
+    self.reject_input(repo, validation, root / 'evidence', 'Staged evidence exceeds entry limit')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 68, in reject_input
+    result = self.invoke('--repository', repo, '--validation', validation,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 33, in invoke
+    return subprocess.run([sys.executable, *options, str(DRIVER), *map(str, arguments)],
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<local-user>\AppData\Local\Programs\Python\Python312\Lib\subprocess.py", line 1630, in _communicate
+    raise TimeoutExpired(self.args, orig_timeout)
+subprocess.TimeoutExpired: Command '['<local-user>\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py', '--repository', '<local-user>\\AppData\\Local\\Temp\\ecorp-evidence-driver-test-5w40nanu\\source', '--validation', '<local-user>\\AppData\\Local\\Temp\\ecorp-evidence-driver-test-5w40nanu\\validation.json', '--output-directory', '<local-user>\\AppData\\Local\\Temp\\ecorp-evidence-driver-test-5w40nanu\\evidence']' timed out after 30 seconds
+
+======================================================================
+FAIL: test_packet_file_count_boundary_and_plus_one (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_packet_file_count_boundary_and_plus_one)
+----------------------------------------------------------------------
+AssertionError: 'README.md' != 'manifest.json'
+- README.md
++ manifest.json
+ : Payload read before inventory admission.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 178, in test_packet_file_count_boundary_and_plus_one
+    self.assert_inventory_refused_before_payload(base, "packet manifest exceeds file limit")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 167, in assert_inventory_refused_before_payload
+    with self.assertRaisesRegex(AssertionError, message):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "packet manifest exceeds file limit" does not match "'README.md' != 'manifest.json'
+- README.md
++ manifest.json
+ : Payload read before inventory admission."
+
+======================================================================
+FAIL: test_packet_total_uses_all_actual_sizes_before_payload (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_packet_total_uses_all_actual_sizes_before_payload)
+----------------------------------------------------------------------
+AssertionError: 'README.md' != 'manifest.json'
+- README.md
++ manifest.json
+ : Payload read before inventory admission.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 201, in test_packet_total_uses_all_actual_sizes_before_payload
+    self.assert_inventory_refused_before_payload(base, "evidence packets exceed total byte limit")
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 167, in assert_inventory_refused_before_payload
+    with self.assertRaisesRegex(AssertionError, message):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "evidence packets exceed total byte limit" does not match "'README.md' != 'manifest.json'
+- README.md
++ manifest.json
+ : Payload read before inventory admission."
+
+======================================================================
+FAIL: test_admitted_file_growth_cannot_expand_payload_read (tools.test_public_evidence_verifier.PublicEvidenceVerifierTests.test_admitted_file_growth_cannot_expand_payload_read)
+----------------------------------------------------------------------
+AssertionError: README.md
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_public_evidence_verifier.py", line 230, in test_admitted_file_growth_cannot_expand_payload_read
+    with self.assertRaisesRegex(AssertionError, "evidence file exceeds byte limit"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "evidence file exceeds byte limit" does not match "README.md"
+
+======================================================================
+FAIL: test_duplicate_gate_cannot_replace_a_required_command (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_duplicate_gate_cannot_replace_a_required_command)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 191, in test_duplicate_gate_cannot_replace_a_required_command
+    self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 70, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 63, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'Nine canonical unique gate commands are required' not found in 'Traceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 78, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_substituted_gate_name_program_and_arguments_are_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_substituted_gate_name_program_and_arguments_are_rejected) (field='name')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 200, in test_substituted_gate_name_program_and_arguments_are_rejected
+    self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 70, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 63, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'Nine canonical unique gate commands are required' not found in 'Traceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 78, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_substituted_gate_name_program_and_arguments_are_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_substituted_gate_name_program_and_arguments_are_rejected) (field='program')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 200, in test_substituted_gate_name_program_and_arguments_are_rejected
+    self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 70, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 63, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'Nine canonical unique gate commands are required' not found in 'Traceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 78, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_substituted_gate_name_program_and_arguments_are_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_substituted_gate_name_program_and_arguments_are_rejected) (field='arguments')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 200, in test_substituted_gate_name_program_and_arguments_are_rejected
+    self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 70, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 63, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'Nine canonical unique gate commands are required' not found in 'Traceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 78, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_missing_gate_command_metadata_is_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_missing_gate_command_metadata_is_rejected) (field='name')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 208, in test_missing_gate_command_metadata_is_rejected
+    self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 70, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 63, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'Nine canonical unique gate commands are required' not found in 'Traceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 78, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_missing_gate_command_metadata_is_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_missing_gate_command_metadata_is_rejected) (field='program')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 208, in test_missing_gate_command_metadata_is_rejected
+    self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 70, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 63, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'Nine canonical unique gate commands are required' not found in 'Traceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 78, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_missing_gate_command_metadata_is_rejected (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_missing_gate_command_metadata_is_rejected) (field='arguments')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 208, in test_missing_gate_command_metadata_is_rejected
+    self.reject_input(repo, validation, root / 'evidence', 'Nine canonical unique gate commands are required')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 70, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 63, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'Nine canonical unique gate commands are required' not found in 'Traceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 78, in <module>\n    assert prefixes[0] in names and report_name in names\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n'
+
+======================================================================
+FAIL: test_staged_total_bytes_rejects_before_materialization (tools.test_staged_evidence_driver.StagedEvidenceDriver.test_staged_total_bytes_rejects_before_materialization)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 243, in test_staged_total_bytes_rejects_before_materialization
+    self.reject_input(repo, validation, root / 'evidence', 'Staged evidence exceeds total byte limit')
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 70, in reject_input
+    self.assert_no_receipt(result, output, message)
+  File "<reviewed-worktree>\tools\test_staged_evidence_driver.py", line 63, in assert_no_receipt
+    self.assertIn(message, result.stderr)
+AssertionError: 'Staged evidence exceeds total byte limit' not found in 'fatal: ambiguous argument \'HEAD\': unknown revision or path not in the working tree.\nUse \'--\' to separate paths from revisions, like this:\n\'git <command> [<revision>...] -- [<file>...]\'\nTraceback (most recent call last):\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 82, in <module>\n    \'source_head\': git(\'rev-parse\', \'HEAD\').decode().strip(),\n                   ^^^^^^^^^^^^^^^^^^^^^^^^\n  File "<reviewed-worktree>\\tools\\verify_pr362_staged_evidence.py", line 51, in <lambda>\n    git = lambda *args: subprocess.check_output([\'git\', \'-C\', str(repo), *args])\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "<local-user>\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\subprocess.py", line 466, in check_output\n    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "<local-user>\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\subprocess.py", line 571, in run\n    raise CalledProcessError(retcode, process.args,\nsubprocess.CalledProcessError: Command \'[\'git\', \'-C\', \'<user-root>\\\\AppData\\\\Local\\\\Temp\\\\ecorp-evidence-driver-test-jxopxy0k\\\\source\', \'rev-parse\', \'HEAD\']\' returned non-zero exit status 128.\n'
+
+----------------------------------------------------------------------
+Ran 9 tests in 50.185s
+
+FAILED (failures=11, errors=2)

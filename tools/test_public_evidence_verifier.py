@@ -27,6 +27,8 @@ ARCHIVE_LIMIT = 4 * 1024 * 1024
 MEMBER_LIMIT = 1024 * 1024
 ARCHIVE_TOTAL_LIMIT = 16 * 1024 * 1024
 ARCHIVE_MEMBER_COUNT = 512
+PACKET_FILE_COUNT = 128
+PACKET_TOTAL_LIMIT = 32 * 1024 * 1024
 
 
 class PublicEvidenceVerifierTests(unittest.TestCase):
@@ -142,6 +144,92 @@ class PublicEvidenceVerifierTests(unittest.TestCase):
             result = self.invoke(base / PACKETS[-1] / "verify_public.py")
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn('"result": "PASS"', result.stdout)
+
+    def add_delivered_file(self, base, packet, name, size=0):
+        path = base / packet / name
+        with path.open("wb") as stream:
+            stream.truncate(size)
+        manifest_path = base / packet / "manifest.json"
+        manifest = json.loads(manifest_path.read_bytes())
+        manifest["delivered_files"].append({"path": name, "bytes": size,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    def assert_inventory_refused_before_payload(self, base, message):
+        verifier = self.verifier_module()
+        original = verifier.read_file
+
+        def manifests_only(root, relative, **kwargs):
+            self.assertEqual(relative, "manifest.json", "Payload read before inventory admission.")
+            return original(root, relative, **kwargs)
+
+        with patch.object(verifier, "read_file", side_effect=manifests_only):
+            with self.assertRaisesRegex(AssertionError, message):
+                verifier.verify(base)
+
+    def test_packet_file_count_boundary_and_plus_one(self):
+        with self.packet_copy() as base:
+            packet = base / PACKETS[0]
+            for number in range(PACKET_FILE_COUNT - len(list(packet.iterdir()))):
+                self.add_delivered_file(base, PACKETS[0], f"empty-{number}.bin")
+            result = self.invoke(base / PACKETS[-1] / "verify_public.py")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.add_delivered_file(base, PACKETS[0], "one-too-many.bin")
+            self.assert_inventory_refused_before_payload(base, "packet manifest exceeds file limit")
+
+    def test_directory_entry_limit_is_streamed_before_payload(self):
+        verifier = self.verifier_module()
+        with self.packet_copy() as base:
+            for number in range(PACKET_FILE_COUNT + 1):
+                (base / PACKETS[0] / f"unlisted-{number}.bin").touch()
+            with patch.object(Path, "iterdir", side_effect=RuntimeError("unbounded directory inventory")):
+                with self.assertRaisesRegex(AssertionError, "packet directory exceeds file limit"):
+                    verifier.verify(base)
+
+    def test_packet_total_uses_all_actual_sizes_before_payload(self):
+        with self.packet_copy() as base:
+            # Each packet is below the aggregate ceiling; their combined bytes
+            # exceed it. Deliberately false manifest sizes cannot shrink the budget.
+            for packet in PACKETS:
+                self.add_delivered_file(base, packet, "padding-a.bin", 6 * 1024 * 1024)
+                self.add_delivered_file(base, packet, "padding-b.bin", 6 * 1024 * 1024)
+                path = base / packet / "manifest.json"
+                manifest = json.loads(path.read_bytes())
+                for row in manifest["delivered_files"]:
+                    row["bytes"] = 0
+                path.write_text(json.dumps(manifest), encoding="utf-8")
+            self.assert_inventory_refused_before_payload(base, "evidence packets exceed total byte limit")
+
+    def test_packet_total_exact_boundary_is_accepted(self):
+        verifier = self.verifier_module()
+        with self.packet_copy() as base:
+            total = sum(path.stat().st_size for packet in PACKETS
+                        for path in (base / packet).iterdir())
+            self.assertLess(total, PACKET_TOTAL_LIMIT)
+            with patch.object(verifier, "MAX_PACKET_TOTAL_BYTES", total):
+                verifier.verify(base)
+            with patch.object(verifier, "MAX_PACKET_TOTAL_BYTES", total - 1):
+                with self.assertRaisesRegex(AssertionError, "evidence packets exceed total byte limit"):
+                    verifier.verify(base)
+
+    def test_admitted_file_growth_cannot_expand_payload_read(self):
+        verifier = self.verifier_module()
+        original = verifier.read_file
+        with self.packet_copy() as base:
+            grown = False
+
+            def grow_after_inventory(root, relative, **kwargs):
+                nonlocal grown
+                if relative != "manifest.json" and not grown:
+                    grown = True
+                    with (root / relative).open("ab") as stream:
+                        stream.write(b"growth after admitted inventory")
+                return original(root, relative, **kwargs)
+
+            with patch.object(verifier, "read_file", side_effect=grow_after_inventory):
+                with self.assertRaisesRegex(AssertionError, "evidence file exceeds byte limit"):
+                    verifier.verify(base)
+            self.assertTrue(grown)
 
     def test_file_at_absolute_byte_limit_is_accepted(self):
         verifier = self.verifier_module()
