@@ -352,6 +352,42 @@ public static class U1AliasProbe {
             Assert ((Invoke-FixtureGit $product @('rev-parse', 'HEAD')) -eq $candidateHead) 'Source admission must not change the fixture commit.'
             $control = Invoke-U1Preflight -Product $product -Options $gitOptions
             Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Cleared flags and restored source must pass without changing history.'
+            $originalTree = Invoke-FixtureGit $product @('rev-parse', 'HEAD^{tree}')
+            $replacementResults = @()
+            foreach ($replacementKind in @('commit', 'tree')) {
+                $replacedObject = if ($replacementKind -eq 'commit') { $candidateHead } else { $originalTree }
+                $installedReplacement = $false
+                try {
+                    [IO.File]::WriteAllText($sourcePath, 'different source hidden by repository replacement refs')
+                    Invoke-FixtureGit $product @('add', '--', 'source.txt') | Out-Null
+                    $replacementTree = Invoke-FixtureGit $product @('write-tree')
+                    $replacementObject = if ($replacementKind -eq 'tree') { $replacementTree } else {
+                        Invoke-FixtureGit $product @('-c', 'user.name=F03 Fixture', '-c', 'user.email=f03-fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit-tree', $replacementTree, '-m', 'owned replacement fixture')
+                    }
+                    Invoke-FixtureGit $product @('replace', $replacedObject, $replacementObject) | Out-Null
+                    $installedReplacement = $true
+                    Assert ((Invoke-FixtureGit $product @('rev-parse', 'HEAD')) -eq $candidateHead) 'Replacement fixture must keep the reported original HEAD.'
+                    Assert (!(Invoke-FixtureGit $product @('status', '--porcelain', '--untracked-files=all'))) 'Replacement fixture must hide the different staged and working bytes from ordinary status.'
+                    Assert ([bool](Invoke-FixtureGit $product @('--no-replace-objects', 'status', '--porcelain', '--untracked-files=all'))) 'Original-object status must observe the staged change.'
+                    $indexBefore = (Get-FileHash -LiteralPath (Join-Path $product '.git/index')).Hash
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $sourceCheck = @($observed.checks | Where-Object name -eq 'source')
+                    $rejected = $observed.status -ne 'preparation-checks-passed' -and
+                        $sourceCheck.Count -eq 1 -and $sourceCheck[0].status -eq 'blocked' -and
+                        $null -eq $observed.source_commit
+                    $replacementResults += $rejected
+                    Assert ((Get-FileHash -LiteralPath (Join-Path $product '.git/index')).Hash -ceq $indexBefore) 'Source reads must preserve the fixture index.'
+                    Assert ((Invoke-FixtureGit $product @('rev-parse', "refs/replace/$replacedObject")) -eq $replacementObject) 'Source reads must preserve replacement refs.'
+                    Write-Output (@{ event = 'replacement-source-change'; kind = $replacementKind; rejected = $rejected; original_head_unchanged = $true; source_status = $sourceCheck[0].status } | ConvertTo-Json -Compress)
+                } finally {
+                    if ($installedReplacement) { Invoke-FixtureGit $product @('replace', '-d', $replacedObject) | Out-Null }
+                    [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+                    Invoke-FixtureGit $product @('read-tree', $candidateHead) | Out-Null
+                }
+            }
+            Assert (@($replacementResults | Where-Object { !$_ }).Count -eq 0) 'Commit and tree replacement refs must block false source attestation.'
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Restoring original objects and source must recover clean attestation.'
             if ($shortAvailable) {
                 $shortControl = Invoke-U1Preflight -Product $shortProduct -Options $gitOptions
                 Assert ($shortControl.status -eq 'preparation-checks-passed' -and $shortControl.source_commit -eq $candidateHead) 'An actual short alias must bind to the same clean Git source.'

@@ -206,15 +206,15 @@ function Invoke-U1Preflight {
         $expectedRoot = Get-U1LocalPath $Product ([ref]$expectedIdentity)
         Assert-U1NoReparseAncestor $expectedRoot
         $observedIdentity = $null
-        $observedRoot = Get-U1LocalPath (Invoke-U1ReadCommand 'git' @('-C', $Product, 'rev-parse', '--show-toplevel')) ([ref]$observedIdentity)
+        $observedRoot = Get-U1LocalPath (Invoke-U1ReadCommand 'git' @('--no-replace-objects', '-C', $Product, 'rev-parse', '--show-toplevel')) ([ref]$observedIdentity)
         if (!$observedIdentity.Equals($expectedIdentity, [StringComparison]::OrdinalIgnoreCase)) {
             throw 'Git repository root does not match Product.'
         }
-        $head = Invoke-U1ReadCommand 'git' @('-C', $Product, 'rev-parse', 'HEAD')
+        $head = Invoke-U1ReadCommand 'git' @('--no-replace-objects', '-C', $Product, 'rev-parse', 'HEAD')
         if ($head -notmatch '^(?:[0-9a-f]{40}|[0-9a-f]{64})$') { throw 'Invalid source revision.' }
         # Status intentionally trusts these index flags and can hide changed bytes.
         # Reject them without refreshing or altering the caller's index.
-        $entries = Invoke-U1ReadCommand 'git' @('--no-optional-locks', '-C', $Product, 'ls-files', '-v', '-z', '--cached')
+        $entries = Invoke-U1ReadCommand 'git' @('--no-replace-objects', '--no-optional-locks', '-C', $Product, 'ls-files', '-v', '-z', '--cached')
         if ($entries) {
             $records = $entries.Split([char]0)
             if ($records[-1] -cne '') { throw 'Incomplete source index inventory.' }
@@ -224,7 +224,9 @@ function Invoke-U1Preflight {
                 }
             }
         }
-        $status = Invoke-U1ReadCommand 'git' @('--no-optional-locks', '-c', 'core.fsmonitor=false', '-C', $Product, 'status', '--porcelain', '--untracked-files=all')
+        # Local refs/replace must not substitute a different commit or tree while
+        # HEAD still reports the original object ID that this report attests.
+        $status = Invoke-U1ReadCommand 'git' @('--no-replace-objects', '--no-optional-locks', '-c', 'core.fsmonitor=false', '-C', $Product, 'status', '--porcelain', '--untracked-files=all')
         if ($status) { throw 'Unrecorded source changes.' }
         $report.source_commit = $head
     } 'Source revision or index could not be verified, or the candidate has tracked/untracked changes; clear hidden index flags and commit the intended candidate before runtime acceptance.'
