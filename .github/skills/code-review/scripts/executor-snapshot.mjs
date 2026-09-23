@@ -80,7 +80,7 @@ export function snapshot(repo, invoke = (args) => execFileSync('gh', args, {
   const prs = pulls.map((pr) => {
     if (!Number.isSafeInteger(pr.number) || pr.number < 1 ||
         !/^[a-f0-9]{40}$/.test(pr.head?.sha) || !/^[a-f0-9]{40}$/.test(pr.base?.sha) ||
-        !branchRef(pr.base?.ref) ||
+        !branchRef(pr.base?.ref) || typeof pr.draft !== 'boolean' ||
         pr.base?.repo?.full_name?.toLowerCase() !== repo.toLowerCase() || pr.state !== 'open') {
       throw new ReadFailure('inventory', 'INVALID_RESPONSE', 'Invalid or out-of-scope PR')
     }

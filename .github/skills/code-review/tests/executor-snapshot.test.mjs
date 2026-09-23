@@ -86,6 +86,42 @@ test('real GitHub inventory requires a valid base.ref and preserves valid branch
   }
 })
 
+for (const [label, draft] of [
+  ['omitted', undefined], ['null', null], ['string', 'synthetic-secret-draft'],
+  ['number', 0], ['object', { token: 'synthetic-secret-draft' }], ['array', []],
+]) {
+  test(`F02: live inventory rejects ${label} draft before detail reads`, () => {
+    let calls = 0
+    assert.throws(() => snapshot('team/repo', (args) => {
+      calls++
+      if (args.at(-1).includes('/pulls?')) {
+        return JSON.stringify([[{ ...pr(1), draft, body: 'synthetic-secret-body' }]])
+      }
+      return detailPages(detailOperation(args.at(-1)), [[]])
+    }), (error) => {
+      assert.ok(error instanceof Error)
+      assert.deepEqual(error.readFailure,
+        { operation: 'inventory', kind: 'INVALID_RESPONSE', exitCode: null, signal: null })
+      assert.equal(error.message, 'Invalid or out-of-scope PR')
+      assert.doesNotMatch(`${error.message}${JSON.stringify(error)}`, /synthetic-secret/)
+      return true
+    })
+    assert.equal(calls, 1, 'malformed draft must be fatal before detail reads')
+  })
+}
+
+test('F02: live inventory preserves explicit boolean drafts and their gate fingerprints', () => {
+  const result = snapshot('team/repo', (args) => args.at(-1).includes('/pulls?') ?
+    JSON.stringify([[{ ...pr(1), draft: true }], [{ ...pr(2), draft: false }]]) :
+    detailPages(detailOperation(args.at(-1)), [[]]))
+  assert.equal(result.complete, true)
+  assert.deepEqual(result.prs.map(({ number, draft }) => ({ number, draft })),
+    [{ number: 1, draft: true }, { number: 2, draft: false }])
+  assert.ok(result.prs.every((pull) => !Object.hasOwn(pull, 'readError') && !Object.hasOwn(pull, 'readFailure')))
+  assert.equal(result.prs[0].reviewKey, result.prs[1].reviewKey)
+  assert.notEqual(result.prs[0].gateKey, result.prs[1].gateKey)
+})
+
 test('complete paginated inventory tracks heads, feedback and checks; read failures are not empty success', () => {
   let comment = 'first'
   const calls = []

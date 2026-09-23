@@ -84,16 +84,8 @@ evidence. N/A needs an applicability reason, never a waiver of security, failing
 tests or repository rules. Missing evidence is BLOCKED. Docs/dependency-only PRs
 are neither automatic passes nor grounds for irrelevant application E2E.
 
-ECorp's baseline commands are:
-
-```sh
-node tools/check_migrations.mjs
-cargo fmt --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-pnpm build:web
-pnpm lint:web
-```
+Run all current-source `AGENTS.md` `ecorp:validation-commands` gates;
+package tests replace none.
 
 For changed user-visible behavior, require the complete browser → server → runner
 path and relevant opt-in DB/platform tests from `docs/EVALS.md`. Use only an

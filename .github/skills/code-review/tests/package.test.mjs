@@ -47,6 +47,24 @@ test('the entrypoint and maintained references resolve inside the package', () =
   assert.match(entrypoint, /^---\r?\nname: code-review\r?\ndescription: [^\r\n]+\r?\n---/)
 })
 
+test('entrypoint delegates repository validation to current source AGENTS', () => {
+  const entrypoint = readFileSync(resolve(root, 'SKILL.md'), 'utf8')
+  const prose = entrypoint.replace(/\s+/gu, ' ')
+  assert.match(prose, /Run all current-source `AGENTS\.md` `ecorp:validation-commands` gates/u)
+  assert.match(prose, /package tests replace none/u)
+  const agents = readFileSync(resolve(root, '../../../AGENTS.md'), 'utf8')
+  const block = /<!-- ecorp:validation-commands -->\r?\n```powershell\r?\n([^`]+)\r?\n```\r?\n<!-- \/ecorp:validation-commands -->/u.exec(agents)
+  assert.ok(block, 'current source AGENTS must provide the canonical validation block')
+  const commands = block[1].trim().split(/\r?\n/u)
+  assert.equal(commands.length, 9, 'retain all nine current repository gates')
+  for (const command of ['pnpm check:docs', 'pnpm test:unit', 'pnpm test:steward']) {
+    assert.ok(commands.includes(command), `missing repository gate: ${command}`)
+  }
+  for (const command of commands) {
+    assert.ok(!entrypoint.split(/\r?\n/u).includes(command), `do not duplicate canonical command: ${command}`)
+  }
+})
+
 test('entrypoint stays within pinned ATV AGENT-03 effective prose limit', (t) => {
   // Same measurement as the ATV-PUB-02 audit's support.mjs; do not count raw Markdown.
   const prose = (text) => text.replace(/^---\r?\n[\s\S]*?\r?\n---/, '')

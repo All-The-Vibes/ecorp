@@ -4703,7 +4703,7 @@ test('B03: same-SHA retarget from snapshot to CLI queues only a gate check', () 
   const inventory = (baseRef) => snapshot(repo, (args) => {
     if (args.at(-1).includes('/pulls?')) return JSON.stringify([[
       { number: 1, base: { sha: sha(10), ref: baseRef, repo: { full_name: repo } },
-        head: { sha: sha(11), ref: 'fix-1', repo: { full_name: repo } }, state: 'open' },
+        head: { sha: sha(11), ref: 'fix-1', repo: { full_name: repo } }, state: 'open', draft: false },
     ]])
     return args.at(-1).includes('/check-runs?') ? '[{"check_runs":[]}]' : '[[]]'
   })
