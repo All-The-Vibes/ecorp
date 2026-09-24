@@ -219,6 +219,22 @@ receipt in the sealed worktree. It does not change either native-read failure.
 New collection code and fixtures are not application acceptance; current
 checks, signed-object validation, and independent outcome review remain required.
 
+## Local Windows process identity
+
+`tools/local_stack_identity.test.ps1` exercises native process inspection and
+QA cleanup using owned inert children. Injected missing main-module results
+cover startup loading, recovery on the same held process, a mismatched receipt,
+and confirmed native exit during inspection. Persistent missing modules and
+native getter errors, including an error after loading begins, must fail visibly,
+preserve the ownership record, and leave the unverified child alive. Stop still
+requires the executable and creation time to match before using the retained handle.
+
+Windows `Process.MainModule` may be null before the executable module loads;
+the shared helper observes only that result for up to forty 50 ms waits.
+Native inspection errors propagate immediately. This bounded native fixture is
+separate from the complete starter lifecycle suite and browser/server/runner
+acceptance; synthetic children do not prove a working local office.
+
 ## First vertical-slice scenario
 
 ### U1 fresh-fixture preparation (issue #240)

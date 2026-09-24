@@ -23,6 +23,24 @@ function ConvertTo-LocalProcessArgument {
         [regex]::Replace($Value, '(\\*)"', '$1$1\"'), '(\\+)$', '$1$1') + '"'
 }
 
+function Get-LocalProcessExecutable {
+    param([Parameter(Mandatory)][Diagnostics.Process]$Process)
+    # The caller retains the native handle. Windows MainModule can be null while
+    # a new process loads; .NET reads it again on each call. Observe that state
+    # for at most 40 short waits without replacing the handle or hiding errors.
+    for ($attempt = 0; $attempt -le 40; $attempt++) {
+        if ($Process.get_HasExited()) { return $null }
+        $module = $Process.get_MainModule()
+        if ($null -ne $module) {
+            $executable = $module.get_FileName()
+            if (![IO.Path]::IsPathFullyQualified($executable)) { throw 'Process executable inspection is incomplete.' }
+            return $executable
+        }
+        if ($attempt -eq 40) { throw 'Process main module remains unavailable; its identity is unverified.' }
+        Start-Sleep -Milliseconds 50
+    }
+}
+
 function Get-LocalProcessIdentity {
     param([Parameter(Mandatory)][ValidateRange(1, [int]::MaxValue)][int]$ProcessId)
     $process = $null
@@ -36,9 +54,8 @@ function Get-LocalProcessIdentity {
         # Call native getters explicitly: PowerShell property access can hide a
         # getter failure as null. Only a missing PID or confirmed exit is absence.
         [void]$process.get_Handle()
-        if ($process.get_HasExited()) { return $null }
-        $executable = $process.get_MainModule().get_FileName()
-        if (![IO.Path]::IsPathFullyQualified($executable)) { throw 'Process executable inspection is incomplete.' }
+        $executable = Get-LocalProcessExecutable -Process $process
+        if ($null -eq $executable) { return $null }
         @{
             pid = $process.Id
             executable = $executable
@@ -83,9 +100,8 @@ function Stop-LocalOwnedProcess {
         # Keep the process handle open across verification and termination. Do
         # not look up a PID again, or infer ownership of its current descendants.
         [void]$process.get_Handle()
-        if ($process.get_HasExited()) { return $false }
-        $executable = $process.get_MainModule().get_FileName()
-        if (![IO.Path]::IsPathFullyQualified($executable)) { throw 'Process executable inspection is incomplete.' }
+        $executable = Get-LocalProcessExecutable -Process $process
+        if ($null -eq $executable) { return $false }
         if (!(Test-LocalPathEqual $executable $Record.executable) -or
             $process.get_StartTime().ToUniversalTime().Ticks -ne
             ([DateTimeOffset]$Record.started_utc).UtcTicks) { return $false }
