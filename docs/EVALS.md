@@ -493,10 +493,13 @@ deterministic check for those contracts, not semantic or repository-wide documen
 
 The `rust-sqlx-coverage-ubuntu` job in `.github/workflows/repository-checks.yml`
 uses its own pinned PostgreSQL 17 service and the existing SQLx test harness.
-`tools/coverage_rust_sqlx.sh` first runs native workspace unit tests, then all
-existing ignored tests in `crony-store` and `crony-server`, accumulating profiles
-with cargo-llvm-cov 0.9.1 and Rust 1.98.1. It requests no code exclusions. Other
-ignored tests, including the runner's stopped-session probe, remain unexecuted.
+`tools/coverage_rust_sqlx.sh` first runs native workspace unit tests, then the
+existing ignored tests in `crony-store` and `crony-server`, except the standalone
+`issue297_native_adversarial_fixture`, which requires its own nonce-qualified
+database driver. The selected tests include the Base audit HTTP authorization
+fixture as well as SQLx tests, accumulating profiles with cargo-llvm-cov 0.9.1 and
+Rust 1.98.1. It requests no code exclusions. Other ignored tests, including the
+runner's stopped-session probe, remain unexecuted.
 The existing Windows unit-only coverage job remains a separate platform lane.
 
 Local execution requires Linux x86_64, Node 22.23.2 with npm, the pinned Rust and
@@ -505,9 +508,14 @@ PostgreSQL service. `DATABASE_URL` and the matching `PGHOST`, `PGPORT`, `PGUSER`
 `PGPASSWORD`, and `PGDATABASE` must select the `ecorp_coverage` role/database on
 loopback or the isolated `postgres` service. The caller declares ownership with
 `ECORP_COVERAGE_OWNED_DATABASE=1`. A read-only preflight rejects an existing
-`_sqlx_test` schema or any `_sqlx_test_*` child database before SQLx can clean or
-reuse its deterministic names. Use a fresh service after an incomplete run;
-preserve the old database and evidence for inspection.
+`_sqlx_test` schema, any `_sqlx_test_*` child database, or an existing
+`ecorp_coverage_base_audit` database before tests can modify retained state. The
+driver creates `ecorp_coverage_base_audit` from `template0` in that same service
+and derives `BASE_AUDIT_TEST_DATABASE_URL` from the validated connection for the
+Tokio HTTP fixture, which does not use SQLx's per-test database harness. The
+fixture database remains until the caller tears down the owned service. Use a
+fresh service after an incomplete run; preserve the old database and evidence
+for inspection.
 
 From that prepared checkout, set `CARGO_TARGET_DIR` to a new absolute directory
 and run `bash tools/coverage_rust_sqlx.sh`. The script refuses an existing target
@@ -518,6 +526,9 @@ retain the actual platform, test counts, measured source-file set, totals and
 outcome. The receipt also binds the invocation script and workflow. CI uploads
 these artifacts for 14 days, including incomplete runs. The native line floor
 is 67.0%, enforced separately from test success, and source changes fail the lane.
+The invocation-owned Anvil cache stays under `CARGO_TARGET_DIR/anvil-cache`,
+outside the uploaded `coverage/` reports. Anvil's test settings and persisted-state
+limit are unchanged; its log and lifecycle receipt remain in the report artifacts.
 
 The September 18, 2026 isolated Linux run at
 `38507abc96b9282689a810e0e3c074fe0a8c8de5` passed 524 workspace unit tests,

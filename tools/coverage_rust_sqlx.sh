@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Native Rust coverage only: no provider, application server, source exclusion,
+# Native Rust coverage only: no provider, separate application server, source exclusion,
 # retry, or alternate test harness. The caller owns the disposable PostgreSQL service;
 # this invocation owns the local Anvil needed by the worker/gateway SQLx acceptance test.
 set -euo pipefail
@@ -50,18 +50,20 @@ assert.ok(env.PGPASSWORD && !db.search && !db.hash)
 NODE
 
 # SQLx 0.8.6 derives deterministic _sqlx_test_* names and may clean an old
-# matching database. Refuse any retained SQLx namespace before invoking tests.
+# matching database. Refuse any retained SQLx namespace or HTTP fixture database
+# before invoking tests. The HTTP fixture does not use SQLx's database harness.
 namespace_state=$(psql --no-password --no-psqlrc --set=ON_ERROR_STOP=1 --tuples-only --no-align \
-  --command "SELECT CASE WHEN EXISTS (SELECT 1 FROM pg_database WHERE left(datname, 11) = '_sqlx_test_') OR to_regnamespace('_sqlx_test') IS NOT NULL THEN 'retained' ELSE 'fresh' END;")
+  --command "SELECT CASE WHEN EXISTS (SELECT 1 FROM pg_database WHERE left(datname, 11) = '_sqlx_test_' OR datname = 'ecorp_coverage_base_audit') OR to_regnamespace('_sqlx_test') IS NOT NULL THEN 'retained' ELSE 'fresh' END;")
 if [[ $namespace_state != fresh ]]; then
-  printf '%s\n' 'Retained SQLx database/schema namespace detected; use a fresh owned service.' >&2
+  printf '%s\n' 'Retained SQLx namespace or audit fixture database detected; use a fresh owned service.' >&2
   exit 1
 fi
 
-unset TEST_DATABASE_URL CRONY_TEST_DATABASE_URL GH_TOKEN GITHUB_TOKEN CRONY_ACCESS_TOKEN
+unset TEST_DATABASE_URL CRONY_TEST_DATABASE_URL BASE_AUDIT_TEST_DATABASE_URL GH_TOKEN GITHUB_TOKEN CRONY_ACCESS_TOKEN
 unset OPENAI_API_KEY ANTHROPIC_API_KEY COPILOT_GITHUB_TOKEN SQLX_OFFLINE
 unset RUSTFLAGS RUSTDOCFLAGS LLVM_PROFILE_FILE RUST_TEST_THREADS
 unset ECORP_COVERAGE_ANVIL_STARTED ECORP_COVERAGE_ANVIL_READY ECORP_COVERAGE_ANVIL_EXIT_CODE
+unset ECORP_COVERAGE_BASE_AUDIT_DATABASE_CREATED
 export CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0 COPILOT_SKIP_CLI_DOWNLOAD=1
 export CARGO_LLVM_COV_TARGET_DIR="$CARGO_TARGET_DIR"
 export CARGO_LLVM_COV_BUILD_DIR="$CARGO_TARGET_DIR/build"
@@ -70,7 +72,7 @@ reports=coverage
 # Other platforms and coverage scopes retain their own baselines.
 readonly line_floor=67.0
 mkdir "$reports" # Never replace or reuse earlier reports/profiles.
-printf '%s\n' 'fresh: no _sqlx_test schema or _sqlx_test_* database existed before this invocation' > "$reports/database-preflight.txt"
+printf '%s\n' 'fresh: no _sqlx_test schema, _sqlx_test_* database, or ecorp_coverage_base_audit database existed before this invocation' > "$reports/database-preflight.txt"
 
 source_snapshot() {
   node --input-type=module - "$1" <<'NODE'
@@ -134,13 +136,16 @@ const receipt = { schema_version: 1, status: status === 0 ? 'passed' : 'incomple
   line_floor_percent: Number(process.env.ECORP_COVERAGE_LINE_FLOOR),
   platform: { os: process.platform, arch: process.arch }, tests, native_totals: native?.data?.[0]?.totals ?? null,
   reported_source_files: native?.data?.flatMap(data => data.files?.map(file => file.filename) ?? []) ?? [],
-  scope: 'Native cargo-llvm-cov Rust workspace unit tests plus ignored crony-store/crony-server SQLx tests on this Linux build. The standalone issue297_native_adversarial_fixture requires a separately owned nonce-qualified database and is not selected by this shared SQLx lane. No source files are excluded from coverage. This is not whole-repository, web, provider, or application E2E coverage.',
+  scope: 'Native cargo-llvm-cov Rust workspace unit tests plus ignored crony-store SQLx and selected crony-server SQLx/HTTP tests on this Linux build. The standalone issue297_native_adversarial_fixture requires a separately owned nonce-qualified database and is not selected by this shared SQLx lane. No source files are excluded from coverage. This is not whole-repository, web, provider, or application E2E coverage.',
   unexecuted_scope: 'The standalone issue297_native_adversarial_fixture and other ignored tests, including the explicit runner stopped-session probe, remain unexecuted in this coverage lane.',
   database: { role: process.env.PGUSER, database: process.env.PGDATABASE, host: process.env.PGHOST, port: process.env.PGPORT,
-    ownership: 'Caller-provided disposable PostgreSQL service; SQLx owns its per-test databases.' },
+    ownership: 'Caller-provided disposable PostgreSQL service; SQLx owns its per-test databases.',
+    http_fixture: { database: 'ecorp_coverage_base_audit', created: process.env.ECORP_COVERAGE_BASE_AUDIT_DATABASE_CREATED === '1',
+      ownership: 'Invocation-created empty database for base_v2_api_http_disconnected_preserves_v1_and_authorization; retained until the caller tears down the owned service.' } },
   evm: { ownership: 'Invocation-owned pinned Anvil child on loopback:18556; native child-job cleanup at exit.',
     started: process.env.ECORP_COVERAGE_ANVIL_STARTED === '1', ready: process.env.ECORP_COVERAGE_ANVIL_READY === '1',
     exit_code: process.env.ECORP_COVERAGE_ANVIL_EXIT_CODE === undefined ? null : Number(process.env.ECORP_COVERAGE_ANVIL_EXIT_CODE),
+    cache_directory: `${process.env.CARGO_TARGET_DIR}/anvil-cache`,
     scope: 'Local chain 84532 for base_worker_http_gateway_restart_and_finality; no public Base network.' },
   artifacts: files.map(file => ({ file, sha256: digest(`coverage/${file}`) })),
   invocation_source_sha256: digest('tools/coverage_rust_sqlx.sh'),
@@ -162,6 +167,18 @@ psql --no-password --no-psqlrc --set=ON_ERROR_STOP=1 --tuples-only --no-align \
 cargo +1.98.1 llvm-cov test --workspace --locked --no-report 2>&1 | tee "$reports/unit-tests.log"
 # In 0.9.1, --no-report already retains profiles and conflicts with --no-clean.
 cargo +1.98.1 llvm-cov test -p crony-store --locked --no-report -- --ignored --test-threads=1 2>&1 | tee "$reports/store-sqlx-tests.log"
+# This existing Tokio HTTP test migrates and bootstraps its own database. Create
+# it in the same explicitly owned service; CREATE DATABASE refuses a collision.
+psql --no-password --no-psqlrc --set=ON_ERROR_STOP=1 \
+  --command 'CREATE DATABASE ecorp_coverage_base_audit WITH TEMPLATE template0;' > "$reports/base-audit-database.txt"
+export ECORP_COVERAGE_BASE_AUDIT_DATABASE_CREATED=1
+BASE_AUDIT_TEST_DATABASE_URL=$(node --input-type=module <<'NODE'
+const database = new URL(process.env.DATABASE_URL)
+database.pathname = '/ecorp_coverage_base_audit'
+process.stdout.write(database.href)
+NODE
+)
+export BASE_AUDIT_TEST_DATABASE_URL
 # Keep the full worker/gateway acceptance in this measured SQLx lane and provide
 # its independently owned native EVM. Refuse a pre-existing listener before launch.
 node --input-type=module <<'NODE'
@@ -173,9 +190,10 @@ await new Promise((resolve, reject) => {
 })
 await new Promise((resolve, reject) => listener.close(error => error ? reject(error) : resolve()))
 NODE
-mkdir "$reports/anvil-cache"
+anvil_cache="$CARGO_TARGET_DIR/anvil-cache"
+mkdir "$anvil_cache"
 anvil --host 127.0.0.1 --port 18556 --chain-id 84532 --quiet \
-  --cache-path "$PWD/$reports/anvil-cache" --max-persisted-states 10000 > "$reports/anvil.log" 2>&1 &
+  --cache-path "$anvil_cache" --max-persisted-states 10000 > "$reports/anvil.log" 2>&1 &
 anvil_pid=$!
 export ECORP_COVERAGE_ANVIL_STARTED=1
 node --input-type=module <<'NODE'
