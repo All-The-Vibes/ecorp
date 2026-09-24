@@ -89,16 +89,24 @@ if sys.platform == 'win32':
 
     assert module.run_windows(str(good), expected, after_verified=replace_blocked) == 0
     record('replacement after final digest denied')
-    with good.open('r+b'):
-        fails(lambda: module.run_windows(str(good), expected))
+    # These cases require a writable image before launch. Use fresh verified
+    # copies so an earlier execution's retained image cannot block fixture setup.
+    writer = root / 'pre-existing-writer.exe'
+    shutil.copyfile(good, writer)
+    assert digest(writer) == expected
+    with writer.open('r+b'):
+        fails(lambda: module.run_windows(str(writer), expected))
     record('pre-existing data writer rejects launch')
 
     # Keeping a writable mapping after closing its source handle is a different
     # native case from an ordinary writer handle. The loader must refuse it.
-    with good.open('r+b') as file:
+    mapped_writer = root / 'pre-existing-mapping.exe'
+    shutil.copyfile(good, mapped_writer)
+    assert digest(mapped_writer) == expected
+    with mapped_writer.open('r+b') as file:
         writer_map = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_WRITE)
     try:
-        fails(lambda: module.run_windows(str(good), expected))
+        fails(lambda: module.run_windows(str(mapped_writer), expected))
         record('pre-existing writable mapping rejects launch')
     finally:
         writer_map.close()

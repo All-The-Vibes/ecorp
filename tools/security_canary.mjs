@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { randomBytes } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -12,7 +12,9 @@ if (!binary || !path.isAbsolute(binary) || process.argv.length !== 3) throw new 
 const config = fileURLToPath(new URL('./gitleaks-snapshot.toml', import.meta.url))
 const fixture = mkdtempSync(path.join(tmpdir(), 'ecorp-secret-canary-'))
 const canary = ['gh', 'p_', randomBytes(27).toString('base64url').replaceAll('-', 'x').replaceAll('_', 'y')].join('')
-const genericCanary = randomBytes(32).toString('base64url')
+// Random base64url values can match the detector's alphabetic-only or stopword
+// exemptions. This reproducible synthetic value exercises detection every run.
+const genericCanary = createHash('sha256').update('ECorp generic detector canary v1').digest('hex')
 const publicId = 'b663e050-1204-482b-936a-e0d48d96c6ce'
 const screenshotDigest = 'bfce9ea7da3977ab423e23e306742b3f770de74f6a801364dbf06c7b4d72ea62'
 const cases = [
