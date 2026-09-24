@@ -413,6 +413,41 @@ function Invoke-LocalSourceGitRead {
     }
 }
 
+function Assert-LocalFactoryRefs {
+    param(
+        [Parameter(Mandatory)][string]$Directory,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$SourceRef,
+        [AllowEmptyString()][string]$PublicationRef = ''
+    )
+    # factory.rs has no public pure validation command: watch/run have effects.
+    # Mirror only validate_source_base_ref; source-bound parity tests guard drift.
+    # The caller applies normalize_args trim before validation and persistence.
+    $selected = if ($PublicationRef) { $PublicationRef } else { $SourceRef }
+    foreach ($entry in @(@{kind='source';value=$SourceRef},@{kind='publication';value=$selected})) {
+        $value = $entry.value
+        if (!$value -or [Text.Encoding]::UTF8.GetByteCount($value) -gt 240 -or
+            $value.StartsWith('-', [StringComparison]::Ordinal) -or $value.StartsWith('/', [StringComparison]::Ordinal) -or
+            $value.EndsWith('/', [StringComparison]::Ordinal) -or $value.EndsWith('.', [StringComparison]::Ordinal) -or
+            $value.Contains('..') -or $value.Contains('@{') -or
+            $value -match '[\p{Cc}\\ ~^:?*\[]') {
+            throw "Factory $($entry.kind) base ref is invalid. No service was changed."
+        }
+    }
+    if ([string]::Equals($selected, 'HEAD', [StringComparison]::Ordinal)) { return }
+    $branch = $selected
+    if ($selected.StartsWith('refs/heads/', [StringComparison]::Ordinal)) {
+        $branch = $selected.Substring(11)
+    } elseif ($selected.StartsWith('refs/', [StringComparison]::Ordinal)) {
+        throw 'Factory publication base ref is invalid. No service was changed.'
+    }
+    try {
+        # Native syntax only, no source lookup (including for saved connections).
+        $null = Invoke-LocalSourceGitRead -Repository $Directory -Arguments @('check-ref-format','--branch',$branch)
+    } catch {
+        throw 'Factory publication base ref is invalid. No service was changed.'
+    }
+}
+
 function Assert-LocalRunnerSourceRef {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][AllowEmptyString()][string]$Ref)
     # Match WorkspaceManager's native validate_ref, not Factory's separate contract.
@@ -425,7 +460,7 @@ function Assert-LocalRunnerSourceRef {
 function Get-LocalSourceCommit {
     param([Parameter(Mandatory)][string]$Repository, [Parameter(Mandatory)][string]$Ref)
     Assert-LocalStackPath -Path $Repository -Directory -Required
-    if ([string]::IsNullOrWhiteSpace($Ref) -or $Ref.StartsWith('-') -or $Ref.Contains("`n") -or $Ref.Contains("`r")) {
+    if ([string]::IsNullOrWhiteSpace($Ref) -or $Ref.StartsWith('-', [StringComparison]::Ordinal) -or $Ref.Contains("`n") -or $Ref.Contains("`r")) {
         throw "Invalid source ref for repository: $Repository"
     }
     $top = Invoke-LocalSourceGitRead -Repository $Repository -Arguments @('rev-parse', '--show-toplevel')
@@ -633,15 +668,44 @@ function Read-LocalStackState {
 
 function Assert-LocalStackStateReplacement {
     param([Parameter(Mandatory)][string]$Path)
-    if (!(Test-Path -LiteralPath $Path)) { return }
+    Assert-LocalStackPath -Path $Path
     $probe = $null
     try {
+        $parent = Split-Path -Parent $Path
+        # A missing parent has no effective access to inspect. Fail closed rather
+        # than create it in Preflight or predict the ACL its children would inherit.
+        Assert-LocalStackPath -Path $parent -Directory -Required
+        if (!('ECorp.LocalStateDirectoryAccess' -as [type])) {
+            # File.OpenHandle cannot request directory rights/backup semantics.
+            Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+namespace ECorp {
+    public static class LocalStateDirectoryAccess {
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern SafeFileHandle CreateFileW(string name, uint access,
+            uint share, IntPtr security, uint disposition, uint flags, IntPtr template);
+        public static void AssertCreateFile(string directory) {
+            // FILE_ADD_FILE, share read/write/delete, OPEN_EXISTING,
+            // FILE_FLAG_BACKUP_SEMANTICS: open only; no file/directory creation.
+            using var handle = CreateFileW(directory, 2, 7, IntPtr.Zero, 3, 0x02000000, IntPtr.Zero);
+            if (handle.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
+    }
+}
+'@
+        }
+        [ECorp.LocalStateDirectoryAccess]::AssertCreateFile($parent)
+        if (!(Test-Path -LiteralPath $Path -ErrorAction Stop)) { return }
         if ([IO.File]::GetAttributes($Path) -band [IO.FileAttributes]::ReadOnly) {
             throw 'Read-only ownership record.'
         }
         # Ask Windows for the delete access needed by atomic replacement without
         # changing file bytes, attributes or ACLs. This detects current access and
-        # sharing failures; later races and parent-directory writes can still fail.
+        # sharing failures; later ACL/path changes, storage and writer failures
+        # remain possible. This admission is not a reservation or rollback guarantee.
         $probe = [IO.FileSystemAclExtensions]::Create(
             [IO.FileInfo]::new($Path), [IO.FileMode]::Open,
             [Security.AccessControl.FileSystemRights]::Delete,
@@ -705,4 +769,4 @@ Export-ModuleMember -Function Get-LocalFullPath, Test-LocalPathEqual,
     Stop-LocalOwnedProcess, New-LocalProcessEnvironment, Start-LocalOwnedProcess,
     Read-LocalStackState, Save-LocalStackState, Assert-LocalStackPath, Assert-LocalStackStateReplacement,
     Get-LocalSourceCommit, Assert-LocalStackProcesses, Get-LocalDatabaseIdentity, Assert-LocalDatabaseIdentity,
-    Assert-LocalRunnerIdentity, Assert-LocalRunnerSourceRef
+    Assert-LocalRunnerIdentity, Assert-LocalRunnerSourceRef, Assert-LocalFactoryRefs

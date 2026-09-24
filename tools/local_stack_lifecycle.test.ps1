@@ -251,6 +251,98 @@ function Assert-ReadRefused {
     Assert-True ($null -eq $value) 'Invalid state must not return usable ownership authority.'
 }
 
+function Invoke-StateParentCases {
+    foreach ($existing in @($true, $false)) {
+        Invoke-Case "state parent native CreateFiles admission (existing=$existing)" {
+            $parent = Join-Path $script:Workspace ("state-parent-" + [guid]::NewGuid().ToString('N'))
+            $null = Assert-InFixture $parent
+            [IO.Directory]::CreateDirectory($parent) | Out-Null
+            $path = Join-Path $parent 'state.json'
+            if ($existing) { Save-LocalStackState $path @{processes=@{};marker='original'} $script:Workspace }
+            # Prepare this owned fixture's native inheritance metadata before capture.
+            Set-Acl -LiteralPath $parent -AclObject (Get-Acl -LiteralPath $parent)
+            $originalAcl = Get-Acl -LiteralPath $parent
+            $originalSddl = $originalAcl.Sddl
+            $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+            try { $sid = $identity.User } finally { $identity.Dispose() }
+            $denied = Get-Acl -LiteralPath $parent
+            # This directory only: the existing file remains readable/deletable.
+            $denied.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new(
+                $sid, [Security.AccessControl.FileSystemRights]::CreateFiles,
+                [Security.AccessControl.AccessControlType]::Deny))
+            $snapshot = {
+                @(Get-Item -LiteralPath $parent; Get-ChildItem -LiteralPath $parent -Force) |
+                    Sort-Object FullName | ForEach-Object {
+                        [ordered]@{path=$_.FullName;acl=(Get-Acl -LiteralPath $_.FullName).Sddl;
+                            attributes=[int]$_.Attributes;created=$_.CreationTimeUtc.Ticks;written=$_.LastWriteTimeUtc.Ticks;
+                            bytes=$(if (!$_.PSIsContainer) { [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName)) })}
+                    } | ConvertTo-Json -Depth 5 -Compress
+            }
+            $evidence = @{existing=$existing;parent=$parent;original_acl=$originalSddl}
+            try {
+                Set-Acl -LiteralPath $parent -AclObject $denied
+                $before = & $snapshot
+                if ($existing) {
+                    $delete = [IO.FileSystemAclExtensions]::Create([IO.FileInfo]::new($path),
+                        [IO.FileMode]::Open, [Security.AccessControl.FileSystemRights]::Delete,
+                        ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete),4096,[IO.FileOptions]::None,$null)
+                    $delete.Dispose()
+                    Assert-True ([IO.File]::ReadAllText($path).Contains('original')) 'The denied parent must not deny reading the existing target.'
+                }
+                $failure = $null
+                try { Assert-LocalStackStateReplacement $path } catch { $failure = $_.Exception.Message }
+                $after = & $snapshot
+                $writerFailure = $null
+                try { Save-LocalStackState $path @{processes=@{};marker='after'} $script:Workspace }
+                catch { $writerFailure = $_.Exception.Message }
+                $evidence.guard_failure = $failure
+                $evidence.writer_failure = $writerFailure
+                $evidence.before = $before
+                $evidence.after = $after
+                $evidence.writer_after = & $snapshot
+                Assert-True ($null -ne $writerFailure -and $writerFailure -match 'denied') 'The actual atomic writer must fail on native parent CreateFiles denial.'
+                Assert-Equal $after $before 'Admission changed bytes, ACLs, attributes or creation/write timestamps.'
+                Assert-Equal $evidence.writer_after $before 'Denied writer changed existing fixture data.'
+                Assert-Equal $failure "Ownership record cannot be replaced: $path" 'The parent denial must reject admission, including an absent state target.'
+            } finally {
+                Set-Acl -LiteralPath $parent -AclObject $originalAcl
+                $evidence.restored_acl = (Get-Acl -LiteralPath $parent).Sddl
+                Write-FixtureFile (Join-Path $script:FixtureRoot "state-parent-$existing.json") ($evidence | ConvertTo-Json -Depth 8)
+                Assert-Equal $evidence.restored_acl $originalSddl 'The fixture parent ACL was not restored exactly.'
+            }
+        }
+        Invoke-Case "state parent writable native control (existing=$existing)" {
+            $parent = Join-Path $script:Workspace ("state-control-" + [guid]::NewGuid().ToString('N'))
+            $null = Assert-InFixture $parent
+            [IO.Directory]::CreateDirectory($parent) | Out-Null
+            $path = Join-Path $parent 'state.json'
+            if ($existing) { Save-LocalStackState $path @{processes=@{};marker='before'} $script:Workspace }
+            $before = @(Get-ChildItem -LiteralPath $parent -Force).Count
+            Assert-LocalStackStateReplacement $path
+            Assert-Equal @(Get-ChildItem -LiteralPath $parent -Force).Count $before 'Admission created a probe file.'
+            Save-LocalStackState $path @{processes=@{};marker='after'} $script:Workspace
+            Assert-Equal (Read-LocalStackState $path $script:Workspace).marker 'after' 'The admitted native atomic writer must succeed.'
+            Assert-Equal @(Get-ChildItem -LiteralPath $parent -Force).Count 1 'The atomic writer left a sibling temporary.'
+        }
+    }
+    Invoke-Case 'state parent admission rejects missing, invalid and redirected parents without creating them' {
+        $root = Join-Path $script:Workspace 'state-path-guards'
+        [IO.Directory]::CreateDirectory($root) | Out-Null
+        $file = Join-Path $root 'file'
+        Write-FixtureFile $file 'retained file ancestor'
+        $junction = Join-Path $root 'redirect'
+        New-Item -ItemType Junction -Path $junction -Target $script:LogDirectory | Out-Null
+        $script:Junctions.Add($junction)
+        foreach ($path in @((Join-Path $root 'missing\state.json'), $root,
+            (Join-Path $file 'missing\state.json'), (Join-Path $junction 'state.json'))) {
+            Assert-Throws { Assert-LocalStackStateReplacement $path } 'Unverifiable parent or wrong path type passed state admission.'
+        }
+        Assert-False ([IO.Directory]::Exists((Join-Path $root 'missing'))) 'Admission created a missing parent.'
+        Assert-Equal ([IO.File]::ReadAllText($file)) 'retained file ancestor' 'Admission changed the file ancestor.'
+        Assert-False ([IO.File]::Exists((Join-Path $script:LogDirectory 'state.json'))) 'Admission wrote through a junction.'
+    }
+}
+
 function Invoke-ModuleCases {
     $module = Join-Path $PSScriptRoot 'local_stack.psm1'
     Import-Module -Name $module -Force -DisableNameChecking
@@ -329,6 +421,7 @@ if (mode === 'reader') {
 }
 '@
 
+    Invoke-StateParentCases
     if ($Suite -eq 'Startup') { Invoke-StartupCases; return }
     $guard = Start-Fixture (New-FixtureSpec)
     $guardRecord = Get-FixtureRecord $guard
@@ -1060,6 +1153,107 @@ Export-ModuleMember -Function Start-LocalOwnedProcess, Stop-LocalOwnedProcess
         }
     }
     try {
+        foreach ($bound in @($false,$true)) {
+            foreach ($kind in @('source','publication')) {
+                foreach ($mode in @(
+                    @{name='Preflight';arguments=@{Preflight=$true}},
+                    @{name='Start';arguments=@{}},
+                    @{name='Restart';arguments=@{Restart=$true}}
+                )) {
+                    Invoke-Case "Factory $kind admission bound=$bound $($mode.name) rejects before effects" {
+                        $originalState = [IO.File]::ReadAllText($statePath)
+                        $retained = $originalState | ConvertFrom-Json -AsHashtable -DateKind String
+                        $retained.processes = @{}
+                        $guards = @()
+                        $ref = if ($mode.name -eq 'Start') { 'HEAD^0' } else { 'HEAD~0' }
+                        $settings = @{
+                            ECORP_FACTORY_WATCH='1'
+                            ECORP_FACTORY_SOURCE_BASE_REF=$(if ($kind -eq 'source') { $ref } else { 'HEAD' })
+                            ECORP_FACTORY_PUBLICATION_BASE_REF=$(if ($kind -eq 'publication') { 'refs/heads/topic.lock' } else { 'HEAD' })
+                            ECORP_FACTORY_WORKSPACE_CONNECTION_ID=$(if ($bound) { '00000000-0000-4000-8000-000000000232' } else { '' })
+                            ECORP_GITHUB_CLI=$script:NodeExecutable
+                        }
+                        $old = @{}
+                        try {
+                            Assert-Equal (Get-LocalSourceCommit $source $ref) $commit 'The rejected source expression must genuinely resolve in owned Git.'
+                            foreach ($role in @('server','runner','web')) {
+                                $guard = Start-Fixture (New-FixtureSpec)
+                                $guards += $guard
+                                $record = Get-FixtureRecord $guard
+                                $record.workspace = $workspace
+                                $record.role = $role
+                                $retained.processes[$role] = $record
+                            }
+                            Write-FixtureFile $statePath ($retained | ConvertTo-Json -Depth 12)
+                            foreach ($name in $settings.Keys) {
+                                $old[$name] = [Environment]::GetEnvironmentVariable($name,'Process')
+                                [Environment]::SetEnvironmentVariable($name,$settings[$name],'Process')
+                            }
+                            $before = Get-StartupSnapshot
+                            $failure = $null
+                            $arguments = $mode.arguments
+                            try { & $starter @arguments -SkipBuild -SkipInstall -SkipFactoryController | Out-Null }
+                            catch { $failure = $_.Exception.Message }
+                            Register-StartupProcesses
+                            $after = Get-StartupSnapshot
+                            $identities = @($retained.processes.Values | ForEach-Object {
+                                @{record=$_;alive=(Test-LocalOwnedProcess $_ $workspace)}
+                            })
+                            Write-FixtureFile (Join-Path $script:FixtureRoot "factory-$kind-$bound-$($mode.name).json") (
+                                @{settings=$settings;before=$before;after=$after;failure=$failure;identities=$identities
+                                    scope='actual public starter; synthetic DB/HTTP/entrypoints; Factory launch disabled'} | ConvertTo-Json -Depth 12)
+                            $expected = if ($kind -eq 'source') { 'Factory source base ref is invalid. No service was changed.' }
+                                else { 'Factory publication base ref is invalid. No service was changed.' }
+                            Assert-Equal $failure $expected 'Native-rejected Factory refs must fail in admission, not after lifecycle effects.'
+                            Assert-Equal $after $before 'Factory rejection changed retained bytes, tree, timestamps or ACLs.'
+                            foreach ($identity in $identities) { Assert-True $identity.alive 'Factory rejection stopped an original native root.' }
+                            foreach ($guard in $guards) { Assert-FixtureAlive $guard }
+                        } finally {
+                            Register-StartupProcesses
+                            foreach ($name in $old.Keys) { [Environment]::SetEnvironmentVariable($name,$old[$name],'Process') }
+                            # Reap only newly registered inert replacements before restoring ownership.
+                            foreach ($record in (Read-LocalStackState $statePath $workspace).processes.Values) {
+                                foreach ($owned in @($script:Processes | Where-Object process_id -eq $record.pid)) { Stop-FixtureHandle $owned }
+                            }
+                            Write-FixtureFile $statePath $originalState
+                            foreach ($guard in $guards) { Stop-FixtureHandle $guard.owned }
+                        }
+                    }
+                }
+            }
+        }
+        Invoke-Case 'Factory native trim and publication fallback retain configured-source authority' {
+            $formatRef = "$([char]0xad)-main"
+            & git -C $source update-ref "refs/heads/$formatRef" $commit
+            Assert-Equal $LASTEXITCODE 0 'The native-compatible Unicode fixture ref must be created.'
+            $resolved = & git -C $source rev-parse --verify --end-of-options "$formatRef^{commit}"
+            Assert-Equal $LASTEXITCODE 0 'The short Unicode fixture ref must genuinely resolve in Git.'
+            Assert-Equal $resolved $commit 'The short ref must resolve without alias substitution.'
+            $originalState = [IO.File]::ReadAllText($statePath)
+            try {
+                foreach ($case in @(
+                    @{source="`t$($invalidRefs[0].ref)$([char]0x85)";publication=" `t";connection=''},
+                    @{source=" $commit ";publication=' HEAD ';connection=''},
+                    @{source=$formatRef;publication='HEAD';connection=''},
+                    @{source=('a'*64);publication=' refs/heads/main ';connection='00000000-0000-4000-8000-000000000232'},
+                    @{source=' connection-project-only ';publication='';connection='00000000-0000-4000-8000-000000000232'}
+                )) {
+                    $retained = $originalState | ConvertFrom-Json -AsHashtable -DateKind String
+                    $retained.configuration.factory_enabled = $true
+                    $retained.configuration.factory_source_base_ref = $case.source
+                    $retained.configuration.factory_publication_base_ref = $case.publication
+                    $retained.configuration.factory_workspace_connection_id = $case.connection
+                    $retained.configuration.factory_github_cli = $script:NodeExecutable
+                    Write-FixtureFile $statePath ($retained | ConvertTo-Json -Depth 12)
+                    $before = Get-StartupSnapshot
+                    $result = & $starter -Preflight -SkipBuild -SkipInstall
+                    Assert-Equal $result.status 'ready' 'Native normalized refs must pass without inventing a different source.'
+                    Assert-Equal $result.source_base_ref 'HEAD' 'Factory normalization must not retarget the independently configured runner.'
+                    Assert-Equal $result.source_commit $commit 'The configured runner checkout remains authoritative.'
+                    Assert-Equal (Get-StartupSnapshot) $before 'Ref normalization in preflight must not rewrite original configuration or files.'
+                }
+            } finally { Write-FixtureFile $statePath $originalState }
+        }
         Invoke-Case 'Factory Unicode ref resolves in preflight while the runner retains its supported ref' {
             $settings = @{
                 ECORP_FACTORY_WATCH='1'
@@ -1432,7 +1626,9 @@ Export-ModuleMember -Function Start-LocalOwnedProcess, Stop-LocalOwnedProcess
                 @{name='Preflight';restart=$false;preflight=$true}
             )) {
                 Invoke-Case "$restriction ownership target rejects $($mode.name) before effects" {
-                    & $starter -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+                    # Refresh each scenario independently; ordinary Start can reuse
+                    # roots whose 45-second fixture TTL is already nearly spent.
+                    & $starter -Restart -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
                     Register-StartupProcesses
                     $originalState = [IO.File]::ReadAllText($statePath)
                     $owned = (Read-LocalStackState $statePath $workspace).processes
@@ -1464,6 +1660,53 @@ Export-ModuleMember -Function Start-LocalOwnedProcess, Stop-LocalOwnedProcess
                         Write-FixtureFile $statePath $originalState
                     }
                 }
+            }
+        }
+        Invoke-Case 'native parent CreateFiles denial rejects public Start Restart and Preflight before effects' {
+            # One fresh set of roots suffices: each rejected mode must preserve it.
+            & $starter -Restart -SkipBuild -SkipInstall -SkipFactoryController | Out-Null
+            Register-StartupProcesses
+            $owned = (Read-LocalStackState $statePath $workspace).processes
+            $parent = Assert-InFixture (Split-Path -Parent $statePath)
+            # Prepare this owned fixture's native inheritance metadata before capture.
+            Set-Acl -LiteralPath $parent -AclObject (Get-Acl -LiteralPath $parent)
+            $originalAcl = Get-Acl -LiteralPath $parent
+            $originalSddl = $originalAcl.Sddl
+            $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+            try { $sid = $identity.User } finally { $identity.Dispose() }
+            $denied = Get-Acl -LiteralPath $parent
+            $denied.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new(
+                $sid, [Security.AccessControl.FileSystemRights]::CreateFiles,
+                [Security.AccessControl.AccessControlType]::Deny))
+            try {
+                Set-Acl -LiteralPath $parent -AclObject $denied
+                foreach ($mode in @(
+                    @{name='Start';restart=$false;preflight=$false},
+                    @{name='Restart';restart=$true;preflight=$false},
+                    @{name='Preflight';restart=$false;preflight=$true}
+                )) {
+                    $before = Get-StartupSnapshot
+                    $failure = $null
+                    try { & $starter -Restart:$mode.restart -Preflight:$mode.preflight -SkipBuild -SkipInstall -SkipFactoryController | Out-Null }
+                    catch { $failure = $_.Exception.Message }
+                    $after = Get-StartupSnapshot
+                    $live = @($owned.Values | ForEach-Object { Test-LocalOwnedProcess $_ $workspace })
+                    Write-FixtureFile (Join-Path $script:FixtureRoot "replacement-deny-CreateFiles-$($mode.name).json") (@{
+                        mode=$mode.name;failure=$failure
+                        before=($before | ConvertFrom-Json);after=($after | ConvertFrom-Json);original_roots_live=$live
+                    } | ConvertTo-Json -Depth 8)
+                    Assert-Equal $after $before 'Parent admission changed retained bytes, attributes, timestamps or ACLs.'
+                    Assert-Equal @($live | Where-Object { !$_ }).Count 0 'Parent admission stopped an original root.'
+                    Assert-Equal $failure "Ownership record cannot be replaced: $statePath" 'Parent denial did not reject before effects.'
+                }
+            } finally {
+                Set-Acl -LiteralPath $parent -AclObject $originalAcl
+                $restored = (Get-Acl -LiteralPath $parent).Sddl
+                Write-FixtureFile (Join-Path $script:FixtureRoot 'parent-acl-public.json') (@{
+                    original=$originalSddl;restored=$restored
+                } | ConvertTo-Json)
+                Assert-Equal $restored $originalSddl 'The startup parent ACL was not restored exactly.'
+                Register-StartupProcesses
             }
         }
         Invoke-Case 'partial restart retains old configuration and a subsequent start recovers it' {
@@ -1564,6 +1807,66 @@ function Invoke-SourceCases {
         (Join-Path $PSScriptRoot 'stop_local.ps1'), [ref]$tokens, [ref]$errors)
     if ($errors.Count) { throw 'The stopper must parse before source guards are meaningful.' }
     $commands = $start.FindAll({ param($node) $node -is [Management.Automation.Language.CommandAst] }, $true)
+    Invoke-Case 'Factory adapter is bound to the native ref predicates, selection and normalization' {
+        # No pure CLI seam exists: never invoke watch/run as a validation probe.
+        # Review/re-run native parity if these versioned contracts change.
+        $native = [IO.File]::ReadAllText((Join-Path $PSScriptRoot '..\crates\crony-cli\src\factory.rs')).Replace("`r`n","`n")
+        $bindings = @{
+            validate_source_base_ref='ae6501f06dfbea946ca2671695aebfb5979b41692a3dc77272bce7b5077c1bc7'
+            publication_base_branch='717fb1dfb6b25f407be92bcef73960b73354a5d63b4d50e75a4329e49e054a06'
+            selected_publication_base_ref='89cb2080cc8d71c10b48e315f63b0c10a6af141e8cb266fd2a317c8544d021a9'
+            normalize_args='0eb28b1a19d05c0535e783653645ed291b1a53de6330084130fb61532587ff05'
+            validate_publication_base_ref='2bc5166f5a1dc4b48f5291b1605d3520824340244a239062d7fe81a77e3acc9e'
+        }
+        foreach ($name in $bindings.Keys) {
+            $body = [regex]::Match($native,"(?ms)^fn $name\(.*?^}").Value
+            $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($body))).ToLowerInvariant()
+            Assert-Equal $hash $bindings[$name] "Native $name changed: inspect the adapter and rerun native parity."
+        }
+        $admission = @($commands | Where-Object { $_.GetCommandName() -eq 'Assert-LocalFactoryRefs' })
+        Assert-Equal $admission.Count 1 'All startup modes must share native Factory ref admission.'
+        foreach ($field in @('source_base_ref','publication_base_ref')) {
+            $statement = "`$factory.$field = `$factory.$field.Trim()"
+            Assert-True ($start.Extent.Text.IndexOf($statement,[StringComparison]::Ordinal) -lt $admission[0].Extent.StartOffset -and
+                $start.Extent.Text.Contains($statement)) 'Native trim must precede admission and persisted identity selection.'
+        }
+        $firstIdentityCheck = $start.Extent.Text.IndexOf("if ((Test-LocalSettingChanged 'factory_source_base_ref'",[StringComparison]::Ordinal)
+        Assert-True ($admission[0].Extent.EndOffset -lt $firstIdentityCheck) 'Ref admission must precede identity checks and lifecycle effects.'
+    }
+    Invoke-Case 'Factory ref adapter matches native Unicode byte boundaries and publication Git syntax' {
+        Import-Module (Join-Path $PSScriptRoot 'local_stack.psm1') -Force -DisableNameChecking
+        foreach ($value in @('HEAD',('a'*40),('a'*64),'refs/heads/main','refs/tags/v1','topic.lock',
+            'topic]','topic{x}',"caf$([char]0xe9)","cafe$([char]0x301)",('a'*239),('a'*240),
+            ("$([char]0xe9)"*120))) {
+            Assert-LocalFactoryRefs -Directory $PSScriptRoot -SourceRef $value -PublicationRef HEAD
+        }
+        $invalid = @('','-main','/main','main/','main.','main..next','main@{0}',('a'*241),("$([char]0xe9)"*121))
+        foreach ($character in ([char[]]'\ ~^:?*[') + @((0..31 + 127..159) | ForEach-Object { [char]$_ })) {
+            $invalid += "a${character}b"
+        }
+        foreach ($value in $invalid) {
+            Assert-Throws { Assert-LocalFactoryRefs -Directory $PSScriptRoot -SourceRef $value -PublicationRef HEAD } 'The native source boundary must reject.'
+            if ($value) {
+                Assert-Throws { Assert-LocalFactoryRefs -Directory $PSScriptRoot -SourceRef HEAD -PublicationRef $value } 'The selected publication boundary must reject.'
+            }
+        }
+        foreach ($value in @('refs/tags/v1','refs/remotes/origin/main','refs/heads/topic.lock','topic/.hidden','topic//next','refs/heads/-main','refs/heads/HEAD')) {
+            Assert-Throws { Assert-LocalFactoryRefs -Directory $PSScriptRoot -SourceRef HEAD -PublicationRef $value } 'Native branch selection/Git must reject, without source lookup.'
+        }
+        foreach ($value in @('HEAD','main','refs/heads/main',"refs/heads/caf$([char]0xe9)",('a'*40),('a'*64))) {
+            Assert-LocalFactoryRefs -Directory $PSScriptRoot -SourceRef $value
+            Assert-LocalFactoryRefs -Directory $PSScriptRoot -SourceRef HEAD -PublicationRef $value
+        }
+        foreach ($code in @(0xad,0x200b,0xfeff)) {
+            # Culture-sensitive prefix/suffix comparison ignores these valid
+            # Unicode format characters; Rust/Git compare the original bytes.
+            $character = [char]$code
+            foreach ($value in @("${character}-main","${character}/main","main.${character}","main/${character}")) {
+                Assert-LocalFactoryRefs -Directory $PSScriptRoot -SourceRef $value -PublicationRef HEAD
+                Assert-LocalFactoryRefs -Directory $PSScriptRoot -SourceRef HEAD -PublicationRef $value
+            }
+        }
+    }
     function Get-ConditionalAncestors {
         param($Node)
         for ($parent = $Node.Parent; $null -ne $parent; $parent = $parent.Parent) {
