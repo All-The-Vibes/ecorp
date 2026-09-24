@@ -1,5 +1,250 @@
 use super::*;
 
+async fn commit_failure_preserves_transport(pool: PgPool, connected: bool) {
+    let store = fixture(pool).await;
+    sqlx::query("UPDATE runs SET status='starting' WHERE id=$1")
+        .bind(run_id(1))
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    let dispatch_pool = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(1)
+        .after_connect(|connection, _| {
+            Box::pin(async move {
+                sqlx::query("SET idle_in_transaction_session_timeout='250ms'")
+                    .execute(connection)
+                    .await?;
+                Ok(())
+            })
+        })
+        .connect_with(store.pool.connect_options().as_ref().clone())
+        .await
+        .unwrap();
+    let dispatcher = PgStore {
+        pool: dispatch_pool,
+    };
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let receiver = connected.then_some(receiver);
+    let outcome = dispatcher
+        .with_run_budget_dispatch(CORP, run_id(1), run_id(1), "issue56-runner-1", || {
+            let transport = sender.send(run_id(1));
+            // PostgreSQL ends the idle transaction after the real enqueue,
+            // without a production fault hook or a synthetic commit error.
+            std::thread::sleep(std::time::Duration::from_millis(750));
+            transport
+        })
+        .await;
+    assert_eq!(
+        receiver
+            .as_ref()
+            .map(|receiver| receiver.try_recv().unwrap()),
+        connected.then_some(run_id(1))
+    );
+    dispatcher.pool.close().await;
+    let outcome = outcome.expect("a commit error must retain the known transport outcome");
+    assert!(
+        outcome.commit_error.is_some(),
+        "PostgreSQL must have terminated the transaction"
+    );
+    assert_eq!(outcome.transport_result.is_ok(), connected);
+    if !connected {
+        assert_eq!(outcome.transport_result.unwrap_err().0, run_id(1));
+    }
+    let state: (String, i64) = sqlx::query_as(
+        "SELECT status,(SELECT count(*) FROM runner_commands WHERE run_id=$1)
+         FROM runs WHERE id=$1",
+    )
+    .bind(run_id(1))
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        state,
+        ("starting".into(), 0),
+        "enqueue is not runner acknowledgement"
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_commit_failure_preserves_enqueued_transport(pool: PgPool) {
+    commit_failure_preserves_transport(pool, true).await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_commit_failure_preserves_disconnected_transport(pool: PgPool) {
+    commit_failure_preserves_transport(pool, false).await;
+}
+
+async fn wait_for_budget_operation(pool: &PgPool, application: &str) -> (i32, Vec<i32>, bool) {
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        loop {
+            let blocked = sqlx::query_as(
+                "SELECT pid,pg_blocking_pids(pid),
+                   EXISTS(SELECT 1 FROM pg_locks lock
+                     WHERE lock.pid=activity.pid AND lock.locktype='advisory' AND NOT lock.granted)
+                 FROM pg_stat_activity activity
+                 WHERE datname=current_database() AND application_name=$1
+                   AND cardinality(pg_blocking_pids(pid))>0",
+            )
+            .bind(application)
+            .fetch_optional(pool)
+            .await
+            .unwrap();
+            if let Some(blocked) = blocked {
+                return blocked;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .expect("actual operation must reach an observed database lock")
+}
+
+async fn expiry_budget_operation(store: PgStore, approval: Uuid, accounting: bool) -> Result<()> {
+    if accounting {
+        store
+            .apply_runner_event(event(0, "run.usage", json!({"input_tokens":100})))
+            .await?;
+    } else {
+        let outcome = store
+            .expire_action_approval(approval)
+            .await?
+            .context("pending approval must expire")?;
+        assert_eq!(outcome.status, "expired");
+    }
+    Ok(())
+}
+
+async fn expiry_and_sibling_accounting(pool: PgPool, accounting_first: bool) {
+    let store = fixture(pool).await;
+    let approval = pending_approval(&store, 1).await;
+    sqlx::query("UPDATE action_approvals SET expires_at=now()-interval '1 second' WHERE id=$1")
+        .bind(approval)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    let mut operation_pools = Vec::new();
+    for application in [
+        "issue56-expiry-first-operation",
+        "issue56-expiry-second-operation",
+    ] {
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .max_connections(1)
+            .after_connect(|connection, _| {
+                Box::pin(async move {
+                    sqlx::query("SET statement_timeout='10s'")
+                        .execute(connection)
+                        .await?;
+                    Ok(())
+                })
+            })
+            .connect_with(
+                store
+                    .pool
+                    .connect_options()
+                    .as_ref()
+                    .clone()
+                    .application_name(application),
+            )
+            .await
+            .unwrap();
+        operation_pools.push(pool);
+    }
+    let mut barrier = store.pool.begin().await.unwrap();
+    let barrier_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *barrier)
+        .await
+        .unwrap();
+    sqlx::query("SELECT id FROM missions WHERE id=$1 FOR UPDATE")
+        .bind(MISSION)
+        .execute(&mut *barrier)
+        .await
+        .unwrap();
+    let first = tokio::spawn(expiry_budget_operation(
+        PgStore {
+            pool: operation_pools[0].clone(),
+        },
+        approval,
+        accounting_first,
+    ));
+    let (first_pid, first_blockers, _) =
+        wait_for_budget_operation(&store.pool, "issue56-expiry-first-operation").await;
+    assert!(first_blockers.contains(&barrier_pid));
+    let second = tokio::spawn(expiry_budget_operation(
+        PgStore {
+            pool: operation_pools[1].clone(),
+        },
+        approval,
+        !accounting_first,
+    ));
+    let (_, second_blockers, second_waits_on_gate) =
+        wait_for_budget_operation(&store.pool, "issue56-expiry-second-operation").await;
+    barrier.commit().await.unwrap();
+    let (first_result, second_result) =
+        tokio::time::timeout(std::time::Duration::from_secs(15), async {
+            tokio::join!(first, second)
+        })
+        .await
+        .expect("both real operations must finish after releasing the mission barrier");
+    for pool in operation_pools {
+        pool.close().await;
+    }
+    first_result
+        .unwrap()
+        .expect("first operation must commit without a deadlock");
+    second_result
+        .unwrap()
+        .expect("second operation must commit without a deadlock");
+    assert!(
+        second_waits_on_gate && second_blockers.contains(&first_pid),
+        "the second operation must wait at the common Corp advisory gate"
+    );
+    let tokens: i64 = sqlx::query_scalar("SELECT input_tokens FROM runs WHERE id=$1")
+        .bind(run_id(0))
+        .fetch_one(&store.pool)
+        .await
+        .unwrap();
+    assert_eq!(tokens, 100, "sibling accounting must be retained");
+    let cleanup: Vec<(String, String, String)> = sqlx::query_as(
+        "SELECT approval.status,run.status,command.status FROM action_approvals approval
+         JOIN runs run ON run.id=approval.run_id AND run.corp_id=approval.corp_id
+         JOIN runner_commands command ON command.corp_id=approval.corp_id
+           AND command.run_id=approval.run_id AND command.command_kind='approval_decision'
+           AND command.payload->>'approval_id'=approval.id::text
+           AND command.payload->'approved'='false'::jsonb
+         WHERE approval.id=$1",
+    )
+    .bind(approval)
+    .fetch_all(&store.pool)
+    .await
+    .unwrap();
+    assert_eq!(
+        cleanup,
+        vec![("expired".into(), "cancelled".into(), "pending".into())]
+    );
+    assert!(
+        store
+            .expire_action_approval(approval)
+            .await
+            .unwrap()
+            .is_none()
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_expiry_serializes_after_sibling_accounting(pool: PgPool) {
+    expiry_and_sibling_accounting(pool, true).await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue56_sibling_accounting_serializes_after_expiry(pool: PgPool) {
+    expiry_and_sibling_accounting(pool, false).await;
+}
+
 const CORP: Uuid = Uuid::from_u128(5601);
 const OWNER: Uuid = Uuid::from_u128(5602);
 const ROOM: Uuid = Uuid::from_u128(5603);
@@ -202,7 +447,9 @@ async fn issue56_native_enqueue_precedes_a_concurrent_fence(pool: PgPool) {
             .is_err()
     );
     barrier.commit().await.unwrap();
-    assert!(dispatch.await.unwrap().unwrap());
+    let dispatched = dispatch.await.unwrap().unwrap();
+    assert!(dispatched.transport_result);
+    assert!(dispatched.commit_error.is_none());
     assert_eq!(usage.await.unwrap().unwrap().breaker_commands.len(), 2);
     assert_eq!(stage(&store, 1).await, "suspend");
 }

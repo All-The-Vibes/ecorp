@@ -741,6 +741,13 @@ pub enum RunnerCommandDispatchOutcome {
     Obsolete,
 }
 
+/// The native transport has run, even when the budget transaction cannot commit.
+#[derive(Debug)]
+pub struct RunBudgetDispatchOutcome<T> {
+    pub transport_result: T,
+    pub commit_error: Option<sqlx::Error>,
+}
+
 fn runner_command_dispatch_state(
     command_status: &str,
     run_status: Option<&str>,
@@ -9499,18 +9506,31 @@ impl PgStore {
         approval_id: Uuid,
     ) -> Result<Option<ActionApprovalDecisionOutcome>> {
         let mut tx = self.pool.begin().await?;
+        let corp_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT corp_id FROM action_approvals WHERE id=$1")
+                .bind(approval_id)
+                .fetch_optional(&mut *tx)
+                .await?;
+        let Some(corp_id) = corp_id else {
+            tx.commit().await?;
+            return Ok(None);
+        };
+        // Expiry and accounting must enter the same gate before locking any
+        // approval, run or mission rows. Re-read the scoped approval after it.
+        aggregate_breaker::lock_corp_tx(&mut tx, corp_id).await?;
         let row = sqlx::query(
             r#"
             SELECT approval.corp_id, approval.room_id, approval.mission_id,
                    approval.task_id, approval.run_id, approval.agent_id,
                    approval.status, approval.expires_at, run.runner_id
             FROM action_approvals approval
-            JOIN runs run ON run.id = approval.run_id
-            WHERE approval.id = $1
+            JOIN runs run ON run.id = approval.run_id AND run.corp_id = approval.corp_id
+            WHERE approval.id = $1 AND approval.corp_id = $2
             FOR UPDATE OF approval, run
             "#,
         )
         .bind(approval_id)
+        .bind(corp_id)
         .fetch_optional(&mut *tx)
         .await?;
         let Some(row) = row else {
@@ -9523,7 +9543,6 @@ impl PgStore {
             tx.commit().await?;
             return Ok(None);
         }
-        let corp_id: Uuid = row.get("corp_id");
         let room_id: Uuid = row.get("room_id");
         let mission_id: Uuid = row.get("mission_id");
         let task_id: Uuid = row.get("task_id");

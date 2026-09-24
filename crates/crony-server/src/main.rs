@@ -5004,7 +5004,15 @@ async fn schedule_ready_tasks(
                     )
                 },
             )
-            .await;
+            .await
+            .map(|outcome| {
+                if outcome.commit_error.is_some() {
+                    warn!(%corp_id, run_id = %record.run_id,
+                        enqueued = outcome.transport_result.is_ok(),
+                        "native start transport result retained after budget gate commit failure");
+                }
+                outcome.transport_result
+            });
         if !matches!(dispatch, Ok(Ok(()))) {
             let reason = match dispatch {
                 Err(error) => format!("budget authority denied native dispatch: {error}"),
@@ -5843,7 +5851,15 @@ async fn resume_run(
                 )
             },
         )
-        .await;
+        .await
+        .map(|outcome| {
+            if outcome.commit_error.is_some() {
+                warn!(%corp_id, run_id = %record.run_id,
+                    enqueued = outcome.transport_result.is_ok(),
+                    "native resume transport result retained after budget gate commit failure");
+            }
+            outcome.transport_result
+        });
     if !matches!(dispatch, Ok(Ok(()))) {
         let reason = match dispatch {
             Err(error) => format!("budget authority denied native resume dispatch: {error}"),

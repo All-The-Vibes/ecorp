@@ -20,7 +20,11 @@ and cost scopes, suspend-to-stop escalation, run isolation, rolling-window targe
 isolation, exact replay, transaction rollback, pending decisions, staged artifacts, exhausted
 dispatch, simultaneous accounting, and lock-observed concurrent manual-review and nested
 verifier/recovery-budget races. Pending-assignment enqueue is checked against a concurrent
-fence, including wrong assignment and tenant rejection. The existing exhausted correction-retry cases retain
+fence, including wrong assignment and tenant rejection. Native PostgreSQL transaction termination
+after a real channel send checks that commit failure preserves both connected and disconnected
+transport outcomes without fabricating an acknowledgement. Expiry/accounting races exercise both
+orderings, inspect the actual advisory-lock wait, retain usage, and require idempotent expiry with
+a pending negative cleanup command. The existing exhausted correction-retry cases retain
 pre-atomic historical accounting rows, independently proving that retries cannot reset spend
 even when an older server committed usage without recording a breaker transition.
 Run it with `cargo test -p crony-store issue56_ -- --ignored --test-threads=1`; ignored

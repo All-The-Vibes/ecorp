@@ -201,6 +201,11 @@ reentrant verifier/recovery paths do not acquire a separate actor gate after the
 After dependency and secret preparation, ordinary start/resume enqueue revalidates the exact
 pending assignment and its budget under this gate. Enqueue therefore either precedes the
 scope fence or is rejected; a breaker cannot be consumed before its native run is enqueued.
+The transport result remains authoritative if the budget-gate transaction fails to commit
+after enqueue: start and resume retain the actual send outcome and log a sanitized warning
+about transaction uncertainty. A successful enqueue is never a runner acknowledgement.
+Approval expiry acquires the same Corp gate before approval, run or mission row locks and
+re-reads the scoped approval under that gate, so sibling accounting cannot invert those locks.
 Exhausted scopes reject new task dispatch
 as well as resume. Staged artifact finalization and queued approval/control commands recheck
 the fence. The existing provenance-validated, zero-provider checkpoint-verification exception

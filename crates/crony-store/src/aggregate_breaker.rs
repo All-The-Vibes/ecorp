@@ -117,6 +117,8 @@ impl PgStore {
         Ok(outcome)
     }
 
+    /// An error means dispatch was never invoked. Once invoked, preserve its
+    /// actual outcome separately from an uncertain transaction completion.
     pub async fn with_run_budget_dispatch<F, T>(
         &self,
         corp_id: Uuid,
@@ -124,7 +126,7 @@ impl PgStore {
         assignment_token: Uuid,
         runner_id: &str,
         dispatch: F,
-    ) -> Result<T>
+    ) -> Result<RunBudgetDispatchOutcome<T>>
     where
         F: FnOnce() -> T,
     {
@@ -147,9 +149,12 @@ impl PgStore {
         // pass a check before asynchronous dependency/secret preparation.
         // Preserve the native transport result, including a verifier-policy
         // rejection, without releasing budget authority before enqueue.
-        let result = dispatch();
-        tx.commit().await?;
-        Ok(result)
+        let transport_result = dispatch();
+        let commit_error = tx.commit().await.err();
+        Ok(RunBudgetDispatchOutcome {
+            transport_result,
+            commit_error,
+        })
     }
 }
 
