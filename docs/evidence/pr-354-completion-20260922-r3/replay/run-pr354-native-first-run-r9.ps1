@@ -99,12 +99,12 @@ try {
       & cargo clean --workspace --target-dir $target *> $refreshLog
       Record-Check 'sqlx-workspace-cache-refresh' $refreshLog $LASTEXITCODE
       $suites = @(
-        @{package='crony-server';filter='factory_connection_tests::';name='factory-connection';expected=9},
+        @{package='crony-server';filter='factory_connection_tests::';name='factory-connection';expected=16},
         @{package='crony-server';filter='issue256_';name='dispatch-readiness';expected=4}
       )
       foreach ($suite in $suites) {
         $log = Join-Path $OutputDirectory "$prefix-sqlx-$($suite.name).log"
-        & cargo test -p $suite.package $suite.filter -- --ignored --test-threads=1 2>&1 | ForEach-Object { ([string]$_).Replace($databasePassword,'[ephemeral database credential]') } | Set-Content -LiteralPath $log -Encoding utf8
+        & cargo test --locked -p $suite.package $suite.filter -- --ignored --test-threads=1 2>&1 | ForEach-Object { ([string]$_).Replace($databasePassword,'[ephemeral database credential]') } | Set-Content -LiteralPath $log -Encoding utf8
         Record-Check "owned-postgresql-$($suite.name)-regressions" $log $LASTEXITCODE
         if ((Get-Content -LiteralPath $log -Raw) -notmatch "test result: ok\. $($suite.expected) passed; 0 failed;") {
           throw "The $($suite.name) suite did not execute all $($suite.expected) expected PostgreSQL regressions."

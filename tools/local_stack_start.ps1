@@ -211,9 +211,10 @@ if ($factoryEnabled) {
         throw 'Factory needs its existing controller ID, Project, repository and positive limits. No service was changed.'
     }
     $factory.controller_id = $controllerId.ToString('D')
-    if ([string]::IsNullOrWhiteSpace($factory.source_base_ref)) {
-        throw 'Factory source ref cannot be empty. No service was changed.'
-    }
+    # Match native normalize_args before ref validation, identity checks and save.
+    $factory.source_base_ref = $factory.source_base_ref.Trim()
+    $factory.publication_base_ref = $factory.publication_base_ref.Trim()
+    Assert-LocalFactoryRefs -Directory $root -SourceRef $factory.source_base_ref -PublicationRef $factory.publication_base_ref
     if ((Test-LocalSettingChanged 'factory_source_base_ref' $sourceRef $factory.source_base_ref) -and
         (Role-Live 'factoryController') -and !$Restart -and !$saved.ContainsKey('factory_source_base_ref')) {
         throw 'Use explicit restart to change the running Factory source ref. No service was changed.'

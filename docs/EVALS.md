@@ -219,6 +219,16 @@ receipt in the sealed worktree. It does not change either native-read failure.
 New collection code and fixtures are not application acceptance; current
 checks, signed-object validation, and independent outcome review remain required.
 
+## Local startup admission
+
+The lifecycle suite exercises existing ownership files and missing targets under
+directories that deny native file creation, retaining their bytes, ACLs and process
+identities. Factory source and publication refs are normalized and validated against
+the native CLI contract before any lifecycle effect, including saved connections,
+preflight, recovery and restart. The parent-directory access check uses the current
+Windows token without writing a probe or changing permissions; it cannot promise
+that a later filesystem race or storage failure will not prevent persistence.
+
 ## Local Windows process identity
 
 `tools/local_stack_identity.test.ps1` exercises native process inspection and

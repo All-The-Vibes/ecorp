@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { redactEvidenceCapabilities } from '../../../../tools/redact_evidence_capabilities.mjs';
+import { verifyReplaySource } from '../../../../tools/check_replay_source.mjs';
+import { evidenceTextDigest, serializeReadinessEvidence, validateReadinessFixture } from '../../../../tools/readiness_replay_contract.mjs';
 
 import { createHash } from 'node:crypto';
 
@@ -21,27 +23,26 @@ const root = process.env.ECORP_COMPLETION_QA_ROOT;
 
 const product = process.env.ECORP_COMPLETION_PRODUCT;
 
-assert.match(root ?? '', /[\\/]qa[\\/]pr265-run-activity-pr354-20260922-r\d+$/);
-
 assert.equal(process.env.ECORP_COMPLETION_PR, '354');
 
 const forbidden = () => Object.keys(process.env).filter(name => /^(PG|DATABASE_URL$|GH_|GITHUB_|AZURE_|OPENAI_API_KEY$|ANTHROPIC_API_KEY$|COPILOT_GITHUB_TOKEN$)/i.test(name));
 
 assert.deepEqual(forbidden(), [], 'The readiness process must not inherit credential variables or database file locators');
 
-const ownership = JSON.parse(await readFile(path.join(root, 'ownership.json'), 'utf8'));
-
-assert.equal(ownership.test_owned, true);
-
-assert.equal(ownership.purpose, 'pr265-run-activity');
-
-assert.equal(path.resolve(ownership.workspace), path.resolve(root));
-
-assert.match(ownership.plan.server, /^http:\/\/127\.0\.0\.1:29354$/);
-
-assert.equal(ownership.plan.database.port, 25354);
-
-assert.match(ownership.demo.corp_id, /^[0-9a-f-]{36}$/);
+let ownership, binding, fixture;
+try {
+  binding = verifyReplaySource(product, process.env.ECORP_COMPLETION_VALIDATION_DIRECTORY, 354);
+  ownership = JSON.parse(await readFile(path.join(root, 'ownership.json'), 'utf8'));
+  fixture = validateReadinessFixture({ root, product, ownership, sourceHead: binding.source_head });
+  assert.ok(path.isAbsolute(process.env.ECORP_COMPLETION_PSQL ?? ''));
+  await execFile('pwsh', ['-NoProfile', '-File',
+    path.join(product, 'docs/evidence/pr-354-completion-20260922-r3/replay/qa-pr354-stack-r3.ps1'),
+    '-Repository', product, '-Phase', 'Status', '-QaRoot', root,
+    '-PostgresBin', path.dirname(process.env.ECORP_COMPLETION_PSQL)],
+  { encoding: 'utf8', windowsHide: true, timeout: 45000 });
+} catch {
+  throw new Error('Readiness replay requires current validated source and exact owned native fixture. Raw admission diagnostics withheld.');
+}
 
 const { demo, source } = ownership;
 
@@ -99,7 +100,8 @@ const report = {
 
   scope: 'Real native CLI, HTTP server, reconciled runner and new owned SCRAM PostgreSQL. Fake GitHub transport only; no external GitHub or provider execution. Fixture claim setup precedes immutable ledger measurements.',
 
-  source, credential_preflight: { forbidden_variable_names: forbidden() }, assertions: [], cli_cases: [],
+  source, replay_source: binding, fixture, stage: 'preflight',
+  credential_preflight: { forbidden_variable_names: forbidden() }, assertions: [], cli_cases: [],
 
 };
 
@@ -111,7 +113,7 @@ function sql(statement) {
 
   const result = spawnSync(process.env.ECORP_COMPLETION_PSQL, [
 
-    '-X', '-A', '-t', '-v', 'ON_ERROR_STOP=1', '-h', '127.0.0.1', '-p', '25354',
+    '-X', '-A', '-t', '-v', 'ON_ERROR_STOP=1', '-h', '127.0.0.1', '-p', String(fixture.databasePort),
 
     '-U', 'pr265_qa', '-d', 'pr265_activity', '-c', statement,
 
@@ -149,7 +151,7 @@ async function post(route, body) {
 
   let payload;
 
-  try { payload = JSON.parse(text); } catch { payload = text; }
+  try { payload = JSON.parse(text); } catch { payload = { unparsed_body: evidenceTextDigest(text) }; }
 
   return { status: response.status, payload };
 
@@ -179,7 +181,7 @@ try {
 
     ready = await preflight(request);
 
-    assert.equal(ready.status, 200, JSON.stringify(ready));
+    assert.equal(ready.status, 200, 'Preflight must succeed');
 
     if (ready.payload.dispatch_readiness?.status === 'ready') break;
 
@@ -237,6 +239,7 @@ try {
 
 
 
+  report.stage = 'native-intake';
   const cliRoot = path.join(root, 'native-intake');
 
   await mkdir(cliRoot);
@@ -315,7 +318,7 @@ try {
 
       record.status = response.status;
 
-      try { record.response = JSON.parse(result); } catch { record.response = result; }
+      try { record.response = JSON.parse(result); } catch { record.response = { unparsed_body: evidenceTextDigest(result) }; }
 
       outgoing.writeHead(response.status, {'content-type':response.headers.get('content-type') ?? 'application/json'});
 
@@ -422,6 +425,7 @@ try {
 
   assert.equal(dryPreflight.status,200);
 
+  report.stage = 'claim';
   const legacyIssue = issues[1];
 
   const claim = await post(`/api/corps/${demo.corp_id}/factory/work-items/claim`,{
@@ -432,7 +436,7 @@ try {
 
   });
 
-  assert.ok([200,201].includes(claim.status),JSON.stringify(claim));
+  assert.ok([200,201].includes(claim.status), 'Fixture claim must succeed');
 
   const workItem = claim.payload.work_item;
 
@@ -456,6 +460,7 @@ try {
 
   report.fixture_setup = {legacy_work_item_id:workItem.id,legacy_lease_expired:true,legacy_source_upgrade_required:true,setup_completed_before_final_ledger_measurement:true};
 
+  report.stage = 'ledger-controls';
   for (const number of [7101,7102]) {
 
     const result = await runCli(number,false);
@@ -464,7 +469,7 @@ try {
 
     const preflights=result.routes.filter(route => route.path === preflightPath);
 
-    assert.equal(preflights.length,1,JSON.stringify(result));
+    assert.equal(preflights.length,1, 'Native intake must perform exactly one preflight');
 
     assert.equal(preflights[0].body.require_dispatch_ready,true);
 
@@ -519,7 +524,9 @@ try {
 
 } catch(error) {
 
-  report.status='failed';report.failure=error.message;throw error;
+  report.status='failed';
+  report.failure={kind:error instanceof assert.AssertionError ? 'assertion' : 'replay-operation',stage:report.stage};
+  process.exitCode=1;
 
 } finally {
 
@@ -527,8 +534,9 @@ try {
 
   report.finished_at=new Date().toISOString();
 
-  await writeFile(destination,`${JSON.stringify(report,null,2)}\n`,{flag:'wx'});
+  const evidence = serializeReadinessEvidence(report);
+  await writeFile(destination,`${evidence}\n`,{flag:'wx'});
 
-  console.log(JSON.stringify(report,null,2));
+  console.log(evidence);
 
 }

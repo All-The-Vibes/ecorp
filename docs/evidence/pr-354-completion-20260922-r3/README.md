@@ -25,7 +25,7 @@ Use PowerShell 7.5 or newer to preserve ownership timestamp strings exactly, and
   -OutputDirectory $newEvidenceDirectory
 ```
 
-This first-run composition builds all three binaries, provisions SCRAM PostgreSQL, requires all nine factory-connection and four readiness SQLx tests, then runs native intake and browser acceptance. It needs no private reuse receipt. The corrected replay accepts raw or published validation receipts, requires every gate in the current checkout (including audit compatibility and EVM), and reconstructs the validated source tree in a private Git index. It removes only the selected evidence packet from that private index, rejects all source drift and Git errors, and never changes the real index. The example selects the current queue integration packet; the historical nine-gate packet cannot authorize changed source. Default ports are 29354, 26354 and 25354. The recorded r3 build block and r7 acceptance block were executed; the combined first-run r8 script is supplied for replay and is not itself claimed as the producer of these results.
+This first-run composition builds all three binaries, provisions SCRAM PostgreSQL, requires the current sixteen factory-connection and four readiness SQLx tests, then runs native intake and browser acceptance. It needs no private reuse receipt. The corrected replay accepts raw or published validation receipts, requires every gate in the current checkout (including audit compatibility and EVM), and reconstructs the validated source tree in a private Git index. It removes only the selected evidence packet from that private index, rejects all source drift and Git errors, and never changes the real index. The example selects the current queue integration packet; the historical nine-gate packet cannot authorize changed source. Default ports are 29354, 26354 and 25354. The recorded r3 build block and r7 acceptance block were executed; the combined first-run r8 script is supplied for replay and is not itself claimed as the producer of these results.
 
 Local Node 24.21.0 differs from the repository 24.19.0 pin. Rust 1.98.1 and PostgreSQL 17.10 were used. Real product screenshots are the PNGs under `native-fixture/`; the validation and retrospective HTML/PNG files render saved results. Development identity and deterministic providers do not establish external-provider or production acceptance. All owned services stopped; databases, source, credentials, logs and workspaces were preserved.
 
@@ -56,3 +56,13 @@ The supported replay inputs now differ from the historical revision 9 inputs. Ex
 The active ledger writer hashes capability-bearing fields before either serialization or equality hashing. Published current ledger snapshots are explicitly redacted derivatives; `provenance/ledger-redaction.json` binds their original and derivative SHA-256 values. The originals remain in Git history; no history was rewritten and no scan exception was added. Historical leases were local QA capabilities with past expiry, not claimed current external credentials. New-leak detection remains unchanged. Historical equality hashes describe the original raw snapshots; derivative equality hashes are recorded separately, never relabelled as historical execution results.
 
 Mixed-version compatibility: the updated CLI deliberately refuses execution against an older server that omits `dispatch_readiness`. Upgrade the server before using execute mode with this CLI. Read-only dry-run output remains readable. The fail-closed execution gate is retained.
+
+The final integration review also corrects readiness-child configuration and failure evidence.
+The child accepts the supervisor's fresh fixture naming contract and reads all ports from
+its exact ownership record, with current validated source and native process/listener checks
+before any product request. Arbitrary remote endpoints, changed source, reused scope and
+invalid ports are rejected. Raw CLI stdout/stderr stay in memory for assertions; reports
+record their byte counts and SHA-256 digests. All structured report responses pass through
+capability redaction, and failure records contain only the operation stage and failure kind.
+Unexpected non-JSON bodies are digested. Prior provenance and execution receipts retain
+their historical bytes and scope; they do not attest these later driver changes.
