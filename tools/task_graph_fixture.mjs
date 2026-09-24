@@ -30,3 +30,26 @@ export function graphFixtureSource(state, corpId) {
   assert.match(source.source_base_commit, /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/iu)
   return { runner, source: { repository: source.source_repository, base_ref: source.source_base_ref, base_commit: source.source_base_commit } }
 }
+
+export async function completeGraphFixtureLaunch(launch, waitForMission, rootTaskIds) {
+  const initial = await launch()
+  assert.ok([200, 409].includes(initial.status), `Graph launch failed: HTTP ${initial.status}`)
+  if (initial.status === 409) {
+    // A native scheduling sweep may claim another root after the first explicit
+    // dispatch admits the mission. Do not reconcile any other dispatch failure.
+    const conflict = /^mission dispatch incomplete \(\d+ new runs dispatched\): (.+)$/u.exec(initial.body?.error)
+    assert.ok(conflict, 'Graph launch did not report a root-claim conflict')
+    for (const failure of conflict[1].split('; ')) {
+      const claim = /^task ([0-9a-f-]{36}) could not create a run: task is not schedulable from status (?:claimed|running|verifying|completed)$/u.exec(failure)
+      assert.ok(claim && rootTaskIds.includes(claim[1]), 'Graph launch had a failure other than a known root claim')
+    }
+  }
+  const result = await waitForMission()
+  assert.equal(result.mission.status, 'completed')
+  // Reconcile only after completion, when the native endpoint cannot dispatch a
+  // dependency or retry. A successful replay requires persisted run.started.
+  const reconciled = initial.status === 409 ? await launch() : initial
+  assert.equal(reconciled.status, 200, 'Completed graph launch did not reconcile')
+  if (initial.status === 409) assert.equal(reconciled.body.replayed, true)
+  return { launched: reconciled.body, result, initialStatus: initial.status }
+}

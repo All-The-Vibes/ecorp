@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { writeFile } from 'node:fs/promises'
 import { downloadVerifiedArtifact } from './artifact_client.mjs'
-import { graphFixtureSource, taskGraphFixtureConfig } from './task_graph_fixture.mjs'
+import { completeGraphFixtureLaunch, graphFixtureSource, taskGraphFixtureConfig } from './task_graph_fixture.mjs'
 
 const config = taskGraphFixtureConfig(process.argv.slice(2), process.env)
 const server = config.server
@@ -22,21 +22,24 @@ const activeStatuses = new Set([
   'verifying',
 ])
 
-async function request(url, init) {
-  const response = await fetch(`${server}${url}`, init)
+async function request(url, init, { withStatus = false } = {}) {
+  const response = await fetch(`${server}${url}`, {
+    ...init, redirect: 'error', signal: AbortSignal.timeout(15_000),
+  })
   const body = await response.json()
+  if (withStatus) return { status: response.status, body }
   if (!response.ok) {
     throw new Error(`${init?.method ?? 'GET'} ${url} failed: ${JSON.stringify(body)}`)
   }
   return body
 }
 
-function post(url, body) {
+function post(url, body, options) {
   return request(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
-  })
+  }, options)
 }
 
 async function snapshot(demo) {
@@ -139,12 +142,13 @@ async function parallelGraphScenario({ sourceSelected = false } = {}) {
   }
   assert.equal(new Set(tasks.map((task) => task.assigned_agent_id)).size, 3)
 
-  const launched = await post(
-    `/api/corps/${demo.corp_id}/missions/${created.mission_id}/launch`,
-    { requested_by: demo.alice_actor_id },
+  const { launched, result, initialStatus } = await completeGraphFixtureLaunch(
+    () => post(`/api/corps/${demo.corp_id}/missions/${created.mission_id}/launch`,
+      { requested_by: demo.alice_actor_id }, { withStatus: true }),
+    () => waitForMission(demo, created.mission_id),
+    tasks.filter(task => task.depth === 0).map(task => task.id),
   )
   assert.equal(launched.run_ids.length, 2)
-  const result = await waitForMission(demo, created.mission_id)
   assert.equal(result.mission.status, 'completed')
   assert.ok(result.maxActiveRuns >= 2)
 
@@ -167,6 +171,8 @@ async function parallelGraphScenario({ sourceSelected = false } = {}) {
     (run) => taskById.get(run.task_id)?.depth === 0,
   )
   assert.equal(rootRuns.length, 2)
+  assert.deepEqual([...launched.run_ids].sort(), rootRuns.map(run => run.id).sort(),
+    'Launch must identify exactly the two original root runs')
   if (sourceSelected) {
     assert.ok(rootRuns.every((run) => taskById.get(run.task_id)?.required_adapter === adapter))
     assert.equal(new Set(rootRuns.map((run) => run.agent_id)).size, 2)
@@ -213,6 +219,8 @@ async function parallelGraphScenario({ sourceSelected = false } = {}) {
     source: source ?? null,
     task_ids: created.task_ids,
     initial_run_ids: launched.run_ids,
+    initial_launch_status: initialStatus,
+    launch_replayed: launched.replayed === true,
     all_run_ids: result.runs.map((run) => run.id),
     max_active_runs: result.maxActiveRuns,
     synthesis_requested_after_roots: true,

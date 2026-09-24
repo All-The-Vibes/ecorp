@@ -601,7 +601,11 @@ It binds every task to the runner's advertised immutable source and chosen fixtu
 runtime, without depending on an unavailable agent in the legacy demo roster.
 The synthesis artifact must contain both verified specialist outputs, not merely
 their task names. Windows additionally retains the original mixed-provider
-demo-roster case. The same test proves an always-failing task stops exactly at
+demo-roster case. A concurrent root-claim conflict is reconciled only after
+successful mission completion through the existing launch replay; the response
+must identify exactly the original root runs. Other dispatch failures remain
+errors, and every graph task must still have exactly one attempt. The same test
+proves an always-failing task stops exactly at
 its retry limit.
 `tools/e2e_verification.mjs` proves all six automated verifier types, a missing-file failure that
 blocks completion, an owner approval gate, and an independent-review gate that rejects the

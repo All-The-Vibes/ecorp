@@ -2,11 +2,15 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
-import { graphFixtureSource, taskGraphFixtureConfig } from './task_graph_fixture.mjs'
+import { completeGraphFixtureLaunch, graphFixtureSource, taskGraphFixtureConfig } from './task_graph_fixture.mjs'
 
 const corp = '00000000-0000-4000-8000-000000000001'
 const env = { CRONY_TASK_GRAPH_TEST: '1', CRONY_SERVER_HTTP: 'http://127.0.0.1:18437' }
 const source = { repository: 'all-the-vibes/ecorp', base_ref: 'HEAD', base_commit: 'a'.repeat(40) }
+const roots = ['00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000003']
+const claimed = id => `task ${id} could not create a run: task is not schedulable from status claimed`
+const conflict = failure => ({ status: 409, body: { error: `mission dispatch incomplete (1 new runs dispatched): ${failure}` } })
+const completed = { mission: { status: 'completed' } }
 function snapshot() {
   return { runners: [{ id: 'fixture', connected: true, corp_id: corp, capabilities: [
     { name: 'fake-process', available: true },
@@ -69,6 +73,61 @@ test('source selection rejects wrong Corp, connection, adapter, source, or ambig
     state => { state.runners[0].capabilities[1].source_repository = null },
     state => { state.runners[0].capabilities.push(structuredClone(state.runners[0].capabilities[1])) },
   ]) { const state = snapshot(); change(state); assert.throws(() => graphFixtureSource(state, corp)) }
+})
+
+test('normal graph launch keeps its response and never launches a second time', async () => {
+  let calls = 0
+  const body = { run_ids: ['root-a', 'root-b'], replayed: false }
+  const result = await completeGraphFixtureLaunch(async () => {
+    assert.equal(++calls, 1)
+    return { status: 200, body }
+  }, async () => completed, roots)
+  assert.deepEqual(result, { launched: body, result: completed, initialStatus: 200 })
+})
+
+test('the hosted root-claim conflict reconciles once, only after persisted mission completion', async () => {
+  const order = []
+  const replay = { run_ids: ['root-a', 'root-b'], replayed: true }
+  const result = await completeGraphFixtureLaunch(async () => {
+    order.push('launch')
+    if (order.length === 1) return conflict(claimed(roots[1]))
+    assert.deepEqual(order, ['launch', 'complete', 'launch'])
+    return { status: 200, body: replay }
+  }, async () => { order.push('complete'); return completed }, roots)
+  assert.deepEqual(result, { launched: replay, result: completed, initialStatus: 409 })
+})
+
+test('graph launch rejects authorization, dispatch, mixed and unknown-task failures without waiting or replaying', async () => {
+  for (const response of [
+    { status: 403, body: {} }, { status: 500, body: {} },
+    { status: 409, body: { error: 'mission has no schedulable tasks' } },
+    conflict(`task ${roots[1]} secret assignment failed: denied`),
+    conflict(`${claimed(roots[1])}; task ${roots[0]} dependency context failed: missing`),
+    conflict(claimed(corp)),
+  ]) {
+    let calls = 0
+    await assert.rejects(completeGraphFixtureLaunch(async () => { calls++; return response },
+      async () => assert.fail('Rejected launches cannot wait or reconcile'), roots))
+    assert.equal(calls, 1)
+  }
+})
+
+test('graph launch never replays a failed, cancelled, incomplete or timed-out mission', async () => {
+  for (const status of ['failed', 'cancelled', 'running', 'ready', 'timeout']) {
+    let calls = 0
+    await assert.rejects(completeGraphFixtureLaunch(async () => { calls++; return conflict(claimed(roots[1])) },
+      async () => { if (status === 'timeout') throw new Error('mission deadline'); return { mission: { status } } }, roots))
+    assert.equal(calls, 1)
+  }
+})
+
+test('graph reconciliation rejects a repeated conflict or a response that dispatched new work', async () => {
+  for (const response of [conflict(claimed(roots[1])), { status: 200, body: { replayed: false } }]) {
+    let calls = 0
+    await assert.rejects(completeGraphFixtureLaunch(async () => ++calls === 1 ? conflict(claimed(roots[1])) : response,
+      async () => completed, roots))
+    assert.equal(calls, 2)
+  }
 })
 
 test('the E2E retains native staffing, source assertions, concurrency, handoff and Windows mixed-provider coverage', () => {
