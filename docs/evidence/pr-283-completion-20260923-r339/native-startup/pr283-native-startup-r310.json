@@ -1,0 +1,47 @@
+{
+  "pr": 283,
+  "purpose": "real-binary startup assertions on owned native PostgreSQL",
+  "source_head": "63fc5edb8350aedd865b50d588bf70b41f154326",
+  "tested_staged_tree": "ef84c5fbaabc1afd00faab784ce3f5fca7f15933",
+  "driver_sha256": "30eda729bc5d0c7545f902813408fbff3f38eb7ae59bb31bde45a5f948d62556",
+  "adapter_sha256": "09020ac6aaecca301b1634ded834ea2f7afcbd381c2a14fc3c8b22c1681c3fd4",
+  "qa_root": "<local-user>\\code\\qa\\pr283-startup-20260922-r310",
+  "target": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T12:03:35.5102105+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "workspace-cache-refresh",
+      "sha256": "4c3b12660869169c4443c3f241f1154bd3e0135d8960a19ab11e015e6829bf12",
+      "log": "<private-evidence>\\pr283-native-startup-r310-workspace-cache-refresh.log",
+      "exit_code": 0
+    },
+    {
+      "name": "standalone-server-build",
+      "sha256": "cb02043efacb568edb0194ab78845c54b4bfc347c1a0349ca48ed68e390ffcea",
+      "log": "<private-evidence>\\pr283-native-startup-r310-server-build.log",
+      "exit_code": 0
+    },
+    {
+      "name": "owned-postgresql-initialization",
+      "sha256": "8d8f9d4c53b2dde63574d55b8e27700894b005efa5367bb174244077153a30c9",
+      "log": "<private-evidence>\\pr283-native-startup-r310-initdb.log",
+      "exit_code": 0
+    },
+    {
+      "name": "unchanged-startup-assertions-native-transport",
+      "sha256": "a6ec9ce36b506c328e2c7a1ab1235945edae2e08f16b1285c4a0d236532713a7",
+      "log": "<private-evidence>\\pr283-native-startup-r310-assertions.log",
+      "exit_code": 0
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; database, credentials, binaries, cases and logs retained.",
+  "binary_sha256": "99d36b43ce3998984c4feba050a567d791989d530957f2fd98dd6cf198975e83",
+  "authentication": {
+    "wrong_password_rejected": true,
+    "method": "scram-sha-256",
+    "delivery": "Native clients use private PGPASSFILE; isolated server child environment delivery is reduced assurance."
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T12:10:39.8753099+00:00"
+}

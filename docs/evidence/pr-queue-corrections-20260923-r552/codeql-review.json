@@ -1,0 +1,98 @@
+{
+  "status": "confirmed-at-published-parent",
+  "published_parent": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+  "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+  "findings": [
+    {
+      "number": 3,
+      "line": 805,
+      "reason": "false positive",
+      "path": "crates/crony-cli/src/publish.rs",
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and SARIF analysis 1827996383. These flows carry work-item, deliverable and artifact UUIDs into authenticated API paths. main.rs constructs the shared transport::api_client: HTTPS is mandatory outside explicit loopback development origins, HTTPS-only is enabled for HTTPS origins, redirects are disabled, loopback bypasses proxies, and Authorization is sensitive. These IDs are not encryption keys or passwords. The reported cleartext production transmission is not present.",
+      "rule": "rust/cleartext-transmission",
+      "status": "already-confirmed"
+    },
+    {
+      "number": 4,
+      "line": 4582,
+      "reason": "false positive",
+      "path": "crates/crony-cli/src/factory.rs",
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and SARIF analysis 1827996383. The source is a parsed work-item UUID used in authorized Corp API paths. The client comes from main.rs through transport::api_client, which rejects remote HTTP, enforces HTTPS-only for HTTPS origins, disables redirects, and bypasses proxies for explicit loopback development. The UUID is not a credential; this flow does not demonstrate cleartext remote transmission.",
+      "rule": "rust/cleartext-transmission",
+      "status": "already-confirmed"
+    },
+    {
+      "number": 19,
+      "line": 71,
+      "reason": "false positive",
+      "path": "crates/crony-server/src/factory_connection_tests.rs",
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and complete SARIF flow in analysis 1827996383. The selected literal is report prose in WorkspaceSetupReport.detail. The flow crosses discarded validation results and conflates Fixture/AppState fields with ArtifactStore.signing_key. The actual nonproduction fixture key is intentionally vec![0x4c; 32], not this report string. Production artifact initialization requires a supplied signing key. This reported prose-to-key flow is false; no production secret exception is granted.",
+      "rule": "rust/hard-coded-cryptographic-value",
+      "status": "confirmed"
+    },
+    {
+      "number": 23,
+      "line": 278,
+      "reason": "false positive",
+      "path": "crates/crony-base/src/rpc.rs",
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and full SARIF analysis 1827996383. The flow starts from the discarded d.input.trusted_manifest()? validation result and conflates unrelated Connected fields with an RPC URL. Production endpoint policy admits HTTPS:443 only, requires an allowed host and public DNS pins, disables redirects and proxies, and marks bearer authorization sensitive. HTTP is available only through explicitly qualified debug loopback policy. No trusted manifest secret is transmitted through this URL clone.",
+      "rule": "rust/cleartext-transmission",
+      "status": "confirmed"
+    },
+    {
+      "number": 24,
+      "line": 86,
+      "reason": "false positive",
+      "path": "crates/crony-runner/src/issue297_native_fixtures.rs",
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and SARIF analysis 1827996383. This literal is a parent-directory component used only to canonicalize CARGO_MANIFEST_DIR and reject fixture/source overlap. The fixture nonce is independently parsed as a canonical non-nil UUID from ECORP_ISSUE297_FIXTURE_NONCE, used to qualify owned paths and compared with child receipts. It is not a cryptographic nonce and is not derived from the directory literal. The reported data flow conflates unrelated fixture fields.",
+      "rule": "rust/hard-coded-cryptographic-value",
+      "status": "confirmed"
+    },
+    {
+      "number": 25,
+      "line": 85,
+      "reason": "false positive",
+      "path": "crates/crony-runner/src/issue297_native_fixtures.rs",
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and SARIF analysis 1827996383. This parent-directory literal participates only in canonicalizing the source checkout and refusing fixture overlap. Parameters::from_environment separately supplies a canonical non-nil UUID; Fixture preserves it as an ownership/receipt correlation value, not cryptographic input. The directory component never supplies that UUID. The alleged path-to-nonce flow is a field-conflation false positive.",
+      "rule": "rust/hard-coded-cryptographic-value",
+      "status": "confirmed"
+    },
+    {
+      "number": 26,
+      "line": 84,
+      "reason": "false positive",
+      "path": "crates/crony-runner/src/issue297_native_fixtures.rs",
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and SARIF analysis 1827996383. CARGO_MANIFEST_DIR is a compile-time source path used to reject native fixture overlap with the checkout. It is neither a secret nor a cryptographic nonce. A separate explicit environment UUID supplies fixture ownership/receipt correlation and is validated by Parameters::parse. The reported path-to-nonce flow crosses unrelated fields rather than an assignment.",
+      "rule": "rust/hard-coded-cryptographic-value",
+      "status": "confirmed"
+    },
+    {
+      "number": 27,
+      "line": 951,
+      "reason": "used in tests",
+      "path": "crates/crony-runner/src/issue297_native_fixtures.rs",
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and SARIF analysis 1827996383. This is an intentional invalid UUID negative test. Parameters::parse rejects the literal and the assertion requires an error. No fixture or cryptographic operation receives it as a valid nonce. The real fixture UUID is explicit environment-supplied ownership/receipt correlation.",
+      "rule": "rust/hard-coded-cryptographic-value",
+      "status": "confirmed"
+    },
+    {
+      "number": 28,
+      "line": 612,
+      "reason": "used in tests",
+      "path": "crates/crony-server/src/cache_admission_tests.rs",
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and SARIF analysis 1827996383. The bytes &[2] are intentional synthetic nonce-column metadata paired with ciphertext &[1] while seeding a grant row for cache-admission authorization tests. This path submits secrets: [] and never encrypts or decrypts these bytes. No runtime cryptographic nonce reuse is introduced; the narrow disposition applies only to this negative/authorization fixture.",
+      "rule": "rust/hard-coded-cryptographic-value",
+      "status": "confirmed"
+    },
+    {
+      "comment": "Reviewed PR #363 at 4cc00784ff7a23c40d61bfce1e96152a22093f2f and SARIF analysis 1827996383. This test generates an ephemeral random role password for native PostgreSQL CREATE ROLE; it does not insert a cleartext password into application data. SQLx statement logging is disabled. Fresh owned-PostgreSQL acceptance r541 verifies SCRAM-SHA-256, rejection of an incorrect password, disabled statement/duration logging and successful SELECT-only gateway authorization. PostgreSQL performs its native role-password hashing. SQLx environment delivery remains explicitly reduced assurance; no production plaintext-secret exception is granted.",
+      "reason": "false positive",
+      "number": 22,
+      "path": "crates/crony-store/src/base_audit_tests.rs",
+      "line": 1017,
+      "rule": "rust/cleartext-storage-database",
+      "status": "confirmed"
+    }
+  ],
+  "scope": "Individual native GitHub false-positive or test-only dispositions. Current-source hosted CodeQL must pass before merge."
+}

@@ -1,0 +1,92 @@
+{
+  "scope": "Retrospective native Windows clean-filter regression on unchanged test bytes; this does not claim original TDD chronology.",
+  "source_head": "288e273f5686e02e261446222794b08652f1dbf5",
+  "staged_tree": "e80a40cf6260b11904b9583ed00dc345c9ef47ca",
+  "baseline_source_sha256": "d0cb61221b0f64f6ade747862a60c4aedf0674bf525b90106d21fe5ad7f6f1f7",
+  "candidate_source_sha256": "274aa26546f7009d0d394860879f85701fb947ebdf1e36016e6594e3b5927182",
+  "tests_sha256": "3fc5d27531c116aa182318e58934cffc98385fa3bc3861171abc4f93924a1f8e",
+  "checks": [
+    {
+      "name": "baseline",
+      "exit_code": 1,
+      "log": "<private-evidence>\\pr319-clean-filters-r1\\baseline.log",
+      "sha256": "ec9e106a42fd14306d91a9b5a45cf2e9a09833698cf54c07ea6bf2a10868b3b2",
+      "filter_cases": [
+        {
+          "preserved": true,
+          "filter_ran": true,
+          "selection": "local",
+          "source_status": "passed",
+          "rejected": false,
+          "event": "clean-filter-source-change"
+        },
+        {
+          "preserved": true,
+          "filter_ran": true,
+          "selection": "included",
+          "source_status": "passed",
+          "rejected": false,
+          "event": "clean-filter-source-change"
+        },
+        {
+          "preserved": true,
+          "filter_ran": true,
+          "selection": "global-explicit",
+          "source_status": "passed",
+          "rejected": false,
+          "event": "clean-filter-source-change"
+        },
+        {
+          "preserved": true,
+          "filter_ran": true,
+          "selection": "global-default",
+          "source_status": "passed",
+          "rejected": false,
+          "event": "clean-filter-source-change"
+        }
+      ]
+    },
+    {
+      "name": "candidate",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr319-clean-filters-r1\\candidate.log",
+      "sha256": "842d4b325294bf3950ae85a7082cc37a614b669280a5e82ff3acf7fd95ce90c7",
+      "filter_cases": [
+        {
+          "rejected": true,
+          "source_status": "blocked",
+          "event": "clean-filter-source-change",
+          "preserved": true,
+          "selection": "local",
+          "filter_ran": false
+        },
+        {
+          "rejected": true,
+          "source_status": "blocked",
+          "event": "clean-filter-source-change",
+          "preserved": true,
+          "selection": "included",
+          "filter_ran": false
+        },
+        {
+          "rejected": true,
+          "source_status": "blocked",
+          "event": "clean-filter-source-change",
+          "preserved": true,
+          "selection": "global-explicit",
+          "filter_ran": false
+        },
+        {
+          "rejected": true,
+          "source_status": "blocked",
+          "event": "clean-filter-source-change",
+          "preserved": true,
+          "selection": "global-default",
+          "filter_ran": false
+        }
+      ]
+    }
+  ],
+  "status": "passed",
+  "source_unchanged": true
+}

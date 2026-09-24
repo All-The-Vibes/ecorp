@@ -1,0 +1,7 @@
+{
+  "original": "run-pr354-native-r4.ps1",
+  "original_sha256": "c7d0b44a997a8a3ef106f504f62463ae6f27086c9f6b5fc5b0a05b93e9681162",
+  "derived": "run-pr354-native-r5.ps1",
+  "derived_sha256": "ed42fa017ef8c20b41ef238c33055d28acc75493c722b5a8cb65f70baddbc189",
+  "reason": "PowerShell coerces the .NET null value to an empty string on this host; removing the Env provider item actually removes the name. All three removal loops now do so. Child credential-variable rejection is unchanged. Previous r3/r4 failures remain preserved."
+}

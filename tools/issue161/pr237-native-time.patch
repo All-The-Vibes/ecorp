@@ -1,0 +1,31 @@
+diff --git a/tools/owned_test_stack.mjs b/tools/owned_test_stack.mjs
+--- a/tools/owned_test_stack.mjs
++++ b/tools/owned_test_stack.mjs
+@@ -58,6 +58,10 @@
+       throw new Error(refusal)
+     }
+   }
++  if (platform === 'win32' && manifest.server_identity?.native_creation_ticks !== undefined &&
++    manifest.server_identity.native_creation_ticks !== identity.native_creation_ticks) {
++    throw new Error(refusal)
++  }
+ }
+ 
+ async function linuxProcess(request) {
+@@ -82,11 +86,13 @@
+     "$ErrorActionPreference = 'Stop'",
+     '$processId = [int]$env:ECORP_QA_PROCESS_ID',
+     '$port = [int]$env:ECORP_QA_PROCESS_PORT',
+-    '$process = Get-CimInstance Win32_Process -Filter "ProcessId = $processId" -Property ProcessId,ExecutablePath,CreationDate',
+-    "if (!$process) { throw 'Recorded QA server is absent' }",
++    '$process = Get-Process -Id $processId -ErrorAction Stop',
++    '[void]$process.Handle',
++    "if ($process.HasExited) { throw 'Recorded QA server is absent' }",
+     '$listeners = @(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)',
+-    "@{ platform='win32'; pid=$processId; executable=$process.ExecutablePath; creation=$process.CreationDate.ToUniversalTime().ToString('o');",
++    "@{ platform='win32'; pid=$processId; executable=$process.Path; creation=$process.StartTime.ToUniversalTime().ToString('o'); native_creation_ticks=$process.StartTime.ToUniversalTime().Ticks.ToString();",
+     'port_owned=[bool]($listeners | Where-Object OwningProcess -eq $processId) } | ConvertTo-Json -Compress',
++    '$process.Dispose()',
+   ].join('\n')
+   const { stdout } = await execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
+     windowsHide: true, timeout: 20_000,

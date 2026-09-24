@@ -1,0 +1,17 @@
+node:internal/fs/promises:1345
+  return new FileHandle(await PromisePrototypeThen(
+                        ^
+
+Error: ENOENT: no such file or directory, open '<reviewed-worktree>\output\native-qualification\phase2-queue-r412\current-attempt.json'
+    at async open (node:internal/fs/promises:1345:25)
+    at async readFile (node:internal/fs/promises:1996:14)
+    at async load (file:///<private-evidence>/queue-audit-native-r412/native_qualification_attempt.mjs:20:41)
+    at async startSurface (file:///<private-evidence>/queue-audit-native-r412/native_qualification_attempt.mjs:149:19)
+    at async file:///<private-evidence>/queue-audit-native-r466/e2e_native_qualification.mjs:10:50 {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r412\\current-attempt.json'
+}
+
+Node.js v24.21.0

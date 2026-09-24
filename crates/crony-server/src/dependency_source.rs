@@ -16,7 +16,8 @@
 use std::{collections::BTreeSet, fmt, marker::PhantomData};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-use crony_domain::{DeliverableForm, SourceDeliverable, repository_relative_path_is_valid};
+use crony_domain::{DeliverableForm, SourceDeliverable};
+use crony_protocol::dependency_files::dependency_path_is_safe as safe_path;
 use serde::{
     Deserialize, Deserializer,
     de::{self, DeserializeSeed, MapAccess, SeqAccess, Visitor},
@@ -24,8 +25,10 @@ use serde::{
 use sha2::{Digest, Sha256};
 
 pub const TYPED_SOURCE_MEDIA_TYPE: &str = "application/vnd.ecorp.deliverable+json";
-pub const MAX_TYPED_SOURCE_FILES: usize = 8;
-pub const MAX_TYPED_SOURCE_FILE_BYTES: usize = 12 * 1024;
+pub use crony_protocol::dependency_files::{
+    MAX_DEPENDENCY_FILE_BYTES as MAX_TYPED_SOURCE_FILE_BYTES,
+    MAX_DEPENDENCY_FILES as MAX_TYPED_SOURCE_FILES,
+};
 /// Sum of content, path, digest, and 128 bytes of framing allowance per file.
 pub const MAX_TYPED_SOURCE_PROMPT_BYTES: usize = 16 * 1024;
 /// Includes the export's redundant patch and JSON/base64 overhead, not prompt text.
@@ -340,69 +343,6 @@ fn checked_paths<'a>(values: impl IntoIterator<Item = &'a str>) -> DecodeResult<
         portable.push(folded);
     }
     Ok(paths)
-}
-
-fn safe_path(path: &str) -> bool {
-    // Deliberately narrower than generic deliverables. No normalization can turn
-    // an unsafe/aliased path into an allowed one. Hidden components cover Git,
-    // provider homes, runner internals, .env*, cloud configs, and credential stores.
-    if !repository_relative_path_is_valid(path)
-        || !path.is_ascii()
-        || path.bytes().any(|byte| {
-            matches!(
-                byte,
-                b'*' | b'?' | b'[' | b']' | b'<' | b'>' | b'"' | b'|' | b'~' | b'%'
-            )
-        })
-    {
-        return false;
-    }
-    path.split('/').all(|component| {
-        if component.starts_with('.') || component.ends_with('.') || component.trim() != component {
-            return false;
-        }
-        let lower = component.to_ascii_lowercase();
-        let stem = lower.split('.').next().unwrap_or_default();
-        let device = matches!(stem, "con" | "prn" | "aux" | "nul" | "conin$" | "conout$")
-            || (stem.len() == 4
-                && (stem.starts_with("com") || stem.starts_with("lpt"))
-                && stem.as_bytes()[3].is_ascii_digit());
-        let secret = matches!(
-            lower.as_str(),
-            "_netrc"
-                | "npmrc"
-                | "terraform.rc"
-                | "kubeconfig"
-                | "accesstokens.json"
-                | "application_default_credentials.json"
-        ) || [
-            "credentials",
-            "secrets",
-            "id_rsa",
-            "id_dsa",
-            "id_ecdsa",
-            "id_ed25519",
-        ]
-        .iter()
-        .any(|name| {
-            lower == *name
-                || lower
-                    .strip_prefix(*name)
-                    .is_some_and(|rest| rest.starts_with('.'))
-        }) || [
-            ".pem",
-            ".key",
-            ".p12",
-            ".pfx",
-            ".p8",
-            ".ppk",
-            ".jks",
-            ".keystore",
-        ]
-        .iter()
-        .any(|suffix| lower.ends_with(*suffix));
-        !device && !secret
-    })
 }
 
 fn text_media_type(path: &str) -> Option<&'static str> {

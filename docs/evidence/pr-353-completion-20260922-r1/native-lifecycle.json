@@ -1,0 +1,47 @@
+{
+  "pr": 353,
+  "tested_staged_tree": "6a84c1fa66aa555bde3da285dce7de1235f38cb5",
+  "source_head": "ab97fa24df40876ecd9fda722820851df45a95c2",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr353-20260922-r2",
+  "started_at_utc": "2026-09-22T17:17:15.3645282+00:00",
+  "status": "passed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "name": "focused-native-acceptance",
+      "log": "<private-evidence>\\pr353-native-r2-focused.log",
+      "exit_code": 0,
+      "sha256": "0b7efba4f789aea47d8fea877e1b3743ca43c7271c0b2d85b0c40a628dc10402"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "9ada92c78d5a21bb6a66b75025c258e5baeb17f5e9f377cb84a7ead4c89fd317",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "219f4a71032b541e3b282f580a50078b55b90e161b32f1f099eee0ab7eb55ef6",
+      "file": "crony-runner.exe"
+    }
+  ],
+  "reused_verification": {
+    "receipt": "<private-evidence>\\pr353-native-r1-lifecycle.json",
+    "reason": "Source and binary hashes match. Successful build/database checks are reused explicitly; only the corrected private acceptance driver runs again on a new owned fixture.",
+    "checks": [
+      {
+        "log": "<private-evidence>\\pr353-native-r1-workspace-cache-refresh.log",
+        "name": "workspace-cache-refresh",
+        "sha256": "0f0cc8a73524b04e65970845a00ba747bed33e9231d9c920227dd30952779af1",
+        "exit_code": 0
+      },
+      {
+        "log": "<private-evidence>\\pr353-native-r1-build.log",
+        "name": "native-build",
+        "sha256": "7230d08b9ca418b83b91c7cd6bc23b95288982ca57db583a910ba3b254bb24f8",
+        "exit_code": 0
+      }
+    ],
+    "receipt_sha256": "8ff2129170da7d7c4296758caa90550e234c669b71272c33b967aa7ccb85da34"
+  },
+  "finished_at_utc": "2026-09-22T17:18:47.7791286+00:00"
+}

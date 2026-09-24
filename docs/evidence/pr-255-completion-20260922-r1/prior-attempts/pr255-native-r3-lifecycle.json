@@ -1,0 +1,102 @@
+{
+  "pr": 255,
+  "status": "failed",
+  "started_at_utc": "2026-09-22T23:21:40.1797505+00:00",
+  "tested_staged_tree": "96e4da4451f9aecd6a0978bc85e93bcbd1126bca",
+  "candidate_staged_tree": "96e4da4451f9aecd6a0978bc85e93bcbd1126bca",
+  "head": "4bb17b5e9191d48f571ba6de15738dcc1cf55855",
+  "qa_root": "<local-user>\\code\\qa\\issue-161-pr255-20260922-r3",
+  "source_scope": "Fresh native source build; same-host development identity; deterministic providers; no physical multi-host or production-provider claim.",
+  "credential_assurance": "Disposable SCRAM PostgreSQL credential in an ACL-restricted fixture; server and SQLx receive it through environment-only reduced-assurance delivery. Browser/runner child environments exclude it.",
+  "toolchain": {
+    "node_repository_pin": "24.19.0",
+    "node": "v24.21.0",
+    "rust": "rustc 1.98.1 (48a229cea 2026-09-01)"
+  },
+  "checks": [
+    {
+      "log": "<private-evidence>\\pr255-native-r3-build.log",
+      "sha256": "48efdcb9cb67b94aa9bdf19c55eb942b243dc455b0c1fa6ad34c311f42136ce4",
+      "exit_code": 0,
+      "name": "build"
+    },
+    {
+      "log": "<private-evidence>\\pr255-native-r3-helper-reconstruction.log",
+      "sha256": "9d004afb8b2580952fdbee71766bf2df208a672c6aca4b44d38bb8b08f2c8757",
+      "exit_code": 0,
+      "name": "helper-reconstruction"
+    },
+    {
+      "log": "<private-evidence>\\pr255-native-r3-postgres-init.log",
+      "sha256": "495808fc3bd840b2c54bcc404dcd5bb6d602d06bdfd98d5038ca765dc105e338",
+      "exit_code": 0,
+      "name": "postgres-init"
+    },
+    {
+      "log": "<private-evidence>\\pr255-native-r3-sqlx-authority.log",
+      "sha256": "68fd1702613287137263140c32642da5268cccdb2273706a0eae15654f890a96",
+      "exit_code": 1,
+      "name": "sqlx-authority"
+    },
+    {
+      "log": "<private-evidence>\\pr255-native-r3-host-stop.log",
+      "sha256": "3003afa16f5cc91b444fc99db294dfec4dd69ee2c532d5616d38349a2422c74c",
+      "exit_code": 0,
+      "name": "host-stop"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "b055b2555f19c5a0e2610f16a29007519fa8d76815079c221cacabc2300b6b6e",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "8ab41afc12566026e52ff1996ce7224360c8ea2f09fe2232ef1deabe4a592a83",
+      "file": "crony-runner.exe"
+    },
+    {
+      "sha256": "fccf4133d652cd1d521418b2a883bab52dc49cfba72a8909ebc8e657b0b7d18a",
+      "file": "crony-cli.exe"
+    }
+  ],
+  "drivers": [
+    {
+      "sha256": "ecf24543b36a35dc7c583304f6f525cb03d9a4c5f560971edd15bae6f29c5ad5",
+      "file": "derivation.json"
+    },
+    {
+      "sha256": "357dd8d6525b31283ff40dd5831d86d4113a7d32047dec461781c94622863d1b",
+      "file": "qa-api.mjs"
+    },
+    {
+      "sha256": "35efd859c5ef4683961ef74f645e515ac485f0007b7d5d959a303fbad31ab954",
+      "file": "qa-browser.mjs"
+    },
+    {
+      "sha256": "084f8bd92bc93994b621909c2ffb0a739488559009dd5c4a57e00ec535c92a5a",
+      "file": "qa-evidence.mjs"
+    },
+    {
+      "sha256": "3318a02268b86768e345c7174a6c9ae717ae59a156e1655dd35843446dcb4c79",
+      "file": "qa-host.ps1"
+    },
+    {
+      "sha256": "f4e6a25476fdec9097cd431656bfaca1eb89645700a5f5def495360c37ec2087",
+      "file": "qa-reconnect.mjs"
+    },
+    {
+      "sha256": "bd32086d09c9f82ae8f6434d3974d650680b595fd82a7937a7d424e4d2ec99bc",
+      "file": "qa-scenarios.mjs"
+    },
+    {
+      "sha256": "bd1ce8cb15ac773f1551693b5cc04582154ea7d89e04d47719a5d32bbc4d4025",
+      "file": "qa-wait.mjs"
+    }
+  ],
+  "fixture_acl": "O:S-1-12-1-39432468-1095704959-1933754808-3062557468G:S-1-12-1-39432468-1095704959-1933754808-3062557468D:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;S-1-12-1-39432468-1095704959-1933754808-3062557468)",
+  "failure": "Native lane sqlx-authority failed; preserve its IDs, resources and evidence.",
+  "cleanup": [
+    "Receipt-owned host processes stopped; database, credentials, helper, workspaces, and evidence preserved."
+  ],
+  "finished_at_utc": "2026-09-22T23:26:38.7176376+00:00"
+}

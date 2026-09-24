@@ -1,0 +1,138 @@
+
+running 131 tests
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_cannot_enter_ordinary_or_missing_grant_path ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_checks_native_content_not_only_its_declared_digest ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_rejects_foreign_new_run_task_or_corp ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_rejects_relabelled_provenance_and_false_completion ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_signature_binds_historical_and_current_identity ... ok
+test artifacts::artifact_receipt_tests::issue211_retained_artifact_signs_current_collection_and_preserves_exact_bytes ... ok
+test artifacts::tests::artifact_file_names_reject_content_disposition_injection ... ok
+test artifacts::tests::bounded_artifact_stream_rejects_size_or_range_mismatch_before_polling ... ok
+test artifacts::tests::bounded_artifact_stream_rejects_understated_body_without_draining ... ok
+test artifacts::tests::bounded_artifact_stream_requires_exact_length_and_eof ... ok
+test artifacts::tests::bounded_verified_read_preserves_signature_retention_digest_and_media_checks ... ok
+test artifacts::tests::bounded_verified_read_rejects_oversized_object_with_small_signed_metadata ... ok
+test artifacts::tests::bounded_verified_read_round_trips_small_artifact_without_limiting_downloads ... ok
+test artifacts::tests::local_store_round_trips_verified_content_and_provenance ... ok
+test artifacts::tests::media_validation_rejects_mismatches ... ok
+test artifacts::tests::production_requires_private_s3_storage ... ok
+test artifacts::tests::source_deliverable_role_and_exact_linkage_are_signed ... ok
+test artifacts::tests::staged_objects_finalize_idempotently_and_cleanup_safely ... ok
+test auth::tests::role_matrix_is_fail_closed ... ok
+test dependency_source::tests::an_invalid_later_file_never_returns_a_partial_handoff ... ok
+test dependency_source::tests::base64_rejects_noncanonical_padding_bits_alphabets_and_whitespace ... ok
+test dependency_source::tests::changed_paths_are_an_additional_exact_unordered_constraint ... ok
+test dependency_source::tests::deleted_renamed_unmerged_and_nonregular_changes_are_rejected ... ok
+test dependency_source::tests::duplicate_fields_are_rejected_including_equal_values_and_nulls ... ok
+test dependency_source::tests::empty_files_bom_and_whitespace_are_not_omitted_or_normalized ... ok
+test dependency_source::tests::envelope_and_file_count_caps_precede_unbounded_parsing ... ok
+test dependency_source::tests::every_export_field_is_required_even_nullable_metadata ... ok
+test dependency_source::tests::expectations_require_immutable_ids_and_a_nonempty_exact_set ... ok
+test dependency_source::tests::extra_missing_duplicate_and_case_aliased_files_fail ... ok
+test dependency_source::tests::file_hash_and_actual_decoded_byte_count_are_verified ... ok
+test dependency_source::tests::full_sha256_git_object_ids_are_supported ... ok
+test dependency_source::tests::invalid_utf8_and_utf8_binary_controls_fail_with_correct_hashes ... ok
+test dependency_source::tests::mime_must_match_a_supported_text_extension_and_content ... ok
+test dependency_source::tests::multiple_handoffs_are_complete_lossless_and_sorted ... ok
+test dependency_source::tests::optional_source_record_binds_identity_mime_and_exact_envelope ... ok
+test dependency_source::tests::patch_integrity_and_typed_set_metadata_are_fail_closed ... ok
+test dependency_source::tests::per_file_encoded_decoded_and_declared_sizes_are_bounded ... ok
+test dependency_source::tests::planner_preflight_rejects_the_same_path_dialect_before_provider_work ... ok
+test dependency_source::tests::redundant_patch_has_independent_encoded_and_decoded_caps ... ok
+test dependency_source::tests::regular_modes_and_non_deleted_export_statuses_are_supported ... ok
+test dependency_source::tests::schema_form_base_and_verifier_are_exact ... ok
+test dependency_source::tests::total_prompt_cap_includes_paths_hashes_framing_and_utf8_bytes ... ok
+test dependency_source::tests::traversal_git_internal_secret_and_nonportable_paths_are_rejected ... ok
+test dependency_source::tests::unknown_fields_positional_arrays_trailing_data_and_wrong_types_fail ... ok
+test factory_connection_tests::claim_authority::issue161_authority_handler_is_uncached_and_rejects_foreign_scope ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::claim_authority::issue161_bad_pin_rejects_claim_before_events_or_materialization ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::claim_authority::issue161_concurrent_controllers_keep_one_claim_and_one_held_mission ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::claim_authority::issue161_production_controller_registration_requires_pin_before_persistence ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_bound_only_preflight_and_materialization ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_post_claim_readiness_conflict_releases_exact_claim ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_post_claim_source_conflict_releases_exact_claim ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue204_handler_stale_claim_conflicts_do_not_release_current_claim ... ignored, requires explicitly owned SQLx maintenance database
+test factory_connection_tests::issue79_claim_handler_and_preflight_reject_cost_without_durable_effects ... ignored, requires explicitly owned SQLx maintenance database
+test planning::tests::deterministic_verification_strategy_drops_provider_model_settings ... ok
+test planning::tests::issue224_attempt_override_rejects_out_of_bounds_values ... ok
+test planning::tests::issue224_attempt_override_sets_every_task_without_changing_other_plan_fields ... ok
+test planning::tests::issue224_fixture_strategies_preserve_default_one_attempt ... ok
+test planning::tests::issue224_ordinary_strategies_preserve_default_two_attempts ... ok
+test planning::tests::issue79_every_registered_strategy_uses_shared_cost_allocation ... ok
+test planning::tests::ordered_candidates_exclude_retired_agents ... ok
+test planning::tests::parallel_strategy_scopes_model_settings_to_matching_adapters ... ok
+test planning::tests::rejects_cycles_depth_budget_and_retry_violations ... ok
+test planning::tests::single_strategy_enforces_requested_adapter ... ok
+test planning::tests::single_strategy_preserves_typed_deliverable_and_rejects_unsafe_scope ... ok
+test planning::tests::strategies_are_replaceable_and_deterministic ... ok
+test planning::tests::studio_handoffs_prioritize_decisions_and_delegate_mechanical_checks ... ok
+test planning::tests::studio_swarm_pins_model_and_reasoning_on_every_task ... ok
+test planning::tests::studio_swarm_prefers_staffing_roles_and_reserves_them_before_fallback ... ok
+test planning::tests::studio_swarm_preserves_graph_and_budget_bounds ... ok
+test planning::tests::studio_swarm_rejects_duplicate_manager_retired_or_offline_workers ... ok
+test planning::tests::studio_swarm_rejects_insufficient_or_mixed_provider_workers ... ok
+test planning::tests::studio_swarm_rejects_non_copilot_adapter_requests ... ok
+test planning::tests::studio_swarm_rejects_unsafe_handoff_roots ... ok
+test planning::tests::studio_swarm_scopes_role_handoffs_and_preserves_final_deliverable ... ok
+test planning::tests::studio_swarm_splits_budgets_and_bounds_attempts ... ok
+test planning::tests::studio_swarm_uses_three_distinct_copilot_roots_and_gameplay_join ... ok
+test planning::tests::verifier_policies_reject_unsafe_paths_commands_and_gates ... ok
+test publication_checkpoint_permission_tests::owned_failure_reporting_does_not_grant_effect_permission ... ok
+test secrets::tests::ciphertext_is_bound_to_corp_secret_and_name ... ok
+test staffing::tests::empty_corp_gets_only_the_required_roles ... ok
+test staffing::tests::only_idle_pinned_same_corp_role_is_reused ... ok
+test staffing::tests::studio_never_falls_back_to_another_provider ... ok
+test tests::artifact_content_disposition_encodes_untrusted_file_names ... ok
+test tests::checkpoint_command_rejects_cross_corp_and_cross_run_payloads ... ok
+test tests::checkpoint_denial_retires_only_the_command_and_store_errors_remain_retryable ... ok
+test tests::checkpoint_verification_requires_explicit_runner_support ... ok
+test tests::durable_verifier_references_reject_embedded_data_bad_digests_and_oversized_transfers ... ok
+test tests::factory_materialization_failure_detail_is_bounded_single_line_text ... ok
+test tests::factory_review_is_required_for_the_outcome_not_each_internal_handoff ... ok
+test tests::factory_review_preserves_explicit_internal_policy_and_reviews_provider_ancestry ... ok
+test tests::issue171_epoch_loss_during_commands_cannot_wake_scheduling ... ok
+test tests::issue171_failed_command_handling_cannot_wake_scheduling ... ok
+test tests::issue171_failed_or_superseded_finalization_cannot_wake_scheduling ... ok
+test tests::issue171_reconnect_wakeup_waits_for_finalization_then_commands ... ok
+test tests::issue171_tick_bounds_and_rotates_unique_current_ready_corps ... ok
+test tests::issue171_tick_continues_other_corps_after_a_scheduling_failure ... ok
+test tests::issue171_tick_skips_unready_and_rechecks_corp_epoch_snapshots ... ok
+test tests::issue171_ticks_retry_failed_commands_or_scheduling_without_new_events ... ok
+test tests::issue171_unready_or_stale_epoch_never_polls_commands_or_scheduler ... ok
+test tests::issue172_all_failing_peers_remain_bounded_and_each_get_a_turn ... ok
+test tests::issue172_corp_batching_does_not_alias_runner_rotation ... ok
+test tests::issue172_epoch_replacement_during_commands_cannot_schedule_or_pin_the_corp ... ok
+test tests::issue172_removed_representative_does_not_reset_other_corps_or_accumulate_state ... ok
+test tests::issue172_repeated_failure_cannot_starve_same_corp_healthy_runner ... ok
+test tests::issue172_snapshot_fencing_skips_a_peer_moved_to_another_corp ... ok
+test tests::issue172_unvisited_singleton_churn_preserves_runner_rotation ... ok
+test tests::issue210_transient_authorization_reads_do_not_terminalize_recovery ... ok
+test tests::issue211_retained_dispatch_binds_exact_provider_free_command ... ok
+test tests::issue211_retained_dispatch_does_not_send_private_upload_binding ... ok
+test tests::issue211_retained_dispatch_requires_its_own_available_capability ... ok
+test tests::issue211_retained_receipt_ack_uses_exact_role_and_digest ... ok
+test tests::issue211_retained_receipt_db_error_is_retryable_but_authority_denial_is_not ... ok
+test tests::issue224_attempt_request_must_match_the_pre_execution_factory_policy ... ok
+test tests::issue224_factory_operation_snapshots_keep_legacy_omission ... ok
+test tests::issue224_planning_input_keeps_the_exact_requested_attempt_allowance ... ok
+test tests::mission_description_is_normalized_and_delivered_to_each_task ... ok
+test tests::mission_preview_and_create_mapping_leave_defaults_to_the_shared_planner ... ok
+test tests::mission_preview_and_create_mapping_preserve_every_request_field ... ok
+test tests::mission_preview_projects_the_actual_plan_without_identity_or_contract_data ... ok
+test tests::mission_source_is_pinned_to_every_planned_task ... ok
+test tests::mission_verification_applies_to_every_terminal_output_even_at_different_depths ... ok
+test tests::model_less_adapter_reports_the_invalid_model_requirement ... ok
+test tests::provider_backed_factory_tasks_require_independent_verification ... ok
+test tests::reconnect_closed_socket_does_not_report_command_delivery ... ok
+test tests::reconnect_dispatch_and_matching_wait_for_successful_finalization ... ok
+test tests::reconnect_failed_or_superseded_finalization_keeps_dispatch_closed ... ok
+test tests::reconnect_preserves_offline_recovery_after_command_ack ... ok
+test tests::reconnect_preserves_pending_recoveries_beyond_one_dispatch_page ... ok
+test tests::reconnect_stale_epoch_cannot_enable_or_deliver_to_replacement_socket ... ok
+test tests::runner_matching_enforces_model_and_reasoning_support ... ok
+test tests::runner_matching_enforces_repository_and_base_ref ... ok
+
+test result: ok. 122 passed; 0 failed; 9 ignored; 0 measured; 0 filtered out; finished in 0.27s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.66s
+     Running unittests src\main.rs (target\debug\deps\crony_server-8fddc2695d975e5a.exe)

@@ -1,0 +1,15 @@
+F02 component regressions passed: 124 invalid/reserved cases across all three plan inputs and forward separators.
+{"drive":"Q:","fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-a1a83ac382d548bba0ea95fd611794ea","mapping":null,"event":"alias-before"}
+{"sameSentinel":true,"drive":"Q:","target":"\\??\\<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-a1a83ac382d548bba0ea95fd611794ea\\retained-office","event":"alias-created"}
+F01 native alias rejected in Root.
+F01 native alias rejected in Product.
+F01 native alias rejected in Protected.
+{"removedTarget":"\\??\\<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-a1a83ac382d548bba0ea95fd611794ea\\retained-office","drive":"Q:","mapping":null,"event":"alias-cleanup"}
+WARNING: Native 8.3 alias cases BLOCKED: the fixture volume did not supply a distinct short name. These cases were not executed and are not passing coverage.
+{"mode":"Required","executed":false,"distinctAlias":false,"event":"native-short-alias","status":"blocked"}
+WARNING: Failed synthetic fixture retained at <local-user>\AppData\Local\Temp\ecorp-u1-preflight-a1a83ac382d548bba0ea95fd611794ea
+Exception: <local-user>\AppData\Local\Temp\ecorp-u1-modes-bccbbf0261554f8bb24bfd33a6515894\lookup-failed\qa_multiplayer_preflight.test.ps1:12
+Line |
+  12 |      if (!$Condition) { throw $Message }
+     |                         ~~~~~~~~~~~~~~
+     | An explicitly provisioned Windows volume with distinct 8.3 names is required for this native lane.

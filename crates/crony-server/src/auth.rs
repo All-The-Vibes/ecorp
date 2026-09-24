@@ -28,6 +28,7 @@ pub enum Permission {
     ControlFactory,
     Recover,
     Publish,
+    PublishAnchor,
     Manage,
 }
 
@@ -73,7 +74,9 @@ impl CorpRole {
             Permission::ControlFactory | Permission::Publish => {
                 matches!(self, Self::Owner | Self::Admin | Self::Manager)
             }
-            Permission::Manage => matches!(self, Self::Owner | Self::Admin),
+            Permission::Manage | Permission::PublishAnchor => {
+                matches!(self, Self::Owner | Self::Admin)
+            }
         }
     }
 }
@@ -294,6 +297,22 @@ impl AuthService {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn base_v2_spending_has_dedicated_owner_admin_permission() {
+        for role in [CorpRole::Owner, CorpRole::Admin] {
+            assert!(role.allows(Permission::PublishAnchor));
+        }
+        for role in [
+            CorpRole::Manager,
+            CorpRole::Member,
+            CorpRole::Guest,
+            CorpRole::Spectator,
+        ] {
+            assert!(!role.allows(Permission::PublishAnchor));
+        }
+        assert_ne!(Permission::PublishAnchor, Permission::Publish);
+    }
+
     use super::*;
 
     #[test]

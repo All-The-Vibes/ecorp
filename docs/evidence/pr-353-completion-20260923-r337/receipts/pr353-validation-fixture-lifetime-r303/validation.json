@@ -1,0 +1,152 @@
+{
+  "started_at_utc": "2026-09-23T11:52:05.0802904+00:00",
+  "repository": "<reviewed-worktree>",
+  "head": "69dc4afe9bdbc014499673842ce6e0b4e8970fd7",
+  "staged_tree": "79beabd4a9a1dad19eae45547ab2dd5979dfe406",
+  "unstaged_diff": [],
+  "target_main": "1edbf1b5f4d4fe3f12f9177bb72b631d8ce2e819",
+  "diff_before": [
+    "M  tools/local_stack_lifecycle.test.ps1"
+  ],
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "test_threads": "1",
+  "cargo_target": "<local-user>\\code\\ecorp-pr338-completion-20260922\\target-validation",
+  "git_core_longpaths": "process-only true",
+  "checks": [
+    {
+      "name": "migrations",
+      "program": "node",
+      "arguments": [
+        "tools/check_migrations.mjs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T11:52:07.3875356+00:00",
+      "duration_seconds": 0.6359382,
+      "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\migrations.log",
+      "sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823"
+    },
+    {
+      "name": "documentation",
+      "program": "pnpm",
+      "arguments": [
+        "check:docs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T11:52:08.0676946+00:00",
+      "duration_seconds": 1.8515094,
+      "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\documentation.log",
+      "sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406"
+    },
+    {
+      "name": "rust-format",
+      "program": "cargo",
+      "arguments": [
+        "fmt",
+        "--check"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T11:52:13.1802614+00:00",
+      "duration_seconds": 5.1045235,
+      "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\rust-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "program": "cargo",
+      "arguments": [
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T11:52:18.2934915+00:00",
+      "duration_seconds": 140.8725451,
+      "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\rust-clippy.log",
+      "sha256": "74d65cceedc277225c9f63102fde3812b513bf4624499d682f8a870569e9d6a5"
+    },
+    {
+      "name": "rust-workspace",
+      "program": "cargo",
+      "arguments": [
+        "test",
+        "--workspace"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T11:54:41.1466018+00:00",
+      "duration_seconds": 723.2078021,
+      "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\rust-workspace.log",
+      "sha256": "a8b7ebd708f1039fa8e1b11e497433cafa5a954b8c6c0507ea46fc38338d9110"
+    },
+    {
+      "name": "node-unit",
+      "program": "pnpm",
+      "arguments": [
+        "test:unit"
+      ],
+      "exit_code": 1,
+      "started_at_utc": "2026-09-23T12:09:43.1415883+00:00",
+      "duration_seconds": 336.0095423,
+      "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\node-unit.log",
+      "sha256": "884fb4b17e18fc40fbecd0663ff6cf2d9982c0f16bfd4cb9c2044b162ed73307"
+    },
+    {
+      "name": "steward",
+      "program": "pnpm",
+      "arguments": [
+        "test:steward"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T12:15:19.5872936+00:00",
+      "duration_seconds": 124.1306579,
+      "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\steward.log",
+      "sha256": "0c1e2813ca2ef728112ecef5e7f4097eaf82e8d60798bd958bce21775cc6ad3d"
+    },
+    {
+      "name": "web-build",
+      "program": "pnpm",
+      "arguments": [
+        "build:web"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T12:17:23.9752015+00:00",
+      "duration_seconds": 11.8631664,
+      "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\web-build.log",
+      "sha256": "4c1b903110ca6347215d8edcda08440fe86e05f5e945bd019819b2a1f46d34a1"
+    },
+    {
+      "name": "web-lint",
+      "program": "pnpm",
+      "arguments": [
+        "lint:web"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T12:17:36.1602382+00:00",
+      "duration_seconds": 4.5700815,
+      "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\web-lint.log",
+      "sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c"
+    }
+  ],
+  "status": "failed",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "workspace_refresh": {
+    "exit_code": 0,
+    "sha256": "0f0cc8a73524b04e65970845a00ba747bed33e9231d9c920227dd30952779af1",
+    "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\workspace-cache-refresh.log"
+  },
+  "native_mcp_build": {
+    "exit_code": 0,
+    "sha256": "3d6ddc828005f9cbf3ffc8ed62e4f4afef99de6857eb964c8b9c15795e28fdbf",
+    "binary_sha256": "ab1c6da2350b1c2522685bfd20515c32bd2663589e1aee2778c0244a5bb2f967",
+    "log": "<private-evidence>\\pr353-validation-fixture-lifetime-r303\\native-mcp-build.log"
+  },
+  "finished_at_utc": "2026-09-23T12:17:41.0106559+00:00",
+  "diff_after": [
+    "M  tools/local_stack_lifecycle.test.ps1"
+  ],
+  "source_unchanged": true
+}

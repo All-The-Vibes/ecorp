@@ -1,0 +1,157 @@
+✔ personal paths include drive-relative, prefixed, escaped and alternate separators (1.5076ms)
+✔ normalized placeholders and ordinary prose remain valid (0.198ms)
+✖ recursive packet scan and CLI reject a leak without printing its value (18.1386ms)
+✔ retained PR226 packets including r3 are scanned for personal user paths (975.9409ms)
+✔ root and ancestor directory links cannot redirect an evidence scan (24.8632ms)
+✔ nested and dangling directory links fail closed (9.4341ms)
+✔ canonical containment rejects absolute cross-drive and UNC relative results (0.405ms)
+✖ actual Windows short alias succeeds while a linked ancestor still fails (445.373ms)
+✖ file replacement before-open with regular fails without reading outside bytes (17.0775ms)
+✖ file replacement before-open with symlink fails without reading outside bytes (13.8658ms)
+✖ file replacement during-read with regular fails without reading outside bytes (17.8678ms)
+✖ file replacement during-read with symlink fails without reading outside bytes (15.5861ms)
+✔ oversize sparse evidence fails before a content read (7.9992ms)
+✖ file growth during a descriptor read fails instead of accepting a prefix (11.687ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 7
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1729.0146
+
+✖ failing tests:
+
+test at tools\check_evidence_personal_paths.test.mjs:29:1
+✖ recursive packet scan and CLI reject a leak without printing its value (18.1386ms)
+  Error: Evidence path check requires regular files and directories; file changed during scan
+      at assertUnchangedFile (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:42:11)
+      at checkNamedFile (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:58:7)
+      at readEvidenceFile (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:61:5)
+      at visit (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:93:38)
+      at visit (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:92:36)
+      at findPersonalPathFiles (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:98:5)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:35:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+
+test at tools\check_evidence_personal_paths.test.mjs:103:1
+✖ actual Windows short alias succeeds while a linked ancestor still fails (445.373ms)
+  Error: Evidence path check requires regular files and directories; file changed during scan
+      at assertUnchangedFile (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:42:11)
+      at checkNamedFile (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:58:7)
+      at readEvidenceFile (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:61:5)
+      at visit (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:93:38)
+      at findPersonalPathFiles (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.mjs:98:5)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:120:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+
+test at tools\check_evidence_personal_paths.test.mjs:128:5
+✖ file replacement before-open with regular fails without reading outside bytes (17.0775ms)
+  AssertionError [ERR_ASSERTION]: the replacement window must actually execute
+
+  false !== true
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:175:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:128:5
+✖ file replacement before-open with symlink fails without reading outside bytes (13.8658ms)
+  AssertionError [ERR_ASSERTION]: the replacement window must actually execute
+
+  false !== true
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:175:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:128:5
+✖ file replacement during-read with regular fails without reading outside bytes (17.8678ms)
+  AssertionError [ERR_ASSERTION]: the replacement window must actually execute
+
+  false !== true
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:175:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:128:5
+✖ file replacement during-read with symlink fails without reading outside bytes (15.5861ms)
+  AssertionError [ERR_ASSERTION]: the replacement window must actually execute
+
+  false !== true
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:175:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_evidence_personal_paths.test.mjs:209:1
+✖ file growth during a descriptor read fails instead of accepting a prefix (11.687ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  false !== true
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/check_evidence_personal_paths.test.mjs:223:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

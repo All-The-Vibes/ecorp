@@ -1,0 +1,44 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
+    executable: '<reviewed-worktree>\\target-native-qualification\\debug\\crony-server.exe',
+    pid: 22376,
+    role: 'server',
++   started_utc: '2026-09-23T09:14:30.547443Z',
+-   started_utc: '2026-09-23T09:14:30.5474430Z',
+    stderr: '<reviewed-worktree>\\output\\native-qualification\\phase2-r4\\logs\\server-20260923T091430538-7866a82a0b0d4aa8bb17c2b6e475f5d3.stderr.log',
+    stdout: '<reviewed-worktree>\\output\\native-qualification\\phase2-r4\\logs\\server-20260923T091430538-7866a82a0b0d4aa8bb17c2b6e475f5d3.stdout.log',
+    workspace: '<reviewed-worktree>'
+  }
+
+    at file:///<private-evidence>/pr293-full-native-r4/native_qualification_acceptance.mjs:43:12 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: {
+    executable: '<reviewed-worktree>\\target-native-qualification\\debug\\crony-server.exe',
+    started_utc: '2026-09-23T09:14:30.547443Z',
+    pid: 22376,
+    workspace: '<reviewed-worktree>',
+    role: 'server',
+    stdout: '<reviewed-worktree>\\output\\native-qualification\\phase2-r4\\logs\\server-20260923T091430538-7866a82a0b0d4aa8bb17c2b6e475f5d3.stdout.log',
+    stderr: '<reviewed-worktree>\\output\\native-qualification\\phase2-r4\\logs\\server-20260923T091430538-7866a82a0b0d4aa8bb17c2b6e475f5d3.stderr.log'
+  },
+  expected: {
+    executable: '<reviewed-worktree>\\target-native-qualification\\debug\\crony-server.exe',
+    started_utc: '2026-09-23T09:14:30.5474430Z',
+    pid: 22376,
+    workspace: '<reviewed-worktree>',
+    role: 'server',
+    stdout: '<reviewed-worktree>\\output\\native-qualification\\phase2-r4\\logs\\server-20260923T091430538-7866a82a0b0d4aa8bb17c2b6e475f5d3.stdout.log',
+    stderr: '<reviewed-worktree>\\output\\native-qualification\\phase2-r4\\logs\\server-20260923T091430538-7866a82a0b0d4aa8bb17c2b6e475f5d3.stderr.log'
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

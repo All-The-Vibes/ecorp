@@ -17,7 +17,7 @@ jobs:
   node-regressions:
     name: Node regressions (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -36,6 +36,14 @@ jobs:
           run_install: false
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Build native evidence scanner dependencies
+        run: cargo build --locked -p crony-runner --bin crony-evidence-paths
       - name: Prepare test reports
         id: reports
         run: >-
@@ -150,6 +158,17 @@ jobs:
             --output "$tools/tool.tar.gz"
           printf '%s  %s\n' b3f68e625481fed9b16444174f3fa5ebcdbde4a1878803a35eabe2dcefcdc41a "$tools/tool.tar.gz" | sha256sum --check
           tar --extract --gzip --file "$tools/tool.tar.gz" --directory "$tools"
+          printf '%s\n' "$tools" >> "$GITHUB_PATH"
+      - name: Install verified local Anvil fixture
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/ecorp-coverage-anvil-1.7.1"
+          mkdir "$tools"
+          curl --fail --show-error --location \
+            https://github.com/foundry-rs/foundry/releases/download/v1.7.1/foundry_v1.7.1_linux_amd64.tar.gz \
+            --output "$tools/foundry.tar.gz"
+          printf '%s  %s\n' cf7e688ed0c4c48adffca788b496076e31060b67ac5afe1e43dbb5499c20c88b "$tools/foundry.tar.gz" | sha256sum --check
+          tar --extract --gzip --file "$tools/foundry.tar.gz" --directory "$tools" anvil
           printf '%s\n' "$tools" >> "$GITHUB_PATH"
       - name: Execute native workspace and owned SQLx coverage
         env:

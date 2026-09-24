@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "finding": "A237-01",
+  "pr": 237,
+  "round": 2,
+  "result": "IMPLEMENTED_AND_FOCUSED_TESTS_PASS_PENDING_INDEPENDENT_REVIEW",
+  "base": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "head": "6e69bc543ef16d11ecf4baf5f2488a6a7b478100",
+  "worktree": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+  "finished_utc": "2026-09-21T00:20:04.7834275Z",
+  "model": "gpt-6-astra per supplied executor routing metadata; no independent runtime model attestation available",
+  "budget": "No numeric budget supplied; one bounded issue-specific RED/GREEN fix; no child agents",
+  "changed_paths": [
+    "tools/e2e_predispatch_failure.mjs",
+    "tools/e2e_predispatch_failure.test.mjs",
+    "tools/owned_test_stack.mjs"
+  ],
+  "changes": [
+    "processOwnership reuses serverIdentity with explicit manifest PID/root/server/binary, retaining bounded() accounting.",
+    "Existing native Get-Process helper exported; capture, native ticks, guards and handle-based termination unchanged.",
+    "Focused Windows-only regression executes actual processOwnership source body and real shared helper/guard with mocked reads/process output; child spawning hard-blocked."
+  ],
+  "callers": [
+    "admission -> processOwnership -> serverIdentity -> assertOwnedRestart",
+    "pre-restart -> processOwnership -> serverIdentity -> assertOwnedRestart",
+    "Existing helper launch/readiness/restart/stop callers unchanged."
+  ],
+  "tdd": {
+    "red_exit": 1,
+    "red": "red-final-command.json",
+    "green_tests": 11,
+    "negative_cases": [
+      "one 100 ns tick mismatch",
+      "missing ticks",
+      "numeric rounded ticks",
+      "wrong/missing PID",
+      "wrong/missing platform",
+      "wrong executable",
+      "unowned listener"
+    ],
+    "identical_test_source": true,
+    "red_source_hashes": [
+      {
+        "sha256": "32b7f036c5061943a665d172cb1cb1bf4797dc19d32bffb2810de5efa6c882a3",
+        "path": "tools/e2e_predispatch_failure.mjs"
+      },
+      {
+        "sha256": "d6e14e29ce9fa0117918dc3e31d98e86ad89d0426ef429f3807377a9d4e6e6c0",
+        "path": "tools/e2e_predispatch_failure.test.mjs"
+      },
+      {
+        "sha256": "bd2896c45b78ec4cd592712e9e63ec750a4fcce412d8a8f37fb90687be887593",
+        "path": "tools/owned_test_stack.mjs"
+      },
+      {
+        "sha256": "e92df321d2cb566d44cd40279dc1e733fba74e27629ab1ac0a2f8e1ca333c635",
+        "path": "tools/owned_test_stack.test.mjs"
+      }
+    ],
+    "green_exit": 0,
+    "red_cause": "Matching valid native manifest rejected by original CIM-only caller at assertOwnedRestart; not setup failure.",
+    "green": "green-final-command.json",
+    "green_source_hashes": [
+      {
+        "sha256": "9ea6f9fdcf6f24f3d4420776c429987b85cda256819f1001623ef9dfdc80eca6",
+        "path": "tools/e2e_predispatch_failure.mjs"
+      },
+      {
+        "sha256": "d6e14e29ce9fa0117918dc3e31d98e86ad89d0426ef429f3807377a9d4e6e6c0",
+        "path": "tools/e2e_predispatch_failure.test.mjs"
+      },
+      {
+        "sha256": "bd2896c45b78ec4cd592712e9e63ec750a4fcce412d8a8f37fb90687be887593",
+        "path": "tools/owned_test_stack.mjs"
+      },
+      {
+        "sha256": "e92df321d2cb566d44cd40279dc1e733fba74e27629ab1ac0a2f8e1ca333c635",
+        "path": "tools/owned_test_stack.test.mjs"
+      }
+    ]
+  },
+  "verification": {
+    "commands": [
+      {
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 0,
+        "command": "node --test tools/e2e_predispatch_failure.test.mjs tools/owned_test_stack.test.mjs",
+        "started_utc": "2026-09-21T00:18:50.2727515Z",
+        "native_process_test": "ECORP_OWNED_PROCESS_TEST=0 for affected suite",
+        "log": "affected.log",
+        "finished_utc": "2026-09-21T00:18:50.6154177Z"
+      },
+      {
+        "finished_utc": "2026-09-21T00:17:50.2627143Z",
+        "started_utc": "2026-09-21T00:17:44.8058856Z",
+        "command": "node --test tools/e2e_predispatch_failure.test.mjs",
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 1,
+        "log": "green.log"
+      },
+      {
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 0,
+        "command": "git -c core.safecrlf=false diff --check -- tools/e2e_predispatch_failure.mjs tools/owned_test_stack.mjs",
+        "started_utc": "2026-09-21T00:18:51.1630426Z",
+        "native_process_test": "ECORP_OWNED_PROCESS_TEST=0 for affected suite",
+        "log": "diff-check.log",
+        "finished_utc": "2026-09-21T00:18:51.2845318Z"
+      },
+      {
+        "started_utc": "2026-09-21T00:18:22.3904337Z",
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 0,
+        "finished_utc": "2026-09-21T00:18:22.663576Z",
+        "log": "green.log",
+        "command": "node --test tools/e2e_predispatch_failure.test.mjs"
+      },
+      {
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 0,
+        "command": "node --test tools/e2e_predispatch_failure.test.mjs",
+        "started_utc": "2026-09-21T00:18:50.0077014Z",
+        "native_process_test": "ECORP_OWNED_PROCESS_TEST=0 for affected suite",
+        "log": "green-final.log",
+        "finished_utc": "2026-09-21T00:18:50.2533677Z"
+      },
+      {
+        "exit_code": 1,
+        "log": "red.log",
+        "command": "node --test tools/e2e_predispatch_failure.test.mjs",
+        "started_utc": "2026-09-21T00:17:11.0079804Z",
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "finished_utc": "2026-09-21T00:17:11.5221045Z"
+      },
+      {
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 1,
+        "command": "node --test tools/e2e_predispatch_failure.test.mjs",
+        "started_utc": "2026-09-21T00:18:49.6524708Z",
+        "native_process_test": "ECORP_OWNED_PROCESS_TEST=0 for affected suite",
+        "log": "red-final.log",
+        "finished_utc": "2026-09-21T00:18:49.9197901Z"
+      },
+      {
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 1,
+        "log": "red2.log",
+        "started_utc": "2026-09-21T00:18:13.738902Z",
+        "finished_utc": "2026-09-21T00:18:14.0201469Z",
+        "command": "node --test tools/e2e_predispatch_failure.test.mjs"
+      },
+      {
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 0,
+        "command": "node --check tools/e2e_predispatch_failure.mjs",
+        "started_utc": "2026-09-21T00:18:50.6445605Z",
+        "native_process_test": "ECORP_OWNED_PROCESS_TEST=0 for affected suite",
+        "log": "syntax-e2e_predispatch_failure.mjs.log",
+        "finished_utc": "2026-09-21T00:18:50.752789Z"
+      },
+      {
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 0,
+        "command": "node --check tools/e2e_predispatch_failure.test.mjs",
+        "started_utc": "2026-09-21T00:18:50.7574623Z",
+        "native_process_test": "ECORP_OWNED_PROCESS_TEST=0 for affected suite",
+        "log": "syntax-e2e_predispatch_failure.test.mjs.log",
+        "finished_utc": "2026-09-21T00:18:50.906218Z"
+      },
+      {
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 0,
+        "command": "node --check tools/owned_test_stack.mjs",
+        "started_utc": "2026-09-21T00:18:50.9110513Z",
+        "native_process_test": "ECORP_OWNED_PROCESS_TEST=0 for affected suite",
+        "log": "syntax-owned_test_stack.mjs.log",
+        "finished_utc": "2026-09-21T00:18:51.0136145Z"
+      },
+      {
+        "cwd": "C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes",
+        "exit_code": 0,
+        "command": "node --check tools/owned_test_stack.test.mjs",
+        "started_utc": "2026-09-21T00:18:51.0194343Z",
+        "native_process_test": "ECORP_OWNED_PROCESS_TEST=0 for affected suite",
+        "log": "syntax-owned_test_stack.test.mjs.log",
+        "finished_utc": "2026-09-21T00:18:51.1549789Z"
+      },
+      {
+        "log": "regression-whitespace.log",
+        "exit_code": 1,
+        "command": "git -c core.safecrlf=false diff --no-index --check -- /dev/null tools/e2e_predispatch_failure.test.mjs",
+        "interpretation": "No-index diff exit 1 denotes new-file difference; empty --check output reports no whitespace errors."
+      }
+    ],
+    "inherited_query_rejection_preserved": true,
+    "shared_helper_delta": "export keyword only relative to inherited snapshot, ignoring CRLF/LF normalization",
+    "syntax": "node --check passed for caller, regression, helper and unchanged helper test",
+    "whitespace": "git diff --check passed",
+    "owned_test_stack_test_unchanged": true,
+    "affected": "82 passed; 1 native-service test explicitly skipped; 0 failed"
+  },
+  "runtime": {
+    "node_binary_sha256": "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3",
+    "node_version": "v24.16.0",
+    "node_binary": "C:\\nvm4w\\nodejs\\node.exe",
+    "platform": "win32"
+  },
+  "retained_failed_attempt": {
+    "observed_effect": "Ten read-only powershell.exe Get-Process attempts for synthetic PID 4242, each absent. No listener queries reached, target signaled, or service/driver/database/container launched.",
+    "correction": "Replace execFile directly with custom promisify stub plus fail-closed ChildProcess.prototype.spawn guard; repeat RED/GREEN with identical final regression.",
+    "reason": "node:test mock proxy retained original execFile promisify implementation; first GREEN escaped intended mock.",
+    "log": "attempt1-green.log",
+    "command": "attempt1-green-command.json"
+  },
+  "limitations": [
+    "Mock contract proof only; final passing tests do not qualify native process identity capture.",
+    "No full predispatch driver, DB, Docker, Factory, server, browser, runner, or manual-stack activity. Full Rust/web build and workspace suite not run under this isolated scope.",
+    "Failed first GREEN made read-only native process lookups; retained rather than relabeled as safe mock evidence.",
+    "New regression skips non-Windows platforms.",
+    "docs/EVALS.md still says old predispatch probe requires PowerShell 7; documentation is outside write scope. Reused helper invokes existing powershell.exe Get-Process path.",
+    "No independent runtime model attestation; supplied routing metadata states gpt-6-astra.",
+    "Other fixer work observed but not edited/reverted; no combined-candidate or PR-wide acceptance asserted."
+  ],
+  "stop_condition": "Assigned defect corrected and focused tests passed; no commit/push, independent approval, or merge."
+}

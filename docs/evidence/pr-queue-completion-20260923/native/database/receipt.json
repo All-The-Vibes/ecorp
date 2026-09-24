@@ -1,0 +1,68 @@
+{
+  "pr": 293,
+  "purpose": "Base V2 owned PostgreSQL regressions",
+  "source_head": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "tested_staged_tree": "67e9c956ad29ed0ffdb10b165d6320a506a3eb5b",
+  "qa_root": "<local-user>\\code\\qa\\queue-audit-store-20260923-r455",
+  "target": "<local-user>\\code\\ecorp-pr-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T16:20:25.0302859+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "sha256": "af4693823acd37356f652a289a6e31d83b43d6e384ae9a26d66b83445f9b3cb4",
+      "log": "<private-evidence>\\queue-native-database-r455-initdb.log"
+    },
+    {
+      "name": "workspace-cache-refresh",
+      "exit_code": 0,
+      "sha256": "28352f8852680c2a1de350ab53a570aa8bf26a0cbd8c863cfe9b6f773c44c01c",
+      "log": "<private-evidence>\\queue-native-database-r455-workspace-cache-refresh.log"
+    },
+    {
+      "passed_tests": 34,
+      "name": "owned-postgresql-base-v2",
+      "exit_code": 0,
+      "sha256": "ccc5b3f57d9e450555550d06861e9337400b3372a73828c3758293bfdf55680e",
+      "log": "<private-evidence>\\queue-native-database-r455-base-v2.log"
+    },
+    {
+      "passed_tests": 2,
+      "name": "owned-postgresql-worker-observation",
+      "exit_code": 0,
+      "sha256": "55e5f7c36f0e5f141ffdbaac12171004c76d322e8fedd42f1343d5af4c4d7323",
+      "log": "<private-evidence>\\queue-native-database-r455-worker-observation.log"
+    },
+    {
+      "passed_tests": 4,
+      "name": "owned-postgresql-worker-terminal-fees",
+      "exit_code": 0,
+      "sha256": "c0627a599575395a9717c1b6e753e05e7c9457fb64c026de607e6925d375da7a",
+      "log": "<private-evidence>\\queue-native-database-r455-worker-terminal-fees.log"
+    },
+    {
+      "passed_tests": 50,
+      "name": "owned-postgresql-native-archive",
+      "exit_code": 0,
+      "sha256": "0677fc6cdcdc285be690ed7de908315745b67e4bf6af58efcf854533f41a4790",
+      "log": "<private-evidence>\\queue-native-database-r455-native-archive.log"
+    },
+    {
+      "passed_tests": 14,
+      "name": "owned-postgresql-delegated-authorization",
+      "exit_code": 0,
+      "sha256": "1c62318ce86340fd7160d73d6d7d9e0e36e8d003c55e7b85155c6648a38e871f",
+      "log": "<private-evidence>\\queue-native-database-r455-delegated-authorization.log"
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+  "authentication": {
+    "authenticated_query": true,
+    "method": "scram-sha-256",
+    "wrong_password_rejected": true,
+    "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance."
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T16:33:58.6166138+00:00"
+}

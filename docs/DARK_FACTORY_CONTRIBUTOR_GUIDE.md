@@ -94,13 +94,12 @@ status change as an atomic cross-machine fence.
 
 - Git
 - PowerShell 7.4+ (`pwsh`) on Windows, not Windows PowerShell 5.1
-- Rust 1.94 or newer
-- Node.js; the repository does not declare a minimum version
+- Rust 1.98.1, as pinned in `rust-toolchain.toml`
+- Node.js 24.19.0, as pinned in `.node-version`
 - pnpm 11.19.0
-- Docker with Compose only for the managed local PostgreSQL database
+- An independently provisioned PostgreSQL database and its native `psql.exe` client on PATH
 - GitHub CLI authenticated with repository and Project access for live factory operations
 - Available local ports on first start (defaults):
-  - managed PostgreSQL: `54329`
   - server: `8791`
   - web: `5187`
 
@@ -135,18 +134,201 @@ This local stack is for solo testing or disjoint eligible issue sets. To consume
 use the [shared authority](#operating-model) with separately enrolled runners and distinct
 `CRONY_RUNNER_ID` values, not another local server pointed at the team's database.
 
-For an existing database, have the trusted host supply `DATABASE_URL` before startup. This
-**bypasses Compose entirely**; no additional database is provisioned. Load connection strings,
+Have the trusted host supply the existing `DATABASE_URL` before **every** preflight, start or
+restart, and put PostgreSQL's `psql.exe` on PATH. Startup never provisions a database or invokes
+Compose. Load connection strings,
 service keys, and provider credentials through trusted host configuration, never as values in
 command arguments, source files, issues, evidence, or logs. Secret values are not saved in the
 process ownership record; environment delivery remains reduced assurance. Re-supply the same
-database connection and required keys when starting a missing server. A retained external stack
-does not fall back to Compose, and even `-Restart` cannot retarget its recorded database identity.
+database connection and required keys when starting a missing server. Even `-Restart` cannot
+retarget its recorded database or runner identity.
 Shared deployments expose authenticated ECorp access, not shared database credentials.
+
+### First-time local development setup
+
+Normal Start cannot create its own prerequisites. The native `crony-cli bootstrap` command also
+uses HTTP; it is not an offline database initializer. For a **new, independently owned development
+database and checkout only**, the procedure below starts a bounded native setup server, applies
+the server's real migrations, calls its development bootstrap API, and lets the native runner
+exchange a short-lived enrollment token for its credential. It stops both setup processes before
+ordinary Preflight/Start. No application or credential rows are inserted by hand.
+
+First provision an empty PostgreSQL database that you own, verify that it contains no existing
+ECorp data, and have trusted host configuration supply its `DATABASE_URL`. Database provisioning
+is a separate explicit operator action, not a launcher fallback. Put `psql.exe` on PATH. Configure
+the source, workspace and provider home [above](#configure-the-source-repository), choose unused
+API/UI ports, and choose a new runner ID:
+
+```powershell
+$env:CRONY_RUNNER_ID = 'my-development-runner'
+$env:CRONY_SERVER_PORT = '8791'
+$env:CRONY_WEB_PORT = '5187'
+pnpm install --frozen-lockfile
+if ($LASTEXITCODE) { throw 'Install failed; do not continue with setup.' }
+cargo build -p crony-server -p crony-runner
+if ($LASTEXITCODE) { throw 'Build failed; do not continue with setup.' }
+```
+
+Do not run this recipe against an existing/shared authority, a retained ownership record, or a
+runner whose credentials are missing. Those are restoration/enrollment decisions for that
+authority's administrator, not first-time setup. Run the following in the same PowerShell 7.4+
+session from the ECorp checkout. The credential directory must not already exist; a partial or
+failed attempt is preserved and must be investigated rather than deleted and replayed.
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$root = (Resolve-Path '.').Path
+Import-Module .\tools\local_stack.psm1 -Force
+$null = Get-LocalDatabaseIdentity -DatabaseUrl $env:DATABASE_URL
+$null = Get-LocalSourceCommit -Repository $env:CRONY_SOURCE_REPOSITORY -Ref $env:CRONY_SOURCE_BASE_REF
+Assert-LocalRunnerIdentity -RunnerId $env:CRONY_RUNNER_ID
+$identity = Join-Path $root 'output\runner'
+$state = Join-Path $root 'output\local-pids.json'
+foreach ($path in @($identity, $state)) {
+    Assert-LocalStackPath -Path $path
+    if (Test-Path -LiteralPath $path) { throw "Existing setup state must be preserved: $path" }
+}
+foreach ($path in @($env:CRONY_RUNNER_WORKSPACE, $env:CRONY_COPILOT_HOME)) {
+    Assert-LocalStackPath -Path $path -Directory
+    if (Test-LocalPathEqual $path $env:CRONY_SOURCE_REPOSITORY) {
+        throw 'Execution/provider paths must not be the source checkout.'
+    }
+}
+if (Test-LocalPathEqual $env:CRONY_RUNNER_WORKSPACE $env:CRONY_COPILOT_HOME) {
+    throw 'Execution workspace and provider home must be distinct.'
+}
+$apiPort = [int]$env:CRONY_SERVER_PORT
+$webPort = [int]$env:CRONY_WEB_PORT
+if ($apiPort -lt 1 -or $apiPort -gt 65535 -or $webPort -lt 1 -or $webPort -gt 65535 -or $apiPort -eq $webPort) {
+    throw 'Choose two distinct valid ports.'
+}
+if (Get-NetTCPConnection -State Listen -ErrorAction Stop |
+    Where-Object LocalPort -in @($apiPort, $webPort)) { throw 'A requested port is occupied.' }
+$target = if ($env:CARGO_TARGET_DIR) {
+    [IO.Path]::GetFullPath($env:CARGO_TARGET_DIR, $root)
+} else { Join-Path $root 'target' }
+$serverExe = Join-Path $target 'debug\crony-server.exe'
+$runnerExe = Join-Path $target 'debug\crony-runner.exe'
+Assert-LocalStackPath -Path $serverExe -Required
+Assert-LocalStackPath -Path $runnerExe -Required
+$url = "http://127.0.0.1:$apiPort"
+$credential = Join-Path $identity 'credential.json'
+$tokenFile = Join-Path $identity 'enrollment.token'
+$logs = Join-Path $identity 'setup-logs'
+$records = @{}
+function Save-SetupRecords {
+    [IO.File]::WriteAllText((Join-Path $identity 'setup-processes.json'),
+        ($records | ConvertTo-Json -Depth 8))
+}
+function Wait-SetupReady($Record, [scriptblock]$Probe) {
+    $deadline = [DateTime]::UtcNow.AddSeconds(60)
+    do {
+        if (!(Test-LocalOwnedProcess $Record $root)) { throw 'Native setup process exited; inspect its unique logs.' }
+        try { if (& $Probe) { return } } catch { }
+        Start-Sleep -Milliseconds 500
+    } while ([DateTime]::UtcNow -lt $deadline)
+    throw 'Native setup was not ready within 60 seconds; preserve its state and logs.'
+}
+New-Item -ItemType Directory -Path $identity | Out-Null
+$principal = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+& icacls.exe $identity /inheritance:r /grant:r "${principal}:(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' *> $null
+if ($LASTEXITCODE) { throw 'Could not protect the new identity directory.' }
+[IO.File]::WriteAllText((Join-Path $identity '.env'), '')
+try {
+    if (Get-NetTCPConnection -State Listen -ErrorAction Stop |
+        Where-Object LocalPort -eq $apiPort) { throw 'API port became occupied; nothing was stopped.' }
+    $records.server = Start-LocalOwnedProcess -Role setup-server -Workspace $root `
+        -FilePath $serverExe -ArgumentList @('--bind', "127.0.0.1:$apiPort") `
+        -WorkingDirectory $identity -LogDirectory $logs `
+        -Environment @{ DATABASE_URL=$env:DATABASE_URL; CRONY_MODE='development' }
+    Save-SetupRecords
+    Wait-SetupReady $records.server { (Invoke-RestMethod "$url/health" -TimeoutSec 3).status -eq 'ok' }
+    $demo = Invoke-RestMethod "$url/api/demo/bootstrap?seed_crew=false" -Method Post `
+        -ContentType 'application/json' -Body '{}' -TimeoutSec 10
+    $env:CRONY_CORP_ID = $demo.corp_id
+    $env:CRONY_ACTOR_ID = $demo.alice_actor_id
+    [IO.File]::WriteAllText((Join-Path $identity 'setup-identity.json'),
+        (@{corp_id=$env:CRONY_CORP_ID;actor_id=$env:CRONY_ACTOR_ID;runner_id=$env:CRONY_RUNNER_ID} | ConvertTo-Json))
+    $enrollment = Invoke-RestMethod "$url/api/corps/$($demo.corp_id)/runners/enroll" -Method Post `
+        -ContentType 'application/json' -TimeoutSec 10 -Body (@{
+            actor_id=$demo.alice_actor_id; runner_id=$env:CRONY_RUNNER_ID; expires_in_seconds=600
+        } | ConvertTo-Json)
+    [IO.File]::WriteAllText($tokenFile, $enrollment.enrollment_token)
+    $enrollment = $null
+    $records.runner = Start-LocalOwnedProcess -Role setup-runner -Workspace $root `
+        -FilePath $runnerExe -WorkingDirectory $identity -LogDirectory $logs `
+        -Environment @{ CRONY_COPILOT_HOME=$env:CRONY_COPILOT_HOME } `
+        -ArgumentList @('--server-ws', "$($url.Replace('http:', 'ws:'))/ws/runner",
+            '--runner-id', $env:CRONY_RUNNER_ID, '--corp-id', $demo.corp_id,
+            '--credential-file', $credential, '--enrollment-token-file', $tokenFile,
+            '--workspace', $env:CRONY_RUNNER_WORKSPACE,
+            '--source-repository', $env:CRONY_SOURCE_REPOSITORY,
+            '--source-base-ref', $env:CRONY_SOURCE_BASE_REF,
+            '--fake-agent-script', (Join-Path $root 'scripts\fake-agent.mjs'))
+    Save-SetupRecords
+    Wait-SetupReady $records.runner {
+        $snapshot = Invoke-RestMethod "$url/api/corps/$($demo.corp_id)/snapshot?actor_id=$($demo.alice_actor_id)" -TimeoutSec 5
+        (Test-Path -LiteralPath $credential) -and
+            @($snapshot.runners | Where-Object { $_.id -ceq $env:CRONY_RUNNER_ID -and $_.connected }).Count -eq 1
+    }
+} finally {
+    foreach ($role in @('runner', 'server')) {
+        if (!$records.ContainsKey($role)) { continue }
+        $record = $records[$role]
+        $stopped = Stop-LocalOwnedProcess -Record $record -Workspace $root
+        if (!$stopped -and (Get-LocalProcessIdentity -ProcessId $record.pid)) {
+            throw 'Setup process identity changed or stopping was unverified; preserve the ownership record.'
+        }
+    }
+}
+.\tools\start_local.ps1 -Preflight -SkipBuild -SkipInstall -SkipFactoryController
+.\tools\start_local.ps1 -SkipBuild -SkipInstall -SkipFactoryController
+```
+
+The native runner, not this recipe, creates and rotates `credential.json`. The enrollment token
+is short-lived and is not forwarded by subsequent Start/Restart. Preserve identity files and
+logs; do not print token/credential contents or put them in arguments. Connection values reach
+the trusted setup server only through its environment (reduced assurance). No Factory controller
+or provider inference is started by setup. If setup succeeds but the shell closes before the first
+Start, restore the non-secret IDs from `output\runner\setup-identity.json` into `CRONY_CORP_ID`,
+`CRONY_ACTOR_ID` and `CRONY_RUNNER_ID`, re-supply the same trusted configuration, then use Preflight.
+Do not replay bootstrap/enrollment to work around a failing preflight.
 
 ### Start, reuse, or explicitly restart
 
-Choose an available API/UI port pair on first start; these are the defaults:
+Before managing services, validate the configured, already provisioned stack:
+
+```powershell
+pwsh -NoProfile -File ./tools/start_local.ps1 -Preflight
+```
+
+`-Preflight` also accepts `-Restart` to validate an intended restart and the ordinary port,
+`-SkipBuild` and `-SkipInstall` options. It returns one versioned object with `status = ready`,
+`read_only = true`, the exact source commit, non-secret scope/address fields, and completed
+check names. Failure terminates with an affected path or configuration name; no connection
+string, credential, token, or service key is printed. It starts no services/providers, writes
+no application database data, and does not change retained files, ACLs, credentials or metadata.
+The short-lived native `psql` client uses its environment rather than connection-string
+arguments, ignores `psqlrc`, forbids prompts, and executes an explicit read-only transaction.
+URI host, port, database, user and password map to explicit child-only libpq environment
+fields; no default local database is probed. Supported URI options are `sslmode`, `sslrootcert`,
+`sslcert`, `sslkey`, `application_name` and `client_encoding`. Other or repeated options fail
+closed rather than silently checking a different connection. This environment-only transport
+remains reduced assurance.
+The authorized database connection must permit reads of the existing Corp, human actor,
+runner and credential records. This is database authorization, not a new human sign-in flow.
+
+The same checks run before normal Start/Restart can stop a process or write startup state.
+Checks cover retained schema, explicit Corp/actor/runner identity, database identity and current
+credential binding/expiry/revocation, source repository/ref/commit, owned processes and ports,
+dependencies, and non-redirected workspace/provider paths. An unchanged source ref that has
+moved away from its retained immutable commit fails closed; source alignment needs explicit
+operator review, not an implicit reset. Legacy PID-only records remain read-only and cannot
+be upgraded by startup. Missing identity/credential state requires separate authorized setup
+or restoration, never deletion or automatic re-enrollment.
+
+Choose an available API/UI port pair when first recording an already configured stack; these
+are the defaults:
 
 ```powershell
 pwsh -NoProfile -File ./tools/start_local.ps1 -ServerPort 8791 -WebPort 5187
@@ -167,11 +349,15 @@ inspect its retained logs and retry.
 
 Start installs dependencies only when starting a missing web client; Rust builds cover
 only missing server, runner, or configured Factory roles. Use `-SkipInstall -SkipBuild` only when
-the dependencies and binaries already match the intended source.
+the dependencies and binaries already match the intended source. `CARGO_TARGET_DIR`, when
+supplied, selects the same debug binaries for validation, build and launch.
 
-- **First setup:** when Corp/actor IDs are not already recorded or supplied through
-  `CRONY_CORP_ID`/`CRONY_ACTOR_ID`, development startup bootstraps with `seed_agents: false`.
-  A new runner without an existing identity receives one-time enrollment.
+- **First setup:** follow the [explicit development recipe](#first-time-local-development-setup).
+  Database provisioning, Corp/actor creation and runner enrollment are
+  separate, explicitly authorized native operations. Supply existing `CRONY_CORP_ID` and
+  `CRONY_ACTOR_ID`, the matching `CRONY_RUNNER_ID`, and its current
+  `output/runner/credential.json` before Start. Startup does not bootstrap demo identities
+  or request enrollment, and does not give the runner an enrollment-token fallback.
 - **Later starts and restarts:** retain the same Corp, runner identity, credential files,
   workspace, and provider home. The runner's native workload credential rotates on reconnect;
   startup does not delete it or re-enroll each time. If an existing identity's credential is
@@ -266,11 +452,8 @@ Legacy PID-only records and unknown/reused PIDs do not authorize stopping arbitr
 For a legacy migration, supply the original database/source/address configuration; preserve
 unverified listeners rather than adopting or killing them.
 
-Managed Compose project names are worktree-derived, but the default database port is still
-`54329`. If it is occupied without that managed container, startup refuses to create another
-container; authorized reuse requires an externally supplied `DATABASE_URL`. Coordinate database
-lifecycle separately; do not tear down a database another session uses or delete its data to make
-Start succeed.
+Coordinate database lifecycle separately and supply its authorized `DATABASE_URL`; do not
+tear down a database another session uses or delete its data to make Start succeed.
 
 ## Curate the live backlog
 
@@ -463,6 +646,39 @@ Remove `--dry-run` only after the preview matches the issue contract. The contro
 item, persists the policy, atomically materializes one mission, updates Project status after durable
 state exists, and dispatches only to a matching runner.
 
+### Plan validity and current dispatch readiness
+
+`POST /api/corps/{corp_id}/factory/preflight` and the CLI's `preflight` preview
+separate two facts:
+
+- `valid: true` retains its legacy meaning: the plan passed policy, graph,
+  budget, contract and authorization validation. It is **not** a runner reservation
+  or proof that execution can start. An unbound deterministic `fake-process` plan
+  can remain valid offline, including when its pinned source has no matching runner.
+- `dispatch_readiness` is either `{"status":"ready"}` or
+  `{"status":"not_ready","reason":"..."}`. This observes every constrained task
+  through the native runner selector after authorized preflight. Corp, actor/room,
+  optional saved connection, repository/ref/immutable commit, adapter/model and
+  reconciliation boundaries still apply. No alternate commit or account is selected.
+  Existing provider/staffing and saved-connection admission checks are not relaxed.
+
+Omitting `require_dispatch_ready` (or setting it to `false`) preserves plan-only
+preflight. `true` rejects a valid but currently unready plan with HTTP 409 and a
+diagnostic, without writing a claim, mission, task, run or journal entry.
+The CLI and its controller worker use that execution mode before a new claim or
+an unmaterialized reclaim, then require a typed `ready` result. Old responses
+omitting readiness remain readable for dry runs but cannot authorize execution
+with the updated CLI; upgrade the server rather than interpreting `valid` as ready.
+The claim endpoint remains a fencing/lineage operation, not an execution-readiness
+certificate. Direct API execution clients must use the execution preflight too.
+
+Readiness is point-in-time, **not a reservation**. The existing materialization and
+native dispatch rechecks remain authoritative if a runner disconnects or source,
+account, authorization or capabilities change afterward. A race can still leave a
+durable claim and mission in the existing blocked/recovery flow. Do not promise
+mutation-free rejection for every race, rewrite old lineage, or replace same-ledger
+claim concurrency with a second lock.
+
 Replaying the same request after a lost response or controller restart should recover the durable
 work item and mission. Do not create a replacement issue or second mission merely because the
 controller's response was lost.
@@ -643,15 +859,7 @@ The repository gate from `AGENTS.md` is:
 
 <!-- ecorp:validation-commands -->
 ```powershell
-node tools/check_migrations.mjs
-pnpm check:docs
-pnpm test:unit
-pnpm test:steward
-cargo fmt --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-pnpm build:web
-pnpm lint:web
+pnpm check
 ```
 <!-- /ecorp:validation-commands -->
 

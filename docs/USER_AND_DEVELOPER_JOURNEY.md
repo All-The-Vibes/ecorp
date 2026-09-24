@@ -32,9 +32,14 @@ sheet, and no document-level horizontal overflow.
 A runner is the trusted process that owns provider sessions and Git worktrees. The web UI can be
 closed without stopping it.
 
-For local development:
+For a fresh development stack, complete the explicit
+[first-time setup](DARK_FACTORY_CONTRIBUTOR_GUIDE.md#first-time-local-development-setup) first.
+That procedure provisions identity through the native development API and enrolls the native
+runner before the ordinary launcher is used. For an already configured stack, supply its trusted
+`DATABASE_URL` and run:
 
 ```powershell
+./tools/start_local.ps1 -Preflight
 ./tools/start_local.ps1
 ```
 
@@ -158,9 +163,29 @@ When a run becomes completed, failed, or cancelled, its adapter disconnects or s
 the runner removes the run from its active-process map, and the employee identity returns off shift.
 ECorp preserves the identity and resumable session metadata without leaving an operating-system
 process alive. Unpinned mission workers retire after terminal missions only when there is no active
-run, control lease, queued message, approval, durable command, or teardown uncertainty. An
-authorized resume can reactivate the preserved worker. Dedicated Pin/Unpin, Clear crew, and manual
-Retire controls remain tracked in [#48](https://github.com/All-The-Vibes/ecorp/issues/48).
+run, unfinished saved/running assignment, control lease, queued message, approval, durable command,
+or teardown uncertainty. An authorized resume can reactivate the preserved worker.
+
+The agent inspector's **Pin identity** keeps an identity reusable after its mission, without
+keeping a provider process alive. **Unpin identity** restores ordinary automatic retirement,
+but never cancels work or discards its operational obligations. Owner, admin, manager and member
+human operators can use these controls; a mission-owned identity additionally requires current
+membership in its owning room. Retired historical identities cannot be pinned into service.
+If another operator changes the pin version, refresh and review before retrying.
+
+The equivalent CLI commands require the snapshot's `pin_version` and a caller-owned UUID:
+
+```powershell
+crony --server http://127.0.0.1:8791 pin <corp-id> <agent-id> <actor-id> --expected-version 0 --operation-key <uuid>
+crony --server http://127.0.0.1:8791 unpin <corp-id> <agent-id> <actor-id> --expected-version 1 --operation-key <new-uuid>
+```
+
+Keep the same key and exact request when retrying an unknown result. Reusing it for another
+actor, identity, value or expected version is a conflict. Exact replay returns the recorded
+result, not necessarily today's pin state; read a fresh snapshot afterward. The browser retains
+its operation key across uncertain requests and refreshes state after success or conflict.
+Clear crew and manual Retire remain tracked in
+[#48](https://github.com/All-The-Vibes/ecorp/issues/48); Pin/Unpin does not complete that umbrella.
 
 Risky commands create durable approval records. After verification passes, the mission card exposes
 provider evidence, verification evidence, the signed source deliverable, and integration state as
@@ -187,12 +212,18 @@ does not merge or deploy.
 
 ### Local process topology
 
-`tools/start_local.ps1` starts:
+After read-only validation of the configured database, source and existing runner identity,
+`tools/start_local.ps1` starts only missing owned services:
 
-1. PostgreSQL through Docker Compose.
-2. `crony-server` on `127.0.0.1:8791`.
-3. `crony-runner`, enrolled through an expiring token and then a rotating credential.
-4. The Vite web client on `127.0.0.1:5187`.
+1. `crony-server` on `127.0.0.1:8791`.
+2. `crony-runner`, using its existing rotating credential.
+3. The Vite web client on `127.0.0.1:5187`.
+
+The database must already be independently provisioned. Normal startup and `-Restart` never
+invoke Compose, bootstrap a Corp, enroll a replacement runner, or delete credentials.
+`-Preflight` performs the same validation without starting services or changing retained state.
+The [one-time development setup](DARK_FACTORY_CONTRIBUTOR_GUIDE.md#first-time-local-development-setup)
+uses temporary, explicitly owned native setup processes, stops them, then hands off to this launcher.
 
 When `ECORP_FACTORY_WATCH=1`, startup also starts the configured trusted GitHub Project watcher.
 Its heartbeat and pause/resume state are independent from individual missions. Without that
@@ -217,15 +248,7 @@ and streams normalized lifecycle events back.
 
 <!-- ecorp:validation-commands -->
 ```powershell
-node tools/check_migrations.mjs
-pnpm check:docs
-pnpm test:unit
-pnpm test:steward
-cargo fmt --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-pnpm build:web
-pnpm lint:web
+pnpm check
 ```
 <!-- /ecorp:validation-commands -->
 

@@ -1,0 +1,34 @@
+✖ published base plus complete patch reconstructs the current driver pin (UTF-8 LF, no BOM) (3.3631ms)
+ℹ {"baseCommit":"b31a38a62330aacba80c3953142e1da957a63ecd","baseSha256":"d5a475ec96be30a2a02b978c7dd8a43dba528b1aa1cefac0931f9313fb1b4c7b","patchLfSha256":"6c34349d7acdea6718bec4051a025adca8cc47df860bfe9c957dd91fc4a25732","reconstructedBytes":16642,"reconstructedSha256":"266e8cccb9b66f496e7971fe305a32854906934d41e3e785cd7ec1541414485d"}
+✔ guard rejects unpatched, tampered and noncanonical helper bytes (8.135ms)
+✔ guard rejects the correct helper from a different source commit (1.0888ms)
+✔ guard rejects clean or additional dirty/untracked dependency files (3.8387ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 523.4586
+
+✖ failing tests:
+
+test at tools\issue161\qa-api-provenance.test.mjs:59:1
+✖ published base plus complete patch reconstructs the current driver pin (UTF-8 LF, no BOM) (3.3631ms)
+  AssertionError [ERR_ASSERTION]: canonical bytes must not contain CR
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/tools/issue161/qa-api-provenance.test.mjs:62:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

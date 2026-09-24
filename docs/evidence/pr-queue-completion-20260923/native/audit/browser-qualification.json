@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "phase": "readback_complete",
+  "started_at": "2026-09-23T17:49:11.224Z",
+  "source_commit": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "source_branch": "codex/ecorp-pr-queue-completion-20260923",
+  "server": "http://127.0.0.1:8992",
+  "web": "http://127.0.0.1:5298",
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "title": "Native local qualification 9250fcbf-8516-4382-a84a-0a9ac835fb32",
+  "assurance": "Development identities and deterministic fake-process; no vendor inference or production identity claim.",
+  "http_results": [
+    {
+      "method": "POST",
+      "route": "/api/demo/bootstrap",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "method": "POST",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/20e11e4b-6a2f-4be2-9bb9-dd6889fc6a50/verification-decision",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "method": "POST",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/20e11e4b-6a2f-4be2-9bb9-dd6889fc6a50/verification-decision",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "method": "POST",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/20e11e4b-6a2f-4be2-9bb9-dd6889fc6a50/verification-decision",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "method": "POST",
+      "route": "/api/demo/bootstrap",
+      "status": 200,
+      "expected": 200
+    }
+  ],
+  "source": {
+    "repository": "local/source-fixture-8ed0824e5491",
+    "base_ref": "main",
+    "base_commit": "c55b66067372ee5db9c6c06ba9acb8d913b59b05"
+  },
+  "mission_id": "b3aeaa6f-5912-4081-bddc-65cd00e38ce2",
+  "task_id": "c9afe50e-2316-4f2c-b91a-1c4ea8dda625",
+  "contract_version": 1,
+  "contract_digest": "a3ceacb119d5abc1cfcaf2c04f5cf1bdb406798162b2cd098818a9315737788a",
+  "verification_policy": {
+    "checks": [
+      {
+        "type": "artifact",
+        "min_bytes": 1
+      }
+    ],
+    "manual_gate": {
+      "type": "independent_review",
+      "roles": [
+        "member",
+        "owner",
+        "admin"
+      ],
+      "exclude_requester": true
+    }
+  },
+  "run_id": "20e11e4b-6a2f-4be2-9bb9-dd6889fc6a50",
+  "verifier_evidence": [
+    {
+      "id": "ecc34464-2c2e-4735-96ff-166cb96fae02",
+      "kind": "artifact",
+      "status": "passed",
+      "check_index": 0
+    }
+  ],
+  "reviewer_actor_id": "00000000-0000-4000-8000-000000000012",
+  "review_status": "approved",
+  "verification_request_key": "20e11e4b-6a2f-4be2-9bb9-dd6889fc6a50",
+  "verification_review": {
+    "run_id": "20e11e4b-6a2f-4be2-9bb9-dd6889fc6a50",
+    "task_id": "c9afe50e-2316-4f2c-b91a-1c4ea8dda625",
+    "gate_type": "independent_review",
+    "status": "approved",
+    "decided_by": "00000000-0000-4000-8000-000000000012",
+    "decided_at": "2026-09-23T17:49:29.536253Z"
+  },
+  "physical_artifact_equal": true,
+  "before_restart": {
+    "mission_status": "completed",
+    "task_status": "completed",
+    "run_status": "completed",
+    "verification_status": "passed",
+    "artifact_id": "c871b6e8-2035-4ee9-938d-11c34a9d9832",
+    "artifact_sha256": "963599762ef202552b04ab5e9935d80b85df11f3ad31dc103f43be603b5f721b",
+    "artifact_bytes": 1667,
+    "artifact_signature": "f55dedada1818acd3cb87230e177ca1391059106d3952e234ba229b658707c15",
+    "workspace_path": "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\runner-workspaces\\worktrees\\c9afe50e23164f2cb91a1c4ea8dda625\\20e11e4b6a2f4be29bb9dd6889fc6a50",
+    "workspace_branch": "crony/task-c9afe50e23164f2cb91a1c4ea8dda625/run-20e11e4b6a2f4be29bb9dd6889fc6a50",
+    "workspace_disposition": "preserved"
+  },
+  "updated_at": "2026-09-23T17:52:35.975Z",
+  "page_errors": [],
+  "current_attempt": {
+    "attempt_id": "456feed6-9b47-458a-9667-9281a4b44f30",
+    "identity_sha256": "2ae260ec106374f2c730fc4156604ea9a9496d21dacf8513b8d1977263b3ac3d",
+    "status": "succeeded",
+    "finished_at": "2026-09-23T17:52:42.481Z"
+  },
+  "after_restart": {
+    "mission_status": "completed",
+    "task_status": "completed",
+    "run_status": "completed",
+    "verification_status": "passed",
+    "artifact_id": "c871b6e8-2035-4ee9-938d-11c34a9d9832",
+    "artifact_sha256": "963599762ef202552b04ab5e9935d80b85df11f3ad31dc103f43be603b5f721b",
+    "artifact_bytes": 1667,
+    "artifact_signature": "f55dedada1818acd3cb87230e177ca1391059106d3952e234ba229b658707c15",
+    "workspace_path": "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\runner-workspaces\\worktrees\\c9afe50e23164f2cb91a1c4ea8dda625\\20e11e4b6a2f4be29bb9dd6889fc6a50",
+    "workspace_branch": "crony/task-c9afe50e23164f2cb91a1c4ea8dda625/run-20e11e4b6a2f4be29bb9dd6889fc6a50",
+    "workspace_disposition": "preserved"
+  },
+  "restart_agreement": true,
+  "base_readback": {
+    "source": "Native Base API read from the real UI browser origin, with rendered evidence checked separately.",
+    "destination_id": "b0cdef8d-8b2b-466c-b5c3-cbb13b79e51c",
+    "verified_digest": "6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913",
+    "verified_sequence": 1,
+    "no_active_intent": true
+  },
+  "archive_readback": {
+    "source": "Native audit status from actual UI browser origin, also rendered in Audit evidence.",
+    "receipt": {
+      "checkpoint_digest": "6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "destination_id": "41a9e0d4-bf65-426e-9ae3-d48907bd4e9e",
+      "status": "published",
+      "updated_at": "2026-09-23T17:50:34.867962+00:00",
+      "witness": {
+        "archive_publication": {
+          "archive": {
+            "byte_count": 11833,
+            "checkpoint_digest": "6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913",
+            "ledger_id": "b1bfe19d-1457-41c7-807a-731662eb2f52",
+            "parts": [
+              {
+                "byte_count": 11833,
+                "git_blob_sha1": "b177cc434a11c6ee6a9034f9084628bbc02f597e",
+                "path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001-6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913/archive-00000.json",
+                "sha256": "958af3069bf407f6e496cdc868f47cfdc6ebb79fdc5f58a1f873b078deb68432"
+              }
+            ],
+            "schema_version": 1,
+            "sha256": "958af3069bf407f6e496cdc868f47cfdc6ebb79fdc5f58a1f873b078deb68432"
+          },
+          "commit": "a1040d9702908dcfc30478859225407a438cdc93",
+          "index_git_blob_sha1": "c3026f8cf6e0d4061dee66405c595c2258ab7cb7",
+          "index_path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001-6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913/archive.json",
+          "index_sha256": "a8df024feb08ad99caaf8ac74f3dd0641186fc4c7515a299c56d9ba9be76138d"
+        },
+        "branch": "audit",
+        "commit": "a1040d9702908dcfc30478859225407a438cdc93",
+        "finalized": false,
+        "independently_verified": false,
+        "path": "audit",
+        "previous_destination_checkpoint": null,
+        "provider": "github",
+        "repository": "qualification/native-audit"
+      }
+    }
+  },
+  "visible_audit_projection": {
+    "checkpoint_digest": "6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913",
+    "transaction_hash": "0xf8a48f976f31e20d3b2aec58ff53ad070e8b65a4d2f65989a66f04e273073e9c",
+    "commit": "a1040d9702908dcfc30478859225407a438cdc93"
+  },
+  "ui_authorization": {
+    "denied_status": 403,
+    "prior_viewer_evidence_absent": true,
+    "owner_projection_restored": true
+  }
+}

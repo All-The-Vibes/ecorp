@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "pr": 237,
+  "status": "passed",
+  "new_current_source_runs": true,
+  "source_head": "0a2eed4c8f1486f051c99b2fd2a440978c86e714",
+  "tested_staged_tree": "2f3b7774e249da21d9393e35b0cd8c1b2d07a2a8",
+  "started_at_utc": "2026-09-22T21:00:31.2440578+00:00",
+  "scope": "<local-user>\\code\\qa\\p237-r8",
+  "commands": [
+    {
+      "name": "windows-external-adapters",
+      "program": "<local-user>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\native\\powershell\\pwsh.exe",
+      "arguments": [
+        "-NoProfile",
+        "-File",
+        "<reviewed-worktree>\\tools\\ci_external_adapters_windows.ps1",
+        "-FixtureRoot",
+        "<local-user>\\code\\qa\\p237-r8\\ecorp-external-adapters-pr237",
+        "-PgBin",
+        "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "-ServerPort",
+        "28437",
+        "-PostgresPort",
+        "55437",
+        "-Execute"
+      ],
+      "started_at_utc": "2026-09-22T21:00:31.3271929+00:00",
+      "finished_at_utc": "2026-09-22T21:02:22.5262041+00:00",
+      "exit_code": 0,
+      "log": "<local-user>\\code\\qa\\p237-r8\\windows-external-adapters.log",
+      "sha256": "2767fced84fa3ee04e6f9910f1020555bf8cf796e1f5974b7b32ab491733f7d2",
+      "execution_receipt": "<local-user>\\code\\qa\\p237-r8\\windows-external-adapters.execution.json",
+      "execution_sha256": "816478d461d18e8b7b4ae4c2094c8a2332986435eac50391ba711f892db1ef0d",
+      "captures": [
+        {
+          "file": "windows-external-adapters.running.png",
+          "started_at_utc": "2026-09-22T21:00:35.411Z",
+          "finished_at_utc": "2026-09-22T21:00:35.499Z",
+          "child_running_at_request": true,
+          "child_running_at_completion": true,
+          "sha256": "f755e85de83cc2b18116c045e09e61c69bf67844a82b3d789b0be7a90a8368e0"
+        },
+        {
+          "file": "windows-external-adapters.completed.png",
+          "started_at_utc": "2026-09-22T21:02:21.857Z",
+          "finished_at_utc": "2026-09-22T21:02:21.925Z",
+          "child_running_at_request": false,
+          "child_running_at_completion": false,
+          "sha256": "6e158dc4c1f9a50917427ccee01d291e145f3baddf8a918da11ad2feef63de93"
+        }
+      ]
+    },
+    {
+      "name": "bounded-recovery",
+      "program": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "arguments": [
+        "<reviewed-worktree>\\tools\\e2e_factory_budget_recovery.mjs",
+        "--execute"
+      ],
+      "started_at_utc": "2026-09-22T21:02:22.5713719+00:00",
+      "finished_at_utc": "2026-09-22T21:03:39.2405630+00:00",
+      "exit_code": 0,
+      "log": "<local-user>\\code\\qa\\p237-r8\\bounded-recovery.log",
+      "sha256": "451259ea9b0c49abf6abb975e977a5258ef07410b9988422772a587c4324b672",
+      "execution_receipt": "<local-user>\\code\\qa\\p237-r8\\bounded-recovery.execution.json",
+      "execution_sha256": "db9c63f28404e550f3a1d6e0ec3392caddf47c46fa13d29f9bdf436c695261b1",
+      "captures": [
+        {
+          "file": "bounded-recovery.running.png",
+          "started_at_utc": "2026-09-22T21:02:25.128Z",
+          "finished_at_utc": "2026-09-22T21:02:25.204Z",
+          "child_running_at_request": true,
+          "child_running_at_completion": true,
+          "sha256": "e8d04432e60c867c09b1d314318f825d3287dd6ca0aba1eac0688fba20e62379"
+        },
+        {
+          "file": "bounded-recovery.completed.png",
+          "started_at_utc": "2026-09-22T21:03:38.584Z",
+          "finished_at_utc": "2026-09-22T21:03:38.652Z",
+          "child_running_at_request": false,
+          "child_running_at_completion": false,
+          "sha256": "ccaa6eb82138b5eb72d20f804bb84489f57ff0a4dccbcc73ed2edc1254ee6160"
+        }
+      ],
+      "native_report": "<local-user>\\code\\qa\\p237-r8\\b\\qa\\issue-50-factory-recovery\\attempts\\20260922210225748\\report.json",
+      "native_report_sha256": "b71cdf08c863a0fd3a317751aa5e1bdcd963dfeff90dd26723adcd4ebb4b1894"
+    },
+    {
+      "name": "revised-budget-hard-stop",
+      "program": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "arguments": [
+        "<reviewed-worktree>\\tools\\e2e_factory_budget_recovery.mjs",
+        "--execute",
+        "--overrun"
+      ],
+      "started_at_utc": "2026-09-22T21:03:39.3736324+00:00",
+      "finished_at_utc": "2026-09-22T21:04:45.5302619+00:00",
+      "exit_code": 0,
+      "log": "<local-user>\\code\\qa\\p237-r8\\revised-budget-hard-stop.log",
+      "sha256": "f6d20bedd34b933ee29ccec707ce53ca8a36b0eb7c1fe186abef8c4c2a58dee9",
+      "execution_receipt": "<local-user>\\code\\qa\\p237-r8\\revised-budget-hard-stop.execution.json",
+      "execution_sha256": "c3baa4d1f452595494db84a26002aad9efcdeac5271621a48b61765d7b63a12e",
+      "captures": [
+        {
+          "file": "revised-budget-hard-stop.running.png",
+          "started_at_utc": "2026-09-22T21:03:42.337Z",
+          "finished_at_utc": "2026-09-22T21:03:42.408Z",
+          "child_running_at_request": true,
+          "child_running_at_completion": true,
+          "sha256": "058e15f5630eae9ae872e4dfe23a39e598a2e3e9cc7f3eabff6f4a0bd4fc01ab"
+        },
+        {
+          "file": "revised-budget-hard-stop.completed.png",
+          "started_at_utc": "2026-09-22T21:04:44.892Z",
+          "finished_at_utc": "2026-09-22T21:04:44.954Z",
+          "child_running_at_request": false,
+          "child_running_at_completion": false,
+          "sha256": "d964c5adbadbec5141eb10365461b9c1cfb2fb31dac8600c52f817c4f37c45f0"
+        }
+      ],
+      "native_report": "<local-user>\\code\\qa\\p237-r8\\o\\qa\\issue-50-factory-recovery\\attempts\\20260922210343026\\report.json",
+      "native_report_sha256": "dc8bdd3b3b17c900b8ca8c8d9f5d5bc0db53656f87252bbcf877c4ec59a18d74"
+    },
+    {
+      "name": "native-missing-checkpoint",
+      "program": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "arguments": [
+        "<reviewed-worktree>\\tools\\e2e_factory_budget_recovery.mjs",
+        "--execute",
+        "--missing-checkpoint"
+      ],
+      "started_at_utc": "2026-09-22T21:04:45.5874906+00:00",
+      "finished_at_utc": "2026-09-22T21:05:56.5081783+00:00",
+      "exit_code": 0,
+      "log": "<local-user>\\code\\qa\\p237-r8\\native-missing-checkpoint.log",
+      "sha256": "d387ac45e514b366461cb88cf02763d40a4a9262493464aae11cac9b8d85c419",
+      "execution_receipt": "<local-user>\\code\\qa\\p237-r8\\native-missing-checkpoint.execution.json",
+      "execution_sha256": "5f1505ddfb6047a5ecf7b5d4627eb6270f39dda3789450ac4ea938058125c883",
+      "captures": [
+        {
+          "file": "native-missing-checkpoint.running.png",
+          "started_at_utc": "2026-09-22T21:04:48.162Z",
+          "finished_at_utc": "2026-09-22T21:04:48.232Z",
+          "child_running_at_request": true,
+          "child_running_at_completion": true,
+          "sha256": "b7981cee8fa73b8278c82cd25ece7e1d14ba8e24c2d73119abc064bf3c347d05"
+        },
+        {
+          "file": "native-missing-checkpoint.completed.png",
+          "started_at_utc": "2026-09-22T21:05:55.868Z",
+          "finished_at_utc": "2026-09-22T21:05:55.933Z",
+          "child_running_at_request": false,
+          "child_running_at_completion": false,
+          "sha256": "5ddb8c58eb9045a92e50f0b7e9f205ed8a07aad5f5fe274b0a1a9196dc7c1517"
+        }
+      ],
+      "native_report": "<local-user>\\code\\qa\\p237-r8\\m\\qa\\issue-50-factory-recovery\\attempts\\20260922210448822\\report.json",
+      "native_report_sha256": "3f2e4abb473c077e61779c8068a8109891d55020ef6c48a6b7398f8ec61303f3"
+    }
+  ],
+  "provider": "Native Rust services and deterministic protocol fixtures; no real provider accounts",
+  "historical_evidence": "Original receipts and report graphics remain unchanged. These are new runs, not reconstructed original evidence.",
+  "finished_at_utc": "2026-09-22T21:05:56.8116160+00:00"
+}

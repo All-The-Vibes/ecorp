@@ -11,7 +11,9 @@ use crate::{
     Args,
     artifacts::{ArtifactStore, PreparedArtifactStore},
     auth::{AuthService, ServerMode},
+    delegated::Broker,
     secrets::SecretCipher,
+    state_audit,
 };
 
 pub struct PreparedStartup {
@@ -19,6 +21,8 @@ pub struct PreparedStartup {
     pub secret_cipher: SecretCipher,
     pub artifacts: PreparedArtifactStore,
     pub cors: CorsLayer,
+    pub audit: Option<std::sync::Arc<state_audit::Service>>,
+    pub delegated: Option<std::sync::Arc<Broker>>,
 }
 
 impl PreparedStartup {
@@ -39,15 +43,23 @@ impl PreparedStartup {
             args.artifact_max_bytes,
             args.mode == ServerMode::Production,
         )?;
+        let audit = state_audit::Service::from_environment().map_err(|_| {
+            anyhow!("invalid state audit configuration: check CRONY_STATE_AUDIT settings")
+        })?;
         // Drop the underlying error chain: discovery errors may include URLs,
         // credentials, or response values. Keep #270's discovery behavior intact.
         let auth = AuthService::initialize(args.mode, args.oidc_issuer.clone(), args.allow_insecure_oidc)
             .await.map_err(|_| anyhow!("invalid OIDC configuration or discovery: check CRONY_OIDC_ISSUER and issuer metadata"))?;
+        let delegated = Broker::from_env(args.mode)
+            .await
+            .map_err(|_| anyhow!("invalid delegated configuration or provider discovery"))?;
         Ok(Self {
             auth,
             secret_cipher,
             artifacts,
             cors,
+            audit,
+            delegated,
         })
     }
 }

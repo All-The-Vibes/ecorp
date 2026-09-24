@@ -1,0 +1,25 @@
+Owned fixture identity verified; DATABASE_URL child environment only (reduced assurance); unrelated credentials scrubbed.
+Command: <review-host>\.cargo\bin\cargo.exe test -p crony-server --locked --offline -j 2 issue283_b05_ -- --include-ignored --test-threads=1 --nocapture
+   Compiling crony-store v0.1.0 (<review-host>\repos\ecorp-pr283-review-fixes\crates\crony-store)
+   Compiling crony-server v0.1.0 (<review-host>\repos\ecorp-pr283-review-fixes\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 45.41s
+     Running unittests src\main.rs (target\debug\deps\crony_server-b4a650ed3d0ec449.exe)
+
+running 2 tests
+test factory_source_audit_tests::issue283_b05_covered_source_upgrade_conflict_and_replay ...
+thread 'factory_source_audit_tests::issue283_b05_covered_source_upgrade_conflict_and_replay' (70056) panicked at crates\crony-server\src\factory_source_audit_tests.rs:211:9:
+assertion `left == right` failed: covered=true
+  left: 400
+ right: 409
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test factory_source_audit_tests::issue283_b05_uncovered_source_upgrade_conflict ... ok
+
+failures:
+
+failures:
+    factory_source_audit_tests::issue283_b05_covered_source_upgrade_conflict_and_replay
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 133 filtered out; finished in 9.20s
+
+error: test failed, to rerun pass `-p crony-server --bin crony-server`

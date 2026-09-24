@@ -1,0 +1,14 @@
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+error[E0609]: no field `task` on type `Operation`
+   --> crates\crony-server\src\delegated_tests.rs:695:153
+    |
+695 | ...().issuer).bind(f.provider.expected().subject).bind(op.task)
+    |                                                           ^^^^ unknown field
+    |
+    = note: available fields are: `id`, `mission`, `assignment`
+
+For more information about this error, try `rustc --explain E0609`.
+error: could not compile `crony-server` (bin "crony-server" test) due to 1 previous error

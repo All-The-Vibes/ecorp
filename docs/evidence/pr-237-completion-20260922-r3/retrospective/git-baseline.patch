@@ -1,0 +1,21 @@
+diff --git a/tools/e2e_factory_budget_recovery.mjs b/tools/e2e_factory_budget_recovery.mjs
+index 163cbeb..0a56909 100644
+--- a/tools/e2e_factory_budget_recovery.mjs
++++ b/tools/e2e_factory_budget_recovery.mjs
+@@ -40,12 +39,0 @@ const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+-// These process-local Git settings also reach the fixture runner's Git children.
+-// All referenced files/directories belong to this exclusively admitted attempt.
+-Object.assign(env, {
+-  GIT_CONFIG_GLOBAL: path.join(attempt, 'empty.gitconfig'), GIT_CONFIG_NOSYSTEM: '1',
+-  GIT_CONFIG_COUNT: '6',
+-  GIT_CONFIG_KEY_0: 'core.hooksPath', GIT_CONFIG_VALUE_0: path.join(attempt, 'empty-git-hooks'),
+-  GIT_CONFIG_KEY_1: 'init.templateDir', GIT_CONFIG_VALUE_1: path.join(attempt, 'empty-git-template'),
+-  GIT_CONFIG_KEY_2: 'commit.gpgSign', GIT_CONFIG_VALUE_2: 'false',
+-  GIT_CONFIG_KEY_3: 'tag.gpgSign', GIT_CONFIG_VALUE_3: 'false',
+-  GIT_CONFIG_KEY_4: 'core.fsmonitor', GIT_CONFIG_VALUE_4: 'false',
+-  GIT_CONFIG_KEY_5: 'core.longpaths', GIT_CONFIG_VALUE_5: 'true',
+-})
+@@ -334,3 +321,0 @@ try {
+-  await writeFile(env.GIT_CONFIG_GLOBAL, '', { flag: 'wx' })
+-  await mkdir(env.GIT_CONFIG_VALUE_0)
+-  await mkdir(env.GIT_CONFIG_VALUE_1)

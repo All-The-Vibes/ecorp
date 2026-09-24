@@ -1,6 +1,9 @@
 mod adapter;
 mod connections;
 mod deliverable;
+mod dependency_files;
+#[cfg(test)]
+mod issue297_native_fixtures;
 mod retained_provider_receipt;
 #[cfg(test)]
 mod retained_provider_receipt_tests;
@@ -24,7 +27,9 @@ use anyhow::{Context, Result, anyhow};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chrono::{DateTime, Utc};
 use clap::Parser;
-use crony_domain::{DeliverableSpec, RetainedProviderReceiptGrant, VerificationPolicy};
+use crony_domain::{
+    DeliverableSpec, RetainedProviderReceiptGrant, RunFailureKind, VerificationPolicy,
+};
 use crony_protocol::{
     ActiveRunClaim, MAX_VERIFICATION_ARTIFACT_BYTES, ResolvedSecret, RunnerCapability, RunnerModel,
     RunnerToServer, ServerToRunner, VerificationArtifactReference,
@@ -174,6 +179,7 @@ struct Args {
 
 #[derive(Debug, Clone)]
 struct Assignment {
+    dependency_files: Vec<crony_protocol::dependency_files::VerifiedDependencyFile>,
     corp_id: Uuid,
     connection_epoch: Uuid,
     room_id: Uuid,
@@ -416,12 +422,42 @@ struct OutboundBus {
 
 #[derive(Default)]
 struct OutboundState {
+    delegated_origin: Option<(Uuid, url::Url)>,
     connection: Option<mpsc::UnboundedSender<RunnerToServer>>,
     connection_epoch: Option<Uuid>,
     pending: VecDeque<RunnerToServer>,
 }
 
 impl OutboundBus {
+    fn delegated_assignment(
+        &self,
+        assignment: &Assignment,
+        runner_id: &str,
+    ) -> Result<adapter::delegated::TrustedAssignment> {
+        let state = self
+            .state
+            .lock()
+            .map_err(|_| anyhow!("runner transport unavailable"))?;
+        let (epoch, url) = state
+            .delegated_origin
+            .as_ref()
+            .context("missing delegated server origin")?;
+        anyhow::ensure!(
+            *epoch == assignment.connection_epoch
+                && state.connection_epoch == Some(*epoch)
+                && state.connection.is_some(),
+            "delegated assignment connection is no longer current"
+        );
+        Ok(adapter::delegated::TrustedAssignment {
+            run_id: assignment.run_id,
+            task_id: assignment.task_id,
+            runner_id: runner_id.to_owned(),
+            connection_epoch: assignment.connection_epoch,
+            assignment_token: assignment.assignment_token,
+            server_http_url: url.clone(),
+        })
+    }
+
     fn send_live(&self, mut message: RunnerToServer) -> bool {
         let Ok(state) = self.state.lock() else {
             return false;
@@ -479,6 +515,26 @@ impl OutboundBus {
             );
         }
         state.pending.push_back(message);
+    }
+}
+
+#[derive(Default)]
+struct DelegatedConnectionGuard(Vec<mpsc::UnboundedSender<AdapterControl>>);
+
+impl DelegatedConnectionGuard {
+    fn track(&mut self, control: mpsc::UnboundedSender<AdapterControl>) {
+        self.0.retain(|existing| !existing.is_closed());
+        self.0.push(control);
+    }
+}
+
+impl Drop for DelegatedConnectionGuard {
+    fn drop(&mut self) {
+        for control in &self.0 {
+            let _ = control.send(AdapterControl::Stop {
+                reason: "Original delegated runner connection ended.".to_owned(),
+            });
+        }
     }
 }
 
@@ -614,6 +670,13 @@ async fn run_connection(
     let (mut socket_tx, mut socket_rx) = socket.split();
     let (out_tx, mut out_rx) = mpsc::unbounded_channel::<RunnerToServer>();
     let connection_epoch = Uuid::new_v4();
+    let mut delegated_connection = DelegatedConnectionGuard::default();
+    let delegated_origin = adapter::delegated::server_http_url(&args.server_ws)?;
+    outbound
+        .state
+        .lock()
+        .map_err(|_| anyhow!("runner transport unavailable"))?
+        .delegated_origin = Some((connection_epoch, delegated_origin));
 
     let writer = tokio::spawn(async move {
         while let Some(message) = out_rx.recv().await {
@@ -726,6 +789,16 @@ async fn run_connection(
     });
     capabilities.push(RunnerCapability {
         workspace_connection_id: None,
+        name: "verifier-cache-suppression-v1".to_owned(),
+        available: true,
+        detail: Some("Explicit verifier child cache controls".to_owned()),
+        models: Vec::new(),
+        source_repository: None,
+        source_base_ref: None,
+        source_base_commit: None,
+    });
+    capabilities.push(RunnerCapability {
+        workspace_connection_id: None,
         name: "checkpoint-verification-v1".to_owned(),
         available: true,
         detail: Some(
@@ -766,6 +839,18 @@ async fn run_connection(
     let setup_capability = workspace_setup_capability(connection_manager.is_some());
     let setup_available = setup_capability.available;
     capabilities.push(setup_capability);
+    capabilities.push(RunnerCapability {
+        workspace_connection_id: None,
+        name: crony_protocol::dependency_files::DEPENDENCY_FILES_CAPABILITY.to_owned(),
+        available: true,
+        detail: Some(
+            "bounded verified dependency files materialized before provider startup".to_owned(),
+        ),
+        models: Vec::new(),
+        source_repository: None,
+        source_base_ref: None,
+        source_base_commit: None,
+    });
     let base_capabilities = Arc::new(capabilities.clone());
     if let Some(manager) = &connection_manager {
         capabilities.extend(manager.capabilities());
@@ -994,6 +1079,7 @@ async fn run_connection(
                 }
             }
             ServerToRunner::StartRun {
+                dependency_files,
                 workspace_connection_id,
                 corp_id,
                 room_id,
@@ -1015,6 +1101,7 @@ async fn run_connection(
                 secrets,
             } => {
                 let assignment = Assignment {
+                    dependency_files,
                     corp_id,
                     connection_epoch,
                     room_id,
@@ -1087,6 +1174,9 @@ async fn run_connection(
                     continue;
                 };
                 let (control_tx, control_rx) = mpsc::unbounded_channel::<AdapterControl>();
+                if assignment.adapter == "delegated-resource" {
+                    delegated_connection.track(control_tx.clone());
+                }
                 let (artifact_ack_tx, artifact_ack_rx) = mpsc::unbounded_channel::<ArtifactAck>();
                 schedule_secret_expiry(secret_ttl, control_tx.clone());
                 active_runs.insert(
@@ -1132,6 +1222,7 @@ async fn run_connection(
                 });
             }
             ServerToRunner::ResumeRun {
+                dependency_files,
                 workspace_connection_id,
                 command_id,
                 corp_id,
@@ -1181,6 +1272,7 @@ async fn run_connection(
                     assignment_token,
                     adapter,
                     mission_title: prompt,
+                    dependency_files,
                     model,
                     reasoning_effort,
                     source_repository,
@@ -1371,6 +1463,7 @@ async fn run_connection(
                     continue;
                 }
                 let assignment = Assignment {
+                    dependency_files: Vec::new(),
                     corp_id,
                     connection_epoch,
                     room_id,
@@ -1532,6 +1625,7 @@ async fn run_connection(
                     continue;
                 }
                 let assignment = Assignment {
+                    dependency_files: Vec::new(),
                     corp_id,
                     connection_epoch,
                     room_id,
@@ -2166,7 +2260,35 @@ async fn execute_assignment(
         );
         return Ok(());
     }
+    if let Err(error) = dependency_files::materialize(
+        &workspace.path,
+        &assignment.dependency_files,
+        &assignment.write_scope,
+    ) {
+        send_run_event(
+            &outbound,
+            &runner_id,
+            &assignment,
+            "run.failed",
+            json!({"error": format!("verified dependency materialization failed: {error:#}")}),
+        );
+        send_teardown_workspace_preserved(
+            &outbound,
+            &runner_id,
+            &assignment,
+            &workspace,
+            "dependency materialization failed before provider startup",
+            None,
+            true,
+        );
+        return Ok(());
+    }
     let request = AdapterRunRequest {
+        trusted_assignment: if assignment.adapter == "delegated-resource" {
+            Some(outbound.delegated_assignment(&assignment, &runner_id)?)
+        } else {
+            None
+        },
         run_id: assignment.run_id,
         mission_id: assignment.mission_id,
         task_id: assignment.task_id,
@@ -3311,7 +3433,15 @@ async fn send_verification_events(
                     assignment,
                     "run.failed",
                     json!({
-                        "error": format!("verified deliverable export failed: {error:#}"),
+                        "failure_kind": RunFailureKind::DeliverableExport,
+                        "error": format!(
+                            "Verified deliverable export failed: {error:#}. \
+                             Automatic fresh-worktree retry is disabled. Keep the preserved worktree; \
+                             inspect its complete source delta and the accepted deliverable/write scope. \
+                             Use the existing preserved-session Resume only when that complete delta \
+                             fits the current contract. If scope excludes retained source, a new \
+                             authorized full-scope mission is required; do not delete source or reset attempts."
+                        ),
                     }),
                 );
                 return VerificationRunOutcome::Failed;
@@ -3870,6 +4000,7 @@ mod tests {
 
     fn verification_assignment(workspace: &WorkspaceLease, run_id: Uuid) -> Assignment {
         Assignment {
+            dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),
             connection_epoch: Uuid::new_v4(),
@@ -3903,6 +4034,43 @@ mod tests {
             checkpoint_verification: false,
             hard_boundary_checkpoint: Arc::default(),
         }
+    }
+
+    #[test]
+    fn delegated_context_is_bound_to_the_original_live_transport() {
+        let workspace = WorkspaceLease {
+            path: PathBuf::from("unused-delegated-context-test"),
+            branch: "test".to_owned(),
+            base_ref: "HEAD".to_owned(),
+            base_commit: "0".repeat(40),
+        };
+        let assignment = verification_assignment(&workspace, Uuid::new_v4());
+        let bus = OutboundBus::default();
+        assert!(bus.delegated_assignment(&assignment, "runner").is_err());
+        let origin = adapter::delegated::server_http_url("ws://127.0.0.1:8791/ws/runner").unwrap();
+        bus.state.lock().unwrap().delegated_origin =
+            Some((assignment.connection_epoch, origin.clone()));
+        let (tx, _rx) = mpsc::unbounded_channel();
+        bus.attach(tx.clone(), assignment.connection_epoch);
+        let context = bus.delegated_assignment(&assignment, "runner").unwrap();
+        assert_eq!(context.run_id, assignment.run_id);
+        assert_eq!(context.task_id, assignment.task_id);
+        assert_eq!(context.assignment_token, assignment.assignment_token);
+        assert_eq!(context.connection_epoch, assignment.connection_epoch);
+        assert_eq!(context.server_http_url, origin);
+        bus.detach();
+        assert!(bus.delegated_assignment(&assignment, "runner").is_err());
+        bus.attach(tx, Uuid::new_v4());
+        assert!(bus.delegated_assignment(&assignment, "runner").is_err());
+    }
+
+    #[test]
+    fn delegated_connection_drop_cancels_the_live_worker() {
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        let mut connection = DelegatedConnectionGuard::default();
+        connection.track(tx);
+        drop(connection);
+        assert!(matches!(rx.try_recv(), Ok(AdapterControl::Stop { .. })));
     }
 
     pub(super) async fn prepared_verification_fixture()
@@ -4116,6 +4284,7 @@ mod tests {
                         "require('node:assert/strict').deepEqual(require('node:fs').readdirSync('.').sort(), ['sentinel.txt'])".to_owned(),
                     ],
                     timeout_ms: 5_000,
+                    cache_suppression: None,
                 },
                 crony_domain::VerifierCheck::File {
                     path: reference.path,
@@ -5041,6 +5210,7 @@ mod tests {
                     "throw Error('cancelled check must not execute')".to_owned(),
                 ],
                 timeout_ms: 5_000,
+                cache_suppression: None,
             }],
             manual_gate: None,
         };
@@ -5068,6 +5238,177 @@ mod tests {
             fingerprint
         );
         std::fs::remove_dir_all(root).expect("remove owned cancellation fixture");
+    }
+
+    #[tokio::test]
+    async fn issue89_complete_scenario_export_failure_is_typed_and_preserves_source() {
+        let (root, repository, managed) = teardown_fixture();
+        let relative = "scenarios/scope-89";
+        let source = repository.join(relative);
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(source.join("tracked.txt"), b"original\n").unwrap();
+        git(&repository, &["add", "."]);
+        git(
+            &repository,
+            &[
+                "-c",
+                "user.name=ECorp Test",
+                "-c",
+                "user.email=test@ecorp.invalid",
+                "commit",
+                "-m",
+                "scenario baseline",
+            ],
+        );
+        let workspaces = Arc::new(
+            WorkspaceManager::initialize(managed, repository.clone(), "HEAD".to_owned())
+                .await
+                .unwrap(),
+        );
+        let task_id = Uuid::new_v4();
+        let run_id = Uuid::new_v4();
+        let workspace = workspaces
+            .prepare(task_id, run_id, None, None)
+            .await
+            .unwrap();
+        let scenario = workspace.path.join(relative);
+        std::fs::write(scenario.join(".gitignore"), b"ignored.log\n").unwrap();
+        std::fs::write(scenario.join("staged.txt"), b"staged scenario source\n").unwrap();
+        git(
+            &workspace.path,
+            &[
+                "add",
+                "scenarios/scope-89/.gitignore",
+                "scenarios/scope-89/staged.txt",
+            ],
+        );
+        std::fs::write(scenario.join("tracked.txt"), b"complete scenario change\n").unwrap();
+        std::fs::write(
+            scenario.join("application.js"),
+            b"export const ready = true;\n",
+        )
+        .unwrap();
+        std::fs::write(scenario.join("EVIDENCE.md"), b"evidence-only correction\n").unwrap();
+        std::fs::write(scenario.join("ignored.log"), b"retained but not exported\n").unwrap();
+        let fingerprint = workspaces.fingerprint(&workspace).await.unwrap();
+        let head = git(&workspace.path, &["rev-parse", "HEAD"]);
+        let index_path = git(&workspace.path, &["rev-parse", "--git-path", "index"]);
+        let index = std::fs::read(&index_path).unwrap();
+        let mut assignment = verification_assignment(&workspace, run_id);
+        assignment.task_id = task_id;
+        assignment.workspace_run_id = run_id;
+        assignment.write_scope = vec![format!("{relative}/EVIDENCE.md")];
+        assignment.verification_policy.checks = vec![crony_domain::VerifierCheck::File {
+            path: format!("{relative}/EVIDENCE.md"),
+            min_bytes: 1,
+        }];
+        assignment.deliverable = Some(DeliverableSpec {
+            form: crony_domain::DeliverableForm::CommitBranch,
+            commit_after_verification: true,
+            paths: Vec::new(),
+        });
+        let outbound = OutboundBus::default();
+        let (_ack, mut acks) = mpsc::unbounded_channel();
+        let artifacts = Arc::new(Mutex::new(Vec::new()));
+        let outcome = send_verification_events(
+            &outbound,
+            "issue89-runner",
+            &assignment,
+            &workspace,
+            &workspaces,
+            None,
+            None,
+            None,
+            &artifacts,
+            None,
+            &mut acks,
+            "evidence corrected",
+            None,
+            None,
+            None,
+            None,
+        )
+        .await;
+        assert_eq!(outcome, VerificationRunOutcome::Failed);
+        let events = recorded_run_events(&outbound);
+        assert_eq!(
+            events
+                .iter()
+                .map(|(kind, _)| kind.as_str())
+                .collect::<Vec<_>>(),
+            [
+                "run.verification_started",
+                "run.verification_evidence",
+                "run.failed"
+            ]
+        );
+        assert_eq!(events[1].1["status"], "passed");
+        assert_eq!(events[2].1["failure_kind"], "deliverable_export");
+        let error = events[2].1["error"].as_str().unwrap();
+        assert!(error.contains("outside the task write scope: scenarios/scope-89/.gitignore"));
+        assert!(error.contains("Automatic fresh-worktree retry is disabled"));
+        assert!(error.contains("preserved-session Resume"));
+        assert_eq!(
+            workspaces.fingerprint(&workspace).await.unwrap(),
+            fingerprint
+        );
+        assert_eq!(git(&workspace.path, &["rev-parse", "HEAD"]), head);
+        assert_eq!(std::fs::read(&index_path).unwrap(), index);
+
+        // A narrower-than-** scope is legal when it still covers the complete scenario.
+        let report = verifier::verify(&assignment.verification_policy, &workspace.path, &[]).await;
+        assert!(report.passed);
+        let exported = deliverable::export(
+            Uuid::new_v4(),
+            assignment.deliverable.as_ref().unwrap(),
+            &workspace,
+            &report,
+            &[],
+            &[format!("{relative}/**")],
+            None,
+        )
+        .await
+        .unwrap();
+        assert!(exported.publication_ready);
+        assert_ne!(exported.head_commit.as_deref(), Some(head.as_str()));
+        let document: Value = serde_json::from_slice(&exported.bytes).unwrap();
+        let paths = document["changes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|change| change["path"].as_str().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            paths,
+            [
+                "scenarios/scope-89/.gitignore",
+                "scenarios/scope-89/EVIDENCE.md",
+                "scenarios/scope-89/application.js",
+                "scenarios/scope-89/staged.txt",
+                "scenarios/scope-89/tracked.txt",
+            ]
+        );
+        assert!(
+            !BASE64
+                .decode(document["patch_base64"].as_str().unwrap())
+                .unwrap()
+                .is_empty()
+        );
+        let bundle = root.join("scenario.bundle");
+        std::fs::write(
+            &bundle,
+            BASE64
+                .decode(document["git_bundle_base64"].as_str().unwrap())
+                .unwrap(),
+        )
+        .unwrap();
+        git(&repository, &["bundle", "verify", bundle.to_str().unwrap()]);
+        assert_eq!(git(&repository, &["rev-parse", "HEAD"]), head);
+        assert_eq!(
+            std::fs::read(scenario.join("ignored.log")).unwrap(),
+            b"retained but not exported\n"
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[tokio::test]
@@ -5214,6 +5555,7 @@ mod tests {
     #[test]
     fn teardown_fail_closed_preserves_workspace_without_false_terminal_claim() {
         let assignment = Assignment {
+            dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),
             connection_epoch: Uuid::new_v4(),
@@ -5336,6 +5678,7 @@ mod tests {
         );
         let base_commit = workspaces.base_commit().to_owned();
         let assignment = Assignment {
+            dependency_files: Vec::new(),
             workspace_connection_id: None,
             corp_id: Uuid::new_v4(),
             connection_epoch: Uuid::new_v4(),

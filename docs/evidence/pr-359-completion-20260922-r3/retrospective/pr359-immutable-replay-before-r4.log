@@ -1,0 +1,144 @@
+✖ Pin reports readFails before issuing a mutation (3.6384ms)
+✖ Pin reports writeFails before issuing a mutation (1.0455ms)
+✔ Pin retries a lost response with the same saved request key and clears only after success (1.5432ms)
+✖ native Pin owned-run-provider-artifact.txt preserves occupied output and source sentinel (24.7402ms)
+✖ native Pin owned-run-provider-artifact.txt preserves hard-link output and source sentinel (16.1947ms)
+✖ native Pin owned-run-provider-artifact.txt preserves symlink output and source sentinel (18.2073ms)
+✔ native Pin owned-run-provider-artifact.txt creates a fresh output once (10.323ms)
+✖ native Pin native-final-snapshot.json preserves occupied output and source sentinel (14.4582ms)
+✖ native Pin native-final-snapshot.json preserves hard-link output and source sentinel (15.385ms)
+✖ native Pin native-final-snapshot.json preserves symlink output and source sentinel (15.0127ms)
+✔ native Pin native-final-snapshot.json creates a fresh output once (11.243ms)
+✔ native pin driver fails before writes without explicit opt-in and bounded phase (310.1436ms)
+✔ native pin driver refuses external, inherited shared-port and credentialed origins (888.4099ms)
+✔ native pin driver never invents missing output or source paths (261.2924ms)
+✔ native pin driver rejects overlapping and aliased directories before any write in every phase (6205.9155ms)
+✔ native pin driver rejects non-directory ancestors and dangling links before creating output (243.5827ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 8
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8561.9316
+
+✖ failing tests:
+
+test at apps\web\src\agentPinOperation.test.mjs:42:3
+✖ Pin reports readFails before issuing a mutation (3.6384ms)
+  AssertionError [ERR_ASSERTION]: No request may use a key that cannot be persisted
+
+  1 !== 0
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/apps/web/src/agentPinOperation.test.mjs:45:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\web\src\agentPinOperation.test.mjs:42:3
+✖ Pin reports writeFails before issuing a mutation (1.0455ms)
+  AssertionError [ERR_ASSERTION]: No request may use a key that cannot be persisted
+
+  1 !== 0
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/apps/web/src/agentPinOperation.test.mjs:45:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\e2e_agent_pinning.test.mjs:33:5
+✖ native Pin owned-run-provider-artifact.txt preserves occupied output and source sentinel (24.7402ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///<reviewed-worktree>/tools/e2e_agent_pinning.test.mjs:54:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EEXIST' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_agent_pinning.test.mjs:33:5
+✖ native Pin owned-run-provider-artifact.txt preserves hard-link output and source sentinel (16.1947ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///<reviewed-worktree>/tools/e2e_agent_pinning.test.mjs:54:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EEXIST' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_agent_pinning.test.mjs:33:5
+✖ native Pin owned-run-provider-artifact.txt preserves symlink output and source sentinel (18.2073ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///<reviewed-worktree>/tools/e2e_agent_pinning.test.mjs:54:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EEXIST' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_agent_pinning.test.mjs:33:5
+✖ native Pin native-final-snapshot.json preserves occupied output and source sentinel (14.4582ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///<reviewed-worktree>/tools/e2e_agent_pinning.test.mjs:54:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EEXIST' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_agent_pinning.test.mjs:33:5
+✖ native Pin native-final-snapshot.json preserves hard-link output and source sentinel (15.385ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///<reviewed-worktree>/tools/e2e_agent_pinning.test.mjs:54:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EEXIST' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\e2e_agent_pinning.test.mjs:33:5
+✖ native Pin native-final-snapshot.json preserves symlink output and source sentinel (15.0127ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///<reviewed-worktree>/tools/e2e_agent_pinning.test.mjs:54:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'EEXIST' },
+    operator: 'rejects',
+    diff: 'simple'
+  }

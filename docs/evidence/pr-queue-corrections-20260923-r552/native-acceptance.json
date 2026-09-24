@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+  "suites": [
+    {
+      "name": "worker-gateway",
+      "status": "passed",
+      "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+      "source_unchanged": true,
+      "source_head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+      "original_receipt_sha256": "4c60c2d88f396d81562f6d59e8cf975a0ede576128d7d4d3206b455f9c2ccb43",
+      "started_at_utc": "2026-09-23T20:13:31.9809807+00:00",
+      "finished_at_utc": "2026-09-23T20:27:11.9543498+00:00",
+      "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "passed_tests": null,
+          "file": "native/worker-gateway/owned-postgresql-initialization.log",
+          "original_sha256": "3c53141629fab418170545e7f313935d949a6b39369b398057aa04374153d49c",
+          "published_sha256": "5f6338e0e0d9ab7938a22482401a6016ce5ba9c736226ef814835a6860f86336",
+          "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+        },
+        {
+          "name": "workspace-cache-refresh",
+          "exit_code": 0,
+          "passed_tests": null,
+          "file": "native/worker-gateway/workspace-cache-refresh.log",
+          "original_sha256": "5440404b06716d0ec52a31db48917c1d0e6d5fcce50cb48959dffae5be52da97",
+          "published_sha256": "8f59ae9fb67420148b8c81c7a53e439e695afab28a18d4e6be90c14619464819",
+          "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+        },
+        {
+          "name": "owned-postgresql-worker-http-gateway-restart-finality",
+          "exit_code": 0,
+          "passed_tests": 2,
+          "file": "native/worker-gateway/owned-postgresql-worker-http-gateway-restart-finality.log",
+          "original_sha256": "ec051361ace036f24458235a54a3e571978842e2fc4798c154fbaa680ad8d016",
+          "published_sha256": "c2b7a92fede6dcb2a0dc6a6cc8d641a40f0ed31e12504fc275baa97db43d41b7",
+          "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+        },
+        {
+          "name": "owned-postgresql-readonly-gateway-authorizer",
+          "exit_code": 0,
+          "passed_tests": 1,
+          "file": "native/worker-gateway/owned-postgresql-readonly-gateway-authorizer.log",
+          "original_sha256": "b149edf4d4e0a1600ef7b8261ad242f792f93e22f9bc9880071159041cf95065",
+          "published_sha256": "284f78fd1d10f9b396d4ed131b270fa069fc5ad6b58e81053fdffc1d6fd99485",
+          "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+        }
+      ],
+      "receipt_treatment": "Selected factual receipt fields only. Detailed private receipts, fixture payloads, private credentials and original logs remain retained.",
+      "authentication": {
+        "authenticated_query": true,
+        "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance.",
+        "method": "scram-sha-256",
+        "wrong_password_rejected": true
+      },
+      "database_settings": {
+        "password_encryption": "scram-sha-256",
+        "log_statement": "none",
+        "log_duration": "off",
+        "log_min_duration_statement": "-1"
+      },
+      "evm": {
+        "chain_id": 84532,
+        "commit": "4072e48705af9d93e3c0f6e29e93b5e9a40caed8",
+        "ready": true,
+        "binary_sha256": "5c2217d266135a6fbe5faaccccb1e9eb2ddc1d06f8aabeef5fdb16d9846e4880",
+        "owned_listener_verified": true,
+        "version": "1.7.1",
+        "scope": "Local deterministic fixture only; no public Base network.",
+        "host": "127.0.0.1",
+        "port": 18556
+      },
+      "anvil_cleanup": "Only the exact owned Anvil stopped; cache and quiet logs retained."
+    },
+    {
+      "name": "delegated",
+      "status": "passed",
+      "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+      "source_unchanged": true,
+      "source_head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+      "original_receipt_sha256": "5577f94abc0277be703e4dd6a5634e55cd8996fa478ed434c708e7832ca4e917",
+      "started_at_utc": "2026-09-23T20:27:45.3202939+00:00",
+      "finished_at_utc": "2026-09-23T20:35:53.7705785+00:00",
+      "cleanup": "Only exact owned fixture processes stopped; private data, credentials, source, worktrees, binaries and evidence retained.",
+      "checks": [
+        {
+          "name": "workspace-cache-refresh",
+          "exit_code": 0,
+          "passed_tests": null,
+          "file": "native/delegated/workspace-cache-refresh.log",
+          "original_sha256": "a3e65613985b1a0a35db36f9cb9bae04cff5f7d16d476ef2686447e8111caf32",
+          "published_sha256": "95f0d5d0ec9057c4a5e12ef4df89237a2d0414ca239dff8f033993eaa2a0b353",
+          "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+        },
+        {
+          "name": "crony-server-build",
+          "exit_code": 0,
+          "passed_tests": null,
+          "file": "native/delegated/crony-server-build.log",
+          "original_sha256": "c1ba3c717b9f7473f9e687b720da763cbf36598cf1743963df1ae4d8b0f1168e",
+          "published_sha256": "579f33f5463ebb8e1c75d426892ee337894822b43067531f06de16ee010335f5",
+          "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+        },
+        {
+          "name": "crony-runner-build",
+          "exit_code": 0,
+          "passed_tests": null,
+          "file": "native/delegated/crony-runner-build.log",
+          "original_sha256": "3e8a6011e0636a9645bfcefdab6188fa9e94712f191ed1c75aa741c025f23848",
+          "published_sha256": "6b5d201f5e2d8b9b03c8f9360f4778119dd36a0ed2781725adfe91bce1102c07",
+          "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+        },
+        {
+          "name": "owned-native-stack-start-and-ownership-proof",
+          "exit_code": 0,
+          "passed_tests": null,
+          "file": "native/delegated/owned-native-stack-start-and-ownership-proof.log",
+          "original_sha256": "8052874a9e5b6678bcfb60075c3ffbd82a4f00fa29273568fa9a5dc7dac479e0",
+          "published_sha256": "0ab78c4b93ab466669efb076f2ec8f9c98228a30eaa85bfbaee0ce9dc55aae11",
+          "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+        },
+        {
+          "name": "owned-browser-server-runner-delegated-acceptance",
+          "exit_code": 0,
+          "passed_tests": null,
+          "file": "native/delegated/owned-browser-server-runner-delegated-acceptance.log",
+          "original_sha256": "e96c1dd627aae3614625a77f99dc69c67aa81e41ef65695f052c198b045fa56c",
+          "published_sha256": "565c5367d313b9e26b80662b3d6d78c50dee14deb9effdc41ed97269fe535cf4",
+          "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+        }
+      ],
+      "receipt_treatment": "Selected factual receipt fields only. Detailed private receipts, fixture payloads, private credentials and original logs remain retained.",
+      "acceptance_outcome": "PASSED",
+      "acceptance_check_count": 15,
+      "live_azure": "NOT_EXECUTED",
+      "binaries": [
+        {
+          "name": "crony-server",
+          "sha256": "770e303b485e9662b6807045398bf6348258b6ded21215aebafd60d416c446c2"
+        },
+        {
+          "name": "crony-runner",
+          "sha256": "3cd7444851a7d5f99ae4432730acbf18a6016744dc94a801d8fa3c11e8f1d030"
+        }
+      ],
+      "acceptance_sha256": "904532c34553f154acb37df4fb358f2f1d04ca9b07defbff24fc433bbad73cf9"
+    }
+  ],
+  "scope": "Affected behavior re-executed using owned PostgreSQL, local pinned Anvil and synthetic Keycloak browser/server/runner fixtures. Live Azure and production authentication are not claimed."
+}

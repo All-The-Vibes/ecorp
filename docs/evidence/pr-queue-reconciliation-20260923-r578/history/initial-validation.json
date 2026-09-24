@@ -1,0 +1,24 @@
+{
+  "status": "failed",
+  "source_head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+  "tested_staged_tree": "6f5c9e94f551b1b32ccd15ca7cf80ca2f0bc5115",
+  "source_unchanged": true,
+  "started_at_utc": "2026-09-23T22:21:19.2674956+00:00",
+  "finished_at_utc": "2026-09-23T22:21:59.8043191+00:00",
+  "reason": "Validation gate failed: readiness-regressions",
+  "original_receipt_sha256": "df6fee932c1d240692821672f1a1d0db80ebb4496d99d8cae1d8bfd0f6a06d1c",
+  "command": "node --test --test-concurrency=1 --test-timeout=180000 --test-reporter=tap tools/readiness_contract.test.mjs tests/readiness/cli.test.js",
+  "exit_code": 1,
+  "counts": {
+    "tests": 33,
+    "passed": 31,
+    "failed": 2,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "file": "history/initial-readiness-regressions.log",
+  "original_sha256": "918079572458e6f9b6df1c527a3703fd5a9dd2cfcd6a6a26ba5d14f798c7a70c",
+  "published_sha256": "3e226dd868df70b63fedd3dd05b4b6a137804dd65070498c19a2b51b1b452b24",
+  "treatment": "Local paths, LF and trailing whitespace normalized. Native outcomes and diagnostics are retained.",
+  "disposition": "31 focused readiness tests passed; the two new streamed-diff fixtures failed before invoking the CLI because invalid GIT_DIR invokes Git diff fallback with exit 129 and no sensitive-path marker. The corrected fixture injects an invalid native boolean configuration value only into the selected streamed diff. A read-only native probe confirmed exit 128 and the synthetic value in stderr. Production source is unchanged by this fixture correction."
+}

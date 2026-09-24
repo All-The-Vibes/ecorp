@@ -1,0 +1,90 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
+    checkpoint_digest: 'e89d2a6ff60ea138c699721d6ee9cec29e85f726ba6d0873a88ee69a1faeddd6',
+    corp_id: '00000000-0000-4000-8000-000000000001',
+    destination_id: '3d88cfe0-333d-466f-bf06-97b595b4dda8',
+    status: 'published',
++   updated_at: '2026-09-23T04:06:57.703928-05:00',
+-   updated_at: '2026-09-23T09:06:57.703928+00:00',
+    witness: {
+      archive_publication: {
+        archive: {
+          byte_count: 11816,
+          checkpoint_digest: 'e89d2a6ff60ea138c699721d6ee9cec29e85f726ba6d0873a88ee69a1faeddd6',
+
+    at file:///<private-evidence>/pr293-full-native-r3/e2e_native_qualification.mjs:276:12 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: {
+    status: 'published',
+    corp_id: '00000000-0000-4000-8000-000000000001',
+    witness: {
+      path: 'audit',
+      branch: 'audit',
+      commit: 'f88a86ae45a7ee0da344b684ed776ab6b343b482',
+      provider: 'github',
+      finalized: false,
+      repository: 'qualification/native-audit',
+      archive_publication: {
+        commit: 'f88a86ae45a7ee0da344b684ed776ab6b343b482',
+        archive: {
+          parts: [ [Object] ],
+          sha256: 'c50fd48a743004b19a9328369d4da2cac734e7b137637c746800083663e5a9ad',
+          ledger_id: 'c95545a1-f211-4fad-b5b5-dc76f25e1854',
+          byte_count: 11816,
+          schema_version: 1,
+          checkpoint_digest: 'e89d2a6ff60ea138c699721d6ee9cec29e85f726ba6d0873a88ee69a1faeddd6'
+        },
+        index_path: 'audit/c95545a1-f211-4fad-b5b5-dc76f25e1854/00000000000000000001-e89d2a6ff60ea138c699721d6ee9cec29e85f726ba6d0873a88ee69a1faeddd6/archive.json',
+        index_sha256: '68af4cdb35c496ddf1ef023cfd9d0bebae6ecbc5e3881325179d7fdfcb8d96f4',
+        index_git_blob_sha1: 'bc19d683d19aa109353b79223a8a9280b3b8c6e3'
+      },
+      independently_verified: false,
+      previous_destination_checkpoint: null
+    },
+    updated_at: '2026-09-23T04:06:57.703928-05:00',
+    destination_id: '3d88cfe0-333d-466f-bf06-97b595b4dda8',
+    checkpoint_digest: 'e89d2a6ff60ea138c699721d6ee9cec29e85f726ba6d0873a88ee69a1faeddd6'
+  },
+  expected: {
+    checkpoint_digest: 'e89d2a6ff60ea138c699721d6ee9cec29e85f726ba6d0873a88ee69a1faeddd6',
+    corp_id: '00000000-0000-4000-8000-000000000001',
+    destination_id: '3d88cfe0-333d-466f-bf06-97b595b4dda8',
+    status: 'published',
+    updated_at: '2026-09-23T09:06:57.703928+00:00',
+    witness: {
+      archive_publication: {
+        archive: {
+          byte_count: 11816,
+          checkpoint_digest: 'e89d2a6ff60ea138c699721d6ee9cec29e85f726ba6d0873a88ee69a1faeddd6',
+          ledger_id: 'c95545a1-f211-4fad-b5b5-dc76f25e1854',
+          parts: [ [Object] ],
+          schema_version: 1,
+          sha256: 'c50fd48a743004b19a9328369d4da2cac734e7b137637c746800083663e5a9ad'
+        },
+        commit: 'f88a86ae45a7ee0da344b684ed776ab6b343b482',
+        index_git_blob_sha1: 'bc19d683d19aa109353b79223a8a9280b3b8c6e3',
+        index_path: 'audit/c95545a1-f211-4fad-b5b5-dc76f25e1854/00000000000000000001-e89d2a6ff60ea138c699721d6ee9cec29e85f726ba6d0873a88ee69a1faeddd6/archive.json',
+        index_sha256: '68af4cdb35c496ddf1ef023cfd9d0bebae6ecbc5e3881325179d7fdfcb8d96f4'
+      },
+      branch: 'audit',
+      commit: 'f88a86ae45a7ee0da344b684ed776ab6b343b482',
+      finalized: false,
+      independently_verified: false,
+      path: 'audit',
+      previous_destination_checkpoint: null,
+      provider: 'github',
+      repository: 'qualification/native-audit'
+    }
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0

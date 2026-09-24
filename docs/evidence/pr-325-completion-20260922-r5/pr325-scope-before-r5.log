@@ -1,0 +1,69 @@
+Preparing worktree (detached HEAD 3525209)
+✖ browser evidence output scope: missing-inside (1121.7479ms)
+ℹ Retained independent Git fixture and receipts: <private-evidence>\pr325-scope-before-r5\F03-missing-inside-2NrZM4
+Preparing worktree (detached HEAD 74ecc84)
+✔ browser evidence output scope: existing-inside (973.8637ms)
+ℹ Retained independent Git fixture and receipts: <private-evidence>\pr325-scope-before-r5\F03-existing-inside-I7nCB8
+Preparing worktree (detached HEAD 75b7d87)
+✖ browser evidence output scope: aliased-inside (984.7372ms)
+ℹ Retained independent Git fixture and receipts: <private-evidence>\pr325-scope-before-r5\F03-aliased-inside-t7JkaF
+Preparing worktree (detached HEAD 29f27a6)
+✔ browser evidence output scope: valid-sibling (1010.5224ms)
+ℹ Retained independent Git fixture and receipts: <private-evidence>\pr325-scope-before-r5\F03-valid-sibling-Y1qIQX
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4238.3668
+
+✖ failing tests:
+
+test at tools\e2e_verifier_browser_scope.test.mjs:16:3
+✖ browser evidence output scope: missing-inside (1121.7479ms)
+  AssertionError [ERR_ASSERTION]: Rejected evidence scope must not create worktree directories
+  + actual - expected
+
+    [
+      '.git',
+      'README.md',
+  +   'missing',
+  +   'missing\\nested',
+  +   'missing\\nested\\evidence'
+    ]
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/e2e_verifier_browser_scope.test.mjs:68:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '.git', 'README.md', 'missing', 'missing\\nested', 'missing\\nested\\evidence' ],
+    expected: [ '.git', 'README.md' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tools\e2e_verifier_browser_scope.test.mjs:16:3
+✖ browser evidence output scope: aliased-inside (984.7372ms)
+  AssertionError [ERR_ASSERTION]: Rejected evidence scope must not create worktree directories
+  + actual - expected
+
+    [
+      '.git',
+      'README.md',
+  +   'missing',
+  +   'missing\\evidence'
+    ]
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/e2e_verifier_browser_scope.test.mjs:68:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '.git', 'README.md', 'missing', 'missing\\evidence' ],
+    expected: [ '.git', 'README.md' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

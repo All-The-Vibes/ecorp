@@ -1,0 +1,40 @@
+<!doctype html><meta charset="utf-8"><title>PR 355 saved behavioral results</title><style>body{font:16px system-ui;margin:40px;max-width:1280px;color:#152536}pre{white-space:pre-wrap;background:#edf2f5;padding:18px}h1{font-size:28px}</style><h1>PR #355: saved behavioral RED/GREEN results</h1><p>Rendered from retained native logs. This is a retrospective comparison, not original development chronology or a product screenshot.</p><h2>baseline-ordinary-failure-control — exit 0</h2><p>Tested tree: 5c0dd2d3570c3492c53543b9501eb2c34e93c035</p><pre>
+running 1 test
+test deliverable_failure_tests::issue89_untyped_execution_failure_keeps_existing_retry_policy ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 405 filtered out; finished in 2.33s
+
+   Compiling crony-domain v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr355-retrospective-20260922-r1\crates\crony-domain)
+   Compiling crony-store v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr355-retrospective-20260922-r1\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 18s
+     Running unittests src\lib.rs (C:\Users\shyamsridhar\code\ecorp-pr338-completion-20260922\target-validation\debug\deps\crony_store-00b65977dbfbe89a.exe)</pre><h2>baseline-export-failure-regression — exit 101</h2><p>Tested tree: 5c0dd2d3570c3492c53543b9501eb2c34e93c035</p><pre>
+running 1 test
+test deliverable_failure_tests::issue89_export_failure_retains_history_and_cannot_schedule_fresh_retry ... FAILED
+
+failures:
+
+failures:
+    deliverable_failure_tests::issue89_export_failure_retains_history_and_cannot_schedule_fresh_retry
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 405 filtered out; finished in 1.85s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.38s
+     Running unittests src\lib.rs (C:\Users\shyamsridhar\code\ecorp-pr338-completion-20260922\target-validation\debug\deps\crony_store-00b65977dbfbe89a.exe)
+
+thread &#x27;deliverable_failure_tests::issue89_export_failure_retains_history_and_cannot_schedule_fresh_retry&#x27; (23992) panicked at crates\crony-store\src\deliverable_failure_tests.rs:178:5:
+assertion `left == right` failed
+  left: String(&quot;ready&quot;)
+ right: &quot;failed&quot;
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+error: test failed, to rerun pass `-p crony-store --lib`</pre><h2>candidate-deliverable-failure-suite — exit 0</h2><p>Tested tree: 5bbcd7f113748ca222ce3e0b2e3310b44baa184e</p><pre>
+running 3 tests
+test deliverable_failure_tests::issue89_export_failure_retains_history_and_cannot_schedule_fresh_retry ... ok
+test deliverable_failure_tests::issue89_unknown_failure_kind_and_wrong_assignment_leave_state_unchanged ... ok
+test deliverable_failure_tests::issue89_untyped_execution_failure_keeps_existing_retry_policy ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 404 filtered out; finished in 6.08s
+
+   Compiling crony-domain v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr355-completion-20260922\crates\crony-domain)
+   Compiling crony-store v0.1.0 (C:\Users\shyamsridhar\code\ecorp-pr355-completion-20260922\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 49s
+     Running unittests src\lib.rs (C:\Users\shyamsridhar\code\ecorp-pr338-completion-20260922\target-validation\debug\deps\crony_store-00b65977dbfbe89a.exe)</pre>

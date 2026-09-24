@@ -1,0 +1,36 @@
+   Compiling crony-audit v0.1.0 (<reviewed-worktree>\crates\crony-audit)
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-base v0.1.0 (<reviewed-worktree>\crates\crony-base)
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 51s
+warning: the following packages contain code that will be rejected by a future version of Rust: proc-macro-error2 v2.0.1
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src\base_worker.rs (<local-user>\code\ecorp-pr-completion-20260922\target-validation\debug\deps\crony_base_worker-17669fbe24bd7bcb.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (<local-user>\code\ecorp-pr-completion-20260922\target-validation\debug\deps\crony_server-6736efc705c3c967.exe)
+
+running 16 tests
+test factory_connection_tests::claim_authority::issue161_authority_handler_is_uncached_and_rejects_foreign_scope ... ok
+test factory_connection_tests::claim_authority::issue161_bad_pin_rejects_claim_before_events_or_materialization ... ok
+test factory_connection_tests::claim_authority::issue161_concurrent_controllers_keep_one_claim_and_one_held_mission ... ok
+test factory_connection_tests::claim_authority::issue161_production_controller_registration_requires_pin_before_persistence ... ok
+test factory_connection_tests::issue204_handler_bound_only_preflight_and_materialization ... ok
+test factory_connection_tests::issue204_handler_post_claim_readiness_conflict_releases_exact_claim ... ok
+test factory_connection_tests::issue204_handler_post_claim_source_conflict_releases_exact_claim ... ok
+test factory_connection_tests::issue204_handler_stale_claim_conflicts_do_not_release_current_claim ... ok
+test factory_connection_tests::issue48_planner_reuses_pins_in_the_saved_connection_room ... ok
+test factory_connection_tests::issue56_dispatcher_retires_fenced_approval_and_control_once ... ok
+test factory_connection_tests::issue56_dispatcher_sends_healthy_progress_only_to_current_epoch ... ok
+test factory_connection_tests::issue79_claim_handler_and_preflight_reject_cost_without_durable_effects ... ok
+test factory_connection_tests::readiness::issue256_matching_preflight_preserves_concurrent_claims_and_dispatch_recheck ... ok
+test factory_connection_tests::readiness::issue256_offline_plan_and_required_readiness_preserve_full_ledger ... ok
+test factory_connection_tests::readiness::issue256_readiness_uses_exact_native_scope_and_reconciliation ... ok
+test factory_connection_tests::readiness::issue256_saved_connection_model_and_room_authority_still_fail_closed ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 227 filtered out; finished in 42.32s

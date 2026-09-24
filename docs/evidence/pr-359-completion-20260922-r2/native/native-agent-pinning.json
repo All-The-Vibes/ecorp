@@ -1,0 +1,373 @@
+{
+  "schema_version": 1,
+  "phase": "complete",
+  "server": "http://127.0.0.1:59031",
+  "web": "http://127.0.0.1:59032",
+  "started_at": "2026-09-22T18:35:16.781Z",
+  "scope": "Owned native development-principal server/runner/browser/CLI deterministic fixture; no provider inference or external effects.",
+  "operations": [
+    {
+      "route": "/api/demo/bootstrap?seed_crew=false",
+      "body": {},
+      "intent_at": "2026-09-22T18:35:17.060Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "body": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[approval-action] issue48 native retention",
+        "preferred_adapter": "fake-process",
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/pr359-agent-pinning",
+          "base_ref": "HEAD",
+          "base_commit": "720d05f989283d63e98938013f682912799bd2c2"
+        },
+        "budget_tokens": 80000,
+        "budget_cost_microusd": 1000000,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "result.md",
+              "min_bytes": 1
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "intent_at": "2026-09-22T18:35:17.301Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/b114a920-a2a2-4b3a-955d-1ee800dfbc3d/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000013",
+        "pinned": false,
+        "expected_version": 1,
+        "idempotency_key": "82acb7c4-840e-48a0-bc6a-ad003f9ef699"
+      },
+      "intent_at": "2026-09-22T18:35:21.561Z"
+    },
+    {
+      "route": "/api/corps/9566d719-5716-451f-88d8-58d051b91cbc/agents/b114a920-a2a2-4b3a-955d-1ee800dfbc3d/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 1,
+        "idempotency_key": "d96804ce-2520-4338-9928-71850f91e277"
+      },
+      "intent_at": "2026-09-22T18:35:21.571Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/b114a920-a2a2-4b3a-955d-1ee800dfbc3d/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 1,
+        "idempotency_key": "cecdf097-ff41-4096-b44c-7c3c5bd86826",
+        "retire": true
+      },
+      "intent_at": "2026-09-22T18:35:21.585Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions/2642f1ae-8a27-452f-8e33-f7504effb9ea/launch",
+      "body": {
+        "requested_by": "00000000-0000-4000-8000-000000000011"
+      },
+      "intent_at": "2026-09-22T18:35:21.596Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/b114a920-a2a2-4b3a-955d-1ee800dfbc3d/lease",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000012"
+      },
+      "intent_at": "2026-09-22T18:35:23.058Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/b114a920-a2a2-4b3a-955d-1ee800dfbc3d/messages",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "text": "Retain for the next assigned mission; this is not a task.",
+        "idempotency_key": "849551f0-4f11-45d2-b626-af7b9953f943"
+      },
+      "intent_at": "2026-09-22T18:35:23.075Z"
+    },
+    {
+      "cli": "pin",
+      "agent": "b114a920-a2a2-4b3a-955d-1ee800dfbc3d",
+      "version": 2,
+      "key": "70ca0836-bcae-49ed-a9c2-12976e7041cd"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/approvals/6e3372d3-3768-4eb8-af5d-277214d6b2dd/decision",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "approved": true,
+        "note": "Owned deterministic fixture approval",
+        "decision_key": "91243b54-c6de-412b-b81f-e4c9bf664a8d"
+      },
+      "intent_at": "2026-09-22T18:35:27.209Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "body": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "issue48 pinned identity reused",
+        "preferred_adapter": "fake-process",
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/pr359-agent-pinning",
+          "base_ref": "HEAD",
+          "base_commit": "720d05f989283d63e98938013f682912799bd2c2"
+        },
+        "budget_tokens": 80000,
+        "budget_cost_microusd": 1000000,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "result.md",
+              "min_bytes": 1
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "intent_at": "2026-09-22T18:35:29.755Z"
+    },
+    {
+      "cli": "unpin",
+      "agent": "b114a920-a2a2-4b3a-955d-1ee800dfbc3d",
+      "version": 3,
+      "key": "ad0a23a6-0bf0-4055-8b88-8b75005119db"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/b114a920-a2a2-4b3a-955d-1ee800dfbc3d/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 0,
+        "idempotency_key": "e9fb2392-aab1-4e51-b6d2-f628fb718445"
+      },
+      "intent_at": "2026-09-22T18:35:36.514Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions/bde1fafc-6e88-4d72-b3fe-aaebc97e344c/launch",
+      "body": {
+        "requested_by": "00000000-0000-4000-8000-000000000011"
+      },
+      "intent_at": "2026-09-22T18:35:36.542Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/b114a920-a2a2-4b3a-955d-1ee800dfbc3d/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 4,
+        "idempotency_key": "f9ddf7e3-8e8d-4dfa-8e38-de793c603da8"
+      },
+      "intent_at": "2026-09-22T18:35:41.145Z"
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/agents/b114a920-a2a2-4b3a-955d-1ee800dfbc3d/pin",
+      "body": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 0,
+        "idempotency_key": "e9fb2392-aab1-4e51-b6d2-f628fb718445"
+      },
+      "intent_at": "2026-09-22T18:35:41.402Z"
+    }
+  ],
+  "checks": [
+    "empty Corp provisions one held mission-owned identity",
+    "Alice browser Pin persisted version one and actor-attributed audit",
+    "guest foreign-Corp and extra-effect requests denied",
+    "Bob browser Unpin preserves exact native run task mission lease approval message command rows",
+    "native CLI Pin and duplicate replay commit exactly once",
+    "native accepted terminal mission retains pinned identity with provider terminated",
+    "pinned identity reused in same room; Unpin preserves second held plan and does not retire early",
+    "both native missions complete once; unpinned identity retires only after obligations settle",
+    "retired Pin rejected and old successful replay cannot resurrect history",
+    "durable audit history, both viewers, tenant/room visibility and original source preserved"
+  ],
+  "source": {
+    "head": "720d05f989283d63e98938013f682912799bd2c2",
+    "status": "",
+    "seed": "041c6f9e907f08335fcb4cd67af3c0d5dc831a3858a448678bff4d4bec8453a2"
+  },
+  "ids": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "mission_source": {
+    "repository": "ecorp-fixture/pr359-agent-pinning",
+    "base_ref": "HEAD",
+    "base_commit": "720d05f989283d63e98938013f682912799bd2c2"
+  },
+  "first": {
+    "mission_id": "2642f1ae-8a27-452f-8e33-f7504effb9ea",
+    "task_id": "a51942ff-1f8c-49d2-b197-e372398a6a7b",
+    "task_ids": [
+      "a51942ff-1f8c-49d2-b197-e372398a6a7b"
+    ],
+    "strategy": "single"
+  },
+  "agent": "b114a920-a2a2-4b3a-955d-1ee800dfbc3d",
+  "browser_pin_event": {
+    "seq": 10,
+    "id": "1ee2bf93-a58f-4fd5-ba3c-673ef42d805f",
+    "schema_version": 1,
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "actor_id": "00000000-0000-4000-8000-000000000011",
+    "type": "agent.pinned",
+    "aggregate_type": "agent",
+    "aggregate_id": "b114a920-a2a2-4b3a-955d-1ee800dfbc3d",
+    "aggregate_version": 1,
+    "correlation_id": "2642f1ae-8a27-452f-8e33-f7504effb9ea",
+    "causation_id": null,
+    "idempotency_key": "agent-pin:e9fb2392-aab1-4e51-b6d2-f628fb718445",
+    "visibility": "corp",
+    "payload": {
+      "mission_id": "2642f1ae-8a27-452f-8e33-f7504effb9ea",
+      "pin_version": 1,
+      "pinned": true,
+      "previous_pinned": false,
+      "request": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "agent_id": "b114a920-a2a2-4b3a-955d-1ee800dfbc3d",
+        "expected_version": 0,
+        "pinned": true
+      }
+    },
+    "created_at": "2026-09-22T18:35:20.948070Z"
+  },
+  "launch": {
+    "run_id": "eef97d7b-e3c1-4580-83cb-39e62ed7bb6a",
+    "runner_id": "runner-issue48-42269426",
+    "run_ids": [
+      "eef97d7b-e3c1-4580-83cb-39e62ed7bb6a"
+    ],
+    "runner_ids": [
+      "runner-issue48-42269426"
+    ],
+    "replayed": false
+  },
+  "approval": "6e3372d3-3768-4eb8-af5d-277214d6b2dd",
+  "queued": {
+    "message_id": "1b40bf56-724a-4152-9b51-4e81fdb69f89",
+    "delivery": "queued",
+    "replayed": false
+  },
+  "obligations_before_unpin": "4dc46aa168defb4792894e6c0db0443d49eb07cf1b78966b3b4fd772b3973466",
+  "browser_unpin_event": {
+    "seq": 18,
+    "id": "7726acb7-094a-41cd-8005-97e22fd6565b",
+    "schema_version": 1,
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "actor_id": "00000000-0000-4000-8000-000000000012",
+    "type": "agent.unpinned",
+    "aggregate_type": "agent",
+    "aggregate_id": "b114a920-a2a2-4b3a-955d-1ee800dfbc3d",
+    "aggregate_version": 2,
+    "correlation_id": "2642f1ae-8a27-452f-8e33-f7504effb9ea",
+    "causation_id": null,
+    "idempotency_key": "agent-pin:4d7bbf0d-b5a5-4baa-ac2c-b8c10f09c2a4",
+    "visibility": "corp",
+    "payload": {
+      "mission_id": "2642f1ae-8a27-452f-8e33-f7504effb9ea",
+      "pin_version": 2,
+      "pinned": false,
+      "previous_pinned": true,
+      "request": {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "agent_id": "b114a920-a2a2-4b3a-955d-1ee800dfbc3d",
+        "expected_version": 1,
+        "pinned": false
+      }
+    },
+    "created_at": "2026-09-22T18:35:25.384840Z"
+  },
+  "second": {
+    "mission_id": "bde1fafc-6e88-4d72-b3fe-aaebc97e344c",
+    "task_id": "1df1ff52-3b70-4586-b810-59942818ce75",
+    "task_ids": [
+      "1df1ff52-3b70-4586-b810-59942818ce75"
+    ],
+    "strategy": "single"
+  },
+  "second_launch": {
+    "run_id": "0285e5f2-3e66-45ba-96a0-7bf61c66b3a5",
+    "runner_id": "runner-issue48-42269426",
+    "run_ids": [
+      "0285e5f2-3e66-45ba-96a0-7bf61c66b3a5"
+    ],
+    "runner_ids": [
+      "runner-issue48-42269426"
+    ],
+    "replayed": false
+  },
+  "native_runs": [
+    {
+      "id": "0285e5f2-3e66-45ba-96a0-7bf61c66b3a5",
+      "task_id": "1df1ff52-3b70-4586-b810-59942818ce75",
+      "agent_id": "b114a920-a2a2-4b3a-955d-1ee800dfbc3d",
+      "source_base_commit": "720d05f989283d63e98938013f682912799bd2c2",
+      "workspace_path": "<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r2\\runner\\worktrees\\1df1ff523b704586b81059942818ce75\\0285e5f23e6645ba96a07bf61c66b3a5",
+      "workspace_disposition": "preserved",
+      "artifact_id": "51ff56f7-6343-4cbb-8a67-8a740705a8df",
+      "artifact_sha256": "85b19ae0082a7e145d3c1cb770ac09d4d8f8ec5c3ad7e601a5df144579eb7840",
+      "verification_sha256": null,
+      "verification_ids": [
+        "73822880-4ab1-48a2-a7fc-7e91a7be0399",
+        "b61501a0-5802-49ab-ab07-edc9e21ac9db"
+      ],
+      "termination_event_id": "9fd80a39-5e4e-4427-91cd-ac84da1de96d"
+    },
+    {
+      "id": "eef97d7b-e3c1-4580-83cb-39e62ed7bb6a",
+      "task_id": "a51942ff-1f8c-49d2-b197-e372398a6a7b",
+      "agent_id": "b114a920-a2a2-4b3a-955d-1ee800dfbc3d",
+      "source_base_commit": "720d05f989283d63e98938013f682912799bd2c2",
+      "workspace_path": "<local-user>\\code\\qa\\pr359-agent-pinning-20260922-r2\\runner\\worktrees\\a51942ff1f8c49d2b197e372398a6a7b\\eef97d7be3c1458083cb39e62ed7bb6a",
+      "workspace_disposition": "preserved",
+      "artifact_id": "da4ab406-5fc8-47c9-b293-4cf09fee1dcf",
+      "artifact_sha256": "0f6555cfda22d47ff7ff25fa193a5afa9d0b195cdbb2b8a6eb88f42cc551e0a6",
+      "verification_sha256": null,
+      "verification_ids": [
+        "fe34f26f-a42b-47e1-a768-f9f24bfc8163",
+        "56022541-2540-4bb2-b248-f0d37a29e56e"
+      ],
+      "termination_event_id": "b9026b92-7433-4393-96ca-11eec710ae53"
+    }
+  ],
+  "final_counts": {
+    "runs": 2,
+    "tasks": 2,
+    "agents": 1,
+    "missions": 2,
+    "pin_events": 4,
+    "retirements": 1,
+    "factory_items": 0,
+    "completed_runs": 2,
+    "pending_commands": 0,
+    "delivered_messages": 1
+  },
+  "completed_at": "2026-09-22T18:35:42.144Z"
+}

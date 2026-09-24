@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
 export const MODEL_FILES = [
-  'evidenceSelection.ts', 'factoryCheckpointRecovery.ts', 'factoryControllerSelection.ts',
+  'evidenceSelection.ts', 'factoryAuthority.ts', 'factoryCheckpointRecovery.ts', 'factoryControllerSelection.ts',
   'factoryPolling.ts', 'formText.ts', 'missionCollaboration.ts', 'missionOriginContext.ts', 'missionPreview.ts',
   'missionProjection.ts', 'missionResultContext.ts', 'missionRuntime.ts',
   'office/characterAssets.ts', 'office/officeModel.ts', 'runActivity.ts', 'snapshotRefresh.ts',

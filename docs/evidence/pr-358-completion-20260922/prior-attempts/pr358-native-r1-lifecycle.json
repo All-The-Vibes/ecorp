@@ -1,0 +1,53 @@
+{
+  "pr": 358,
+  "tested_staged_tree": "027542b8cbf1356723360b36f48dc42b6e8fbd56",
+  "source_head": "aa66c2ec14df9210a6576f2a709515e5f081c08f",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr358-20260922-r1",
+  "started_at_utc": "2026-09-22T20:28:43.9487863+00:00",
+  "status": "failed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "log": "<private-evidence>\\pr358-native-r1-workspace-cache-refresh.log",
+      "exit_code": 0,
+      "sha256": "10d8287885f8f637dc6037623adf8edf77b5e04aac747375cd5bd34264d28ea7",
+      "name": "workspace-cache-refresh"
+    },
+    {
+      "log": "<private-evidence>\\pr358-native-r1-build.log",
+      "exit_code": 0,
+      "sha256": "578f04a362954cfdc4b519f5f3266c5b75a364f97de58b71a0a66896c85da52b",
+      "name": "native-build"
+    },
+    {
+      "log": "<private-evidence>\\pr358-native-r1-sqlx-workspace-cache-refresh.log",
+      "exit_code": 0,
+      "sha256": "8a0569f9cb7ad5371adb407dc5dee2d606764ade919214ba7db43bc40c103c83",
+      "name": "sqlx-workspace-cache-refresh"
+    },
+    {
+      "log": "<private-evidence>\\pr358-native-r1-sqlx-crony-store.log",
+      "exit_code": 0,
+      "sha256": "b801c7ab1d2b6219d6744f1db9ebbdd47bad351b5af8df47a80ad899274318ca",
+      "name": "owned-postgresql-crony-store-regressions"
+    },
+    {
+      "log": "<private-evidence>\\pr358-native-r1-sqlx-crony-server.log",
+      "exit_code": 101,
+      "sha256": "028b677be36a7065f2df2997ad63bb7abd483626abb76eec26aa953af5e01a33",
+      "name": "owned-postgresql-crony-server-regressions"
+    }
+  ],
+  "binaries": [
+    {
+      "file": "crony-server.exe",
+      "sha256": "c5d5d2ac3895786d0f4b873294d2d242db25d29e5705cbf4bd71e68f35de067d"
+    },
+    {
+      "file": "crony-runner.exe",
+      "sha256": "9283bf4c6dd80a6e23681c166e9322ad02353ccdfe37015ce3f2cad94f36a603"
+    }
+  ],
+  "failure": "owned-postgresql-crony-server-regressions failed; preserve logs and fixture.",
+  "finished_at_utc": "2026-09-22T20:34:53.9723077+00:00"
+}

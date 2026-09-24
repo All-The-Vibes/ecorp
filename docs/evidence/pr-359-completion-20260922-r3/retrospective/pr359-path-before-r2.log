@@ -1,0 +1,59 @@
+✔ native pin driver fails before writes without explicit opt-in and bounded phase (282.4526ms)
+✔ native pin driver refuses external, inherited shared-port and credentialed origins (871.3355ms)
+✔ native pin driver never invents missing output or source paths (243.6887ms)
+✖ native pin driver rejects overlapping and aliased directories before any write in every phase (253.3605ms)
+✔ native pin driver rejects non-directory ancestors and dangling links before creating output (286.8824ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2090.6155
+
+✖ failing tests:
+
+test at tools\e2e_agent_pinning.test.mjs:44:1
+✖ native pin driver rejects overlapping and aliased directories before any write in every phase (253.3605ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /source, output and private directories must be disjoint/. Input:
+
+  'fatal: not a git repository (or any of the parent directories): .git\n' +
+    'node:internal/errors:986\r\n' +
+    '  const err = new Error(message);\r\n' +
+    '              ^\r\n' +
+    '\r\n' +
+    'Error: Command failed: git -C <local-user>\\AppData\\Local\\Temp\\ecorp-pin-boundary-5vPPEm\\source rev-parse HEAD\r\n' +
+    'fatal: not a git repository (or any of the parent directories): .git\r\n' +
+    '\r\n' +
+    '    at genericNodeError (node:internal/errors:986:15)\r\n' +
+    '    at wrappedFn (node:internal/errors:540:14)\r\n' +
+    '    at checkExecSyncError (node:child_process:942:11)\r\n' +
+    '    at execFileSync (node:child_process:978:15)\r\n' +
+    '    at sourceIdentity (file:///<reviewed-worktree>/tools/e2e_agent_pinning.mjs:46:9)\r\n' +
+    '    at file:///<reviewed-worktree>/tools/e2e_agent_pinning.mjs:56:41 {\r\n' +
+    '  status: 128,\r\n' +
+    '  signal: null,\r\n' +
+    '  output: [\r\n' +
+    '    null,\r\n' +
+    "    '',\r\n" +
+    "    'fatal: not a git repository (or any of the parent directories): .git\\n'\r\n" +
+    '  ],\r\n' +
+    '  pid: 47216,\r\n' +
+    "  stdout: '',\r\n" +
+    "  stderr: 'fatal: not a git repository (or any of the parent directories): .git\\n'\r\n" +
+    '}\r\n' +
+    '\r\n' +
+    'Node.js v24.21.0\r\n'
+
+      at denied (file:///<reviewed-worktree>/tools/e2e_agent_pinning.test.mjs:22:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/e2e_agent_pinning.test.mjs:76:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "fatal: not a git repository (or any of the parent directories): .git\nnode:internal/errors:986\r\n  const err = new Error(message);\r\n              ^\r\n\r\nError: Command failed: git -C <local-user>\\AppData\\Local\\Temp\\ecorp-pin-boundary-5vPPEm\\source rev-parse HEAD\r\nfatal: not a git repository (or any of the parent directories): .git\r\n\r\n    at genericNodeError (node:internal/errors:986:15)\r\n    at wrappedFn (node:internal/errors:540:14)\r\n    at checkExecSyncError (node:child_process:942:11)\r\n    at execFileSync (node:child_process:978:15)\r\n    at sourceIdentity (file:///<reviewed-worktree>/tools/e2e_agent_pinning.mjs:46:9)\r\n    at file:///<reviewed-worktree>/tools/e2e_agent_pinning.mjs:56:41 {\r\n  status: 128,\r\n  signal: null,\r\n  output: [\r\n    null,\r\n    '',\r\n    'fatal: not a git repository (or any of the parent directories): .git\\n'\r\n  ],\r\n  pid: 47216,\r\n  stdout: '',\r\n  stderr: 'fatal: not a git repository (or any of the parent directories): .git\\n'\r\n}\r\n\r\nNode.js v24.21.0\r\n",
+    expected: /source, output and private directories must be disjoint/,
+    operator: 'match',
+    diff: 'simple'
+  }

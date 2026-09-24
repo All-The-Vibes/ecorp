@@ -1,0 +1,32 @@
+{
+  "kind": "derived command transcription",
+  "wrappers": [
+    {
+      "original_path": "fix-db-target/red.ps1",
+      "original_sha256": "10eb26c5bf4480dd8c10d3fd73227db8da3f874aff3f50ada2f452a3a66dd5b6",
+      "original_bytes": 245,
+      "command_script_utf8": "Set-Location -LiteralPath 'C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes'\n$env:ECORP_OWNED_PROCESS_TEST = '0'\nnode --test --test-reporter=tap --test-name-pattern='^database query options' tools/owned_test_stack.test.mjs\nexit $LASTEXITCODE\r\n",
+      "limitation": "Command text extracted from retained wrapper; not re-executed by packager."
+    },
+    {
+      "original_path": "fix-db-target/green.ps1",
+      "original_sha256": "10eb26c5bf4480dd8c10d3fd73227db8da3f874aff3f50ada2f452a3a66dd5b6",
+      "original_bytes": 245,
+      "command_script_utf8": "Set-Location -LiteralPath 'C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes'\n$env:ECORP_OWNED_PROCESS_TEST = '0'\nnode --test --test-reporter=tap --test-name-pattern='^database query options' tools/owned_test_stack.test.mjs\nexit $LASTEXITCODE\r\n",
+      "limitation": "Command text extracted from retained wrapper; not re-executed by packager."
+    },
+    {
+      "original_path": "fix-db-target/affected.ps1",
+      "original_sha256": "b6abdf81bb67e8b5db5f3f97a74d5bf38bcec47cc20d9b8e82a702015e8bdda3",
+      "original_bytes": 281,
+      "command_script_utf8": "Set-Location -LiteralPath 'C:\\Users\\sschofield\\repos\\ecorp-pr237-review-fixes'\n$env:ECORP_OWNED_PROCESS_TEST = '0'\nnode --test --test-reporter=tap --test-name-pattern='^(?!native owned child)' tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs\nexit $LASTEXITCODE\r\n",
+      "limitation": "Command text extracted from retained wrapper; not re-executed by packager."
+    }
+  ],
+  "node_integration": {
+    "recorded_template": "node --test --test-concurrency=1 --test-reporter=tap <nine named suites>",
+    "expanded_from_recorded_tests": "node --test --test-concurrency=1 --test-reporter=tap tools/ci_runner_tests.test.mjs tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/factory_budget_process.test.mjs tools/factory_budget_fixture_config.test.mjs tools/e2e_factory_budget_recovery.test.mjs tools/e2e_predispatch_failure.test.mjs tools/controlled_runner_fixture.test.mjs tools/identity_fixture.test.mjs",
+    "basis": "receipts/node-integration-results.json",
+    "limitation": "Expansion of recorded template and ordered tests, not a newly executed command."
+  }
+}

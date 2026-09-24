@@ -1,0 +1,75 @@
+{
+  "pr": 358,
+  "purpose": "Aggregate/source-correction owned PostgreSQL regressions",
+  "source_head": "5db7afa19b1bb17c06feea40043ba8d5005b22b1",
+  "tested_staged_tree": "bdc88da4ae7b003c47f2f661cf95aafc4a6b27f7",
+  "qa_root": "<local-user>\\code\\qa\\pr358-dispatch-store-20260923-r1",
+  "target": "<local-user>\\code\\ecorp-pr338-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T07:40:05.5421304+00:00",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-dispatch-native-r1-initdb.log",
+      "sha256": "35399e1c7669758b02ab2ffbad0e59f873b1cf25d16aecc055b78910a76ec666"
+    },
+    {
+      "name": "workspace-cache-refresh",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-dispatch-native-r1-workspace-cache-refresh.log",
+      "sha256": "0f0cc8a73524b04e65970845a00ba747bed33e9231d9c920227dd30952779af1"
+    },
+    {
+      "name": "owned-postgresql-source-correction-enqueue",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-dispatch-native-r1-source-correction-enqueue.log",
+      "sha256": "4638235e340ca1215fc76a9b8aad0eeb06dc027dc27ac352b71eb4a70a2751d7"
+    },
+    {
+      "name": "owned-postgresql-aggregate",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-dispatch-native-r1-aggregate.log",
+      "sha256": "d8034aa3d2b1c1e23dc46af56a8bff9a454eda55d1337591dc95731ce6d0f86a"
+    },
+    {
+      "name": "owned-postgresql-correction-authority",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-dispatch-native-r1-correction-authority.log",
+      "sha256": "ff4cd1db9ae3b4d302992bb0dd744039ce0c487ddf434a473fdb452d15474330"
+    },
+    {
+      "name": "owned-postgresql-source-only-publication",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-dispatch-native-r1-source-only-publication.log",
+      "sha256": "e451e4effb1f118e824bd7b994905b2415a39dea6628705436e7399b76df3325"
+    },
+    {
+      "name": "owned-postgresql-exhausted-retry",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-dispatch-native-r1-exhausted-retry.log",
+      "sha256": "c9de8d6977c34c45c7714637941000801b715f141d5dc70153346c70b3eef652"
+    },
+    {
+      "name": "owned-postgresql-correction-usage",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-dispatch-native-r1-correction-usage.log",
+      "sha256": "b9612d39bf8c25ed658b31975fe2a9cdea4a1eb84d33bb76319cf718d22d175f"
+    },
+    {
+      "name": "owned-postgresql-resume-budget",
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-dispatch-native-r1-resume-budget.log",
+      "sha256": "f34644892cb360dd2bf78b619ba244d40fc1348895bf730e7473cab481a2600a"
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+  "authentication": {
+    "wrong_password_rejected": true,
+    "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance.",
+    "method": "scram-sha-256",
+    "authenticated_query": true
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T07:46:24.1494517+00:00"
+}

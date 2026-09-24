@@ -1,0 +1,31 @@
+F02 component regressions passed: 124 invalid/reserved cases across all three plan inputs and forward separators.
+{"drive":"Q:","event":"alias-before","mapping":null,"fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-4fa584bbcc6b4370a8d25067b67868b9"}
+{"drive":"Q:","event":"alias-created","target":"\\??\\<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-4fa584bbcc6b4370a8d25067b67868b9\\retained-office","sameSentinel":true}
+F01 native alias rejected in Root.
+F01 native alias rejected in Product.
+F01 native alias rejected in Protected.
+{"drive":"Q:","event":"alias-cleanup","removedTarget":"\\??\\<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-4fa584bbcc6b4370a8d25067b67868b9\\retained-office","mapping":null}
+F01 native short-path overlap rejected: short fixture ancestor.
+F01 native short-path overlap rejected: short product.
+F01 native short-path overlap rejected: short protected ancestor.
+F01 native short-path overlap rejected: multiple missing descendants.
+{"executed":true,"event":"native-short-alias","distinctAlias":true,"status":"passed","mode":"Required"}
+F01 native SUBST/unmapped-drive and simulated mapped/unknown-drive regressions passed.
+{"drive":"Q:","event":"volume-before","mapping":null,"target":"\\Device\\HarddiskVolume4","fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-4fa584bbcc6b4370a8d25067b67868b9"}
+{"drive":"Q:","event":"volume-created","target":"\\Device\\HarddiskVolume4","sameSentinel":true}
+F01 native same-volume disjoint control passed: Root.
+F01 native same-volume disjoint control passed: Product.
+F01 native same-volume disjoint control passed: Protected.
+F01 native same-volume overlap rejected: Root.
+F01 native same-volume overlap rejected: Protected.
+F01 native same-volume overlap rejected: Product.
+F01 native same-volume overlap rejected: protected drive root.
+F01 native same-volume overlap rejected: aliased protected drive root.
+{"drive":"Q:","event":"volume-cleanup","removedTarget":"\\Device\\HarddiskVolume4","mapping":null,"exactMatch":true}
+F01 native same-volume aliases, disjoint DOS-path controls and drive-root ancestry regressions passed.
+WARNING: Failed synthetic fixture retained at <local-user>\AppData\Local\Temp\ecorp-u1-preflight-4fa584bbcc6b4370a8d25067b67868b9
+Exception: <reviewed-worktree>\tools\qa_multiplayer_preflight.test.ps1:12
+Line |
+  12 |      if (!$Condition) { throw $Message }
+     |                         ~~~~~~~~~~~~~~
+     | The native stat-cache fixture must distinguish restored and changed timestamps.

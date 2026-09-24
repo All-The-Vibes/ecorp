@@ -1,0 +1,20 @@
+    Checking crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+    Checking crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+    Checking crony-gateways v0.1.0 (<reviewed-worktree>\crates\crony-gateways)
+    Checking crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+    Checking crony-cli v0.1.0 (<reviewed-worktree>\crates\crony-cli)
+    Checking crony-runner v0.1.0 (<reviewed-worktree>\crates\crony-runner)
+    Checking crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+error: this expression creates a reference which is immediately dereferenced by the compiler
+    --> crates\crony-server\src\main.rs:5483:17
+     |
+5483 |                 &prompt,
+     |                 ^^^^^^^ help: change this to: `prompt`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#needless_borrow
+     = note: `-D clippy::needless-borrow` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::needless_borrow)]`
+
+error: could not compile `crony-server` (bin "crony-server" test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `crony-server` (bin "crony-server") due to 1 previous error

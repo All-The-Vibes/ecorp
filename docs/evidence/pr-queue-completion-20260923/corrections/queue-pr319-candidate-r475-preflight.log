@@ -1,0 +1,82 @@
+F02 component regressions passed: 124 invalid/reserved cases across all three plan inputs and forward separators.
+{"mapping":null,"event":"alias-before","drive":"Q:","fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-c08dc655252f4d009a266d6373a9db98"}
+{"sameSentinel":true,"event":"alias-created","drive":"Q:","target":"\\??\\<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-c08dc655252f4d009a266d6373a9db98\\retained-office"}
+F01 native alias rejected in Root.
+F01 native alias rejected in Product.
+F01 native alias rejected in Protected.
+{"removedTarget":"\\??\\<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-c08dc655252f4d009a266d6373a9db98\\retained-office","mapping":null,"event":"alias-cleanup","drive":"Q:"}
+F01 native short-path overlap rejected: short fixture ancestor.
+F01 native short-path overlap rejected: short product.
+F01 native short-path overlap rejected: short protected ancestor.
+F01 native short-path overlap rejected: multiple missing descendants.
+{"executed":true,"status":"passed","event":"native-short-alias","mode":"Required","distinctAlias":true}
+F01 native SUBST/unmapped-drive and simulated mapped/unknown-drive regressions passed.
+{"fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-c08dc655252f4d009a266d6373a9db98","mapping":null,"event":"volume-before","drive":"Q:","target":"\\Device\\HarddiskVolume4"}
+{"sameSentinel":true,"event":"volume-created","drive":"Q:","target":"\\Device\\HarddiskVolume4"}
+F01 native same-volume disjoint control passed: Root.
+F01 native same-volume disjoint control passed: Product.
+F01 native same-volume disjoint control passed: Protected.
+F01 native same-volume overlap rejected: Root.
+F01 native same-volume overlap rejected: Protected.
+F01 native same-volume overlap rejected: Product.
+F01 native same-volume overlap rejected: protected drive root.
+F01 native same-volume overlap rejected: aliased protected drive root.
+{"removedTarget":"\\Device\\HarddiskVolume4","mapping":null,"event":"volume-cleanup","exactMatch":true,"drive":"Q:"}
+F01 native same-volume aliases, disjoint DOS-path controls and drive-root ancestry regressions passed.
+{"selection":"default","event":"post-index-change-preflight","status":"preparation-checks-passed","hook_ran":false,"source_commit":"dc5c7556e131ab66c0c14e756fd647ea301d52ab","source_and_environment_preserved":true,"positive_control_ran":true,"git_calls":11,"fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-c08dc655252f4d009a266d6373a9db98\\hook-default"}
+{"selection":"repository","event":"post-index-change-preflight","status":"preparation-checks-passed","hook_ran":false,"source_commit":"dc5c7556e131ab66c0c14e756fd647ea301d52ab","source_and_environment_preserved":true,"positive_control_ran":true,"git_calls":11,"fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-c08dc655252f4d009a266d6373a9db98\\hook-repository"}
+{"selection":"worktree","event":"post-index-change-preflight","status":"preparation-checks-passed","hook_ran":false,"source_commit":"dc5c7556e131ab66c0c14e756fd647ea301d52ab","source_and_environment_preserved":true,"positive_control_ran":true,"git_calls":12,"fixture":"<local-user>\\AppData\\Local\\Temp\\ecorp-u1-preflight-c08dc655252f4d009a266d6373a9db98\\hook-worktree"}
+{"rejected":true,"restored_time":true,"event":"stat-cache-source-change","native_status_empty":true,"index_preserved":true}
+{"rejected":true,"restored_time":false,"event":"stat-cache-source-change","native_status_empty":false,"index_preserved":true}
+{"working_bytes_restored":true,"event":"staged-source-change","rejected":true,"index_preserved":true}
+{"source_status":"blocked","event":"hidden-index-change","rejected":true,"flag":"assume-unchanged"}
+{"source_status":"blocked","event":"hidden-index-change","rejected":true,"flag":"skip-worktree"}
+{"kind":"commit","event":"replacement-source-change","source_status":"blocked","rejected":true,"original_head_unchanged":true}
+{"kind":"tree","event":"replacement-source-change","source_status":"blocked","rejected":true,"original_head_unchanged":true}
+{"event":"clean-filter-source-change","preserved":true,"rejected":true,"filter_ran":false,"source_status":"blocked","selection":"local"}
+{"event":"clean-filter-source-change","preserved":true,"rejected":true,"filter_ran":false,"source_status":"blocked","selection":"included"}
+{"event":"clean-filter-source-change","preserved":true,"rejected":true,"filter_ran":false,"source_status":"blocked","selection":"global-explicit"}
+{"event":"clean-filter-source-change","preserved":true,"rejected":true,"filter_ran":false,"source_status":"blocked","selection":"global-default"}
+F03 native local/included/global filter rejection, effect prevention and source preservation passed.
+{"preserved":true,"status_called":false,"event":"gitlink-source-change","rejected":true,"filter_ran":false}
+{"existing":false,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE"}
+{"existing":true,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE"}
+{"existing":false,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE2"}
+{"existing":true,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE2"}
+{"existing":false,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE2_EVENT"}
+{"existing":true,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE2_EVENT"}
+{"existing":false,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE_SETUP"}
+{"existing":true,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE_SETUP"}
+{"existing":false,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE_PERFORMANCE"}
+{"existing":true,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE_PERFORMANCE"}
+{"existing":false,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE_FUTURE_VARIANT"}
+{"existing":true,"git_calls":0,"event":"git-trace-preflight","preserved":true,"name":"GIT_TRACE_FUTURE_VARIANT"}
+{"preserved":true,"key":"include.path","git_calls":1,"event":"git-include-preflight","expanded":false}
+{"preserved":true,"key":"includeIf.gitdir:**.path","git_calls":1,"event":"git-include-preflight","expanded":false}
+{"preserved":true,"key":"includeIf.onbranch:*.path","git_calls":1,"event":"git-include-preflight","expanded":false}
+{"preserved":true,"key":"include.path","git_calls":2,"event":"git-worktree-include-preflight","expanded":false}
+{"preserved":true,"key":"includeIf.gitdir:**.path","git_calls":2,"event":"git-worktree-include-preflight","expanded":false}
+{"preserved":true,"key":"includeIf.onbranch:*.path","git_calls":2,"event":"git-worktree-include-preflight","expanded":false}
+{"preserved":true,"key":"include.path","git_calls":2,"event":"git-linked-worktree-include-preflight","expanded":false}
+{"preserved":true,"key":"includeIf.gitdir:**.path","git_calls":2,"event":"git-linked-worktree-include-preflight","expanded":false}
+{"preserved":true,"key":"includeIf.onbranch:*.path","git_calls":2,"event":"git-linked-worktree-include-preflight","expanded":false}
+F03 native short-alias Git identity passed.
+F03 native clean control passed with distinct candidate/foreign identities.
+F03 native tracked/untracked dirty controls passed; source bytes preserved.
+F03 native selection rejected: GIT_DIR+GIT_WORK_TREE
+F03 native selection rejected: GIT_DIR
+F03 native selection rejected: GIT_WORK_TREE
+F03 native selection rejected: GIT_COMMON_DIR
+F03 native selection rejected: GIT_INDEX_FILE
+F03 native selection rejected: GIT_CONFIG
+F03 native selection rejected: GIT_CONFIG_GLOBAL
+F03 native selection rejected: GIT_CONFIG_SYSTEM
+F03 native selection rejected: GIT_ATTR_NOSYSTEM
+F03 native selection rejected: GIT_ATTR_SOURCE
+F03 native selection rejected: GIT_CONFIG_PARAMETERS
+F03 native selection rejected: GIT_CONFIG_COUNT+GIT_CONFIG_KEY_0+GIT_CONFIG_VALUE_0
+F03 native selection rejected: GIT_CONFIG_VALUE_77
+F03 native selection rejected: GIT_OBJECT_DIRECTORY
+F03 native selection rejected: GIT_ALTERNATE_OBJECT_DIRECTORIES
+F03 native Git selection, identity binding, value non-disclosure and preservation regressions passed.
+U1 portable preflight path, port, tool, source, registry, report and source-preservation regressions passed. Native 8.3 alias lane: passed.

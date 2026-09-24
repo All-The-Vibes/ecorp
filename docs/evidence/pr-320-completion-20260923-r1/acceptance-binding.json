@@ -1,0 +1,222 @@
+{
+  "source_head": "765aff1f8dd812cf68620177f77e722860a9ecab",
+  "tested_staged_tree": "f1a91739839dca0edbf994af3c66c2780a5518a3",
+  "target_main": "1edbf1b5f4d4fe3f12f9177bb72b631d8ce2e819",
+  "acceptance_bindings": [
+    {
+      "receipt": "pr320-native-database-r5.json",
+      "tested_staged_tree": "23262332f42a2602344df89658f0475a6865b3cc",
+      "nonhistorical_differences_to_final_gate_tree": [
+        "db/migrations/manifest.json",
+        "docs/EVALS.md",
+        "tools/qa_delegated.ps1"
+      ]
+    },
+    {
+      "receipt": "pr320-native-startup-r2.json",
+      "tested_staged_tree": "1bc53b77f798c23dce223f99dfdce033dc6f8669",
+      "nonhistorical_differences_to_final_gate_tree": [
+        "docs/EVALS.md",
+        "tools/qa_delegated.ps1"
+      ]
+    },
+    {
+      "receipt": "pr320-native-integration-r2-continuation.json",
+      "tested_staged_tree": "d9cc0a13ac2d3b670a077a15d803f29918241c68",
+      "nonhistorical_differences_to_final_gate_tree": [
+        "docs/EVALS.md"
+      ]
+    }
+  ],
+  "binding_explanation": "All Rust and web implementation/test bytes and all migration SQL bytes match across these successful runs. After SQLx, the manifest registered the already-tested 0044 SQL; the Keycloak launcher then received a shorter owned Java socket directory. Full-stack acceptance includes that launcher fix. Main then added only docs/EVALS.md and historical PR273 evidence. The nine final gates cover the final integrated tree.",
+  "interrupted_wrapper": "The original r2 launcher receipt remains running historically. Its continuation independently verified exact process/binary ownership, completed all 14 acceptance checks, and stopped only owned fixture processes. The earlier receipt was not rewritten.",
+  "evidence_classification": "Earlier failed attempts include setup/test defects and are preserved as such. No original TDD chronology or unchanged-test behavioral RED is inferred.",
+  "artifacts": [
+    {
+      "file": "pr320-native-database-r5.json",
+      "original_sha256": "34580c3f66ede8f063f2f8e6310cacaca2cda0018355f264021dec2db1434588",
+      "published_sha256": "c6ca679cc132fa002bf82d3dc6bce6893fed3e165570a9b0202ca2b057aa25e9"
+    },
+    {
+      "file": "pr320-native-database-r5-initdb.log",
+      "original_sha256": "549ffc4815b5e9e775c635e7241f2ff80db569ef21d0540a5740ab71f90cb4cf",
+      "published_sha256": "762f507d9821953a82f369e9e1f45102e03ad7b1488e7b34b469835bdfaf9f52"
+    },
+    {
+      "file": "pr320-native-database-r5-workspace-cache-refresh.log",
+      "original_sha256": "ddd210bfe0617ba90dbc48b3577e2622fbb71c3cbe29bc8696ff31269c9ebf7a",
+      "published_sha256": "503262bd8050acced6645a23a3b8c770bd41b1bed9160f83a3280e0cada4acec"
+    },
+    {
+      "file": "pr320-native-database-r5-sqlx.log",
+      "original_sha256": "2834b5f41801a9d01091c1722698583255afaf42a950c6296e7f9d7ef9047a56",
+      "published_sha256": "d2a3308f14bb7db84ed416fa58b143613583fc636ae7cc9ab8b25c48245adeb0"
+    },
+    {
+      "file": "pr320-native-startup-r2.json",
+      "original_sha256": "0c40f8eab36828681e22e2f697c1ce0507bb170d36236161430ba4b382b5fb91",
+      "published_sha256": "8664dbf57317e5715530e9a64f69c6d65a304a6b40fa88d74cd95cc4fd0a4543"
+    },
+    {
+      "file": "pr320-native-startup-r2-workspace-cache-refresh.log",
+      "original_sha256": "a205fb8d42db573236d897f20aa5bb5e16e39d75cd59eb93df8f5c0cb2b70568",
+      "published_sha256": "62b334758d56ee6b55a13d0c6e420c8af9b5753d7716a89dbb7ac53d154e06ac"
+    },
+    {
+      "file": "pr320-native-startup-r2-server-build.log",
+      "original_sha256": "a09372b654ccbd44cd9ef054481bdbc1893584e9805c2251f44824be317832b5",
+      "published_sha256": "82f29fe2610803a63cb44e9f1eeff7c40c2f31cccf6d669ae48639b8112aa1a0"
+    },
+    {
+      "file": "pr320-native-startup-r2-initdb.log",
+      "original_sha256": "52565afc3f3a03fcfcac70029b24ee490c919bc6b4d73b2017f422371ff0da50",
+      "published_sha256": "5c5a15179fdf48402a0c4f3b6ef266eca889c7b5ae5ff37f3e59cca86eff6360"
+    },
+    {
+      "file": "pr320-native-startup-r2-assertions.log",
+      "original_sha256": "856767f5d5849d4b5c98ca8bf1e51e3811d909f78e7b3590059045b63a64a7bd",
+      "published_sha256": "b2550770768aa0ff79c76956304aa1b2d485ec6078b03c59e05b797c5a3ca7ac"
+    },
+    {
+      "file": "pr320-native-integration-r2-continuation.json",
+      "original_sha256": "77172c21e77723ee155caeac98e51d387d3593e21d3a3bfd4a75f48b686f8317",
+      "published_sha256": "34728fed41fab43a07e08ee80e3a00fe605899b1b034a1948529f78ab0e1d060"
+    },
+    {
+      "file": "pr320-native-integration-r2-continuation-browser-driver.log",
+      "original_sha256": "38bcc71ab067b015588922bce99129589593d03af19c0a8aae40168c5479d5bb",
+      "published_sha256": "e44123a53aa99f8f4a428e7f4429e92468d15f3357f972784c98947bed087293"
+    },
+    {
+      "file": "pr320-native-integration-r2.json",
+      "original_sha256": "06d1dde947cc21e03d4b285c2a1ece09440096b30a2b37bd1dc249f27bad2719",
+      "published_sha256": "1850002a9f422aef8d0277bcb4ec6cf6d0dfca71b50ac88f98dce1ac91848bba"
+    },
+    {
+      "file": "pr320-native-integration-r2-workspace-cache-refresh.log",
+      "original_sha256": "71f5e471ad0f1bb9efaeeb42fa9770c0069ee01e91fafcf06d3e5282758c6daa",
+      "published_sha256": "2ec2b2ec1ecd3f1ec0009ffb174cfab9008f640363e2b5fe11991e6cd23ea3e7"
+    },
+    {
+      "file": "pr320-native-integration-r2-crony-server-build.log",
+      "original_sha256": "b846fc333c8c19c7beab7c8527796daf3be9a727e9b1b355ae75cf2708fd7cd0",
+      "published_sha256": "769e5be5d84120a4d3ff05bc3256bbbc491dae52f3c1bdb08d83ce2b1d65843b"
+    },
+    {
+      "file": "pr320-native-integration-r2-crony-runner-build.log",
+      "original_sha256": "2b5c6189e34d713b74ebe26e34e639807310459ef59b0e429d42235cad4c74d8",
+      "published_sha256": "51518d156c85b33ec324cf6bc56b29ce420d296088db97147763623bdec533cc"
+    },
+    {
+      "file": "pr320-native-integration-r2-start.log",
+      "original_sha256": "08d9471ed7471b97df770ebfeed010511c86d811e9c3df798aa119251ec26421",
+      "published_sha256": "fb690f12a6c0ae579fe3dfbb874b4691b71fb7f157c9238776d746751b29a6f2"
+    },
+    {
+      "file": "pr320-native-integration-r2-continuation-ownership.log",
+      "original_sha256": "9bd65a92fba5769e305623c6ad6f645b31dacdf81b9015bd949873931b95efce",
+      "published_sha256": "2d0a9dac9d94772661a57ec6c3f2dec04323ebc33a610512c7a8f0090cc6e592"
+    },
+    {
+      "file": "pr320-native-integration-r2-continuation-stop.log",
+      "original_sha256": "0f78987c26f6eb301988108a41cdace677c760f6015ffee031e682fb6a48d041",
+      "published_sha256": "d7a0a717b71d67269a2c1153d4af0b17ca6a908d401d14cc7a456b15ab26ee5c"
+    },
+    {
+      "file": "pr320-ui-cancellation-20260923-r2.log",
+      "original_sha256": "d9c20de9e286beb4e45f80a11b2292b734286be4595f8e38c2c22954229ae0e9",
+      "published_sha256": "ded7547ac656ef35b9d3f9e534a3d8446cbca86c0b7ebdd6aceeb7104284630b"
+    },
+    {
+      "file": "pr320-delegated-lifecycle-r2.log",
+      "original_sha256": "b1d610c082b20ff9652cec2d159a6723c0658cc9523e7d2b53a18180d7ffbc9c",
+      "published_sha256": "0e138513a61bd8605279b21f5bde240ad8c2e123140098feba7c557d4a3102ee"
+    },
+    {
+      "file": "synthetic-integration.json",
+      "original_sha256": "218ebdb6fc01f4af8b186b32f8f4eac02d201b3c9d225b34dc655e89b6226c45",
+      "published_sha256": "7297994b859544d532656b6b0bd50560e37aa89b87f37c4f4b86737b01087a7f"
+    },
+    {
+      "file": "synthetic-receipt.json",
+      "original_sha256": "341272ded87323fc6fbdcf09e2cd3218b9f3ab4f488af33b279c582f3990558f",
+      "published_sha256": "fe00ddfc94165e0478628ae596edfd9b3ddefa13c861dd04c6b66399a8bb95a1"
+    },
+    {
+      "file": "browser-completed.png",
+      "original_sha256": "3dcaa4384782f3c527142c3eff695af8d8b89d6a085d520f902c632e1b572b6d",
+      "published_sha256": "3dcaa4384782f3c527142c3eff695af8d8b89d6a085d520f902c632e1b572b6d"
+    },
+    {
+      "file": "browser-private-receipt.png",
+      "original_sha256": "cc15eebf1dd880608976523eabee15f683b6a04f475ee636cb7314d03c04c129",
+      "published_sha256": "cc15eebf1dd880608976523eabee15f683b6a04f475ee636cb7314d03c04c129"
+    },
+    {
+      "file": "browser-cancelled.png",
+      "original_sha256": "d429d126f9e8ba9e251201b23ddef9633f3cd5d1af344e202d9797d01eecdb74",
+      "published_sha256": "d429d126f9e8ba9e251201b23ddef9633f3cd5d1af344e202d9797d01eecdb74"
+    },
+    {
+      "file": "prior-attempts/pr320-native-database-r1.json",
+      "original_sha256": "5fd6e03b9edd7f46d50b87d8b7ab197e43613183aabe5d72b50fcdbe02920485",
+      "published_sha256": "0146ad63b8022529395d75e6673c73f66045fce3c0f7c06ab947bdfff371804b"
+    },
+    {
+      "file": "prior-attempts/pr320-native-database-r1-sqlx.log",
+      "original_sha256": "801caeaa32271c6bbb2333ca2f5017729721a89c7b00cd2805f84c84d08112e7",
+      "published_sha256": "ecd39641b2c03ad5bd76ce5459b4753604b12370b296af07e517778335f98232"
+    },
+    {
+      "file": "prior-attempts/pr320-native-database-r2.json",
+      "original_sha256": "4a2a4dfd2001dbcacc0f11646ae7c7ad3de088831b684afde08ad4001338a782",
+      "published_sha256": "0f959244e4b1972f7c7541729c628909236cff40bef2ba305cf5d24e825b777b"
+    },
+    {
+      "file": "prior-attempts/pr320-native-database-r2-sqlx.log",
+      "original_sha256": "26eb7ef2702a6ed36bff4161343c5690cf23e0caabe35903f618ab5503821cc4",
+      "published_sha256": "ec5fe01799f477357dfd845f842811bd62a980fcdb3fe9c880afed518913c1d3"
+    },
+    {
+      "file": "prior-attempts/pr320-native-database-r3.json",
+      "original_sha256": "ccdb6bd1afb30134f5829b0aa551dd794d1c8556c57fd16b573577d9bfa07d0c",
+      "published_sha256": "0329b74e42b145ae354c755785a7a7a7b9038611b6830d67ba8cc511baf3438e"
+    },
+    {
+      "file": "prior-attempts/pr320-native-database-r3-sqlx.log",
+      "original_sha256": "2e6116a640f5f753b5ba68283a32d8b85a40827e28aa03a461a1fcd1f7c234aa",
+      "published_sha256": "18cf50a920b3effeaf4e16e15507f111ead480f350511896b69a6743d2494dee"
+    },
+    {
+      "file": "prior-attempts/pr320-native-database-r4.json",
+      "original_sha256": "d6fdffc84d5048670280ae9ef571d9c31bf46101e042bf3170d4a098733420b2",
+      "published_sha256": "b3ead767851d60240ddedc5764e0709a2115d2c39c60b49d4328fdb1511f6e88"
+    },
+    {
+      "file": "prior-attempts/pr320-native-database-r4-sqlx.log",
+      "original_sha256": "5590aa006813934de2bdf4ed13df9a60e62fdecd9fd783d10fa98c45b3848ceb",
+      "published_sha256": "099fc2c963b28cb77f392f1120353b6b90f51ce83847fcf700ac92acbcefe8bd"
+    },
+    {
+      "file": "prior-attempts/pr320-native-startup-r1.json",
+      "original_sha256": "5a9b28fa4b0db0dc1943db6af76bfb0e7e063ce6b6d5a92a4cc52264a26abb88",
+      "published_sha256": "aab4ac65c3190357e704f0f5fa07ba74c40550a6d5247913e6c936a47d2136f2"
+    },
+    {
+      "file": "prior-attempts/pr320-native-startup-r1-assertions.log",
+      "original_sha256": "607ad29e38f72b208f7e8e46bb82a5ce881f0bbcfa68de83ac7eb832b1f661d3",
+      "published_sha256": "0887c0ba906e28d3bb68021fa42166b924ea030a3c06d1401eb17502f91e5a24"
+    },
+    {
+      "file": "prior-attempts/pr320-native-integration-r1.json",
+      "original_sha256": "5cc11d4e42ba33eaf465c7b66422d1f4784982d66716346f7544fd74372ce6e3",
+      "published_sha256": "e269ce4da1f40091a3e016b1676bf0b28f2fda811b42c844c8ba2a600de4b9e8"
+    },
+    {
+      "file": "prior-attempts/pr320-native-integration-r1-start.log",
+      "original_sha256": "5d9f6d570abfe0324f329a9f2803fdf282226694b7c179739e9b7bdf5a0cc243",
+      "published_sha256": "81107db7a92fc518a7b5f9b956dc41bf48fdcd288f37a93861cf160c544d0672"
+    }
+  ],
+  "limitations": "This is automated synthetic acceptance with Keycloak 26.7.4 and development principals. Live Azure/Entra, production identity acceptance and operating-system isolation were NOT_EXECUTED. The broader #285 SQL/hosted-OBO acceptance remains open. Local Node was 24.21.0; the repository pin is 24.19.0. Successful local checks do not replace fresh hosted checks or eligible protected review."
+}

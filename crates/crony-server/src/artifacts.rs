@@ -840,6 +840,8 @@ mod tests {
     use object_store::{GetResultPayload, ObjectMeta, memory::InMemory};
     use serde_json::json;
 
+    include!("issue297_native_fixture.rs");
+
     #[test]
     fn hmac_sha256_keeps_the_rfc4231_signature_bytes() {
         let mut mac = Hmac::<Sha256>::new_from_slice(&[0x0b; 20]).unwrap();

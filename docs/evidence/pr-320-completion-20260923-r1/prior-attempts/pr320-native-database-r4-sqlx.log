@@ -1,0 +1,33 @@
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 53.55s
+     Running unittests src\main.rs (<local-user>\code\ecorp-pr324-completion-20260922\target-validation\debug\deps\crony_server-1811e8fef3235ccf.exe)
+
+running 9 tests
+test delegated::authority_tests::delegated_callback_consumed_before_effect_and_concurrent_replay_denied ... ok
+test delegated::authority_tests::delegated_cancel_waits_for_authorized_effect_and_scrubs_token ... ok
+test delegated::authority_tests::delegated_failed_redemption_cannot_replay_or_fail_a_new_attempt ... ok
+test delegated::authority_tests::delegated_independent_expiry_is_bounded_and_erases_abandoned_pkce ... FAILED
+test delegated::authority_tests::delegated_original_assignment_survives_reconnect_and_refuses_rebinding ... ok
+test delegated::authority_tests::delegated_release_serializes_with_credential_revocation ... ok
+test delegated::authority_tests::delegated_revoked_authority_denies_all_new_effects ... ok
+test delegated::authority_tests::delegated_separate_login_and_provider_identity_complete_real_handlers ... ok
+test delegated::tests::delegated_job_room_rejection_rolls_back_all_admission ... ok
+
+failures:
+
+---- delegated::authority_tests::delegated_independent_expiry_is_bounded_and_erases_abandoned_pkce stdout ----
+
+thread 'delegated::authority_tests::delegated_independent_expiry_is_bounded_and_erases_abandoned_pkce' (44044) panicked at crates\crony-server\src\delegated_tests.rs:701:31:
+called `Result::unwrap()` on an `Err` value: Database(PgDatabaseError { severity: Error, code: "23502", message: "null value in column \"verification_policy\" of relation \"tasks\" violates not-null constraint", detail: Some("Failing row contains (f2f24631-1309-4999-b33f-52e3d9126c71, c31d31fa-3d92-4bad-bcee-12006e4d9f80, 00000000-0000-4000-8000-000000000001, expiry, fixture, pending, null, 2026-09-23 06:42:24.244797+00, 2026-09-23 06:42:24.244797+00, c097bea9-f831-4d6f-a3f4-86ea7777afb5, {\"model\": null, \"objective\": \"Read the configured protected reso..., 0, 1, 0, null, null, pending, 1)."), hint: None, position: None, where: None, schema: Some("public"), table: Some("tasks"), column: Some("verification_policy"), data_type: None, constraint: None, file: Some("execMain.c"), line: Some(2028), routine: Some("ExecConstraints") })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    delegated::authority_tests::delegated_independent_expiry_is_bounded_and_erases_abandoned_pkce
+
+test result: FAILED. 8 passed; 1 failed; 0 ignored; 0 measured; 160 filtered out; finished in 29.64s
+
+error: test failed, to rerun pass `-p crony-server --bin crony-server`

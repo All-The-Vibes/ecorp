@@ -1,0 +1,79 @@
+{
+  "status": "fresh-fixture-retry-prepared",
+  "observed_at_utc": "2026-09-23T17:48:36.107927+00:00",
+  "tested_staged_tree": "67e9c956ad29ed0ffdb10b165d6320a506a3eb5b",
+  "production_source_changed": false,
+  "qualification_assertions_modified": false,
+  "failure": "r466 runtime readback imported the r412 attempt helper, which looked for the r412 current-attempt.json. The real runtime/signing/broadcast/recovery steps passed. r466 stays failed.",
+  "preserved_attempt": [
+    {
+      "file": "queue-native-sequence-r466.json",
+      "sha256": "325ea68396945594cca4d28beb7174da18e5640c242937d47b723da64b970966"
+    },
+    {
+      "file": "queue-audit-native-r466\\acceptance-run.json",
+      "sha256": "b7e18e394786b7e11aba56635ae8317a5626df88f29a6d12e2403fee37fb01d6"
+    },
+    {
+      "file": "queue-audit-native-r466\\runtime-readback.log",
+      "sha256": "504a915df5b6c2290be60dce58c924e62309e5b4ee5f076d8eaa120927e109ff"
+    },
+    {
+      "file": "queue-audit-native-r466\\cleanup-r466.json",
+      "sha256": "71bbb74d38596cf4d5de25aacc264de06255735c352c49a2bc46465446e57872"
+    },
+    {
+      "file": "queue-audit-native-r466\\driver-adaptations.json",
+      "sha256": "6e9cc3a2574a162029d76daa456aef527d67b6ad745371a7c1308ec75b1483d5"
+    }
+  ],
+  "helper_uri_bindings": [
+    {
+      "driver": "e2e_native_qualification.mjs",
+      "uri": "file:///<private-evidence>/queue-audit-native-r471/native_qualification_attempt.mjs"
+    },
+    {
+      "driver": "e2e_native_qualification.mjs",
+      "uri": "file:///<reviewed-worktree>/tools/native_qualification_finality.mjs"
+    },
+    {
+      "driver": "e2e_native_archive.mjs",
+      "uri": "file:///<reviewed-worktree>/tools/native_qualification_trust.mjs"
+    },
+    {
+      "driver": "e2e_native_archive.mjs",
+      "uri": "file:///<private-evidence>/queue-audit-native-r471/native_qualification_attempt.mjs"
+    },
+    {
+      "driver": "e2e_native_qualification_browser.mjs",
+      "uri": "file:///<private-evidence>/queue-audit-native-r471/native_qualification_attempt.mjs"
+    },
+    {
+      "driver": "e2e_native_qualification_browser.mjs",
+      "uri": "file:///<reviewed-worktree>/tools/artifact_client.mjs"
+    },
+    {
+      "driver": "native_qualification_acceptance.mjs",
+      "uri": "file:///<private-evidence>/queue-audit-native-r471/native_qualification_attempt.mjs"
+    }
+  ],
+  "supervisors": [
+    {
+      "original": "run-queue-audit-native-r466.ps1",
+      "original_sha256": "9f2b345b30a84c3566f460a72b8f11b0359844c0c390887e1539bf319f0d7e07",
+      "executed": "run-queue-audit-native-r471.ps1",
+      "executed_sha256": "a710c22c7dbccc057c37250d7fbccb5c08e2b9c4805b62de00fc2060e14548e4"
+    },
+    {
+      "original": "run-queue-native-sequence-r466.ps1",
+      "original_sha256": "d6d2e48b1367aebfcf6cac8e8315151f85c3ac57bc37cb3246abb55d9bf89795",
+      "executed": "run-queue-native-sequence-r471.ps1",
+      "executed_sha256": "d9884144607ab8c31609192c02033fcdb92b5e1260b6673aa1ef2a0b811f5de6"
+    }
+  ],
+  "adaptations": {
+    "file": "queue-audit-native-r471\\driver-adaptations.json",
+    "sha256": "0e3832e3a4329c67b302be7b5611bc10c9c956a2ba0fb243ab8e18f672c0fd86"
+  },
+  "scope": "Fresh native audit only, unchanged validated product source and binaries; untouched delegated/Factory/deliverable r433 fixtures and source-bound r455 database acceptance reused."
+}

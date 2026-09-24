@@ -267,6 +267,19 @@ async fn issue211_collection_replays_new_receipt_for_latest_failed_checkpoint(po
         store.runner_command_dispatch_state(&command).await.unwrap(),
         RunnerCommandDispatchState::Pending
     );
+    for (field, value) in [
+        ("assignment_token", json!(Uuid::new_v4())),
+        ("unexpected_executable_field", json!(true)),
+        (BINDING, json!({"sha256":"invalid","bytes":1})),
+    ] {
+        let mut altered = command.clone();
+        altered.payload[field] = value;
+        assert_eq!(
+            store.runner_command_dispatch_state(&altered).await.unwrap(),
+            RunnerCommandDispatchState::Settled,
+            "changed {field} must not use the private upload-binding exception"
+        );
+    }
     assert_dispatch_read(&store, &command, true).await;
     store
         .acknowledge_runner_command(command.id, RUNNER)
@@ -578,6 +591,10 @@ async fn issue211_collection_binding_survives_abandon_and_rejects_replacement(po
         set_payload(&store, &command, &tampered).await;
         assert_upload_denied(&store, input.clone(), artifact.clone(), &staging).await;
         assert_dispatch_read(&store, &command, false).await;
+        assert_eq!(
+            store.runner_command_dispatch_state(&command).await.unwrap(),
+            RunnerCommandDispatchState::Settled
+        );
     }
     set_payload(&store, &command, &first).await;
     assert_dispatch_read(&store, &command, true).await;
@@ -1032,7 +1049,7 @@ async fn corrected_then_stopped(
         "adapter":"github-copilot","workspace":"fixture-worktree","workspace_branch":"crony/fixture",
         "workspace_base_ref":"main","workspace_base_commit":"a".repeat(40),"execution_mode":"provider"
     }))).await.unwrap();
-    store
+    let stopped = store
         .apply_runner_event(event(
             launch.run_id,
             launch.assignment_token,
@@ -1044,11 +1061,7 @@ async fn corrected_then_stopped(
         ))
         .await
         .unwrap();
-    let stopped = store
-        .evaluate_circuit_breaker(CORP, launch.run_id)
-        .await
-        .unwrap();
-    assert_eq!(stopped.event.unwrap().payload["stage"], "stop");
+    assert_eq!(stopped.related_events[0].payload["stage"], "stop");
     store
         .apply_runner_event(event(
             launch.run_id,

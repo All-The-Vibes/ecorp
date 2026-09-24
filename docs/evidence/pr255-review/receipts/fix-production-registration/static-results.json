@@ -1,0 +1,47 @@
+[
+  {
+    "name": "fmt",
+    "command": "cargo fmt --check",
+    "startedAt": "2026-09-21T14:58:16.2499457Z",
+    "finishedAt": "2026-09-21T14:58:22.7438499Z",
+    "exitCode": 0,
+    "log": "C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-255/round-2/fix-production-registration/fmt.log",
+    "environment": "OS/toolchain allowlist only; no DB/application/provider credentials"
+  },
+  {
+    "name": "compile",
+    "command": "cargo test -p crony-server --locked --offline --no-run",
+    "startedAt": "2026-09-21T14:58:22.7780345Z",
+    "finishedAt": "2026-09-21T15:00:39.4999226Z",
+    "exitCode": 0,
+    "log": "C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-255/round-2/fix-production-registration/compile.log",
+    "environment": "OS/toolchain allowlist only; no DB/application/provider credentials"
+  },
+  {
+    "name": "clippy",
+    "command": "cargo clippy -p crony-server --all-targets --locked --offline -- -D warnings",
+    "startedAt": "2026-09-21T15:00:39.5132884Z",
+    "finishedAt": "2026-09-21T15:02:37.4647561Z",
+    "exitCode": 0,
+    "log": "C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-255/round-2/fix-production-registration/clippy.log",
+    "environment": "OS/toolchain allowlist only; no DB/application/provider credentials"
+  },
+  {
+    "name": "list",
+    "command": "cargo test -p crony-server --locked --offline factory_connection_tests:: -- --ignored --list",
+    "startedAt": "2026-09-21T15:02:37.4762346Z",
+    "finishedAt": "2026-09-21T15:02:47.1910166Z",
+    "exitCode": 0,
+    "log": "C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-255/round-2/fix-production-registration/list.log",
+    "environment": "OS/toolchain allowlist only; no DB/application/provider credentials"
+  },
+  {
+    "name": "server-unit",
+    "command": "cargo test -p crony-server --locked --offline -- --test-threads=1",
+    "startedAt": "2026-09-21T15:02:47.1996179Z",
+    "finishedAt": "2026-09-21T15:02:54.2157193Z",
+    "exitCode": 0,
+    "log": "C:/Users/sschofield/.codex/review-executors/ecorp/receipts/pr-255/round-2/fix-production-registration/server-unit.log",
+    "environment": "OS/toolchain allowlist only; no DB/application/provider credentials"
+  }
+]

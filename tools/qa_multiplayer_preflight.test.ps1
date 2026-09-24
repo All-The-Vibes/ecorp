@@ -1,0 +1,925 @@
+#requires -Version 7.4
+[CmdletBinding()]
+param(
+    [ValidateSet('Required', 'ReportUnavailable')]
+    [string]$ShortAliasMode = 'Required'
+)
+$ErrorActionPreference = 'Stop'
+if (!$IsWindows) { throw 'Run the U1 preflight regression on Windows.' }
+. (Join-Path $PSScriptRoot 'qa_multiplayer_preflight.ps1')
+
+function Assert([bool]$Condition, [string]$Message) {
+    if (!$Condition) { throw $Message }
+}
+function Reject([scriptblock]$Action, [string]$Pattern) {
+    $caught = $false
+    try { & $Action | Out-Null } catch {
+        $caught = $true
+        Assert ($_.Exception.Message -match $Pattern) "Unexpected rejection: $($_.Exception.Message)"
+    }
+    Assert $caught "Expected rejection matching $Pattern"
+}
+
+$fixture = Join-Path ([IO.Path]::GetTempPath()) "ecorp-u1-preflight-$([guid]::NewGuid().ToString('N'))"
+$product = Join-Path $fixture 'product [literal] with spaces'
+$office = Join-Path $fixture 'retained-office'
+$qa = Join-Path $fixture 'qa\u1-new'
+$completed = $false
+New-Item -ItemType Directory -Path $product, $office | Out-Null
+[IO.File]::WriteAllText((Join-Path $product 'package.json'), '{"packageManager":"pnpm@11.19.0"}')
+[IO.File]::WriteAllText((Join-Path $office 'sentinel'), 'untouched')
+try {
+    $planArgs = @{ Product = $product; Root = $qa; Protected = @($office); Ports = @(18870, 15870, 15470) }
+    $plan = Get-U1FixturePlan @planArgs
+    Assert ($plan.qa_root -eq $qa) 'Expected literal-path support.'
+    Assert ($plan.directories.Count -eq 7) 'Expected separately named planned storage roots.'
+    Assert (!(Test-Path -LiteralPath $qa)) 'Planning must not create the fixture.'
+    foreach ($bad in @('', '.', 'C:relative', '\\host\share\qa\u1-new', '\\?\C:\qa\u1-new', 'C:\qa\u1-new:stream')) {
+        Reject { Get-U1LocalPath $bad } 'absolute local drive'
+    }
+    foreach ($bad in @('C:\office.\qa\u1-new', 'C:\office \qa\u1-new', 'C:\qa\u1-new.')) {
+        Reject { Get-U1LocalPath $bad } 'Trailing dots or spaces'
+    }
+    $invalidComponents = @('*', '?', '<', '>', '|', '"', 'CONIN$', 'conout$') + @(0..31 | ForEach-Object { "bad$([char]$_)name" })
+    $deviceNames = @('CON', 'PRN', 'AUX', 'NUL') + @(
+        foreach ($prefix in @('COM', 'LPT')) {
+            foreach ($digit in @(1..9) + @([char]0xB9, [char]0xB2, [char]0xB3)) { "$prefix$digit" }
+        }
+    )
+    $invalidComponents += @(
+        foreach ($device in $deviceNames) {
+            $device
+            "$($device.ToLowerInvariant()).txt"
+            "$device.tar.gz"
+        }
+    )
+    foreach ($component in $invalidComponents) {
+        # An absent ancestor must not hide invalid components in any caller's input.
+        $invalidPath = "$fixture\missing\$component\qa\u1-invalid"
+        foreach ($field in @('Root', 'Product', 'Protected')) {
+            $bad = $planArgs.Clone(); $bad[$field] = $invalidPath
+            Reject { Get-U1FixturePlan @bad } 'Invalid or reserved Windows path component'
+        }
+        Reject { Get-U1LocalPath $invalidPath.Replace('\', '/') } 'Invalid or reserved Windows path component'
+    }
+    foreach ($component in @('literal [brackets] with spaces', 'CONSOLE', 'aux-data', 'NUL-file.txt',
+        'COM0', 'COM10', 'LPT0', 'LPT10', 'COM1x', 'LPT9x', 'file.NUL', ' CON', '.config',
+        'CONIN$.txt', 'CONOUT$.txt')) {
+        $validPath = "$fixture\missing\$component\qa\u1-valid"
+        $valid = $planArgs.Clone(); $valid.Root = $validPath
+        Assert ((Get-U1FixturePlan @valid).qa_root -eq $validPath) 'Valid non-device components must remain literal.'
+        Assert ((Get-U1LocalPath $validPath.Replace('\', '/')) -eq $validPath) 'Forward separators must remain supported.'
+    }
+    Assert (!(Test-Path -LiteralPath "$fixture\missing")) 'Component validation must not create missing ancestors.'
+    Write-Output "F02 component regressions passed: $($invalidComponents.Count) invalid/reserved cases across all three plan inputs and forward separators."
+    Assert ((Get-U1LocalPath 'C:\') -eq 'C:\') 'A protected drive root must not become a drive-relative path.'
+    Assert (Test-U1PathOverlap 'C:\' 'C:\qa\u1-new') 'A protected drive root overlaps descendants.'
+    Assert (!(Test-U1PathOverlap 'C:\' 'D:\qa\u1-new')) 'Different drives do not overlap.'
+    Assert (Test-U1PathOverlap 'C:\office' 'c:\OFFICE\child') 'Windows path comparison must ignore case.'
+    Assert (Test-U1PathOverlap 'C:\office\child' 'C:\office') 'Ancestor overlap must be denied.'
+    Assert (!(Test-U1PathOverlap 'C:\office' 'C:\office-two')) 'Sibling prefix is not overlap.'
+    # Native setup is mandatory: inability to create an owned alias is not a test pass.
+    Add-Type -TypeDefinition @'
+using System.Runtime.InteropServices;
+using System.Text;
+public static class U1AliasProbe {
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern uint QueryDosDevice(string name, StringBuilder target, int size);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern uint GetShortPathName(string path, StringBuilder target, int size);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool DefineDosDevice(uint flags, string name, string target);
+}
+'@
+    function Get-ProbeDriveTarget([string]$Drive) {
+        $buffer = [Text.StringBuilder]::new(32768)
+        if ([U1AliasProbe]::QueryDosDevice($Drive, $buffer, $buffer.Capacity)) { return $buffer.ToString() }
+        $errorCode = [Runtime.InteropServices.Marshal]::GetLastWin32Error()
+        if ($errorCode -ne 2) { throw "Drive inventory failed: $errorCode" }
+        return $null
+    }
+    $drive = $null
+    foreach ($letter in @('Q','R','S','T','U','V','W','X','Y','Z','P','O','N','M','L','K','J','I','H','G','F','E','D')) {
+        if (!(Get-ProbeDriveTarget "${letter}:") -and !(Get-PSDrive -Name $letter -ErrorAction SilentlyContinue)) {
+            $drive = "${letter}:"
+            break
+        }
+    }
+    Assert ($null -ne $drive) 'Native alias setup unavailable: no unused drive letter.'
+    $subst = Join-Path $env:SystemRoot 'System32\subst.exe'
+    $expectedTarget = "\??\$office"
+    $mapped = $false
+    try {
+        Assert ($null -eq (Get-ProbeDriveTarget $drive)) 'Chosen drive became occupied; do not replace it.'
+        Write-Output (@{ event = 'alias-before'; drive = $drive; mapping = $null; fixture = $fixture } | ConvertTo-Json -Compress)
+        & $subst $drive $office
+        Assert ($LASTEXITCODE -eq 0) 'Native SUBST setup failed; not a behavioral test result.'
+        $mapped = $true
+        Assert ((Get-ProbeDriveTarget $drive) -ceq $expectedTarget) 'Native mapping does not match the owned synthetic office.'
+        Assert ((Get-Content -LiteralPath "$drive\sentinel" -Raw) -eq 'untouched') 'Alias must reach the synthetic sentinel.'
+        Write-Output (@{ event = 'alias-created'; drive = $drive; target = $expectedTarget; sameSentinel = $true } | ConvertTo-Json -Compress)
+        foreach ($field in @('Root', 'Product', 'Protected')) {
+            $bad = $planArgs.Clone()
+            $bad[$field] = if ($field -eq 'Root') { "$drive\qa\u1-new" } else { "$drive\" }
+            Reject {
+                $accepted = Get-U1FixturePlan @bad
+                Write-Host (@{ event = 'alias-incorrectly-accepted'; field = $field; qa_root = $accepted.qa_root } | ConvertTo-Json -Compress)
+            } 'Substituted, mapped or unverifiable drives'
+            Write-Output "F01 native alias rejected in $field."
+        }
+        Reject { Get-U1LocalPath "$drive/qa/u1-new" } 'Substituted, mapped or unverifiable drives'
+        $bad = $planArgs.Clone(); $bad.Root = "$drive\qa\u1-new"; $bad.Protected = @([IO.Path]::GetPathRoot($office))
+        Reject { Get-U1FixturePlan @bad } 'Substituted, mapped or unverifiable drives'
+        Assert (!(Test-Path -LiteralPath "$office\qa")) 'Alias planning must not create directories.'
+    } finally {
+        if ($mapped) {
+            Assert ((Get-ProbeDriveTarget $drive) -ceq $expectedTarget) 'Mapping changed; refuse to remove a mapping no longer owned.'
+            & $subst $drive /D
+            Assert ($LASTEXITCODE -eq 0) 'Owned mapping removal failed.'
+            Assert ($null -eq (Get-ProbeDriveTarget $drive)) 'Owned mapping remains after cleanup.'
+            Write-Output (@{ event = 'alias-cleanup'; drive = $drive; removedTarget = $expectedTarget; mapping = $null } | ConvertTo-Json -Compress)
+        }
+    }
+    $shortBuffer = [Text.StringBuilder]::new(32768)
+    $shortLength = [U1AliasProbe]::GetShortPathName($product, $shortBuffer, $shortBuffer.Capacity)
+    $shortProduct = $shortBuffer.ToString()
+    $shortAvailable = $shortLength -gt 0 -and $shortLength -lt $shortBuffer.Capacity -and
+        !$shortProduct.Equals($product, [StringComparison]::OrdinalIgnoreCase)
+    $shortAliasStatus = 'blocked'
+    if ($shortAvailable) {
+        $valid = $planArgs.Clone(); $valid.Product = $shortProduct
+        Assert ((Get-U1FixturePlan @valid).product -eq [IO.Path]::GetFullPath($shortProduct)) 'Ordinary short paths must remain supported.'
+        Assert ([IO.Path]::GetFullPath($shortProduct).Equals([IO.Path]::GetFullPath($product), [StringComparison]::OrdinalIgnoreCase)) 'The supported Windows runtime must expand the existing short alias.'
+        foreach ($case in @(
+            @{ name = 'short fixture ancestor'; Product = $product; Root = "$shortProduct\qa\u1-short"; Protected = @($office) },
+            @{ name = 'short product'; Product = $shortProduct; Root = "$product\qa\u1-long"; Protected = @($office) },
+            @{ name = 'short protected ancestor'; Product = $office; Root = "$product\qa\u1-long"; Protected = @($shortProduct) },
+            @{ name = 'multiple missing descendants'; Product = $product; Root = "$shortProduct\missing\deeper\qa\u1-short"; Protected = @($office) }
+        )) {
+            $bad = $planArgs.Clone()
+            foreach ($field in @('Root', 'Product', 'Protected')) { $bad[$field] = $case[$field] }
+            Reject { Get-U1FixturePlan @bad } 'disjoint'
+            Write-Output "F01 native short-path overlap rejected: $($case.name)."
+        }
+        Assert (!(Test-Path -LiteralPath "$product\qa") -and !(Test-Path -LiteralPath "$product\missing")) 'Short-path planning must not create directories.'
+        $shortAliasStatus = 'passed'
+    } else {
+        Write-Warning 'Native 8.3 alias cases BLOCKED: the fixture volume did not supply a distinct short name. These cases were not executed and are not passing coverage.'
+    }
+    Write-Output (@{ event = 'native-short-alias'; status = $shortAliasStatus; mode = $ShortAliasMode; distinctAlias = $shortAvailable; executed = $shortAvailable } | ConvertTo-Json -Compress)
+    Assert ($shortAvailable -or $ShortAliasMode -eq 'ReportUnavailable') 'An explicitly provisioned Windows volume with distinct 8.3 names is required for this native lane.'
+    $bad = $planArgs.Clone(); $bad.Protected = @([IO.Path]::GetPathRoot($office))
+    Reject { Get-U1FixturePlan @bad } 'disjoint'
+    Reject { Get-U1LocalPath "$drive\qa\u1-new" } 'Substituted, mapped or unverifiable drives'
+    # Network/unknown device responses are simulated; no SMB share or mapping is created.
+    $nativeDriveTarget = (Get-Item Function:\Get-U1DriveTarget).ScriptBlock
+    try {
+        foreach ($unsupportedTarget in @('\Device\LanmanRedirector\server\share', '\Device\Mup\server\share',
+            '\??\C:\elsewhere', '\Device\Unknown', '')) {
+            function Get-U1DriveTarget([string]$Drive) { return $unsupportedTarget }
+            Reject { Get-U1LocalPath $qa } 'Substituted, mapped or unverifiable drives'
+        }
+    } finally { Set-Item Function:\Get-U1DriveTarget -Value $nativeDriveTarget }
+    Assert ((Get-U1FixturePlan @planArgs).qa_root -eq $qa) 'Native local-drive validation must be restored.'
+    Write-Output 'F01 native SUBST/unmapped-drive and simulated mapped/unknown-drive regressions passed.'
+    # Two direct DOS drive letters can name the same volume without being SUBST paths.
+    $volumeDrive = $null
+    $volumeTarget = Get-ProbeDriveTarget ([IO.Path]::GetPathRoot($fixture).Substring(0, 2))
+    Assert ($volumeTarget -match '^\\Device\\HarddiskVolume[0-9]+$') 'Native volume-alias setup requires a direct local temp volume.'
+    foreach ($letter in @('Q','R','S','T','U','V','W','X','Y','Z','P','O','N','M','L','K','J','I','H','G','F','E','D')) {
+        if (!(Get-ProbeDriveTarget "${letter}:") -and !(Get-PSDrive -Name $letter -ErrorAction SilentlyContinue)) {
+            $volumeDrive = "${letter}:"
+            break
+        }
+    }
+    Assert ($null -ne $volumeDrive) 'Native volume-alias setup unavailable: no unused drive.'
+    $volumeMapped = $false
+    try {
+        Assert ($null -eq (Get-ProbeDriveTarget $volumeDrive)) 'Volume-alias drive became occupied; do not replace it.'
+        Write-Output (@{ event = 'volume-before'; drive = $volumeDrive; mapping = $null; target = $volumeTarget; fixture = $fixture } | ConvertTo-Json -Compress)
+        # RAW_TARGET_PATH | NO_BROADCAST_SYSTEM; only the unused DOS name is created.
+        Assert ([U1AliasProbe]::DefineDosDevice(9, $volumeDrive, $volumeTarget)) 'Native raw-volume setup failed; not a behavioral result.'
+        $volumeMapped = $true
+        Assert ((Get-ProbeDriveTarget $volumeDrive) -ceq $volumeTarget) 'Raw-volume mapping does not match the exact owned definition.'
+        $aliasOffice = $volumeDrive + $office.Substring(2)
+        $aliasProduct = $volumeDrive + $product.Substring(2)
+        $aliasQa = $volumeDrive + $qa.Substring(2)
+        Assert ((Get-Content -LiteralPath "$aliasOffice\sentinel" -Raw) -eq 'untouched') 'Both volume letters must reach the same synthetic sentinel.'
+        Write-Output (@{ event = 'volume-created'; drive = $volumeDrive; target = $volumeTarget; sameSentinel = $true } | ConvertTo-Json -Compress)
+        foreach ($field in @('Root', 'Product', 'Protected')) {
+            $positive = $planArgs.Clone()
+            $positive[$field] = switch ($field) { Root { $aliasQa } Product { $aliasProduct } Protected { @($aliasOffice) } }
+            $control = Get-U1FixturePlan @positive
+            Assert ($control.qa_root -eq $positive.Root -and $control.product -eq $positive.Product) 'Disjoint alias control must preserve normal DOS output paths.'
+            Assert ($control.protected_roots[-1] -eq @($positive.Protected)[-1]) 'Protected output must remain a DOS path.'
+            Assert ($control.directories[0] -eq (Join-Path $positive.Root 'database')) 'Planned directories must not use native comparison keys.'
+            Write-Output "F01 native same-volume disjoint control passed: $field."
+        }
+        $volumeCases = @(
+            @{ name = 'Root'; Product = $product; Root = "$aliasOffice\qa\u1-new"; Protected = @($office) },
+            @{ name = 'Protected'; Product = $product; Root = "$office\qa\u1-new"; Protected = @($aliasOffice) },
+            @{ name = 'Product'; Product = $aliasProduct; Root = "$product\qa\u1-new"; Protected = @($office) },
+            @{ name = 'protected drive root'; Product = $product; Root = $aliasQa; Protected = @([IO.Path]::GetPathRoot($office)) },
+            @{ name = 'aliased protected drive root'; Product = $product; Root = $qa; Protected = @("$volumeDrive\") }
+        )
+        foreach ($case in $volumeCases) {
+            $bad = $planArgs.Clone()
+            foreach ($field in @('Root', 'Product', 'Protected')) { $bad[$field] = $case[$field] }
+            Reject {
+                $accepted = Get-U1FixturePlan @bad
+                Write-Host (@{ event = 'volume-incorrectly-accepted'; case = $case.name; qa_root = $accepted.qa_root } | ConvertTo-Json -Compress)
+            } 'disjoint'
+            Write-Output "F01 native same-volume overlap rejected: $($case.name)."
+        }
+        Assert (!(Test-Path -LiteralPath $qa) -and !(Test-Path -LiteralPath "$office\qa") -and !(Test-Path -LiteralPath "$product\qa")) 'Volume-alias planning must not create directories.'
+    } finally {
+        if ($volumeMapped) {
+            Assert ((Get-ProbeDriveTarget $volumeDrive) -ceq $volumeTarget) 'Volume mapping changed; refuse to remove an unowned definition.'
+            # RAW_TARGET_PATH | REMOVE_DEFINITION | EXACT_MATCH_ON_REMOVE | NO_BROADCAST_SYSTEM.
+            Assert ([U1AliasProbe]::DefineDosDevice(15, $volumeDrive, $volumeTarget)) 'Exact raw-volume mapping cleanup failed.'
+            Assert ($null -eq (Get-ProbeDriveTarget $volumeDrive)) 'Raw-volume mapping remains after cleanup.'
+            Write-Output (@{ event = 'volume-cleanup'; drive = $volumeDrive; removedTarget = $volumeTarget; mapping = $null; exactMatch = $true } | ConvertTo-Json -Compress)
+        }
+    }
+    Assert ((Get-U1FixturePlan @planArgs).qa_root -eq $qa) 'Ordinary disjoint planning must remain unchanged after alias cleanup.'
+    Write-Output 'F01 native same-volume aliases, disjoint DOS-path controls and drive-root ancestry regressions passed.'
+    Reject { Get-U1FixturePlan @planArgs -AdditionalProtectedPorts @(15470) } 'distinct high ports'
+    Reject { Get-U1FixturePlan @planArgs -AdditionalProtectedPorts @(-1) } 'distinct high ports'
+    foreach ($port in @(0, 9999, 65536, 8791, 8793, 5187, 5291, 15191, 15193, 5432, 54329, 18870, 15870)) {
+        $bad = $planArgs.Clone(); $bad.Ports = @(18870, 15870, $port)
+        Reject { Get-U1FixturePlan @bad } 'distinct high ports'
+    }
+    $bad = $planArgs.Clone(); $bad.Protected = @()
+    Reject { Get-U1FixturePlan @bad } 'Explicit protected'
+    $bad.Protected = @((Join-Path $fixture 'absent-office'))
+    Reject { Get-U1FixturePlan @bad } 'existing directory'
+    $bad = $planArgs.Clone(); $bad.Root = Join-Path $office 'qa\u1-new'
+    Reject { Get-U1FixturePlan @bad } 'disjoint'
+    $bad.Root = Join-Path $product 'qa\u1-new'
+    Reject { Get-U1FixturePlan @bad } 'disjoint'
+    $bad.Root = Join-Path $fixture 'qa\other'
+    Reject { Get-U1FixturePlan @bad } 'dedicated'
+    New-Item -ItemType Directory -Path $qa | Out-Null
+    [IO.File]::WriteAllText((Join-Path $qa 'retained-failure'), 'keep')
+    Reject { Get-U1FixturePlan @planArgs } 'occupied'
+    Assert ((Get-Content -LiteralPath (Join-Path $qa 'retained-failure') -Raw) -eq 'keep') 'Occupied fixture must be preserved.'
+    $planArgs.Root = Join-Path $fixture 'qa\u1-next'
+    $junction = Join-Path $fixture 'qa\u1-link'
+    New-Item -ItemType Junction -Path $junction -Target $office | Out-Null
+    $bad = $planArgs.Clone(); $bad.Root = $junction
+    Reject { Get-U1FixturePlan @bad } 'Reparse'
+    $bad.Root = Join-Path $junction 'qa\u1-nested'
+    Reject { Get-U1FixturePlan @bad } 'Reparse'
+    $bad = $planArgs.Clone(); $bad.Protected = @($junction)
+    Reject { Get-U1FixturePlan @bad } 'Reparse'
+    Remove-Item -LiteralPath $junction
+    Assert-U1PortsAvailable @(18870, 15870, 15470) @(443, 5432)
+    Reject { Assert-U1PortsAvailable @(18870, 15870, 15470) @(15870) } 'occupied'
+    foreach ($registry in @('', 'http://registry.invalid', 'https://user:secret@registry.invalid', 'https://registry.invalid/?secret=x', 'https://registry.invalid/#x')) {
+        Reject { ConvertTo-U1Registry $registry } 'credential-free HTTPS'
+    }
+    Assert ((ConvertTo-U1Registry 'https://registry.invalid/npm/') -eq 'https://registry.invalid/npm') 'Registry path must be preserved.'
+
+    # F03: real Git owns the source boundary; unrelated prerequisites stay offline.
+    & {
+        $nativeReadCommand = (Get-Item Function:\Invoke-U1ReadCommand).ScriptBlock
+        $savedEnvironment = @{}
+        foreach ($entry in Get-ChildItem Env:) {
+            if ($entry.Name -like 'GIT_*' -or $entry.Name -in @('HOME', 'USERPROFILE', 'XDG_CONFIG_HOME')) {
+                $savedEnvironment[$entry.Name] = $entry.Value
+            }
+        }
+        $homeRoot = Join-Path $fixture 'git-home'
+        $other = Join-Path $fixture 'other-clean-source'
+        $emptyTemplate = Join-Path $fixture 'empty-git-template'
+        New-Item -ItemType Directory -Path $homeRoot, $other, $emptyTemplate | Out-Null
+        try {
+            foreach ($entry in @(Get-ChildItem Env:GIT_*)) { Remove-Item -LiteralPath "Env:$($entry.Name)" }
+            foreach ($name in @('HOME', 'USERPROFILE', 'XDG_CONFIG_HOME')) { [Environment]::SetEnvironmentVariable($name, $homeRoot) }
+            function Invoke-FixtureGit([string]$Root, [string[]]$Arguments) {
+                & $nativeReadCommand 'git' (@('--no-optional-locks', '-c', 'core.fsmonitor=false', '-c', "core.hooksPath=$emptyTemplate", '-C', $Root) + $Arguments)
+            }
+            foreach ($root in @($product, $other)) {
+                Invoke-FixtureGit $root @('init', '--initial-branch=f03-fixture', "--template=$emptyTemplate") | Out-Null
+                [IO.File]::WriteAllText((Join-Path $root 'source.txt'), "fixture source: $(Split-Path -Leaf $root)")
+                [IO.File]::WriteAllText((Join-Path $root 'package.json'), '{"packageManager":"pnpm@11.19.0"}')
+                Invoke-FixtureGit $root @('add', '--', 'source.txt', 'package.json') | Out-Null
+                # Synthetic authorship only; never use the operator or PR author's identity.
+                Invoke-FixtureGit $root @('-c', 'user.name=F03 Fixture', '-c', 'user.email=f03-fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-m', 'owned synthetic source') | Out-Null
+            }
+            $nativeGitCalls = [Collections.Generic.List[object]]::new()
+            function Invoke-U1ReadCommand([string]$Name, [string[]]$Arguments) {
+                if ($Name -eq 'git') {
+                    $nativeGitCalls.Add(@($Arguments))
+                    return & $nativeReadCommand $Name $Arguments
+                }
+                if ($Name -eq 'node') { return 'v22.14.0' }
+                if ($Name -eq 'npm') { return 'https://registry.invalid/npm' }
+                if ($Name -eq 'docker') { return '29.8.0' }
+                throw 'Unexpected non-Git prerequisite.'
+            }
+            function Assert-U1CommandAvailable([string]$Name) {}
+            function Get-NetTCPConnection { return @{ LocalPort = 443 } }
+            $gitOptions = @{
+                QaRoot = $planArgs.Root; ProtectedRoot = @($office)
+                ServerPort = 18870; WebPort = 15870; DatabasePort = 15470
+                ProtectedPort = @(); ApprovedNpmRegistry = 'https://registry.invalid/npm'
+            }
+            $candidateHead = Invoke-FixtureGit $product @('rev-parse', 'HEAD')
+            $otherHead = Invoke-FixtureGit $other @('rev-parse', 'HEAD')
+            Assert ($candidateHead -ne $otherHead) 'Real fixture repositories must have distinct commits.'
+            Assert (!(Invoke-FixtureGit $other @('status', '--porcelain', '--untracked-files=all'))) 'Foreign control must be clean.'
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Real clean Product must attest its own commit.'
+            Assert (!(Test-Path -LiteralPath 'Env:GIT_INDEX_FILE')) 'Source attestation must restore an originally absent index override, not an empty override.'
+            # A mandatory temporary-index write invokes post-index-change even
+            # with --no-optional-locks. Only harmless owned sentinel writes run.
+            $hookConfig = Join-Path $product '.git/config'
+            $hookConfigBytes = [IO.File]::ReadAllBytes($hookConfig)
+            $hookWorktreeConfig = Join-Path $product '.git/config.worktree'
+            $hookResults = @()
+            foreach ($selection in @('default', 'repository', 'worktree')) {
+                $hookRoot = Join-Path $fixture "hook-$selection"
+                [IO.Directory]::CreateDirectory($hookRoot) | Out-Null
+                $sentinel = Join-Path $hookRoot 'outside-product-sentinel'
+                $hookDirectory = if ($selection -eq 'default') { Join-Path $product '.git/hooks' } else { Join-Path $hookRoot 'redirected-hooks' }
+                [IO.Directory]::CreateDirectory($hookDirectory) | Out-Null
+                $hook = Join-Path $hookDirectory 'post-index-change'
+                Assert (!(Test-Path -LiteralPath $hook) -and !(Test-Path -LiteralPath $hookWorktreeConfig)) 'Hook fixture paths must start absent.'
+                Assert ($sentinel.StartsWith($fixture + '\', [StringComparison]::OrdinalIgnoreCase) -and
+                    !(Test-U1PathOverlap $product $sentinel) -and !$sentinel.Contains("'")) 'Hook may write only its owned external sentinel.'
+                [IO.File]::WriteAllText($sentinel, "untouched`n")
+                [IO.File]::WriteAllText($hook, "#!/bin/sh`nprintf 'hook-executed\n' >> '$($sentinel.Replace('\', '/'))'`n")
+                try {
+                    if ($selection -eq 'repository') {
+                        Invoke-FixtureGit $product @('config', '--local', 'core.hooksPath', $hookDirectory.Replace('\', '/')) | Out-Null
+                    } elseif ($selection -eq 'worktree') {
+                        Invoke-FixtureGit $product @('config', '--local', 'extensions.worktreeConfig', 'true') | Out-Null
+                        # A lower-priority empty path proves the worktree setting wins.
+                        Invoke-FixtureGit $product @('config', '--local', 'core.hooksPath', $emptyTemplate.Replace('\', '/')) | Out-Null
+                        Invoke-FixtureGit $product @('config', '--worktree', 'core.hooksPath', $hookDirectory.Replace('\', '/')) | Out-Null
+                    }
+                    Assert (!(Invoke-FixtureGit $product @('status', '--porcelain', '--untracked-files=all'))) 'Hook source must otherwise be clean.'
+                    $before = @(Get-ChildItem -LiteralPath $product -Recurse -Force -File | Get-FileHash | Select-Object Path, Hash) | ConvertTo-Json -Compress
+                    # Bypass only the source helper for this native positive control.
+                    # Setup's hook-disabling wrapper must not mask the actual hook.
+                    $env:GIT_INDEX_FILE = Join-Path $hookRoot 'positive-control-index'
+                    try {
+                        & $nativeReadCommand 'git' @('--no-replace-objects', '--no-optional-locks', '-c', 'core.fsmonitor=false',
+                            '-C', $product, 'read-tree', '--no-sparse-checkout', $candidateHead) | Out-Null
+                    } finally { Remove-Item -LiteralPath Env:GIT_INDEX_FILE }
+                    Assert ([IO.File]::ReadAllText($sentinel) -ceq "untouched`nhook-executed`n") 'Native positive control must really execute the owned hook; setup failure is not RED.'
+                    Copy-Item -LiteralPath $sentinel -Destination (Join-Path $hookRoot 'positive-control-sentinel')
+                    [IO.File]::WriteAllText($sentinel, "untouched`n")
+                    $environmentBefore = @(Get-ChildItem Env: | Sort-Object Name | Select-Object Name, Value) | ConvertTo-Json -Compress
+                    $nativeGitCalls.Clear()
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $after = @(Get-ChildItem -LiteralPath $product -Recurse -Force -File | Get-FileHash | Select-Object Path, Hash) | ConvertTo-Json -Compress
+                    $environmentAfter = @(Get-ChildItem Env: | Sort-Object Name | Select-Object Name, Value) | ConvertTo-Json -Compress
+                    Assert ($observed.status -eq 'preparation-checks-passed' -and $observed.source_commit -ceq $candidateHead) 'An otherwise clean source with hooks must still attest its own commit.'
+                    Assert ($before -ceq $after -and $environmentBefore -ceq $environmentAfter) 'Hook attestation must preserve every source/index/HEAD/config byte and the process environment.'
+                    Assert (!(Test-Path -LiteralPath $gitOptions.QaRoot)) 'Hook attestation must not provision the QA root.'
+                    $hookRan = [IO.File]::ReadAllText($sentinel) -cne "untouched`n"
+                    $result = @{ event = 'post-index-change-preflight'; selection = $selection; positive_control_ran = $true;
+                        hook_ran = $hookRan; status = $observed.status; source_commit = $observed.source_commit;
+                        source_and_environment_preserved = $true; git_calls = $nativeGitCalls.Count; fixture = $hookRoot }
+                    $hookResults += $result
+                    Write-Output ($result | ConvertTo-Json -Compress)
+                } finally {
+                    [IO.File]::WriteAllBytes($hookConfig, $hookConfigBytes)
+                    # Retain hook/config bytes and all marker effects, including failures.
+                    if (Test-Path -LiteralPath $hookWorktreeConfig) {
+                        Move-Item -LiteralPath $hookWorktreeConfig -Destination (Join-Path $hookRoot 'retained-config.worktree')
+                    }
+                    if ($selection -eq 'default') {
+                        Move-Item -LiteralPath $hook -Destination (Join-Path $hookRoot 'retained-post-index-change')
+                    }
+                }
+            }
+            Assert (@($hookResults | Where-Object hook_ran).Count -eq 0) 'Native post-index-change hooks executed during preparation-only source attestation; owned effects retained.'
+            $sourcePath = Join-Path $product 'source.txt'
+            $originalSource = [IO.File]::ReadAllBytes($sourcePath)
+            # A supported Git setting can ignore ctime changes. Set it explicitly
+            # in this owned fixture so restored-mtime behavior does not depend on
+            # whether two writes happen within the same filesystem clock tick.
+            Invoke-FixtureGit $product @('config', 'core.trustctime', 'false') | Out-Null
+            $contentFailures = [Collections.Generic.List[string]]::new()
+            foreach ($restoreTime in @($true, $false)) {
+                $originalTime = [DateTime]::UtcNow.AddMinutes(-10)
+                try {
+                    [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+                    [IO.File]::SetLastWriteTimeUtc($sourcePath, $originalTime)
+                    # Warm only the synthetic fixture index; production preflight
+                    # must preserve those exact bytes even when its stat data lies.
+                    Invoke-FixtureGit $product @('update-index', '--refresh') | Out-Null
+                    $changed = [byte[]]$originalSource.Clone()
+                    $changed[0] = $changed[0] -bxor 32
+                    [IO.File]::WriteAllBytes($sourcePath, $changed)
+                    if ($restoreTime) { [IO.File]::SetLastWriteTimeUtc($sourcePath, $originalTime) }
+                    $workingBlob = Invoke-FixtureGit $product @('hash-object', '--no-filters', '--', 'source.txt')
+                    $committedBlob = Invoke-FixtureGit $product @('rev-parse', 'HEAD:source.txt')
+                    Assert ($workingBlob -cne $committedBlob) 'The same-length fixture must contain different source bytes.'
+                    $ordinaryStatus = Invoke-FixtureGit $product @('status', '--porcelain', '--untracked-files=all')
+                    Assert ([bool]$ordinaryStatus -eq !$restoreTime) "The native stat-cache fixture must distinguish restored and changed timestamps (restored=$restoreTime; status=$ordinaryStatus)."
+                    $indexBefore = (Get-FileHash -LiteralPath (Join-Path $product '.git/index')).Hash
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $rejected = ($observed.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $observed.source_commit
+                    if (!$rejected) { $contentFailures.Add("same-length source change (restored time: $restoreTime)") }
+                    Assert ((Get-FileHash -LiteralPath (Join-Path $product '.git/index')).Hash -ceq $indexBefore) 'Content comparison must not refresh the real index.'
+                    Assert ([Convert]::ToBase64String([IO.File]::ReadAllBytes($sourcePath)) -ceq [Convert]::ToBase64String($changed)) 'Content comparison must preserve changed source.'
+                    Write-Output (@{event='stat-cache-source-change';restored_time=$restoreTime;native_status_empty=!$ordinaryStatus;rejected=$rejected;index_preserved=$true} | ConvertTo-Json -Compress)
+                } finally {
+                    [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+                    [IO.File]::SetLastWriteTimeUtc($sourcePath, $originalTime)
+                    Invoke-FixtureGit $product @('update-index', '--refresh') | Out-Null
+                }
+            }
+            # A temporary HEAD index must not hide a real staged change, even
+            # when working bytes have subsequently been restored to HEAD.
+            try {
+                [IO.File]::WriteAllBytes($sourcePath, $changed)
+                Invoke-FixtureGit $product @('add', '--', 'source.txt') | Out-Null
+                [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+                $indexBefore = (Get-FileHash -LiteralPath (Join-Path $product '.git/index')).Hash
+                $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                $rejected = ($observed.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $observed.source_commit
+                if (!$rejected) { $contentFailures.Add('staged change with restored worktree bytes') }
+                Assert ((Get-FileHash -LiteralPath (Join-Path $product '.git/index')).Hash -ceq $indexBefore) 'Staged source comparison must preserve the real index.'
+                Assert ([Convert]::ToBase64String([IO.File]::ReadAllBytes($sourcePath)) -ceq [Convert]::ToBase64String($originalSource)) 'Staged source comparison must preserve working bytes.'
+                Write-Output (@{event='staged-source-change';rejected=$rejected;index_preserved=$true;working_bytes_restored=$true} | ConvertTo-Json -Compress)
+            } finally {
+                Invoke-FixtureGit $product @('read-tree', $candidateHead) | Out-Null
+                [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+            }
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Restoring content must recover clean source attestation.'
+            $hiddenChanges = @()
+            foreach ($indexFlag in @('assume-unchanged', 'skip-worktree')) {
+                try {
+                    Invoke-FixtureGit $product @('update-index', "--$indexFlag", '--', 'source.txt') | Out-Null
+                    [IO.File]::WriteAllText($sourcePath, 'unrecorded hidden source change')
+                    Assert (!(Invoke-FixtureGit $product @('status', '--porcelain', '--untracked-files=all'))) 'Index-flag fixture must hide the tracked modification from status.'
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $sourceCheck = @($observed.checks | Where-Object name -eq 'source')
+                    $rejected = $observed.status -ne 'preparation-checks-passed' -and
+                        $sourceCheck.Count -eq 1 -and $sourceCheck[0].status -eq 'blocked' -and
+                        $null -eq $observed.source_commit
+                    $hiddenChanges += $rejected
+                    Write-Output (@{ event = 'hidden-index-change'; flag = $indexFlag; rejected = $rejected; source_status = $sourceCheck[0].status } | ConvertTo-Json -Compress)
+                } finally {
+                    [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+                    Invoke-FixtureGit $product @('update-index', "--no-$indexFlag", '--', 'source.txt') | Out-Null
+                }
+            }
+            Assert (@($hiddenChanges | Where-Object { !$_ }).Count -eq 0) 'Both hidden index flags must block source attestation.'
+            Assert ((Invoke-FixtureGit $product @('rev-parse', 'HEAD')) -eq $candidateHead) 'Source admission must not change the fixture commit.'
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Cleared flags and restored source must pass without changing history.'
+            $originalTree = Invoke-FixtureGit $product @('rev-parse', 'HEAD^{tree}')
+            $replacementResults = @()
+            foreach ($replacementKind in @('commit', 'tree')) {
+                $replacedObject = if ($replacementKind -eq 'commit') { $candidateHead } else { $originalTree }
+                $installedReplacement = $false
+                try {
+                    [IO.File]::WriteAllText($sourcePath, 'different source hidden by repository replacement refs')
+                    Invoke-FixtureGit $product @('add', '--', 'source.txt') | Out-Null
+                    $replacementTree = Invoke-FixtureGit $product @('write-tree')
+                    $replacementObject = if ($replacementKind -eq 'tree') { $replacementTree } else {
+                        Invoke-FixtureGit $product @('-c', 'user.name=F03 Fixture', '-c', 'user.email=f03-fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit-tree', $replacementTree, '-m', 'owned replacement fixture')
+                    }
+                    Invoke-FixtureGit $product @('replace', $replacedObject, $replacementObject) | Out-Null
+                    $installedReplacement = $true
+                    Assert ((Invoke-FixtureGit $product @('rev-parse', 'HEAD')) -eq $candidateHead) 'Replacement fixture must keep the reported original HEAD.'
+                    Assert (!(Invoke-FixtureGit $product @('status', '--porcelain', '--untracked-files=all'))) 'Replacement fixture must hide the different staged and working bytes from ordinary status.'
+                    Assert ([bool](Invoke-FixtureGit $product @('--no-replace-objects', 'status', '--porcelain', '--untracked-files=all'))) 'Original-object status must observe the staged change.'
+                    $indexBefore = (Get-FileHash -LiteralPath (Join-Path $product '.git/index')).Hash
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $sourceCheck = @($observed.checks | Where-Object name -eq 'source')
+                    $rejected = $observed.status -ne 'preparation-checks-passed' -and
+                        $sourceCheck.Count -eq 1 -and $sourceCheck[0].status -eq 'blocked' -and
+                        $null -eq $observed.source_commit
+                    $replacementResults += $rejected
+                    Assert ((Get-FileHash -LiteralPath (Join-Path $product '.git/index')).Hash -ceq $indexBefore) 'Source reads must preserve the fixture index.'
+                    Assert ((Invoke-FixtureGit $product @('rev-parse', "refs/replace/$replacedObject")) -eq $replacementObject) 'Source reads must preserve replacement refs.'
+                    Write-Output (@{ event = 'replacement-source-change'; kind = $replacementKind; rejected = $rejected; original_head_unchanged = $true; source_status = $sourceCheck[0].status } | ConvertTo-Json -Compress)
+                } finally {
+                    if ($installedReplacement) { Invoke-FixtureGit $product @('replace', '-d', $replacedObject) | Out-Null }
+                    [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+                    Invoke-FixtureGit $product @('read-tree', $candidateHead) | Out-Null
+                }
+            }
+            Assert (@($replacementResults | Where-Object { !$_ }).Count -eq 0) 'Commit and tree replacement refs must block false source attestation.'
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Restoring original objects and source must recover clean attestation.'
+            # Real clean filters can execute and normalize changed worktree bytes back
+            # to the indexed blob. Exercise local, included and user-level selection.
+            $localConfig = [IO.Path]::GetFullPath((Join-Path $product '.git/config'))
+            $originalConfig = [IO.File]::ReadAllBytes($localConfig)
+            $infoAttributes = Join-Path $product '.git/info/attributes'
+            $includedConfig = Join-Path $fixture 'included-filter-config'
+            $globalConfig = Join-Path $homeRoot '.gitconfig'
+            $explicitAttributes = Join-Path $fixture 'global-attributes'
+            $defaultAttributes = Join-Path $homeRoot 'git/attributes'
+            $filterMarker = Join-Path $fixture 'clean-filter-executed'
+            $filterBody = '$null = [Console]::In.ReadToEnd(); [IO.File]::WriteAllText(''' +
+                $filterMarker.Replace("'", "''") + ''', ''executed''); $bytes = [Convert]::FromBase64String(''' +
+                [Convert]::ToBase64String($originalSource) + '''); [Console]::OpenStandardOutput().Write($bytes, 0, $bytes.Length)'
+            $encodedFilter = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($filterBody))
+            $pwshPath = (Get-Command pwsh -CommandType Application | Select-Object -First 1).Source.Replace('\', '/')
+            $filterCommand = '"' + $pwshPath + '" -NoLogo -NoProfile -NonInteractive -EncodedCommand ' + $encodedFilter
+            $filterResults = @()
+            foreach ($selection in @('local', 'included', 'global-explicit', 'global-default')) {
+                try {
+                    Assert (!(Test-Path -LiteralPath $globalConfig)) 'The isolated user config must start absent.'
+                    if ($selection -in @('local', 'included')) {
+                        [IO.Directory]::CreateDirectory((Split-Path -Parent $infoAttributes)) | Out-Null
+                        [IO.File]::WriteAllText($infoAttributes, "source.txt filter=u1-fixture`n")
+                        if ($selection -eq 'local') {
+                            Invoke-FixtureGit $product @('config', 'filter.u1-fixture.clean', $filterCommand) | Out-Null
+                        } else {
+                            Invoke-FixtureGit $product @('config', '--file', $includedConfig, 'filter.u1-fixture.clean', $filterCommand) | Out-Null
+                            Invoke-FixtureGit $product @('config', 'include.path', $includedConfig.Replace('\', '/')) | Out-Null
+                        }
+                    } else {
+                        Invoke-FixtureGit $product @('config', '--file', $globalConfig, 'filter.u1-fixture.clean', $filterCommand) | Out-Null
+                        $selectedAttributes = if ($selection -eq 'global-explicit') { $explicitAttributes } else { $defaultAttributes }
+                        [IO.Directory]::CreateDirectory((Split-Path -Parent $selectedAttributes)) | Out-Null
+                        [IO.File]::WriteAllText($selectedAttributes, "source.txt filter=u1-fixture`n")
+                        if ($selection -eq 'global-explicit') {
+                            Invoke-FixtureGit $product @('config', '--file', $globalConfig, 'core.attributesFile', $explicitAttributes.Replace('\', '/')) | Out-Null
+                        }
+                    }
+                    [IO.File]::WriteAllText($sourcePath, "changed source hidden by $selection clean filter")
+                    Assert (!(Invoke-FixtureGit $product @('status', '--porcelain', '--untracked-files=all'))) 'The native clean filter must hide modified bytes from ordinary status.'
+                    Assert (Test-Path -LiteralPath $filterMarker) 'Ordinary status must execute the actual fixture filter.'
+                    Remove-Item -LiteralPath $filterMarker
+                    $preservedPaths = @($sourcePath, $localConfig, (Join-Path $product '.git/index'), $infoAttributes,
+                        $includedConfig, $globalConfig, $explicitAttributes, $defaultAttributes) |
+                        Where-Object { Test-Path -LiteralPath $_ }
+                    $filesBefore = @($preservedPaths | ForEach-Object { Get-FileHash -LiteralPath $_ } | Select-Object Path, Hash)
+                    $environmentBefore = @(Get-ChildItem Env:GIT_* | Sort-Object Name | Select-Object Name, Value)
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $sourceCheck = @($observed.checks | Where-Object name -eq 'source')
+                    $rejected = $observed.status -ne 'preparation-checks-passed' -and
+                        $sourceCheck.Count -eq 1 -and $sourceCheck[0].status -eq 'blocked' -and
+                        $null -eq $observed.source_commit
+                    $filterRan = Test-Path -LiteralPath $filterMarker
+                    $filesAfter = @($preservedPaths | ForEach-Object { Get-FileHash -LiteralPath $_ } | Select-Object Path, Hash)
+                    $environmentAfter = @(Get-ChildItem Env:GIT_* | Sort-Object Name | Select-Object Name, Value)
+                    Assert (($filesBefore | ConvertTo-Json -Compress) -ceq ($filesAfter | ConvertTo-Json -Compress)) 'Source admission must preserve configuration, attributes, index and modified bytes.'
+                    Assert (($environmentBefore | ConvertTo-Json -Compress) -ceq ($environmentAfter | ConvertTo-Json -Compress)) 'Source Git isolation must restore the original environment, including absent keys.'
+                    $result = @{ event = 'clean-filter-source-change'; selection = $selection; rejected = $rejected;
+                        filter_ran = $filterRan; source_status = $sourceCheck[0].status; preserved = $true }
+                    $filterResults += $result
+                    Write-Output ($result | ConvertTo-Json -Compress)
+                } finally {
+                    [IO.File]::WriteAllBytes($sourcePath, $originalSource)
+                    [IO.File]::WriteAllBytes($localConfig, $originalConfig)
+                    foreach ($ownedFile in @($infoAttributes, $includedConfig, $globalConfig, $explicitAttributes, $defaultAttributes, $filterMarker)) {
+                        Assert ($ownedFile.StartsWith($fixture + '\', [StringComparison]::OrdinalIgnoreCase)) 'Filter cleanup must remain inside the owned fixture.'
+                        if (Test-Path -LiteralPath $ownedFile) { Remove-Item -LiteralPath $ownedFile }
+                    }
+                }
+            }
+            Assert (@($filterResults | Where-Object { !$_.rejected -or $_.filter_ran }).Count -eq 0) 'All native clean-filter selections must block false attestation without executing the filter.'
+            try {
+                [IO.File]::WriteAllText($infoAttributes, "source.txt -text`n")
+                $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                Assert (($observed.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $observed.source_commit) 'Repository info/attributes alone must block local source overrides.'
+            } finally { Remove-Item -LiteralPath $infoAttributes }
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Removing fixture filters and restoring source must recover clean attestation.'
+            Write-Output 'F03 native local/included/global filter rejection, effect prevention and source preservation passed.'
+            $gitlinkProduct = Join-Path $fixture 'gitlink-source'
+            $gitlinkChild = Join-Path $gitlinkProduct 'nested'
+            [IO.Directory]::CreateDirectory($gitlinkChild) | Out-Null
+            foreach ($root in @($gitlinkProduct, $gitlinkChild)) {
+                Invoke-FixtureGit $root @('init', '--initial-branch=f03-fixture', "--template=$emptyTemplate") | Out-Null
+            }
+            [IO.File]::WriteAllBytes((Join-Path $gitlinkChild 'source.txt'), $originalSource)
+            Invoke-FixtureGit $gitlinkChild @('add', '--', 'source.txt') | Out-Null
+            Invoke-FixtureGit $gitlinkChild @('-c', 'user.name=F03 Fixture', '-c', 'user.email=f03-fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-m', 'owned nested fixture') | Out-Null
+            $childHead = Invoke-FixtureGit $gitlinkChild @('rev-parse', 'HEAD')
+            [IO.File]::WriteAllText((Join-Path $gitlinkProduct 'package.json'), '{"packageManager":"pnpm@11.19.0"}')
+            [IO.File]::WriteAllText((Join-Path $gitlinkProduct '.gitmodules'), "[submodule `"nested`"]`n    path = nested`n    url = https://example.invalid/unused.git`n")
+            Invoke-FixtureGit $gitlinkProduct @('add', '--', 'package.json', '.gitmodules') | Out-Null
+            Invoke-FixtureGit $gitlinkProduct @('update-index', '--add', '--cacheinfo', "160000,$childHead,nested") | Out-Null
+            Invoke-FixtureGit $gitlinkProduct @('-c', 'user.name=F03 Fixture', '-c', 'user.email=f03-fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-m', 'owned gitlink fixture') | Out-Null
+            Invoke-FixtureGit $gitlinkProduct @('config', 'submodule.nested.url', 'https://example.invalid/unused.git') | Out-Null
+            [IO.Directory]::CreateDirectory((Join-Path $gitlinkChild '.git/info')) | Out-Null
+            [IO.File]::WriteAllText((Join-Path $gitlinkChild '.git/info/attributes'), "source.txt filter=u1-fixture`n")
+            Invoke-FixtureGit $gitlinkChild @('config', 'filter.u1-fixture.clean', $filterCommand) | Out-Null
+            [IO.File]::WriteAllText((Join-Path $gitlinkChild 'source.txt'), 'different child bytes concealed by a nested clean filter')
+            # Empty stat metadata forces content verification, so the fixture
+            # exercises a real child clean filter rather than a size-only diff.
+            Invoke-FixtureGit $gitlinkChild @('read-tree', $childHead) | Out-Null
+            Invoke-FixtureGit $gitlinkProduct @('status', '--porcelain', '--untracked-files=all') | Out-Null
+            Assert (Test-Path -LiteralPath $filterMarker) 'Native recursive status must execute the nested fixture filter.'
+            Remove-Item -LiteralPath $filterMarker
+            $preservedPaths = @((Join-Path $gitlinkProduct '.git/index'), (Join-Path $gitlinkChild '.git/index'), (Join-Path $gitlinkChild '.git/config'), (Join-Path $gitlinkChild 'source.txt'))
+            $before = @($preservedPaths | ForEach-Object { Get-FileHash -LiteralPath $_ } | Select-Object Path, Hash)
+            $nativeGitCalls.Clear()
+            $observed = Invoke-U1Preflight -Product $gitlinkProduct -Options $gitOptions
+            $rejected = ($observed.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $observed.source_commit
+            $filterRan = Test-Path -LiteralPath $filterMarker
+            $statusCalled = @($nativeGitCalls | Where-Object { $_ -contains 'status' }).Count -ne 0
+            if (!$rejected -or $filterRan -or $statusCalled) { $contentFailures.Add('gitlink must reject before recursive status or nested filters') }
+            $after = @($preservedPaths | ForEach-Object { Get-FileHash -LiteralPath $_ } | Select-Object Path, Hash)
+            Assert (($before | ConvertTo-Json -Compress) -ceq ($after | ConvertTo-Json -Compress)) 'Preflight must preserve nested source, configuration and both indexes.'
+            Write-Output (@{event='gitlink-source-change';rejected=$rejected;filter_ran=$filterRan;status_called=$statusCalled;preserved=$true} | ConvertTo-Json -Compress)
+            Assert ($contentFailures.Count -eq 0) ($contentFailures -join '; ')
+            # Git tracing can write before even the first repository observation.
+            $traceMarker = Join-Path $fixture 'inherited-git-trace'
+            foreach ($traceName in @('GIT_TRACE', 'GIT_TRACE2', 'GIT_TRACE2_EVENT', 'GIT_TRACE_SETUP', 'GIT_TRACE_PERFORMANCE', 'GIT_TRACE_FUTURE_VARIANT')) {
+                foreach ($existing in @($false, $true)) {
+                    if ($existing) { [IO.File]::WriteAllText($traceMarker, 'retained trace sentinel') }
+                    $traceBefore = if ($existing) { (Get-FileHash -LiteralPath $traceMarker).Hash } else { $null }
+                    try {
+                        [Environment]::SetEnvironmentVariable($traceName, $traceMarker)
+                        $nativeGitCalls.Clear()
+                        $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                        $sourceCheck = @($observed.checks | Where-Object name -eq 'source')
+                        Assert ($sourceCheck.Count -eq 1 -and $sourceCheck[0].status -eq 'blocked' -and $null -eq $observed.source_commit) 'Inherited tracing must block source attestation.'
+                        Assert ($nativeGitCalls.Count -eq 0) 'Inherited tracing must be rejected before any Git invocation.'
+                        Assert ((Test-Path -LiteralPath $traceMarker) -eq $existing) 'Preflight must never create an inherited trace file.'
+                        if ($existing) { Assert ((Get-FileHash -LiteralPath $traceMarker).Hash -ceq $traceBefore) 'Preflight must preserve existing trace bytes.' }
+                        Assert ([Environment]::GetEnvironmentVariable($traceName) -ceq $traceMarker) 'Preflight must preserve the caller tracing setting.'
+                        Assert (!($observed | ConvertTo-Json -Depth 8).Contains(($traceMarker | ConvertTo-Json -Compress))) 'Tracing values must not enter diagnostics.'
+                        Write-Output (@{ event = 'git-trace-preflight'; name = $traceName; existing = $existing; git_calls = $nativeGitCalls.Count; preserved = $true } | ConvertTo-Json -Compress)
+                    } finally {
+                        Remove-Item -LiteralPath "Env:$traceName" -ErrorAction SilentlyContinue
+                        if (Test-Path -LiteralPath $traceMarker) { Remove-Item -LiteralPath $traceMarker }
+                    }
+                }
+            }
+            # A malformed local target proves that --no-includes does not open
+            # it. Call inventory also prevents prior rev-parse/config expansion.
+            $includeTarget = Join-Path $fixture 'must-not-read-include'
+            [IO.File]::WriteAllText($includeTarget, 'INVALID_PRIVATE_INCLUDE_SENTINEL')
+            $configBeforeIncludes = [IO.File]::ReadAllBytes($localConfig)
+            try {
+                foreach ($includeKey in @('include.path', 'includeIf.gitdir:**.path', 'includeIf.onbranch:*.path')) {
+                    [IO.File]::WriteAllBytes($localConfig, $configBeforeIncludes)
+                    Invoke-FixtureGit $product @('config', '--local', '--no-includes', $includeKey, $includeTarget.Replace('\', '/')) | Out-Null
+                    $hashBefore = (Get-FileHash -LiteralPath $localConfig).Hash
+                    $nativeGitCalls.Clear()
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $sourceCheck = @($observed.checks | Where-Object name -eq 'source')
+                    Assert ($sourceCheck.Count -eq 1 -and $sourceCheck[0].status -eq 'blocked' -and $null -eq $observed.source_commit) 'Local includes must block source attestation.'
+                    Assert ($nativeGitCalls.Count -eq 1 -and $nativeGitCalls[0] -contains 'config' -and $nativeGitCalls[0] -contains '--file' -and $nativeGitCalls[0] -contains $localConfig -and $nativeGitCalls[0] -contains '--no-includes') 'The only Git invocation must inventory local keys without repository setup or include expansion.'
+                    Assert ((Get-FileHash -LiteralPath $localConfig).Hash -ceq $hashBefore) 'Local include configuration must remain unchanged.'
+                    Assert ([IO.File]::ReadAllText($includeTarget) -ceq 'INVALID_PRIVATE_INCLUDE_SENTINEL') 'Included file bytes must remain unchanged.'
+                    Assert (!($observed | ConvertTo-Json -Depth 8).Contains('INVALID_PRIVATE_INCLUDE_SENTINEL')) 'Included bytes must not enter diagnostics.'
+                    Write-Output (@{ event = 'git-include-preflight'; key = $includeKey; git_calls = $nativeGitCalls.Count; expanded = $false; preserved = $true } | ConvertTo-Json -Compress)
+                }
+            } finally {
+                [IO.File]::WriteAllBytes($localConfig, $configBeforeIncludes)
+                Remove-Item -LiteralPath $includeTarget
+            }
+            $worktreeConfig = [IO.Path]::GetFullPath((Join-Path $product '.git/config.worktree'))
+            Assert (!(Test-Path -LiteralPath $worktreeConfig)) 'The owned fixture must start without worktree configuration.'
+            [IO.File]::WriteAllText($includeTarget, 'INVALID_PRIVATE_WORKTREE_INCLUDE_SENTINEL')
+            try {
+                Invoke-FixtureGit $product @('config', '--local', '--no-includes', 'extensions.worktreeConfig', 'true') | Out-Null
+                foreach ($includeKey in @('include.path', 'includeIf.gitdir:**.path', 'includeIf.onbranch:*.path')) {
+                    [IO.File]::WriteAllText($worktreeConfig, '')
+                    Invoke-FixtureGit $product @('config', '--worktree', '--no-includes', $includeKey, $includeTarget.Replace('\', '/')) | Out-Null
+                    $worktreeHash = (Get-FileHash -LiteralPath $worktreeConfig).Hash
+                    $localHash = (Get-FileHash -LiteralPath $localConfig).Hash
+                    $nativeGitCalls.Clear()
+                    $observed = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $sourceCheck = @($observed.checks | Where-Object name -eq 'source')
+                    Assert ($sourceCheck.Count -eq 1 -and $sourceCheck[0].status -eq 'blocked' -and $null -eq $observed.source_commit) 'Worktree includes must block source attestation.'
+                    Assert ($nativeGitCalls.Count -eq 2 -and $nativeGitCalls[0] -contains $localConfig -and $nativeGitCalls[1] -contains $worktreeConfig -and $nativeGitCalls[0] -contains '--file' -and $nativeGitCalls[1] -contains '--file' -and $nativeGitCalls[0] -contains '--no-includes' -and $nativeGitCalls[1] -contains '--no-includes') 'Only explicit non-expanding local and worktree file inventories may run.'
+                    Assert ((Get-FileHash -LiteralPath $localConfig).Hash -ceq $localHash -and (Get-FileHash -LiteralPath $worktreeConfig).Hash -ceq $worktreeHash) 'Both source configurations must remain unchanged.'
+                    Assert ([IO.File]::ReadAllText($includeTarget) -ceq 'INVALID_PRIVATE_WORKTREE_INCLUDE_SENTINEL') 'Worktree include bytes must remain unchanged.'
+                    Assert (!($observed | ConvertTo-Json -Depth 8).Contains('INVALID_PRIVATE_WORKTREE_INCLUDE_SENTINEL')) 'Worktree include bytes must not enter diagnostics.'
+                    Write-Output (@{ event = 'git-worktree-include-preflight'; key = $includeKey; git_calls = $nativeGitCalls.Count; expanded = $false; preserved = $true } | ConvertTo-Json -Compress)
+                }
+                [IO.File]::WriteAllText($worktreeConfig, '')
+                $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+                Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'A clean worktree configuration must still attest the source.'
+            } finally {
+                [IO.File]::WriteAllBytes($localConfig, $configBeforeIncludes)
+                if (Test-Path -LiteralPath $worktreeConfig) { Remove-Item -LiteralPath $worktreeConfig }
+                Remove-Item -LiteralPath $includeTarget
+            }
+            $linkedProduct = Join-Path $fixture 'linked source [literal]'
+            Invoke-FixtureGit $product @('worktree', 'add', '--detach', $linkedProduct, $candidateHead) | Out-Null
+            $linkedMarker = Join-Path $linkedProduct '.git'
+            # Git marks this owned marker hidden on Windows; make fixture rewrites explicit.
+            [IO.File]::SetAttributes($linkedMarker, [IO.FileAttributes]::Normal)
+            $linkedMarkerBytes = [IO.File]::ReadAllBytes($linkedMarker)
+            $linkedGitDir = [IO.Path]::GetFullPath((Invoke-FixtureGit $linkedProduct @('rev-parse', '--absolute-git-dir')))
+            $linkedConfig = Join-Path $linkedGitDir 'config.worktree'
+            $linkedCommonMarker = Join-Path $linkedGitDir 'commondir'
+            $linkedCommonBytes = [IO.File]::ReadAllBytes($linkedCommonMarker)
+            try {
+                foreach ($relative in @($false, $true)) {
+                    if ($relative) {
+                        $relativeGit = [IO.Path]::GetRelativePath($linkedProduct, $linkedGitDir).Replace('\', '/')
+                        [IO.File]::WriteAllText($linkedMarker, "gitdir: $relativeGit`n")
+                    }
+                    $control = Invoke-U1Preflight -Product $linkedProduct -Options $gitOptions
+                    Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Absolute and relative linked-worktree markers must resolve to the same clean source.'
+                }
+                Invoke-FixtureGit $product @('config', '--local', '--no-includes', 'extensions.worktreeConfig', 'true') | Out-Null
+                [IO.File]::WriteAllText($linkedConfig, "[core]`n    bare = false`n")
+                $control = Invoke-U1Preflight -Product $linkedProduct -Options $gitOptions
+                Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'A linked worktree with its own ordinary configuration must attest its source.'
+                [IO.File]::WriteAllText($includeTarget, 'INVALID_PRIVATE_LINKED_INCLUDE_SENTINEL')
+                foreach ($includeKey in @('include.path', 'includeIf.gitdir:**.path', 'includeIf.onbranch:*.path')) {
+                    [IO.File]::WriteAllText($linkedConfig, '')
+                    Invoke-FixtureGit $product @('config', '--file', $linkedConfig, '--no-includes', $includeKey, $includeTarget.Replace('\', '/')) | Out-Null
+                    $beforeFiles = @($localConfig, $linkedConfig, $linkedMarker, $linkedCommonMarker, $includeTarget) | Get-FileHash | Select-Object Path, Hash
+                    $nativeGitCalls.Clear()
+                    $observed = Invoke-U1Preflight -Product $linkedProduct -Options $gitOptions
+                    Assert (($observed.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $observed.source_commit) 'Linked-worktree includes must be rejected before repository discovery.'
+                    Assert ($nativeGitCalls.Count -eq 2 -and $nativeGitCalls[0] -contains $localConfig -and $nativeGitCalls[1] -contains $linkedConfig -and $nativeGitCalls[0] -contains '--no-includes' -and $nativeGitCalls[1] -contains '--no-includes') 'Linked-worktree rejection must only inventory explicit unexpanded configuration files.'
+                    $afterFiles = @($localConfig, $linkedConfig, $linkedMarker, $linkedCommonMarker, $includeTarget) | Get-FileHash | Select-Object Path, Hash
+                    Assert (($beforeFiles | ConvertTo-Json -Compress) -ceq ($afterFiles | ConvertTo-Json -Compress)) 'Linked source metadata and include bytes must be preserved.'
+                    Write-Output (@{ event = 'git-linked-worktree-include-preflight'; key = $includeKey; git_calls = $nativeGitCalls.Count; expanded = $false; preserved = $true } | ConvertTo-Json -Compress)
+                }
+            } finally {
+                [IO.File]::WriteAllBytes($localConfig, $configBeforeIncludes)
+                [IO.File]::WriteAllBytes($linkedMarker, $linkedMarkerBytes)
+                Assert ([Convert]::ToBase64String([IO.File]::ReadAllBytes($linkedCommonMarker)) -ceq [Convert]::ToBase64String($linkedCommonBytes)) 'Linked commondir marker must remain unchanged.'
+                if (Test-Path -LiteralPath $linkedConfig) { Remove-Item -LiteralPath $linkedConfig }
+                if (Test-Path -LiteralPath $includeTarget) { Remove-Item -LiteralPath $includeTarget }
+            }
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Clean source must recover after tracing and local-include cases.'
+            if ($shortAvailable) {
+                $shortControl = Invoke-U1Preflight -Product $shortProduct -Options $gitOptions
+                Assert ($shortControl.status -eq 'preparation-checks-passed' -and $shortControl.source_commit -eq $candidateHead) 'An actual short alias must bind to the same clean Git source.'
+                Write-Output 'F03 native short-alias Git identity passed.'
+            } else {
+                Write-Output 'F03 native short-alias Git identity BLOCKED: no distinct alias; not executed.'
+            }
+            Write-Output 'F03 native clean control passed with distinct candidate/foreign identities.'
+            $untracked = Join-Path $product 'untracked.txt'
+            [IO.File]::WriteAllText($untracked, 'preserve untracked source')
+            $report = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert (($report.checks | Where-Object name -eq 'source').status -eq 'blocked') 'Real untracked Product must block.'
+            Assert ([IO.File]::ReadAllText($untracked) -eq 'preserve untracked source') 'Preflight must preserve untracked source.'
+            Remove-Item -LiteralPath $untracked
+            $sourceFile = Join-Path $product 'source.txt'
+            $originalSource = [IO.File]::ReadAllText($sourceFile)
+            [IO.File]::WriteAllText($sourceFile, 'preserve dirty expected Product')
+            $report = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert (($report.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $report.source_commit) 'Real tracked dirt must block without attesting a source commit.'
+            Write-Output 'F03 native tracked/untracked dirty controls passed; source bytes preserved.'
+            $foreignConfig = Join-Path $fixture 'foreign-git-config'
+            [IO.File]::WriteAllText($foreignConfig, "[core]`nworktree = $($other.Replace('\', '/'))`n")
+            $overrides = @(
+                @{ GIT_DIR = (Join-Path $other '.git'); GIT_WORK_TREE = $other },
+                @{ GIT_DIR = (Join-Path $other '.git') },
+                @{ GIT_WORK_TREE = $other },
+                @{ GIT_COMMON_DIR = (Join-Path $other '.git') },
+                @{ GIT_INDEX_FILE = (Join-Path $other '.git\index') },
+                @{ GIT_CONFIG = $foreignConfig },
+                @{ GIT_CONFIG_GLOBAL = $foreignConfig },
+                @{ GIT_CONFIG_SYSTEM = $foreignConfig },
+                @{ GIT_ATTR_NOSYSTEM = '0' },
+                @{ GIT_ATTR_SOURCE = $otherHead },
+                @{ GIT_CONFIG_PARAMETERS = "'core.worktree=$($other.Replace('\', '/'))'" },
+                @{ GIT_CONFIG_COUNT = '1'; GIT_CONFIG_KEY_0 = 'core.worktree'; GIT_CONFIG_VALUE_0 = $other },
+                @{ GIT_CONFIG_VALUE_77 = 'F03_ENV_VALUE_MUST_NOT_APPEAR' },
+                @{ GIT_OBJECT_DIRECTORY = (Join-Path $other '.git\objects') },
+                @{ GIT_ALTERNATE_OBJECT_DIRECTORIES = (Join-Path $other '.git\objects') }
+            )
+            $beforeFiles = @(Get-ChildItem -LiteralPath $product, $other -Recurse -Force -File | Get-FileHash | Select-Object Path, Hash)
+            foreach ($selection in $overrides) {
+                try {
+                    foreach ($name in $selection.Keys) { [Environment]::SetEnvironmentVariable($name, $selection[$name]) }
+                    Assert (@(Get-ChildItem Env:GIT_*).Count -eq $selection.Count) 'Each Git selection case must start with only its own overrides.'
+                    $report = Invoke-U1Preflight -Product $product -Options $gitOptions
+                    $label = ($selection.Keys | Sort-Object) -join '+'
+                    if (($report.checks | Where-Object name -eq 'source').status -eq 'passed') {
+                        Write-Output (@{ event = 'f03-foreign-source-incorrectly-accepted'; candidateMatches = ($report.source_commit -eq $candidateHead); foreignMatches = ($report.source_commit -eq $otherHead) } | ConvertTo-Json -Compress)
+                    }
+                    Assert (($report.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $report.source_commit) "Inherited $label must reject before attesting a source commit."
+                    $json = $report | ConvertTo-Json -Depth 8
+                    Assert (!$json.Contains(($other | ConvertTo-Json -Compress)) -and !$json.Contains(($foreignConfig | ConvertTo-Json -Compress)) -and !$json.Contains('F03_ENV_VALUE_MUST_NOT_APPEAR')) 'Source diagnostics must not serialize selection values.'
+                    Write-Output "F03 native selection rejected: $label"
+                } finally {
+                    foreach ($name in $selection.Keys) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+                }
+            }
+            $afterFiles = @(Get-ChildItem -LiteralPath $product, $other -Recurse -Force -File | Get-FileHash | Select-Object Path, Hash)
+            Assert (($beforeFiles | ConvertTo-Json -Compress) -ceq ($afterFiles | ConvertTo-Json -Compress)) 'Rejected source reads must preserve both real repositories, including indexes and dirty bytes.'
+            [IO.File]::WriteAllText($sourceFile, $originalSource)
+            $nested = Join-Path $product 'not-the-repository-root'
+            New-Item -ItemType Directory -Path $nested | Out-Null
+            $report = Invoke-U1Preflight -Product $nested -Options $gitOptions
+            Assert (($report.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $report.source_commit) 'Git discovery of a parent must not attest the intended Product.'
+            Invoke-FixtureGit $product @('config', 'core.worktree', $other) | Out-Null
+            try {
+                $report = Invoke-U1Preflight -Product $product -Options $gitOptions
+                Assert (($report.checks | Where-Object name -eq 'source').status -eq 'blocked' -and $null -eq $report.source_commit) 'Repository-local core.worktree must not attest a foreign root.'
+            } finally { Invoke-FixtureGit $product @('config', '--unset', 'core.worktree') | Out-Null }
+            $control = Invoke-U1Preflight -Product $product -Options $gitOptions
+            Assert ($control.status -eq 'preparation-checks-passed' -and $control.source_commit -eq $candidateHead) 'Clean Product must remain admissible after scoped selection tests.'
+            Assert (!(Test-Path -LiteralPath $gitOptions.QaRoot)) 'Native source checks must not provision the QA root.'
+            Write-Output 'F03 native Git selection, identity binding, value non-disclosure and preservation regressions passed.'
+        } finally {
+            foreach ($entry in @(Get-ChildItem Env:GIT_*)) { Remove-Item -LiteralPath "Env:$($entry.Name)" }
+            foreach ($name in @('HOME', 'USERPROFILE', 'XDG_CONFIG_HOME')) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+            foreach ($name in $savedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name]) }
+        }
+    }
+
+    # Only prerequisite observations are stubbed; path/port/report guards above remain real.
+    $script:dirty = $false
+    $script:missing = ''
+    $script:busy = $false
+    $script:inventoryFailure = $false
+    $script:registry = 'https://registry.invalid/npm/'
+    $script:commands = [Collections.Generic.List[string]]::new()
+    function Invoke-U1ReadCommand([string]$Name, [string[]]$Arguments) {
+        $script:commands.Add("$Name $($Arguments -join ' ')")
+        if ($Name -eq 'git') {
+            if ($Arguments -contains '--show-toplevel') { return $product }
+            if ($Arguments -contains '--git-path') { return (Join-Path $product '.git/info/attributes') }
+            if ($Arguments -contains 'config') { return '' }
+            if ($Arguments -contains 'rev-parse') { return 'a' * 40 }
+            if ($Arguments -contains 'ls-files') {
+                if ($Arguments -contains '--stage') { return ("100644 " + ('a' * 40) + " 0`tsource.txt`0") }
+                return "H source.txt`0"
+            }
+            if ($Arguments -contains 'read-tree' -or $Arguments -contains 'diff-index') { return '' }
+            if ($script:dirty) { return '?? unrecorded.txt' }
+            return ''
+        }
+        if ($Name -eq 'node') { return 'v22.14.0' }
+        if ($Name -eq 'npm') { return $script:registry }
+        if ($Name -eq 'docker') { return '29.8.0' }
+        throw 'Unexpected command.'
+    }
+    function Assert-U1CommandAvailable([string]$Name) {
+        if ($Name -eq $script:missing) { throw 'Missing fixture command.' }
+    }
+    function Get-NetTCPConnection {
+        if ($script:inventoryFailure) { throw 'fixture inventory unavailable' }
+        if ($script:busy) { return @{ LocalPort = 18870 } }
+        return @{ LocalPort = 443 }
+    }
+    $options = @{
+        QaRoot = $planArgs.Root; ProtectedRoot = @($office)
+        ServerPort = 18870; WebPort = 15870; DatabasePort = 15470
+        ProtectedPort = @(); ApprovedNpmRegistry = 'https://registry.invalid/npm'
+    }
+    $report = Invoke-U1Preflight -Product $product -Options $options
+    Assert ($report.status -eq 'preparation-checks-passed') ($report | ConvertTo-Json -Depth 8)
+    Assert ($report.acceptance -eq 'not-run' -and $report.effects -eq 'owned-temporary-index-created-and-removed') 'Preflight must report its temporary index without claiming acceptance.'
+    Assert ($report.required_toolchain.pnpm -eq '11.19.0') 'Record the repository pin without executing a package-manager shim.'
+    Assert ($report.remaining_gates.Count -eq 6) 'Do not omit deferred U1 gates.'
+    foreach ($requirement in @('Inventory', 'source hashes', 'crosswalk and differences', 'adoption alone is insufficient')) {
+        Assert ($report.remaining_gates[0].Contains($requirement)) 'G0 requires the retained-original inventory, reviewed reconciliation and exact adoption together.'
+    }
+    Assert (@($script:commands | Where-Object { $_ -match 'install|rustup|^pnpm|^cargo|^rustc' }).Count -eq 0) 'No install-capable shim may be run.'
+    Assert (@($script:commands | Where-Object { $_ -match '^git ' -and $_ -notmatch 'core.fsmonitor=false' }).Count -eq 0) 'Every source Git command must disable fsmonitor hooks.'
+    Assert (@($script:commands | Where-Object { $_ -match 'status ' -and $_ -match '--ignore-submodules=all' }).Count -eq 1) 'Source status must explicitly disable submodule recursion.'
+    Assert (!(Test-Path Env:GIT_INDEX_FILE)) 'The owned index override must not escape the source check.'
+    foreach ($name in @('rustc', 'cargo', 'pnpm')) {
+        $script:missing = $name
+        Assert ((Invoke-U1Preflight -Product $product -Options $options).status -eq 'blocked') 'Missing tools must block.'
+    }
+    $script:missing = ''
+    $script:dirty = $true
+    $report = Invoke-U1Preflight -Product $product -Options $options
+    Assert ($report.status -eq 'blocked' -and $null -eq $report.source_commit) 'Dirty source must not inherit clean-source acceptance.'
+    $script:dirty = $false
+    $script:busy = $true
+    Assert ((Invoke-U1Preflight -Product $product -Options $options).status -eq 'blocked') 'Occupied ports must block.'
+    $script:busy = $false
+    $script:inventoryFailure = $true
+    Assert ((Invoke-U1Preflight -Product $product -Options $options).status -eq 'blocked') 'Unavailable inventory must not look like free ports.'
+    $script:inventoryFailure = $false
+    $script:registry = 'https://user:DO_NOT_PRINT@registry.invalid/'
+    $report = Invoke-U1Preflight -Product $product -Options $options
+    Assert ($report.status -eq 'blocked') 'Credential-bearing registry must block.'
+    Assert (($report | ConvertTo-Json -Depth 8) -notmatch 'DO_NOT_PRINT') 'Diagnostics must not expose registry credentials.'
+    $script:registry = 'https://other.invalid/'
+    Assert ((Invoke-U1Preflight -Product $product -Options $options).status -eq 'blocked') 'An unapproved registry must block.'
+    Assert (!(Test-Path -LiteralPath $options.QaRoot)) 'Preflight must not provision the QA root on success or failure.'
+    Assert ((Get-Content -LiteralPath (Join-Path $office 'sentinel') -Raw) -eq 'untouched') 'Retained office sentinel changed.'
+    $completed = $true
+    Write-Output "U1 portable preflight path, port, tool, source, registry, report and source-preservation regressions passed. Native 8.3 alias lane: $shortAliasStatus."
+} finally {
+    if ($completed) {
+        $resolved = (Get-Item -LiteralPath $fixture -Force).FullName
+        Assert ($resolved -eq $fixture -and (Split-Path -Leaf $resolved) -match '^ecorp-u1-preflight-[0-9a-f]{32}$') 'Refuse unexpected cleanup target.'
+        # Native Git metadata is hidden/read-only on Windows; remove only owned fixture metadata.
+        foreach ($gitRoot in @($product, (Join-Path $fixture 'other-clean-source'), (Join-Path $fixture 'gitlink-source/nested'), (Join-Path $fixture 'gitlink-source'))) {
+            $gitDirectory = [IO.Path]::GetFullPath((Join-Path $gitRoot '.git'))
+            Assert ($gitDirectory.StartsWith($resolved + '\', [StringComparison]::OrdinalIgnoreCase)) 'Refuse Git metadata cleanup outside the owned root.'
+            Assert-U1NoReparseAncestor $gitDirectory
+            Remove-Item -LiteralPath $gitDirectory -Recurse -Force
+        }
+        Remove-Item -LiteralPath $resolved -Recurse
+    } else {
+        Write-Warning "Failed synthetic fixture retained at $fixture"
+    }
+}

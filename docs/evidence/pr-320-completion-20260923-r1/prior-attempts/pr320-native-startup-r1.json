@@ -1,0 +1,47 @@
+{
+  "pr": 320,
+  "purpose": "real-binary startup assertions on owned native PostgreSQL",
+  "source_head": "765aff1f8dd812cf68620177f77e722860a9ecab",
+  "tested_staged_tree": "23262332f42a2602344df89658f0475a6865b3cc",
+  "driver_sha256": "90b60aa90f6767327146cfd6bb77003c48e3725de5d833339d74990a1d364891",
+  "adapter_sha256": "98876f7e9418002e9995c2fa68ab6ba67edabd41742a720d49d76733917a842a",
+  "qa_root": "<local-user>\\code\\qa\\pr320-startup-20260923-r1",
+  "target": "<local-user>\\code\\ecorp-pr324-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T06:45:35.8918670+00:00",
+  "status": "failed",
+  "checks": [
+    {
+      "name": "workspace-cache-refresh",
+      "log": "<private-evidence>\\pr320-native-startup-r1-workspace-cache-refresh.log",
+      "sha256": "ddd210bfe0617ba90dbc48b3577e2622fbb71c3cbe29bc8696ff31269c9ebf7a",
+      "exit_code": 0
+    },
+    {
+      "name": "standalone-server-build",
+      "log": "<private-evidence>\\pr320-native-startup-r1-server-build.log",
+      "sha256": "f4993f967fd06075da310cd9cd1e96001c7ffe9841d30c6b5d6e166ebf1e38c1",
+      "exit_code": 0
+    },
+    {
+      "name": "owned-postgresql-initialization",
+      "log": "<private-evidence>\\pr320-native-startup-r1-initdb.log",
+      "sha256": "0f28dd050a59cbead3986499add1b585ac43faf05c2ae8dc0a6762ab17707bb0",
+      "exit_code": 0
+    },
+    {
+      "name": "unchanged-startup-assertions-native-transport",
+      "log": "<private-evidence>\\pr320-native-startup-r1-assertions.log",
+      "sha256": "607ad29e38f72b208f7e8e46bb82a5ce881f0bbcfa68de83ac7eb832b1f661d3",
+      "exit_code": 1
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; database, credentials, binaries, cases and logs retained.",
+  "binary_sha256": "271397e718cba5c032f6e3459e0e0050b2f75d121cddbf65169b2ff261573fb9",
+  "authentication": {
+    "delivery": "Native clients use private PGPASSFILE; isolated server child environment delivery is reduced assurance.",
+    "method": "scram-sha-256",
+    "wrong_password_rejected": true
+  },
+  "failure": "unchanged-startup-assertions-native-transport failed; fixture and logs retained.",
+  "finished_at_utc": "2026-09-23T06:50:57.2931975+00:00"
+}

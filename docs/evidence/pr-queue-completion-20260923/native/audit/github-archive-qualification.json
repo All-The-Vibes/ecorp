@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "complete": true,
+  "started_at": "2026-09-23T17:52:14.521Z",
+  "checks": [
+    "Remote index equals native authoritative receipt",
+    "Recovered exact signed checkpoint",
+    "Actual API receipt equals durable native PG receipt",
+    "Recovered archive equals native API export",
+    "Recovered archive equals worker-retained native archive",
+    "Recovered archive equals original qualified native archive"
+  ],
+  "commands": [
+    {
+      "executable": "crony-cli",
+      "arguments": [
+        "base-audit-verify",
+        "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\github-native-archive.json",
+        "--manifests",
+        "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\manifests.json",
+        "--trust-pin",
+        "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\trust-pin.json",
+        "--expected-manifest-version",
+        "1",
+        "--expected-manifest-digest",
+        "0x113f708c67688185f2b70cdb5a80eefe8644a140d315f83652c67a8acbe863dd",
+        "--expected-checkpoint",
+        "0x6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0
+    },
+    {
+      "executable": "crony-cli",
+      "arguments": [
+        "base-audit-verify",
+        "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\github-archive-tampered-negative.json",
+        "--manifests",
+        "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\manifests.json",
+        "--trust-pin",
+        "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\trust-pin.json",
+        "--expected-manifest-version",
+        "1",
+        "--expected-manifest-digest",
+        "0x113f708c67688185f2b70cdb5a80eefe8644a140d315f83652c67a8acbe863dd",
+        "--expected-checkpoint",
+        "0x6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913"
+      ],
+      "exit_code": 1,
+      "expected_exit": 1
+    },
+    {
+      "executable": "crony-cli",
+      "arguments": [
+        "base-audit-verify",
+        "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\github-archive-incomplete-negative.json",
+        "--manifests",
+        "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\manifests.json",
+        "--trust-pin",
+        "<reviewed-worktree>\\output\\native-qualification\\phase2-queue-r471\\trust-pin.json",
+        "--expected-manifest-version",
+        "1",
+        "--expected-manifest-digest",
+        "0x113f708c67688185f2b70cdb5a80eefe8644a140d315f83652c67a8acbe863dd",
+        "--expected-checkpoint",
+        "0x6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913"
+      ],
+      "exit_code": 1,
+      "expected_exit": 1
+    }
+  ],
+  "current_attempt": {
+    "attempt_id": "456feed6-9b47-458a-9667-9281a4b44f30",
+    "identity_sha256": "2ae260ec106374f2c730fc4156604ea9a9496d21dacf8513b8d1977263b3ac3d",
+    "status": "succeeded",
+    "finished_at": "2026-09-23T17:52:23.123Z"
+  },
+  "original_evidence_checkpoint": "6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913",
+  "original_trust": {
+    "manifests.json": "3b357883cc9b2bb0226b37e67f848cc87a65aad93b2cb56eb3a8bb84fef4d13b",
+    "trust-pin.json": "c555ee2c7d84c1a59c9927995d1815ecf911fb9d58bf87f5a2c48abab39e8d87"
+  },
+  "initial_complete_publication": {
+    "commit": "a1040d9702908dcfc30478859225407a438cdc93",
+    "archive_index_status": 200
+  },
+  "task_binding": {
+    "resource": "mission/b3aeaa6f-5912-4081-bddc-65cd00e38ce2/governance",
+    "revision": 1,
+    "version_hash": "d5088195b86e9630c6c82d558f1880605b67850eb4d28742a02f088f56a89848",
+    "content_hash": "183aba58cfa61d8fc85c5fea48b752ca690d861b74fd8040c5a2ad5244f89cb2",
+    "mission_id": "b3aeaa6f-5912-4081-bddc-65cd00e38ce2",
+    "task": {
+      "allowed_tools": [
+        "filesystem",
+        "shell"
+      ],
+      "budget_cost_microusd": 500000,
+      "budget_tokens": 50000,
+      "contract_digest": "05f551f12d24ba7901417020e644ba28e5fa500ba14939b9422650cb65aa4879",
+      "contract_version": 1,
+      "task_id": "c9afe50e-2316-4f2c-b91a-1c4ea8dda625",
+      "verification_digest": "3fe665a3157e79ecdadef1bf08ee241a646ff77de1d6488f3a6b5008561b37be",
+      "write_scope": [
+        "**"
+      ]
+    },
+    "execution_run_not_in_v1_governance_archive": true
+  },
+  "receipt": {
+    "checkpoint_digest": "6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "destination_id": "41a9e0d4-bf65-426e-9ae3-d48907bd4e9e",
+    "status": "published",
+    "updated_at": "2026-09-23T17:50:34.867962+00:00",
+    "witness": {
+      "archive_publication": {
+        "archive": {
+          "byte_count": 11833,
+          "checkpoint_digest": "6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913",
+          "ledger_id": "b1bfe19d-1457-41c7-807a-731662eb2f52",
+          "parts": [
+            {
+              "byte_count": 11833,
+              "git_blob_sha1": "b177cc434a11c6ee6a9034f9084628bbc02f597e",
+              "path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001-6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913/archive-00000.json",
+              "sha256": "958af3069bf407f6e496cdc868f47cfdc6ebb79fdc5f58a1f873b078deb68432"
+            }
+          ],
+          "schema_version": 1,
+          "sha256": "958af3069bf407f6e496cdc868f47cfdc6ebb79fdc5f58a1f873b078deb68432"
+        },
+        "commit": "a1040d9702908dcfc30478859225407a438cdc93",
+        "index_git_blob_sha1": "c3026f8cf6e0d4061dee66405c595c2258ab7cb7",
+        "index_path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001-6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913/archive.json",
+        "index_sha256": "a8df024feb08ad99caaf8ac74f3dd0641186fc4c7515a299c56d9ba9be76138d"
+      },
+      "branch": "audit",
+      "commit": "a1040d9702908dcfc30478859225407a438cdc93",
+      "finalized": false,
+      "independently_verified": false,
+      "path": "audit",
+      "previous_destination_checkpoint": null,
+      "provider": "github",
+      "repository": "qualification/native-audit"
+    }
+  },
+  "archive_bytes": 11833,
+  "archive_sha256": "958af3069bf407f6e496cdc868f47cfdc6ebb79fdc5f58a1f873b078deb68432",
+  "immutable_objects": {
+    "commit": "a1040d9702908dcfc30478859225407a438cdc93",
+    "entries": [
+      {
+        "path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001-6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913.cbor",
+        "blob_sha": "88d0f9734b31b30c2e8750e3e1acd667c232fa22",
+        "bytes": 141
+      },
+      {
+        "path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001-6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913.ed25519",
+        "blob_sha": "2218750eaa57eea8a9d3a7eb260592b5a37269ee",
+        "bytes": 64
+      },
+      {
+        "path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001-6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913.json",
+        "blob_sha": "addaa34305adb785d2a54167b5754f84db227d0a",
+        "bytes": 1067
+      },
+      {
+        "path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001-6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913/archive-00000.json",
+        "blob_sha": "b177cc434a11c6ee6a9034f9084628bbc02f597e",
+        "bytes": 11833
+      },
+      {
+        "path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001-6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913/archive.json",
+        "blob_sha": "c3026f8cf6e0d4061dee66405c595c2258ab7cb7",
+        "bytes": 576
+      },
+      {
+        "path": "audit/b1bfe19d-1457-41c7-807a-731662eb2f52/00000000000000000001.checkpoint",
+        "blob_sha": "6e5707869f222a2a8c02db5064a6bff60dc4d41c",
+        "bytes": 64
+      }
+    ],
+    "identity": "Actual immutable Git commit/tree/blob objects; local fixture, not GitHub infrastructure.",
+    "writes": 6
+  },
+  "anchor_transaction": "0xf8a48f976f31e20d3b2aec58ff53ad070e8b65a4d2f65989a66f04e273073e9c",
+  "checkpoint_digest": "6a1a4c135d4446334b97158f3415ea0bfd5ffbf6aa7665ccedc58f5c6d9ee913",
+  "signatures": 1,
+  "independent_recovery": "Immutable GitHub objects + original independent trust pin + native offline CLI; no PG/API archive used to reconstruct or verify.",
+  "byte_equality": "Every returned immutable blob and concatenated archive equals the hashes/lengths computed from native selected bytes in the durable receipt; V1 envelope/payload/signature byte equality also proved.",
+  "limits": [
+    "Local GitHub fixture, not real GitHub infrastructure.",
+    "Governance archive resolves task and contract digests; V1 does not include run transcript/artifact contents.",
+    "Original local anchor/finality evidence reused, no additional signing/broadcast.",
+    "Two RPC endpoints share one local Anvil."
+  ],
+  "finished_at": "2026-09-23T17:52:16.978Z"
+}

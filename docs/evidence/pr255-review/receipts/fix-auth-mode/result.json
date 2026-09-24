@@ -1,0 +1,73 @@
+{
+  "finding": "PR255-AUTH-MODE",
+  "aliases": [
+    "A-002",
+    "PR255-B-002"
+  ],
+  "checkout": "C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes",
+  "startingHead": "690ee80e692d848c4c3a371ddb31388a78b9ddf3",
+  "finalHead": "690ee80e692d848c4c3a371ddb31388a78b9ddf3",
+  "completedAt": "2026-09-21T14:38:20.6251948Z",
+  "outcome": "Scoped implementation and pure verification complete; rendered/native acceptance remains parent-owned",
+  "changedPaths": [
+    "apps/web/src/App.tsx",
+    "apps/web/src/factoryAuthority.ts",
+    "apps/web/src/factoryAuthorityConnection.test.mjs",
+    "apps/web/src/snapshotRefresh.test.mjs"
+  ],
+  "red": {
+    "rawLog": "red-final-tests.log",
+    "exitCode": 1,
+    "receipt": "red-final-tests.json",
+    "failed": 19,
+    "passed": 3,
+    "baselineBindings": [
+      {
+        "path": "apps/web/src/App.tsx",
+        "unchangedDuringRed": true
+      },
+      {
+        "path": "apps/web/src/factoryAuthority.ts",
+        "unchangedDuringRed": true
+      },
+      {
+        "path": "apps/web/src/FactoryAuthorityNotice.tsx",
+        "unchangedDuringRed": true
+      }
+    ]
+  },
+  "green": {
+    "rawLog": "final-affected-tests.log",
+    "exitCode": 0,
+    "skipped": 0,
+    "receipt": "final-affected-tests.json",
+    "failed": 0,
+    "passed": 38
+  },
+  "regressionTestBytesIdenticalAcrossRedGreen": true,
+  "typecheckReceipt": "final-typecheck.json",
+  "lintReceipt": "final-focused-lint.json",
+  "whitespaceReceipt": "diff-check.json",
+  "finalSourceHashes": "final-source-hashes.json",
+  "backendAuthHealthLockManifestAndNoticeUnchanged": true,
+  "limitations": [
+    "App callbacks are extracted with TypeScript and executed against mocked I/O using the existing VM testing pattern, not rendered React.",
+    "No browser, server, runner, provider or database startup or access.",
+    "No full repository suite, production-identity, independent review or full-PR acceptance claim.",
+    "WebSocket reconnection architecture and real backend authentication remain unchanged.",
+    "Parent owns final integration, browser/native acceptance and all state/GitHub publication."
+  ],
+  "prohibitedEffects": {
+    "servicesStarted": 0,
+    "executorStateChanges": 0,
+    "githubMutations": 0,
+    "commits": 0,
+    "pushes": 0,
+    "agentsLaunched": 0
+  },
+  "otherWorkerPathsObservedButNotModified": [
+    "tools/issue161/qa-host.ps1",
+    "tools/local_stack.psm1",
+    "tools/local_stack_identity.test.ps1"
+  ]
+}

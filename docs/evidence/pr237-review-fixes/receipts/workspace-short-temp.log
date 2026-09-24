@@ -1,0 +1,516 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 17.33s
+     Running unittests src\main.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_cli-7b08358633388329.exe)
+
+running 119 tests
+test factory::project::tests::invalid_requested_identity_never_calls_fetch ... ok
+test factory::project::tests::accepts_a_genuinely_empty_project ... ok
+test factory::project::tests::accepts_an_empty_errors_array ... ok
+test factory::project::tests::queries_use_verified_fragments_filtered_items_and_rate_limit ... ok
+test factory::project::tests::propagates_fetch_failure_without_returning_accumulated_items ... ok
+test factory::project::tests::json_budget_counts_serialized_utf8_and_escaping_at_the_exact_boundary ... ok
+test factory::project::tests::non_issue_and_null_content_remain_counted_non_candidates ... ok
+test factory::project::tests::rejects_duplicate_item_ids_within_and_across_pages_even_for_placeholders ... ok
+test factory::project::tests::rejects_null_or_missing_resolution_data ... ok
+test factory::project::tests::rejects_empty_non_progress_and_early_truncation ... ok
+test factory::project::tests::rejects_total_count_drift_in_both_directions ... ok
+test factory::project::tests::user_and_organization_identity_match_case_insensitively ... ok
+test factory::project::tests::rejects_missing_null_empty_or_wrong_type_cursors_even_on_final_pages ... ok
+test factory::project::tests::rejects_repeated_and_looping_cursors_including_the_terminal_page ... ok
+test factory::project::tests::rejects_project_identity_mismatch_at_resolution_and_on_later_pages ... ok
+test factory::quota::tests::final_http_status_is_used_and_prior_valid_retry_hints_are_not_shortened ... ok
+test factory::quota::tests::expired_failures_escalate_until_a_success_and_never_overflow ... ok
+test factory::project::tests::rejects_null_or_missing_pages_and_pagination_metadata ... ok
+test factory::project::tests::unset_or_other_type_status_is_not_a_candidate_status ... ok
+test factory::project::tests::rejects_partial_graphql_errors_at_every_stage_without_echoing_them ... ok
+test factory::quota::tests::invalid_persisted_quota_fails_conservatively_without_shortening_valid_wait ... ok
+test factory::quota::tests::graphql_rate_limited_and_http_failures_are_typed ... ok
+test factory::project::tests::rejects_archived_missing_identity_and_malformed_source_rows ... ok
+test factory::quota::tests::low_quota_accepts_response_but_blocks_next_request_and_clones_share_state ... ok
+test factory::quota::tests::high_balance_does_not_cancel_an_outstanding_wait ... ok
+test factory::quota::tests::malformed_hints_fall_back_and_unrepresentable_positive_hints_fail_closed ... ok
+test factory::quota::tests::only_data_rate_limit_is_an_observation ... ok
+test factory::quota::tests::oversized_diagnostics_cannot_hide_a_longer_retry_requirement ... ok
+test factory::quota::tests::invalid_observations_leave_state_intact_and_errors_do_not_echo_values ... ok
+test factory::quota::tests::malformed_or_oversized_headers_have_safe_errors ... ok
+test factory::quota::tests::primary_headers_and_duplicate_hints_choose_the_latest_deadline ... ok
+test factory::quota::tests::plain_json_fixtures_are_unchanged_and_http_preambles_are_stripped ... ok
+test factory::quota::tests::primary_or_explicitly_exhausted_responses_still_respect_hourly_reset ... ok
+test factory::quota::tests::primary_failure_uses_known_reset_but_secondary_does_not_use_high_quota_reset ... ok
+test factory::quota::tests::reset_header_has_a_safety_margin ... ok
+test factory::quota::tests::reserve_scales_down_and_includes_actual_observed_cost ... ok
+test factory::quota::tests::reset_margin_expires_without_inventing_a_new_balance ... ok
+test factory::quota::tests::restart_round_trip_and_stale_reconcile_preserve_the_longest_wait ... ok
+test factory::quota::tests::restore_reconstructs_low_quota_wait_and_bounds_bad_persisted_counters ... ok
+test factory::quota::tests::secondary_403_and_503_ignore_healthy_primary_reset_and_escalate_locally ... ok
+test factory::quota::tests::secondary_retry_after_supports_http_dates_and_stderr_headers ... ok
+test factory::quota::tests::stale_and_out_of_order_observations_do_not_restore_spent_budget ... ok
+test factory::quota::tests::successful_data_and_non_retryable_errors_are_not_misclassified ... ok
+test factory::quota::tests::typed_display_debug_and_error_chain_never_contain_remote_secrets ... ok
+test factory::quota::tests::typed_failure_only_and_admission_wait_is_not_a_failed_attempt ... ok
+test factory::tests::graphql_error_envelope_must_be_absent_or_an_empty_array ... ok
+test factory::tests::dependency_parser_uses_only_explicit_blockers ... ok
+test factory::tests::exact_project_reads_reject_deleted_or_non_issue_content ... ok
+test factory::tests::exact_project_reads_preserve_source_content_and_project_identity ... ok
+test factory::tests::acceptance_parser_preserves_issue_checklist_order ... ok
+test factory::tests::github_identity_and_failure_details_are_canonical_and_single_line ... ok
+test factory::project::tests::enforces_item_and_page_size_limits ... ok
+test factory::tests::issue204_checked_source_fences_scope_readiness_adapter_and_revision ... ok
+test factory::tests::issue204_new_policy_pins_connection_without_changing_legacy_shape ... ok
+test factory::tests::issue204_recovery_rejects_connection_substitution_or_silent_fallback ... ok
+test factory::tests::issue206_future_catch_up_keeps_only_a_server_validated_running_checkpoint_recoverable ... ok
+test factory::tests::issue206_generic_polling_and_other_modes_never_read_or_repair_cancelled_items ... ok
+test factory::tests::issue206_only_explicit_checkpoint_recovery_admits_the_marked_cancelled_item ... ok
+test factory::tests::issue206_reconciliation_request_is_exact_idempotent_and_never_uses_a_checkout ... ok
+test factory::tests::issue206_production_flow_returns_dry_run_before_repair_and_refreshes_before_claim ... ok
+test factory::project::tests::two_pages_preserve_exact_source_and_opaque_variables ... ok
+test factory::tests::issue221_checkpoint_actions_honor_availability_without_weakening_cancelled_proof ... ok
+test factory::tests::issue204_factory_option_is_typed_and_rejects_nil ... ok
+test factory::tests::issue221_native_mode_flags_are_mode_specific_and_preserve_legacy_defaults ... ok
+test factory::tests::issue224_existing_factory_policy_is_reused_and_never_revised_by_an_override ... ok
+test factory::tests::issue221_present_malformed_flags_fail_closed_in_both_context_decoders ... ok
+test factory::project::tests::enforces_page_limit_without_fetching_page_one_hundred_and_one ... ok
+test factory::tests::issue224_legacy_null_policy_is_read_without_inserting_a_request_key ... ok
+test factory::tests::issue221_production_mode_preflight_precedes_dry_run_and_rechecks_before_claim ... ok
+test factory::tests::issue224_invalid_or_incongruent_attempt_choices_fail_before_preflight ... ok
+test factory::tests::issue224_factory_policy_and_bodies_share_only_the_explicit_planning_choice ... ok
+test factory::tests::issue224_recovery_revision_requests_do_not_carry_an_attempt_setter ... ok
+test factory::tests::issue224_recovery_attempt_congruence_precedes_dry_run_and_remote_mutations ... ok
+test factory::tests::issue221_fresh_recovery_context_denies_before_revision_or_recovery_mutation ... ok
+test factory::tests::issue206_dry_run_reads_proof_but_never_posts_reconciliation_or_opens_a_checkout ... ok
+test factory::tests::publication_base_defaults_to_the_selected_source_ref ... ok
+test factory::tests::publication_base_requires_head_or_a_branch_ref ... ok
+test factory::tests::issue79_legacy_cost_requires_exact_intake_and_only_audited_server_reconciliation ... ok
+test factory::tests::recovery_active_replay_requires_the_same_reviewed_source_and_policy ... ok
+test factory::tests::recovery_cached_revision_rejects_changed_policy_with_same_source_and_reason ... ok
+test factory::tests::issue206_explicit_reconciliation_uses_only_the_current_marker_and_native_endpoint ... ok
+test factory::tests::recovery_completion_preserves_catch_up_states_and_cleanup_gate ... ok
+test factory::tests::recovery_cached_revision_replays_the_exact_current_replacement ... ok
+test factory::tests::issue221_active_replay_dry_run_matches_existing_request_without_mutations ... ok
+test factory::tests::issue221_active_replay_still_requires_current_native_authority ... ok
+test factory::tests::recovery_contract_preserves_authority_and_replaces_only_its_provenance_marker ... ok
+test factory::tests::recovery_cached_revision_rejects_changed_reviewed_source ... ok
+test factory::tests::recovery_publication_base_reuses_persisted_policy ... ok
+test factory::tests::recovery_never_falls_back_to_new_factory_work_or_another_issue ... ok
+test factory::tests::recovery_legacy_unbound_revision_requires_a_new_explicit_binding ... ok
+test factory::tests::issue221_current_provider_correction_retains_null_head_and_current_revision ... ok
+test factory::tests::recovery_verifier_only_policy_revision_replays_after_a_lost_authorization_response ... ok
+test factory::tests::utf8_truncation_never_splits_a_character ... ok
+test factory::tests::source_commit_requires_a_full_git_object_id ... ok
+test publish::tests::publication_branch_authorization_and_body_are_retry_stable ... ok
+test publish::tests::default_publication_branch_is_stable ... ok
+test factory::tests::verified_items_leave_the_queue_and_expired_claims_allow_failover ... ok
+test publish::tests::portable_bundle_head_is_single_exact_and_bounded ... ok
+test publish::tests::remote_base_refs_are_explicit ... ok
+test publish::tests::publication_start_and_recovery_keys_track_the_exact_invocation ... ok
+test publish::tests::remote_head_requires_one_symbolic_branch_and_object ... ok
+test factory::tests::recovery_revision_keys_bind_policy_actor_source_and_exact_request ... ok
+test factory::tests::recovery_cached_revision_rejects_wrong_attribution_or_superseded_contract ... ok
+test tests::issue224_launch_and_resume_have_no_attempt_override ... ok
+test tests::ordinary_factory_commands_do_not_require_recovery_options ... ok
+test tests::copied_recovery_commands_preserve_every_literal_argument ... ok
+test factory::tests::issue221_mode_preflight_denies_unavailable_or_malformed_flags_even_in_dry_run ... ok
+test factory::tests::issue79_legacy_cost_selector_mismatches_never_post_or_pin_source ... ok
+test tests::copied_recovery_commands_reject_missing_required_arguments ... ok
+test factory::tests::issue221_active_correction_replays_only_the_same_native_request_without_new_work ... ok
+test tests::issue224_planning_flags_are_optional_and_use_the_shared_ceiling ... ok
+test factory::tests::recovery_source_binding_survives_objective_size_cap_and_description_normalization ... ok
+test tests::issue224_invalid_attempt_flags_fail_during_argument_parsing ... ok
+test factory::tests::issue79_run_rejects_cost_before_github_or_server_in_both_modes ... ok
+test factory::tests::issue221_active_replay_rejects_mismatched_mode_actor_source_revision_and_request ... ok
+test factory::tests::issue204_bound_source_resolution_needs_no_controller_checkout ... ok
+test publish::tests::publication_branch_uses_git_branch_rules ... ok
+test factory::project::tests::supports_more_than_one_thousand_items_and_exact_maximum ... ok
+test factory::project::tests::enforces_total_json_budget_including_resolution_and_ignored_fields ... ok
+
+test result: ok. 119 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.43s
+
+     Running unittests src\lib.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_domain-e1423bb459fb8d07.exe)
+
+running 19 tests
+test factory_connection::tests::issue204_factory_binding_preserves_legacy_unbound_policy ... ok
+test factory_connection::tests::issue204_factory_binding_retains_the_exact_connection ... ok
+test planned_attempts::tests::issue224_explicit_attempt_policy_uses_the_existing_ceiling ... ok
+test planned_attempts::tests::issue224_invalid_attempt_policy_is_rejected_without_echoing_input ... ok
+test factory_connection::tests::issue204_factory_binding_rejects_malformed_and_nil_values_without_echoing_input ... ok
+test planned_attempts::tests::issue224_omitted_attempt_policy_preserves_legacy_shape ... ok
+test planning_cost::tests::issue79_cost_rejects_overflow_impossible_splits_and_unknown_strategies ... ok
+test planning_cost::tests::issue79_cost_allocations_preserve_small_defaults_and_boundaries ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_grant_rejects_missing_or_conflated_generations ... ok
+test tests::portable_paths_and_write_scopes_have_one_shared_grammar ... ok
+test planning_cost::tests::issue79_policy_validates_every_strategy_without_rewriting_json ... ok
+test tests::mission_context_wire_shape_contains_only_scoped_source_linkage ... ok
+test tests::status_serialization_is_stable ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_validates_exact_bytes_without_rewriting ... ok
+test workspace_connections::tests::setup_progress_is_not_terminal_or_authenticated_readiness ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_rejects_duplicate_native_fields_in_literal_bytes ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_rejects_foreign_or_falsely_completed_content ... ok
+test workspace_connections::tests::workspace_setup_is_a_fixed_native_surface_not_remote_shell ... ok
+test retained_provider_receipt::tests::issue211_retained_receipt_requires_complete_native_shape_and_safe_relative_paths ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_gateways-c6538f2b10b99670.exe)
+
+running 6 tests
+test tests::issue224_gateway_planning_rejects_malformed_attempts_without_defaulting ... ok
+test tests::issue224_mcp_creation_preserves_omission_and_forwards_explicit_attempts ... ok
+test tests::issue224_mcp_schema_exposes_optional_native_attempt_bounds ... ok
+test tests::gateways_do_not_expose_internal_database_shapes ... ok
+test tests::protocol_versions_fail_closed ... ok
+test tests::issue224_nonplanning_mcp_actions_reject_attempt_fields_before_api_calls ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\bin\crony-a2a.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_a2a-3a30d90d63a5fb72.exe)
+
+running 2 tests
+test tests::issue224_a2a_creation_keeps_legacy_shape_and_forwards_attempt_choice ... ok
+test tests::issue224_a2a_invalid_or_postplanning_attempt_fields_fail_before_api_calls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\bin\crony-acp.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_acp-321beb933fab802e.exe)
+
+running 2 tests
+test tests::issue224_acp_creation_keeps_legacy_shape_and_forwards_attempt_choice ... ok
+test tests::issue224_acp_invalid_or_postplanning_attempt_fields_leave_sessions_unchanged ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\bin\crony-mcp.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_mcp-70ccde5e13f97f71.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_protocol-f7b7988e774204f9.exe)
+
+running 10 tests
+test tests::durable_control_message_accepts_the_legacy_wire_shape ... ok
+test tests::launch_replay_flag_is_backward_compatible_with_prior_responses ... ok
+test tests::verifier_artifact_reference_preserves_metadata_only_wire_compatibility ... ok
+test tests::issue224_existing_execution_commands_reject_attempt_changes ... ok
+test tests::verifier_artifact_transfer_is_explicit_in_the_runner_wire_shape ... ok
+test tests::verifier_artifact_debug_never_discloses_transferred_bytes ... ok
+test tests::issue224_contract_revisions_reject_nested_attempt_settings ... ok
+test tests::issue224_factory_preflight_tasks_preserve_legacy_reads_and_attempt_values ... ok
+test tests::mission_preview_wire_shape_is_only_the_public_graph_summary ... ok
+test tests::issue224_planning_requests_preserve_omitted_and_explicit_attempt_policy ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (C:\Users\sschofield\.codex\review-executors\ecorp\receipts\pr-237\round-2\fix-cold-primary\build-output\debug\deps\crony_runner-48f9a515e69075ab.exe)
+
+running 215 tests
+test adapter::codex::tests::usage_notifications_are_deduplicated_and_scoped_to_the_active_turn ... ok
+test adapter::connection::tests::native_code_input_is_bounded_and_cleared_on_cancellation ... ok
+test adapter::connection::tests::native_auth_and_catalog_parsing_fail_closed ... ok
+test adapter::connection::tests::native_login_instructions_allow_only_native_urls_and_safe_codes ... ok
+test adapter::codex::tests::unavailable_codex_reports_explicit_capabilities ... ok
+test adapter::connection::tests::native_protocol_reader_bounds_before_allocating_untrusted_lines ... ok
+test adapter::connection::tests::native_ready_mixed_catalog_advertises_only_usable_models ... ok
+test adapter::connection::tests::native_ready_preserves_enabled_and_policy_absent_native_catalogs ... ok
+test adapter::connection::tests::native_ready_rejects_disabled_or_unknown_policy_only_catalogs ... ok
+test adapter::connection::tests::native_copilot_never_falls_back_to_path_or_a_fixture_as_readiness ... ok
+test adapter::copilot::stopped_evidence::tests::issue211_native_history_and_account_bounds_fail_closed ... ok
+test adapter::copilot::stopped_evidence::tests::issue211_native_history_receipt_is_redacted_and_never_claims_provider_completion ... ok
+test adapter::copilot::stopped_evidence::tests::issue211_native_history_rejects_foreign_missing_or_repeated_identity ... ok
+test adapter::connection::tests::native_system_sign_in_and_expired_inspection_spawn_nothing ... ok
+test adapter::connection::tests::native_profile_constructor_is_lazy_and_rejects_overlapping_storage ... ok
+test adapter::connection::tests::native_profile_environment_is_shared_by_probe_execute_and_resume ... ok
+test adapter::connection::tests::native_copilot_home_is_not_its_per_worktree_session_filesystem ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_rechecks_account_after_history_without_fallback ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_rejects_unpinned_runtime_before_history_or_auth_reads ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_session_not_found_has_no_resume_or_send_fallback ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_timeline_not_found_has_no_automatic_fallback ... ok
+test adapter::copilot::tests::copilot_cli_does_not_inherit_common_credential_environment ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_http_and_websocket_hooks_deny_without_downstream_contact ... ok
+test adapter::copilot::tests::fixture_exposes_every_model_and_policy_state ... ok
+test adapter::copilot::tests::local_cli_launch_preserves_runtime_and_sandbox_policy ... ok
+test adapter::copilot::tests::native_managed_permissions_never_pre_authorize_shell ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_uses_only_fixed_paginated_reads ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_rejects_malformed_expired_duplicate_and_oversize_pages ... ok
+test adapter::copilot::tests::sandbox_denies_the_user_profile_and_sensitive_stores ... ok
+test adapter::connection::tests::native_missing_install_is_not_ready ... ok
+test adapter::copilot::tests::tool_activity_signature_tracks_arguments_without_exposing_them ... ok
+test adapter::copilot::tests::permission_handler_requires_decisions_for_every_exception_class ... ok
+test adapter::copilot::tests::unverified_runtime_versions_do_not_advertise_native_filesystem_support ... ok
+test adapter::copilot::tests::permission_policy_is_scoped_to_the_worktree ... ok
+test adapter::copilot::tests::typed_directory_tool_rejects_relative_and_absolute_symlink_paths ... ok
+test adapter::copilot_fs::tests::file_modes_reject_privilege_bits_and_invalid_values ... ok
+test adapter::copilot_fs::tests::dangling_symlinks_cannot_create_external_files ... ok
+test adapter::copilot::tests::typed_directory_tool_is_idempotent_and_cannot_expand_authority ... ok
+test adapter::copilot_fs::tests::namespace_spelling_does_not_authorize_another_root_or_device ... ok
+test adapter::copilot_fs::tests::hard_links_cannot_mutate_external_files ... ok
+test adapter::copilot_fs::tests::filesystem_provider_contains_reads_writes_and_renames ... ok
+test adapter::copilot_fs::tests::native_windows_namespace_paths_read_the_same_capability_scoped_file ... ok
+test adapter::copilot_fs::tests::native_writes_obey_the_persisted_task_scope ... ok
+test adapter::copilot_fs::tests::all_operations_reject_linked_paths_and_protect_roots ... ok
+test adapter::copilot_fs::tests::worktree_directory_resolution_rejects_state_nested_under_workspace ... ok
+test adapter::copilot_fs::tests::worktree_directory_resolution_keeps_native_state_authority_separate ... ok
+test adapter::codex::tests::installed_codex_reports_full_capabilities ... ok
+test adapter::copilot::tests::fixture_runs_selected_model_and_emits_evidence ... ok
+test adapter::copilot::stopped_evidence::wire_tests::issue211_native_wire_enforces_total_history_bytes_and_page_limit ... ok
+test adapter::codex::tests::stop_is_graceful_and_evidenced ... ok
+test adapter::external::tests::adapter_drop_during_runner_shutdown_kills_the_owned_scope ... ok
+test adapter::external::tests::claude_permission_frame_preserves_provider_context ... ok
+test adapter::codex::tests::failed_turn_returns_failed_exit_with_evidence ... ok
+test adapter::external::tests::claude_resume_session_id_cannot_be_parsed_as_a_flag ... ok
+test adapter::external::tests::claude_runs_without_user_plugins_mcp_or_browser_integrations ... ok
+test adapter::codex::tests::executes_streams_usage_and_writes_evidence ... ok
+test adapter::external::tests::availability_probe_cleans_descendants_after_root_exit ... ok
+test adapter::external::tests::claude_permission_bridge_auto_allows_only_contained_worktree_path ... ok
+test adapter::external::tests::opencode_runs_without_external_plugins ... ok
+test adapter::codex::tests::forwards_live_steering_to_the_active_turn ... ok
+test adapter::codex::tests::interrupts_then_resumes_the_same_session_and_workspace ... ok
+test adapter::external::tests::claude_permission_response_write_failure_fails_provider ... ok
+test adapter::external::tests::claude_permission_bridge_suspends_and_applies_one_matching_approval ... ok
+test adapter::external::tests::repeated_stop_is_bounded_and_reports_one_terminal_result ... ok
+test adapter::connection::tests::native_claude_rejects_foreign_prompt_input_without_writing_it ... ok
+test adapter::external::tests::external_interrupt_removes_stubborn_process_tree ... ok
+test adapter::external::tests::claude_and_opencode_produce_equivalent_evidence ... ok
+test adapter::external::tests::claude_permission_bridge_denies_rejection_and_expiry ... ok
+test adapter::external::tests::external_stop_removes_process_tree_after_grandchild_already_exited ... ok
+test adapter::tests::capabilities_are_explicit ... ok
+test adapter::external::tests::spawn_setup_failure_retains_scope_until_verified ... ok
+test adapter::external::tests::claude_error_and_malformed_results_cannot_complete ... ok
+test adapter::tests::unsupported_features_return_typed_errors ... ok
+test adapter::external::tests::root_exit_is_observed_without_waiting_for_inherited_pipe_eof ... ok
+test connections::github::tests::github_repository_choice_normalizes_case_without_changing_id_or_branch ... ok
+test connections::github::tests::personal_scope_removes_machine_tokens_without_changing_global_login ... ok
+test connections::github::tests::repository_and_device_instruction_parsing_never_accept_shell_or_token_text ... ok
+test adapter::tests::fake_adapter_passes_stop_contract ... ok
+test connections::process::tests::setup_reader_bounds_unterminated_lines_and_never_retains_diagnostics ... ok
+test connections::storage::tests::browser_paths_cannot_use_traversal_or_windows_device_names ... ok
+test connections::storage::tests::canonical_roots_keep_native_workspace_path_representation ... ok
+test connections::storage::tests::private_root_cannot_hide_inside_a_source_checkout ... ok
+test connections::storage::tests::registry_replacement_is_exact_and_rejects_corrupt_or_escaping_files ... ok
+test adapter::external::tests::stop_preempts_a_blocked_protocol_write ... ok
+test connections::tests::branch_refresh_keeps_old_accepted_pin_and_fences_older_ready_ack ... ok
+test connections::tests::completed_auth_check_is_terminal_and_source_survives_later_agent_failure ... ok
+test connections::tests::connection_ready_requires_exact_server_ack_and_survives_registry_roundtrip ... ok
+test connections::tests::installed_executable_and_native_account_are_independent_choices ... ok
+test connections::tests::late_ack_recognizes_server_committed_history_without_reselecting_old_profile ... ok
+test connections::tests::native_code_cannot_target_non_claude_or_expired_login_and_is_not_serialized ... ok
+test connections::tests::native_code_is_prompt_bound_one_shot_and_exact_retries_never_feed_another_prompt ... ok
+test connections::tests::operation_replay_preserves_native_login_receipt_and_rejects_changed_scope ... ok
+test adapter::external::tests::terminal_result_is_drained_after_root_exit_before_inherited_pipe_eof ... ok
+test connections::tests::receipt_cap_preserves_live_unacked_unfinished_and_unexpired_operations ... ok
+test adapter::process_tree::tests::root_query_failure_keeps_the_owned_scope_for_verified_cleanup ... ok
+test adapter::process_tree::tests::stubborn_tree_is_removed_idempotently_without_killing_unrelated_process ... ok
+test connections::tests::rejected_ready_and_forged_acceptance_are_not_dispatch_authority ... ok
+test connections::tests::saved_native_identity_never_falls_back_to_another_source_or_profile ... ok
+test connections::tests::receipt_cap_restart_preserves_current_source_and_all_retained_receipts ... ok
+test adapter::process_tree::tests::verification_failure_keeps_the_owned_scope_for_retry ... ok
+test connections::tests::receipt_cap_live_duplicate_and_conflicting_commands_do_not_compact_or_restart ... ok
+test adapter::external::tests::verification_failure_reports_uncertainty_once_and_retries_owned_cleanup ... ok
+test adapter::connection::tests::native_codex_device_login_and_inspection_never_send_a_turn ... ok
+test adapter::process_tree::tests::termination_handles_a_descendant_that_already_exited ... ok
+test adapter::connection::tests::native_copilot_device_login_uses_same_empty_profile_and_no_sessions ... ok
+test connections::tests::receipt_cap_rollover_prunes_old_terminal_acknowledged_entries_without_reset ... ok
+test adapter::external::tests::availability_probe_owns_and_times_out_the_complete_scope ... ok
+test adapter::tests::fake_adapter_passes_spawn_stream_steer_and_artifact_contract ... ok
+test deliverable::tests::git_pathspec_magic_is_rejected_before_staging ... ok
+test deliverable::tests::sensitive_directories_match_at_every_depth ... ok
+test connections::storage::tests::windows_private_root_primary_path_enforces_acl ... ok
+test deliverable::tests::default_export_rejects_changes_outside_task_write_scope ... ok
+test deliverable::tests::nested_secret_directories_are_rejected_before_export ... ok
+test adapter::connection::tests::native_claude_code_bridge_binds_prompt_and_adopts_persisted_auth ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_ack_identity_requires_new_run_role_digest_and_stored_id ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_capability_and_workspace_only_route_are_wired ... ok
+test adapter::external::tests::initialization_is_preempted_by_stop_interrupt_and_hard_breaker ... ok
+test deliverable::tests::secret_like_paths_are_rejected_before_export ... ok
+test deliverable::tests::archive_is_deterministic_and_includes_tracked_and_untracked_source ... ok
+test deliverable::tests::commit_form_bundles_validated_branch_when_head_is_detached ... ok
+test deliverable::tests::scoped_archive_preserves_staged_and_unselected_source_exactly ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_grant_fences_command_mode_run_and_checkpoint_scope ... ok
+test deliverable::tests::verifier_only_export_rejects_unselected_preserved_head_changes ... ok
+test deliverable::tests::commit_form_updates_only_the_isolated_branch_after_verification ... ok
+test deliverable::tests::scoped_commit_excludes_unselected_committed_changes ... ok
+test source_checkpoint::tests::issue190_blocked_checkpoint_capture_has_an_overall_deadline ... ok
+test deliverable::tests::scoped_commit_preserves_unselected_staged_work ... ok
+test deliverable::tests::scoped_commit_reset_treats_selected_paths_literally ... ok
+test deliverable::tests::verifier_only_export_preserves_post_base_git_modes_and_readonly_source ... ok
+test retained_provider_receipt_tests::issue211_existing_provider_artifact_reference_remains_a_transfer_not_a_collection ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_is_not_implicitly_collected_without_a_grant ... ok
+test source_checkpoint::tests::issue190_checkpoint_read_limits_preserve_source ... ok
+test source_checkpoint::tests::issue190_checkpoint_binds_changed_policy_and_untracked_bytes ... ok
+test source_checkpoint::tests::issue190_cancelled_exit_checkpoints_before_terminal_event ... ok
+test source_checkpoint::tests::issue190_checkpoint_rejects_detached_or_replaced_branch_and_source_base ... ok
+test deliverable::tests::verifier_only_export_preserves_the_existing_head_commit ... ok
+test source_checkpoint::tests::issue190_quarantine_never_mints_or_downgrades_a_checkpoint ... ok
+test source_checkpoint::tests::issue190_cleanup_commit_rejects_a_late_retention_acknowledgment ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_is_excluded_from_export_without_changing_source_bytes ... ok
+test source_checkpoint::tests::issue190_failed_exit_checkpoints_before_terminal_event ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_upload_is_exact_and_all_current_checks_and_manual_gate_run ... ok
+test source_checkpoint::tests::issue190_runtime_error_retains_without_checkpoint_proof ... ok
+test stopped_session_probe_tests::issue211_native_stopped_session_read_without_inference ... ignored, requires an explicit owned stopped-session probe file; never starts inference
+test tests::active_secrets_schedule_a_bounded_provider_lifetime ... ok
+test tests::buffered_run_events_rebind_epoch_without_changing_assignment_fence ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_source_drift_or_identical_file_replacement_is_rejected_at_ack ... ok
+test source_checkpoint::tests::issue190_late_stop_cancels_running_verifier_without_post_verifier_seal ... ok
+test source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal ... FAILED
+test source_checkpoint::tests::issue190_stopped_artifact_callback_cannot_fail_an_unreadable_local_artifact ... ok
+test source_checkpoint::tests::issue190_soft_directive_keeps_normal_verification ... ok
+test tests::expired_secrets_fail_before_provider_start ... ok
+test source_checkpoint::tests::issue190_uncertain_teardown_retains_without_checkpoint_proof ... ok
+test source_checkpoint::tests::issue190_unpinned_legacy_source_retains_without_checkpoint_proof ... ok
+test tests::teardown_fail_closed_preserves_workspace_without_false_terminal_claim ... ok
+test tests::verifier_artifact_transfer_bounds_encoded_decoded_and_declared_size ... ok
+test source_checkpoint::tests::issue190_stop_wins_over_provider_completion_and_seals_source ... ok
+test tests::verifier_artifact_transfer_cancellation_cleans_all_snapshots ... ok
+test source_checkpoint::tests::issue190_suspend_wins_over_provider_completion_and_seals_source ... ok
+test tests::verifier_artifact_transfer_decodes_inline_bytes ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_rejects_wrong_historical_session_model_and_current_checkpoint ... ok
+test tests::teardown_fail_closed_execute_assignment_preserves_exact_workspace_until_verified ... ok
+test tests::verifier_artifact_transfer_cleanup_error_blocks_acceptance ... ok
+test tests::ordinary_verifier_still_rejects_an_uncommitted_replacement_tree ... ok
+test tests::checkpoint_verifier_cancellation_still_quarantines_unexpected_head ... ok
+test tests::verifier_artifact_transfer_early_error_preserves_prepared_workspace ... ok
+test tests::checkpoint_verifier_cancellation_does_not_quarantine_own_commit ... ok
+test tests::verifier_artifact_transfer_cancellation_during_upload_cannot_accept_completion ... ok
+test tests::checkpoint_verifier_exports_uncommitted_source_without_a_provider ... ok
+test tests::checkpoint_verifier_rejects_head_drift_after_its_owned_commit ... ok
+test tests::checkpoint_verifier_retains_own_commit_after_ack_failure ... ok
+test tests::verifier_artifact_transfer_quarantine_flag_is_explicit_not_text_derived ... ok
+test tests::verifier_artifact_transfer_rejects_tampered_hash ... ok
+test tests::verifier_artifact_transfer_fingerprint_mismatch_is_quarantined ... ok
+test tests::workspace_setup_capability_requires_storage_and_native_process_ownership ... ok
+test tests::verifier_artifact_transfer_stages_contained_legacy_bytes_privately ... ok
+test connections::integration_tests::native_fixture_personal_github_profiles_and_login_replay_survive_restart ... ok
+test verifier::tests::explicit_paths_are_canonicalized_and_directory_targets_are_rejected ... ok
+test tests::verifier_artifact_transfer_keeps_exact_source_and_baseline ... ok
+test verifier::tests::missing_programs_fail_closed_without_searching_the_workspace ... ok
+test verifier::tests::command_failure_records_bounded_resolution_evidence ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_stop_interrupt_and_control_closure_cancel_during_collection ... ok
+test verifier::tests::windows_pathext_resolves_package_manager_and_direct_executable_names ... ok
+test verifier::tests::cancelled_verifier_command_terminates_its_owned_process_tree ... ok
+test workspace::tests::fingerprint_and_legacy_search_never_traverse_windows_junctions ... ok
+test verifier::tests::windows_batch_launch_does_not_inject_malicious_arguments ... ok
+test workspace::tests::fingerprint_binds_windows_readonly_modes_and_snapshots_preserve_them ... ok
+test workspace::tests::fingerprint_entry_and_snapshot_byte_limits_fail_without_source_mutation ... ok
+test workspace::tests::github_remote_urls_normalize_to_repository_identity ... ok
+test workspace::tests::fingerprint_is_reproducible_and_excludes_only_root_git_control ... ok
+test tests::verifier_artifact_transfer_held_upload_artifact_error_keeps_matching_checkpoint_trusted ... ok
+test workspace::tests::local_repository_identity_is_stable_and_contract_safe ... ok
+test verifier::tests::matrix_checks_pass_and_missing_or_escaping_files_fail ... ok
+test workspace::tests::path_and_ref_guards_fail_closed ... ok
+test tests::verifier_artifact_transfer_inline_assignment_preserves_completed_source ... ok
+test tests::verifier_artifact_transfer_held_upload_source_drift_is_quarantined ... ok
+test tests::verifier_artifact_transfer_provider_admission_failure_preserves_workspace ... ok
+test tests::verifier_artifact_transfer_held_upload_head_drift_is_quarantined ... ok
+test tests::verifier_artifact_transfer_held_upload_source_drift_with_manual_gate_is_quarantined ... ok
+test tests::verifier_artifact_transfer_held_upload_head_drift_with_manual_gate_is_quarantined ... ok
+test workspace::tests::fingerprint_covers_tracked_untracked_and_ignored_bytes ... FAILED
+test workspace::tests::occupied_or_tampered_target_never_falls_back_to_the_source_checkout ... ok
+test workspace::tests::pinned_snapshots_share_identity_lock_and_preserved_dirty_worktrees ... FAILED
+test workspace::tests::legacy_artifact_search_is_bounded_by_name_size_and_digest ... FAILED
+test workspace::tests::source_identity_requires_the_exact_resolved_commit ... ok
+test workspace::tests::removes_only_clean_integrated_worktrees ... FAILED
+test workspace::tests::provisions_distinct_worktrees_without_touching_source_checkout ... FAILED
+test workspace::tests::unpinned_worktrees_follow_the_live_ref_while_pinned_and_resumed_work_stays_fixed ... FAILED
+test workspace::tests::initialize_pinned_retains_commit_after_ref_advances_or_disappears ... FAILED
+test workspace::tests::verifier_snapshot_is_physical_isolated_and_excludes_git_control ... FAILED
+test retained_provider_receipt_tests::issue211_retained_receipt_missing_malformed_and_oversized_files_never_upload ... ok
+test workspace::tests::pinned_sources_reject_invalid_unavailable_and_non_commit_ids ... ok
+test tests::verifier_artifact_transfer_held_upload_unchanged_checkpoint_is_trusted ... ok
+test verifier::tests::windows_installed_npm_shim_runs_incident_command_policy ... ok
+test retained_provider_receipt_tests::issue211_retained_receipt_missing_ack_withholds_artifact_checks_and_retries_are_identical ... ok
+test connections::integration_tests::native_fixture_ready_ack_refresh_rejection_and_old_run_pins_survive_restart has been running for over 60 seconds
+test connections::integration_tests::native_fixture_ready_ack_refresh_rejection_and_old_run_pins_survive_restart ... ok
+
+failures:
+
+---- source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal stdout ----
+
+thread 'source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal' (85496) panicked at crates\crony-runner\src\source_checkpoint.rs:674:57:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- workspace::tests::fingerprint_covers_tracked_untracked_and_ignored_bytes stdout ----
+
+thread 'workspace::tests::fingerprint_covers_tracked_untracked_and_ignored_bytes' (6112) panicked at crates\crony-runner\src\workspace.rs:1685:14:
+prepare worktree: create worktree C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\6f6bfbb2-2106-4028-8064-be5ef0385aba\runner workspace with spaces\worktrees\9854519ad067499ab066fb9ab725d037\2683465c19dd46329b7963b75267dfea on branch crony/task-9854519ad067499ab066fb9ab725d037/run-2683465c19dd46329b7963b75267dfea
+
+Caused by:
+    git worktree add -b crony/task-9854519ad067499ab066fb9ab725d037/run-2683465c19dd46329b7963b75267dfea C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\6f6bfbb2-2106-4028-8064-be5ef0385aba\runner workspace with spaces\worktrees\9854519ad067499ab066fb9ab725d037\2683465c19dd46329b7963b75267dfea ba65349d1bb0fab95d7e9dacf05cf9985afa7bd2 failed with exit code: 128: Preparing worktree (new branch 'crony/task-9854519ad067499ab066fb9ab725d037/run-2683465c19dd46329b7963b75267dfea')
+    fatal: '$GIT_DIR' too big
+
+---- workspace::tests::pinned_snapshots_share_identity_lock_and_preserved_dirty_worktrees stdout ----
+
+thread 'workspace::tests::pinned_snapshots_share_identity_lock_and_preserved_dirty_worktrees' (42768) panicked at crates\crony-runner\src\workspace.rs:2514:14:
+called `Result::unwrap()` on an `Err` value: create worktree C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\9a67a810-6c68-4192-afb6-f43f66de3758\runner workspace with spaces\worktrees\3c8fe0970ed94d1ca3a6ddf5787798a5\f61dee13db3444b4a29a06d8efa7c38d on branch crony/task-3c8fe0970ed94d1ca3a6ddf5787798a5/run-f61dee13db3444b4a29a06d8efa7c38d
+
+Caused by:
+    git worktree add -b crony/task-3c8fe0970ed94d1ca3a6ddf5787798a5/run-f61dee13db3444b4a29a06d8efa7c38d C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\9a67a810-6c68-4192-afb6-f43f66de3758\runner workspace with spaces\worktrees\3c8fe0970ed94d1ca3a6ddf5787798a5\f61dee13db3444b4a29a06d8efa7c38d 12ad6ee2e4eb9c2768cf38e65c896d82ed1dbfbc failed with exit code: 128: Preparing worktree (new branch 'crony/task-3c8fe0970ed94d1ca3a6ddf5787798a5/run-f61dee13db3444b4a29a06d8efa7c38d')
+    fatal: '$GIT_DIR' too big
+
+---- workspace::tests::legacy_artifact_search_is_bounded_by_name_size_and_digest stdout ----
+
+thread 'workspace::tests::legacy_artifact_search_is_bounded_by_name_size_and_digest' (85272) panicked at crates\crony-runner\src\workspace.rs:2060:14:
+prepare worktree: create worktree C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\8cef76c8-635b-4138-bbe7-e80bf5e85b1b\runner workspace with spaces\worktrees\ac9c23cf16c54aeb8114b977758431ff\dee0710747124d7596316bf50227c3cd on branch crony/task-ac9c23cf16c54aeb8114b977758431ff/run-dee0710747124d7596316bf50227c3cd
+
+Caused by:
+    git worktree add -b crony/task-ac9c23cf16c54aeb8114b977758431ff/run-dee0710747124d7596316bf50227c3cd C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\8cef76c8-635b-4138-bbe7-e80bf5e85b1b\runner workspace with spaces\worktrees\ac9c23cf16c54aeb8114b977758431ff\dee0710747124d7596316bf50227c3cd 12ad6ee2e4eb9c2768cf38e65c896d82ed1dbfbc failed with exit code: 128: Preparing worktree (new branch 'crony/task-ac9c23cf16c54aeb8114b977758431ff/run-dee0710747124d7596316bf50227c3cd')
+    fatal: '$GIT_DIR' too big
+
+---- workspace::tests::removes_only_clean_integrated_worktrees stdout ----
+
+thread 'workspace::tests::removes_only_clean_integrated_worktrees' (12864) panicked at crates\crony-runner\src\workspace.rs:2172:14:
+clean worktree: create worktree C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\42b0237b-719a-4c0d-887f-0862231694c1\runner workspace with spaces\worktrees\9b87face939c471e9d232a657b16cd0d\9cf89f2c2c1244ae85eca4189c1c99f2 on branch crony/task-9b87face939c471e9d232a657b16cd0d/run-9cf89f2c2c1244ae85eca4189c1c99f2
+
+Caused by:
+    git worktree add -b crony/task-9b87face939c471e9d232a657b16cd0d/run-9cf89f2c2c1244ae85eca4189c1c99f2 C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\42b0237b-719a-4c0d-887f-0862231694c1\runner workspace with spaces\worktrees\9b87face939c471e9d232a657b16cd0d\9cf89f2c2c1244ae85eca4189c1c99f2 1f8873db5c58fca489683dbe4f99e607c2e84816 failed with exit code: 128: Preparing worktree (new branch 'crony/task-9b87face939c471e9d232a657b16cd0d/run-9cf89f2c2c1244ae85eca4189c1c99f2')
+    fatal: '$GIT_DIR' too big
+
+---- workspace::tests::provisions_distinct_worktrees_without_touching_source_checkout stdout ----
+
+thread 'workspace::tests::provisions_distinct_worktrees_without_touching_source_checkout' (80752) panicked at crates\crony-runner\src\workspace.rs:1625:14:
+first worktree: create worktree C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\2be001e5-3ffe-4ce8-a295-00af724ea602\runner workspace with spaces\worktrees\a44376e0afcf405393ef313222eaefb8\936bde4a4e2c493fb9cdf0642092c5f3 on branch crony/task-a44376e0afcf405393ef313222eaefb8/run-936bde4a4e2c493fb9cdf0642092c5f3
+
+Caused by:
+    git worktree add -b crony/task-a44376e0afcf405393ef313222eaefb8/run-936bde4a4e2c493fb9cdf0642092c5f3 C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\2be001e5-3ffe-4ce8-a295-00af724ea602\runner workspace with spaces\worktrees\a44376e0afcf405393ef313222eaefb8\936bde4a4e2c493fb9cdf0642092c5f3 1f8873db5c58fca489683dbe4f99e607c2e84816 failed with exit code: 128: Preparing worktree (new branch 'crony/task-a44376e0afcf405393ef313222eaefb8/run-936bde4a4e2c493fb9cdf0642092c5f3')
+    fatal: '$GIT_DIR' too big
+
+---- workspace::tests::unpinned_worktrees_follow_the_live_ref_while_pinned_and_resumed_work_stays_fixed stdout ----
+
+thread 'workspace::tests::unpinned_worktrees_follow_the_live_ref_while_pinned_and_resumed_work_stays_fixed' (70904) panicked at crates\crony-runner\src\workspace.rs:2333:14:
+first unpinned worktree: create worktree C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\b030adaa-3c36-4067-a463-a863e66c43d1\runner workspace with spaces\worktrees\40039ce7062f420f883013e05b9174bc\c0bb48b57d0c4850b0b207b24413c2cc on branch crony/task-40039ce7062f420f883013e05b9174bc/run-c0bb48b57d0c4850b0b207b24413c2cc
+
+Caused by:
+    git worktree add -b crony/task-40039ce7062f420f883013e05b9174bc/run-c0bb48b57d0c4850b0b207b24413c2cc C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\b030adaa-3c36-4067-a463-a863e66c43d1\runner workspace with spaces\worktrees\40039ce7062f420f883013e05b9174bc\c0bb48b57d0c4850b0b207b24413c2cc 1f8873db5c58fca489683dbe4f99e607c2e84816 failed with exit code: 128: Preparing worktree (new branch 'crony/task-40039ce7062f420f883013e05b9174bc/run-c0bb48b57d0c4850b0b207b24413c2cc')
+    fatal: '$GIT_DIR' too big
+
+---- workspace::tests::initialize_pinned_retains_commit_after_ref_advances_or_disappears stdout ----
+
+thread 'workspace::tests::initialize_pinned_retains_commit_after_ref_advances_or_disappears' (51488) panicked at crates\crony-runner\src\workspace.rs:2474:14:
+prepare on the exact restored commit: create worktree C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\0bb4549e-0788-4f53-bb4f-5d45a687dc05\runner workspace with spaces\worktrees\f13543ae1bb8436b975f3470e4d2eb60\9211df634d1e45dfa9b2e6af42b365ff on branch crony/task-f13543ae1bb8436b975f3470e4d2eb60/run-9211df634d1e45dfa9b2e6af42b365ff
+
+Caused by:
+    git worktree add -b crony/task-f13543ae1bb8436b975f3470e4d2eb60/run-9211df634d1e45dfa9b2e6af42b365ff C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\0bb4549e-0788-4f53-bb4f-5d45a687dc05\runner workspace with spaces\worktrees\f13543ae1bb8436b975f3470e4d2eb60\9211df634d1e45dfa9b2e6af42b365ff ba65349d1bb0fab95d7e9dacf05cf9985afa7bd2 failed with exit code: 128: Preparing worktree (new branch 'crony/task-f13543ae1bb8436b975f3470e4d2eb60/run-9211df634d1e45dfa9b2e6af42b365ff')
+    fatal: '$GIT_DIR' too big
+
+---- workspace::tests::verifier_snapshot_is_physical_isolated_and_excludes_git_control stdout ----
+
+thread 'workspace::tests::verifier_snapshot_is_physical_isolated_and_excludes_git_control' (77788) panicked at crates\crony-runner\src\workspace.rs:2094:14:
+prepare worktree: create worktree C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\2cc34e42-e5ff-4424-b7e1-ae1e309e9e8a\runner workspace with spaces\worktrees\6cbcdc21abe84039b5ef84a78472dcbe\3300b62710e145c28d3d56c6cd5e52ee on branch crony/task-6cbcdc21abe84039b5ef84a78472dcbe/run-3300b62710e145c28d3d56c6cd5e52ee
+
+Caused by:
+    git worktree add -b crony/task-6cbcdc21abe84039b5ef84a78472dcbe/run-3300b62710e145c28d3d56c6cd5e52ee C:\Users\sschofield\AppData\Local\Temp\p237-fab716dc\crony workspace tests\2cc34e42-e5ff-4424-b7e1-ae1e309e9e8a\runner workspace with spaces\worktrees\6cbcdc21abe84039b5ef84a78472dcbe\3300b62710e145c28d3d56c6cd5e52ee 618ed88b988606ba9ba27e1df8e885f934ec4bb8 failed with exit code: 128: Preparing worktree (new branch 'crony/task-6cbcdc21abe84039b5ef84a78472dcbe/run-3300b62710e145c28d3d56c6cd5e52ee')
+    fatal: '$GIT_DIR' too big
+
+
+failures:
+    source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal
+    workspace::tests::fingerprint_covers_tracked_untracked_and_ignored_bytes
+    workspace::tests::initialize_pinned_retains_commit_after_ref_advances_or_disappears
+    workspace::tests::legacy_artifact_search_is_bounded_by_name_size_and_digest
+    workspace::tests::pinned_snapshots_share_identity_lock_and_preserved_dirty_worktrees
+    workspace::tests::provisions_distinct_worktrees_without_touching_source_checkout
+    workspace::tests::removes_only_clean_integrated_worktrees
+    workspace::tests::unpinned_worktrees_follow_the_live_ref_while_pinned_and_resumed_work_stays_fixed
+    workspace::tests::verifier_snapshot_is_physical_isolated_and_excludes_git_control
+
+test result: FAILED. 205 passed; 9 failed; 1 ignored; 0 measured; 0 filtered out; finished in 76.32s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

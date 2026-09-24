@@ -1,0 +1,121 @@
+✖ F03: inventory rejects malformed review text and out-of-scope PR URLs before detail reads (3.6483ms)
+✔ F03: string titles and nullable string bodies retain exact review fingerprints (2.2187ms)
+✖ F03: sync rejects invalid live refs while preserving historical identity (286.0398ms)
+✖ F03: published rejects invalid live refs while preserving historical identity (783.4993ms)
+✖ F03: progress-published rejects invalid live refs while preserving historical identity (927.7559ms)
+✖ F03: v1 refs keep their replay contract and valid live branch names are preserved exactly (269.5446ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 1
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2597.5977
+
+✖ failing tests:
+
+test at .github\skills\code-review\tests\executor-snapshot.test.mjs:28:1
+✖ F03: inventory rejects malformed review text and out-of-scope PR URLs before detail reads (3.6483ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-snapshot.test.mjs:40:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:4794:3
+✖ F03: sync rejects invalid live refs while preserving historical identity (286.0398ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:32:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:4812:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:4794:3
+✖ F03: published rejects invalid live refs while preserving historical identity (783.4993ms)
+  AssertionError [ERR_ASSERTION]: {"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","action":"audit","reason":null,"claimId":"210b2cbe-fe52-4bbe-9ec6-bc28c01c28da","snapshot":{"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","reviewKey":"0000000000000000000000000000000000000000000000000000000000000001","gateKey":"0000000000000000000000000000000000000000000000000000000000000001","sourceRepo":"example/ecorp","branch":"--force","state":"open","baseRef":"main","draft":false,"url":"https://github.com/example/ecorp/pull/1"},"round":1,"startedAt":"2026-09-23T04:00:34.997Z","baseline":[],"publication":{"owner":"native-task-1","number":1,"claimId":"210b2cbe-fe52-4bbe-9ec6-bc28c01c28da","base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000b","snapshot":{"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","reviewKey":"0000000000000000000000000000000000000000000000000000000000000001","gateKey":"0000000000000000000000000000000000000000000000000000000000000001","sourceRepo":"example/ecorp","branch":"--force","state":"open","baseRef":"main","draft":false,"url":"https://github.com/example/ecorp/pull/1"},"reviewers":[{"reviewerId":"210b2cbe-fe52-4bbe-9ec6-bc28c01c28da-reviewer-1","model":"gpt-6-astra","base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","verdict":"NICE","completedAt":"2026-09-23T04:00:35.144Z","sourceRef":"evidence/210b2cbe-fe52-4bbe-9ec6-bc28c01c28da-review-1.json","criteria":[{"id":"CORRECTNESS","result":"PASS","sourceRef":"evidence/rubric-CORRECTNESS.json"},{"id":"DURABILITY","result":"PASS","sourceRef":"evidence/rubric-DURABILITY.json"},{"id":"SECURITY","result":"PASS","sourceRef":"evidence/rubric-SECURITY.json"},{"id":"TEMPLATE","result":"PASS","sourceRef":"evidence/rubric-TEMPLATE.json"},{"id":"VERIFICATION","result":"PASS","sourceRef":"evidence/rubric-VERIFICATION.json"},{"id":"COMPLETENESS","result":"PASS","sourceRef":"evidence/rubric-COMPLETENESS.json"},{"id":"SIMPLICITY","result":"PASS","sourceRef":"evidence/rubric-SIMPLICITY.json"},{"id":"TRUTHFULNESS","result":"PASS","sourceRef":"evidence/rubric-TRUTHFULNESS.json"}]},{"reviewerId":"210b2cbe-fe52-4bbe-9ec6-bc28c01c28da-reviewer-2","model":"gpt-6-astra","base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","verdict":"NICE","completedAt":"2026-09-23T04:00:35.145Z","sourceRef":"evidence/210b2cbe-fe52-4bbe-9ec6-bc28c01c28da-review-2.json","criteria":[{"id":"CORRECTNESS","result":"PASS","sourceRef":"evidence/rubric-CORRECTNESS.json"},{"id":"DURABILITY","result":"PASS","sourceRef":"evidence/rubric-DURABILITY.json"},{"id":"SECURITY","result":"PASS","sourceRef":"evidence/rubric-SECURITY.json"},{"id":"TEMPLATE","result":"PASS","sourceRef":"evidence/rubric-TEMPLATE.json"},{"id":"VERIFICATION","result":"PASS","sourceRef":"evidence/rubric-VERIFICATION.json"},{"id":"COMPLETENESS","result":"PASS","sourceRef":"evidence/rubric-COMPLETENESS.json"},{"id":"SIMPLICITY","result":"PASS","sourceRef":"evidence/rubric-SIMPLICITY.json"},{"id":"TRUTHFULNESS","result":"PASS","sourceRef":"evidence/rubric-TRUTHFULNESS.json"}]}],"push":{"repo":"example/ecorp","branch":"--force","before":"000000000000000000000000000000000000000b","head":"000000000000000000000000000000000000000c","sourceRef":"synthetic/live-ref-push.json","pushedAt":"2026-09-23T04:00:35.145Z"}},"failureEvidence":null,"failureReceipt":null,"failureReceiptVersion":null,"evidence":[],"findings":[]}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:32:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:4812:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:4794:3
+✖ F03: progress-published rejects invalid live refs while preserving historical identity (927.7559ms)
+  AssertionError [ERR_ASSERTION]: {"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","action":"audit","reason":null,"claimId":"daade339-7773-44b9-8a12-73d58dfbda57","snapshot":{"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","reviewKey":"0000000000000000000000000000000000000000000000000000000000000001","gateKey":"0000000000000000000000000000000000000000000000000000000000000001","sourceRepo":"example/ecorp","branch":"--force","state":"open","baseRef":"main","draft":false,"url":"https://github.com/example/ecorp/pull/1"},"round":1,"startedAt":"2026-09-23T04:00:35.782Z","baseline":[],"publication":{"owner":"native-task-1","number":1,"claimId":"daade339-7773-44b9-8a12-73d58dfbda57","base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000b","snapshot":{"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","reviewKey":"0000000000000000000000000000000000000000000000000000000000000001","gateKey":"0000000000000000000000000000000000000000000000000000000000000001","sourceRepo":"example/ecorp","branch":"--force","state":"open","baseRef":"main","draft":false,"url":"https://github.com/example/ecorp/pull/1"},"reviewers":[{"reviewerId":"daade339-7773-44b9-8a12-73d58dfbda57-progress-1-reviewer-1","model":"gpt-6-astra","base":"000000000000000000000000000000000000000b","head":"000000000000000000000000000000000000000c","verdict":"SAFE_TO_PUBLISH","completedAt":"2026-09-23T04:00:36.069Z","sourceRef":"evidence/daade339-7773-44b9-8a12-73d58dfbda57-progress-1-review-1.json","criteria":[{"id":"SOURCE_SCOPE","result":"PASS","sourceRef":"synthetic/SOURCE_SCOPE.json"},{"id":"FIX_EVIDENCE","result":"PASS","sourceRef":"synthetic/FIX_EVIDENCE.json"},{"id":"NO_NEW_BLOCKERS","result":"PASS","sourceRef":"synthetic/NO_NEW_BLOCKERS.json"},{"id":"TRUTHFUL_STATUS","result":"PASS","sourceRef":"synthetic/TRUTHFUL_STATUS.json"}],"runtime":"native"},{"reviewerId":"daade339-7773-44b9-8a12-73d58dfbda57-progress-1-reviewer-2","model":"gpt-6-astra","base":"000000000000000000000000000000000000000b","head":"000000000000000000000000000000000000000c","verdict":"SAFE_TO_PUBLISH","completedAt":"2026-09-23T04:00:36.069Z","sourceRef":"evidence/daade339-7773-44b9-8a12-73d58dfbda57-progress-1-review-2.json","criteria":[{"id":"SOURCE_SCOPE","result":"PASS","sourceRef":"synthetic/SOURCE_SCOPE.json"},{"id":"FIX_EVIDENCE","result":"PASS","sourceRef":"synthetic/FIX_EVIDENCE.json"},{"id":"NO_NEW_BLOCKERS","result":"PASS","sourceRef":"synthetic/NO_NEW_BLOCKERS.json"},{"id":"TRUTHFUL_STATUS","result":"PASS","sourceRef":"synthetic/TRUTHFUL_STATUS.json"}],"runtime":"native"}],"push":{"repo":"example/ecorp","branch":"--force","before":"000000000000000000000000000000000000000b","head":"000000000000000000000000000000000000000c","sourceRef":"synthetic/progress-push.json","pushedAt":"2026-09-23T04:00:36.069Z"}},"failureEvidence":null,"failureReceipt":null,"failureReceiptVersion":null,"publicationKind":"progress","evidence":[],"findings":[]}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:32:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:4812:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:4819:1
+✖ F03: v1 refs keep their replay contract and valid live branch names are preserved exactly (269.5446ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:32:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:4825:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

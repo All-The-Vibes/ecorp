@@ -1,0 +1,24 @@
+✔ personal paths include drive-relative, prefixed, escaped and alternate separators (1.8339ms)
+✔ normalized placeholders and ordinary prose remain valid (0.1888ms)
+✔ recursive packet scan and CLI reject a leak without printing its value (345.2688ms)
+✔ retained PR226 packets including r3 are scanned for personal user paths (960.5247ms)
+✔ root and ancestor directory links cannot redirect an evidence scan (24.3452ms)
+✔ nested and dangling directory links fail closed (11.9281ms)
+✔ canonical containment rejects absolute cross-drive and UNC relative results (0.5897ms)
+✔ actual Windows short alias succeeds while a linked ancestor still fails (434.1054ms)
+✔ file replacement before-open with regular fails without reading outside bytes (22.7229ms)
+✔ file replacement before-open with symlink fails without reading outside bytes (15.7444ms)
+✔ file replacement during-read with regular fails without reading outside bytes (20.9045ms)
+✔ file replacement during-read with symlink fails without reading outside bytes (18.1152ms)
+✔ oversize sparse evidence fails before a content read (7.4507ms)
+✔ empty evidence and a file at the byte limit are accepted (48.1444ms)
+✔ hard-linked evidence is rejected without reading the shared file (18.0329ms)
+✔ file growth during a descriptor read fails instead of accepting a prefix (16.184ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2095.8067

@@ -304,9 +304,9 @@ async fn git_fixture(program: &Path, root: &Path, cwd: &Path, args: &[&str]) -> 
         .env("GIT_CONFIG_GLOBAL", root.join("empty.gitconfig"))
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GIT_ALLOW_PROTOCOL", "file")
+        .arg("-c")
+        .arg(super::github::disabled_hooks_config(root).unwrap())
         .args([
-            "-c",
-            "core.hooksPath=",
             "-c",
             "commit.gpgSign=false",
             "-c",
@@ -329,6 +329,80 @@ async fn git_fixture(program: &Path, root: &Path, cwd: &Path, args: &[&str]) -> 
         String::from_utf8_lossy(&output.stderr)
     );
     String::from_utf8(output.stdout).unwrap().trim().to_owned()
+}
+
+#[tokio::test]
+async fn native_fixture_git_suppresses_default_and_configured_hooks() {
+    let fixture = Fixture::new().await;
+    let native_root = fixture.root.join("native-github");
+    fs::create_dir(&native_root).unwrap();
+    let native = super::github::NativeGitHub::new(
+        fixture.root.join("fake-gh.cmd"),
+        native_root.clone(),
+        None,
+        None,
+    );
+    let custom_hooks = fixture.root.join("custom-hooks");
+    fs::create_dir(&custom_hooks).unwrap();
+    let marker = fixture.source.join("hook-ran");
+    let checkout = ["checkout", "--detach", &fixture.head_a];
+    for hooks in [fixture.source.join(".git/hooks"), custom_hooks] {
+        fs::write(
+            hooks.join("post-checkout"),
+            "#!/bin/sh\nprintf 'hook ran\\n' >> hook-ran\n",
+        )
+        .unwrap();
+        let setting = format!("core.hooksPath={}", hooks.display());
+        // Positive control: the installed Git really executes this hook.
+        git_fixture(
+            &fixture.git,
+            &fixture.root,
+            &fixture.source,
+            &["-c", &setting, checkout[0], checkout[1], checkout[2]],
+        )
+        .await;
+        assert!(marker.is_file(), "positive-control hook must run");
+        fs::remove_file(&marker).unwrap();
+        if hooks != fixture.source.join(".git/hooks") {
+            git_fixture(
+                &fixture.git,
+                &fixture.root,
+                &fixture.source,
+                &[
+                    "config",
+                    "--local",
+                    "core.hooksPath",
+                    hooks.to_str().unwrap(),
+                ],
+            )
+            .await;
+        }
+        git_fixture(&fixture.git, &fixture.root, &fixture.source, &checkout).await;
+        assert!(!marker.exists(), "fixture Git must suppress hooks");
+        let output = native
+            .git(
+                &fixture.source,
+                &checkout.map(std::ffi::OsString::from),
+                Utc::now() + chrono::Duration::seconds(30),
+            )
+            .await
+            .unwrap();
+        assert!(output.success, "native Git checkout must succeed");
+        assert!(!marker.exists(), "production Git must suppress hooks");
+    }
+    fs::write(native_root.join("empty-hooks/post-checkout"), "not inert").unwrap();
+    assert!(
+        native
+            .git(
+                &fixture.source,
+                &checkout.map(std::ffi::OsString::from),
+                Utc::now() + chrono::Duration::seconds(30),
+            )
+            .await
+            .is_err(),
+        "a populated hook-suppression directory must fail closed"
+    );
+    assert!(!marker.exists());
 }
 
 fn silent() -> SetupProgress {

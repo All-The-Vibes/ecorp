@@ -58,6 +58,13 @@ of those boundaries.
   re-verify after the parent lands.
 - Do not put long-lived secrets in prompts, logs, command arguments, or agent-readable files.
 
+Migration versions must be unique, positive, and increasing; gaps may reserve versions already
+allocated to stacked work. Preserve existing SQL bytes, filenames, versions, and manifest checksums
+when reconciling branches rather than renumbering historical migrations. SQLx requires every
+already-applied migration to remain present in the source; do not run a foundation-only source
+against a database that has newer stacked migrations. Check migration tooling with
+`node --test tools/check_migrations.test.mjs` and `node tools/check_migrations.mjs`.
+
 For a normal human contribution:
 
 ```powershell
@@ -80,12 +87,20 @@ the **same authenticated server/control plane, the same Corp, and the same claim
 Database co-location, separate Corps on one server, or a shared GitHub Project alone do not unify
 claim authority.
 
-Prerequisites are Git, PowerShell 7.4+ on Windows, Rust 1.94 or newer, Node.js, pnpm 11.19.0, Docker with
-Compose, GitHub CLI authenticated for `All-The-Vibes/ecorp` and Project #5, and any provider entitlement
+The [claim-authority setup](docs/FACTORY_CLAIM_AUTHORITY.md) explains the non-secret
+Corp ledger ID, read-only inspection, independently approved controller pin, and
+legacy/development diagnostics. It does not close #161 or claim multi-host acceptance.
+
+Prerequisites are Git, PowerShell 7.4+ on Windows, Rust 1.94 or newer, Node.js, pnpm 11.19.0,
+PostgreSQL's `psql.exe`, GitHub CLI authenticated for `All-The-Vibes/ecorp` and Project #5, and any provider entitlement
 required for real-agent work.
 
 Clone ECorp and give the runner an execution root that is separate from the configured source
-checkout:
+checkout. Before the startup commands below, complete separate authorized database/identity setup
+and supply the existing `DATABASE_URL`, Corp/actor/runner IDs and current runner credential.
+For a fresh development stack, use the executable
+[first-time setup procedure](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#first-time-local-development-setup);
+for retained stacks, use the [startup guide](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#start-reuse-or-explicitly-restart):
 
 ```powershell
 git clone https://github.com/All-The-Vibes/ecorp.git
@@ -95,6 +110,7 @@ $env:CRONY_SOURCE_REPOSITORY = (Get-Location).Path
 $env:CRONY_SOURCE_BASE_REF = 'HEAD'
 $env:CRONY_RUNNER_WORKSPACE = Join-Path $env:USERPROFILE '.ecorp\runner-workspaces'
 
+pwsh -NoProfile -File ./tools/start_local.ps1 -Preflight
 pwsh -NoProfile -File ./tools/start_local.ps1
 Invoke-RestMethod http://127.0.0.1:8791/health
 Invoke-WebRequest http://127.0.0.1:5187
@@ -111,13 +127,15 @@ isolated worktrees. Closing a browser or desktop client must not terminate a run
 runner workspace, credential directory, or provider state directory with another contributor.
 Shared deployments expose one authenticated ECorp authority, not shared database credentials.
 Contributors running local tests on the same machine must also coordinate ports and database
-ownership. Worktree-specific Compose project names do not make the default database port private.
+ownership. Startup does not provision or take ownership of a database listener.
 
 ### Local startup and recovery
 
-Use the same command for first setup and an ordinary subsequent start:
+After [explicit first-time setup](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#first-time-local-development-setup)
+or restoration of an existing authorized identity, validate without changing runtime state, then start:
 
 ```powershell
+pwsh -NoProfile -File ./tools/start_local.ps1 -Preflight
 pwsh -NoProfile -File ./tools/start_local.ps1
 ```
 
@@ -136,7 +154,11 @@ pwsh -NoProfile -File ./tools/start_local.ps1 -Restart
 pwsh -NoProfile -File ./tools/stop_local.ps1
 ```
 
-An externally supplied `DATABASE_URL` bypasses Compose entirely. Load it and any custom service
+Every start/restart requires the existing `DATABASE_URL` and PostgreSQL `psql.exe` on PATH.
+The shared read-only preflight validates retained scope, source and credential identity before
+process control or writes. Startup never provisions a database, bootstraps an identity or enrolls
+a replacement runner. See the [startup guide](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#start-reuse-or-explicitly-restart).
+Load the connection and any custom service
 keys/provider credentials through trusted host configuration before startup; do not put their
 values in arguments, issues, source files or logs. Secret values are not saved in the process
 ownership record. Environment delivery remains reduced assurance.
@@ -148,8 +170,8 @@ separate operator actions. An explicit `CRONY_RUNNER_STARTUP_RECOVERY=false` is 
 server rather than silently discarded.
 
 Legacy PID-only records and unknown/reused PIDs are not process-control authority. They are
-preserved rather than used to stop arbitrary processes. During a one-time legacy migration,
-provide the original database/source/address configuration; an unverified existing listener is
+preserved rather than used to stop arbitrary processes or automatically upgraded into new
+ownership. Legacy recovery is a separate operator action; an unverified existing listener is
 left untouched. There is no fallback port, database reset, credential wipe or automatic unpause.
 
 ### Use GitHub Copilot
@@ -294,15 +316,7 @@ The repository gate is:
 
 <!-- ecorp:validation-commands -->
 ```powershell
-node tools/check_migrations.mjs
-pnpm check:docs
-pnpm test:unit
-pnpm test:steward
-cargo fmt --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-pnpm build:web
-pnpm lint:web
+pnpm check
 ```
 <!-- /ecorp:validation-commands -->
 
@@ -316,6 +330,10 @@ fixtures do not start the complete product stack or replace the separately owned
 The Repository checks workflow runs the same suites on Linux and Windows and retains JUnit
 results on success or failure. Successful jobs establish hosted regression evidence; record
 local runs separately when hosted execution is unavailable.
+
+The native evidence scanner and its regression tests additionally require CPython
+3.12 or newer on Windows or Linux. See the [scanner setup and trust boundary](docs/EVIDENCE_SCANNER.md)
+for executable admission, platform limits and reproduction commands.
 
 `pnpm check:docs` compares the marked validation-command blocks in contributor documentation
 with `package.json` and the current Copilot compatibility paragraphs with their Cargo/adapter

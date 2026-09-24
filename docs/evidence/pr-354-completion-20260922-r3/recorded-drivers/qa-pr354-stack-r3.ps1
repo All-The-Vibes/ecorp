@@ -1,0 +1,186 @@
+#requires -Version 7.4
+<#
+Owned Windows supervisor for PR354 readiness and browser acceptance.
+Reuses local_stack.psm1; never starts a watcher, borrows a DB, or resets a fixture.
+DryRun is read-only. Start requires a NEW QA directory. Stop retains all data.
+#>
+[CmdletBinding()]
+param(
+    [ValidateSet('DryRun','Start','Status','Stop')][string]$Phase = 'DryRun',
+    [Parameter(Mandatory)][string]$Repository,
+    [Parameter(Mandatory)][string]$QaRoot,
+    [Parameter(Mandatory)][string]$PostgresBin,
+    [int]$ServerPort = 18865,
+    [int]$WebPort = 15865,
+    [int]$DatabasePort = 15465
+)
+$ErrorActionPreference = 'Stop'
+$product = (Resolve-Path -LiteralPath $Repository).Path
+$qa = [IO.Path]::GetFullPath($QaRoot).TrimEnd('\')
+if (![IO.Path]::IsPathFullyQualified($QaRoot) -or
+    (Split-Path -Leaf $qa) -notmatch '^pr265-run-activity-[a-zA-Z0-9-]+$' -or
+    (Split-Path -Leaf (Split-Path -Parent $qa)) -ne 'qa' -or
+    $qa.StartsWith($product, [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Use a dedicated absolute qa/pr265-run-activity-* directory outside the product.'
+}
+$pg = (Resolve-Path -LiteralPath $PostgresBin).Path
+Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force
+$recordPath = Join-Path $qa 'ownership.json'
+if ($Phase -in @('Status','Stop')) {
+    $state = Read-LocalStackState -Path $recordPath -Workspace $qa
+    if (!$state -or $state.purpose -ne 'pr265-run-activity') { throw 'Missing exact fixture ownership.' }
+    if ($Phase -eq 'Status') {
+        foreach ($role in @('postgres','server','runner','web')) {
+            if (!(Test-LocalOwnedProcess -Record $state.processes[$role] -Workspace $qa)) {
+                throw "Exact $role process identity is absent or changed."
+            }
+        }
+        foreach ($entry in @(@('server',([uri]$state.plan.server).Port), @('web',([uri]$state.plan.web).Port), @('postgres',$state.plan.database.port))) {
+            $owners = @(Get-NetTCPConnection -State Listen -LocalPort $entry[1] | Select-Object -ExpandProperty OwningProcess -Unique)
+            if ($owners.Count -ne 1 -or $owners[0] -ne $state.processes[$entry[0]].pid) { throw 'Listener ownership changed.' }
+        }
+        Write-Output 'Exact fixture process identities and listener ownership verified.'
+        return
+    }
+    foreach ($role in @('web','runner','server')) {
+        if (Test-LocalOwnedProcess -Record $state.processes[$role] -Workspace $qa) {
+            if (!(Stop-LocalOwnedProcess -Record $state.processes[$role] -Workspace $qa)) {
+                throw "Could not verify stop of $role; all records retained."
+            }
+        }
+    }
+    if (Test-LocalOwnedProcess -Record $state.processes.postgres -Workspace $qa) {
+        & (Join-Path $pg 'pg_ctl.exe') -D (Join-Path $qa 'database') -m fast -w stop
+        if ($LASTEXITCODE) { throw 'Owned PostgreSQL shutdown failed; retained.' }
+    }
+    $state.stopped_at = [DateTime]::UtcNow.ToString('o')
+    Save-LocalStackState -Path $recordPath -State $state -Workspace $qa
+    Write-Output 'Stopped only recorded fixture processes; database, source, credentials and evidence retained.'
+    return
+}
+$ports = @($ServerPort,$WebPort,$DatabasePort)
+if (@($ports | Select-Object -Unique).Count -ne 3 -or @($ports | Where-Object { $_ -lt 10000 -or $_ -gt 65535 }).Count) {
+    throw 'Three distinct high ports are required.'
+}
+if (Test-Path -LiteralPath $qa) { throw 'Occupied QA directory: preserve it; never reset or adopt it.' }
+$listeners = @(Get-NetTCPConnection -State Listen -ErrorAction Stop | Select-Object -ExpandProperty LocalPort)
+foreach ($port in $ports) { if ($listeners -contains $port) { throw "QA port $port is occupied; nothing stopped." } }
+$serverExe = Join-Path $product 'target\debug\crony-server.exe'
+$runnerExe = Join-Path $product 'target\debug\crony-runner.exe'
+$node = (Get-Command node.exe).Source
+$vite = Join-Path $product 'apps\web\node_modules\vite\bin\vite.js'
+foreach ($file in @($vite, (Join-Path $pg 'initdb.exe'), (Join-Path $pg 'postgres.exe'), (Join-Path $pg 'createdb.exe'))) {
+    if (!(Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing prerequisite: $file" }
+}
+$plan = [ordered]@{
+    phase=$Phase; product=$product; product_commit=(& git -C $product rev-parse HEAD)
+    qa_root=$qa; server="http://127.0.0.1:$ServerPort"; web="http://127.0.0.1:$WebPort"
+    database=@{host='127.0.0.1';port=$DatabasePort;name='pr265_activity';fresh=$true}
+    runner_id='pr265-activity-qa'; provider='native deterministic fake-process; no AI inference'
+    source='new independent synthetic Git repository, never the product checkout'
+    factory_watcher=$false; github_effects=$false; existing_state_touched=$false
+    build_required=(!(Test-Path -LiteralPath $serverExe) -or !(Test-Path -LiteralPath $runnerExe))
+}
+$plan | ConvertTo-Json -Depth 5
+if ($Phase -eq 'DryRun') { return }
+if ($plan.build_required) { throw 'Build matching-source server and runner before Start.' }
+New-Item -ItemType Directory -Path $qa | Out-Null
+# Private fixture credentials are never under the synthetic source or agent worktrees.
+$sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+& icacls.exe $qa /inheritance:r /grant:r "*${sid}:(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' | Out-Null
+if ($LASTEXITCODE) { throw 'Cannot make the new QA root private.' }
+foreach ($dir in @('logs','source','runner','connections','evidence','credentials')) {
+    New-Item -ItemType Directory -Path (Join-Path $qa $dir) | Out-Null
+}
+$source = Join-Path $qa 'source'
+[IO.File]::WriteAllText((Join-Path $source 'README.md'), "# PR265 deterministic source fixture`n")
+& git -C $source init -b main
+& git -C $source add README.md
+& git -C $source -c user.name='ECorp QA' -c user.email='qa@ecorp.invalid' commit -m 'Initialize isolated acceptance fixture'
+if ($LASTEXITCODE) { throw 'Synthetic source initialization failed.' }
+& git -C $source remote add origin https://github.com/ecorp-fixture/pr265-run-activity.git
+# New fixture-only credential, stored outside source and runner workspaces.
+$databasePassword = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+$passwordPath = Join-Path $qa 'credentials/postgres-password.txt'
+$pgpassPath = Join-Path $qa 'credentials/pgpass.conf'
+[IO.File]::WriteAllText($passwordPath,$databasePassword,[Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText($pgpassPath,"127.0.0.1:${DatabasePort}:*:pr265_qa:$databasePassword`n",[Text.UTF8Encoding]::new($false))
+& (Join-Path $pg 'initdb.exe') -D (Join-Path $qa 'database') -U pr265_qa --auth=scram-sha-256 --encoding=UTF8 --locale=C --pwfile=$passwordPath
+if ($LASTEXITCODE) { throw 'Fresh PostgreSQL initialization failed; preserve this root.' }
+$state = @{schema_version=2;workspace=$qa;purpose='pr265-run-activity';test_owned=$true;processes=@{};plan=$plan}
+function Launch([string]$Role,[string]$Exe,[string[]]$ArgumentList,[string]$Cwd,[hashtable]$Environment) {
+    $state.processes[$Role] = Start-LocalOwnedProcess -Role $Role -Workspace $qa -FilePath $Exe `
+        -ArgumentList $ArgumentList -WorkingDirectory $Cwd -LogDirectory (Join-Path $qa 'logs') -Environment $Environment
+    Save-LocalStackState -Path $recordPath -State $state -Workspace $qa
+}
+function Wait-Ready([scriptblock]$Probe,[string]$Description) {
+    $deadline = [DateTime]::UtcNow.AddSeconds(60)
+    do {
+        try { if (& $Probe) { return } } catch { }
+        Start-Sleep -Milliseconds 250
+    } while ([DateTime]::UtcNow -lt $deadline)
+    throw "$Description did not become ready; preserve logs and ownership."
+}
+Launch 'postgres' (Join-Path $pg 'postgres.exe') @('-D',(Join-Path $qa 'database'),'-h','127.0.0.1','-p',"$DatabasePort") $qa @{}
+Wait-Ready { & (Join-Path $pg 'pg_isready.exe') -h 127.0.0.1 -p $DatabasePort -U pr265_qa *> $null; $LASTEXITCODE -eq 0 } 'PostgreSQL'
+$priorPgpass = $env:PGPASSFILE
+$priorPgpassword = $env:PGPASSWORD
+try {
+    $env:PGPASSFILE = Join-Path $qa 'credentials/intentionally-absent.pgpass'
+    $env:PGPASSWORD = 'invalid-owned-fixture-probe'
+    & (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $DatabasePort -U pr265_qa -d postgres -c 'SELECT 1' *> $null
+    $wrongPasswordCode = $LASTEXITCODE
+    if ($wrongPasswordCode -eq 0) { throw 'PostgreSQL accepted an incorrect password.' }
+    Remove-Item -LiteralPath Env:PGPASSWORD -ErrorAction SilentlyContinue
+    $env:PGPASSFILE = $pgpassPath
+    & (Join-Path $pg 'createdb.exe') -w -h 127.0.0.1 -p $DatabasePort -U pr265_qa pr265_activity
+    if ($LASTEXITCODE) { throw 'Authenticated fixture database creation failed.' }
+    $state.database_authentication = @{method='scram-sha-256';wrong_password_rejected=$true;authenticated_creation=$true;
+        credential_delivery='Private PGPASSFILE for fixture SQL clients; server and SQLx environment-only delivery is reduced assurance.';
+        credentials_outside_source_and_runner_workspaces=$true;runner_and_web_environment_secrets_removed=$true}
+    $state.database_authentication | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $qa 'evidence/database-authentication.json') -Encoding utf8
+} finally {
+    $env:PGPASSFILE = $priorPgpass
+    $env:PGPASSWORD = $priorPgpassword
+}
+$serverEnv = @{
+    DATABASE_URL="postgres://pr265_qa:${databasePassword}@127.0.0.1:$DatabasePort/pr265_activity"
+    CRONY_BIND="127.0.0.1:$ServerPort"; CRONY_MODE='development'; CRONY_RUNNER_GRACE_SECS='30'
+    CRONY_RUNNER_CREDENTIAL_TTL_SECS='7200'; ECORP_FACTORY_WATCH='0'
+    CRONY_OBJECT_STORE_LOCAL_ROOT=(Join-Path $qa 'objects')
+    CRONY_SECRET_MASTER_KEY_HEX=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+    CRONY_ARTIFACT_SIGNING_KEY_HEX=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+}
+Launch 'server' $serverExe @() $product $serverEnv
+$serverEnv.Remove('DATABASE_URL')
+$databasePassword = $null
+Wait-Ready { (Invoke-RestMethod "$($plan.server)/health" -TimeoutSec 2).status -eq 'ok' } 'Server'
+$demo = Invoke-RestMethod "$($plan.server)/api/demo/bootstrap?seed_crew=false" -Method Post -ContentType 'application/json' -Body '{}'
+$enrollment = Invoke-RestMethod "$($plan.server)/api/corps/$($demo.corp_id)/runners/enroll" -Method Post -ContentType 'application/json' -Body (@{
+    actor_id=$demo.alice_actor_id;runner_id=$plan.runner_id;expires_in_seconds=900
+} | ConvertTo-Json)
+$enrollmentPath = Join-Path $qa 'enrollment.txt'
+[IO.File]::WriteAllText($enrollmentPath,$enrollment.enrollment_token)
+$runnerEnv = @{
+    CRONY_SERVER_WS="ws://127.0.0.1:$ServerPort/ws/runner"; CRONY_RUNNER_ID=$plan.runner_id
+    CRONY_CORP_ID=$demo.corp_id; CRONY_RUNNER_CREDENTIAL_FILE=(Join-Path $qa 'credential.json')
+    CRONY_RUNNER_ENROLLMENT_TOKEN_FILE=$enrollmentPath; CRONY_RUNNER_WORKSPACE=(Join-Path $qa 'runner')
+    CRONY_SOURCE_REPOSITORY=$source; CRONY_SOURCE_BASE_REF='HEAD'
+    CRONY_FAKE_AGENT_SCRIPT=(Join-Path $product 'scripts\fake-aggregate-budget.mjs')
+    ECORP_AGGREGATE_FIXTURE_ROOT=$qa
+    CRONY_CODEX_COMMAND=(Join-Path $qa 'disabled-codex.exe'); CRONY_CLAUDE_COMMAND=(Join-Path $qa 'disabled-claude.exe')
+    CRONY_OPENCODE_COMMAND=(Join-Path $qa 'disabled-opencode.exe'); CRONY_COPILOT_FIXTURE='true'
+    CRONY_COPILOT_USE_LOGGED_IN_USER='false'; CRONY_CONNECTIONS_DIRECTORY=(Join-Path $qa 'connections')
+    CRONY_GITHUB_COMMAND=(Join-Path $qa 'disabled-github.exe'); ECORP_FACTORY_WATCH='0'
+}
+Launch 'runner' $runnerExe @() $product $runnerEnv
+Launch 'web' $node @($vite,'--host','127.0.0.1','--port',"$WebPort",'--strictPort') (Join-Path $product 'apps\web') @{
+    VITE_CRONY_SERVER_HTTP=$plan.server; ECORP_FACTORY_WATCH='0'
+}
+Wait-Ready { (Invoke-RestMethod "$($plan.server)/health" -TimeoutSec 2).runners -eq 1 } 'Runner'
+Wait-Ready { (Invoke-WebRequest $plan.web -TimeoutSec 2).StatusCode -eq 200 } 'Web'
+$state.demo=$demo
+$state.source=@{repository='ecorp-fixture/pr265-run-activity';base_ref='HEAD';base_commit=(& git -C $source rev-parse HEAD)}
+$state.ready_at=[DateTime]::UtcNow.ToString('o')
+Save-LocalStackState -Path $recordPath -State $state -Workspace $qa
+Write-Output "Owned deterministic stack ready. Non-secret receipt: $recordPath"

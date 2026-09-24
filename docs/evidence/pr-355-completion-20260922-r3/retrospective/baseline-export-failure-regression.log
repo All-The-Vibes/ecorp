@@ -1,0 +1,20 @@
+
+running 1 test
+test deliverable_failure_tests::issue89_export_failure_retains_history_and_cannot_schedule_fresh_retry ... FAILED
+
+failures:
+
+failures:
+    deliverable_failure_tests::issue89_export_failure_retains_history_and_cannot_schedule_fresh_retry
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 405 filtered out; finished in 1.85s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.38s
+     Running unittests src\lib.rs (<local-user>\code\ecorp-pr338-completion-20260922\target-validation\debug\deps\crony_store-00b65977dbfbe89a.exe)
+
+thread 'deliverable_failure_tests::issue89_export_failure_retains_history_and_cannot_schedule_fresh_retry' (23992) panicked at crates\crony-store\src\deliverable_failure_tests.rs:178:5:
+assertion `left == right` failed
+  left: String("ready")
+ right: "failed"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+error: test failed, to rerun pass `-p crony-store --lib`

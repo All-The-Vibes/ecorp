@@ -1,0 +1,136 @@
+{
+  "started_at_utc": "2026-09-22T14:46:22.8948549+00:00",
+  "repository": "<reviewed-worktree>",
+  "head": "2a419712f224f317329cadb66fa33d3dfb729309",
+  "staged_tree": "4d03d8222e77b90d375c9886bf13e9bab844c9af",
+  "unstaged_diff": [],
+  "target_main": "5f65e536f80e206082a8a819f2675c9b16210fce",
+  "diff_before": [
+    "M  Cargo.lock",
+    "M  Cargo.toml",
+    "M  README.md",
+    "M  apps/desktop/src-tauri/tauri.conf.json",
+    "M  apps/web/package.json",
+    "M  crates/crony-cli/Cargo.toml",
+    "M  crates/crony-cli/src/factory.rs",
+    "M  crates/crony-cli/src/publish.rs",
+    "M  crates/crony-server/src/artifacts.rs",
+    "M  docs/ARCHITECTURE.md",
+    "M  docs/BRAND_AND_PRODUCT_SITE.md",
+    "M  docs/EVALS.md",
+    "M  docs/PRODUCT_AND_TECHNICAL_PLAN.md",
+    "M  docs/README.md",
+    "M  docs/SECURITY.md",
+    "A  docs/TRUST_FABRIC.md",
+    "M  docs/assets/architecture/README.md",
+    "A  docs/assets/architecture/ecorp-architecture-multiplayer-v3.png",
+    "A  docs/assets/architecture/ecorp-architecture-multiplayer-v3.svg",
+    "A  docs/assets/architecture/ecorp-multiplayer-control-v1.png",
+    "A  docs/assets/architecture/ecorp-multiplayer-control-v1.svg",
+    "A  docs/assets/architecture/ecorp-trust-fabric-v1.png",
+    "A  docs/assets/architecture/ecorp-trust-fabric-v1.svg",
+    "A  docs/evidence/pr-357-completion-20260922/.gitattributes",
+    "A  docs/evidence/pr-357-completion-20260922/.gitignore",
+    "A  docs/evidence/pr-357-completion-20260922/README.md",
+    "A  docs/evidence/pr-357-completion-20260922/documentation.log",
+    "A  docs/evidence/pr-357-completion-20260922/migrations.log",
+    "A  docs/evidence/pr-357-completion-20260922/node-unit.log",
+    "A  docs/evidence/pr-357-completion-20260922/rust-clippy.log",
+    "A  docs/evidence/pr-357-completion-20260922/rust-format.log",
+    "A  docs/evidence/pr-357-completion-20260922/rust-workspace.log",
+    "A  docs/evidence/pr-357-completion-20260922/steward.log",
+    "A  docs/evidence/pr-357-completion-20260922/validation.html",
+    "A  docs/evidence/pr-357-completion-20260922/validation.json",
+    "A  docs/evidence/pr-357-completion-20260922/validation.png",
+    "A  docs/evidence/pr-357-completion-20260922/web-build.log",
+    "A  docs/evidence/pr-357-completion-20260922/web-lint.log",
+    "M  pnpm-lock.yaml"
+  ],
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "test_threads": "1",
+  "cargo_target": "<local-user>\\code\\ecorp-pr-completion-20260922\\target",
+  "git_core_longpaths": "process-only true",
+  "checks": [
+    {
+      "name": "migrations",
+      "program": "node",
+      "arguments": [
+        "tools/check_migrations.mjs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T14:46:24.3374334+00:00",
+      "duration_seconds": 0.1859006,
+      "log": "<private-evidence>\\pr355-validation-r3\\migrations.log",
+      "sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823"
+    },
+    {
+      "name": "documentation",
+      "program": "pnpm",
+      "arguments": [
+        "check:docs"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T14:46:24.5609964+00:00",
+      "duration_seconds": 1.0550666,
+      "log": "<private-evidence>\\pr355-validation-r3\\documentation.log",
+      "sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406"
+    },
+    {
+      "name": "rust-format",
+      "program": "cargo",
+      "arguments": [
+        "fmt",
+        "--check"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T15:03:22.9456018+00:00",
+      "duration_seconds": 2.3088265,
+      "log": "<private-evidence>\\pr355-validation-r3\\rust-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "program": "cargo",
+      "arguments": [
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T15:03:25.2596603+00:00",
+      "duration_seconds": 77.4426474,
+      "log": "<private-evidence>\\pr355-validation-r3\\rust-clippy.log",
+      "sha256": "be7dd9e8d3f238d82f8f612ce0ae57e93c0dc59f1645a00474dd4e0ee2a0bac7"
+    },
+    {
+      "name": "rust-workspace",
+      "program": "cargo",
+      "arguments": [
+        "test",
+        "--workspace"
+      ],
+      "exit_code": 0,
+      "started_at_utc": "2026-09-22T15:04:42.9397854+00:00",
+      "duration_seconds": 552.1764586,
+      "log": "<private-evidence>\\pr355-validation-r3\\rust-workspace.log",
+      "sha256": "b5be77aa8a61866a3e0fb478459c7d73a1ee967d5b57469f25a0e766a2d8f570"
+    }
+  ],
+  "status": "running",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "workspace_refresh": {
+    "exit_code": 0,
+    "log": "<private-evidence>\\pr355-validation-r3\\workspace-cache-refresh.log",
+    "sha256": "ab556f1be5bd34135bb4daa645f4fac49076712ecde3cc9b11a390b0729bc8eb"
+  },
+  "native_mcp_build": {
+    "exit_code": 101,
+    "log": "<private-evidence>\\pr355-validation-r3\\native-mcp-build.log",
+    "sha256": "6f8d1115fda5d69d2a9a7deed3d43c4837b9615d9a6bcaf346570b89e085b191"
+  }
+}

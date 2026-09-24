@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>PR255 · current validation evidence</title><style>body{font:15px/1.38 Segoe UI,Arial,sans-serif;margin:28px;background:#fff;color:#18232e}h1{font-size:25px;margin:0 0 8px}h2{font-size:18px;margin:18px 0 5px}p{margin:6px 0}pre{font:12px/1.32 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f6f8;padding:9px;margin:6px 0;border-left:3px solid #526a7b}.limit{background:#fff3cd;padding:10px;border:1px solid #c99732}footer{font-size:12px;margin-top:12px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:5px;border:1px solid #ccd6dc;text-align:left}</style></head><body><h1>PR255 · current validation evidence</h1><p>All-The-Vibes/ecorp · PR255 · September 21, 2026 · Windows correction worktree</p><p class="limit">Actual saved-log report capture — NOT the live product UI, historical screenshots, full-PR NICE, or merge approval.</p><h2>Repository gates</h2><p>42 immutable migrations; formatting and workspace Clippy PASS. Web build and lint PASS. OS/toolchain-only environment; frozen offline dependencies. Rust tests qualified with one test thread.</p><h2>Rust baseline: 561 passed, 352 ignored</h2><p>This precedes the added ignored server test; all production Rust bytes stayed unchanged. Current server recheck: 122 passed / 9 ignored. The new database case was then explicitly executed below.</p><pre>test result: ok. 123 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.98s
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 213 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 439.08s
+test result: ok. 122 passed; 0 failed; 8 ignored; 0 measured; 0 filtered out; finished in 0.25s
+test result: ok. 62 passed; 0 failed; 343 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s</pre><h2>Current frontend root suite</h2><pre>â„¹ tests 316
+â„¹ suites 0
+â„¹ pass 316
+â„¹ fail 0
+â„¹ cancelled 0
+â„¹ skipped 0
+â„¹ todo 0
+â„¹ duration_ms 7464.2427</pre><h2>Actual fresh PostgreSQL 17 / native handler execution</h2><table><tr><th>Command scope</th><th>Observed result</th><th>Exit</th></tr><tr><td>production-registration</td><td>1 passed / 0 failed / 0 ignored</td><td>exit 0</td></tr><tr><td>authority-handler-family</td><td>9 passed / 0 failed / 0 ignored</td><td>exit 0</td></tr><tr><td>authority-store</td><td>6 passed / 0 failed / 0 ignored</td><td>exit 0</td></tr><tr><td>cost-admission</td><td>6 passed / 0 failed / 0 ignored</td><td>exit 0</td></tr></table><p>New production-mode handler exercised missing/wrong/nil pins, actor/role/Corp denials, no-effects checks, acceptance and exact replay. Synthetic post-middleware principals and bounded loopback discovery; not live IdP or bearer middleware.</p><p>Owned fixture 127.0.0.1:55463 was stopped with exact container/label/image readback and no remaining listener. Data and receipts retained; manual DB54329 was untouched.</p><footer>Starting Git HEAD: 690ee80e692d848c4c3a371ddb31388a78b9ddf3. Tests ran on recorded corrected working bytes, not a yet-uncreated commit. Raw commands, exits and exact input hashes are retained. Counts overlap and must not be added across suites.</footer></body></html>

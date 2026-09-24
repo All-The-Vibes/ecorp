@@ -5,7 +5,7 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "check:migrations": "node tools/check_migrations.mjs",
-    "check:docs": "node tools/check_documentation.mjs",
+    "check:docs": "node tools/check_documentation.mjs && node tools/check_docs.mjs",
     "doctor:toolchain": "node tools/verify_toolchain.mjs",
     "probe:mcp": "node tools/probe_mcp.mjs",
     "observe:run": "node tools/operation_receipt.mjs",
@@ -18,7 +18,15 @@
     "dev:web": "pnpm --dir apps/web dev",
     "build:web": "pnpm --dir apps/web build",
     "lint:web": "pnpm --dir apps/web lint",
-    "check": "pnpm check:migrations && pnpm check:docs && pnpm test:unit && pnpm test:steward && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace && pnpm build:web && pnpm lint:web"
+    "check": "node tools/run_checks.mjs --group full",
+    "test": "node tools/run_checks.mjs --group test",
+    "test:js": "node tools/run_checks.mjs --group node",
+    "check:fast": "node tools/run_checks.mjs --group fast",
+    "check:preview": "node tools/run_checks.mjs --group full --dry-run",
+    "check:docs:preview": "node tools/check_docs.mjs --dry-run",
+    "check:docs:write": "node tools/check_docs.mjs --write",
+    "check:state-audit-compatibility": "node tools/check_state_audit_compatibility.mjs",
+    "check:state-audit-evm": "cargo test --locked -p crony-audit --test ethereum_local_chain"
   },
   "devDependencies": {
     "ws": "8.21.3"

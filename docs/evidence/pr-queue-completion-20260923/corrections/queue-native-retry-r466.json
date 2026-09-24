@@ -1,0 +1,69 @@
+{
+  "status": "fresh-fixture-retry-prepared",
+  "observed_at_utc": "2026-09-23T17:42:48.789168+00:00",
+  "tested_staged_tree": "67e9c956ad29ed0ffdb10b165d6320a506a3eb5b",
+  "production_source_changed": false,
+  "previous_sequence": {
+    "file": "queue-native-sequence-r433.json",
+    "sha256": "6823f38085cf06ed59535773912716f7868b62331fcca02bb55184a42c6fef72",
+    "status": "failed"
+  },
+  "previous_native_attempt": {
+    "file": "queue-audit-native-r412/acceptance-run.json",
+    "sha256": "ebf25ab012dedd3a0fdf3d35ee6e31f22d872e01e6b78171e51900b8c4b91feb",
+    "status": "failed",
+    "reason": "anvil readiness timed out; no completion claimed.",
+    "steps": [
+      {
+        "name": "initialize-postgres",
+        "started_at_utc": "2026-09-23T17:37:13.3593892+00:00",
+        "status": "passed",
+        "log": "<private-evidence>\\queue-audit-native-r412\\initialize-postgres.log",
+        "exit_code": 0,
+        "finished_at_utc": "2026-09-23T17:37:23.6524361+00:00",
+        "sha256": "ff25d3343733342323172c2345f6d2521516cdcac637ba1e00259a32be909c24"
+      },
+      {
+        "name": "stack-start",
+        "started_at_utc": "2026-09-23T17:37:23.6681588+00:00",
+        "status": "failed",
+        "log": "<private-evidence>\\queue-audit-native-r412\\stack-start.log",
+        "reason": "anvil readiness timed out; no completion claimed.",
+        "finished_at_utc": "2026-09-23T17:38:32.8555416+00:00",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "cleanup": {
+    "file": "queue-native-failure-cleanup-r464.json",
+    "sha256": "c86d2f992c347644410e36af8a7ef6db8ea72883fd1789437e9073cfb82c301d"
+  },
+  "toolchain_install": {
+    "command": "pwsh -NoProfile -File tools/setup_base_registry.ps1",
+    "exit_code": 0,
+    "log": "queue-native-toolchain-r465.log",
+    "sha256": "23887018fbb86a154ea47b57fd951f1b8c042aa022d7205e13ce85f0d5a1508c",
+    "tools": {
+      "anvil": {
+        "version": "anvil Version: 1.7.1",
+        "commit": "Commit SHA: 4072e48705af9d93e3c0f6e29e93b5e9a40caed8",
+        "sha256": "5c2217d266135a6fbe5faaccccb1e9eb2ddc1d06f8aabeef5fdb16d9846e4880"
+      },
+      "forge": {
+        "version": "forge Version: 1.7.1",
+        "commit": "Commit SHA: 4072e48705af9d93e3c0f6e29e93b5e9a40caed8",
+        "sha256": "6df26c16a6e53519abdd09fcdacf9af1ecdb50e216ee1816fa8012b5a553ef48"
+      }
+    },
+    "native_solc_sha256": "ccbd3ed44d5fbd26fe039702d403421f1212d2e8752e3cbe3bfd074986911586"
+  },
+  "adaptations": {
+    "file": "queue-audit-native-r466/driver-adaptations.json",
+    "sha256": "6e9cc3a2574a162029d76daa456aef527d67b6ad745371a7c1308ec75b1483d5"
+  },
+  "retry_supervisor": {
+    "file": "run-queue-native-sequence-r466.ps1",
+    "sha256": "d6d2e48b1367aebfcf6cac8e8315151f85c3ac57bc37cb3246abb55d9bf89795"
+  },
+  "scope": "Fresh audit fixture only; reuse the unchanged validated source, native binaries and database acceptance. Delegated/Factory/deliverable r433 fixtures have not started. The r433 audit failure remains a failure. No acceptance assertion was weakened."
+}

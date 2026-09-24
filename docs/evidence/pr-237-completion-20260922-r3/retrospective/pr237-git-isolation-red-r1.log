@@ -1,0 +1,30 @@
+✖ PR237 synthetic Git setup ignores caller hooks, templates and signing configuration (508.24ms)
+ℹ Retained synthetic Git fixture: <local-user>\AppData\Local\Temp\ecorp-git-isolation-7z3Qbm
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 662.3001
+
+✖ failing tests:
+
+test at tools\factory_budget_git.test.mjs:23:1
+✖ PR237 synthetic Git setup ignores caller hooks, templates and signing configuration (508.24ms)
+  Error: Command failed: git -C <local-user>\AppData\Local\Temp\ecorp-git-isolation-7z3Qbm\source -c user.name=ECorp QA -c user.email=qa@example.invalid commit -m Synthetic recovery fixture
+
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at ChildProcess.exithandler (node:child_process:417:12)
+      at ChildProcess.emit (node:events:514:28)
+      at maybeClose (node:internal/child_process:1141:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:306:5) {
+    code: 1,
+    killed: false,
+    signal: null,
+    cmd: 'git -C <local-user>\\AppData\\Local\\Temp\\ecorp-git-isolation-7z3Qbm\\source -c user.name=ECorp QA -c user.email=qa@example.invalid commit -m Synthetic recovery fixture',
+    stdout: '',
+    stderr: ''
+  }

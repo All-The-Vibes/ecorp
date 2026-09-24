@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "kind": "local-validation-report",
+  "scope": "Local readiness iteration 1, before subsequent CLI hardening. Not hosted CI, browser or production evidence.",
+  "producer": "Codex desktop task 01a0a0da-9366-7503-8c71-51034a99d053",
+  "startedAt": "2026-09-18T04:41:42.248Z",
+  "finishedAt": "2026-09-18T04:44:18.368Z",
+  "source": {
+    "commit": "0b1ad59da398e3dbd6a696d0264bcb6ebd620219",
+    "branch": "codex/ai-readiness-improvements",
+    "dirty": true,
+    "trackedDiffSha256": "ac16db3b92909eb959f296be8d39c8493e345b7918b2663c238c725919f88994",
+    "untrackedDigests": [
+      [
+        ".github/CODEOWNERS",
+        "998da9337ab183df57c3f61c890f31fea86371ac07729438e52bf795b684425c"
+      ],
+      [
+        ".github/dependabot.yml",
+        "75e5ec094bc6c2f2ffe5c2ec1a1a39ff1cbd4208a2cc3de55af47650c66b9e0a"
+      ],
+      [
+        ".github/skills/readiness-improvement/SKILL.md",
+        "deb98846d1e517a6a06cae3727c03bf654fe26fd5e794c592f7c8c8743553d74"
+      ],
+      [
+        ".github/workflows/security.yml",
+        "cd6aa86c40946cb38a9361a6b455566c2ae5687394996aa2034778ffb7aa4278"
+      ],
+      [
+        ".gitleaks.toml",
+        "3badf9b810f9cd9b40a971a7b8895ed426bb9743d57f2447a9b67679f8bbccfa"
+      ],
+      [
+        ".node-version",
+        "7e8a2fa94951112b894a3dbe3d05efef5e9263741fa49125f0a70f40fedab4cc"
+      ],
+      [
+        ".pre-commit-config.yaml",
+        "3d39bdaf0a12141d7fcd6cc44c551caec378e5c9cf2a2c6c8e9201fd8f60da31"
+      ],
+      [
+        "apps/web/AGENTS.md",
+        "ea3eb78555a1aa841f134cf319f992441f269411ac2cb01e6bd5ce93b18daa18"
+      ],
+      [
+        "crates/AGENTS.md",
+        "e0e99ca55a4bffbecf1f7e098c52c4d28293d97e5f4e35b83c45d278339d3e4f"
+      ],
+      [
+        "docs/AI_READINESS.md",
+        "e7fd8c227f447155aa1e9d0f21ad86e313aa8e6add2bf5ed51f2df00aee9fa78"
+      ],
+      [
+        "docs/VALIDATION.md",
+        "ce14e70cc8346c82d607ba398b3568b9ca14f762359e07477ee003f8bac30491"
+      ],
+      [
+        "rust-toolchain.toml",
+        "887f9be066a15585a2c583578e84b0fcb541126d81546276bad3d2ff00d61167"
+      ],
+      [
+        "test.config.json",
+        "00f3c4a9cac0634731296749e622e82dc0b520dd3285b28be520a063da87fed0"
+      ],
+      [
+        "tools/check_docs.mjs",
+        "fe8edfa5fd093d2687a7c4bf03ff8b192c8e671f6dbf3a6b4492d8b180366fef"
+      ],
+      [
+        "tools/readiness_contract.test.mjs",
+        "861311d6436f80f05244d37cd47773ecef7575f85c3c5c9880a8718a5e51d2e1"
+      ],
+      [
+        "tools/run_checks.mjs",
+        "a8179688b23c21a2584d869157cde9b5fadd389b2ea6bda050a6c1653ddf943c"
+      ],
+      [
+        "tools/security_canary.mjs",
+        "abb3a7047225ecf9136cd7a4af35f32afa509bfd3a6d2b8dcd183c8a11bfbcf1"
+      ]
+    ]
+  },
+  "sourceChangedDuringValidation": false,
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "argv": [
+        "node",
+        "tools/check_migrations.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 135,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "docs",
+      "argv": [
+        "node",
+        "tools/check_docs.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 111,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "node-tests",
+      "argv": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "apps/web/src/evidenceNavigation.test.mjs",
+        "apps/web/src/evidenceSelection.test.mjs",
+        "apps/web/src/factoryCheckpointRecovery.test.mjs",
+        "apps/web/src/factoryControllerSelection.test.mjs",
+        "apps/web/src/factoryPolling.test.mjs",
+        "apps/web/src/missionCollaboration.test.mjs",
+        "apps/web/src/missionComposer.test.mjs",
+        "apps/web/src/missionOriginContext.test.mjs",
+        "apps/web/src/missionPreview.test.mjs",
+        "apps/web/src/missionProjection.test.mjs",
+        "apps/web/src/missionResultContext.test.mjs",
+        "apps/web/src/missionRuntime.test.mjs",
+        "apps/web/src/office/officeModel.test.mjs",
+        "apps/web/src/runActivity.test.mjs",
+        "apps/web/src/snapshotRefresh.test.mjs",
+        "apps/web/src/workResultCard.test.mjs",
+        "apps/web/src/workflowContext.test.mjs",
+        "apps/web/src/workspaceConnections.test.mjs",
+        "scenarios/repo-steward/actions.test.mjs",
+        "scenarios/repo-steward/steward.test.mjs",
+        "scenarios/repo-steward/teams-host.test.mjs",
+        "tools/checkpoint_application_fixture.test.mjs",
+        "tools/copilot_fs_wire_observer.test.mjs",
+        "tools/copilot_fs_wire_process.test.mjs",
+        "tools/copilot_probe_boundaries.test.mjs",
+        "tools/copilot_probe_environment.test.mjs",
+        "tools/copilot_probe_native_read.test.mjs",
+        "tools/copilot_probe_process.test.mjs",
+        "tools/e2e_checkpoint_verification.test.mjs",
+        "tools/e2e_evidence_selection.test.mjs",
+        "tools/e2e_external_adapters.test.mjs",
+        "tools/e2e_late_termination.test.mjs",
+        "tools/e2e_stopped_source_checkpoint.test.mjs",
+        "tools/fake_codex_budget_stream.test.mjs",
+        "tools/fake_github_quota.test.mjs",
+        "tools/fixture_source_identity.test.mjs",
+        "tools/local_stack_lifecycle.test.mjs",
+        "tools/local_stack_operation.test.mjs",
+        "tools/office_model.test.mjs",
+        "tools/owned_test_stack.test.mjs",
+        "tools/readiness_contract.test.mjs",
+        "tools/runner_ack_fault_relay.test.mjs"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 51734,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 1027,
+          "passed": 1027,
+          "failed": 0,
+          "skipped": 0,
+          "todo": 0,
+          "cancelled": 0
+        }
+      },
+      "errorCode": null
+    },
+    {
+      "name": "format",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 5826,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 17684,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "rust-tests",
+      "argv": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--locked"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 66216,
+      "counts": {
+        "rust": {
+          "passed": 554,
+          "failed": 0,
+          "ignored": 343,
+          "summaries": 14
+        },
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "pnpm",
+        "build:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 12283,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    },
+    {
+      "name": "web-lint",
+      "argv": [
+        "pnpm",
+        "lint:web"
+      ],
+      "exitCode": 0,
+      "passed": true,
+      "durationMs": 2010,
+      "counts": {
+        "rust": null,
+        "node": null
+      },
+      "errorCode": null
+    }
+  ],
+  "notRun": []
+}

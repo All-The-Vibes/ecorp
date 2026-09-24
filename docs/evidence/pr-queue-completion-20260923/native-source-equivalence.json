@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "status": "verified-scope-equivalence",
+  "native_execution_tree": "67e9c956ad29ed0ffdb10b165d6320a506a3eb5b",
+  "validation_source_tree": "54c6dbd01b9cd027b1920c58a65f5651574247cd",
+  "native_selection": {
+    "file": "queue-native-selection-r481.json",
+    "sha256": "cffc6bcbcbca80e9cbfe36d7d3e2b7497aa788676145d3a94c78734e365b70af"
+  },
+  "changed_paths": [
+    {
+      "file": "tools/qa_multiplayer_object_sources.test.mjs",
+      "before_sha256": "e9111f15c8863bf0524060c8cc1ce90082fffbf68ae5ef994c8332247b8e3d3b",
+      "after_sha256": "dad4f22f2adb380ab1bff0e2613c08cf89fe8663d17469d29d343a738256047c"
+    },
+    {
+      "file": "tools/qa_multiplayer_object_sources.test.ps1",
+      "before_sha256": "27917e097ed6bdac9a731fcc682428c4c409f5eca57de1a1663faa1b521abb32",
+      "after_sha256": "a58784841a9622a2b4462f4ccd4e02b1ba1caed4e710e20729b86ddcf2ce9c8c"
+    },
+    {
+      "file": "tools/qa_multiplayer_preflight.ps1",
+      "before_sha256": "d545e6e97a8ed01e3ef8df832553ca7479787b16c42762e0e5c22fca7b6d6a9d",
+      "after_sha256": "fea31530634dee2756a43eace6a77cb0cb5cd64ec66786a642f015cb224feef3"
+    },
+    {
+      "file": "tools/qa_multiplayer_preflight.test.ps1",
+      "before_sha256": "64ed31941f11b48d4915c79b6be3ea9f7e4bb898a1ed1a24df91bef1924cc748",
+      "after_sha256": "024bbd802a4143bd1ca458e8bf89cabdcd6d961d985ce19576bc9c145d1a86fe"
+    },
+    {
+      "file": ".github/workflows/ci.yml",
+      "before_sha256": "cd1999d96c5a09a131fda0482a8b1ed76fe14d20a3bb8f914391d23b59917f27",
+      "after_sha256": "c3d7d6d2e9a3a3e0c7e471e9f12004020e9c23237e3c28681eddf89df984a625"
+    }
+  ],
+  "outside_changed_paths": [],
+  "tracked_tree_comparison": "git diff --name-only <native_execution_tree> <validation_source_tree>; exact five-path allowlist and before/after Git blob SHA-256 checks",
+  "scope": "All tracked entries outside the five standalone multiplayer preflight, preflight-test and CI paths are identical, including application code, dependencies, runtime scripts, native acceptance drivers and existing evidence. The five native suites do not import or invoke these standalone preflight files. Native execution receipts retain their original executed tree; they are reused only for unchanged runtime behavior. The changed preflight is covered by fresh focused checks and the final full validation run, whose result is recorded separately.",
+  "focused_logs": {
+    "queue-pr319-candidate-r475-objects.log": "564cee1f128c3f31f52b2b4ddf1f0a29d61d2ba5dc972098bf4bc3f6c8b9b3dc",
+    "queue-pr319-candidate-r475-preflight.log": "e3c94a7c79ed23296aa91d42ce071d657eacb5f690ed3bac9eca77c68dcfca48"
+  },
+  "at_utc": "2026-09-23T18:23:15.025059+00:00"
+}

@@ -1,0 +1,74 @@
+warning: in the working copy of '.github/workflows/ci.yml', LF will be replaced by CRLF the next time Git touches it
+{
+  "preservation": "PASS",
+  "diagnostics": [
+    {
+      "name": "syntax",
+      "command": "C:\\nvm4w\\nodejs\\node.exe",
+      "args": [
+        "--check",
+        "tools/ci_runner_tests.test.mjs"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "whitespace",
+      "command": "git",
+      "args": [
+        "diff",
+        "--check",
+        "--",
+        ".github/workflows/ci.yml",
+        "tools/ci_runner_tests.test.mjs"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "migrations",
+      "command": "C:\\nvm4w\\nodejs\\node.exe",
+      "args": [
+        "tools/check_migrations.mjs"
+      ],
+      "exit": 0
+    }
+  ],
+  "sources": [
+    {
+      "commit": "39632b957819012721c90902925d8fa7a9c7e873",
+      "file": ".github/workflows/ci.yml",
+      "blob": "a82cc72c8f3668e2997af45b98ac8693cc47c21b",
+      "sha256": "ccb8462c5c774b139fbe1c7111f599f047886460c3dc3f5c0e90bfc4d8e85356"
+    },
+    {
+      "commit": "2cde6bb11b3b5da96794684e8e3eb393f615a6ea",
+      "file": ".github/workflows/ci.yml",
+      "blob": "cdab617e172531f05735711b664ccc531342eb75",
+      "sha256": "bd9d98d3e4cdac8976b2279e9882eb4d26248bc6a2be4e74b0631a60c8d6a6fb"
+    },
+    {
+      "commit": "0ae2ef035d04b8e59d5ebc9ab050c79a2dabcbeb",
+      "file": ".github/skills/code-review/SKILL.md",
+      "blob": "c0a2082480b47d8ce30129e5a0dfae8682f30dbf",
+      "sha256": "1e1327f1f421a25ce2d4c33e44ddc702459e5debb31609f7a32aeaa4ff1ccc04"
+    },
+    {
+      "commit": "0ae2ef035d04b8e59d5ebc9ab050c79a2dabcbeb",
+      "file": ".github/skills/code-review/references/dependencies.md",
+      "blob": "d1cbda0c3f69d9bc4c35855c2ae33bd0de6c5e3c",
+      "sha256": "b6cb1f02b1e6977a153c6bc95edfd368aee7db14b0434829c1bc66b06222b6f4"
+    },
+    {
+      "commit": "0ae2ef035d04b8e59d5ebc9ab050c79a2dabcbeb",
+      "file": ".github/skills/code-review/references/remediation.md",
+      "blob": "263cbae3f4c62d4df973091caba9d97659c0cbbe",
+      "sha256": "7159e9c01195855d9d82f29a5d9c13ce349721d77bc5cca9586b0b3c5c26d027"
+    },
+    {
+      "commit": "b31a38a62330aacba80c3953142e1da957a63ecd",
+      "file": "tools/owned_test_stack.mjs",
+      "blob": "7e4dbdc8665665c0d647f503b463dc6254368d95",
+      "sha256": "d5a475ec96be30a2a02b978c7dd8a43dba528b1aa1cefac0931f9313fb1b4c7b"
+    }
+  ],
+  "files": 18
+}

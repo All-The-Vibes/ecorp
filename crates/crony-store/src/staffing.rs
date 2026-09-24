@@ -302,10 +302,12 @@ impl PgStore {
         let mut tx = self.pool.begin().await?;
         let row = sqlx::query(
             r#"
-            SELECT t.mission_id, m.room_id FROM runs r
+            SELECT t.mission_id, m.room_id, r.status FROM runs r
             JOIN tasks t ON t.id = r.task_id AND t.corp_id = r.corp_id
             JOIN missions m ON m.id = t.mission_id AND m.corp_id = t.corp_id
-            WHERE r.id = $1 AND r.corp_id = $2 AND r.status = 'starting'
+            WHERE r.id = $1 AND r.corp_id = $2
+              AND r.status IN ('starting', 'running', 'waiting_for_input',
+                               'waiting_for_approval', 'verifying')
               AND m.status = 'running'
             FOR UPDATE OF r, t, m
             "#,
@@ -315,6 +317,30 @@ impl PgStore {
         .fetch_one(&mut *tx)
         .await
         .context("dependency context run is not awaiting dispatch")?;
+        let idempotency_key = format!("run:{run_id}:dependency-context");
+        let payload = json!({"context_sha256": context_sha256, "handoffs": handoffs});
+        let existing: Option<Value> = sqlx::query_scalar(
+            "SELECT payload FROM events
+             WHERE corp_id = $1 AND aggregate_type = 'run' AND aggregate_id = $2
+               AND type = 'run.dependency_context' AND idempotency_key = $3",
+        )
+        .bind(corp_id)
+        .bind(run_id)
+        .bind(&idempotency_key)
+        .fetch_optional(&mut *tx)
+        .await?;
+        if let Some(existing) = existing {
+            anyhow::ensure!(
+                existing == payload,
+                "dependency context replay differs from the persisted dispatch receipt"
+            );
+            tx.commit().await?;
+            return Ok(None);
+        }
+        anyhow::ensure!(
+            row.get::<String, _>("status") == "starting",
+            "active run has no dependency context dispatch receipt"
+        );
         let mission_id: Uuid = row.get("mission_id");
         let event = append_event_tx(
             &mut tx,
@@ -327,8 +353,8 @@ impl PgStore {
                     "run.dependency_context",
                     "run",
                     run_id,
-                    format!("run:{run_id}:dependency-context"),
-                    json!({"context_sha256": context_sha256, "handoffs": handoffs}),
+                    idempotency_key,
+                    payload,
                 )
             },
         )
@@ -422,6 +448,13 @@ impl PgStore {
               AND a.current_run_id IS NULL AND a.status = 'idle'
               AND m.status IN ('completed', 'failed', 'cancelled')
               AND NOT EXISTS (
+                SELECT 1 FROM tasks t JOIN missions assigned
+                  ON assigned.id = t.mission_id AND assigned.corp_id = t.corp_id
+                WHERE t.assigned_agent_id = a.id AND t.corp_id = a.corp_id
+                  AND assigned.status IN ('ready', 'running')
+                  AND t.status NOT IN ('completed', 'cancelled')
+              )
+              AND NOT EXISTS (
                 SELECT 1 FROM runs r WHERE r.agent_id = a.id AND r.corp_id = a.corp_id
                   AND r.status IN ('provisioning', 'starting', 'running',
                     'waiting_for_input', 'waiting_for_approval', 'verifying')
@@ -469,6 +502,23 @@ impl PgStore {
             let corp_id: Uuid = row.get("corp_id");
             let mission_id: Uuid = row.get("mission_id");
             let room_id: Uuid = row.get("room_id");
+            // A pinned identity can already belong to a second saved plan when
+            // unpinned. Recheck after the agent lock: plan creation holds SHARE.
+            let assigned: bool = sqlx::query_scalar(
+                "SELECT EXISTS (
+                   SELECT 1 FROM tasks t JOIN missions m
+                     ON m.id = t.mission_id AND m.corp_id = t.corp_id
+                   WHERE t.assigned_agent_id = $1 AND t.corp_id = $2
+                     AND m.status IN ('ready', 'running')
+                     AND t.status NOT IN ('completed', 'cancelled'))",
+            )
+            .bind(agent_id)
+            .bind(corp_id)
+            .fetch_one(&mut *tx)
+            .await?;
+            if assigned {
+                continue;
+            }
             sqlx::query(
                 "UPDATE agents SET retired_at = now(), station = NULL WHERE id = $1 AND corp_id = $2",
             )

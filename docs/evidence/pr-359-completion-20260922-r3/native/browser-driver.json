@@ -1,0 +1,180 @@
+{
+  "viewports": [
+    {
+      "label": "desktop before Pin",
+      "width": 1440,
+      "client": 1440,
+      "scroll": 1440
+    },
+    {
+      "label": "390px before Pin",
+      "width": 390,
+      "client": 390,
+      "scroll": 390
+    },
+    {
+      "label": "390px pinned",
+      "width": 390,
+      "client": 390,
+      "scroll": 390
+    },
+    {
+      "label": "desktop pinned",
+      "width": 1440,
+      "client": 1440,
+      "scroll": 1440
+    },
+    {
+      "label": "desktop before Unpin",
+      "width": 1440,
+      "client": 1440,
+      "scroll": 1440
+    },
+    {
+      "label": "390px before Unpin",
+      "width": 390,
+      "client": 390,
+      "scroll": 390
+    },
+    {
+      "label": "390px unpinned with live obligations",
+      "width": 390,
+      "client": 390,
+      "scroll": 390
+    },
+    {
+      "label": "desktop unpinned with live obligations",
+      "width": 1440,
+      "client": 1440,
+      "scroll": 1440
+    },
+    {
+      "label": "desktop retained history",
+      "width": 1440,
+      "client": 1440,
+      "scroll": 1440
+    },
+    {
+      "label": "390px retained history",
+      "width": 390,
+      "client": 390,
+      "scroll": 390
+    }
+  ],
+  "browser_environment_keys": [
+    "APPDATA",
+    "ComSpec",
+    "LOCALAPPDATA",
+    "PATHEXT",
+    "Path",
+    "ProgramData",
+    "ProgramFiles",
+    "ProgramFiles(x86)",
+    "SystemRoot",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "windir"
+  ],
+  "status": "passed",
+  "started_at": "2026-09-22T21:20:15.344Z",
+  "scope": "Actual native Edge office controls and owned development-principal server/runner/CLI fixture; deterministic provider, no external effects.",
+  "phases": [
+    {
+      "name": "prepare",
+      "exit_code": 0,
+      "stdout_sha256": "3c212339991b5c80864cd2c49b24fe5d0990cea0b9d284443bd43c610c0bf9a1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "start",
+      "exit_code": 0,
+      "stdout_sha256": "d071656d39b29530ac70d32bf19b10a13d7c2415b84b69f87d710f4959db670b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "complete",
+      "exit_code": 0,
+      "stdout_sha256": "0f289a0127e39d66cb6e17ef23f555f493d6a160b9153ef570fb017588c5c1ab",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "captures": [
+    {
+      "file": "desktop-alice-before-pin.png",
+      "sha256": "aa8c4cbcb21929d53197a5ad288a209bca3e7b876722d9a5329138040ff3978a"
+    },
+    {
+      "file": "mobile-alice-before-pin.png",
+      "sha256": "d4cd2caef051b68c9b9916564eb00e89f4eb87c182190748126f3e6629a655a4"
+    },
+    {
+      "file": "mobile-alice-pinned.png",
+      "sha256": "137312b02b1989fbdc9458a45db3bce28fd154ca9e63f1debadb2030460c56d3"
+    },
+    {
+      "file": "desktop-alice-pinned.png",
+      "sha256": "8ca933c8e59c384511972a534abf9d5cce7bc7264760c0b90aa072055318ac3c"
+    },
+    {
+      "file": "desktop-bob-before-unpin.png",
+      "sha256": "4b8c10e30c197d8072c9ea89db2268cf770ab87cfd28e75e3510ad86d74849db"
+    },
+    {
+      "file": "mobile-bob-before-unpin.png",
+      "sha256": "5e8602bbc80499d9e642063b01fa39ff934726b92d9fdccd7d9aeead55c1c4cd"
+    },
+    {
+      "file": "mobile-bob-unpinned-active-obligations.png",
+      "sha256": "03aa0d98d8c63cafe476d2b70a82471d258953e17e5b852fa5a845f2f6110be4"
+    },
+    {
+      "file": "desktop-bob-unpinned-active-obligations.png",
+      "sha256": "2bef5d47a9b4993a6309e070761ce64e3fa31b9951b37cab26578dc9c67205e1"
+    },
+    {
+      "file": "desktop-completed-retention-history.png",
+      "sha256": "e925045bdc1112884987012a8ec13ae2481c11488ac51058fd20f78fc56ca439"
+    },
+    {
+      "file": "mobile-completed-retention-history.png",
+      "sha256": "bc36055c909c4147fff96b5927718ceed296e34716dc0f9c4b3052fc053424ec"
+    }
+  ],
+  "requests": [
+    {
+      "actor": "Alice",
+      "request": {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "pinned": true,
+        "expected_version": 0,
+        "idempotency_key": "3921bbfa-cdd0-4b32-96b1-025738e7e8c9"
+      },
+      "response": {
+        "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "pinned": true,
+        "pin_version": 1,
+        "replayed": false
+      }
+    },
+    {
+      "actor": "Bob",
+      "request": {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "pinned": false,
+        "expected_version": 1,
+        "idempotency_key": "41d49d9b-2b89-4144-9eac-b72b1de93bbc"
+      },
+      "response": {
+        "agent_id": "6800a644-9fe9-4ab7-916f-be33ac18f653",
+        "pinned": false,
+        "pin_version": 2,
+        "replayed": false
+      }
+    }
+  ],
+  "browser_errors": [],
+  "blocked_requests": [],
+  "browser": "153.0.4234.48",
+  "finished_at": "2026-09-22T21:20:45.843Z"
+}

@@ -1,0 +1,507 @@
+TAP version 13
+# Subtest: authority endpoint never displays credentials, query or fragment
+ok 1 - authority endpoint never displays credentials, query or fragment
+  ---
+  duration_ms: 1.5219
+  type: 'test'
+  ...
+# Subtest: missing, nil, malformed and mismatched authority stays unverified
+ok 2 - missing, nil, malformed and mismatched authority stays unverified
+  ---
+  duration_ms: 0.662
+  type: 'test'
+  ...
+# Subtest: production health, failed snapshot, then development retry replaces the old mode
+not ok 3 - production health, failed snapshot, then development retry replaces the old mode
+  ---
+  duration_ms: 19.6145
+  type: 'test'
+  location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:73:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'production'
+    - 'development'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'development'
+  actual: 'production'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:84:10)
+    async Test.run (node:internal/test_runner/test:1313:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: development health, failed snapshot, then production retry records production without demo bootstrap
+ok 4 - development health, failed snapshot, then production retry records production without demo bootstrap
+  ---
+  duration_ms: 8.1809
+  type: 'test'
+  ...
+# Subtest: each pending attempt and failed snapshot clears previously verified mode
+not ok 5 - each pending attempt and failed snapshot clears previously verified mode
+  ---
+  duration_ms: 2.1247
+  type: 'test'
+  location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:103:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'production'
+    - 'unknown'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'unknown'
+  actual: 'production'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:108:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1306:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+    Test.postRun (node:internal/test_runner/test:1447:19)
+    Test.run (node:internal/test_runner/test:1372:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+  ...
+# Subtest: unavailable or malformed health cannot retain authentication assurance or bootstrap
+    # Subtest: network failure
+    not ok 1 - network failure
+      ---
+      duration_ms: 4.3286
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: HTTP failure with production body
+    not ok 2 - HTTP failure with production body
+      ---
+      duration_ms: 4.0939
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: invalid JSON
+    not ok 3 - invalid JSON
+      ---
+      duration_ms: 3.8964
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: null
+    not ok 4 - null
+      ---
+      duration_ms: 4.1617
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: {}
+    not ok 5 - {}
+      ---
+      duration_ms: 4.245
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: []
+    not ok 6 - []
+      ---
+      duration_ms: 3.664
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: "production"
+    not ok 7 - "production"
+      ---
+      duration_ms: 3.1576
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: {"status":"ok"}
+    not ok 8 - {"status":"ok"}
+      ---
+      duration_ms: 2.6803
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: {"status":"ok","mode":null}
+    not ok 9 - {"status":"ok","mode":null}
+      ---
+      duration_ms: 2.3701
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: {"status":"ok","mode":42}
+    not ok 10 - {"status":"ok","mode":42}
+      ---
+      duration_ms: 2.6683
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: {"status":"ok","mode":"Production"}
+    not ok 11 - {"status":"ok","mode":"Production"}
+      ---
+      duration_ms: 7.2811
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: {"status":"ok","mode":"unknown"}
+    not ok 12 - {"status":"ok","mode":"unknown"}
+      ---
+      duration_ms: 5.3283
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: {"mode":"production"}
+    not ok 13 - {"mode":"production"}
+      ---
+      duration_ms: 2.9614
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    # Subtest: {"mode":"production","status":"failed"}
+    not ok 14 - {"mode":"production","status":"failed"}
+      ---
+      duration_ms: 2.2147
+      type: 'test'
+      location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:128:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        + actual - expected
+        
+        + 'production'
+        - 'unknown'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'unknown'
+      actual: 'production'
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:133:14)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:128:5)
+        async Test.run (node:internal/test_runner/test:1313:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+      ...
+    1..14
+not ok 6 - unavailable or malformed health cannot retain authentication assurance or bootstrap
+  ---
+  duration_ms: 58.6798
+  type: 'test'
+  location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:116:1'
+  failureType: 'subtestsFailed'
+  error: '14 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: cancelled health cannot overwrite a newer successful development attempt
+not ok 7 - cancelled health cannot overwrite a newer successful development attempt
+  ---
+  duration_ms: 2.8772
+  type: 'test'
+  location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:140:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'unknown'
+    - 'development'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'development'
+  actual: 'unknown'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:149:10)
+    async Test.run (node:internal/test_runner/test:1313:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+  ...
+# Subtest: production form retry clears failed assurance and revalidates health on success
+not ok 8 - production form retry clears failed assurance and revalidates health on success
+  ---
+  duration_ms: 2.2015
+  type: 'test'
+  location: 'C:\\Users\\sschofield\\repos\\ecorp-pr255-review-fixes\\apps\\web\\src\\factoryAuthorityConnection.test.mjs:156:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'production'
+    - 'unknown'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'unknown'
+  actual: 'production'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/sschofield/repos/ecorp-pr255-review-fixes/apps/web/src/factoryAuthorityConnection.test.mjs:160:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1306:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+    Test.postRun (node:internal/test_runner/test:1447:19)
+    Test.run (node:internal/test_runner/test:1372:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+  ...
+1..8
+# tests 22
+# suites 0
+# pass 3
+# fail 19
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1100.9719

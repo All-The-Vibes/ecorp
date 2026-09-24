@@ -1,0 +1,28 @@
+   Compiling crony-domain v0.1.0 (<local-user>\code\ecorp-pr358-regression-lease-before-20260923-r1\crates\crony-domain)
+   Compiling crony-store v0.1.0 (<local-user>\code\ecorp-pr358-regression-lease-before-20260923-r1\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 09s
+     Running unittests src\lib.rs (<local-user>\code\ecorp-pr362-completion-20260922\target-validation\debug\deps\crony_store-00b65977dbfbe89a.exe)
+
+running 2 tests
+
+thread 'pr358_retrospective_lease::issue56_control_dispatch_revalidates_lease_after_run_wait_release_reacquire' (24872) panicked at crates\crony-store\src\pr358_retrospective_lease.rs:306:25:
+release must preserve the version fence
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test pr358_retrospective_lease::issue56_control_dispatch_revalidates_lease_after_run_wait_release_reacquire ... FAILED
+
+thread 'pr358_retrospective_lease::issue56_control_dispatch_revalidates_lease_after_run_wait_renew' (46588) panicked at crates\crony-store\src\pr358_retrospective_lease.rs:211:21:
+stale control after renew
+
+thread 'pr358_retrospective_lease::issue56_control_dispatch_revalidates_lease_after_run_wait_renew' (46588) panicked at crates\crony-store\src\pr358_retrospective_lease.rs:246:28:
+called `Result::unwrap()` on an `Err` value: JoinError::Panic(Id(65), "stale control after renew", ...)
+test pr358_retrospective_lease::issue56_control_dispatch_revalidates_lease_after_run_wait_renew ... FAILED
+
+failures:
+
+failures:
+    pr358_retrospective_lease::issue56_control_dispatch_revalidates_lease_after_run_wait_release_reacquire
+    pr358_retrospective_lease::issue56_control_dispatch_revalidates_lease_after_run_wait_renew
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 426 filtered out; finished in 3.61s
+
+error: test failed, to rerun pass `-p crony-store --lib`

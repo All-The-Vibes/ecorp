@@ -1,0 +1,13 @@
+# Preserve the published evidence bytes on every checkout.
+* -text
+# Exact executed bytes and patch context are evidence, including original whitespace.
+recorded-drivers/qa-pr354-readiness-r7.mjs -whitespace
+recorded-drivers/run-pr354-native-r6.ps1 -whitespace
+recorded-drivers/run-pr354-native-r7.ps1 -whitespace
+replay/qa-pr354-readiness-r7.mjs -whitespace
+retrospective/baseline-test-only.patch -whitespace
+# Preserve exact archived evidence and patch context; executable source keeps normal checks.
+archived-drivers/recorded-drivers/qa-pr354-readiness-r7.mjs.txt -whitespace
+archived-drivers/replay/qa-pr354-readiness-r7.mjs.txt -whitespace
+recorded-drivers/pre-review-correction/qa-pr354-readiness-r9.mjs.txt -whitespace
+retrospective/candidate-test-original.rs -whitespace

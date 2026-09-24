@@ -43,6 +43,16 @@ Development mode still enforces room membership in persistence, snapshots, write
 replay, and live delivery. Eve is a deliberate non-member fixture used to prove that room-scoped
 missions, tasks, runs, messages, and events are not returned.
 
+Identity Pin/Unpin uses the existing `Operate` permission (human owner/admin/manager/member),
+not a control lease or provider-native permission. The store transaction rechecks and locks
+current Corp-local role and owning-room membership even for an exact replay. OIDC principal
+mapping remains authoritative over a claimed `actor_id`. Agent row locking serializes pinning
+with automatic retirement; expected versions fence stale/ABA multiplayer updates, and a
+Corp-scoped UUID key binds the exact actor, identity, value and version. Audit events inherit
+the owning room's visibility. Pin grants retention/reuse only, never execution authority;
+Unpin cannot release or discard any active run, lease, approval, queued message or command.
+New operations on retired identities conflict; old replay cannot restore their historical state.
+
 Runner nodes require one-time enrollment followed by rotating, expiring workload credentials.
 Only credential hashes are stored. Replayed, expired, unknown, and revoked credentials are denied.
 
@@ -335,6 +345,14 @@ provider authority.
 Budget policies constrain run, mission, requester, and Corp usage. Repeated tools and explicit
 no-progress events feed an auditable circuit breaker; ordinary human conversation does not.
 
+Aggregate hard limits are scope-wide authority boundaries. Accounting, all affected run fences,
+incidents, and durable runner commands are one transaction. New dispatch, runner progress,
+artifact staging/finalization, and manual approval/verification decisions serialize with that
+transaction; a previously staged object cannot become accepted evidence after the fence.
+Run-local limits never fence unrelated runs. A stronger existing stage is never weakened or
+reissued, and current hard fences make queued effect-advancing approval/control commands obsolete.
+Rolling usage windows limit accounting, not the set of active assignments that must be fenced.
+
 Mission budget recovery is a dedicated owner/admin operation, not a resume parameter. Original
 limits and consumed usage are never reset. Proposal and decision requests are Corp-scoped,
 role-gated, versioned, and exactly idempotent; approval rechecks the current mission limits and
@@ -580,6 +598,31 @@ process—not an agent session or a general stdin/shell endpoint.
 - Assignment tokens are omitted from shared snapshots and event payloads.
 - Every runner event must match both the current connection epoch and the stored assignment token.
 - A stale runner cannot turn a `lost` run back into an active or cancelled run.
+
+## State-audit security boundary
+
+State audit reuses native command authorization and row-locks the authorizing
+actor record so a concurrent role demotion cannot race an accepted covered
+mutation. Audit snapshots are explicit DTOs: they include identifiers,
+revisions, ceilings, allowed tools/write scope and domain-separated digests,
+but exclude claim tokens, credentials, raw provider inputs and unnecessary
+contract prose. Private replay results remain in a separate immutable table
+that is never part of a public checkpoint export.
+
+Checkpoint private keys and GitHub credentials are file-backed trusted-service
+inputs and are never accepted through API, CLI arguments, runner messages or
+agent-visible state. Public signing-key activation history is immutable except
+for one-way retirement. Offline verification requires a separately retained
+raw public key or exact trusted key-history file; archive-contained keys are
+not treated as trust roots.
+
+External publication detects branch ancestry rewrites, conflicting bytes and
+different checkpoint digests at the same ledger sequence. Such divergence, or
+a restored database missing a retained witness, disables the destination.
+Only an authorized explicit reconciliation against the retained ledger ID and
+checkpoint digest re-enables it. This detects rollback relative to the
+retained witness but does not make PostgreSQL resistant to a privileged
+administrator, prove the truth of recorded claims, or replace backups.
 
 ## Reporting
 

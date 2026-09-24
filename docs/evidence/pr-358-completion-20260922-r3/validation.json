@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "pr": 358,
+  "source_head": "2e02c95a44fe4b1f7b103ac68c51e8c18476bca8",
+  "tested_staged_tree": "ec90ff8a3fe1facbaf234141a843ca90ebb382ab",
+  "target_main": "08b0b89b2dd16c1906c9dd3468c5ddecca24c4ce",
+  "started_at_utc": "2026-09-22T22:42:37.7299022+00:00",
+  "finished_at_utc": "2026-09-22T22:57:33.6285630+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "git": "git version 2.55.0.windows.5",
+  "rust_test_threads": "1",
+  "scope": "All nine contributor gates passed, followed by 28 store and two server real PostgreSQL regressions, three aggregate-budget scopes, native approval/rejection/expiry with actual runner ACK, and the real Edge/browser/server/runner verifier policy lane. Server restart was explicitly skipped; deterministic providers and development identity do not establish production acceptance.",
+  "maintainer_changes": "Revalidate the durable control lease and message under the final dispatch transaction, retain their locks through synchronous enqueue, check expiry after lock waits, preserve monotonic lease versions on release, and order interrupt locks consistently. Preserve aggregate budget fences and narrowly scoped negative-approval cleanup.",
+  "source_binding": "The tested Git tree precedes this evidence-only addition. The final commit must preserve all tested source bytes; no original TDD chronology is claimed.",
+  "normalization": "Published logs replace local checkout/evidence/user-root paths with placeholders, use LF, and remove trailing line whitespace and blank lines at EOF. Original and published SHA-256 values are recorded separately.",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.2413412,
+      "log": "migrations.log",
+      "original_log_sha256": "6ae889b1834275b33238126326a4ec2f6d463f30c578ab57292bcc69abeb1823",
+      "published_log_sha256": "647fc92ef827bdde2d804ae951c78304f0522f35f9832dde27b39840b8263757"
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.1387871,
+      "log": "documentation.log",
+      "original_log_sha256": "da0a3808709f745fd80c41e75e624a2dade2e948901ef747868ddb0f84d4e406",
+      "published_log_sha256": "f7c1081b3ad5e5b322c890127d287c1cef53b868efc7b40d1b7b2eef7b9aeb18"
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 3.7833336,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 91.4443936,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "bc379864144feb8c9a3e3e699f79f146c509da601efcfcb3a15a8ae07b56fae4",
+      "published_log_sha256": "b6ed292c7f0fb1e1d55b2fa9f2f316dac7745ea08919039b34ac6e3d57083d31"
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace",
+      "exit_code": 0,
+      "duration_seconds": 608.5323366,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "4a965b591e7d2226250f7c5466ca32b0970ad926f4151f6486c51c6dda0c4242",
+      "published_log_sha256": "f4b859643f9bea4af40579a738a7b7df5a0099d8bb9307dca202b5feb4a6dc20"
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "duration_seconds": 59.9479353,
+      "log": "node-unit.log",
+      "original_log_sha256": "1959cee3db5e4bf6f490d3912523d513d3ebee759d0f9aff629e99ca98536cf5",
+      "published_log_sha256": "77bbf9d9e9572eaac18fc9d41bef4f2fd181c0720e621ba73ab138bc397afde0"
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 104.0630723,
+      "log": "steward.log",
+      "original_log_sha256": "30f39b2ab953ae899a4786071a32e658ed9839cf23456c0cb70b569629bf1399",
+      "published_log_sha256": "fd1a9acb073d97cd1f0d33bc1a575c2eeacf3d68f50995970d7b48d50df8d6e2"
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 3.7571411,
+      "log": "web-build.log",
+      "original_log_sha256": "0e401ea1e4d351355f6343e4b17ced9a6b52b2267975dcd1c63ffa71252a07c2",
+      "published_log_sha256": "f15b7a18ce1a05a7348f0033b0561c6fff0ba3a2ae09205ce180f79cd585ae78"
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 2.2130407,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+    }
+  ],
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "build_preparation": {
+    "workspace_refresh": {
+      "exit_code": 0,
+      "log": "workspace-refresh.log",
+      "original_log_sha256": "f1664f4e5d8b476f2762719cc40a4d61a053240f316702944d575e4f6adb8815",
+      "published_log_sha256": "2c7762561266b7bbce51411c055a284c761eb3f6288f6cc6f965b7f94fdd2b10"
+    },
+    "native_mcp_build": {
+      "exit_code": 0,
+      "log": "native-mcp-build.log",
+      "original_log_sha256": "1074895be8e3bf373e818aa27fdfcd79b2a04ea8437b048d1b45e16984b5d18c",
+      "published_log_sha256": "46c3ff37ba1bca75fdaed1b6441864b525ce7d7382f3b593f30933b3287b63b5",
+      "binary_sha256": "172c39c558afc3efbf8245666a58db118aeb3725db027dd3b634830cf98963fe"
+    }
+  }
+}

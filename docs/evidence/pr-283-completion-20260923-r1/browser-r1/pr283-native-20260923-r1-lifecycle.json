@@ -1,0 +1,45 @@
+{
+  "pr": 283,
+  "tested_staged_tree": "35f923a2e11dbf5326186be5c5e9c5c146626373",
+  "source_head": "2b276332e3944aa38ce1d980698180dff6caaf68",
+  "qa_root": "<local-user>\\code\\qa\\pr283-state-audit-20260923-r1",
+  "started_at_utc": "2026-09-23T05:36:26.8929695+00:00",
+  "status": "failed",
+  "cleanup": "Only recorded owned processes stopped; all fixture data and evidence retained.",
+  "checks": [
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr283-native-20260923-r1-workspace-refresh.log",
+      "name": "workspace-cache-refresh",
+      "sha256": "ea6d89c0738ff44047665d7cd26133062fb7ec042919ca7e7fefd6324e1a8601"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr283-native-20260923-r1-build.log",
+      "name": "matching-source-native-build",
+      "sha256": "a45772fd9511869644391b5b6d7794f745654801f8ae2590e1e258f8a8cd3b63"
+    },
+    {
+      "exit_code": 1,
+      "log": "<private-evidence>\\pr283-native-20260923-r1-browser.log",
+      "name": "browser-server-runner-audit-acceptance",
+      "sha256": "db1c13eefe66ed7b9559b86bf833972e33610fff0dfaa4b6551b8c644bd95bfb"
+    }
+  ],
+  "binaries": [
+    {
+      "file": "<private-evidence>\\pr283-native-20260923-r1-binaries\\crony-server.exe",
+      "sha256": "0a7d697bb16f9cc78fc2675f817d80c371dd864c342a6aee770eb5e49ac0e99f"
+    },
+    {
+      "file": "<private-evidence>\\pr283-native-20260923-r1-binaries\\crony-runner.exe",
+      "sha256": "3da158dc921b5d6872e6e36b098ba7b8e59308a4b9e3b327f7b2adb290bba09d"
+    },
+    {
+      "file": "<private-evidence>\\pr283-native-20260923-r1-binaries\\crony-cli.exe",
+      "sha256": "47c620180aac49e84d3bdc8c1fb7261a51467437df8ab6c63553ce25200c4d36"
+    }
+  ],
+  "failure": "browser-server-runner-audit-acceptance failed; preserve all evidence.",
+  "finished_at_utc": "2026-09-23T05:39:12.8251683+00:00"
+}

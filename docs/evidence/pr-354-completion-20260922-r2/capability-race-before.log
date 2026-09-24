@@ -1,0 +1,69 @@
+   Compiling windows-sys v0.61.2
+   Compiling indexmap v2.14.1
+   Compiling windows-sys v0.48.0
+   Compiling socket2 v0.6.5
+   Compiling mio v1.2.2
+   Compiling tokio v1.53.1
+   Compiling tokio-util v0.7.19
+   Compiling h2 v0.4.19
+   Compiling rand v0.8.8
+   Compiling tokio-stream v0.1.19
+   Compiling home v0.5.12
+   Compiling base64 v0.22.1
+   Compiling byteorder v1.5.0
+   Compiling hyper v1.11.1
+   Compiling sqlx-core v0.8.6
+   Compiling etcetera v0.8.0
+   Compiling hyper-util v0.1.20
+   Compiling sqlx-postgres v0.8.6
+   Compiling tower v0.5.3
+   Compiling schannel v0.1.29
+   Compiling anstyle-wincon v3.0.11
+   Compiling sqlx-macros-core v0.8.6
+   Compiling rustls-native-certs v0.8.4
+   Compiling tokio-rustls v0.26.4
+   Compiling winapi-util v0.1.11
+   Compiling anstyle-query v1.1.5
+   Compiling regex-syntax v0.8.11
+   Compiling anstream v1.0.0
+   Compiling sqlx-macros v0.8.6
+   Compiling regex-automata v0.4.18
+   Compiling same-file v1.0.6
+   Compiling hyper-rustls v0.27.9
+   Compiling tower-http v0.6.11
+   Compiling crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+   Compiling clap_builder v4.6.7
+   Compiling reqwest v0.12.28
+   Compiling sqlx v0.8.6
+   Compiling matchers v0.2.0
+   Compiling walkdir v2.5.0
+   Compiling tokio-tungstenite v0.29.0
+   Compiling nu-ansi-term v0.50.3
+   Compiling axum v0.8.9
+   Compiling object_store v0.12.5
+   Compiling tracing-subscriber v0.3.23
+   Compiling clap v4.6.7
+   Compiling crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+   Compiling crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+   Compiling crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 44s
+     Running unittests src\main.rs (<local-user>\code\ecorp-pr338-completion-20260922\target-validation\debug\deps\crony_server-05dbe3038b00ba36.exe)
+
+running 1 test
+test tests::issue256_start_dispatch_rechecks_capabilities_after_selection ... FAILED
+
+failures:
+
+---- tests::issue256_start_dispatch_rechecks_capabilities_after_selection stdout ----
+
+thread 'tests::issue256_start_dispatch_rechecks_capabilities_after_selection' (42428) panicked at crates\crony-server\src\main.rs:8648:13:
+stale adapter capability reached enqueue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::issue256_start_dispatch_rechecks_capabilities_after_selection
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 139 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p crony-server --bin crony-server`

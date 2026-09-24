@@ -1,14 +1,57 @@
+use super::state_audit::native_policy;
+use sqlx::Acquire;
 use std::collections::HashSet;
 
 use super::*;
+
+#[cfg(test)]
+#[path = "state_audit_refusal_tests.rs"]
+mod state_audit_refusal_tests;
 
 impl PgStore {
     pub async fn create_mission_contract_revision(
         &self,
         input: CreateMissionContractRevisionInput,
     ) -> Result<MissionContractRevisionOutcome> {
+        anyhow::ensure!(
+            input.expected_contract_version > 0,
+            "expected task contract version must be positive"
+        );
+        let reason = normalize_factory_text(&input.reason, "contract revision reason", 4_000)?;
+        let description = normalize_mission_description(&input.description)?;
+        validate_revised_contract(&input.contract, &input.verification_policy)?;
+        let op = state_audit::Operation {
+            corp: input.corp_id,
+            actor: input.actor_id,
+            mission: input.mission_id,
+            request_id: input.idempotency_key,
+            name: "contract_revision",
+            request: json!({
+                "task_id":input.task_id,"expected_contract_version":input.expected_contract_version,
+                "next_action":input.next_action,"source_run_id":input.source_run_id,"reason":reason,
+                "description":description,"contract":input.contract,"verification_policy":input.verification_policy
+            }),
+        };
+        let store = self.clone();
+        self.audited(op, move |tx| {
+            Box::pin(async move {
+                store
+                    .create_mission_contract_revision_audit_inner(input, tx)
+                    .await
+            })
+        })
+        .await
+    }
+
+    async fn create_mission_contract_revision_audit_inner(
+        &self,
+        input: CreateMissionContractRevisionInput,
+        outer: &mut Transaction<'_, Postgres>,
+    ) -> Result<MissionContractRevisionOutcome> {
         if input.expected_contract_version <= 0 {
-            return Err(anyhow!("expected task contract version must be positive"));
+            return Err(native_policy!(
+                "expected task contract version must be positive"
+            ));
         }
         let reason = normalize_factory_text(&input.reason, "contract revision reason", 4_000)?;
         let description = normalize_mission_description(&input.description)?;
@@ -25,7 +68,7 @@ impl PgStore {
             "verification_policy": input.verification_policy,
         });
 
-        let mut tx = self.pool.begin().await?;
+        let mut tx = outer.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
         lock_factory_keys_tx(
             &mut tx,
@@ -61,7 +104,7 @@ impl PgStore {
         .bind(input.task_id)
         .fetch_optional(&mut *tx)
         .await?
-        .context("mission task was not found for contract revision")?;
+        .ok_or_else(|| native_policy!("mission task was not found for contract revision"))?;
         let room_id: Uuid = mission.get("room_id");
         assert_room_membership_tx(&mut tx, input.corp_id, room_id, input.actor_id).await?;
         ensure_contract_revision_operator_tx(
@@ -90,7 +133,7 @@ impl PgStore {
                 || row.get::<Uuid, _>("revised_by") != input.actor_id
                 || row.get::<Value, _>("request") != request
             {
-                return Err(anyhow!(
+                return Err(native_policy!(
                     "mission contract revision idempotency key was reused with a different request"
                 ));
             }
@@ -108,7 +151,7 @@ impl PgStore {
         ensure_no_active_mission_run_tx(&mut tx, input.corp_id, input.mission_id).await?;
         let current_contract_version: i64 = mission.get("contract_version");
         if current_contract_version != input.expected_contract_version {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "task contract version is {current_contract_version}, not {}",
                 input.expected_contract_version
             ));
@@ -132,7 +175,7 @@ impl PgStore {
         let task_status: String = mission.get("task_status");
         let required_adapter: String = mission.get("required_adapter");
         if task_status == "completed" || mission_status == "completed" {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "completed mission work cannot be revised; create a new mission"
             ));
         }
@@ -140,12 +183,12 @@ impl PgStore {
         match input.next_action {
             MissionContractRevisionAction::Redispatch => {
                 if input.source_run_id.is_some() {
-                    return Err(anyhow!(
+                    return Err(native_policy!(
                         "redispatch contract revisions cannot name a source run"
                     ));
                 }
                 if mission_status != "ready" {
-                    return Err(anyhow!(
+                    return Err(native_policy!(
                         "redispatch contract revisions require a ready mission with no prior run"
                     ));
                 }
@@ -157,15 +200,15 @@ impl PgStore {
                 .fetch_one(&mut *tx)
                 .await?;
                 if run_count != 0 {
-                    return Err(anyhow!(
+                    return Err(native_policy!(
                         "redispatch contract revisions are only allowed before the first run"
                     ));
                 }
             }
             MissionContractRevisionAction::Resume => {
-                let source_run_id = input
-                    .source_run_id
-                    .context("resume contract revisions require a source run")?;
+                let source_run_id = input.source_run_id.ok_or_else(|| {
+                    native_policy!("resume contract revisions require a source run")
+                })?;
                 ensure_resumable_contract_revision_source_tx(
                     &mut tx,
                     input.corp_id,
@@ -200,7 +243,7 @@ impl PgStore {
             && (replacement_contract.model.is_some()
                 || replacement_contract.reasoning_effort.is_some())
         {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "fake-process contract revisions cannot select a model or reasoning effort"
             ));
         }
@@ -358,14 +401,14 @@ async fn contract_revision_by_id_tx(
     .transpose()
 }
 
-async fn ensure_contract_revision_operator_tx(
+pub(super) async fn ensure_contract_revision_operator_tx(
     tx: &mut Transaction<'_, Postgres>,
     corp_id: Uuid,
     actor_id: Uuid,
     requester: Uuid,
 ) -> Result<()> {
     let role: Option<String> = sqlx::query_scalar(
-        "SELECT role FROM actors WHERE id = $1 AND corp_id = $2 AND kind = 'human'",
+        "SELECT role FROM actors WHERE id = $1 AND corp_id = $2 AND kind = 'human' FOR SHARE",
     )
     .bind(actor_id)
     .bind(corp_id)
@@ -374,7 +417,7 @@ async fn ensure_contract_revision_operator_tx(
     if actor_id == requester || matches!(role.as_deref(), Some("owner" | "admin" | "manager")) {
         return Ok(());
     }
-    Err(anyhow!(
+    Err(native_policy!(
         "forbidden: only the mission requester, owner, admin, or manager can revise its contract"
     ))
 }
@@ -403,7 +446,7 @@ async fn ensure_no_active_mission_run_tx(
     .fetch_one(&mut **tx)
     .await?;
     if active {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "mission contract cannot be revised while a run is active"
         ));
     }
@@ -461,9 +504,9 @@ async fn ensure_resumable_contract_revision_source_tx(
     .bind(corp_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("contract revision source run was not found")?;
+    .ok_or_else(|| native_policy!("contract revision source run was not found"))?;
     if source.get::<Uuid, _>("task_id") != task_id {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "contract revision source run belongs to another task"
         ));
     }
@@ -479,12 +522,12 @@ async fn ensure_resumable_contract_revision_source_tx(
             "failed" | "cancelled" | "lost"
         )
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "resume contract revisions require a terminal preserved provider session"
         ));
     }
     if source.get::<String, _>("breaker_stage") == "stop" {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "stop-stage provider work cannot be revised for resume"
         ));
     }
@@ -500,13 +543,13 @@ async fn ensure_resumable_contract_revision_source_tx(
                 .as_deref()
                 == Some("quarantined")
     }) {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "provider workspace lineage reached stop or quarantine and cannot be revised for resume"
         ));
     }
     let latest = latest_workspace_source_id(&lineage)?;
     if latest != source_run_id {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "contract revision source run is not the latest resumable lineage checkpoint"
         ));
     }
@@ -528,7 +571,7 @@ fn ensure_resume_contract_is_narrow(
         || replacement.reasoning_effort != current.reasoning_effort
         || replacement.deliverable != current.deliverable
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "resume contract revisions cannot change budget, source, secrets, model, reasoning, or deliverable authority"
         ));
     }
@@ -537,7 +580,7 @@ fn ensure_resume_contract_is_narrow(
         .iter()
         .any(|tool| !current.allowed_tools.contains(tool))
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "resume contract revisions cannot widen allowed tools"
         ));
     }
@@ -546,7 +589,7 @@ fn ensure_resume_contract_is_narrow(
         .iter()
         .any(|action| !replacement.prohibited_actions.contains(action))
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "resume contract revisions cannot remove prohibited actions"
         ));
     }
@@ -556,14 +599,14 @@ fn ensure_resume_contract_is_narrow(
             .iter()
             .any(|authorized| write_scope_allows_path(authorized, candidate))
     }) {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "resume contract revisions cannot widen the task write scope"
         ));
     }
     if required_adapter == "fake-process"
         && (replacement.model.is_some() || replacement.reasoning_effort.is_some())
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "fake-process contract revisions cannot select a model or reasoning effort"
         ));
     }
@@ -601,7 +644,9 @@ async fn ensure_revised_task_budget_fits_mission_tx(
         .checked_add(contract.budget_cost_microusd)
         .context("revised task cost budget overflow")?;
     if total_tokens > mission_budget_tokens || total_cost > mission_budget_cost_microusd {
-        return Err(anyhow!("revised task contract exceeds the mission budget"));
+        return Err(native_policy!(
+            "revised task contract exceeds the mission budget"
+        ));
     }
     Ok(())
 }
@@ -660,7 +705,7 @@ fn validate_revised_contract(
         || contract.budget_cost_microusd <= 0
         || contract.budget_cost_microusd > 10_000_000
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "mission contract revision is incomplete or out of bounds"
         ));
     }
@@ -676,7 +721,7 @@ fn validate_revised_contract(
                 .iter()
                 .any(|value| value.trim().is_empty() || value.len() > 500)
         {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "mission contract revision contains invalid list entries"
             ));
         }
@@ -686,7 +731,7 @@ fn validate_revised_contract(
         .iter()
         .any(|scope| !write_scope_is_valid(scope))
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "mission contract revision contains an invalid write scope"
         ));
     }
@@ -723,12 +768,12 @@ fn validate_revised_contract(
             || !matches!(base_commit.len(), 40 | 64)
             || !base_commit.bytes().all(|byte| byte.is_ascii_hexdigit())
         {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "mission contract revision has an invalid source repository requirement"
             ));
         }
     } else if source.0.is_some() || source.1.is_some() || source.2.is_some() {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "mission contract revision must preserve a complete source identity"
         ));
     }
@@ -737,7 +782,9 @@ fn validate_revised_contract(
         .as_ref()
         .is_some_and(|model| model.trim().is_empty() || model.len() > 128)
     {
-        return Err(anyhow!("mission contract revision has an invalid model"));
+        return Err(native_policy!(
+            "mission contract revision has an invalid model"
+        ));
     }
     if contract.reasoning_effort.as_ref().is_some_and(|effort| {
         !matches!(
@@ -745,7 +792,7 @@ fn validate_revised_contract(
             "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max"
         )
     }) {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "mission contract revision has an invalid reasoning effort"
         ));
     }
@@ -756,7 +803,7 @@ fn validate_revised_contract(
                 .iter()
                 .any(|path| !repository_relative_path_is_valid(path)))
     {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "mission contract revision has invalid deliverable paths"
         ));
     }
@@ -778,7 +825,7 @@ fn validate_revised_contract(
             || secret.resource.trim().is_empty()
             || secret.resource.len() > 512
         {
-            return Err(anyhow!(
+            return Err(native_policy!(
                 "mission contract revision has an invalid secret reference"
             ));
         }
@@ -790,7 +837,7 @@ pub(super) fn validate_mission_verification_policy(
     verification_policy: &VerificationPolicy,
 ) -> Result<()> {
     if verification_policy.checks.is_empty() || verification_policy.checks.len() > 16 {
-        return Err(anyhow!(
+        return Err(native_policy!(
             "mission contract revision verifier must contain between 1 and 16 checks"
         ));
     }
@@ -798,13 +845,13 @@ pub(super) fn validate_mission_verification_policy(
         match check {
             VerifierCheck::Artifact { min_bytes } => {
                 if *min_bytes == 0 {
-                    return Err(anyhow!("artifact verifier requires a byte floor"));
+                    return Err(native_policy!("artifact verifier requires a byte floor"));
                 }
             }
             VerifierCheck::File { path, min_bytes }
             | VerifierCheck::Screenshot { path, min_bytes } => {
                 if !repository_relative_path_is_valid(path) || *min_bytes == 0 {
-                    return Err(anyhow!("file verifier is invalid"));
+                    return Err(native_policy!("file verifier is invalid"));
                 }
             }
             VerifierCheck::JsonSchema {
@@ -818,18 +865,20 @@ pub(super) fn validate_mission_verification_policy(
                         .iter()
                         .any(|key| key.trim().is_empty() || key.len() > 128)
                 {
-                    return Err(anyhow!("JSON schema verifier is invalid"));
+                    return Err(native_policy!("JSON schema verifier is invalid"));
                 }
             }
             VerifierCheck::Command {
                 program,
                 args,
                 timeout_ms,
+                ..
             }
             | VerifierCheck::Test {
                 program,
                 args,
                 timeout_ms,
+                ..
             } => {
                 if program.trim().is_empty()
                     || program.len() > 256
@@ -838,7 +887,7 @@ pub(super) fn validate_mission_verification_policy(
                     || args.iter().any(|arg| arg.len() > 2_000)
                     || !(100..=60_000).contains(timeout_ms)
                 {
-                    return Err(anyhow!("command verifier is invalid"));
+                    return Err(native_policy!("command verifier is invalid"));
                 }
             }
         }
@@ -854,7 +903,7 @@ pub(super) fn validate_mission_verification_policy(
                 .iter()
                 .any(|role| !matches!(role.as_str(), "owner" | "admin" | "manager" | "member"))
         {
-            return Err(anyhow!("manual verification gate is invalid"));
+            return Err(native_policy!("manual verification gate is invalid"));
         }
     }
     Ok(())

@@ -1,0 +1,60 @@
+{
+  "pr": 293,
+  "purpose": "Base V2 owned PostgreSQL regressions",
+  "source_head": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "tested_staged_tree": "f84b8bcd418f0479c0173bb6594f77577a310a44",
+  "qa_root": "<local-user>\\code\\qa\\queue-audit-store-20260923-r451",
+  "target": "<local-user>\\code\\ecorp-pr-completion-20260922\\target-validation",
+  "started_at_utc": "2026-09-23T16:06:21.6129653+00:00",
+  "status": "failed",
+  "checks": [
+    {
+      "log": "<private-evidence>\\queue-native-database-r451-initdb.log",
+      "name": "owned-postgresql-initialization",
+      "sha256": "b134479ba270917fdb767eca881357199b5a987c18cd5d8d32e9f7045bf2035f",
+      "exit_code": 0
+    },
+    {
+      "log": "<private-evidence>\\queue-native-database-r451-workspace-cache-refresh.log",
+      "name": "workspace-cache-refresh",
+      "sha256": "a3a9e6cb6378b346bff61a74f945835e3107e984b0d0736d9641b9e99966702e",
+      "exit_code": 0
+    },
+    {
+      "log": "<private-evidence>\\queue-native-database-r451-base-v2.log",
+      "name": "owned-postgresql-base-v2",
+      "sha256": "2b3d3b767d3e98046f017b6ba0fa560cffd7148f9e801e94216c89b39a044781",
+      "exit_code": 0,
+      "passed_tests": 34
+    },
+    {
+      "log": "<private-evidence>\\queue-native-database-r451-worker-observation.log",
+      "name": "owned-postgresql-worker-observation",
+      "sha256": "b0afe8a5502fedc760d3dce6eebe096da214cfb5d89e7455a343cc1e6d04a05a",
+      "exit_code": 0,
+      "passed_tests": 2
+    },
+    {
+      "log": "<private-evidence>\\queue-native-database-r451-worker-terminal-fees.log",
+      "name": "owned-postgresql-worker-terminal-fees",
+      "sha256": "5994798ca9afeed01ca7448e25e73fb5ea04fb28d78a33a095e853c358e905d1",
+      "exit_code": 0,
+      "passed_tests": 4
+    },
+    {
+      "log": "<private-evidence>\\queue-native-database-r451-native-archive.log",
+      "name": "owned-postgresql-native-archive",
+      "sha256": "5fd9401eb86d36a8799f6eb93ecda094e5f6264de4275017e5ae976c1f026d0b",
+      "exit_code": 101
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; data, credentials and logs retained.",
+  "authentication": {
+    "wrong_password_rejected": true,
+    "authenticated_query": true,
+    "delivery": "Private PGPASSFILE for native clients; SQLx environment-only delivery is reduced assurance.",
+    "method": "scram-sha-256"
+  },
+  "failure": "owned-postgresql-native-archive failed; retained the fixture and logs.",
+  "finished_at_utc": "2026-09-23T16:18:34.3923957+00:00"
+}

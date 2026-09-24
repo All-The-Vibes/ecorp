@@ -1,0 +1,7 @@
+
+running 1 test
+test issue297_native_fixtures::issue297_native_fixture_dispatch ...
+ISSUE297_NATIVE_FIXTURE: {"schema_version":1,"case_id":"destination-symlink","nonce":"73c39b2b-845d-4e70-89b5-e0f4c8ba6726","status":"native_rejection_observed","positive_controls":["native_assignment_provider_started","native_exact_byte_readback","native_read_write_permissions","legitimate_retained_checkpoint","same_destination_plain_file_control","native_destination_link_resolves_exact_target","relative_internal_symlink_checkpoint"],"rejection_assertions":["native_materializer_rejection","no_adapter_entry","no_provider_start","workspace_preserved","owned_sentinel_unchanged","no_dependency_writes"],"evidence_scope":"native-runner-assignment-materialization","platform":"windows","qualification":"Actual execute_assignment -> workspace prepare/checkpoint -> materializer -> fake-process child; not signed-store, server, browser, real-provider or full-stack acceptance. A relative file symlink within the retained owned child worktree was checkpointed legitimately before dispatch; native OS link creation capability was present.","observations":{}}
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 240 filtered out; finished in 6.88s

@@ -1,0 +1,32 @@
+Owned fixture identity/label/loopback verified. Credential delivery: ephemeral environment-only reduced assurance.
+Inherited provider/application credentials removed by environment allowlist.
+Command: <review-host>\.cargo\bin\cargo.exe test -p crony-store --lib --locked --offline -j 2 issue283_source_upgrade -- --test-threads=1 --nocapture --ignored
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.20s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-c43d8b35d717387f.exe)
+
+running 4 tests
+test state_audit_tests::issue283_source_upgrade_accepted_padded_then_trimmed ... Error: native idempotency result predates audit coverage; no retroactive decision was recorded
+FAILED
+test state_audit_tests::issue283_source_upgrade_precoverage_alias_remains_rejected ... ok
+test state_audit_tests::issue283_source_upgrade_refused_padded_then_trimmed ... Error: missing source-upgrade refusal receipt
+FAILED
+test state_audit_tests::issue283_source_upgrade_refused_trimmed_then_padded ...
+thread 'state_audit_tests::issue283_source_upgrade_refused_trimmed_then_padded' (64824) panicked at crates\crony-store\src\state_audit_tests.rs:1276:5:
+assertion `left == right` failed
+  left: "factory source policy already has an immutable base commit; audit refusal receipt 18685744-fb8f-4eb7-883a-39cc39c2418d:5:efa74c300d5f6b1dbe9123f22b2a58371cbb881270bac4c7abf210cf010b069e"
+ right: "factory source policy already has an immutable base commit; audit refusal receipt 18685744-fb8f-4eb7-883a-39cc39c2418d:4:7a0f6d7a8bcbf1025e0abfd338a81cf2faa0968fca0641912aa02ec0ad09f88b"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    state_audit_tests::issue283_source_upgrade_accepted_padded_then_trimmed
+    state_audit_tests::issue283_source_upgrade_refused_padded_then_trimmed
+    state_audit_tests::issue283_source_upgrade_refused_trimmed_then_padded
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 415 filtered out; finished in 11.89s
+
+error: test failed, to rerun pass `-p crony-store --lib`
+
+Exit code: 101

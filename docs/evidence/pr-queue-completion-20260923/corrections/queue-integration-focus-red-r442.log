@@ -1,0 +1,721 @@
+TAP version 13
+# Subtest: every pinned upstream dependency exists and retains its exact bytes
+ok 1 - every pinned upstream dependency exists and retains its exact bytes
+  ---
+  duration_ms: 12.7566
+  type: 'test'
+  ...
+# Subtest: the entrypoint and maintained references resolve inside the package
+ok 2 - the entrypoint and maintained references resolve inside the package
+  ---
+  duration_ms: 8.0905
+  type: 'test'
+  ...
+# Subtest: entrypoint delegates repository validation to current source AGENTS
+ok 3 - entrypoint delegates repository validation to current source AGENTS
+  ---
+  duration_ms: 2.7143
+  type: 'test'
+  ...
+# Subtest: entrypoint stays within pinned ATV AGENT-03 effective prose limit
+ok 4 - entrypoint stays within pinned ATV AGENT-03 effective prose limit
+  ---
+  duration_ms: 1.1133
+  type: 'test'
+  ...
+# ATV AGENT-03 effective prose: 7990/8000 characters
+# Subtest: maintained instructions distinguish scoped publication from full acceptance
+ok 5 - maintained instructions distinguish scoped publication from full acceptance
+  ---
+  duration_ms: 5.8897
+  type: 'test'
+  ...
+# Subtest: Rust input accepts stable or the accepted exact release, not implicit or other channels
+ok 6 - Rust input accepts stable or the accepted exact release, not implicit or other channels
+  ---
+  duration_ms: 0.354
+  type: 'test'
+  ...
+# Subtest: CI remote actions use full commit SHAs and an explicit stable Rust channel or accepted release
+ok 7 - CI remote actions use full commit SHAs and an explicit stable Rust channel or accepted release
+  ---
+  duration_ms: 0.9324
+  type: 'test'
+  ...
+# Subtest: Windows runner CI compiles before ACL readiness, runs serially, and preserves readiness receipts
+ok 8 - Windows runner CI compiles before ACL readiness, runs serially, and preserves readiness receipts
+  ---
+  duration_ms: 1.2766
+  type: 'test'
+  ...
+# Subtest: the checked-in fixture identity helper canonicalizes the intended ATV origin
+ok 9 - the checked-in fixture identity helper canonicalizes the intended ATV origin
+  ---
+  duration_ms: 2.636
+  type: 'test'
+  ...
+# Subtest: e2e_factory_claims.mjs derives URLs and policies from the actual checked Git origin
+ok 10 - e2e_factory_claims.mjs derives URLs and policies from the actual checked Git origin
+  ---
+  duration_ms: 1.0603
+  type: 'test'
+  ...
+# Subtest: e2e_factory_controller.mjs derives URLs and policies from the actual checked Git origin
+ok 11 - e2e_factory_controller.mjs derives URLs and policies from the actual checked Git origin
+  ---
+  duration_ms: 0.988
+  type: 'test'
+  ...
+# Subtest: e2e_factory_publication.mjs derives URLs and policies from the actual checked Git origin
+ok 12 - e2e_factory_publication.mjs derives URLs and policies from the actual checked Git origin
+  ---
+  duration_ms: 1.6211
+  type: 'test'
+  ...
+# Subtest: claims retain normalized source, pre-effect readiness and native automatic verification
+ok 13 - claims retain normalized source, pre-effect readiness and native automatic verification
+  ---
+  duration_ms: 0.8439
+  type: 'test'
+  ...
+# Subtest: controller retains wrong-repository rejection, native attempt preview and fake GitHub transport
+ok 14 - controller retains wrong-repository rejection, native attempt preview and fake GitHub transport
+  ---
+  duration_ms: 1.0111
+  type: 'test'
+  ...
+# Subtest: publication retains dynamic casing/effect identity, local bare transport and merge guards
+ok 15 - publication retains dynamic casing/effect identity, local bare transport and merge guards
+  ---
+  duration_ms: 0.9178
+  type: 'test'
+  ...
+# Subtest: CI runs every complete factory suite without suppressing errors or restart checks
+ok 16 - CI runs every complete factory suite without suppressing errors or restart checks
+  ---
+  duration_ms: 0.7228
+  type: 'test'
+  ...
+# Subtest: CI server preview is explicit, isolated, read-only and credential-free
+ok 17 - CI server preview is explicit, isolated, read-only and credential-free
+  ---
+  duration_ms: 1.353
+  type: 'test'
+  ...
+# Subtest: CI server refuses missing scope, legacy/manual targets and unexpected database configuration
+ok 18 - CI server refuses missing scope, legacy/manual targets and unexpected database configuration
+  ---
+  duration_ms: 2.8514
+  type: 'test'
+  ...
+# Subtest: owned cleanup wiring accepts LF and CRLF but still requires unconditional exact cleanup
+ok 19 - owned cleanup wiring accepts LF and CRLF but still requires unconditional exact cleanup
+  ---
+  duration_ms: 0.4372
+  type: 'test'
+  ...
+# Subtest: all CI restart fixtures consume the same explicit ownership manifest without numeric-PID fallbacks
+not ok 20 - all CI restart fixtures consume the same explicit ownership manifest without numeric-PID fallbacks
+  ---
+  duration_ms: 1.6689
+  type: 'test'
+  location: '<reviewed-worktree>\\tools\\ci_owned_test_server.test.mjs:65:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input was expected to not match the regular expression /8791|54329|server-ci\.pid|--database-url|target\/debug\/crony-server \\/u. Input:
+
+    '\n' +
+      '    runs-on: ubuntu-latest\n' +
+      '    timeout-minutes: 30\n' +
+      '    env:\n' +
+      "      ECORP_CI_OWNED_SERVER: '1'\n" +
+      '      CRONY_SERVER_HTTP: http://127.0.0.1:18471\n' +
+      '      CRONY_TEST_SERVER_BINARY: ${{ github.workspace }}/target/debug/crony-server\n' +
+      '      CRONY_TEST_SERVER_PID_FILE: ${{ github.workspace }}/output/server-ci.json\n' +
+      '      DATABASE_URL: postgres://crony:crony@127.0.0.1:55471/crony\n' +
+      '    services:\n' +
+      '      postgres:\n' +
+      '        image: postgres:17-alpine\n' +
+      '        env:\n' +
+      '          POSTGRES_USER: crony\n' +
+      '          POSTGRES_PASSWORD: crony\n' +
+      '          POSTGRES_DB: crony\n' +
+      '        ports:\n' +
+      '          - 55471:5432\n' +
+      '        options: >-\n' +
+      '          --health-cmd "pg_isready -U crony -d crony"\n' +
+      '          --health-interval 2s\n' +
+      '          --health-timeout 3s\n' +
+      '          --health-retries 30\n' +
+      '    steps:\n' +
+      '      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1\n' +
+      '        with:\n' +
+      '          persist-credentials: false\n' +
+      '          fetch-depth: 0\n' +
+      '      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable\n' +
+      '        with:\n' +
+      '          toolchain: 1.98.1\n' +
+      '      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0\n' +
+      '        with:\n' +
+      '          version: 11.19.0\n' +
+      '      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0\n' +
+      '        with:\n' +
+      '          node-version-file: .node-version\n' +
+      '          cache: pnpm\n' +
+      '      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2\n' +
+      '      - run: pnpm install --frozen-lockfile\n' +
+      '      - run: cargo build --locked -p crony-server -p crony-runner -p crony-cli -p crony-gateways\n' +
+      '      - name: Verify native read-only MCP protocol and probe\n' +
+      '        env:\n' +
+      '          CRONY_MCP_TEST_BINARY: ${{ github.workspace }}/target/debug/crony-mcp\n' +
+      '        run: node --test tools/probe_mcp.test.mjs tools/operation_receipt.test.mjs tools/consume_operation_receipt.test.mjs\n' +
+      '      - name: Start control and execution planes\n' +
+      '        shell: bash\n' +
+      '        run: |\n' +
+      '          mkdir -p output\n' +
+      '          node tools/ci_owned_test_server.mjs --dry-run\n' +
+      '          node tools/ci_owned_test_server.mjs --start\n' +
+      '          DEMO_JSON="$(curl --fail --silent -X POST \\\n' +
+      "            -H 'content-type: application/json' \\\n" +
+      "            -d '{}' \\\n" +
+      '            http://127.0.0.1:18471/api/demo/bootstrap)"\n' +
+      `          CORP_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).corp_id)' "$DEMO_JSON")"\n` +
+      `          ALICE_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).alice_actor_id)' "$DEMO_JSON")"\n` +
+      '          ENROLLMENT_JSON="$(curl --fail --silent -X POST \\\n' +
+      "            -H 'content-type: application/json' \\\n" +
+      '            -d "{\\"actor_id\\":\\"$ALICE_ID\\",\\"runner_id\\":\\"runner-local\\",\\"expires_in_seconds\\":600}" \\\n' +
+      '            "http://127.0.0.1:18471/api/corps/$CORP_ID/runners/enroll")"\n' +
+      '          mkdir -p output/runner\n' +
+      "          node -e 'process.stdout.write(JSON.parse(process.argv[1]).enrollment_token)' \\\n" +
+      '            "$ENROLLMENT_JSON" > output/runner/enrollment.token\n' +
+      '          chmod 600 output/runner/enrollment.token\n' +
+      '          target/debug/crony-runner \\\n' +
+      '            --server-ws ws://127.0.0.1:18471/ws/runner \\\n' +
+      '            --runner-id runner-local \\\n' +
+      '            --corp-id "$CORP_ID" \\\n' +
+      '            --credential-file "$PWD/output/runner/credential.json" \\\n' +
+      '            --enrollment-token-file "$PWD/output/runner/enrollment.token" \\\n' +
+      '            --workspace "$PWD/output/runner" \\\n' +
+      '            --source-repository "$PWD" \\\n' +
+      '            --source-base-ref HEAD \\\n' +
+      '            --fake-agent-script "$PWD/scripts/fake-agent.mjs" \\\n' +
+      '            --codex-command node \\\n' +
+      '            --codex-command-arg "$PWD/scripts/fake-codex-app-server.mjs" \\\n' +
+      '            --claude-command node \\\n' +
+      '            --claude-command-arg "$PWD/scripts/fake-external-agent.mjs" \\\n' +
+      '            --opencode-command node \\\n' +
+      '            --opencode-command-arg "$PWD/scripts/fake-external-agent.mjs" \\\n' +
+      '            --copilot-fixture \\\n' +
+      '            > output/runner-ci.log 2>&1 &\n' +
+      '          echo $! > output/runner-ci.pid\n' +
+      '      - name: Wait for runner\n' +
+      '        shell: bash\n' +
+      '        run: |\n' +
+      '          for attempt in $(seq 1 60); do\n' +
+      `            if curl --fail --silent http://127.0.0.1:18471/health | grep -q '"runners":1'; then\n` +
+      '              exit 0\n' +
+      '            fi\n' +
+      '            sleep 1\n' +
+      '          done\n' +
+      '          cat output/server-ci.stdout.log output/server-ci.stderr.log || true\n' +
+      '          cat output/runner-ci.log || true\n' +
+      '          exit 1\n' +
+      '      - name: Race demo bootstrap and reset lifecycle\n' +
+      '        run: node tools/e2e_demo_lifecycle.mjs\n' +
+      '      - name: Exercise the real server-to-runner path\n' +
+      '        shell: pwsh\n' +
+      '        run: ./tools/e2e_smoke.ps1 -Server $env:CRONY_SERVER_HTTP\n' +
+      '      - name: Verify content-addressed artifacts, provenance, and Corp-scoped download\n' +
+      '        run: node tools/e2e_artifacts.mjs\n' +
+      '      - name: Verify portable source deliverables, exact linkage, and cleanup acknowledgment\n' +
+      '        run: node tools/e2e_portable_deliverables.mjs\n' +
+      '      - name: Verify Codex start, steer, resume, interrupt, stop, usage, and evidence\n' +
+      '        run: node tools/e2e_codex.mjs\n' +
+      '      - name: Verify external CLI providers fail closed on Unix\n' +
+      '        env:\n' +
+      "          CRONY_EXTERNAL_ADAPTER_TEST: '1'\n" +
+      '          CRONY_SERVER_HTTP: http://127.0.0.1:18471\n' +
+      '        run: |\n' +
+      '          node tools/e2e_external_adapters.mjs --expect-unix --dry-run\n' +
+      '          node tools/e2e_external_adapters.mjs --expect-unix\n' +
+      '      - name: Verify GitHub Copilot harness, model discovery, selection, and resume\n' +
+      '        run: node tools/e2e_copilot.mjs\n' +
+      '      - name: Verify MCP, ACP, and A2A gateway conformance\n' +
+      '        run: node tools/e2e_gateways.mjs\n' +
+      '      - name: Verify parallel worktree isolation and source-checkout preservation\n' +
+      '        run: node tools/e2e_worktrees.mjs\n' +
+      '      - name: Verify bounded task-graph planning, scheduling, and retries\n' +
+      '        env:\n' +
+      "          CRONY_TASK_GRAPH_TEST: '1'\n" +
+      '          CRONY_SERVER_HTTP: http://127.0.0.1:18471\n' +
+      '        run: |\n' +
+      '          node tools/e2e_task_graph.mjs --dry-run\n' +
+      '          node tools/e2e_task_graph.mjs\n' +
+      '      - name: Verify automated, failed, human, and independent evidence gates\n' +
+      '        run: node tools/e2e_verification.mjs\n' +
+      '      - name: Verify resumable event replay\n' +
+      '        run: node tools/e2e_replay.mjs\n' +
+      '      - name: Verify control fencing and emergency stop\n' +
+      '        run: node tools/e2e_leases.mjs\n' +
+      '      - name: Verify room threads and membership isolation\n' +
+      '        run: node tools/e2e_rooms.mjs\n' +
+      '      - name: Verify cache-policy recovery and resume admission with real SQL\n' +
+      '        env:\n' +
+      '          DATABASE_URL: postgres://crony:crony@127.0.0.1:54329/crony\n' +
+      '        run: cargo test -p crony-server cache_admission_lifecycle_tests --locked -- --ignored --test-threads=1\n' +
+      '      - name: Verify runner grace and reconciliation\n' +
+      '        run: node tools/e2e_runner_reconnect.mjs\n' +
+      '      - name: Verify duplicate runner delivery is idempotent\n' +
+      '        run: node tools/e2e_idempotency.mjs\n' +
+      '      - name: Verify atomic artifact staging, cleanup, and restart recovery\n' +
+      '        env:\n' +
+      "          CRONY_ARTIFACT_STAGING_TEST: '1'\n" +
+      '          CRONY_SERVER_HTTP: http://127.0.0.1:18471\n' +
+      '        run: |\n' +
+      '          node tools/e2e_artifact_staging.mjs --dry-run\n' +
+      '          node tools/e2e_artifact_staging.mjs\n' +
+      '      - name: Verify fenced factory claims, restart recovery, and one linked mission\n' +
+      '        run: node tools/e2e_factory_claims.mjs\n' +
+      '      - name: Verify Project eligibility, dry run, dispatch, status sync, and replay\n' +
+      '        run: node tools/e2e_factory_controller.mjs\n' +
+      '      - name: Verify idempotent branch and pull-request publication with recovery\n' +
+      '        run: node tools/e2e_factory_publication.mjs\n' +
+      '      - name: Verify OIDC, Corp RBAC, runner enrollment, rotation, replay defense, and revocation\n' +
+      '        env:\n' +
+      "          CRONY_IDENTITY_TEST: '1'\n" +
+      "          CRONY_AUTH_TEST_PORT: '18473'\n" +
+      "          FAKE_OIDC_PORT: '18472'\n" +
+      '        run: |\n' +
+      '          node tools/e2e_identity.mjs --dry-run\n' +
+      '          node tools/e2e_identity.mjs\n' +
+      '      - name: Verify scoped secret brokering without plaintext leakage\n' +
+      '        run: node tools/e2e_secrets.mjs\n' +
+      '      - name: Verify durable risky-action approvals and exactly-once decision effects\n' +
+      '        run: node tools/e2e_approvals.mjs\n' +
+      '      - name: Verify budget and loop circuit-breaker stages\n' +
+      '        env:\n' +
+      "          CRONY_BUDGET_TEST: '1'\n" +
+      '          CRONY_BUDGET_RUNNER_ID: runner-local\n' +
+      '          CRONY_BUDGET_OUTPUT: ${{ github.workspace }}/output/e2e-budgets.json\n' +
+      '        run: |\n' +
+      '          node tools/e2e_budgets.mjs --dry-run\n' +
+      '          node tools/e2e_budgets.mjs\n' +
+      '      - name: Verify terminal provider cleanup and off-shift agent state\n' +
+      '        run: node tools/e2e_idle_cleanup.mjs\n' +
+      '      - name: Run the versioned 100-scenario deterministic evaluation lane\n' +
+      '        run: node tools/run_evals.mjs\n' +
+      '      - name: Consolidate chaos and restart evidence\n' +
+      '        run: node tools/e2e_chaos_report.mjs\n' +
+      '      - name: Stop the ownership-verified CI server\n' +
+      '        if: always()\n' +
+      '        run: node tools/ci_owned_test_server.mjs --stop\n' +
+      '      - name: Upload runtime evidence\n' +
+      '        if: always()\n' +
+      '        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2\n' +
+      '        with:\n' +
+      '          name: integration-evidence\n' +
+      '          path: |\n' +
+      '            output/e2e-smoke.json\n' +
+      '            output/e2e-artifacts.json\n' +
+      '            output/e2e-portable-deliverables.json\n' +
+      '            output/e2e-artifact-staging.json\n' +
+      '            output/e2e-demo-lifecycle.json\n' +
+      '            output/e2e-codex.json\n' +
+      '            output/e2e-external-adapters.json\n' +
+      '            output/e2e-copilot.json\n' +
+      '            output/e2e-gateways.json\n' +
+      '            output/e2e-worktrees.json\n' +
+      '            output/e2e-task-graph.json\n' +
+      '            output/e2e-verification.json\n' +
+      '            output/e2e-identity.json\n' +
+      '            output/e2e-secrets.json\n' +
+      '            output/e2e-approvals.json\n' +
+      '            output/e2e-budgets.json\n' +
+      '            output/e2e-idle-cleanup.json\n' +
+      '            output/e2e-chaos.json\n' +
+      '            output/eval-report.json\n' +
+      '            output/e2e-runner-reconnect.json\n' +
+      '            output/e2e-idempotency.json\n' +
+      '            output/e2e-factory-claims.json\n' +
+      '            output/e2e-factory-controller.json\n' +
+      '            output/e2e-factory-publicat'... 911 more characters
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        env:
+          ECORP_CI_OWNED_SERVER: '1'
+          CRONY_SERVER_HTTP: http://127.0.0.1:18471
+          CRONY_TEST_SERVER_BINARY: ${{ github.workspace }}/target/debug/crony-server
+          CRONY_TEST_SERVER_PID_FILE: ${{ github.workspace }}/output/server-ci.json
+          DATABASE_URL: postgres://crony:crony@127.0.0.1:55471/crony
+        services:
+          postgres:
+            image: postgres:17-alpine
+            env:
+              POSTGRES_USER: crony
+              POSTGRES_PASSWORD: crony
+              POSTGRES_DB: crony
+            ports:
+              - 55471:5432
+            options: >-
+              --health-cmd "pg_isready -U crony -d crony"
+              --health-interval 2s
+              --health-timeout 3s
+              --health-retries 30
+        steps:
+          - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            with:
+              persist-credentials: false
+              fetch-depth: 0
+          - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+            with:
+              toolchain: 1.98.1
+          - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+            with:
+              version: 11.19.0
+          - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+            with:
+              node-version-file: .node-version
+              cache: pnpm
+          - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+          - run: pnpm install --frozen-lockfile
+          - run: cargo build --locked -p crony-server -p crony-runner -p crony-cli -p crony-gateways
+          - name: Verify native read-only MCP protocol and probe
+            env:
+              CRONY_MCP_TEST_BINARY: ${{ github.workspace }}/target/debug/crony-mcp
+            run: node --test tools/probe_mcp.test.mjs tools/operation_receipt.test.mjs tools/consume_operation_receipt.test.mjs
+          - name: Start control and execution planes
+            shell: bash
+            run: |
+              mkdir -p output
+              node tools/ci_owned_test_server.mjs --dry-run
+              node tools/ci_owned_test_server.mjs --start
+              DEMO_JSON="$(curl --fail --silent -X POST \
+                -H 'content-type: application/json' \
+                -d '{}' \
+                http://127.0.0.1:18471/api/demo/bootstrap)"
+              CORP_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).corp_id)' "$DEMO_JSON")"
+              ALICE_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).alice_actor_id)' "$DEMO_JSON")"
+              ENROLLMENT_JSON="$(curl --fail --silent -X POST \
+                -H 'content-type: application/json' \
+                -d "{\"actor_id\":\"$ALICE_ID\",\"runner_id\":\"runner-local\",\"expires_in_seconds\":600}" \
+                "http://127.0.0.1:18471/api/corps/$CORP_ID/runners/enroll")"
+              mkdir -p output/runner
+              node -e 'process.stdout.write(JSON.parse(process.argv[1]).enrollment_token)' \
+                "$ENROLLMENT_JSON" > output/runner/enrollment.token
+              chmod 600 output/runner/enrollment.token
+              target/debug/crony-runner \
+                --server-ws ws://127.0.0.1:18471/ws/runner \
+                --runner-id runner-local \
+                --corp-id "$CORP_ID" \
+                --credential-file "$PWD/output/runner/credential.json" \
+                --enrollment-token-file "$PWD/output/runner/enrollment.token" \
+                --workspace "$PWD/output/runner" \
+                --source-repository "$PWD" \
+                --source-base-ref HEAD \
+                --fake-agent-script "$PWD/scripts/fake-agent.mjs" \
+                --codex-command node \
+                --codex-command-arg "$PWD/scripts/fake-codex-app-server.mjs" \
+                --claude-command node \
+                --claude-command-arg "$PWD/scripts/fake-external-agent.mjs" \
+                --opencode-command node \
+                --opencode-command-arg "$PWD/scripts/fake-external-agent.mjs" \
+                --copilot-fixture \
+                > output/runner-ci.log 2>&1 &
+              echo $! > output/runner-ci.pid
+          - name: Wait for runner
+            shell: bash
+            run: |
+              for attempt in $(seq 1 60); do
+                if curl --fail --silent http://127.0.0.1:18471/health | grep -q '"runners":1'; then
+                  exit 0
+                fi
+                sleep 1
+              done
+              cat output/server-ci.stdout.log output/server-ci.stderr.log || true
+              cat output/runner-ci.log || true
+              exit 1
+          - name: Race demo bootstrap and reset lifecycle
+            run: node tools/e2e_demo_lifecycle.mjs
+          - name: Exercise the real server-to-runner path
+            shell: pwsh
+            run: ./tools/e2e_smoke.ps1 -Server $env:CRONY_SERVER_HTTP
+          - name: Verify content-addressed artifacts, provenance, and Corp-scoped download
+            run: node tools/e2e_artifacts.mjs
+          - name: Verify portable source deliverables, exact linkage, and cleanup acknowledgment
+            run: node tools/e2e_portable_deliverables.mjs
+          - name: Verify Codex start, steer, resume, interrupt, stop, usage, and evidence
+            run: node tools/e2e_codex.mjs
+          - name: Verify external CLI providers fail closed on Unix
+            env:
+              CRONY_EXTERNAL_ADAPTER_TEST: '1'
+              CRONY_SERVER_HTTP: http://127.0.0.1:18471
+            run: |
+              node tools/e2e_external_adapters.mjs --expect-unix --dry-run
+              node tools/e2e_external_adapters.mjs --expect-unix
+          - name: Verify GitHub Copilot harness, model discovery, selection, and resume
+            run: node tools/e2e_copilot.mjs
+          - name: Verify MCP, ACP, and A2A gateway conformance
+            run: node tools/e2e_gateways.mjs
+          - name: Verify parallel worktree isolation and source-checkout preservation
+            run: node tools/e2e_worktrees.mjs
+          - name: Verify bounded task-graph planning, scheduling, and retries
+            env:
+              CRONY_TASK_GRAPH_TEST: '1'
+              CRONY_SERVER_HTTP: http://127.0.0.1:18471
+            run: |
+              node tools/e2e_task_graph.mjs --dry-run
+              node tools/e2e_task_graph.mjs
+          - name: Verify automated, failed, human, and independent evidence gates
+            run: node tools/e2e_verification.mjs
+          - name: Verify resumable event replay
+            run: node tools/e2e_replay.mjs
+          - name: Verify control fencing and emergency stop
+            run: node tools/e2e_leases.mjs
+          - name: Verify room threads and membership isolation
+            run: node tools/e2e_rooms.mjs
+          - name: Verify cache-policy recovery and resume admission with real SQL
+            env:
+              DATABASE_URL: postgres://crony:crony@127.0.0.1:54329/crony
+            run: cargo test -p crony-server cache_admission_lifecycle_tests --locked -- --ignored --test-threads=1
+          - name: Verify runner grace and reconciliation
+            run: node tools/e2e_runner_reconnect.mjs
+          - name: Verify duplicate runner delivery is idempotent
+            run: node tools/e2e_idempotency.mjs
+          - name: Verify atomic artifact staging, cleanup, and restart recovery
+            env:
+              CRONY_ARTIFACT_STAGING_TEST: '1'
+              CRONY_SERVER_HTTP: http://127.0.0.1:18471
+            run: |
+              node tools/e2e_artifact_staging.mjs --dry-run
+              node tools/e2e_artifact_staging.mjs
+          - name: Verify fenced factory claims, restart recovery, and one linked mission
+            run: node tools/e2e_factory_claims.mjs
+          - name: Verify Project eligibility, dry run, dispatch, status sync, and replay
+            run: node tools/e2e_factory_controller.mjs
+          - name: Verify idempotent branch and pull-request publication with recovery
+            run: node tools/e2e_factory_publication.mjs
+          - name: Verify OIDC, Corp RBAC, runner enrollment, rotation, replay defense, and revocation
+            env:
+              CRONY_IDENTITY_TEST: '1'
+              CRONY_AUTH_TEST_PORT: '18473'
+              FAKE_OIDC_PORT: '18472'
+            run: |
+              node tools/e2e_identity.mjs --dry-run
+              node tools/e2e_identity.mjs
+          - name: Verify scoped secret brokering without plaintext leakage
+            run: node tools/e2e_secrets.mjs
+          - name: Verify durable risky-action approvals and exactly-once decision effects
+            run: node tools/e2e_approvals.mjs
+          - name: Verify budget and loop circuit-breaker stages
+            env:
+              CRONY_BUDGET_TEST: '1'
+              CRONY_BUDGET_RUNNER_ID: runner-local
+              CRONY_BUDGET_OUTPUT: ${{ github.workspace }}/output/e2e-budgets.json
+            run: |
+              node tools/e2e_budgets.mjs --dry-run
+              node tools/e2e_budgets.mjs
+          - name: Verify terminal provider cleanup and off-shift agent state
+            run: node tools/e2e_idle_cleanup.mjs
+          - name: Run the versioned 100-scenario deterministic evaluation lane
+            run: node tools/run_evals.mjs
+          - name: Consolidate chaos and restart evidence
+            run: node tools/e2e_chaos_report.mjs
+          - name: Stop the ownership-verified CI server
+            if: always()
+            run: node tools/ci_owned_test_server.mjs --stop
+          - name: Upload runtime evidence
+            if: always()
+            uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+            with:
+              name: integration-evidence
+              path: |
+                output/e2e-smoke.json
+                output/e2e-artifacts.json
+                output/e2e-portable-deliverables.json
+                output/e2e-artifact-staging.json
+                output/e2e-demo-lifecycle.json
+                output/e2e-codex.json
+                output/e2e-external-adapters.json
+                output/e2e-copilot.json
+                output/e2e-gateways.json
+                output/e2e-worktrees.json
+                output/e2e-task-graph.json
+                output/e2e-verification.json
+                output/e2e-identity.json
+                output/e2e-secrets.json
+                output/e2e-approvals.json
+                output/e2e-budgets.json
+                output/e2e-idle-cleanup.json
+                output/e2e-chaos.json
+                output/eval-report.json
+                output/e2e-runner-reconnect.json
+                output/e2e-idempotency.json
+                output/e2e-factory-claims.json
+                output/e2e-factory-controller.json
+                output/e2e-factory-publication.json
+                output/fake-github-factory-state.json
+                output/fake-github-publication-*.json
+                output/publication-server-restart.stdout.log
+                output/publication-server-restart.stderr.log
+                output/e2e-replay.json
+                output/e2e-leases.json
+                output/server-ci.json
+                output/server-ci.stdout.log
+                output/server-ci.stderr.log
+                output/factory-server-restart.stdout.log
+                output/factory-server-restart.stderr.log
+                output/server-restart.stdout.log
+                output/server-restart.stderr.log
+                output/*restart*.stdout.log
+                output/*restart*.stderr.log
+                output/artifact-recovery-server.stdout.log
+                output/artifact-recovery-server.stderr.log
+                output/runner-ci.log
+                output/runner/**/result.md
+                output/runner/**/evidence/*.json
+
+
+  operator: 'doesNotMatch'
+  stack: |-
+    TestContext.<anonymous> (file:///<reviewed-worktree>/tools/ci_owned_test_server.test.mjs:75:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: native test discovery covers existing web, tooling and steward suites
+ok 21 - native test discovery covers existing web, tooling and steward suites
+  ---
+  duration_ms: 2.7222
+  type: 'test'
+  ...
+# Subtest: standalone live and historical replays stay separate while adjacent unit suites remain enrolled
+not ok 22 - standalone live and historical replays stay separate while adjacent unit suites remain enrolled
+  ---
+  duration_ms: 1.4837
+  type: 'test'
+  location: '<reviewed-worktree>\\tools\\readiness_contract.test.mjs:12:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+
+      [
+        '.github/skills/code-review/tests/package.test.mjs',
+    +   'tools/fixtures/delegated-keycloak/test/live.test.mjs',
+        'tools/fixtures/delegated-keycloak/test/security.test.mjs',
+        'tools/fixtures/pr226-evidence-baseline-next/sample.test.mjs',
+    +   'tools/fixtures/pr226-evidence-baseline/check_evidence_personal_paths.test.mjs',
+    +   'tools/fixtures/pr226-evidence-baseline/nested/sample.test.mjs'
+      ]
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: '.github/skills/code-review/tests/package.test.mjs'
+    1: 'tools/fixtures/delegated-keycloak/test/security.test.mjs'
+    2: 'tools/fixtures/pr226-evidence-baseline-next/sample.test.mjs'
+  actual:
+    0: '.github/skills/code-review/tests/package.test.mjs'
+    1: 'tools/fixtures/delegated-keycloak/test/live.test.mjs'
+    2: 'tools/fixtures/delegated-keycloak/test/security.test.mjs'
+    3: 'tools/fixtures/pr226-evidence-baseline-next/sample.test.mjs'
+    4: 'tools/fixtures/pr226-evidence-baseline/check_evidence_personal_paths.test.mjs'
+    5: 'tools/fixtures/pr226-evidence-baseline/nested/sample.test.mjs'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///<reviewed-worktree>/tools/readiness_contract.test.mjs:21:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: empty discovery, invalid config and unknown groups fail closed
+ok 23 - empty discovery, invalid config and unknown groups fail closed
+  ---
+  duration_ms: 0.6233
+  type: 'test'
+  ...
+# Subtest: CommonJS CLI integration tests join the same native Node runner
+ok 24 - CommonJS CLI integration tests join the same native Node runner
+  ---
+  duration_ms: 0.1848
+  type: 'test'
+  ...
+# Subtest: review skill package tests remain enrolled when the independently reviewed skill lands
+ok 25 - review skill package tests remain enrolled when the independently reviewed skill lands
+  ---
+  duration_ms: 0.1604
+  type: 'test'
+  ...
+# Subtest: Windows package-manager execution uses an explicit argument vector, never a shell
+ok 26 - Windows package-manager execution uses an explicit argument vector, never a shell
+  ---
+  duration_ms: 0.4829
+  type: 'test'
+  ...
+# Subtest: full gate retains Rust, web and migration checks and adds Node/docs validation
+ok 27 - full gate retains Rust, web and migration checks and adds Node/docs validation
+  ---
+  duration_ms: 0.416
+  type: 'test'
+  ...
+# Subtest: test results distinguish failed, passed, ignored and not-observed
+ok 28 - test results distinguish failed, passed, ignored and not-observed
+  ---
+  duration_ms: 0.6359
+  type: 'test'
+  ...
+# Subtest: generated docs follow canonical command and version changes
+not ok 29 - generated docs follow canonical command and version changes
+  ---
+  duration_ms: 0.6629
+  type: 'test'
+  location: '<reviewed-worktree>\\tools\\readiness_contract.test.mjs:63:1'
+  failureType: 'testCodeFailure'
+  error: 'document separately run fixtures'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///<reviewed-worktree>/tools/readiness_contract.test.mjs:66:10)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: repair preserves authored prose, is idempotent, and refuses ambiguous blocks
+ok 30 - repair preserves authored prose, is idempotent, and refuses ambiguous blocks
+  ---
+  duration_ms: 0.5754
+  type: 'test'
+  ...
+# Subtest: Windows CRLF checkout is not mistaken for documentation drift
+ok 31 - Windows CRLF checkout is not mistaken for documentation drift
+  ---
+  duration_ms: 0.2967
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 28
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 576.4839

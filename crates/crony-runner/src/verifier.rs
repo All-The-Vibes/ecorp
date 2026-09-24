@@ -10,7 +10,9 @@ use std::{
 use std::os::unix::fs::PermissionsExt;
 
 use anyhow::{Context, Result, anyhow};
-use crony_domain::{ManualVerificationGate, VerificationPolicy, VerifierCheck};
+use crony_domain::{
+    ManualVerificationGate, VerificationPolicy, VerifierCacheSuppression, VerifierCheck,
+};
 use serde::Serialize;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -129,7 +131,7 @@ async fn run_check_inner(
     {
         return CancellableCheckResult::Cancelled;
     }
-    let outcome = match check {
+    let mut outcome = match check {
         VerifierCheck::Artifact { min_bytes } => {
             CheckOutcome::from_result(verify_artifact(artifacts, *min_bytes).await)
         }
@@ -140,16 +142,19 @@ async fn run_check_inner(
             program,
             args,
             timeout_ms,
+            cache_suppression,
         }
         | VerifierCheck::Test {
             program,
             args,
             timeout_ms,
+            cache_suppression,
         } => match verify_command_cancellable(
             workspace,
             program,
             args,
             *timeout_ms,
+            *cache_suppression,
             cancellation.as_deref_mut(),
         )
         .await
@@ -165,6 +170,32 @@ async fn run_check_inner(
             CheckOutcome::from_result(verify_screenshot(workspace, path, *min_bytes).await)
         }
     };
+    if let VerifierCheck::Command {
+        program,
+        cache_suppression,
+        ..
+    }
+    | VerifierCheck::Test {
+        program,
+        cache_suppression,
+        ..
+    } = check
+    {
+        let effective = cache_suppression.or_else(|| automatic_cache_suppression(program));
+        outcome.payload["cache_suppression"] = json!({
+            "policy": effective,
+            "source": if cache_suppression.is_some() { "explicit" } else if effective.is_some() { "automatic" } else { "none" },
+            "scope": "verifier_child",
+            "requested_environment": match effective {
+                Some(VerifierCacheSuppression::PythonInterpreter | VerifierCacheSuppression::PythonEnvironment) => json!({"PYTHONDONTWRITEBYTECODE":"1"}),
+                Some(VerifierCacheSuppression::NodeCompileCache) => json!({"NODE_DISABLE_COMPILE_CACHE":"1"}),
+                None => json!({}),
+            },
+            "requested_argument_prefix": if effective == Some(VerifierCacheSuppression::PythonInterpreter) { vec!["-B"] } else { vec![] },
+            "zero_cache_writes_verified": false,
+            "cleanup_authorized": false,
+        });
+    }
     if cancellation
         .as_ref()
         .is_some_and(|receiver| *receiver.borrow())
@@ -286,11 +317,49 @@ async fn verify_command(
     args: &[String],
     timeout_ms: u64,
 ) -> CheckOutcome {
-    match verify_command_cancellable(workspace, program, args, timeout_ms, None).await {
+    match verify_command_cancellable(workspace, program, args, timeout_ms, None, None).await {
         CommandCheckOutcome::Completed(outcome) => outcome,
         CommandCheckOutcome::Cancelled => {
             unreachable!("non-cancellable verifier command was cancelled")
         }
+    }
+}
+
+fn automatic_cache_suppression(program: &str) -> Option<VerifierCacheSuppression> {
+    let name = Path::new(program).file_name()?.to_str()?;
+    // Match the declared entry point, not a canonical symlink target or script arguments.
+    #[cfg(windows)]
+    let name = name.to_ascii_lowercase();
+    #[cfg(windows)]
+    let name = name.strip_suffix(".exe").unwrap_or(&name);
+    #[cfg(windows)]
+    if name == "py" {
+        return Some(VerifierCacheSuppression::PythonEnvironment);
+    }
+    if name == "python"
+        || name == "python3"
+        || name
+            .strip_prefix("python3.")
+            .is_some_and(|v| !v.is_empty() && v.bytes().all(|b| b.is_ascii_digit()))
+    {
+        Some(VerifierCacheSuppression::PythonInterpreter)
+    } else {
+        None
+    }
+}
+
+fn apply_cache_suppression(command: &mut Command, policy: Option<VerifierCacheSuppression>) {
+    match policy {
+        Some(VerifierCacheSuppression::PythonInterpreter) => {
+            command.arg("-B").env("PYTHONDONTWRITEBYTECODE", "1");
+        }
+        Some(VerifierCacheSuppression::PythonEnvironment) => {
+            command.env("PYTHONDONTWRITEBYTECODE", "1");
+        }
+        Some(VerifierCacheSuppression::NodeCompileCache) => {
+            command.env("NODE_DISABLE_COMPILE_CACHE", "1");
+        }
+        None => {}
     }
 }
 
@@ -299,6 +368,7 @@ async fn verify_command_cancellable(
     program: &str,
     args: &[String],
     timeout_ms: u64,
+    cache_suppression: Option<VerifierCacheSuppression>,
     cancellation: Option<&mut watch::Receiver<bool>>,
 ) -> CommandCheckOutcome {
     let deadline = Instant::now() + Duration::from_millis(timeout_ms);
@@ -333,6 +403,8 @@ async fn verify_command_cancellable(
     }
     let identity = executable_identity(&resolved.executable);
     let mut command = Command::new(&resolved.executable);
+    let cache = cache_suppression.or_else(|| automatic_cache_suppression(program));
+    apply_cache_suppression(&mut command, cache);
     command
         .args(args)
         .current_dir(workspace)
@@ -970,7 +1042,246 @@ fn normalize_path(path: PathBuf) -> PathBuf {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
+    #[test]
+    fn issue140_cache_policy_is_typed_scoped_and_roundtrips() {
+        for (policy, key, injected) in [
+            (
+                VerifierCacheSuppression::PythonInterpreter,
+                "PYTHONDONTWRITEBYTECODE",
+                true,
+            ),
+            (
+                VerifierCacheSuppression::PythonEnvironment,
+                "PYTHONDONTWRITEBYTECODE",
+                false,
+            ),
+            (
+                VerifierCacheSuppression::NodeCompileCache,
+                "NODE_DISABLE_COMPILE_CACHE",
+                false,
+            ),
+        ] {
+            let mut child = Command::new("fixture");
+            apply_cache_suppression(&mut child, Some(policy));
+            child.arg("original");
+            let env: Vec<_> = child.as_std().get_envs().collect();
+            assert_eq!(env, vec![(OsStr::new(key), Some(OsStr::new("1")))]);
+            let args: Vec<_> = child.as_std().get_args().collect();
+            assert_eq!(
+                args,
+                if injected {
+                    vec![OsStr::new("-B"), OsStr::new("original")]
+                } else {
+                    vec![OsStr::new("original")]
+                }
+            );
+            let check = VerifierCheck::Test {
+                program: "fixture".to_owned(),
+                args: vec![],
+                timeout_ms: 1000,
+                cache_suppression: Some(policy),
+            };
+            let value = serde_json::to_value(&check).unwrap();
+            assert_eq!(
+                serde_json::from_value::<VerifierCheck>(value).unwrap(),
+                check
+            );
+        }
+        let mut child = Command::new("fixture");
+        apply_cache_suppression(&mut child, None);
+        assert_eq!(child.as_std().get_envs().count(), 0);
+        assert_eq!(child.as_std().get_args().count(), 0);
+        let old = json!({"type":"command", "program":"node", "args":[], "timeout_ms":1000});
+        let parsed: VerifierCheck = serde_json::from_value(old.clone()).unwrap();
+        assert_eq!(serde_json::to_value(parsed).unwrap(), old);
+        let bad = json!({"type":"command", "program":"node", "args":[], "timeout_ms":1000, "cache_suppression":"delete_all"});
+        assert!(serde_json::from_value::<VerifierCheck>(bad).is_err());
+        for program in [
+            "pytest",
+            "python-wrapper",
+            "python3.bad",
+            "node",
+            "python3.",
+        ] {
+            assert_eq!(automatic_cache_suppression(program), None);
+        }
+        for program in ["python", "python3", "python3.12"] {
+            assert_eq!(
+                automatic_cache_suppression(program),
+                Some(VerifierCacheSuppression::PythonInterpreter)
+            );
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn issue140_windows_launcher_policy_preserves_launcher_arguments() {
+        use std::ffi::OsStr;
+
+        for (program, expected_policy, expected_args) in [
+            (
+                "py",
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                vec![OsStr::new("original")],
+            ),
+            (
+                "py.exe",
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                vec![OsStr::new("original")],
+            ),
+            (
+                "PY.EXE",
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                vec![OsStr::new("original")],
+            ),
+            (
+                "Python",
+                Some(VerifierCacheSuppression::PythonInterpreter),
+                vec![OsStr::new("-B"), OsStr::new("original")],
+            ),
+            (
+                "PYTHON3.EXE",
+                Some(VerifierCacheSuppression::PythonInterpreter),
+                vec![OsStr::new("-B"), OsStr::new("original")],
+            ),
+            (
+                "Python3.12.ExE",
+                Some(VerifierCacheSuppression::PythonInterpreter),
+                vec![OsStr::new("-B"), OsStr::new("original")],
+            ),
+            ("pytest.exe", None, vec![OsStr::new("original")]),
+            ("python-wrapper.exe", None, vec![OsStr::new("original")]),
+            ("python3.bad.exe", None, vec![OsStr::new("original")]),
+            ("python3..exe", None, vec![OsStr::new("original")]),
+            ("python3.12x.exe", None, vec![OsStr::new("original")]),
+        ] {
+            assert_eq!(automatic_cache_suppression(program), expected_policy);
+
+            let mut command = Command::new(program);
+            apply_cache_suppression(&mut command, expected_policy);
+            command.arg("original");
+
+            assert_eq!(
+                command.as_std().get_args().collect::<Vec<_>>(),
+                expected_args
+            );
+
+            let env = command.as_std().get_envs().collect::<Vec<_>>();
+            match expected_policy {
+                Some(VerifierCacheSuppression::PythonInterpreter)
+                | Some(VerifierCacheSuppression::PythonEnvironment) => {
+                    assert_eq!(
+                        env,
+                        vec![(OsStr::new("PYTHONDONTWRITEBYTECODE"), Some(OsStr::new("1")))]
+                    );
+                }
+                None => assert!(env.is_empty()),
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn issue140_failed_command_evidence_distinguishes_cache_selection_sources() {
+        let workspace =
+            std::env::temp_dir().join(format!("cache-evidence-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&workspace).unwrap();
+        for (name, explicit, expected_policy, expected_source) in [
+            ("git", None, None, "none"),
+            ("node", None, None, "none"),
+            (
+                "python3",
+                None,
+                Some(VerifierCacheSuppression::PythonInterpreter),
+                "automatic",
+            ),
+            (
+                "python3",
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                Some(VerifierCacheSuppression::PythonEnvironment),
+                "explicit",
+            ),
+            (
+                "node",
+                Some(VerifierCacheSuppression::NodeCompileCache),
+                Some(VerifierCacheSuppression::NodeCompileCache),
+                "explicit",
+            ),
+        ] {
+            let check = VerifierCheck::Command {
+                program: workspace.join(name).to_string_lossy().into_owned(),
+                args: vec![],
+                timeout_ms: 1_000,
+                cache_suppression: explicit,
+            };
+            let result = run_check(0, &check, &workspace, &[]).await;
+            assert!(
+                !result.passed,
+                "the explicit executable must remain missing"
+            );
+            let evidence = &result.payload["cache_suppression"];
+            assert_eq!(evidence["policy"], json!(expected_policy));
+            assert_eq!(evidence["source"], expected_source);
+            assert_eq!(evidence["scope"], "verifier_child");
+            assert_eq!(evidence["zero_cache_writes_verified"], false);
+            assert_eq!(evidence["cleanup_authorized"], false);
+            assert_eq!(
+                evidence["requested_argument_prefix"],
+                if expected_policy == Some(VerifierCacheSuppression::PythonInterpreter) {
+                    json!(["-B"])
+                } else {
+                    json!([])
+                }
+            );
+            assert_eq!(
+                evidence["requested_environment"],
+                match expected_policy {
+                    Some(
+                        VerifierCacheSuppression::PythonInterpreter
+                        | VerifierCacheSuppression::PythonEnvironment,
+                    ) => json!({"PYTHONDONTWRITEBYTECODE":"1"}),
+                    Some(VerifierCacheSuppression::NodeCompileCache) =>
+                        json!({"NODE_DISABLE_COMPILE_CACHE":"1"}),
+                    None => json!({}),
+                }
+            );
+        }
+        std::fs::remove_dir(&workspace).unwrap();
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Node.js 22.8+; run explicitly"]
+    async fn issue140_node_compile_cache_opt_in_uses_native_control() {
+        let check = VerifierCheck::Test {
+            program: "node".to_owned(),
+            args: vec!["-e".to_owned(), "const m = require('node:module'); if (m.enableCompileCache().status !== m.constants.compileCacheStatus.DISABLED) process.exit(1)".to_owned()],
+            timeout_ms: 10_000,
+            cache_suppression: Some(VerifierCacheSuppression::NodeCompileCache),
+        };
+        let result = run_check(0, &check, &std::env::temp_dir(), &[]).await;
+        assert!(result.passed, "{result:?}");
+        assert_eq!(
+            result.payload["cache_suppression"]["requested_argument_prefix"],
+            json!([])
+        );
+    }
+
+    #[tokio::test]
+    #[ignore = "requires Python 3; run explicitly"]
+    async fn issue140_explicit_wrapper_policy_leaves_argv_unchanged() {
+        let workspace = std::env::temp_dir();
+        let check = VerifierCheck::Command {
+            program: if cfg!(windows) { "python" } else { "python3" }.to_owned(),
+            args: vec!["-c".to_owned(), "import os, sys; assert os.environ['PYTHONDONTWRITEBYTECODE'] == '1'; assert sys.argv[1:] == ['argument with spaces']".to_owned(), "argument with spaces".to_owned()],
+            timeout_ms: 10_000,
+            cache_suppression: Some(VerifierCacheSuppression::PythonEnvironment),
+        };
+        let result = run_check(0, &check, &workspace, &[]).await;
+        assert!(result.passed, "{result:?}");
+        assert_eq!(result.payload["cache_suppression"]["source"], "explicit");
+    }
+
     use super::*;
 
     fn empty_environment() -> ResolutionEnvironment {
@@ -986,6 +1297,160 @@ mod tests {
             sha256: hex::encode(Sha256::digest(bytes)),
             bytes: bytes.len(),
             media_type: "text/plain".to_owned(),
+        }
+    }
+
+    #[tokio::test]
+    async fn issue297_negative_fake_outputs_are_rejected_by_native_verifier() {
+        let root = std::env::temp_dir().join(format!(
+            "issue297-negative-verifier-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let nonce = uuid::Uuid::new_v4().to_string();
+        for case in [
+            "control",
+            "exact-limit-control",
+            "missing-file",
+            "oversized-file",
+            "invalid-probe",
+        ] {
+            issue297_verify_case(&root, case, &nonce).await;
+        }
+        tokio::fs::remove_dir_all(root).await.unwrap();
+    }
+
+    pub(crate) async fn issue297_verify_case(root: &Path, case: &str, nonce: &str) -> Value {
+        use std::process::Stdio;
+        assert!(
+            [
+                "control",
+                "exact-limit-control",
+                "missing-file",
+                "oversized-file",
+                "invalid-probe"
+            ]
+            .contains(&case)
+        );
+        let paths = [
+            "handoffs/specialist-a.md",
+            "handoffs/specialist-a-probe.json",
+        ];
+        let policy = VerificationPolicy {
+            checks: vec![
+                VerifierCheck::Artifact { min_bytes: 1 },
+                VerifierCheck::File { path: paths[0].to_owned(), min_bytes: 1 },
+                VerifierCheck::File { path: paths[1].to_owned(), min_bytes: 1 },
+                VerifierCheck::Command {
+                    program: "node".to_owned(),
+                    args: vec![
+                        "-e".to_owned(),
+                        "const fs=require('node:fs');for(const p of process.argv.slice(1)){const b=fs.readFileSync(p);const s=new TextDecoder('utf-8',{fatal:true}).decode(b);if(!b.length||b.length>6144)process.exit(1);if(p.endsWith('.json'))JSON.parse(s)}".to_owned(),
+                        paths[0].to_owned(), paths[1].to_owned(),
+                    ],
+                    timeout_ms: 5_000,
+                    cache_suppression: None,
+                },
+            ],
+            manual_gate: None,
+        };
+        // This invokes the native verifier, not a server/store/full-stack acceptance gate.
+        // On any panic the owned root is deliberately retained for diagnosis.
+        {
+            let workspace = root
+                .join(case)
+                .join("workspaces")
+                .join("runs")
+                .join("child");
+            tokio::fs::create_dir_all(&workspace).await.unwrap();
+            let marker = if matches!(case, "control" | "exact-limit-control") {
+                String::new()
+            } else {
+                format!("[issue297-adversarial:{case}:{nonce}]")
+            };
+            let mut command = tokio::process::Command::new("node");
+            command
+                .arg(
+                    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                        .join("..")
+                        .join("..")
+                        .join("scripts")
+                        .join("fake-agent.mjs"),
+                )
+                .args(["--run-id", &uuid::Uuid::new_v4().to_string(), "--workdir"])
+                .arg(&workspace)
+                .arg("--mission")
+                .arg(format!(
+                    "MISSION: {marker}\nOBJECTIVE: {marker}\nEXPECTED OUTPUT: Verified research files: {}",
+                    paths.join(", ")
+                ))
+                .env_clear()
+                .env("CRONY_ISSUE297_ADVERSARIAL_NONCE", nonce)
+                .stdin(Stdio::null())
+                .kill_on_drop(true);
+            for key in ["PATH", "SystemRoot", "WINDIR"] {
+                if let Some(value) = std::env::var_os(key) {
+                    command.env(key, value);
+                }
+            }
+            let output = tokio::time::timeout(Duration::from_secs(10), command.output())
+                .await
+                .unwrap()
+                .unwrap();
+            tokio::fs::write(root.join(case).join("child.stdout.txt"), &output.stdout)
+                .await
+                .unwrap();
+            tokio::fs::write(root.join(case).join("child.stderr.txt"), &output.stderr)
+                .await
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{case}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            let events: Vec<Value> = String::from_utf8(output.stdout)
+                .unwrap()
+                .lines()
+                .map(|line| serde_json::from_str(line).unwrap())
+                .collect();
+            let receipts: Vec<_> = events
+                .iter()
+                .filter(|event| event["type"] == "artifact")
+                .collect();
+            assert_eq!(receipts.len(), 1);
+            let receipt = PathBuf::from(receipts[0]["path"].as_str().unwrap());
+            assert!(
+                receipt.starts_with(root),
+                "Fixture artifact must stay inside owned root"
+            );
+            let bytes = tokio::fs::read(&receipt).await.unwrap();
+            if case == "exact-limit-control" {
+                tokio::fs::write(workspace.join(paths[0]), vec![b'x'; 6144])
+                    .await
+                    .unwrap();
+            }
+            let report = verify(&policy, &workspace, &[artifact(receipt, &bytes)]).await;
+            assert_eq!(report.checks.len(), 4);
+            assert!(
+                report.checks[0].passed,
+                "Reject content, not a missing provider artifact"
+            );
+            let control = matches!(case, "control" | "exact-limit-control");
+            assert_eq!(report.passed, control, "{case}: {report:?}");
+            if !control {
+                let index = if case == "missing-file" { 1 } else { 3 };
+                assert!(
+                    !report.checks[index].passed,
+                    "Exact native check must reject {case}"
+                );
+            }
+            let evidence = serde_json::to_value(&report).unwrap();
+            tokio::fs::write(
+                root.join(case).join("native-verifier.json"),
+                serde_json::to_vec(&evidence).unwrap(),
+            )
+            .await
+            .unwrap();
+            evidence
         }
     }
 
@@ -1028,11 +1493,13 @@ mod tests {
                         program: "node".to_owned(),
                         args: vec!["-e".to_owned(), "process.exit(0)".to_owned()],
                         timeout_ms: 30_000,
+                        cache_suppression: None,
                     },
                     VerifierCheck::Test {
                         program: "node".to_owned(),
                         args: vec!["-e".to_owned(), "process.exit(0)".to_owned()],
                         timeout_ms: 30_000,
+                        cache_suppression: None,
                     },
                     VerifierCheck::JsonSchema {
                         path: "schema.json".to_owned(),
@@ -1232,6 +1699,7 @@ mod tests {
             program: "node".to_owned(),
             args: vec!["-e".to_owned(), script.to_owned()],
             timeout_ms: 30_000,
+            cache_suppression: None,
         };
         let (cancellation_tx, mut cancellation_rx) = watch::channel(false);
         let task_workspace = workspace.clone();

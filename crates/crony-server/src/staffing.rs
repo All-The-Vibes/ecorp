@@ -67,6 +67,7 @@ pub fn candidates(
             created_at: Utc::now(),
             mission_id: None,
             pinned: false,
+            pin_version: 0,
             retired_at: None,
         });
     }

@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "source_head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+  "tested_staged_tree": "85d872ede83d697950674d891e16d6da15f2cd9f",
+  "source_unchanged": true,
+  "trusted_base": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "incoming_pr": 323,
+  "incoming_head": "592ab11c2a733579d46e990a0685524b3a6684d4",
+  "started_at_utc": "2026-09-23T22:23:43.8880686+00:00",
+  "finished_at_utc": "2026-09-23T23:11:51.9111707+00:00",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "native_mcp_binary_sha256": "cce823ff7338d60563a4a2bba19e00046c14a54450d1f02e1232af7fbc5f2b3d",
+  "reconciliation_sha256": "92400db36b2e028aca6252a248f2a6e6c160bcd7d433dfeaa0d8bab506894d6f",
+  "original_receipt_sha256": "b70d114e4836f75ad61694ac87d09da6a8af364464fd52788e967df8ef910316",
+  "checks": [
+    {
+      "name": "readiness-regressions",
+      "command": "node --test --test-concurrency=1 --test-timeout=180000 --test-reporter=tap tools/readiness_contract.test.mjs tests/readiness/cli.test.js",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T22:23:44.4228798+00:00",
+      "duration_seconds": 38.5591018,
+      "counts": {
+        "tests": 33,
+        "passed": 33,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0
+      },
+      "file": "gates/readiness-regressions.log",
+      "original_sha256": "732b03714e0dbc53d2e7bf85603793834bdf03ce1b76b671c94f43fcb0b800e8",
+      "published_sha256": "3423673dbaee6b988f2b55c3aeddd255fae3d840e3d9d3af11ea61f8816c5a16",
+      "treatment": "Local paths, LF and trailing whitespace normalized. Native outcomes and diagnostics are retained."
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T22:24:24.0004018+00:00",
+      "duration_seconds": 0.8766021,
+      "counts": null,
+      "file": "gates/documentation.log",
+      "original_sha256": "01432084f5a9f7b2fac65e10454b3ee1977a20948a22216b52f1bd2334d2dbd3",
+      "published_sha256": "26bf938737ecae9455a78c364b28619436c4152da4a9b9b448e177ac162dd09b",
+      "treatment": "Local paths, LF and trailing whitespace normalized. Native outcomes and diagnostics are retained."
+    },
+    {
+      "name": "required-unit",
+      "command": "pnpm test:unit",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T22:24:27.9312045+00:00",
+      "duration_seconds": 474.0713867,
+      "counts": {
+        "tests": 2206,
+        "passed": 2185,
+        "failed": 0,
+        "skipped": 21,
+        "cancelled": 0
+      },
+      "file": "gates/required-unit.log",
+      "original_sha256": "f41c49996af4c9c373504d4763ad6b18d15c79526c883f9bf44b49503c065bde",
+      "published_sha256": "ba433a4c22d092c818c7cb5a6889c6f4aabe0bf3e1de1515333d652e864848c4",
+      "treatment": "Local paths, LF and trailing whitespace normalized. Native outcomes and diagnostics are retained."
+    },
+    {
+      "name": "full-node",
+      "command": "pnpm test:js",
+      "exit_code": 0,
+      "started_at_utc": "2026-09-23T22:32:23.8030243+00:00",
+      "duration_seconds": 2366.5920724,
+      "counts": {
+        "tests": 3060,
+        "passed": 3039,
+        "failed": 0,
+        "skipped": 21,
+        "cancelled": 0
+      },
+      "file": "gates/full-node.log",
+      "original_sha256": "5661a1f16e5a28e8f6f195022d8f208b945510c89971ea3c94a6432418be671d",
+      "published_sha256": "3ca4550ab7f6c0b2cc8c573cfe543330ce381e9f57e1bd5ce85284e33eaa1ae7",
+      "treatment": "Local paths, LF and trailing whitespace normalized. Native outcomes and diagnostics are retained."
+    }
+  ],
+  "retained_execution": {
+    "packet": "../pr-queue-corrections-20260923-r552",
+    "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+    "original_receipt_sha256": "e29bb0407e505937e74a4295d43de5e494ea5574d11da569108173d4f477bbb8",
+    "scope": "Every tracked blob outside the four named readiness files and the historical corrective evidence packet is identical. Retained Rust, browser/server/runner and other native executions retain their actual older tree; no fresh execution is implied."
+  },
+  "scope": "The four listed commands were executed after integrating the latest PR #323 changes. The earlier eleven gates and native acceptances retain their original source trees and execution times. Required hosted CI/security remains separate."
+}

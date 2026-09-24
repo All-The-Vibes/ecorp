@@ -1,0 +1,35 @@
+{
+  "pr": 305,
+  "tested_staged_tree": "93a5374d211eb9eb0fbb8e8cc61356e1e18b35fe",
+  "head": "155dc9cc4df91f2d9a5372de0c2cc9446c58c89c",
+  "started_at_utc": "2026-09-22T22:52:37.4532670+00:00",
+  "status": "failed",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr305-20260922-browser-r1",
+  "checks": [
+    {
+      "sha256": "b2151632223db88213b6008a69bf6a054c6688066608cc8be9b705471bebf731",
+      "exit_code": 0,
+      "name": "current-source-native-build",
+      "log": "<private-evidence>\\pr305-browser-r1-build.log"
+    },
+    {
+      "sha256": "6eaa6c939472d59400b6ddf3e55e251f2fd32f7ed17ee8e87dab3a2ab9f8f768",
+      "exit_code": 1,
+      "name": "owned-static-app-admission",
+      "log": "<private-evidence>\\pr305-browser-r1-context.log"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "99541ed8b3fdc09c719812b88b070bdcdcf4b0128faab9aff2a5d4b0cd627de1",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "7672cc475effedbf15ef759a9c02188586360f0c8713776316a180e22d6fd0d2",
+      "file": "crony-runner.exe"
+    }
+  ],
+  "failure": "owned-static-app-admission failed; preserve the fixture and recorded IDs.",
+  "cleanup": "Only owned processes stopped; all source, database, workspaces and evidence retained.",
+  "finished_at_utc": "2026-09-22T22:54:39.8857101+00:00"
+}

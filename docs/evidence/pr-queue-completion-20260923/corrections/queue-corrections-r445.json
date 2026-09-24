@@ -1,0 +1,103 @@
+{
+  "recorded_at_utc": "2026-09-23T15:53:49.3809884+00:00",
+  "source_tree_before": "ea2eb6a06d2ff36f96c10d1b2af2eaf3a9b1b84c",
+  "source_tree_after": "4568bb67bad4201d1d7ff77555b9ccec3f7cd823",
+  "files": [
+    ".github/skills/code-review/tests/package.test.mjs",
+    ".github/workflows/ci.yml",
+    "docs/VALIDATION.md",
+    "test.config.json",
+    "tools/check_docs.mjs",
+    "tools/ci_factory_repository.test.mjs",
+    "tools/readiness_contract.test.mjs",
+    "tools/run_checks.mjs"
+  ],
+  "prior_validation": {
+    "node_passed": 3026,
+    "status": "failed",
+    "node_tests": 3053,
+    "node_cancelled": 0,
+    "checks": [
+      {
+        "name": "migrations",
+        "exit_code": 0
+      },
+      {
+        "name": "state-audit-compatibility",
+        "exit_code": 0
+      },
+      {
+        "name": "documentation",
+        "exit_code": 0
+      },
+      {
+        "name": "rust-format",
+        "exit_code": 0
+      },
+      {
+        "name": "state-audit-evm",
+        "exit_code": 0
+      },
+      {
+        "name": "rust-clippy",
+        "exit_code": 0
+      },
+      {
+        "name": "rust-workspace",
+        "exit_code": 0
+      },
+      {
+        "name": "node-unit",
+        "exit_code": 1
+      },
+      {
+        "name": "steward",
+        "exit_code": 0
+      },
+      {
+        "name": "web-build",
+        "exit_code": 0
+      },
+      {
+        "name": "web-lint",
+        "exit_code": 0
+      }
+    ],
+    "node_skipped": 21,
+    "path": "queue-validation-r421/validation.json",
+    "source_unchanged": true,
+    "node_failed": 6
+  },
+  "corrections": [
+    "Inherit the CI integration job owned PostgreSQL URL rather than the obsolete 54329 override.",
+    "Keep only the standalone delegated live suite and recovered historical PR226 baseline outside ordinary Node discovery; retain adjacent security and review unit suites.",
+    "Validate exclusions and disclose dedicated fixture/replay lanes in generated documentation.",
+    "Bind review-package assertions to current pnpm check and full Node discovery; verify Windows compile/readiness/serial order with intervening safety steps retained.",
+    "Check that a mismatched Factory source rejects before creating any work item, mission, task or run."
+  ],
+  "regressions": [
+    {
+      "file": "queue-integration-focus-red-r442.log",
+      "sha256": "96c2bac33dc554aaf597b059cfd9bfbbd9766b975695d30c1adcf52e510c9ca3"
+    },
+    {
+      "file": "queue-integration-focus-green-r443.log",
+      "sha256": "8cef63194ec61dea6f51c3026220427ca0ec985e3f21ddd21b64410e0a574c22"
+    },
+    {
+      "file": "queue-ci-port-red-r431.log",
+      "sha256": "7dc4cd5856b4f0d4ad2dc978e4b0baac7efbbb81cfce468b38c55ada80a64e2a"
+    },
+    {
+      "file": "queue-docs-preview-r443.json",
+      "sha256": "bc607b5e237a4a435ed7f0ec6195c645f64b9bd88d339ac86e4ffc94853b3b73"
+    }
+  ],
+  "review": "Inspected all eight correction diffs. The historical baseline bytes and outcomes remain untouched. Live identity acceptance remains required in the owned native sequence.",
+  "focus_result": {
+    "skipped": 0,
+    "failed": 0,
+    "cancelled": 0,
+    "passed": 50
+  }
+}

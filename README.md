@@ -157,21 +157,31 @@ Artifact bytes move through bounded staging, content-addressed storage, signed p
 ## Start locally
 
 **Prerequisites:** repository access, Git, Rust 1.94 or newer, Node.js compatible with the pinned
-pnpm/Vite toolchain, pnpm 11.19.0, Docker with Compose, and PowerShell 7.4+ on Windows. Provider credentials
-are optional for the deterministic harness; real-agent work requires the selected provider's access.
+pnpm/Vite toolchain, pnpm 11.19.0, PostgreSQL with `psql.exe`, and PowerShell 7.4+ on Windows.
+Provider credentials are optional for the deterministic harness; real-agent work requires the
+selected provider's access.
 
 ```powershell
 git clone https://github.com/All-The-Vibes/ecorp.git
 cd ecorp
 pnpm install --frozen-lockfile
+```
+
+For a fresh clone, first follow the explicit
+[first-time local development setup](docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md#first-time-local-development-setup).
+It uses the native server bootstrap and runner enrollment once, then stops those setup processes.
+With the resulting identity, credential, source settings and trusted `DATABASE_URL` configured:
+
+```powershell
+pwsh -NoProfile -File ./tools/start_local.ps1 -Preflight
 pwsh -NoProfile -File ./tools/start_local.ps1
 ```
 
 Open **http://127.0.0.1:5187** by default, or the retained address printed by the command.
 Start reuses healthy owned services and starts only missing ones. It keeps the database, native
 runner identity, provider home, worktrees and diagnostics rather than resetting them.
-An explicitly supplied `DATABASE_URL` uses that database without starting Docker; otherwise,
-first-time local setup uses the workspace's managed Compose database.
+Every preflight/start/restart requires an explicitly supplied `DATABASE_URL` for an independently
+provisioned, authorized database. Startup does not invoke Compose, create a Corp, or enroll a runner.
 This is your local ECorp console, not the public product-site tour. Use the
 [five-step mission guide](docs/USER_AND_DEVELOPER_JOURNEY.md) for repository confirmation, staffing,
 verification, and review.
@@ -228,6 +238,11 @@ pnpm check
 ```
 
 This runs migration checks, Rust formatting, Clippy, the workspace test suite, and the web build and lint.
+
+It also runs the native Node regression suites and the documentation-contract drift gate.
+Use `pnpm check:preview` to inspect the exact commands without executing them, or
+`pnpm check:fast` for quick feedback. See [reproducible validation](docs/VALIDATION.md)
+for pinned toolchains, test discovery, evidence receipts, and ignored-test boundaries.
 
 ## Run a GitHub issue through the factory
 

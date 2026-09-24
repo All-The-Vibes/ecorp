@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "status": "source-reviewed",
+  "started_at_utc": "2026-09-23T17:17:32.01279-05:00",
+  "repository": "All-The-Vibes/ecorp",
+  "source_head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+  "trusted_base": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "previous_tested_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+  "previous_packaged_tree": "653bbb3fdbc2e2cf91f0131c551b96718047220d",
+  "historical_packet": "docs/evidence/pr-queue-corrections-20260923-r552",
+  "historical_packet_tree": "01f29e7a2238dc4c739ed4eda6b4980c0ce5816e",
+  "historical_assertion": {
+    "status": "passed",
+    "head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+    "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+    "committed": false,
+    "artifacts": 38,
+    "preserved_original_prs": [
+      226,
+      237,
+      255,
+      283,
+      293,
+      294,
+      304,
+      305,
+      319,
+      320,
+      323,
+      325,
+      332,
+      353,
+      354,
+      355,
+      358,
+      359
+    ]
+  },
+  "historical_validation_sha256": "e29bb0407e505937e74a4295d43de5e494ea5574d11da569108173d4f477bbb8",
+  "incoming_pr": 323,
+  "incoming_previous_head": "d3fb5d8bf73d9f0f26ca14b9378fe15a3ac2f5da",
+  "incoming_head": "592ab11c2a733579d46e990a0685524b3a6684d4",
+  "incoming_paths": [
+    "docs/VALIDATION.md",
+    "tests/readiness/cli.test.js",
+    "tools/readiness_contract.test.mjs",
+    "tools/run_checks.mjs"
+  ],
+  "pending_parents": [
+    "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+    "592ab11c2a733579d46e990a0685524b3a6684d4"
+  ],
+  "incoming_patch_sha256": "f6404d3d17f5251f8daea4c62dafc4c6d38410ba61a05d0f97a43fea4b0b4739",
+  "apply_exit": 1,
+  "apply_log_sha256": "b2b899a99cd819348ad9825ec537cf8e4db07dc9f758fa3b6962ef4fe01be31e",
+  "unmerged_paths": [
+    "tools/run_checks.mjs"
+  ],
+  "updated_at_utc": "2026-09-23T22:23:38.794722+00:00",
+  "final_tested_tree": "85d872ede83d697950674d891e16d6da15f2cd9f",
+  "completed_static_review": {
+    "reviewed_at_utc": "2026-09-23T22:23:38.794722+00:00",
+    "resolved_paths": [
+      "tools/run_checks.mjs"
+    ],
+    "current_unmerged_paths": [],
+    "outside_incoming_paths": [],
+    "historical_packet_tree_unchanged": false,
+    "review": "Reconciled the contributor deadline, exact loaded configuration hash, and native Git diagnostic preservation with the existing streamed diff hashing, asynchronous entry point, expanded discovery, and eleven validation gates. Extended the same diagnostic metadata to streamed diff failures, without retaining raw stderr; added initial and postflight native streamed-diff regressions. Reviewed configuration race rejection and unchanged repository assertions. Native regression execution remains pending.",
+    "syntax_and_whitespace": "Earlier node --check passed on both edited JavaScript files; staged git diff --check passed after conflict resolution.",
+    "streamed_fixture_correction": "The private marker is now an invalid native core.quotePath boolean passed through environment configuration only to the selected streamed diff; native stderr is compared by byte length and SHA-256 while its raw text is withheld.",
+    "historical_packet_existing_blobs_unchanged": true
+  },
+  "prior_reconciliation": {
+    "file": "queue-reconciliation-r575.json",
+    "sha256": "6dfc5680afa6e2c795ca5b8430e32bdc87339f0667cebef55a3e1c2f09bfab91",
+    "tested_staged_tree": "6f5c9e94f551b1b32ccd15ca7cf80ca2f0bc5115"
+  },
+  "prior_final_validation_attempt": {
+    "file": "queue-final-validation-r575/validation.json",
+    "sha256": "df6fee932c1d240692821672f1a1d0db80ebb4496d99d8cae1d8bfd0f6a06d1c",
+    "status": "failed",
+    "tested_staged_tree": "6f5c9e94f551b1b32ccd15ca7cf80ca2f0bc5115",
+    "diagnosis": "31 focused readiness tests passed; the two new streamed-diff fixtures failed before invoking the CLI because invalid GIT_DIR invokes Git diff fallback with exit 129 and no sensitive-path marker. The corrected fixture injects an invalid native boolean configuration value only into the selected streamed diff. A read-only native probe confirmed exit 128 and the synthetic value in stderr. Production source is unchanged by this fixture correction."
+  },
+  "historical_packet_staging_correction": {
+    "original_staged_tree": "7e06be48437da11efee95e65bac39c1f8c3264ad",
+    "complete_staged_tree": "01f29e7a2238dc4c739ed4eda6b4980c0ce5816e",
+    "added_artifacts": [
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/build/native-mcp-build.log",
+        "sha256": "0ef9a9def792299c0f63c8f1af5fa4d1add7ab2de2f019e588a8985dad95cdea"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/build/workspace-refresh.log",
+        "sha256": "639bf525b51903fe694b0976c2fad1e2c50aff06d91b2803914c97bc315e9a88"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/documentation.log",
+        "sha256": "26bf938737ecae9455a78c364b28619436c4152da4a9b9b448e177ac162dd09b"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/migrations.log",
+        "sha256": "e0c2f15cea3dd8c554af2802de061ce01c5ca9fef6fbb11c4e8eeddeaf7e537b"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/node-unit.log",
+        "sha256": "f54ff943235e8ef86b810c2567b8e2c81fb11a1450152e35b7bcafaa041ebca3"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/rust-clippy.log",
+        "sha256": "5df1e2a98c15b88b0e5d5db06eb97dc46f48bec73ccf9b4090996d9318da812b"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/rust-format.log",
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/rust-workspace.log",
+        "sha256": "92f8c6631474fcdc77c7a964da5b55c1d5aeb0907937a95fc2e82451fc535982"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/state-audit-compatibility.log",
+        "sha256": "9f811af000a8ef259cc02015935744ac019939a42ac2e248d8ae10c87093f09d"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/state-audit-evm.log",
+        "sha256": "fe34939e668dbcd3b910cfca68af9b988cb33e28c9882c26ddb89d2a071ef29a"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/steward.log",
+        "sha256": "39060e8ba7d7bd0d00aa1d4a1d5c01830219f0b6897559218d6d781cd32c726a"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/web-build.log",
+        "sha256": "c0cc5ef5246e58699ab324df858669679833d2a6454d12519603e32c3e03eb0f"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/gates/web-lint.log",
+        "sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/native/delegated/crony-runner-build.log",
+        "sha256": "6b5d201f5e2d8b9b03c8f9360f4778119dd36a0ed2781725adfe91bce1102c07"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/native/delegated/crony-server-build.log",
+        "sha256": "579f33f5463ebb8e1c75d426892ee337894822b43067531f06de16ee010335f5"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/native/delegated/owned-browser-server-runner-delegated-acceptance.log",
+        "sha256": "565c5367d313b9e26b80662b3d6d78c50dee14deb9effdc41ed97269fe535cf4"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/native/delegated/owned-native-stack-start-and-ownership-proof.log",
+        "sha256": "0ab78c4b93ab466669efb076f2ec8f9c98228a30eaa85bfbaee0ce9dc55aae11"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/native/delegated/workspace-cache-refresh.log",
+        "sha256": "95f0d5d0ec9057c4a5e12ef4df89237a2d0414ca239dff8f033993eaa2a0b353"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/native/worker-gateway/owned-postgresql-initialization.log",
+        "sha256": "5f6338e0e0d9ab7938a22482401a6016ce5ba9c736226ef814835a6860f86336"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/native/worker-gateway/owned-postgresql-readonly-gateway-authorizer.log",
+        "sha256": "284f78fd1d10f9b396d4ed131b270fa069fc5ad6b58e81053fdffc1d6fd99485"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/native/worker-gateway/owned-postgresql-worker-http-gateway-restart-finality.log",
+        "sha256": "c2b7a92fede6dcb2a0dc6a6cc8d641a40f0ed31e12504fc275baa97db43d41b7"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/native/worker-gateway/workspace-cache-refresh.log",
+        "sha256": "8f59ae9fb67420148b8c81c7a53e439e695afab28a18d4e6be90c14619464819"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/validation-history/initial-node-unit.log",
+        "sha256": "74e4cf85d184513f5feb2fd80e79da54867478d3a2cc1eff86ec8a28f15c0a34"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/validation-history/teams-host-diagnostic.log",
+        "sha256": "824b87c3ea91dec6cbf43d2a483ed8a18d9d7e26518c8ebd4de98ce9ff70e2c7"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/windows-instrumented/instrumented-build.log",
+        "sha256": "d8bbed1cddaae6d97ff0e5c1c3f5f963ef1acfad441d9edbbcbb69c4100fea4a"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/windows-instrumented/instrumented-external-adapters.log",
+        "sha256": "403e8ed3797a889463a105eef81bf622cf44827820ae2685aafea8bf00535856"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/windows-instrumented/llvm-tools.log",
+        "sha256": "fb4562bf999148ffcae6ca67cc6213e519d3fdd3c752a25f96cf7638369293aa"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/windows-runner/instrumented-build.log",
+        "sha256": "88258b638b1e4a9e55b5be943d761bb818e3ab6dbc0529c46ec5377c5716bb98"
+      },
+      {
+        "path": "docs/evidence/pr-queue-corrections-20260923-r552/windows-runner/instrumented-runner.log",
+        "sha256": "917b29f1b6b0cec1d97957e36e71801956fc09d3c25033282444bbed2b932141"
+      }
+    ],
+    "scope": "The prior packager left 29 manifest-listed .log artifacts ignored by Git. Added their existing bytes to the index explicitly; the original 10 staged blobs, all 38 manifest artifact hashes, and the earlier published completion packet remain unchanged. No historical result or time is rewritten."
+  }
+}

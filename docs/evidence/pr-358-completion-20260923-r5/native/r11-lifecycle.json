@@ -1,0 +1,75 @@
+{
+  "pr": 358,
+  "validation_source_tree": "452b82634081ab70c903db7da9d0702d2e6286fc",
+  "validation_receipt_sha256": "32496ceda77c4a3eb53a545fa00ddf425c31cfa9ae9039d112fda3214f21fbbc",
+  "tested_staged_tree": "452b82634081ab70c903db7da9d0702d2e6286fc",
+  "source_head": "5db7afa19b1bb17c06feea40043ba8d5005b22b1",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr358-20260923-r11",
+  "started_at_utc": "2026-09-23T09:07:45.9964019+00:00",
+  "status": "passed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-native-r11-focused.log",
+      "name": "focused-native-acceptance",
+      "sha256": "3c72f6630199a55e2b54781008de87dfed6e9f51de028917547b496cddcac8e5"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-native-r11-approval-expiry.log",
+      "name": "native-approval-decision-rejection-expiry",
+      "sha256": "9d41e0a92ae9963d0cbc01d43466d04657276186431b01d43605707bd280faad"
+    },
+    {
+      "exit_code": 0,
+      "log": "<private-evidence>\\pr358-native-r11-browser.log",
+      "name": "browser-server-runner-policy-acceptance",
+      "sha256": "34be0a4c7724d4949e96941a3d9937bcbf579279059752cc5a921a6cd29127a1"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "8400b49c3476ef82e8ab7eff09fba952f936ed6d56fce9f6441182f50e4c1052",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "1eece3a9c25e9a2f621f4239c5b73723b123a02b0bd8eb35ca4399acf021356f",
+      "file": "crony-runner.exe"
+    }
+  ],
+  "retained_native_evidence": {
+    "checks": [
+      {
+        "sha256": "f77b86bd93c958e481a1dddd19b252442a2f9f5ef533db15cde377d8d593f2cb",
+        "name": "native-build",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r10-build.log"
+      },
+      {
+        "sha256": "e5b26445d102b976e436219f7834331c0dd299c37a1b8c5d3b01e3289c88895a",
+        "name": "owned-postgresql-retained-receipts-regressions",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r10-sqlx-retained-receipts.log"
+      },
+      {
+        "sha256": "2bf136cd1c8ee496939347c59beb4afa885745e2194cd2cb9b41df805255c71b",
+        "name": "owned-postgresql-crony-store-regressions",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r10-sqlx-crony-store.log"
+      },
+      {
+        "sha256": "d099b0ecc8c37f5fd1c68c803b887ebec53ad9f72d43f5ffbb9190cbc2d533fa",
+        "name": "owned-postgresql-crony-server-regressions",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr358-native-r10-sqlx-crony-server.log"
+      }
+    ],
+    "receipt": "<private-evidence>\\pr358-native-r10-lifecycle.json",
+    "sha256": "9faa8e538fb91e3472d77019ed4a51ac7d9d1478c908914d6371fe5fa731d83f",
+    "native_postgres_count": 48,
+    "qualification": "Reused unchanged source/binaries and all 48 already passed native PostgreSQL regressions. This r11 driver freshly executes aggregate, approval and browser acceptance."
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-23T09:08:59.2642405+00:00"
+}

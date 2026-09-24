@@ -1,0 +1,70 @@
+    Checking windows-sys v0.61.2
+    Checking crony-domain v0.1.0 (<reviewed-worktree>\crates\crony-domain)
+    Checking crony-protocol v0.1.0 (<reviewed-worktree>\crates\crony-protocol)
+    Checking mio v1.2.2
+    Checking socket2 v0.6.5
+    Checking tokio v1.53.1
+    Checking schannel v0.1.29
+    Checking native-tls v0.2.18
+    Checking rustls-native-certs v0.8.4
+    Checking anstyle-wincon v3.0.11
+    Checking anstyle-query v1.1.5
+    Checking anstream v1.0.0
+    Checking clap_builder v4.6.7
+    Checking clap v4.6.7
+    Checking home v0.5.12
+    Checking nu-ansi-term v0.50.3
+    Checking tokio-util v0.7.19
+    Checking tokio-rustls v0.26.4
+    Checking h2 v0.4.19
+    Checking tower v0.5.3
+    Checking tokio-native-tls v0.3.1
+    Checking tower-http v0.6.11
+    Checking tokio-stream v0.1.19
+    Checking tokio-tungstenite v0.29.0
+    Checking cap-primitives v4.0.3
+    Checking hyper v1.11.1
+    Checking tracing-subscriber v0.3.23
+    Checking hyper-util v0.1.20
+    Checking sqlx-core v0.8.6
+    Checking hyper-tls v0.6.0
+    Checking hyper-rustls v0.27.9
+    Checking reqwest v0.12.28
+    Checking axum v0.8.9
+    Checking etcetera v0.8.0
+    Checking tungstenite v0.24.0
+    Checking sqlx-postgres v0.8.6
+    Checking crony-gateways v0.1.0 (<reviewed-worktree>\crates\crony-gateways)
+    Checking tokio-tungstenite v0.24.0
+    Checking cap-std v4.0.3
+    Checking winapi-util v0.1.11
+    Checking github-copilot-sdk v1.0.11
+    Checking sqlx v0.8.6
+    Checking tokio-tungstenite v0.28.0
+    Checking same-file v1.0.6
+    Checking cap-fs-ext v4.0.3
+    Checking walkdir v2.5.0
+    Checking object_store v0.12.5
+    Checking crony-store v0.1.0 (<reviewed-worktree>\crates\crony-store)
+    Checking crony-server v0.1.0 (<reviewed-worktree>\crates\crony-server)
+    Checking crony-runner v0.1.0 (<reviewed-worktree>\crates\crony-runner)
+error: manual implementation of `.is_multiple_of()`
+   --> crates\crony-runner\src\bin\crony-evidence-paths.rs:250:31
+    |
+250 |                 length > 0 && length % 2 == 0 && offset + header + length <= bytes,
+    |                               ^^^^^^^^^^^^^^^ help: replace with: `length.is_multiple_of(2)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#manual_is_multiple_of
+    = note: `-D clippy::manual-is-multiple-of` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::manual_is_multiple_of)]`
+
+error: manual implementation of `.is_multiple_of()`
+   --> crates\crony-runner\src\bin\crony-evidence-paths.rs:281:44
+    |
+281 |                 next >= header + length && next % 8 == 0 && offset + next < bytes,
+    |                                            ^^^^^^^^^^^^^ help: replace with: `next.is_multiple_of(8)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#manual_is_multiple_of
+
+error: could not compile `crony-runner` (bin "crony-evidence-paths") due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...

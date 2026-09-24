@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "tested_staged_tree": "db307a6fc9768ca6caf9309d980b3e21fdd98051",
+  "source_head": "4cc00784ff7a23c40d61bfce1e96152a22093f2f",
+  "source_unchanged": true,
+  "started_at_utc": "2026-09-23T21:06:19.4195623+00:00",
+  "finished_at_utc": "2026-09-23T21:15:10.8974569+00:00",
+  "original_receipt_sha256": "01c1c2811e05dcb350904dd8bd97436e79e275f06d6c51f3c34182bf0795ff28",
+  "prior_receipt_sha256": "c5ffcbac82323eed9fd26585413b423de9489484d74bccda021adb4266d8f106",
+  "counts": {
+    "passed": 260,
+    "failed": 0,
+    "ignored": 5
+  },
+  "scope": "All tests in the native instrumented crony-runner binary, sequentially. Existing ignored tests remain disclosed. This is diagnostic execution, not workspace coverage measurement or hosted acceptance.",
+  "tool_hashes": [
+    {
+      "file": "cargo-llvm-cov.zip",
+      "sha256": "656590cfa13bb7478595bbfdd3bc6bc075a4f7f3f0df5a439c1856cb03c5a4d2"
+    },
+    {
+      "file": "cargo-llvm-cov.exe",
+      "sha256": "a854b3d24f49535dc8b3d070035e0f9042b5cac25324e66cb06c639e4e04baeb"
+    },
+    {
+      "file": "node-SHASUMS256.txt",
+      "sha256": "778ac5b2fcdbd68d9c0ae9f4310674faa3af0910bd0d18e7f6597787c40a3e39"
+    },
+    {
+      "file": "node-v22.23.2-win-x64.zip",
+      "sha256": "1177b4137ba5adaa56354ae40f1080c7450e8ae09cecb47da459d1c52ac99f97"
+    }
+  ],
+  "checks": [
+    {
+      "name": "instrumented-build",
+      "command": "cargo +1.98.1 test -p crony-runner --bin crony-runner --locked --no-run",
+      "exit_code": 0,
+      "duration_seconds": 18.0361192,
+      "file": "windows-runner/instrumented-build.log",
+      "original_sha256": "6f6aa26171d01f1359abd184051c6a42bfe89797432116ab2d6a739c809b48b7",
+      "published_sha256": "88258b638b1e4a9e55b5be943d761bb818e3ab6dbc0529c46ec5377c5716bb98",
+      "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+    },
+    {
+      "name": "instrumented-runner",
+      "command": "cargo +1.98.1 test -p crony-runner --bin crony-runner --locked -- --test-threads=1",
+      "exit_code": 0,
+      "duration_seconds": 501.9077482,
+      "file": "windows-runner/instrumented-runner.log",
+      "original_sha256": "46bc051f4e2dec241a2164725a83e3bc5ebb01c86dabc60f9a97fa5766b06d29",
+      "published_sha256": "917b29f1b6b0cec1d97957e36e71801956fc09d3c25033282444bbed2b932141",
+      "treatment": "Local paths/user normalized; LF and trailing whitespace normalized. Original evidence remains retained."
+    }
+  ]
+}

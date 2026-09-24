@@ -9,6 +9,7 @@ export interface OfficeAgent {
   mission_id?: string | null
   /** Legacy snapshots omit this field; only an explicit true means pinned. */
   pinned?: boolean
+  pin_version?: number
   retired_at?: string | null
 }
 

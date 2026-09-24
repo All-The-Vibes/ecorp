@@ -1,0 +1,97 @@
+✖ PR237 launch rollback: identity exception reaps the real child before rejecting (59.9657ms)
+ℹ Retained process-admission logs: <local-user>\AppData\Local\Temp\ecorp-budget-admission-jq5p6S
+✖ PR237 launch rollback: identity absence reaps the real child before rejecting (37.4044ms)
+ℹ Retained process-admission logs: <local-user>\AppData\Local\Temp\ecorp-budget-admission-GtOwSK
+✖ PR237 launch rollback: foreign executable reaps the real child before rejecting (35.1242ms)
+ℹ Retained process-admission logs: <local-user>\AppData\Local\Temp\ecorp-budget-admission-xfR78q
+✖ PR237 launch rollback: receipt publication reaps the real child before rejecting (40.9985ms)
+ℹ Retained process-admission logs: <local-user>\AppData\Local\Temp\ecorp-budget-admission-KIFeiD
+✖ PR237 launch rollback: PowerShell record failure reaps or retains the exact process capability (2302.0756ms)
+ℹ Retained PowerShell admission logs: <local-user>\AppData\Local\Temp\ecorp-admission-ad1b19bee1a94ce48a000e93b9299ef9
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2654.6984
+
+✖ failing tests:
+
+test at tools\factory_budget_start.test.mjs:32:3
+✖ PR237 launch rollback: identity exception reaps the real child before rejecting (59.9657ms)
+  AssertionError [ERR_ASSERTION]: Admission must confirm child exit before returning the failure
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/factory_budget_start.test.mjs:54:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\factory_budget_start.test.mjs:32:3
+✖ PR237 launch rollback: identity absence reaps the real child before rejecting (37.4044ms)
+  AssertionError [ERR_ASSERTION]: Admission must confirm child exit before returning the failure
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/factory_budget_start.test.mjs:54:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\factory_budget_start.test.mjs:32:3
+✖ PR237 launch rollback: foreign executable reaps the real child before rejecting (35.1242ms)
+  AssertionError [ERR_ASSERTION]: Admission must confirm child exit before returning the failure
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/factory_budget_start.test.mjs:54:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\factory_budget_start.test.mjs:32:3
+✖ PR237 launch rollback: receipt publication reaps the real child before rejecting (40.9985ms)
+  AssertionError [ERR_ASSERTION]: Admission must confirm child exit before returning the failure
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/factory_budget_start.test.mjs:54:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\factory_budget_start.test.mjs:67:1
+✖ PR237 launch rollback: PowerShell record failure reaps or retains the exact process capability (2302.0756ms)
+  AssertionError [ERR_ASSERTION]: Record construction rejected while its owned child remained alive.
+
+  false !== true
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/tools/factory_budget_start.test.mjs:81:45)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

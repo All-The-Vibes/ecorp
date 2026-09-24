@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "prs": [
+    226,
+    237,
+    255,
+    283,
+    293,
+    294,
+    304,
+    305,
+    319,
+    320,
+    323,
+    325,
+    332,
+    353,
+    354,
+    355,
+    358,
+    359
+  ],
+  "source_head": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "target_main": "34002d3a362dd7b031c70803cf918e78f982bf1f",
+  "tested_staged_tree": "54c6dbd01b9cd027b1920c58a65f5651574247cd",
+  "native_execution_tree": "67e9c956ad29ed0ffdb10b165d6320a506a3eb5b",
+  "native_source_equivalence": "native-source-equivalence.json",
+  "status": "passed",
+  "started_at_utc": "2026-09-23T18:23:21.2826645+00:00",
+  "finished_at_utc": "2026-09-23T19:21:51.6669635+00:00",
+  "platform": "Windows x64",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "rust_test_threads": "1",
+  "git_core_longpaths": "process-only true",
+  "build_isolation": "Workspace package artifacts are removed under the task Cargo mutex before Rust validation. Third-party dependency cache is retained. Node tests use a freshly built copied native MCP binary.",
+  "original_receipt_sha256": "63f6f8e77a147b50c2394aa21fa605534c1dea51bbfeba97ecae570c436010fc",
+  "source_binding": "The final staged/committed tree must equal the tested source after excluding only this newly added packet. All original PR heads remain ancestors.",
+  "normalization": "Published text replaces local source, fixture and user paths, uses LF, and removes trailing whitespace. Original and published hashes are distinct. No historical evidence is reclassified as current acceptance.",
+  "checks": [
+    {
+      "name": "migrations",
+      "command": "node tools/check_migrations.mjs",
+      "exit_code": 0,
+      "duration_seconds": 0.1776539,
+      "log": "migrations.log",
+      "original_log_sha256": "e072a9f1c44e3592772411a96d57ea3d6c5f42507f8a93abeac1c15fdf936bcd",
+      "published_log_sha256": "e0c2f15cea3dd8c554af2802de061ce01c5ca9fef6fbb11c4e8eeddeaf7e537b",
+      "counts": null
+    },
+    {
+      "name": "state-audit-compatibility",
+      "command": "pnpm check:state-audit-compatibility",
+      "exit_code": 0,
+      "duration_seconds": 0.8140999,
+      "log": "state-audit-compatibility.log",
+      "original_log_sha256": "0f53897df9ff4a39bc1e830d3887c5e0df48a85526e6eb8cb414b61ccc531bac",
+      "published_log_sha256": "9f811af000a8ef259cc02015935744ac019939a42ac2e248d8ae10c87093f09d",
+      "counts": null
+    },
+    {
+      "name": "documentation",
+      "command": "pnpm check:docs",
+      "exit_code": 0,
+      "duration_seconds": 1.1203205,
+      "log": "documentation.log",
+      "original_log_sha256": "01432084f5a9f7b2fac65e10454b3ee1977a20948a22216b52f1bd2334d2dbd3",
+      "published_log_sha256": "26bf938737ecae9455a78c364b28619436c4152da4a9b9b448e177ac162dd09b",
+      "counts": null
+    },
+    {
+      "name": "rust-format",
+      "command": "cargo fmt --check",
+      "exit_code": 0,
+      "duration_seconds": 4.0577609,
+      "log": "rust-format.log",
+      "original_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "counts": null
+    },
+    {
+      "name": "state-audit-evm",
+      "command": "pnpm check:state-audit-evm",
+      "exit_code": 0,
+      "duration_seconds": 15.3706508,
+      "log": "state-audit-evm.log",
+      "original_log_sha256": "f92c298494a63024e91de881d64b6a1ad02979e53ae88b6a4ca65154a67d90b1",
+      "published_log_sha256": "1d45f0f463e8f0935a923ecf180c35216c167bbbad4ef38ee9dccbef597097b0",
+      "counts": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "summaries": 1
+      }
+    },
+    {
+      "name": "rust-clippy",
+      "command": "cargo clippy --workspace --all-targets --locked -- -D warnings",
+      "exit_code": 0,
+      "duration_seconds": 136.5555185,
+      "log": "rust-clippy.log",
+      "original_log_sha256": "69fe137743744718281e1e911ed343427f9d511dc1e845146829bdf3160394b6",
+      "published_log_sha256": "2ac3c72f97dae83c818ca523288925a9a5cdf73e7040397bc25afbcbd095e175",
+      "counts": null
+    },
+    {
+      "name": "rust-workspace",
+      "command": "cargo test --workspace --locked",
+      "exit_code": 0,
+      "duration_seconds": 920.9033353,
+      "log": "rust-workspace.log",
+      "original_log_sha256": "a12f45bbb537b6452c5decc4292c1967cdca57fa92bc4a0eba25c38c216380de",
+      "published_log_sha256": "1de10e6ea9e62f900db0cd5e72e53001dbdb1b69cb3c3a0ef2ac338cff77a8e3",
+      "counts": {
+        "passed": 815,
+        "failed": 0,
+        "ignored": 546,
+        "summaries": 41
+      }
+    },
+    {
+      "name": "node-unit",
+      "command": "pnpm test:js",
+      "exit_code": 0,
+      "duration_seconds": 2311.627952,
+      "log": "node-unit.log",
+      "original_log_sha256": "faf9b85cec7ff5335b5201656599ccfab874a47b0e16232cb3e6cce97bdc9d61",
+      "published_log_sha256": "aaed21c9e4bfdd014ebc5bb759e89a8b6c9dfac71498c2d031825e711cf74d9a",
+      "counts": {
+        "tests": 3052,
+        "passed": 3031,
+        "failed": 0,
+        "skipped": 21,
+        "cancelled": 0
+      }
+    },
+    {
+      "name": "steward",
+      "command": "pnpm test:steward",
+      "exit_code": 0,
+      "duration_seconds": 80.0685269,
+      "log": "steward.log",
+      "original_log_sha256": "6e339bcf12f986fdcc7d6188b521dc2c528d8ae48aa44caf94a186e80ccca09b",
+      "published_log_sha256": "87dd7778737dd448ec6de7b7bbd060b845e55238dab168ee5e26b205e03f16f3",
+      "counts": {
+        "tests": 227,
+        "passed": 227,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0
+      }
+    },
+    {
+      "name": "web-build",
+      "command": "pnpm build:web",
+      "exit_code": 0,
+      "duration_seconds": 6.9457245,
+      "log": "web-build.log",
+      "original_log_sha256": "3d7912e30570b848a07e3d169500dcf4f7d87d4aa6819d10cbf5dddf57ddb9ce",
+      "published_log_sha256": "53497283b11e6a51ad84443d743b3a92304babf0a735ae887a7e6e9603344f5b",
+      "counts": null
+    },
+    {
+      "name": "web-lint",
+      "command": "pnpm lint:web",
+      "exit_code": 0,
+      "duration_seconds": 2.5989771,
+      "log": "web-lint.log",
+      "original_log_sha256": "827b649d485c99a80680a27128e7b9fcb299a1edc963402b6fe41d46295a856c",
+      "published_log_sha256": "631fd124c92482f859127c32203ae4c81cb6ae95d07d365cadbebf6689a37928",
+      "counts": null
+    }
+  ],
+  "build_preparation": [
+    {
+      "name": "workspace_refresh",
+      "exit_code": 0,
+      "file": "build/workspace-refresh.log",
+      "original_sha256": "998747a791ec3551f481cd87f3cf70c0ea5b208d5f0e8685fcf7053225389e8c",
+      "published_sha256": "ebdc9b3322d00f402dcadc94d9a682e3cde74115a3669473dc9e47ca0160ea00",
+      "treatment": "Local paths normalized; LF and trailing whitespace normalized.",
+      "binary_sha256": null
+    },
+    {
+      "name": "native_mcp_build",
+      "exit_code": 0,
+      "file": "build/native-mcp-build.log",
+      "original_sha256": "9dc1eb6ee18ca306c1a9e4d89b2a3c047ca8df86165873d1a51f4351d3918e17",
+      "published_sha256": "13b5212060d92f6b523dbc4fba2994e6efe7f0c7fff29d22ff2f68f68da46374",
+      "treatment": "Local paths normalized; LF and trailing whitespace normalized.",
+      "binary_sha256": "63d5a858de1bf887279479e013403213b8a4e9eea0375cd156507f42d569ea80"
+    }
+  ]
+}

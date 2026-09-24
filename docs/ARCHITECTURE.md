@@ -74,6 +74,16 @@ Runner daemons:
 
 The server never executes an agent shell command.
 
+A native post-verification deliverable export failure is reported as typed
+`run.failed` metadata (`failure_kind: deliverable_export`). It retains the ordinary
+failed-run/failed-task and Factory blocked projections, but is not eligible for an
+automatic fresh-worktree retry. Its operator summary requires inspection of the
+complete preserved source and accepted write/deliverable scope before the existing
+authorized preserved-session Resume action; an excluded source delta needs a new
+separately authorized full-scope mission, not source deletion or an attempt reset.
+This marker grants no recovery, source, connection or publication authority.
+Older untyped execution failures keep their existing retry policy.
+
 ## Artifact storage and provenance
 
 The runner reads the adapter artifact from its isolated worktree and sends a bounded base64 upload
@@ -178,6 +188,28 @@ tool-activity events feed no-progress and repeated-tool counters; human conversa
 Monotonic steer, constrain, suspend, and stop transitions create immutable incidents and durable
 runner directives. Suspend is a terminal provider checkpoint: the session and worktree are
 preserved for an explicit resume. A hard overrun stops immediately.
+
+Usage accounting and breaker evaluation commit together. A mission, requester rolling-24-hour,
+or Corp rolling-24-hour hard transition fences every active consuming run in that scope,
+including provisioning and older active runs whose own usage has aged out of the rolling window.
+Run limits and loop counters remain run-local. Each run advances only to a stronger stage, with
+one incident and durable command per stage; the server delivers the commands to every affected
+runner. Transition inputs retain the scope identity, metric, used amount, limit, evaluated run,
+and the complete affected-run set. Admission and effect acceptance share the Corp budget lock,
+so they cannot observe accounting without its fence. This gate also serializes requester budgets;
+reentrant verifier/recovery paths do not acquire a separate actor gate after the Corp gate.
+After dependency and secret preparation, ordinary start/resume enqueue revalidates the exact
+pending assignment and its budget under this gate. Enqueue therefore either precedes the
+scope fence or is rejected; a breaker cannot be consumed before its native run is enqueued.
+The transport result remains authoritative if the budget-gate transaction fails to commit
+after enqueue: start and resume retain the actual send outcome and log a sanitized warning
+about transaction uncertainty. A successful enqueue is never a runner acknowledgement.
+Approval expiry acquires the same Corp gate before approval, run or mission row locks and
+re-reads the scoped approval under that gate, so sibling accounting cannot invert those locks.
+Exhausted scopes reject new task dispatch
+as well as resume. Staged artifact finalization and queued approval/control commands recheck
+the fence. The existing provenance-validated, zero-provider checkpoint-verification exception
+remains an explicit recovery authority, not a generic verifier exemption.
 
 Mission limits retain immutable original token/cost values plus the current authorized ceiling.
 An exhausted `suspend` can be recovered only through a versioned `mission_budget_revisions`
@@ -311,16 +343,44 @@ than being silently omitted. The combined dependency text is capped at 64 KiB. A
 Resume repeats this boundary and records its own receipt.
 
 Unpinned mission workers retire after terminal missions only when there is no active run,
-live control lease, queued message, pending approval, pending command or unresolved
+unfinished assignment in another saved/running mission, live control lease, queued message,
+pending approval, pending command or unresolved
 process-teardown uncertainty. Lease/message grants serialize with retirement. An explicitly
 authorized resume can reactivate its preserved worker but cannot overwrite another active
 assignment. Current office views exclude retired workers; historical missions/runs retain
 their identities.
 
 The development UI bootstraps humans/rooms without the fixed crew. The explicit legacy
-demo/fixture bootstrap remains available. This is a bounded milestone of #48: dedicated
-Clear crew, Pin/Unpin and manual Retire controls, and their complete contributor workflow,
-remain tracked there rather than being implied by the metadata fields.
+demo/fixture bootstrap remains available.
+
+### Identity Pin/Unpin
+
+The office inspector, `crony pin` / `crony unpin`, and
+`POST /api/corps/{corp_id}/agents/{agent_id}/pin` share one authorized retention operation.
+The strict request contains `actor_id`, `pinned`, nonnegative `expected_version`, and a
+non-nil UUID `idempotency_key`. `pin_version` is zero for existing identities and otherwise
+the highest committed `agent.pinned` / `agent.unpinned` aggregate version. It uses the
+existing event journal and agent model; no new migration or provider lifecycle engine is needed.
+
+The transaction locks the current human operator, Corp/operation key, and agent, checks
+the owning mission's current room membership, and persists only the pin bit and an
+actor-attributed immutable event. The event carries the exact request, previous value,
+result/version and owning mission/room. Every accepted new key advances the version, even
+for the same value. Stale versions and key substitutions conflict rather than overwriting
+another operator. Only a new committed event is broadcast.
+
+Exact replay rechecks current authority and returns the **historical operation result**;
+it neither reapplies that value nor emits another event. Clients refresh the authoritative
+snapshot instead of treating the replay result as current state. Retired identities reject
+new operations; replay of an older Pin never resurrects them. Existing explicit authorized
+resume/recovered activation is unchanged.
+
+Pin prevents automatic retirement and preserves same-room reuse; it does not keep a provider
+process alive or authorize execution. Unpin does not cancel runs, drop assignments, release
+leases, resolve approvals, consume messages or enqueue a runner command. All existing
+retirement blockers still apply, including a second saved/running mission assigned while
+the identity was pinned. This completes only the bounded Pin/Unpin surface of #48.
+Clear crew and manual Retire remain out of scope and tracked there.
 
 ## State and events
 
@@ -1026,6 +1086,51 @@ unresolved identity is `null`, and missing, non-regular, ambiguous, or unspawnab
 check with a precise diagnostic. Resolution and execution share the declared timeout; stdin remains
 closed, output remains bounded, and dropping a timed-out child still kills it.
 
+## Verifier cache suppression
+
+Command and test checks accept optional `cache_suppression`: `python_interpreter`,
+`python_environment`, or `node_compile_cache`. Omission retains the legacy serialized
+shape. Recognized direct Python entry points (`python`, `python3`, `python3.<minor>`,
+including Windows `.exe` spellings) default to native `-B` plus child-only
+`PYTHONDONTWRITEBYTECODE=1`. The argument protects imports even with `-E` or `-I`.
+Windows `py` launchers use environment-only suppression; author any interpreter flags
+after launcher selectors. Wrapper commands require explicit `python_environment`;
+arguments are never guessed from script contents or reconstructed through a shell.
+
+Other runtimes receive no automatic override. `node_compile_cache` opts into
+`NODE_DISABLE_COMPILE_CACHE=1` (Node 22.8+). This disables Node's native module compile
+cache, not package-manager or application caches. All controls are scoped to the
+verifier child. Provider and arbitrary task execution are unchanged.
+
+Command evidence records the requested effective policy, selection source, environment
+and argument prefix. It does not prove the program honored the setting or wrote zero
+caches: wrappers can discard environment and programs can explicitly write files.
+An unresolved or failed command still fails normally. Existing policy serialization
+and equality include explicit controls; no migration or new approval is needed.
+
+Explicit controls require the selected runner to advertise the available global
+`verifier-cache-suppression-v1` capability. The server includes this in existing planning compatibility checks,
+scheduling, resume and durable recovery preparation, and again at the current-epoch
+assignment send for StartRun, ResumeRun and VerifyRun. Unsupported assignments fail
+through existing pre-dispatch handling; absent controls remain legacy-compatible.
+Direct plans that support offline creation may still be saved without a compatible
+runner; initial runner-selection rejection creates no run and consumes no task attempt.
+After a run is allocated, its slot remains charged to the shared task attempt limit
+if dispatch fails, including late capability loss. Source-correction and ordinary
+verifier-only recovery retain the same allocation accounting; separately authorized
+checkpoint verification retains its existing exception. These failures stop through
+the existing failure paths, without refunding attempts or adding automatic retries.
+Fresh pre-dispatch failure transactions expire unexpired secret-grant metadata for
+that Corp/run and record the number changed on the failure event. Grant rows and
+original grant events remain retained. This does not recall or revoke values already
+delivered, and replay does not backfill failures committed before this behavior.
+Automatic Python suppression still requires an updated runner. This does not grant
+any runner permission to delete ignored files. The existing cleanup gate preserves dirty,
+committed, unknown and unverifiable worktrees. Disposition detail reports independent
+tracked/untracked/ignored counts; ignored ownership remains unattributed. This mechanism
+allocates no cache directories. Provider artifacts remain recorded in their existing
+artifact events, separately from source state and requested verifier controls.
+
 ## Portable source-deliverable boundary
 
 Provider artifacts and application deliverables are separate object roles. After the provider
@@ -1169,3 +1274,29 @@ new-work ordering and status. Project #3 remains the record for existing executi
 1. Add stronger OS/container isolation for untrusted child processes.
 2. Add artifact retention sweeping and signing-key rotation.
 3. Add multi-region control-plane and object-store recovery drills.
+
+## State audit
+
+Opt-in mission-governance auditing extends the existing PostgreSQL authority;
+it does not replace it. A covered contract revision, budget proposal/decision,
+or legacy Factory source-commit upgrade holds the Corp audit-head lock and
+commits operational rows, domain events, immutable content/version objects,
+the resource ref, the hash-linked decision and its stable receipt in one
+transaction. Deferred fingerprint triggers reject any other path that changes
+the declared mission-governance projection.
+
+The trusted server periodically creates destination-neutral Ed25519
+checkpoints over the verified ledger prefix. Public-key activation ranges are
+retained so a key rotation does not invalidate earlier checkpoints. GitHub
+publication is a durable additive projection with independent interval or
+monthly UTC scheduling, overdue thresholds and assurance gates. A retained
+witness mismatch or conflicting remote history disables publication until
+explicit authorized reconciliation. PostgreSQL remains necessary for history
+retrieval; external publications authenticate retained evidence but cannot
+reconstruct it.
+
+The V1 delivery also includes `contracts/StateAuditAnchor.sol` and an
+in-process REVM compatibility test using the frozen V1 checkpoint vector.
+Production Ethereum submission, confirmation, replacement, reorganization and
+finality handling remain the V2 transport layer and do not change the
+checkpoint bytes.

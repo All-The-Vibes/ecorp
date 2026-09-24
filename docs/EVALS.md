@@ -8,6 +8,36 @@ The [September 12 scheduler acceptance](evidence/2026-09-12-scheduler-standalone
 records PR #179's main-based source gate separately from the combined recovery
 and two-runner runtime acceptance. Earlier failed attempts remain retained.
 
+The [PR #237 main-sync report](evidence/2026-09-12-main-sync-ci-validation.md)
+records the subsequent local combined-candidate checks and owned Windows QA,
+separately from hosted integration, real providers and live-factory deployment.
+
+## Aggregate hard-budget acceptance
+
+The opt-in `aggregate_breaker_tests::issue56_` store family uses actual migrations in an
+explicitly owned disposable PostgreSQL database. It exercises mission/requester/Corp token
+and cost scopes, suspend-to-stop escalation, run isolation, rolling-window targets, tenant
+isolation, exact replay, transaction rollback, pending decisions, staged artifacts, exhausted
+dispatch, simultaneous accounting, and lock-observed concurrent manual-review and nested
+verifier/recovery-budget races. Pending-assignment enqueue is checked against a concurrent
+fence, including wrong assignment and tenant rejection. Native PostgreSQL transaction termination
+after a real channel send checks that commit failure preserves both connected and disconnected
+transport outcomes without fabricating an acknowledgement. Expiry/accounting races exercise both
+orderings, inspect the actual advisory-lock wait, retain usage, and require idempotent expiry with
+a pending negative cleanup command. The existing exhausted correction-retry cases retain
+pre-atomic historical accounting rows, independently proving that retries cannot reset spend
+even when an older server committed usage without recording a breaker transition.
+Run it with `cargo test -p crony-store issue56_ -- --ignored --test-threads=1`; ignored
+tests in the ordinary workspace gate are not counted as passes.
+
+`tools/e2e_aggregate_budgets.mjs` is a destructive, owned-stack-only driver. It requires an
+explicit loopback endpoint and `ECORP_AGGREGATE_FIXTURE_ROOT`, with the native runner configured
+to use `scripts/fake-aggregate-budget.mjs`. The fixture holds several real child processes at
+a barrier, releases one usage report, and attempts late artifact/completion from every fenced
+child. It checks persisted scope metadata, acknowledgements, preserved workspaces, and absence
+of accepted late effects. This is deterministic native protocol evidence, not vendor inference,
+production identity, or publication. Do not point it at retained services.
+
 ## Multiplayer and the built-in trust fabric
 
 The [September 17 multiplayer integration report](evidence/2026-09-17-multiplayer-ui-integration.md)
@@ -30,6 +60,48 @@ The September 19, 2026 documentation refresh reviewed main
 production-identity, cross-owner, or ledger-network acceptance exercise.
 
 ## Evidence rule
+
+### Claim-authority contribution (#161)
+
+The [claim-authority contract](FACTORY_CLAIM_AUTHORITY.md) and September 13, 2026
+[runtime verdict](evidence/issue161/runtime-acceptance.md) separate recorded local
+acceptance from physical multi-host and production-identity acceptance. The earlier
+[QA handoff](evidence/issue161/qa-handoff.md) is retained as the pre-runtime checkpoint.
+
+The approved owned Windows fixture executed six actual-migration store tests and
+three actual-handler database tests, native concurrent controllers, independent-ledger
+pin rejection, API/runner reconnect, browser-created verified work, and downloaded
+artifact/source-bundle integrity checks. The `issue161_` SQLx cases reuse existing
+fixtures and remain ignored in ordinary workspace tests; their separate recorded
+execution does not turn other ignored tests into passes.
+
+Source-drift preflight accepted the deterministic plan; dispatch then rejected
+the unmatched commit, retaining one blocked item/mission and zero runs. Do not
+claim rejection before claim/materialization. Multiple native processes on one
+host are not physical multi-host or independent production-human proof.
+PR #237 owns the shared QA supervisor; the exact native-timestamp patch and its
+seven passing helper tests are recorded in the runtime verdict. Coordinate its
+integration rather than duplicate that contribution. No new runtime execution
+is implied by these documentation updates.
+
+### Export failure regression (#89)
+
+The bounded #89 export-failure regression uses a nonempty native Git scenario
+delta: `.gitignore`, modified tracked source, staged source, nonignored untracked
+source, and an evidence-only correction. The runner test checks unchanged source,
+HEAD and index after export rejection, then verifies a real commit/branch bundle
+with a legal whole-scenario scope. The `deliverable_failure_tests::issue89_` SQLx
+family uses real migrations, public bootstrap/enrollment/mission/run methods and
+authenticated runner events to check no automatic retry, unchanged attempt/budget/
+contract/evidence history, idempotency, invalid-input rollback and ordinary retries.
+
+This is an increment, not full #89 acceptance. Current preserved checkpoints have
+fingerprints and policy hashes but no complete changed-path inventory, and the
+resume command does not carry prior provider-artifact exclusions. Pre-acceptance
+contract/finish-scope rejection and pre-provider exportability revalidation remain
+unimplemented. A passing exporter regression does not prove those boundaries.
+
+### Scope of evidence
 
 An implementation claim needs evidence at the same scope:
 
@@ -151,7 +223,94 @@ receipt in the sealed worktree. It does not change either native-read failure.
 New collection code and fixtures are not application acceptance; current
 checks, signed-object validation, and independent outcome review remain required.
 
+## Local startup admission
+
+The lifecycle suite exercises existing ownership files and missing targets under
+directories that deny native file creation, retaining their bytes, ACLs and process
+identities. Factory source and publication refs are normalized and validated against
+the native CLI contract before any lifecycle effect, including saved connections,
+preflight, recovery and restart. The parent-directory access check uses the current
+Windows token without writing a probe or changing permissions; it cannot promise
+that a later filesystem race or storage failure will not prevent persistence.
+
+## Local Windows process identity
+
+`tools/local_stack_identity.test.ps1` exercises native process inspection and
+QA cleanup using owned inert children. Injected missing main-module results
+cover startup loading, recovery on the same held process, a mismatched receipt,
+and confirmed native exit during inspection. Persistent missing modules and
+native getter errors, including an error after loading begins, must fail visibly,
+preserve the ownership record, and leave the unverified child alive. Stop still
+requires the executable and creation time to match before using the retained handle.
+
+Windows `Process.MainModule` may be null before the executable module loads;
+the shared helper observes only that result for up to forty 50 ms waits.
+Native inspection errors propagate immediately. This bounded native fixture is
+separate from the complete starter lifecycle suite and browser/server/runner
+acceptance; synthetic children do not prove a working local office.
+
 ## First vertical-slice scenario
+
+### U1 fresh-fixture preparation (issue #240)
+
+`tools/qa_multiplayer_preflight.ps1` is a Windows prerequisite check, not
+a launcher, sandbox qualification, runtime-readiness receipt or U1 acceptance.
+It reuses the repository's Git/toolchain and native Windows listener inventory;
+it does not replace `local_stack.psm1` process ownership or the existing E2E drivers.
+The September 18 update to #318 establishes that original R1-R14/M01-M37
+artifacts are retained locally, although they are not a published canonical contract. The proposed
+[replacement multiplayer contract](MULTIPLAYER_ACCEPTANCE_V1.md) defines new
+requirements/test families and separates development entry from runtime acceptance.
+G0 requires a source-bound inventory of those original artifacts, a reviewed
+crosswalk to MP1 with explicit differences, and adoption of the exact reviewed
+bytes. Adoption alone does not satisfy G0. Original and sanitized publication
+hashes remain distinct; filenames and historical review cannot transfer approval.
+Isolated contract/test development may proceed, while U1 runtime and release
+acceptance retain the separate G1/G2/G3 requirements.
+
+Select a **new** `qa\u1-*` root outside the product and every retained office/source
+root. Supply all protected roots and any additional occupied-office port assignments,
+including currently stopped offices; the command cannot discover an offline office.
+It rejects existing fixture directories rather than resetting or adopting them.
+Use the organization-approved registry, not an arbitrary registry chosen to pass:
+
+```powershell
+pwsh -NoProfile -File .\tools\qa_multiplayer_preflight.ps1 `
+  -QaRoot C:\ecorp-qa\qa\u1-rehearsal-01 `
+  -ProtectedRoot C:\ecorp-office `
+  -ServerPort 18870 -WebPort 15870 -DatabasePort 15470 `
+  -ApprovedNpmRegistry https://your-approved-registry.example/npm/
+```
+
+The JSON report exits **2** for any blocker and **0** only when preparation checks
+pass. It checks clean Git source (including untracked files), disjoint literal
+paths without reparse ancestors, distinct high ports, command presence, Node,
+the effective npm registry, and Docker connectivity. Rust and pnpm shims are not
+executed because they can download toolchains; their required versions are recorded,
+not verified. Registry values and command stderr are never included in diagnostics.
+Source attestation rejects inherited Git selection/tracing, local includes and filters,
+hidden index flags, gitlinks and staged changes. It creates an owned temporary index
+outside protected and QA roots, populates it from the pinned commit, and checks worktree
+contents without trusting the caller's cached file metadata or recursing into submodules.
+It removes that index and reports the actual temporary-index effects; the source index,
+source bytes and QA root remain unchanged. No containers, credentials, databases, services
+or packages are created; no provider runs, GitHub mutations, database connections or
+shutdowns are performed.
+
+A free-port observation is not a reservation. Recheck source, paths, ports, exact
+runtime/security configuration and ownership immediately before any later launch.
+Planned artifact/browser directories do not establish private storage or independent
+identity. OIDC/JWKS, six verifier kinds, artifact bytes, replay, nonmember denial,
+source preservation, M34 hostile boundaries and exact owned shutdown remain unrun
+until separately exercised with the reviewed original or replacement fixture.
+Never use a preparation pass to enable cross-owner execution.
+
+Run the dependency-free focused regression with
+`pwsh -NoProfile -File .\tools\qa_multiplayer_preflight.test.ps1`.
+It uses owned synthetic directories and stubbed prerequisite observations, retains
+failed fixtures, and runs in the Windows CI runner lane. It is not full-stack proof.
+
+### First vertical-slice steps
 
 1. Start Postgres, server, runner, and web client.
 2. Bootstrap the demo Corp.
@@ -329,15 +488,7 @@ or real-provider performance.
 
 <!-- ecorp:validation-commands -->
 ```powershell
-node tools/check_migrations.mjs
-pnpm check:docs
-pnpm test:unit
-pnpm test:steward
-cargo fmt --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-pnpm build:web
-pnpm lint:web
+pnpm check
 ```
 <!-- /ecorp:validation-commands -->
 
@@ -372,10 +523,13 @@ deterministic check for those contracts, not semantic or repository-wide documen
 
 The `rust-sqlx-coverage-ubuntu` job in `.github/workflows/repository-checks.yml`
 uses its own pinned PostgreSQL 17 service and the existing SQLx test harness.
-`tools/coverage_rust_sqlx.sh` first runs native workspace unit tests, then all
-existing ignored tests in `crony-store` and `crony-server`, accumulating profiles
-with cargo-llvm-cov 0.9.1 and Rust 1.98.1. It requests no code exclusions. Other
-ignored tests, including the runner's stopped-session probe, remain unexecuted.
+`tools/coverage_rust_sqlx.sh` first runs native workspace unit tests, then the
+existing ignored tests in `crony-store` and `crony-server`, except the standalone
+`issue297_native_adversarial_fixture`, which requires its own nonce-qualified
+database driver. The selected tests include the Base audit HTTP authorization
+fixture as well as SQLx tests, accumulating profiles with cargo-llvm-cov 0.9.1 and
+Rust 1.98.1. It requests no code exclusions. Other ignored tests, including the
+runner's stopped-session probe, remain unexecuted.
 The existing Windows unit-only coverage job remains a separate platform lane.
 
 Local execution requires Linux x86_64, Node 22.23.2 with npm, the pinned Rust and
@@ -384,9 +538,14 @@ PostgreSQL service. `DATABASE_URL` and the matching `PGHOST`, `PGPORT`, `PGUSER`
 `PGPASSWORD`, and `PGDATABASE` must select the `ecorp_coverage` role/database on
 loopback or the isolated `postgres` service. The caller declares ownership with
 `ECORP_COVERAGE_OWNED_DATABASE=1`. A read-only preflight rejects an existing
-`_sqlx_test` schema or any `_sqlx_test_*` child database before SQLx can clean or
-reuse its deterministic names. Use a fresh service after an incomplete run;
-preserve the old database and evidence for inspection.
+`_sqlx_test` schema, any `_sqlx_test_*` child database, or an existing
+`ecorp_coverage_base_audit` database before tests can modify retained state. The
+driver creates `ecorp_coverage_base_audit` from `template0` in that same service
+and derives `BASE_AUDIT_TEST_DATABASE_URL` from the validated connection for the
+Tokio HTTP fixture, which does not use SQLx's per-test database harness. The
+fixture database remains until the caller tears down the owned service. Use a
+fresh service after an incomplete run; preserve the old database and evidence
+for inspection.
 
 From that prepared checkout, set `CARGO_TARGET_DIR` to a new absolute directory
 and run `bash tools/coverage_rust_sqlx.sh`. The script refuses an existing target
@@ -397,6 +556,9 @@ retain the actual platform, test counts, measured source-file set, totals and
 outcome. The receipt also binds the invocation script and workflow. CI uploads
 these artifacts for 14 days, including incomplete runs. The native line floor
 is 67.0%, enforced separately from test success, and source changes fail the lane.
+The invocation-owned Anvil cache stays under `CARGO_TARGET_DIR/anvil-cache`,
+outside the uploaded `coverage/` reports. Anvil's test settings and persisted-state
+limit are unchanged; its log and lifecycle receipt remain in the report artifacts.
 
 The September 18, 2026 isolated Linux run at
 `38507abc96b9282689a810e0e3c074fe0a8c8de5` passed 524 workspace unit tests,
@@ -469,7 +631,11 @@ It binds every task to the runner's advertised immutable source and chosen fixtu
 runtime, without depending on an unavailable agent in the legacy demo roster.
 The synthesis artifact must contain both verified specialist outputs, not merely
 their task names. Windows additionally retains the original mixed-provider
-demo-roster case. The same test proves an always-failing task stops exactly at
+demo-roster case. A concurrent root-claim conflict is reconciled only after
+successful mission completion through the existing launch replay; the response
+must identify exactly the original root runs. Other dispatch failures remain
+errors, and every graph task must still have exactly one attempt. The same test
+proves an always-failing task stops exactly at
 its retry limit.
 `tools/e2e_verification.mjs` proves all six automated verifier types, a missing-file failure that
 blocks completion, an owner approval gate, and an independent-review gate that rejects the
@@ -519,7 +685,7 @@ reaches terminal `stop` without artifact or accepted completion. Its review-hard
   retryable pre-dispatch failure cannot displace the preserved source run from its resumable
   provider/workspace lineage. Chromium also proves cancelled+suspended missions retain recovery
   controls and that the same control remains available after a `dispatch_not_started` failure.
-Cross-run fan-out for already active runs remains open in #56. See
+`tools/e2e_aggregate_budgets.mjs` adds #56's active cross-run fan-out coverage described above. See
 `docs/evidence/2026-08-30-approval-and-budget-validation.md` and
 `docs/evidence/2026-09-02-authorized-budget-recovery.md`.
 
@@ -555,6 +721,40 @@ The runner unit suite applies one provider-independent lifecycle conformance har
 `fake-process` adapter. It verifies spawn, stream, steer, artifact, stop, capability reporting, and
 typed errors for unsupported resume and usage operations.
 
+**Bounded identity Pin/Unpin.**
+
+`crony-store`'s opt-in `issue48_` SQLx cases use the actual migrations in an explicitly owned
+authenticated PostgreSQL fixture. They cover human role/room/Corp authority, permission changes
+on replay, key substitutions, stale ABA versions, concurrent operators/duplicates/retirement,
+transaction rollback, active operational row preservation, same-room pinned reuse, second
+saved/running assignment retention, and unchanged recovered activation. `crony-server`'s
+matching opt-in cases invoke the actual handler with development and OIDC principals; those
+mapping tests are not a claim of production identity-provider authentication. Wire/CLI tests
+and `AgentPinControl.test.mjs` cover required version/key and actual production component behavior.
+
+`tools/e2e_agent_pinning.mjs` is a separate native, manually phased acceptance driver, not a
+unit test or an automatic stack owner. It requires `CRONY_PIN_TEST=1`, explicit owned loopback
+server/web ports in 59030–59039, an `issue48_app` (or fresh `issue48_app_<suffix>`) database
+on 59030 with authenticated `PG*`
+environment, and absolute `CRONY_PIN_OUTPUT`, `CRONY_PIN_PRIVATE`, `CRONY_PIN_SOURCE`,
+`CRONY_CLI_BINARY`, and `ECORP_PSQL_BINARY` paths. The external owner must start and verify
+its own binaries, deterministic fake-process runner and fresh empty development Corp.
+The source fixture must have a committed `seed.txt`; the runner ID is
+`runner-issue48-42269426`. The driver never resets a Corp, starts services, calls real providers,
+or overwrites an interrupted initial checkpoint.
+
+Run `--phase prepare`, click Pin as Alice in a **new** actual office browser, then run
+`--phase start`. At the native approval wait, click Unpin as Bob in another new browser and run
+`--phase complete`. The driver compares exact operational rows across that Unpin, then proves
+CLI idempotency, native accepted completion, pinned reuse, second held-plan preservation,
+automatic retirement, rejection of retired Pin and historical replay without resurrection.
+Its checkpoint records intent before mutation and final database counts. Desktop/mobile
+screenshots, browser reload/live projection checks, service ownership/cleanup, source/binary
+hashes and exact gate results must be captured separately; the JSON checkpoint alone does not
+prove browser behavior or a production deployment.
+See the [Pin/Unpin validation report](evidence/2026-09-19-agent-pinning.md) for exact
+counts, retained evidence and the explicitly qualified full-workspace failure.
+
 The Codex adapter suite uses a protocol-faithful fake app-server to verify availability reporting,
 start, streaming, usage de-duplication, live `turn/steer`, graceful `turn/interrupt`, stop, durable
 resume, completed evidence, cancelled evidence, and failed evidence without requiring credentials.
@@ -573,9 +773,12 @@ unavailable-adapter denial without persisting a run or execution journal.
 The driver reads the connected fixture runner's OS; an optional
 `CRONY_TEST_RUNNER_PLATFORM` expectation must match it and cannot select a weaker
 test mode. The fixture requires exactly one connected runner.
-`node --test tools/e2e_external_adapters.test.mjs` checks the driver with synthetic
-HTTP responses, including wrong-platform, false-success, unrelated-denial, and
-child-cleanup negatives; it does not replace native integration acceptance.
+The driver additionally requires `CRONY_EXTERNAL_ADAPTER_TEST=1`, an explicit
+owned endpoint, and `--expect-windows` or `--expect-unix`; `--dry-run` makes no
+requests. `tools/e2e_external_adapters.test.mjs` and the retained upstream
+`tools/e2e_external_adapters_http.test.mjs` check synthetic HTTP responses,
+wrong-platform/false-success/unrelated-denial cases, empty execution journals
+and child cleanup. They do not replace native integration acceptance.
 See `docs/evidence/2026-08-30-external-adapter-validation.md` and
 `docs/evidence/2026-09-12-pr234-platform-contract.md`.
 
@@ -1025,10 +1228,51 @@ runner commit `ada87bd85dafdc62f354c4641c7e9340be5b1ece`; an identical publicati
 same PR with one attempt and no additional remote effect. See
 `docs/evidence/2026-09-03-recovered-suspend-publication.md`.
 
+## Verifier cache suppression (#140)
+
+`cargo test -p crony-runner issue140_ -- --include-ignored` runs the complete focused
+matrix. Three cases are explicitly opt-in because they require Python 3 and Node 22.8+;
+the default Rust suite does not silently require those host runtimes. They exercise
+real imports with ordinary, `-E`, `-I` and combined flags, clean linked-worktree removal,
+byte-preserving ignored-file retention, typed serialization, child-only overrides,
+wrapper argument preservation, and Node's native compile-cache status.
+
+See [the scoped evidence](evidence/2026-09-16-verifier-cache-suppression.md). Cache
+suppression is not isolation or authority to delete a file; a successful command is
+not universal proof that its children created no caches.
+
+
+### Explicit verifier cache-control admission
+
+Run `cargo test -p crony-domain -p crony-server issue140_ --locked --offline` for
+persisted explicit policy detection, selected-runner capability matching and final
+StartRun/ResumeRun/VerifyRun admission, including legacy policies and reconnects.
+See `docs/evidence/2026-09-16-verifier-cache-suppression.md` for native runtime and
+legacy-capability launch rejection evidence and coverage limits.
+## State audit acceptance
+
+The opt-in `issue281_` SQLx family applies all real migrations to disposable
+databases and covers atomic accepted/refused mutations, stable retry receipts,
+cross-Corp denial, stale revisions, rollback after an injected audit failure,
+concurrent writers, actor-demotion locking, immutable ledger identity,
+covered-task reparenting, the covered legacy source-commit upgrade, capacity
+fail-closed behavior, key rotation, complete export/tamper detection,
+independent interval/monthly destination configuration, durable publisher
+retry/catch-up, explicit early publication, assurance projections and
+restore-divergence disable/reconciliation.
+
+`tools/check_state_audit_compatibility.mjs` independently reproduces the frozen
+CBOR bytes, Ed25519 verification and Ethereum static ABI words.
+`cargo test -p crony-audit --test ethereum_local_chain` additionally deploys
+the Solidity 0.8.30 artifact to an in-process REVM chain and executes
+registration, publisher rotation, first/sparse anchors, exact retry and all
+specified conflict/authorization failures using the V1 checkpoint digest.
+These tests establish protocol and local-contract compatibility; they do not
+claim mainnet submission, confirmation or finality.
 
 ## Server startup configuration boundary (#271)
 
-The server prepares CORS, encryption/signing keys and object-store configuration,
+The server prepares CORS, encryption/signing keys, state-audit configuration and object-store configuration,
 then completes bounded OIDC discovery before database connection, migration,
 artifact-directory creation, recovery or worker activation. Native object-store
 clients are prepared once; local filesystem creation is deferred. Configuration
@@ -1059,10 +1303,13 @@ fixture. It uses no operator database URL, retained runtime or provider account.
 Cleanup verifies the exact container name and ownership label. Do not run Python
 with assertions disabled. The cleanup guards also run independently without Docker.
 
-The 58 rejection cases compare public schema, all table contents (including the
+The 72 rejection cases compare public schema, all table contents (including the
 migration ledger) and sequences on empty and recovery-sensitive populated
 databases. They also check filesystem writes, observed listeners, fixture
-requests and secret-safe diagnostics. CLI/help cases use their own disposable
+requests and secret-safe diagnostics. The audit cases cover a short signing seed,
+an invalid checkpoint interval, a missing key ID, malformed retained-witness JSON,
+an unsupported 64-character GitHub commit and internal CR/LF in GitHub credentials;
+fixture-owned audit input hashes must remain unchanged. CLI/help cases use their own disposable
 database and prove no mutation or fixture request. Positive cases cover migration,
 demo persistence/restart, runner grace recovery, orphan staging cleanup and
 production startup with 32- and 33-byte signing keys against TLS storage.

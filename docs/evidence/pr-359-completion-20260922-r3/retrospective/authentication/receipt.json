@@ -1,0 +1,86 @@
+{
+  "status": "passed",
+  "started_at_utc": "2026-09-22T21:24:19.9930342+00:00",
+  "tested_staged_tree": "5c8db0930157853b582d3184b1521b1161dbd5ae",
+  "scope": "Retrospective execution of exact historical and corrected initdb command bytes in two fresh, loopback-only owned PostgreSQL fixtures; no application, runner, provider, shared database or remote effects.",
+  "postgres_version": "postgres (PostgreSQL) 17.10",
+  "cases": [
+    {
+      "variant": "baseline",
+      "supervisor_file": "qa-pr359-stack-r1.ps1",
+      "supervisor_sha256": "970caee9fbc985ffbc02aa02282337890a3a4042c02f886505d3d9e20762ad08",
+      "command": "& (Join-Path $pg 'initdb.exe') -D (Join-Path $qa 'database') -U issue48 --auth=trust --encoding=UTF8 --locale=C",
+      "command_sha256": "64032935c6f841fc7cf1fbe2c638b63d55f36210a757cf7f25910e21ab0485f8",
+      "started_at_utc": "2026-09-22T21:24:20.2522915+00:00",
+      "port": 59470,
+      "cleanup": "Exact owned process stopped and port verified free; database, credentials and evidence retained in the private fixture root.",
+      "initdb_exit": 0,
+      "initdb_log_sha256": "39bbe9096527f96e168c34ce60500d2826c372db8d384a9a276feb7b2e9e9cd2",
+      "process": {
+        "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+        "pid": 18160,
+        "stdout": "<private-evidence>\\pr359-auth-retrospective-r1\\baseline\\logs\\postgres-20260922T212428968-4e0f34bf849c411fb412012a07c91d8f.stdout.log",
+        "stderr": "<private-evidence>\\pr359-auth-retrospective-r1\\baseline\\logs\\postgres-20260922T212428968-4e0f34bf849c411fb412012a07c91d8f.stderr.log",
+        "workspace": "<private-evidence>\\pr359-auth-retrospective-r1\\baseline",
+        "role": "postgres",
+        "started_utc": "2026-09-22T21:24:29.0559585Z"
+      },
+      "wrong_password": {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr359-auth-retrospective-r1\\baseline\\wrong-password.log",
+        "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+        "query": "SELECT 1",
+        "credential_delivery": "private PGPASSFILE or deliberately wrong per-child environment; no credential value in arguments or logs"
+      },
+      "correct_password": {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr359-auth-retrospective-r1\\baseline\\correct-password.log",
+        "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+        "query": "SELECT 1",
+        "credential_delivery": "private PGPASSFILE or deliberately wrong per-child environment; no credential value in arguments or logs"
+      },
+      "wrong_password_accepted": true,
+      "expected_result_observed": true,
+      "finished_at_utc": "2026-09-22T21:24:31.6043180+00:00"
+    },
+    {
+      "variant": "corrected",
+      "supervisor_file": "qa-pr359-stack-r2.ps1",
+      "supervisor_sha256": "ef757c569d334d1bede59a2429d9574f0d1a218db28a64a3010da6eabe5396b7",
+      "command": "& (Join-Path $pg 'initdb.exe') -D (Join-Path $qa 'database') -U issue48 --auth=scram-sha-256 --encoding=UTF8 --locale=C --pwfile=$passwordPath",
+      "command_sha256": "6857a616cfdbd44ad771da28e77a0e67f4b3837d8e8ca06132bab8a88fa7f27e",
+      "started_at_utc": "2026-09-22T21:24:31.6385186+00:00",
+      "port": 59471,
+      "cleanup": "Exact owned process stopped and port verified free; database, credentials and evidence retained in the private fixture root.",
+      "initdb_exit": 0,
+      "initdb_log_sha256": "2825c5477cbc80797ef728e4487e81fb1b56a52d4562ed7c0125d83d16de8a16",
+      "process": {
+        "executable": "<local-user>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+        "pid": 14512,
+        "stdout": "<private-evidence>\\pr359-auth-retrospective-r1\\corrected\\logs\\postgres-20260922T212439947-9184a64ddca545208e44a07ae93506e1.stdout.log",
+        "stderr": "<private-evidence>\\pr359-auth-retrospective-r1\\corrected\\logs\\postgres-20260922T212439947-9184a64ddca545208e44a07ae93506e1.stderr.log",
+        "workspace": "<private-evidence>\\pr359-auth-retrospective-r1\\corrected",
+        "role": "postgres",
+        "started_utc": "2026-09-22T21:24:39.9565551Z"
+      },
+      "wrong_password": {
+        "exit_code": 2,
+        "log": "<private-evidence>\\pr359-auth-retrospective-r1\\corrected\\wrong-password.log",
+        "sha256": "3c859dd89fa59b097b45ce7abbf939372f589f41b49d44cef5efa80989048785",
+        "query": "SELECT 1",
+        "credential_delivery": "private PGPASSFILE or deliberately wrong per-child environment; no credential value in arguments or logs"
+      },
+      "correct_password": {
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr359-auth-retrospective-r1\\corrected\\correct-password.log",
+        "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04",
+        "query": "SELECT 1",
+        "credential_delivery": "private PGPASSFILE or deliberately wrong per-child environment; no credential value in arguments or logs"
+      },
+      "wrong_password_accepted": false,
+      "expected_result_observed": true,
+      "finished_at_utc": "2026-09-22T21:24:42.3973156+00:00"
+    }
+  ],
+  "finished_at_utc": "2026-09-22T21:24:42.4016915+00:00"
+}

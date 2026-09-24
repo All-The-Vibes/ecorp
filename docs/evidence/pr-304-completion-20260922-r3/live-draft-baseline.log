@@ -1,0 +1,560 @@
+✖ LIVE-DRAFT: sync refuses omitted without changing the journal (524.718ms)
+✖ LIVE-DRAFT: sync refuses null without changing the journal (502.183ms)
+✖ LIVE-DRAFT: sync refuses string without changing the journal (508.0595ms)
+✖ LIVE-DRAFT: sync refuses number without changing the journal (508.1259ms)
+✖ LIVE-DRAFT: sync refuses object without changing the journal (507.2637ms)
+✖ LIVE-DRAFT: sync refuses array without changing the journal (520.8052ms)
+✔ LIVE-DRAFT: sync accepts explicit false and retains it (498.6406ms)
+✔ LIVE-DRAFT: sync accepts explicit true and retains it (519.6534ms)
+✖ LIVE-DRAFT: v1 sync with absent historical draft still replays unchanged (629.8645ms)
+✖ LIVE-DRAFT: v2 sync with absent historical draft still replays unchanged (649.432ms)
+✖ LIVE-DRAFT: published refuses omitted without changing the journal (1035.7638ms)
+✖ LIVE-DRAFT: published refuses null without changing the journal (1018.7182ms)
+✖ LIVE-DRAFT: published refuses string without changing the journal (1036.5575ms)
+✖ LIVE-DRAFT: published refuses number without changing the journal (1031.0223ms)
+✖ LIVE-DRAFT: published refuses object without changing the journal (1026.8614ms)
+✖ LIVE-DRAFT: published refuses array without changing the journal (1031.7551ms)
+✔ LIVE-DRAFT: published accepts explicit false and retains it (1033.0876ms)
+✔ LIVE-DRAFT: published accepts explicit true and retains it (1031.4281ms)
+✖ LIVE-DRAFT: v1 published with absent historical draft still replays unchanged (1196.5161ms)
+✖ LIVE-DRAFT: v2 published with absent historical draft still replays unchanged (1178.667ms)
+✖ LIVE-DRAFT: progress-published refuses omitted without changing the journal (1158.4298ms)
+✖ LIVE-DRAFT: progress-published refuses null without changing the journal (1193.0956ms)
+✖ LIVE-DRAFT: progress-published refuses string without changing the journal (1184.1369ms)
+✖ LIVE-DRAFT: progress-published refuses number without changing the journal (1207.7994ms)
+✖ LIVE-DRAFT: progress-published refuses object without changing the journal (1189.7724ms)
+✖ LIVE-DRAFT: progress-published refuses array without changing the journal (1167.4832ms)
+✔ LIVE-DRAFT: progress-published accepts explicit false and retains it (1165.449ms)
+✔ LIVE-DRAFT: progress-published accepts explicit true and retains it (1178.0527ms)
+✖ LIVE-DRAFT: v1 progress-published with absent historical draft still replays unchanged (1328.2207ms)
+✖ LIVE-DRAFT: v2 progress-published with absent historical draft still replays unchanged (1307.1613ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 6
+ℹ fail 24
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28286.779
+
+✖ failing tests:
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: sync refuses omitted without changing the journal (524.718ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:29:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: sync refuses null without changing the journal (502.183ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: sync refuses string without changing the journal (508.0595ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: sync refuses number without changing the journal (508.1259ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: sync refuses object without changing the journal (507.2637ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: sync refuses array without changing the journal (520.8052ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3859:5
+✖ LIVE-DRAFT: v1 sync with absent historical draft still replays unchanged (629.8645ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:29:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3877:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3859:5
+✖ LIVE-DRAFT: v2 sync with absent historical draft still replays unchanged (649.432ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:29:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3877:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: published refuses omitted without changing the journal (1035.7638ms)
+  AssertionError [ERR_ASSERTION]: {"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","action":"audit","reason":null,"claimId":"9157b6e7-91a6-429e-a6cd-53d6d37873ef","snapshot":{"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","reviewKey":"0000000000000000000000000000000000000000000000000000000000000001","gateKey":"0000000000000000000000000000000000000000000000000000000000000001","sourceRepo":"example/ecorp","branch":"fix-1","state":"open","baseRef":"main","url":"https://github.com/example/ecorp/pull/1"},"round":1,"startedAt":"2026-09-23T01:51:41.412Z","baseline":[],"publication":{"owner":"native-task-1","number":1,"claimId":"9157b6e7-91a6-429e-a6cd-53d6d37873ef","base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000b","snapshot":{"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","reviewKey":"0000000000000000000000000000000000000000000000000000000000000001","gateKey":"0000000000000000000000000000000000000000000000000000000000000001","sourceRepo":"example/ecorp","branch":"fix-1","state":"open","baseRef":"main","url":"https://github.com/example/ecorp/pull/1"},"reviewers":[{"reviewerId":"9157b6e7-91a6-429e-a6cd-53d6d37873ef-reviewer-1","model":"gpt-6-astra","base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","verdict":"NICE","completedAt":"2026-09-23T01:51:41.564Z","sourceRef":"evidence/9157b6e7-91a6-429e-a6cd-53d6d37873ef-review-1.json","criteria":[{"id":"CORRECTNESS","result":"PASS","sourceRef":"evidence/rubric-CORRECTNESS.json"},{"id":"DURABILITY","result":"PASS","sourceRef":"evidence/rubric-DURABILITY.json"},{"id":"SECURITY","result":"PASS","sourceRef":"evidence/rubric-SECURITY.json"},{"id":"TEMPLATE","result":"PASS","sourceRef":"evidence/rubric-TEMPLATE.json"},{"id":"VERIFICATION","result":"PASS","sourceRef":"evidence/rubric-VERIFICATION.json"},{"id":"COMPLETENESS","result":"PASS","sourceRef":"evidence/rubric-COMPLETENESS.json"},{"id":"SIMPLICITY","result":"PASS","sourceRef":"evidence/rubric-SIMPLICITY.json"},{"id":"TRUTHFULNESS","result":"PASS","sourceRef":"evidence/rubric-TRUTHFULNESS.json"}]},{"reviewerId":"9157b6e7-91a6-429e-a6cd-53d6d37873ef-reviewer-2","model":"gpt-6-astra","base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","verdict":"NICE","completedAt":"2026-09-23T01:51:41.564Z","sourceRef":"evidence/9157b6e7-91a6-429e-a6cd-53d6d37873ef-review-2.json","criteria":[{"id":"CORRECTNESS","result":"PASS","sourceRef":"evidence/rubric-CORRECTNESS.json"},{"id":"DURABILITY","result":"PASS","sourceRef":"evidence/rubric-DURABILITY.json"},{"id":"SECURITY","result":"PASS","sourceRef":"evidence/rubric-SECURITY.json"},{"id":"TEMPLATE","result":"PASS","sourceRef":"evidence/rubric-TEMPLATE.json"},{"id":"VERIFICATION","result":"PASS","sourceRef":"evidence/rubric-VERIFICATION.json"},{"id":"COMPLETENESS","result":"PASS","sourceRef":"evidence/rubric-COMPLETENESS.json"},{"id":"SIMPLICITY","result":"PASS","sourceRef":"evidence/rubric-SIMPLICITY.json"},{"id":"TRUTHFULNESS","result":"PASS","sourceRef":"evidence/rubric-TRUTHFULNESS.json"}]}],"push":{"repo":"example/ecorp","branch":"fix-1","before":"000000000000000000000000000000000000000b","head":"000000000000000000000000000000000000000c","sourceRef":"synthetic/live-draft-push.json","pushedAt":"2026-09-23T01:51:41.564Z"}},"failureEvidence":null,"failureReceipt":null,"failureReceiptVersion":null,"evidence":[],"findings":[]}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:29:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: published refuses null without changing the journal (1018.7182ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: published refuses string without changing the journal (1036.5575ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: published refuses number without changing the journal (1031.0223ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: published refuses object without changing the journal (1026.8614ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: published refuses array without changing the journal (1031.7551ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3859:5
+✖ LIVE-DRAFT: v1 published with absent historical draft still replays unchanged (1196.5161ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:29:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3877:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3859:5
+✖ LIVE-DRAFT: v2 published with absent historical draft still replays unchanged (1178.667ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:29:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3877:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: progress-published refuses omitted without changing the journal (1158.4298ms)
+  AssertionError [ERR_ASSERTION]: {"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","action":"audit","reason":null,"claimId":"48d0b02e-5e85-4e70-be8b-2450e015be58","snapshot":{"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","reviewKey":"0000000000000000000000000000000000000000000000000000000000000001","gateKey":"0000000000000000000000000000000000000000000000000000000000000001","sourceRepo":"example/ecorp","branch":"fix-1","state":"open","baseRef":"main","url":"https://github.com/example/ecorp/pull/1"},"round":1,"startedAt":"2026-09-23T01:51:52.044Z","baseline":[],"publication":{"owner":"native-task-1","number":1,"claimId":"48d0b02e-5e85-4e70-be8b-2450e015be58","base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000b","snapshot":{"number":1,"base":"000000000000000000000000000000000000000a","head":"000000000000000000000000000000000000000c","reviewKey":"0000000000000000000000000000000000000000000000000000000000000001","gateKey":"0000000000000000000000000000000000000000000000000000000000000001","sourceRepo":"example/ecorp","branch":"fix-1","state":"open","baseRef":"main","url":"https://github.com/example/ecorp/pull/1"},"reviewers":[{"reviewerId":"48d0b02e-5e85-4e70-be8b-2450e015be58-progress-1-reviewer-1","model":"gpt-6-astra","base":"000000000000000000000000000000000000000b","head":"000000000000000000000000000000000000000c","verdict":"SAFE_TO_PUBLISH","completedAt":"2026-09-23T01:51:52.316Z","sourceRef":"evidence/48d0b02e-5e85-4e70-be8b-2450e015be58-progress-1-review-1.json","criteria":[{"id":"SOURCE_SCOPE","result":"PASS","sourceRef":"synthetic/SOURCE_SCOPE.json"},{"id":"FIX_EVIDENCE","result":"PASS","sourceRef":"synthetic/FIX_EVIDENCE.json"},{"id":"NO_NEW_BLOCKERS","result":"PASS","sourceRef":"synthetic/NO_NEW_BLOCKERS.json"},{"id":"TRUTHFUL_STATUS","result":"PASS","sourceRef":"synthetic/TRUTHFUL_STATUS.json"}],"runtime":"native"},{"reviewerId":"48d0b02e-5e85-4e70-be8b-2450e015be58-progress-1-reviewer-2","model":"gpt-6-astra","base":"000000000000000000000000000000000000000b","head":"000000000000000000000000000000000000000c","verdict":"SAFE_TO_PUBLISH","completedAt":"2026-09-23T01:51:52.316Z","sourceRef":"evidence/48d0b02e-5e85-4e70-be8b-2450e015be58-progress-1-review-2.json","criteria":[{"id":"SOURCE_SCOPE","result":"PASS","sourceRef":"synthetic/SOURCE_SCOPE.json"},{"id":"FIX_EVIDENCE","result":"PASS","sourceRef":"synthetic/FIX_EVIDENCE.json"},{"id":"NO_NEW_BLOCKERS","result":"PASS","sourceRef":"synthetic/NO_NEW_BLOCKERS.json"},{"id":"TRUTHFUL_STATUS","result":"PASS","sourceRef":"synthetic/TRUTHFUL_STATUS.json"}],"runtime":"native"}],"push":{"repo":"example/ecorp","branch":"fix-1","before":"000000000000000000000000000000000000000b","head":"000000000000000000000000000000000000000c","sourceRef":"synthetic/progress-push.json","pushedAt":"2026-09-23T01:51:52.316Z"}},"failureEvidence":null,"failureReceipt":null,"failureReceiptVersion":null,"publicationKind":"progress","evidence":[],"findings":[]}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:29:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: progress-published refuses null without changing the journal (1193.0956ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: progress-published refuses string without changing the journal (1184.1369ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: progress-published refuses number without changing the journal (1207.7994ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: progress-published refuses object without changing the journal (1189.7724ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3840:5
+✖ LIVE-DRAFT: progress-published refuses array without changing the journal (1167.4832ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /draft/. Input:
+
+  'invalid PR inventory fields'
+
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3846:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'invalid PR inventory fields',
+    expected: /draft/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3859:5
+✖ LIVE-DRAFT: v1 progress-published with absent historical draft still replays unchanged (1328.2207ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:29:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3877:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .github\skills\code-review\tests\executor-state.test.mjs:3859:5
+✖ LIVE-DRAFT: v2 progress-published with absent historical draft still replays unchanged (1307.1613ms)
+  AssertionError [ERR_ASSERTION]: {"ok":true}
+
+
+  0 !== 1
+
+      at run (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:29:10)
+      at TestContext.<anonymous> (file:///<reviewed-worktree>/.github/skills/code-review/tests/executor-state.test.mjs:3877:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,20 @@
+Owned fixture identity/label/loopback verified. Credential delivery: ephemeral environment-only reduced assurance.
+Inherited provider/application credentials removed by environment allowlist.
+Command: <review-host>\.cargo\bin\cargo.exe test -p crony-store --lib --locked --offline -j 2 issue281_legacy_source_commit_upgrade_is_audited_atomically -- --test-threads=1 --nocapture --ignored
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.42s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-c43d8b35d717387f.exe)
+
+running 1 test
+test state_audit_tests::issue281_legacy_source_commit_upgrade_is_audited_atomically ... Error: native idempotency result predates audit coverage; no retroactive decision was recorded
+FAILED
+
+failures:
+
+failures:
+    state_audit_tests::issue281_legacy_source_commit_upgrade_is_audited_atomically
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 418 filtered out; finished in 2.38s
+
+error: test failed, to rerun pass `-p crony-store --lib`
+
+Exit code: 101

@@ -1,0 +1,59 @@
+{
+  "pr": 294,
+  "tested_staged_tree": "29c59aa86469db2e21880c140fc1ca119cc3276b",
+  "source_head": "be187e5072223e3bd7dbc147293bfc18ecdac822",
+  "qa_root": "<local-user>\\code\\qa\\pr265-run-activity-pr294-20260922-r3",
+  "started_at_utc": "2026-09-22T22:14:03.1598934+00:00",
+  "status": "passed",
+  "cleanup": "Only owned processes stopped; database, source, credentials, workspaces and logs retained.",
+  "checks": [
+    {
+      "log": "<private-evidence>\\pr294-native-r3-browser.log",
+      "name": "browser-server-runner-policy-acceptance",
+      "exit_code": 0,
+      "sha256": "2d02584688ad0576fba096091fa9ddd1bc714156e0946cc97d0e29789eb0acce"
+    }
+  ],
+  "binaries": [
+    {
+      "sha256": "783cd936f0a9149c7a846f0aeda44512ee1f7cbc9e27136cac4117a59fc09979",
+      "file": "crony-server.exe"
+    },
+    {
+      "sha256": "5666509804f8027ffccacb4295978c8804b4b0c870cc393bd6773be7686152bf",
+      "file": "crony-runner.exe"
+    }
+  ],
+  "reused_native_validation": {
+    "reason": "Same passing staged source and exact executable hashes; only private browser navigation changed.",
+    "checks": [
+      {
+        "name": "workspace-cache-refresh",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr294-native-r2-workspace-cache-refresh.log",
+        "sha256": "a2a6191c843be0ede889c5396bfdcd799f56f6441d3fa84cb94190be732f47d6"
+      },
+      {
+        "name": "native-build",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr294-native-r2-build.log",
+        "sha256": "729cfe56ad2f92c5cb37fd02a63a374d1ae091c5ddbbee818d03009098d146f3"
+      },
+      {
+        "name": "sqlx-workspace-cache-refresh",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr294-native-r2-sqlx-workspace-cache-refresh.log",
+        "sha256": "32ce4dd47cc7d35d4919f8db5b23be5292b2df57b8e455b23908a1ead8a25575"
+      },
+      {
+        "name": "owned-postgresql-crony-server-regressions",
+        "exit_code": 0,
+        "log": "<private-evidence>\\pr294-native-r2-sqlx-crony-server.log",
+        "sha256": "a3bb44229fac9ff8700ee4a86d93567734f62c3053900e883ec9d2a875e306d2"
+      }
+    ],
+    "lifecycle": "<private-evidence>\\pr294-native-r2-lifecycle.json",
+    "sha256": "3be5328b9ad8ee6ef2c8c39a64ce2079218b44aaadbbe1d1edb99addec8240dc"
+  },
+  "finished_at_utc": "2026-09-22T22:15:06.4038910+00:00"
+}
