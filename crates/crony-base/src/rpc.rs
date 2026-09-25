@@ -13,7 +13,7 @@ use crate::{
 use alloy::{
     consensus::{SignableTransaction, TxEnvelope},
     eips::eip2718::Encodable2718,
-    primitives::{PrimitiveSignature, U64, keccak256},
+    primitives::{Signature, U64, keccak256},
     rpc::types::{Log, TransactionReceipt},
     sol_types::{SolCall, SolEvent},
 };
@@ -450,9 +450,8 @@ impl HttpRpc {
                 json!({"blockHash":block,"requireCanonical":true}),
             )
             .await?;
-        let head = ECorpCheckpointRegistryV1::headCall::abi_decode_returns(&bytes, true)
-            .map_err(|_| Error::Evidence("invalid registry head ABI"))?
-            ._0;
+        let head = ECorpCheckpointRegistryV1::headCall::abi_decode_returns_validate(&bytes)
+            .map_err(|_| Error::Evidence("invalid registry head ABI"))?;
         let result = RegistryHead {
             registered: head.registered,
             owner: head.owner,
@@ -587,7 +586,7 @@ impl HttpRpc {
             .map(|n| n / 100)
             .ok_or(Error::Admission("gas overflow"))?;
         unsigned.gas_limit = gas_limit;
-        let signature = PrimitiveSignature::new(U256::MAX, U256::MAX, true);
+        let signature = Signature::new(U256::MAX, U256::MAX, true);
         let serialized = TxEnvelope::Eip1559(unsigned.into_signed(signature)).encoded_2718();
         let bytes = self
             .call(
@@ -601,9 +600,8 @@ impl HttpRpc {
                 json!({"blockHash":block,"requireCanonical":true}),
             )
             .await?;
-        let l1_data_fee = GasPriceOracle::getL1FeeCall::abi_decode_returns(&bytes, true)
-            .map_err(|_| Error::Evidence("invalid oracle ABI"))?
-            ._0;
+        let l1_data_fee = GasPriceOracle::getL1FeeCall::abi_decode_returns_validate(&bytes)
+            .map_err(|_| Error::Evidence("invalid oracle ABI"))?;
         Ok(FeeQuote {
             gas_limit,
             max_fee_per_gas: transaction.max_fee_per_gas,
@@ -774,12 +772,11 @@ impl ReceiptEvidence {
         })
     }
     pub fn cost(&self) -> Result<SettledFee> {
-        let gas = self
-            .receipt
-            .gas_used
-            .try_into()
-            .map_err(|_| Error::Evidence("receipt gas exceeds u64"))?;
-        SettledFee::from_receipt(gas, self.receipt.effective_gas_price, self.l1_fee)
+        SettledFee::from_receipt(
+            self.receipt.gas_used,
+            self.receipt.effective_gas_price,
+            self.l1_fee,
+        )
     }
     pub fn exact_event(
         &self,
@@ -842,7 +839,7 @@ pub struct AnchorEvent {
 }
 impl AnchorEvent {
     pub fn decode(log: &Log) -> Result<Self> {
-        let event = ECorpCheckpointRegistryV1::Anchored::decode_log(&log.inner, true)
+        let event = ECorpCheckpointRegistryV1::Anchored::decode_log_validate(&log.inner)
             .map_err(|_| Error::Evidence("invalid anchor event ABI"))?;
         let call = AnchorCall {
             stream_id: event.data.streamId,
@@ -1391,9 +1388,8 @@ impl BaseConnection {
                     json!({"blockHash":block.hash,"requireCanonical":true}),
                 )
                 .await?;
-            if ECorpCheckpointRegistryV1::versionCall::abi_decode_returns(&version, true)
+            if ECorpCheckpointRegistryV1::versionCall::abi_decode_returns_validate(&version)
                 .map_err(|_| Error::Evidence("invalid registry version"))?
-                ._0
                 != U256::from(m.contract_version)
             {
                 return Err(Error::Evidence("registry version mismatch"));
@@ -2384,6 +2380,47 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn registry_head_rejects_noncanonical_abi_values() {
+        let head = ECorpCheckpointRegistryV1::Head {
+            registered: true,
+            owner: Address::repeat_byte(1),
+            pendingOwner: Address::ZERO,
+            publisher: Address::repeat_byte(5),
+            paused: false,
+            lastSequence: 0,
+            lastDigest: B256::ZERO,
+            previousAnchorDigest: B256::ZERO,
+            anchorOrdinal: 0,
+        };
+        let encoded = (head,).abi_encode_params();
+        // Booleans must be 0 or 1; addresses and uint64 values require zero padding.
+        for (field, offset, value) in [
+            ("registered", 31, 2),
+            ("owner", 32, 1),
+            ("paused", 159, 2),
+            ("lastSequence", 160, 1),
+            ("anchorOrdinal", 256, 1),
+        ] {
+            let mut malformed = encoded.clone();
+            malformed[offset] = value;
+            let (rpc, task) = fixture(vec![("eth_call", json!(Bytes::from(malformed)))]).await;
+            assert!(
+                matches!(
+                    rpc.head(
+                        Address::repeat_byte(6),
+                        B256::repeat_byte(7),
+                        B256::repeat_byte(4)
+                    )
+                    .await,
+                    Err(Error::Evidence("invalid registry head ABI"))
+                ),
+                "{field}"
+            );
+            task.await.unwrap();
+        }
+    }
+
+    #[tokio::test]
     async fn startup_rejects_wrong_network_before_any_signing() {
         let (primary, p) = fixture(vec![("eth_chainId", json!("0x1"))]).await;
         let (secondary, s) = fixture(vec![]).await;
@@ -2571,6 +2608,31 @@ mod tests {
         missing_fee["l1Fee"] = json!("not-wei");
         assert!(ReceiptEvidence::parse(missing_fee).is_err());
     }
+    #[test]
+    fn receipt_fee_accounting_preserves_integer_boundaries() {
+        let mut raw = receipt(json!([]), "0x1");
+        raw["gasUsed"] = json!("0xffffffffffffffff");
+        raw["cumulativeGasUsed"] = raw["gasUsed"].clone();
+        raw["effectiveGasPrice"] = json!("0xffffffffffffffffffffffffffffffff");
+        raw["l1Fee"] = json!("0x0");
+        let fee = ReceiptEvidence::parse(raw.clone()).unwrap().cost().unwrap();
+        let execution = U256::from(u64::MAX) * U256::from(u128::MAX);
+        assert_eq!(fee.execution_wei, execution);
+        assert_eq!(fee.total_wei, Some(execution));
+
+        raw["l1Fee"] = json!(U256::MAX);
+        assert!(matches!(
+            ReceiptEvidence::parse(raw.clone()).unwrap().cost(),
+            Err(Error::Admission("wei overflow"))
+        ));
+
+        raw["gasUsed"] = json!("0x10000000000000000");
+        assert!(matches!(
+            ReceiptEvidence::parse(raw),
+            Err(Error::Evidence("invalid receipt"))
+        ));
+    }
+
     fn replay_event(raw: Value) -> Result<Option<AnchorEvent>> {
         let original = AnchorEvent::decode(&serde_json::from_value(log()).unwrap()).unwrap();
         ReceiptEvidence::parse(raw).unwrap().exact_event_or_replay(
@@ -2637,6 +2699,33 @@ mod tests {
     }
 
     #[test]
+    fn anchor_events_reject_noncanonical_abi_padding() {
+        for field in ["sequence", "anchorOrdinal", "publisher"] {
+            let mut malformed = log();
+            if field == "sequence" {
+                let mut topic: B256 =
+                    serde_json::from_value(malformed["topics"][2].clone()).unwrap();
+                topic[0] = 1;
+                malformed["topics"][2] = json!(topic);
+            } else {
+                let mut data = serde_json::from_value::<Bytes>(malformed["data"].clone())
+                    .unwrap()
+                    .to_vec();
+                // The first two unindexed words are digests, then uint64 and address.
+                data[if field == "anchorOrdinal" { 64 } else { 96 }] = 1;
+                malformed["data"] = json!(Bytes::from(data));
+            }
+            assert!(
+                matches!(
+                    AnchorEvent::decode(&serde_json::from_value(malformed).unwrap()),
+                    Err(Error::Evidence("invalid anchor event ABI"))
+                ),
+                "{field}"
+            );
+        }
+    }
+
+    #[test]
     fn replay_rejects_duplicate_matching_events() {
         let mut second = log();
         second["logIndex"] = json!("0x1");
@@ -2671,9 +2760,10 @@ mod tests {
         for field in ["stream", "sequence", "digest", "previous", "publisher"] {
             let mut bad = log();
             let decoded: Log = serde_json::from_value(bad.clone()).unwrap();
-            let mut event = ECorpCheckpointRegistryV1::Anchored::decode_log(&decoded.inner, true)
-                .unwrap()
-                .data;
+            let mut event =
+                ECorpCheckpointRegistryV1::Anchored::decode_log_validate(&decoded.inner)
+                    .unwrap()
+                    .data;
             match field {
                 "stream" => event.streamId = B256::repeat_byte(9),
                 "sequence" => event.sequence = 11,

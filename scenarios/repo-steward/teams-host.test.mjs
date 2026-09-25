@@ -34,7 +34,9 @@ test('Teams CLI has no secret argument or skip-auth switch', async () => {
   await assert.rejects(main(['--skip-auth'], environment()));
   await assert.rejects(main(['--serve-test', '--client-secret', settings.clientSecret], environment()));
 });
-test('native Teams SDK rejects unauthenticated requests on an owned loopback endpoint', { timeout: 15000 }, async t => {
+// Include the SDK's cold module load on Windows; each HTTP probe remains bounded
+// by its own five-second deadline and must still prove native auth rejection.
+test('native Teams SDK rejects unauthenticated requests on an owned loopback endpoint', { timeout: 60000 }, async t => {
   let snapshotReads = 0;
   const started = Date.now();
   const host = await createTeamsHost(settings, { now: () => now, snapshotProvider: async () => { snapshotReads++; return fixtureSnapshot(now); } });
@@ -121,7 +123,7 @@ test('a configured binding cannot silently move to another chat', async () => {
   const a = activity(); a.conversation.id = mutable.chatId;
   await route.handler(context(a, async () => { sends++; })); assert.equal(sends, 0);
 });
-test('SDK startup collision is detected and leaves the existing listener untouched', { timeout: 15000 }, async t => {
+test('SDK startup collision is detected and leaves the existing listener untouched', { timeout: 60000 }, async t => {
   const existing = createServer((_req, res) => res.end('owned-control'));
   await new Promise(resolve => existing.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => { existing.close(resolve); existing.closeAllConnections(); }));

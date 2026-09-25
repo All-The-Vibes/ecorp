@@ -1,10 +1,13 @@
 //! Always-on local EVM execution; no RPC, wallet, or external node is required.
 use crony_audit::{SignedCheckpoint, VerifyingKey};
 use revm::{
-    Evm, InMemoryDB,
-    primitives::{
-        AccountInfo, Address, Bytes, ExecutionResult, Output, SpecId, TxKind, U256, keccak256,
-    },
+    Context, Database, ExecuteCommitEvm, MainBuilder, MainContext, MainnetEvm,
+    context::TxEnv,
+    context_interface::result::{ExecutionResult, Output},
+    database::InMemoryDB,
+    handler::MainnetContext,
+    primitives::{Address, Bytes, TxKind, U256, hardfork::SpecId, keccak256},
+    state::AccountInfo,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -91,7 +94,7 @@ fn rejects(result: &ExecutionResult) {
 }
 
 struct Chain {
-    evm: Evm<'static, (), InMemoryDB>,
+    evm: MainnetEvm<MainnetContext<InMemoryDB>>,
     registry: Address,
 }
 
@@ -100,31 +103,34 @@ impl Chain {
         let a = artifact();
         let code =
             hex::decode(a["contract"]["evm"]["bytecode"]["object"].as_str().unwrap()).unwrap();
-        let mut evm = Evm::builder()
-            .with_db(InMemoryDB::default())
-            .with_spec_id(SpecId::CANCUN)
-            .modify_cfg_env(|cfg| cfg.chain_id = chain_id)
-            .modify_db(|db| {
-                for byte in 1..=8 {
-                    db.insert_account_info(
-                        address(byte),
-                        AccountInfo {
-                            balance: U256::MAX,
-                            ..Default::default()
-                        },
-                    );
-                }
+        let mut db = InMemoryDB::default();
+        for byte in 1..=8 {
+            db.insert_account_info(
+                address(byte),
+                AccountInfo {
+                    balance: U256::MAX,
+                    ..Default::default()
+                },
+            );
+        }
+        let mut evm = Context::mainnet()
+            .with_db(db)
+            .modify_cfg_chained(|cfg| {
+                cfg.spec = SpecId::CANCUN;
+                cfg.chain_id = chain_id;
             })
-            .modify_tx_env(|tx| {
-                tx.caller = address(1);
-                tx.transact_to = TxKind::Create;
-                tx.data = code.into();
-                tx.gas_limit = 10_000_000;
-                tx.gas_price = U256::ZERO;
-                tx.chain_id = Some(chain_id);
+            .build_mainnet();
+        let deployed = evm
+            .transact_commit(TxEnv {
+                caller: address(1),
+                kind: TxKind::Create,
+                data: code.into(),
+                gas_limit: 10_000_000,
+                chain_id: Some(chain_id),
+                ..Default::default()
             })
-            .build();
-        let registry = match evm.transact_commit().unwrap() {
+            .unwrap();
+        let registry = match deployed {
             ExecutionResult::Success {
                 output: Output::Create(runtime, Some(registry)),
                 ..
@@ -140,6 +146,30 @@ impl Chain {
         Self { evm, registry }
     }
 
+    fn call_raw(&mut self, caller: Address, data: Bytes, value: u64) -> ExecutionResult {
+        let nonce = self
+            .evm
+            .data
+            .ctx
+            .journaled_state
+            .database
+            .basic(caller)
+            .unwrap()
+            .map_or(0, |account| account.nonce);
+        self.evm
+            .transact_commit(TxEnv {
+                caller,
+                kind: TxKind::Call(self.registry),
+                data,
+                value: U256::from(value),
+                nonce,
+                gas_limit: 10_000_000,
+                chain_id: Some(self.evm.data.ctx.cfg.chain_id),
+                ..Default::default()
+            })
+            .unwrap()
+    }
+
     fn call_value(
         &mut self,
         who: u8,
@@ -147,13 +177,7 @@ impl Chain {
         words: &[Word],
         value: u64,
     ) -> ExecutionResult {
-        let tx = &mut self.evm.context.evm.env.tx;
-        tx.caller = address(who);
-        tx.transact_to = TxKind::Call(self.registry);
-        tx.data = calldata(signature, words);
-        tx.value = U256::from(value);
-        tx.gas_limit = 10_000_000;
-        self.evm.transact_commit().unwrap()
+        self.call_raw(address(who), calldata(signature, words), value)
     }
 
     fn call(&mut self, who: u8, signature: &str, words: &[Word]) -> ExecutionResult {
@@ -385,10 +409,7 @@ fn administrative_events_match_current_head_and_zero_cannot_accept() {
         assert_eq!(&c.head(id)[5..], history);
     }
     let before = c.head(id);
-    let tx = &mut c.evm.context.evm.env.tx;
-    tx.caller = Address::ZERO;
-    tx.data = calldata("acceptOwner(bytes32)", &[id]);
-    rejects(&c.evm.transact_commit().unwrap());
+    rejects(&c.call_raw(Address::ZERO, calldata("acceptOwner(bytes32)", &[id]), 0));
     assert_eq!(c.head(id), before);
 }
 
@@ -721,10 +742,7 @@ fn every_entrypoint_is_nonpayable_and_unknown_calls_revert() {
         rejects(&c.call_value(who, sig, &words, 1));
     }
     rejects(&c.call(1, "upgradeTo(address)", &[account(address(3))]));
-    let tx = &mut c.evm.context.evm.env.tx;
-    tx.data = Bytes::new();
-    tx.value = U256::from(1);
-    rejects(&c.evm.transact_commit().unwrap());
+    rejects(&c.call_raw(address(1), Bytes::new(), 1));
     assert_eq!(c.head(id)[5..], [ZERO; 4]);
 }
 

@@ -39,7 +39,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           toolchain: 1.98.1
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
       - name: Build native evidence scanner dependencies
@@ -77,7 +77,7 @@ jobs:
           scenarios/repo-steward/maintenance.test.mjs scenarios/repo-steward/feedback-cli.test.mjs
       - name: Upload regression results
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: repository-checks-${{ matrix.os }}
           path: output/repository-checks/*.xml
@@ -105,7 +105,7 @@ jobs:
         run: node tools/coverage_web_models.mjs --output output/coverage/web-models-ci
       - name: Preserve scoped coverage and source identities
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: web-model-coverage
           path: output/coverage/web-models-ci/
@@ -176,7 +176,7 @@ jobs:
         run: bash tools/coverage_rust_sqlx.sh
       - name: Preserve native reports, source identities and scope
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rust-sqlx-coverage-linux
           path: coverage/
@@ -264,7 +264,7 @@ jobs:
           }
       - name: Preserve native unit reports and source identities
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rust-unit-coverage-windows
           path: output/coverage/rust-unit-windows/

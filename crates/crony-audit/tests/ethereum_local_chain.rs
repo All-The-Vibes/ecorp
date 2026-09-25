@@ -1,6 +1,11 @@
 use revm::{
-    Evm, InMemoryDB,
-    primitives::{AccountInfo, Address, Bytes, ExecutionResult, Output, TxKind, U256, keccak256},
+    Context, Database, ExecuteCommitEvm, MainBuilder, MainContext, MainnetEvm,
+    context::TxEnv,
+    context_interface::result::{ExecutionResult, Output},
+    database::InMemoryDB,
+    handler::MainnetContext,
+    primitives::{Address, Bytes, TxKind, U256, keccak256},
+    state::AccountInfo,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -71,18 +76,29 @@ fn ipfs_unixfs_file_digest(bytes: &[u8]) -> [u8; 32] {
 }
 
 fn execute(
-    evm: &mut Evm<'_, (), InMemoryDB>,
+    evm: &mut MainnetEvm<MainnetContext<InMemoryDB>>,
     caller: Address,
     target: Address,
     data: Bytes,
 ) -> ExecutionResult {
-    let tx = &mut evm.context.evm.env.tx;
-    tx.caller = caller;
-    tx.transact_to = TxKind::Call(target);
-    tx.data = data;
-    tx.value = U256::ZERO;
-    tx.gas_limit = 10_000_000;
-    evm.transact_commit().unwrap()
+    let nonce = evm
+        .data
+        .ctx
+        .journaled_state
+        .database
+        .basic(caller)
+        .unwrap()
+        .unwrap()
+        .nonce;
+    evm.transact_commit(TxEnv {
+        caller,
+        kind: TxKind::Call(target),
+        data,
+        nonce,
+        gas_limit: 10_000_000,
+        ..Default::default()
+    })
+    .unwrap()
 }
 
 fn assert_success(result: ExecutionResult) {
@@ -153,28 +169,26 @@ fn v1_checkpoint_executes_against_local_anchor_contract() {
     let publisher = address(0x22);
     let rotated_publisher = address(0x33);
     let attacker = address(0x44);
-    let mut evm = Evm::builder()
-        .with_db(InMemoryDB::default())
-        .modify_db(|db| {
-            for account in [authority, publisher, rotated_publisher, attacker] {
-                db.insert_account_info(
-                    account,
-                    AccountInfo {
-                        balance: U256::MAX,
-                        ..Default::default()
-                    },
-                );
-            }
+    let mut db = InMemoryDB::default();
+    for account in [authority, publisher, rotated_publisher, attacker] {
+        db.insert_account_info(
+            account,
+            AccountInfo {
+                balance: U256::MAX,
+                ..Default::default()
+            },
+        );
+    }
+    let mut evm = Context::mainnet().with_db(db).build_mainnet();
+    let deployed = evm
+        .transact_commit(TxEnv {
+            caller: authority,
+            kind: TxKind::Create,
+            data: init_code,
+            gas_limit: 10_000_000,
+            ..Default::default()
         })
-        .modify_tx_env(|tx| {
-            tx.caller = authority;
-            tx.transact_to = TxKind::Create;
-            tx.data = init_code;
-            tx.gas_limit = 10_000_000;
-            tx.gas_price = U256::ZERO;
-        })
-        .build();
-    let deployed = evm.transact_commit().unwrap();
+        .unwrap();
     let contract = match deployed {
         ExecutionResult::Success {
             output: Output::Create(_, Some(address)),
