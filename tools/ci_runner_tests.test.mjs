@@ -34,14 +34,14 @@ for (const [job, runner, stepName, suites] of [
 
 test('CI remote actions use the accepted target immutable SHA pins', () => {
   const workflow = readFileSync(path.join(import.meta.dirname, '..', '.github', 'workflows', 'ci.yml'), 'utf8')
-  // Accepted main 39632b957819012721c90902925d8fa7a9c7e873; repository requires SHA pinning.
+  // Reviewed upstream release commits; repository requires immutable SHA pins.
   const pins = {
     'actions/checkout': '3d3c42e5aac5ba805825da76410c181273ba90b1',
     'dtolnay/rust-toolchain': '6bed0761d98439e5a578e2877258200ad565ba87',
     'pnpm/action-setup': 'ea17c68df8912ef543352723c149a84f56e3d413',
     'actions/setup-node': '820762786026740c76f36085b0efc47a31fe5020',
     'Swatinem/rust-cache': '6323deb102c322ba6fcbdcafc7e3dddab59af2b6',
-    'actions/upload-artifact': 'ea165f8d65b6e75b540449e92b4886f43607fa02',
+    'actions/upload-artifact': '043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
   }
   const uses = [...workflow.matchAll(/^[ \t]+(?:- )?uses: ([^\s#]+)/gmu)].map(match => match[1])
   for (const jobName of ['quality', 'integration', 'external-adapters-windows', 'runner-platforms', 'desktop-windows']) {

@@ -57,7 +57,7 @@ jobs:
         run: pnpm check
       - name: Upload machine-readable validation report
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: validation-report
           path: output/readiness/*.json
@@ -249,7 +249,7 @@ jobs:
         run: node tools/ci_owned_test_server.mjs --stop
       - name: Upload runtime evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: integration-evidence
           path: |
@@ -345,7 +345,7 @@ jobs:
         run: ./tools/ci_external_adapters_windows.ps1 -FixtureRoot (Join-Path $env:RUNNER_TEMP 'ecorp-external-adapters-ci') -PgBin $env:ECORP_QA_PG_BIN -Execute
       - name: Upload external-adapter fixture evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: external-adapters-windows-evidence
           # Never upload the private runner credential, database or worktrees.
@@ -417,13 +417,13 @@ jobs:
         if: runner.os != 'Windows'
         run: cargo test --locked -p crony-runner
       - run: node tools/platform_runner_contract.mjs
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: runner-platform-${{ matrix.os }}
           path: output/platform/*
       - name: Preserve Windows connection ACL readiness receipts
         if: always() && runner.os == 'Windows'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: runner-platform-windows-readiness-${{ github.run_attempt }}
           path: output/runner-platform-windows-readiness/
@@ -431,7 +431,7 @@ jobs:
           retention-days: 14
       - name: Preserve Windows browser policy handoff receipts
         if: always() && runner.os == 'Windows'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: runner-platform-browser-policy-handoff-${{ github.run_attempt }}
           path: output/runner-platform-browser-policy-handoff/
