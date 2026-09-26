@@ -83,9 +83,12 @@ The persisted command remains an argument array, for example:
   "type": "command",
   "program": "node",
   "args": ["C:\\trusted-verifiers\\verify_arcade_browser.mjs", "arcade"],
-  "timeout_ms": 120000
+  "timeout_ms": 60000
 }
 ```
+
+Persisted command checks require a timeout from 100 to 60,000 milliseconds,
+inclusive. The example uses the maximum accepted by the server and policy editor.
 
 Copy the helper beside the trusted verifier when deploying that script. Do not
 read a provider-authored policy from the task worktree. Retain the report with

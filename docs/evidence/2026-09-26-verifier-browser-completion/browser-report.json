@@ -1,0 +1,955 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "started_at": "2026-09-26T14:43:23.032Z",
+  "server": "http://127.0.0.1:18936",
+  "web": "http://127.0.0.1:15936",
+  "scope": "Real browser/server/runner with deterministic fake-process; development identity, no real-provider inference or manual review decisions",
+  "product_head": "08ed24829e033a39a8913d52be6a136eac1cc2aa",
+  "product_tree": "f6215c05f1e6d3820065be5114a993dbbb0ea85f",
+  "source_commit": "4587c2a15f6d37aec4c81fa1a14caaf092b254fd",
+  "errors": [],
+  "blocked_requests": [],
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1050,
+      "layout": {
+        "viewport": 1440,
+        "content": 1440
+      },
+      "screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\evidence\\browser-2026-09-26T14-43-23.031Z-3b35f687\\desktop-browser-policy.png",
+        "sha256": "b54934c226c6966b0f851110a9a62b41985e9a1e4cebbab95c405b6791f24ca4"
+      }
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "layout": {
+        "viewport": 390,
+        "content": 390
+      },
+      "screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\evidence\\browser-2026-09-26T14-43-23.031Z-3b35f687\\mobile-browser-policy.png",
+        "sha256": "0fac806561b2d7d4ed7525220bad8d2416fd6d6b146a66e59af32530881f00be"
+      }
+    }
+  ],
+  "missions": [
+    {
+      "title": "[clean-worktree] Installed Edge browser verification 0870f65d",
+      "mission_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+      "task_id": "2c76fca6-1f5a-4284-af28-807bf45d7be4",
+      "authored": {
+        "title": "[clean-worktree] Installed Edge browser verification 0870f65d",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue136-browser",
+          "base_ref": "HEAD",
+          "base_commit": "4587c2a15f6d37aec4c81fa1a14caaf092b254fd"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "review_only_report",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "command",
+              "program": "node",
+              "args": [
+                "<USERPROFILE>\\code\\ecorp-dependency-queue-20260925\\tools\\verify_arcade_browser.mjs",
+                "arcade"
+              ],
+              "timeout_ms": 60000
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "expected_outcome": "passed",
+      "saved_screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\evidence\\browser-2026-09-26T14-43-23.031Z-3b35f687\\passed-saved.png",
+        "sha256": "158ef4bf20bec925ae6c446dcc25104bad2bc079fe5acbcd5813bc657df37078"
+      },
+      "launch": {
+        "run_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+        "runner_id": "runner-issue136-r2",
+        "run_ids": [
+          "1ebae488-afdf-401f-aea2-0b12c337b9ea"
+        ],
+        "runner_ids": [
+          "runner-issue136-r2"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[clean-worktree] Installed Edge browser verification 0870f65d",
+          "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-26T14:43:32.401138Z",
+          "updated_at": "2026-09-26T14:43:43.610002Z"
+        },
+        "tasks": [
+          {
+            "id": "2c76fca6-1f5a-4284-af28-807bf45d7be4",
+            "mission_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [clean-worktree] Installed Edge browser verification 0870f65d",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [clean-worktree] Installed Edge browser verification 0870f65d",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue136-browser",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "4587c2a15f6d37aec4c81fa1a14caaf092b254fd",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "review_only_report",
+                "commit_after_verification": false,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "<USERPROFILE>\\code\\ecorp-dependency-queue-20260925\\tools\\verify_arcade_browser.mjs",
+                    "arcade"
+                  ],
+                  "timeout_ms": 60000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "13e7c632-4562-40bd-b6b5-881971d9de31",
+            "created_at": "2026-09-26T14:43:32.401138Z",
+            "updated_at": "2026-09-26T14:43:43.610002Z"
+          }
+        ],
+        "run": {
+          "id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "2c76fca6-1f5a-4284-af28-807bf45d7be4",
+          "agent_id": "13e7c632-4562-40bd-b6b5-881971d9de31",
+          "runner_id": "runner-issue136-r2",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/issue136-browser",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "4587c2a15f6d37aec4c81fa1a14caaf092b254fd",
+          "workspace_path": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\runner\\worktrees\\2c76fca61f5a4284af28807bf45d7be4\\1ebae488afdf401faea20b12c337b9ea",
+          "workspace_branch": "crony/task-2c76fca61f5a4284af28807bf45d7be4/run-1ebae488afdf401faea20b12c337b9ea",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "4587c2a15f6d37aec4c81fa1a14caaf092b254fd",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=3; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+          "workspace_fingerprint": "bf9204432b6341e445622fa4428d9e26dce1cef683c2c81239827566859b276f",
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 1 verifier checks passed",
+          "verification_sha256": "11b12a0a91ac7b418b22aba18f187434874f5142267e9b79a308ca0bf023b5ce",
+          "deliverable_sha256": "0a62fb13d9f3445ee818fa0bec8e4dd9f9c52e53215944f8bd45acd3bbfe799a",
+          "status": "completed",
+          "summary": "Created runner evidence outside the task worktree.",
+          "artifact_id": "6ff59026-4179-4d05-8dd2-acd01979741e",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/6ff59026-4179-4d05-8dd2-acd01979741e",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "d6d1157ac554bffeac94652ad334bf8c0e3d4bc30e4d29634e56f15aae46c124",
+          "artifact_sha256": "48d563191b70b8f396c7bd6c26035a0593e1eff40bf898a9ebbe427ebf446df4",
+          "created_at": "2026-09-26T14:43:33.018758Z",
+          "updated_at": "2026-09-26T14:43:44.111501Z"
+        },
+        "evidence": [
+          {
+            "id": "2bceba56-3377-402f-930a-2f41f8d63893",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "2c76fca6-1f5a-4284-af28-807bf45d7be4",
+            "run_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "check_index": 0,
+            "kind": "command",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "<USERPROFILE>\\code\\ecorp-dependency-queue-20260925\\tools\\verify_arcade_browser.mjs",
+                "arcade"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "stderr": "",
+              "stdout": "{\"verifier\":\"ecorp-arcade-browser-v1\",\"passed\":true,\"browser\":{\"schemaVersion\":1,\"host\":\"CPC-shyam-9UD55\",\"platform\":\"win32\",\"browser\":\"edge\",\"selection\":\"declared-executable\",\"executable\":\"C:\\\\Program Files (x86)\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe\",\"sha256\":\"f530bafcdb7e529bd21dd8be46e20c82b5c70fa0ffd770fe4c45a5c2c054c211\",\"policySha256\":\"ee8ad1eecdcfd8076ad1cde3d63f39da94e9f267fc01306977c6c6f2c23868a5\",\"browserVersion\":\"154.0.4258.37\"},\"cases\":[{\"name\":\"desktop\",\"width\":1280,\"height\":800,\"reducedMotion\":\"no-preference\",\"pauseState\":\"paused\",\"finalState\":\"ready\",\"layout\":{\"width\":1280,\"scrollWidth\":1280,\"reducedMotion\":false,\"focusedButton\":true,\"canvas\":0},\"errors\":[],\"remoteRequestCount\":0},{\"name\":\"mobile\",\"width\":390,\"height\":844,\"reducedMotion\":\"reduce\",\"pauseState\":\"paused\",\"finalState\":\"ready\",\"layout\":{\"width\":390,\"scrollWidth\":390,\"reducedMotion\":true,\"focusedButton\":true,\"canvas\":0},\"errors\":[],\"remoteRequestCount\":0}],\"errors\":[],\"screenshots\":[{\"path\":\"arcade/evidence/desktop.png\",\"sha256\":\"b288a3aa4e69cd1dd3c9233a4de75a4a0ad56eafcf4a0cc753772fc7775b2355\",\"bytes\":11815},{\"path\":\"arcade/evidence/mobile.png\",\"sha256\":\"bf9816c605ab0551c4eb9d18c9b6a847c4d769475feb1014eae925def77f0547\",\"bytes\":10263}]}\n"
+            },
+            "created_at": "2026-09-26T14:43:42.382596Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 9,
+            "id": "20790cb4-bfc1-4756-afcb-6b93ea1d5a3f",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "run:1ebae488-afdf-401f-aea2-0b12c337b9ea:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "13e7c632-4562-40bd-b6b5-881971d9de31",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-issue136-r2",
+              "status": "starting",
+              "task_id": "2c76fca6-1f5a-4284-af28-807bf45d7be4"
+            },
+            "created_at": "2026-09-26T14:43:33.018758Z"
+          },
+          {
+            "seq": 10,
+            "id": "98843386-1e3b-4249-b4c8-a9b77bdfa26d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:98843386-1e3b-4249-b4c8-a9b77bdfa26d",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "2c76fca6-1f5a-4284-af28-807bf45d7be4",
+              "workspace": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\runner\\worktrees\\2c76fca61f5a4284af28807bf45d7be4\\1ebae488afdf401faea20b12c337b9ea",
+              "workspace_base_commit": "4587c2a15f6d37aec4c81fa1a14caaf092b254fd",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-2c76fca61f5a4284af28807bf45d7be4/run-1ebae488afdf401faea20b12c337b9ea"
+            },
+            "created_at": "2026-09-26T14:43:33.666677Z"
+          },
+          {
+            "seq": 11,
+            "id": "07118239-9ec1-4b31-a18f-4059c9c66ba6",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:07118239-9ec1-4b31-a18f-4059c9c66ba6",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T14:43:33.779192Z"
+          },
+          {
+            "seq": 12,
+            "id": "96e32b37-04ce-4bb9-82b3-383cb1916928",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:96e32b37-04ce-4bb9-82b3-383cb1916928",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [clean-worktree] Installed Edge browser verification 0870f65d\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/issue136-browser\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: 4587c2a15f6d37aec4c81fa1a14caaf092b254fd\nOBJECTIVE: Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [clean-worktree] Installed Edge browser verification 0870f65d\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 1000000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: review_only_report\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-26T14:43:34.491729Z"
+          },
+          {
+            "seq": 13,
+            "id": "d28351d9-4665-4e96-92b9-8e727b11aa8f",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:d28351d9-4665-4e96-92b9-8e727b11aa8f",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T14:43:34.495631Z"
+          },
+          {
+            "seq": 14,
+            "id": "41bb8837-d22e-4715-acf2-0d8c47ec56f5",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:41bb8837-d22e-4715-acf2-0d8c47ec56f5",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T14:43:35.404223Z"
+          },
+          {
+            "seq": 15,
+            "id": "a23bb9d6-dcae-4a62-a85d-546ccee92d7c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "artifact:6ff59026-4179-4d05-8dd2-acd01979741e:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "6ff59026-4179-4d05-8dd2-acd01979741e",
+              "artifact_role": "provider_evidence",
+              "bytes": 1582,
+              "file_name": "fake-clean-1ebae488-afdf-401f-aea2-0b12c337b9ea.md",
+              "media_type": "text/markdown",
+              "metadata": {},
+              "producer_agent_id": "13e7c632-4562-40bd-b6b5-881971d9de31",
+              "producer_runner_id": "runner-issue136-r2",
+              "provenance_signature": "d6d1157ac554bffeac94652ad334bf8c0e3d4bc30e4d29634e56f15aae46c124",
+              "retention_until": "2026-10-26T14:43:36.333973Z",
+              "sha256": "48d563191b70b8f396c7bd6c26035a0593e1eff40bf898a9ebbe427ebf446df4",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/6ff59026-4179-4d05-8dd2-acd01979741e",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T14:43:36.383563Z"
+          },
+          {
+            "seq": 16,
+            "id": "de75e0a6-d3a2-4218-b9bd-5b594bb03e0d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:de75e0a6-d3a2-4218-b9bd-5b594bb03e0d",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-26T14:43:36.878481Z"
+          },
+          {
+            "seq": 17,
+            "id": "085575d4-317f-4332-ac3c-51c067be67f9",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:085575d4-317f-4332-ac3c-51c067be67f9",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 1
+            },
+            "created_at": "2026-09-26T14:43:36.883791Z"
+          },
+          {
+            "seq": 18,
+            "id": "5eec2562-909f-483f-af5d-f3bbe554628a",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:5eec2562-909f-483f-af5d-f3bbe554628a",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "2bceba56-3377-402f-930a-2f41f8d63893",
+              "kind": "command",
+              "payload": {
+                "args": [
+                  "<USERPROFILE>\\code\\ecorp-dependency-queue-20260925\\tools\\verify_arcade_browser.mjs",
+                  "arcade"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "",
+                "stdout": "{\"verifier\":\"ecorp-arcade-browser-v1\",\"passed\":true,\"browser\":{\"schemaVersion\":1,\"host\":\"CPC-shyam-9UD55\",\"platform\":\"win32\",\"browser\":\"edge\",\"selection\":\"declared-executable\",\"executable\":\"C:\\\\Program Files (x86)\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe\",\"sha256\":\"f530bafcdb7e529bd21dd8be46e20c82b5c70fa0ffd770fe4c45a5c2c054c211\",\"policySha256\":\"ee8ad1eecdcfd8076ad1cde3d63f39da94e9f267fc01306977c6c6f2c23868a5\",\"browserVersion\":\"154.0.4258.37\"},\"cases\":[{\"name\":\"desktop\",\"width\":1280,\"height\":800,\"reducedMotion\":\"no-preference\",\"pauseState\":\"paused\",\"finalState\":\"ready\",\"layout\":{\"width\":1280,\"scrollWidth\":1280,\"reducedMotion\":false,\"focusedButton\":true,\"canvas\":0},\"errors\":[],\"remoteRequestCount\":0},{\"name\":\"mobile\",\"width\":390,\"height\":844,\"reducedMotion\":\"reduce\",\"pauseState\":\"paused\",\"finalState\":\"ready\",\"layout\":{\"width\":390,\"scrollWidth\":390,\"reducedMotion\":true,\"focusedButton\":true,\"canvas\":0},\"errors\":[],\"remoteRequestCount\":0}],\"errors\":[],\"screenshots\":[{\"path\":\"arcade/evidence/desktop.png\",\"sha256\":\"b288a3aa4e69cd1dd3c9233a4de75a4a0ad56eafcf4a0cc753772fc7775b2355\",\"bytes\":11815},{\"path\":\"arcade/evidence/mobile.png\",\"sha256\":\"bf9816c605ab0551c4eb9d18c9b6a847c4d769475feb1014eae925def77f0547\",\"bytes\":10263}]}\n"
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-26T14:43:42.382596Z"
+          },
+          {
+            "seq": 19,
+            "id": "e1994ad8-0a52-4c92-9dc9-c97f199e4847",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "artifact:77a29573-f7ef-4379-95ab-a4817e2b0679:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "77a29573-f7ef-4379-95ab-a4817e2b0679",
+              "artifact_role": "source_deliverable",
+              "bytes": 1349,
+              "file_name": "ecorp-review-report.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "4587c2a15f6d37aec4c81fa1a14caaf092b254fd",
+                "branch": "crony/task-2c76fca61f5a4284af28807bf45d7be4/run-1ebae488afdf401faea20b12c337b9ea",
+                "form": "review_only_report",
+                "git_bundle_sha256": null,
+                "head_commit": null,
+                "integration_state": "not_applicable",
+                "publication_ready": false,
+                "verification_sha256": "11b12a0a91ac7b418b22aba18f187434874f5142267e9b79a308ca0bf023b5ce"
+              },
+              "producer_agent_id": "13e7c632-4562-40bd-b6b5-881971d9de31",
+              "producer_runner_id": "runner-issue136-r2",
+              "provenance_signature": "07326694d9b51551f69493b00db2db4e9321834f69bec268964ba0bda75c0e5b",
+              "retention_until": "2026-10-26T14:43:43.487093Z",
+              "sha256": "0a62fb13d9f3445ee818fa0bec8e4dd9f9c52e53215944f8bd45acd3bbfe799a",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/77a29573-f7ef-4379-95ab-a4817e2b0679",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T14:43:43.534054Z"
+          },
+          {
+            "seq": 20,
+            "id": "a547e9eb-3a5a-4dd1-a9c2-f715c0d0406c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:a547e9eb-3a5a-4dd1-a9c2-f715c0d0406c",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "0a62fb13d9f3445ee818fa0bec8e4dd9f9c52e53215944f8bd45acd3bbfe799a",
+              "summary": "all 1 verifier checks passed",
+              "verification_sha256": "11b12a0a91ac7b418b22aba18f187434874f5142267e9b79a308ca0bf023b5ce"
+            },
+            "created_at": "2026-09-26T14:43:43.576127Z"
+          },
+          {
+            "seq": 21,
+            "id": "d4eccd78-220a-4095-873f-b19f5bb6e9fd",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:d4eccd78-220a-4095-873f-b19f5bb6e9fd",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created runner evidence outside the task worktree."
+            },
+            "created_at": "2026-09-26T14:43:43.610002Z"
+          },
+          {
+            "seq": 22,
+            "id": "f7a2013d-aaa6-45a7-86e2-d8e1c904ab63",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "1ebae488-afdf-401f-aea2-0b12c337b9ea",
+            "aggregate_version": 1,
+            "correlation_id": "29f7e954-9fcd-4a80-8db8-4f7273f84e80",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-issue136-r2:event:f7a2013d-aaa6-45a7-86e2-d8e1c904ab63",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=3; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+              "dirty": true,
+              "workspace": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\runner\\worktrees\\2c76fca61f5a4284af28807bf45d7be4\\1ebae488afdf401faea20b12c337b9ea",
+              "workspace_base_commit": "4587c2a15f6d37aec4c81fa1a14caaf092b254fd",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-2c76fca61f5a4284af28807bf45d7be4/run-1ebae488afdf401faea20b12c337b9ea",
+              "workspace_fingerprint": "bf9204432b6341e445622fa4428d9e26dce1cef683c2c81239827566859b276f"
+            },
+            "created_at": "2026-09-26T14:43:44.111501Z"
+          }
+        ]
+      },
+      "final_screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\evidence\\browser-2026-09-26T14-43-23.031Z-3b35f687\\passed-final.png",
+        "sha256": "6837ee59ea3b1b78306f05a25c044d1b1cd7aac7ef85114ce36135af271a38f2"
+      }
+    }
+  ],
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "stage": "native chrome module/CLI verification",
+  "persisted_browser": {
+    "report": {
+      "verifier": "ecorp-arcade-browser-v1",
+      "passed": true,
+      "browser": {
+        "schemaVersion": 1,
+        "host": "CPC-shyam-9UD55",
+        "platform": "win32",
+        "browser": "edge",
+        "selection": "declared-executable",
+        "executable": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+        "sha256": "f530bafcdb7e529bd21dd8be46e20c82b5c70fa0ffd770fe4c45a5c2c054c211",
+        "policySha256": "ee8ad1eecdcfd8076ad1cde3d63f39da94e9f267fc01306977c6c6f2c23868a5",
+        "browserVersion": "154.0.4258.37"
+      },
+      "cases": [
+        {
+          "name": "desktop",
+          "width": 1280,
+          "height": 800,
+          "reducedMotion": "no-preference",
+          "pauseState": "paused",
+          "finalState": "ready",
+          "layout": {
+            "width": 1280,
+            "scrollWidth": 1280,
+            "reducedMotion": false,
+            "focusedButton": true,
+            "canvas": 0
+          },
+          "errors": [],
+          "remoteRequestCount": 0
+        },
+        {
+          "name": "mobile",
+          "width": 390,
+          "height": 844,
+          "reducedMotion": "reduce",
+          "pauseState": "paused",
+          "finalState": "ready",
+          "layout": {
+            "width": 390,
+            "scrollWidth": 390,
+            "reducedMotion": true,
+            "focusedButton": true,
+            "canvas": 0
+          },
+          "errors": [],
+          "remoteRequestCount": 0
+        }
+      ],
+      "errors": [],
+      "screenshots": [
+        {
+          "path": "arcade/evidence/desktop.png",
+          "sha256": "b288a3aa4e69cd1dd3c9233a4de75a4a0ad56eafcf4a0cc753772fc7775b2355",
+          "bytes": 11815
+        },
+        {
+          "path": "arcade/evidence/mobile.png",
+          "sha256": "bf9816c605ab0551c4eb9d18c9b6a847c4d769475feb1014eae925def77f0547",
+          "bytes": 10263
+        }
+      ]
+    },
+    "file": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\runner\\worktrees\\2c76fca61f5a4284af28807bf45d7be4\\1ebae488afdf401faea20b12c337b9ea\\arcade\\evidence\\browser-verification.json",
+    "sha256": "3bd158c73b1f4093e15d41d70353bfb27f3b73a50e8ca99728099f650af298a0",
+    "server_evidence_id": "2bceba56-3377-402f-930a-2f41f8d63893"
+  },
+  "native_browsers": [
+    {
+      "name": "edge",
+      "status": "passed",
+      "result": {
+        "passed": true,
+        "scope": "Actual browser and arcade command verifier, not ECorp full-stack acceptance",
+        "fixture": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\runner\\worktrees\\2c76fca61f5a4284af28807bf45d7be4\\1ebae488afdf401faea20b12c337b9ea\\issue136-fixture-b060cf17-52f4-40aa-8d85-2e35fbc8caf3",
+        "selection": {
+          "schemaVersion": 1,
+          "host": "CPC-shyam-9UD55",
+          "platform": "win32",
+          "browser": "edge",
+          "selection": "declared-executable",
+          "executable": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+          "sha256": "f530bafcdb7e529bd21dd8be46e20c82b5c70fa0ffd770fe4c45a5c2c054c211",
+          "policySha256": "090bbc0c5bbf322b22ece20901b2cd7194f4a33685dd94cd8539062b9e42b293"
+        },
+        "children": [
+          {
+            "name": "wrong-hash",
+            "exitCode": 1,
+            "signal": null
+          },
+          {
+            "name": "wrong-host",
+            "exitCode": 1,
+            "signal": null
+          },
+          {
+            "name": "missing-executable",
+            "exitCode": 1,
+            "signal": null
+          },
+          {
+            "name": "module",
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "name": "cli-selection-preflight",
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "name": "cli-selection",
+            "exitCode": 0,
+            "signal": null
+          }
+        ],
+        "negative": [
+          {
+            "name": "wrong-hash",
+            "exitCode": 1,
+            "noEvidenceWrites": true
+          },
+          {
+            "name": "wrong-host",
+            "exitCode": 1,
+            "noEvidenceWrites": true
+          },
+          {
+            "name": "missing-executable",
+            "exitCode": 1,
+            "noEvidenceWrites": true
+          }
+        ],
+        "reports": [
+          {
+            "mode": "module",
+            "browser": {
+              "schemaVersion": 1,
+              "host": "CPC-shyam-9UD55",
+              "platform": "win32",
+              "browser": "edge",
+              "selection": "declared-executable",
+              "executable": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+              "sha256": "f530bafcdb7e529bd21dd8be46e20c82b5c70fa0ffd770fe4c45a5c2c054c211",
+              "policySha256": "090bbc0c5bbf322b22ece20901b2cd7194f4a33685dd94cd8539062b9e42b293",
+              "browserVersion": "154.0.4258.37"
+            },
+            "cases": [
+              "desktop",
+              "mobile"
+            ]
+          },
+          {
+            "mode": "cli-selection",
+            "browser": {
+              "schemaVersion": 1,
+              "host": "CPC-shyam-9UD55",
+              "platform": "win32",
+              "browser": "edge",
+              "selection": "declared-executable",
+              "executable": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+              "sha256": "f530bafcdb7e529bd21dd8be46e20c82b5c70fa0ffd770fe4c45a5c2c054c211",
+              "policySha256": "090bbc0c5bbf322b22ece20901b2cd7194f4a33685dd94cd8539062b9e42b293",
+              "browserVersion": "154.0.4258.37"
+            },
+            "cases": [
+              "desktop",
+              "mobile"
+            ]
+          }
+        ],
+        "sourceUnchanged": true
+      },
+      "result_file": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\evidence\\native-edge\\native-browser-4ATIpQ\\result.json",
+      "sha256": "f63d2f54db3b0411502630fe1d25938748d8bbbc965865874d6c8a6cf31547f8"
+    },
+    {
+      "name": "chrome",
+      "status": "passed",
+      "result": {
+        "passed": true,
+        "scope": "Actual browser and arcade command verifier, not ECorp full-stack acceptance",
+        "fixture": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\runner\\worktrees\\2c76fca61f5a4284af28807bf45d7be4\\1ebae488afdf401faea20b12c337b9ea\\issue136-fixture-fe0a44ae-f18a-49f1-9c6a-f200f6886e45",
+        "selection": {
+          "schemaVersion": 1,
+          "host": "CPC-shyam-9UD55",
+          "platform": "win32",
+          "browser": "chrome",
+          "selection": "declared-executable",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "sha256": "73aaac25447e2a4626d87b279dc900b5333cb78a84ca3d6bbfc766d9b0c60560",
+          "policySha256": "4d066e13b6cd1b49979a2716454a85117f963545ca74426638b1c45988cfca52"
+        },
+        "children": [
+          {
+            "name": "wrong-hash",
+            "exitCode": 1,
+            "signal": null
+          },
+          {
+            "name": "wrong-host",
+            "exitCode": 1,
+            "signal": null
+          },
+          {
+            "name": "missing-executable",
+            "exitCode": 1,
+            "signal": null
+          },
+          {
+            "name": "module",
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "name": "cli-selection-preflight",
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "name": "cli-selection",
+            "exitCode": 0,
+            "signal": null
+          }
+        ],
+        "negative": [
+          {
+            "name": "wrong-hash",
+            "exitCode": 1,
+            "noEvidenceWrites": true
+          },
+          {
+            "name": "wrong-host",
+            "exitCode": 1,
+            "noEvidenceWrites": true
+          },
+          {
+            "name": "missing-executable",
+            "exitCode": 1,
+            "noEvidenceWrites": true
+          }
+        ],
+        "reports": [
+          {
+            "mode": "module",
+            "browser": {
+              "schemaVersion": 1,
+              "host": "CPC-shyam-9UD55",
+              "platform": "win32",
+              "browser": "chrome",
+              "selection": "declared-executable",
+              "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+              "sha256": "73aaac25447e2a4626d87b279dc900b5333cb78a84ca3d6bbfc766d9b0c60560",
+              "policySha256": "4d066e13b6cd1b49979a2716454a85117f963545ca74426638b1c45988cfca52",
+              "browserVersion": "154.0.8037.57"
+            },
+            "cases": [
+              "desktop",
+              "mobile"
+            ]
+          },
+          {
+            "mode": "cli-selection",
+            "browser": {
+              "schemaVersion": 1,
+              "host": "CPC-shyam-9UD55",
+              "platform": "win32",
+              "browser": "chrome",
+              "selection": "declared-executable",
+              "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+              "sha256": "73aaac25447e2a4626d87b279dc900b5333cb78a84ca3d6bbfc766d9b0c60560",
+              "policySha256": "4d066e13b6cd1b49979a2716454a85117f963545ca74426638b1c45988cfca52",
+              "browserVersion": "154.0.8037.57"
+            },
+            "cases": [
+              "desktop",
+              "mobile"
+            ]
+          }
+        ],
+        "sourceUnchanged": true
+      },
+      "result_file": "<USERPROFILE>\\code\\qa\\i136-stack-r2\\evidence\\native-chrome\\native-browser-XJ0bNH\\result.json",
+      "sha256": "730bee980ef2c30599e57d7b029b30d92f6a6e8911b3ab5d93a5560774f108ba"
+    },
+    {
+      "name": "chromium",
+      "status": "unavailable",
+      "reason": "Pinned managed browser is not installed; no installation attempted"
+    }
+  ],
+  "source_unchanged": true,
+  "finished_at": "2026-09-26T14:44:01.859Z"
+}
