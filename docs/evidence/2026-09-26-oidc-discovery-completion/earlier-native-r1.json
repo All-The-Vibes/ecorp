@@ -1,0 +1,134 @@
+{
+  "issue": 270,
+  "status": "failed",
+  "started_at_utc": "2026-09-26T12:43:25.1728142+00:00",
+  "source_head": "bdde15b25ac80139834549656e8e90f95b8d4547",
+  "source_files": [
+    {
+      "path": "crates/crony-server/src/auth.rs",
+      "sha256": "be5dcf653a5bf8abf9d2f2c21eab67ec964900f357f365e397952d49d9360563"
+    },
+    {
+      "path": "crates/crony-server/src/artifacts.rs",
+      "sha256": "bb245f70cbf93759e51fafa35ab88680ffd1fb5ada2b263b128ab38d2a337196"
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "1683e45f8061aac41df347f87abefee03a60eb398d77a4daefe4aa8d286c04f1"
+    },
+    {
+      "path": "crates/crony-runner/src/main.rs",
+      "sha256": "504774ef1fb0324242da6a35110790e823aef9d3a1d96a97548699177271988f"
+    },
+    {
+      "path": "scripts/fake-agent.mjs",
+      "sha256": "5e28dba3338bfac6eeb50d552d6189602bbce44e2d5c0cbd23d585a66941757f"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "b324edcdd1f358e09f0d3afec92a55edebefee2c33d50394ef282c6b1c1f804a"
+    },
+    {
+      "path": "tools/local_stack.psm1",
+      "sha256": "3a216b5abcddcee89f4270d49381bc90bfc4694278e3a4cf65acf8ec02e7feff"
+    }
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue270-oidc-20260926-r1",
+  "ports": {
+    "provider": 18971,
+    "database": 59270,
+    "server": 18970,
+    "web": 15970
+  },
+  "issuer": "https://localhost:18971/tenant/v2.0",
+  "server_binary": {
+    "issue": 270,
+    "created_at_utc": "2026-09-26T12:14:19.2762219Z",
+    "source": "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp\\target\\debug\\crony-server.exe",
+    "copy": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue270-native-binaries-r1\\crony-server.exe",
+    "sha256": "a630562bb72b2093e77264cc5ff91f8013a4b75a0d4386fe738d243c13aca62b",
+    "build_receipt": "issue270-server-build-r1.json",
+    "source_file_sha256": "be5dcf653a5bf8abf9d2f2c21eab67ec964900f357f365e397952d49d9360563",
+    "purpose": "Preserve standalone server TLS feature build before runner/workspace feature unification."
+  },
+  "runner_binary": {
+    "issue": 270,
+    "source_binary": "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp\\target\\debug\\crony-runner.exe",
+    "copied_binary": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue270-native-binaries-r1\\crony-runner.exe",
+    "sha256": "dd743d8e3aa5fd729655953164d4975ad6207283523322d826840f7e10b65dd2",
+    "build_receipt": "issue270-runner-build-r1.json",
+    "copied_at_utc": "2026-09-26T12:20:32.7039818Z"
+  },
+  "phases": [
+    {
+      "name": "owned-database-authenticated",
+      "at_utc": "2026-09-26T12:43:36.4014471+00:00"
+    },
+    {
+      "name": "owned-https-provider-started",
+      "at_utc": "2026-09-26T12:43:38.8258057+00:00"
+    },
+    {
+      "name": "production-discovery-ready",
+      "at_utc": "2026-09-26T12:43:45.1325882+00:00"
+    }
+  ],
+  "cleanup": [
+    {
+      "role": "server-dev",
+      "result": "exact owned process stopped"
+    },
+    {
+      "role": "runner",
+      "result": "exact owned process stopped"
+    },
+    {
+      "role": "server-prod",
+      "result": "exact owned process stopped"
+    },
+    {
+      "role": "server-dev",
+      "result": "already exited"
+    },
+    {
+      "role": "provider",
+      "result": "exact owned process stopped"
+    },
+    {
+      "role": "postgres",
+      "result": "exact owned PostgreSQL stopped"
+    }
+  ],
+  "assurance": "Private synthetic fixtures. Production HTTPS discovery/UserInfo plus native runner and artifact transport. SQLx and artifact/master keys use environment-only delivery: reduced assurance. No real provider sign-in, AWS signature validation, cloud durability, deployment or human review claim.",
+  "database_authentication": {
+    "scram_sha256": true,
+    "authenticated_query": true,
+    "wrong_password_rejected": true
+  },
+  "tls": {
+    "minimum": "TLS1.2",
+    "trust": "SSL_CERT_FILE in owned server process only",
+    "insecure_oidc": false,
+    "system_trust_changed": false,
+    "certificate_verified": true,
+    "allow_http_storage": false
+  },
+  "synthetic_source": {
+    "head": "54bb7d36b19fcbaae37f28af5fe143807a0c81c0",
+    "path": "<USERPROFILE>\\code\\qa\\issue270-oidc-20260926-r1\\source",
+    "remote_count": 0
+  },
+  "development_setup": {
+    "stopped": true,
+    "seed_crew": false,
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "purpose": "Create synthetic OIDC actor links and scoped runner enrollment before production start"
+  },
+  "failure": "Cannot find path '<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe <USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe' because it does not exist.",
+  "finished_at_utc": "2026-09-26T12:43:47.0960192+00:00",
+  "fixture_files_preserved": true
+}
