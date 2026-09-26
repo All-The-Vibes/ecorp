@@ -157,14 +157,33 @@ class Postgres:
 
     def __exit__(self, *_):
         # The daemon may have created the container even if docker run timed out
-        # before returning its ID. Resolve only this invocation's exact name.
-        result = subprocess.run(['docker', 'container', 'ls', '-aq', '--filter', 'name=^/'+self.name+'$'], capture_output=True, text=True, timeout=15)
-        if result.returncode:
-            raise RuntimeError('could not verify disposable container cleanup')
-        identity = result.stdout.strip()
-        if not identity:
-            return
-        info = json.loads(command(['docker', 'inspect', identity]))[0]
+        # before returning its ID. Poll only this invocation's exact name; a
+        # known-ID cleanup keeps its single lookup and has no grace-period wait.
+        deadline = time.monotonic() + 5 if self.container is None else None
+        while True:
+            remaining = deadline - time.monotonic() if deadline is not None else 15
+            if remaining <= 0:
+                print('No container visible after 5s for owned fixture ' + self.name +
+                    '; it may appear later and require verified cleanup.', flush=True)
+                return
+            result = subprocess.run(['docker', 'container', 'ls', '-aq', '--filter', 'name=^/'+self.name+'$'], capture_output=True, text=True, timeout=min(15, remaining))
+            if result.returncode:
+                raise RuntimeError('could not verify disposable container cleanup')
+            identities = result.stdout.split()
+            if identities:
+                if len(identities) != 1:
+                    raise RuntimeError('refuse cleanup of unverified container')
+                identity = identities[0]
+                break
+            if deadline is None:
+                return
+            remaining = deadline - time.monotonic()
+            if remaining > 0:
+                time.sleep(min(.25, remaining))
+        inspected = json.loads(command(['docker', 'inspect', identity]))
+        if not isinstance(inspected, list) or len(inspected) != 1:
+            raise RuntimeError('refuse cleanup of unverified container')
+        info = inspected[0]
         if info['Name'] != '/' + self.name or info['Config']['Labels'].get('ecorp.test-owner') != self.owner:
             raise RuntimeError('refuse cleanup of unverified container')
         command(['docker', 'rm', '--force', identity])

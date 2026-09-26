@@ -1303,6 +1303,18 @@ fixture. It uses no operator database URL, retained runtime or provider account.
 Cleanup verifies the exact container name and ownership label. Do not run Python
 with assertions disabled. The cleanup guards also run independently without Docker.
 
+If startup fails before returning a container ID, cleanup polls only the invocation's
+exact name for up to five seconds, with at most 250 ms between lookups. Each lookup's
+timeout is bounded by the remaining grace period. Missing containers produce a
+warning naming the fixture: a container can still appear after the grace period and
+require separately verified cleanup. Known-ID cleanup retains one lookup without a
+grace-period wait. Failed or ambiguous lookup, unexpected inspection results, and
+name or owner-label mismatch never authorize removal. Inspection and removal retain
+their existing 45-second command limits; the five-second bound covers discovery,
+not total teardown. Cleanup success or failure preserves the original startup error.
+Controlled-clock guard tests cover delayed appearance, absence, lookup latency and
+failure, foreign ownership, unexpected identities, and both cleanup-command failures.
+
 The 72 rejection cases compare public schema, all table contents (including the
 migration ledger) and sequences on empty and recovery-sensitive populated
 databases. They also check filesystem writes, observed listeners, fixture
