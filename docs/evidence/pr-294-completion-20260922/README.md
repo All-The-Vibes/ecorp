@@ -27,3 +27,10 @@ The nine retained PNGs are genuine application captures. Development principals 
 Public text uses normalized local paths and separate original/published SHA-256 values. Credential files and database/workspace contents are preserved locally and excluded. The current packet does not change previous evidence.
 
 Trailing line whitespace and blank lines at EOF are removed from the published logs. This formatting normalization does not alter test-result text; original and published hashes are distinct. The local `.gitattributes` preserves published evidence bytes on checkout.
+
+Publication correction, September 26, 2026: the three historical stack-start logs
+now redact caret-escaped local account roots, and their published hash bindings
+have been refreshed. Earlier statements about immutable packets and normalized
+paths describe the original publication. Execution dates, results, original
+runtime hashes, drivers and screenshots retain their original scope. See the
+[dated correction and hash manifest](../2026-09-26-verifier-cache-publication-correction/README.md).
