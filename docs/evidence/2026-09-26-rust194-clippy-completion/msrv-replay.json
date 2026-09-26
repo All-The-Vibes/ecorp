@@ -1,0 +1,238 @@
+{
+  "issue": 327,
+  "status": "passed",
+  "started_at_utc": "2026-09-26T15:42:59.318763+00:00",
+  "head": "b2430b82804cb2312d93e05f503df2908d9d65a4",
+  "base": "08ed24829e033a39a8913d52be6a136eac1cc2aa",
+  "scope": "Retrospective RED/GREEN replay prompted by PR 372 comment 4111847008. This records new observations; it does not add missing historical fingerprints to the earlier RED run.",
+  "repository": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp",
+  "target_owned_by_run": "<USERPROFILE>\\code\\ecorp-dependency-queue-20260925\\target\\issue327-rust194-20260926",
+  "command": [
+    "cargo",
+    "+1.94.0",
+    "clippy",
+    "--locked",
+    "--offline",
+    "--workspace",
+    "--all-targets",
+    "--target-dir",
+    "<USERPROFILE>\\code\\ecorp-dependency-queue-20260925\\target\\issue327-rust194-20260926",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "phases": [
+    {
+      "name": "red",
+      "started_at_utc": "2026-09-26T15:42:59.980336+00:00",
+      "source_before": [
+        {
+          "path": "crates/crony-server/src/main.rs",
+          "sha256": "dcfee67c0440f2b51dbc7f65f3e868389580c2f0a341bcea7e09f0a5d19b35ca"
+        },
+        {
+          "path": "crates/crony-store/src/state_audit_tests.rs",
+          "sha256": "60ae394a92c7e12ca137a683976822bec049eed1d3456ab052b128cc0cd3d2eb"
+        },
+        {
+          "path": "crates/crony-store/src/retained_provider_receipt.rs",
+          "sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15"
+        },
+        {
+          "path": "Cargo.lock",
+          "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+        },
+        {
+          "path": "Cargo.toml",
+          "sha256": "5d44b942b18fa98cde27d32b2858158bbe373c60b7f4778853a363889a39c763"
+        },
+        {
+          "path": "rust-toolchain.toml",
+          "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+        }
+      ],
+      "finished_at_utc": "2026-09-26T15:44:34.487502+00:00",
+      "exit_code": 101,
+      "source_after": [
+        {
+          "path": "crates/crony-server/src/main.rs",
+          "sha256": "dcfee67c0440f2b51dbc7f65f3e868389580c2f0a341bcea7e09f0a5d19b35ca"
+        },
+        {
+          "path": "crates/crony-store/src/state_audit_tests.rs",
+          "sha256": "60ae394a92c7e12ca137a683976822bec049eed1d3456ab052b128cc0cd3d2eb"
+        },
+        {
+          "path": "crates/crony-store/src/retained_provider_receipt.rs",
+          "sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15"
+        },
+        {
+          "path": "Cargo.lock",
+          "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+        },
+        {
+          "path": "Cargo.toml",
+          "sha256": "5d44b942b18fa98cde27d32b2858158bbe373c60b7f4778853a363889a39c763"
+        },
+        {
+          "path": "rust-toolchain.toml",
+          "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+        }
+      ],
+      "log": "issue327-msrv-replay-r1-red.log",
+      "log_sha256": "2add086708b6bc84ad529d665205ef9f63c92446c99a8b71dd27adb808b9bc86",
+      "log_bytes": 5080,
+      "source_unchanged": true,
+      "diagnostic_files": [
+        "crates/crony-server/src/main.rs",
+        "crates/crony-store/src/state_audit_tests.rs"
+      ]
+    },
+    {
+      "name": "green",
+      "started_at_utc": "2026-09-26T15:44:34.693491+00:00",
+      "source_before": [
+        {
+          "path": "crates/crony-server/src/main.rs",
+          "sha256": "a831f13fc973847ae8edb889af5996abf4412ab781c64659e02ebc82b69c68f9"
+        },
+        {
+          "path": "crates/crony-store/src/state_audit_tests.rs",
+          "sha256": "2ddc8c361126aa4192a2c95bd8a26035e2d99062d65e2a864dae923df29bb3ef"
+        },
+        {
+          "path": "crates/crony-store/src/retained_provider_receipt.rs",
+          "sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15"
+        },
+        {
+          "path": "Cargo.lock",
+          "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+        },
+        {
+          "path": "Cargo.toml",
+          "sha256": "5d44b942b18fa98cde27d32b2858158bbe373c60b7f4778853a363889a39c763"
+        },
+        {
+          "path": "rust-toolchain.toml",
+          "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+        }
+      ],
+      "finished_at_utc": "2026-09-26T15:45:27.759514+00:00",
+      "exit_code": 0,
+      "source_after": [
+        {
+          "path": "crates/crony-server/src/main.rs",
+          "sha256": "a831f13fc973847ae8edb889af5996abf4412ab781c64659e02ebc82b69c68f9"
+        },
+        {
+          "path": "crates/crony-store/src/state_audit_tests.rs",
+          "sha256": "2ddc8c361126aa4192a2c95bd8a26035e2d99062d65e2a864dae923df29bb3ef"
+        },
+        {
+          "path": "crates/crony-store/src/retained_provider_receipt.rs",
+          "sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15"
+        },
+        {
+          "path": "Cargo.lock",
+          "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+        },
+        {
+          "path": "Cargo.toml",
+          "sha256": "5d44b942b18fa98cde27d32b2858158bbe373c60b7f4778853a363889a39c763"
+        },
+        {
+          "path": "rust-toolchain.toml",
+          "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+        }
+      ],
+      "log": "issue327-msrv-replay-r1-green.log",
+      "log_sha256": "98462681709979632d86a0095218bda78949037fb892dbd60b6ab89bcd3afca2",
+      "log_bytes": 303,
+      "source_unchanged": true,
+      "diagnostic_files": []
+    }
+  ],
+  "source_before_replay": [
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "a831f13fc973847ae8edb889af5996abf4412ab781c64659e02ebc82b69c68f9"
+    },
+    {
+      "path": "crates/crony-store/src/state_audit_tests.rs",
+      "sha256": "2ddc8c361126aa4192a2c95bd8a26035e2d99062d65e2a864dae923df29bb3ef"
+    },
+    {
+      "path": "crates/crony-store/src/retained_provider_receipt.rs",
+      "sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "5d44b942b18fa98cde27d32b2858158bbe373c60b7f4778853a363889a39c763"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "baseline_blobs": [
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "commit": "08ed24829e033a39a8913d52be6a136eac1cc2aa",
+      "blob": "68ba8a9450154f5eedf661feeb8469fdfabfda2a",
+      "sha256": "dcfee67c0440f2b51dbc7f65f3e868389580c2f0a341bcea7e09f0a5d19b35ca"
+    },
+    {
+      "path": "crates/crony-store/src/state_audit_tests.rs",
+      "commit": "08ed24829e033a39a8913d52be6a136eac1cc2aa",
+      "blob": "a93ba59586987558aec88e379f78c6e1885b5d05",
+      "sha256": "60ae394a92c7e12ca137a683976822bec049eed1d3456ab052b128cc0cd3d2eb"
+    }
+  ],
+  "clean_before": true,
+  "red_executable_source_matches_base": true,
+  "restoration": [
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "restored": true,
+      "sha256": "a831f13fc973847ae8edb889af5996abf4412ab781c64659e02ebc82b69c68f9"
+    },
+    {
+      "path": "crates/crony-store/src/state_audit_tests.rs",
+      "restored": true,
+      "sha256": "2ddc8c361126aa4192a2c95bd8a26035e2d99062d65e2a864dae923df29bb3ef"
+    }
+  ],
+  "restored_at_utc": "2026-09-26T15:44:34.562836+00:00",
+  "source_after_replay": [
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "a831f13fc973847ae8edb889af5996abf4412ab781c64659e02ebc82b69c68f9"
+    },
+    {
+      "path": "crates/crony-store/src/state_audit_tests.rs",
+      "sha256": "2ddc8c361126aa4192a2c95bd8a26035e2d99062d65e2a864dae923df29bb3ef"
+    },
+    {
+      "path": "crates/crony-store/src/retained_provider_receipt.rs",
+      "sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "5d44b942b18fa98cde27d32b2858158bbe373c60b7f4778853a363889a39c763"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "clean_after": true,
+  "finished_at_utc": "2026-09-26T15:45:27.972061+00:00"
+}
