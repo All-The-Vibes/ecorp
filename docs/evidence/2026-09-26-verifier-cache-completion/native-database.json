@@ -1,0 +1,78 @@
+{
+  "issue": 140,
+  "purpose": "Native cache-policy admission, scoped expiry, replay and rollback regressions on current main",
+  "source_head": "a65fb99ada85363324e20f37fd84f5bb65606e70",
+  "source_tree": "f6215c05f1e6d3820065be5114a993dbbb0ea85f",
+  "source_files": [
+    {
+      "path": "crates/crony-server/src/cache_admission_tests.rs",
+      "sha256": "7ed767432f129e83de56928cbc0434f164f4e6ababab482fa5d8ec0d9a3f653d"
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "1683e45f8061aac41df347f87abefee03a60eb398d77a4daefe4aa8d286c04f1"
+    },
+    {
+      "path": "crates/crony-store/src/lib.rs",
+      "sha256": "96e9e5d59c1d4643bde2b3da8f202c93e2d8c0698436eafba8153042599f089b"
+    },
+    {
+      "path": "crates/crony-domain/src/lib.rs",
+      "sha256": "ed7c29320c9fed8a6fea16a6b3881028a2a3096f664325e831fea22bff681a5e"
+    },
+    {
+      "path": "crates/crony-runner/src/verifier.rs",
+      "sha256": "b2e760722eb3c7b615f69b0026e8e399633430dcc40cebc0ae32863ab4c64acb"
+    },
+    {
+      "path": "crates/crony-runner/src/workspace.rs",
+      "sha256": "908f588817f9d2eda252105fa33198cd535202b900bf427dbdfb3824c08e0adc"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "8d4d840f8810fa9a9202ff871147134bfc0e070ae391cae907127e3fa17e05ac"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue140-cache-admission-20260926-r1",
+  "started_at_utc": "2026-09-26T14:02:51.5974467Z",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue140-native-database-r1-initdb.log",
+      "sha256": "106b53d7c420cbadf363ccfad41755a7c6de08d05a172a3337609de71e02bc9f",
+      "counts": {
+        "failed": 0,
+        "ignored": 0,
+        "passed": 0,
+        "summaries": 0
+      }
+    },
+    {
+      "name": "cache-admission-lifecycle",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue140-native-database-r1-cache-admission.log",
+      "sha256": "b5bc8ebc028a113f365e2a3ce86ca5a954ff3e0213b4ee492fd76f4012f7e021",
+      "counts": {
+        "failed": 0,
+        "ignored": 0,
+        "passed": 12,
+        "summaries": 2
+      }
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+  "authentication": {
+    "method": "scram-sha-256",
+    "wrong_password_rejected": true,
+    "authenticated_query": true,
+    "delivery": "Private PGPASSFILE for clients. SQLx environment-only delivery is reduced assurance."
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-26T14:04:00.4777107Z"
+}

@@ -22,10 +22,13 @@ function Must-Throw([scriptblock]$Action, [string]$MessagePattern = '') {
     }
     Check $caught 'Inspection uncertainty was converted to absence or a successful return.'
 }
-function With-LoadingModule([scriptblock]$Action, [int]$ExpectedLookups = 1) {
+function With-LoadingModule([scriptblock]$Action, [int]$ExpectedLookups = 1,
+    [ValidateSet('null', 'partial-copy')][string]$LoadingFailure = 'null') {
     & $module {
+        param($Failure)
         $script:LoadingLookups = 0
         $script:LoadingReads = 0
+        $script:LoadingFailure = $Failure
         function script:Get-Process {
             [CmdletBinding()]param([int]$Id)
             $script:LoadingLookups++
@@ -35,12 +38,17 @@ function With-LoadingModule([scriptblock]$Action, [int]$ExpectedLookups = 1) {
             $p | Add-Member ScriptMethod get_MainModule {
                 $script:LoadingReads++
                 $this.FixtureModuleReads++
-                if ($this.FixtureModuleReads -le 2) { return $null }
+                if ($this.FixtureModuleReads -le 2) {
+                    if ($script:LoadingFailure -eq 'partial-copy') {
+                        throw [ComponentModel.Win32Exception]::new(299, 'injected partial-copy uncertainty')
+                    }
+                    return $null
+                }
                 $this.FixtureMainModule
             } -Force
             $p
         }
-    }
+    } $LoadingFailure
     try {
         & $Action
         Check ((& $module { $script:LoadingLookups }) -eq $ExpectedLookups) 'Loading inspection reopened the PID.'
@@ -131,6 +139,26 @@ try {
                 'path' {
                     $p | Add-Member ScriptMethod get_MainModule { throw 'injected path uncertainty' } -Force
                 }
+                'partial-copy-path' {
+                    $p | Add-Member ScriptMethod get_MainModule {
+                        throw [ComponentModel.Win32Exception]::new(299, 'injected partial-copy uncertainty')
+                    } -Force
+                }
+                'denied-path' {
+                    $p | Add-Member ScriptMethod get_MainModule {
+                        throw [ComponentModel.Win32Exception]::new(5, 'injected path access uncertainty')
+                    } -Force
+                }
+                'partial-copy-then-denied-path' {
+                    $p | Add-Member NoteProperty FixtureModuleReads 0
+                    $p | Add-Member ScriptMethod get_MainModule {
+                        $this.FixtureModuleReads++
+                        if ($this.FixtureModuleReads -eq 1) {
+                            throw [ComponentModel.Win32Exception]::new(299, 'injected partial-copy uncertainty')
+                        }
+                        throw [ComponentModel.Win32Exception]::new(5, 'injected denial after partial-copy')
+                    } -Force
+                }
                 'empty-path' {
                     $p | Add-Member ScriptMethod get_MainModule { $null } -Force
                 }
@@ -150,10 +178,11 @@ try {
             $p
         }
     }
-    foreach ($fault in @('lookup-denied', 'lookup-argument', 'lookup-process-error', 'handle', 'has-exited', 'path', 'empty-path', 'loading-path', 'start-time')) {
+    foreach ($fault in @('lookup-denied', 'lookup-argument', 'lookup-process-error', 'handle', 'has-exited', 'path', 'partial-copy-path', 'denied-path', 'partial-copy-then-denied-path', 'empty-path', 'loading-path', 'start-time')) {
         & $module { param($Fault) $script:InspectionFault = $Fault; $script:UncertainKillAttempted = $false } $fault
         $faultPattern = if ($fault -eq 'empty-path') { 'null-valued expression|main module remains unavailable' }
             elseif ($fault -eq 'loading-path') { 'null-valued expression|injected path uncertainty after loading' }
+            elseif ($fault -eq 'partial-copy-then-denied-path') { 'injected denial after partial-copy' }
             else { 'injected .* uncertainty' }
         Case "$fault identity propagates" { Must-Throw { Get-LocalProcessIdentity -ProcessId $child.Id } $faultPattern }
         Case "$fault ownership check propagates" { Must-Throw { Test-LocalOwnedProcess -Record $receipt -Workspace $workspace } $faultPattern }
@@ -168,33 +197,35 @@ try {
         }
     }
     & $module { Remove-Item Function:Get-Process; Remove-Variable InspectionFault -Scope Script }
-    Case 'loading module recovers the exact identity on one held process' {
+    foreach ($loadingFailure in @('null', 'partial-copy')) {
+    Case "$loadingFailure module loading recovers the exact identity on one held process" {
         With-LoadingModule {
             $current = Get-LocalProcessIdentity -ProcessId $child.Id
             Check ($current.started_utc -ceq $receipt.started_utc) 'Loading changed the creation identity.'
             Check (Test-LocalPathEqual $current.executable $receipt.executable) 'Loading changed the executable identity.'
-        }
+        } -LoadingFailure $loadingFailure
     }
-    Case 'loading module recovers an exact ownership check' {
+    Case "$loadingFailure module loading recovers an exact ownership check" {
         With-LoadingModule {
             Check (Test-LocalOwnedProcess -Record $receipt -Workspace $workspace) 'Loading prevented verified ownership.'
-        }
+        } -LoadingFailure $loadingFailure
     }
-    Case 'loading module never authorizes a mismatched receipt' {
+    Case "$loadingFailure module loading never authorizes a mismatched receipt" {
         $mismatch = $receipt.Clone()
         $mismatch.started_utc = '2000-01-01T00:00:00.0000000Z'
         With-LoadingModule {
             Check (!(Stop-LocalOwnedProcess -Record $mismatch -Workspace $workspace)) 'Loading authorized a mismatched receipt.'
             Check (!$child.get_HasExited()) 'Loading inspection stopped a mismatched process.'
-        }
+        } -LoadingFailure $loadingFailure
     }
-    Case 'native exit during module loading is confirmed on the held process' {
+    Case "$loadingFailure native exit during module loading is confirmed on the held process" {
         $exiting = [Diagnostics.Process]::Start($info)
         [void]$exiting.get_Handle()
         try {
             & $module {
-                param($OwnedChild)
+                param($OwnedChild, $Failure)
                 $script:ExitingChild = $OwnedChild
+                $script:ExitingFailure = $Failure
                 $script:ExitLookups = 0
                 function script:Get-Process {
                     [CmdletBinding()]param([int]$Id)
@@ -205,11 +236,14 @@ try {
                         # inspecting Process. The code under test must observe exit.
                         $script:ExitingChild.Kill()
                         if (!$script:ExitingChild.WaitForExit(5000)) { throw 'Fixture child did not exit.' }
+                        if ($script:ExitingFailure -eq 'partial-copy') {
+                            throw [ComponentModel.Win32Exception]::new(299, 'injected partial-copy uncertainty')
+                        }
                         $null
                     } -Force
                     $p
                 }
-            } $exiting
+            } $exiting $loadingFailure
             Check ($null -eq (Get-LocalProcessIdentity -ProcessId $exiting.Id)) 'Confirmed exit returned a live identity.'
             Check ((& $module { $script:ExitLookups }) -eq 1) 'Exit inspection reopened the PID.'
             Check ($exiting.get_HasExited()) 'Exit was not confirmed through the creation handle.'
@@ -219,6 +253,7 @@ try {
             Check ($exiting.WaitForExit(5000)) 'The owned exit fixture was not reaped.'
             $exiting.Dispose()
         }
+    }
     }
     Case 'invalid PID is not evidence of absence' { Must-Throw { Get-LocalProcessIdentity -ProcessId 0 } }
     Case 'exact identity survives all injected uncertainty' {
@@ -242,7 +277,7 @@ try {
             Check ($child.WaitForExit(5000)) 'Owned handle did not confirm exit.'
             Check ($result.saves -eq 1 -and $result.record.stopped_verified) 'QA cleanup did not persist the verified stop.'
             Check ($result.messages.Count -eq 1) 'QA cleanup did not report the verified stop.'
-        } -ExpectedLookups 3 # QA checks presence and ownership, then Stop verifies its own held process.
+        } -ExpectedLookups 3 -LoadingFailure 'partial-copy' # QA checks presence and ownership, then Stop verifies its own held process.
     }
     Case 'confirmed native absence is distinct from uncertainty' {
         Check ($null -eq (Get-LocalProcessIdentity -ProcessId $child.Id)) 'Exited child returned an identity.'

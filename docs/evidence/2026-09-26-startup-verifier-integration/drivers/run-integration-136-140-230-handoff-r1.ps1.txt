@@ -1,0 +1,31 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp'
+$node = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe'
+$output = Join-Path $PSScriptRoot 'integration-136-140-230-handoff-r1'
+$receiptPath = Join-Path $PSScriptRoot 'integration-136-140-230-handoff-r1.json'
+$log = Join-Path $PSScriptRoot 'integration-136-140-230-handoff-r1.log'
+if ((Test-Path -LiteralPath $receiptPath) -or (Test-Path -LiteralPath $output) -or (Test-Path -LiteralPath $log)) { throw 'Preserve previous native handoff evidence.' }
+. (Join-Path $PSScriptRoot 'integration-136-140-230-source-guard-r1.ps1')
+$before = $build.source_before
+$started = [DateTimeOffset]::UtcNow.ToString('o')
+$head = $sourceHead
+& (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File (Join-Path $product 'tools/local_stack_browser_policy_handoff.test.ps1') -NodePath $node -OutputDirectory $output *> $log
+$code = $LASTEXITCODE
+$same = $false
+$bindingFailure = $null
+try { Assert-IntegrationSource; $same = $true } catch { $bindingFailure = $_.Exception.Message }
+$after = @($build.source_before | ForEach-Object { @{path=$_.path;sha256=(Get-FileHash -LiteralPath (Join-Path $product $_.path)).Hash.ToLowerInvariant()} })
+$cases = @()
+if (Test-Path -LiteralPath (Join-Path $output 'cases.json')) { $cases = @(Get-Content -Raw -LiteralPath (Join-Path $output 'cases.json') | ConvertFrom-Json) }
+$record = [ordered]@{
+    issue=136;head=$head;tree=$sourceTree;source_status=$sourceStatus;source_kind='reviewed uncommitted staged integration candidate';binding_failure=$bindingFailure;build_receipt='integration-136-140-230-native-build-r2.json';integration_preparation='integration-136-140-230-preparation-r2.json';drivers=@($PSCommandPath,(Join-Path $PSScriptRoot 'integration-136-140-230-source-guard-r1.ps1') | ForEach-Object {@{path=$_;sha256=(Get-FileHash -LiteralPath $_).Hash.ToLowerInvariant()}});started_at_utc=$started;finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    exit_code=$code;source_unchanged=$same;source_before=$before;source_after=$after
+    passed=@($cases | Where-Object passed).Count;failed=@($cases | Where-Object {!$_.passed}).Count;expected_cases=16
+    cases=$cases;log=$log;log_sha256=(Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant()
+    assurance='Actual native Windows process handoff and exact identity checks at zero and 250 ms readiness delays; Playwright launch observer, not a real browser or Rust runner. Synthetic noncredential canaries only.'
+}
+$record | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8
+$record | Select-Object issue,exit_code,source_unchanged,passed,failed,expected_cases | ConvertTo-Json -Compress
+if ($code -ne 0 -or !$same -or $record.passed -ne 16 -or $record.failed -ne 0) { exit 1 }

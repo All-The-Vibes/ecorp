@@ -1,0 +1,4168 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "started_at": "2026-09-26T18:50:32.057Z",
+  "server": "http://127.0.0.1:19040",
+  "web": "http://127.0.0.1:16040",
+  "scope": "Real browser/server/runner with deterministic fake-process; development identity, no real-provider inference or manual review decisions",
+  "screenshot_fixture": "The existing fake-agent screenshot signature fixture exercises the screenshot verifier; browser screenshots below are separate real rendered captures.",
+  "source_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+  "errors": [],
+  "blocked_requests": [],
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1050,
+      "selected": [
+        {
+          "index": 0,
+          "type": "artifact",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 1,
+          "type": "file",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 2,
+          "type": "command",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 3,
+          "type": "test",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 4,
+          "type": "json_schema",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 5,
+          "type": "screenshot",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        }
+      ],
+      "manual_gates": "draft-only; restored to none",
+      "command_summary": "Command · [\"node\",\"-e\",\"require('node:assert/strict').deepEqual(process.argv.slice(1), [\\\"one two\\\",\\\"two  spaces\\\",\\\"quoted \\\\\\\"value\\\\\\\"\\\",\\\"back\\\\\\\\slash\\\"])\",\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"] · 10s",
+      "byte_summary": "Provider artifact · at least 1 byte",
+      "layout": {
+        "viewport": 1440,
+        "content": 1440
+      },
+      "screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\desktop-editor.png",
+        "sha256": "7c7d349369cc38bfe7b332470531657609e64d3cf6d13316b204388e8ea96f0b"
+      }
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "selected": [
+        {
+          "index": 0,
+          "type": "artifact",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 1,
+          "type": "file",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 2,
+          "type": "command",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 3,
+          "type": "test",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 4,
+          "type": "json_schema",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        },
+        {
+          "index": 5,
+          "type": "screenshot",
+          "focus": {
+            "active": true,
+            "outline": "solid",
+            "outline_width": 3
+          }
+        }
+      ],
+      "manual_gates": "draft-only; restored to none",
+      "command_summary": "Command · [\"node\",\"-e\",\"require('node:assert/strict').deepEqual(process.argv.slice(1), [\\\"one two\\\",\\\"two  spaces\\\",\\\"quoted \\\\\\\"value\\\\\\\"\\\",\\\"back\\\\\\\\slash\\\"])\",\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"] · 10s",
+      "byte_summary": "Provider artifact · at least 1 byte",
+      "layout": {
+        "viewport": 390,
+        "content": 390
+      },
+      "screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\mobile-editor.png",
+        "sha256": "7f1dbf3ac8b8f01b325b86f50264c0f586d8cf04ac0ca16a317cb13245cef251"
+      }
+    }
+  ],
+  "missions": [
+    {
+      "title": "[verification-matrix] Policy browser pass efe9aadd",
+      "mission_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+      "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+      "authored": {
+        "title": "[verification-matrix] Policy browser pass efe9aadd",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue140-cache",
+          "base_ref": "HEAD",
+          "base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "review_only_report",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "file",
+              "path": "verify.txt",
+              "min_bytes": 9
+            },
+            {
+              "type": "command",
+              "program": "node",
+              "args": [
+                "-e",
+                "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                "one two",
+                "two  spaces",
+                "quoted \"value\"",
+                "back\\slash"
+              ],
+              "timeout_ms": 10000
+            },
+            {
+              "type": "test",
+              "program": "node",
+              "args": [
+                "--test",
+                "fixture.test.mjs"
+              ],
+              "timeout_ms": 10000
+            },
+            {
+              "type": "json_schema",
+              "path": "schema.json",
+              "required_keys": [
+                "status",
+                "count"
+              ]
+            },
+            {
+              "type": "screenshot",
+              "path": "screenshot.png",
+              "min_bytes": 16
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "expected_outcome": "passed",
+      "saved_screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\passed-saved.png",
+        "sha256": "cb1eb5a80ff0a537cfac1fdf8bd91a9aa044fe0c2b9796b33f91d198160f0be4"
+      },
+      "launch": {
+        "run_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+        "runner_id": "runner-integration-140-r1",
+        "run_ids": [
+          "84be29a4-1b6b-4970-8ed9-da14bf207a8a"
+        ],
+        "runner_ids": [
+          "runner-integration-140-r1"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "3248e20b-f810-45f7-9373-015e2176ed75",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[verification-matrix] Policy browser pass efe9aadd",
+          "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-26T18:50:42.484379Z",
+          "updated_at": "2026-09-26T18:50:49.150263Z"
+        },
+        "tasks": [
+          {
+            "id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+            "mission_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser pass efe9aadd",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser pass efe9aadd",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue140-cache",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "review_only_report",
+                "commit_after_verification": false,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 1
+                },
+                {
+                  "type": "file",
+                  "path": "verify.txt",
+                  "min_bytes": 9
+                },
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "-e",
+                    "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                    "one two",
+                    "two  spaces",
+                    "quoted \"value\"",
+                    "back\\slash"
+                  ],
+                  "timeout_ms": 10000
+                },
+                {
+                  "type": "test",
+                  "program": "node",
+                  "args": [
+                    "--test",
+                    "fixture.test.mjs"
+                  ],
+                  "timeout_ms": 10000
+                },
+                {
+                  "type": "json_schema",
+                  "path": "schema.json",
+                  "required_keys": [
+                    "status",
+                    "count"
+                  ]
+                },
+                {
+                  "type": "screenshot",
+                  "path": "screenshot.png",
+                  "min_bytes": 16
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "bc584cf5-042e-44ce-a543-5e7fd55c44e5",
+            "created_at": "2026-09-26T18:50:42.484379Z",
+            "updated_at": "2026-09-26T18:50:49.150263Z"
+          }
+        ],
+        "run": {
+          "id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+          "agent_id": "bc584cf5-042e-44ce-a543-5e7fd55c44e5",
+          "runner_id": "runner-integration-140-r1",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/issue140-cache",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+          "workspace_path": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\d245cff3fa434816822895411d0dd47a\\84be29a41b6b49708ed9da14bf207a8a",
+          "workspace_branch": "crony/task-d245cff3fa434816822895411d0dd47a/run-84be29a41b6b49708ed9da14bf207a8a",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=4; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+          "workspace_fingerprint": "dbd6f8bc8ec6b8381aa4f4928d4776921127de9549ac1707c09c209686133d3f",
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 6 verifier checks passed",
+          "verification_sha256": "02cc992f5ccec33f24e9dedaad9436a962e8eff4a1ea7ee6adf453c9024d7a43",
+          "deliverable_sha256": "3bf7f3f8d06403db78ecb7dce068d2806e320e6087d98da3f8c57487613b757a",
+          "status": "completed",
+          "summary": "Created and verified result.md through the runner-owned child process.",
+          "artifact_id": "b22a0b6a-675a-4267-a0c0-49cd5289e15b",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b22a0b6a-675a-4267-a0c0-49cd5289e15b",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "382d593e4a860e6096a501f4e4cb9c6f9240cde175e9727b40ec57a4e08c6345",
+          "artifact_sha256": "4de4205298f7767b6d02bd732bc4c8c265402f5663d8d715153b65a651e7923d",
+          "created_at": "2026-09-26T18:50:42.965276Z",
+          "updated_at": "2026-09-26T18:50:49.515688Z"
+        },
+        "evidence": [
+          {
+            "id": "62e5225d-d7cb-4b29-901e-9dbf6e6bab76",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+            "run_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "passed",
+            "summary": "durable artifact b22a0b6a-675a-4267-a0c0-49cd5289e15b has 1558 verified bytes",
+            "payload": {
+              "artifact_id": "b22a0b6a-675a-4267-a0c0-49cd5289e15b",
+              "bytes": 1558,
+              "media_type": "text/markdown",
+              "producer_agent_id": "bc584cf5-042e-44ce-a543-5e7fd55c44e5",
+              "producer_runner_id": "runner-integration-140-r1",
+              "provenance_signature": "382d593e4a860e6096a501f4e4cb9c6f9240cde175e9727b40ec57a4e08c6345",
+              "retention_until": "2026-10-26T18:50:46.151140Z",
+              "sha256": "4de4205298f7767b6d02bd732bc4c8c265402f5663d8d715153b65a651e7923d",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b22a0b6a-675a-4267-a0c0-49cd5289e15b",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T18:50:48.032583Z"
+          },
+          {
+            "id": "da6719ed-b2b5-4919-904c-5b27ad7d8a42",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+            "run_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "check_index": 1,
+            "kind": "file",
+            "status": "passed",
+            "summary": "verify.txt exists with 9 bytes",
+            "payload": {
+              "bytes": 9,
+              "path": "verify.txt",
+              "sha256": "8f5a1374b3eb9532a67c0de915a0810ea089fc304c33a44642a7f4878984803e"
+            },
+            "created_at": "2026-09-26T18:50:48.067852Z"
+          },
+          {
+            "id": "e5fe8be0-0902-4163-a882-29985842d9b6",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+            "run_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "check_index": 2,
+            "kind": "command",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "-e",
+                "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                "one two",
+                "two  spaces",
+                "quoted \"value\"",
+                "back\\slash"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "stderr": "",
+              "stdout": ""
+            },
+            "created_at": "2026-09-26T18:50:48.091478Z"
+          },
+          {
+            "id": "da8dfb77-e205-485f-b4d0-f1047eb556c4",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+            "run_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "check_index": 3,
+            "kind": "test",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "--test",
+                "fixture.test.mjs"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "stderr": "",
+              "stdout": "✔ deterministic verifier inputs (6.5023ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 116.5795\n"
+            },
+            "created_at": "2026-09-26T18:50:48.111389Z"
+          },
+          {
+            "id": "11466422-6259-4290-bc48-923ffa588342",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+            "run_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "check_index": 4,
+            "kind": "json_schema",
+            "status": "passed",
+            "summary": "schema.json satisfies 2 required keys",
+            "payload": {
+              "path": "schema.json",
+              "required_keys": [
+                "status",
+                "count"
+              ]
+            },
+            "created_at": "2026-09-26T18:50:48.134178Z"
+          },
+          {
+            "id": "19b62c48-2b3d-4ad4-b7d1-106e8e0b6e7e",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+            "run_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "check_index": 5,
+            "kind": "screenshot",
+            "status": "passed",
+            "summary": "screenshot.png is a valid png screenshot",
+            "payload": {
+              "bytes": 24,
+              "format": "png",
+              "path": "screenshot.png"
+            },
+            "created_at": "2026-09-26T18:50:48.155910Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 9,
+            "id": "848dbfcb-2f0e-4688-b67b-7d65438425eb",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "run:84be29a4-1b6b-4970-8ed9-da14bf207a8a:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "bc584cf5-042e-44ce-a543-5e7fd55c44e5",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-integration-140-r1",
+              "status": "starting",
+              "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a"
+            },
+            "created_at": "2026-09-26T18:50:42.965276Z"
+          },
+          {
+            "seq": 10,
+            "id": "2105b2bd-1bbb-4219-8971-bd8c5f2016da",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:2105b2bd-1bbb-4219-8971-bd8c5f2016da",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "d245cff3-fa43-4816-8228-95411d0dd47a",
+              "workspace": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\d245cff3fa434816822895411d0dd47a\\84be29a41b6b49708ed9da14bf207a8a",
+              "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-d245cff3fa434816822895411d0dd47a/run-84be29a41b6b49708ed9da14bf207a8a"
+            },
+            "created_at": "2026-09-26T18:50:43.531239Z"
+          },
+          {
+            "seq": 11,
+            "id": "189407b4-c18d-4722-be3e-6ab2c822b93b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:189407b4-c18d-4722-be3e-6ab2c822b93b",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:50:43.613017Z"
+          },
+          {
+            "seq": 12,
+            "id": "898b61cc-d962-4a9b-b65c-ea9dff51c061",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:898b61cc-d962-4a9b-b65c-ea9dff51c061",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [verification-matrix] Policy browser pass efe9aadd\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/issue140-cache\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: a984aabe1d0b2397508b6795c27e8781dd719aff\nOBJECTIVE: Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser pass efe9aadd\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 1000000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: review_only_report\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-26T18:50:44.313403Z"
+          },
+          {
+            "seq": 13,
+            "id": "5601f435-6c33-4597-808f-fbc1b97f4c22",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:5601f435-6c33-4597-808f-fbc1b97f4c22",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:50:44.316653Z"
+          },
+          {
+            "seq": 14,
+            "id": "baace312-b226-43ae-b9fe-d0069d3fd419",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:baace312-b226-43ae-b9fe-d0069d3fd419",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:50:45.224195Z"
+          },
+          {
+            "seq": 15,
+            "id": "1d29a336-a957-44d9-9779-6f517b8fdbc4",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "artifact:b22a0b6a-675a-4267-a0c0-49cd5289e15b:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "b22a0b6a-675a-4267-a0c0-49cd5289e15b",
+              "artifact_role": "provider_evidence",
+              "bytes": 1558,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "bc584cf5-042e-44ce-a543-5e7fd55c44e5",
+              "producer_runner_id": "runner-integration-140-r1",
+              "provenance_signature": "382d593e4a860e6096a501f4e4cb9c6f9240cde175e9727b40ec57a4e08c6345",
+              "retention_until": "2026-10-26T18:50:46.151140Z",
+              "sha256": "4de4205298f7767b6d02bd732bc4c8c265402f5663d8d715153b65a651e7923d",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b22a0b6a-675a-4267-a0c0-49cd5289e15b",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T18:50:46.187876Z"
+          },
+          {
+            "seq": 16,
+            "id": "443f7688-288e-4366-8489-374bb3312c1e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:443f7688-288e-4366-8489-374bb3312c1e",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-26T18:50:46.657434Z"
+          },
+          {
+            "seq": 17,
+            "id": "b81d41e3-fec0-4ce4-960c-ea23d17275fc",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:b81d41e3-fec0-4ce4-960c-ea23d17275fc",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 6
+            },
+            "created_at": "2026-09-26T18:50:46.662844Z"
+          },
+          {
+            "seq": 18,
+            "id": "3c40bca4-da51-4498-91a9-48916598e816",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:3c40bca4-da51-4498-91a9-48916598e816",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "62e5225d-d7cb-4b29-901e-9dbf6e6bab76",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "b22a0b6a-675a-4267-a0c0-49cd5289e15b",
+                "bytes": 1558,
+                "media_type": "text/markdown",
+                "producer_agent_id": "bc584cf5-042e-44ce-a543-5e7fd55c44e5",
+                "producer_runner_id": "runner-integration-140-r1",
+                "provenance_signature": "382d593e4a860e6096a501f4e4cb9c6f9240cde175e9727b40ec57a4e08c6345",
+                "retention_until": "2026-10-26T18:50:46.151140Z",
+                "sha256": "4de4205298f7767b6d02bd732bc4c8c265402f5663d8d715153b65a651e7923d",
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b22a0b6a-675a-4267-a0c0-49cd5289e15b",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "passed",
+              "summary": "durable artifact b22a0b6a-675a-4267-a0c0-49cd5289e15b has 1558 verified bytes"
+            },
+            "created_at": "2026-09-26T18:50:48.032583Z"
+          },
+          {
+            "seq": 19,
+            "id": "74d4ea7a-675b-4846-9fe2-cf9e3bea9f93",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:74d4ea7a-675b-4846-9fe2-cf9e3bea9f93",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 1,
+              "evidence_id": "da6719ed-b2b5-4919-904c-5b27ad7d8a42",
+              "kind": "file",
+              "payload": {
+                "bytes": 9,
+                "path": "verify.txt",
+                "sha256": "8f5a1374b3eb9532a67c0de915a0810ea089fc304c33a44642a7f4878984803e"
+              },
+              "status": "passed",
+              "summary": "verify.txt exists with 9 bytes"
+            },
+            "created_at": "2026-09-26T18:50:48.067852Z"
+          },
+          {
+            "seq": 20,
+            "id": "e1645f07-5a0e-484b-a9ae-f0c3b9bad58e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:e1645f07-5a0e-484b-a9ae-f0c3b9bad58e",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 2,
+              "evidence_id": "e5fe8be0-0902-4163-a882-29985842d9b6",
+              "kind": "command",
+              "payload": {
+                "args": [
+                  "-e",
+                  "require('node:assert/strict').deepEqual(process.argv.slice(1), [\"one two\",\"two  spaces\",\"quoted \\\"value\\\"\",\"back\\\\slash\"])",
+                  "one two",
+                  "two  spaces",
+                  "quoted \"value\"",
+                  "back\\slash"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-26T18:50:48.091478Z"
+          },
+          {
+            "seq": 21,
+            "id": "6f367eab-390c-4555-9e1b-ce0bab5ffb01",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:6f367eab-390c-4555-9e1b-ce0bab5ffb01",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 3,
+              "evidence_id": "da8dfb77-e205-485f-b4d0-f1047eb556c4",
+              "kind": "test",
+              "payload": {
+                "args": [
+                  "--test",
+                  "fixture.test.mjs"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "stderr": "",
+                "stdout": "✔ deterministic verifier inputs (6.5023ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 116.5795\n"
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-26T18:50:48.111389Z"
+          },
+          {
+            "seq": 22,
+            "id": "1a1c9e66-d78c-4f3e-b0b6-54406139b7ca",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:1a1c9e66-d78c-4f3e-b0b6-54406139b7ca",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 4,
+              "evidence_id": "11466422-6259-4290-bc48-923ffa588342",
+              "kind": "json_schema",
+              "payload": {
+                "path": "schema.json",
+                "required_keys": [
+                  "status",
+                  "count"
+                ]
+              },
+              "status": "passed",
+              "summary": "schema.json satisfies 2 required keys"
+            },
+            "created_at": "2026-09-26T18:50:48.134178Z"
+          },
+          {
+            "seq": 23,
+            "id": "7c4c939d-e55d-473b-bbd4-5ae93057a0ef",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:7c4c939d-e55d-473b-bbd4-5ae93057a0ef",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 5,
+              "evidence_id": "19b62c48-2b3d-4ad4-b7d1-106e8e0b6e7e",
+              "kind": "screenshot",
+              "payload": {
+                "bytes": 24,
+                "format": "png",
+                "path": "screenshot.png"
+              },
+              "status": "passed",
+              "summary": "screenshot.png is a valid png screenshot"
+            },
+            "created_at": "2026-09-26T18:50:48.155910Z"
+          },
+          {
+            "seq": 24,
+            "id": "d48b1a23-a501-481d-8106-414f7e1b733e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "artifact:acd1b931-3571-42fe-8ac0-6561129b16fb:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "acd1b931-3571-42fe-8ac0-6561129b16fb",
+              "artifact_role": "source_deliverable",
+              "bytes": 1282,
+              "file_name": "ecorp-review-report.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+                "branch": "crony/task-d245cff3fa434816822895411d0dd47a/run-84be29a41b6b49708ed9da14bf207a8a",
+                "form": "review_only_report",
+                "git_bundle_sha256": null,
+                "head_commit": null,
+                "integration_state": "not_applicable",
+                "publication_ready": false,
+                "verification_sha256": "02cc992f5ccec33f24e9dedaad9436a962e8eff4a1ea7ee6adf453c9024d7a43"
+              },
+              "producer_agent_id": "bc584cf5-042e-44ce-a543-5e7fd55c44e5",
+              "producer_runner_id": "runner-integration-140-r1",
+              "provenance_signature": "e4c2922dc30973ec31dbe256b8ddc59bcab73c9ff68aeef9db4aa7b26941890d",
+              "retention_until": "2026-10-26T18:50:49.054396Z",
+              "sha256": "3bf7f3f8d06403db78ecb7dce068d2806e320e6087d98da3f8c57487613b757a",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/acd1b931-3571-42fe-8ac0-6561129b16fb",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T18:50:49.093101Z"
+          },
+          {
+            "seq": 25,
+            "id": "b17daebe-60b0-41d6-bb32-073d80733bb0",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:b17daebe-60b0-41d6-bb32-073d80733bb0",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "3bf7f3f8d06403db78ecb7dce068d2806e320e6087d98da3f8c57487613b757a",
+              "summary": "all 6 verifier checks passed",
+              "verification_sha256": "02cc992f5ccec33f24e9dedaad9436a962e8eff4a1ea7ee6adf453c9024d7a43"
+            },
+            "created_at": "2026-09-26T18:50:49.125796Z"
+          },
+          {
+            "seq": 26,
+            "id": "d9612b27-c954-41f0-b224-bbb9b6aa5fc3",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:d9612b27-c954-41f0-b224-bbb9b6aa5fc3",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created and verified result.md through the runner-owned child process."
+            },
+            "created_at": "2026-09-26T18:50:49.150263Z"
+          },
+          {
+            "seq": 28,
+            "id": "d1748cea-431a-42d3-9061-2eecc442e7f6",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "84be29a4-1b6b-4970-8ed9-da14bf207a8a",
+            "aggregate_version": 1,
+            "correlation_id": "3248e20b-f810-45f7-9373-015e2176ed75",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:d1748cea-431a-42d3-9061-2eecc442e7f6",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=4; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+              "dirty": true,
+              "workspace": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\d245cff3fa434816822895411d0dd47a\\84be29a41b6b49708ed9da14bf207a8a",
+              "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-d245cff3fa434816822895411d0dd47a/run-84be29a41b6b49708ed9da14bf207a8a",
+              "workspace_fingerprint": "dbd6f8bc8ec6b8381aa4f4928d4776921127de9549ac1707c09c209686133d3f"
+            },
+            "created_at": "2026-09-26T18:50:49.515688Z"
+          }
+        ]
+      },
+      "final_screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\passed-final.png",
+        "sha256": "aa82b79c2c5cfa778a185d59ed94966c5c039c91222bb3429852c66184d20c32"
+      }
+    },
+    {
+      "title": "[verification-matrix] Policy browser floor failure d27b52bd",
+      "mission_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+      "task_id": "d08e36ea-9b84-4a83-8038-5db019eea3da",
+      "authored": {
+        "title": "[verification-matrix] Policy browser floor failure d27b52bd",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue140-cache",
+          "base_ref": "HEAD",
+          "base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "review_only_report",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 10000000
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "expected_outcome": "failed",
+      "saved_screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\failed-saved.png",
+        "sha256": "660c3fc0096cc4af914eb74db55c4a33b9f28a7b8727dc07be7910290fac4c94"
+      },
+      "launch": {
+        "run_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+        "runner_id": "runner-integration-140-r1",
+        "run_ids": [
+          "f6bf79db-9ef9-4a05-82d6-e0c44129af18"
+        ],
+        "runner_ids": [
+          "runner-integration-140-r1"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[verification-matrix] Policy browser floor failure d27b52bd",
+          "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "failed",
+          "created_at": "2026-09-26T18:50:50.768162Z",
+          "updated_at": "2026-09-26T18:50:54.720346Z"
+        },
+        "tasks": [
+          {
+            "id": "d08e36ea-9b84-4a83-8038-5db019eea3da",
+            "mission_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser floor failure d27b52bd",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser floor failure d27b52bd",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue140-cache",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "review_only_report",
+                "commit_after_verification": false,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 10000000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "failed",
+            "status": "verification_failed",
+            "assigned_agent_id": "75668141-281d-40a4-8595-4ac7fb93726f",
+            "created_at": "2026-09-26T18:50:50.768162Z",
+            "updated_at": "2026-09-26T18:50:54.720346Z"
+          }
+        ],
+        "run": {
+          "id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "d08e36ea-9b84-4a83-8038-5db019eea3da",
+          "agent_id": "75668141-281d-40a4-8595-4ac7fb93726f",
+          "runner_id": "runner-integration-140-r1",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/issue140-cache",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+          "workspace_path": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\d08e36ea9b844a8380385db019eea3da\\f6bf79db9ef94a0582d6e0c44129af18",
+          "workspace_branch": "crony/task-d08e36ea9b844a8380385db019eea3da/run-f6bf79db9ef94a0582d6e0c44129af18",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+          "workspace_fingerprint": "4bb3aaea4dca697968fde60f597151925e9a1826b9e837dde52e004ab43286d0",
+          "execution_mode": "provider",
+          "verification_status": "failed",
+          "verification_summary": "1 of 1 verifier checks failed",
+          "verification_sha256": null,
+          "deliverable_sha256": null,
+          "status": "failed",
+          "summary": "1 of 1 verifier checks failed",
+          "artifact_id": "097e4f77-49af-44f3-95c0-2b7ae37977eb",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/097e4f77-49af-44f3-95c0-2b7ae37977eb",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "f66a300c502f78b96b4aabdb30733af6f9059b19ba5c5d1ea9d71108cc05920d",
+          "artifact_sha256": "7ab32f1b7128dd7782d312c7143c956db72d9fece91cd5f520ee565e2e9e1218",
+          "created_at": "2026-09-26T18:50:51.046712Z",
+          "updated_at": "2026-09-26T18:50:54.727304Z"
+        },
+        "evidence": [
+          {
+            "id": "3c9bbf17-6977-4474-8136-e00874e5d11e",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "d08e36ea-9b84-4a83-8038-5db019eea3da",
+            "run_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "failed",
+            "summary": "durable artifact 097e4f77-49af-44f3-95c0-2b7ae37977eb has 1576 verified bytes",
+            "payload": {
+              "artifact_id": "097e4f77-49af-44f3-95c0-2b7ae37977eb",
+              "bytes": 1576,
+              "media_type": "text/markdown",
+              "producer_agent_id": "75668141-281d-40a4-8595-4ac7fb93726f",
+              "producer_runner_id": "runner-integration-140-r1",
+              "provenance_signature": "f66a300c502f78b96b4aabdb30733af6f9059b19ba5c5d1ea9d71108cc05920d",
+              "retention_until": "2026-10-26T18:50:54.166179Z",
+              "sha256": "7ab32f1b7128dd7782d312c7143c956db72d9fece91cd5f520ee565e2e9e1218",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/097e4f77-49af-44f3-95c0-2b7ae37977eb",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T18:50:54.700004Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 33,
+            "id": "5c59c943-c3d7-4680-ad64-fc01bdd5427a",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "run:f6bf79db-9ef9-4a05-82d6-e0c44129af18:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "75668141-281d-40a4-8595-4ac7fb93726f",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-integration-140-r1",
+              "status": "starting",
+              "task_id": "d08e36ea-9b84-4a83-8038-5db019eea3da"
+            },
+            "created_at": "2026-09-26T18:50:51.046712Z"
+          },
+          {
+            "seq": 34,
+            "id": "e46e7421-cfc6-40bc-8da5-d01487301cc8",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:e46e7421-cfc6-40bc-8da5-d01487301cc8",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "d08e36ea-9b84-4a83-8038-5db019eea3da",
+              "workspace": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\d08e36ea9b844a8380385db019eea3da\\f6bf79db9ef94a0582d6e0c44129af18",
+              "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-d08e36ea9b844a8380385db019eea3da/run-f6bf79db9ef94a0582d6e0c44129af18"
+            },
+            "created_at": "2026-09-26T18:50:51.545438Z"
+          },
+          {
+            "seq": 35,
+            "id": "72c47757-3851-47cc-833e-36b49e05ae29",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:72c47757-3851-47cc-833e-36b49e05ae29",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:50:51.617094Z"
+          },
+          {
+            "seq": 36,
+            "id": "e93800b7-4df2-432a-bd3e-686d6008cdf0",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:e93800b7-4df2-432a-bd3e-686d6008cdf0",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [verification-matrix] Policy browser floor failure d27b52bd\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/issue140-cache\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: a984aabe1d0b2397508b6795c27e8781dd719aff\nOBJECTIVE: Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Policy browser floor failure d27b52bd\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 1000000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: review_only_report\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-26T18:50:52.324487Z"
+          },
+          {
+            "seq": 37,
+            "id": "726c39a2-1681-481b-83cc-16dd6387a33b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:726c39a2-1681-481b-83cc-16dd6387a33b",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:50:52.328Z"
+          },
+          {
+            "seq": 38,
+            "id": "ec492f61-cdf8-4d3c-88e8-921488e20d46",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:ec492f61-cdf8-4d3c-88e8-921488e20d46",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:50:53.240015Z"
+          },
+          {
+            "seq": 39,
+            "id": "c187655f-21b8-4eef-ac8b-4341ebe42c58",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "artifact:097e4f77-49af-44f3-95c0-2b7ae37977eb:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "097e4f77-49af-44f3-95c0-2b7ae37977eb",
+              "artifact_role": "provider_evidence",
+              "bytes": 1576,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "75668141-281d-40a4-8595-4ac7fb93726f",
+              "producer_runner_id": "runner-integration-140-r1",
+              "provenance_signature": "f66a300c502f78b96b4aabdb30733af6f9059b19ba5c5d1ea9d71108cc05920d",
+              "retention_until": "2026-10-26T18:50:54.166179Z",
+              "sha256": "7ab32f1b7128dd7782d312c7143c956db72d9fece91cd5f520ee565e2e9e1218",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/097e4f77-49af-44f3-95c0-2b7ae37977eb",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T18:50:54.195388Z"
+          },
+          {
+            "seq": 40,
+            "id": "9b098e53-b8eb-4e9d-90e3-7f84ada0db4e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:9b098e53-b8eb-4e9d-90e3-7f84ada0db4e",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-26T18:50:54.672725Z"
+          },
+          {
+            "seq": 41,
+            "id": "84b5449e-a87d-46dd-8a5c-78d425585032",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:84b5449e-a87d-46dd-8a5c-78d425585032",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 1
+            },
+            "created_at": "2026-09-26T18:50:54.676881Z"
+          },
+          {
+            "seq": 42,
+            "id": "480d40c2-0043-4589-aea9-aa003032f0ea",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:480d40c2-0043-4589-aea9-aa003032f0ea",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "3c9bbf17-6977-4474-8136-e00874e5d11e",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "097e4f77-49af-44f3-95c0-2b7ae37977eb",
+                "bytes": 1576,
+                "media_type": "text/markdown",
+                "producer_agent_id": "75668141-281d-40a4-8595-4ac7fb93726f",
+                "producer_runner_id": "runner-integration-140-r1",
+                "provenance_signature": "f66a300c502f78b96b4aabdb30733af6f9059b19ba5c5d1ea9d71108cc05920d",
+                "retention_until": "2026-10-26T18:50:54.166179Z",
+                "sha256": "7ab32f1b7128dd7782d312c7143c956db72d9fece91cd5f520ee565e2e9e1218",
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/097e4f77-49af-44f3-95c0-2b7ae37977eb",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "failed",
+              "summary": "durable artifact 097e4f77-49af-44f3-95c0-2b7ae37977eb has 1576 verified bytes"
+            },
+            "created_at": "2026-09-26T18:50:54.700004Z"
+          },
+          {
+            "seq": 43,
+            "id": "daeaf1ca-a885-4bc1-8495-9e1dc0bc9059",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_failed",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:daeaf1ca-a885-4bc1-8495-9e1dc0bc9059",
+            "visibility": "corp",
+            "payload": {
+              "completion_summary": "Created and verified result.md through the runner-owned child process.",
+              "error": "1 of 1 verifier checks failed"
+            },
+            "created_at": "2026-09-26T18:50:54.720346Z"
+          },
+          {
+            "seq": 44,
+            "id": "182efba1-c08f-43a2-aaab-70c27aea7f06",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "f6bf79db-9ef9-4a05-82d6-e0c44129af18",
+            "aggregate_version": 1,
+            "correlation_id": "e33fb6c3-7472-40d6-947c-187d3d40aa89",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:182efba1-c08f-43a2-aaab-70c27aea7f06",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+              "dirty": null,
+              "workspace": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\d08e36ea9b844a8380385db019eea3da\\f6bf79db9ef94a0582d6e0c44129af18",
+              "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-d08e36ea9b844a8380385db019eea3da/run-f6bf79db9ef94a0582d6e0c44129af18",
+              "workspace_fingerprint": "4bb3aaea4dca697968fde60f597151925e9a1826b9e837dde52e004ab43286d0",
+              "workspace_quarantined": false
+            },
+            "created_at": "2026-09-26T18:50:54.727304Z"
+          }
+        ]
+      },
+      "final_screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\failed-final.png",
+        "sha256": "f258d7641ede4b5f8728567b8a4f0fd5adf4116cb8cfdcfa8b02aa52204b1f32"
+      }
+    }
+  ],
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "development_actor_id": "00000000-0000-4000-8000-000000000011",
+  "stage": "automatic Python verifier and ignored-worktree disposition",
+  "explicit_cache_policy": {
+    "mission_id": "fbc6c2d3-6485-4bf0-a8e3-fda41965d596",
+    "authored": {
+      "title": "[verification-matrix] Explicit node cache policy 164e4bed",
+      "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+      "requested_by": "00000000-0000-4000-8000-000000000011",
+      "preferred_adapter": "fake-process",
+      "preferred_model": null,
+      "reasoning_effort": null,
+      "strategy": "single",
+      "source": {
+        "repository": "ecorp-fixture/issue140-cache",
+        "base_ref": "HEAD",
+        "base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff"
+      },
+      "budget_tokens": 1000000,
+      "deliverable": {
+        "form": "review_only_report",
+        "commit_after_verification": false,
+        "paths": []
+      },
+      "contract": null,
+      "verification_policy": {
+        "checks": [
+          {
+            "type": "command",
+            "program": "node",
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "timeout_ms": 10000,
+            "cache_suppression": "node_compile_cache"
+          },
+          {
+            "type": "test",
+            "program": "node",
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "timeout_ms": 10000,
+            "cache_suppression": "node_compile_cache"
+          }
+        ],
+        "manual_gate": null
+      }
+    },
+    "policy": {
+      "checks": [
+        {
+          "type": "command",
+          "program": "node",
+          "args": [
+            "-e",
+            "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+          ],
+          "timeout_ms": 10000,
+          "cache_suppression": "node_compile_cache"
+        },
+        {
+          "type": "test",
+          "program": "node",
+          "args": [
+            "-e",
+            "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+          ],
+          "timeout_ms": 10000,
+          "cache_suppression": "node_compile_cache"
+        }
+      ],
+      "manual_gate": null
+    },
+    "setup": "Supported HTTP create API; actual browser review and launch; no response mocks or database seeding",
+    "viewports": [
+      {
+        "name": "desktop",
+        "width": 1440,
+        "height": 1050,
+        "text": "Exact completion plan\n1\n\nCommand · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible runner)\n\n2\n\nTest · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible runner)\n\nManual gate\nNone",
+        "contrast": {
+          "minimum_ratio": 7.495994426354229,
+          "threshold": 4.5,
+          "rows": [
+            {
+              "text": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the miss",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "16px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Contract v",
+              "color": "rgb(53, 70, 80)",
+              "background": [
+                237,
+                241,
+                238
+              ],
+              "font_size": "12px",
+              "ratio": 8.593208645112512
+            },
+            {
+              "text": "1",
+              "color": "rgb(53, 70, 80)",
+              "background": [
+                237,
+                241,
+                238
+              ],
+              "font_size": "12px",
+              "ratio": 8.593208645112512
+            },
+            {
+              "text": "Agent",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Delivery engineer",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "·",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Test harness",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Depends on",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Nothing; ready independently",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Expected output",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "A source-backed, verified mission artifact",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Repository",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "ecorp-fixture/issue140-cache",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "@ HEAD",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "(a984aabe1d0b)",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Budget",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "1,000,000",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "tokens",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Write scope",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "**",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Allowed tools",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "filesystem, shell",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "References",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "None attached",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Deliverable",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Review Only Report",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Acceptance checks",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "the declared artifact exists",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "the task reports concrete verification evidence",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Prohibited actions",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "modify files outside the assigned worktree",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "use undeclared long-lived credentials",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Exact completion plan",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "1",
+              "color": "rgb(135, 13, 33)",
+              "background": [
+                246,
+                232,
+                235
+              ],
+              "font_size": "12px",
+              "ratio": 8.371218327588748
+            },
+            {
+              "text": "Command · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatibl",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "13px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "2",
+              "color": "rgb(135, 13, 33)",
+              "background": [
+                246,
+                232,
+                235
+              ],
+              "font_size": "12px",
+              "ratio": 8.371218327588748
+            },
+            {
+              "text": "Test · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible r",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "13px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Manual gate",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "9px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "None",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "Revise contract for",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "14px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "redispatch",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "14px",
+              "ratio": 18.58009472439472
+            }
+          ]
+        },
+        "layout": {
+          "viewport": 1440,
+          "content": 1440
+        },
+        "screenshot": {
+          "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\cache-desktop-ready.png",
+          "sha256": "9f999f757a4f8448aa90de90da76949d36ef9fdf12234001d9cc96f380dd7b07"
+        }
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844,
+        "text": "Exact completion plan\n1\n\nCommand · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible runner)\n\n2\n\nTest · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible runner)\n\nManual gate\nNone",
+        "contrast": {
+          "minimum_ratio": 7.495994426354229,
+          "threshold": 4.5,
+          "rows": [
+            {
+              "text": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the miss",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "16px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Contract v",
+              "color": "rgb(53, 70, 80)",
+              "background": [
+                237,
+                241,
+                238
+              ],
+              "font_size": "12px",
+              "ratio": 8.593208645112512
+            },
+            {
+              "text": "1",
+              "color": "rgb(53, 70, 80)",
+              "background": [
+                237,
+                241,
+                238
+              ],
+              "font_size": "12px",
+              "ratio": 8.593208645112512
+            },
+            {
+              "text": "Agent",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Delivery engineer",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "·",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Test harness",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Depends on",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Nothing; ready independently",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Expected output",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "A source-backed, verified mission artifact",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Repository",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "ecorp-fixture/issue140-cache",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "@ HEAD",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "(a984aabe1d0b)",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Budget",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "1,000,000",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "tokens",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Write scope",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "**",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Allowed tools",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "filesystem, shell",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "References",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "None attached",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Deliverable",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Review Only Report",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Acceptance checks",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "the declared artifact exists",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "the task reports concrete verification evidence",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Prohibited actions",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "modify files outside the assigned worktree",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "use undeclared long-lived credentials",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "12px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Exact completion plan",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "1",
+              "color": "rgb(135, 13, 33)",
+              "background": [
+                246,
+                232,
+                235
+              ],
+              "font_size": "12px",
+              "ratio": 8.371218327588748
+            },
+            {
+              "text": "Command · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatibl",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "13px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "2",
+              "color": "rgb(135, 13, 33)",
+              "background": [
+                246,
+                232,
+                235
+              ],
+              "font_size": "12px",
+              "ratio": 8.371218327588748
+            },
+            {
+              "text": "Test · [\"node\",\"-e\",\"require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')\"] · 10s · Requested cache control: Node compile cache (requires a compatible r",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "13px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "Manual gate",
+              "color": "rgb(85, 85, 80)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "9px",
+              "ratio": 7.495994426354229
+            },
+            {
+              "text": "None",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "11px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "Revise contract for",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "14px",
+              "ratio": 18.58009472439472
+            },
+            {
+              "text": "redispatch",
+              "color": "rgb(19, 19, 19)",
+              "background": [
+                255,
+                255,
+                255
+              ],
+              "font_size": "14px",
+              "ratio": 18.58009472439472
+            }
+          ]
+        },
+        "layout": {
+          "viewport": 390,
+          "content": 390
+        },
+        "screenshot": {
+          "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\cache-mobile-ready.png",
+          "sha256": "111010a3c32705c370019ecad228abefed923d2b67e9bc6e3286c2d7cd747622"
+        }
+      }
+    ],
+    "final": {
+      "mission": {
+        "id": "fbc6c2d3-6485-4bf0-a8e3-fda41965d596",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[verification-matrix] Explicit node cache policy 164e4bed",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "specification_version": 1,
+        "strategy": "single",
+        "max_nodes": 1,
+        "max_depth": 0,
+        "original_budget_tokens": 1000000,
+        "original_budget_cost_microusd": 1000000,
+        "budget_tokens": 1000000,
+        "budget_cost_microusd": 1000000,
+        "status": "completed",
+        "created_at": "2026-09-26T18:50:55.163650Z",
+        "updated_at": "2026-09-26T18:51:02.267576Z"
+      },
+      "tasks": [
+        {
+          "id": "377518f8-5034-4346-be7e-b99917caae0b",
+          "mission_id": "fbc6c2d3-6485-4bf0-a8e3-fda41965d596",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "title": "Produce the mission outcome",
+          "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Explicit node cache policy 164e4bed",
+          "plan_key": "deliver",
+          "contract": {
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [verification-matrix] Explicit node cache policy 164e4bed",
+            "expected_output": "A source-backed, verified mission artifact",
+            "source_repository": "ecorp-fixture/issue140-cache",
+            "source_base_ref": "HEAD",
+            "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+            "acceptance_tests": [
+              "the declared artifact exists",
+              "the task reports concrete verification evidence"
+            ],
+            "allowed_tools": [
+              "filesystem",
+              "shell"
+            ],
+            "prohibited_actions": [
+              "modify files outside the assigned worktree",
+              "use undeclared long-lived credentials"
+            ],
+            "references": [],
+            "write_scope": [
+              "**"
+            ],
+            "budget_tokens": 1000000,
+            "budget_cost_microusd": 1000000,
+            "deadline_at": null,
+            "escalation": "ask the current human controller or mission owner",
+            "secret_refs": [],
+            "model": null,
+            "reasoning_effort": null,
+            "deliverable": {
+              "form": "review_only_report",
+              "commit_after_verification": false,
+              "paths": []
+            }
+          },
+          "contract_version": 1,
+          "depth": 0,
+          "max_attempts": 2,
+          "attempt_count": 1,
+          "required_adapter": "fake-process",
+          "depends_on": [],
+          "verification_policy": {
+            "checks": [
+              {
+                "type": "command",
+                "program": "node",
+                "args": [
+                  "-e",
+                  "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+                ],
+                "timeout_ms": 10000,
+                "cache_suppression": "node_compile_cache"
+              },
+              {
+                "type": "test",
+                "program": "node",
+                "args": [
+                  "-e",
+                  "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+                ],
+                "timeout_ms": 10000,
+                "cache_suppression": "node_compile_cache"
+              }
+            ],
+            "manual_gate": null
+          },
+          "verification_status": "passed",
+          "status": "completed",
+          "assigned_agent_id": "5a9680f9-69b8-4b68-bc60-30ef4b4abbe0",
+          "created_at": "2026-09-26T18:50:55.163650Z",
+          "updated_at": "2026-09-26T18:51:02.267576Z"
+        }
+      ],
+      "run": {
+        "id": "f053f002-0bc6-4754-8f09-e8546e60b161",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "task_id": "377518f8-5034-4346-be7e-b99917caae0b",
+        "agent_id": "5a9680f9-69b8-4b68-bc60-30ef4b4abbe0",
+        "runner_id": "runner-integration-140-r1",
+        "provider_session_id": null,
+        "resumed_from_run_id": null,
+        "workspace_run_id": "f053f002-0bc6-4754-8f09-e8546e60b161",
+        "model": null,
+        "reasoning_effort": null,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cost_microusd": 0,
+        "budget_tokens_limit": 1000000,
+        "budget_cost_microusd_limit": 1000000,
+        "breaker_stage": "healthy",
+        "no_progress_events": 0,
+        "repeated_tool_count": 0,
+        "source_repository": "ecorp-fixture/issue140-cache",
+        "source_base_ref": "HEAD",
+        "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+        "workspace_path": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\377518f850344346be7eb99917caae0b\\f053f0020bc647548f09e8546e60b161",
+        "workspace_branch": "crony/task-377518f850344346be7eb99917caae0b/run-f053f0020bc647548f09e8546e60b161",
+        "workspace_base_ref": "HEAD",
+        "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+        "workspace_disposition": "preserved",
+        "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=4; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+        "workspace_fingerprint": "f1205a962fd0897681d309187fe639774344a0a04d1fb094c4db109daa2f07ba",
+        "execution_mode": "provider",
+        "verification_status": "passed",
+        "verification_summary": "all 2 verifier checks passed",
+        "verification_sha256": "b66f042d1746b87d7bd82490c3d70ea69b34b46f70d800b149e7c5b47a8e2a52",
+        "deliverable_sha256": "561a2e74eb02e9ea383d3eed5b3f6ea2b724e69f3179db3c0ed8709f8e8a17d1",
+        "status": "completed",
+        "summary": "Created and verified result.md through the runner-owned child process.",
+        "artifact_id": "a5a30282-fb85-4794-b536-a059e329b4ef",
+        "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/a5a30282-fb85-4794-b536-a059e329b4ef",
+        "artifact_media_type": "text/markdown",
+        "artifact_signature": "f1d2e263cd39cc438a32322fe95c6939e5609cbd146270079b12f1d7b6c04df2",
+        "artifact_sha256": "607192b7e5812f55711c10cad0a3505c6e8b80c55e70133dbf2223f418f7694a",
+        "created_at": "2026-09-26T18:50:56.362001Z",
+        "updated_at": "2026-09-26T18:51:02.598112Z"
+      },
+      "evidence": [
+        {
+          "id": "845d470e-7bda-4f85-ab40-3fa586d1bbc0",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "377518f8-5034-4346-be7e-b99917caae0b",
+          "run_id": "f053f002-0bc6-4754-8f09-e8546e60b161",
+          "check_index": 0,
+          "kind": "command",
+          "status": "passed",
+          "summary": "\"node\" exited successfully",
+          "payload": {
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "cache_suppression": {
+              "cleanup_authorized": false,
+              "policy": "node_compile_cache",
+              "requested_argument_prefix": [],
+              "requested_environment": {
+                "NODE_DISABLE_COMPILE_CACHE": "1"
+              },
+              "scope": "verifier_child",
+              "source": "explicit",
+              "zero_cache_writes_verified": false
+            },
+            "error": null,
+            "exit_code": 0,
+            "program": "node",
+            "requested_program": "node",
+            "resolution_mode": "path_pathext",
+            "resolved_executable": {
+              "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+              "file_name": "node.exe"
+            },
+            "stderr": "",
+            "stdout": ""
+          },
+          "created_at": "2026-09-26T18:51:01.235295Z"
+        },
+        {
+          "id": "a29951e5-cae6-41e0-aaec-414d4286dd9e",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "377518f8-5034-4346-be7e-b99917caae0b",
+          "run_id": "f053f002-0bc6-4754-8f09-e8546e60b161",
+          "check_index": 1,
+          "kind": "test",
+          "status": "passed",
+          "summary": "\"node\" exited successfully",
+          "payload": {
+            "args": [
+              "-e",
+              "require('node:assert/strict').equal(process.env.NODE_DISABLE_COMPILE_CACHE, '1')"
+            ],
+            "cache_suppression": {
+              "cleanup_authorized": false,
+              "policy": "node_compile_cache",
+              "requested_argument_prefix": [],
+              "requested_environment": {
+                "NODE_DISABLE_COMPILE_CACHE": "1"
+              },
+              "scope": "verifier_child",
+              "source": "explicit",
+              "zero_cache_writes_verified": false
+            },
+            "error": null,
+            "exit_code": 0,
+            "program": "node",
+            "requested_program": "node",
+            "resolution_mode": "path_pathext",
+            "resolved_executable": {
+              "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+              "file_name": "node.exe"
+            },
+            "stderr": "",
+            "stdout": ""
+          },
+          "created_at": "2026-09-26T18:51:01.239068Z"
+        }
+      ]
+    },
+    "screenshot": {
+      "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\cache-completed.png",
+      "sha256": "25f3de52d82e5801f6118e61f8e8e693916633718f81ec786de7551096470ce5"
+    }
+  },
+  "automatic_python": [
+    {
+      "mission_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+      "authored": {
+        "title": "[clean-worktree] Automatic Python cache suppression 03fa6498",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue140-cache",
+          "base_ref": "HEAD",
+          "base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "review_only_report",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "test",
+              "program": "python",
+              "timeout_ms": 10000,
+              "args": [
+                "-I",
+                "-c",
+                "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+              ]
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "policy": {
+        "checks": [
+          {
+            "type": "test",
+            "program": "python",
+            "timeout_ms": 10000,
+            "args": [
+              "-I",
+              "-c",
+              "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+            ]
+          }
+        ],
+        "manual_gate": null
+      },
+      "mode": "clean-worktree",
+      "setup": "Supported create API, actual browser launch, current native Python interpreter. The ignored control is produced by the deterministic agent before verifier execution; separate native unit tests cover pre-existing bytecode and ignored user files.",
+      "clean_workspace_removed": true,
+      "final": {
+        "mission": {
+          "id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[clean-worktree] Automatic Python cache suppression 03fa6498",
+          "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-26T18:51:02.947722Z",
+          "updated_at": "2026-09-26T18:51:08.167358Z"
+        },
+        "tasks": [
+          {
+            "id": "2fa84690-dae6-4785-99ea-792340207905",
+            "mission_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [clean-worktree] Automatic Python cache suppression 03fa6498",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [clean-worktree] Automatic Python cache suppression 03fa6498",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue140-cache",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "review_only_report",
+                "commit_after_verification": false,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "test",
+                  "program": "python",
+                  "args": [
+                    "-I",
+                    "-c",
+                    "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+                  ],
+                  "timeout_ms": 10000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "32502703-71ce-4893-b773-5038e80cf14b",
+            "created_at": "2026-09-26T18:51:02.947722Z",
+            "updated_at": "2026-09-26T18:51:08.167358Z"
+          }
+        ],
+        "run": {
+          "id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "2fa84690-dae6-4785-99ea-792340207905",
+          "agent_id": "32502703-71ce-4893-b773-5038e80cf14b",
+          "runner_id": "runner-integration-140-r1",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/issue140-cache",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+          "workspace_path": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\2fa84690dae6478599ea792340207905\\65551136f82c4de9ad540e00f47abfdb",
+          "workspace_branch": "crony/task-2fa84690dae6478599ea792340207905/run-65551136f82c4de9ad540e00f47abfdb",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+          "workspace_disposition": "removed",
+          "workspace_detail": "clean worktree has no commits ahead of HEAD; branch deletion=true",
+          "workspace_fingerprint": null,
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 1 verifier checks passed",
+          "verification_sha256": "1c9b44da7bbf044d8c2c57844f7bfa758a1f72e1eb6f1902753e8a200173e86d",
+          "deliverable_sha256": "257efb8e9f904e720f767102b9bbae95ccfe5b696dfd4e18222702c6c5556fcc",
+          "status": "completed",
+          "summary": "Created runner evidence outside the task worktree.",
+          "artifact_id": "b6992d97-d068-44fa-9da4-459d62a30978",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b6992d97-d068-44fa-9da4-459d62a30978",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "8531e4a63d8ec8e558cc8c5908f936f64cec87e5d1a6efaa00f20e0861d80214",
+          "artifact_sha256": "b2b8632709f02ba9eb94a10740d16e2e7b339ea6a3fc7e30c40e7aa6e9c7c753",
+          "created_at": "2026-09-26T18:51:03.545685Z",
+          "updated_at": "2026-09-26T18:51:08.911789Z"
+        },
+        "evidence": [
+          {
+            "id": "37f4d3b4-aaa7-4e5d-b739-82d0fcc629e3",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "2fa84690-dae6-4785-99ea-792340207905",
+            "run_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "check_index": 0,
+            "kind": "test",
+            "status": "passed",
+            "summary": "\"python\" exited successfully",
+            "payload": {
+              "args": [
+                "-I",
+                "-c",
+                "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": "python_interpreter",
+                "requested_argument_prefix": [
+                  "-B"
+                ],
+                "requested_environment": {
+                  "PYTHONDONTWRITEBYTECODE": "1"
+                },
+                "scope": "verifier_child",
+                "source": "automatic",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "python",
+              "requested_program": "python",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "ebec19b7a7d6bcb9fadfcf2691ed176f99a6218b715241db51dfc4983a317195",
+                "file_name": "python.exe"
+              },
+              "stderr": "",
+              "stdout": ""
+            },
+            "created_at": "2026-09-26T18:51:07.847014Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 69,
+            "id": "47eb6909-8e16-4816-8c88-fed3c96bcdf1",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "run:65551136-f82c-4de9-ad54-0e00f47abfdb:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "32502703-71ce-4893-b773-5038e80cf14b",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-integration-140-r1",
+              "status": "starting",
+              "task_id": "2fa84690-dae6-4785-99ea-792340207905"
+            },
+            "created_at": "2026-09-26T18:51:03.545685Z"
+          },
+          {
+            "seq": 70,
+            "id": "c4a4f0f6-f8ea-4981-aba7-9151a6398eec",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:c4a4f0f6-f8ea-4981-aba7-9151a6398eec",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "2fa84690-dae6-4785-99ea-792340207905",
+              "workspace": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\2fa84690dae6478599ea792340207905\\65551136f82c4de9ad540e00f47abfdb",
+              "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-2fa84690dae6478599ea792340207905/run-65551136f82c4de9ad540e00f47abfdb"
+            },
+            "created_at": "2026-09-26T18:51:04.030351Z"
+          },
+          {
+            "seq": 71,
+            "id": "6d931cde-888c-42cb-bfd6-80ab4812065d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:6d931cde-888c-42cb-bfd6-80ab4812065d",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:51:04.101146Z"
+          },
+          {
+            "seq": 73,
+            "id": "53414e23-9e66-445d-8516-47b35a626ce9",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:53414e23-9e66-445d-8516-47b35a626ce9",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [clean-worktree] Automatic Python cache suppression 03fa6498\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/issue140-cache\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: a984aabe1d0b2397508b6795c27e8781dd719aff\nOBJECTIVE: Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [clean-worktree] Automatic Python cache suppression 03fa6498\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 1000000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: review_only_report\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-26T18:51:04.810794Z"
+          },
+          {
+            "seq": 74,
+            "id": "e5ddd593-40bd-4432-b074-54bf0f9986f2",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:e5ddd593-40bd-4432-b074-54bf0f9986f2",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:51:04.813058Z"
+          },
+          {
+            "seq": 75,
+            "id": "51f33c2b-f0ce-45b2-ae70-c63860631117",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:51f33c2b-f0ce-45b2-ae70-c63860631117",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:51:05.723900Z"
+          },
+          {
+            "seq": 76,
+            "id": "8355ea0d-93ae-4a63-a5a7-6bf356e73b9c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "artifact:b6992d97-d068-44fa-9da4-459d62a30978:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "b6992d97-d068-44fa-9da4-459d62a30978",
+              "artifact_role": "provider_evidence",
+              "bytes": 1578,
+              "file_name": "fake-clean-65551136-f82c-4de9-ad54-0e00f47abfdb.md",
+              "media_type": "text/markdown",
+              "metadata": {},
+              "producer_agent_id": "32502703-71ce-4893-b773-5038e80cf14b",
+              "producer_runner_id": "runner-integration-140-r1",
+              "provenance_signature": "8531e4a63d8ec8e558cc8c5908f936f64cec87e5d1a6efaa00f20e0861d80214",
+              "retention_until": "2026-10-26T18:51:06.652371Z",
+              "sha256": "b2b8632709f02ba9eb94a10740d16e2e7b339ea6a3fc7e30c40e7aa6e9c7c753",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b6992d97-d068-44fa-9da4-459d62a30978",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T18:51:06.663126Z"
+          },
+          {
+            "seq": 77,
+            "id": "c4d2d5f2-d12b-4730-8474-3716cdea5e1d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:c4d2d5f2-d12b-4730-8474-3716cdea5e1d",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-26T18:51:07.155644Z"
+          },
+          {
+            "seq": 78,
+            "id": "18a1a1dc-9953-4d7a-ae81-c292c89695a3",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:18a1a1dc-9953-4d7a-ae81-c292c89695a3",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 1
+            },
+            "created_at": "2026-09-26T18:51:07.166261Z"
+          },
+          {
+            "seq": 79,
+            "id": "7b0956f9-faad-4722-8db1-bdc48cb55b60",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:7b0956f9-faad-4722-8db1-bdc48cb55b60",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "37f4d3b4-aaa7-4e5d-b739-82d0fcc629e3",
+              "kind": "test",
+              "payload": {
+                "args": [
+                  "-I",
+                  "-c",
+                  "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": "python_interpreter",
+                  "requested_argument_prefix": [
+                    "-B"
+                  ],
+                  "requested_environment": {
+                    "PYTHONDONTWRITEBYTECODE": "1"
+                  },
+                  "scope": "verifier_child",
+                  "source": "automatic",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "python",
+                "requested_program": "python",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "ebec19b7a7d6bcb9fadfcf2691ed176f99a6218b715241db51dfc4983a317195",
+                  "file_name": "python.exe"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "status": "passed",
+              "summary": "\"python\" exited successfully"
+            },
+            "created_at": "2026-09-26T18:51:07.847014Z"
+          },
+          {
+            "seq": 80,
+            "id": "e3b84357-0f25-4545-9b90-a1bf4319c611",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "artifact:38b06ab1-8f32-4a0d-b80a-88da61cd2ffb:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "38b06ab1-8f32-4a0d-b80a-88da61cd2ffb",
+              "artifact_role": "source_deliverable",
+              "bytes": 515,
+              "file_name": "ecorp-review-report.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+                "branch": "crony/task-2fa84690dae6478599ea792340207905/run-65551136f82c4de9ad540e00f47abfdb",
+                "form": "review_only_report",
+                "git_bundle_sha256": null,
+                "head_commit": null,
+                "integration_state": "not_applicable",
+                "publication_ready": false,
+                "verification_sha256": "1c9b44da7bbf044d8c2c57844f7bfa758a1f72e1eb6f1902753e8a200173e86d"
+              },
+              "producer_agent_id": "32502703-71ce-4893-b773-5038e80cf14b",
+              "producer_runner_id": "runner-integration-140-r1",
+              "provenance_signature": "cb2d2aea05e00b472f90ee34266740a61f9675bff1d1406037975211b0a48fe3",
+              "retention_until": "2026-10-26T18:51:08.130504Z",
+              "sha256": "257efb8e9f904e720f767102b9bbae95ccfe5b696dfd4e18222702c6c5556fcc",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/38b06ab1-8f32-4a0d-b80a-88da61cd2ffb",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T18:51:08.150356Z"
+          },
+          {
+            "seq": 81,
+            "id": "29fe4ca3-77fa-4a1f-a64a-1a28479722d8",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:29fe4ca3-77fa-4a1f-a64a-1a28479722d8",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "257efb8e9f904e720f767102b9bbae95ccfe5b696dfd4e18222702c6c5556fcc",
+              "summary": "all 1 verifier checks passed",
+              "verification_sha256": "1c9b44da7bbf044d8c2c57844f7bfa758a1f72e1eb6f1902753e8a200173e86d"
+            },
+            "created_at": "2026-09-26T18:51:08.163050Z"
+          },
+          {
+            "seq": 82,
+            "id": "e645fa2a-6b41-4c8e-95b6-a70111eb98cd",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:e645fa2a-6b41-4c8e-95b6-a70111eb98cd",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created runner evidence outside the task worktree."
+            },
+            "created_at": "2026-09-26T18:51:08.167358Z"
+          },
+          {
+            "seq": 83,
+            "id": "057f6751-0545-49d2-8a7c-0c0fbe63d025",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_removed",
+            "aggregate_type": "run",
+            "aggregate_id": "65551136-f82c-4de9-ad54-0e00f47abfdb",
+            "aggregate_version": 1,
+            "correlation_id": "61f07f3b-a10b-4201-8dd0-820ddb0bbb3e",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:057f6751-0545-49d2-8a7c-0c0fbe63d025",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": true,
+              "commits_ahead": 0,
+              "detail": "clean worktree has no commits ahead of HEAD; branch deletion=true",
+              "dirty": false,
+              "workspace": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\2fa84690dae6478599ea792340207905\\65551136f82c4de9ad540e00f47abfdb",
+              "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-2fa84690dae6478599ea792340207905/run-65551136f82c4de9ad540e00f47abfdb",
+              "workspace_fingerprint": null
+            },
+            "created_at": "2026-09-26T18:51:08.911789Z"
+          }
+        ]
+      },
+      "screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\python-clean-worktree.png",
+        "sha256": "522401817165d69396d0022559e4397ad516741bda7a47ffe6d1be44655c502f"
+      }
+    },
+    {
+      "mission_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+      "authored": {
+        "title": "[ignored-worktree] Automatic Python cache suppression e28b09f7",
+        "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue140-cache",
+          "base_ref": "HEAD",
+          "base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "review_only_report",
+          "commit_after_verification": false,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "test",
+              "program": "python",
+              "timeout_ms": 10000,
+              "args": [
+                "-I",
+                "-c",
+                "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+              ]
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "policy": {
+        "checks": [
+          {
+            "type": "test",
+            "program": "python",
+            "timeout_ms": 10000,
+            "args": [
+              "-I",
+              "-c",
+              "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+            ]
+          }
+        ],
+        "manual_gate": null
+      },
+      "mode": "ignored-worktree",
+      "setup": "Supported create API, actual browser launch, current native Python interpreter. The ignored control is produced by the deterministic agent before verifier execution; separate native unit tests cover pre-existing bytecode and ignored user files.",
+      "ignored_file": {
+        "sha256": "c4c6a6069a0cc26517296eeca5b58b0f501689895f3bcb7523085ce324f5b527",
+        "bytes": 21,
+        "preserved": true
+      },
+      "final": {
+        "mission": {
+          "id": "44f78d70-54bd-47b8-9510-56205994fd78",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[ignored-worktree] Automatic Python cache suppression e28b09f7",
+          "description": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-26T18:51:09.120017Z",
+          "updated_at": "2026-09-26T18:51:14.172073Z"
+        },
+        "tasks": [
+          {
+            "id": "d630b37b-c755-4e61-8505-4eb3b2e95a6d",
+            "mission_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [ignored-worktree] Automatic Python cache suppression e28b09f7",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [ignored-worktree] Automatic Python cache suppression e28b09f7",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue140-cache",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "review_only_report",
+                "commit_after_verification": false,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "test",
+                  "program": "python",
+                  "args": [
+                    "-I",
+                    "-c",
+                    "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+                  ],
+                  "timeout_ms": 10000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "d33f0eae-662d-463b-a6c7-47c1dd614979",
+            "created_at": "2026-09-26T18:51:09.120017Z",
+            "updated_at": "2026-09-26T18:51:14.172073Z"
+          }
+        ],
+        "run": {
+          "id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "d630b37b-c755-4e61-8505-4eb3b2e95a6d",
+          "agent_id": "d33f0eae-662d-463b-a6c7-47c1dd614979",
+          "runner_id": "runner-integration-140-r1",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/issue140-cache",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+          "workspace_path": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\d630b37bc7554e6185054eb3b2e95a6d\\90fa8e2dcc3648578a9d56df36dd75ba",
+          "workspace_branch": "crony/task-d630b37bc7554e6185054eb3b2e95a6d/run-90fa8e2dcc3648578a9d56df36dd75ba",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=0; ignored_files=1; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+          "workspace_fingerprint": "9f4014207383bd72ae0fa474a5d2ebe48b85e8e9bb0f44f03b9a9aeb31d88eff",
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 1 verifier checks passed",
+          "verification_sha256": "1c9b44da7bbf044d8c2c57844f7bfa758a1f72e1eb6f1902753e8a200173e86d",
+          "deliverable_sha256": "ea3be851f6b8ac56a4a0619e08d32376c03cd7d6a0ef122f1c2623e50a579ac7",
+          "status": "completed",
+          "summary": "Created runner evidence outside the task worktree.",
+          "artifact_id": "7ae42f24-2d84-46cf-bb7b-7cde031d60a6",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/7ae42f24-2d84-46cf-bb7b-7cde031d60a6",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "74e065aa9e66805385d4fe4b41e99a6234eb0ecadd96a1b4a6ae34e80dd15c1c",
+          "artifact_sha256": "12519e8a4be4ab90aeb6c0d4e33ef3b2009e3f2d4f6c74f06f5e7fd2351130c0",
+          "created_at": "2026-09-26T18:51:09.547352Z",
+          "updated_at": "2026-09-26T18:51:14.517607Z"
+        },
+        "evidence": [
+          {
+            "id": "196a4b14-7ede-4190-aaad-0195580e9682",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "d630b37b-c755-4e61-8505-4eb3b2e95a6d",
+            "run_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "check_index": 0,
+            "kind": "test",
+            "status": "passed",
+            "summary": "\"python\" exited successfully",
+            "payload": {
+              "args": [
+                "-I",
+                "-c",
+                "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": "python_interpreter",
+                "requested_argument_prefix": [
+                  "-B"
+                ],
+                "requested_environment": {
+                  "PYTHONDONTWRITEBYTECODE": "1"
+                },
+                "scope": "verifier_child",
+                "source": "automatic",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "python",
+              "requested_program": "python",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "ebec19b7a7d6bcb9fadfcf2691ed176f99a6218b715241db51dfc4983a317195",
+                "file_name": "python.exe"
+              },
+              "stderr": "",
+              "stdout": ""
+            },
+            "created_at": "2026-09-26T18:51:13.833651Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 88,
+            "id": "602dabca-7842-4ab4-978c-50985f0be16b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "run:90fa8e2d-cc36-4857-8a9d-56df36dd75ba:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "d33f0eae-662d-463b-a6c7-47c1dd614979",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "runner-integration-140-r1",
+              "status": "starting",
+              "task_id": "d630b37b-c755-4e61-8505-4eb3b2e95a6d"
+            },
+            "created_at": "2026-09-26T18:51:09.547352Z"
+          },
+          {
+            "seq": 89,
+            "id": "ee375f62-dcf2-4bf7-bb33-b865d769e3cc",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:ee375f62-dcf2-4bf7-bb33-b865d769e3cc",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "d630b37b-c755-4e61-8505-4eb3b2e95a6d",
+              "workspace": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\d630b37bc7554e6185054eb3b2e95a6d\\90fa8e2dcc3648578a9d56df36dd75ba",
+              "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-d630b37bc7554e6185054eb3b2e95a6d/run-90fa8e2dcc3648578a9d56df36dd75ba"
+            },
+            "created_at": "2026-09-26T18:51:10.026114Z"
+          },
+          {
+            "seq": 90,
+            "id": "18d6c17f-67ad-4bf8-b989-a8f07ca74e20",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:18d6c17f-67ad-4bf8-b989-a8f07ca74e20",
+            "visibility": "corp",
+            "payload": {
+              "message": "Reading the mission contract",
+              "station": "briefing",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:51:10.099298Z"
+          },
+          {
+            "seq": 92,
+            "id": "d3eb1cb1-fe5d-423f-996f-f45d0ef3ffff",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.output",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:d3eb1cb1-fe5d-423f-996f-f45d0ef3ffff",
+            "visibility": "corp",
+            "payload": {
+              "stream": "stdout",
+              "text": "Mission accepted: MISSION: [ignored-worktree] Automatic Python cache suppression e28b09f7\nTASK: Produce the mission outcome\nATTEMPT: 1\nSOURCE REPOSITORY: ecorp-fixture/issue140-cache\nSOURCE BASE REF: HEAD\nSOURCE BASE COMMIT: a984aabe1d0b2397508b6795c27e8781dd719aff\nOBJECTIVE: Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [ignored-worktree] Automatic Python cache suppression e28b09f7\nEXPECTED OUTPUT: A source-backed, verified mission artifact\nACCEPTANCE TESTS:\n- the declared artifact exists\n- the task reports concrete verification evidence\nALLOWED TOOLS:\n- filesystem\n- shell\nPROHIBITED ACTIONS:\n- modify files outside the assigned worktree\n- use undeclared long-lived credentials\nREFERENCES:\n- none\nWRITE SCOPE:\n- **\nTOKEN BUDGET: 1000000\nCOST BUDGET (MICROUSD): 1000000\nMODEL: provider default\nREASONING EFFORT: provider default\nDELIVERABLE FORM: review_only_report\nCOMMIT AFTER VERIFICATION: false\nSECRET CAPABILITIES:\n- none\nDEADLINE: none\nESCALATION: ask the current human controller or mission owner"
+            },
+            "created_at": "2026-09-26T18:51:10.812519Z"
+          },
+          {
+            "seq": 93,
+            "id": "4820b172-e42f-417d-b65c-ba649c7a065e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:4820b172-e42f-417d-b65c-ba649c7a065e",
+            "visibility": "corp",
+            "payload": {
+              "message": "Collecting evidence and constraints",
+              "station": "research",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:51:10.814727Z"
+          },
+          {
+            "seq": 94,
+            "id": "fe721e9e-6fe7-4eab-aa98-3852dee16b1b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:fe721e9e-6fe7-4eab-aa98-3852dee16b1b",
+            "visibility": "corp",
+            "payload": {
+              "message": "Producing the artifact in an isolated workspace",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-26T18:51:11.725424Z"
+          },
+          {
+            "seq": 95,
+            "id": "0bc52293-db9b-4d00-b591-3844649d2c57",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "artifact:7ae42f24-2d84-46cf-bb7b-7cde031d60a6:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "7ae42f24-2d84-46cf-bb7b-7cde031d60a6",
+              "artifact_role": "provider_evidence",
+              "bytes": 1582,
+              "file_name": "fake-clean-90fa8e2d-cc36-4857-8a9d-56df36dd75ba.md",
+              "media_type": "text/markdown",
+              "metadata": {},
+              "producer_agent_id": "d33f0eae-662d-463b-a6c7-47c1dd614979",
+              "producer_runner_id": "runner-integration-140-r1",
+              "provenance_signature": "74e065aa9e66805385d4fe4b41e99a6234eb0ecadd96a1b4a6ae34e80dd15c1c",
+              "retention_until": "2026-10-26T18:51:12.649054Z",
+              "sha256": "12519e8a4be4ab90aeb6c0d4e33ef3b2009e3f2d4f6c74f06f5e7fd2351130c0",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/7ae42f24-2d84-46cf-bb7b-7cde031d60a6",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T18:51:12.662495Z"
+          },
+          {
+            "seq": 96,
+            "id": "d98d5768-b8f5-40ae-8711-e8e387b98f59",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:d98d5768-b8f5-40ae-8711-e8e387b98f59",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-26T18:51:13.152605Z"
+          },
+          {
+            "seq": 97,
+            "id": "7413f640-f2d9-4e6e-b2b4-31dba39fc642",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:7413f640-f2d9-4e6e-b2b4-31dba39fc642",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 1
+            },
+            "created_at": "2026-09-26T18:51:13.155342Z"
+          },
+          {
+            "seq": 98,
+            "id": "c6de6c76-0b59-4983-ab5d-a11e81ede544",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:c6de6c76-0b59-4983-ab5d-a11e81ede544",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "196a4b14-7ede-4190-aaad-0195580e9682",
+              "kind": "test",
+              "payload": {
+                "args": [
+                  "-I",
+                  "-c",
+                  "import sys; sys.path.insert(0, '.'); import issue140_fixture; from pathlib import Path; assert issue140_fixture.VALUE == 140; assert sys.dont_write_bytecode; assert not list(Path('.').rglob('__pycache__')); assert not list(Path('.').rglob('*.pyc'))"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": "python_interpreter",
+                  "requested_argument_prefix": [
+                    "-B"
+                  ],
+                  "requested_environment": {
+                    "PYTHONDONTWRITEBYTECODE": "1"
+                  },
+                  "scope": "verifier_child",
+                  "source": "automatic",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "python",
+                "requested_program": "python",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "ebec19b7a7d6bcb9fadfcf2691ed176f99a6218b715241db51dfc4983a317195",
+                  "file_name": "python.exe"
+                },
+                "stderr": "",
+                "stdout": ""
+              },
+              "status": "passed",
+              "summary": "\"python\" exited successfully"
+            },
+            "created_at": "2026-09-26T18:51:13.833651Z"
+          },
+          {
+            "seq": 99,
+            "id": "34b7a568-8273-45d4-847c-076fb0a62242",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "artifact:309e7e43-fde4-4b4b-a08d-88152a604eb7:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "309e7e43-fde4-4b4b-a08d-88152a604eb7",
+              "artifact_role": "source_deliverable",
+              "bytes": 515,
+              "file_name": "ecorp-review-report.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+                "branch": "crony/task-d630b37bc7554e6185054eb3b2e95a6d/run-90fa8e2dcc3648578a9d56df36dd75ba",
+                "form": "review_only_report",
+                "git_bundle_sha256": null,
+                "head_commit": null,
+                "integration_state": "not_applicable",
+                "publication_ready": false,
+                "verification_sha256": "1c9b44da7bbf044d8c2c57844f7bfa758a1f72e1eb6f1902753e8a200173e86d"
+              },
+              "producer_agent_id": "d33f0eae-662d-463b-a6c7-47c1dd614979",
+              "producer_runner_id": "runner-integration-140-r1",
+              "provenance_signature": "b275611d76f0fc9c9464d6485c385090c51bab508e9c1bba4a26c46a1a85f017",
+              "retention_until": "2026-10-26T18:51:14.131418Z",
+              "sha256": "ea3be851f6b8ac56a4a0619e08d32376c03cd7d6a0ef122f1c2623e50a579ac7",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/309e7e43-fde4-4b4b-a08d-88152a604eb7",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-26T18:51:14.155125Z"
+          },
+          {
+            "seq": 100,
+            "id": "d0fd6117-5150-422b-94de-11864a858677",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:d0fd6117-5150-422b-94de-11864a858677",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "ea3be851f6b8ac56a4a0619e08d32376c03cd7d6a0ef122f1c2623e50a579ac7",
+              "summary": "all 1 verifier checks passed",
+              "verification_sha256": "1c9b44da7bbf044d8c2c57844f7bfa758a1f72e1eb6f1902753e8a200173e86d"
+            },
+            "created_at": "2026-09-26T18:51:14.166386Z"
+          },
+          {
+            "seq": 101,
+            "id": "297c7bcc-b2d0-4dc7-910d-c21958c2e709",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:297c7bcc-b2d0-4dc7-910d-c21958c2e709",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Created runner evidence outside the task worktree."
+            },
+            "created_at": "2026-09-26T18:51:14.172073Z"
+          },
+          {
+            "seq": 102,
+            "id": "a336ab4a-e608-4857-b25e-56b0f7a369cd",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "90fa8e2d-cc36-4857-8a9d-56df36dd75ba",
+            "aggregate_version": 1,
+            "correlation_id": "44f78d70-54bd-47b8-9510-56205994fd78",
+            "causation_id": null,
+            "idempotency_key": "runner:runner-integration-140-r1:event:a336ab4a-e608-4857-b25e-56b0f7a369cd",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=0; ignored_files=1; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+              "dirty": true,
+              "workspace": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\runner\\worktrees\\d630b37bc7554e6185054eb3b2e95a6d\\90fa8e2dcc3648578a9d56df36dd75ba",
+              "workspace_base_commit": "a984aabe1d0b2397508b6795c27e8781dd719aff",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-d630b37bc7554e6185054eb3b2e95a6d/run-90fa8e2dcc3648578a9d56df36dd75ba",
+              "workspace_fingerprint": "9f4014207383bd72ae0fa474a5d2ebe48b85e8e9bb0f44f03b9a9aeb31d88eff"
+            },
+            "created_at": "2026-09-26T18:51:14.517607Z"
+          }
+        ]
+      },
+      "screenshot": {
+        "file": "<USERPROFILE>\\code\\qa\\integration-136-140-230-cache-r1\\evidence\\browser-2026-09-26T18-50-32.056Z-c2acb31a\\python-ignored-worktree.png",
+        "sha256": "71a4f12e4088841856007739c6033322b0d1aee40b50a8b4764c5c30fcfdaaea"
+      }
+    }
+  ],
+  "source_unchanged": true,
+  "finished_at": "2026-09-26T18:51:15.096Z"
+}

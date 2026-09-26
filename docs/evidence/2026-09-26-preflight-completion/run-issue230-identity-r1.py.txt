@@ -1,0 +1,49 @@
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+ev = Path(__file__).resolve().parent
+repo = Path(r'<USERPROFILE>\.codex\worktrees\issue230-preflight\ecorp')
+revision = sys.argv[1]
+assert revision in ('red', 'green')
+receipt = ev / ('issue230-identity-' + revision + '-r1.json')
+log = ev / ('issue230-identity-' + revision + '-r1.log')
+assert not receipt.exists() and not log.exists()
+def sha(data): return hashlib.sha256(data).hexdigest()
+def git(*args): return subprocess.check_output(['git', '-C', str(repo), *args])
+paths = ['tools/local_stack.psm1', 'tools/local_stack_identity.test.ps1']
+source = {path: sha((repo / path).read_bytes()) for path in paths}
+record = dict(issue=230, revision=revision, status='running', started_at_utc=datetime.now(timezone.utc).isoformat(),
+              head=git('rev-parse', 'HEAD').decode().strip(), source_files=source,
+              tracked_diff_sha256=sha(git('diff', '--binary', '--no-ext-diff', '--no-textconv', 'HEAD')))
+def save(): receipt.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+save()
+env = {key: value for key, value in os.environ.items() if key.upper() in {
+    'SYSTEMROOT', 'WINDIR', 'COMSPEC', 'PATH', 'PATHEXT', 'TEMP', 'TMP', 'PSMODULEPATH',
+    'PROGRAMFILES', 'PROGRAMFILES(X86)', 'PROGRAMW6432'}}
+env['PATH'] = r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64;' + env.get('PATH', '')
+args = [r'C:\Program Files\PowerShell\7\pwsh.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-File', str(repo / paths[1]), '-EvidenceRoot', str(ev)]
+try:
+    result = subprocess.run(args, cwd=repo, env=env, capture_output=True, timeout=180)
+    log.write_bytes(result.stdout + result.stderr)
+    lines = [line for line in result.stdout.decode('utf-8-sig').splitlines() if line.startswith('ECORP_IDENTITY_TEST_RESULT=')]
+    assert len(lines) == 1, 'Native structured report missing; retain original log.'
+    native = json.loads(lines[0].split('=', 1)[1])
+    record.update(argv=args, exit_code=result.returncode, log=str(log), log_sha256=sha(log.read_bytes()), native=native,
+                  passed=sum(case['passed'] for case in native['cases']), failed=sum(not case['passed'] for case in native['cases']),
+                  source_unchanged=source == {path: sha((repo / path).read_bytes()) for path in paths})
+    assert record['source_unchanged'] and native['cleanup_verified']
+    record['status'] = 'passed' if result.returncode == 0 and record['failed'] == 0 else 'failed'
+except Exception as error:
+    record['status'] = 'error'
+    record['failure'] = str(error)
+    raise
+finally:
+    record['finished_at_utc'] = datetime.now(timezone.utc).isoformat()
+    save()
+    print(json.dumps({key: record.get(key) for key in ['issue', 'revision', 'status', 'passed', 'failed', 'source_unchanged', 'failure']}))
+if record['status'] != 'passed': sys.exit(1)

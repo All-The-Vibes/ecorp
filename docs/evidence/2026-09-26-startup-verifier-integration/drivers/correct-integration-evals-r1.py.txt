@@ -1,0 +1,176 @@
+"""Correct only maintained EVALS prose after the staged-source canonical run ends."""
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+evidence = Path(__file__).resolve().parent
+repo = Path(r'<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp')
+node = Path(r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe')
+receipt = evidence / 'integration-136-140-230-evals-followup-r1.json'
+base = '1505aeaa21b5cd67b8d892607ea6697cf1e8ef05'
+tested_tree = '289f55ca6b32558f8d98a86f8aa340dc3e288db1'
+relative = 'docs/EVALS.md'
+target = repo / relative
+assert not receipt.exists(), 'Preserve any previous correction receipt.'
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding='utf-8-sig'))
+
+
+def git(*args):
+    return subprocess.check_output(['git', '-C', str(repo), *args])
+
+
+def encoded(value):
+    return (json.dumps(value, indent=2) + '\n').encode()
+
+
+canonical_run = load(evidence / 'issue230-canonical-r1.json')
+assert canonical_run['status'] == 'passed', 'Do not mutate the source while canonical validation runs.'
+canonical_path = Path(canonical_run['canonical_report']['path'])
+canonical = load(canonical_path)
+assert digest(canonical_path.read_bytes()) == canonical_run['canonical_report']['sha256']
+assert canonical['status'] == 'passed' and not canonical['sourceChangedDuringValidation']
+assert not canonical['notRun'] and len(canonical['checks']) == 11
+assert all(item['passed'] for item in canonical['checks'])
+assert git('rev-parse', 'HEAD').decode().strip() == base
+assert git('write-tree').decode().strip() == tested_tree
+assert not git('diff', '--name-only').strip()
+assert not git('ls-files', '--others', '--exclude-standard').strip()
+tested_diff = git('diff', '--binary', '--no-ext-diff', '--no-textconv', 'HEAD')
+assert digest(tested_diff) == canonical['source']['trackedDiffSha256']
+native = load(evidence / 'integration-136-140-230-native-build-r2.json')
+physical = native['source_before']
+assert native['source_after'] == physical and len(physical) == 6515
+assert set(canonical['source']['files']) == {item['path'] for item in physical}
+for item in physical:
+    assert digest((repo / item['path']).read_bytes()) == item['sha256'], item['path']
+
+before = target.read_bytes()
+newline = b'\r\n' if b'\r\n' in before else b'\n'
+old = '''`tools/local_stack_identity.test.ps1` exercises native process inspection and
+QA cleanup using owned inert children. Injected missing main-module results
+cover startup loading, recovery on the same held process, a mismatched receipt,
+and confirmed native exit during inspection. Persistent missing modules and
+native getter errors, including an error after loading begins, must fail visibly,
+preserve the ownership record, and leave the unverified child alive. Stop still
+requires the executable and creation time to match before using the retained handle.
+
+Windows `Process.MainModule` may be null before the executable module loads;
+the shared helper observes only that result for up to forty 50 ms waits.
+Native inspection errors propagate immediately. This bounded native fixture is
+separate from the complete starter lifecycle suite and browser/server/runner
+acceptance; synthetic children do not prove a working local office.
+'''.encode().replace(b'\n', newline)
+new = '''`tools/local_stack_identity.test.ps1` exercises native process inspection and
+QA cleanup using owned inert children. Injected missing main-module results and
+native partial-copy errors (299) cover startup loading, recovery on the same
+held process, a mismatched receipt, and confirmed native exit during inspection.
+Persistent missing modules or error 299, access denial (5), and other getter
+errors, including an error after loading begins, must fail visibly, preserve the
+ownership record, and leave the unverified child alive. Stop still requires the
+executable and creation time to match before using the retained handle.
+
+Windows `Process.MainModule` may be null or raise `ERROR_PARTIAL_COPY` (299)
+before the executable module loads. The shared helper retries only those
+observations for up to forty 50 ms waits on the same held process and handle.
+Unresolved null results and persistent error 299 fail closed; all other native
+inspection errors, including access denial (5), propagate immediately. This
+bounded native fixture is separate from the complete starter lifecycle suite
+and browser/server/runner acceptance; synthetic children do not prove a working
+local office.
+'''.encode().replace(b'\n', newline)
+assert before.count(old) == 1, 'The maintained prose changed; review before editing.'
+after = before.replace(old, new, 1)
+before_blob = git('rev-parse', ':' + relative).decode().strip()
+record = {'issues': [136, 140, 230], 'status': 'running',
+          'started_at_utc': datetime.now(timezone.utc).isoformat(),
+          'base': base, 'tested_staged_tree': tested_tree,
+          'canonical_report_sha256': digest(canonical_path.read_bytes()),
+          'tested_tracked_diff_sha256': digest(tested_diff),
+          'changed_path': relative, 'old_physical_sha256': digest(before),
+          'new_physical_sha256': digest(after), 'old_git_blob': before_blob,
+          'old_excerpt': old.decode(), 'new_excerpt': new.decode(),
+          'scope': 'Only the Local Windows process identity prose, corrected after canonical validation; no execution, test, policy, dependency or configuration file changes.',
+          'checks': []}
+
+
+def save():
+    receipt.write_bytes(encoded(record))
+
+
+env = {key: value for key, value in os.environ.items()
+       if not re.match(r'^(CRONY_|ECORP_|GH_|GITHUB_|AZURE_|GIT_TRACE)', key, re.I)
+       and key.upper() not in {'DATABASE_URL', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY',
+                             'COPILOT_GITHUB_TOKEN', 'NODE_OPTIONS', 'CARGO_TARGET_DIR',
+                             'RUSTUP_TOOLCHAIN', 'GIT_CURL_VERBOSE', 'GIT_INDEX_FILE'}}
+env['PATH'] = str(node.parent) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + env['PATH']
+env['PYTHON'] = sys.executable
+
+
+def command(name, argv):
+    log = evidence / ('integration-136-140-230-evals-r1-' + name + '.log')
+    assert not log.exists(), str(log)
+    result = subprocess.run([str(item) for item in argv], cwd=repo, env=env,
+                            capture_output=True, timeout=900)
+    data = result.stdout + result.stderr
+    log.write_bytes(data)
+    check = {'name': name, 'argv': [str(item) for item in argv],
+             'exit_code': result.returncode, 'log': str(log), 'sha256': digest(data)}
+    if name == 'documentation-regression':
+        text = data.decode('utf-8', errors='replace')
+        check['counts'] = {key: int(re.findall(r'^# ' + key + r' (\d+)\s*$', text, re.M)[-1])
+                           for key in ['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo']}
+        assert check['counts']['fail'] == check['counts']['cancelled'] == 0
+    record['checks'].append(check)
+    save()
+    assert result.returncode == 0, name + ' failed; retain its log.'
+
+
+save()
+try:
+    for name, data in [('before', before), ('after', after)]:
+        capture = evidence / ('integration-136-140-230-evals-r1-' + name + '.md')
+        assert not capture.exists(), str(capture)
+        capture.write_bytes(data)
+        record[name + '_capture'] = {'path': str(capture), 'sha256': digest(data)}
+    target.write_bytes(after)
+    record['new_git_blob'] = git('hash-object', '--path=' + relative, '--', str(target)).decode().strip()
+    patch = git('diff', '--binary', '--no-ext-diff', '--no-textconv', '--', relative)
+    patch_path = evidence / 'integration-136-140-230-evals-r1.patch'
+    assert not patch_path.exists(), str(patch_path)
+    patch_path.write_bytes(patch)
+    record['patch'] = {'path': str(patch_path), 'sha256': digest(patch)}
+    save()
+    command('docs', [node, 'tools/check_docs.mjs'])
+    command('repository-docs', [node, 'tools/check_documentation.mjs'])
+    command('documentation-regression', [node, '--test', '--test-reporter=tap', 'tools/check_documentation.test.mjs'])
+    command('diff-check', ['git', 'diff', '--check', '--', relative])
+    assert git('write-tree').decode().strip() == tested_tree
+    assert git('diff', '--name-only').decode().splitlines() == [relative]
+    assert not git('ls-files', '--others', '--exclude-standard').strip()
+    assert digest(git('diff', '--cached', '--binary', '--no-ext-diff', '--no-textconv', 'HEAD')) == digest(tested_diff)
+    for item in physical:
+        expected = digest(after) if item['path'] == relative else item['sha256']
+        assert digest((repo / item['path']).read_bytes()) == expected, item['path']
+    record.update(status='passed', unchanged_physical_file_count=6514,
+                  unchanged_execution_and_test_source=True, real_index_tree_unchanged=True,
+                  exact_head_hosted_checks='pending after publication')
+except Exception as error:
+    record['status'] = 'failed-preserve-state'
+    record['failure'] = str(error)
+    raise
+finally:
+    record['finished_at_utc'] = datetime.now(timezone.utc).isoformat()
+    save()
+    print(json.dumps({key: record.get(key) for key in ['issues', 'status', 'changed_path', 'old_git_blob', 'new_git_blob', 'checks', 'failure']}))

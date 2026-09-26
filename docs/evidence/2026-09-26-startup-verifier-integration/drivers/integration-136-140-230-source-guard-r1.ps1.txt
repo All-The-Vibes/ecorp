@@ -1,0 +1,31 @@
+#requires -Version 7.5
+# Dot-source only from the integration acceptance drivers in this evidence directory.
+$expectedIntegrationProduct = '<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp'
+$expectedIntegrationMain = '1505aeaa21b5cd67b8d892607ea6697cf1e8ef05'
+$expectedIntegrationTree = '289f55ca6b32558f8d98a86f8aa340dc3e288db1'
+if ($product -cne $expectedIntegrationProduct) { throw 'Wrong integration product.' }
+$integrationBuildPath = Join-Path $PSScriptRoot 'integration-136-140-230-native-build-r2.json'
+$build = Get-Content -LiteralPath $integrationBuildPath -Raw | ConvertFrom-Json
+$integrationPreparation = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'integration-136-140-230-preparation-r2.json') -Raw | ConvertFrom-Json
+if ($build.status -cne 'passed' -or !$build.source_unchanged -or $build.repository -cne $product -or $build.head -cne $expectedIntegrationMain -or $build.tree -cne $expectedIntegrationTree) { throw 'A passed exact integration native build is required.' }
+if (!$integrationPreparation.preserved_checkouts_unchanged -or $integrationPreparation.candidate.tree -cne $build.tree) { throw 'Missing integration ownership and preserved contribution provenance.' }
+$sourceHead = $build.head
+$sourceTree = $build.tree
+$sourceStatus = @($build.status_before)
+function Assert-IntegrationSource {
+    if ((& git -C $product rev-parse HEAD).Trim() -cne $sourceHead -or (& git -C $product write-tree).Trim() -cne $sourceTree -or (& git -C $product branch --show-current).Trim() -cne 'codex/issue136-140-230-completion') { throw 'Integration commit, index or branch changed.' }
+    if ((@(& git -C $product status --porcelain=v1) -join "`n") -cne ($sourceStatus -join "`n") -or @(& git -C $product ls-files -u).Count) { throw 'Integration staged source or conflict state changed.' }
+    $mergePath = (& git -C $product rev-parse --git-path MERGE_HEAD).Trim()
+    if (![IO.Path]::IsPathFullyQualified($mergePath)) { $mergePath = Join-Path $product $mergePath }
+    if ((@(Get-Content -LiteralPath $mergePath) -join "`n") -cne (@($integrationPreparation.merge_heads) -join "`n")) { throw 'Prepared contribution ancestry changed.' }
+    foreach ($entry in $build.source_before) {
+        if ((Get-FileHash -LiteralPath (Join-Path $product $entry.path)).Hash.ToLowerInvariant() -cne $entry.sha256) { throw "Built physical source changed: $($entry.path)" }
+    }
+    foreach ($name in @('crony-server','crony-runner')) {
+        if ($build.binaries.$name.path -cne (Join-Path $product "target/debug/$name.exe") -or (Get-FileHash -LiteralPath $build.binaries.$name.path).Hash.ToLowerInvariant() -cne $build.binaries.$name.sha256) { throw 'Built integration binary changed.' }
+    }
+}
+Assert-IntegrationSource
+foreach ($key in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($key -match '^(CRONY_|ECORP_|GH_|GITHUB_|AZURE_)' -or $key -in @('DATABASE_URL','PGPASSWORD','PGPASSFILE','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR')) { [Environment]::SetEnvironmentVariable($key,$null,'Process') }
+}

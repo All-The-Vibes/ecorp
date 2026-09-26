@@ -1,0 +1,46 @@
+{
+  "issue": 136,
+  "phase": "red",
+  "observed_at_utc": "2026-09-26T14:51:30.232Z",
+  "repository": "<USERPROFILE>\\.codex\\worktrees\\issue136-browser-docs\\ecorp",
+  "head": "08ed24829e033a39a8913d52be6a136eac1cc2aa",
+  "document_sha256": "e9dbc944b5023938c8746bd1c7920ec0d860a9bb4f3b16d1e60eb24144a5cd12",
+  "validator_sha256": "9f9df313562777b7996eff40c42da60c98fabad9d3f8057a00b5efab774d6cd4",
+  "documented_command": {
+    "type": "command",
+    "program": "node",
+    "args": [
+      "C:\\trusted-verifiers\\verify_arcade_browser.mjs",
+      "arcade"
+    ],
+    "timeout_ms": 120000
+  },
+  "errors": [
+    "Check 1 timeout must be between 100 and 60,000 ms."
+  ],
+  "boundaries": [
+    {
+      "timeout_ms": 99,
+      "errors": [
+        "Check 1 timeout must be between 100 and 60,000 ms."
+      ]
+    },
+    {
+      "timeout_ms": 100,
+      "errors": []
+    },
+    {
+      "timeout_ms": 60000,
+      "errors": []
+    },
+    {
+      "timeout_ms": 60001,
+      "errors": [
+        "Check 1 timeout must be between 100 and 60,000 ms."
+      ]
+    }
+  ],
+  "reproduced": true,
+  "passed": false,
+  "scope": "Exact documented JSON checked against the existing UI admission validator; no new runtime acceptance claim."
+}

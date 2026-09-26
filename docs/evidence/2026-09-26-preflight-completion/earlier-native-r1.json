@@ -1,0 +1,44 @@
+{
+  "issue": 230,
+  "status": "running",
+  "started_at_utc": "2026-09-26T16:56:31.7639379+00:00",
+  "repository": "<USERPROFILE>\\.codex\\worktrees\\issue230-preflight\\ecorp",
+  "head": "563db5cca7e81a1347d416f78004f4d189772e00",
+  "tree": "70d96a7677337e53a7cbdd42e25c1f8e6ba7493c",
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue230-preflight-20260926-r1",
+  "ports": {
+    "web": 15930,
+    "database": 59230,
+    "server": 18930
+  },
+  "build_receipt": "issue230-native-build-r1.json",
+  "build_receipt_sha256": "c219a4982388db51c161d852559e5e85e9700e195fc05e7552e04337c8fe12da",
+  "binaries": {
+    "crony-runner": {
+      "sha256": "091c68c4dd46d75c2dd0bfe4792bdf92af60dce63802807db772eb14b815ed54",
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue230-preflight\\ecorp\\target\\debug\\crony-runner.exe"
+    },
+    "crony-server": {
+      "sha256": "b86a096e26918a9e420b52994bdeac0cd13697cf33ffb7405affbe959926fefc",
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue230-preflight\\ecorp\\target\\debug\\crony-server.exe"
+    }
+  },
+  "checks": [],
+  "cleanup": [],
+  "source_unchanged": null,
+  "drivers": [
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue230-native-r1.ps1",
+      "sha256": "8ed10cd24832d0aab574c241a60f68c870e8e743926f59480820c15a3a403027"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue230-native-supervisor-r1.ps1",
+      "sha256": "bc79eed4e60595ef43a68ecd8ca798b534917b804c68ab0a54a95b3febd0bba9"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue230-native-startup-r1.ps1",
+      "sha256": "5a17aa81a6551d2940be4d37e5c8003bdca296404f12988cd0bf1390cd828ca7"
+    }
+  ],
+  "assurance": "Current-source native Windows public preflight/start/restart/stop and actual Chrome/browser/server/runner acceptance, fresh owned SCRAM database and synthetic identity/source/fake-process provider. Ephemeral environment-only server credential delivery is reduced assurance. No production identity, inference, deployment, external provider or independent human approval is claimed."
+}

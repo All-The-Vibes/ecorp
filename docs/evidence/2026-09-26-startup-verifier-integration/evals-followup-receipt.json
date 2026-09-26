@@ -1,0 +1,93 @@
+{
+  "issues": [
+    136,
+    140,
+    230
+  ],
+  "status": "passed",
+  "started_at_utc": "2026-09-26T19:49:29.184511+00:00",
+  "base": "1505aeaa21b5cd67b8d892607ea6697cf1e8ef05",
+  "tested_staged_tree": "289f55ca6b32558f8d98a86f8aa340dc3e288db1",
+  "canonical_report_sha256": "6638fc97e5b18929cf2dca1adb7c45c9c316a394a9a18b3056f4b1dd017df455",
+  "tested_tracked_diff_sha256": "1456ac84174b7bbf330f972db2f0e56e03c0502a01181dde1f99b2b515767e44",
+  "changed_path": "docs/EVALS.md",
+  "old_physical_sha256": "c976d643602612f3c51affbf5414c64a1659c6e1996d49730749225a5f6294a2",
+  "new_physical_sha256": "d5df37ecf476716f305cade3d9ff85e3e24eca76a5599453ac4403f513c1a1ed",
+  "old_git_blob": "5bbfa10bfc4b18e1d91d9ee41acccd777c55d57c",
+  "old_excerpt": "`tools/local_stack_identity.test.ps1` exercises native process inspection and\r\nQA cleanup using owned inert children. Injected missing main-module results\r\ncover startup loading, recovery on the same held process, a mismatched receipt,\r\nand confirmed native exit during inspection. Persistent missing modules and\r\nnative getter errors, including an error after loading begins, must fail visibly,\r\npreserve the ownership record, and leave the unverified child alive. Stop still\r\nrequires the executable and creation time to match before using the retained handle.\r\n\r\nWindows `Process.MainModule` may be null before the executable module loads;\r\nthe shared helper observes only that result for up to forty 50 ms waits.\r\nNative inspection errors propagate immediately. This bounded native fixture is\r\nseparate from the complete starter lifecycle suite and browser/server/runner\r\nacceptance; synthetic children do not prove a working local office.\r\n",
+  "new_excerpt": "`tools/local_stack_identity.test.ps1` exercises native process inspection and\r\nQA cleanup using owned inert children. Injected missing main-module results and\r\nnative partial-copy errors (299) cover startup loading, recovery on the same\r\nheld process, a mismatched receipt, and confirmed native exit during inspection.\r\nPersistent missing modules or error 299, access denial (5), and other getter\r\nerrors, including an error after loading begins, must fail visibly, preserve the\r\nownership record, and leave the unverified child alive. Stop still requires the\r\nexecutable and creation time to match before using the retained handle.\r\n\r\nWindows `Process.MainModule` may be null or raise `ERROR_PARTIAL_COPY` (299)\r\nbefore the executable module loads. The shared helper retries only those\r\nobservations for up to forty 50 ms waits on the same held process and handle.\r\nUnresolved null results and persistent error 299 fail closed; all other native\r\ninspection errors, including access denial (5), propagate immediately. This\r\nbounded native fixture is separate from the complete starter lifecycle suite\r\nand browser/server/runner acceptance; synthetic children do not prove a working\r\nlocal office.\r\n",
+  "scope": "Only the Local Windows process identity prose, corrected after canonical validation; no execution, test, policy, dependency or configuration file changes.",
+  "checks": [
+    {
+      "name": "docs",
+      "argv": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_docs.mjs"
+      ],
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\integration-136-140-230-evals-r1-docs.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "repository-docs",
+      "argv": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "tools/check_documentation.mjs"
+      ],
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\integration-136-140-230-evals-r1-repository-docs.log",
+      "sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d"
+    },
+    {
+      "name": "documentation-regression",
+      "argv": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "--test",
+        "--test-reporter=tap",
+        "tools/check_documentation.test.mjs"
+      ],
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\integration-136-140-230-evals-r1-documentation-regression.log",
+      "sha256": "07bb3574940f0aee3e1c1e00754f1452527611373b6ce6528fe921e67d57b899",
+      "counts": {
+        "tests": 28,
+        "pass": 28,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      }
+    },
+    {
+      "name": "diff-check",
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "docs/EVALS.md"
+      ],
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\integration-136-140-230-evals-r1-diff-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "before_capture": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\integration-136-140-230-evals-r1-before.md",
+    "sha256": "c976d643602612f3c51affbf5414c64a1659c6e1996d49730749225a5f6294a2"
+  },
+  "after_capture": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\integration-136-140-230-evals-r1-after.md",
+    "sha256": "d5df37ecf476716f305cade3d9ff85e3e24eca76a5599453ac4403f513c1a1ed"
+  },
+  "new_git_blob": "459e835e0b8cb844089e3e014c7e8f4b1d1849d6",
+  "patch": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\integration-136-140-230-evals-r1.patch",
+    "sha256": "076bacc8b4de4d68a2d4c3a9d05eea10c0c88a788bdb48ccbfaae47eaaa02a96"
+  },
+  "unchanged_physical_file_count": 6514,
+  "unchanged_execution_and_test_source": true,
+  "real_index_tree_unchanged": true,
+  "exact_head_hosted_checks": "pending after publication",
+  "finished_at_utc": "2026-09-26T19:49:35.841920+00:00"
+}

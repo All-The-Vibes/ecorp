@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "issue": 230,
+  "assembled_at_utc": "2026-09-26T17:51:57.716757+00:00",
+  "base": "563db5cca7e81a1347d416f78004f4d189772e00",
+  "native_tested_staged_tree": "373c148967aaef3da00eaa2c14aabfee3e0446c8",
+  "tested_code_diff_sha256": "a05c5193d65e080ef4f637ba1f60b5451b0fcb8507a356a0c5e9de4ec4e802f2",
+  "source_files": [
+    {
+      "path": "tools/local_stack.psm1",
+      "physical_sha256": "72772a2157a96265cd017218fd8ea5d2cef450b845c6d01e1b017fee80643158"
+    },
+    {
+      "path": "tools/local_stack_identity.test.ps1",
+      "physical_sha256": "7e6c09c883c316c9e89b628082504196eccbc79d8c36c3109efa87652597a494"
+    }
+  ],
+  "focused_red": {
+    "passed": 64,
+    "failed": 10,
+    "exit_code": 1,
+    "scope": "September 26 retrospective injected-getter regression"
+  },
+  "focused_green": {
+    "passed": 74,
+    "failed": 0,
+    "exit_code": 0
+  },
+  "native_checks": [
+    {
+      "name": "only provisioning application processes stopped",
+      "passed": true
+    },
+    {
+      "name": "preflight-missing-database",
+      "passed": true
+    },
+    {
+      "name": "missing-database preflight preserves database files ACLs source and credential",
+      "passed": true
+    },
+    {
+      "name": "preflight preserves database files ACLs source and credential",
+      "passed": true
+    },
+    {
+      "name": "preflight-invalid-actor",
+      "passed": true
+    },
+    {
+      "name": "preflight-missing-source-ref",
+      "passed": true
+    },
+    {
+      "name": "preflight-occupied-port",
+      "passed": true
+    },
+    {
+      "name": "rejected preflights preserve database files ACLs source and credential",
+      "passed": true
+    },
+    {
+      "name": "actual startup owns ready server runner and web",
+      "passed": true
+    },
+    {
+      "name": "second start retains all three process identities",
+      "passed": true
+    },
+    {
+      "name": "invalid-restart-retains-live-stack",
+      "passed": true
+    },
+    {
+      "name": "invalid restart preserves exact process identities",
+      "passed": true
+    },
+    {
+      "name": "missing-database-restart-retains-live-stack",
+      "passed": true
+    },
+    {
+      "name": "missing-database restart preserves exact process identities and retained metadata",
+      "passed": true
+    },
+    {
+      "name": "invalid-source-restart-retains-live-stack",
+      "passed": true
+    },
+    {
+      "name": "invalid-source restart preserves exact process identities and retained metadata",
+      "passed": true
+    },
+    {
+      "name": "start recovers only missing web",
+      "passed": true
+    },
+    {
+      "name": "actual-startup browser server runner policy acceptance",
+      "passed": true
+    },
+    {
+      "name": "source checkout HEAD index and worktree remain unchanged",
+      "passed": true
+    },
+    {
+      "name": "original refs preserved and new refs belong to observed isolated runs",
+      "passed": true
+    },
+    {
+      "name": "rotated credential remains scoped to the original authorized enrollment",
+      "passed": true
+    },
+    {
+      "name": "explicit restart replaces all three owned application processes",
+      "passed": true
+    },
+    {
+      "name": "restart retains enrollment and source state",
+      "passed": true
+    }
+  ],
+  "native_binary_sha256": {
+    "crony-runner": "091c68c4dd46d75c2dd0bfe4792bdf92af60dce63802807db772eb14b815ed54",
+    "crony-server": "b86a096e26918a9e420b52994bdeac0cd13697cf33ffb7405affbe959926fefc"
+  },
+  "source_unchanged": true,
+  "native_cleanup_verified": true,
+  "original_files_retained": true,
+  "canonical": "Canonical pnpm check on this final staged publication candidate is required before committing. Its source-bound receipt and actual counts will be posted to the linked PR; this packet does not anticipate a pass.",
+  "historical_attempts": [
+    {
+      "file": "earlier-native-r1.json",
+      "status": "running",
+      "failure": ""
+    },
+    {
+      "file": "earlier-native-r2.json",
+      "status": "failed",
+      "failure": "Native startup acceptance failed; original evidence is retained."
+    },
+    {
+      "file": "earlier-native-r3.json",
+      "status": "failed",
+      "failure": "Native startup acceptance failed; original evidence is retained."
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "focused-red.json",
+      "source_name": "issue230-identity-red-r1.json",
+      "original_sha256": "a0cc0e40e03d922ee930f0c144597c36a1c88d4ac268735a5209eaa61f6a693f",
+      "published_sha256": "fc53380e90f3f5aac4ec00b59e3b7aed0ff65c9254d1c8e0300b81e09e57bab7",
+      "bytes": 11119,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "focused-red.log",
+      "source_name": "issue230-identity-red-r1.log",
+      "original_sha256": "b4ed42fc4fbe7d66c6046bd5752f3fa93e0f354c8e2ca487e44a98caad0caef2",
+      "published_sha256": "0e2722ec1f97f9c3852ddc657abd49ba8ee53a19760ff85e55838839f41954b0",
+      "bytes": 6933,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "focused-green.json",
+      "source_name": "issue230-identity-green-r1.json",
+      "original_sha256": "b211ad0f69773d642f5ddad0223221a9e20460a70fd754adf3806ee2b0abdfd2",
+      "published_sha256": "d0697637c0091808ba6325cb81e492a883c03f8bbd100421ba1ff74df8d5975f",
+      "bytes": 9830,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "focused-green.log",
+      "source_name": "issue230-identity-green-r1.log",
+      "original_sha256": "26d95ae90e12f27667cf8395e9cef5627ba706149880070d2f63cf3b74e44af5",
+      "published_sha256": "81204919820c51f002ea20c87d77908a6798fc25b6b8902054c5a921a0f8ad60",
+      "bytes": 5751,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "native-stack.json",
+      "source_name": "issue230-native-stack-r4.json",
+      "original_sha256": "fd546d12de084b310a99181ded5d869c892feb58f6885eebe8fb0a37c85f8198",
+      "published_sha256": "9e8643d4a0a48294108c0bfdb3d4b9f8173c66019e1759b61fba72dfff2403cc",
+      "bytes": 102518,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text; omit the enrollment credential-file SHA-256 value from this public copy"
+    },
+    {
+      "file": "native-build.json",
+      "source_name": "issue230-native-build-r2.json",
+      "original_sha256": "05e01c72e5269b92943d36b882632554318e9acaafc2b3d6d7a7299367c66c26",
+      "published_sha256": "d666eb70ff2cb5066d64bb6a4b9be47b6c5419744bf1ab14a2387f1fb73510cd",
+      "bytes": 2363472,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "native-build.log",
+      "source_name": "issue230-native-build-r2.log",
+      "original_sha256": "a65036f88cb5be2044a21ca5dcf38cc9db1fa81a751718aaa5e589fdc84cf6f3",
+      "published_sha256": "a65036f88cb5be2044a21ca5dcf38cc9db1fa81a751718aaa5e589fdc84cf6f3",
+      "bytes": 564,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "startup-result.json",
+      "source_name": "result.json",
+      "original_sha256": "23010dc7f2c4bd89a162bf6a78643f4cc194b858d14a1124715a05f5b1be9c9b",
+      "published_sha256": "7956a06298c6b7a1e390a1864eed73ed17e00d179cac4c46044f8aead295fe9b",
+      "bytes": 11053,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text; omit the enrollment credential-file SHA-256 value from this public copy"
+    },
+    {
+      "file": "browser-result.json",
+      "source_name": "report.json",
+      "original_sha256": "101c4843ead731882f2097e276a1edcfe57c96f0fbb276439f8c5938f5da3844",
+      "published_sha256": "06ba9a1618d51dfbc31e3561936fb4085c6247b017aba6c3a823870418be8059",
+      "bytes": 76152,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "startup.log",
+      "source_name": "issue230-native-r4-startup.stdout.log",
+      "original_sha256": "384072bdcd0e82ba8bc220e530c8cb1197d092f58c15f3918040983901afa1f4",
+      "published_sha256": "384072bdcd0e82ba8bc220e530c8cb1197d092f58c15f3918040983901afa1f4",
+      "bytes": 1461,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "run-issue230-native-r4.ps1.txt",
+      "source_name": "run-issue230-native-r4.ps1",
+      "original_sha256": "4c299a2b558330354b4768673fb2b0d8e27d188c8faf8d0683488b861cffc5c8",
+      "published_sha256": "0fe33e6d4c8ebe06996cc695402cc4ed23f88592084137649faa7db02d95d3dd",
+      "bytes": 11419,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "issue230-native-supervisor-r3.ps1.txt",
+      "source_name": "issue230-native-supervisor-r3.ps1",
+      "original_sha256": "3b5da3df0b46ddbff389740f3baad28bf4f6942ec9fa16756e33f23d8b45ff2e",
+      "published_sha256": "b0567a530124718e5ca8806ca7d9423e500307016d6fff25018908a4c033d196",
+      "bytes": 12266,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "issue230-native-startup-r1.ps1.txt",
+      "source_name": "issue230-native-startup-r1.ps1",
+      "original_sha256": "5a17aa81a6551d2940be4d37e5c8003bdca296404f12988cd0bf1390cd828ca7",
+      "published_sha256": "4e1b6f55c1654a7316090563a7c93c8bcb886a3aed4678aa33ab546c6043cadf",
+      "bytes": 19698,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "run-issue230-identity-r1.py.txt",
+      "source_name": "run-issue230-identity-r1.py",
+      "original_sha256": "30be2611cad77aaed6ea16cc4458f16cf7227c9ea5a740384a9362918e1ad39c",
+      "published_sha256": "700bd02fc6414aa5d78f36ae08f778a664411ba51606a696a67725367068a550",
+      "bytes": 2940,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "passed-final.png",
+      "source_name": "passed-final.png",
+      "original_sha256": "6332c0f4061f55211debee710dd459ddfb36562162104e89a4112f0dbd24afeb",
+      "published_sha256": "6332c0f4061f55211debee710dd459ddfb36562162104e89a4112f0dbd24afeb",
+      "bytes": 267120,
+      "transform": "none; original PNG bytes"
+    },
+    {
+      "file": "failed-final.png",
+      "source_name": "failed-final.png",
+      "original_sha256": "07111e9e5a91477133f77176d5f0e496b922796b14bb131f678c993c7a03b94c",
+      "published_sha256": "07111e9e5a91477133f77176d5f0e496b922796b14bb131f678c993c7a03b94c",
+      "bytes": 254780,
+      "transform": "none; original PNG bytes"
+    },
+    {
+      "file": "earlier-native-r1.json",
+      "source_name": "issue230-native-stack-r1.json",
+      "original_sha256": "f382a095e3288445ea1b7e89777e6844191fd482015240a6d9975a8475b71fd4",
+      "published_sha256": "7b85094c961d57cb937ef995c13c807bbd9e1333bc97a7ae27010fd90836083c",
+      "bytes": 2217,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "earlier-native-r2.json",
+      "source_name": "issue230-native-stack-r2.json",
+      "original_sha256": "1354cd036ccb5129ca9ee4d455404930b0993579fda2239aaa6d801f81a24b76",
+      "published_sha256": "eca698f8aac5e8b843cd07ed5d7c52250642bd81d37f35932cb2f6607482a736",
+      "bytes": 6257,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "earlier-native-r3.json",
+      "source_name": "issue230-native-stack-r3.json",
+      "original_sha256": "adc87d4c60477e07b4a7e714c278211c98a54b243685712f85265f47305b6a1a",
+      "published_sha256": "a121d4d4a3e6b8f53a2966e68946ba88c680743a31401c10e3a6a0f276b09caa",
+      "bytes": 16030,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text; omit the enrollment credential-file SHA-256 value from this public copy"
+    },
+    {
+      "file": "issue230-owned-runtime-preserved-r2.json",
+      "source_name": "issue230-owned-runtime-preserved-r2.json",
+      "original_sha256": "09538e0768a085c993e943bf9b3936839fdb6249fa1beb91eff6aad27b3fac47",
+      "published_sha256": "d2afdec8dfed12a5886b56a6ae4365151a04d74412ef78191c0200a4199cde28",
+      "bytes": 1653,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    },
+    {
+      "file": "issue230-owned-runtime-preserved-r3.json",
+      "source_name": "issue230-owned-runtime-preserved-r3.json",
+      "original_sha256": "7ecc30a9e42cd8bda34a1426b5123cb872ead54a8cf80a313fa88f45ac637a4a",
+      "published_sha256": "bddfc1ffb89012ce9c2c00eb462ada26c388b0c964829e14def7d1f4ab29b39b",
+      "bytes": 2173,
+      "transform": "UTF-8 without BOM; replace local profile roots/account labels, preserve other text"
+    }
+  ],
+  "assurance": "Current-source native Windows public preflight/start/restart/stop and actual Chrome/browser/server/runner acceptance, fresh owned SCRAM database and synthetic identity/source/fake-process provider. Ephemeral environment-only server credential delivery is reduced assurance. No production identity, inference, deployment, external provider or independent human approval is claimed.",
+  "publication_scope": "Native acceptance executed on the stated two-file staged source. This dated packet is a later documentation-only addition. Original and publication hashes are distinct; no claim of execution on a future commit.",
+  "prior_preservation": "Earlier runtime files remain in their owned failed fixture. Payload hashes, stopped processes, owner and restricted access were reconciled. The strict ACL-hash comparison failed after a native move; unchanged ACL representations are not claimed.",
+  "publication_redactions": "The three public credential_sha256 values are omitted. They were identified as file fingerprints, not credential values, by native scan triage. Original records remain intact and separately bound by original_sha256. All acceptance booleans, counts, source/binary hashes and unrelated fields are preserved. Scanner rules and ignore policy are unchanged."
+}

@@ -236,18 +236,22 @@ that a later filesystem race or storage failure will not prevent persistence.
 ## Local Windows process identity
 
 `tools/local_stack_identity.test.ps1` exercises native process inspection and
-QA cleanup using owned inert children. Injected missing main-module results
-cover startup loading, recovery on the same held process, a mismatched receipt,
-and confirmed native exit during inspection. Persistent missing modules and
-native getter errors, including an error after loading begins, must fail visibly,
-preserve the ownership record, and leave the unverified child alive. Stop still
-requires the executable and creation time to match before using the retained handle.
+QA cleanup using owned inert children. Injected missing main-module results and
+native partial-copy errors (299) cover startup loading, recovery on the same
+held process, a mismatched receipt, and confirmed native exit during inspection.
+Persistent missing modules or error 299, access denial (5), and other getter
+errors, including an error after loading begins, must fail visibly, preserve the
+ownership record, and leave the unverified child alive. Stop still requires the
+executable and creation time to match before using the retained handle.
 
-Windows `Process.MainModule` may be null before the executable module loads;
-the shared helper observes only that result for up to forty 50 ms waits.
-Native inspection errors propagate immediately. This bounded native fixture is
-separate from the complete starter lifecycle suite and browser/server/runner
-acceptance; synthetic children do not prove a working local office.
+Windows `Process.MainModule` may be null or raise `ERROR_PARTIAL_COPY` (299)
+before the executable module loads. The shared helper retries only those
+observations for up to forty 50 ms waits on the same held process and handle.
+Unresolved null results and persistent error 299 fail closed; all other native
+inspection errors, including access denial (5), propagate immediately. This
+bounded native fixture is separate from the complete starter lifecycle suite
+and browser/server/runner acceptance; synthetic children do not prove a working
+local office.
 
 ## First vertical-slice scenario
 

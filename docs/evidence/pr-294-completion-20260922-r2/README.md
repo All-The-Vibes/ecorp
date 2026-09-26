@@ -21,3 +21,10 @@ Build provenance: Workspace package artifacts are removed under the task Cargo m
 The first immutable packet retains the original failed navigation attempts and successful r3 run. This second packet adds fresh evidence for the CSS correction. Browser r4 selects the actual Work item, opens the Task graph and saved task, measures computed text/background contrast, launches through the real application, and verifies persisted native evidence. No DOM injection or mocked response is used. The minimum saved-contract contrast was 7.496:1 on both viewports. The two screenshots were also visually inspected. Deterministic fake-process providers and development identity remain explicit; requested cache control does not prove zero cache writes or authorize cleanup. Drivers retain normalized local paths; substitute owned absolute tool/checkout/evidence roots to replay locally. The backend reuse checks require the original immutable packet and its retained native evidence rather than silently rebuilding or accepting an unrelated executable.
 
 Trailing line whitespace and blank lines at EOF are removed from the published logs. This formatting normalization does not alter test-result text; original and published hashes are distinct. The local `.gitattributes` preserves published evidence bytes on checkout.
+
+Publication correction, September 26, 2026: the three historical stack-start logs
+now redact caret-escaped local account roots, and their published hash bindings
+have been refreshed. Earlier statements about immutable packets and normalized
+paths describe the original publication. Execution dates, results, original
+runtime hashes, drivers and screenshots retain their original scope. See the
+[dated correction and hash manifest](../2026-09-26-verifier-cache-publication-correction/README.md).

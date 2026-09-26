@@ -46,3 +46,10 @@ All nine existing validation results are reused only after proving identical pro
 The earlier packets remain byte-for-byte unchanged. The new invocation requires no prior private binary, private path substitution inside the drivers, or omitted supervisor. It accepts either receipt schema and rebuilds before replay.
 
 Five receipt-admission cases also passed on the retained r3 replay driver: matching and mismatching trees for both raw and published schemas, plus rejection of a failed gate. `guards/result.json` binds these checks to the exact executed driver hash and source commit. Synthetic receipts are test fixtures only. Matching cases intentionally stop at the occupied-fixture preservation guard, before provisioning; mismatching or failed receipts are rejected earlier. No lifecycle or process was created, and existing fixture ownership and source stayed unchanged. The exact historical test driver is retained with its original local paths; it is separate from the parameterized native replay command above.
+
+Publication correction, September 26, 2026: the three historical stack-start logs
+now redact caret-escaped local account roots, and their published hash bindings
+have been refreshed. Earlier statements about immutable packets and normalized
+paths describe the original publication. Execution dates, results, original
+runtime hashes, drivers and screenshots retain their original scope. See the
+[dated correction and hash manifest](../2026-09-26-verifier-cache-publication-correction/README.md).

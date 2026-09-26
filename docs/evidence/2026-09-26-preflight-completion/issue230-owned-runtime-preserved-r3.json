@@ -1,0 +1,33 @@
+{
+  "issue": 230,
+  "status": "preserved",
+  "observed_at_utc": "2026-09-26T17:39:51.7982768+00:00",
+  "prior_receipt": "issue230-owned-runtime-preserved-r2.json",
+  "prior_receipt_sha256": "09538e0768a085c993e943bf9b3936839fdb6249fa1beb91eff6aad27b3fac47",
+  "fixture": "<USERPROFILE>\\code\\qa\\issue230-preflight-20260926-r2",
+  "all_owned_processes_stopped": true,
+  "credential_rotation_scope_verified": true,
+  "files": [
+    {
+      "source": "<USERPROFILE>\\.codex\\worktrees\\issue230-preflight\\ecorp\\output\\runner\\credential.json",
+      "destination": "<USERPROFILE>\\code\\qa\\issue230-preflight-20260926-r2\\evidence\\startup\\preserved-product-credential.json",
+      "sha256": "41e247f6015a2f337999457ea6d02bb0b94e733ff4353220c9a0b09f097abc35",
+      "status": "preserved",
+      "acl_before_sha256": "21e034c7a288e841b69af104742cd13333ab63d606f1c739a6913c7031467c5e",
+      "acl_after_sha256": "21e034c7a288e841b69af104742cd13333ab63d606f1c739a6913c7031467c5e",
+      "acl_exactly_unchanged": true,
+      "accessible_only_to_owner_system_or_local_administrators": true
+    },
+    {
+      "source": "<USERPROFILE>\\.codex\\worktrees\\issue230-preflight\\ecorp\\output\\local-pids.json",
+      "destination": "<USERPROFILE>\\code\\qa\\issue230-preflight-20260926-r2\\evidence\\startup\\preserved-local-pids.json",
+      "sha256": "1fa452f74e2dbd7bbd8de534e570bf846951703e8f7471e4e1078884bd55c4ce",
+      "status": "preserved",
+      "acl_before_sha256": "f84c254aa44b986994e4dfa3abacc8d5810a40a07416e4f03838dffe381554ea",
+      "acl_after_sha256": "74809d39bf70bf35e8aee50750176cd1e164a5cc5127f9b0b893a29e9717b086",
+      "acl_exactly_unchanged": false,
+      "accessible_only_to_owner_system_or_local_administrators": true
+    }
+  ],
+  "note": "The prior helper moved both exact files before its strict ACL hash check failed. This read-only reconciliation verifies both preserved payloads, source absence, current ownership, private access and inactive processes. Native move changed ACL representation/inheritance; exact ACL identity is not claimed. No credential bytes were exposed and no additional file was moved."
+}
