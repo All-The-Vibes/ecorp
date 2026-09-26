@@ -1207,9 +1207,9 @@ impl crony_audit::PublicationTransport for PublicationFixture {
     ) -> futures_util::future::BoxFuture<'a, Result<bool>> {
         Box::pin(async {
             Ok(!*self.rewritten.lock().unwrap()
-                && !self
+                && self
                     .rewrite_after_writes
-                    .is_some_and(|threshold| *self.writes.lock().unwrap() >= threshold))
+                    .is_none_or(|threshold| *self.writes.lock().unwrap() < threshold))
         })
     }
     fn read<'a>(

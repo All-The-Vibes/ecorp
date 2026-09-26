@@ -1,0 +1,102 @@
+{
+  "issue": 327,
+  "purpose": "Rust 1.94 upload-binding controls and PublicationFixture database regressions",
+  "source_head": "bdde15b25ac80139834549656e8e90f95b8d4547",
+  "source_files": [
+    {
+      "path": "crates/crony-store/src/state_audit_tests.rs",
+      "sha256": "2ddc8c361126aa4192a2c95bd8a26035e2d99062d65e2a864dae923df29bb3ef"
+    },
+    {
+      "path": "crates/crony-store/src/retained_provider_receipt.rs",
+      "sha256": "da4cc47ee4503e817f38727f768aaa8276c0f1324ef72ca656fb7f3abd25fd15"
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "a831f13fc973847ae8edb889af5996abf4412ab781c64659e02ebc82b69c68f9"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue327-publication-20260926-r1",
+  "target": "<USERPROFILE>\\code\\ecorp-dependency-queue-20260925\\target\\issue327-rust194-20260926",
+  "started_at_utc": "2026-09-26T12:22:43.1217703Z",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue327-native-database-r1-initdb.log",
+      "sha256": "bfc83342911f4314f096e5fef3ec04c078fd6768597baa055211046b4211b0c4",
+      "counts": {
+        "summaries": 0,
+        "passed": 0,
+        "ignored": 0,
+        "failed": 0
+      }
+    },
+    {
+      "name": "upload-binding",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue327-native-database-r1-upload-binding.log",
+      "sha256": "f7ea09fab3bd80451e409210f3480978f555aa86becaf57be0a37b1a841f49fd",
+      "counts": {
+        "summaries": 1,
+        "passed": 5,
+        "ignored": 0,
+        "failed": 0
+      }
+    },
+    {
+      "name": "archive-readback",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue327-native-database-r1-archive-readback.log",
+      "sha256": "786ad72ed9de5ed221f7d61033ba887b5d7c5a3be666495cfb4105dcfc0c9a53",
+      "counts": {
+        "summaries": 1,
+        "passed": 1,
+        "ignored": 0,
+        "failed": 0
+      }
+    },
+    {
+      "name": "ancestry-threshold",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue327-native-database-r1-ancestry-threshold.log",
+      "sha256": "0a00adffd69a9acbfd842a823b9528f3e53cd8befcabdffbec92660c26789f94",
+      "counts": {
+        "summaries": 1,
+        "passed": 1,
+        "ignored": 0,
+        "failed": 0
+      }
+    },
+    {
+      "name": "publisher-interruption",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue327-native-database-r1-publisher-interruption.log",
+      "sha256": "b00f3e403f3724bbb65525c6f0f59ae600808b25d8b206d1ff4dba1e6a0d3ff7",
+      "counts": {
+        "summaries": 1,
+        "passed": 1,
+        "ignored": 0,
+        "failed": 0
+      }
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+  "authentication": {
+    "authenticated_query": true,
+    "wrong_password_rejected": true,
+    "delivery": "Private PGPASSFILE for clients. SQLx environment-only delivery is reduced assurance.",
+    "method": "scram-sha-256"
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-26T12:28:20.9689689Z"
+}

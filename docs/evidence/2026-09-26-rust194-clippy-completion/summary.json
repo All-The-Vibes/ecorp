@@ -1,0 +1,426 @@
+{
+  "schema_version": 1,
+  "issue": 327,
+  "observed_at_utc": "2026-09-26T15:15:27.398189+00:00",
+  "base": "08ed24829e033a39a8913d52be6a136eac1cc2aa",
+  "tested_code_diff_sha256": "00489333a221d3fcf9d5edec2813c2df3522a65648b660e5dc53635ee69a2e0d",
+  "canonical_original_sha256": "e69fea10c1d5f9635da2569c2fe98d28a3b36e8e7605b972dd8b79ad9ac34d7f",
+  "canonical_status": "passed",
+  "canonical_checks": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3088,
+          "passed": 3023,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 821,
+          "failed": 0,
+          "ignored": 550,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "code_files": [
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "a831f13fc973847ae8edb889af5996abf4412ab781c64659e02ebc82b69c68f9"
+    },
+    {
+      "path": "crates/crony-store/src/state_audit_tests.rs",
+      "sha256": "2ddc8c361126aa4192a2c95bd8a26035e2d99062d65e2a864dae923df29bb3ef"
+    }
+  ],
+  "rust194_red": {
+    "base": "bdde15b25ac80139834549656e8e90f95b8d4547",
+    "exit_code": 101,
+    "scope": "Five reconnect assertion idioms and one state-audit test idiom; the original production upload predicate was already fixed in merged PR #338.",
+    "source_binding_limitation": "The original run fingerprinted only retained_provider_receipt.rs, not either file diagnosed by Clippy. Its original timing, command, exit code and recorded fingerprints are retained; missing historical fingerprints are not invented."
+  },
+  "rust194_green": {
+    "base": "08ed24829e033a39a8913d52be6a136eac1cc2aa",
+    "exit_code": 0,
+    "scope": "Complete strict locked offline workspace/all-targets Clippy on Rust 1.94.0"
+  },
+  "reconnect": {
+    "failed": 0,
+    "passed": 7,
+    "ignored": 1,
+    "summaries": 1
+  },
+  "native_controls": [
+    {
+      "name": "upload-binding",
+      "counts": {
+        "summaries": 1,
+        "passed": 5,
+        "ignored": 0,
+        "failed": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "archive-readback",
+      "counts": {
+        "summaries": 1,
+        "passed": 1,
+        "ignored": 0,
+        "failed": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "ancestry-threshold",
+      "counts": {
+        "summaries": 1,
+        "passed": 1,
+        "ignored": 0,
+        "failed": 0
+      },
+      "exit_code": 0
+    },
+    {
+      "name": "publisher-interruption",
+      "counts": {
+        "summaries": 1,
+        "passed": 1,
+        "ignored": 0,
+        "failed": 0
+      },
+      "exit_code": 0
+    }
+  ],
+  "earlier_canonical_failure": {
+    "status": "failed",
+    "source": "bdde15b25ac80139834549656e8e90f95b8d4547",
+    "checks": [
+      {
+        "name": "node-tests",
+        "exit_code": 1,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3067,
+            "passed": 3001,
+            "failed": 1,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        }
+      }
+    ],
+    "explanation": "Substituted-drive fixture failed; overlapping allocation is plausible but unproven. This failure is retained separately from the later complete pass."
+  },
+  "publication_scope": "Saved-result documentation and browser captures are added after the code-candidate canonical run. They are not a live product acceptance run or a claim that the earlier command executed on the later publication tree.",
+  "artifacts": [
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-26T13-50-36-114Z-6bafe75a-eb5a-45e8-bc1e-46a81a7294ee-full.json",
+      "original_sha256": "e69fea10c1d5f9635da2569c2fe98d28a3b36e8e7605b972dd8b79ad9ac34d7f",
+      "published_sha256": "e69fea10c1d5f9635da2569c2fe98d28a3b36e8e7605b972dd8b79ad9ac34d7f",
+      "bytes": 498728,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue327-canonical-r3-install-root.log",
+      "original_sha256": "7f0bc0d76245cb658615b58c9ef63316b8c15db9a42ebac7d23163d70c2f2606",
+      "published_sha256": "7f0bc0d76245cb658615b58c9ef63316b8c15db9a42ebac7d23163d70c2f2606",
+      "bytes": 87,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue327-canonical-r3-install-web.log",
+      "original_sha256": "adb47508d810b99dfed4902729b943687ca6744985ef99c88ce3a534b1ddcbf7",
+      "published_sha256": "adb47508d810b99dfed4902729b943687ca6744985ef99c88ce3a534b1ddcbf7",
+      "bytes": 88,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue327-canonical-r3-install-steward.log",
+      "original_sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "published_sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "bytes": 28,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue327-canonical-r3-pnpm-check.log",
+      "original_sha256": "bf0b6797c7c23e989dac65b968d0f225fb51fc958e126fb7f85d6dc7f90acf2b",
+      "published_sha256": "d39adf0674e5c59c8c036c334a98c20f51f49b296b096ee1efcce4e55151efc4",
+      "bytes": 35405,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "msrv-red.json",
+      "source_name": "issue327-rust194-clippy-r1.json",
+      "original_sha256": "a49a63afabc3d83c99d322abfcaddd824193d401677d7777247b2ce52005c13f",
+      "published_sha256": "6f32013501eb3a22774d99c2b8572707f52e720f2a272ab76218ab98e338c5c0",
+      "bytes": 1537,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present; dated historical-binding qualification",
+      "previous_published_sha256": "405540493dba69f82ab36fef8a882a9109239ce4b990592258275702502e1ab7",
+      "publication_corrected_at_utc": "2026-09-26T15:47:01.259840+00:00"
+    },
+    {
+      "file": "msrv-red.log",
+      "source_name": "issue327-rust194-clippy-r1.log",
+      "original_sha256": "c96337931f653514802d4af9e694d1066e700d7f45fd0c57fc077435859b19ee",
+      "published_sha256": "1d38d2788577d77187a62beedb4ad21eef0c0675e3c75ec7f197fd629933b7d0",
+      "bytes": 21535,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "msrv-green.json",
+      "source_name": "issue327-rust194-current-r2.json",
+      "original_sha256": "0beb2a45b8911790baf3109fdd206973c4e012a185417a5d8b786127a47a227a",
+      "published_sha256": "a947fc4f08ab0c688717ec739bca925389981c7070d49403ec59d52f95213b70",
+      "bytes": 2612,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "msrv-green.log",
+      "source_name": "issue327-rust194-current-r2.log",
+      "original_sha256": "52cbe59a685492f2eaadc06e4b57c04d400a4953f24b43ae5c79d4470139446a",
+      "published_sha256": "52cbe59a685492f2eaadc06e4b57c04d400a4953f24b43ae5c79d4470139446a",
+      "bytes": 74,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "reconnect.json",
+      "source_name": "issue327-reconnect-tests-r1.json",
+      "original_sha256": "df8c624fec1f550b11e327de79a27434e33a9e0205a6eadd065e6884cacad0a3",
+      "published_sha256": "ca3a965d5da5fc56a1e8029de0806b737fb60054254cf3e64eebd1744f4c8d3b",
+      "bytes": 1538,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "reconnect.log",
+      "source_name": "issue327-reconnect-tests-r1.log",
+      "original_sha256": "00cfa3b97b8094bd6f6b818d5943162f46897632f1e33cb96e2f7bd592cb645e",
+      "published_sha256": "1d5f332e8701bfede783a221a73f0673a5e3b179032b576f4b61dbc7184ba18c",
+      "bytes": 11321,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "native-controls.json",
+      "source_name": "issue327-native-database-r1.json",
+      "original_sha256": "4f4dc652b6ad4300dba313ba8c2ae43595096d7698779e891b728555e9337ead",
+      "published_sha256": "bce1da7157163f4edb9f2de89ef02a3155a5100f4bf3425c334fd5b655c06338",
+      "bytes": 3738,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "native-owned-postgresql-initialization.log",
+      "source_name": "issue327-native-database-r1-initdb.log",
+      "original_sha256": "bfc83342911f4314f096e5fef3ec04c078fd6768597baa055211046b4211b0c4",
+      "published_sha256": "bdee959367f16bf34ad85eb969e39c7a315e863e3400a1ec306eabcaef5f13c4",
+      "bytes": 1027,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present; caret-escaped account roots and initdb account label redacted, with every other log byte unchanged",
+      "previous_published_sha256": "2c80beea9a2849b6d0d3b0ac1ca94665432c43ce3d0e878144c7a22f1894f0da",
+      "publication_corrected_at_utc": "2026-09-26T15:47:01.259840+00:00"
+    },
+    {
+      "file": "native-upload-binding.log",
+      "source_name": "issue327-native-database-r1-upload-binding.log",
+      "original_sha256": "f7ea09fab3bd80451e409210f3480978f555aa86becaf57be0a37b1a841f49fd",
+      "published_sha256": "de36dfd98a514476d6c2ca91fd817a47eed05cf9a43884f88c268da4e3f1d8b5",
+      "bytes": 5017,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "native-archive-readback.log",
+      "source_name": "issue327-native-database-r1-archive-readback.log",
+      "original_sha256": "786ad72ed9de5ed221f7d61033ba887b5d7c5a3be666495cfb4105dcfc0c9a53",
+      "published_sha256": "1857d4b43ae2627b87fa5444ba7098e50f8e1c2d4aa6270ef0933695d11fedeb",
+      "bytes": 473,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "native-ancestry-threshold.log",
+      "source_name": "issue327-native-database-r1-ancestry-threshold.log",
+      "original_sha256": "0a00adffd69a9acbfd842a823b9528f3e53cd8befcabdffbec92660c26789f94",
+      "published_sha256": "c80ba8216b4be05468ce898e9cc144d850aac9ee1dea45a5af34895f95cd6604",
+      "bytes": 452,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "native-publisher-interruption.log",
+      "source_name": "issue327-native-database-r1-publisher-interruption.log",
+      "original_sha256": "b00f3e403f3724bbb65525c6f0f59ae600808b25d8b206d1ff4dba1e6a0d3ff7",
+      "published_sha256": "ebf69b14a095a130cea13c79f25f9ba055950aa3a2a2da97325033533bbcd587",
+      "bytes": 451,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "earlier-canonical-failure.json",
+      "source_name": "2026-09-26T13-06-56-150Z-3403a71b-096b-4faf-b5db-8dae03adbbc9-full.json",
+      "original_sha256": "65ee96ad21456ec9e17f8d6d9840d712d527295d2533a85bbe5e1edab8de9e76",
+      "published_sha256": "65ee96ad21456ec9e17f8d6d9840d712d527295d2533a85bbe5e1edab8de9e76",
+      "bytes": 497218,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "earlier-canonical-failure.log",
+      "source_name": "issue327-canonical-r2-pnpm-check.log",
+      "original_sha256": "7ff2dbf5f03b9e6281e6fe85f964685aefd7d84b10889e0aaa7597ca0629586f",
+      "published_sha256": "5b2a6b37a90eb190dd890fb02da7ee752eb0094e8db101fd3c53ad4519f5e5ef",
+      "bytes": 744753,
+      "transform": "UTF-8 without BOM; Windows profile roots, including synthetic controls, replaced with <USERPROFILE> when present"
+    },
+    {
+      "file": "msrv-replay.json",
+      "source_name": "issue327-msrv-replay-r1.json",
+      "original_sha256": "aea7b005fc5fe432d4df35b4de82fe1f536ad0c22b64ee5ec3f1c22b20acca47",
+      "published_sha256": "65c731f20daedad9f2a6a1a4994a4f9194cd091e4c1d75cd17c378208dc0678f",
+      "bytes": 8841,
+      "transform": "UTF-8 without BOM; plain, JSON-escaped and caret-escaped Windows account roots plus local account labels redacted. Raw original retained privately."
+    },
+    {
+      "file": "msrv-replay-red.log",
+      "source_name": "issue327-msrv-replay-r1-red.log",
+      "original_sha256": "2add086708b6bc84ad529d665205ef9f63c92446c99a8b71dd27adb808b9bc86",
+      "published_sha256": "dcd6c7422ca7916f8223a4bb8cbe729c5bf6cb9f8d8afcc13a3760ae7832693a",
+      "bytes": 5064,
+      "transform": "UTF-8 without BOM; plain, JSON-escaped and caret-escaped Windows account roots plus local account labels redacted. Raw original retained privately."
+    },
+    {
+      "file": "msrv-replay-green.log",
+      "source_name": "issue327-msrv-replay-r1-green.log",
+      "original_sha256": "98462681709979632d86a0095218bda78949037fb892dbd60b6ab89bcd3afca2",
+      "published_sha256": "5266cbdb93fbf58b9434a3ee22c52ece7c193b90b66c926349c2e7a15dfd1e94",
+      "bytes": 287,
+      "transform": "UTF-8 without BOM; plain, JSON-escaped and caret-escaped Windows account roots plus local account labels redacted. Raw original retained privately."
+    }
+  ],
+  "rust194_replay": {
+    "receipt": "msrv-replay.json",
+    "observed_at_utc": "2026-09-26T15:45:27.972061+00:00",
+    "head": "b2430b82804cb2312d93e05f503df2908d9d65a4",
+    "baseline": "08ed24829e033a39a8913d52be6a136eac1cc2aa",
+    "red_exit_code": 101,
+    "green_exit_code": 0,
+    "both_diagnosed_files_fingerprinted_before_and_after": true,
+    "candidate_restored_and_clean": true,
+    "scope": "Retrospective RED/GREEN replay prompted by PR 372 comment 4111847008. This records new observations; it does not add missing historical fingerprints to the earlier RED run."
+  },
+  "publication_correction": {
+    "recorded_at_utc": "2026-09-26T15:47:01.259840+00:00",
+    "review": 5326415341,
+    "comment": 4111847008,
+    "corrected_log": "native-owned-postgresql-initialization.log",
+    "changed_lines": [
+      1,
+      22
+    ],
+    "escaped_account_roots_redacted": 2,
+    "account_labels_redacted": 1,
+    "originals_preserved_privately": true,
+    "earlier_results_and_code_unchanged": true
+  }
+}
