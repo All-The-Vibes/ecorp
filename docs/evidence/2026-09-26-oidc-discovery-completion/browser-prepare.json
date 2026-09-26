@@ -1,0 +1,162 @@
+{
+  "issue": 270,
+  "phase": "prepare",
+  "status": "passed",
+  "started_at_utc": "2026-09-26T13:03:26.021Z",
+  "source_head": "bdde15b25ac80139834549656e8e90f95b8d4547",
+  "issuer": "https://localhost:18971/tenant/v2.0",
+  "server": "http://127.0.0.1:18970",
+  "web": "http://127.0.0.1:15970",
+  "assurance": "Production mode with HTTPS path issuer and ephemeral synthetic identities. Deterministic fake-process adapter. Native artifact transport through an owned HTTPS fixture; no real Entra sign-in, AWS authentication, cloud durability, deployment or human review claim.",
+  "http_results": [
+    {
+      "method": "GET",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/snapshot?actor_id=00000000-0000-4000-8000-000000000011",
+      "status": 401,
+      "expected": 401,
+      "identity": null
+    },
+    {
+      "method": "GET",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/snapshot?actor_id=00000000-0000-4000-8000-000000000011",
+      "status": 401,
+      "expected": 401,
+      "identity": "invalid"
+    },
+    {
+      "method": "GET",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/snapshot?actor_id=00000000-0000-4000-8000-000000000012",
+      "status": 403,
+      "expected": 403,
+      "identity": 0
+    },
+    {
+      "method": "GET",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/snapshot?actor_id=00000000-0000-4000-8000-000000000011",
+      "status": 403,
+      "expected": 403,
+      "identity": 3
+    },
+    {
+      "method": "POST",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/1e6ccd89-219e-4bdf-bf1d-2375e2a22d6b/verification-decision",
+      "status": 403,
+      "expected": 403,
+      "identity": 0
+    },
+    {
+      "method": "POST",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/1e6ccd89-219e-4bdf-bf1d-2375e2a22d6b/verification-decision",
+      "status": 403,
+      "expected": 403,
+      "identity": 2
+    },
+    {
+      "method": "POST",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/1e6ccd89-219e-4bdf-bf1d-2375e2a22d6b/verification-decision",
+      "status": 403,
+      "expected": 403,
+      "identity": 3
+    },
+    {
+      "method": "POST",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/1e6ccd89-219e-4bdf-bf1d-2375e2a22d6b/verification-decision",
+      "status": 200,
+      "expected": 200,
+      "identity": 1
+    }
+  ],
+  "page_errors": [],
+  "authorization_controls": {
+    "missing_bearer": 401,
+    "invalid_bearer": 401,
+    "principal_mismatch": 403,
+    "unlinked_subject": 403,
+    "corp_guest_read": 200,
+    "guest_room_scoped_state_empty": true
+  },
+  "browser_authenticated": true,
+  "title": "OIDC path issuer acceptance 77258024-0d58-49d6-b86d-909ba588f96a",
+  "runner_source": {
+    "runner_id": "runner-issue270-r6",
+    "repository": "local/source-7594301dcc9f",
+    "base_ref": "HEAD",
+    "base_commit": "9d6c0ee2fe13b87d38cbba3752eceeb9e1796c54"
+  },
+  "repository_options": [
+    [
+      "local/source-7594301dcc9f",
+      "HEAD",
+      "9d6c0ee2fe13b87d38cbba3752eceeb9e1796c54"
+    ]
+  ],
+  "target": [
+    "local/source-7594301dcc9f",
+    "HEAD",
+    "9d6c0ee2fe13b87d38cbba3752eceeb9e1796c54"
+  ],
+  "creation_response": {
+    "status": 200,
+    "body": "{\"mission_id\":\"3d2a532e-623a-48b0-92b4-84ce88d02718\",\"task_id\":\"6317241d-6590-43b9-a0af-eadb30ee1f69\",\"task_ids\":[\"6317241d-6590-43b9-a0af-eadb30ee1f69\"],\"strategy\":\"independent-review\"}"
+  },
+  "mission_id": "3d2a532e-623a-48b0-92b4-84ce88d02718",
+  "task_id": "6317241d-6590-43b9-a0af-eadb30ee1f69",
+  "contract_digest": "1108bce4fd7fc33f33435422d5df786a92df9cb49fdb0724087d0d5b884f65a6",
+  "verification_policy": {
+    "checks": [
+      {
+        "type": "artifact",
+        "min_bytes": 1
+      }
+    ],
+    "manual_gate": {
+      "type": "independent_review",
+      "roles": [
+        "member",
+        "owner",
+        "admin"
+      ],
+      "exclude_requester": true
+    }
+  },
+  "stage": "launched",
+  "run_id": "1e6ccd89-219e-4bdf-bf1d-2375e2a22d6b",
+  "verifier_evidence": [
+    {
+      "id": "e517b290-67b6-42d3-aeed-6802a2fc9151",
+      "kind": "artifact",
+      "status": "passed",
+      "check_index": 0
+    }
+  ],
+  "synthetic_review_controls": {
+    "requester": 403,
+    "corp_guest": 403,
+    "unlinked_subject": 403,
+    "independent_member": 200
+  },
+  "verification_review": {
+    "run_id": "1e6ccd89-219e-4bdf-bf1d-2375e2a22d6b",
+    "task_id": "6317241d-6590-43b9-a0af-eadb30ee1f69",
+    "gate_type": "independent_review",
+    "status": "approved",
+    "decided_by": "00000000-0000-4000-8000-000000000012",
+    "decided_at": "2026-09-26T13:03:35.099374Z"
+  },
+  "acceptance": {
+    "mission_status": "completed",
+    "task_status": "completed",
+    "run_status": "completed",
+    "verification_status": "passed",
+    "artifact_id": "32e369c4-7b4a-45f7-bfdb-e237f868f590",
+    "artifact_sha256": "548074ce791fc4073a44a86825ed1cf112cdb2558d255236abba266022238648",
+    "artifact_signature": "beed6e7cd7c032b41b7e9eddf8ac0c4b6d5fe9547a6b9a0729f368a063a60222",
+    "artifact_bytes": 1675,
+    "workspace_path": "<USERPROFILE>\\code\\qa\\issue270-oidc-20260926-r6\\runner\\worktrees\\6317241d659043b9a0afeadb30ee1f69\\1e6ccd89219e4bdfbf1d2375e2a22d6b",
+    "workspace_branch": "crony/task-6317241d659043b9a0afeadb30ee1f69/run-1e6ccd89219e4bdfbf1d2375e2a22d6b",
+    "workspace_disposition": "preserved"
+  },
+  "physical_artifact_equal": true,
+  "synthetic_source_unchanged": true,
+  "finished_at_utc": "2026-09-26T13:03:36.803Z"
+}

@@ -1,0 +1,184 @@
+{
+  "issue": 270,
+  "status": "failed",
+  "started_at_utc": "2026-09-26T12:48:32.2908969+00:00",
+  "source_head": "bdde15b25ac80139834549656e8e90f95b8d4547",
+  "source_files": [
+    {
+      "path": "crates/crony-server/src/auth.rs",
+      "sha256": "be5dcf653a5bf8abf9d2f2c21eab67ec964900f357f365e397952d49d9360563"
+    },
+    {
+      "path": "crates/crony-server/src/artifacts.rs",
+      "sha256": "bb245f70cbf93759e51fafa35ab88680ffd1fb5ada2b263b128ab38d2a337196"
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "1683e45f8061aac41df347f87abefee03a60eb398d77a4daefe4aa8d286c04f1"
+    },
+    {
+      "path": "crates/crony-runner/src/main.rs",
+      "sha256": "504774ef1fb0324242da6a35110790e823aef9d3a1d96a97548699177271988f"
+    },
+    {
+      "path": "scripts/fake-agent.mjs",
+      "sha256": "5e28dba3338bfac6eeb50d552d6189602bbce44e2d5c0cbd23d585a66941757f"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "b324edcdd1f358e09f0d3afec92a55edebefee2c33d50394ef282c6b1c1f804a"
+    },
+    {
+      "path": "tools/local_stack.psm1",
+      "sha256": "3a216b5abcddcee89f4270d49381bc90bfc4694278e3a4cf65acf8ec02e7feff"
+    }
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue270-oidc-20260926-r3",
+  "ports": {
+    "web": 15970,
+    "database": 59270,
+    "server": 18970,
+    "provider": 18971
+  },
+  "issuer": "https://localhost:18971/tenant/v2.0",
+  "server_binary": {
+    "issue": 270,
+    "created_at_utc": "2026-09-26T12:14:19.2762219Z",
+    "source": "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp\\target\\debug\\crony-server.exe",
+    "copy": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue270-native-binaries-r1\\crony-server.exe",
+    "sha256": "a630562bb72b2093e77264cc5ff91f8013a4b75a0d4386fe738d243c13aca62b",
+    "build_receipt": "issue270-server-build-r1.json",
+    "source_file_sha256": "be5dcf653a5bf8abf9d2f2c21eab67ec964900f357f365e397952d49d9360563",
+    "purpose": "Preserve standalone server TLS feature build before runner/workspace feature unification."
+  },
+  "runner_binary": {
+    "issue": 270,
+    "source_binary": "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp\\target\\debug\\crony-runner.exe",
+    "copied_binary": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue270-native-binaries-r1\\crony-runner.exe",
+    "sha256": "dd743d8e3aa5fd729655953164d4975ad6207283523322d826840f7e10b65dd2",
+    "build_receipt": "issue270-runner-build-r1.json",
+    "copied_at_utc": "2026-09-26T12:20:32.7039818Z"
+  },
+  "drivers": [
+    {
+      "sha256": "0990f6b2282990ba4524683dabf00994a27a62797f7391ba6ac057906abcf802",
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue270-native-r3.ps1"
+    },
+    {
+      "sha256": "3877ed559adb663d1e9434cc420612f8cbf0834b91eaed28137b420ee7788390",
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue270-browser-r2.mjs"
+    },
+    {
+      "sha256": "f73070515544b33b707bc58e6b59a8c00fd96c324c27c61ee6b91bbec7c0ed55",
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue270-https-fixture-r1.py"
+    }
+  ],
+  "phases": [
+    {
+      "at_utc": "2026-09-26T12:48:43.5816719+00:00",
+      "name": "owned-database-authenticated"
+    },
+    {
+      "at_utc": "2026-09-26T12:48:46.1367994+00:00",
+      "name": "owned-https-provider-started"
+    },
+    {
+      "at_utc": "2026-09-26T12:48:51.2387011+00:00",
+      "name": "production-discovery-ready"
+    },
+    {
+      "at_utc": "2026-09-26T12:48:53.0534002+00:00",
+      "name": "full-owned-stack-started"
+    }
+  ],
+  "cleanup": [
+    {
+      "role": "server-dev",
+      "result": "exact owned process stopped"
+    },
+    {
+      "role": "browser-prepare",
+      "result": "already exited"
+    },
+    {
+      "role": "web",
+      "result": "exact owned process stopped"
+    },
+    {
+      "role": "runner",
+      "result": "exact owned process stopped"
+    },
+    {
+      "role": "server-prod",
+      "result": "exact owned process stopped"
+    },
+    {
+      "role": "server-dev",
+      "result": "already exited"
+    },
+    {
+      "role": "provider",
+      "result": "exact owned process stopped"
+    },
+    {
+      "role": "postgres",
+      "result": "exact owned PostgreSQL stopped"
+    }
+  ],
+  "assurance": "Private synthetic fixtures. Production HTTPS discovery/UserInfo plus native runner and artifact transport. SQLx and artifact/master keys use environment-only delivery: reduced assurance. No real provider sign-in, AWS signature validation, cloud durability, deployment or human review claim.",
+  "database_authentication": {
+    "wrong_password_rejected": true,
+    "scram_sha256": true,
+    "authenticated_query": true
+  },
+  "tls": {
+    "certificate_verified": true,
+    "insecure_oidc": false,
+    "system_trust_changed": false,
+    "minimum": "TLS1.2",
+    "trust": "SSL_CERT_FILE in owned server process only",
+    "allow_http_storage": false
+  },
+  "synthetic_source": {
+    "path": "<USERPROFILE>\\code\\qa\\issue270-oidc-20260926-r3\\source",
+    "remote_count": 0,
+    "head": "7a8efea022289858c06681d95245ed4bc8966617"
+  },
+  "authorization_fixture": {
+    "correction": "Eve is a Corp guest with read permission and no room membership. The fourth synthetic subject has no actor link and supplies the nonmember control.",
+    "observed_human_actors": [
+      {
+        "actor_id": "00000000-0000-4000-8000-000000000011",
+        "name": "Alice",
+        "role": "owner",
+        "room_memberships": 1
+      },
+      {
+        "actor_id": "00000000-0000-4000-8000-000000000012",
+        "name": "Bob",
+        "role": "member",
+        "room_memberships": 1
+      },
+      {
+        "actor_id": "00000000-0000-4000-8000-000000000013",
+        "name": "Eve",
+        "role": "guest",
+        "room_memberships": 0
+      }
+    ],
+    "unlinked_subject_link_created": false
+  },
+  "development_setup": {
+    "seed_crew": false,
+    "purpose": "Create synthetic OIDC actor links and scoped runner enrollment before production start",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "stopped": true
+  },
+  "failure": "Browser prepare failed; sanitized report retained.",
+  "finished_at_utc": "2026-09-26T12:49:28.2345386+00:00",
+  "fixture_files_preserved": true
+}

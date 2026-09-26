@@ -1,0 +1,234 @@
+// Source-bound synthetic acceptance: production OIDC path discovery, native runner,
+// persisted verifier/review state and native artifact transport. No real IdP claim.
+import assert from 'node:assert/strict'
+import { createHash, randomUUID } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
+import { readFile, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+
+assert.equal(process.argv[2], '--root')
+const root = path.resolve(process.argv[3])
+const phase = process.argv[4] || 'prepare'
+assert.ok(['prepare', 'readback'].includes(phase))
+const config = JSON.parse(await readFile(path.join(root, 'credentials', 'browser.json'), 'utf8'))
+const { server, web, demo, users, source, source_commit: sourceCommit, runner_id: runnerId } = config
+assert.match(sourceCommit, /^[0-9a-f]{40}$/u)
+assert.match(runnerId, /^runner-issue270-r\d+$/u)
+assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), sourceCommit)
+for (const origin of [server, web]) {
+  const url = new URL(origin)
+  assert.equal(url.hostname, '127.0.0.1')
+  assert.equal(url.protocol, 'http:')
+  assert.ok(!url.username && !url.password && !url.search && !url.hash)
+}
+const require = createRequire(import.meta.url)
+const { chromium } = require(config.playwright)
+const reportPath = path.join(root, 'evidence', `browser-${phase}.json`)
+const requests = [], errors = []
+let report = { issue: 270, phase, status: 'running', started_at_utc: new Date().toISOString(),
+  source_head: config.source_head, issuer: config.issuer, server, web,
+  assurance: 'Production mode with HTTPS path issuer and ephemeral synthetic identities. Deterministic fake-process adapter. Native artifact transport through an owned HTTPS fixture; no real Entra sign-in, AWS authentication, cloud durability, deployment or human review claim.',
+  http_results: requests, page_errors: errors }
+const save = () => writeFile(reportPath, JSON.stringify(report, null, 2) + '\n', { flag: 'w' })
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+function sanitized(error) {
+  let text = String(error?.message || error)
+  for (const user of users) text = text.split(user.token).join('[ephemeral token withheld]')
+  return text
+}
+async function request(route, body, expected = 200, role = 0) {
+  const headers = { 'content-type': 'application/json' }
+  if (role !== null) headers.authorization = 'Bearer ' + (role === 'invalid' ? 'invalid-owned-fixture-token' : users[role].token)
+  const response = await fetch(server + route, { method: body === undefined ? 'GET' : 'POST', headers,
+    body: body === undefined ? undefined : JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(15_000) })
+  if (body !== undefined || response.status !== 200) requests.push({ method: body === undefined ? 'GET' : 'POST', route, status: response.status, expected, identity: role })
+  assert.equal(response.status, expected, `Unexpected status for ${route}`)
+  if (response.status === 204 || response.status >= 400) return null
+  return response.json()
+}
+const api = suffix => `/api/corps/${demo.corp_id}${suffix}`
+const snapshot = () => request(api(`/snapshot?actor_id=${demo.alice_actor_id}`))
+function view(state) {
+  const mission = state.snapshot.missions.find(item => item.id === report.mission_id)
+  assert.ok(mission, 'Owned mission missing')
+  const tasks = state.snapshot.tasks.filter(item => item.mission_id === mission.id)
+  assert.equal(tasks.length, 1)
+  const task = tasks[0]
+  return { mission, task, runs: state.snapshot.runs.filter(item => item.task_id === task.id), state }
+}
+function contractDigest(task) {
+  const canonical = JSON.stringify({ contract: task.contract, policy: task.verification_policy }, (_, value) =>
+    value && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))) : value)
+  return createHash('sha256').update(canonical).digest('hex')
+}
+async function waitFor(predicate) {
+  const deadline = Date.now() + 150_000
+  while (Date.now() < deadline) {
+    const current = view(await snapshot())
+    assert.ok(!['failed', 'cancelled'].includes(current.mission.status), 'Owned mission failed')
+    if (predicate(current)) return current
+    await delay(250)
+  }
+  throw new Error('Owned mission did not reach its required persisted state')
+}
+let browser
+try {
+  if (phase === 'readback') {
+    const prior = JSON.parse(await readFile(path.join(root, 'evidence', 'browser-prepare.json'), 'utf8'))
+    assert.equal(prior.status, 'passed')
+    report = { ...report, mission_id: prior.mission_id, task_id: prior.task_id, run_id: prior.run_id,
+      contract_digest: prior.contract_digest, before_restart: prior.acceptance }
+  }
+  await save()
+  const health = await request('/health', undefined, 200, null)
+  assert.equal(health.mode, 'production')
+  await request(api(`/snapshot?actor_id=${demo.alice_actor_id}`), undefined, 401, null)
+  await request(api(`/snapshot?actor_id=${demo.alice_actor_id}`), undefined, 401, 'invalid')
+  await request(api(`/snapshot?actor_id=${demo.bob_actor_id}`), undefined, 403, 0)
+  await request(api(`/snapshot?actor_id=${demo.alice_actor_id}`), undefined, 403, 3)
+  const guest = await request(api(`/snapshot?actor_id=${demo.eve_actor_id}`), undefined, 200, 2)
+  for (const field of ['rooms', 'missions', 'tasks', 'runs']) assert.deepEqual(guest.snapshot[field], [], `Guest leaked room-scoped ${field}`)
+  report.authorization_controls = { missing_bearer: 401, invalid_bearer: 401, principal_mismatch: 403,
+    unlinked_subject: 403, corp_guest_read: 200, guest_room_scoped_state_empty: true }
+  browser = await chromium.launch({ channel: 'chrome', headless: true })
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' })
+  page.on('pageerror', () => errors.push('Browser pageerror'))
+  await page.goto(web + '/#missions', { waitUntil: 'networkidle', timeout: 30_000 })
+  await page.locator('#production-corp').fill(demo.corp_id)
+  await page.locator('#production-actor').fill(demo.alice_actor_id)
+  await page.locator('#production-token').fill(users[0].token)
+  await page.getByRole('button', { name: 'Connect securely', exact: true }).click()
+  await page.locator('.live-indicator.live-live').waitFor({ timeout: 30_000 })
+  assert.equal(await page.locator('#production-token').count(), 0)
+  report.browser_authenticated = true
+  if (phase === 'prepare') {
+    report.title = 'OIDC path issuer acceptance ' + randomUUID()
+    if (!(await page.locator('#mission-title').isVisible())) await page.getByRole('button', { name: 'New mission', exact: true }).click()
+    await page.locator('#mission-title').fill(report.title)
+    await page.locator('details.mission-advanced-options').filter({ has: page.locator('#mission-description') }).locator('summary').click()
+    await page.locator('#mission-description').fill('Create a non-sensitive deterministic result in the isolated synthetic source worktree. Require persisted verification and independent synthetic outcome review. No external effects.')
+    let targets = []
+    const targetDeadline = Date.now() + 30_000
+    while (Date.now() < targetDeadline) {
+      const state = await snapshot()
+      const runner = state.runners.find(item => item.id === runnerId && item.connected)
+      const capability = runner?.capabilities.find(item => item.name === 'workspace-isolation' && item.available && !item.workspace_connection_id)
+      if (!capability) { await delay(250); continue }
+      assert.equal(capability.source_base_commit, sourceCommit)
+      assert.equal(capability.source_base_ref, 'HEAD')
+      assert.match(capability.source_repository, /^local\/source-[0-9a-f]{12}$/u)
+      report.runner_source = { runner_id: runner.id, repository: capability.source_repository,
+        base_ref: capability.source_base_ref, base_commit: capability.source_base_commit }
+      const options = await page.locator('#mission-repository option').evaluateAll(items => items.filter(item => item.value).map(item => ({ value: item.value, source: JSON.parse(item.value) })))
+      report.repository_options = options.map(item => item.source)
+      targets = options.filter(item => item.source[0] === capability.source_repository.toLowerCase() &&
+        item.source[1] === 'HEAD' && item.source[2] === sourceCommit)
+      if (targets.length) break
+      await delay(250)
+    }
+    assert.equal(targets.length, 1, 'Exactly one owned synthetic source must be selected')
+    report.target = targets[0].source
+    await page.locator('#mission-repository').selectOption(targets[0].value)
+    await page.getByRole('checkbox', { name: /Confirm this target/ }).check()
+    await page.locator('details.mission-advanced-options').filter({ has: page.locator('#mission-deliverable') }).locator('summary').click()
+    await page.getByRole('checkbox', { name: /Developer fixtures/ }).check()
+    await page.locator('#mission-adapter').selectOption('fake-process')
+    await page.locator('#mission-strategy').selectOption('independent-review')
+    await page.locator('#mission-deliverable').selectOption('review_only_report')
+    await page.getByRole('checkbox', { name: /Commit verified work/ }).uncheck()
+    await page.getByRole('checkbox', { name: /Save without starting/ }).check()
+    await page.getByRole('button', { name: 'Review and build', exact: true }).click()
+    const creation = page.waitForResponse(response => response.url() === server + api('/missions') && response.request().method() === 'POST')
+    await page.getByRole('button', { name: 'Save plan', exact: true }).click()
+    const response = await creation
+    const creationBody = await response.text()
+    report.creation_response = { status: response.status(), body: sanitized(creationBody).slice(0, 4096) }
+    assert.equal(response.status(), 200, `Mission creation failed: ${report.creation_response.body}`)
+    report.mission_id = JSON.parse(creationBody).mission_id
+    const held = view(await snapshot())
+    assert.equal(held.mission.status, 'ready')
+    assert.equal(held.runs.length, 0)
+    report.task_id = held.task.id
+    report.contract_digest = contractDigest(held.task)
+    report.verification_policy = held.task.verification_policy
+    report.stage = 'created'
+    await save()
+    const card = page.locator(`[data-mission-id="${report.mission_id}"]`)
+    await card.locator('.status-chip-ready').waitFor()
+    const launch = page.waitForResponse(response => response.url() === server + api(`/missions/${report.mission_id}/launch`) && response.request().method() === 'POST')
+    await card.getByTestId('work-result-card').getByRole('button', { name: 'Start mission', exact: true }).click()
+    const launched = await launch
+    assert.equal(launched.status(), 200)
+    report.run_id = (await launched.json()).run_id
+    report.stage = 'launched'
+    await save()
+    const waiting = await waitFor(current => current.runs.length === 1 && current.runs[0].status === 'waiting_for_approval' && current.runs[0].workspace_disposition === 'preserved' && current.state.snapshot.verification_requests.some(item => item.run_id === report.run_id && item.status === 'pending'))
+    const evidence = waiting.state.snapshot.verification_evidence.filter(item => item.run_id === report.run_id)
+    assert.ok(evidence.length && evidence.every(item => item.status === 'passed'))
+    report.verifier_evidence = evidence.map(item => ({ id: item.id, kind: item.kind, status: item.status, check_index: item.check_index }))
+    const decision = api(`/runs/${report.run_id}/verification-decision`)
+    await request(decision, { actor_id: demo.alice_actor_id, approved: true, note: 'Synthetic requester self-review rejection control.' }, 403, 0)
+    await request(decision, { actor_id: demo.eve_actor_id, approved: true, note: 'Synthetic guest-role rejection control.' }, 403, 2)
+    await request(decision, { actor_id: demo.bob_actor_id, approved: true, note: 'Synthetic unlinked-subject rejection control.' }, 403, 3)
+    const accepted = await request(decision, { actor_id: demo.bob_actor_id, approved: true, note: 'Synthetic fixture reviewer accepts verified test artifact; this is not a human decision.' }, 200, 1)
+    assert.equal(accepted.status, 'approved')
+    report.synthetic_review_controls = { requester: 403, corp_guest: 403, unlinked_subject: 403, independent_member: 200 }
+  }
+  const completed = await waitFor(current => current.mission.status === 'completed' && current.runs.length === 1 && current.runs[0].status === 'completed' && current.runs[0].workspace_disposition === 'preserved')
+  const run = completed.runs[0]
+  assert.equal(run.id, report.run_id)
+  assert.equal(completed.task.id, report.task_id)
+  assert.equal(contractDigest(completed.task), report.contract_digest)
+  assert.equal(run.verification_status, 'passed')
+  assert.equal(completed.task.verification_status, 'passed')
+  assert.ok(run.workspace_path && run.workspace_branch)
+  assert.ok(path.resolve(run.workspace_path).startsWith(path.join(root, 'runner') + path.sep))
+  assert.equal(Object.hasOwn(run, 'artifact_path'), false)
+  assert.ok(run.artifact_uri && run.artifact_id && run.artifact_signature)
+  const separator = run.artifact_uri.includes('?') ? '&' : '?'
+  const artifact = await fetch(server + run.artifact_uri + separator + 'actor_id=' + demo.alice_actor_id,
+    { headers: { authorization: 'Bearer ' + users[0].token }, redirect: 'error', signal: AbortSignal.timeout(15_000) })
+  assert.equal(artifact.status, 200)
+  assert.equal(artifact.headers.get('content-type'), run.artifact_media_type)
+  assert.equal(artifact.headers.get('x-content-type-options'), 'nosniff')
+  assert.equal(artifact.headers.get('x-crony-artifact-signature'), run.artifact_signature)
+  const bytes = Buffer.from(await artifact.arrayBuffer())
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), run.artifact_sha256)
+  const physical = await readFile(path.join(run.workspace_path, 'result.md'))
+  assert.ok(bytes.equals(physical), 'Native downloaded artifact differs from isolated runner artifact')
+  assert.equal(execFileSync('git', ['-C', source, 'status', '--porcelain'], { encoding: 'utf8' }).trim(), '')
+  assert.equal(execFileSync('git', ['-C', source, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), sourceCommit)
+  const review = completed.state.snapshot.verification_requests.find(item => item.run_id === run.id)
+  assert.equal(review.status, 'approved')
+  assert.equal(review.decided_by, demo.bob_actor_id)
+  report.verification_review = { run_id: review.run_id, task_id: review.task_id, gate_type: review.gate_type, status: review.status, decided_by: review.decided_by, decided_at: review.decided_at }
+  report.acceptance = { mission_status: completed.mission.status, task_status: completed.task.status, run_status: run.status,
+    verification_status: run.verification_status, artifact_id: run.artifact_id, artifact_sha256: run.artifact_sha256,
+    artifact_signature: run.artifact_signature, artifact_bytes: bytes.length, workspace_path: run.workspace_path,
+    workspace_branch: run.workspace_branch, workspace_disposition: run.workspace_disposition }
+  if (phase === 'readback') {
+    assert.deepEqual(report.acceptance, report.before_restart)
+    report.restart_agreement = true
+  }
+  await page.reload({ waitUntil: 'networkidle' })
+  await page.locator('.live-indicator.live-live').waitFor()
+  const finalCard = page.locator(`[data-mission-id="${report.mission_id}"]`)
+  await finalCard.waitFor()
+  await finalCard.locator('.status-chip-completed').waitFor()
+  await page.screenshot({ path: path.join(root, 'evidence', `browser-${phase}-completed.png`), fullPage: true })
+  assert.deepEqual(errors, [])
+  report.status = 'passed'
+  report.physical_artifact_equal = true
+  report.synthetic_source_unchanged = true
+} catch (error) {
+  report.status = 'failed'
+  report.failure = sanitized(error)
+  process.exitCode = 1
+} finally {
+  await browser?.close()
+  report.finished_at_utc = new Date().toISOString()
+  await save()
+  console.log(JSON.stringify({ phase, status: report.status, mission_id: report.mission_id, failure: report.failure }))
+  for (const user of users) user.token = null
+}

@@ -1,0 +1,219 @@
+#requires -Version 7.5
+param([ValidatePattern('^r[0-9]+$')][string]$Attempt='r6')
+$ErrorActionPreference='Stop'
+$PSNativeCommandUseErrorActionPreference=$false
+$product='<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp'
+$qa="<USERPROFILE>\code\qa\issue270-oidc-20260926-$Attempt"
+$receiptPath=Join-Path $PSScriptRoot "issue270-native-stack-$Attempt.json"
+$pg='<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin'
+$python='<USERPROFILE>\AppData\Local\Programs\Python\Python312\python.exe'
+$node='<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe'
+$openssl='C:\Program Files\Git\usr\bin\openssl.exe'
+$ports=@{database=59270;server=18970;web=15970;provider=18971}
+$dbUser='issue270'
+$server="http://127.0.0.1:$($ports.server)"
+$web="http://127.0.0.1:$($ports.web)"
+$issuer="https://localhost:$($ports.provider)/tenant/v2.0"
+if((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $receiptPath)){throw 'Preserve prior fixture and receipts.'}
+if(@(Get-NetTCPConnection -State Listen|Where-Object {$_.LocalPort -in $ports.Values}).Count){throw 'An intended fixture port is occupied; nothing stopped.'}
+foreach($name in @([Environment]::GetEnvironmentVariables('Process').Keys)){
+ if($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_|AWS_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','NODE_EXTRA_CA_CERTS','SSL_CERT_FILE','SSL_CERT_DIR','HTTP_PROXY','HTTPS_PROXY','ALL_PROXY')){[Environment]::SetEnvironmentVariable($name,$null,'Process')}
+}
+Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force -DisableNameChecking
+function SourceFiles {
+ @('crates/crony-server/src/auth.rs','crates/crony-server/src/artifacts.rs','crates/crony-server/src/main.rs','crates/crony-runner/src/main.rs','scripts/fake-agent.mjs','Cargo.lock','pnpm-lock.yaml','tools/local_stack.psm1')|ForEach-Object{[ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $product $_)).Hash.ToLowerInvariant()}}
+}
+$before=@(SourceFiles)
+$serverBuild=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue270-server-binary-r1.json') -Raw|ConvertFrom-Json
+$runnerBuild=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue270-runner-binary-r1.json') -Raw|ConvertFrom-Json
+if((Get-FileHash -LiteralPath $serverBuild.copy).Hash.ToLowerInvariant() -cne $serverBuild.sha256 -or (Get-FileHash -LiteralPath $runnerBuild.copied_binary).Hash.ToLowerInvariant() -cne $runnerBuild.sha256 -or $before[0].sha256 -cne $serverBuild.auth_source_sha256){throw 'Standalone binary/source provenance changed.'}
+New-Item -ItemType Directory -Path $qa|Out-Null
+$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+& icacls.exe $qa /inheritance:r /grant:r "*${sid}:(OI)(CI)F" '*S-1-5-18:(OI)(CI)F' *> $null
+if($LASTEXITCODE){throw 'Private fixture ACL failed.'}
+foreach($directory in @('credentials','logs','evidence','objects','source','runner','connections','server')){New-Item -ItemType Directory -Path (Join-Path $qa $directory)|Out-Null}
+$state=@{schema_version=2;workspace=$qa;purpose='issue270-oidc';test_owned=$true;processes=@{};plan=@{database=@{host='127.0.0.1';port=$ports.database;user=$dbUser;name='postgres'};server=$server;web=$web;issuer=$issuer}}
+$ownership=Join-Path $qa 'ownership.json'
+$receipt=[ordered]@{issue=270;status='running';started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');source_head=(& git -C $product rev-parse HEAD).Trim();source_files=$before;qa_root=$qa;ports=$ports;issuer=$issuer;server_binary=$serverBuild;runner_binary=$runnerBuild;drivers=@( $PSCommandPath,(Join-Path $PSScriptRoot 'issue270-browser-r5.mjs'),(Join-Path $PSScriptRoot 'issue270-https-fixture-r1.py') | ForEach-Object{ @{path=$_;sha256=(Get-FileHash -LiteralPath $_).Hash.ToLowerInvariant()} });phases=@();cleanup=@();assurance='Private synthetic fixtures. Production HTTPS discovery/UserInfo plus native runner and artifact transport. SQLx and artifact/master keys use environment-only delivery: reduced assurance. No real provider sign-in, AWS signature validation, cloud durability, deployment or human review claim.'}
+function Save {$receipt|ConvertTo-Json -Depth 30|Set-Content -LiteralPath $receiptPath -Encoding utf8;Save-LocalStackState -Path $ownership -State $state -Workspace $qa}
+function Phase([string]$Name){$receipt.phases+=@(@{name=$Name;at_utc=[DateTimeOffset]::UtcNow.ToString('o')});Save;Write-Output $Name}
+function Start-Owned([string]$Role,[string]$Binary,[string[]]$Arguments,[string]$Directory,[hashtable]$Environment){
+ $state.processes[$Role]=Start-LocalOwnedProcess -Role $Role -Workspace $qa -FilePath $Binary -ArgumentList $Arguments -WorkingDirectory $Directory -LogDirectory (Join-Path $qa 'logs') -Environment $Environment
+ Save
+}
+function Stop-Owned([string]$Role){
+ if(!$state.processes[$Role]){return}
+ $identity=Get-LocalProcessIdentity -ProcessId $state.processes[$Role].pid
+ if(!$identity){$receipt.cleanup+=@(@{role=$Role;result='already exited'});return}
+ if(!(Stop-LocalOwnedProcess -Record $state.processes[$Role] -Workspace $qa)){throw "Ownership cannot authorize stopping $Role."}
+ $receipt.cleanup+=@(@{role=$Role;result='exact owned process stopped'});Save
+}
+function Check-Listener([string]$Role,[int]$Port){
+ if(!(Test-LocalOwnedProcess -Record $state.processes[$Role] -Workspace $qa)){throw "Owned $Role is not running."}
+ $listeners=@(Get-NetTCPConnection -State Listen -LocalPort $Port|Select-Object -ExpandProperty OwningProcess -Unique)
+ if($listeners.Count -ne 1 -or $listeners[0] -ne $state.processes[$Role].pid){throw "Listener ownership mismatch for $Role."}
+}
+function Wait-Health([string]$Role,[string]$Mode){
+ $deadline=[DateTime]::UtcNow.AddSeconds(50)
+ do{
+  try{$health=Invoke-RestMethod -Uri "$server/health" -TimeoutSec 2;if($health.mode -eq $Mode){Check-Listener $Role $ports.server;return}}catch{}
+  if(!(Test-LocalOwnedProcess -Record $state.processes[$Role] -Workspace $qa)){throw "$Role exited before readiness."}
+  Start-Sleep -Milliseconds 200
+ }while([DateTime]::UtcNow -lt $deadline)
+ throw "$Role did not reach expected health mode."
+}
+function Local-Post([string]$Route,[hashtable]$Body,[int]$Expected=200){
+ $response=Invoke-WebRequest -Uri ($server+$Route) -Method Post -ContentType 'application/json' -Body ($Body|ConvertTo-Json -Compress) -TimeoutSec 10 -SkipHttpErrorCheck
+ if($response.StatusCode -ne $Expected){throw "Unexpected local response status for $Route."}
+ if($Expected -ne 204){$response.Content|ConvertFrom-Json}
+}
+function Run-Browser([string]$Phase){
+ $role="browser-$Phase"
+ Start-Owned $role $node @((Join-Path $PSScriptRoot 'issue270-browser-r5.mjs'),'--root',$qa,$Phase) $qa @{}
+ $process=Get-Process -Id $state.processes[$role].pid -ErrorAction Stop
+ try{
+  [void]$process.get_Handle()
+  $deadline=[DateTime]::UtcNow.AddMinutes(6)
+  while(!$process.WaitForExit(1000)){if([DateTime]::UtcNow -gt $deadline){throw 'Browser driver exceeded its bounded deadline.'}}
+  if($process.ExitCode -ne 0){throw "Browser $Phase failed; sanitized report retained."}
+ }finally{$process.Dispose()}
+ $report=Get-Content -LiteralPath (Join-Path $qa "evidence/browser-$Phase.json") -Raw|ConvertFrom-Json
+ if($report.status -ne 'passed'){throw 'Browser evidence did not pass.'}
+ $receipt["browser_$Phase"]=$report
+ Phase "browser-$Phase-passed"
+}
+$secret=$null;$master=$null;$signing=$null;$storageSecret=$null;$users=$null;$serverEnvironment=$null;$providerConfig=$null;$browserConfig=$null
+Save
+try{
+ $secret=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+ $master=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+ $signing=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+ $storageSecret=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+ $accessKey='fixture'+[guid]::NewGuid().ToString('N')
+ $users=@('alice','bob','eve','unlinked')|ForEach-Object{@{subject="$_-subject";email="$_@example.test";token=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()}}
+ $providerConfig=@{issuer=$issuer;bucket='issue270';access_key=$accessKey;users=$users}
+ $providerConfig|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $qa 'credentials/provider.json') -Encoding utf8
+ $passwordPath=Join-Path $qa 'credentials/postgres-password.txt'
+ $passfile=Join-Path $qa 'credentials/pgpass.conf'
+ [IO.File]::WriteAllText($passwordPath,$secret,[Text.UTF8Encoding]::new($false))
+ [IO.File]::WriteAllText($passfile,"127.0.0.1:$($ports.database):*:${dbUser}:$secret`n",[Text.UTF8Encoding]::new($false))
+ & (Join-Path $pg 'initdb.exe') -D (Join-Path $qa 'database') -U $dbUser --auth=scram-sha-256 --encoding=UTF8 --locale=C --pwfile=$passwordPath *> (Join-Path $qa 'logs/initdb.log')
+ if($LASTEXITCODE){throw 'Owned PostgreSQL initialization failed.'}
+ Start-Owned 'postgres' (Join-Path $pg 'postgres.exe') @('-D',(Join-Path $qa 'database'),'-h','127.0.0.1','-p',"$($ports.database)") $qa @{}
+ $deadline=[DateTime]::UtcNow.AddSeconds(30)
+ do{& (Join-Path $pg 'pg_isready.exe') -h 127.0.0.1 -p $ports.database -U $dbUser *> $null;if(!$LASTEXITCODE){break};Start-Sleep -Milliseconds 200}while([DateTime]::UtcNow -lt $deadline)
+ if($LASTEXITCODE){throw 'Owned PostgreSQL readiness failed.'}
+ Check-Listener 'postgres' $ports.database
+ $env:PGPASSFILE=Join-Path $qa 'credentials/nonexistent.pgpass';$env:PGPASSWORD='invalid-owned-fixture-probe'
+ & (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $ports.database -U $dbUser -d postgres -c 'SELECT 1' *> $null
+ if(!$LASTEXITCODE){throw 'Wrong database password accepted.'}
+ Remove-Item -LiteralPath Env:PGPASSWORD
+ $env:PGPASSFILE=$passfile
+ & (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $ports.database -U $dbUser -d postgres -c 'SELECT 1' *> $null
+ if($LASTEXITCODE){throw 'Owned database authentication failed.'}
+ $receipt.database_authentication=@{scram_sha256=$true;wrong_password_rejected=$true;authenticated_query=$true}
+ Phase 'owned-database-authenticated'
+ $credentials=Join-Path $qa 'credentials'
+ $ca=Join-Path $credentials 'ca.pem';$caKey=Join-Path $credentials 'ca-key.pem';$certificate=Join-Path $credentials 'cert.pem';$key=Join-Path $credentials 'key.pem';$csr=Join-Path $credentials 'request.pem'
+ & $openssl req -x509 -newkey rsa:2048 -nodes -keyout $caKey -out $ca -days 1 -subj '/CN=ECorp issue270 private fixture CA' -addext 'basicConstraints=critical,CA:TRUE' *> (Join-Path $qa 'logs/ca.log')
+ if($LASTEXITCODE){throw 'Private CA generation failed.'}
+ & $openssl req -new -newkey rsa:2048 -nodes -keyout $key -out $csr -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1' -addext 'basicConstraints=critical,CA:FALSE' *> (Join-Path $qa 'logs/cert-request.log')
+ if($LASTEXITCODE){throw 'Private certificate request failed.'}
+ & $openssl x509 -req -in $csr -CA $ca -CAkey $caKey -CAcreateserial -out $certificate -days 1 -copy_extensions copy *> (Join-Path $qa 'logs/cert-sign.log')
+ if($LASTEXITCODE){throw 'Private certificate signing failed.'}
+ & $openssl verify -CAfile $ca -verify_hostname localhost $certificate *> (Join-Path $qa 'logs/cert-verification.log')
+ if($LASTEXITCODE){throw 'Owned certificate verification failed.'}
+ Start-Owned 'provider' $python @('-X','utf8','-B',(Join-Path $PSScriptRoot 'issue270-https-fixture-r1.py'),'--root',$qa) $qa @{}
+ $deadline=[DateTime]::UtcNow.AddSeconds(15)
+ do{
+  if(!(Test-LocalOwnedProcess -Record $state.processes.provider -Workspace $qa)){throw 'Owned HTTPS provider exited before readiness.'}
+  $providerListeners=@(Get-NetTCPConnection -State Listen -LocalPort $ports.provider -ErrorAction SilentlyContinue)
+  if($providerListeners.Count){break}
+  Start-Sleep -Milliseconds 200
+ }while([DateTime]::UtcNow -lt $deadline)
+ Check-Listener 'provider' $ports.provider
+ $receipt.tls=@{minimum='TLS1.2';certificate_verified=$true;trust='SSL_CERT_FILE in owned server process only';system_trust_changed=$false;insecure_oidc=$false;allow_http_storage=$false}
+ Phase 'owned-https-provider-started'
+ $source=Join-Path $qa 'source'
+ & git -C $source init --initial-branch=main *> (Join-Path $qa 'logs/source-init.log')
+ if($LASTEXITCODE){throw 'Synthetic source initialization failed.'}
+ [IO.File]::WriteAllText((Join-Path $source 'README.md'),"# Synthetic issue270 acceptance source`nNo external repository or provider operations.`n")
+ & git -C $source add -- README.md *> $null
+ if($LASTEXITCODE){throw 'Synthetic source staging failed.'}
+ & git -C $source -c user.name='ECorp synthetic fixture' -c user.email='fixture@example.test' -c commit.gpgsign=false commit -m 'Initialize synthetic OIDC acceptance source' *> (Join-Path $qa 'logs/source-commit.log')
+ if($LASTEXITCODE){throw 'Synthetic source commit failed.'}
+ $receipt.synthetic_source=@{path=$source;head=(& git -C $source rev-parse HEAD).Trim();remote_count=@(& git -C $source remote).Count}
+ if($receipt.synthetic_source.remote_count){throw 'Synthetic source unexpectedly has a remote.'}
+ $serverEnvironment=@{DATABASE_URL="postgres://${dbUser}:${secret}@127.0.0.1:$($ports.database)/postgres";CRONY_BIND="127.0.0.1:$($ports.server)";CRONY_MODE='development';CRONY_CORS_ORIGINS=$web;CRONY_SECRET_MASTER_KEY_HEX=$master;CRONY_ARTIFACT_SIGNING_KEY_HEX=$signing;CRONY_OBJECT_STORE_BACKEND='local';CRONY_OBJECT_STORE_LOCAL_ROOT=(Join-Path $qa 'objects/bootstrap');CRONY_RUNNER_CREDENTIAL_TTL_SECS='900';ECORP_FACTORY_WATCH='0'}
+ Start-Owned 'server-dev' $serverBuild.copy @() (Join-Path $qa 'server') $serverEnvironment
+ Wait-Health 'server-dev' 'development'
+ $demo=Local-Post '/api/demo/bootstrap?seed_crew=true' @{}
+ $corpGuid=[guid]::Parse($demo.corp_id).ToString()
+ $membershipSql="SELECT coalesce(json_agg(json_build_object('actor_id',actor.id,'name',actor.name,'role',actor.role,'room_memberships',(SELECT count(*) FROM room_memberships WHERE actor_id=actor.id)) ORDER BY actor.name),'[]'::json) FROM actors actor WHERE actor.corp_id='$corpGuid' AND actor.kind='human'"
+ $membershipJson=& (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $ports.database -U $dbUser -d postgres -t -A -v ON_ERROR_STOP=1 -c $membershipSql
+ if($LASTEXITCODE){throw 'Fixture membership evidence unavailable.'}
+ $members=@($membershipJson|ConvertFrom-Json)
+ $guest=@($members|Where-Object {$_.actor_id -eq $demo.eve_actor_id})
+ if($members.Count -ne 3 -or $guest.Count -ne 1 -or $guest[0].role -cne 'guest' -or $guest[0].room_memberships -ne 0){throw 'Unexpected native demo membership; do not relax authorization controls.'}
+ $receipt.authorization_fixture=@{observed_human_actors=$members;unlinked_subject_link_created=$false;correction='Eve is a Corp guest with read permission and no room membership. The fourth synthetic subject has no actor link and supplies the nonmember control.'}
+ for($index=0;$index -lt 3;$index++){
+  $actor=@($demo.alice_actor_id,$demo.bob_actor_id,$demo.eve_actor_id)[$index]
+  Local-Post '/api/demo/oidc-link' @{actor_id=$actor;issuer=$issuer;subject=$users[$index].subject;email=$users[$index].email} 204
+ }
+ $runnerId="runner-issue270-$Attempt"
+ $enrollment=Local-Post "/api/corps/$($demo.corp_id)/runners/enroll" @{actor_id=$demo.alice_actor_id;runner_id=$runnerId;expires_in_seconds=900}
+ [IO.File]::WriteAllText((Join-Path $qa 'credentials/enrollment-token.txt'),$enrollment.enrollment_token,[Text.UTF8Encoding]::new($false))
+ $enrollment=$null
+ $browserConfig=@{server=$server;web=$web;issuer=$issuer;demo=$demo;users=$users;source=$source;source_commit=$receipt.synthetic_source.head;runner_id=$runnerId;source_head=$receipt.source_head;playwright='<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'}
+ $browserConfig|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $qa 'credentials/browser.json') -Encoding utf8
+ Stop-Owned 'server-dev'
+ $serverEnvironment.CRONY_MODE='production';$serverEnvironment.CRONY_OIDC_ISSUER=$issuer;$serverEnvironment.CRONY_OBJECT_STORE_BACKEND='s3';$serverEnvironment.CRONY_OBJECT_STORE_ENDPOINT="https://localhost:$($ports.provider)";$serverEnvironment.CRONY_OBJECT_STORE_BUCKET='issue270';$serverEnvironment.CRONY_OBJECT_STORE_REGION='us-east-1';$serverEnvironment.CRONY_OBJECT_STORE_ACCESS_KEY=$accessKey;$serverEnvironment.CRONY_OBJECT_STORE_SECRET_KEY=$storageSecret;$serverEnvironment.CRONY_OBJECT_STORE_ALLOW_HTTP='false';$serverEnvironment.SSL_CERT_FILE=$ca
+ Start-Owned 'server-prod' $serverBuild.copy @() (Join-Path $qa 'server') $serverEnvironment
+ Wait-Health 'server-prod' 'production'
+ $receipt.development_setup=@{purpose='Create synthetic OIDC actor links and scoped runner enrollment before production start';corp_id=$demo.corp_id;seed_crew=$true;stopped=$true}
+ Phase 'production-discovery-ready'
+ $runnerEnvironment=@{CRONY_SERVER_WS="ws://127.0.0.1:$($ports.server)/ws/runner";CRONY_RUNNER_ID=$runnerId;CRONY_CORP_ID=$demo.corp_id;CRONY_RUNNER_CREDENTIAL_FILE=(Join-Path $qa 'credentials/runner.json');CRONY_RUNNER_ENROLLMENT_TOKEN_FILE=(Join-Path $qa 'credentials/enrollment-token.txt');CRONY_RUNNER_WORKSPACE=(Join-Path $qa 'runner');CRONY_SOURCE_REPOSITORY=$source;CRONY_SOURCE_BASE_REF='HEAD';CRONY_FAKE_AGENT_SCRIPT=(Join-Path $product 'scripts/fake-agent.mjs');CRONY_CODEX_COMMAND=(Join-Path $qa 'disabled-codex.exe');CRONY_CLAUDE_COMMAND=(Join-Path $qa 'disabled-claude.exe');CRONY_OPENCODE_COMMAND=(Join-Path $qa 'disabled-opencode.exe');CRONY_COPILOT_FIXTURE='true';CRONY_COPILOT_USE_LOGGED_IN_USER='false';CRONY_COPILOT_HOME=(Join-Path $qa 'runner/copilot-home');CRONY_CONNECTIONS_DIRECTORY=(Join-Path $qa 'connections');CRONY_GITHUB_COMMAND=(Join-Path $qa 'disabled-github.exe');ECORP_FACTORY_WATCH='0'}
+ Start-Owned 'runner' $runnerBuild.copied_binary @() $product $runnerEnvironment
+ Start-Owned 'web' $node @((Join-Path $product 'apps/web/node_modules/vite/bin/vite.js'),'--host','127.0.0.1','--port',"$($ports.web)",'--strictPort') (Join-Path $product 'apps/web') @{VITE_CRONY_SERVER_HTTP=$server}
+ $deadline=[DateTime]::UtcNow.AddSeconds(30)
+ do{try{$response=Invoke-WebRequest -Uri $web -TimeoutSec 2;if($response.StatusCode -eq 200){break}}catch{};Start-Sleep -Milliseconds 200}while([DateTime]::UtcNow -lt $deadline)
+ Check-Listener 'web' $ports.web
+ Phase 'full-owned-stack-started'
+ Run-Browser 'prepare'
+ Stop-Owned 'server-prod'
+ Start-Owned 'server-readback' $serverBuild.copy @() (Join-Path $qa 'server') $serverEnvironment
+ Wait-Health 'server-readback' 'production'
+ Run-Browser 'readback'
+ $calls=Get-Content -LiteralPath (Join-Path $qa 'evidence/provider-calls.jsonl')|ForEach-Object{$_|ConvertFrom-Json}
+ if(!@($calls|Where-Object {$_.path -ceq '/tenant/v2.0/.well-known/openid-configuration' -and $_.status -eq 200}).Count){throw 'Exact path issuer discovery was not observed.'}
+ if(@($calls|Where-Object {$_.path -like '*openid-configuration' -and $_.path -cne '/tenant/v2.0/.well-known/openid-configuration'}).Count){throw 'An incorrect discovery path was requested.'}
+ $receipt.provider_calls=@($calls)
+ if(($before|ConvertTo-Json -Compress) -cne (@(SourceFiles)|ConvertTo-Json -Compress)){throw 'Validated implementation source changed.'}
+ $receipt.source_unchanged=$true
+ $receipt.status='passed'
+}catch{
+ $message=$_.Exception.Message
+ foreach($value in @($secret,$master,$signing,$storageSecret)+@($users|ForEach-Object token)){if($value){$message=$message.Replace($value,'[ephemeral credential withheld]')}}
+ $receipt.status='failed';$receipt.failure=$message
+}finally{
+ foreach($role in @('browser-readback','browser-prepare','web','runner','server-readback','server-prod','server-dev','provider')){
+  try{Stop-Owned $role}catch{$receipt.cleanup+=@(@{role=$role;result='ownership or stop unverified; preserve resource'});$receipt.status='failed'}
+ }
+ if($state.processes.postgres){
+  try{
+   if(!(Test-LocalOwnedProcess -Record $state.processes.postgres -Workspace $qa)){throw 'Database identity unverified.'}
+   & (Join-Path $pg 'pg_ctl.exe') -D (Join-Path $qa 'database') -m fast -w stop *> (Join-Path $qa 'logs/database-stop.log')
+   if($LASTEXITCODE){throw 'Database stop failed.'}
+   $receipt.cleanup+=@(@{role='postgres';result='exact owned PostgreSQL stopped'})
+  }catch{$receipt.cleanup+=@(@{role='postgres';result='ownership or stop unverified; preserve resource'});$receipt.status='failed'}
+ }
+ $state.stopped_at=[DateTimeOffset]::UtcNow.ToString('o')
+ Remove-Item -LiteralPath Env:PGPASSFILE,Env:PGPASSWORD -ErrorAction SilentlyContinue
+ $secret=$null;$master=$null;$signing=$null;$storageSecret=$null;$users=$null;$providerConfig=$null;$browserConfig=$null
+ if($serverEnvironment){$serverEnvironment.Clear()}
+ $receipt.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+ $receipt.fixture_files_preserved=$true
+ Save
+}
+[ordered]@{issue=270;status=$receipt.status;failure=$receipt.failure;receipt=$receiptPath}|ConvertTo-Json -Compress
+if($receipt.status -ne 'passed'){exit 1}
