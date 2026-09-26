@@ -8971,13 +8971,13 @@ mod tests {
         // scheduling nor durable delivery may start it during the loss sweep.
         assert_eq!(select_ready_runner(&runners, corp_id, &requirements), None);
         assert!(
-            !send_command_to_current_runner(
+            send_command_to_current_runner(
                 &runners,
                 "runner",
                 epoch,
                 reconnect_test_command(after_capture_run),
             )
-            .is_ok()
+            .is_err()
         );
         assert!(received.try_recv().is_err());
         finish_tx.send(Ok(())).unwrap();
@@ -9037,13 +9037,13 @@ mod tests {
         runners.insert("runner".to_owned(), connection);
 
         assert!(
-            !send_command_to_current_runner(
+            send_command_to_current_runner(
                 &runners,
                 "runner",
                 epoch,
                 reconnect_test_command(recovery_run),
             )
-            .is_ok()
+            .is_err()
         );
         assert!(received.try_recv().is_err());
 
@@ -9084,23 +9084,23 @@ mod tests {
         assert!(!enable_runner_dispatch(&runners, "runner", old_epoch));
         assert!(!runners.get("runner").unwrap().dispatch_ready);
         assert!(
-            !send_command_to_current_runner(
+            send_command_to_current_runner(
                 &runners,
                 "runner",
                 old_epoch,
                 reconnect_test_command(run_id),
             )
-            .is_ok()
+            .is_err()
         );
         assert!(enable_runner_dispatch(&runners, "runner", new_epoch));
         assert!(
-            !send_command_to_current_runner(
+            send_command_to_current_runner(
                 &runners,
                 "runner",
                 old_epoch,
                 reconnect_test_command(run_id),
             )
-            .is_ok()
+            .is_err()
         );
         assert!(
             send_command_to_current_runner(
@@ -9139,13 +9139,13 @@ mod tests {
         assert!(enable_runner_dispatch(&runners, "runner", epoch));
         drop(received);
         assert!(
-            !send_command_to_current_runner(
+            send_command_to_current_runner(
                 &runners,
                 "runner",
                 epoch,
                 reconnect_test_command(run_id),
             )
-            .is_ok()
+            .is_err()
         );
         assert!(preserved.contains(&run_id));
     }
