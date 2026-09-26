@@ -1,0 +1,29 @@
+{
+  "issues": [
+    136,
+    140,
+    230
+  ],
+  "status": "preflight-failed",
+  "build_executed": false,
+  "at_utc": "2026-09-26T18:40:29.906733+00:00",
+  "head": "1505aeaa21b5cd67b8d892607ea6697cf1e8ef05",
+  "tree": "289f55ca6b32558f8d98a86f8aa340dc3e288db1",
+  "log": "integration-136-140-230-native-build-r1.log",
+  "failure": "Generic git diff --check interpreted byte-preserved CRLF evidence as trailing whitespace. Recognizing CR-at-EOL leaves exactly an intentional blank patch context line and two original native-log trailing blank lines.",
+  "resolution": "Keep all historical evidence bytes unchanged. R2 checks whitespace on the full candidate with native CRLF recognized, excluding exactly these three hash-bound raw captures. Canonical product gates remain unchanged.",
+  "preserved_raw_captures": [
+    {
+      "path": "docs/evidence/2026-09-26-preflight-completion/tested-code.patch",
+      "sha256": "a05c5193d65e080ef4f637ba1f60b5451b0fcb8507a356a0c5e9de4ec4e802f2"
+    },
+    {
+      "path": "docs/evidence/2026-09-26-verifier-cache-completion/native-cache-admission.log",
+      "sha256": "b5bc8ebc028a113f365e2a3ce86ca5a954ff3e0213b4ee492fd76f4012f7e021"
+    },
+    {
+      "path": "docs/evidence/2026-09-26-verifier-cache-completion/native-runtime.log",
+      "sha256": "283583d53b12cff14959dbd5b57c4f495a67493a2209c7edc647e006856a16f3"
+    }
+  ]
+}

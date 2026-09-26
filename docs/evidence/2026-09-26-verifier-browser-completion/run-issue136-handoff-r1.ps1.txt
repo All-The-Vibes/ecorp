@@ -1,0 +1,30 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<USERPROFILE>\code\ecorp-dependency-queue-20260925'
+$node = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe'
+$output = Join-Path $PSScriptRoot 'issue136-handoff-r1'
+$receiptPath = Join-Path $PSScriptRoot 'issue136-handoff-r1.json'
+$log = Join-Path $PSScriptRoot 'issue136-handoff-r1.log'
+if ((Test-Path -LiteralPath $receiptPath) -or (Test-Path -LiteralPath $output) -or (Test-Path -LiteralPath $log)) { throw 'Preserve previous native handoff evidence.' }
+$files = @('tools/local_stack_browser_policy_handoff.test.ps1','tools/local_stack.psm1','tools/local_stack_start.ps1','tools/verifier_browser.mjs','tools/verify_arcade_browser.mjs','.github/workflows/ci.yml')
+function Fingerprints { @($files | ForEach-Object { @{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $product $_)).Hash.ToLowerInvariant()} }) }
+$before = Fingerprints
+$started = [DateTimeOffset]::UtcNow.ToString('o')
+$head = (& git -C $product rev-parse HEAD).Trim()
+& (Join-Path $PSHOME 'pwsh.exe') -NoProfile -File (Join-Path $product 'tools/local_stack_browser_policy_handoff.test.ps1') -NodePath $node -OutputDirectory $output *> $log
+$code = $LASTEXITCODE
+$after = Fingerprints
+$same = ($before | ConvertTo-Json -Compress) -ceq ($after | ConvertTo-Json -Compress)
+$cases = @()
+if (Test-Path -LiteralPath (Join-Path $output 'cases.json')) { $cases = @(Get-Content -Raw -LiteralPath (Join-Path $output 'cases.json') | ConvertFrom-Json) }
+$record = [ordered]@{
+    issue=136;head=$head;started_at_utc=$started;finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    exit_code=$code;source_unchanged=$same;source_before=$before;source_after=$after
+    passed=@($cases | Where-Object passed).Count;failed=@($cases | Where-Object {!$_.passed}).Count;expected_cases=16
+    cases=$cases;log=$log;log_sha256=(Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant()
+    assurance='Actual native Windows process handoff and exact identity checks at zero and 250 ms readiness delays; Playwright launch observer, not a real browser or Rust runner. Synthetic noncredential canaries only.'
+}
+$record | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $receiptPath -Encoding utf8
+$record | Select-Object issue,exit_code,source_unchanged,passed,failed,expected_cases | ConvertTo-Json -Compress
+if ($code -ne 0 -or !$same -or $record.passed -ne 16 -or $record.failed -ne 0) { exit 1 }

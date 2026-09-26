@@ -1,0 +1,134 @@
+#requires -Version 7.5
+$ErrorActionPreference='Stop'
+$PSNativeCommandUseErrorActionPreference=$false
+$product='<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp'
+$qa='<USERPROFILE>\code\qa\issue136-140-230-preflight-20260926-r1'
+$receiptPath=Join-Path $PSScriptRoot 'integration-136-140-230-preflight-r2.json'
+$supervisor=Join-Path $PSScriptRoot 'integration-136-140-230-native-supervisor-r1.ps1'
+$startup=Join-Path $PSScriptRoot 'integration-136-140-230-native-startup-r1.ps1'
+$pwsh='C:\Program Files\PowerShell\7\pwsh.exe'
+$pg='<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin'
+$nodeDirectory='<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64'
+$pythonDirectory='<USERPROFILE>\AppData\Local\Programs\Python\Python312'
+$expected='1505aeaa21b5cd67b8d892607ea6697cf1e8ef05'
+if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $receiptPath)) {throw 'Preserve existing fixture and receipt.'}
+foreach($file in @('output/local-pids.json','output/runner/credential.json')) {
+    if(Test-Path -LiteralPath (Join-Path $product $file)){throw 'Existing product runtime must be preserved.'}
+}
+$build=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'integration-136-140-230-native-build-r2.json') -Raw | ConvertFrom-Json
+if($build.status -ne 'passed' -or !$build.source_unchanged -or $build.head -cne $expected -or $build.repository -cne $product){throw 'A verified matching-source native build is required.'}
+function Assert-Source {
+    if((& git -C $product rev-parse HEAD).Trim() -cne $expected -or (& git -C $product write-tree).Trim() -cne $build.tree -or (@(& git -C $product status --porcelain=v1) -join "`n") -cne (@($build.status_before) -join "`n")){throw 'Native acceptance source is no longer the exact staged reviewed candidate.'}
+    foreach($entry in $build.source_before){
+        if((Get-FileHash -LiteralPath (Join-Path $product $entry.path)).Hash.ToLowerInvariant() -cne $entry.sha256){throw "Built source fingerprint changed: $($entry.path)"}
+    }
+    foreach($name in @('crony-server','crony-runner')){
+        if((Get-FileHash -LiteralPath $build.binaries.$name.path).Hash.ToLowerInvariant() -cne $build.binaries.$name.sha256){throw 'Native binary fingerprint changed.'}
+    }
+}
+Assert-Source
+foreach($key in @([Environment]::GetEnvironmentVariables('Process').Keys)){
+    if($key -match '^(CRONY_|ECORP_|GH_|GITHUB_|AZURE_)' -or $key -in @('DATABASE_URL','PGPASSWORD','PGPASSFILE','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR')){[Environment]::SetEnvironmentVariable($key,$null,'Process')}
+}
+$env:PATH="$pg;$nodeDirectory;$pythonDirectory;$env:PATH"
+if((Get-Command psql.exe).Source -cne (Join-Path $pg 'psql.exe')){throw 'Pinned PostgreSQL client is not resolved.'}
+$env:ECORP_COMPLETION_PRODUCT=$product
+$env:ECORP_COMPLETION_QA_ROOT=$qa
+$env:ECORP_COMPLETION_ISSUE='230'
+$env:CRONY_PLAYWRIGHT_MODULE='<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+$env:CRONY_BROWSER_CHANNEL='chrome'
+$env:ECORP_FACTORY_WATCH='0'
+$receipt=[ordered]@{
+    issue=230;issues=@(136,140,230);status='running';started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');repository=$product
+    head=$expected;tree=$build.tree;source_kind='reviewed uncommitted staged candidate';qa_root=$qa;ports=@{database=59233;server=18933;web=15933}
+    build_receipt='integration-136-140-230-native-build-r2.json';build_receipt_sha256=(Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'integration-136-140-230-native-build-r2.json')).Hash.ToLowerInvariant()
+    binaries=$build.binaries;checks=@();phases=@();cleanup=@();source_unchanged=$null;historical_issue230_receipt='issue230-native-stack-r4.json';integration_preparation='integration-136-140-230-preparation-r2.json';pinned_psql=(Get-Command psql.exe).Source
+    drivers=@($PSCommandPath,$supervisor,$startup | ForEach-Object {[ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath $_).Hash.ToLowerInvariant()}})
+    assurance='Exact combined-source native Windows public preflight/start/restart/stop and actual Chrome/browser/server/runner acceptance, fresh owned SCRAM database and synthetic identity/source/fake-process provider. Ephemeral environment-only server credential delivery is reduced assurance. No production identity, inference, deployment, external provider or independent human approval is claimed.'
+}
+function Save {$receipt | ConvertTo-Json -Depth 35 | Set-Content -LiteralPath $receiptPath -Encoding utf8}
+function Invoke-Phase([string]$Name,[string[]]$Arguments,[int]$TimeoutSeconds=1200) {
+    $stdout=Join-Path $PSScriptRoot ('integration-136-140-230-preflight-r2-'+$Name+'.stdout.log')
+    $stderr=Join-Path $PSScriptRoot ('integration-136-140-230-preflight-r2-'+$Name+'.stderr.log')
+    if((Test-Path -LiteralPath $stdout) -or (Test-Path -LiteralPath $stderr)){throw 'Preserve phase output.'}
+    foreach($arg in $Arguments){if($arg.Contains('"') -or $arg.Contains("`n") -or $arg.EndsWith('\')){throw 'Unsupported phase argument.'}}
+    $quoted=@($Arguments | ForEach-Object {'"'+$_+'"'})
+    $phase=[ordered]@{name=$Name;started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');stdout=$stdout;stderr=$stderr;status='starting'}
+    $receipt.phases+=@($phase);Save
+    $child=Start-Process -FilePath $pwsh -ArgumentList $quoted -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+    try {
+        [void]$child.Handle
+        $phase.pid=$child.Id;$phase.process_started_utc=$child.StartTime.ToUniversalTime().ToString('o');$phase.status='running';Save
+        $deadline=[DateTimeOffset]::UtcNow.AddSeconds($TimeoutSeconds)
+        while(!$child.WaitForExit(1000)){
+            if([DateTimeOffset]::UtcNow -ge $deadline){
+                $phase.status='timed-out';Save
+                $child.Kill()
+                if(!$child.WaitForExit(10000)){throw 'Owned phase termination is unverified.'}
+                throw "Bounded direct-process wait exceeded for $Name; retain all logs."
+            }
+        }
+        $child.Refresh()
+        $phase.exit_code=$child.ExitCode;$phase.status='exited';$phase.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o');Save
+        return [int]$child.ExitCode
+    } finally {$child.Dispose()}
+}
+
+Save
+try {
+    $provisionCode=Invoke-Phase 'fresh-provisioning' @('-NoProfile','-File',$supervisor,'-Phase','Start','-QaRoot',$qa,'-PostgresBin',$pg,'-DatabasePort','59233','-ServerPort','18933','-WebPort','15933') 600
+    if($provisionCode -ne 0){throw 'Fresh native provisioning failed; retain its logs.'}
+    $statusCode=Invoke-Phase 'fresh-fixture-status' @('-NoProfile','-File',$supervisor,'-Phase','Status','-QaRoot',$qa,'-PostgresBin',$pg) 120
+    if($statusCode -ne 0){throw 'Fresh fixture status failed; preserve ownership.'}
+    $health=Invoke-RestMethod 'http://127.0.0.1:18933/health' -TimeoutSec 5
+    if($health.status -cne 'ok' -or $health.runners -ne 1){throw 'Fresh fixture readiness failed.'}
+    $receipt.checks+=@(@{name='fresh-owned-native-provisioning-status-and-health';exit_code=$provisionCode;status_exit_code=$statusCode});Save
+    $startupCode=Invoke-Phase 'startup' @('-NoProfile','-File',$startup)
+    $receipt.checks+=@(@{name='public-startup-preflight-restart-and-browser';exit_code=$startupCode});Save
+    $startupReport=Join-Path $qa 'evidence/startup/result.json'
+    if(Test-Path -LiteralPath $startupReport){
+        $receipt.startup_report=@{path=$startupReport;sha256=(Get-FileHash -LiteralPath $startupReport).Hash.ToLowerInvariant();result=(Get-Content -LiteralPath $startupReport -Raw | ConvertFrom-Json)}
+    }
+    if($startupCode -ne 0 -or !$receipt.startup_report -or $receipt.startup_report.result.status -ne 'passed'){throw 'Native startup acceptance failed; original evidence is retained.'}
+    $reports=@(Get-ChildItem -LiteralPath (Join-Path $qa 'evidence') -Filter 'report.json' -File -Recurse)
+    if($reports.Count -ne 1){throw 'Exactly one fresh browser report is required.'}
+    $browser=Get-Content -LiteralPath $reports[0].FullName -Raw | ConvertFrom-Json
+    $receipt.browser_report=@{path=$reports[0].FullName;sha256=(Get-FileHash -LiteralPath $reports[0].FullName).Hash.ToLowerInvariant();result=$browser}
+    if($browser.status -ne 'passed'){throw 'Browser acceptance did not pass.'}
+    Assert-Source
+    $receipt.source_unchanged=$true
+    $receipt.status='passed'
+} catch {
+    $receipt.status='failed'
+    $receipt.failure=[regex]::Replace($_.Exception.Message,'\bpostgres(?:ql)?://\S+','[database URL withheld]')
+} finally {
+    try {
+        Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force -DisableNameChecking
+        $productState=Read-LocalStackState -Path (Join-Path $product 'output/local-pids.json') -Workspace $product
+        if($productState){
+            $live=@($productState.processes.Values | Where-Object {Test-LocalOwnedProcess -Record $_ -Workspace $product})
+            if($live.Count){
+                $stopCode=Invoke-Phase 'outer-product-stop' @('-NoProfile','-File',(Join-Path $product 'tools/stop_local.ps1')) 120
+                if($stopCode -ne 0){throw 'Public startup cleanup failed; preserve exact process receipts.'}
+                $productState=Read-LocalStackState -Path (Join-Path $product 'output/local-pids.json') -Workspace $product
+                if(@($productState.processes.Values | Where-Object {Test-LocalOwnedProcess -Record $_ -Workspace $product}).Count){throw 'Owned application process remains live.'}
+            }
+            $receipt.cleanup+=@(@{scope='public-startup';result='recorded application processes are stopped; files retained'})
+        }
+    }catch{$receipt.status='failed';$receipt.cleanup+=@(@{scope='public-startup';result='unverified; preserve resources and inspect ownership'})}
+    if(Test-Path -LiteralPath (Join-Path $qa 'ownership.json')){
+        try {
+            $stopCode=Invoke-Phase 'outer-supervisor-stop' @('-NoProfile','-File',$supervisor,'-Phase','Stop','-QaRoot',$qa,'-PostgresBin',$pg) 120
+            if($stopCode -ne 0){throw 'Owned fixture stop failed.'}
+            $state=Read-LocalStackState -Path (Join-Path $qa 'ownership.json') -Workspace $qa
+            if(@($state.processes.Values | Where-Object {Test-LocalOwnedProcess -Record $_ -Workspace $qa}).Count){throw 'Owned provisioning process remains live.'}
+            $receipt.cleanup+=@(@{scope='fresh-fixture';result='recorded provisioning applications and PostgreSQL stopped; all files retained'})
+        }catch{$receipt.status='failed';$receipt.cleanup+=@(@{scope='fresh-fixture';result='unverified; preserve resources and inspect ownership'})}
+    }
+    foreach($key in @([Environment]::GetEnvironmentVariables('Process').Keys)){
+        if($key -match '^(CRONY_|ECORP_)' -or $key -in @('DATABASE_URL','PGPASSWORD','PGPASSFILE')){[Environment]::SetEnvironmentVariable($key,$null,'Process')}
+    }
+    $receipt.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o');Save
+}
+Write-Output "Issues136/140/230 native preflight acceptance $($receipt.status); receipt retained at $receiptPath"
+if($receipt.status -ne 'passed'){exit 1}

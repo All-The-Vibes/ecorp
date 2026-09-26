@@ -1,0 +1,926 @@
+{
+  "schema_version": 1,
+  "issues": [
+    136,
+    140,
+    230
+  ],
+  "assembled_at_utc": "2026-09-26T19:50:09.585823+00:00",
+  "base": "1505aeaa21b5cd67b8d892607ea6697cf1e8ef05",
+  "tested_staged_tree": "289f55ca6b32558f8d98a86f8aa340dc3e288db1",
+  "preserved_merge_heads": [
+    "4c3ac517933f26c73df8f426413ecc3fac7a41b6",
+    "24bae9e525d2824d5469fbe5b5aacf0610cb3afc"
+  ],
+  "source_manifest": {
+    "file": "source-manifest.json",
+    "sha256": "b96bac22dd5470e682268c4e9da7e74a0b289e08e0f6af583fa389f39c2784d0",
+    "file_count": 6515
+  },
+  "canonical": {
+    "status": "passed",
+    "command": "pnpm check",
+    "source_changed": false,
+    "original_report_sha256": "6638fc97e5b18929cf2dca1adb7c45c9c316a394a9a18b3056f4b1dd017df455",
+    "checks": [
+      {
+        "name": "migrations",
+        "passed": true,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "durationMs": 747,
+        "argv": [
+          "node",
+          "tools/check_migrations.mjs"
+        ]
+      },
+      {
+        "name": "state-audit-compatibility",
+        "passed": true,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "durationMs": 133,
+        "argv": [
+          "node",
+          "tools/check_state_audit_compatibility.mjs"
+        ]
+      },
+      {
+        "name": "state-audit-evm",
+        "passed": true,
+        "counts": {
+          "rust": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 1
+          },
+          "node": null
+        },
+        "durationMs": 20164,
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "crony-audit",
+          "--test",
+          "ethereum_local_chain"
+        ]
+      },
+      {
+        "name": "docs",
+        "passed": true,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "durationMs": 135,
+        "argv": [
+          "node",
+          "tools/check_docs.mjs"
+        ]
+      },
+      {
+        "name": "repository-docs",
+        "passed": true,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "durationMs": 292,
+        "argv": [
+          "node",
+          "tools/check_documentation.mjs"
+        ]
+      },
+      {
+        "name": "node-tests",
+        "passed": true,
+        "counts": {
+          "rust": null,
+          "node": {
+            "tests": 3088,
+            "passed": 3023,
+            "failed": 0,
+            "skipped": 65,
+            "todo": 0,
+            "cancelled": 0
+          }
+        },
+        "durationMs": 2289607,
+        "argv": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "--test-timeout=180000",
+          "--test-reporter=tap",
+          ".github/skills/code-review/tests/executor-snapshot.test.mjs",
+          ".github/skills/code-review/tests/executor-state.test.mjs",
+          ".github/skills/code-review/tests/package.test.mjs",
+          "apps/web/src/AgentPinControl.test.mjs",
+          "apps/web/src/DelegatedPanel.test.mjs",
+          "apps/web/src/VerificationPolicyEditor.test.mjs",
+          "apps/web/src/agentPinOperation.test.mjs",
+          "apps/web/src/evidenceNavigation.test.mjs",
+          "apps/web/src/evidenceSelection.test.mjs",
+          "apps/web/src/factoryAuthority.test.mjs",
+          "apps/web/src/factoryAuthorityConnection.test.mjs",
+          "apps/web/src/factoryCheckpointRecovery.test.mjs",
+          "apps/web/src/factoryControllerSelection.test.mjs",
+          "apps/web/src/factoryPolling.test.mjs",
+          "apps/web/src/formText.test.mjs",
+          "apps/web/src/missionCollaboration.test.mjs",
+          "apps/web/src/missionComposer.test.mjs",
+          "apps/web/src/missionOriginContext.test.mjs",
+          "apps/web/src/missionPreview.test.mjs",
+          "apps/web/src/missionProjection.test.mjs",
+          "apps/web/src/missionResultContext.test.mjs",
+          "apps/web/src/missionReviewSummary.test.mjs",
+          "apps/web/src/missionRuntime.test.mjs",
+          "apps/web/src/office/characterAssets.test.mjs",
+          "apps/web/src/office/officeModel.test.mjs",
+          "apps/web/src/runActivity.test.mjs",
+          "apps/web/src/snapshotRefresh.test.mjs",
+          "apps/web/src/verificationPolicy.test.mjs",
+          "apps/web/src/workResultCard.test.mjs",
+          "apps/web/src/workflowContext.test.mjs",
+          "apps/web/src/workspaceConnections.test.mjs",
+          "scenarios/repo-steward/actions.test.mjs",
+          "scenarios/repo-steward/feedback-cli.test.mjs",
+          "scenarios/repo-steward/feedback.test.mjs",
+          "scenarios/repo-steward/maintenance.test.mjs",
+          "scenarios/repo-steward/recurring-audit.test.mjs",
+          "scenarios/repo-steward/steward.test.mjs",
+          "scenarios/repo-steward/teams-host.test.mjs",
+          "tests/readiness/cli.test.js",
+          "tools/budget_fixture.test.mjs",
+          "tools/check_deliverable_diff.test.mjs",
+          "tools/check_documentation.test.mjs",
+          "tools/check_evidence_launch.test.mjs",
+          "tools/check_evidence_native_build.test.mjs",
+          "tools/check_evidence_personal_paths.test.mjs",
+          "tools/check_migrations.test.mjs",
+          "tools/check_replay_source.test.mjs",
+          "tools/checkpoint_application_fixture.test.mjs",
+          "tools/ci_external_adapters_windows.test.mjs",
+          "tools/ci_factory_repository.test.mjs",
+          "tools/ci_maintenance.test.mjs",
+          "tools/ci_owned_test_server.test.mjs",
+          "tools/ci_runner_tests.test.mjs",
+          "tools/consume_operation_receipt.test.mjs",
+          "tools/controlled_runner_fixture.test.mjs",
+          "tools/copilot_fs_wire_observer.test.mjs",
+          "tools/copilot_fs_wire_process.test.mjs",
+          "tools/copilot_probe_boundaries.test.mjs",
+          "tools/copilot_probe_environment.test.mjs",
+          "tools/copilot_probe_native_read.test.mjs",
+          "tools/copilot_probe_process.test.mjs",
+          "tools/coverage_web_models.test.mjs",
+          "tools/delegated_lifecycle.test.mjs",
+          "tools/delegated_qa_root.test.mjs",
+          "tools/e2e_agent_pinning.test.mjs",
+          "tools/e2e_checkpoint_verification.test.mjs",
+          "tools/e2e_evidence_selection.test.mjs",
+          "tools/e2e_external_adapters.test.mjs",
+          "tools/e2e_external_adapters_http.test.mjs",
+          "tools/e2e_factory_budget_recovery.test.mjs",
+          "tools/e2e_late_termination.test.mjs",
+          "tools/e2e_predispatch_failure.test.mjs",
+          "tools/e2e_stopped_source_checkpoint.test.mjs",
+          "tools/e2e_verifier_browser_retention.test.mjs",
+          "tools/e2e_verifier_browser_scope.test.mjs",
+          "tools/factory_budget_fixture_config.test.mjs",
+          "tools/factory_budget_git.test.mjs",
+          "tools/factory_budget_process.test.mjs",
+          "tools/factory_budget_provenance.test.mjs",
+          "tools/factory_budget_start.test.mjs",
+          "tools/fake_codex_budget_stream.test.mjs",
+          "tools/fake_github_quota.test.mjs",
+          "tools/fixture_source_identity.test.mjs",
+          "tools/fixtures/delegated-keycloak/test/security.test.mjs",
+          "tools/identity_fixture.test.mjs",
+          "tools/import_operation_behavior.test.mjs",
+          "tools/issue161/qa-api-provenance.test.mjs",
+          "tools/issue161/qa-plan.test.mjs",
+          "tools/local_source_commit.test.mjs",
+          "tools/local_stack_lifecycle.test.mjs",
+          "tools/local_stack_operation.test.mjs",
+          "tools/native_qualification_attempt.test.mjs",
+          "tools/native_qualification_finality.test.mjs",
+          "tools/native_qualification_trust.test.mjs",
+          "tools/office_model.test.mjs",
+          "tools/operation_feedback.test.mjs",
+          "tools/operation_receipt.test.mjs",
+          "tools/owned_test_stack.test.mjs",
+          "tools/probe_mcp.test.mjs",
+          "tools/qa_multiplayer_object_sources.test.mjs",
+          "tools/readiness_contract.test.mjs",
+          "tools/readiness_replay_contract.test.mjs",
+          "tools/redact_evidence_capabilities.test.mjs",
+          "tools/research_handoff_adversarial.test.mjs",
+          "tools/research_handoff_browser.test.mjs",
+          "tools/research_handoff_native.test.mjs",
+          "tools/runner_ack_fault_relay.test.mjs",
+          "tools/secret_scan.test.mjs",
+          "tools/secret_scan_native.test.mjs",
+          "tools/security_fixtures.test.mjs",
+          "tools/startup_validation_harness.test.mjs",
+          "tools/task_graph_fixture.test.mjs",
+          "tools/verifier_browser.test.mjs",
+          "tools/verify_toolchain.test.mjs"
+        ]
+      },
+      {
+        "name": "format",
+        "passed": true,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "durationMs": 4009,
+        "argv": [
+          "cargo",
+          "fmt",
+          "--check"
+        ]
+      },
+      {
+        "name": "clippy",
+        "passed": true,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "durationMs": 30226,
+        "argv": [
+          "cargo",
+          "clippy",
+          "--workspace",
+          "--all-targets",
+          "--locked",
+          "--",
+          "-D",
+          "warnings"
+        ]
+      },
+      {
+        "name": "rust-tests",
+        "passed": true,
+        "counts": {
+          "rust": {
+            "passed": 829,
+            "failed": 0,
+            "ignored": 550,
+            "summaries": 41
+          },
+          "node": null
+        },
+        "durationMs": 521374,
+        "argv": [
+          "cargo",
+          "test",
+          "--workspace",
+          "--locked"
+        ]
+      },
+      {
+        "name": "web-build",
+        "passed": true,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "durationMs": 8184,
+        "argv": [
+          "pnpm",
+          "build:web"
+        ]
+      },
+      {
+        "name": "web-lint",
+        "passed": true,
+        "counts": {
+          "rust": null,
+          "node": null
+        },
+        "durationMs": 2501,
+        "argv": [
+          "pnpm",
+          "lint:web"
+        ]
+      }
+    ],
+    "node_discovery_files": 114
+  },
+  "native": {
+    "startup_checks_passed": 23,
+    "startup_checks_failed": 0,
+    "handoff": {
+      "passed": 16,
+      "failed": 0,
+      "scope": "Actual native Windows process handoff and exact identity checks at zero and 250 ms readiness delays; Playwright launch observer, not a real browser or Rust runner. Synthetic noncredential canaries only."
+    },
+    "admission": {
+      "failed": 0,
+      "summaries": 2,
+      "passed": 12,
+      "ignored": 0
+    },
+    "browser": "passed",
+    "cache": "passed",
+    "binaries": {
+      "crony-runner": "f65b1d37147d3ae28517531017bfdc6ce4b5be30264c08c4f5c31aeab1fb7fba",
+      "crony-server": "a66d6094615094d48487eb2bdc4e85109c8c2be8df6d77fab6a3db2db4a1c322"
+    }
+  },
+  "artifacts": [
+    {
+      "file": "build-receipt.json",
+      "source_name": "integration-136-140-230-native-build-r2.json",
+      "original_sha256": "3bc42c5af647a7d005992f6272b9279736891955941a55fcb049e7c1c03350eb",
+      "published_sha256": "662e56c3ad6f6d912533c4c5bec23ec4c1ffb7c27fcf550e9e7575afcf686014",
+      "bytes": 19073,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": [
+        "/source_before",
+        "/source_after"
+      ]
+    },
+    {
+      "file": "preflight-receipt.json",
+      "source_name": "integration-136-140-230-preflight-r2.json",
+      "original_sha256": "26becec3acaf41aa2be4e91b3e9b4129748461701de3a3416a482e0edf3a6992",
+      "published_sha256": "b74a352d3d1c37e66a2d28bf11f08e3faf585d112db8d1a9b1b754c31b214c71",
+      "bytes": 101260,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "browser-receipt.json",
+      "source_name": "integration-136-140-230-browser-r1.json",
+      "original_sha256": "8b086757dbb7a468dc939d03e697b7702f740ac53cbee28ff7526c2284b0a8ef",
+      "published_sha256": "e75242b54bb22b1212f54ff15909944bf1f98040e253e320a2f00c425e6738d2",
+      "bytes": 60194,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": [
+        "/source_files"
+      ]
+    },
+    {
+      "file": "cache-receipt.json",
+      "source_name": "integration-136-140-230-cache-r1.json",
+      "original_sha256": "69016e79b62d82d13ad03ce82abb567efc7023e02e3f5c929efa0943432f8cf0",
+      "published_sha256": "8f772a46887544df9c965c8b46f332ee13a211556471855cda0e34fd10ff707e",
+      "bytes": 199839,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": [
+        "/source_files"
+      ]
+    },
+    {
+      "file": "admission-receipt.json",
+      "source_name": "integration-136-140-230-admission-r1.json",
+      "original_sha256": "eb4746faa0fba5cd4d12082b3ed67dfc628a8c3650261cdc73a79424af0dc174",
+      "published_sha256": "7763142f8a40b7b098a9ae6cd3576993dc42feb0116cbfbd6385521602690294",
+      "bytes": 11168,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": [
+        "/source_files"
+      ]
+    },
+    {
+      "file": "handoff-receipt.json",
+      "source_name": "integration-136-140-230-handoff-r1.json",
+      "original_sha256": "d12de1f805adfb2aecd348dc8edc07b6258fc0a4bc05dc67286861c5b6c385a4",
+      "published_sha256": "e58b28bbcbb6667ad395b2ae167b2dac6eb5b08d6aaeb445a92e6f6b54f6b45f",
+      "bytes": 17824,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": [
+        "/source_before",
+        "/source_after"
+      ]
+    },
+    {
+      "file": "canonical-run.json",
+      "source_name": "issue230-canonical-r1.json",
+      "original_sha256": "1136de0f19a1e44dccfd241d6735e1e47966c145cad8115ac78c0a98d0d8deae",
+      "published_sha256": "5aa08dc3ba32f2374754a18fea1384ee398999b05e60c7236bd2330540dae377",
+      "bytes": 14148,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": [
+        "/canonical_report/source/files"
+      ]
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-26T18-59-29-174Z-85ce7f85-02b3-4c58-897b-b412d1eee52b-full.json",
+      "original_sha256": "6638fc97e5b18929cf2dca1adb7c45c9c316a394a9a18b3056f4b1dd017df455",
+      "published_sha256": "31ef6b378af5aa17486148fb494e9283e17fb8fb87fdc10d1578d62436fd51be",
+      "bytes": 10745,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": [
+        "/source/files"
+      ]
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue230-canonical-r1-install-root.log",
+      "original_sha256": "8fb22da83a34314e282004a7740184e54ecce1397c35dc59f389ea2219a104ef",
+      "published_sha256": "8fb22da83a34314e282004a7740184e54ecce1397c35dc59f389ea2219a104ef",
+      "bytes": 87,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue230-canonical-r1-install-web.log",
+      "original_sha256": "2ca3a7fe610ee2a216ba0186ae371dd5c3388c2cb096aa977c8ea8762d2c554f",
+      "published_sha256": "2ca3a7fe610ee2a216ba0186ae371dd5c3388c2cb096aa977c8ea8762d2c554f",
+      "bytes": 88,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue230-canonical-r1-install-steward.log",
+      "original_sha256": "a4ea6a5b4ef4ee7c94c343a445a8c4ce77ae5baa79292f89c9c51d64949d559a",
+      "published_sha256": "a4ea6a5b4ef4ee7c94c343a445a8c4ce77ae5baa79292f89c9c51d64949d559a",
+      "bytes": 29,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue230-canonical-r1-pnpm-check.log",
+      "original_sha256": "515728e01b106601028e64a51b866e96773c621b6b97005532a8db3a55b3eb0a",
+      "published_sha256": "2d6569cc87014afff4f3fe32f073556ffbe75938dece5489f67bf317dc2a3dc1",
+      "bytes": 9401,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "native-build.log",
+      "source_name": "integration-136-140-230-native-build-r2.log",
+      "original_sha256": "22d9d1868b8f920225918ba57ca802a368a89089a9cdf37866bd753599e87608",
+      "published_sha256": "0ccfc8670df50cde4ac5ff3038a9062a335178bcb6d56d5ebb368ac3d0ab2e5b",
+      "bytes": 1390,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "native-handoff.log",
+      "source_name": "integration-136-140-230-handoff-r1.log",
+      "original_sha256": "6c2b92a277a486c3e1453aa0346c7a4d1f396443866df3c5b068f8abff52060a",
+      "published_sha256": "a0b0f0917f4f41141a37e8e16508c2ae1323c176a13ba79d5196e05873d851e2",
+      "bytes": 6492,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "admission-owned-postgresql-initialization.log",
+      "source_name": "integration-136-140-230-admission-r1-initdb.log",
+      "original_sha256": "4d6c61faefe505be96bb5e6fa2d0b016dee5cac317330ddd1f23c00a561c7ee9",
+      "published_sha256": "f3c50fa45bded5444e4c78ffb6a7a3c942ec87090a66649ff788fecd2fe2b56e",
+      "bytes": 1043,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "admission-cache-admission-lifecycle.log",
+      "source_name": "integration-136-140-230-admission-r1-cache-admission.log",
+      "original_sha256": "19e89dd0792e31a714666aff66c97e2b530ac6117103fb940d85bdc42f4a3c1f",
+      "published_sha256": "702741abdaf496c519e76d63898a9656358dd5f0a0f3eab430ad0abbe115e30e",
+      "bytes": 2139,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "startup-result.json",
+      "source_name": "result.json",
+      "original_sha256": "a587ec80ff357445f4feefba6720400a6c01b08c21f968239721b973a203ea65",
+      "published_sha256": "c03033106eef160116639db4072006b0849ec81c8a65b18e21cba64654e9f89c",
+      "bytes": 11047,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "preflight-browser-result.json",
+      "source_name": "report.json",
+      "original_sha256": "614fd802221a63e1a150c3bb5210f97c175e142ffd0ba6f6d506fc474c24fe53",
+      "published_sha256": "8f16217f76fe02d4af00d81fd1b89ee895b9dc450dc363bdc34c7039ef34629b",
+      "bytes": 76642,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "browser-result.json",
+      "source_name": "report.json",
+      "original_sha256": "b57d0a407d8047905e4c87e127a83ac37e79357d9bfde7f9ac923a2fd079ae55",
+      "published_sha256": "f1e844ebcb593898f8b5deffbbf5e98cda259a87d69a5363c9f0466b3ea66d4b",
+      "bytes": 44583,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "cache-result.json",
+      "source_name": "report.json",
+      "original_sha256": "2cc39f413b47cd78fc28bc2dfe5990ec7193fc2ca098f1625d2703a90c503ca0",
+      "published_sha256": "0565da091d0553f5786eb5d479b0ebdb1d5352300c2eb540f7db6f6334e872f3",
+      "bytes": 178433,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "persisted-browser-verifier.json",
+      "source_name": "browser-verification.json",
+      "original_sha256": "d42c9d427253fed807b327636e4539b2a4cfd7d801ae2e7493506879fa682bcc",
+      "published_sha256": "d42c9d427253fed807b327636e4539b2a4cfd7d801ae2e7493506879fa682bcc",
+      "bytes": 1671,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "native-edge-result.json",
+      "source_name": "result.json",
+      "original_sha256": "36745a9eeed5f2a46a3021962c79ce115c8ae098c20f4c461eaa79a266f2e50f",
+      "published_sha256": "00b5ca79cfeddd685fec8eef17e1ff3bfde7c35040ef529660a74ecaa917ef8a",
+      "bytes": 2848,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "native-chrome-result.json",
+      "source_name": "result.json",
+      "original_sha256": "2b22af3fd5115cd60930df3205a5b5baa49af0c18130e79412b2b1c762edd778",
+      "published_sha256": "b825474fe96745d4ff4c206e30916e0d00bdc2eb3bda055468b9be8382ba563b",
+      "bytes": 2833,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/run-integration-136-140-230-preflight-r2.ps1.txt",
+      "source_name": "run-integration-136-140-230-preflight-r2.ps1",
+      "original_sha256": "c8f2b47ea427c297ae44cb4d891b4088ebd74b12732b9707394c426849256032",
+      "published_sha256": "47cf01d179d28d1da8da113c1017e7e150e1160d047387ff9bface1086ac57e8",
+      "bytes": 11152,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/integration-136-140-230-native-supervisor-r1.ps1.txt",
+      "source_name": "integration-136-140-230-native-supervisor-r1.ps1",
+      "original_sha256": "2bee6504a345b3845e94f1c1a1479a3d7bf9fb6c489993403ebf5ea0781ddb99",
+      "published_sha256": "a9c321f84c45272cd4ff5c1bf46626106cd89efcdc16ace363e200f91cb75d3a",
+      "bytes": 12317,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/integration-136-140-230-native-startup-r1.ps1.txt",
+      "source_name": "integration-136-140-230-native-startup-r1.ps1",
+      "original_sha256": "feaf7d26336685a099ef14f1bcd3147a72fb99b3715d2dd7b48777b0799d42a1",
+      "published_sha256": "ad5b2a8bf7daab712c76e2391e43a1541e28fef0f61f3ed550b606cc3c7524ed",
+      "bytes": 19730,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/run-integration-136-140-230-browser-r1.ps1.txt",
+      "source_name": "run-integration-136-140-230-browser-r1.ps1",
+      "original_sha256": "360a7a79fa537a0abafa505dab4dce5b134a3ebe9c3e04caf9945f474d12f7f7",
+      "published_sha256": "cc3b9e2a83bdf34798b6f7c773a88812298a353c988aeb48b1b01fae026c5544",
+      "bytes": 19299,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/issue136-browser-r2.mjs.txt",
+      "source_name": "issue136-browser-r2.mjs",
+      "original_sha256": "3396b9cdf98a81160d497a1d8513c17ffd414c00b05f7085712e5158d6d5b421",
+      "published_sha256": "3396b9cdf98a81160d497a1d8513c17ffd414c00b05f7085712e5158d6d5b421",
+      "bytes": 19977,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/integration-136-140-230-source-guard-r1.ps1.txt",
+      "source_name": "integration-136-140-230-source-guard-r1.ps1",
+      "original_sha256": "d4ff04f1ab15be3a465cfb6aeb920fce33930a69f9dd31d029ec2f5fb8621be8",
+      "published_sha256": "f0d7f00a2c092f1977a83f31b3bed50046c9fc5181cc9e143a40e4eb35f6cc47",
+      "bytes": 3081,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/run-integration-136-140-230-cache-r1.ps1.txt",
+      "source_name": "run-integration-136-140-230-cache-r1.ps1",
+      "original_sha256": "b2d17b7ebe5fa2b8e2e1a782dd99f213bf666c16b3ebc1be98111a3cac0e6a14",
+      "published_sha256": "0ee3cb78842cfcf5990bfe5ff0026e7ccd9c4315feb705faaa76180e15fe9c30",
+      "bytes": 17925,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/issue140-browser-r1.mjs.txt",
+      "source_name": "issue140-browser-r1.mjs",
+      "original_sha256": "b61287b9c3fe7c99df041ab323e413e2644031b8f40e354f762ffb2d8115d9bb",
+      "published_sha256": "b61287b9c3fe7c99df041ab323e413e2644031b8f40e354f762ffb2d8115d9bb",
+      "bytes": 31606,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/run-integration-136-140-230-admission-r1.ps1.txt",
+      "source_name": "run-integration-136-140-230-admission-r1.ps1",
+      "original_sha256": "8c65a6808117480c60df93db371dda00aea8bcf10aa164ef37ad265fa57e7d7a",
+      "published_sha256": "0fb97df669576275155f8c793462d8f75e0891047dc867149aac5da502b4b7f9",
+      "bytes": 8567,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/run-integration-136-140-230-handoff-r1.ps1.txt",
+      "source_name": "run-integration-136-140-230-handoff-r1.ps1",
+      "original_sha256": "87e4bc44162e895ac798002a91b8fca8ce8ecad8ea4bbe0d14e1bf233dc6b81e",
+      "published_sha256": "efe0935873244c016dbc776025316a5ec32ed41f2b1abd22e1b5406dd3d1879e",
+      "bytes": 2886,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/run-canonical-r3.ps1.txt",
+      "source_name": "run-canonical-r3.ps1",
+      "original_sha256": "40fe63022b7cdcc1de1cdb0e8b81b64fa22c1c7b4db72f80b1d0d8d3dac7605c",
+      "published_sha256": "08e5612d9fbb2e6d49ab7c3d3332dc34efe8a500a93656c7e4fcd462d8c73c48",
+      "bytes": 4621,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "evals-followup-receipt.json",
+      "source_name": "integration-136-140-230-evals-followup-r1.json",
+      "original_sha256": "90551702491602cdd129b61cd01180524d99ee9cc1febd964c6552d20d2661cc",
+      "published_sha256": "a8e7002dd812bd135809113137824dbf3a3ef9cd11eab21eeca31b5be0a56bc2",
+      "bytes": 6111,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "evals-prose-correction.patch",
+      "source_name": "integration-136-140-230-evals-r1.patch",
+      "original_sha256": "076bacc8b4de4d68a2d4c3a9d05eea10c0c88a788bdb48ccbfaae47eaaa02a96",
+      "published_sha256": "076bacc8b4de4d68a2d4c3a9d05eea10c0c88a788bdb48ccbfaae47eaaa02a96",
+      "bytes": 2352,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "drivers/correct-integration-evals-r1.py.txt",
+      "source_name": "correct-integration-evals-r1.py",
+      "original_sha256": "373fc66d43dc2b71f78da77cbaa8d54ec09c2d82f8996a5eee0754cb379ba9a5",
+      "published_sha256": "17398e3306958a2374ebb8f3f714b5a7144186cf57bec3d1e8f60cbd6e4e33f4",
+      "bytes": 9358,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "evals-docs.log",
+      "source_name": "integration-136-140-230-evals-r1-docs.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "evals-repository-docs.log",
+      "source_name": "integration-136-140-230-evals-r1-repository-docs.log",
+      "original_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "published_sha256": "82b70cd8b09f7ca893d85a035f92af32ec614958493db9c77b5bf9c0c1c31d2d",
+      "bytes": 276,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "evals-documentation-regression.log",
+      "source_name": "integration-136-140-230-evals-r1-documentation-regression.log",
+      "original_sha256": "07bb3574940f0aee3e1c1e00754f1452527611373b6ce6528fe921e67d57b899",
+      "published_sha256": "07bb3574940f0aee3e1c1e00754f1452527611373b6ce6528fe921e67d57b899",
+      "bytes": 6178,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "evals-diff-check.log",
+      "source_name": "integration-136-140-230-evals-r1-diff-check.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "logs/integration-136-140-230-preflight-r2-fresh-fixture-status.stderr.log",
+      "source_name": "integration-136-140-230-preflight-r2-fresh-fixture-status.stderr.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "logs/integration-136-140-230-preflight-r2-fresh-fixture-status.stdout.log",
+      "source_name": "integration-136-140-230-preflight-r2-fresh-fixture-status.stdout.log",
+      "original_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "published_sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc",
+      "bytes": 67,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "logs/integration-136-140-230-preflight-r2-fresh-provisioning.stderr.log",
+      "source_name": "integration-136-140-230-preflight-r2-fresh-provisioning.stderr.log",
+      "original_sha256": "d2cb6ffb663a2b94bca7a186494ceb020deacbc8ff6c9af0ce2e8eba2120ca08",
+      "published_sha256": "d2cb6ffb663a2b94bca7a186494ceb020deacbc8ff6c9af0ce2e8eba2120ca08",
+      "bytes": 102,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "logs/integration-136-140-230-preflight-r2-fresh-provisioning.stdout.log",
+      "source_name": "integration-136-140-230-preflight-r2-fresh-provisioning.stdout.log",
+      "original_sha256": "9baec0110ca54bd96239746cbed9fb1eb71b564db5b00cf7fb6010e3a6a96051",
+      "published_sha256": "6804c1137d0c967a1f2add5052cec1fc35713da50c2a4f6b020f4843c7cc4617",
+      "bytes": 2180,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "logs/integration-136-140-230-preflight-r2-outer-supervisor-stop.stderr.log",
+      "source_name": "integration-136-140-230-preflight-r2-outer-supervisor-stop.stderr.log",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "logs/integration-136-140-230-preflight-r2-outer-supervisor-stop.stdout.log",
+      "source_name": "integration-136-140-230-preflight-r2-outer-supervisor-stop.stdout.log",
+      "original_sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "published_sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e",
+      "bytes": 154,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "logs/integration-136-140-230-preflight-r2-startup.stderr.log",
+      "source_name": "integration-136-140-230-preflight-r2-startup.stderr.log",
+      "original_sha256": "39bb7021ef94125a214c317d457558c52b4f01eb4b3b633d2812d515301fd578",
+      "published_sha256": "39bb7021ef94125a214c317d457558c52b4f01eb4b3b633d2812d515301fd578",
+      "bytes": 109,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "logs/integration-136-140-230-preflight-r2-startup.stdout.log",
+      "source_name": "integration-136-140-230-preflight-r2-startup.stdout.log",
+      "original_sha256": "d8b80c9b82beb2dd6cf6248d9a7fad2dfaaaf0606fb8170f8dbdbbde077d4ae0",
+      "published_sha256": "d8b80c9b82beb2dd6cf6248d9a7fad2dfaaaf0606fb8170f8dbdbbde077d4ae0",
+      "bytes": 1461,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "earlier-build-preflight-failure.json",
+      "source_name": "integration-136-140-230-native-build-r1.json",
+      "original_sha256": "9462a20beed10da619a5018213e4777d76ee7a6ec187e16f4b8bfa99c9cd32ed",
+      "published_sha256": "9462a20beed10da619a5018213e4777d76ee7a6ec187e16f4b8bfa99c9cd32ed",
+      "bytes": 1400,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "earlier-build-preflight-failure.log",
+      "source_name": "integration-136-140-230-native-build-r1.log",
+      "original_sha256": "0ba274477db784a277cf2f737171f50cba2859d23b46554c7f2f6e84b6de2e90",
+      "published_sha256": "0ba274477db784a277cf2f737171f50cba2859d23b46554c7f2f6e84b6de2e90",
+      "bytes": 11951272,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "contribution-preservation.json",
+      "source_name": "integration-136-140-230-preparation-r2.json",
+      "original_sha256": "947c7a9af1a828cb0a6c2bb589ffc7705e24a8e6618117f2662c5aeb4e96a240",
+      "published_sha256": "3384cdd9cf2e3aa6ff79b44aadc36f01e6209ca529ef2b65ee871766503df939",
+      "bytes": 19746,
+      "transform": "UTF-8 without BOM; redact personal profile/account labels and enrollment-file digests; explicitly replace duplicate source inventories when listed",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "preflight-passed-final.png",
+      "source_name": "passed-final.png",
+      "original_sha256": "dd3a960d94d848cd388a86b2620bbde1a772e2938101e8b23064322e563d9b9f",
+      "published_sha256": "dd3a960d94d848cd388a86b2620bbde1a772e2938101e8b23064322e563d9b9f",
+      "bytes": 266582,
+      "transform": "none; original PNG bytes",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "preflight-failed-final.png",
+      "source_name": "failed-final.png",
+      "original_sha256": "7b5769101fbcc7772bb7010f4d0ddbdc7246b360d158e174bcb7b8259a0b941d",
+      "published_sha256": "7b5769101fbcc7772bb7010f4d0ddbdc7246b360d158e174bcb7b8259a0b941d",
+      "bytes": 253950,
+      "transform": "none; original PNG bytes",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "browser-runner-desktop.png",
+      "source_name": "runner-desktop.png",
+      "original_sha256": "b288a3aa4e69cd1dd3c9233a4de75a4a0ad56eafcf4a0cc753772fc7775b2355",
+      "published_sha256": "b288a3aa4e69cd1dd3c9233a4de75a4a0ad56eafcf4a0cc753772fc7775b2355",
+      "bytes": 11815,
+      "transform": "none; original PNG bytes",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "browser-runner-mobile.png",
+      "source_name": "runner-mobile.png",
+      "original_sha256": "bf9816c605ab0551c4eb9d18c9b6a847c4d769475feb1014eae925def77f0547",
+      "published_sha256": "bf9816c605ab0551c4eb9d18c9b6a847c4d769475feb1014eae925def77f0547",
+      "bytes": 10263,
+      "transform": "none; original PNG bytes",
+      "replaced_source_inventory_fields": []
+    },
+    {
+      "file": "cache-completed.png",
+      "source_name": "cache-completed.png",
+      "original_sha256": "25f3de52d82e5801f6118e61f8e8e693916633718f81ec786de7551096470ce5",
+      "published_sha256": "25f3de52d82e5801f6118e61f8e8e693916633718f81ec786de7551096470ce5",
+      "bytes": 350922,
+      "transform": "none; original PNG bytes",
+      "replaced_source_inventory_fields": []
+    }
+  ],
+  "documentation_followup": {
+    "file": "evals-followup-receipt.json",
+    "original_receipt_sha256": "90551702491602cdd129b61cd01180524d99ee9cc1febd964c6552d20d2661cc",
+    "changed_path": "docs/EVALS.md",
+    "old_git_blob": "5bbfa10bfc4b18e1d91d9ee41acccd777c55d57c",
+    "new_git_blob": "459e835e0b8cb844089e3e014c7e8f4b1d1849d6",
+    "checks": [
+      {
+        "name": "docs",
+        "exit_code": 0,
+        "counts": null
+      },
+      {
+        "name": "repository-docs",
+        "exit_code": 0,
+        "counts": null
+      },
+      {
+        "name": "documentation-regression",
+        "exit_code": 0,
+        "counts": {
+          "tests": 28,
+          "pass": 28,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        }
+      },
+      {
+        "name": "diff-check",
+        "exit_code": 0,
+        "counts": null
+      }
+    ]
+  },
+  "publication_scope": "Canonical and native receipts executed on the stated staged tree before the additive evidence packet and the separately validated docs/EVALS.md prose correction. Publication validation must prove that the other 6514 physical files and Git blobs remain unchanged, that removing this packet and restoring the exact original EVALS blob reconstructs the tested tree, and that the eleven-gate/114-file plan is identical. The changed prose has separate documentation and regression receipts. Exact-head hosted checks and substantive review remain separate requirements.",
+  "review_state_at_assembly": "Independent outcome review and final hosted checks pending. This is a reviewable evidence handoff, not a human decision or accepted completion.",
+  "assurance": [
+    "Build on the exact staged 103-path integration candidate, preserving both prepared contribution heads. Full tracked physical fingerprints bind PowerShell and browser acceptance to this candidate; the HEAD is its unchanged parent, not a claim of clean committed source.",
+    "Exact combined-source native Windows public preflight/start/restart/stop and actual Chrome/browser/server/runner acceptance, fresh owned SCRAM database and synthetic identity/source/fake-process provider. Ephemeral environment-only server credential delivery is reduced assurance. No production identity, inference, deployment, external provider or independent human approval is claimed.",
+    "Exact combined-source fresh owned development database/server/runner/browser with actual installed Edge/Chrome and native Node verifier processes, deterministic fake-process provider, and synthetic identities. No inference, production authentication, cloud qualification or human decision. Ephemeral server database credentials use environment delivery with reduced assurance.",
+    "Exact combined-source fresh owned development database/server/runner/browser with actual native Python and Node verifier processes, deterministic fake-process provider, and synthetic identities. No inference, production authentication, cloud qualification or human decision. Ephemeral server database credentials use environment delivery with reduced assurance.",
+    "Actual native Windows process handoff and exact identity checks at zero and 250 ms readiness delays; Playwright launch observer, not a real browser or Rust runner. Synthetic noncredential canaries only."
+  ],
+  "limitations": [
+    "Managed Chromium is unavailable; no browser download was attempted.",
+    "Synthetic identities and the deterministic fake-process provider do not qualify production authentication, real inference or cloud operation.",
+    "Database environment delivery remains reduced assurance.",
+    "Typed verifier cache policy has cleanup_authorized=false and zero_cache_writes_verified=false; scope is verifier_child.",
+    "The ignored sentinel was preserved, and no collaborator source or worktree was deleted.",
+    "Historical Cargo advisory debt is not a clean audit.",
+    "Earlier individual evidence packets retain their original dates, tested source and failed attempts."
+  ]
+}

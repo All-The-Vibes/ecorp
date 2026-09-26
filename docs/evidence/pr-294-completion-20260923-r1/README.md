@@ -21,3 +21,10 @@ Build provenance: Workspace package artifacts are removed under the task Cargo m
 `integration-binding.json` verifies that production and tool bytes match the earlier native acceptance tree and hashes the retained receipts. The earlier runtime replay was not repeated during this documentation-only integration. Local Node was 24.21.0; the repository pin remains 24.19.0.
 
 Trailing line whitespace and blank lines at EOF are removed from the published logs. This formatting normalization does not alter test-result text; original and published hashes are distinct. The local `.gitattributes` preserves published evidence bytes on checkout.
+
+Publication correction, September 26, 2026: the three historical stack-start logs
+now redact caret-escaped local account roots, and their published hash bindings
+have been refreshed. Earlier statements about immutable packets and normalized
+paths describe the original publication. Execution dates, results, original
+runtime hashes, drivers and screenshots retain their original scope. See the
+[dated correction and hash manifest](../2026-09-26-verifier-cache-publication-correction/README.md).

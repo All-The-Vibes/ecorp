@@ -1,0 +1,178 @@
+TAP version 13
+# Subtest: accepts matching current contracts, aliases, CRLF and historical prose outside markers
+ok 1 - accepts matching current contracts, aliases, CRLF and historical prose outside markers
+  ---
+  duration_ms: 67.6721
+  type: 'test'
+  ...
+# Subtest: rejects added source validation command and reports expected and actual
+ok 2 - rejects added source validation command and reports expected and actual
+  ---
+  duration_ms: 51.2423
+  type: 'test'
+  ...
+# Subtest: rejects removed source validation command and reports expected and actual
+ok 3 - rejects removed source validation command and reports expected and actual
+  ---
+  duration_ms: 47.4223
+  type: 'test'
+  ...
+# Subtest: rejects reordered source validation command and reports expected and actual
+ok 4 - rejects reordered source validation command and reports expected and actual
+  ---
+  duration_ms: 50.9012
+  type: 'test'
+  ...
+# Subtest: rejects changed documented commands; correcting the documented sequence restores passing
+ok 5 - rejects changed documented commands; correcting the documented sequence restores passing
+  ---
+  duration_ms: 79.4319
+  type: 'test'
+  ...
+# Subtest: accepts quoted literal Node globs through aliases while preserving quoted versus shell-expanded arguments
+ok 6 - accepts quoted literal Node globs through aliases while preserving quoted versus shell-expanded arguments
+  ---
+  duration_ms: 74.252
+  type: 'test'
+  ...
+# Subtest: rejects a source SDK bump until both current compatibility docs are updated
+ok 7 - rejects a source SDK bump until both current compatibility docs are updated
+  ---
+  duration_ms: 63.6311
+  type: 'test'
+  ...
+# Subtest: rejects a source CLI bump until both current compatibility docs are updated
+ok 8 - rejects a source CLI bump until both current compatibility docs are updated
+  ---
+  duration_ms: 67.8327
+  type: 'test'
+  ...
+# Subtest: rejects missing opening marker instead of silently dropping a required documentation contract
+ok 9 - rejects missing opening marker instead of silently dropping a required documentation contract
+  ---
+  duration_ms: 49.8849
+  type: 'test'
+  ...
+# Subtest: rejects missing closing marker instead of silently dropping a required documentation contract
+ok 10 - rejects missing closing marker instead of silently dropping a required documentation contract
+  ---
+  duration_ms: 43.9757
+  type: 'test'
+  ...
+# Subtest: rejects duplicate block instead of silently dropping a required documentation contract
+ok 11 - rejects duplicate block instead of silently dropping a required documentation contract
+  ---
+  duration_ms: 47.1843
+  type: 'test'
+  ...
+# Subtest: rejects reversed markers instead of silently dropping a required documentation contract
+ok 12 - rejects reversed markers instead of silently dropping a required documentation contract
+  ---
+  duration_ms: 44.6174
+  type: 'test'
+  ...
+# Subtest: rejects inline marker instead of silently dropping a required documentation contract
+ok 13 - rejects inline marker instead of silently dropping a required documentation contract
+  ---
+  duration_ms: 44.5872
+  type: 'test'
+  ...
+# Subtest: requires every current runtime contract and a single SDK and CLI claim inside each
+ok 14 - requires every current runtime contract and a single SDK and CLI claim inside each
+  ---
+  duration_ms: 41.6359
+  type: 'test'
+  ...
+# Subtest: rejects missing root alias in the authoritative command sequence
+ok 15 - rejects missing root alias in the authoritative command sequence
+  ---
+  duration_ms: 52.7283
+  type: 'test'
+  ...
+# Subtest: rejects cyclic root aliases in the authoritative command sequence
+ok 16 - rejects cyclic root aliases in the authoritative command sequence
+  ---
+  duration_ms: 50.2168
+  type: 'test'
+  ...
+# Subtest: rejects shell pipeline in the authoritative command sequence
+ok 17 - rejects shell pipeline in the authoritative command sequence
+  ---
+  duration_ms: 51.8152
+  type: 'test'
+  ...
+# Subtest: rejects quoted shell expansion in the authoritative command sequence
+ok 18 - rejects quoted shell expansion in the authoritative command sequence
+  ---
+  duration_ms: 52.1813
+  type: 'test'
+  ...
+# Subtest: rejects empty command in the authoritative command sequence
+ok 19 - rejects empty command in the authoritative command sequence
+  ---
+  duration_ms: 50.2837
+  type: 'test'
+  ...
+# Subtest: rejects unsupported alias arguments in the authoritative command sequence
+ok 20 - rejects unsupported alias arguments in the authoritative command sequence
+  ---
+  duration_ms: 49.9771
+  type: 'test'
+  ...
+# Subtest: rejects unknown documented aliases and malformed command fences
+ok 21 - rejects unknown documented aliases and malformed command fences
+  ---
+  duration_ms: 47.1486
+  type: 'test'
+  ...
+# Subtest: reports missing required documents and an invalid source manifest without silently skipping them
+ok 22 - reports missing required documents and an invalid source manifest without silently skipping them
+  ---
+  duration_ms: 50.4602
+  type: 'test'
+  ...
+# Subtest: fails closed for unconstrained SDK dependency
+ok 23 - fails closed for unconstrained SDK dependency
+  ---
+  duration_ms: 45.2985
+  type: 'test'
+  ...
+# Subtest: fails closed for SDK pin in wrong table
+ok 24 - fails closed for SDK pin in wrong table
+  ---
+  duration_ms: 52.2361
+  type: 'test'
+  ...
+# Subtest: fails closed for duplicate SDK declaration
+ok 25 - fails closed for duplicate SDK declaration
+  ---
+  duration_ms: 49.2482
+  type: 'test'
+  ...
+# Subtest: fails closed for missing named runtime constant
+ok 26 - fails closed for missing named runtime constant
+  ---
+  duration_ms: 55.6989
+  type: 'test'
+  ...
+# Subtest: fails closed for duplicate runtime constant
+ok 27 - fails closed for duplicate runtime constant
+  ---
+  duration_ms: 46.9336
+  type: 'test'
+  ...
+# Subtest: relocated CLI resolves its own repository, executes no documented command, and exits nonzero for drift
+ok 28 - relocated CLI resolves its own repository, executes no documented command, and exits nonzero for drift
+  ---
+  duration_ms: 280.1978
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1839.1696

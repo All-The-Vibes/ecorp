@@ -1,0 +1,330 @@
+// September 26 retrospective current-source acceptance; historical driver remains unchanged.
+// Requires a caller-owned Windows QA stack and receipt, never the manual app.
+// No fixture reset, provider inference, browser response mocks, storage seeding,
+// or reviewer decisions. The caller starts/stops its services with native helpers.
+import assert from 'node:assert/strict'
+import { execFile } from 'node:child_process'
+import { createHash, randomUUID } from 'node:crypto'
+import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { promisify } from 'node:util'
+import { pathToFileURL } from 'node:url'
+assert.ok(path.isAbsolute(process.env.ECORP_COMPLETION_PRODUCT ?? ''), 'Absolute reviewed product checkout required')
+const { captureOwnedTestServerManifest } = await import(pathToFileURL(path.join(process.env.ECORP_COMPLETION_PRODUCT, 'tools/owned_test_stack.mjs')).href)
+
+assert.equal(process.env.ECORP_POLICY_TEST, '1', 'Explicit owned-stack opt-in required')
+assert.ok(path.isAbsolute(process.env.ECORP_POLICY_SETUP ?? ''), 'Absolute QA setup receipt required')
+const setup = JSON.parse(await readFile(process.env.ECORP_POLICY_SETUP, 'utf8'))
+assert.equal(setup.test_owned, true)
+assert.ok(path.isAbsolute(setup.qa_root) && path.isAbsolute(setup.output))
+const forbiddenPorts = new Set(['8791', '8793', '5187', '5291', '15191', '15193', '54330'])
+function origin(value) {
+  const url = new URL(value)
+  assert.equal(url.protocol, 'http:')
+  assert.equal(url.hostname, '127.0.0.1')
+  assert.ok(url.port && !forbiddenPorts.has(url.port))
+  assert.equal(url.pathname, '/')
+  assert.ok(!url.username && !url.password && !url.search && !url.hash)
+  return url.origin
+}
+const server = origin(setup.server_url)
+const web = origin(setup.web_url)
+assert.notEqual(server, web)
+const output = path.join(setup.output, `browser-${new Date().toISOString().replaceAll(':', '-')}-${randomUUID().slice(0, 8)}`)
+await mkdir(output, { recursive: true })
+const report = {
+  schema_version: 1, status: 'running', started_at: new Date().toISOString(), server, web,
+  scope: 'Real browser/server/runner with deterministic fake-process; development identity, no real-provider inference or manual review decisions',
+  product_head: setup.source_head, product_tree: setup.source_tree, source_commit: setup.source_commit, errors: [], blocked_requests: [], viewports: [], missions: [],
+}
+const save = () => writeFile(path.join(output, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
+const execute = promisify(execFile)
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+let browser, page, demo
+
+async function request(route) {
+  assert.ok(route === '/health' || route.startsWith(`/api/corps/${demo.corp_id}/snapshot?`))
+  const response = await fetch(`${server}${route}`, { redirect: 'error', signal: AbortSignal.timeout(15_000) })
+  assert.equal(response.status, 200, `${route.split('?')[0]}: HTTP ${response.status}`)
+  return response.json()
+}
+const snapshot = () => request(`/api/corps/${demo.corp_id}/snapshot?actor_id=${demo.alice_actor_id}`)
+async function until(label, read, predicate, timeout = 90_000) {
+  const end = Date.now() + timeout
+  while (Date.now() < end) {
+    const value = await read()
+    if (predicate(value)) return value
+    await delay(150)
+  }
+  throw new Error(`Timed out waiting for ${label}`)
+}
+function missionView(state, missionId) {
+  const s = state.snapshot
+  const mission = s.missions.find((row) => row.id === missionId)
+  assert.ok(mission)
+  const tasks = s.tasks.filter((row) => row.mission_id === missionId)
+  const ids = new Set(tasks.map((row) => row.id))
+  const runs = s.runs.filter((row) => ids.has(row.task_id))
+  return { mission, tasks, runs, state: s }
+}
+async function screenshot(name) {
+  const file = path.join(output, `${name}.png`)
+  await page.screenshot({ path: file, fullPage: true })
+  return { file, sha256: createHash('sha256').update(await readFile(file)).digest('hex') }
+}
+async function noOverflow(width) {
+  const measured = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth }))
+  assert.equal(measured.viewport, width)
+  assert.ok(measured.content <= width, `Viewport overflow: ${measured.content} > ${width}`)
+  return measured
+}
+async function openAdvanced(containing) {
+  const details = page.locator('details.mission-advanced-options').filter({ has: page.locator(containing) })
+  assert.equal(await details.count(), 1)
+  if (!(await details.evaluate((element) => element.open))) await details.locator('summary').click()
+}
+async function prepareMission(title) {
+  report.stage = 'prepare unsaved mission'
+  await save()
+  await page.goto(`${web}/#missions`, { waitUntil: 'networkidle', timeout: 30_000 })
+  await page.locator('.live-indicator.live-live').waitFor({ timeout: 30_000 })
+  const newMission = page.getByRole('button', { name: 'New mission', exact: true })
+  if (await newMission.isVisible()) await newMission.click()
+  await page.locator('#mission-title').fill(title)
+  await openAdvanced('#mission-description')
+  await page.locator('#mission-description').fill('Owned deterministic verification-policy regression. Use the isolated source fixture, preserve evidence, and perform no external effects.')
+  const targets = await page.locator('#mission-repository option').evaluateAll((items) => items
+    .filter((item) => item.value).map((item) => ({ value: item.value, source: JSON.parse(item.value) })))
+  const matches = targets.filter((item) => item.source[0] === setup.source_repository && item.source[2] === setup.source_commit)
+  assert.equal(matches.length, 1, 'Exactly the caller-owned immutable source must be available')
+  await page.locator('#mission-repository').selectOption(matches[0].value)
+  await page.getByRole('checkbox', { name: /Confirm this target/ }).check()
+  await openAdvanced('#mission-deliverable')
+  await page.getByRole('checkbox', { name: /Developer fixtures/ }).check()
+  await page.locator('#mission-adapter').selectOption('fake-process')
+  await page.locator('#mission-strategy').selectOption('single')
+  await page.locator('#mission-deliverable').selectOption('review_only_report')
+  await page.getByRole('checkbox', { name: /Commit verified work/ }).uncheck()
+  await page.getByRole('checkbox', { name: /Save without starting/ }).check()
+  await page.getByRole('button', { name: 'Review and build', exact: true }).click()
+  const custom = page.getByRole('checkbox', { name: /Custom verification/ })
+  assert.equal(await custom.isEnabled(), true)
+  await custom.check()
+  return page.getByTestId('mission-verification-editor')
+}
+async function fillCheck(editor, index, check) {
+  report.stage = `author check ${index + 1}: ${check.type}`
+  await save()
+  const tabs = editor.locator('.verification-check-tabs button')
+  while (await tabs.count() <= index) await editor.getByRole('button', { name: 'Add check', exact: true }).click()
+  await tabs.nth(index).click()
+  await editor.getByLabel(`Verifier check ${index + 1} type`, { exact: true }).selectOption(check.type)
+  if (check.type === 'artifact') await editor.getByLabel('Minimum artifact bytes', { exact: true }).fill(String(check.min_bytes))
+  if (check.type === 'file' || check.type === 'screenshot') {
+    await editor.getByLabel('Worktree-relative path', { exact: true }).fill(check.path)
+    await editor.getByLabel('Minimum bytes', { exact: true }).fill(String(check.min_bytes))
+  }
+  if (check.type === 'command' || check.type === 'test') {
+    await editor.getByLabel('Program', { exact: true }).fill(check.program)
+    await editor.getByLabel('Timeout in milliseconds', { exact: true }).fill(String(check.timeout_ms))
+    await editor.getByLabel('Arguments, one per line').fill(check.args.join('\n'))
+  }
+  if (check.type === 'json_schema') {
+    await editor.getByLabel('JSON file', { exact: true }).fill(check.path)
+    await editor.getByLabel('Required top-level keys').fill(check.required_keys.join('\n'))
+  }
+}
+async function saveAndLaunch(title, expectedPolicy, expectedOutcome) {
+  report.stage = `save ${expectedOutcome}`
+  await save()
+  const saveButton = page.getByRole('button', { name: 'Save plan', exact: true })
+  assert.equal(await saveButton.isEnabled(), true, 'The authored verification policy must satisfy the UI contract')
+  const [response] = await Promise.all([
+    page.waitForResponse((response) => response.url() === `${server}/api/corps/${demo.corp_id}/missions` && response.request().method() === 'POST'),
+    saveButton.click(),
+  ])
+  assert.equal(response.status(), 200)
+  const authored = response.request().postDataJSON()
+  assert.deepEqual(authored.verification_policy, expectedPolicy)
+  assert.equal(authored.preferred_adapter, 'fake-process')
+  const created = await response.json()
+  const receipt = { title, mission_id: created.mission_id, task_id: created.task_id, authored, expected_outcome: expectedOutcome }
+  report.missions.push(receipt)
+  await save()
+  const saved = missionView(await snapshot(), created.mission_id)
+  assert.equal(saved.mission.status, 'ready')
+  assert.equal(saved.runs.length, 0)
+  assert.equal(saved.tasks.length, 1)
+  assert.deepEqual(saved.tasks[0].verification_policy, expectedPolicy)
+  const card = page.locator(`[data-mission-id="${created.mission_id}"]`)
+  await card.locator('.status-chip-ready').waitFor()
+  receipt.saved_screenshot = await screenshot(`${expectedOutcome}-saved`)
+  const [launched] = await Promise.all([
+    page.waitForResponse((value) => value.url() === `${server}/api/corps/${demo.corp_id}/missions/${created.mission_id}/launch` && value.request().method() === 'POST'),
+    card.getByTestId('work-result-card').getByRole('button', { name: 'Start mission', exact: true }).click(),
+  ])
+  assert.equal(launched.status(), 200)
+  receipt.launch = await launched.json()
+  report.stage = `runner ${expectedOutcome}`
+  await save()
+  const final = await until(`runner ${expectedOutcome}`, async () => missionView(await snapshot(), created.mission_id), (value) =>
+    value.runs.length === 1 && ['completed', 'failed'].includes(value.mission.status) && value.runs[0].workspace_disposition === 'preserved')
+  const run = final.runs[0]
+  assert.equal(run.runner_id, setup.runner_id)
+  assert.equal(run.source_base_commit, setup.source_commit)
+  const relative = path.relative(setup.workspace, run.workspace_path)
+  assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative))
+  assert.notEqual(path.resolve(run.workspace_path).toLowerCase(), path.resolve(setup.source).toLowerCase())
+  const evidence = final.state.verification_evidence.filter((item) => item.run_id === run.id).sort((a, b) => a.check_index - b.check_index)
+  const events = final.state.events.filter((event) => event.aggregate_id === run.id)
+  assert.equal(evidence.length, expectedPolicy.checks.length)
+  assert.deepEqual(final.tasks[0].verification_policy, expectedPolicy)
+  assert.equal(final.state.verification_requests.filter((row) => row.run_id === run.id).length, 0)
+  if (expectedOutcome === 'passed') {
+    assert.equal(final.mission.status, 'completed')
+    assert.equal(run.status, 'completed')
+    assert.ok(evidence.every((item) => item.status === 'passed'))
+    for (const [index, check] of expectedPolicy.checks.entries()) {
+      if (check.type === 'command' || check.type === 'test') {
+        assert.deepEqual(evidence[index].payload.args, check.args)
+        assert.equal(evidence[index].payload.program, check.program)
+        assert.equal(evidence[index].payload.exit_code, 0)
+      }
+    }
+    assert.equal(events.filter((event) => event.type === 'run.completed').length, 1)
+  } else {
+    assert.equal(final.mission.status, 'failed')
+    assert.equal(run.status, 'failed')
+    assert.equal(evidence[0].status, 'failed')
+    assert.equal(evidence[0].kind, 'artifact')
+    assert.equal(events.filter((event) => event.type === 'run.completed').length, 0)
+    assert.ok(events.some((event) => event.type === 'run.verification_failed'))
+  }
+  receipt.final = { mission: final.mission, tasks: final.tasks, run, evidence, events }
+  await until('final browser projection', () => card.innerText(), (text) => expectedOutcome === 'passed' ? /completed/i.test(text) : /failed/i.test(text), 30_000)
+  receipt.final_screenshot = await screenshot(`${expectedOutcome}-final`)
+  await save()
+}
+
+
+try {
+  for (const [role, url] of [['server',server],['web',web]]) {
+    const processRecord=setup.processes[role]
+    assert.ok(processRecord?.pid && processRecord.executable)
+    await captureOwnedTestServerManifest({root:setup.qa_root,server:url,binary:processRecord.executable,pid:processRecord.pid,pidPath:path.join(output,`${role}-ownership.json`)})
+  }
+  assert.equal((await request('/health')).mode,'development')
+  const {chromium}=createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser=await chromium.launch({channel:'chrome',headless:true})
+  const context=await browser.newContext({viewport:{width:1440,height:1050},reducedMotion:'reduce'})
+  await context.route('**/*',async route=>{
+    const url=new URL(route.request().url())
+    if(![server,web].includes(url.origin)||url.pathname==='/api/demo/reset'||/verification-decision|action-approval/.test(url.pathname)){
+      report.blocked_requests.push({method:route.request().method(),origin:url.origin,path:url.pathname})
+      await route.abort()
+    }else await route.continue()
+  })
+  page=await context.newPage()
+  page.on('pageerror',error=>report.errors.push(error.message.slice(0,1000)))
+  const boot=page.waitForResponse(response=>response.url().startsWith(`${server}/api/demo/bootstrap`)&&response.request().method()==='POST')
+  await page.goto(`${web}/#missions`,{waitUntil:'networkidle',timeout:30000})
+  const bootstrap=await boot
+  assert.equal(bootstrap.status(),200)
+  demo=await bootstrap.json()
+  report.corp_id=demo.corp_id
+  const verifier=path.join(process.env.ECORP_COMPLETION_PRODUCT,'tools/verify_arcade_browser.mjs')
+  const policy={checks:[{type:'command',program:'node',args:[verifier,'arcade'],timeout_ms:60000}],manual_gate:null}
+  const title=`[clean-worktree] Installed Edge browser verification ${randomUUID().slice(0,8)}`
+  const editor=await prepareMission(title)
+  await fillCheck(editor,0,policy.checks[0])
+  for(const [name,width,height] of [['desktop',1440,1050],['mobile',390,844]]){
+    await page.setViewportSize({width,height})
+    const disclosure=editor.locator('.verification-plan-disclosure')
+    if(!(await disclosure.evaluate(element=>element.open))) await disclosure.locator('summary').click()
+    const rendered=await editor.getByTestId('verification-policy-preview').innerText()
+    assert.ok(rendered.includes('verify_arcade_browser.mjs')&&rendered.includes('arcade'))
+    report.viewports.push({name,width,height,layout:await noOverflow(width),screenshot:await screenshot(`${name}-browser-policy`)})
+  }
+  await saveAndLaunch(title,policy,'passed')
+  const final=report.missions[0].final
+  const persisted=JSON.parse(final.evidence[0].payload.stdout)
+  const verificationFile=path.join(final.run.workspace_path,'arcade/evidence/browser-verification.json')
+  const verificationBytes=await readFile(verificationFile)
+  const onDisk=JSON.parse(verificationBytes)
+  assert.deepEqual(persisted,onDisk,'Actual selection/workflow report must be persisted by the server')
+  assert.equal(persisted.passed,true)
+  assert.equal(persisted.browser.browser,'edge')
+  assert.equal(persisted.browser.selection,'declared-executable')
+  assert.equal(persisted.browser.sha256,setup.browser_policy.sha256)
+  assert.equal(persisted.browser.host,setup.browser_policy.host)
+  assert.equal(persisted.browser.platform,'win32')
+  assert.equal(persisted.browser.policySha256,createHash('sha256').update(await readFile(setup.browser_policy_path)).digest('hex'))
+  assert.ok(persisted.browser.browserVersion)
+  assert.deepEqual(persisted.cases.map(({name,width})=>[name,width]),[['desktop',1280],['mobile',390]])
+  assert.ok(persisted.cases.every(item=>item.remoteRequestCount===0&&item.errors.length===0))
+  for(const image of persisted.screenshots){
+    const bytes=await readFile(path.join(final.run.workspace_path,image.path))
+    assert.equal(bytes.length,image.bytes)
+    assert.equal(createHash('sha256').update(bytes).digest('hex'),image.sha256)
+    await writeFile(path.join(output,`runner-${path.basename(image.path)}`),bytes,{flag:'wx'})
+  }
+  report.persisted_browser={report:onDisk,file:verificationFile,sha256:createHash('sha256').update(verificationBytes).digest('hex'),server_evidence_id:final.evidence[0].id}
+  await save()
+  report.native_browsers=[]
+  for(const [name,executable] of [['edge',setup.browser_policy.executable],['chrome','C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'],['chromium',chromium.executablePath()]]){
+    try{await access(executable)}catch(error){
+      if(error.code!=='ENOENT') throw error
+      report.native_browsers.push({name,status:'unavailable',reason:'Pinned managed browser is not installed; no installation attempted'})
+      continue
+    }
+    const browserPolicy={...setup.browser_policy,browser:name,sha256:createHash('sha256').update(await readFile(executable)).digest('hex')}
+    if(name==='chromium') delete browserPolicy.executable
+    else browserPolicy.executable=executable
+    const policyPath=path.join(setup.qa_root,'operator',`${name}-native-policy.json`)
+    await writeFile(policyPath,JSON.stringify(browserPolicy),{flag:'wx'})
+    const nativeOutput=path.join(setup.output,`native-${name}`)
+    report.stage=`native ${name} module/CLI verification`
+    await save()
+    let child
+    try{
+      child=await execute(process.execPath,[path.join(process.env.ECORP_COMPLETION_PRODUCT,'tools/e2e_verifier_browser.mjs')],{
+        cwd:process.env.ECORP_COMPLETION_PRODUCT,windowsHide:true,timeout:180000,maxBuffer:8*1024*1024,
+        env:{...process.env,CRONY_BROWSER_TEST_WORKTREE:final.run.workspace_path,CRONY_BROWSER_TEST_OUTPUT:nativeOutput,CRONY_VERIFIER_BROWSER_POLICY:policyPath}})
+    }catch(error){
+      await writeFile(path.join(output,`${name}-native.stdout.log`),error.stdout??'')
+      await writeFile(path.join(output,`${name}-native.stderr.log`),error.stderr??'')
+      throw error
+    }
+    await writeFile(path.join(output,`${name}-native.stdout.log`),child.stdout)
+    await writeFile(path.join(output,`${name}-native.stderr.log`),child.stderr)
+    const dirs=await readdir(nativeOutput)
+    assert.equal(dirs.length,1)
+    const resultPath=path.join(nativeOutput,dirs[0],'result.json')
+    const resultBytes=await readFile(resultPath)
+    const result=JSON.parse(resultBytes)
+    assert.equal(result.passed,true)
+    assert.equal(result.sourceUnchanged,true)
+    assert.equal(result.negative.length,3)
+    assert.ok(result.negative.every(item=>item.noEvidenceWrites&&item.exitCode!==0))
+    assert.equal(result.reports.length,2)
+    report.native_browsers.push({name,status:'passed',result,result_file:resultPath,sha256:createHash('sha256').update(resultBytes).digest('hex')})
+    await save()
+  }
+  assert.equal((await execute('git',['-C',setup.source,'rev-parse','HEAD'])).stdout.trim(),setup.source_commit)
+  assert.equal((await execute('git',['-C',setup.source,'status','--porcelain'])).stdout.trim(),'')
+  assert.equal(report.errors.length,0)
+  assert.equal(report.blocked_requests.length,0)
+  report.source_unchanged=true
+  report.status='passed'
+}catch(error){
+  report.status='failed'
+  report.failure=String(error.message).replace(/\b(?:postgres(?:ql)?):\/\/\S+/g,'[database URL withheld]').slice(0,2000)
+  if(page) report.failure_screenshot=await screenshot('failure').catch(()=>null)
+  process.exitCode=1
+}finally{
+  await browser?.close()
+  report.finished_at=new Date().toISOString()
+  await save()
+  console.log(JSON.stringify({status:report.status,stage:report.stage,report:path.join(output,'report.json'),failure:report.failure}))
+}

@@ -25,12 +25,24 @@ function ConvertTo-LocalProcessArgument {
 
 function Get-LocalProcessExecutable {
     param([Parameter(Mandatory)][Diagnostics.Process]$Process)
-    # The caller retains the native handle. Windows MainModule can be null while
-    # a new process loads; .NET reads it again on each call. Observe that state
-    # for at most 40 short waits without replacing the handle or hiding errors.
+    # The caller retains the native handle. Windows module snapshots can be null
+    # or fail with ERROR_PARTIAL_COPY (299) while a process loads. Retry only
+    # those incomplete snapshots within the same 40 short waits. Other errors
+    # and exhausted retries remain uncertainty, never absence or ownership.
     for ($attempt = 0; $attempt -le 40; $attempt++) {
         if ($Process.get_HasExited()) { return $null }
-        $module = $Process.get_MainModule()
+        try { $module = $Process.get_MainModule() }
+        catch {
+            # Explicit getter calls wrap the native error in PowerShell method
+            # exceptions. Match its numeric code, not localized message text.
+            $failure = $_.Exception
+            while ($failure -isnot [ComponentModel.Win32Exception] -and $failure.InnerException) {
+                $failure = $failure.InnerException
+            }
+            if ($failure -isnot [ComponentModel.Win32Exception] -or
+                $failure.NativeErrorCode -ne 299 -or $attempt -eq 40) { throw }
+            $module = $null
+        }
         if ($null -ne $module) {
             $executable = $module.get_FileName()
             if (![IO.Path]::IsPathFullyQualified($executable)) { throw 'Process executable inspection is incomplete.' }
