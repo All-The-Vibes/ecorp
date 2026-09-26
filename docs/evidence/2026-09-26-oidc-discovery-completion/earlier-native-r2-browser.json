@@ -1,0 +1,37 @@
+{
+  "issue": 270,
+  "phase": "prepare",
+  "status": "failed",
+  "started_at_utc": "2026-09-26T12:45:00.130Z",
+  "source_head": "bdde15b25ac80139834549656e8e90f95b8d4547",
+  "issuer": "https://localhost:18971/tenant/v2.0",
+  "server": "http://127.0.0.1:18970",
+  "web": "http://127.0.0.1:15970",
+  "assurance": "Production mode with HTTPS path issuer and ephemeral synthetic identities. Deterministic fake-process adapter. Native artifact transport through an owned HTTPS fixture; no real Entra sign-in, AWS authentication, cloud durability, deployment or human review claim.",
+  "http_results": [
+    {
+      "method": "GET",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/snapshot?actor_id=00000000-0000-4000-8000-000000000011",
+      "status": 401,
+      "expected": 401,
+      "identity": null
+    },
+    {
+      "method": "GET",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/snapshot?actor_id=00000000-0000-4000-8000-000000000011",
+      "status": 401,
+      "expected": 401,
+      "identity": "invalid"
+    },
+    {
+      "method": "GET",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/snapshot?actor_id=00000000-0000-4000-8000-000000000012",
+      "status": 403,
+      "expected": 403,
+      "identity": 0
+    }
+  ],
+  "page_errors": [],
+  "failure": "Unexpected status for /api/corps/00000000-0000-4000-8000-000000000001/snapshot?actor_id=00000000-0000-4000-8000-000000000013\n\n200 !== 403\n",
+  "finished_at_utc": "2026-09-26T12:45:00.283Z"
+}

@@ -157,9 +157,17 @@ impl AuthService {
                 "production OIDC issuer must use https; use --allow-insecure-oidc only for isolated tests"
             ));
         }
-        let discovery_url = issuer_url
-            .join(".well-known/openid-configuration")
-            .context("construct OIDC discovery URL")?;
+        // OIDC appends discovery to the full issuer path. A relative URL join
+        // would replace the last segment (for example Entra's `v2.0`).
+        let mut discovery_url = issuer_url;
+        discovery_url
+            .path_segments_mut()
+            .map_err(|_| anyhow!("construct OIDC discovery URL: issuer cannot be a base URL"))?
+            .pop_if_empty()
+            .extend([".well-known", "openid-configuration"]);
+        // Preserve the prior relative join's query/fragment clearing behavior.
+        discovery_url.set_query(None);
+        discovery_url.set_fragment(None);
         let discovery = client
             .get(discovery_url)
             .send()
@@ -314,6 +322,160 @@ mod tests {
     }
 
     use super::*;
+    use axum::{Json, Router, routing::get};
+    use serde_json::json;
+
+    struct DiscoveryFixture {
+        issuer: String,
+        server: tokio::task::JoinHandle<()>,
+    }
+
+    impl Drop for DiscoveryFixture {
+        fn drop(&mut self) {
+            self.server.abort();
+        }
+    }
+
+    async fn discovery_fixture(path: &str, mismatched_issuer: bool) -> DiscoveryFixture {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind test-owned discovery endpoint");
+        let issuer = format!("http://{}{path}", listener.local_addr().unwrap());
+        let discovered_issuer = if mismatched_issuer {
+            format!("{issuer}/different-issuer")
+        } else {
+            issuer.clone()
+        };
+        let document_path = format!("{path}/.well-known/openid-configuration");
+        let app = Router::new().route(
+            &document_path,
+            get(move || {
+                let discovered_issuer = discovered_issuer.clone();
+                async move {
+                    Json(json!({
+                        "issuer": discovered_issuer,
+                        "userinfo_endpoint": "https://identity.example.test/userinfo"
+                    }))
+                }
+            }),
+        );
+        let server = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+        DiscoveryFixture { issuer, server }
+    }
+
+    async fn assert_discovery_at_issuer_path(path: &str) {
+        let fixture = discovery_fixture(path, false).await;
+        for suffix in ["", "/"] {
+            let auth = AuthService::initialize(
+                ServerMode::Production,
+                Some(format!("{}{suffix}", fixture.issuer)),
+                true,
+            )
+            .await
+            .unwrap_or_else(|error| panic!("discovery for {path:?}{suffix} failed: {error:#}"));
+            assert_eq!(auth.mode(), ServerMode::Production);
+            assert_eq!(auth.issuer.as_deref(), Some(fixture.issuer.as_str()));
+            assert_eq!(
+                auth.userinfo_endpoint.unwrap().as_str(),
+                "https://identity.example.test/userinfo"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn discovery_supports_root_issuer_with_or_without_trailing_slash() {
+        assert_discovery_at_issuer_path("").await;
+    }
+
+    #[tokio::test]
+    async fn discovery_preserves_nested_issuer_path() {
+        assert_discovery_at_issuer_path("/realms/ecorp").await;
+    }
+
+    #[tokio::test]
+    async fn discovery_preserves_entra_v2_issuer_path() {
+        assert_discovery_at_issuer_path("/00000000-0000-4000-8000-000000000001/v2.0").await;
+    }
+
+    #[tokio::test]
+    async fn discovery_preserves_percent_encoded_issuer_path() {
+        assert_discovery_at_issuer_path("/realms/ecorp%20test").await;
+    }
+
+    #[tokio::test]
+    async fn discovery_still_rejects_mismatched_issuer() {
+        let fixture = discovery_fixture("", true).await;
+        let result =
+            AuthService::initialize(ServerMode::Production, Some(fixture.issuer.clone()), true)
+                .await;
+        let error = result.err().expect("a foreign issuer must be rejected");
+        assert!(error.to_string().contains("OIDC discovery issuer mismatch"));
+    }
+
+    #[tokio::test]
+    async fn production_still_requires_https_without_test_override() {
+        let result = AuthService::initialize(
+            ServerMode::Production,
+            Some("http://127.0.0.1:1/tenant/v2.0".to_owned()),
+            false,
+        )
+        .await;
+        let error = result
+            .err()
+            .expect("plaintext production issuer must be rejected");
+        assert!(
+            error
+                .to_string()
+                .contains("production OIDC issuer must use https")
+        );
+    }
+
+    #[tokio::test]
+    async fn development_does_not_require_discovery() {
+        let auth = AuthService::initialize(ServerMode::Development, None, false)
+            .await
+            .unwrap();
+        assert_eq!(auth.mode(), ServerMode::Development);
+        assert!(auth.issuer.is_none());
+        assert!(auth.userinfo_endpoint.is_none());
+    }
+
+    #[tokio::test]
+    async fn discovery_drops_query_and_fragment_from_metadata_request() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind test-owned discovery endpoint");
+        let issuer = format!(
+            "http://{}/realms/ecorp?query=preserved#fragment",
+            listener.local_addr().unwrap()
+        );
+        let discovered_issuer = issuer.clone();
+        let document_path = "/realms/ecorp/.well-known/openid-configuration";
+        let app = Router::new().route(
+            document_path,
+            get(move |uri: axum::http::Uri| {
+                let discovered_issuer = discovered_issuer.clone();
+                async move {
+                    assert_eq!(uri.path_and_query().unwrap().as_str(), document_path);
+                    Json(json!({
+                        "issuer": discovered_issuer,
+                        "userinfo_endpoint": "https://identity.example.test/userinfo"
+                    }))
+                }
+            }),
+        );
+        let server = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+        let fixture = DiscoveryFixture { issuer, server };
+        let auth =
+            AuthService::initialize(ServerMode::Production, Some(fixture.issuer.clone()), true)
+                .await
+                .unwrap();
+        assert_eq!(auth.issuer.as_deref(), Some(fixture.issuer.as_str()));
+    }
 
     #[test]
     fn role_matrix_is_fail_closed() {

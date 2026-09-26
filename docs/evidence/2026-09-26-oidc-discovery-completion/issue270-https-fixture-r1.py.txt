@@ -1,0 +1,118 @@
+"""Owned HTTPS OIDC and artifact transport fixtures; no real-provider claim."""
+import argparse
+import datetime
+import hashlib
+import http.server
+import json
+from pathlib import Path
+import ssl
+import threading
+from urllib.parse import parse_qs, unquote, urlsplit
+from xml.sax.saxutils import escape
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--root", required=True)
+args = parser.parse_args()
+root = Path(args.root).resolve()
+config = json.loads((root / "credentials" / "provider.json").read_text())
+issuer = config["issuer"]
+bucket = config["bucket"]
+objects = {}
+lock = threading.Lock()
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
+    def log_message(self, *_):
+        pass
+
+    def reply(self, status, body=b"", media="application/json", extra=None):
+        self.send_response(status)
+        self.send_header("Content-Type", media)
+        self.send_header("Content-Length", str(len(body)))
+        for key, value in (extra or {}).items():
+            self.send_header(key, value)
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
+        # No headers, queries, tokens, credential identifiers or bodies enter logs.
+        with lock:
+            with (root / "evidence" / "provider-calls.jsonl").open("a") as stream:
+                stream.write(json.dumps({"time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "method": self.command, "path": urlsplit(self.path).path, "status": status}) + "\n")
+
+    def do_GET(self):
+        path = urlsplit(self.path).path
+        if path == urlsplit(issuer).path + "/.well-known/openid-configuration":
+            return self.reply(200, json.dumps({"issuer": issuer, "userinfo_endpoint": issuer + "/userinfo"}).encode())
+        if path == urlsplit(issuer).path + "/userinfo":
+            token = self.headers.get("Authorization", "").removeprefix("Bearer ")
+            user = next((item for item in config["users"] if item["token"] == token), None)
+            if not user:
+                return self.reply(401, b'{"error":"invalid_token"}')
+            return self.reply(200, json.dumps({"sub": user["subject"], "email": user["email"]}).encode())
+        return self.storage()
+
+    def do_PUT(self):
+        return self.storage()
+
+    def do_HEAD(self):
+        return self.storage()
+
+    def do_DELETE(self):
+        return self.storage()
+
+    def storage(self):
+        parsed = urlsplit(self.path)
+        prefix = "/" + bucket
+        if parsed.path != prefix and not parsed.path.startswith(prefix + "/"):
+            return self.reply(404, b"{}")
+        # Artifact transport only: recognize the scoped fixture key. This fixture
+        # does not qualify AWS SigV4 authentication or cloud storage durability.
+        auth = self.headers.get("Authorization", "")
+        if not auth.startswith("AWS4-HMAC-SHA256 ") or "Credential=" + config["access_key"] + "/" not in auth:
+            return self.reply(403, b"<Error><Code>AccessDenied</Code></Error>", "application/xml")
+        key = unquote(parsed.path[len(prefix):].lstrip("/"))
+        query = parse_qs(parsed.query)
+        if self.command == "GET" and not key:
+            wanted = query.get("prefix", [""])[0]
+            with lock:
+                found = [(k, v) for k, v in objects.items() if k.startswith(wanted)]
+            entries = "".join("<Contents><Key>" + escape(k) + "</Key><LastModified>2026-09-26T00:00:00.000Z</LastModified>"
+                + "<ETag>&quot;" + hashlib.md5(v).hexdigest() + "&quot;</ETag><Size>" + str(len(v)) + "</Size></Contents>" for k, v in found)
+            xml = '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>' + bucket + '</Name><IsTruncated>false</IsTruncated>' + entries + '</ListBucketResult>'
+            return self.reply(200, xml.encode(), "application/xml")
+        if not key:
+            return self.reply(400, b"{}")
+        if self.command == "PUT":
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 <= length <= 20_000_000 or self.headers.get("Transfer-Encoding"):
+                return self.reply(400, b"{}")
+            content = self.rfile.read(length)
+            with lock:
+                objects[key] = content
+                (root / "objects" / hashlib.sha256(key.encode()).hexdigest()).write_bytes(content)
+            return self.reply(200, extra={"ETag": '"' + hashlib.md5(content).hexdigest() + '"'})
+        if self.command == "DELETE":
+            with lock:
+                objects.pop(key, None)
+            return self.reply(204)
+        with lock:
+            content = objects.get(key)
+        if content is None:
+            return self.reply(404, b"<Error><Code>NoSuchKey</Code></Error>", "application/xml")
+        return self.reply(200, content, "application/octet-stream", {
+            "ETag": '"' + hashlib.md5(content).hexdigest() + '"',
+            "Last-Modified": "Sat, 26 Sep 2026 00:00:00 GMT",
+        })
+
+
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.minimum_version = ssl.TLSVersion.TLSv1_2
+context.load_cert_chain(root / "credentials" / "cert.pem", root / "credentials" / "key.pem")
+server = http.server.ThreadingHTTPServer(("127.0.0.1", urlsplit(issuer).port), Handler)
+server.daemon_threads = True
+server.socket = context.wrap_socket(server.socket, server_side=True)
+print("Owned HTTPS provider fixture ready; synthetic identity and artifact transport only.", flush=True)
+server.serve_forever()
