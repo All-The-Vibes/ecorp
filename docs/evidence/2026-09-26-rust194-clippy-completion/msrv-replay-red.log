@@ -1,0 +1,135 @@
+    Checking crony-server v0.1.0 (<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\crates\crony-server)
+    Checking crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\crates\crony-store)
+error: this boolean expression can be simplified
+    --> crates\crony-server\src\main.rs:8974:13
+     |
+8974 | /             !send_command_to_current_runner(
+8975 | |                 &runners,
+8976 | |                 "runner",
+8977 | |                 epoch,
+...    |
+8980 | |             .is_ok()
+     | |____________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.94.0/index.html#nonminimal_bool
+     = note: `-D clippy::nonminimal-bool` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::nonminimal_bool)]`
+help: try
+     |
+8974 ~             send_command_to_current_runner(
+8975 +                 &runners,
+8976 +                 "runner",
+8977 +                 epoch,
+8978 +                 reconnect_test_command(after_capture_run),
+8979 +             ).is_err()
+     |
+
+error: this boolean expression can be simplified
+    --> crates\crony-server\src\main.rs:9040:13
+     |
+9040 | /             !send_command_to_current_runner(
+9041 | |                 &runners,
+9042 | |                 "runner",
+9043 | |                 epoch,
+...    |
+9046 | |             .is_ok()
+     | |____________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.94.0/index.html#nonminimal_bool
+help: try
+     |
+9040 ~             send_command_to_current_runner(
+9041 +                 &runners,
+9042 +                 "runner",
+9043 +                 epoch,
+9044 +                 reconnect_test_command(recovery_run),
+9045 +             ).is_err()
+     |
+
+error: this boolean expression can be simplified
+    --> crates\crony-server\src\main.rs:9087:13
+     |
+9087 | /             !send_command_to_current_runner(
+9088 | |                 &runners,
+9089 | |                 "runner",
+9090 | |                 old_epoch,
+...    |
+9093 | |             .is_ok()
+     | |____________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.94.0/index.html#nonminimal_bool
+help: try
+     |
+9087 ~             send_command_to_current_runner(
+9088 +                 &runners,
+9089 +                 "runner",
+9090 +                 old_epoch,
+9091 +                 reconnect_test_command(run_id),
+9092 +             ).is_err()
+     |
+
+error: this boolean expression can be simplified
+    --> crates\crony-server\src\main.rs:9097:13
+     |
+9097 | /             !send_command_to_current_runner(
+9098 | |                 &runners,
+9099 | |                 "runner",
+9100 | |                 old_epoch,
+...    |
+9103 | |             .is_ok()
+     | |____________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.94.0/index.html#nonminimal_bool
+help: try
+     |
+9097 ~             send_command_to_current_runner(
+9098 +                 &runners,
+9099 +                 "runner",
+9100 +                 old_epoch,
+9101 +                 reconnect_test_command(run_id),
+9102 +             ).is_err()
+     |
+
+error: this boolean expression can be simplified
+    --> crates\crony-server\src\main.rs:9142:13
+     |
+9142 | /             !send_command_to_current_runner(
+9143 | |                 &runners,
+9144 | |                 "runner",
+9145 | |                 epoch,
+...    |
+9148 | |             .is_ok()
+     | |____________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.94.0/index.html#nonminimal_bool
+help: try
+     |
+9142 ~             send_command_to_current_runner(
+9143 +                 &runners,
+9144 +                 "runner",
+9145 +                 epoch,
+9146 +                 reconnect_test_command(run_id),
+9147 +             ).is_err()
+     |
+
+error: could not compile `crony-server` (bin "crony-server" test) due to 5 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: this boolean expression can be simplified
+    --> crates\crony-store\src\state_audit_tests.rs:1210:20
+     |
+1210 |                   && !self
+     |  ____________________^
+1211 | |                     .rewrite_after_writes
+1212 | |                     .is_some_and(|threshold| *self.writes.lock().unwrap() >= threshold))
+     | |_______________________________________________________________________________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.94.0/index.html#nonminimal_bool
+     = note: `-D clippy::nonminimal-bool` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::nonminimal_bool)]`
+help: try
+     |
+1210 ~                 && self
+1211 ~                     .rewrite_after_writes.is_none_or(|threshold| *self.writes.lock().unwrap() < threshold))
+     |
+
+error: could not compile `crony-store` (lib test) due to 1 previous error
