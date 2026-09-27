@@ -472,7 +472,7 @@ boundary; it is not OS sandbox attestation, and verifier commands retain their e
 authority. The native harness remains responsible for its supported execution and permissions.
 
 The server signs the artifact role, filename, exact source identity and deliverable metadata with
-the content digest. New source-deliverable assignments require the canonical-verification runner
+the content digest. New source-deliverable assignments require the `canonical-source-verification-v1` runner
 capability. A run cannot pass until its ready source object links the exact verification digest and
 exported-byte digest, and its `run.verification_passed` event and every persisted check match the signed source
 identity within the same Corp, task and run. Independent manual gates still apply. Historical
