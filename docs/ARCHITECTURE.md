@@ -1216,13 +1216,18 @@ membership; an out-of-room actor receives no work-item source metadata or policy
 
 The trusted publisher downloads the signed deliverable and imports its embedded Git bundle into a
 temporary bare repository. It verifies the bundle digest, source branch provenance, exact commit,
-authorized base ancestry, and current remote base before adopting or pushing the branch. Existing
+authorized base ancestry, and current remote base before adopting or pushing the branch. Canonical
+deliverables must also have valid paired `verified_tree` and `source_verification` metadata bound to
+that base, and the imported commit's native Git tree must equal that verified tree. The candidate
+commit may have different export metadata; its tree is the source identity. Existing
 matching branches and pull requests are recovered; conflicting remote identities fail closed and
 branches are never force-pushed. The branch passes `git check-ref-format --branch` before durable
 start, with a defensive server-side branch-shape check as a second boundary.
-The runner bundles a short run-scoped ref pointing to the already validated workspace branch rather
-than the worktree's possibly detached `HEAD`; the publisher accepts exactly one matching legacy
-HEAD or run-scoped bundle head before import.
+The runner bundles a short ref containing the run ID and preparation owner, pointing to the verified
+export commit independently of the worktree's possibly detached `HEAD`. The publisher accepts exactly
+one matching head. Ownership-qualified refs require canonical metadata; historical `HEAD` and
+run-only refs may omit both canonical fields. Any supplied canonical field is validated, so null,
+partial or malformed identities cannot fall back to the historical contract.
 
 An adopted pull request must report the exact verified `headRefOid`, the target repository owner,
 and `isCrossRepository = false`; a same-named branch from a fork is ignored and cannot advance

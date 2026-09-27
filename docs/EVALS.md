@@ -88,6 +88,13 @@ rejection of a CRLF-only migration checksum, successful canonical-checksum compl
 downloaded signed-bundle verification, and the actual checker in its clean exported commit.
 Deterministic protocol fixtures do not establish real-provider inference or human review.
 
+`cargo test --locked -p crony-cli publication_import -- --test-threads=1` exercises publication
+import with real local Git bundles. It checks SHA-1 and SHA-256 tree binding, export commits with
+different metadata and the same tree, mismatched trees, malformed or partial canonical identities,
+and legacy documents that omit both identity fields. Ownership-qualified bundle refs require the
+canonical identity. These local import regressions complement the complete server/runner/CLI/Git
+publication drill below; they do not exercise real GitHub effects.
+
 ### Claim-authority contribution (#161)
 
 The [claim-authority contract](FACTORY_CLAIM_AUTHORITY.md) and September 13, 2026
