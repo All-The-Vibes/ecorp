@@ -1,0 +1,18 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.40s
+     Running unittests src\main.rs (target\debug\deps\crony_runner-bef4c6df3726e249.exe)
+
+running 1 test
+
+thread 'deliverable::canonical_tests::canonical_private_git_timeout_reaps_descendants_before_snapshot_cleanup' (18576) panicked at crates\crony-runner\src\deliverable_verification_tests.rs:188:5:
+private Git descendant still owns the snapshot: Err(Os { code: 32, kind: Uncategorized, message: "The process cannot access the file because it is being used by another process." })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test deliverable::canonical_tests::canonical_private_git_timeout_reaps_descendants_before_snapshot_cleanup ... FAILED
+
+failures:
+
+failures:
+    deliverable::canonical_tests::canonical_private_git_timeout_reaps_descendants_before_snapshot_cleanup
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 276 filtered out; finished in 8.04s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

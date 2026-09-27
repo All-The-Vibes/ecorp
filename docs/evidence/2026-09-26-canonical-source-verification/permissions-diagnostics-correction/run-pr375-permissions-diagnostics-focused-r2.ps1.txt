@@ -1,0 +1,61 @@
+#requires -Version 7.5
+param([Parameter(Mandatory)][ValidateSet('red','green')][string]$Mode)
+$ErrorActionPreference='Stop'
+$PSNativeCommandUseErrorActionPreference=$false
+$repo='<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp'
+$prefix="pr375-permissions-diagnostics-$Mode-r2"
+$receiptPath=Join-Path $PSScriptRoot "$prefix.json"
+if(Test-Path -LiteralPath $receiptPath){throw 'Preserve the existing focused receipt.'}
+$key=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes((Join-Path $repo 'target').ToLowerInvariant())))
+$mutex=[Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$held=$false
+$record=[ordered]@{pr=375;mode=$Mode;status='running';started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');scope='Retrospective canary diagnostics and real-file permission regressions. The red runner extracts the prior open/copy behavior unchanged and adds deterministic tests; this is not historical development or full-stack acceptance.';checks=@()}
+function Save { [IO.File]::WriteAllText($receiptPath,($record|ConvertTo-Json -Depth 15)+"`n") }
+try {
+ try{$held=$mutex.WaitOne(1000)}catch [Threading.AbandonedMutexException]{$held=$true}
+ if(!$held){throw 'Another process owns this Cargo target.'}
+ foreach($name in @([Environment]::GetEnvironmentVariables('Process').Keys)){
+  if($name -match '^(CRONY_|ECORP_|GH_|GITHUB_|AZURE_|GIT_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')){[Environment]::SetEnvironmentVariable($name,$null,'Process')}
+ }
+ $env:PATH='<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64;'+$env:PATH
+ $env:CARGO_BUILD_JOBS='2';$env:CARGO_NET_OFFLINE='true';$env:RUST_TEST_THREADS='1';$env:GIT_TERMINAL_PROMPT='0'
+ $record.head=(& git -C $repo rev-parse HEAD).Trim()
+ $record.head_tree=(& git -C $repo rev-parse 'HEAD^{tree}').Trim()
+ $patch=Join-Path $PSScriptRoot "$prefix.patch"
+ if(Test-Path -LiteralPath $patch){throw 'Preserve focused patch.'}
+ git -C $repo diff --binary --no-ext-diff --no-textconv HEAD > $patch
+ if($LASTEXITCODE){throw 'Source capture failed.'}
+ $record.patch=@{path=$patch;sha256=(Get-FileHash -LiteralPath $patch).Hash.ToLowerInvariant()}
+ $record.source_files=@('crates/crony-runner/src/deliverable_verification.rs','tools/task_graph_fixture.mjs','tools/task_graph_fixture.test.mjs')|ForEach-Object {@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $repo $_)).Hash.ToLowerInvariant()}}
+ Save
+ Push-Location -LiteralPath $repo
+ try {
+  foreach($step in @(
+   @{name='diagnostics';program='node';arguments=@('--test','--test-reporter=tap','--test-concurrency=1','tools/task_graph_fixture.test.mjs')},
+   @{name='native-permissions';program='cargo';arguments=@('test','--locked','--offline','-p','crony-runner','canonical_ignored_input_','--','--test-threads=1','--nocapture')}
+  )){
+   $log=Join-Path $PSScriptRoot "$prefix-$($step.name).log"
+   if(Test-Path -LiteralPath $log){throw 'Preserve focused log.'}
+   $started=[DateTimeOffset]::UtcNow
+   $program=$step.program;$arguments=$step.arguments
+   & $program @arguments *> $log
+   $code=$LASTEXITCODE
+   $logText=Get-Content -Raw -LiteralPath $log
+   $summaries=@([regex]::Matches($logText,'test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out')|ForEach-Object {@{passed=[int]$_.Groups[1].Value;failed=[int]$_.Groups[2].Value;ignored=[int]$_.Groups[3].Value;filtered=[int]$_.Groups[5].Value}})
+   $nodeCounts=@{}
+   foreach($match in [regex]::Matches($logText,'(?m)^# (tests|suites|pass|fail|cancelled|skipped|todo) (\d+)\r?$')){$nodeCounts[$match.Groups[1].Value]=[int]$match.Groups[2].Value}
+   $record.checks+=@{name=$step.name;program=$program;arguments=$arguments;started_at_utc=$started.ToString('o');finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o');exit_code=$code;log=$log;sha256=(Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant();rust_summaries=$summaries;node_counts=$nodeCounts}
+   Save
+   Write-Output "$($step.name) exit=$code"
+  }
+ } finally {Pop-Location}
+ $record.status=if(@($record.checks|Where-Object {$_.exit_code -ne 0}).Count){'failed'}else{'passed'}
+} catch {$record.status='failed';$record.failure=$_.Exception.Message}
+finally {
+ $record.source_unchanged=@($record.source_files|Where-Object {$_.sha256 -cne (Get-FileHash -LiteralPath (Join-Path $repo $_.path)).Hash.ToLowerInvariant()}).Count -eq 0
+ $record.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+ Save
+ if($held){$mutex.ReleaseMutex()};$mutex.Dispose()
+}
+[pscustomobject]$record|Select-Object status,head,source_unchanged,checks|ConvertTo-Json -Depth 10
+if($record.status -ne 'passed'){exit 1}

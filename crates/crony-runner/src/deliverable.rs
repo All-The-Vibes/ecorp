@@ -1,6 +1,6 @@
 use std::{
     ffi::OsString,
-    path::{Component, Path},
+    path::{Component, Path, PathBuf},
     process::{Output, Stdio},
     time::Duration,
 };
@@ -17,7 +17,17 @@ use sha2::{Digest, Sha256};
 use tokio::process::Command;
 use uuid::Uuid;
 
+#[cfg(test)]
+use crate::verifier::SourceVerification;
 use crate::{adapter::AdapterArtifact, verifier::VerificationReport, workspace::WorkspaceLease};
+
+#[path = "deliverable_verification.rs"]
+mod verification;
+pub(crate) use verification::isolate_git_environment;
+
+#[cfg(test)]
+#[path = "deliverable_verification_tests.rs"]
+mod canonical_tests;
 
 const GIT_TIMEOUT: Duration = Duration::from_secs(30);
 const MAX_DELIVERABLE_BYTES: usize = 16_777_216;
@@ -34,6 +44,87 @@ pub struct ExportedDeliverable {
     pub branch: String,
     pub git_bundle_sha256: Option<String>,
     pub publication_ready: bool,
+    pub verified_tree: String,
+}
+
+/// A single native Git index is selected before checks and never staged again at export.
+pub struct PreparedDeliverable {
+    run_id: Uuid,
+    spec: DeliverableSpec,
+    workspace: WorkspaceLease,
+    workspace_root: PathBuf,
+    workspace_directory: cap_std::fs::Dir,
+    index: PathBuf,
+    bundle: PathBuf,
+    bundle_ref: String,
+    tree: String,
+    original_head: String,
+    preserve_head_commit: Option<String>,
+    changes: Vec<(String, String)>,
+    provider_artifacts: Vec<AdapterArtifact>,
+    verified_report_sha256: Option<String>,
+}
+
+impl Drop for PreparedDeliverable {
+    fn drop(&mut self) {
+        // Both names contain an unpredictable owner nonce. Never reuse/remove a prior run's files.
+        for path in [&self.index, &self.bundle] {
+            if let Err(error) = std::fs::remove_file(path)
+                && error.kind() != std::io::ErrorKind::NotFound
+            {
+                tracing::warn!(path = %path.display(), %error, "deliverable scratch cleanup failed");
+            }
+        }
+    }
+}
+
+impl PreparedDeliverable {
+    pub async fn verify(
+        &mut self,
+        policy: &crony_domain::VerificationPolicy,
+        artifacts: &[AdapterArtifact],
+        cancellation: &mut tokio::sync::watch::Receiver<bool>,
+    ) -> Result<Option<VerificationReport>> {
+        self.verified_report_sha256 = None;
+        let report = verification::verify(self, policy, artifacts, cancellation).await?;
+        self.verified_report_sha256 = report
+            .as_ref()
+            .filter(|report| report.passed)
+            .map(|report| {
+                serde_json::to_vec(report).map(|bytes| hex::encode(Sha256::digest(bytes)))
+            })
+            .transpose()?;
+        Ok(report)
+    }
+
+    pub async fn export(&self, report: &VerificationReport) -> Result<ExportedDeliverable> {
+        if !report.passed
+            || report.source.is_none()
+            || self.verified_report_sha256.as_ref()
+                != Some(&hex::encode(Sha256::digest(serde_json::to_vec(report)?)))
+            || report
+                .source
+                .as_ref()
+                .is_none_or(|source| !source.is_valid() || source.tree != self.tree)
+        {
+            return Err(anyhow!(
+                "deliverable requires a passing report for its exact Git candidate"
+            ));
+        }
+        let tree = git_text(&self.workspace_root, &self.index, &["write-tree".into()]).await?;
+        let head = git_text(
+            &self.workspace_root,
+            &self.index,
+            &["rev-parse".into(), "HEAD^{commit}".into()],
+        )
+        .await?;
+        if tree != self.tree || head != self.original_head {
+            return Err(anyhow!(
+                "deliverable candidate or original HEAD changed during verification"
+            ));
+        }
+        export_prepared(self, report).await
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -54,6 +145,7 @@ struct TemporaryExportPaths<'a> {
 }
 
 #[allow(clippy::too_many_arguments)]
+#[cfg(test)]
 pub async fn export(
     run_id: Uuid,
     spec: &DeliverableSpec,
@@ -63,65 +155,123 @@ pub async fn export(
     write_scope: &[String],
     preserve_head_commit: Option<&str>,
 ) -> Result<ExportedDeliverable> {
+    // Low-level export tests supply fixture reports. Production must call prepare -> verify -> export.
+    let mut prepared = prepare(
+        run_id,
+        spec,
+        workspace,
+        provider_artifacts,
+        write_scope,
+        preserve_head_commit,
+    )
+    .await?;
+    let mut report = report.clone();
+    report.source = Some(SourceVerification {
+        tree: prepared.tree.clone(),
+        base_commit: workspace.base_commit.clone(),
+        candidate_commit: prepared.original_head.clone(),
+        ignored_input_sha256: hex::encode(Sha256::digest([])),
+        ignored_input_count: 0,
+        ignored_input_bytes: 0,
+    });
+    prepared.verified_report_sha256 =
+        Some(hex::encode(Sha256::digest(serde_json::to_vec(&report)?)));
+    prepared.export(&report).await
+}
+
+pub async fn prepare(
+    run_id: Uuid,
+    spec: &DeliverableSpec,
+    workspace: &WorkspaceLease,
+    provider_artifacts: &[AdapterArtifact],
+    write_scope: &[String],
+    preserve_head_commit: Option<&str>,
+) -> Result<PreparedDeliverable> {
     let workspace_root = tokio::fs::canonicalize(&workspace.path)
         .await
         .context("resolve deliverable worktree")?;
+    let owner = Uuid::new_v4().simple().to_string();
     let temporary_index = workspace
         .path
         .parent()
         .context("deliverable worktree has no managed parent")?
-        .join(format!(".ecorp-deliverable-{}.index", run_id.simple()));
+        .join(format!(
+            ".ecorp-deliverable-{}-{owner}.index",
+            run_id.simple()
+        ));
     let temporary_bundle = workspace
         .path
         .parent()
         .context("deliverable worktree has no managed parent")?
-        .join(format!(".ecorp-deliverable-{}.bundle", run_id.simple()));
-    let temporary_bundle_ref = format!("refs/ecorp/deliverables/{}", run_id.simple());
-    let _ = tokio::fs::remove_file(&temporary_index).await;
-    let _ = tokio::fs::remove_file(&temporary_bundle).await;
-
-    let temporary_paths = TemporaryExportPaths {
-        index: &temporary_index,
-        bundle: &temporary_bundle,
-        bundle_ref: &temporary_bundle_ref,
+        .join(format!(
+            ".ecorp-deliverable-{}-{owner}.bundle",
+            run_id.simple()
+        ));
+    let mut prepared = PreparedDeliverable {
+        run_id,
+        spec: spec.clone(),
+        workspace: workspace.clone(),
+        workspace_directory: cap_std::fs::Dir::open_ambient_dir(
+            &workspace_root,
+            cap_std::ambient_authority(),
+        )?,
+        workspace_root,
+        index: temporary_index,
+        bundle: temporary_bundle,
+        bundle_ref: format!("refs/ecorp/deliverables/{}-{owner}", run_id.simple()),
+        tree: String::new(),
+        original_head: String::new(),
+        preserve_head_commit: preserve_head_commit.map(str::to_owned),
+        changes: Vec::new(),
+        provider_artifacts: provider_artifacts.to_vec(),
+        verified_report_sha256: None,
     };
-    let result = export_with_index(
+    prepared.original_head = git_text(
+        &prepared.workspace_root,
+        &prepared.index,
+        &["rev-parse".into(), "HEAD^{commit}".into()],
+    )
+    .await?;
+    prepared.changes = select_index(
         spec,
         workspace,
-        &workspace_root,
-        report,
+        &prepared.workspace_root,
         provider_artifacts,
         write_scope,
         preserve_head_commit,
-        &temporary_paths,
+        &prepared.index,
     )
-    .await;
-    let _ = tokio::fs::remove_file(&temporary_index).await;
-    let _ = tokio::fs::remove_file(&temporary_bundle).await;
-    result
+    .await?;
+    prepared.tree = git_text(
+        &prepared.workspace_root,
+        &prepared.index,
+        &["write-tree".into()],
+    )
+    .await?;
+    Ok(prepared)
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn export_with_index(
+async fn select_index(
     spec: &DeliverableSpec,
     workspace: &WorkspaceLease,
     workspace_root: &Path,
-    report: &VerificationReport,
     provider_artifacts: &[AdapterArtifact],
     write_scope: &[String],
     preserve_head_commit: Option<&str>,
-    temporary_paths: &TemporaryExportPaths<'_>,
-) -> Result<ExportedDeliverable> {
+    index: &Path,
+) -> Result<Vec<(String, String)>> {
     for path in &spec.paths {
         validate_relative(path)?;
     }
-    #[cfg(windows)]
-    let index_base = preserve_head_commit.unwrap_or(&workspace.base_commit);
-    #[cfg(not(windows))]
-    let index_base = &workspace.base_commit;
+    let index_base = if cfg!(windows) {
+        preserve_head_commit.unwrap_or(&workspace.base_commit)
+    } else {
+        &workspace.base_commit
+    };
     git_success(
         workspace_root,
-        temporary_paths.index,
+        index,
         &[OsString::from("read-tree"), OsString::from(index_base)],
     )
     .await?;
@@ -136,13 +286,7 @@ async fn export_with_index(
             OsString::from(&workspace.base_commit),
             OsString::from("--"),
         ];
-        for (_, path) in changed_paths(
-            workspace_root,
-            temporary_paths.index,
-            &workspace.base_commit,
-        )
-        .await?
-        {
+        for (_, path) in changed_paths(workspace_root, index, &workspace.base_commit).await? {
             if !spec
                 .paths
                 .iter()
@@ -152,7 +296,7 @@ async fn export_with_index(
             }
         }
         if reset_args.len() > 4 {
-            git_success(workspace_root, temporary_paths.index, &reset_args).await?;
+            git_success(workspace_root, index, &reset_args).await?;
         }
     }
 
@@ -175,7 +319,7 @@ async fn export_with_index(
             add_args.push(OsString::from(path));
         }
     }
-    git_success(workspace_root, temporary_paths.index, &add_args).await?;
+    git_success(workspace_root, index, &add_args).await?;
 
     for artifact in provider_artifacts {
         let Ok(artifact_path) = tokio::fs::canonicalize(&artifact.path).await else {
@@ -187,7 +331,7 @@ async fn export_with_index(
         let relative = portable_path(path)?;
         git_success(
             workspace_root,
-            temporary_paths.index,
+            index,
             &[
                 OsString::from("reset"),
                 OsString::from("-q"),
@@ -199,14 +343,25 @@ async fn export_with_index(
         .await?;
     }
 
-    let changes = changed_paths(
-        workspace_root,
-        temporary_paths.index,
-        &workspace.base_commit,
-    )
-    .await?;
+    let changes = changed_paths(workspace_root, index, &workspace.base_commit).await?;
     reject_out_of_scope_changes(&changes, write_scope)?;
-    reject_unsafe_changes(workspace_root, temporary_paths.index, &changes).await?;
+    reject_unsafe_changes(workspace_root, index, &changes).await?;
+    Ok(changes)
+}
+
+async fn export_prepared(
+    prepared: &PreparedDeliverable,
+    report: &VerificationReport,
+) -> Result<ExportedDeliverable> {
+    let spec = &prepared.spec;
+    let workspace = &prepared.workspace;
+    let workspace_root = &prepared.workspace_root;
+    let changes = &prepared.changes;
+    let temporary_paths = TemporaryExportPaths {
+        index: &prepared.index,
+        bundle: &prepared.bundle,
+        bundle_ref: &prepared.bundle_ref,
+    };
     let verification_bytes =
         serde_json::to_vec(report).context("serialize verification report for linkage")?;
     let verification_sha256 = hex::encode(Sha256::digest(&verification_bytes));
@@ -214,15 +369,7 @@ async fn export_with_index(
     let should_commit =
         spec.commit_after_verification || spec.form == DeliverableForm::CommitBranch;
     let head_commit = if should_commit {
-        commit_index(
-            workspace_root,
-            temporary_paths.index,
-            workspace,
-            &verification_sha256,
-            &changes,
-            preserve_head_commit,
-        )
-        .await?
+        commit_prepared(prepared, &verification_sha256).await?
     } else {
         None
     };
@@ -232,11 +379,13 @@ async fn export_with_index(
         temporary_paths.index,
         &[
             OsString::from("diff"),
-            OsString::from("--cached"),
             OsString::from("--binary"),
             OsString::from("--full-index"),
+            OsString::from("--no-ext-diff"),
+            OsString::from("--no-textconv"),
             OsString::from("--no-color"),
             OsString::from(&workspace.base_commit),
+            OsString::from(&prepared.tree),
             OsString::from("--"),
         ],
     )
@@ -281,7 +430,8 @@ async fn export_with_index(
             let archived = archive_changes(
                 workspace_root,
                 temporary_paths.index,
-                &changes,
+                &prepared.tree,
+                changes,
                 include_content,
             )
             .await?;
@@ -292,6 +442,8 @@ async fn export_with_index(
                 "head_commit": head_commit,
                 "branch": workspace.branch,
                 "verification_sha256": verification_sha256,
+                "verified_tree": prepared.tree,
+                "source_verification": report.source,
                 "patch_sha256": hex::encode(Sha256::digest(&patch)),
                 "patch_base64": include_content.then(|| BASE64.encode(&patch)),
                 "git_bundle_sha256": git_bundle_sha256,
@@ -335,6 +487,7 @@ async fn export_with_index(
         branch: workspace.branch.clone(),
         git_bundle_sha256,
         publication_ready: spec.form == DeliverableForm::CommitBranch,
+        verified_tree: prepared.tree.clone(),
     })
 }
 
@@ -515,6 +668,7 @@ async fn reject_unsafe_changes(
 async fn archive_changes(
     workspace: &Path,
     index: &Path,
+    tree: &str,
     changes: &[(String, String)],
     include_content: bool,
 ) -> Result<Vec<ArchivedChange>> {
@@ -535,14 +689,28 @@ async fn archive_changes(
         let content = git_output(
             workspace,
             index,
-            &[OsString::from("show"), OsString::from(format!(":{path}"))],
+            &[
+                OsString::from("cat-file"),
+                OsString::from("blob"),
+                OsString::from(format!("{tree}:{path}")),
+            ],
         )
         .await?
         .stdout;
+        let mode = git_text(
+            workspace,
+            index,
+            &["ls-tree".into(), tree.into(), "--".into(), path.into()],
+        )
+        .await?
+        .split_whitespace()
+        .next()
+        .context("canonical tree omitted file mode")?
+        .to_owned();
         archived.push(ArchivedChange {
             path: path.clone(),
             status: status.clone(),
-            mode: Some(index_mode(workspace, index, path).await?),
+            mode: Some(mode),
             sha256: Some(hex::encode(Sha256::digest(&content))),
             bytes: Some(content.len()),
             media_type: Some(infer_media_type(path).to_owned()),
@@ -571,15 +739,15 @@ async fn index_mode(workspace: &Path, index: &Path, path: &str) -> Result<String
         .context("Git index omitted file mode")
 }
 
-async fn commit_index(
-    workspace: &Path,
-    index: &Path,
-    lease: &WorkspaceLease,
+async fn commit_prepared(
+    prepared: &PreparedDeliverable,
     verification_sha256: &str,
-    changes: &[(String, String)],
-    preserve_head_commit: Option<&str>,
 ) -> Result<Option<String>> {
-    let tree = git_text(workspace, index, &[OsString::from("write-tree")]).await?;
+    let workspace = &prepared.workspace_root;
+    let index = &prepared.index;
+    let lease = &prepared.workspace;
+    let tree = &prepared.tree;
+    let changes = &prepared.changes;
     let base_tree = git_text(
         workspace,
         index,
@@ -589,13 +757,8 @@ async fn commit_index(
         ],
     )
     .await?;
-    let old_head = git_text(
-        workspace,
-        index,
-        &[OsString::from("rev-parse"), OsString::from("HEAD^{commit}")],
-    )
-    .await?;
-    if let Some(expected_head) = preserve_head_commit {
+    let old_head = &prepared.original_head;
+    if let Some(expected_head) = prepared.preserve_head_commit.as_deref() {
         if old_head != expected_head {
             return Err(anyhow!(
                 "verifier-only deliverable expected head {expected_head}, found {old_head}"
@@ -610,14 +773,14 @@ async fn commit_index(
             ],
         )
         .await?;
-        if tree != expected_tree {
+        if tree != &expected_tree {
             return Err(anyhow!(
                 "verifier-only deliverable tree changed from preserved head {expected_head}"
             ));
         }
         return Ok(Some(expected_head.to_owned()));
     }
-    let commit = if tree == base_tree {
+    let commit = if tree == &base_tree {
         lease.base_commit.clone()
     } else {
         let message =
@@ -627,7 +790,7 @@ async fn commit_index(
             index,
             &[
                 OsString::from("commit-tree"),
-                OsString::from(&tree),
+                OsString::from(tree),
                 OsString::from("-p"),
                 OsString::from(&lease.base_commit),
                 OsString::from("-m"),
@@ -649,13 +812,15 @@ async fn commit_index(
             OsString::from("update-ref"),
             OsString::from(format!("refs/heads/{}", lease.branch)),
             OsString::from(&commit),
-            OsString::from(&old_head),
+            OsString::from(old_head),
         ],
     )
     .await?;
     if !changes.is_empty() {
         let mut command = Command::new("git");
-        remove_git_tracing(&mut command);
+        verification::clear_git_environment(&mut command);
+        #[cfg(windows)]
+        command.args(["-c", "core.longpaths=true"]);
         command
             .args(["reset", "--mixed", "HEAD", "--"])
             .args(changes.iter().map(|(_, path)| path))
@@ -860,11 +1025,16 @@ async fn git_text_with_env(
     env: &[(&str, &str)],
 ) -> Result<String> {
     let mut command = Command::new("git");
-    remove_git_tracing(&mut command);
+    verification::clear_git_environment(&mut command);
+    #[cfg(windows)]
+    command.args(["-c", "core.longpaths=true"]);
     command
         .args(args)
         .current_dir(workspace)
-        .env("GIT_INDEX_FILE", index)
+        .env(
+            "GIT_INDEX_FILE",
+            crate::workspace::normalize_path(index.to_path_buf()),
+        )
         .env("GIT_LITERAL_PATHSPECS", "1")
         .envs(env.iter().copied())
         .stdin(Stdio::null())
@@ -886,11 +1056,16 @@ async fn git_text_with_env(
 
 async fn git_output(workspace: &Path, index: &Path, args: &[OsString]) -> Result<Output> {
     let mut command = Command::new("git");
-    remove_git_tracing(&mut command);
+    verification::clear_git_environment(&mut command);
+    #[cfg(windows)]
+    command.args(["-c", "core.longpaths=true"]);
     command
         .args(args)
         .current_dir(workspace)
-        .env("GIT_INDEX_FILE", index)
+        .env(
+            "GIT_INDEX_FILE",
+            crate::workspace::normalize_path(index.to_path_buf()),
+        )
         .env("GIT_LITERAL_PATHSPECS", "1")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -904,17 +1079,6 @@ async fn git_output(workspace: &Path, index: &Path, args: &[OsString]) -> Result
         return Err(git_error(&output));
     }
     Ok(output)
-}
-
-fn remove_git_tracing(command: &mut Command) {
-    // Trace destinations can be source paths. Git must not create new inputs
-    // while selecting/exporting the tree that the verifier has checked.
-    for (name, _) in std::env::vars_os() {
-        let normalized = name.to_string_lossy().to_ascii_uppercase();
-        if normalized.starts_with("GIT_TRACE") || normalized == "GIT_CURL_VERBOSE" {
-            command.env_remove(name);
-        }
-    }
 }
 
 fn git_error(output: &Output) -> anyhow::Error {
@@ -975,6 +1139,7 @@ mod tests {
                 payload: json!({"sha256": "fixed"}),
             }],
             manual_gate: None,
+            source: None,
         };
         (root, lease, report)
     }
@@ -1004,6 +1169,7 @@ mod tests {
                 summary: "checker/exporter parity fixture".to_owned(),
                 checks: Vec::new(),
                 manual_gate: None,
+                source: None,
             };
             let exported = export(
                 Uuid::new_v4(),
@@ -1035,14 +1201,26 @@ mod tests {
             "GIT_TRACE2_PERF",
             "git_trace",
             "GiT_tRaCe2_EvEnT",
+            "GIT_CONFIG_COUNT",
         ] {
             let (root, lease, _) = fixture();
             let evidence = root.with_extension("evidence");
             let scratch = evidence.join("checker-scratch");
             fs::create_dir_all(&scratch).expect("create owned evidence");
-            fs::write(root.join("tracked.txt"), b"intentional change\n")
-                .expect("modify fixture source");
+            git(&root, &["config", "core.autocrlf", "false"]);
+            git(&root, &["config", "core.whitespace", "cr-at-eol"]);
+            let source_bytes: &[u8] = if name == "GIT_CONFIG_COUNT" {
+                b"intentional change\r\n"
+            } else {
+                b"intentional change\n"
+            };
+            fs::write(root.join("tracked.txt"), source_bytes).expect("modify fixture source");
             let trace = root.join("inherited-trace.txt");
+            let inherited_value = if name == "GIT_CONFIG_COUNT" {
+                OsString::from("1")
+            } else {
+                trace.as_os_str().to_owned()
+            };
             // Git expands Windows short-name aliases when reporting its root.
             // Use that same spelling for the checker's strict root validation.
             let checker_root = git(&root, &["rev-parse", "--show-toplevel"]);
@@ -1055,7 +1233,9 @@ mod tests {
                 .arg(&lease.base_commit)
                 .arg("--scratch-root")
                 .arg(&scratch)
-                .env(name, &trace)
+                .env(name, &inherited_value)
+                .env("GIT_CONFIG_KEY_0", "core.autocrlf")
+                .env("GIT_CONFIG_VALUE_0", "true")
                 .env("GIT_CURL_VERBOSE", "1")
                 .kill_on_drop(true);
             let checked = tokio::time::timeout(Duration::from_secs(60), check.output())
@@ -1084,7 +1264,9 @@ mod tests {
                 .env(CHILD_SOURCE, &root)
                 .env(CHILD_BASE, &lease.base_commit)
                 .env(CHILD_EVIDENCE, &evidence)
-                .env(name, &trace)
+                .env(name, &inherited_value)
+                .env("GIT_CONFIG_KEY_0", "core.autocrlf")
+                .env("GIT_CONFIG_VALUE_0", "true")
                 .env("GIT_CURL_VERBOSE", "1")
                 .kill_on_drop(true);
             let exported = tokio::time::timeout(Duration::from_secs(90), native.output())
@@ -1103,7 +1285,7 @@ mod tests {
             fs::write(
                 evidence.join("parity.json"),
                 serde_json::to_vec_pretty(&json!({
-                    "trace_environment": name,
+                    "inherited_git_environment": name,
                     "base": lease.base_commit,
                     "checker_tree": checked["candidateTree"],
                     "exporter_tree": tree,
@@ -1132,7 +1314,7 @@ mod tests {
             assert_eq!(git(&root, &["status", "--porcelain=v1"]), "");
             assert_eq!(
                 fs::read(root.join("tracked.txt")).expect("source bytes"),
-                b"intentional change\n"
+                source_bytes
             );
             // Preserve actual native export, diagnostics, and source fixtures,
             // including failures and any trace file produced by old code.

@@ -1,0 +1,131 @@
+{
+  "issue": 82,
+  "purpose": "Native canonical-source completion linkage, budget checkpoint regression and cache-policy admission on issue82 source",
+  "source_head": "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964",
+  "source_tree": "955cf9ef13f29efdbc28d28086775e2c8e43e6a6",
+  "source_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "crates/crony-runner/src/deliverable_verification_tests.rs",
+      "sha256": "e7a77f2ace2c740cdb1c4aeca628f6838669c88e10ee67d4ef16733a7acdd6d2"
+    },
+    {
+      "path": "crates/crony-runner/src/deliverable_verification.rs",
+      "sha256": "b96511af8f1f663c3e080b5cadf9824f391f686be7db0a195f656b5376eb06dd"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    },
+    {
+      "path": "tools/e2e_factory_controller.mjs",
+      "sha256": "986192a10f1d5421f8b3d5214c50039484316542cc4da4a7b4692dbdd76118e9"
+    }
+  ],
+  "source_binding": {
+    "schema_version": 1,
+    "source_head": "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964",
+    "source_branch": "codex/issue82-canonical-verification",
+    "source_tree": "9ddca9d6bbf522827f53a3a5d11554a10c96337a",
+    "source_files_sha256": "aa9ab3cac1caa586050ac64364d0a5f43f102be6d310e0443da35d47aea9c796",
+    "source_file_count": 6702,
+    "tracked_diff_sha256": "2cb203752a90ba61eda06dd417c154398055640a59f2e4d550e9d3e987741187",
+    "untracked_digests": [],
+    "canonical_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-canonical-r9.json",
+    "canonical_receipt_sha256": "612aa0ac946486e0f759db74e2d9d0ba5380ec0fae581abd40e734c8a157c31c",
+    "canonical_report_sha256": "b89d9eb80673bf39aa649d010121ad62dcfab1e84a2138512cb50174d11e354a",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "tested_tree": "9ddca9d6bbf522827f53a3a5d11554a10c96337a",
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-r11",
+  "started_at_utc": "2026-09-27T10:49:27.1591906Z",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r11-initdb.log",
+      "sha256": "df37b5736953f090520a21dc6c960542fbfb7a5a84f8e6e24c50283bdbff5873",
+      "counts": {
+        "ignored": 0,
+        "summaries": 0,
+        "failed": 0,
+        "passed": 0
+      }
+    },
+    {
+      "name": "budget-checkpoints-and-canonical-source-linkage-after-store-fix",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r11-budget-checkpoints.log",
+      "sha256": "659332445278bda1e71ed1ddd475c1a7b01c5164e46a193225d4937520cd9b4f",
+      "counts": {
+        "ignored": 0,
+        "summaries": 1,
+        "failed": 0,
+        "passed": 178
+      }
+    },
+    {
+      "name": "cache-admission-lifecycle",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r11-cache-admission.log",
+      "sha256": "70f5b247173c9b31c003020eb9db2295be12b4d15326c3c97e036798ec3751a6",
+      "counts": {
+        "ignored": 0,
+        "summaries": 2,
+        "failed": 0,
+        "passed": 12
+      }
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+  "authentication": {
+    "authenticated_query": true,
+    "delivery": "Private PGPASSFILE for clients. SQLx environment-only delivery is reduced assurance.",
+    "method": "scram-sha-256",
+    "wrong_password_rejected": true
+  },
+  "source_after": {
+    "schema_version": 1,
+    "source_head": "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964",
+    "source_branch": "codex/issue82-canonical-verification",
+    "source_tree": "9ddca9d6bbf522827f53a3a5d11554a10c96337a",
+    "source_files_sha256": "aa9ab3cac1caa586050ac64364d0a5f43f102be6d310e0443da35d47aea9c796",
+    "source_file_count": 6702,
+    "tracked_diff_sha256": "2cb203752a90ba61eda06dd417c154398055640a59f2e4d550e9d3e987741187",
+    "untracked_digests": [],
+    "canonical_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-canonical-r9.json",
+    "canonical_receipt_sha256": "612aa0ac946486e0f759db74e2d9d0ba5380ec0fae581abd40e734c8a157c31c",
+    "canonical_report_sha256": "b89d9eb80673bf39aa649d010121ad62dcfab1e84a2138512cb50174d11e354a",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-27T10:59:14.6524970Z"
+}

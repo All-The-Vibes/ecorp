@@ -1,0 +1,217 @@
+#requires -Version 7.5
+[CmdletBinding()]
+param([ValidatePattern('^r[0-9]+$')][string]$Revision = 'r7')
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp'
+$qa = "<USERPROFILE>\code\qa\pr375-factory-native-$Revision"
+$pg = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin'
+$nodeDirectory = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64'
+$python = '<USERPROFILE>\AppData\Local\Programs\Python\Python312\python.exe'
+$node = Join-Path $nodeDirectory 'node.exe'
+$checker = Join-Path $PSScriptRoot 'issue82-source-binding-r1.py'
+$canonical = Join-Path $PSScriptRoot 'issue82-canonical-r9.json'
+$buildPath = Join-Path $PSScriptRoot 'pr375-factory-native-build-r5.json'
+$receiptPath = Join-Path $PSScriptRoot "pr375-factory-native-$Revision.json"
+$driver = Join-Path $product 'tools/e2e_factory_controller.mjs'
+$serverPort = 18884
+$databasePort = 59087
+$generated = @('fake-github-factory-state.json','factory-invalid-verification-policy.json','factory-explicit-verification-policy.json','e2e-factory-controller.json')
+if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $receiptPath)) { throw 'Preserve existing native Factory fixtures and receipts.' }
+foreach ($file in $generated) {
+    if (Test-Path -LiteralPath (Join-Path $product "output/$file")) { throw "Preserve existing driver output $file." }
+}
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:PATH = "$nodeDirectory;$pg;$env:PATH"
+$env:GIT_TERMINAL_PROMPT = '0'
+$env:GCM_INTERACTIVE = 'Never'
+$env:GIT_CONFIG_COUNT = '1'
+$env:GIT_CONFIG_KEY_0 = 'core.longpaths'
+$env:GIT_CONFIG_VALUE_0 = 'true'
+$bindingText = & $python $checker $product $canonical
+if ($LASTEXITCODE) { throw 'Source must match canonical r9 validation before native execution.' }
+$binding = $bindingText | ConvertFrom-Json -AsHashtable
+$build = Get-Content -LiteralPath $buildPath -Raw | ConvertFrom-Json -AsHashtable -Depth 50
+if ($build.status -ne 'passed' -or !$build.source_unchanged -or
+    $build.source_binding.source_tree -cne $binding.source_tree -or
+    $build.source_binding.source_files_sha256 -cne $binding.source_files_sha256 -or
+    $build.binaries.Count -ne 3) { throw 'Require matching-source server, runner and CLI build.' }
+foreach ($binary in $build.binaries) {
+    if ((Get-FileHash -LiteralPath $binary.path).Hash.ToLowerInvariant() -cne $binary.sha256) { throw 'Built binary changed.' }
+}
+$ports = @(Get-NetTCPConnection -State Listen | Select-Object -ExpandProperty LocalPort)
+if ($ports -contains $serverPort -or $ports -contains $databasePort) { throw 'An existing process owns a requested test port.' }
+Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force
+$recordPath = Join-Path $qa 'ownership.json'
+$state = @{schema_version=2;workspace=$qa;purpose='pr375-factory-native';test_owned=$true;processes=@{};source=$product;source_binding=$binding}
+$receipt = [ordered]@{
+    pr=375;issue=82;status='running';started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');
+    source_binding=$binding;build_receipt=$buildPath;build_receipt_sha256=(Get-FileHash -LiteralPath $buildPath).Hash.ToLowerInvariant();
+    binaries=$build.binaries;qa_root=$qa;server="http://127.0.0.1:$serverPort";driver=$driver;
+    driver_sha256=(Get-FileHash -LiteralPath $driver).Hash.ToLowerInvariant();source_unchanged=$null;cleanup=@();
+    scope='Corrected Factory controller driver, independent native Git pack transfer and Git process cleanup, native Windows CLI/server/runner, fresh owned SCRAM PostgreSQL and deterministic fake-process child. The GitHub CLI is a local fixture: zero actual GitHub effects or vendor inference.';
+    fixture_correction='r2 and r3 timed out during private Git transfer and failed snapshot cleanup. r4 timed out during transfer but its cleanup succeeded. This revision uses native pack-objects with an explicit shallow base and reuses native Windows process ownership. It awaits teardown on every return and checks exported source separately from provider evidence. r5 completed its native run and both canonical checks, then observed active workspace disposition before finalization; its immediate preservation assertion failed. This revision polls persisted preservation with a bounded deadline and rejects removal. r6 reached the approval scenario but exceeded its 30-second deadline while the native run was still verifying with no verification evidence or source deliverable. It does not prove eventual verification or approval. This revision gives approval the same bounded 180-second allowance as mission completion because canonical verification precedes the durable approval request. Failed attempts remain preserved.';
+    acceptance='The complete controller must pass, exported source bytes must match, provider evidence must remain separate, and persisted verifier evidence must bind the exported Git tree.'
+}
+function Save { $receipt | ConvertTo-Json -Depth 60 | Set-Content -LiteralPath $receiptPath -Encoding utf8 }
+function Launch([string]$Role,[string]$Exe,[string[]]$ArgumentList,[string]$Cwd,[hashtable]$Environment) {
+    $state.processes[$Role] = Start-LocalOwnedProcess -Role $Role -Workspace $qa -FilePath $Exe -ArgumentList $ArgumentList -WorkingDirectory $Cwd -LogDirectory (Join-Path $qa 'logs') -Environment $Environment
+    Save-LocalStackState -Path $recordPath -State $state -Workspace $qa
+}
+function Wait-Ready([scriptblock]$Probe,[string]$Description) {
+    $deadline = [DateTime]::UtcNow.AddSeconds(60)
+    do { try { if (& $Probe) { return } } catch { }; Start-Sleep -Milliseconds 250 } while ([DateTime]::UtcNow -lt $deadline)
+    throw "$Description did not become ready."
+}
+Save
+$databasePassword = $null
+$serverEnv = $null
+try {
+    New-Item -ItemType Directory -Path $qa | Out-Null
+    $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+    & icacls.exe $qa /inheritance:r /grant:r ('*{0}:(OI)(CI)F' -f $sid) '*S-1-5-18:(OI)(CI)F' | Out-Null
+    if ($LASTEXITCODE) { throw 'Could not restrict private fixture directory.' }
+    foreach ($dir in @('logs','runner','credentials','connections','evidence')) {
+        New-Item -ItemType Directory -Path (Join-Path $qa $dir) | Out-Null
+    }
+    Save-LocalStackState -Path $recordPath -State $state -Workspace $qa
+    $databasePassword = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+    $passwordPath = Join-Path $qa 'credentials/postgres-password.txt'
+    $pgpassPath = Join-Path $qa 'credentials/pgpass.conf'
+    [IO.File]::WriteAllText($passwordPath,$databasePassword,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($pgpassPath,(('127.0.0.1:{0}:*:pr375_qa:{1}' -f $databasePort,$databasePassword) + [Environment]::NewLine),[Text.UTF8Encoding]::new($false))
+    & (Join-Path $pg 'initdb.exe') -D (Join-Path $qa 'database') -U pr375_qa --auth=scram-sha-256 --encoding=UTF8 --locale=C --pwfile=$passwordPath *> (Join-Path $qa 'logs/initdb.log')
+    if ($LASTEXITCODE) { throw 'Fresh database initialization failed.' }
+    Launch 'postgres' (Join-Path $pg 'postgres.exe') @('-D',(Join-Path $qa 'database'),'-h','127.0.0.1','-p',"$databasePort") $qa @{}
+    Wait-Ready { & (Join-Path $pg 'pg_isready.exe') -h 127.0.0.1 -p $databasePort -U pr375_qa *> $null; $LASTEXITCODE -eq 0 } 'PostgreSQL'
+    $env:PGPASSWORD = 'invalid-owned-fixture-probe'
+    $env:PGPASSFILE = Join-Path $qa 'credentials/intentionally-absent.pgpass'
+    & (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $databasePort -U pr375_qa -d postgres -c 'SELECT 1' *> $null
+    if ($LASTEXITCODE -eq 0) { throw 'Fresh PostgreSQL accepted an incorrect password.' }
+    Remove-Item -LiteralPath Env:PGPASSWORD
+    $env:PGPASSFILE = $pgpassPath
+    & (Join-Path $pg 'createdb.exe') -w -h 127.0.0.1 -p $databasePort -U pr375_qa pr375_factory
+    if ($LASTEXITCODE) { throw 'Authenticated fixture database creation failed.' }
+    Remove-Item -LiteralPath Env:PGPASSFILE
+    $receipt.database_authentication = @{method='scram-sha-256';wrong_password_rejected=$true;authenticated_creation=$true;secrets_outside_source_and_runner=$true;server_environment_delivery='reduced assurance'}
+    $serverEnv = @{
+        DATABASE_URL=('postgres://pr375_qa:{0}@127.0.0.1:{1}/pr375_factory' -f $databasePassword,$databasePort)
+        CRONY_BIND="127.0.0.1:$serverPort";CRONY_MODE='development';CRONY_RUNNER_GRACE_SECS='30';CRONY_RUNNER_CREDENTIAL_TTL_SECS='7200'
+        CRONY_OBJECT_STORE_LOCAL_ROOT=(Join-Path $qa 'objects');ECORP_FACTORY_WATCH='0'
+        CRONY_SECRET_MASTER_KEY_HEX=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+        CRONY_ARTIFACT_SIGNING_KEY_HEX=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+    }
+    Launch 'server' (Join-Path $product 'target/debug/crony-server.exe') @() $product $serverEnv
+    $serverEnv.Clear()
+    $databasePassword = $null
+    Wait-Ready { (Invoke-RestMethod "$($receipt.server)/health" -TimeoutSec 2).status -eq 'ok' } 'Server'
+    $demo = Invoke-RestMethod "$($receipt.server)/api/demo/bootstrap?seed_crew=false" -Method Post -ContentType 'application/json' -Body '{}'
+    $enrollment = Invoke-RestMethod "$($receipt.server)/api/corps/$($demo.corp_id)/runners/enroll" -Method Post -ContentType 'application/json' -Body (@{
+        actor_id=$demo.alice_actor_id;runner_id='pr375-factory-native';expires_in_seconds=900
+    } | ConvertTo-Json)
+    $enrollmentPath = Join-Path $qa 'credentials/enrollment.txt'
+    [IO.File]::WriteAllText($enrollmentPath,$enrollment.enrollment_token)
+    $enrollment=$null
+    $runnerEnv = @{
+        CRONY_SERVER_WS="ws://127.0.0.1:$serverPort/ws/runner";CRONY_RUNNER_ID='pr375-factory-native';CRONY_CORP_ID=$demo.corp_id
+        CRONY_RUNNER_CREDENTIAL_FILE=(Join-Path $qa 'credentials/runner.json');CRONY_RUNNER_ENROLLMENT_TOKEN_FILE=$enrollmentPath
+        CRONY_RUNNER_WORKSPACE=(Join-Path $qa 'runner');CRONY_SOURCE_REPOSITORY=$product;CRONY_SOURCE_BASE_REF='HEAD'
+        CRONY_FAKE_AGENT_SCRIPT=(Join-Path $product 'scripts/fake-agent.mjs')
+        CRONY_CODEX_COMMAND=(Join-Path $qa 'disabled-codex.exe');CRONY_CLAUDE_COMMAND=(Join-Path $qa 'disabled-claude.exe')
+        CRONY_OPENCODE_COMMAND=(Join-Path $qa 'disabled-opencode.exe');CRONY_COPILOT_FIXTURE='true';CRONY_COPILOT_USE_LOGGED_IN_USER='false'
+        CRONY_CONNECTIONS_DIRECTORY=(Join-Path $qa 'connections');CRONY_GITHUB_COMMAND=(Join-Path $qa 'disabled-github.exe');ECORP_FACTORY_WATCH='0'
+    }
+    Launch 'runner' (Join-Path $product 'target/debug/crony-runner.exe') @() $product $runnerEnv
+    Wait-Ready { (Invoke-RestMethod "$($receipt.server)/health" -TimeoutSec 2).runners -eq 1 } 'Runner'
+    foreach ($entry in @(@('server',$serverPort),@('postgres',$databasePort))) {
+        $owners = @(Get-NetTCPConnection -State Listen -LocalPort $entry[1] | Select-Object -ExpandProperty OwningProcess -Unique)
+        if ($owners.Count -ne 1 -or $owners[0] -ne $state.processes[$entry[0]].pid) { throw 'Native listener ownership changed.' }
+    }
+    $state.demo=$demo
+    $state.ready_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    Save-LocalStackState -Path $recordPath -State $state -Workspace $qa
+    $env:CRONY_SERVER_HTTP=$receipt.server
+    $env:CRONY_CLI_BINARY=Join-Path $product 'target/debug/crony-cli.exe'
+    $env:ECORP_TEST_SOURCE_REPOSITORY=$product
+    $driverLog=Join-Path $qa 'evidence/controller.log'
+    Push-Location -LiteralPath $product
+    try { & $node $driver *> $driverLog; $receipt.driver_exit_code=$LASTEXITCODE } finally { Pop-Location }
+    $receipt.driver_log=@{path=$driverLog;sha256=(Get-FileHash -LiteralPath $driverLog).Hash.ToLowerInvariant()}
+    $env:PGPASSFILE=$pgpassPath
+    $query = @'
+SELECT jsonb_build_object(
+    'missions',(SELECT coalesce(jsonb_agg(to_jsonb(m) ORDER BY id),'[]') FROM missions m),
+    'tasks',(SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY id),'[]') FROM tasks t),
+    'runs',(SELECT coalesce(jsonb_agg((to_jsonb(r)-'assignment_token') ORDER BY id),'[]') FROM runs r),
+    'verification_evidence',(SELECT coalesce(jsonb_agg(to_jsonb(v) ORDER BY id),'[]') FROM verification_evidence v),
+    'source_deliverables',(SELECT coalesce(jsonb_agg(to_jsonb(d) ORDER BY id),'[]') FROM source_deliverables d),
+    'artifacts',(SELECT coalesce(jsonb_agg(to_jsonb(a) ORDER BY id),'[]') FROM artifacts a),
+    'factory_work_items',(SELECT coalesce(jsonb_agg((to_jsonb(f)-'claim_token') ORDER BY id),'[]') FROM factory_work_items f),
+    'migrations',(SELECT coalesce(jsonb_agg(jsonb_build_object('version',version,'success',success,'checksum',encode(checksum,'hex')) ORDER BY version),'[]') FROM _sqlx_migrations)
+);
+'@
+    $dbReceipt=Join-Path $qa 'evidence/database-state.json'
+    $query | & (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $databasePort -U pr375_qa -d pr375_factory -v ON_ERROR_STOP=1 -At -o $dbReceipt
+    if ($LASTEXITCODE) { throw 'Unable to capture persisted Factory state.' }
+    Remove-Item -LiteralPath Env:PGPASSFILE
+    $receipt.database_state=@{path=$dbReceipt;sha256=(Get-FileHash -LiteralPath $dbReceipt).Hash.ToLowerInvariant()}
+    $persisted=Get-Content -LiteralPath $dbReceipt -Raw | ConvertFrom-Json -AsHashtable -Depth 100
+    $receipt.verification=@($persisted.verification_evidence | ForEach-Object {
+        @{id=$_.id;run_id=$_.run_id;status=$_.status;check_index=$_.check_index;payload=$_.payload}
+    })
+    $receipt.generated_files=@(
+        foreach ($file in $generated) {
+            $path=Join-Path $product "output/$file"
+            if (Test-Path -LiteralPath $path) {
+                $copy=Join-Path $qa "evidence/$file"
+                Copy-Item -LiteralPath $path -Destination $copy
+                @{path=$path;copy=$copy;sha256=(Get-FileHash -LiteralPath $copy).Hash.ToLowerInvariant()}
+            }
+        }
+    )
+    $receipt.status=if ($receipt.driver_exit_code -eq 0) {'passed'} else {'failed'}
+    if ($receipt.driver_exit_code) { $receipt.failure='Native Factory driver exited nonzero; inspect the exact driver log and persisted state to identify the reached phase.' }
+} catch { $receipt.status='failed';$receipt.failure=($_.Exception.Message -replace '\bpostgres(?:ql)?://\S+','[database URL withheld]') }
+finally {
+    if ($serverEnv) { $serverEnv.Clear() }
+    $databasePassword=$null
+    foreach ($name in @('PGPASSWORD','PGPASSFILE','CRONY_SERVER_HTTP','CRONY_CLI_BINARY','ECORP_TEST_SOURCE_REPOSITORY','GIT_CONFIG_COUNT','GIT_CONFIG_KEY_0','GIT_CONFIG_VALUE_0')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+    foreach ($role in @('runner','server','postgres')) {
+        try {
+            $owned=$state.processes[$role]
+            if ($owned) {
+                if (Test-LocalOwnedProcess -Record $owned -Workspace $qa) {
+                    if ($role -eq 'postgres') {
+                        & (Join-Path $pg 'pg_ctl.exe') -D (Join-Path $qa 'database') -m fast -w stop *> (Join-Path $qa 'logs/postgres-stop.log')
+                        if ($LASTEXITCODE) { throw 'Owned PostgreSQL did not stop.' }
+                    } elseif (!(Stop-LocalOwnedProcess -Record $owned -Workspace $qa)) { throw "Owned $role stop is unverified." }
+                }
+                if (Test-LocalOwnedProcess -Record $owned -Workspace $qa) { throw "Owned $role is still active." }
+                $receipt.cleanup += @{role=$role;pid=$owned.pid;stopped=$true}
+            }
+        } catch { $receipt.status='failed';$receipt.cleanup += @{role=$role;stopped=$false;error=$_.Exception.Message} }
+    }
+    if (Test-Path -LiteralPath $recordPath) {
+        $state.stopped_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+        Save-LocalStackState -Path $recordPath -State $state -Workspace $qa
+    }
+    try {
+        $afterText=& $python $checker $product $canonical
+        if ($LASTEXITCODE) { throw 'Source changed during native reproduction.' }
+        $after=$afterText | ConvertFrom-Json -AsHashtable
+        $receipt.source_unchanged=$after.source_tree -ceq $binding.source_tree -and $after.source_files_sha256 -ceq $binding.source_files_sha256
+        if (!$receipt.source_unchanged) { throw 'Source changed during native reproduction.' }
+        foreach ($binary in $build.binaries) {
+            if ((Get-FileHash -LiteralPath $binary.path).Hash.ToLowerInvariant() -cne $binary.sha256) { throw 'Native binary changed during reproduction.' }
+        }
+        $receipt.binaries_unchanged=$true
+    } catch { $receipt.status='failed';$receipt.binding_failure=$_.Exception.Message }
+    $receipt.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$receipt | Select-Object pr,status,driver_exit_code,source_unchanged,binaries_unchanged,database_state,cleanup,failure,binding_failure | ConvertTo-Json -Depth 8
+if ($receipt.status -ne 'passed') { exit 1 }

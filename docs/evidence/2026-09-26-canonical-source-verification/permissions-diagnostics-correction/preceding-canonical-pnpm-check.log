@@ -1,0 +1,60 @@
+$ node tools/run_checks.mjs --group full
+Running migrations
+{
+  "schema_version": 1,
+  "migration_count": 56,
+  "latest_version": 56,
+  "immutable_checksums": true
+}
+Running state-audit-compatibility
+V1 canonical bytes, independent Ed25519 signature, and Ethereum static ABI compatibility passed (no chain transaction).
+Running state-audit-evm
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.73s
+
+     Running tests\ethereum_local_chain.rs (target\debug\deps\ethereum_local_chain-690b62ff5cd3dc75.exe)
+running 1 test
+test v1_checkpoint_executes_against_local_anchor_contract ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+Running docs
+Running repository-docs
+{
+  "ok": true,
+  "scope": "Marked repository validation commands and current Copilot SDK/CLI versions only",
+  "validationDocuments": 5,
+  "runtimeDocuments": 2,
+  "validationCommands": 1,
+  "copilotVersions": {
+    "sdk": "1.0.11",
+    "cli": "1.0.79"
+  },
+  "errors": []
+}
+Running node-tests
+# tests 3094
+# pass 3029
+# fail 0
+# cancelled 0
+# skipped 65
+# todo 0
+# duration_ms 2253081.5546
+Running format
+Running clippy
+    Checking crony-runner v0.1.0 (<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\crates\crony-runner)
+error: call to `set_readonly` with argument `false`
+    --> crates\crony-runner\src\deliverable_verification.rs:1263:21
+     |
+1263 |                     permissions.set_readonly(false);
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: on Unix platforms this results in the file being world writable
+     = help: you can set the desired permissions using `PermissionsExt`. For more information, see
+             https://doc.rust-lang.org/std/os/unix/fs/trait.PermissionsExt.html
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#permissions_set_readonly_false
+     = note: `-D clippy::permissions-set-readonly-false` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::permissions_set_readonly_false)]`
+
+error: could not compile `crony-runner` (bin "crony-runner" test) due to 1 previous error
+Validation report: <USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\output\readiness\2026-09-27T16-50-55-967Z-7a857f7f-219d-4ff6-bb0d-f36aa2f19a0f-full.json
+[ELIFECYCLE] Command failed with exit code 1.

@@ -1,0 +1,377 @@
+// Fresh native acceptance; the malformed command and missed wakeup are explicit local SQL faults.
+// Neither fault is a human decision, provider event, or claimed browser launch.
+import assert from 'node:assert/strict'
+import { execFile, spawn } from 'node:child_process'
+import { createHash, randomUUID } from 'node:crypto'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { promisify } from 'node:util'
+
+assert.equal(process.env.ECORP_ISSUE172_TEST, '1')
+assert.ok(path.isAbsolute(process.env.ECORP_ISSUE172_SETUP ?? ''))
+const setup = JSON.parse(await readFile(process.env.ECORP_ISSUE172_SETUP, 'utf8'))
+assert.equal(setup.test_owned, true)
+assert.equal(setup.issue, 172)
+for (const field of ['repository', 'qa_root', 'output', 'psql']) assert.ok(path.isAbsolute(setup[field]))
+assert.match(path.basename(setup.qa_root), /^issue172-scheduler-fairness-[a-zA-Z0-9-]+$/)
+assert.equal(path.basename(path.dirname(setup.qa_root)), 'qa')
+assert.deepEqual(Object.keys(setup.sources).sort(), ['a', 'b'])
+for (const side of ['a', 'b']) {
+  const source = setup.sources[side]
+  assert.equal(source.repository, `ecorp-fixture/issue172-${side}`)
+  assert.equal(source.runner_id, `${side}-issue172-native-qa`)
+  assert.equal(path.resolve(source.path), path.join(setup.qa_root, `source-${side}`))
+  assert.equal(path.resolve(source.workspace), path.join(setup.qa_root, `runner-${side}`))
+  assert.match(source.base_commit, /^[0-9a-f]{40}$/)
+}
+function localOrigin(value) {
+  const url = new URL(value)
+  assert.equal(url.protocol, 'http:')
+  assert.equal(url.hostname, '127.0.0.1')
+  assert.ok(Number(url.port) > 10000 && !['15191', '15193'].includes(url.port))
+  assert.equal(url.pathname, '/')
+  assert.ok(!url.username && !url.password && !url.search && !url.hash)
+  return url.origin
+}
+const server = localOrigin(setup.server_url), web = localOrigin(setup.web_url)
+assert.notEqual(server, web)
+assert.equal(setup.database.host, '127.0.0.1')
+assert.equal(setup.database.name, 'issue172_fairness')
+assert.equal(setup.database.user, 'issue172_qa')
+assert.ok(Number.isInteger(setup.database.port) && setup.database.port > 10000)
+const { captureOwnedTestServerManifest } = await import(pathToFileURL(path.join(setup.repository, 'tools/owned_test_stack.mjs')).href)
+const execute = promisify(execFile)
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+const output = path.join(setup.output, 'issue172-browser-' + new Date().toISOString().replaceAll(':', '-') + '-' + randomUUID().slice(0, 8))
+await mkdir(output, { recursive: false })
+const report = {
+  schema_version: 1, issue: 172, status: 'running', started_at: new Date().toISOString(),
+  source_binding: setup.source_binding, sources: setup.sources, server, web, qa_root: setup.qa_root,
+  scope: 'Real Edge browser authoring, native server and two native runners with deterministic child protocols. Malformed command and missed wakeup are deliberately injected in an owned PostgreSQL database. No vendor inference, external effects, human review, or browser launch of B is claimed.',
+  missions: [], errors: [], blocked_requests: [], browser_mutations: [], sql_operations: [],
+}
+const reportPath = path.join(output, 'report.json')
+const save = () => writeFile(reportPath, JSON.stringify(report, null, 2) + '\n')
+let browser, page, demo, frozen = false
+const uuid = value => { assert.match(value, /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/); return `'${value}'::uuid` }
+async function git(root, args) {
+  const result = await execute('git', ['-C', root, ...args], { encoding: 'buffer', maxBuffer: 16 * 1024 * 1024, timeout: 30000, windowsHide: true })
+  return result.stdout
+}
+async function sql(label, statement, mutation = false) {
+  assert.ok(!frozen || !mutation, 'No further SQL mutation after the eligibility boundary')
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^PG|^(DATABASE_URL|GH_|GITHUB_|AZURE_|CRONY_|ECORP_)/i.test(name)))
+  env.PGPASSFILE = path.join(setup.qa_root, 'credentials', 'pgpass.conf')
+  const started = new Date().toISOString()
+  const result = await new Promise((resolve, reject) => {
+    const child = spawn(setup.psql, ['-X', '-w', '-q', '-t', '-A', '-v', 'ON_ERROR_STOP=1', '-h', setup.database.host,
+      '-p', String(setup.database.port), '-U', setup.database.user, '-d', setup.database.name], { env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] })
+    let stdout = '', stderr = ''
+    const timer = setTimeout(() => { child.kill(); reject(new Error('Owned SQL operation timed out: ' + label)) }, 15000)
+    child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8')
+    child.stdout.on('data', bytes => { stdout += bytes })
+    child.stderr.on('data', bytes => { stderr += bytes })
+    child.on('error', error => { clearTimeout(timer); reject(error) })
+    child.on('close', code => { clearTimeout(timer); resolve({ code, stdout, stderr }) })
+    child.stdin.end(statement + '\n')
+  })
+  const entry = { label, mutation, started_at: started, finished_at: new Date().toISOString(), exit_code: result.code,
+    statement_sha256: sha256(statement), statement, stderr: result.stderr }
+  report.sql_operations.push(entry)
+  await save()
+  assert.equal(result.code, 0, label + ': ' + result.stderr.slice(0, 1500))
+  const values = result.stdout.trim().split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line))
+  assert.equal(values.length, 1, label + ' must return one JSON value')
+  entry.result = values[0]
+  return values[0]
+}
+async function request(route) {
+  assert.ok(route === '/health' || route.startsWith('/api/corps/' + demo.corp_id + '/snapshot?'))
+  const response = await fetch(server + route, { redirect: 'error', signal: AbortSignal.timeout(15000) })
+  assert.equal(response.status, 200, route.split('?')[0] + ': HTTP ' + response.status)
+  return response.json()
+}
+const snapshot = () => request('/api/corps/' + demo.corp_id + '/snapshot?actor_id=' + demo.alice_actor_id)
+async function until(label, read, predicate, timeout = 120000) {
+  const deadline = Date.now() + timeout
+  while (Date.now() < deadline) {
+    const value = await read()
+    if (predicate(value)) return value
+    await delay(250)
+  }
+  throw new Error('Timed out waiting for ' + label)
+}
+function view(state, missionId) {
+  const s = state.snapshot, mission = s.missions.find(row => row.id === missionId)
+  assert.ok(mission)
+  const tasks = s.tasks.filter(row => row.mission_id === missionId), ids = new Set(tasks.map(row => row.id))
+  return { mission, tasks, runs: s.runs.filter(row => ids.has(row.task_id)), state: s }
+}
+async function screenshot(name) {
+  const file = path.join(output, name + '.png')
+  await page.screenshot({ path: file, fullPage: true })
+  return { file, sha256: sha256(await readFile(file)) }
+}
+async function advanced(containing) {
+  const details = page.locator('details.mission-advanced-options').filter({ has: page.locator(containing) })
+  assert.equal(await details.count(), 1)
+  if (!(await details.evaluate(element => element.open))) await details.locator('summary').click()
+}
+const policy = { checks: [{ type: 'artifact', min_bytes: 1 }, { type: 'command', program: 'node', args: ['verify.mjs'], timeout_ms: 10000 }], manual_gate: null }
+async function saveMission(side) {
+  const source = setup.sources[side]
+  const title = `[issue172-native-${side}] Native scheduler fairness ${randomUUID().slice(0, 8)}`
+  report.stage = 'browser author ' + side
+  await save()
+  await page.goto(web + '/#missions', { waitUntil: 'networkidle', timeout: 30000 })
+  await page.locator('.live-indicator.live-live').waitFor({ timeout: 30000 })
+  const create = page.getByRole('button', { name: 'New mission', exact: true })
+  if (await create.isVisible()) await create.click()
+  await page.locator('#mission-title').fill(title)
+  await advanced('#mission-description')
+  await page.locator('#mission-description').fill('Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.')
+  const targets = await page.locator('#mission-repository option').evaluateAll(items => items.filter(item => item.value).map(item => ({ value: item.value, source: JSON.parse(item.value) })))
+  const matches = targets.filter(item => item.source[0] === source.repository && item.source[2] === source.base_commit)
+  assert.equal(matches.length, 1)
+  await page.locator('#mission-repository').selectOption(matches[0].value)
+  await page.getByRole('checkbox', { name: /Confirm this target/ }).check()
+  await advanced('#mission-deliverable')
+  await page.getByRole('checkbox', { name: /Developer fixtures/ }).check()
+  await page.locator('#mission-adapter').selectOption('fake-process')
+  await page.locator('#mission-strategy').selectOption('single')
+  await page.locator('#mission-deliverable').selectOption('commit_branch')
+  await page.getByRole('checkbox', { name: /Save without starting/ }).check()
+  await page.getByRole('button', { name: 'Review and build', exact: true }).click()
+  await page.getByRole('checkbox', { name: /Custom verification/ }).check()
+  const editor = page.getByTestId('mission-verification-editor'), tabs = editor.locator('.verification-check-tabs button')
+  for (const [index, check] of policy.checks.entries()) {
+    while (await tabs.count() <= index) await editor.getByRole('button', { name: 'Add check', exact: true }).click()
+    await tabs.nth(index).click()
+    await editor.getByLabel('Verifier check ' + (index + 1) + ' type', { exact: true }).selectOption(check.type)
+    if (check.type === 'artifact') await editor.getByLabel('Minimum artifact bytes', { exact: true }).fill(String(check.min_bytes))
+    else {
+      await editor.getByLabel('Program', { exact: true }).fill(check.program)
+      await editor.getByLabel('Timeout in milliseconds', { exact: true }).fill(String(check.timeout_ms))
+      await editor.getByLabel('Arguments, one per line').fill(check.args.join('\n'))
+    }
+  }
+  assert.equal(await tabs.count(), policy.checks.length)
+  await editor.getByLabel('Final reviewer gate').selectOption('none')
+  const creation = page.waitForResponse(response => response.url() === server + '/api/corps/' + demo.corp_id + '/missions' && response.request().method() === 'POST')
+  await page.getByRole('button', { name: 'Save plan', exact: true }).click()
+  const response = await creation
+  assert.equal(response.status(), 200)
+  const authored = response.request().postDataJSON(), created = await response.json()
+  assert.deepEqual(authored.verification_policy, policy)
+  assert.equal(authored.preferred_adapter, 'fake-process')
+  assert.equal(authored.deliverable.form, 'commit_branch')
+  assert.equal(authored.deliverable.commit_after_verification, true)
+  const record = { side, title, authored, mission_id: created.mission_id, task_id: created.task_id }
+  report.missions.push(record)
+  const saved = view(await snapshot(), record.mission_id)
+  assert.equal(saved.mission.status, 'ready'); assert.equal(saved.runs.length, 0); assert.equal(saved.tasks.length, 1)
+  assert.deepEqual(saved.tasks[0].verification_policy, policy)
+  assert.equal(saved.tasks[0].contract.source_repository, source.repository)
+  assert.equal(saved.tasks[0].contract.source_base_commit, source.base_commit)
+  record.saved = { mission: saved.mission, tasks: saved.tasks }
+  await page.locator(`[data-mission-id="${record.mission_id}"] .status-chip-ready`).waitFor()
+  record.saved_screenshot = await screenshot(side + '-saved')
+  await save()
+  return record
+}
+async function complete(record) {
+  const source = setup.sources[record.side]
+  const final = await until(record.side + ' verified native completion', async () => view(await snapshot(), record.mission_id), value =>
+    value.runs.length === 1 && ['completed', 'failed'].includes(value.mission.status) && value.runs[0].workspace_disposition === 'preserved')
+  const run = final.runs[0]
+  record.final = { mission: final.mission, tasks: final.tasks, run,
+    evidence: final.state.verification_evidence.filter(item => item.run_id === run.id).sort((a, b) => a.check_index - b.check_index),
+    events: final.state.events.filter(item => item.aggregate_id === run.id) }
+  await save()
+  assert.equal(final.mission.status, 'completed'); assert.equal(run.status, 'completed')
+  assert.equal(run.runner_id, source.runner_id); assert.equal(run.source_base_commit, source.base_commit)
+  assert.deepEqual(final.tasks[0].verification_policy, policy)
+  assert.equal(record.final.evidence.length, 2)
+  assert.ok(record.final.evidence.every(item => item.status === 'passed'))
+  assert.equal(record.final.evidence[1].payload.exit_code, 0)
+  assert.deepEqual(record.final.evidence[1].payload.args, ['verify.mjs'])
+  assert.equal(final.state.verification_requests.filter(row => row.run_id === run.id).length, 0)
+  const relative = path.relative(source.workspace, run.workspace_path)
+  assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative))
+  const outputBytes = await readFile(path.join(run.workspace_path, 'output.txt'))
+  assert.deepEqual(outputBytes, Buffer.from(`Issue 172 native runner ${record.side} completed.\n`))
+  const workspaceStatus = (await git(run.workspace_path, ['status', '--porcelain=v1', '--untracked-files=all'])).toString()
+  assert.equal(workspaceStatus, '?? result.md\n')
+  const diagnostic = await readFile(path.join(run.workspace_path, 'result.md'))
+  assert.deepEqual(diagnostic, Buffer.from(`# Native issue172 diagnostic\n\nRunner fixture: ${record.side}\nRun: ${run.id}\nThe persisted verifier decides completion.\n`))
+  const preserved = record.final.events.find(item => item.type === 'run.workspace_preserved')
+  assert.ok(preserved)
+  assert.equal(preserved.payload.dirty, true)
+  assert.equal(preserved.payload.workspace, run.workspace_path)
+  record.preserved_diagnostic = { path: path.join(run.workspace_path, 'result.md'), sha256: sha256(diagnostic), workspace_status: workspaceStatus,
+    scope: 'Exact deterministic provider diagnostic remains untracked and is preserved; no other dirty files are allowed.' }
+  const deliverables = final.state.source_deliverables.filter(item => item.run_id === run.id)
+  assert.equal(deliverables.length, 1)
+  const delivered = deliverables[0]
+  const response = await fetch(server + delivered.uri + '?actor_id=' + demo.alice_actor_id, { redirect: 'error', signal: AbortSignal.timeout(15000) })
+  assert.equal(response.status, 200)
+  assert.equal(response.headers.get('x-crony-artifact-signature'), delivered.provenance_signature)
+  const bytes = Buffer.from(await response.arrayBuffer()), envelope = JSON.parse(bytes)
+  assert.equal(sha256(bytes), delivered.sha256)
+  assert.equal(envelope.head_commit, delivered.head_commit)
+  assert.equal(envelope.base_commit, source.base_commit)
+  assert.equal(envelope.verification_sha256, run.verification_sha256)
+  assert.equal(run.deliverable_sha256, delivered.sha256)
+  assert.equal(envelope.source_verification.tree, envelope.verified_tree)
+  assert.equal((await git(run.workspace_path, ['rev-parse', 'HEAD^{tree}'])).toString().trim(), envelope.verified_tree)
+  for (const item of record.final.evidence) assert.deepEqual(item.payload.source, envelope.source_verification)
+  const accepted = record.final.events.find(item => item.type === 'run.verification_passed')
+  const completed = record.final.events.find(item => item.type === 'run.completed')
+  assert.ok(accepted && completed && accepted.seq < completed.seq)
+  const outsider = await fetch(server + delivered.uri + '?actor_id=' + demo.eve_actor_id, { redirect: 'error', signal: AbortSignal.timeout(15000) })
+  assert.equal(outsider.status, 404)
+  const file = path.join(output, record.side + '-deliverable.json')
+  await writeFile(file, bytes, { flag: 'wx' })
+  record.download = { file, sha256: sha256(bytes), signature_matches_record: true, envelope, outsider_http_status: outsider.status }
+  const card = page.locator(`[data-mission-id="${record.mission_id}"]`)
+  await until('completed browser projection', () => card.innerText(), value => /completed/i.test(value), 30000)
+  record.final_screenshot = await screenshot(record.side + '-completed')
+  await save()
+  return final
+}
+async function nodes(label) {
+  return sql(label, `SELECT coalesce(jsonb_agg(to_jsonb(n) ORDER BY id),'[]'::jsonb) FROM (
+    SELECT id,corp_id,connection_epoch,status,connected_at,disconnected_at,grace_expires_at
+    FROM runner_nodes WHERE corp_id=${uuid(demo.corp_id)} ORDER BY id) n;`)
+}
+async function failures() {
+  const lines = (await Promise.all(['stdout', 'stderr'].map(key => readFile(setup.processes.server[key], 'utf8')))).join('\n').replace(/\x1b\[[0-9;]*m/g, '').split(/\r?\n/)
+  return lines.filter(line => line.includes('mission lifecycle scheduling deferred until a later tick') && line.includes('breaker command omitted stage'))
+}
+async function command(label, id) {
+  return sql(label, `SELECT to_jsonb(c) FROM (SELECT id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key,status,created_at,dispatched_at,failed_at,failure_detail FROM runner_commands WHERE id=${uuid(id)} AND corp_id=${uuid(demo.corp_id)}) c;`)
+}
+try {
+  for (const [role, url] of [['server', server], ['web', web]]) {
+    const owned = setup.processes[role]
+    await captureOwnedTestServerManifest({ root: setup.qa_root, server: url, binary: owned.executable, pid: owned.pid, pidPath: path.join(output, role + '-ownership.json') })
+  }
+  assert.equal((await request('/health')).mode, 'development')
+  const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'msedge', headless: true })
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' })
+  await context.route('**/*', async route => {
+    const request = route.request(), url = new URL(request.url()), mutating = !['GET', 'HEAD', 'OPTIONS'].includes(request.method())
+    if (![server, web].includes(url.origin) || url.pathname === '/api/demo/reset' || /verification-decision|action-approval/.test(url.pathname) || (frozen && mutating)) {
+      report.blocked_requests.push({ method: request.method(), origin: url.origin, path: url.pathname, frozen })
+      await route.abort()
+    } else {
+      if (mutating) report.browser_mutations.push({ at: new Date().toISOString(), method: request.method(), path: url.pathname, frozen })
+      await route.continue()
+    }
+  })
+  page = await context.newPage()
+  page.on('pageerror', error => report.errors.push(error.message.slice(0, 1000)))
+  const bootResponse = page.waitForResponse(response => response.url().startsWith(server + '/api/demo/bootstrap') && response.request().method() === 'POST')
+  await page.goto(web + '/#missions', { waitUntil: 'networkidle', timeout: 30000 })
+  const boot = await bootResponse
+  assert.equal(boot.status(), 200); demo = await boot.json()
+  assert.equal(demo.corp_id, setup.demo.corp_id)
+  report.corp_id = demo.corp_id; report.development_actor_id = demo.alice_actor_id
+  report.nodes_before = await nodes('initial native runner epochs')
+  assert.deepEqual(report.nodes_before.map(row => row.id), ['a-issue172-native-qa', 'b-issue172-native-qa'])
+  assert.ok(report.nodes_before.every(row => row.status === 'connected' && !row.disconnected_at))
+  const a = await saveMission('a')
+  const launchResponse = page.waitForResponse(response => response.url() === `${server}/api/corps/${demo.corp_id}/missions/${a.mission_id}/launch` && response.request().method() === 'POST')
+  await page.locator(`[data-mission-id="${a.mission_id}"]`).getByTestId('work-result-card').getByRole('button', { name: 'Start mission', exact: true }).click()
+  const launch = await launchResponse
+  assert.equal(launch.status(), 200); a.launch = await launch.json()
+  const aFinal = await complete(a)
+  await until('A worker retirement', async () => (await snapshot()).snapshot.agents.find(row => row.id === aFinal.runs[0].agent_id), row => Boolean(row?.retired_at), 30000)
+  const injectedId = randomUUID()
+  report.stage = 'owned malformed command injection'
+  report.fault = await sql('inject one pending fixture command anchored to completed A run', `BEGIN;
+    WITH added AS (INSERT INTO runner_commands(id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key)
+      SELECT ${uuid(injectedId)},r.corp_id,r.runner_id,r.id,'circuit_breaker',
+        '{"test_owned":true,"issue":172,"fault":"deliberately omitted breaker stage"}'::jsonb,'issue172-native-fault-${injectedId}'
+      FROM runs r JOIN tasks t ON t.id=r.task_id JOIN missions m ON m.id=t.mission_id
+      WHERE r.id=${uuid(aFinal.runs[0].id)} AND r.corp_id=${uuid(demo.corp_id)} AND r.runner_id='a-issue172-native-qa'
+        AND r.status='completed' AND m.id=${uuid(a.mission_id)} AND m.requested_by=${uuid(demo.alice_actor_id)}
+        AND r.verification_status='passed' AND r.deliverable_sha256 IS NOT NULL
+      RETURNING id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key,status,created_at,dispatched_at,failed_at,failure_detail)
+    SELECT jsonb_build_object('rows',count(*),'command',jsonb_agg(to_jsonb(added))->0) FROM added;
+    COMMIT;`, true)
+  assert.equal(report.fault.rows, 1)
+  const b = await saveMission('b')
+  report.periodic_failures_before = await until('multiple native periodic command failures', failures, lines => lines.length >= 3, 45000)
+  assert.deepEqual(await nodes('epochs after repeated failures'), report.nodes_before)
+  const pendingBefore = await command('fault remains pending before eligibility', injectedId)
+  assert.equal(pendingBefore.status, 'pending'); assert.equal(pendingBefore.dispatched_at, null); assert.equal(pendingBefore.failed_at, null)
+  const bSaved = view(await snapshot(), b.mission_id)
+  assert.equal(bSaved.mission.status, 'ready'); assert.equal(bSaved.runs.length, 0)
+  report.stage = 'single fixture-only missed-wakeup transition'
+  report.boundary = await sql('make only the browser-saved B mission eligible without publishing a wakeup', `BEGIN;
+    WITH before AS MATERIALIZED (
+      SELECT m.id,m.corp_id,m.status,m.requested_by,t.id AS task_id,t.status AS task_status,t.contract,t.verification_policy,
+        t.assigned_agent_id,t.attempt_count,t.max_attempts,a.status AS agent_status,a.retired_at
+      FROM missions m JOIN tasks t ON t.mission_id=m.id JOIN agents a ON a.id=t.assigned_agent_id
+      WHERE m.id=${uuid(b.mission_id)} AND m.corp_id=${uuid(demo.corp_id)} AND m.requested_by=${uuid(demo.alice_actor_id)}
+        AND m.status='ready' AND t.id=${uuid(b.task_id)} AND t.status IN ('pending','ready') AND t.attempt_count=0
+        AND t.max_attempts>=1 AND a.status='idle' AND a.retired_at IS NULL
+        AND t.contract->>'source_repository'='ecorp-fixture/issue172-b' AND t.contract->>'source_base_commit'='${setup.sources.b.base_commit}'
+        AND NOT EXISTS(SELECT 1 FROM runs WHERE task_id=t.id)
+        AND NOT EXISTS(SELECT 1 FROM task_dependencies WHERE task_id=t.id) FOR UPDATE OF m,t,a),
+    changed AS (UPDATE missions m SET status='running',updated_at=clock_timestamp() FROM before b WHERE m.id=b.id RETURNING m.id,m.status,m.updated_at)
+    SELECT jsonb_build_object('rows',(SELECT count(*) FROM changed),'before',(SELECT to_jsonb(b) FROM before b),
+      'after',(SELECT to_jsonb(c) FROM changed c),'event_seq',coalesce((SELECT max(seq) FROM events WHERE corp_id=${uuid(demo.corp_id)}),0),
+      'transaction_at',clock_timestamp(),'simulation','fixture-only ready-to-running transition; no browser launch or lifecycle publication');
+    COMMIT;`, true)
+  frozen = true
+  report.browser_mutations_at_boundary = report.browser_mutations.length
+  assert.equal(report.boundary.rows, 1)
+  assert.deepEqual(report.boundary.before.verification_policy, policy)
+  assert.deepEqual(report.boundary.before.contract, bSaved.tasks[0].contract)
+  const bFinal = await complete(b)
+  report.periodic_failures_after = await until('fault still fails after B completed', failures,
+    lines => lines.length >= report.periodic_failures_before.length + 2, 30000)
+  report.fault_after = await command('unchanged pending fault after healthy completion', injectedId)
+  assert.deepEqual(report.fault_after, pendingBefore)
+  report.nodes_after = await nodes('unchanged connection epochs after healthy completion')
+  assert.deepEqual(report.nodes_after, report.nodes_before)
+  report.events_after_boundary = await sql('native event order after the missed-wakeup boundary', `SELECT coalesce(jsonb_agg(to_jsonb(e) ORDER BY seq),'[]'::jsonb) FROM (
+    SELECT seq,type,aggregate_type,aggregate_id,correlation_id,created_at,payload FROM events
+    WHERE corp_id=${uuid(demo.corp_id)} AND seq>${Number(report.boundary.event_seq)} ORDER BY seq) e;`)
+  const first = report.events_after_boundary[0]
+  assert.equal(first.type, 'run.requested'); assert.equal(first.aggregate_id, bFinal.runs[0].id)
+  assert.equal(first.payload.runner_id, 'b-issue172-native-qa'); assert.equal(first.payload.mission_launch, false)
+  report.dispatch_latency_ms = Date.parse(first.created_at) - Date.parse(report.boundary.after.updated_at)
+  assert.ok(report.dispatch_latency_ms >= 0 && report.dispatch_latency_ms < 15000)
+  assert.equal(report.events_after_boundary.filter(item => /^runner\.(connected|disconnected|registered|revoked)/.test(item.type)).length, 0)
+  report.assignment_fences = await sql('non-secret assignment fence assertions', `SELECT jsonb_build_object(
+    'A_has_assignment',(SELECT assignment_token IS NOT NULL FROM runs WHERE id=${uuid(aFinal.runs[0].id)}),
+    'B_has_assignment',(SELECT assignment_token IS NOT NULL FROM runs WHERE id=${uuid(bFinal.runs[0].id)}),
+    'assignments_distinct',(SELECT a.assignment_token<>b.assignment_token FROM runs a,runs b WHERE a.id=${uuid(aFinal.runs[0].id)} AND b.id=${uuid(bFinal.runs[0].id)}),
+    'B_same_corp',(SELECT corp_id=${uuid(demo.corp_id)} FROM runs WHERE id=${uuid(bFinal.runs[0].id)}),
+    'B_expected_runner',(SELECT runner_id='b-issue172-native-qa' FROM runs WHERE id=${uuid(bFinal.runs[0].id)}));`)
+  assert.ok(Object.values(report.assignment_fences).every(Boolean))
+  assert.equal(report.browser_mutations.length, report.browser_mutations_at_boundary)
+  for (const source of Object.values(setup.sources)) {
+    assert.equal((await git(source.path, ['rev-parse', 'HEAD'])).toString().trim(), source.base_commit)
+    assert.equal((await git(source.path, ['status', '--porcelain=v1', '--untracked-files=all'])).toString(), '')
+  }
+  assert.equal(report.errors.length, 0); assert.equal(report.blocked_requests.length, 0)
+  report.source_unchanged = true; report.status = 'passed'
+} catch (error) {
+  report.status = 'failed'
+  report.failure = String(error.message).replace(/\bpostgres(?:ql)?:\/\/\S+/g, '[database URL withheld]').slice(0, 2500)
+  if (page) report.failure_screenshot = await screenshot('failure').catch(() => null)
+  process.exitCode = 1
+} finally {
+  await browser?.close()
+  report.finished_at = new Date().toISOString()
+  await save()
+  console.log(JSON.stringify({ status: report.status, stage: report.stage, report: reportPath, failure: report.failure }))
+}

@@ -1,0 +1,17 @@
+import { captureOwnedTestServerManifest, stopOwnedTestServer } from "file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/owned_test_stack.mjs";
+
+const context = {
+  root: process.env.ECORP_TEST_FIXTURE_ROOT,
+  server: process.env.CRONY_SERVER_HTTP,
+  binary: process.env.CRONY_TEST_SERVER_BINARY,
+  manifestPath: process.env.CRONY_TEST_SERVER_PID_FILE,
+  databaseUrl: process.env.DATABASE_URL,
+};
+if (process.argv[2] === 'capture') {
+  const manifest = await captureOwnedTestServerManifest({ ...context,
+    pidPath: context.manifestPath, pid: Number(process.env.ECORP_QA_SERVER_PID) });
+  console.log(JSON.stringify({ action: 'capture', server: manifest.server, state: manifest.server_state }));
+} else if (process.argv[2] === 'stop') {
+  const stopped = await stopOwnedTestServer(context);
+  console.log(JSON.stringify({ action: 'stop', stopped }));
+} else throw new Error('Unknown owned fixture lifecycle action');

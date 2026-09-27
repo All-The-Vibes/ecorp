@@ -1,0 +1,63 @@
+{
+  "issue": 82,
+  "purpose": "Native canonical-source completion linkage, budget checkpoint regression and cache-policy admission on issue82 source",
+  "source_head": "640a144f3d4832a23a6b30701946ac0af3ee1506",
+  "source_tree": "eb5819240ab343c549757346b18a68db88e25476",
+  "source_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "crates/crony-server/src/dependency_source.rs",
+      "sha256": "9831b960cae18462681786b2a4060d5cffd0ed86afa6c1c4fbb0ef8d803c95f1"
+    },
+    {
+      "path": "crates/crony-store/src/canonical_source_verification_tests.rs",
+      "sha256": "20b736f69ec0454093580437497c9c2b742285493704aba9eba3fa4c79a36e05"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-r4",
+  "started_at_utc": "2026-09-27T02:24:45.5830995Z",
+  "status": "failed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r4-initdb.log",
+      "sha256": "c5b094a8f736da4036369078ea392731d62dc51fedb34a930fc473ec6ff55f1f",
+      "counts": {
+        "ignored": 0,
+        "failed": 0,
+        "summaries": 0,
+        "passed": 0
+      }
+    },
+    {
+      "name": "canonical-source-review-regressions-before-store-fix",
+      "exit_code": 101,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r4-budget-checkpoints.log",
+      "sha256": "5dc563760c4e7c868d4a4ae2470a736bf19aad1a0abfe6f60ee5b57511de91aa",
+      "counts": {
+        "ignored": 0,
+        "failed": 6,
+        "summaries": 1,
+        "passed": 1
+      }
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+  "authentication": {
+    "wrong_password_rejected": true,
+    "authenticated_query": true,
+    "delivery": "Private PGPASSFILE for clients. SQLx environment-only delivery is reduced assurance.",
+    "method": "scram-sha-256"
+  },
+  "failure": "canonical-source-review-regressions-before-store-fix did not satisfy its native acceptance.",
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-27T02:27:06.2866028Z"
+}

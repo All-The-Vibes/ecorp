@@ -1,0 +1,89 @@
+"""Bind native acceptance to a complete, source-stable canonical gate."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+
+repository = Path(sys.argv[1]).resolve(strict=True)
+receipt_path = Path(sys.argv[2]).resolve(strict=True)
+receipt = json.loads(receipt_path.read_text(encoding="utf-8-sig"))
+assert receipt["issue"] == 82 and receipt["status"] == "passed"
+assert Path(receipt["repository"]).resolve() == repository
+gate = receipt["canonical_report"]
+assert gate["status"] == "passed" and gate["sourceChangedDuringValidation"] is False
+assert gate["notRun"] == []
+expected = [
+    "migrations", "state-audit-compatibility", "state-audit-evm", "docs",
+    "repository-docs", "node-tests", "format", "clippy", "rust-tests",
+    "web-build", "web-lint",
+]
+assert [item["name"] for item in gate["checks"]] == expected
+assert all(item["passed"] and item["exitCode"] == 0 for item in gate["checks"])
+assert all(item["exit_code"] == 0 for item in receipt["checks"])
+assert hashlib.sha256(Path(gate["path"]).read_bytes()).hexdigest() == gate["sha256"]
+original = json.loads(Path(gate["path"]).read_text(encoding="utf-8-sig"))
+assert original["source"] == gate["source"]
+assert original["checks"] == gate["checks"]
+environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+environment["GIT_TERMINAL_PROMPT"] = "0"
+
+def git(arguments, env=environment):
+    result = subprocess.run(
+        ["git", "-C", str(repository), *arguments], env=env,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+        timeout=90, creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+    if result.returncode:
+        raise RuntimeError("Native Git source binding failed: " + arguments[0])
+    return result.stdout
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+source = gate["source"]
+head = git(["rev-parse", "HEAD"]).decode().strip()
+branch = git(["branch", "--show-current"]).decode().strip()
+assert source["commit"] == head and source["branch"] == branch
+files = [item for item in git(["ls-files", "-z", "--cached", "--others", "--exclude-standard"]).decode().split("\0") if item]
+assert files == source["files"]
+tracked_diff = digest(git(["diff", "--binary", "--no-ext-diff", "--no-textconv", "HEAD"]))
+assert tracked_diff == source["trackedDiffSha256"]
+untracked = [item for item in git(["ls-files", "-z", "--others", "--exclude-standard"]).decode().split("\0") if item]
+untracked_digests = [[item, digest((repository / item).read_bytes())] for item in untracked]
+assert untracked_digests == source["untrackedDigests"]
+assert digest((repository / "test.config.json").read_bytes()) == source["testConfigSha256"]
+physical = []
+for name in sorted(set(files)):
+    file = repository / name
+    physical.append([name, digest(file.read_bytes()) if file.is_file() else None])
+file_descriptor, index_name = tempfile.mkstemp(prefix="ecorp-issue82-index-")
+os.close(file_descriptor)
+index = Path(index_name)
+assert index.is_absolute() and index.name.startswith("ecorp-issue82-index-")
+index.unlink()
+try:
+    temporary = dict(environment, GIT_INDEX_FILE=str(index))
+    git(["read-tree", "HEAD"], temporary)
+    git(["add", "--all"], temporary)
+    source_tree = git(["write-tree"], temporary).decode().strip()
+finally:
+    if index.exists():
+        index.unlink()
+result = {
+    "schema_version": 1,
+    "source_head": head,
+    "source_branch": branch,
+    "source_tree": source_tree,
+    "source_files_sha256": digest(json.dumps(physical, separators=(",", ":"), ensure_ascii=False).encode()),
+    "source_file_count": len(physical),
+    "tracked_diff_sha256": tracked_diff,
+    "untracked_digests": untracked_digests,
+    "canonical_receipt": str(receipt_path),
+    "canonical_receipt_sha256": digest(receipt_path.read_bytes()),
+    "canonical_report_sha256": gate["sha256"],
+    "canonical_gate_names": expected,
+}
+print(json.dumps(result))

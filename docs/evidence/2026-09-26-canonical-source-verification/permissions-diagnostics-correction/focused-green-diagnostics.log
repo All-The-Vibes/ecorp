@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: task graph requires explicit ownership and a single dry-run option
+ok 1 - task graph requires explicit ownership and a single dry-run option
+  ---
+  duration_ms: 3.2288
+  type: 'test'
+  ...
+# Subtest: task graph refuses manual ports, credentials, remote origins and malformed endpoints even in CI
+ok 2 - task graph refuses manual ports, credentials, remote origins and malformed endpoints even in CI
+  ---
+  duration_ms: 0.9098
+  type: 'test'
+  ...
+# Subtest: obsolete roster SQL cannot be silently re-enabled
+ok 3 - obsolete roster SQL cannot be silently re-enabled
+  ---
+  duration_ms: 1.1372
+  type: 'test'
+  ...
+# Subtest: source-selected staffing reads exact source metadata without mutating the snapshot
+ok 4 - source-selected staffing reads exact source metadata without mutating the snapshot
+  ---
+  duration_ms: 1.348
+  type: 'test'
+  ...
+# Subtest: source selection rejects wrong Corp, connection, adapter, source, or ambiguous runner
+ok 5 - source selection rejects wrong Corp, connection, adapter, source, or ambiguous runner
+  ---
+  duration_ms: 6.0139
+  type: 'test'
+  ...
+# Subtest: normal graph launch keeps its response and never launches a second time
+ok 6 - normal graph launch keeps its response and never launches a second time
+  ---
+  duration_ms: 0.5217
+  type: 'test'
+  ...
+# Subtest: the hosted root-claim conflict reconciles once, only after persisted mission completion
+ok 7 - the hosted root-claim conflict reconciles once, only after persisted mission completion
+  ---
+  duration_ms: 0.6468
+  type: 'test'
+  ...
+# Subtest: graph launch rejects authorization, dispatch, mixed and unknown-task failures without waiting or replaying
+ok 8 - graph launch rejects authorization, dispatch, mixed and unknown-task failures without waiting or replaying
+  ---
+  duration_ms: 0.8238
+  type: 'test'
+  ...
+# Subtest: graph launch never replays a failed, cancelled, incomplete or timed-out mission
+ok 9 - graph launch never replays a failed, cancelled, incomplete or timed-out mission
+  ---
+  duration_ms: 0.8479
+  type: 'test'
+  ...
+# Subtest: failed graph reports bounded identifiers and states without private free text
+ok 10 - failed graph reports bounded identifiers and states without private free text
+  ---
+  duration_ms: 1.8315
+  type: 'test'
+  ...
+# Subtest: graph failure diagnostics omit nested values in allowed fields
+ok 11 - graph failure diagnostics omit nested values in allowed fields
+  ---
+  duration_ms: 0.4454
+  type: 'test'
+  ...
+# Subtest: graph failure rejects malformed identifiers and states without assertion value disclosure
+ok 12 - graph failure rejects malformed identifiers and states without assertion value disclosure
+  ---
+  duration_ms: 1.6703
+  type: 'test'
+  ...
+# Subtest: source-selection assertions do not disclose private Corp or commit values
+ok 13 - source-selection assertions do not disclose private Corp or commit values
+  ---
+  duration_ms: 0.7575
+  type: 'test'
+  ...
+# Subtest: launch and replay assertions never print unknown response values
+ok 14 - launch and replay assertions never print unknown response values
+  ---
+  duration_ms: 1.0532
+  type: 'test'
+  ...
+# Subtest: graph reconciliation rejects a repeated conflict or a response that dispatched new work
+ok 15 - graph reconciliation rejects a repeated conflict or a response that dispatched new work
+  ---
+  duration_ms: 0.3142
+  type: 'test'
+  ...
+# Subtest: the E2E retains native staffing, source assertions, concurrency, handoff and Windows mixed-provider coverage
+ok 16 - the E2E retains native staffing, source assertions, concurrency, handoff and Windows mixed-provider coverage
+  ---
+  duration_ms: 2.1764
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 176.7676

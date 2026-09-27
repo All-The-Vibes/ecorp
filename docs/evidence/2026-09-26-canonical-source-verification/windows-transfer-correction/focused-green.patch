@@ -1,0 +1,379 @@
+diff --git a/crates/crony-runner/src/deliverable_verification.rs b/crates/crony-runner/src/deliverable_verification.rs
+index 1b627b1..a57160d 100644
+--- a/crates/crony-runner/src/deliverable_verification.rs
++++ b/crates/crony-runner/src/deliverable_verification.rs
+@@ -5,7 +5,7 @@ use std::{
+     collections::BTreeSet,
+     ffi::OsString,
+     path::{Component, Path, PathBuf},
+-    process::{Output, Stdio},
++    process::{ExitStatus, Output, Stdio},
+     time::Duration,
+ };
+ 
+@@ -16,7 +16,7 @@ use crony_domain::{VerificationPolicy, VerifierCheck};
+ use serde_json::json;
+ use sha2::{Digest, Sha256};
+ use tokio::{
+-    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
++    io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader},
+     process::Command,
+     sync::watch,
+ };
+@@ -34,6 +34,8 @@ use crate::adapter::process_tree::{OwnedProcessTree, OwnedProcessTreeSpawn};
+ const MAX_ENTRIES: usize = 100_000;
+ const MAX_BYTES: u64 = 4 * 1024 * 1024 * 1024;
+ const MAX_GIT_OUTPUT: u64 = 16 * 1024 * 1024;
++// Candidate and base blobs, plus bounded tree/commit/pack framing. Never buffer a pack in memory.
++const MAX_GIT_PACK_BYTES: u64 = 2 * MAX_BYTES + 64 * 1024 * 1024;
+ 
+ #[derive(Debug)]
+ struct SourceFile {
+@@ -136,30 +138,7 @@ async fn verify_inner(
+         &[],
+     )
+     .await?;
+-    // Native pack output writes independent objects directly, avoiding the costly local
+-    // upload-pack/index-pack pipe chain on Windows. Limit history to candidate + base;
+-    // no source config, refs, hooks, alternates or older history enter the snapshot.
+-    let pack_prefix = workspace::normalize_path(baseline.path().join(".git/objects/pack/pack"));
+-    let revisions = format!(
+-        "--shallow {}\n{}\n",
+-        prepared.workspace.base_commit, candidate_commit
+-    );
+-    private_git(
+-        &prepared.workspace_root,
+-        &[
+-            "pack-objects".into(),
+-            "--revs".into(),
+-            "--shallow".into(),
+-            "--quiet".into(),
+-            // Temporary snapshots need neither delta searches nor recompression.
+-            "--window=0".into(),
+-            "--compression=0".into(),
+-            pack_prefix.into_os_string(),
+-        ],
+-        revisions.as_bytes(),
+-    )
+-    .await
+-    .context("pack independent canonical source objects")?;
++    transfer_canonical_objects(prepared, baseline.path(), &candidate_commit).await?;
+     tokio::fs::write(
+         baseline.path().join(".git/shallow"),
+         format!("{}\n", prepared.workspace.base_commit),
+@@ -262,6 +241,78 @@ async fn verify_inner(
+     Ok(Some(report))
+ }
+ 
++async fn transfer_canonical_objects(
++    prepared: &PreparedDeliverable,
++    snapshot: &Path,
++    candidate_commit: &str,
++) -> Result<()> {
++    // A named pack makes Git finalize files from the source object database. That rename
++    // fails when checkout and snapshot are on different volumes. Stream to an exclusively
++    // created snapshot file, await the producer, then let native index-pack install locally.
++    // Only candidate + base history enters; source config, refs, hooks and alternates do not.
++    let transfer_path = snapshot.join(".git/ecorp-transfer.pack");
++    let mut transfer = tokio::fs::OpenOptions::new()
++        .write(true)
++        .create_new(true)
++        .open(&transfer_path)
++        .await
++        .context("create owned canonical pack transfer")?;
++    let revisions = format!(
++        "--shallow {}\n{}\n",
++        prepared.workspace.base_commit, candidate_commit
++    );
++    let mut pack = git_command(&prepared.workspace_root);
++    pack.args([
++        "pack-objects",
++        "--revs",
++        "--shallow",
++        "--quiet",
++        // Temporary snapshots need neither delta searches nor recompression.
++        "--window=0",
++        "--compression=0",
++        "--stdout",
++    ]);
++    let (status, errors) = run_private_git_stream(
++        &mut pack,
++        revisions.as_bytes(),
++        &mut transfer,
++        MAX_GIT_PACK_BYTES,
++        super::GIT_TIMEOUT,
++    )
++    .await
++    .context("pack independent canonical source objects")?;
++    if !status.success() {
++        bail!(
++            "pack canonical objects failed: {}",
++            String::from_utf8_lossy(&errors).trim()
++        );
++    }
++    drop(transfer);
++    let input = tokio::fs::File::open(&transfer_path).await?;
++    let mut index = git_command(snapshot);
++    index.args(["index-pack", "--stdin", "--threads=1"]);
++    let (status, errors) = run_private_git_stream(
++        &mut index,
++        input,
++        &mut Vec::new(),
++        MAX_GIT_OUTPUT,
++        super::GIT_TIMEOUT,
++    )
++    .await
++    .context("install independent canonical source objects")?;
++    if !status.success() {
++        bail!(
++            "index canonical objects failed: {}",
++            String::from_utf8_lossy(&errors).trim()
++        );
++    }
++    // Every process and file handle is released before removing this snapshot-owned scratch.
++    tokio::fs::remove_file(transfer_path)
++        .await
++        .context("remove canonical pack transfer")?;
++    Ok(())
++}
++
+ /// Sanitize Git routing/config only. This is not a verifier command or an OS sandbox.
+ pub(super) fn clear_git_environment(command: &mut Command) {
+     for (name, _) in std::env::vars_os() {
+@@ -418,6 +469,23 @@ pub(super) async fn run_private_git(
+     input: &[u8],
+     timeout: Duration,
+ ) -> Result<Output> {
++    let mut output = Vec::new();
++    let (status, stderr) =
++        run_private_git_stream(command, input, &mut output, MAX_GIT_OUTPUT, timeout).await?;
++    Ok(Output {
++        status,
++        stdout: output,
++        stderr,
++    })
++}
++
++async fn run_private_git_stream(
++    command: &mut Command,
++    input: impl AsyncRead + Unpin,
++    output: &mut (impl AsyncWrite + Unpin),
++    output_limit: u64,
++    timeout: Duration,
++) -> Result<(ExitStatus, Vec<u8>)> {
+     command
+         .stdin(Stdio::piped())
+         .stdout(Stdio::piped())
+@@ -425,47 +493,49 @@ pub(super) async fn run_private_git(
+     let mut process = PrivateGitProcess::spawn(command)
+         .await
+         .context("start private Git operation")?;
+-    let result = collect_private_git(process.child_mut(), input, timeout).await;
++    let result =
++        collect_private_git(process.child_mut(), input, output, output_limit, timeout).await;
+     process.finish(result).await
+ }
+ 
+ async fn collect_private_git(
+     child: &mut tokio::process::Child,
+-    input: &[u8],
++    mut input: impl AsyncRead + Unpin,
++    output: &mut (impl AsyncWrite + Unpin),
++    output_limit: u64,
+     timeout: Duration,
+-) -> Result<Output> {
++) -> Result<(ExitStatus, Vec<u8>)> {
+     let mut stdin = child.stdin.take().context("Git stdin")?;
+     let mut stdout = child
+         .stdout
+         .take()
+         .context("Git stdout")?
+-        .take(MAX_GIT_OUTPUT + 1);
++        .take(output_limit + 1);
+     let mut stderr = child.stderr.take().context("Git stderr")?.take(64 * 1024);
+-    let mut output = Vec::new();
+     let mut errors = Vec::new();
+     let (status, _, _, _) = tokio::time::timeout(timeout, async {
+         tokio::try_join!(
+             child.wait(),
+             async move {
+-                stdin.write_all(input).await?;
++                tokio::io::copy(&mut input, &mut stdin).await?;
+                 drop(stdin);
+                 Ok::<_, std::io::Error>(())
+             },
+-            stdout.read_to_end(&mut output),
++            async {
++                if tokio::io::copy(&mut stdout, output).await? > output_limit {
++                    return Err(std::io::Error::other(
++                        "private Git output exceeds its bound",
++                    ));
++                }
++                output.flush().await
++            },
+             stderr.read_to_end(&mut errors),
+         )
+     })
+     .await
+     .context("private Git operation timed out")?
+     .context("private Git I/O failed")?;
+-    if output.len() as u64 > MAX_GIT_OUTPUT {
+-        bail!("private Git output exceeds its bound");
+-    }
+-    Ok(Output {
+-        status,
+-        stdout: output,
+-        stderr: errors,
+-    })
++    Ok((status, errors))
+ }
+ 
+ async fn tree_files(root: &Path, tree: &str) -> Result<Vec<SourceFile>> {
+diff --git a/crates/crony-runner/src/deliverable_verification_tests.rs b/crates/crony-runner/src/deliverable_verification_tests.rs
+index 8c4b0b8..3df79e9 100644
+--- a/crates/crony-runner/src/deliverable_verification_tests.rs
++++ b/crates/crony-runner/src/deliverable_verification_tests.rs
+@@ -17,7 +17,11 @@ struct Fixture {
+ 
+ impl Fixture {
+     fn new() -> Self {
+-        let root = std::env::temp_dir().join(format!("ecorp-canonical-test-{}", Uuid::new_v4()));
++        Self::new_in(&std::env::temp_dir())
++    }
++
++    fn new_in(parent: &Path) -> Self {
++        let root = parent.join(format!("ecorp-canonical-test-{}", Uuid::new_v4()));
+         let source = root.join("source");
+         fs::create_dir_all(&source).unwrap();
+         println!("canonical fixture: {}", root.display());
+@@ -301,6 +305,22 @@ async fn canonical_export_supports_long_windows_paths_without_changing_git_confi
+     fixture.cleanup();
+ }
+ 
++#[tokio::test]
++async fn canonical_private_git_rejects_excess_diagnostic_output() {
++    let mut command = tokio::process::Command::new("node");
++    command.args([
++        "-e",
++        "process.stdout.write(Buffer.alloc(17*1024*1024));setTimeout(()=>{},6000)",
++    ]);
++    let error = verification::run_private_git(&mut command, &[], Duration::from_secs(10))
++        .await
++        .unwrap_err();
++    assert!(
++        format!("{error:#}").contains("output exceeds its bound"),
++        "{error:#}"
++    );
++}
++
+ #[tokio::test]
+ async fn canonical_migration_checks_cover_conversion_selection_and_clean_runner_commits() {
+     let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+@@ -686,7 +706,10 @@ async fn canonical_checks_reject_raw_source_index_head_and_untracked_mutation()
+ 
+ #[tokio::test]
+ async fn canonical_private_git_contains_only_candidate_and_base_history() {
+-    let mut fixture = Fixture::new();
++    // Hosted Windows keeps the checkout on D: and verification snapshots on C:.
++    // A temp-only source fixture cannot exercise that native cross-volume export.
++    let mut fixture = Fixture::new_in(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target"));
++    println!("canonical snapshots: {}", std::env::temp_dir().display());
+     fixture.write("ancestor-only.txt", b"excluded historical bytes\n");
+     fixture.commit_base();
+     let ancestor = fixture.lease.base_commit.clone();
+@@ -764,6 +787,39 @@ a.equal(fs.readFileSync('other.txt', 'utf8'), 'other before\n');
+     fixture.cleanup();
+ }
+ 
++#[tokio::test]
++async fn canonical_snapshot_streams_packs_larger_than_diagnostic_output_limit() {
++    let mut fixture = Fixture::new();
++    let bytes = vec![b'x'; 17 * 1024 * 1024];
++    fixture.write("large-base.txt", &bytes);
++    fixture.commit_base();
++    fixture.write("tracked.txt", b"candidate bytes\n");
++    let mut prepared = fixture.prepare(&["tracked.txt"], &[]).await;
++    let report = verify(
++        &mut prepared,
++        &policy(vec![
++            VerifierCheck::File {
++                path: "large-base.txt".into(),
++                min_bytes: bytes.len() as u64,
++            },
++            node("const fs=require('node:fs'),a=require('node:assert/strict');const p='.git/objects/pack/';a.ok(fs.readdirSync(p).filter(f=>f.endsWith('.pack')).some(f=>fs.statSync(p+f).size>16*1024*1024));a.equal(fs.existsSync('.git/ecorp-transfer.pack'),false)"),
++        ]),
++        &[],
++    )
++    .await;
++    assert!(report.passed, "{report:?}");
++    assert_eq!(
++        report.checks[0].payload["sha256"],
++        hex::encode(Sha256::digest(&bytes))
++    );
++    assert_eq!(
++        git(&fixture.lease.path, &["rev-parse", "HEAD"]),
++        fixture.lease.base_commit
++    );
++    drop(prepared);
++    fixture.cleanup();
++}
++
+ #[tokio::test]
+ async fn canonical_commands_have_private_git_context_and_fresh_build_outputs() {
+     let fixture = Fixture::new();
+diff --git a/crates/crony-server/src/artifacts.rs b/crates/crony-server/src/artifacts.rs
+index b5b6ede..1c74d7a 100644
+--- a/crates/crony-server/src/artifacts.rs
++++ b/crates/crony-server/src/artifacts.rs
+@@ -713,7 +713,7 @@ fn source_deliverable_metadata(payload: &Value) -> Result<Value> {
+         .unwrap_or(false);
+     if !valid_hex(verification_sha256, 64, 64)
+         || !valid_hex(base_commit, 40, 64)
+-        || head_commit.is_some_and(|value| !valid_hex(value, 40, 64))
++        || head_commit.is_some_and(|value| !valid_hex(value, source.tree.len(), source.tree.len()))
+         || branch.is_empty()
+         || branch.len() > 512
+         || !matches!(
+@@ -948,6 +948,42 @@ mod tests {
+         payload["content_base64"] = json!(BASE64.encode(content));
+     }
+ 
++    #[test]
++    fn canonical_upload_requires_head_in_the_verified_object_format() {
++        let mut store = memory_store();
++        store.max_bytes = 8192;
++        for object_length in [40, 64] {
++            let mut payload = issue82_source_upload_fixture("commit_branch");
++            payload["verified_tree"] = json!("d".repeat(object_length));
++            payload["base_commit"] = json!("b".repeat(object_length));
++            payload["source_verification"]["tree"] = payload["verified_tree"].clone();
++            payload["source_verification"]["base_commit"] = payload["base_commit"].clone();
++            payload["source_verification"]["candidate_commit"] = json!("c".repeat(object_length));
++            for head_length in 39..=65 {
++                payload["head_commit"] = json!("f".repeat(head_length));
++                let mut envelope = payload.clone();
++                for field in ["content_base64", "bytes", "sha256"] {
++                    envelope.as_object_mut().unwrap().remove(field);
++                }
++                envelope["schema_version"] = json!(1);
++                issue82_replace_upload_content(
++                    &mut payload,
++                    &serde_json::to_vec(&envelope).unwrap(),
++                );
++                let result = store.prepare_staging(
++                    identity(),
++                    &payload,
++                    Utc::now() + chrono::Duration::days(1),
++                );
++                assert_eq!(
++                    result.is_ok(),
++                    head_length == object_length,
++                    "verified object length {object_length}, head length {head_length}"
++                );
++            }
++        }
++    }
++
+     #[test]
+     fn issue82_source_envelope_must_match_signed_upload_identity() {
+         let mut store = memory_store();

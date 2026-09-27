@@ -1,0 +1,64 @@
+{
+  "pr": 375,
+  "scope": "Retrospective native regressions; not browser or two-volume acceptance.",
+  "mode": "red",
+  "status": "failed",
+  "started_at_utc": "2026-09-27T13:31:11.2653397+00:00",
+  "checks": [
+    {
+      "arguments": [
+        "test",
+        "--locked",
+        "-p",
+        "crony-server",
+        "canonical_upload_requires_head_in_the_verified_object_format",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "finished_at_utc": "2026-09-27T13:32:11.5041382+00:00",
+      "name": "upload-object-identities",
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-windows-fix-red-r1-upload-object-identities.log",
+      "sha256": "bc978069c4bf364f38b54a4268edf60f8a3364525b414df0bcb57908c6986eb8",
+      "started_at_utc": "2026-09-27T13:31:11.6469281+00:00",
+      "summaries": [
+        {
+          "filtered": 4,
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "filtered": 258,
+          "passed": 0,
+          "failed": 1,
+          "ignored": 0
+        }
+      ],
+      "exit_code": 101
+    }
+  ],
+  "head": "712a30eb018fa2325f889bdc4fd539161e2c0f3a",
+  "head_tree": "354ba6df5dc2512c43e81d68da8a699b3508fed2",
+  "patch": {
+    "sha256": "af23a0e0bc8ce9191abc3ef4644cf554702756d4a3d68cd46bdb0bd60cb521d9",
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-windows-fix-red-r1.patch"
+  },
+  "source_files": [
+    {
+      "sha256": "b96511af8f1f663c3e080b5cadf9824f391f686be7db0a195f656b5376eb06dd",
+      "path": "crates/crony-runner/src/deliverable_verification.rs"
+    },
+    {
+      "sha256": "c80fc7e4b40289445a4b972d4feae19c23e5e6eab9451b429b7794b0cb8f77f4",
+      "path": "crates/crony-runner/src/deliverable_verification_tests.rs"
+    },
+    {
+      "sha256": "7b51b45e6cf53ff84024a667b0e9d8674826628c97818d8ba7a1302482c4f903",
+      "path": "crates/crony-server/src/artifacts.rs"
+    }
+  ],
+  "failure": "Observed upload-object-identities failure.",
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-27T13:32:11.5676758+00:00"
+}

@@ -1,0 +1,35 @@
+{
+  "pr": 375,
+  "issue": 82,
+  "observed_at_utc": "2026-09-27T09:35:54.7701604+00:00",
+  "status": "acceptance_failed_correction_pending_validation",
+  "failed_receipt": "pr375-factory-native-r6.json",
+  "failed_receipt_sha256": "43b57dc6598350089bf50291ab88fa8ef035767e8bedc9f18601e4185d5b1f4c",
+  "observed_failure": "Factory approval scenario 9012 exceeded the 30-second driver deadline. Persisted run 2d82dc8a-e18c-422b-8dcf-b91badfd4eb8 was verifying with verification_status running; no verification evidence or source deliverable was recorded when the supervisor stopped the stack.",
+  "code_change": "Use the same bounded 180-second allowance as waitForMission for waitForApproval, since canonical source verification precedes the durable approval request.",
+  "limitation": "This receipt does not establish that the pending verification or approval would eventually have passed. Fresh complete native acceptance is required.",
+  "prior_canonical": "issue82-canonical-r8.json",
+  "source_unchanged_during_failed_run": true,
+  "binaries_unchanged_during_failed_run": true,
+  "cleanup": [
+    {
+      "pid": 23120,
+      "role": "runner",
+      "stopped": true
+    },
+    {
+      "pid": 26304,
+      "role": "server",
+      "stopped": true
+    },
+    {
+      "pid": 12620,
+      "role": "postgres",
+      "stopped": true
+    }
+  ],
+  "retained_qa_root": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r6",
+  "changed_file": "tools/e2e_factory_controller.mjs",
+  "changed_file_sha256": "986192a10f1d5421f8b3d5214c50039484316542cc4da4a7b4692dbdd76118e9",
+  "next_canonical": "issue82-canonical-r9.json"
+}

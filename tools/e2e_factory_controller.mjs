@@ -371,7 +371,27 @@ async function waitForMission(demo, missionId, timeoutMs = 180_000) {
   throw new Error(`timed out waiting for factory controller mission ${missionId}`)
 }
 
-async function waitForApproval(demo, missionId, timeoutMs = 30_000) {
+async function waitForWorkspacePreservation(demo, missionId, timeoutMs = 60_000) {
+  const deadline = Date.now() + timeoutMs
+  let disposition = 'run not observed'
+  while (Date.now() < deadline) {
+    const state = await snapshot(demo)
+    const taskIds = new Set(
+      state.snapshot.tasks
+        .filter((task) => task.mission_id === missionId)
+        .map((task) => task.id),
+    )
+    const runs = state.snapshot.runs.filter((run) => taskIds.has(run.task_id))
+    assert.ok(runs.length <= 1, 'the single-task Factory fixture must have one run')
+    disposition = runs[0]?.workspace_disposition ?? 'run not observed'
+    assert.notEqual(disposition, 'removed', 'the committed workspace must be retained')
+    if (disposition === 'preserved') return state
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+  throw new Error(`timed out waiting for Factory workspace preservation: ${disposition}`)
+}
+
+async function waitForApproval(demo, missionId, timeoutMs = 180_000) {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     const state = await snapshot(demo)
@@ -804,10 +824,12 @@ await writeFile(
 )
 await rm(releaseSourceRepository, { recursive: true, force: true })
 
+const portableSourceText = 'portable untracked source\n'
 const explicitVerificationPolicy = {
   checks: [
     { type: 'artifact', min_bytes: 1 },
-    { type: 'file', path: 'result.md', min_bytes: 50 },
+    // Provider result.md is separate evidence; the file check must name exported source.
+    { type: 'file', path: 'portable-untracked.txt', min_bytes: Buffer.byteLength(portableSourceText) },
   ],
   manual_gate: null,
 }
@@ -1080,7 +1102,8 @@ assert.equal(replay.materialized_now, false)
 assert.equal(replay.launch.recovered, true)
 assert.equal(replay.factory_state, 'verified')
 
-const finalState = await snapshot(demo)
+// Run completion precedes the runner's awaited workspace finalization and fingerprint.
+const finalState = await waitForWorkspacePreservation(demo, first.mission_id)
 const factoryItems = finalState.snapshot.factory_work_items.filter(
   (item) => item.source_project_item_id === 'PVTI_FAKE_FACTORY_9001',
 )
@@ -1117,6 +1140,38 @@ const factoryWorktreeHead = (
   })
 ).stdout.trim()
 assert.equal(sourceDeliverables[0].head_commit, factoryWorktreeHead)
+const exportedGitOptions = { cwd: runs[0].workspace_path, windowsHide: true }
+const exportedSourceText = (
+  await execFile('git', ['cat-file', 'blob', `${factoryWorktreeHead}:portable-untracked.txt`], exportedGitOptions)
+).stdout
+assert.equal(exportedSourceText, portableSourceText)
+const exportedReadme = (
+  await execFile('git', ['cat-file', 'blob', `${factoryWorktreeHead}:README.md`], exportedGitOptions)
+).stdout
+assert.ok(exportedReadme.endsWith('\n\nPortable deliverable fixture: tracked change.\n'))
+const exportedProviderArtifact = (
+  await execFile('git', ['ls-tree', '--name-only', factoryWorktreeHead, '--', 'result.md'], exportedGitOptions)
+).stdout
+assert.equal(exportedProviderArtifact, '', 'provider evidence must not be exported as source')
+const exportedTree = (
+  await execFile('git', ['rev-parse', `${factoryWorktreeHead}^{tree}`], exportedGitOptions)
+).stdout.trim()
+const canonicalEvidence = finalState.snapshot.verification_evidence
+  .filter((evidence) => evidence.run_id === runs[0].id)
+  .sort((left, right) => left.check_index - right.check_index)
+assert.equal(canonicalEvidence.length, explicitVerificationPolicy.checks.length)
+for (const [index, evidence] of canonicalEvidence.entries()) {
+  assert.equal(evidence.check_index, index)
+  assert.equal(evidence.kind, explicitVerificationPolicy.checks[index].type)
+  assert.equal(evidence.status, 'passed')
+  assert.equal(evidence.corp_id, demo.corp_id)
+  assert.ok(taskIds.has(evidence.task_id))
+  assert.equal(evidence.payload.source.tree, exportedTree)
+  assert.equal(evidence.payload.source.base_commit, sourceBaseCommit)
+}
+assert.equal(canonicalEvidence[0].payload.artifact_id, runs[0].artifact_id)
+assert.ok(runs[0].artifact_id)
+assert.equal(runs[0].verification_status, 'passed')
 const fakeState = JSON.parse(await readFile(statePath, 'utf8'))
 assert.equal(fakeState.items[0].status, 'In Progress')
 assert.ok(fakeState.item_edits >= 1)
@@ -2085,6 +2140,19 @@ const report = {
   explicit_verification_policy_persisted: true,
   portable_deliverable_materialized: sourceDeliverables.length === 1,
   portable_deliverable_form: sourceDeliverables[0].form,
+  canonical_verification: {
+    exported_head: factoryWorktreeHead,
+    exported_tree: exportedTree,
+    exported_file: 'portable-untracked.txt',
+    exported_file_bytes: Buffer.byteLength(exportedSourceText),
+    exported_file_matches: exportedSourceText === portableSourceText,
+    tracked_change_exported: exportedReadme.endsWith('\n\nPortable deliverable fixture: tracked change.\n'),
+    provider_artifact_excluded_from_source: exportedProviderArtifact === '',
+    evidence_ids: canonicalEvidence.map((evidence) => evidence.id),
+    evidence_kinds: canonicalEvidence.map((evidence) => evidence.kind),
+    artifact_id: runs[0].artifact_id,
+    persisted_checks_passed: canonicalEvidence.every((evidence) => evidence.status === 'passed'),
+  },
   factory_state: factoryItems[0].state,
   claim_token_absent_from_snapshot: true,
   mission_status: missions[0].status,

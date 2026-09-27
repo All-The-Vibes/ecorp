@@ -1,0 +1,461 @@
+diff --git a/crates/crony-runner/src/deliverable_verification.rs b/crates/crony-runner/src/deliverable_verification.rs
+index a57160d..71f062e 100644
+--- a/crates/crony-runner/src/deliverable_verification.rs
++++ b/crates/crony-runner/src/deliverable_verification.rs
+@@ -11,7 +11,7 @@ use std::{
+ 
+ use anyhow::{Context, Result, bail};
+ use cap_fs_ext::{DirExt, FollowSymlinks, MetadataExt, OpenOptionsFollowExt};
+-use cap_std::fs::{Dir, Metadata, OpenOptions};
++use cap_std::fs::{Dir, Metadata, OpenOptions, Permissions};
+ use crony_domain::{VerificationPolicy, VerifierCheck};
+ use serde_json::json;
+ use sha2::{Digest, Sha256};
+@@ -794,7 +794,7 @@ async fn copy_ignored_inputs(
+         let name = components.last().context("input name")?;
+         let metadata = parent.symlink_metadata(name)?;
+         tokio::fs::create_dir_all(destination.parent().context("ignored-input parent")?).await?;
+-        let (sha256, bytes) = if input_is_link(&metadata) {
++        let (sha256, bytes, permissions) = if input_is_link(&metadata) {
+             // Read the target without following it. read_link rejects all absolute targets,
+             // including internal Windows junctions; the rebasing step below checks containment.
+             let target = relative_input_link_target(
+@@ -809,6 +809,7 @@ async fn copy_ignored_inputs(
+             (
+                 hex::encode(Sha256::digest(value.as_bytes())),
+                 value.len() as u64,
++                metadata.permissions(),
+             )
+         } else {
+             if !metadata.is_file() {
+@@ -821,46 +822,9 @@ async fn copy_ignored_inputs(
+             {
+                 bail!("ignored inputs exceed snapshot bounds");
+             }
+-            let mut options = OpenOptions::new();
+-            options.read(true).follow(FollowSymlinks::No);
+-            #[cfg(unix)]
+-            {
+-                use cap_std::fs::OpenOptionsExt;
+-                options.custom_flags(libc::O_NONBLOCK);
+-            }
+-            #[cfg(windows)]
+-            {
+-                use cap_std::fs::OpenOptionsExt;
+-                options.share_mode(1);
+-            }
+-            let opened_file = parent.open_with(name, &options)?;
+-            let opened = opened_file.metadata()?;
+-            if !opened.is_file()
+-                || input_is_link(&opened)
+-                || (opened.dev(), opened.ino(), opened.len())
+-                    != (metadata.dev(), metadata.ino(), metadata.len())
+-            {
+-                bail!("ignored input changed while opening: {path}");
+-            }
+-            let source_std = opened_file.into_std();
+-            let permissions = source_std.metadata()?.permissions();
+-            let mut source_file = tokio::fs::File::from_std(source_std);
+-            let mut destination_file = tokio::fs::OpenOptions::new()
+-                .write(true)
+-                .create_new(true)
+-                .open(&destination)
+-                .await?;
+-            let copied = tokio::io::copy(
+-                &mut (&mut source_file).take(metadata.len() + 1),
+-                &mut destination_file,
+-            )
+-            .await?;
+-            if copied != metadata.len() {
+-                bail!("ignored input changed size during copy: {path}");
+-            }
+-            drop(destination_file);
+-            tokio::fs::set_permissions(&destination, permissions).await?;
+-            (file_digest(&destination, metadata.len()).await?, copied)
++            let opened = open_ignored_file(parent, name, &metadata)
++                .with_context(|| format!("open ignored input: {path}"))?;
++            copy_ignored_file(opened, &destination).await?
+         };
+         total = total
+             .checked_add(bytes)
+@@ -868,19 +832,89 @@ async fn copy_ignored_inputs(
+         if total.saturating_add(source_bytes) > MAX_BYTES {
+             bail!("verification inputs exceed snapshot bounds");
+         }
+-        #[cfg(unix)]
+-        let permissions = {
+-            use cap_std::fs::PermissionsExt;
+-            json!({"unix_mode": metadata.permissions().mode() & 0o777})
+-        };
+-        #[cfg(windows)]
+-        let permissions = json!({"windows_readonly": metadata.permissions().readonly()});
++        let permissions = ignored_input_permission_details(&permissions);
+         digest.update(serde_json::to_vec(&json!({"path":path, "sha256":sha256, "bytes":bytes, "link":input_is_link(&metadata), "permissions": permissions}))?);
+         digest.update([0]);
+     }
+     Ok((hex::encode(digest.finalize()), paths.len(), total))
+ }
+ 
++struct OpenedIgnoredInput {
++    file: cap_std::fs::File,
++    permissions: Permissions,
++    bytes: u64,
++}
++
++fn open_ignored_file(parent: &Dir, name: &str, metadata: &Metadata) -> Result<OpenedIgnoredInput> {
++    let mut options = OpenOptions::new();
++    options.read(true).follow(FollowSymlinks::No);
++    #[cfg(unix)]
++    {
++        use cap_std::fs::OpenOptionsExt;
++        options.custom_flags(libc::O_NONBLOCK);
++    }
++    #[cfg(windows)]
++    {
++        use cap_std::fs::OpenOptionsExt;
++        options.share_mode(1);
++    }
++    let file = parent.open_with(name, &options)?;
++    let opened = file.metadata()?;
++    if !opened.is_file()
++        || input_is_link(&opened)
++        || (opened.dev(), opened.ino(), opened.len())
++            != (metadata.dev(), metadata.ino(), metadata.len())
++    {
++        bail!("ignored input changed while opening");
++    }
++    Ok(OpenedIgnoredInput {
++        file,
++        permissions: metadata.permissions(),
++        bytes: metadata.len(),
++    })
++}
++
++async fn copy_ignored_file(
++    opened: OpenedIgnoredInput,
++    destination: &Path,
++) -> Result<(String, u64, Permissions)> {
++    let source_std = opened.file.into_std();
++    let permissions = source_std.metadata()?.permissions();
++    let mut source_file = tokio::fs::File::from_std(source_std);
++    let mut destination_file = tokio::fs::OpenOptions::new()
++        .write(true)
++        .create_new(true)
++        .open(destination)
++        .await?;
++    let copied = tokio::io::copy(
++        &mut (&mut source_file).take(opened.bytes + 1),
++        &mut destination_file,
++    )
++    .await?;
++    if copied != opened.bytes {
++        bail!("ignored input changed size during copy");
++    }
++    drop(destination_file);
++    tokio::fs::set_permissions(destination, permissions).await?;
++    Ok((
++        file_digest(destination, opened.bytes).await?,
++        copied,
++        opened.permissions,
++    ))
++}
++
++fn ignored_input_permission_details(permissions: &Permissions) -> serde_json::Value {
++    #[cfg(unix)]
++    {
++        use cap_std::fs::PermissionsExt;
++        json!({"unix_mode": permissions.mode() & 0o777})
++    }
++    #[cfg(windows)]
++    {
++        json!({"windows_readonly": permissions.readonly()})
++    }
++}
++
+ /// pnpm uses absolute internal junctions on Windows. Rebase only ignored inputs,
+ /// never canonical Git symlinks; the materialized target is included in the input digest.
+ fn relative_input_link_target(source: &Path, path: &str, target: &Path) -> Result<PathBuf> {
+@@ -1167,10 +1201,170 @@ async fn check_source_integrity(
+     Ok(())
+ }
+ 
+-#[cfg(all(test, windows))]
++#[cfg(test)]
+ mod tests {
+     use super::*;
+ 
++    struct PermissionFixture {
++        root: PathBuf,
++        directory: Dir,
++    }
++
++    impl PermissionFixture {
++        fn new() -> Self {
++            let root = std::env::temp_dir().join(format!(
++                "ecorp-ignored-permissions-{}",
++                uuid::Uuid::new_v4()
++            ));
++            std::fs::create_dir(&root).unwrap();
++            println!("ignored permission fixture: {}", root.display());
++            std::fs::write(root.join("input"), b"dependency\n").unwrap();
++            let directory = Dir::open_ambient_dir(&root, cap_std::ambient_authority()).unwrap();
++            let fixture = Self { root, directory };
++            fixture.set_permissions(false);
++            fixture
++        }
++
++        fn set_permissions(&self, alternate: bool) {
++            #[cfg(unix)]
++            let permissions = {
++                use std::os::unix::fs::PermissionsExt;
++                std::fs::Permissions::from_mode(if alternate { 0o755 } else { 0o644 })
++            };
++            #[cfg(windows)]
++            let permissions = {
++                let mut permissions = std::fs::metadata(self.root.join("input"))
++                    .unwrap()
++                    .permissions();
++                permissions.set_readonly(alternate);
++                permissions
++            };
++            std::fs::set_permissions(self.root.join("input"), permissions).unwrap();
++        }
++
++        fn cleanup(self) {
++            // Preserve a failed fixture. Only this successful test owns these exact files.
++            assert!(
++                self.root
++                    .file_name()
++                    .unwrap()
++                    .to_string_lossy()
++                    .starts_with("ecorp-ignored-permissions-")
++            );
++            #[cfg(windows)]
++            for name in ["input", "copied"] {
++                let path = self.root.join(name);
++                if path.exists() {
++                    let mut permissions = std::fs::metadata(&path).unwrap().permissions();
++                    permissions.set_readonly(false);
++                    std::fs::set_permissions(path, permissions).unwrap();
++                }
++            }
++            drop(self.directory);
++            std::fs::remove_dir_all(self.root).unwrap();
++        }
++    }
++
++    #[test]
++    fn canonical_ignored_input_rejects_permission_change_between_stat_and_open() {
++        let fixture = PermissionFixture::new();
++        let before = fixture.directory.symlink_metadata("input").unwrap();
++        fixture.set_permissions(true);
++        let after = fixture.directory.symlink_metadata("input").unwrap();
++        assert_eq!(
++            (before.dev(), before.ino(), before.len()),
++            (after.dev(), after.ino(), after.len())
++        );
++        assert_ne!(before.permissions(), after.permissions());
++        let error = open_ignored_file(&fixture.directory, "input", &before)
++            .err()
++            .expect("mode-only changes must reject the input before copying");
++        assert!(
++            error
++                .to_string()
++                .contains("ignored input changed while opening")
++        );
++        assert!(!fixture.root.join("copied").exists());
++        fixture.cleanup();
++    }
++
++    #[tokio::test]
++    async fn canonical_ignored_input_copies_and_fingerprints_captured_permissions() {
++        let fixture = PermissionFixture::new();
++        let before = fixture.directory.symlink_metadata("input").unwrap();
++        let opened = open_ignored_file(&fixture.directory, "input", &before).unwrap();
++        let captured = opened.permissions.clone();
++        // Change only the source mode after capture, without a timing-dependent race.
++        fixture.set_permissions(true);
++        assert_ne!(
++            captured,
++            fixture
++                .directory
++                .symlink_metadata("input")
++                .unwrap()
++                .permissions()
++        );
++        let (digest, bytes, fingerprint_permissions) =
++            copy_ignored_file(opened, &fixture.root.join("copied"))
++                .await
++                .unwrap();
++        assert_eq!(
++            std::fs::read(fixture.root.join("copied")).unwrap(),
++            b"dependency\n"
++        );
++        assert_eq!(digest, hex::encode(Sha256::digest(b"dependency\n")));
++        assert_eq!(bytes, 11);
++        let copied_permissions = fixture
++            .directory
++            .symlink_metadata("copied")
++            .unwrap()
++            .permissions();
++        assert_eq!(copied_permissions, captured);
++        assert_eq!(fingerprint_permissions, captured);
++        assert_eq!(
++            ignored_input_permission_details(&fingerprint_permissions),
++            ignored_input_permission_details(&copied_permissions)
++        );
++        fixture.cleanup();
++    }
++
++    #[tokio::test]
++    async fn canonical_ignored_input_preserves_unchanged_native_permissions() {
++        for alternate in [false, true] {
++            let fixture = PermissionFixture::new();
++            fixture.set_permissions(alternate);
++            let before = fixture.directory.symlink_metadata("input").unwrap();
++            let opened = open_ignored_file(&fixture.directory, "input", &before).unwrap();
++            let (_, _, fingerprint_permissions) =
++                copy_ignored_file(opened, &fixture.root.join("copied"))
++                    .await
++                    .unwrap();
++            assert_eq!(fingerprint_permissions, before.permissions());
++            assert_eq!(
++                fixture
++                    .directory
++                    .symlink_metadata("copied")
++                    .unwrap()
++                    .permissions(),
++                fingerprint_permissions
++            );
++            fixture.cleanup();
++        }
++    }
++
++    #[cfg(unix)]
++    #[test]
++    fn canonical_ignored_input_fingerprint_includes_special_permission_bits() {
++        use cap_std::fs::PermissionsExt;
++        for mode in [0o1755, 0o2755, 0o4755] {
++            assert_ne!(
++                ignored_input_permission_details(&Permissions::from_mode(mode)),
++                ignored_input_permission_details(&Permissions::from_mode(0o755))
++            );
++        }
++    }
++
++    #[cfg(windows)]
+     #[tokio::test]
+     async fn canonical_raw_blob_rejection_waits_for_process_exit() {
+         let root =
+diff --git a/tools/task_graph_fixture.test.mjs b/tools/task_graph_fixture.test.mjs
+index 5711931..2c20884 100644
+--- a/tools/task_graph_fixture.test.mjs
++++ b/tools/task_graph_fixture.test.mjs
+@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
+ import { readFileSync } from 'node:fs'
+ import path from 'node:path'
+ import test from 'node:test'
++import { inspect } from 'node:util'
+ import { completeGraphFixtureLaunch, graphFixtureSource, taskGraphFixtureConfig } from './task_graph_fixture.mjs'
+ 
+ const corp = '00000000-0000-4000-8000-000000000001'
+@@ -121,14 +122,15 @@ test('graph launch never replays a failed, cancelled, incomplete or timed-out mi
+   }
+ })
+ 
+-test('failed graph reports bounded persisted run causes without unrelated snapshot contents', async () => {
++test('failed graph reports bounded identifiers and states without private free text', async () => {
+   const failed = {
+     mission: { id: corp, status: 'failed', secret: 'mission-private-canary' },
+     runs: Array.from({ length: 20 }, (_, index) => ({
+-      id: `run-${index}`, task_id: roots[index % 2], status: 'failed',
+-      summary: 'trusted Git could not export the verified deliverable',
+-      verification_status: 'failed', verification_summary: 'a'.repeat(2000),
+-      workspace_disposition: 'preserved', workspace_detail: 'failure preserved for inspection',
++      id: `00000000-0000-4000-8000-${String(100 + index).padStart(12, '0')}`,
++      task_id: roots[index % 2], status: 'failed',
++      summary: 'command stderr: summary-private-canary',
++      verification_status: 'failed', verification_summary: 'verification-private-canary'.repeat(100),
++      workspace_disposition: 'preserved', workspace_detail: 'workspace-private-canary',
+       artifact_uri: 'artifact-private-canary', credentials: { password: 'credential-private-canary' },
+     })),
+     state: { snapshot: { secrets: ['snapshot-private-canary'] } },
+@@ -140,17 +142,14 @@ test('failed graph reports bounded persisted run causes without unrelated snapsh
+     return conflict(claimed(roots[1]))
+   }, async () => failed, roots), error => {
+     assert.match(error.message, /Task graph did not complete:/u)
+-    assert.match(error.message, /trusted Git could not export the verified deliverable/u)
+-    assert.doesNotMatch(error.message, /private-canary|a{513}|run-12/u)
++    assert.doesNotMatch(inspect(error), /private-canary|000000000112/u)
+     const detail = JSON.parse(error.message.split('\n')[0].split('Task graph did not complete: ')[1])
+     assert.deepEqual(detail.mission, { id: corp, status: 'failed' })
+     assert.equal(detail.run_count, 20)
+     assert.equal(detail.runs.length, 12)
+     assert.deepEqual(detail.runs[0], {
+-      id: 'run-0', task_id: roots[0], status: 'failed',
+-      summary: failed.runs[0].summary, verification_status: 'failed',
+-      verification_summary: 'a'.repeat(512), workspace_disposition: 'preserved',
+-      workspace_detail: 'failure preserved for inspection',
++      id: failed.runs[0].id, task_id: roots[0], status: 'failed',
++      verification_status: 'failed', workspace_disposition: 'preserved',
+     })
+     return true
+   })
+@@ -168,6 +167,57 @@ test('graph failure diagnostics omit nested values in allowed fields', async ()
+   })
+ })
+ 
++test('graph failure rejects malformed identifiers and states without assertion value disclosure', async () => {
++  for (const invalid of ['private-canary', `${corp}\nprivate-canary`, 'a'.repeat(2000),
++    { secret: 'nested-private-canary' }, null, 123]) {
++    await assert.rejects(completeGraphFixtureLaunch(async () => ({ status: 200, body: {} }),
++      async () => ({ mission: { id: invalid, status: invalid }, runs: [{
++        id: invalid, task_id: invalid, status: invalid,
++        verification_status: invalid, workspace_disposition: invalid,
++      }] }), roots), error => {
++      assert.doesNotMatch(inspect(error), /private-canary|a{513}/u)
++      const detail = JSON.parse(error.message.split('\n')[0].split('Task graph did not complete: ')[1])
++      assert.deepEqual(detail, { mission: { id: null, status: null }, run_count: 1,
++        runs: [{ id: null, task_id: null, status: null, verification_status: null, workspace_disposition: null }] })
++      assert.equal(error.actual, false)
++      return true
++    })
++  }
++})
++
++test('source-selection assertions do not disclose private Corp or commit values', () => {
++  for (const change of [
++    state => { state.runners[0].corp_id = 'corp-private-canary' },
++    state => { state.runners[0].capabilities[1].source_base_commit = 'commit-private-canary' },
++    state => { state.runners[0].capabilities[1].source_base_commit = { secret: 'nested-private-canary' } },
++  ]) {
++    const state = snapshot()
++    change(state)
++    assert.throws(() => graphFixtureSource(state, corp), error => {
++      assert.doesNotMatch(inspect(error), /private-canary/u)
++      return true
++    })
++  }
++})
++
++test('launch and replay assertions never print unknown response values', async () => {
++  for (const invalid of ['response-private-canary', { secret: 'nested-private-canary' }]) {
++    for (const responses of [
++      [{ status: invalid, body: {} }],
++      [conflict(claimed(roots[1])), { status: invalid, body: {} }],
++      [conflict(claimed(roots[1])), { status: 200, body: { replayed: invalid } }],
++    ]) {
++      let calls = 0
++      await assert.rejects(completeGraphFixtureLaunch(async () => responses[calls++],
++        async () => completed, roots), error => {
++        assert.doesNotMatch(inspect(error), /private-canary/u)
++        return true
++      })
++      assert.equal(calls, responses.length)
++    }
++  }
++})
++
+ test('graph reconciliation rejects a repeated conflict or a response that dispatched new work', async () => {
+   for (const response of [conflict(claimed(roots[1])), { status: 200, body: { replayed: false } }]) {
+     let calls = 0

@@ -16,7 +16,7 @@
 use std::{collections::BTreeSet, fmt, marker::PhantomData};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-use crony_domain::{DeliverableForm, SourceDeliverable};
+use crony_domain::{DeliverableForm, SourceDeliverable, SourceVerification};
 use crony_protocol::dependency_files::dependency_path_is_safe as safe_path;
 use serde::{
     Deserialize, Deserializer,
@@ -162,6 +162,15 @@ pub fn decode_typed_source(
     }
     if document.verification_sha256 != expected.verification_sha256 {
         return Err(Error::ContractMismatch("verification SHA-256"));
+    }
+    match (&document.verified_tree, &document.source_verification) {
+        // Immutable historical v1 envelopes predate the canonical-source fields.
+        (None, None) => {}
+        (Some(tree), Some(Object(source)))
+            if source.is_valid()
+                && tree == &source.tree
+                && source.base_commit == expected.base_commit => {}
+        _ => return Err(Error::InvalidEnvelope),
     }
     if document
         .head_commit
@@ -372,6 +381,10 @@ struct ArtifactSet {
     head_commit: Option<String>,
     branch: String,
     verification_sha256: String,
+    #[serde(default, deserialize_with = "present_non_null")]
+    verified_tree: Option<String>,
+    #[serde(default, deserialize_with = "present_non_null")]
+    source_verification: Option<Object<SourceVerification>>,
     patch_sha256: String,
     patch_base64: String,
     // Unit fields require explicit null, not missing fields or embedded bundles.
@@ -399,6 +412,14 @@ fn required_nullable_string<'de, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Option<String>, D::Error> {
     Option::<String>::deserialize(deserializer)
+}
+
+// Missing extension fields identify historical envelopes. Explicit null is not
+// historical absence, and must not defeat duplicate-field or paired-field checks.
+fn present_non_null<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
+    deserializer: D,
+) -> Result<Option<T>, D::Error> {
+    T::deserialize(deserializer).map(Some)
 }
 
 // Serde structs otherwise also accept positional arrays. Both the envelope and
@@ -530,6 +551,98 @@ mod tests {
             ),
         ]);
         (document, paths)
+    }
+
+    fn canonical_fixture() -> (Value, Vec<String>) {
+        let (mut document, paths) = fixture();
+        document["verified_tree"] = json!("b".repeat(40));
+        document["source_verification"] = json!({
+            "tree": "b".repeat(40),
+            "base_commit": BASE,
+            "candidate_commit": "c".repeat(40),
+            "ignored_input_sha256": digest(b""),
+            "ignored_input_count": 0,
+            "ignored_input_bytes": 0,
+        });
+        (document, paths)
+    }
+
+    #[test]
+    fn canonical_source_extension_preserves_exact_legacy_handoff_content() {
+        let (document, paths) = canonical_fixture();
+        let bytes = serde_json::to_vec(&document).unwrap();
+        let source = source_record(&document, &bytes);
+        let expected = ExpectedTypedSource {
+            source: Some(&source),
+            ..contract(&paths)
+        };
+        let files = decode_typed_source(&bytes, &expected).unwrap();
+        assert_eq!(files, decode(&fixture().0, &paths).unwrap());
+    }
+
+    #[test]
+    fn canonical_source_extension_rejects_partial_null_and_mismatched_identities() {
+        let (original, paths) = canonical_fixture();
+        for field in ["verified_tree", "source_verification"] {
+            let mut document = original.clone();
+            document.as_object_mut().unwrap().remove(field);
+            assert!(decode(&document, &paths).is_err(), "missing {field}");
+            document[field] = Value::Null;
+            assert!(decode(&document, &paths).is_err(), "null {field}");
+        }
+        let mut document = original.clone();
+        document["verified_tree"] = json!("d".repeat(40));
+        assert!(decode(&document, &paths).is_err());
+        for (field, value) in [
+            ("base_commit", json!("d".repeat(40))),
+            ("tree", json!("d".repeat(40))),
+            ("candidate_commit", json!("short")),
+            ("ignored_input_sha256", json!("D".repeat(64))),
+            ("ignored_input_count", json!(100_001)),
+            ("ignored_input_bytes", json!(4_u64 * 1024 * 1024 * 1024 + 1)),
+            ("unknown", json!(true)),
+        ] {
+            let mut document = original.clone();
+            document["source_verification"][field] = value;
+            assert!(decode(&document, &paths).is_err(), "invalid {field}");
+        }
+        for field in original["source_verification"].as_object().unwrap().keys() {
+            let mut document = original.clone();
+            document["source_verification"]
+                .as_object_mut()
+                .unwrap()
+                .remove(field);
+            assert!(decode(&document, &paths).is_err(), "missing source {field}");
+        }
+        let source = &original["source_verification"];
+        document["source_verification"] = json!([
+            source["tree"],
+            source["base_commit"],
+            source["candidate_commit"],
+            source["ignored_input_sha256"],
+            source["ignored_input_count"],
+            source["ignored_input_bytes"],
+        ]);
+        assert!(decode(&document, &paths).is_err(), "array-shaped source");
+    }
+
+    #[test]
+    fn canonical_source_extension_rejects_duplicate_fields_at_both_levels() {
+        let (document, paths) = canonical_fixture();
+        let serialized = serde_json::to_string(&document).unwrap();
+        for key in ["verified_tree", "source_verification"] {
+            for value in [document[key].clone(), Value::Null] {
+                let duplicate = format!("{{\"{key}\":{value},{}", &serialized[1..]);
+                assert!(decode_typed_source(duplicate.as_bytes(), &contract(&paths)).is_err());
+            }
+        }
+        let source = &document["source_verification"];
+        let serialized_source = serde_json::to_string(source).unwrap();
+        for (key, value) in source.as_object().unwrap() {
+            let duplicate = format!("{{\"{key}\":{value},{}", &serialized_source[1..]);
+            let bytes = serialized.replacen(&serialized_source, &duplicate, 1);
+            assert!(decode_typed_source(bytes.as_bytes(), &contract(&paths)).is_err());
+        }
     }
 
     fn decode(document: &Value, paths: &[String]) -> DecodeResult<Vec<DependencySourceFile>> {

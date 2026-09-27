@@ -1,0 +1,106 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp'
+$qa = '<USERPROFILE>\code\qa\ecorp-external-adapters-pr375-r2'
+$python = '<USERPROFILE>\AppData\Local\Programs\Python\Python312\python.exe'
+$checker = Join-Path $PSScriptRoot 'issue82-source-binding-r1.py'
+$canonicalPath = Join-Path $PSScriptRoot 'issue82-canonical-r5.json'
+$nativePath = Join-Path $PSScriptRoot 'issue82-native-r2-lifecycle.json'
+$receiptPath = Join-Path $PSScriptRoot 'pr375-graph-regression-r2.json'
+$log = Join-Path $PSScriptRoot 'pr375-graph-regression-r2.log'
+if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $receiptPath) -or (Test-Path -LiteralPath $log)) {
+    throw 'Preserve existing graph regression resources and receipts.'
+}
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:PATH = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64;' + $env:PATH
+function SourceBinding {
+    $text = & $python $checker $product $canonicalPath
+    if ($LASTEXITCODE) { throw 'Source differs from the complete canonical validation.' }
+    return ($text | ConvertFrom-Json -AsHashtable)
+}
+function SameSource($Left, $Right) {
+    return $Left.source_head -ceq $Right.source_head -and
+        $Left.source_tree -ceq $Right.source_tree -and
+        $Left.source_files_sha256 -ceq $Right.source_files_sha256 -and
+        $Left.tracked_diff_sha256 -ceq $Right.tracked_diff_sha256
+}
+$native = Get-Content -LiteralPath $nativePath -Raw | ConvertFrom-Json -AsHashtable -Depth 100
+if ($native.status -ne 'passed' -or !$native.source_unchanged -or
+    $native.browser_report.status -ne 'passed' -or $native.binaries.Count -ne 2) {
+    throw 'Require the completed native browser/build receipt for this source.'
+}
+$binding = SourceBinding
+if (!(SameSource $binding $native.source_binding)) { throw 'Graph source differs from native build source.' }
+$expectedBinaries = @('crony-runner.exe','crony-server.exe')
+$observedBinaries = @($native.binaries | ForEach-Object { Split-Path -Leaf $_.path } | Sort-Object)
+if (@(Compare-Object $expectedBinaries $observedBinaries).Count) { throw 'Incomplete native binary identity.' }
+foreach ($binary in $native.binaries) {
+    $expectedPath = Join-Path $product ('target/debug/' + (Split-Path -Leaf $binary.path))
+    if ([IO.Path]::GetFullPath($binary.path) -ine [IO.Path]::GetFullPath($expectedPath) -or
+        (Get-FileHash -LiteralPath $binary.path).Hash.ToLowerInvariant() -cne $binary.sha256) {
+        throw 'Native binary differs from its matching-source build.'
+    }
+}
+$receipt = [ordered]@{
+    issue=82;pr=375;source_binding=$binding;binary_receipt=$nativePath;
+    binary_receipt_sha256=(Get-FileHash -LiteralPath $nativePath).Hash.ToLowerInvariant();
+    binaries=$native.binaries;fixture=$qa;server_port=18883;postgres_port=59085;
+    started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');status='running';source_unchanged=$false;
+    purpose='Run the unchanged Windows native external-adapter CI driver on the fully validated review fixes, including parallel and mixed-provider dependency handoffs.';
+    scope='Deterministic protocol fixtures, native Windows processes, fresh synthetic loopback PostgreSQL. No provider inference or GitHub effects.';
+    driver=@{path='tools/ci_external_adapters_windows.ps1';sha256=(Get-FileHash -LiteralPath (Join-Path $product 'tools/ci_external_adapters_windows.ps1')).Hash.ToLowerInvariant()}
+}
+function Save { $receipt | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $receiptPath -Encoding utf8 }
+Save
+Push-Location -LiteralPath $product
+try {
+    & (Join-Path $product 'tools/ci_external_adapters_windows.ps1') -FixtureRoot $qa -PgBin '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin' -ServerPort 18883 -PostgresPort 59085 -Execute *> $log
+    $reportPath = Join-Path $qa 'evidence/fixture-report.json'
+    $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json -AsHashtable -Depth 30
+    if ($report.status -ne 'passed' -or !$report.source_checkout_unchanged -or
+        $report.cross_provider_graph -ne 'passed' -or $report.controlled_runner_readiness -ne 'passed' -or
+        $report.identity_lifecycle -ne 'passed' -or $report.budget_breakers -ne 'passed' -or
+        $report.cleanup.Count -ne 3 -or @($report.cleanup | Where-Object { !$_.stopped }).Count -or
+        $report.real_provider_calls -ne 0 -or $report.real_github_mutations -ne 0) {
+        throw 'Native graph fixture did not satisfy its complete acceptance and cleanup contract.'
+    }
+    $receipt.native_reports = @(
+        foreach ($name in @('fixture-report.json','e2e-external-adapters.json','e2e-task-graph.json',
+            'e2e-controlled-runner-readiness.json','e2e-identity-lifecycle.json','e2e-budgets.json')) {
+            $path = Join-Path $qa "evidence/$name"
+            @{path=$path;sha256=(Get-FileHash -LiteralPath $path).Hash.ToLowerInvariant()}
+        }
+    )
+    $receipt.cleanup = $report.cleanup
+    $receipt.status = 'passed'
+} catch {
+    $receipt.status = 'failed'
+    $receipt.failure = ($_.Exception.Message -replace '\bpostgres(?:ql)?://\S+', '[database URL withheld]')
+} finally {
+    Pop-Location
+    try {
+        $after = SourceBinding
+        $receipt.source_after = $after
+        $receipt.source_unchanged = SameSource $binding $after
+        if (!$receipt.source_unchanged) { throw 'Source changed during native graph acceptance.' }
+        foreach ($binary in $native.binaries) {
+            if ((Get-FileHash -LiteralPath $binary.path).Hash.ToLowerInvariant() -cne $binary.sha256) {
+                throw 'A native binary changed during graph acceptance.'
+            }
+        }
+        $receipt.binaries_unchanged = $true
+    } catch {
+        $receipt.status = 'failed'
+        $receipt.binding_failure = $_.Exception.Message
+    }
+    if (Test-Path -LiteralPath $log) { $receipt.log_sha256 = (Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant() }
+    $receipt.finished_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$receipt | Select-Object issue,pr,status,source_unchanged,binaries_unchanged,cleanup,failure,binding_failure | ConvertTo-Json -Depth 10
+if ($receipt.status -ne 'passed') { exit 1 }

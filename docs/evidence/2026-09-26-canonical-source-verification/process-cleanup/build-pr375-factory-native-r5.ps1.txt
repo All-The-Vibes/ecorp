@@ -1,0 +1,59 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp'
+$target = Join-Path $product 'target'
+$python = '<USERPROFILE>\AppData\Local\Programs\Python\Python312\python.exe'
+$canonical = Join-Path $PSScriptRoot 'issue82-canonical-r9.json'
+$checker = Join-Path $PSScriptRoot 'issue82-source-binding-r1.py'
+$log = Join-Path $PSScriptRoot 'pr375-factory-native-build-r5.log'
+$receiptPath = Join-Path $PSScriptRoot 'pr375-factory-native-build-r5.json'
+if ((Test-Path -LiteralPath $log) -or (Test-Path -LiteralPath $receiptPath)) { throw 'Preserve existing build evidence.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:PATH = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64;' + $env:PATH
+$env:CARGO_NET_OFFLINE = 'true'
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_TARGET_DIR = $target
+$bindingText = & $python $checker $product $canonical
+if ($LASTEXITCODE) { throw 'Build source does not match canonical r9 validation.' }
+$binding = $bindingText | ConvertFrom-Json -AsHashtable
+$receipt = [ordered]@{pr=375;source_binding=$binding;status='running';started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');command='cargo build --locked --offline -p crony-server -p crony-runner -p crony-cli'}
+function Save { $receipt | ConvertTo-Json -Depth 40 | Set-Content -LiteralPath $receiptPath -Encoding utf8 }
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$held = $false
+Save
+Push-Location -LiteralPath $product
+try {
+    try { $held = $mutex.WaitOne(1000) } catch [Threading.AbandonedMutexException] { $held = $true }
+    if (!$held) { throw 'Another process owns this Cargo target.' }
+    & cargo build --locked --offline -p crony-server -p crony-runner -p crony-cli *> $log
+    $receipt.exit_code = $LASTEXITCODE
+    if ($LASTEXITCODE) { throw 'Matching-source build failed.' }
+    $afterText = & $python $checker $product $canonical
+    if ($LASTEXITCODE) { throw 'Build source changed.' }
+    $after = $afterText | ConvertFrom-Json -AsHashtable
+    if ($after.source_files_sha256 -cne $binding.source_files_sha256 -or $after.source_tree -cne $binding.source_tree) { throw 'Build source changed.' }
+    $receipt.source_unchanged = $true
+    $receipt.binaries = @(
+        foreach ($name in @('crony-server.exe','crony-runner.exe','crony-cli.exe')) {
+            $path = Join-Path $target "debug/$name"
+            @{path=$path;sha256=(Get-FileHash -LiteralPath $path).Hash.ToLowerInvariant()}
+        }
+    )
+    $receipt.status = 'passed'
+} catch { $receipt.status='failed'; $receipt.failure=$_.Exception.Message }
+finally {
+    Pop-Location
+    if ($held) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+    if (Test-Path -LiteralPath $log) { $receipt.log_sha256=(Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant() }
+    $receipt.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$receipt | Select-Object pr,status,exit_code,source_unchanged,failure | ConvertTo-Json
+if ($receipt.status -ne 'passed') { exit 1 }

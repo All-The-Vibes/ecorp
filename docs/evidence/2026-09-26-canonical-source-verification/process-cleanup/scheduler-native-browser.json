@@ -1,0 +1,2706 @@
+{
+  "schema_version": 1,
+  "issue": 172,
+  "status": "passed",
+  "started_at": "2026-09-27T10:45:10.193Z",
+  "source_binding": {
+    "schema_version": 1,
+    "source_head": "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964",
+    "source_branch": "codex/issue82-canonical-verification",
+    "source_tree": "9ddca9d6bbf522827f53a3a5d11554a10c96337a",
+    "source_files_sha256": "aa9ab3cac1caa586050ac64364d0a5f43f102be6d310e0443da35d47aea9c796",
+    "source_file_count": 6702,
+    "tracked_diff_sha256": "2cb203752a90ba61eda06dd417c154398055640a59f2e4d550e9d3e987741187",
+    "untracked_digests": [],
+    "canonical_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-canonical-r9.json",
+    "canonical_receipt_sha256": "612aa0ac946486e0f759db74e2d9d0ba5380ec0fae581abd40e734c8a157c31c",
+    "canonical_report_sha256": "b89d9eb80673bf39aa649d010121ad62dcfab1e84a2138512cb50174d11e354a",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "sources": {
+    "b": {
+      "repository": "ecorp-fixture/issue172-b",
+      "runner_id": "b-issue172-native-qa",
+      "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-b",
+      "path": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\source-b",
+      "base_ref": "HEAD",
+      "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29"
+    },
+    "a": {
+      "repository": "ecorp-fixture/issue172-a",
+      "runner_id": "a-issue172-native-qa",
+      "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-a",
+      "path": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\source-a",
+      "base_ref": "HEAD",
+      "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693"
+    }
+  },
+  "server": "http://127.0.0.1:18872",
+  "web": "http://127.0.0.1:15872",
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5",
+  "scope": "Real Edge browser authoring, native server and two native runners with deterministic child protocols. Malformed command and missed wakeup are deliberately injected in an owned PostgreSQL database. No vendor inference, external effects, human review, or browser launch of B is claimed.",
+  "missions": [
+    {
+      "side": "a",
+      "title": "[issue172-native-a] Native scheduler fairness bf72e009",
+      "authored": {
+        "title": "[issue172-native-a] Native scheduler fairness bf72e009",
+        "description": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue172-a",
+          "base_ref": "HEAD",
+          "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "commit_branch",
+          "commit_after_verification": true,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "command",
+              "program": "node",
+              "args": [
+                "verify.mjs"
+              ],
+              "timeout_ms": 10000
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "mission_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+      "task_id": "62a5a65a-93b5-4fdf-89a5-8b152e818e06",
+      "saved": {
+        "mission": {
+          "id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[issue172-native-a] Native scheduler fairness bf72e009",
+          "description": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "ready",
+          "created_at": "2026-09-27T10:45:17.804816Z",
+          "updated_at": "2026-09-27T10:45:17.804816Z"
+        },
+        "tasks": [
+          {
+            "id": "62a5a65a-93b5-4fdf-89a5-8b152e818e06",
+            "mission_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-a] Native scheduler fairness bf72e009",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-a] Native scheduler fairness bf72e009",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue172-a",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "commit_branch",
+                "commit_after_verification": true,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 0,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 1
+                },
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "verify.mjs"
+                  ],
+                  "timeout_ms": 10000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "pending",
+            "status": "ready",
+            "assigned_agent_id": "f4cf632c-15a3-429f-9f10-5af0cac1b80b",
+            "created_at": "2026-09-27T10:45:17.804816Z",
+            "updated_at": "2026-09-27T10:45:17.804816Z"
+          }
+        ]
+      },
+      "saved_screenshot": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue172-browser-2026-09-27T10-45-10.191Z-f51b93e5\\a-saved.png",
+        "sha256": "e850270b32ad4d0165509c1ab3f8c5de1f05e5d91d6187c754b8d03a00a26442"
+      },
+      "launch": {
+        "run_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+        "runner_id": "a-issue172-native-qa",
+        "run_ids": [
+          "510df2ab-00e3-4258-ae6c-0276127b8716"
+        ],
+        "runner_ids": [
+          "a-issue172-native-qa"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[issue172-native-a] Native scheduler fairness bf72e009",
+          "description": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-27T10:45:17.804816Z",
+          "updated_at": "2026-09-27T10:45:27.894996Z"
+        },
+        "tasks": [
+          {
+            "id": "62a5a65a-93b5-4fdf-89a5-8b152e818e06",
+            "mission_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-a] Native scheduler fairness bf72e009",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-a] Native scheduler fairness bf72e009",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue172-a",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "commit_branch",
+                "commit_after_verification": true,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 1
+                },
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "verify.mjs"
+                  ],
+                  "timeout_ms": 10000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "f4cf632c-15a3-429f-9f10-5af0cac1b80b",
+            "created_at": "2026-09-27T10:45:17.804816Z",
+            "updated_at": "2026-09-27T10:45:27.894996Z"
+          }
+        ],
+        "run": {
+          "id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "62a5a65a-93b5-4fdf-89a5-8b152e818e06",
+          "agent_id": "f4cf632c-15a3-429f-9f10-5af0cac1b80b",
+          "runner_id": "a-issue172-native-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/issue172-a",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+          "workspace_path": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-a\\worktrees\\62a5a65a93b54fdf89a58b152e818e06\\510df2ab00e34258ae6c0276127b8716",
+          "workspace_branch": "crony/task-62a5a65a93b54fdf89a58b152e818e06/run-510df2ab00e34258ae6c0276127b8716",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=1; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+          "workspace_fingerprint": "9e58674580d4096feca04ff1e318ec5a98ea6fb370227fcece68a60ccf9175e5",
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 2 verifier checks passed",
+          "verification_sha256": "1c0ab81c1c32c8f89d54c531f89136efb88b03c1074b2e2fe5914d27475b49f1",
+          "deliverable_sha256": "b04306aed717411b3f89ead4143938677573b3ef78e44b0057be3b0a1d54fa4a",
+          "status": "completed",
+          "summary": "Owned scheduler output prepared for the authoritative verifier.",
+          "artifact_id": "d25d64c4-c263-4aaa-a18e-eee06c6a96b7",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/d25d64c4-c263-4aaa-a18e-eee06c6a96b7",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "45ca626bb9c664bcea0eccc038275b62afe443c1508bd1e7e301f4c3c81b1672",
+          "artifact_sha256": "d2bfc9166c338e50b0dddd0d33dc808069a532e903edd47c0cc441e795f87f0e",
+          "created_at": "2026-09-27T10:45:18.408263Z",
+          "updated_at": "2026-09-27T10:45:28.233303Z"
+        },
+        "evidence": [
+          {
+            "id": "ebfe4867-5e1c-48ea-a636-62a650de31cd",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "62a5a65a-93b5-4fdf-89a5-8b152e818e06",
+            "run_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "passed",
+            "summary": "durable artifact d25d64c4-c263-4aaa-a18e-eee06c6a96b7 has 133 verified bytes",
+            "payload": {
+              "artifact_id": "d25d64c4-c263-4aaa-a18e-eee06c6a96b7",
+              "bytes": 133,
+              "media_type": "text/markdown",
+              "producer_agent_id": "f4cf632c-15a3-429f-9f10-5af0cac1b80b",
+              "producer_runner_id": "a-issue172-native-qa",
+              "provenance_signature": "45ca626bb9c664bcea0eccc038275b62afe443c1508bd1e7e301f4c3c81b1672",
+              "retention_until": "2026-10-27T10:45:19.104800Z",
+              "sha256": "d2bfc9166c338e50b0dddd0d33dc808069a532e903edd47c0cc441e795f87f0e",
+              "source": {
+                "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+                "candidate_commit": "212fa53a616617a5c290b8b339074c532dc7485e",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+              },
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/d25d64c4-c263-4aaa-a18e-eee06c6a96b7",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T10:45:26.747516Z"
+          },
+          {
+            "id": "c2c7e87c-c96c-4405-a033-423a44ba5b70",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "62a5a65a-93b5-4fdf-89a5-8b152e818e06",
+            "run_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "check_index": 1,
+            "kind": "command",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "verify.mjs"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "source": {
+                "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+                "candidate_commit": "212fa53a616617a5c290b8b339074c532dc7485e",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+              },
+              "stderr": "",
+              "stdout": "Owned native scheduler output verified.\n"
+            },
+            "created_at": "2026-09-27T10:45:26.771985Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 11,
+            "id": "b8edc079-925d-4925-8ade-769e95609bc1",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "run:510df2ab-00e3-4258-ae6c-0276127b8716:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "f4cf632c-15a3-429f-9f10-5af0cac1b80b",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "a-issue172-native-qa",
+              "status": "starting",
+              "task_id": "62a5a65a-93b5-4fdf-89a5-8b152e818e06"
+            },
+            "created_at": "2026-09-27T10:45:18.408263Z"
+          },
+          {
+            "seq": 12,
+            "id": "6c07b431-a4b6-4c24-b63c-81d0aa0976f9",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "runner:a-issue172-native-qa:event:6c07b431-a4b6-4c24-b63c-81d0aa0976f9",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "62a5a65a-93b5-4fdf-89a5-8b152e818e06",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-a\\worktrees\\62a5a65a93b54fdf89a58b152e818e06\\510df2ab00e34258ae6c0276127b8716",
+              "workspace_base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-62a5a65a93b54fdf89a58b152e818e06/run-510df2ab00e34258ae6c0276127b8716"
+            },
+            "created_at": "2026-09-27T10:45:18.981418Z"
+          },
+          {
+            "seq": 13,
+            "id": "2723c29c-b2ec-4ea3-ba20-a6a9f28e9a5d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "runner:a-issue172-native-qa:event:2723c29c-b2ec-4ea3-ba20-a6a9f28e9a5d",
+            "visibility": "corp",
+            "payload": {
+              "message": "Writing the owned scheduler acceptance output in the assigned isolated worktree.",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-27T10:45:19.075915Z"
+          },
+          {
+            "seq": 14,
+            "id": "b34e766e-66e5-4bec-8118-8c3acbaed86c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "artifact:d25d64c4-c263-4aaa-a18e-eee06c6a96b7:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "d25d64c4-c263-4aaa-a18e-eee06c6a96b7",
+              "artifact_role": "provider_evidence",
+              "bytes": 133,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "f4cf632c-15a3-429f-9f10-5af0cac1b80b",
+              "producer_runner_id": "a-issue172-native-qa",
+              "provenance_signature": "45ca626bb9c664bcea0eccc038275b62afe443c1508bd1e7e301f4c3c81b1672",
+              "retention_until": "2026-10-27T10:45:19.104800Z",
+              "sha256": "d2bfc9166c338e50b0dddd0d33dc808069a532e903edd47c0cc441e795f87f0e",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/d25d64c4-c263-4aaa-a18e-eee06c6a96b7",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T10:45:19.143962Z"
+          },
+          {
+            "seq": 15,
+            "id": "442ddf38-63c5-4899-8a20-26e245d8c985",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "runner:a-issue172-native-qa:event:442ddf38-63c5-4899-8a20-26e245d8c985",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-27T10:45:19.173484Z"
+          },
+          {
+            "seq": 16,
+            "id": "bf0b58c4-4d98-4e88-9ae6-687e8eeacbf2",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "runner:a-issue172-native-qa:event:bf0b58c4-4d98-4e88-9ae6-687e8eeacbf2",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 2
+            },
+            "created_at": "2026-09-27T10:45:19.177871Z"
+          },
+          {
+            "seq": 17,
+            "id": "fa3d956f-4cb7-4654-a0f8-f6dbbbbc63a2",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "runner:a-issue172-native-qa:event:fa3d956f-4cb7-4654-a0f8-f6dbbbbc63a2",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "ebfe4867-5e1c-48ea-a636-62a650de31cd",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "d25d64c4-c263-4aaa-a18e-eee06c6a96b7",
+                "bytes": 133,
+                "media_type": "text/markdown",
+                "producer_agent_id": "f4cf632c-15a3-429f-9f10-5af0cac1b80b",
+                "producer_runner_id": "a-issue172-native-qa",
+                "provenance_signature": "45ca626bb9c664bcea0eccc038275b62afe443c1508bd1e7e301f4c3c81b1672",
+                "retention_until": "2026-10-27T10:45:19.104800Z",
+                "sha256": "d2bfc9166c338e50b0dddd0d33dc808069a532e903edd47c0cc441e795f87f0e",
+                "source": {
+                  "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+                  "candidate_commit": "212fa53a616617a5c290b8b339074c532dc7485e",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/d25d64c4-c263-4aaa-a18e-eee06c6a96b7",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "passed",
+              "summary": "durable artifact d25d64c4-c263-4aaa-a18e-eee06c6a96b7 has 133 verified bytes"
+            },
+            "created_at": "2026-09-27T10:45:26.747516Z"
+          },
+          {
+            "seq": 18,
+            "id": "f903401b-6099-462a-92cb-3b1eb78e9add",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "runner:a-issue172-native-qa:event:f903401b-6099-462a-92cb-3b1eb78e9add",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 1,
+              "evidence_id": "c2c7e87c-c96c-4405-a033-423a44ba5b70",
+              "kind": "command",
+              "payload": {
+                "args": [
+                  "verify.mjs"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "source": {
+                  "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+                  "candidate_commit": "212fa53a616617a5c290b8b339074c532dc7485e",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+                },
+                "stderr": "",
+                "stdout": "Owned native scheduler output verified.\n"
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-27T10:45:26.771985Z"
+          },
+          {
+            "seq": 19,
+            "id": "3b6072bf-028a-4d43-b78d-6c2ca3af95e7",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "artifact:071ea4a8-5a0f-4b66-a432-8061bbc64897:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "071ea4a8-5a0f-4b66-a432-8061bbc64897",
+              "artifact_role": "source_deliverable",
+              "bytes": 2467,
+              "file_name": "ecorp-commit-branch.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+                "branch": "crony/task-62a5a65a93b54fdf89a58b152e818e06/run-510df2ab00e34258ae6c0276127b8716",
+                "form": "commit_branch",
+                "git_bundle_sha256": "a5567243856896dcca003c507d2f1f4770adf05697b397ae4d1a93c6836f27e9",
+                "head_commit": "6d121c191bfc918ac3b82909ad20107d28bfd5bf",
+                "integration_state": "ready_for_review",
+                "publication_ready": true,
+                "source_verification": {
+                  "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+                  "candidate_commit": "212fa53a616617a5c290b8b339074c532dc7485e",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+                },
+                "verification_sha256": "1c0ab81c1c32c8f89d54c531f89136efb88b03c1074b2e2fe5914d27475b49f1",
+                "verified_tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+              },
+              "producer_agent_id": "f4cf632c-15a3-429f-9f10-5af0cac1b80b",
+              "producer_runner_id": "a-issue172-native-qa",
+              "provenance_signature": "878d353128cd201b6c2e9caa6200b8d9d1da11a8aa56c3fa9abea6bdbfaf3fbb",
+              "retention_until": "2026-10-27T10:45:27.802139Z",
+              "sha256": "b04306aed717411b3f89ead4143938677573b3ef78e44b0057be3b0a1d54fa4a",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/071ea4a8-5a0f-4b66-a432-8061bbc64897",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T10:45:27.838664Z"
+          },
+          {
+            "seq": 20,
+            "id": "7d9a40ec-5931-4d32-94cd-bc8351e93922",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "runner:a-issue172-native-qa:event:7d9a40ec-5931-4d32-94cd-bc8351e93922",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "b04306aed717411b3f89ead4143938677573b3ef78e44b0057be3b0a1d54fa4a",
+              "source_verification": {
+                "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+                "candidate_commit": "212fa53a616617a5c290b8b339074c532dc7485e",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+              },
+              "summary": "all 2 verifier checks passed",
+              "verification_sha256": "1c0ab81c1c32c8f89d54c531f89136efb88b03c1074b2e2fe5914d27475b49f1",
+              "verified_tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+            },
+            "created_at": "2026-09-27T10:45:27.869203Z"
+          },
+          {
+            "seq": 21,
+            "id": "e36afde0-d4f5-4e4b-b0a9-c0889bf3a221",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "runner:a-issue172-native-qa:event:e36afde0-d4f5-4e4b-b0a9-c0889bf3a221",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Owned scheduler output prepared for the authoritative verifier."
+            },
+            "created_at": "2026-09-27T10:45:27.894996Z"
+          },
+          {
+            "seq": 22,
+            "id": "b81a1495-9af4-4250-893a-a51490f47188",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+            "aggregate_version": 1,
+            "correlation_id": "9702bd07-5e32-4318-8473-c1ce2fdc611a",
+            "causation_id": null,
+            "idempotency_key": "runner:a-issue172-native-qa:event:b81a1495-9af4-4250-893a-a51490f47188",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=1; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+              "dirty": true,
+              "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-a\\worktrees\\62a5a65a93b54fdf89a58b152e818e06\\510df2ab00e34258ae6c0276127b8716",
+              "workspace_base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-62a5a65a93b54fdf89a58b152e818e06/run-510df2ab00e34258ae6c0276127b8716",
+              "workspace_fingerprint": "9e58674580d4096feca04ff1e318ec5a98ea6fb370227fcece68a60ccf9175e5"
+            },
+            "created_at": "2026-09-27T10:45:28.233303Z"
+          }
+        ]
+      },
+      "preserved_diagnostic": {
+        "path": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-a\\worktrees\\62a5a65a93b54fdf89a58b152e818e06\\510df2ab00e34258ae6c0276127b8716\\result.md",
+        "sha256": "d2bfc9166c338e50b0dddd0d33dc808069a532e903edd47c0cc441e795f87f0e",
+        "workspace_status": "?? result.md\n",
+        "scope": "Exact deterministic provider diagnostic remains untracked and is preserved; no other dirty files are allowed."
+      },
+      "download": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue172-browser-2026-09-27T10-45-10.191Z-f51b93e5\\a-deliverable.json",
+        "sha256": "b04306aed717411b3f89ead4143938677573b3ef78e44b0057be3b0a1d54fa4a",
+        "signature_matches_record": true,
+        "envelope": {
+          "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+          "branch": "crony/task-62a5a65a93b54fdf89a58b152e818e06/run-510df2ab00e34258ae6c0276127b8716",
+          "changes": [
+            {
+              "bytes": 37,
+              "content_base64": "SXNzdWUgMTcyIG5hdGl2ZSBydW5uZXIgYSBjb21wbGV0ZWQuCg==",
+              "media_type": "text/plain",
+              "mode": "100644",
+              "path": "output.txt",
+              "sha256": "cc6901b8421ea93906f5ac90ddf50657a54181cc4e8ffe20b6d38726bff50fa3",
+              "status": "A"
+            }
+          ],
+          "form": "commit_branch",
+          "git_bundle_base64": "IyB2MiBnaXQgYnVuZGxlCi0wOTBjZjJkZDYxMmNjMGU4NDJjNTE1MTg3MDA4MzQyMWYyYjEyNjkzIFByZXBhcmUgaW5kZXBlbmRlbnQgaXNzdWUxNzIgcnVubmVyIGEgZml4dHVyZQo2ZDEyMWMxOTFiZmM5MThhYzNiODI5MDlhZDIwMTA3ZDI4YmZkNWJmIHJlZnMvZWNvcnAvZGVsaXZlcmFibGVzLzUxMGRmMmFiMDBlMzQyNThhZTZjMDI3NjEyN2I4NzE2LWRlODQ0ODc5NWRhZTQ5NzU4Yzc3ZjljNjg4ZjMzZDA5CgpQQUNLAAAAAgAAAAOcFHicnY/BSgQxEETv+Yr8wEp3J5lOREQRwbOC96TTwcDszBKy+/0O6x94qqpH1aHmULWeKnDlwJpjZm7VpepFSGTB5DynGrjlmMwlD92mhQTSqNYFjwpo9CQBA0YGiM4TNipIS3ImX+fPPuz72z4u9vO6bTrs07jri8oBH/p2y2uvzxY5QYCQiO3pMGBkP5/7nPrPuflb3XT01rXaqms/Qi6rGvN9p5Jn37fT18crheXRokAuEQXFkcQWj9degsPDoVu0lRgLOEFgX0ipaUjoK7HnUHxqaH4B5CxjBfkCH/R5UbluU014pLFMRITp+ZRK6td4nJvLeJhxQp18fmlJQWmJXklFCcO2Zt6OzCphuQvhzLqBrS4yNvMFT04sVwMART0PIbUCeJzzLC4uTVUwNDdSyEssySxLVSgqzctLLVJIVEjOzy3ISS1JTdHjAgDxrQy74oEozuB1iLi+Mm4lkhT/e5015/4=",
+          "git_bundle_sha256": "a5567243856896dcca003c507d2f1f4770adf05697b397ae4d1a93c6836f27e9",
+          "head_commit": "6d121c191bfc918ac3b82909ad20107d28bfd5bf",
+          "patch_base64": "ZGlmZiAtLWdpdCBhL291dHB1dC50eHQgYi9vdXRwdXQudHh0Cm5ldyBmaWxlIG1vZGUgMTAwNjQ0CmluZGV4IDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAuLmI2ODMwZDg4Njk3YTEzMWVkMDU3MDMyZDUxODU0NDFjM2M5ZjExYzkKLS0tIC9kZXYvbnVsbAorKysgYi9vdXRwdXQudHh0CkBAIC0wLDAgKzEgQEAKK0lzc3VlIDE3MiBuYXRpdmUgcnVubmVyIGEgY29tcGxldGVkLgo=",
+          "patch_sha256": "50c2fe4b8c1271165666dbbf6b2d3d84ce0892239623212bdd6b06772793dade",
+          "schema_version": 1,
+          "source_verification": {
+            "base_commit": "090cf2dd612cc0e842c5151870083421f2b12693",
+            "candidate_commit": "212fa53a616617a5c290b8b339074c532dc7485e",
+            "ignored_input_bytes": 0,
+            "ignored_input_count": 0,
+            "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+          },
+          "verification_sha256": "1c0ab81c1c32c8f89d54c531f89136efb88b03c1074b2e2fe5914d27475b49f1",
+          "verified_tree": "42d07d757ea8a77fd39d4cc2cc6193479d57fa89"
+        },
+        "outsider_http_status": 404
+      },
+      "final_screenshot": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue172-browser-2026-09-27T10-45-10.191Z-f51b93e5\\a-completed.png",
+        "sha256": "bc801d3e262a6bdfb79e41947ce51db4684df5337378596013fd6d2d4ee93763"
+      }
+    },
+    {
+      "side": "b",
+      "title": "[issue172-native-b] Native scheduler fairness 7ff434ef",
+      "authored": {
+        "title": "[issue172-native-b] Native scheduler fairness 7ff434ef",
+        "description": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue172-b",
+          "base_ref": "HEAD",
+          "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "commit_branch",
+          "commit_after_verification": true,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "command",
+              "program": "node",
+              "args": [
+                "verify.mjs"
+              ],
+              "timeout_ms": 10000
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "mission_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+      "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+      "saved": {
+        "mission": {
+          "id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[issue172-native-b] Native scheduler fairness 7ff434ef",
+          "description": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "ready",
+          "created_at": "2026-09-27T10:45:32.130473Z",
+          "updated_at": "2026-09-27T10:45:32.130473Z"
+        },
+        "tasks": [
+          {
+            "id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+            "mission_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-b] Native scheduler fairness 7ff434ef",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-b] Native scheduler fairness 7ff434ef",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue172-b",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "commit_branch",
+                "commit_after_verification": true,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 0,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 1
+                },
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "verify.mjs"
+                  ],
+                  "timeout_ms": 10000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "pending",
+            "status": "ready",
+            "assigned_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+            "created_at": "2026-09-27T10:45:32.130473Z",
+            "updated_at": "2026-09-27T10:45:32.130473Z"
+          }
+        ]
+      },
+      "saved_screenshot": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue172-browser-2026-09-27T10-45-10.191Z-f51b93e5\\b-saved.png",
+        "sha256": "a83dfab8c8b04368dd24738ad15502c7127477d89aca6c8334e55253359ebf2c"
+      },
+      "final": {
+        "mission": {
+          "id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[issue172-native-b] Native scheduler fairness 7ff434ef",
+          "description": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-27T10:45:32.130473Z",
+          "updated_at": "2026-09-27T10:45:57.791909Z"
+        },
+        "tasks": [
+          {
+            "id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+            "mission_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-b] Native scheduler fairness 7ff434ef",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-b] Native scheduler fairness 7ff434ef",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue172-b",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": [],
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "commit_branch",
+                "commit_after_verification": true,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 1
+                },
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "verify.mjs"
+                  ],
+                  "timeout_ms": 10000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+            "created_at": "2026-09-27T10:45:32.130473Z",
+            "updated_at": "2026-09-27T10:45:57.791909Z"
+          }
+        ],
+        "run": {
+          "id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+          "agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+          "runner_id": "b-issue172-native-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/issue172-b",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+          "workspace_path": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-b\\worktrees\\1c7160d0d054435eaf6810c9bb6631c7\\15951ce3f5e44c728370c76d8217f145",
+          "workspace_branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=1; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+          "workspace_fingerprint": "5b7a48dabe406b125009f0a4ea9a491c33712f5e11b8748210bb3810a6d74f6d",
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 2 verifier checks passed",
+          "verification_sha256": "88ebaa96104fbf4c6570bceb5e797805bc9c3ab8476aa362667f456078180ddb",
+          "deliverable_sha256": "a11a4db09c40fde6cf4c53c2dbb8e85d6a8b88ae25aaae705afbf473889a1910",
+          "status": "completed",
+          "summary": "Owned scheduler output prepared for the authoritative verifier.",
+          "artifact_id": "b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "f869f7c116e57074600101c62d95dd65bf32aac6cbd37830a8efb2ac460fe7f8",
+          "artifact_sha256": "5caf3b322dfe50ad4ae86c628d5ccdeec48aa69e7c190bb0f40efd8bff6fb3be",
+          "created_at": "2026-09-27T10:45:48.359011Z",
+          "updated_at": "2026-09-27T10:45:58.121948Z"
+        },
+        "evidence": [
+          {
+            "id": "82698765-d1af-4ff8-8b20-11c34c09b74f",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+            "run_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "passed",
+            "summary": "durable artifact b2627d83-9c87-45c4-9d7e-8984fd0e10a4 has 133 verified bytes",
+            "payload": {
+              "artifact_id": "b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+              "bytes": 133,
+              "media_type": "text/markdown",
+              "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+              "producer_runner_id": "b-issue172-native-qa",
+              "provenance_signature": "f869f7c116e57074600101c62d95dd65bf32aac6cbd37830a8efb2ac460fe7f8",
+              "retention_until": "2026-10-27T10:45:48.978081Z",
+              "sha256": "5caf3b322dfe50ad4ae86c628d5ccdeec48aa69e7c190bb0f40efd8bff6fb3be",
+              "source": {
+                "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "509b16515e5ec99db98acd895de768084741f013"
+              },
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T10:45:56.672318Z"
+          },
+          {
+            "id": "f9911726-45a4-46e2-b076-258f93ca4d41",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+            "run_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "check_index": 1,
+            "kind": "command",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "verify.mjs"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "source": {
+                "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "509b16515e5ec99db98acd895de768084741f013"
+              },
+              "stderr": "",
+              "stdout": "Owned native scheduler output verified.\n"
+            },
+            "created_at": "2026-09-27T10:45:56.693465Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 28,
+            "id": "c7232a61-73d4-4687-b518-d64496257418",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "run:15951ce3-f5e4-4c72-8370-c76d8217f145:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": false,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "b-issue172-native-qa",
+              "status": "starting",
+              "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7"
+            },
+            "created_at": "2026-09-27T10:45:48.359011Z"
+          },
+          {
+            "seq": 29,
+            "id": "133725da-db3f-4b3d-b303-c540c83d4582",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "runner:b-issue172-native-qa:event:133725da-db3f-4b3d-b303-c540c83d4582",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-b\\worktrees\\1c7160d0d054435eaf6810c9bb6631c7\\15951ce3f5e44c728370c76d8217f145",
+              "workspace_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145"
+            },
+            "created_at": "2026-09-27T10:45:48.875008Z"
+          },
+          {
+            "seq": 30,
+            "id": "68223fb4-227c-4ad8-8723-ce20dde54b3e",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "runner:b-issue172-native-qa:event:68223fb4-227c-4ad8-8723-ce20dde54b3e",
+            "visibility": "corp",
+            "payload": {
+              "message": "Writing the owned scheduler acceptance output in the assigned isolated worktree.",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-27T10:45:48.954309Z"
+          },
+          {
+            "seq": 31,
+            "id": "d4717a7a-d624-48fc-bef2-efc429e9db1b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "artifact:b2627d83-9c87-45c4-9d7e-8984fd0e10a4:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+              "artifact_role": "provider_evidence",
+              "bytes": 133,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+              "producer_runner_id": "b-issue172-native-qa",
+              "provenance_signature": "f869f7c116e57074600101c62d95dd65bf32aac6cbd37830a8efb2ac460fe7f8",
+              "retention_until": "2026-10-27T10:45:48.978081Z",
+              "sha256": "5caf3b322dfe50ad4ae86c628d5ccdeec48aa69e7c190bb0f40efd8bff6fb3be",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T10:45:49.010544Z"
+          },
+          {
+            "seq": 32,
+            "id": "7310aa87-395b-429c-86e1-c5698e22d0b7",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "runner:b-issue172-native-qa:event:7310aa87-395b-429c-86e1-c5698e22d0b7",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-27T10:45:49.038612Z"
+          },
+          {
+            "seq": 33,
+            "id": "4e254d79-265a-46df-97b5-d216ef4b16a5",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "runner:b-issue172-native-qa:event:4e254d79-265a-46df-97b5-d216ef4b16a5",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 2
+            },
+            "created_at": "2026-09-27T10:45:49.043138Z"
+          },
+          {
+            "seq": 34,
+            "id": "34088caa-60a3-4271-9f26-abf0f2fb5033",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "runner:b-issue172-native-qa:event:34088caa-60a3-4271-9f26-abf0f2fb5033",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "82698765-d1af-4ff8-8b20-11c34c09b74f",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+                "bytes": 133,
+                "media_type": "text/markdown",
+                "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+                "producer_runner_id": "b-issue172-native-qa",
+                "provenance_signature": "f869f7c116e57074600101c62d95dd65bf32aac6cbd37830a8efb2ac460fe7f8",
+                "retention_until": "2026-10-27T10:45:48.978081Z",
+                "sha256": "5caf3b322dfe50ad4ae86c628d5ccdeec48aa69e7c190bb0f40efd8bff6fb3be",
+                "source": {
+                  "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                  "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "509b16515e5ec99db98acd895de768084741f013"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "passed",
+              "summary": "durable artifact b2627d83-9c87-45c4-9d7e-8984fd0e10a4 has 133 verified bytes"
+            },
+            "created_at": "2026-09-27T10:45:56.672318Z"
+          },
+          {
+            "seq": 35,
+            "id": "a31217e3-1d17-44ea-8a1c-ab79bde71210",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "runner:b-issue172-native-qa:event:a31217e3-1d17-44ea-8a1c-ab79bde71210",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 1,
+              "evidence_id": "f9911726-45a4-46e2-b076-258f93ca4d41",
+              "kind": "command",
+              "payload": {
+                "args": [
+                  "verify.mjs"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "source": {
+                  "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                  "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "509b16515e5ec99db98acd895de768084741f013"
+                },
+                "stderr": "",
+                "stdout": "Owned native scheduler output verified.\n"
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-27T10:45:56.693465Z"
+          },
+          {
+            "seq": 36,
+            "id": "41020a72-204f-420b-b171-e5bb1fe5afef",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "artifact:1db92659-0d43-441b-9d02-bed4ff139348:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "1db92659-0d43-441b-9d02-bed4ff139348",
+              "artifact_role": "source_deliverable",
+              "bytes": 2467,
+              "file_name": "ecorp-commit-branch.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                "branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+                "form": "commit_branch",
+                "git_bundle_sha256": "3e4fb58f4d8dc5bb7f1100669a243ad9050a3f2730ac17b619a9420f87cdd0c7",
+                "head_commit": "0a04d282abfc1a9b4c1e7016888066d7a3eea164",
+                "integration_state": "ready_for_review",
+                "publication_ready": true,
+                "source_verification": {
+                  "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                  "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "509b16515e5ec99db98acd895de768084741f013"
+                },
+                "verification_sha256": "88ebaa96104fbf4c6570bceb5e797805bc9c3ab8476aa362667f456078180ddb",
+                "verified_tree": "509b16515e5ec99db98acd895de768084741f013"
+              },
+              "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+              "producer_runner_id": "b-issue172-native-qa",
+              "provenance_signature": "a0001fd0747f65c41fb582ff8a831ec7106b616d9b7641634fd8207444f2b990",
+              "retention_until": "2026-10-27T10:45:57.722141Z",
+              "sha256": "a11a4db09c40fde6cf4c53c2dbb8e85d6a8b88ae25aaae705afbf473889a1910",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/1db92659-0d43-441b-9d02-bed4ff139348",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T10:45:57.757318Z"
+          },
+          {
+            "seq": 37,
+            "id": "3d909235-341e-4930-be32-3c7e6d784063",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "runner:b-issue172-native-qa:event:3d909235-341e-4930-be32-3c7e6d784063",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "a11a4db09c40fde6cf4c53c2dbb8e85d6a8b88ae25aaae705afbf473889a1910",
+              "source_verification": {
+                "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "509b16515e5ec99db98acd895de768084741f013"
+              },
+              "summary": "all 2 verifier checks passed",
+              "verification_sha256": "88ebaa96104fbf4c6570bceb5e797805bc9c3ab8476aa362667f456078180ddb",
+              "verified_tree": "509b16515e5ec99db98acd895de768084741f013"
+            },
+            "created_at": "2026-09-27T10:45:57.766821Z"
+          },
+          {
+            "seq": 38,
+            "id": "09027ddd-84ae-446f-861f-5f7bc04b9825",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "runner:b-issue172-native-qa:event:09027ddd-84ae-446f-861f-5f7bc04b9825",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Owned scheduler output prepared for the authoritative verifier."
+            },
+            "created_at": "2026-09-27T10:45:57.791909Z"
+          },
+          {
+            "seq": 39,
+            "id": "09917eab-5109-4817-8d42-3e5e30a53c69",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+            "aggregate_version": 1,
+            "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "causation_id": null,
+            "idempotency_key": "runner:b-issue172-native-qa:event:09917eab-5109-4817-8d42-3e5e30a53c69",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=1; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+              "dirty": true,
+              "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-b\\worktrees\\1c7160d0d054435eaf6810c9bb6631c7\\15951ce3f5e44c728370c76d8217f145",
+              "workspace_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+              "workspace_fingerprint": "5b7a48dabe406b125009f0a4ea9a491c33712f5e11b8748210bb3810a6d74f6d"
+            },
+            "created_at": "2026-09-27T10:45:58.121948Z"
+          }
+        ]
+      },
+      "preserved_diagnostic": {
+        "path": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-b\\worktrees\\1c7160d0d054435eaf6810c9bb6631c7\\15951ce3f5e44c728370c76d8217f145\\result.md",
+        "sha256": "5caf3b322dfe50ad4ae86c628d5ccdeec48aa69e7c190bb0f40efd8bff6fb3be",
+        "workspace_status": "?? result.md\n",
+        "scope": "Exact deterministic provider diagnostic remains untracked and is preserved; no other dirty files are allowed."
+      },
+      "download": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue172-browser-2026-09-27T10-45-10.191Z-f51b93e5\\b-deliverable.json",
+        "sha256": "a11a4db09c40fde6cf4c53c2dbb8e85d6a8b88ae25aaae705afbf473889a1910",
+        "signature_matches_record": true,
+        "envelope": {
+          "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+          "branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+          "changes": [
+            {
+              "bytes": 37,
+              "content_base64": "SXNzdWUgMTcyIG5hdGl2ZSBydW5uZXIgYiBjb21wbGV0ZWQuCg==",
+              "media_type": "text/plain",
+              "mode": "100644",
+              "path": "output.txt",
+              "sha256": "574735145f0896f914711fe9f729ff28c6e736db4ef56adc0c2c7caccc872f8f",
+              "status": "A"
+            }
+          ],
+          "form": "commit_branch",
+          "git_bundle_base64": "IyB2MiBnaXQgYnVuZGxlCi1iYzAwY2RlNmYyOTI1YjU4OGU1ZjA4MDU5N2ZjZjNmZDAyOGQxZDI5IFByZXBhcmUgaW5kZXBlbmRlbnQgaXNzdWUxNzIgcnVubmVyIGIgZml4dHVyZQowYTA0ZDI4MmFiZmMxYTliNGMxZTcwMTY4ODgwNjZkN2EzZWVhMTY0IHJlZnMvZWNvcnAvZGVsaXZlcmFibGVzLzE1OTUxY2UzZjVlNDRjNzI4MzcwYzc2ZDgyMTdmMTQ1LWYzMzY4MDUyMjAyYjRkZmI4NjhlNmFlYmNiZmY1YTRjCgpQQUNLAAAAAgAAAAOcFHicnVBLSgQxFNznFLnAyEu6Xz4ioojgWsF93icY6OkeQmbObxhv4Ko+UAVVo6tahEwuoENF5ZyFciosKaNoDAnSGldXwS3mUrruwxIDsGioPnskTEmxQgLMsXJdqoBP4sRnU67j5+j2/e3oF/t53Xft9qnf8UV5mg9tv5WtybN1MQPOCgz2NAkYPs7nNob+M27+UjftrTYVK7q1KQptasz33eUy2rGfvj5ePYZHO2dQKTk4WCvVlQNGIFZCjTnOdcSZl0LzjVDKEnwIsa4YICaXQITML4q2ZCT5AurQwRqK6KF18hHVa4dRntamoLNgeJwBKQDW/50BwwGQfh9vdXRwdXQudHh0AGT7vyM3A5vrlW26JZktYPOxQefskXcmbGgSvbUCeJzzLC4uTVUwNDdSyEssySxLVSgqzctLLVJIUkjOzy3ISS1JTdHjAgDxugy86ZTOzDVHYuMY/s+KPQCf5bh5a4U=",
+          "git_bundle_sha256": "3e4fb58f4d8dc5bb7f1100669a243ad9050a3f2730ac17b619a9420f87cdd0c7",
+          "head_commit": "0a04d282abfc1a9b4c1e7016888066d7a3eea164",
+          "patch_base64": "ZGlmZiAtLWdpdCBhL291dHB1dC50eHQgYi9vdXRwdXQudHh0Cm5ldyBmaWxlIG1vZGUgMTAwNjQ0CmluZGV4IDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAuLjY0ZmJiZjIzMzcwMzliZWI5NTZkYmEyNTk5MmQ2MGYzYjE0MWU3ZWMKLS0tIC9kZXYvbnVsbAorKysgYi9vdXRwdXQudHh0CkBAIC0wLDAgKzEgQEAKK0lzc3VlIDE3MiBuYXRpdmUgcnVubmVyIGIgY29tcGxldGVkLgo=",
+          "patch_sha256": "55a935f2bbc765954a319a6131b9d9f8a7f066d1632acbca03ddbcbd21ab147e",
+          "schema_version": 1,
+          "source_verification": {
+            "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+            "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+            "ignored_input_bytes": 0,
+            "ignored_input_count": 0,
+            "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tree": "509b16515e5ec99db98acd895de768084741f013"
+          },
+          "verification_sha256": "88ebaa96104fbf4c6570bceb5e797805bc9c3ab8476aa362667f456078180ddb",
+          "verified_tree": "509b16515e5ec99db98acd895de768084741f013"
+        },
+        "outsider_http_status": 404
+      },
+      "final_screenshot": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue172-browser-2026-09-27T10-45-10.191Z-f51b93e5\\b-completed.png",
+        "sha256": "ae580c72219010ae6626334c36f9519b218800afc2e947676e54d67812f24a22"
+      }
+    }
+  ],
+  "errors": [],
+  "blocked_requests": [],
+  "browser_mutations": [
+    {
+      "at": "2026-09-27T10:45:15.137Z",
+      "method": "POST",
+      "path": "/api/demo/bootstrap",
+      "frozen": false
+    },
+    {
+      "at": "2026-09-27T10:45:17.797Z",
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "frozen": false
+    },
+    {
+      "at": "2026-09-27T10:45:18.401Z",
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/missions/9702bd07-5e32-4318-8473-c1ce2fdc611a/launch",
+      "frozen": false
+    },
+    {
+      "at": "2026-09-27T10:45:32.123Z",
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "frozen": false
+    }
+  ],
+  "sql_operations": [
+    {
+      "label": "initial native runner epochs",
+      "mutation": false,
+      "started_at": "2026-09-27T10:45:16.172Z",
+      "finished_at": "2026-09-27T10:45:16.321Z",
+      "exit_code": 0,
+      "statement_sha256": "4e4044e6f2e2140839682f2c197bf0d8e210cefadbe3fe9cc03789418f30e402",
+      "statement": "SELECT coalesce(jsonb_agg(to_jsonb(n) ORDER BY id),'[]'::jsonb) FROM (\n    SELECT id,corp_id,connection_epoch,status,connected_at,disconnected_at,grace_expires_at\n    FROM runner_nodes WHERE corp_id='00000000-0000-4000-8000-000000000001'::uuid ORDER BY id) n;",
+      "stderr": "",
+      "result": [
+        {
+          "id": "a-issue172-native-qa",
+          "status": "connected",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "connected_at": "2026-09-27T05:45:08.028548-05:00",
+          "disconnected_at": null,
+          "connection_epoch": "6a38aa4f-d420-427c-ace0-8cf7239c9cf6",
+          "grace_expires_at": null
+        },
+        {
+          "id": "b-issue172-native-qa",
+          "status": "connected",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "connected_at": "2026-09-27T05:45:08.109276-05:00",
+          "disconnected_at": null,
+          "connection_epoch": "539b90df-832e-4be0-86a1-ca1e7a89a94c",
+          "grace_expires_at": null
+        }
+      ]
+    },
+    {
+      "label": "inject one pending fixture command anchored to completed A run",
+      "mutation": true,
+      "started_at": "2026-09-27T10:45:30.592Z",
+      "finished_at": "2026-09-27T10:45:30.746Z",
+      "exit_code": 0,
+      "statement_sha256": "eee28fd331b9c4578f41293e1f4272d7f97d1eee08d3071ce8c2c0a104c97942",
+      "statement": "BEGIN;\n    WITH added AS (INSERT INTO runner_commands(id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key)\n      SELECT 'f619d67a-3916-4a73-b605-3872800dce4a'::uuid,r.corp_id,r.runner_id,r.id,'circuit_breaker',\n        '{\"test_owned\":true,\"issue\":172,\"fault\":\"deliberately omitted breaker stage\"}'::jsonb,'issue172-native-fault-f619d67a-3916-4a73-b605-3872800dce4a'\n      FROM runs r JOIN tasks t ON t.id=r.task_id JOIN missions m ON m.id=t.mission_id\n      WHERE r.id='510df2ab-00e3-4258-ae6c-0276127b8716'::uuid AND r.corp_id='00000000-0000-4000-8000-000000000001'::uuid AND r.runner_id='a-issue172-native-qa'\n        AND r.status='completed' AND m.id='9702bd07-5e32-4318-8473-c1ce2fdc611a'::uuid AND m.requested_by='00000000-0000-4000-8000-000000000011'::uuid\n        AND r.verification_status='passed' AND r.deliverable_sha256 IS NOT NULL\n      RETURNING id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key,status,created_at,dispatched_at,failed_at,failure_detail)\n    SELECT jsonb_build_object('rows',count(*),'command',jsonb_agg(to_jsonb(added))->0) FROM added;\n    COMMIT;",
+      "stderr": "",
+      "result": {
+        "rows": 1,
+        "command": {
+          "id": "f619d67a-3916-4a73-b605-3872800dce4a",
+          "run_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+          "status": "pending",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "payload": {
+            "fault": "deliberately omitted breaker stage",
+            "issue": 172,
+            "test_owned": true
+          },
+          "failed_at": null,
+          "runner_id": "a-issue172-native-qa",
+          "created_at": "2026-09-27T05:45:30.717681-05:00",
+          "command_kind": "circuit_breaker",
+          "dispatched_at": null,
+          "failure_detail": null,
+          "idempotency_key": "issue172-native-fault-f619d67a-3916-4a73-b605-3872800dce4a"
+        }
+      }
+    },
+    {
+      "label": "epochs after repeated failures",
+      "mutation": false,
+      "started_at": "2026-09-27T10:45:45.467Z",
+      "finished_at": "2026-09-27T10:45:45.613Z",
+      "exit_code": 0,
+      "statement_sha256": "4e4044e6f2e2140839682f2c197bf0d8e210cefadbe3fe9cc03789418f30e402",
+      "statement": "SELECT coalesce(jsonb_agg(to_jsonb(n) ORDER BY id),'[]'::jsonb) FROM (\n    SELECT id,corp_id,connection_epoch,status,connected_at,disconnected_at,grace_expires_at\n    FROM runner_nodes WHERE corp_id='00000000-0000-4000-8000-000000000001'::uuid ORDER BY id) n;",
+      "stderr": "",
+      "result": [
+        {
+          "id": "a-issue172-native-qa",
+          "status": "connected",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "connected_at": "2026-09-27T05:45:08.028548-05:00",
+          "disconnected_at": null,
+          "connection_epoch": "6a38aa4f-d420-427c-ace0-8cf7239c9cf6",
+          "grace_expires_at": null
+        },
+        {
+          "id": "b-issue172-native-qa",
+          "status": "connected",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "connected_at": "2026-09-27T05:45:08.109276-05:00",
+          "disconnected_at": null,
+          "connection_epoch": "539b90df-832e-4be0-86a1-ca1e7a89a94c",
+          "grace_expires_at": null
+        }
+      ]
+    },
+    {
+      "label": "fault remains pending before eligibility",
+      "mutation": false,
+      "started_at": "2026-09-27T10:45:45.615Z",
+      "finished_at": "2026-09-27T10:45:45.755Z",
+      "exit_code": 0,
+      "statement_sha256": "5d485e0efb7d93bf1adf3c7a6614a76df53b25c318ac939e933161ea14b633eb",
+      "statement": "SELECT to_jsonb(c) FROM (SELECT id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key,status,created_at,dispatched_at,failed_at,failure_detail FROM runner_commands WHERE id='f619d67a-3916-4a73-b605-3872800dce4a'::uuid AND corp_id='00000000-0000-4000-8000-000000000001'::uuid) c;",
+      "stderr": "",
+      "result": {
+        "id": "f619d67a-3916-4a73-b605-3872800dce4a",
+        "run_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+        "status": "pending",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "payload": {
+          "fault": "deliberately omitted breaker stage",
+          "issue": 172,
+          "test_owned": true
+        },
+        "failed_at": null,
+        "runner_id": "a-issue172-native-qa",
+        "created_at": "2026-09-27T05:45:30.717681-05:00",
+        "command_kind": "circuit_breaker",
+        "dispatched_at": null,
+        "failure_detail": null,
+        "idempotency_key": "issue172-native-fault-f619d67a-3916-4a73-b605-3872800dce4a"
+      }
+    },
+    {
+      "label": "make only the browser-saved B mission eligible without publishing a wakeup",
+      "mutation": true,
+      "started_at": "2026-09-27T10:45:45.774Z",
+      "finished_at": "2026-09-27T10:45:45.949Z",
+      "exit_code": 0,
+      "statement_sha256": "09e74eefd6543e5535fec046112cfcb4566df04eeba056bcc135865262c1a68a",
+      "statement": "BEGIN;\n    WITH before AS MATERIALIZED (\n      SELECT m.id,m.corp_id,m.status,m.requested_by,t.id AS task_id,t.status AS task_status,t.contract,t.verification_policy,\n        t.assigned_agent_id,t.attempt_count,t.max_attempts,a.status AS agent_status,a.retired_at\n      FROM missions m JOIN tasks t ON t.mission_id=m.id JOIN agents a ON a.id=t.assigned_agent_id\n      WHERE m.id='b8c19c0a-a36d-4526-919a-c64cfa01ddb2'::uuid AND m.corp_id='00000000-0000-4000-8000-000000000001'::uuid AND m.requested_by='00000000-0000-4000-8000-000000000011'::uuid\n        AND m.status='ready' AND t.id='1c7160d0-d054-435e-af68-10c9bb6631c7'::uuid AND t.status IN ('pending','ready') AND t.attempt_count=0\n        AND t.max_attempts>=1 AND a.status='idle' AND a.retired_at IS NULL\n        AND t.contract->>'source_repository'='ecorp-fixture/issue172-b' AND t.contract->>'source_base_commit'='bc00cde6f2925b588e5f080597fcf3fd028d1d29'\n        AND NOT EXISTS(SELECT 1 FROM runs WHERE task_id=t.id)\n        AND NOT EXISTS(SELECT 1 FROM task_dependencies WHERE task_id=t.id) FOR UPDATE OF m,t,a),\n    changed AS (UPDATE missions m SET status='running',updated_at=clock_timestamp() FROM before b WHERE m.id=b.id RETURNING m.id,m.status,m.updated_at)\n    SELECT jsonb_build_object('rows',(SELECT count(*) FROM changed),'before',(SELECT to_jsonb(b) FROM before b),\n      'after',(SELECT to_jsonb(c) FROM changed c),'event_seq',coalesce((SELECT max(seq) FROM events WHERE corp_id='00000000-0000-4000-8000-000000000001'::uuid),0),\n      'transaction_at',clock_timestamp(),'simulation','fixture-only ready-to-running transition; no browser launch or lifecycle publication');\n    COMMIT;",
+      "stderr": "",
+      "result": {
+        "rows": 1,
+        "after": {
+          "id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+          "status": "running",
+          "updated_at": "2026-09-27T05:45:45.93811-05:00"
+        },
+        "before": {
+          "id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+          "status": "ready",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+          "contract": {
+            "model": null,
+            "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-b] Native scheduler fairness 7ff434ef",
+            "escalation": "ask the current human controller or mission owner",
+            "references": [],
+            "deadline_at": null,
+            "deliverable": {
+              "form": "commit_branch",
+              "paths": [],
+              "commit_after_verification": true
+            },
+            "secret_refs": [],
+            "write_scope": [
+              "**"
+            ],
+            "allowed_tools": [
+              "filesystem",
+              "shell"
+            ],
+            "budget_tokens": 1000000,
+            "expected_output": "A source-backed, verified mission artifact",
+            "source_base_ref": "HEAD",
+            "acceptance_tests": [
+              "the declared artifact exists",
+              "the task reports concrete verification evidence"
+            ],
+            "reasoning_effort": null,
+            "source_repository": "ecorp-fixture/issue172-b",
+            "prohibited_actions": [
+              "modify files outside the assigned worktree",
+              "use undeclared long-lived credentials"
+            ],
+            "source_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+            "budget_cost_microusd": 1000000
+          },
+          "retired_at": null,
+          "task_status": "ready",
+          "agent_status": "idle",
+          "max_attempts": 2,
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "attempt_count": 0,
+          "assigned_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+          "verification_policy": {
+            "checks": [
+              {
+                "type": "artifact",
+                "min_bytes": 1
+              },
+              {
+                "args": [
+                  "verify.mjs"
+                ],
+                "type": "command",
+                "program": "node",
+                "timeout_ms": 10000
+              }
+            ],
+            "manual_gate": null
+          }
+        },
+        "event_seq": 27,
+        "simulation": "fixture-only ready-to-running transition; no browser launch or lifecycle publication",
+        "transaction_at": "2026-09-27T05:45:45.938606-05:00"
+      }
+    },
+    {
+      "label": "unchanged pending fault after healthy completion",
+      "mutation": false,
+      "started_at": "2026-09-27T10:45:58.716Z",
+      "finished_at": "2026-09-27T10:45:58.858Z",
+      "exit_code": 0,
+      "statement_sha256": "5d485e0efb7d93bf1adf3c7a6614a76df53b25c318ac939e933161ea14b633eb",
+      "statement": "SELECT to_jsonb(c) FROM (SELECT id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key,status,created_at,dispatched_at,failed_at,failure_detail FROM runner_commands WHERE id='f619d67a-3916-4a73-b605-3872800dce4a'::uuid AND corp_id='00000000-0000-4000-8000-000000000001'::uuid) c;",
+      "stderr": "",
+      "result": {
+        "id": "f619d67a-3916-4a73-b605-3872800dce4a",
+        "run_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+        "status": "pending",
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "payload": {
+          "fault": "deliberately omitted breaker stage",
+          "issue": 172,
+          "test_owned": true
+        },
+        "failed_at": null,
+        "runner_id": "a-issue172-native-qa",
+        "created_at": "2026-09-27T05:45:30.717681-05:00",
+        "command_kind": "circuit_breaker",
+        "dispatched_at": null,
+        "failure_detail": null,
+        "idempotency_key": "issue172-native-fault-f619d67a-3916-4a73-b605-3872800dce4a"
+      }
+    },
+    {
+      "label": "unchanged connection epochs after healthy completion",
+      "mutation": false,
+      "started_at": "2026-09-27T10:45:58.860Z",
+      "finished_at": "2026-09-27T10:45:58.997Z",
+      "exit_code": 0,
+      "statement_sha256": "4e4044e6f2e2140839682f2c197bf0d8e210cefadbe3fe9cc03789418f30e402",
+      "statement": "SELECT coalesce(jsonb_agg(to_jsonb(n) ORDER BY id),'[]'::jsonb) FROM (\n    SELECT id,corp_id,connection_epoch,status,connected_at,disconnected_at,grace_expires_at\n    FROM runner_nodes WHERE corp_id='00000000-0000-4000-8000-000000000001'::uuid ORDER BY id) n;",
+      "stderr": "",
+      "result": [
+        {
+          "id": "a-issue172-native-qa",
+          "status": "connected",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "connected_at": "2026-09-27T05:45:08.028548-05:00",
+          "disconnected_at": null,
+          "connection_epoch": "6a38aa4f-d420-427c-ace0-8cf7239c9cf6",
+          "grace_expires_at": null
+        },
+        {
+          "id": "b-issue172-native-qa",
+          "status": "connected",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "connected_at": "2026-09-27T05:45:08.109276-05:00",
+          "disconnected_at": null,
+          "connection_epoch": "539b90df-832e-4be0-86a1-ca1e7a89a94c",
+          "grace_expires_at": null
+        }
+      ]
+    },
+    {
+      "label": "native event order after the missed-wakeup boundary",
+      "mutation": false,
+      "started_at": "2026-09-27T10:45:58.999Z",
+      "finished_at": "2026-09-27T10:45:59.137Z",
+      "exit_code": 0,
+      "statement_sha256": "cba2c320942e33e997eb7190bf51cdaeff45ab6747143cd3fc2460fedddf0e31",
+      "statement": "SELECT coalesce(jsonb_agg(to_jsonb(e) ORDER BY seq),'[]'::jsonb) FROM (\n    SELECT seq,type,aggregate_type,aggregate_id,correlation_id,created_at,payload FROM events\n    WHERE corp_id='00000000-0000-4000-8000-000000000001'::uuid AND seq>27 ORDER BY seq) e;",
+      "stderr": "",
+      "result": [
+        {
+          "seq": 28,
+          "type": "run.requested",
+          "payload": {
+            "model": null,
+            "status": "starting",
+            "attempt": 1,
+            "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+            "agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+            "runner_id": "b-issue172-native-qa",
+            "max_attempts": 2,
+            "mission_launch": false,
+            "reasoning_effort": null
+          },
+          "created_at": "2026-09-27T05:45:48.359011-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 29,
+          "type": "run.started",
+          "payload": {
+            "adapter": "fake-process",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+            "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-b\\worktrees\\1c7160d0d054435eaf6810c9bb6631c7\\15951ce3f5e44c728370c76d8217f145",
+            "mission_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+            "workspace_branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+            "workspace_base_ref": "HEAD",
+            "workspace_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29"
+          },
+          "created_at": "2026-09-27T05:45:48.875008-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 30,
+          "type": "run.status",
+          "payload": {
+            "status": "working",
+            "message": "Writing the owned scheduler acceptance output in the assigned isolated worktree.",
+            "station": "terminal"
+          },
+          "created_at": "2026-09-27T05:45:48.954309-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 31,
+          "type": "run.artifact",
+          "payload": {
+            "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+            "bytes": 133,
+            "sha256": "5caf3b322dfe50ad4ae86c628d5ccdeec48aa69e7c190bb0f40efd8bff6fb3be",
+            "metadata": {
+              "workspace_relative_path": "result.md"
+            },
+            "verifier": "crony-server:artifact-ingest-v1",
+            "file_name": "result.md",
+            "media_type": "text/markdown",
+            "artifact_id": "b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+            "artifact_role": "provider_evidence",
+            "retention_until": "2026-10-27T10:45:48.978081Z",
+            "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+            "producer_runner_id": "b-issue172-native-qa",
+            "provenance_signature": "f869f7c116e57074600101c62d95dd65bf32aac6cbd37830a8efb2ac460fe7f8"
+          },
+          "created_at": "2026-09-27T05:45:49.010544-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 32,
+          "type": "run.session_terminated",
+          "payload": {
+            "adapter": "fake-process",
+            "message": "Provider session stopped; no idle agent process remains.",
+            "outcome": "completed",
+            "provider_process_alive": false
+          },
+          "created_at": "2026-09-27T05:45:49.038612-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 33,
+          "type": "run.verification_started",
+          "payload": {
+            "check_count": 2
+          },
+          "created_at": "2026-09-27T05:45:49.043138-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 34,
+          "type": "run.verification_evidence",
+          "payload": {
+            "kind": "artifact",
+            "status": "passed",
+            "payload": {
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+              "bytes": 133,
+              "sha256": "5caf3b322dfe50ad4ae86c628d5ccdeec48aa69e7c190bb0f40efd8bff6fb3be",
+              "source": {
+                "tree": "509b16515e5ec99db98acd895de768084741f013",
+                "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "verifier": "crony-server:artifact-ingest-v1",
+              "media_type": "text/markdown",
+              "artifact_id": "b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+              "retention_until": "2026-10-27T10:45:48.978081Z",
+              "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+              "producer_runner_id": "b-issue172-native-qa",
+              "provenance_signature": "f869f7c116e57074600101c62d95dd65bf32aac6cbd37830a8efb2ac460fe7f8"
+            },
+            "summary": "durable artifact b2627d83-9c87-45c4-9d7e-8984fd0e10a4 has 133 verified bytes",
+            "check_index": 0,
+            "evidence_id": "82698765-d1af-4ff8-8b20-11c34c09b74f"
+          },
+          "created_at": "2026-09-27T05:45:56.672318-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 35,
+          "type": "run.verification_evidence",
+          "payload": {
+            "kind": "command",
+            "status": "passed",
+            "payload": {
+              "args": [
+                "verify.mjs"
+              ],
+              "error": null,
+              "source": {
+                "tree": "509b16515e5ec99db98acd895de768084741f013",
+                "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "stderr": "",
+              "stdout": "Owned native scheduler output verified.\n",
+              "program": "node",
+              "exit_code": 0,
+              "resolution_mode": "path_pathext",
+              "cache_suppression": {
+                "scope": "verifier_child",
+                "policy": null,
+                "source": "none",
+                "cleanup_authorized": false,
+                "requested_environment": {},
+                "requested_argument_prefix": [],
+                "zero_cache_writes_verified": false
+              },
+              "requested_program": "node",
+              "resolved_executable": {
+                "file_name": "node.exe",
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69"
+              }
+            },
+            "summary": "\"node\" exited successfully",
+            "check_index": 1,
+            "evidence_id": "f9911726-45a4-46e2-b076-258f93ca4d41"
+          },
+          "created_at": "2026-09-27T05:45:56.693465-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 36,
+          "type": "run.deliverable",
+          "payload": {
+            "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/1db92659-0d43-441b-9d02-bed4ff139348",
+            "bytes": 2467,
+            "sha256": "a11a4db09c40fde6cf4c53c2dbb8e85d6a8b88ae25aaae705afbf473889a1910",
+            "metadata": {
+              "form": "commit_branch",
+              "branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+              "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+              "head_commit": "0a04d282abfc1a9b4c1e7016888066d7a3eea164",
+              "verified_tree": "509b16515e5ec99db98acd895de768084741f013",
+              "git_bundle_sha256": "3e4fb58f4d8dc5bb7f1100669a243ad9050a3f2730ac17b619a9420f87cdd0c7",
+              "integration_state": "ready_for_review",
+              "publication_ready": true,
+              "source_verification": {
+                "tree": "509b16515e5ec99db98acd895de768084741f013",
+                "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+                "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "verification_sha256": "88ebaa96104fbf4c6570bceb5e797805bc9c3ab8476aa362667f456078180ddb"
+            },
+            "verifier": "crony-server:artifact-ingest-v1",
+            "file_name": "ecorp-commit-branch.json",
+            "media_type": "application/vnd.ecorp.deliverable+json",
+            "artifact_id": "1db92659-0d43-441b-9d02-bed4ff139348",
+            "artifact_role": "source_deliverable",
+            "retention_until": "2026-10-27T10:45:57.722141Z",
+            "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+            "producer_runner_id": "b-issue172-native-qa",
+            "provenance_signature": "a0001fd0747f65c41fb582ff8a831ec7106b616d9b7641634fd8207444f2b990"
+          },
+          "created_at": "2026-09-27T05:45:57.757318-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 37,
+          "type": "run.verification_passed",
+          "payload": {
+            "summary": "all 2 verifier checks passed",
+            "verified_tree": "509b16515e5ec99db98acd895de768084741f013",
+            "deliverable_sha256": "a11a4db09c40fde6cf4c53c2dbb8e85d6a8b88ae25aaae705afbf473889a1910",
+            "source_verification": {
+              "tree": "509b16515e5ec99db98acd895de768084741f013",
+              "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+              "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+              "ignored_input_bytes": 0,
+              "ignored_input_count": 0,
+              "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "verification_sha256": "88ebaa96104fbf4c6570bceb5e797805bc9c3ab8476aa362667f456078180ddb"
+          },
+          "created_at": "2026-09-27T05:45:57.766821-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 38,
+          "type": "run.completed",
+          "payload": {
+            "summary": "Owned scheduler output prepared for the authoritative verifier."
+          },
+          "created_at": "2026-09-27T05:45:57.791909-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        },
+        {
+          "seq": 39,
+          "type": "run.workspace_preserved",
+          "payload": {
+            "dirty": true,
+            "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=1; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+            "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-b\\worktrees\\1c7160d0d054435eaf6810c9bb6631c7\\15951ce3f5e44c728370c76d8217f145",
+            "commits_ahead": null,
+            "branch_deleted": false,
+            "workspace_branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+            "workspace_base_ref": "HEAD",
+            "workspace_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+            "workspace_fingerprint": "5b7a48dabe406b125009f0a4ea9a491c33712f5e11b8748210bb3810a6d74f6d"
+          },
+          "created_at": "2026-09-27T05:45:58.121948-05:00",
+          "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+          "aggregate_type": "run",
+          "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+        }
+      ]
+    },
+    {
+      "label": "non-secret assignment fence assertions",
+      "mutation": false,
+      "started_at": "2026-09-27T10:45:59.140Z",
+      "finished_at": "2026-09-27T10:45:59.282Z",
+      "exit_code": 0,
+      "statement_sha256": "7b1c52164bf40b8bf583698358a8c94577b4a42a3f4c5b35184bf8b9de3ca197",
+      "statement": "SELECT jsonb_build_object(\n    'A_has_assignment',(SELECT assignment_token IS NOT NULL FROM runs WHERE id='510df2ab-00e3-4258-ae6c-0276127b8716'::uuid),\n    'B_has_assignment',(SELECT assignment_token IS NOT NULL FROM runs WHERE id='15951ce3-f5e4-4c72-8370-c76d8217f145'::uuid),\n    'assignments_distinct',(SELECT a.assignment_token<>b.assignment_token FROM runs a,runs b WHERE a.id='510df2ab-00e3-4258-ae6c-0276127b8716'::uuid AND b.id='15951ce3-f5e4-4c72-8370-c76d8217f145'::uuid),\n    'B_same_corp',(SELECT corp_id='00000000-0000-4000-8000-000000000001'::uuid FROM runs WHERE id='15951ce3-f5e4-4c72-8370-c76d8217f145'::uuid),\n    'B_expected_runner',(SELECT runner_id='b-issue172-native-qa' FROM runs WHERE id='15951ce3-f5e4-4c72-8370-c76d8217f145'::uuid));",
+      "stderr": "",
+      "result": {
+        "B_same_corp": true,
+        "A_has_assignment": true,
+        "B_has_assignment": true,
+        "B_expected_runner": true,
+        "assignments_distinct": true
+      }
+    }
+  ],
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "development_actor_id": "00000000-0000-4000-8000-000000000011",
+  "nodes_before": [
+    {
+      "id": "a-issue172-native-qa",
+      "status": "connected",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "connected_at": "2026-09-27T05:45:08.028548-05:00",
+      "disconnected_at": null,
+      "connection_epoch": "6a38aa4f-d420-427c-ace0-8cf7239c9cf6",
+      "grace_expires_at": null
+    },
+    {
+      "id": "b-issue172-native-qa",
+      "status": "connected",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "connected_at": "2026-09-27T05:45:08.109276-05:00",
+      "disconnected_at": null,
+      "connection_epoch": "539b90df-832e-4be0-86a1-ca1e7a89a94c",
+      "grace_expires_at": null
+    }
+  ],
+  "stage": "single fixture-only missed-wakeup transition",
+  "fault": {
+    "rows": 1,
+    "command": {
+      "id": "f619d67a-3916-4a73-b605-3872800dce4a",
+      "run_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+      "status": "pending",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "payload": {
+        "fault": "deliberately omitted breaker stage",
+        "issue": 172,
+        "test_owned": true
+      },
+      "failed_at": null,
+      "runner_id": "a-issue172-native-qa",
+      "created_at": "2026-09-27T05:45:30.717681-05:00",
+      "command_kind": "circuit_breaker",
+      "dispatched_at": null,
+      "failure_detail": null,
+      "idempotency_key": "issue172-native-fault-f619d67a-3916-4a73-b605-3872800dce4a"
+    }
+  },
+  "periodic_failures_before": [
+    "2026-09-27T10:45:33.352748Z  WARN crony_server: mission lifecycle scheduling deferred until a later tick error=breaker command omitted stage corp_id=00000000-0000-4000-8000-000000000001",
+    "2026-09-27T10:45:39.349092Z  WARN crony_server: mission lifecycle scheduling deferred until a later tick error=breaker command omitted stage corp_id=00000000-0000-4000-8000-000000000001",
+    "2026-09-27T10:45:45.352793Z  WARN crony_server: mission lifecycle scheduling deferred until a later tick error=breaker command omitted stage corp_id=00000000-0000-4000-8000-000000000001"
+  ],
+  "boundary": {
+    "rows": 1,
+    "after": {
+      "id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+      "status": "running",
+      "updated_at": "2026-09-27T05:45:45.93811-05:00"
+    },
+    "before": {
+      "id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+      "status": "ready",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+      "contract": {
+        "model": null,
+        "objective": "Write the owned deterministic output in the assigned isolated worktree. The persisted command and artifact verifiers decide completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue172-native-b] Native scheduler fairness 7ff434ef",
+        "escalation": "ask the current human controller or mission owner",
+        "references": [],
+        "deadline_at": null,
+        "deliverable": {
+          "form": "commit_branch",
+          "paths": [],
+          "commit_after_verification": true
+        },
+        "secret_refs": [],
+        "write_scope": [
+          "**"
+        ],
+        "allowed_tools": [
+          "filesystem",
+          "shell"
+        ],
+        "budget_tokens": 1000000,
+        "expected_output": "A source-backed, verified mission artifact",
+        "source_base_ref": "HEAD",
+        "acceptance_tests": [
+          "the declared artifact exists",
+          "the task reports concrete verification evidence"
+        ],
+        "reasoning_effort": null,
+        "source_repository": "ecorp-fixture/issue172-b",
+        "prohibited_actions": [
+          "modify files outside the assigned worktree",
+          "use undeclared long-lived credentials"
+        ],
+        "source_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+        "budget_cost_microusd": 1000000
+      },
+      "retired_at": null,
+      "task_status": "ready",
+      "agent_status": "idle",
+      "max_attempts": 2,
+      "requested_by": "00000000-0000-4000-8000-000000000011",
+      "attempt_count": 0,
+      "assigned_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+      "verification_policy": {
+        "checks": [
+          {
+            "type": "artifact",
+            "min_bytes": 1
+          },
+          {
+            "args": [
+              "verify.mjs"
+            ],
+            "type": "command",
+            "program": "node",
+            "timeout_ms": 10000
+          }
+        ],
+        "manual_gate": null
+      }
+    },
+    "event_seq": 27,
+    "simulation": "fixture-only ready-to-running transition; no browser launch or lifecycle publication",
+    "transaction_at": "2026-09-27T05:45:45.938606-05:00"
+  },
+  "browser_mutations_at_boundary": 4,
+  "periodic_failures_after": [
+    "2026-09-27T10:45:33.352748Z  WARN crony_server: mission lifecycle scheduling deferred until a later tick error=breaker command omitted stage corp_id=00000000-0000-4000-8000-000000000001",
+    "2026-09-27T10:45:39.349092Z  WARN crony_server: mission lifecycle scheduling deferred until a later tick error=breaker command omitted stage corp_id=00000000-0000-4000-8000-000000000001",
+    "2026-09-27T10:45:45.352793Z  WARN crony_server: mission lifecycle scheduling deferred until a later tick error=breaker command omitted stage corp_id=00000000-0000-4000-8000-000000000001",
+    "2026-09-27T10:45:51.344855Z  WARN crony_server: mission lifecycle scheduling deferred until a later tick error=breaker command omitted stage corp_id=00000000-0000-4000-8000-000000000001",
+    "2026-09-27T10:45:57.348365Z  WARN crony_server: mission lifecycle scheduling deferred until a later tick error=breaker command omitted stage corp_id=00000000-0000-4000-8000-000000000001"
+  ],
+  "fault_after": {
+    "id": "f619d67a-3916-4a73-b605-3872800dce4a",
+    "run_id": "510df2ab-00e3-4258-ae6c-0276127b8716",
+    "status": "pending",
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "payload": {
+      "fault": "deliberately omitted breaker stage",
+      "issue": 172,
+      "test_owned": true
+    },
+    "failed_at": null,
+    "runner_id": "a-issue172-native-qa",
+    "created_at": "2026-09-27T05:45:30.717681-05:00",
+    "command_kind": "circuit_breaker",
+    "dispatched_at": null,
+    "failure_detail": null,
+    "idempotency_key": "issue172-native-fault-f619d67a-3916-4a73-b605-3872800dce4a"
+  },
+  "nodes_after": [
+    {
+      "id": "a-issue172-native-qa",
+      "status": "connected",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "connected_at": "2026-09-27T05:45:08.028548-05:00",
+      "disconnected_at": null,
+      "connection_epoch": "6a38aa4f-d420-427c-ace0-8cf7239c9cf6",
+      "grace_expires_at": null
+    },
+    {
+      "id": "b-issue172-native-qa",
+      "status": "connected",
+      "corp_id": "00000000-0000-4000-8000-000000000001",
+      "connected_at": "2026-09-27T05:45:08.109276-05:00",
+      "disconnected_at": null,
+      "connection_epoch": "539b90df-832e-4be0-86a1-ca1e7a89a94c",
+      "grace_expires_at": null
+    }
+  ],
+  "events_after_boundary": [
+    {
+      "seq": 28,
+      "type": "run.requested",
+      "payload": {
+        "model": null,
+        "status": "starting",
+        "attempt": 1,
+        "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+        "agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+        "runner_id": "b-issue172-native-qa",
+        "max_attempts": 2,
+        "mission_launch": false,
+        "reasoning_effort": null
+      },
+      "created_at": "2026-09-27T05:45:48.359011-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 29,
+      "type": "run.started",
+      "payload": {
+        "adapter": "fake-process",
+        "room_id": "00000000-0000-4000-8000-000000000041",
+        "task_id": "1c7160d0-d054-435e-af68-10c9bb6631c7",
+        "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-b\\worktrees\\1c7160d0d054435eaf6810c9bb6631c7\\15951ce3f5e44c728370c76d8217f145",
+        "mission_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2",
+        "workspace_branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+        "workspace_base_ref": "HEAD",
+        "workspace_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29"
+      },
+      "created_at": "2026-09-27T05:45:48.875008-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 30,
+      "type": "run.status",
+      "payload": {
+        "status": "working",
+        "message": "Writing the owned scheduler acceptance output in the assigned isolated worktree.",
+        "station": "terminal"
+      },
+      "created_at": "2026-09-27T05:45:48.954309-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 31,
+      "type": "run.artifact",
+      "payload": {
+        "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+        "bytes": 133,
+        "sha256": "5caf3b322dfe50ad4ae86c628d5ccdeec48aa69e7c190bb0f40efd8bff6fb3be",
+        "metadata": {
+          "workspace_relative_path": "result.md"
+        },
+        "verifier": "crony-server:artifact-ingest-v1",
+        "file_name": "result.md",
+        "media_type": "text/markdown",
+        "artifact_id": "b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+        "artifact_role": "provider_evidence",
+        "retention_until": "2026-10-27T10:45:48.978081Z",
+        "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+        "producer_runner_id": "b-issue172-native-qa",
+        "provenance_signature": "f869f7c116e57074600101c62d95dd65bf32aac6cbd37830a8efb2ac460fe7f8"
+      },
+      "created_at": "2026-09-27T05:45:49.010544-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 32,
+      "type": "run.session_terminated",
+      "payload": {
+        "adapter": "fake-process",
+        "message": "Provider session stopped; no idle agent process remains.",
+        "outcome": "completed",
+        "provider_process_alive": false
+      },
+      "created_at": "2026-09-27T05:45:49.038612-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 33,
+      "type": "run.verification_started",
+      "payload": {
+        "check_count": 2
+      },
+      "created_at": "2026-09-27T05:45:49.043138-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 34,
+      "type": "run.verification_evidence",
+      "payload": {
+        "kind": "artifact",
+        "status": "passed",
+        "payload": {
+          "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+          "bytes": 133,
+          "sha256": "5caf3b322dfe50ad4ae86c628d5ccdeec48aa69e7c190bb0f40efd8bff6fb3be",
+          "source": {
+            "tree": "509b16515e5ec99db98acd895de768084741f013",
+            "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+            "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+            "ignored_input_bytes": 0,
+            "ignored_input_count": 0,
+            "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "verifier": "crony-server:artifact-ingest-v1",
+          "media_type": "text/markdown",
+          "artifact_id": "b2627d83-9c87-45c4-9d7e-8984fd0e10a4",
+          "retention_until": "2026-10-27T10:45:48.978081Z",
+          "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+          "producer_runner_id": "b-issue172-native-qa",
+          "provenance_signature": "f869f7c116e57074600101c62d95dd65bf32aac6cbd37830a8efb2ac460fe7f8"
+        },
+        "summary": "durable artifact b2627d83-9c87-45c4-9d7e-8984fd0e10a4 has 133 verified bytes",
+        "check_index": 0,
+        "evidence_id": "82698765-d1af-4ff8-8b20-11c34c09b74f"
+      },
+      "created_at": "2026-09-27T05:45:56.672318-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 35,
+      "type": "run.verification_evidence",
+      "payload": {
+        "kind": "command",
+        "status": "passed",
+        "payload": {
+          "args": [
+            "verify.mjs"
+          ],
+          "error": null,
+          "source": {
+            "tree": "509b16515e5ec99db98acd895de768084741f013",
+            "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+            "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+            "ignored_input_bytes": 0,
+            "ignored_input_count": 0,
+            "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": "",
+          "stdout": "Owned native scheduler output verified.\n",
+          "program": "node",
+          "exit_code": 0,
+          "resolution_mode": "path_pathext",
+          "cache_suppression": {
+            "scope": "verifier_child",
+            "policy": null,
+            "source": "none",
+            "cleanup_authorized": false,
+            "requested_environment": {},
+            "requested_argument_prefix": [],
+            "zero_cache_writes_verified": false
+          },
+          "requested_program": "node",
+          "resolved_executable": {
+            "file_name": "node.exe",
+            "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69"
+          }
+        },
+        "summary": "\"node\" exited successfully",
+        "check_index": 1,
+        "evidence_id": "f9911726-45a4-46e2-b076-258f93ca4d41"
+      },
+      "created_at": "2026-09-27T05:45:56.693465-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 36,
+      "type": "run.deliverable",
+      "payload": {
+        "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/1db92659-0d43-441b-9d02-bed4ff139348",
+        "bytes": 2467,
+        "sha256": "a11a4db09c40fde6cf4c53c2dbb8e85d6a8b88ae25aaae705afbf473889a1910",
+        "metadata": {
+          "form": "commit_branch",
+          "branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+          "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+          "head_commit": "0a04d282abfc1a9b4c1e7016888066d7a3eea164",
+          "verified_tree": "509b16515e5ec99db98acd895de768084741f013",
+          "git_bundle_sha256": "3e4fb58f4d8dc5bb7f1100669a243ad9050a3f2730ac17b619a9420f87cdd0c7",
+          "integration_state": "ready_for_review",
+          "publication_ready": true,
+          "source_verification": {
+            "tree": "509b16515e5ec99db98acd895de768084741f013",
+            "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+            "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+            "ignored_input_bytes": 0,
+            "ignored_input_count": 0,
+            "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "verification_sha256": "88ebaa96104fbf4c6570bceb5e797805bc9c3ab8476aa362667f456078180ddb"
+        },
+        "verifier": "crony-server:artifact-ingest-v1",
+        "file_name": "ecorp-commit-branch.json",
+        "media_type": "application/vnd.ecorp.deliverable+json",
+        "artifact_id": "1db92659-0d43-441b-9d02-bed4ff139348",
+        "artifact_role": "source_deliverable",
+        "retention_until": "2026-10-27T10:45:57.722141Z",
+        "producer_agent_id": "b316717a-d007-4352-b472-1d7fbbe16199",
+        "producer_runner_id": "b-issue172-native-qa",
+        "provenance_signature": "a0001fd0747f65c41fb582ff8a831ec7106b616d9b7641634fd8207444f2b990"
+      },
+      "created_at": "2026-09-27T05:45:57.757318-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 37,
+      "type": "run.verification_passed",
+      "payload": {
+        "summary": "all 2 verifier checks passed",
+        "verified_tree": "509b16515e5ec99db98acd895de768084741f013",
+        "deliverable_sha256": "a11a4db09c40fde6cf4c53c2dbb8e85d6a8b88ae25aaae705afbf473889a1910",
+        "source_verification": {
+          "tree": "509b16515e5ec99db98acd895de768084741f013",
+          "base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+          "candidate_commit": "016ff3d18b65046aff4833a44c2c3e06c4b4f2d8",
+          "ignored_input_bytes": 0,
+          "ignored_input_count": 0,
+          "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "verification_sha256": "88ebaa96104fbf4c6570bceb5e797805bc9c3ab8476aa362667f456078180ddb"
+      },
+      "created_at": "2026-09-27T05:45:57.766821-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 38,
+      "type": "run.completed",
+      "payload": {
+        "summary": "Owned scheduler output prepared for the authoritative verifier."
+      },
+      "created_at": "2026-09-27T05:45:57.791909-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    },
+    {
+      "seq": 39,
+      "type": "run.workspace_preserved",
+      "payload": {
+        "dirty": true,
+        "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=1; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+        "workspace": "<USERPROFILE>\\code\\qa\\issue172-scheduler-fairness-20260927-r5\\runner-b\\worktrees\\1c7160d0d054435eaf6810c9bb6631c7\\15951ce3f5e44c728370c76d8217f145",
+        "commits_ahead": null,
+        "branch_deleted": false,
+        "workspace_branch": "crony/task-1c7160d0d054435eaf6810c9bb6631c7/run-15951ce3f5e44c728370c76d8217f145",
+        "workspace_base_ref": "HEAD",
+        "workspace_base_commit": "bc00cde6f2925b588e5f080597fcf3fd028d1d29",
+        "workspace_fingerprint": "5b7a48dabe406b125009f0a4ea9a491c33712f5e11b8748210bb3810a6d74f6d"
+      },
+      "created_at": "2026-09-27T05:45:58.121948-05:00",
+      "aggregate_id": "15951ce3-f5e4-4c72-8370-c76d8217f145",
+      "aggregate_type": "run",
+      "correlation_id": "b8c19c0a-a36d-4526-919a-c64cfa01ddb2"
+    }
+  ],
+  "dispatch_latency_ms": 2421,
+  "assignment_fences": {
+    "B_same_corp": true,
+    "A_has_assignment": true,
+    "B_has_assignment": true,
+    "B_expected_runner": true,
+    "assignments_distinct": true
+  },
+  "source_unchanged": true,
+  "finished_at": "2026-09-27T10:45:59.964Z"
+}

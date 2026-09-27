@@ -1134,16 +1134,32 @@ artifact events, separately from source state and requested verifier controls.
 ## Portable source-deliverable boundary
 
 Provider artifacts and application deliverables are separate object roles. After the provider
-process terminates, the runner executes the persisted verifier policy in the assigned worktree. A
-passing report is normalized and hashed. The runner then uses a temporary Git index to construct
-the requested patch, archive, typed set, commit/branch bundle, or review report from tracked and
-non-ignored untracked changes.
+process terminates, the runner selects the requested deliverable into a temporary native Git index
+rooted at the assigned base commit. Git clean filters and line-ending normalization run during
+selection. The resulting complete tree is frozen before verification: selected changes overlay the
+base, while omitted physical changes cannot satisfy source checks.
+
+The runner materializes raw blobs in an independent private Git repository, with its own objects,
+index and temporary candidate commit. Bounded local build inputs classified by the candidate's
+ignore rules are copied separately and fingerprinted; tracked source, provider artifacts, Git
+metadata and sensitive paths are excluded from those inputs. Provider artifacts remain inputs to
+Artifact checks only. Every Command/Test check starts from a fresh snapshot. Changed source bytes,
+executable modes, HEAD, index tree or newly created nonignored source reject that check.
+
+A passing report records the verified tree, base and temporary candidate commit, plus the ignored
+input digest and bounds. Export uses that frozen tree without restaging the physical worktree to
+construct the requested patch, archive, typed set, commit/branch bundle or review report. A later
+runner commit may have different metadata from the temporary candidate, but must retain its tree.
 
 The resulting bytes use the existing reservation, staging, validation, finalization, and recovery
 path. `source_deliverables` links the ready object to its task, run, verification digest, base
 commit, optional post-verification commit, task branch, retention, and integration state. The
 server returns a runner-only storage acknowledgment; only then can the runner emit passing
-verification and evaluate safe worktree cleanup.
+verification and evaluate safe worktree cleanup. New source-deliverable assignments require
+`canonical-source-verification-v1`. Signed upload metadata, `run.verification_passed` and every
+persisted check must agree on the source identity. `run.completed` is gated by that persisted
+linkage. Historical artifacts remain readable, while new completion
+must satisfy this admission rule and any independent manual gate.
 
 Pull-request publication, merge, and deployment are outside this boundary. A ready source
 deliverable proves portable review material exists; it does not imply external integration. See
@@ -1200,13 +1216,18 @@ membership; an out-of-room actor receives no work-item source metadata or policy
 
 The trusted publisher downloads the signed deliverable and imports its embedded Git bundle into a
 temporary bare repository. It verifies the bundle digest, source branch provenance, exact commit,
-authorized base ancestry, and current remote base before adopting or pushing the branch. Existing
+authorized base ancestry, and current remote base before adopting or pushing the branch. Canonical
+deliverables must also have valid paired `verified_tree` and `source_verification` metadata bound to
+that base, and the imported commit's native Git tree must equal that verified tree. The candidate
+commit may have different export metadata; its tree is the source identity. Existing
 matching branches and pull requests are recovered; conflicting remote identities fail closed and
 branches are never force-pushed. The branch passes `git check-ref-format --branch` before durable
 start, with a defensive server-side branch-shape check as a second boundary.
-The runner bundles a short run-scoped ref pointing to the already validated workspace branch rather
-than the worktree's possibly detached `HEAD`; the publisher accepts exactly one matching legacy
-HEAD or run-scoped bundle head before import.
+The runner bundles a short ref containing the run ID and preparation owner, pointing to the verified
+export commit independently of the worktree's possibly detached `HEAD`. The publisher accepts exactly
+one matching head. Ownership-qualified refs require canonical metadata; historical `HEAD` and
+run-only refs may omit both canonical fields. Any supplied canonical field is validated, so null,
+partial or malformed identities cannot fall back to the historical contract.
 
 An adopted pull request must report the exact verified `headRefOid`, the target repository owner,
 and `isCrossRepository = false`; a same-named branch from a fork is ignored and cannot advance

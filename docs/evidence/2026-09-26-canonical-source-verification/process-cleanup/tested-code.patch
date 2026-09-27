@@ -1,0 +1,574 @@
+diff --git a/crates/crony-runner/src/deliverable_verification.rs b/crates/crony-runner/src/deliverable_verification.rs
+index 0161b76..1b627b1 100644
+--- a/crates/crony-runner/src/deliverable_verification.rs
++++ b/crates/crony-runner/src/deliverable_verification.rs
+@@ -5,7 +5,8 @@ use std::{
+     collections::BTreeSet,
+     ffi::OsString,
+     path::{Component, Path, PathBuf},
+-    process::Stdio,
++    process::{Output, Stdio},
++    time::Duration,
+ };
+ 
+ use anyhow::{Context, Result, bail};
+@@ -27,6 +28,9 @@ use crate::{
+     workspace::{self, VerificationSnapshot},
+ };
+ 
++#[cfg(windows)]
++use crate::adapter::process_tree::{OwnedProcessTree, OwnedProcessTreeSpawn};
++
+ const MAX_ENTRIES: usize = 100_000;
+ const MAX_BYTES: u64 = 4 * 1024 * 1024 * 1024;
+ const MAX_GIT_OUTPUT: u64 = 16 * 1024 * 1024;
+@@ -132,34 +136,36 @@ async fn verify_inner(
+         &[],
+     )
+     .await?;
+-    // A verbatim Windows path is not a Git transport address. Use an encoded local
+-    // URL so drive colons, spaces and UNC paths cannot be parsed as SSH syntax.
+-    let source_url =
+-        url::Url::from_directory_path(workspace::normalize_path(prepared.workspace_root.clone()))
+-            .map_err(|_| {
+-            anyhow::anyhow!("canonical source cannot be represented as a local Git URL")
+-        })?;
++    // Native pack output writes independent objects directly, avoiding the costly local
++    // upload-pack/index-pack pipe chain on Windows. Limit history to candidate + base;
++    // no source config, refs, hooks, alternates or older history enter the snapshot.
++    let pack_prefix = workspace::normalize_path(baseline.path().join(".git/objects/pack/pack"));
++    let revisions = format!(
++        "--shallow {}\n{}\n",
++        prepared.workspace.base_commit, candidate_commit
++    );
+     private_git(
+-        baseline.path(),
++        &prepared.workspace_root,
+         &[
+-            "-c".into(),
+-            "protocol.file.allow=always".into(),
+-            "fetch".into(),
++            "pack-objects".into(),
++            "--revs".into(),
++            "--shallow".into(),
+             "--quiet".into(),
+-            // Fetch sanitizes repository-local configuration before launching upload-pack.
+-            // The fixed local command must opt in too; never edit the source Git config.
+-            #[cfg(windows)]
+-            "--upload-pack=git -c core.longpaths=true upload-pack".into(),
+-            "--depth=2".into(),
+-            "--no-tags".into(),
+-            "--no-write-fetch-head".into(),
+-            "--no-recurse-submodules".into(),
+-            source_url.as_str().into(),
+-            candidate_commit.clone().into(),
++            // Temporary snapshots need neither delta searches nor recompression.
++            "--window=0".into(),
++            "--compression=0".into(),
++            pack_prefix.into_os_string(),
+         ],
+-        &[],
++        revisions.as_bytes(),
+     )
+-    .await?;
++    .await
++    .context("pack independent canonical source objects")?;
++    tokio::fs::write(
++        baseline.path().join(".git/shallow"),
++        format!("{}\n", prepared.workspace.base_commit),
++    )
++    .await
++    .context("record private canonical history boundary")?;
+     private_git(
+         baseline.path(),
+         &[
+@@ -321,13 +327,113 @@ async fn private_git_with_index(
+             workspace::normalize_path(index.to_path_buf()),
+         );
+     }
+-    let mut child = command
+-        .args(args)
++    command.args(args);
++    let output = run_private_git(&mut command, input, super::GIT_TIMEOUT).await?;
++    // check-ignore returns 1 for a successful query with no ignored paths.
++    if !output.status.success()
++        && !(args.first().is_some_and(|arg| arg == "check-ignore")
++            && output.status.code() == Some(1))
++    {
++        bail!(
++            "private Git operation failed: {}",
++            String::from_utf8_lossy(&output.stderr).trim()
++        );
++    }
++    Ok(output.stdout)
++}
++
++/// Own trusted Git children until their pipes and workspace handles are released.
++/// Windows reuses the runner's native Job Object adapter; this adds no harness permissions.
++struct PrivateGitProcess {
++    #[cfg(windows)]
++    tree: OwnedProcessTree,
++    #[cfg(not(windows))]
++    child: tokio::process::Child,
++}
++
++impl PrivateGitProcess {
++    async fn spawn(command: &mut Command) -> Result<Self> {
++        #[cfg(windows)]
++        {
++            let tree = match OwnedProcessTree::spawn(command)? {
++                OwnedProcessTreeSpawn::Ready(tree) => tree,
++                OwnedProcessTreeSpawn::CleanupRequired { mut tree, error } => {
++                    let cleanup = tree.terminate_and_wait().await;
++                    return Err(match cleanup {
++                        Ok(_) => anyhow::Error::new(error)
++                            .context("private Git process ownership setup failed"),
++                        Err(cleanup) => anyhow::Error::new(error).context(format!(
++                            "private Git process ownership setup failed and cleanup was unverified: {cleanup}"
++                        )),
++                    });
++                }
++            };
++            Ok(Self { tree })
++        }
++        #[cfg(not(windows))]
++        {
++            Ok(Self {
++                child: command.kill_on_drop(true).spawn()?,
++            })
++        }
++    }
++
++    fn child_mut(&mut self) -> &mut tokio::process::Child {
++        #[cfg(windows)]
++        {
++            self.tree.child_mut()
++        }
++        #[cfg(not(windows))]
++        {
++            &mut self.child
++        }
++    }
++
++    async fn finish<T>(&mut self, result: Result<T>) -> Result<T> {
++        #[cfg(windows)]
++        let cleanup = self.tree.terminate_and_wait().await.map(|_| ());
++        #[cfg(not(windows))]
++        let cleanup = async {
++            if self.child.try_wait()?.is_none() {
++                self.child.start_kill()?;
++                tokio::time::timeout(Duration::from_secs(5), self.child.wait()).await??;
++            }
++            Ok::<_, std::io::Error>(())
++        }
++        .await;
++        match (result, cleanup) {
++            (Err(error), Err(cleanup)) => {
++                Err(error.context(format!("private Git cleanup also failed: {cleanup}")))
++            }
++            (Ok(_), Err(cleanup)) => {
++                Err(anyhow::Error::new(cleanup).context("private Git cleanup failed"))
++            }
++            (result, Ok(())) => result,
++        }
++    }
++}
++
++pub(super) async fn run_private_git(
++    command: &mut Command,
++    input: &[u8],
++    timeout: Duration,
++) -> Result<Output> {
++    command
+         .stdin(Stdio::piped())
+         .stdout(Stdio::piped())
+-        .stderr(Stdio::piped())
+-        .spawn()
++        .stderr(Stdio::piped());
++    let mut process = PrivateGitProcess::spawn(command)
++        .await
+         .context("start private Git operation")?;
++    let result = collect_private_git(process.child_mut(), input, timeout).await;
++    process.finish(result).await
++}
++
++async fn collect_private_git(
++    child: &mut tokio::process::Child,
++    input: &[u8],
++    timeout: Duration,
++) -> Result<Output> {
+     let mut stdin = child.stdin.take().context("Git stdin")?;
+     let mut stdout = child
+         .stdout
+@@ -337,7 +443,7 @@ async fn private_git_with_index(
+     let mut stderr = child.stderr.take().context("Git stderr")?.take(64 * 1024);
+     let mut output = Vec::new();
+     let mut errors = Vec::new();
+-    let (status, _, _, _) = tokio::time::timeout(super::GIT_TIMEOUT, async {
++    let (status, _, _, _) = tokio::time::timeout(timeout, async {
+         tokio::try_join!(
+             child.wait(),
+             async move {
+@@ -355,16 +461,11 @@ async fn private_git_with_index(
+     if output.len() as u64 > MAX_GIT_OUTPUT {
+         bail!("private Git output exceeds its bound");
+     }
+-    // check-ignore returns 1 for a successful query with no ignored paths.
+-    if !status.success()
+-        && !(args.first().is_some_and(|arg| arg == "check-ignore") && status.code() == Some(1))
+-    {
+-        bail!(
+-            "private Git operation failed: {}",
+-            String::from_utf8_lossy(&errors).trim()
+-        );
+-    }
+-    Ok(output)
++    Ok(Output {
++        status,
++        stdout: output,
++        stderr: errors,
++    })
+ }
+ 
+ async fn tree_files(root: &Path, tree: &str) -> Result<Vec<SourceFile>> {
+@@ -422,13 +523,24 @@ async fn tree_files(root: &Path, tree: &str) -> Result<Vec<SourceFile>> {
+ }
+ 
+ async fn materialize(root: &Path, files: &mut [SourceFile]) -> Result<Vec<(PathBuf, PathBuf)>> {
+-    let mut child = git_command(root)
++    let mut command = git_command(root);
++    command
+         .args(["cat-file", "--batch"])
+         .stdin(Stdio::piped())
+         .stdout(Stdio::piped())
+-        .stderr(Stdio::null())
+-        .spawn()
++        .stderr(Stdio::null());
++    let mut process = PrivateGitProcess::spawn(&mut command)
++        .await
+         .context("start raw Git blob reader")?;
++    let result = materialize_blobs(process.child_mut(), root, files).await;
++    process.finish(result).await
++}
++
++async fn materialize_blobs(
++    child: &mut tokio::process::Child,
++    root: &Path,
++    files: &mut [SourceFile],
++) -> Result<Vec<(PathBuf, PathBuf)>> {
+     let mut stdin = child.stdin.take().context("blob reader stdin")?;
+     let mut stdout = BufReader::new(child.stdout.take().context("blob reader stdout")?);
+     let mut links = Vec::new();
+@@ -984,3 +1096,32 @@ async fn check_source_integrity(
+     // Raw-file comparisons above deliberately do not use Git diff: clean filters can hide drift.
+     Ok(())
+ }
++
++#[cfg(all(test, windows))]
++mod tests {
++    use super::*;
++
++    #[tokio::test]
++    async fn canonical_raw_blob_rejection_waits_for_process_exit() {
++        let root =
++            std::env::temp_dir().join(format!("ecorp-raw-blob-error-{}", uuid::Uuid::new_v4()));
++        std::fs::create_dir(&root).unwrap();
++        private_git(
++            &root,
++            &["init".into(), "--quiet".into(), "--template=".into()],
++            &[],
++        )
++        .await
++        .unwrap();
++        let mut files = [SourceFile {
++            path: "missing.txt".into(),
++            mode: "100644".into(),
++            object: "0".repeat(40),
++            bytes: 1,
++            sha256: String::new(),
++        }];
++        let error = materialize(&root, &mut files).await.unwrap_err();
++        assert!(format!("{error:#}").contains("unexpected raw Git blob header"));
++        std::fs::remove_dir_all(&root).expect("rejected blob reader must release the snapshot");
++    }
++}
+diff --git a/crates/crony-runner/src/deliverable_verification_tests.rs b/crates/crony-runner/src/deliverable_verification_tests.rs
+index e9ff33f..8c4b0b8 100644
+--- a/crates/crony-runner/src/deliverable_verification_tests.rs
++++ b/crates/crony-runner/src/deliverable_verification_tests.rs
+@@ -162,6 +162,72 @@ fn assert_snapshots_removed(run_id: Uuid) {
+     }
+ }
+ 
++#[cfg(windows)]
++#[tokio::test]
++async fn canonical_private_git_timeout_reaps_descendants_before_snapshot_cleanup() {
++    let root = std::env::temp_dir().join(format!("ecorp-private-git-timeout-{}", Uuid::new_v4()));
++    fs::create_dir(&root).unwrap();
++    let mut command = tokio::process::Command::new("node");
++    command.current_dir(&root).kill_on_drop(true).args([
++        "-e",
++        r#"const {spawn}=require('node:child_process');
++spawn(process.execPath,['-e',"require('node:fs').writeFileSync('child-ready.txt',String(process.pid));setTimeout(()=>{},6000)"],{cwd:process.cwd(),stdio:'ignore'});
++setTimeout(()=>{},6000);"#,
++    ]);
++    let error = verification::run_private_git(&mut command, &[], Duration::from_secs(2))
++        .await
++        .unwrap_err();
++    assert!(format!("{error:#}").contains("timed out"), "{error:#}");
++    assert!(
++        root.join("child-ready.txt").exists(),
++        "descendant must start before timeout"
++    );
++    let child_pid: u32 = fs::read_to_string(root.join("child-ready.txt"))
++        .unwrap()
++        .parse()
++        .unwrap();
++    let child_alive = crate::adapter::process_tree::process_is_alive(child_pid);
++    let cleanup = fs::remove_dir_all(&root);
++    if cleanup.is_err() {
++        // The negative regression must not leave an indefinitely running child.
++        // Its own fixed lifetime expires; retain the failed fixture for diagnosis.
++        tokio::time::sleep(Duration::from_secs(6)).await;
++    }
++    assert!(
++        cleanup.is_ok(),
++        "private Git descendant still owns the snapshot: {cleanup:?}"
++    );
++    assert!(
++        !child_alive,
++        "private Git descendant survived awaited cleanup"
++    );
++}
++
++#[cfg(windows)]
++#[tokio::test]
++async fn canonical_private_git_success_reaps_descendants_before_snapshot_cleanup() {
++    let root = std::env::temp_dir().join(format!("ecorp-private-git-success-{}", Uuid::new_v4()));
++    fs::create_dir(&root).unwrap();
++    let mut command = tokio::process::Command::new("node");
++    command.current_dir(&root).args([
++        "-e",
++        r#"const fs=require('node:fs'),{spawn}=require('node:child_process');
++spawn(process.execPath,['-e',"require('node:fs').writeFileSync('child-ready.txt',String(process.pid));setTimeout(()=>{},6000)"],{cwd:process.cwd(),stdio:'ignore'});
++const poll=setInterval(()=>{if(fs.existsSync('child-ready.txt'))process.exit(0)},10);
++setTimeout(()=>process.exit(1),6000);"#,
++    ]);
++    let output = verification::run_private_git(&mut command, &[], Duration::from_secs(10))
++        .await
++        .unwrap();
++    assert!(output.status.success());
++    let child_pid: u32 = fs::read_to_string(root.join("child-ready.txt"))
++        .unwrap()
++        .parse()
++        .unwrap();
++    assert!(!crate::adapter::process_tree::process_is_alive(child_pid));
++    fs::remove_dir_all(&root).expect("successful private Git must release the snapshot");
++}
++
+ #[cfg(windows)]
+ #[tokio::test]
+ async fn canonical_export_supports_long_windows_paths_without_changing_git_config() {
+@@ -618,6 +684,86 @@ async fn canonical_checks_reject_raw_source_index_head_and_untracked_mutation()
+     }
+ }
+ 
++#[tokio::test]
++async fn canonical_private_git_contains_only_candidate_and_base_history() {
++    let mut fixture = Fixture::new();
++    fixture.write("ancestor-only.txt", b"excluded historical bytes\n");
++    fixture.commit_base();
++    let ancestor = fixture.lease.base_commit.clone();
++    let ancestor_blob = git(
++        &fixture.lease.path,
++        &["rev-parse", "HEAD:ancestor-only.txt"],
++    );
++    git(
++        &fixture.lease.path,
++        &["tag", "historical-fixture", &ancestor],
++    );
++    fs::remove_file(fixture.lease.path.join("ancestor-only.txt")).unwrap();
++    fixture.write("tracked.txt", b"base bytes\n");
++    fixture.commit_base();
++    // Exercise already-packed objects and preserve a real source config/ref/index.
++    git(&fixture.lease.path, &["repack", "-adq"]);
++    git(
++        &fixture.lease.path,
++        &["config", "ecorp.fixture", "source-only"],
++    );
++    fixture.write("other.txt", b"unselected staged bytes\n");
++    git(&fixture.lease.path, &["add", "other.txt"]);
++    let config = fs::read(fixture.lease.path.join(".git/config")).unwrap();
++    let index = fs::read(fixture.lease.path.join(".git/index")).unwrap();
++    let refs = git(&fixture.lease.path, &["show-ref"]);
++    fixture.write("tracked.txt", b"candidate bytes\n");
++    let mut prepared = fixture.prepare(&["tracked.txt"], &[]).await;
++    let script = format!(
++        "const expected = {};{}",
++        json!({
++            "base": fixture.lease.base_commit,
++            "tree": prepared.tree,
++            "excluded": [ancestor, ancestor_blob],
++        }),
++        r#"
++const fs = require('node:fs'), cp = require('node:child_process'), a = require('node:assert/strict');
++const git = (...args) => cp.execFileSync('git', args, {encoding:'utf8'}).trim();
++const head = git('rev-parse', 'HEAD');
++a.deepEqual(git('rev-list', 'HEAD').split('\n'), [head, expected.base]);
++a.equal(git('rev-parse', 'HEAD^{tree}'), expected.tree);
++a.equal(fs.readFileSync('.git/shallow', 'utf8'), expected.base + '\n');
++for (const oid of expected.excluded) a.notEqual(cp.spawnSync('git', ['cat-file', '-e', oid]).status, 0);
++const commits = git('cat-file', '--batch-all-objects', '--batch-check=%(objectname) %(objecttype)')
++    .split('\n').filter(line => line.endsWith(' commit')).map(line => line.split(' ')[0]).sort();
++a.deepEqual(commits, [head, expected.base].sort());
++a.equal(git('for-each-ref'), '');
++a.equal(cp.spawnSync('git', ['config', '--get', 'ecorp.fixture']).status, 1);
++for (const path of ['.git/objects/info/alternates', '.git/commondir']) a.equal(fs.existsSync(path), false);
++git('fsck', '--connectivity-only', '--no-reflogs', '--no-progress');
++a.equal(fs.readFileSync('tracked.txt', 'utf8'), 'candidate bytes\n');
++a.equal(fs.readFileSync('other.txt', 'utf8'), 'other before\n');
++"#,
++    );
++    let report = verify(&mut prepared, &policy(vec![node(&script)]), &[]).await;
++    assert!(report.passed, "{report:?}");
++    assert_eq!(
++        fs::read(fixture.lease.path.join(".git/config")).unwrap(),
++        config
++    );
++    assert_eq!(
++        fs::read(fixture.lease.path.join(".git/index")).unwrap(),
++        index
++    );
++    assert_eq!(git(&fixture.lease.path, &["show-ref"]), refs);
++    assert_eq!(
++        git(&fixture.lease.path, &["rev-parse", "HEAD"]),
++        fixture.lease.base_commit
++    );
++    assert!(!fixture.lease.path.join(".git/shallow").exists());
++    assert_eq!(
++        fs::read(fixture.lease.path.join("other.txt")).unwrap(),
++        b"unselected staged bytes\n"
++    );
++    drop(prepared);
++    fixture.cleanup();
++}
++
+ #[tokio::test]
+ async fn canonical_commands_have_private_git_context_and_fresh_build_outputs() {
+     let fixture = Fixture::new();
+diff --git a/tools/e2e_factory_controller.mjs b/tools/e2e_factory_controller.mjs
+index 8e5e1a7..14be278 100644
+--- a/tools/e2e_factory_controller.mjs
++++ b/tools/e2e_factory_controller.mjs
+@@ -371,7 +371,27 @@ async function waitForMission(demo, missionId, timeoutMs = 180_000) {
+   throw new Error(`timed out waiting for factory controller mission ${missionId}`)
+ }
+ 
+-async function waitForApproval(demo, missionId, timeoutMs = 30_000) {
++async function waitForWorkspacePreservation(demo, missionId, timeoutMs = 60_000) {
++  const deadline = Date.now() + timeoutMs
++  let disposition = 'run not observed'
++  while (Date.now() < deadline) {
++    const state = await snapshot(demo)
++    const taskIds = new Set(
++      state.snapshot.tasks
++        .filter((task) => task.mission_id === missionId)
++        .map((task) => task.id),
++    )
++    const runs = state.snapshot.runs.filter((run) => taskIds.has(run.task_id))
++    assert.ok(runs.length <= 1, 'the single-task Factory fixture must have one run')
++    disposition = runs[0]?.workspace_disposition ?? 'run not observed'
++    assert.notEqual(disposition, 'removed', 'the committed workspace must be retained')
++    if (disposition === 'preserved') return state
++    await new Promise((resolve) => setTimeout(resolve, 100))
++  }
++  throw new Error(`timed out waiting for Factory workspace preservation: ${disposition}`)
++}
++
++async function waitForApproval(demo, missionId, timeoutMs = 180_000) {
+   const deadline = Date.now() + timeoutMs
+   while (Date.now() < deadline) {
+     const state = await snapshot(demo)
+@@ -804,10 +824,12 @@ await writeFile(
+ )
+ await rm(releaseSourceRepository, { recursive: true, force: true })
+ 
++const portableSourceText = 'portable untracked source\n'
+ const explicitVerificationPolicy = {
+   checks: [
+     { type: 'artifact', min_bytes: 1 },
+-    { type: 'file', path: 'result.md', min_bytes: 50 },
++    // Provider result.md is separate evidence; the file check must name exported source.
++    { type: 'file', path: 'portable-untracked.txt', min_bytes: Buffer.byteLength(portableSourceText) },
+   ],
+   manual_gate: null,
+ }
+@@ -1080,7 +1102,8 @@ assert.equal(replay.materialized_now, false)
+ assert.equal(replay.launch.recovered, true)
+ assert.equal(replay.factory_state, 'verified')
+ 
+-const finalState = await snapshot(demo)
++// Run completion precedes the runner's awaited workspace finalization and fingerprint.
++const finalState = await waitForWorkspacePreservation(demo, first.mission_id)
+ const factoryItems = finalState.snapshot.factory_work_items.filter(
+   (item) => item.source_project_item_id === 'PVTI_FAKE_FACTORY_9001',
+ )
+@@ -1117,6 +1140,38 @@ const factoryWorktreeHead = (
+   })
+ ).stdout.trim()
+ assert.equal(sourceDeliverables[0].head_commit, factoryWorktreeHead)
++const exportedGitOptions = { cwd: runs[0].workspace_path, windowsHide: true }
++const exportedSourceText = (
++  await execFile('git', ['cat-file', 'blob', `${factoryWorktreeHead}:portable-untracked.txt`], exportedGitOptions)
++).stdout
++assert.equal(exportedSourceText, portableSourceText)
++const exportedReadme = (
++  await execFile('git', ['cat-file', 'blob', `${factoryWorktreeHead}:README.md`], exportedGitOptions)
++).stdout
++assert.ok(exportedReadme.endsWith('\n\nPortable deliverable fixture: tracked change.\n'))
++const exportedProviderArtifact = (
++  await execFile('git', ['ls-tree', '--name-only', factoryWorktreeHead, '--', 'result.md'], exportedGitOptions)
++).stdout
++assert.equal(exportedProviderArtifact, '', 'provider evidence must not be exported as source')
++const exportedTree = (
++  await execFile('git', ['rev-parse', `${factoryWorktreeHead}^{tree}`], exportedGitOptions)
++).stdout.trim()
++const canonicalEvidence = finalState.snapshot.verification_evidence
++  .filter((evidence) => evidence.run_id === runs[0].id)
++  .sort((left, right) => left.check_index - right.check_index)
++assert.equal(canonicalEvidence.length, explicitVerificationPolicy.checks.length)
++for (const [index, evidence] of canonicalEvidence.entries()) {
++  assert.equal(evidence.check_index, index)
++  assert.equal(evidence.kind, explicitVerificationPolicy.checks[index].type)
++  assert.equal(evidence.status, 'passed')
++  assert.equal(evidence.corp_id, demo.corp_id)
++  assert.ok(taskIds.has(evidence.task_id))
++  assert.equal(evidence.payload.source.tree, exportedTree)
++  assert.equal(evidence.payload.source.base_commit, sourceBaseCommit)
++}
++assert.equal(canonicalEvidence[0].payload.artifact_id, runs[0].artifact_id)
++assert.ok(runs[0].artifact_id)
++assert.equal(runs[0].verification_status, 'passed')
+ const fakeState = JSON.parse(await readFile(statePath, 'utf8'))
+ assert.equal(fakeState.items[0].status, 'In Progress')
+ assert.ok(fakeState.item_edits >= 1)
+@@ -2085,6 +2140,19 @@ const report = {
+   explicit_verification_policy_persisted: true,
+   portable_deliverable_materialized: sourceDeliverables.length === 1,
+   portable_deliverable_form: sourceDeliverables[0].form,
++  canonical_verification: {
++    exported_head: factoryWorktreeHead,
++    exported_tree: exportedTree,
++    exported_file: 'portable-untracked.txt',
++    exported_file_bytes: Buffer.byteLength(exportedSourceText),
++    exported_file_matches: exportedSourceText === portableSourceText,
++    tracked_change_exported: exportedReadme.endsWith('\n\nPortable deliverable fixture: tracked change.\n'),
++    provider_artifact_excluded_from_source: exportedProviderArtifact === '',
++    evidence_ids: canonicalEvidence.map((evidence) => evidence.id),
++    evidence_kinds: canonicalEvidence.map((evidence) => evidence.kind),
++    artifact_id: runs[0].artifact_id,
++    persisted_checks_passed: canonicalEvidence.every((evidence) => evidence.status === 'passed'),
++  },
+   factory_state: factoryItems[0].state,
+   claim_token_absent_from_snapshot: true,
+   mission_status: missions[0].status,

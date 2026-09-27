@@ -42,7 +42,11 @@ pub struct VerificationReport {
     pub summary: String,
     pub checks: Vec<VerificationCheckResult>,
     pub manual_gate: Option<ManualVerificationGate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceVerification>,
 }
+
+pub use crony_domain::SourceVerification;
 
 pub(crate) enum CancellableCheckResult {
     Completed(VerificationCheckResult),
@@ -77,7 +81,7 @@ pub(crate) async fn verify_cancellable(
     Some(verification_report(policy, checks))
 }
 
-fn verification_report(
+pub(crate) fn verification_report(
     policy: &VerificationPolicy,
     checks: Vec<VerificationCheckResult>,
 ) -> VerificationReport {
@@ -91,6 +95,7 @@ fn verification_report(
         },
         checks,
         manual_gate: policy.manual_gate.clone(),
+        source: None,
     }
 }
 
@@ -100,7 +105,7 @@ pub(crate) async fn run_check(
     workspace: &Path,
     artifacts: &[AdapterArtifact],
 ) -> VerificationCheckResult {
-    match run_check_inner(check_index, check, workspace, artifacts, None).await {
+    match run_check_inner(check_index, check, workspace, artifacts, None, false).await {
         CancellableCheckResult::Completed(result) => result,
         CancellableCheckResult::Cancelled => {
             unreachable!("non-cancellable verifier check was cancelled")
@@ -115,7 +120,33 @@ pub(crate) async fn run_check_cancellable(
     artifacts: &[AdapterArtifact],
     cancellation: &mut watch::Receiver<bool>,
 ) -> CancellableCheckResult {
-    run_check_inner(check_index, check, workspace, artifacts, Some(cancellation)).await
+    run_check_inner(
+        check_index,
+        check,
+        workspace,
+        artifacts,
+        Some(cancellation),
+        false,
+    )
+    .await
+}
+
+pub(crate) async fn run_canonical_check_cancellable(
+    check_index: i32,
+    check: &VerifierCheck,
+    workspace: &Path,
+    artifacts: &[AdapterArtifact],
+    cancellation: &mut watch::Receiver<bool>,
+) -> CancellableCheckResult {
+    run_check_inner(
+        check_index,
+        check,
+        workspace,
+        artifacts,
+        Some(cancellation),
+        true,
+    )
+    .await
 }
 
 async fn run_check_inner(
@@ -124,6 +155,7 @@ async fn run_check_inner(
     workspace: &Path,
     artifacts: &[AdapterArtifact],
     mut cancellation: Option<&mut watch::Receiver<bool>>,
+    canonical_git: bool,
 ) -> CancellableCheckResult {
     if cancellation
         .as_ref()
@@ -156,6 +188,7 @@ async fn run_check_inner(
             *timeout_ms,
             *cache_suppression,
             cancellation.as_deref_mut(),
+            canonical_git,
         )
         .await
         {
@@ -317,7 +350,8 @@ async fn verify_command(
     args: &[String],
     timeout_ms: u64,
 ) -> CheckOutcome {
-    match verify_command_cancellable(workspace, program, args, timeout_ms, None, None).await {
+    match verify_command_cancellable(workspace, program, args, timeout_ms, None, None, false).await
+    {
         CommandCheckOutcome::Completed(outcome) => outcome,
         CommandCheckOutcome::Cancelled => {
             unreachable!("non-cancellable verifier command was cancelled")
@@ -370,6 +404,7 @@ async fn verify_command_cancellable(
     timeout_ms: u64,
     cache_suppression: Option<VerifierCacheSuppression>,
     cancellation: Option<&mut watch::Receiver<bool>>,
+    canonical_git: bool,
 ) -> CommandCheckOutcome {
     let deadline = Instant::now() + Duration::from_millis(timeout_ms);
     let attempted_mode = attempted_resolution_mode(program);
@@ -403,6 +438,9 @@ async fn verify_command_cancellable(
     }
     let identity = executable_identity(&resolved.executable);
     let mut command = Command::new(&resolved.executable);
+    if canonical_git {
+        crate::deliverable::isolate_git_environment(&mut command);
+    }
     let cache = cache_suppression.or_else(|| automatic_cache_suppression(program));
     apply_cache_suppression(&mut command, cache);
     command

@@ -1,0 +1,15 @@
+#requires -Version 7.5
+$ErrorActionPreference='Stop'
+$target='<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\target'
+$key=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex=[Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$held=$false
+try {
+    try {$held=$mutex.WaitOne(1000)} catch [Threading.AbandonedMutexException] {$held=$true}
+    if(!$held){throw 'Another process owns this Cargo target.'}
+    & (Join-Path $PSScriptRoot 'run-canonical-r3.ps1') -RepositoryPath '<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp' -Issue 82 -Revision r9
+    if($LASTEXITCODE){exit $LASTEXITCODE}
+} finally {
+    if($held){$mutex.ReleaseMutex()}
+    $mutex.Dispose()
+}

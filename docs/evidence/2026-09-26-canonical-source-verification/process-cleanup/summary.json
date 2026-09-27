@@ -1,0 +1,942 @@
+{
+  "issue": 82,
+  "pr": 375,
+  "additional_issue_acceptance": [
+    172
+  ],
+  "status": "local-private-pack-cleanup-and-scheduler-acceptance-validated",
+  "published_head_before_fixes": "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964",
+  "tested_tree": "9ddca9d6bbf522827f53a3a5d11554a10c96337a",
+  "source_files_sha256": "aa9ab3cac1caa586050ac64364d0a5f43f102be6d310e0443da35d47aea9c796",
+  "original_physical_file_count": 6702,
+  "tested_code_patch_sha256": "2cb203752a90ba61eda06dd417c154398055640a59f2e4d550e9d3e987741187",
+  "canonical_original_sha256": "b89d9eb80673bf39aa649d010121ad62dcfab1e84a2138512cb50174d11e354a",
+  "node_counts": {
+    "tests": 3089,
+    "passed": 3024,
+    "failed": 0,
+    "skipped": 65,
+    "todo": 0,
+    "cancelled": 0
+  },
+  "rust_counts": {
+    "passed": 853,
+    "failed": 0,
+    "ignored": 558,
+    "summaries": 41
+  },
+  "database_checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "counts": {
+        "ignored": 0,
+        "summaries": 0,
+        "failed": 0,
+        "passed": 0
+      }
+    },
+    {
+      "name": "budget-checkpoints-and-canonical-source-linkage-after-store-fix",
+      "exit_code": 0,
+      "counts": {
+        "ignored": 0,
+        "summaries": 1,
+        "failed": 0,
+        "passed": 178
+      }
+    },
+    {
+      "name": "cache-admission-lifecycle",
+      "exit_code": 0,
+      "counts": {
+        "ignored": 0,
+        "summaries": 2,
+        "failed": 0,
+        "passed": 12
+      }
+    }
+  ],
+  "scheduler_acceptance": {
+    "mission_count": 2,
+    "dispatch_latency_ms": 2421,
+    "missed_wakeup_affected_rows": 1,
+    "fault_status": "pending",
+    "periodic_failures_before": 3,
+    "inference": "deterministic native child protocols only",
+    "browser_mutations_after_boundary": 0,
+    "native_runner_count": 2,
+    "periodic_failures_after": 5,
+    "faults": "owned local SQL injection; no synthetic provider events"
+  },
+  "retained_results": [
+    {
+      "receipt": "pr375-private-git-timeout-red-r2.json",
+      "exit_code": 101,
+      "interpretation": "One targeted timeout regression failed before awaited process-tree cleanup; the earlier wrong-filter attempt ran zero tests and is not red evidence."
+    },
+    {
+      "receipt": "pr375-factory-native-r2.json",
+      "status": "failed",
+      "driver_exit_code": 1,
+      "database_state_sha256": "43504d9b52c69ed15b57f5f0f008f9c48af15cf221a19f81b0bdf42d3268b716",
+      "interpretation": "Native Git transfer timed out before file checks, then snapshot cleanup reported Windows error 32. Private database snapshot remains retained locally."
+    },
+    {
+      "receipt": "pr375-factory-native-r3.json",
+      "status": "failed",
+      "driver_exit_code": 1,
+      "database_state_sha256": "c672218d71cfb59368ed94d65f921fcf02c800b8a8affe1e276f936af001d021",
+      "interpretation": "Native Git transfer timed out before file checks, then snapshot cleanup reported Windows error 32. Private database snapshot remains retained locally."
+    },
+    {
+      "receipt": "pr375-factory-native-r4.json",
+      "status": "failed",
+      "driver_exit_code": 1,
+      "database_state_sha256": "58d42e29819cae9b4f4d28dbcff72795af5baaf8e2bf12e9bf6d94270de8428b",
+      "interpretation": "Native Git transfer timed out before file checks; Windows error 32 did not recur. No persisted verifier evidence completed. Private database snapshot remains retained locally."
+    },
+    {
+      "receipt": "pr375-factory-native-r5.json",
+      "status": "failed",
+      "driver_exit_code": 1,
+      "database_state_sha256": "0c79b831843dd00603969cc907442529c4b0653690a7d5da0c69a2c473051098",
+      "observed_run": {
+        "id": "602d9433-053b-4c3f-96a2-721f770c6440",
+        "status": "completed",
+        "verification_status": "passed",
+        "workspace_disposition": "active"
+      },
+      "passed_verifier_records": 2,
+      "interpretation": "The native run completed and both canonical checks passed. The driver immediately observed active workspace disposition before runner finalization and failed its preservation assertion. The stack was then stopped; this receipt does not establish eventual preservation. Current-source acceptance uses a bounded persisted-state wait, rejecting removal, and keeps all export and verifier assertions."
+    },
+    {
+      "receipt": "pr375-factory-native-r6.json",
+      "status": "failed",
+      "driver_exit_code": 1,
+      "database_state_sha256": "4b48bce572e28acfcd2503b90e07400c47269f8564b1ccdb40c2c535588645a9",
+      "observed_run": {
+        "id": "2d82dc8a-e18c-422b-8dcf-b91badfd4eb8",
+        "status": "verifying",
+        "verification_status": "running",
+        "workspace_disposition": "active"
+      },
+      "verification_records": 0,
+      "source_deliverable_records": 0,
+      "interpretation": "The approval scenario exceeded its 30-second driver deadline while the native run was still verifying. No verification evidence or source deliverable existed at final capture. The stack was stopped; eventual verification and approval remain unproven. Current-source acceptance uses the same bounded 180-second allowance for approval and mission completion because canonical verification precedes the durable approval request."
+    },
+    {
+      "receipt": "pr375-cleanup-regressions-r1.json",
+      "status": "passed-on-earlier-source",
+      "passed": 16,
+      "filtered": 263,
+      "interpretation": "Earlier process-cleanup regression coverage. It predates the pack change; canonical r9 separately executes these tests on the current source."
+    },
+    {
+      "receipt": "pr375-integration-job-r2.json",
+      "job_id": 108556193276,
+      "run_id": 36296490240,
+      "interpretation": "Hosted Factory controller expected completed but observed failed. That log alone does not establish a 30-second private-Git timeout."
+    }
+  ],
+  "diagnostics": [
+    {
+      "receipt": "pr375-private-git-fetch-r1-baseline.json",
+      "status": "passed",
+      "failure": null,
+      "timings": [
+        {
+          "name": "fetch",
+          "elapsed_seconds": 27.1699502,
+          "exit_code": 0,
+          "timed_out": false
+        }
+      ],
+      "scope": "Isolated Git diagnostics using the retained failed Factory r4 source, not acceptance of the candidate implementation."
+    },
+    {
+      "receipt": "pr375-private-git-fetch-r1-compression-zero.json",
+      "status": "passed",
+      "failure": null,
+      "timings": [
+        {
+          "name": "fetch",
+          "elapsed_seconds": 21.8828905,
+          "exit_code": 0,
+          "timed_out": false
+        }
+      ],
+      "scope": "Isolated Git diagnostics using the retained failed Factory r4 source, not acceptance of the candidate implementation."
+    },
+    {
+      "receipt": "pr375-private-git-pack-r1.json",
+      "status": "failed",
+      "failure": "Method invocation failed because [System.Threading.Tasks.VoidTaskResult] does not contain a method named 'Trim'.",
+      "timings": [],
+      "scope": "Isolated Git diagnostics using the retained failed Factory r4 source, not acceptance of the candidate implementation."
+    },
+    {
+      "receipt": "pr375-private-git-pack-r2.json",
+      "status": "passed",
+      "failure": null,
+      "timings": [
+        {
+          "name": "pack",
+          "elapsed_seconds": 1.747291,
+          "exit_code": 0,
+          "timed_out": false
+        }
+      ],
+      "scope": "Isolated Git diagnostics using the retained failed Factory r4 source, not acceptance of the candidate implementation."
+    },
+    {
+      "receipt": "pr375-private-git-pack-r3.json",
+      "status": "passed",
+      "failure": null,
+      "timings": [
+        {
+          "name": "pack",
+          "elapsed_seconds": 1.4233568,
+          "exit_code": 0,
+          "timed_out": false
+        }
+      ],
+      "scope": "Isolated Git diagnostics using the retained failed Factory r4 source, not acceptance of the candidate implementation."
+    }
+  ],
+  "focused_pack_regression": {
+    "passed": 1,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 279
+  },
+  "patch_representation": {
+    "candidate_diff_sha256": "2cb203752a90ba61eda06dd417c154398055640a59f2e4d550e9d3e987741187",
+    "candidate_diff_bytes": 23741,
+    "focused_recorded_patch_sha256": "d043de662124702bd8fa464679422eb6f345cb51ee5448e1f76c68495f9d161f",
+    "focused_recorded_patch_bytes": 24315,
+    "byte_equal": false,
+    "normalized_equal": true,
+    "normalized_sha256": "2cb203752a90ba61eda06dd417c154398055640a59f2e4d550e9d3e987741187",
+    "normalization": "Decode UTF-8 with optional BOM; replace CRLF with LF; retain exactly one final LF. All three physical source hashes independently match the focused receipt."
+  },
+  "artifacts": [
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue82-canonical-r9.json",
+      "original_sha256": "612aa0ac946486e0f759db74e2d9d0ba5380ec0fae581abd40e734c8a157c31c",
+      "published_sha256": "9ff6604abbf7bd7b9d6ab04869bab219bd0c439019864f59fa78c80b70eb6af7",
+      "bytes": 554328,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-27T09-36-07-181Z-523a87c1-440a-44a3-b7c4-c7863c99f44f-full.json",
+      "original_sha256": "b89d9eb80673bf39aa649d010121ad62dcfab1e84a2138512cb50174d11e354a",
+      "published_sha256": "b89d9eb80673bf39aa649d010121ad62dcfab1e84a2138512cb50174d11e354a",
+      "bytes": 530431,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue82-canonical-r9-install-root.log",
+      "original_sha256": "2ca3a7fe610ee2a216ba0186ae371dd5c3388c2cb096aa977c8ea8762d2c554f",
+      "published_sha256": "2ca3a7fe610ee2a216ba0186ae371dd5c3388c2cb096aa977c8ea8762d2c554f",
+      "bytes": 88,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue82-canonical-r9-install-web.log",
+      "original_sha256": "3a7fa94bb017c068154eb957471c092804dc58ca3eea6de1388d44a042660b1b",
+      "published_sha256": "3a7fa94bb017c068154eb957471c092804dc58ca3eea6de1388d44a042660b1b",
+      "bytes": 88,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue82-canonical-r9-install-steward.log",
+      "original_sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "published_sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "bytes": 28,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue82-canonical-r9-pnpm-check.log",
+      "original_sha256": "1661fcca088738d049b5aad92d94f7fdee5250befa9a8d2efb4a1dd0c23eda52",
+      "published_sha256": "9660fc9f040a23bed776e3d5f7b8c498ad497ac46f4ca690bdbeb1a4c61f3a59",
+      "bytes": 9402,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-build.json",
+      "source_name": "pr375-factory-native-build-r5.json",
+      "original_sha256": "962a7fd677588882d9c6b4a1233bef1d6c818ee09ab22a4b3b59b97be2dc027f",
+      "published_sha256": "9c8403df9503e85e90f989929686e50cbce09fc68cc34898c16c75ba05e124ef",
+      "bytes": 2128,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-build.log",
+      "source_name": "pr375-factory-native-build-r5.log",
+      "original_sha256": "ae956020f25132d318ab55c4a14fa6736e186c64add83411a7db9a8430f72cec",
+      "published_sha256": "2be3c004fb7fa67bafe27dcddf5a938f58368ec98e8a2671bc2a4bd100073537",
+      "bytes": 182,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-database.json",
+      "source_name": "issue82-native-database-r11.json",
+      "original_sha256": "ccccdd22de266fb5a256b1747811581baf47002e88c2c669fea3876ffeb6a0a0",
+      "published_sha256": "b996d668c9ebe324e7173d5a8071caaecd6716a60209233f852abf377cd92880",
+      "bytes": 5239,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "database-owned-postgresql-initialization.log",
+      "source_name": "issue82-native-database-r11-initdb.log",
+      "original_sha256": "df37b5736953f090520a21dc6c960542fbfb7a5a84f8e6e24c50283bdbff5873",
+      "published_sha256": "122c517a47b3584a5fa1ef4da48061f5629ff1c3de0efdeb09cf3da56a030651",
+      "bytes": 1035,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "database-budget-checkpoints-and-canonical-source-linkage-after-store-fix.log",
+      "source_name": "issue82-native-database-r11-budget-checkpoints.log",
+      "original_sha256": "659332445278bda1e71ed1ddd475c1a7b01c5164e46a193225d4937520cd9b4f",
+      "published_sha256": "659332445278bda1e71ed1ddd475c1a7b01c5164e46a193225d4937520cd9b4f",
+      "bytes": 21154,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "database-cache-admission-lifecycle.log",
+      "source_name": "issue82-native-database-r11-cache-admission.log",
+      "original_sha256": "70f5b247173c9b31c003020eb9db2295be12b4d15326c3c97e036798ec3751a6",
+      "published_sha256": "70f5b247173c9b31c003020eb9db2295be12b4d15326c3c97e036798ec3751a6",
+      "bytes": 1718,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-lifecycle.json",
+      "source_name": "issue82-native-r4-lifecycle.json",
+      "original_sha256": "2034144b7cd35de3b81af442fb61ced744a69d7b28d422951c503feeefa3f37f",
+      "published_sha256": "24377ff006e8a33c43acbe3abba9bdad75f8bfae32dc5946b72319a64388a9d5",
+      "bytes": 4197,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-matching-source-native-build.log",
+      "source_name": "issue82-native-r4-build.log",
+      "original_sha256": "1af61f5c69281d4bef5ccb2925f30457797c0daf9be195f38cea2b200c2e1bdc",
+      "published_sha256": "1af61f5c69281d4bef5ccb2925f30457797c0daf9be195f38cea2b200c2e1bdc",
+      "bytes": 73,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-browser-to-server-to-native-runner.log",
+      "source_name": "issue82-native-r4-browser.log",
+      "original_sha256": "6c20fb2e9180a592166cce5ce77672c4c52bd289d01c7482c913f71758f35690",
+      "published_sha256": "da579b7663e5a317b958909d287e0b8403e93fabfebe0ef91df9c5c7e0f7b0ad",
+      "bytes": 198,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "scheduler-native-lifecycle.json",
+      "source_name": "issue172-native-r5-lifecycle.json",
+      "original_sha256": "f1ce464b35f9598e27356febee0e137f1222b4dbb9f54d388aa33d5e99e89e44",
+      "published_sha256": "c0c736e1ad5339ddf363a8d83e7de28a5816a40ee2e0f66dcb0205fa787c093f",
+      "bytes": 4913,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "scheduler-matching-source-native-build.log",
+      "source_name": "issue172-native-r5-build.log",
+      "original_sha256": "07b38384951b79db714f84d759ba2c1aa48b46d4ceb333d00fc770d956c2b29f",
+      "published_sha256": "07b38384951b79db714f84d759ba2c1aa48b46d4ceb333d00fc770d956c2b29f",
+      "bytes": 73,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "scheduler-browser-to-server-to-native-runner.log",
+      "source_name": "issue172-native-r5-browser.log",
+      "original_sha256": "bee404f91b408dd64dc5c4edfceb4bb5f69d8f1c0eeb87f3a042187d68a3c3ed",
+      "published_sha256": "d418b01e894d4078d696a32474cc92dd974d9bce44de1c16ddc45e31d9bd4cde",
+      "bytes": 223,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-browser.json",
+      "source_name": "report.json",
+      "original_sha256": "8e27256fb64d498e1ca4af7beb51e129550af8e7502c9f9297801b9163bb332c",
+      "published_sha256": "92052d24b65f8cda6947929aab038c06cf4d9a4f4be9c26588ecb8aad917649c",
+      "bytes": 72383,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "scheduler-native-browser.json",
+      "source_name": "report.json",
+      "original_sha256": "fd09e518b8dbaa9a132c036c27d80d19a297d66ddf2b6226113e587859c796ea",
+      "published_sha256": "e08a63127246d8a169cf8eaa03dd674b60ce34294f839e821e23417efd4bf194",
+      "bytes": 132049,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-failed-saved.png",
+      "source_name": "failed-saved.png",
+      "original_sha256": "61bd8a0012db7d94a57550f75175eb76db27e732878ae600250708c232ba28b8",
+      "published_sha256": "61bd8a0012db7d94a57550f75175eb76db27e732878ae600250708c232ba28b8",
+      "bytes": 226636,
+      "transform": "none"
+    },
+    {
+      "file": "native-failed-final.png",
+      "source_name": "failed-final.png",
+      "original_sha256": "9ea1ab61119ab55811aab0c66d16fb549122c755135964954f79370f11fb3161",
+      "published_sha256": "9ea1ab61119ab55811aab0c66d16fb549122c755135964954f79370f11fb3161",
+      "bytes": 270315,
+      "transform": "none"
+    },
+    {
+      "file": "native-passed-saved.png",
+      "source_name": "passed-saved.png",
+      "original_sha256": "55cf6bee0c8d64f0f410ed83d87028f1da57d35c4732ee9782a8febbd01d913f",
+      "published_sha256": "55cf6bee0c8d64f0f410ed83d87028f1da57d35c4732ee9782a8febbd01d913f",
+      "bytes": 232815,
+      "transform": "none"
+    },
+    {
+      "file": "native-passed-final.png",
+      "source_name": "passed-final.png",
+      "original_sha256": "873f6af8c1a2d43d02cdd2b5a55fb1c2f26e5a0906798bb3b3a4a23a87803162",
+      "published_sha256": "873f6af8c1a2d43d02cdd2b5a55fb1c2f26e5a0906798bb3b3a4a23a87803162",
+      "bytes": 306080,
+      "transform": "none"
+    },
+    {
+      "file": "scheduler-mission-1-saved.png",
+      "source_name": "a-saved.png",
+      "original_sha256": "e850270b32ad4d0165509c1ab3f8c5de1f05e5d91d6187c754b8d03a00a26442",
+      "published_sha256": "e850270b32ad4d0165509c1ab3f8c5de1f05e5d91d6187c754b8d03a00a26442",
+      "bytes": 224969,
+      "transform": "none"
+    },
+    {
+      "file": "scheduler-mission-1-final.png",
+      "source_name": "a-completed.png",
+      "original_sha256": "bc801d3e262a6bdfb79e41947ce51db4684df5337378596013fd6d2d4ee93763",
+      "published_sha256": "bc801d3e262a6bdfb79e41947ce51db4684df5337378596013fd6d2d4ee93763",
+      "bytes": 295520,
+      "transform": "none"
+    },
+    {
+      "file": "scheduler-mission-2-saved.png",
+      "source_name": "b-saved.png",
+      "original_sha256": "a83dfab8c8b04368dd24738ad15502c7127477d89aca6c8334e55253359ebf2c",
+      "published_sha256": "a83dfab8c8b04368dd24738ad15502c7127477d89aca6c8334e55253359ebf2c",
+      "bytes": 227551,
+      "transform": "none"
+    },
+    {
+      "file": "scheduler-mission-2-final.png",
+      "source_name": "b-completed.png",
+      "original_sha256": "ae580c72219010ae6626334c36f9519b218800afc2e947676e54d67812f24a22",
+      "published_sha256": "ae580c72219010ae6626334c36f9519b218800afc2e947676e54d67812f24a22",
+      "bytes": 300401,
+      "transform": "none"
+    },
+    {
+      "file": "native-graph-driver.json",
+      "source_name": "pr375-graph-regression-r6.json",
+      "original_sha256": "c5be72ad7aac812635d8f8c57289a9292cb126e6305d5127cad8f5f12c364fe2",
+      "published_sha256": "65183e0e124e714f39ed2c32b091f81c8692638f0c759b5bf1a5e385fa033600",
+      "bytes": 5386,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-graph.log",
+      "source_name": "pr375-graph-regression-r6.log",
+      "original_sha256": "c413d9d44c3f804ca96555d99ba87ec407d0566393f1cf6c4edeae6b09c8afdf",
+      "published_sha256": "7946ceb0fd370d7ee5e872fdec23c7f7ce92eee382bf7bafad353004de0084d4",
+      "bytes": 971,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-fixture-report.json",
+      "source_name": "fixture-report.json",
+      "original_sha256": "a3f31b0b98238433655a5d0d8b7ed08c4a48cfe4563b05d0c885c87c04a27ce3",
+      "published_sha256": "32141f1e0ab025ab6fff9035c5f42fafcbaee999c0c24673ae64d3e633005dac",
+      "bytes": 969,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-external-adapters.json",
+      "source_name": "e2e-external-adapters.json",
+      "original_sha256": "f268834fcc812bdea7935eea847f567b2a41f6a90adfea7faa519c9fe0ccce07",
+      "published_sha256": "f268834fcc812bdea7935eea847f567b2a41f6a90adfea7faa519c9fe0ccce07",
+      "bytes": 1379,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-task-graph.json",
+      "source_name": "e2e-task-graph.json",
+      "original_sha256": "760caf919523d6141e32dea1aa0b51c58039e74938dc930a82d77b993da52151",
+      "published_sha256": "760caf919523d6141e32dea1aa0b51c58039e74938dc930a82d77b993da52151",
+      "bytes": 2351,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-controlled-runner-readiness.json",
+      "source_name": "e2e-controlled-runner-readiness.json",
+      "original_sha256": "cc0352136a3554c2c9f4b38705975fbda3d770cafb7414c181568510dbc8537e",
+      "published_sha256": "cc0352136a3554c2c9f4b38705975fbda3d770cafb7414c181568510dbc8537e",
+      "bytes": 527,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-identity-lifecycle.json",
+      "source_name": "e2e-identity-lifecycle.json",
+      "original_sha256": "b63bde0e5b8c3e63c69be8ada77dc26e7705c65aa586f72d55c186c613878b18",
+      "published_sha256": "b63bde0e5b8c3e63c69be8ada77dc26e7705c65aa586f72d55c186c613878b18",
+      "bytes": 773,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-budgets.json",
+      "source_name": "e2e-budgets.json",
+      "original_sha256": "6ea5db7afed9481a1802cab4373b3e772bc5583a33d4d5f9483e9acb096b99c9",
+      "published_sha256": "6ea5db7afed9481a1802cab4373b3e772bc5583a33d4d5f9483e9acb096b99c9",
+      "bytes": 1471,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-factory-driver.json",
+      "source_name": "pr375-factory-native-r7.json",
+      "original_sha256": "7631c9903a66e222270ca50007c199976869636643d3ddec0343cc3b08e26d64",
+      "published_sha256": "a4bc4278037c510f00a77bdd7d66d2afa16bc0a10381877e1d5ced10d829522a",
+      "bytes": 6364,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-factory.log",
+      "source_name": "controller.log",
+      "original_sha256": "2c4032b2222c9915029295471143e4fec8bb31361273fb3a6793b7d53dcf8566",
+      "published_sha256": "2c4032b2222c9915029295471143e4fec8bb31361273fb3a6793b7d53dcf8566",
+      "bytes": 8771,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-pack-regression-r3.json",
+      "source_name": "pr375-pack-regression-r3.json",
+      "original_sha256": "3e6021e108b725bff03ab23c9fd58e77b9b4bedb46d8135dd61b2ddcae291302",
+      "published_sha256": "8249420d6d3cf4abeb96575dca01323a74770913e896114190dba3689617ab1c",
+      "bytes": 1597,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "private-pack-focused.log",
+      "source_name": "pr375-pack-regression-r3.log",
+      "original_sha256": "37a690d88d93740cac6b7b80d70e0169faed4b1a5e842fd27cd120217e3f89b6",
+      "published_sha256": "5f9569322aa56bf77f9da3408e315eb03eecda555ec379e9ad3574fece681a95",
+      "bytes": 501,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "private-pack-focused.patch",
+      "source_name": "pr375-pack-regression-r3.patch",
+      "original_sha256": "d043de662124702bd8fa464679422eb6f345cb51ee5448e1f76c68495f9d161f",
+      "published_sha256": "d043de662124702bd8fa464679422eb6f345cb51ee5448e1f76c68495f9d161f",
+      "bytes": 24315,
+      "transform": "none"
+    },
+    {
+      "file": "pr375-private-git-timeout-red-r2.json",
+      "source_name": "pr375-private-git-timeout-red-r2.json",
+      "original_sha256": "16c1c65b6cf3d3092b01ae188c7017abddf8df09cb4a38840720d3938140759d",
+      "published_sha256": "27f42752f110d6700b7bed4533458e1ad24696c1ac7ffccbcf2b325f989376bc",
+      "bytes": 687,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "process-cleanup-timeout-red.log",
+      "source_name": "pr375-private-git-timeout-red-r2.log",
+      "original_sha256": "b3c0b5b51289d269f044e678cc1c756dc923cbde97577e68d5266fdf8bde52fc",
+      "published_sha256": "b3c0b5b51289d269f044e678cc1c756dc923cbde97577e68d5266fdf8bde52fc",
+      "bytes": 1072,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-factory-native-r2.json",
+      "source_name": "pr375-factory-native-r2.json",
+      "original_sha256": "df18c8a26859205b80c0f7ac91f19ebc86e78e960150a1a2a8fc09f28451f1c6",
+      "published_sha256": "c905aaa658271e2f5c06f9730df5f41f9e1da34a6c5e52eca4a01963e6bc9109",
+      "bytes": 6007,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-factory-r2-failed.log",
+      "source_name": "controller.log",
+      "original_sha256": "b946564252287daf4beb9cb3fbe39ce297547250216277d08a471b69d1a663d6",
+      "published_sha256": "1b8af6b1be7be4ef3188a3093a33317cb01f25156d8f09a8186959dd22442f5d",
+      "bytes": 563,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-factory-native-r3.json",
+      "source_name": "pr375-factory-native-r3.json",
+      "original_sha256": "33596ded4131f050b75242fc2dc894d7131b3f9e66f68eeeb1c4df7cf4af3efa",
+      "published_sha256": "dd0b86bf96574f9677397c0c5913819eda3e7e67e3555cdce99ecaa747670e2f",
+      "bytes": 6085,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-factory-r3-failed.log",
+      "source_name": "controller.log",
+      "original_sha256": "b946564252287daf4beb9cb3fbe39ce297547250216277d08a471b69d1a663d6",
+      "published_sha256": "1b8af6b1be7be4ef3188a3093a33317cb01f25156d8f09a8186959dd22442f5d",
+      "bytes": 563,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-factory-native-r4.json",
+      "source_name": "pr375-factory-native-r4.json",
+      "original_sha256": "959504c804f1efeced442f58ba7f936f28557b761120354e2e32a3db966622ab",
+      "published_sha256": "21ef9ce3072208b146c0bf18d243e50c10496c635ed8721c109c3ba823361df8",
+      "bytes": 5446,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-factory-r4-failed.log",
+      "source_name": "controller.log",
+      "original_sha256": "8233ce4fa273f14a8a858379680b5754fc9598d112a8f6bddfaadbc659fef34e",
+      "published_sha256": "7b62292593b401fbf61e8abc85663ad1db72f4aada7b531c65b43b3401f95a5e",
+      "bytes": 563,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-factory-native-r5.json",
+      "source_name": "pr375-factory-native-r5.json",
+      "original_sha256": "02f21e61e478fc76f00879363b94906646804eb244d02494e42dec0b6d989e03",
+      "published_sha256": "c1b409b836d05bf6a5be04981f5714963c531e89dcd85ee0a877ea1624082af0",
+      "bytes": 7623,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-factory-r5-failed.log",
+      "source_name": "controller.log",
+      "original_sha256": "95875092728714080ab6f61dc978fbcabdb446358eb026d22b0718975ab0db8d",
+      "published_sha256": "3e33a4edec2b6e367b91eab806b64d6dabb151a7aba39eccf8e19d2956972412",
+      "bytes": 563,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-factory-native-r6.json",
+      "source_name": "pr375-factory-native-r6.json",
+      "original_sha256": "43b57dc6598350089bf50291ab88fa8ef035767e8bedc9f18601e4185d5b1f4c",
+      "published_sha256": "4022d326f9c3faf94322a2be167c59900b799a914af9819c46ff246690c9e6a3",
+      "bytes": 5807,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-factory-r6-failed.log",
+      "source_name": "controller.log",
+      "original_sha256": "2648e8fc9f5ce76ace97bed3ca614c714ffef0791a77061a679d4dd97fa68469",
+      "published_sha256": "734538eeceb944dc222fd20f09b7be3da905032962d7e81448c1ee2e5ab9a3ba",
+      "bytes": 532,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-factory-native-r6-investigation.json",
+      "source_name": "pr375-factory-native-r6-investigation.json",
+      "original_sha256": "fc55fbf6bd2ba898634a9db8417828a3aa62918eb03e0a91f0d5a8caaaf909e2",
+      "published_sha256": "a46cedfb3f6988185f9623c77f31b9c0a2df50ac51bdf40c99798ecdb26c0650",
+      "bytes": 1645,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "scheduler-historical-reconciliation.md",
+      "source_name": "issue172-evidence-reconciliation-r2.md",
+      "original_sha256": "e9a0f0d6a78af330108b1ff2e49cef49a91db2d1a5beca36f93235d217ee3d34",
+      "published_sha256": "e9a0f0d6a78af330108b1ff2e49cef49a91db2d1a5beca36f93235d217ee3d34",
+      "bytes": 1596,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-cleanup-regressions-r1.json",
+      "source_name": "pr375-cleanup-regressions-r1.json",
+      "original_sha256": "c0f359f734489815a0d69a3e2a5021dc1f155a7f1096b66bbe2513577d455e5a",
+      "published_sha256": "0c638316bd476584c5640e6967536da79614db1a00e79d954bd657970849c690",
+      "bytes": 1556,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "historical-process-cleanup-focused.log",
+      "source_name": "pr375-cleanup-regressions-r1.log",
+      "original_sha256": "15131e253b00b8fec0e961174828a0d66b00173b040659b801c5e368ed4fc628",
+      "published_sha256": "cbe1b35ec91f0224c7bc6a23a306e296ba7d28db81b687436aaba520c514f60c",
+      "bytes": 17016,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-private-git-fetch-r1-baseline.json",
+      "source_name": "pr375-private-git-fetch-r1-baseline.json",
+      "original_sha256": "9c892d3bc1aa88c86f3f72fc25cae044d433877903f9da0a29ace06a67c02132",
+      "published_sha256": "f351a0b6801db10b56b523b151ce88e8bec9cfe503fbfaa80fdba134b16ee662",
+      "bytes": 3868,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-private-git-fetch-r1-compression-zero.json",
+      "source_name": "pr375-private-git-fetch-r1-compression-zero.json",
+      "original_sha256": "8c3c2a36c8fb53f945662469737043349d2e66290c18b463a2c0e645271d7224",
+      "published_sha256": "5e14b05e612e1e88e52f12923eaf317af65bac1e48d6e5448b72f30046ca0c58",
+      "bytes": 3928,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-private-git-pack-r1.json",
+      "source_name": "pr375-private-git-pack-r1.json",
+      "original_sha256": "d0de3cd1cefcb08eb19136b86f2ae7f5b270e7192e54568d4ec38c3ee389cd36",
+      "published_sha256": "e1dfb5b908c7736a098c857b04eae26f6f7a9bed43d20864ca34ff6d1d6f9730",
+      "bytes": 1256,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-private-git-pack-r2.json",
+      "source_name": "pr375-private-git-pack-r2.json",
+      "original_sha256": "bd7f3943c7a1aec489502f0a2f06d9881f63fba9020eed9db86a9e4d24ee6e9b",
+      "published_sha256": "9ab1e05e389010449f95355b12cbe66b78cd977f2ab9bbe148abf2bd043a4092",
+      "bytes": 5578,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-private-git-pack-r3.json",
+      "source_name": "pr375-private-git-pack-r3.json",
+      "original_sha256": "ab03d71419cb0785f0690a7f3a4e3ff2783f439c07a16c046d0fd6bc2de4bfa5",
+      "published_sha256": "ed60937b36a85a362b670caff60d05fd85438ffcdbd836718052c6f2a0e5e603",
+      "bytes": 5621,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-integration-job-r2.json",
+      "source_name": "pr375-integration-job-r2.json",
+      "original_sha256": "d55aeafc6ba375d6c0767193721a8ca9465ec3d8a5b81ca49dcccd6b66974235",
+      "published_sha256": "1c92e1bdb6ca742b87b1b671326698a9962a9b92ee403631288b21fd452c5d05",
+      "bytes": 14792,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "hosted-integration-failed.log",
+      "source_name": "pr375-integration-job-r2.log",
+      "original_sha256": "bfa47b33a0a0b99317d1d285eea958af1c6154477a6b72c7f86d5b1f7c85b378",
+      "published_sha256": "46c310d794881ae67536d1747bebedf548ef92d9f47f8d27e8f59f92f6132f62",
+      "bytes": 173737,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "tested-code.patch",
+      "source_name": "Raw native Git candidate diff before evidence additions",
+      "original_sha256": "2cb203752a90ba61eda06dd417c154398055640a59f2e4d550e9d3e987741187",
+      "published_sha256": "2cb203752a90ba61eda06dd417c154398055640a59f2e4d550e9d3e987741187",
+      "bytes": 23741,
+      "transform": "none"
+    },
+    {
+      "file": "run-pr375-canonical-r9.ps1.txt",
+      "source_name": "run-pr375-canonical-r9.ps1",
+      "original_sha256": "4a0cf004a44bcdbfec1fb72d37b69b53b048a147398a763cf8e0e1900a274c0b",
+      "published_sha256": "4d4dddca0e78a7b3d4bb6a6cd97c98a4fb8a27cd1238edc27c9ad164b0b51048",
+      "bytes": 763,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-canonical-r3.ps1.txt",
+      "source_name": "run-canonical-r3.ps1",
+      "original_sha256": "40fe63022b7cdcc1de1cdb0e8b81b64fa22c1c7b4db72f80b1d0d8d3dac7605c",
+      "published_sha256": "08e5612d9fbb2e6d49ab7c3d3332dc34efe8a500a93656c7e4fcd462d8c73c48",
+      "bytes": 4621,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-source-binding-r1.py.txt",
+      "source_name": "issue82-source-binding-r1.py",
+      "original_sha256": "4d8c3cf40547ecdcfcdff360f26bc12adcb0aabca18b0e8ee41c9d01e77b1a79",
+      "published_sha256": "4d8c3cf40547ecdcfcdff360f26bc12adcb0aabca18b0e8ee41c9d01e77b1a79",
+      "bytes": 3945,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "build-pr375-factory-native-r5.ps1.txt",
+      "source_name": "build-pr375-factory-native-r5.ps1",
+      "original_sha256": "6b56caccb9e0d1effb7a9e9366de43d2787172a63ecf1d8a8f6308cafcc93e17",
+      "published_sha256": "a0713063c9525b858e1a8d47b5dfddfc61623199025a318dd4f3d0767ad6857a",
+      "bytes": 3561,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; trailing spaces removed; LF lines and exactly one final LF; other text preserved"
+    },
+    {
+      "file": "run-pr375-factory-native-r7.ps1.txt",
+      "source_name": "run-pr375-factory-native-r7.ps1",
+      "original_sha256": "27a8b04e89a435bb411c4661bee06bf10cd51b9e582e33ef114b5abb7be90cd1",
+      "published_sha256": "113ca2d0f4552855cfb8c3dca1131e1384025f0b211097791ea33b56289edfe7",
+      "bytes": 17227,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; trailing spaces removed; LF lines and exactly one final LF; other text preserved"
+    },
+    {
+      "file": "prepare-pr375-factory-output-r7.ps1.txt",
+      "source_name": "prepare-pr375-factory-output-r7.ps1",
+      "original_sha256": "8ddef6a4b250202e6d21e845a5d80c96a0d84c081f1320797b65f8fe468a6913",
+      "published_sha256": "89bdedace716c8e7a041d91e02a91262b06998cb0cbd6d3c2bf745a444ebba21",
+      "bytes": 3761,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-issue82-native-r1.ps1.txt",
+      "source_name": "run-issue82-native-r1.ps1",
+      "original_sha256": "83231fb096581b3538f7f1c74603d6cce9e4565d778c389777b3a22cbf5655d5",
+      "published_sha256": "11b5b5451985d3af80970a97398259a4a12aff48c4f845da7fb4b576bbcdbc16",
+      "bytes": 8667,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-stack-r1.ps1.txt",
+      "source_name": "issue82-stack-r1.ps1",
+      "original_sha256": "6675c2ffacbc166976e75fb9b1ddcdd540d722e652f827f07d945bf67ec7d0bc",
+      "published_sha256": "6675c2ffacbc166976e75fb9b1ddcdd540d722e652f827f07d945bf67ec7d0bc",
+      "bytes": 11903,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-browser-r1.mjs.txt",
+      "source_name": "issue82-browser-r1.mjs",
+      "original_sha256": "abf823a10f5e552a9b9495794ce3ec58075003bad820ed386a184d35c4e1e937",
+      "published_sha256": "abf823a10f5e552a9b9495794ce3ec58075003bad820ed386a184d35c4e1e937",
+      "bytes": 21687,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-prepare-fixture-r1.mjs.txt",
+      "source_name": "issue82-prepare-fixture-r1.mjs",
+      "original_sha256": "c726f8fd28de99e07175f4cd0e929502ae7db0288810e794234fe944fcb0b7ac",
+      "published_sha256": "c726f8fd28de99e07175f4cd0e929502ae7db0288810e794234fe944fcb0b7ac",
+      "bytes": 3465,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-canonical-agent-r1.mjs.txt",
+      "source_name": "issue82-canonical-agent-r1.mjs",
+      "original_sha256": "3d1c1fddb310fed948864573c38d29c83d6f3dd9f4f7af2ebaf6dbd15c4a2da3",
+      "published_sha256": "3d1c1fddb310fed948864573c38d29c83d6f3dd9f4f7af2ebaf6dbd15c4a2da3",
+      "bytes": 2036,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-pr375-graph-regression-r6.ps1.txt",
+      "source_name": "run-pr375-graph-regression-r6.ps1",
+      "original_sha256": "e439e697380876b6d169ca42dfa5368ce9fb0d1cab2fe7d0602958867a8cb617",
+      "published_sha256": "1a30ecc12a4f334e74feb27e3015e8c16c77dcde7055b1b4787a427dcce3e460",
+      "bytes": 6709,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-pr375-db-regression-r11.ps1.txt",
+      "source_name": "run-pr375-db-regression-r11.ps1",
+      "original_sha256": "9ab54b0f53ab2889c614687c3c59851e8ea5a270883e43c371949913ce31d4ab",
+      "published_sha256": "d72fc42772367cd6e43ec11c3ebe8ad9503fb14dc6382f0b9168143152d83b6f",
+      "bytes": 708,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-issue82-native-db-r11.ps1.txt",
+      "source_name": "run-issue82-native-db-r11.ps1",
+      "original_sha256": "5b9b0c237e0c566609acbe9fe6036edbfa6ee34f084279298ff5a73678403397",
+      "published_sha256": "2711183c557464bd0c49a6d441e836f27b00e26264c99d89d877789ce6022160",
+      "bytes": 10396,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; trailing spaces removed; LF lines and exactly one final LF; other text preserved"
+    },
+    {
+      "file": "run-issue172-native-r4.ps1.txt",
+      "source_name": "run-issue172-native-r4.ps1",
+      "original_sha256": "f85bb260ce4fb43fd0334554bfbd0136060bd6c711fc28ba12ca65e55e20ff08",
+      "published_sha256": "5ba1cf897630f51a99b45818b9cc6c93542e464b3af9c5b5cb516130b3b56ca5",
+      "bytes": 9993,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue172-stack-r1.ps1.txt",
+      "source_name": "issue172-stack-r1.ps1",
+      "original_sha256": "b31d5304cb332e54d91dfa853d75cbc5a357357c85fc19ba285807a1af6c2bed",
+      "published_sha256": "b31d5304cb332e54d91dfa853d75cbc5a357357c85fc19ba285807a1af6c2bed",
+      "bytes": 12453,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue172-browser-r2.mjs.txt",
+      "source_name": "issue172-browser-r2.mjs",
+      "original_sha256": "5b0142ad58d2e143ebf876748a871acef6c67e88506e1f1b460526f67b0df1c9",
+      "published_sha256": "5b0142ad58d2e143ebf876748a871acef6c67e88506e1f1b460526f67b0df1c9",
+      "bytes": 27301,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue172-prepare-fixture-r1.mjs.txt",
+      "source_name": "issue172-prepare-fixture-r1.mjs",
+      "original_sha256": "d13092fd7e45a6e6308e0254cfbe5febb665cce0d9a24d5056c8539fcad4a160",
+      "published_sha256": "d13092fd7e45a6e6308e0254cfbe5febb665cce0d9a24d5056c8539fcad4a160",
+      "bytes": 2671,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue172-native-agent-r1.mjs.txt",
+      "source_name": "issue172-native-agent-r1.mjs",
+      "original_sha256": "31187a25200da5e6454f31e5eb5001cfb9e52c3e6bd4a919e8b29e0f49ad3c8c",
+      "published_sha256": "31187a25200da5e6454f31e5eb5001cfb9e52c3e6bd4a919e8b29e0f49ad3c8c",
+      "bytes": 1532,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": ".gitattributes",
+      "source_name": "Publication byte-preservation attributes",
+      "original_sha256": "c38a55672ec8b5e709b61ba9db341cfbfd99a310ad3e15415be3b6b2c9fc5bcd",
+      "published_sha256": "c38a55672ec8b5e709b61ba9db341cfbfd99a310ad3e15415be3b6b2c9fc5bcd",
+      "bytes": 117,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    }
+  ],
+  "limits": [
+    "Tested source precedes publication-only additions; equivalence and final-head hosted checks are separate.",
+    "Deterministic native adapters and local fixtures, not live inference or an independent human decision.",
+    "The graph lane uses synthetic loopback trust; other fresh PostgreSQL lanes use SCRAM.",
+    "SQLx/server environment delivery is reduced assurance. Private database snapshots are not publication inputs.",
+    "Focused cases overlap canonical and native suites; counts are not additive.",
+    "Historical Cargo debt remains 12 advisories: 2 high, 1 moderate, 9 low; not a clean audit.",
+    "Fresh issue 172 acceptance does not rewrite or repair the failed September 7-8 historical bridge fixture."
+  ],
+  "publication_whitespace_correction": {
+    "failed_validation": "pr375-process-validation-r4.json",
+    "failed_validation_sha256": "7e40d4c239ab4d3695f4eb5605b0b8e0478b8e973c13bb93719e483102ae1bb8",
+    "result": "The first publication whitespace check rejected three .txt helper copies. Only those publication copies were normalized; original execution helpers and failed receipt are retained.",
+    "files": [
+      {
+        "file": "build-pr375-factory-native-r5.ps1.txt",
+        "before_sha256": "664c14834a8edd2c3e37d87778eee2ff0e34216a46f73e37595f0028b6aa0b53",
+        "after_sha256": "a0713063c9525b858e1a8d47b5dfddfc61623199025a318dd4f3d0767ad6857a",
+        "original_execution_helper_sha256": "6b56caccb9e0d1effb7a9e9366de43d2787172a63ecf1d8a8f6308cafcc93e17",
+        "execution_helper_unchanged": true
+      },
+      {
+        "file": "run-issue82-native-db-r11.ps1.txt",
+        "before_sha256": "251bcebfc6f6d904fa74d5baf6755a3c170102c7d7f0f837936baec6bfa948bd",
+        "after_sha256": "2711183c557464bd0c49a6d441e836f27b00e26264c99d89d877789ce6022160",
+        "original_execution_helper_sha256": "5b9b0c237e0c566609acbe9fe6036edbfa6ee34f084279298ff5a73678403397",
+        "execution_helper_unchanged": true
+      },
+      {
+        "file": "run-pr375-factory-native-r7.ps1.txt",
+        "before_sha256": "91caee7770a6147761db6c647dac779a343bb73c0332a4f393c03ef13894b9c8",
+        "after_sha256": "113ca2d0f4552855cfb8c3dca1131e1384025f0b211097791ea33b56289edfe7",
+        "original_execution_helper_sha256": "27a8b04e89a435bb411c4661bee06bf10cd51b9e582e33ef114b5abb7be90cd1",
+        "execution_helper_unchanged": true
+      }
+    ]
+  }
+}

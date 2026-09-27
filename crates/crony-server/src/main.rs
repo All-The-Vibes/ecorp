@@ -1606,11 +1606,15 @@ enum RunnerDispatchError {
     Unavailable,
     UnsupportedVerifierPolicy,
     UnsupportedDependencyFiles,
+    UnsupportedCanonicalSource,
 }
 
 impl RunnerDispatchError {
     fn detail(&self) -> &'static str {
         match self {
+            Self::UnsupportedCanonicalSource => {
+                "runner requires canonical-source-verification-v1 before accepting a source deliverable"
+            }
             Self::Unavailable => {
                 "runner disconnected, changed epoch or capabilities, or is not ready before accepting assignment"
             }
@@ -1637,6 +1641,14 @@ fn runner_supports_cache_suppression(capabilities: &[RunnerCapability]) -> bool 
     capabilities.iter().any(|cap| {
         cap.workspace_connection_id.is_none()
             && cap.name == "verifier-cache-suppression-v1"
+            && cap.available
+    })
+}
+
+fn runner_supports_canonical_source(capabilities: &[RunnerCapability]) -> bool {
+    capabilities.iter().any(|cap| {
+        cap.workspace_connection_id.is_none()
+            && cap.name == crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY
             && cap.available
     })
 }
@@ -1686,6 +1698,22 @@ fn send_command_to_current_runner(
     {
         return Err(RunnerDispatchError::UnsupportedVerifierPolicy);
     }
+    if matches!(
+        &command,
+        ServerToRunner::StartRun {
+            deliverable: Some(_),
+            ..
+        } | ServerToRunner::ResumeRun {
+            deliverable: Some(_),
+            ..
+        } | ServerToRunner::VerifyRun {
+            deliverable: Some(_),
+            ..
+        }
+    ) && !runner_supports_canonical_source(&connection.capabilities)
+    {
+        return Err(RunnerDispatchError::UnsupportedCanonicalSource);
+    }
     if let ServerToRunner::StartRun {
         dependency_files,
         corp_id,
@@ -1697,6 +1725,7 @@ fn send_command_to_current_runner(
         source_base_ref,
         source_base_commit,
         verification_policy,
+        deliverable,
         ..
     } = &command
         && !runner_satisfies_requirements(
@@ -1712,6 +1741,7 @@ fn send_command_to_current_runner(
                 source_base_commit: source_base_commit.as_deref(),
                 workspace_connection_id: *workspace_connection_id,
                 requires_cache_suppression: verification_policy.requires_cache_suppression(),
+                canonical_source: deliverable.is_some(),
             },
         )
     {
@@ -2039,6 +2069,15 @@ async fn decode_recovery_runner_command(
                 anyhow::bail!(RunnerDispatchError::UnsupportedVerifierPolicy.detail());
             }
             validate_retained_provider_receipt_command(command, &payload)?;
+            if payload.deliverable.is_some()
+                && !state.runners.get(&command.runner_id).is_some_and(|runner| {
+                    runner.corp_id == command.corp_id
+                        && runner.dispatch_ready
+                        && runner_supports_canonical_source(&runner.capabilities)
+                })
+            {
+                anyhow::bail!(RunnerDispatchError::UnsupportedCanonicalSource.detail());
+            }
             match payload.mode {
                 FactoryVerificationRecoveryMode::SourceCorrection => {
                     if !source_correction_authority_is_current(state, command).await? {
@@ -2867,6 +2906,7 @@ async fn plan_mission(
                             .as_ref()
                             .map(|source| source.base_commit.as_str()),
                         workspace_connection_id: input.workspace_connection_id,
+                        canonical_source: input.deliverable.is_some(),
                         requires_cache_suppression: input
                             .verification_policy
                             .is_some_and(VerificationPolicy::requires_cache_suppression),
@@ -4861,6 +4901,7 @@ async fn schedule_ready_tasks(
             };
         let requirements = RunnerRequirements {
             dependency_files: candidate.requires_dependency_files,
+            canonical_source: candidate.requires_canonical_source,
             adapter: &candidate.required_adapter,
             model: candidate.required_model.as_deref(),
             reasoning_effort: candidate.required_reasoning_effort.as_deref(),
@@ -4890,7 +4931,11 @@ async fn schedule_ready_tasks(
                     candidate.required_source_repository.as_deref(),
                     candidate.required_source_base_ref.as_deref(),
                     candidate.required_source_base_commit.as_deref(),
-                ) + if requirements.requires_cache_suppression {
+                ) + if requirements.canonical_source {
+                    "; the selected runner must also advertise canonical-source-verification-v1"
+                } else {
+                    ""
+                } + if requirements.requires_cache_suppression {
                     "; the selected runner must also advertise verifier-cache-suppression-v1"
                 } else {
                     ""
@@ -5430,6 +5475,7 @@ fn runner_requirement_mismatch(
 
 struct RunnerRequirements<'a> {
     dependency_files: bool,
+    canonical_source: bool,
     adapter: &'a str,
     model: Option<&'a str>,
     reasoning_effort: Option<&'a str>,
@@ -5443,6 +5489,7 @@ struct RunnerRequirements<'a> {
 impl<'a> RunnerRequirements<'a> {
     fn for_planned_task(task: &'a crony_domain::PlannedTask, plan: &TaskGraphPlan) -> Self {
         Self {
+            canonical_source: task.contract.deliverable.is_some(),
             dependency_files: plan.tasks.iter().any(|parent| {
                 task.depends_on.contains(&parent.key)
                     && parent.contract.deliverable.as_ref().is_some_and(|spec| {
@@ -5475,6 +5522,8 @@ fn runner_satisfies_requirements(
     connection.dispatch_ready
         && connection.corp_id == corp_id
         && (!requirements.dependency_files || supports_dependency_files(&connection.capabilities))
+        && (!requirements.canonical_source
+            || runner_supports_canonical_source(&connection.capabilities))
         && (!requirements.requires_cache_suppression
             || runner_supports_cache_suppression(&connection.capabilities))
         && runner_workspace_satisfies_requirement(
@@ -5672,6 +5721,19 @@ async fn resume_run(
     {
         drop(runner);
         let detail = RunnerDispatchError::UnsupportedVerifierPolicy.detail();
+        for event in state
+            .store
+            .fail_run_before_dispatch(corp_id, record.run_id, detail)
+            .await
+            .map_err(ApiError::internal)?
+        {
+            publish(&state, event);
+        }
+        return Err(ApiError::conflict(detail));
+    }
+    if record.deliverable.is_some() && !runner_supports_canonical_source(&runner.capabilities) {
+        drop(runner);
+        let detail = RunnerDispatchError::UnsupportedCanonicalSource.detail();
         for event in state
             .store
             .fail_run_before_dispatch(corp_id, record.run_id, detail)
@@ -8232,6 +8294,7 @@ mod tests {
         runners.insert("runner".to_owned(), connection);
         let mut requirements = RunnerRequirements {
             requires_cache_suppression: false,
+            canonical_source: false,
             dependency_files: true,
             adapter: "fake-process",
             model: None,
@@ -8947,6 +9010,7 @@ mod tests {
         runners.insert("runner".to_owned(), connection);
         let requirements = RunnerRequirements {
             requires_cache_suppression: false,
+            canonical_source: false,
             workspace_connection_id: None,
             dependency_files: false,
             adapter: "fake-process",
@@ -9275,6 +9339,7 @@ mod tests {
             runners.insert("runner".to_owned(), connection);
             let requirements = RunnerRequirements {
                 dependency_files: false,
+                canonical_source: false,
                 requires_cache_suppression: false,
                 workspace_connection_id: workspace,
                 adapter: "github-copilot",
@@ -9898,6 +9963,145 @@ mod cache_admission_tests {
         );
     }
 
+    fn canonical_command(kind: &str) -> ServerToRunner {
+        let mut command = command(kind, false);
+        match &mut command {
+            ServerToRunner::StartRun { deliverable, .. }
+            | ServerToRunner::ResumeRun { deliverable, .. }
+            | ServerToRunner::VerifyRun { deliverable, .. } => {
+                *deliverable = Some(crony_domain::DeliverableSpec {
+                    form: crony_domain::DeliverableForm::Archive,
+                    commit_after_verification: false,
+                    paths: Vec::new(),
+                });
+            }
+            _ => unreachable!(),
+        }
+        command
+    }
+
+    #[test]
+    fn issue82_canonical_source_support_gates_every_assignment_and_current_epoch() {
+        for kind in ["start_run", "resume_run", "verify_run"] {
+            let runners = DashMap::new();
+            let epoch = Uuid::new_v4();
+            let (runner, mut rx) = connection(epoch, vec![capability("fake-process")]);
+            runners.insert("runner".to_owned(), runner);
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind)),
+                Err(RunnerDispatchError::UnsupportedCanonicalSource)
+            );
+            assert!(rx.try_recv().is_err());
+            // Assignments without a deliverable keep their existing admission contract.
+            assert!(
+                send_command_to_current_runner(&runners, "runner", epoch, command(kind, false))
+                    .is_ok()
+            );
+            assert!(rx.try_recv().is_ok());
+            let mut support = capability(crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY);
+            support.available = false;
+            runners
+                .get_mut("runner")
+                .unwrap()
+                .capabilities
+                .push(support);
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind)),
+                Err(RunnerDispatchError::UnsupportedCanonicalSource)
+            );
+            {
+                let mut runner = runners.get_mut("runner").unwrap();
+                runner.capabilities[1].available = true;
+                runner.capabilities[1].workspace_connection_id = Some(Uuid::new_v4());
+            }
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind)),
+                Err(RunnerDispatchError::UnsupportedCanonicalSource)
+            );
+            assert!(rx.try_recv().is_err());
+            runners.get_mut("runner").unwrap().capabilities[1].workspace_connection_id = None;
+            assert!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind))
+                    .is_ok()
+            );
+            assert!(rx.try_recv().is_ok());
+            let replacement = Uuid::new_v4();
+            let (runner, mut replacement_rx) =
+                connection(replacement, vec![capability("fake-process")]);
+            runners.insert("runner".to_owned(), runner);
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind)),
+                Err(RunnerDispatchError::Unavailable)
+            );
+            assert_eq!(
+                send_command_to_current_runner(
+                    &runners,
+                    "runner",
+                    replacement,
+                    canonical_command(kind)
+                ),
+                Err(RunnerDispatchError::UnsupportedCanonicalSource)
+            );
+            assert!(replacement_rx.try_recv().is_err());
+        }
+    }
+
+    #[test]
+    fn issue82_canonical_matching_requires_global_support_on_the_selected_runner() {
+        let runners = DashMap::new();
+        let epoch = Uuid::new_v4();
+        let (runner, _rx) = connection(epoch, vec![capability("fake-process")]);
+        runners.insert("runner".to_owned(), runner);
+        let mut requirements = RunnerRequirements {
+            dependency_files: false,
+            canonical_source: true,
+            adapter: "fake-process",
+            model: None,
+            reasoning_effort: None,
+            source_repository: None,
+            source_base_ref: None,
+            source_base_commit: None,
+            workspace_connection_id: None,
+            requires_cache_suppression: false,
+        };
+        let select = |requirements: &RunnerRequirements<'_>| {
+            select_ready_runner(&runners, Uuid::nil(), requirements)
+        };
+        assert!(select(&requirements).is_none());
+        let (unrelated, _other_rx) = connection(
+            Uuid::new_v4(),
+            vec![capability(
+                crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY,
+            )],
+        );
+        runners.insert("unrelated".to_owned(), unrelated);
+        assert!(select(&requirements).is_none());
+        let mut support = capability(crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY);
+        support.available = false;
+        runners
+            .get_mut("runner")
+            .unwrap()
+            .capabilities
+            .push(support);
+        assert!(select(&requirements).is_none());
+        {
+            let mut runner = runners.get_mut("runner").unwrap();
+            runner.capabilities[1].available = true;
+            runner.capabilities[1].workspace_connection_id = Some(Uuid::new_v4());
+        }
+        assert!(select(&requirements).is_none());
+        requirements.canonical_source = false;
+        assert_eq!(select(&requirements), Some(("runner".to_owned(), epoch)));
+        requirements.canonical_source = true;
+        runners.get_mut("runner").unwrap().capabilities[1].workspace_connection_id = None;
+        assert_eq!(select(&requirements), Some(("runner".to_owned(), epoch)));
+        let workspace = Uuid::new_v4();
+        runners.get_mut("runner").unwrap().capabilities[0].workspace_connection_id =
+            Some(workspace);
+        requirements.workspace_connection_id = Some(workspace);
+        assert_eq!(select(&requirements), Some(("runner".to_owned(), epoch)));
+    }
+
     #[test]
     fn issue140_explicit_controls_gate_every_assignment_at_send() {
         for kind in ["start_run", "resume_run", "verify_run"] {
@@ -9967,6 +10171,7 @@ mod cache_admission_tests {
         runners.insert("runner".to_owned(), runner);
         let mut requirements = RunnerRequirements {
             dependency_files: false,
+            canonical_source: false,
             adapter: "fake-process",
             model: None,
             reasoning_effort: None,
