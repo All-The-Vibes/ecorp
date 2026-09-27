@@ -112,11 +112,13 @@ The helper mirrors `crates/crony-runner/src/deliverable.rs`:
 3. Reset existing in-worktree provider artifacts to the base.
 4. Inspect the cached candidate against that same base with `git diff --check`.
 
-Both the checker and every native exporter Git child remove inherited
-`GIT_TRACE*` and `GIT_CURL_VERBOSE` variables case-insensitively. This also covers
-export's final real-index reset: a trace destination inside the worktree must
-not create an additional input before, during, or after selection. No trace
-path is ignored or silently dropped from an existing candidate.
+Both the checker and every native exporter Git child remove inherited `GIT_*`
+variables case-insensitively, then set their owned index, literal-path and
+noninteractive controls. Ambient configuration overrides cannot change the
+candidate's line-ending conversion. Git replacement objects are disabled.
+This also covers export's final real-index reset: a trace destination inside
+the worktree must not create an additional input before, during, or after
+selection. No trace path is ignored or silently dropped from an existing candidate.
 
 Thus tracked changes, committed differences from the base, staged source still
 present on disk, deletions, and non-ignored untracked source are checked. The
@@ -138,13 +140,15 @@ not a replacement for those safety checks. An internal path rejected by export
 does not become exportable because its whitespace is clean.
 
 Git attributes, clean filters, whitespace configuration, binary detection and
-line-ending conversion apply just as when building the export index. The helper
+line-ending conversion from the authorized Git configuration apply just as when
+building the export index. The helper
 does not rewrite CRLF bytes. It writes ordinary local Git objects while staging
 and recording the candidate tree, but does **not** alter the real index, source
 files, HEAD, branches, refs, or repository configuration. It is not a sandbox for
 hostile Git configuration or filters and must run only in an already authorized
-workspace. Concurrent edits are not frozen; existing runner lifecycle/verification
-boundaries remain responsible for binding evidence to the eventual export.
+workspace. The standalone helper does not freeze concurrent edits. The runner
+freezes its selected tree before verification, checks its canonical blob bytes
+and exports that same tree; the helper's result alone is not this evidence.
 
 ## Regression evidence and integration
 
@@ -156,11 +160,13 @@ cargo test --locked -p crony-runner --bin crony-runner deliverable::tests::nativ
 ```
 
 The Rust regression runs the actual checker and native commit/branch exporter
-in separate child processes with the same trace environment. It compares the
+in separate child processes with the same inherited Git overrides. It compares the
 complete candidate and exported tree IDs, checks the final real index and
 source bytes, and retains each owned Git fixture and its sibling `.evidence`
 directory, including any trace created by a failing exporter. Lowercase and
 mixed-case variable names exercise Windows' case-insensitive environment too.
+An inherited `GIT_CONFIG_COUNT` override attempts to change CRLF normalization;
+the checker and exporter must retain the same tree and physical source bytes.
 
 The suite reproduces the old false pass, then checks red and green untracked
 source with the CLI; compares complete candidate-tree IDs with an independent

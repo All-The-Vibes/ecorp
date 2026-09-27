@@ -1,0 +1,11 @@
+   Compiling crony-runner v0.1.0 (<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\crates\crony-runner)
+error[E0559]: variant `crony_domain::VerifierCheck::File` has no field named `sha256`
+   --> crates\crony-runner\src\deliverable_verification_tests.rs:189:13
+    |
+189 |             sha256: Some(hex::encode(Sha256::digest(b"verified long-path export\n"))),
+    |             ^^^^^^ `crony_domain::VerifierCheck::File` does not have this field
+    |
+    = note: all struct fields are already assigned
+
+For more information about this error, try `rustc --explain E0559`.
+error: could not compile `crony-runner` (bin "crony-runner" test) due to 1 previous error

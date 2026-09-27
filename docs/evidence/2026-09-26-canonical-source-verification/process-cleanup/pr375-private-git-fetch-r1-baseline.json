@@ -1,0 +1,104 @@
+{
+  "pr": 375,
+  "status": "passed",
+  "variant": "baseline",
+  "qa_root": "<USERPROFILE>\\code\\qa\\pr375-private-git-fetch-r1-baseline",
+  "source": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r4\\runner\\worktrees\\a102e90c14bc4a40b2cbff73857053cd\\f8b99150758c43e9b857cbd7977f9908",
+  "started_at_utc": "2026-09-27T07:07:04.3728713+00:00",
+  "commands": [
+    {
+      "arguments": [
+        "rev-parse",
+        "HEAD"
+      ],
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "name": "source-head",
+      "pid": 16252,
+      "timed_out": false,
+      "exit_code": 0,
+      "stdout_sha256": "37efede03df6461d549de39ad53044bd920e2b77d83f031ea56a92f0b757d5b8",
+      "process_exited": true,
+      "elapsed_seconds": 0.1779654
+    },
+    {
+      "arguments": [
+        "init",
+        "--quiet",
+        "--template="
+      ],
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "name": "init",
+      "pid": 25504,
+      "timed_out": false,
+      "exit_code": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "process_exited": true,
+      "elapsed_seconds": 0.1828999
+    },
+    {
+      "arguments": [
+        "-c",
+        "protocol.file.allow=always",
+        "fetch",
+        "--quiet",
+        "--upload-pack=git -c core.longpaths=true -c pack.window=0 upload-pack",
+        "--depth=2",
+        "--no-tags",
+        "--no-write-fetch-head",
+        "--no-recurse-submodules",
+        "file:///<USERPROFILE>/code/qa/pr375-factory-native-r4/runner/worktrees/a102e90c14bc4a40b2cbff73857053cd/f8b99150758c43e9b857cbd7977f9908/",
+        "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964"
+      ],
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "name": "fetch",
+      "pid": 26036,
+      "timed_out": false,
+      "exit_code": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "process_exited": true,
+      "elapsed_seconds": 27.1699502
+    },
+    {
+      "arguments": [
+        "rev-parse",
+        "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964^{tree}"
+      ],
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "name": "fetched-tree",
+      "pid": 24800,
+      "timed_out": false,
+      "exit_code": 0,
+      "stdout_sha256": "ecc247d20e3fd398c7fdb8ab51def60ba4b27fba4fc082b44fddc9532ac99d09",
+      "process_exited": true,
+      "elapsed_seconds": 0.1524978
+    }
+  ],
+  "scope": "Native Git diagnostics against the retained failed run. Fetches its unchanged base commit, not the unpublished candidate. No acceptance or product fix is claimed.",
+  "active_process": null,
+  "source_head": "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964",
+  "fetch": {
+    "arguments": [
+      "-c",
+      "protocol.file.allow=always",
+      "fetch",
+      "--quiet",
+      "--upload-pack=git -c core.longpaths=true -c pack.window=0 upload-pack",
+      "--depth=2",
+      "--no-tags",
+      "--no-write-fetch-head",
+      "--no-recurse-submodules",
+      "file:///<USERPROFILE>/code/qa/pr375-factory-native-r4/runner/worktrees/a102e90c14bc4a40b2cbff73857053cd/f8b99150758c43e9b857cbd7977f9908/",
+      "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964"
+    ],
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "name": "fetch",
+    "pid": 26036,
+    "timed_out": false,
+    "exit_code": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "process_exited": true,
+    "elapsed_seconds": 27.1699502
+  },
+  "fetched_tree": "955cf9ef13f29efdbc28d28086775e2c8e43e6a6",
+  "finished_at_utc": "2026-09-27T07:07:32.1952763+00:00"
+}

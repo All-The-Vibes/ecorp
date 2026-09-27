@@ -1,0 +1,95 @@
+{
+  "pr": 375,
+  "scope": "Retrospective native regressions; not browser or two-volume acceptance.",
+  "mode": "green",
+  "status": "passed",
+  "started_at_utc": "2026-09-27T13:35:31.7452713+00:00",
+  "checks": [
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-windows-fix-green-r1-upload-object-identities.log",
+      "finished_at_utc": "2026-09-27T13:36:28.0189999+00:00",
+      "arguments": [
+        "test",
+        "--locked",
+        "-p",
+        "crony-server",
+        "canonical_upload_requires_head_in_the_verified_object_format",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        {
+          "filtered": 4,
+          "failed": 0,
+          "ignored": 0,
+          "passed": 0
+        },
+        {
+          "filtered": 258,
+          "failed": 0,
+          "ignored": 0,
+          "passed": 1
+        }
+      ],
+      "name": "upload-object-identities",
+      "started_at_utc": "2026-09-27T13:35:32.1522653+00:00",
+      "sha256": "212c0e93358d7e747f485886f9c2e212c26d3ae8efe3987acef8865a3dcaa552"
+    },
+    {
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-windows-fix-green-r1-canonical-runner.log",
+      "finished_at_utc": "2026-09-27T13:41:41.4619970+00:00",
+      "arguments": [
+        "test",
+        "--locked",
+        "-p",
+        "crony-runner",
+        "canonical_",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "summaries": [
+        {
+          "filtered": 25,
+          "failed": 0,
+          "ignored": 0,
+          "passed": 0
+        },
+        {
+          "filtered": 263,
+          "failed": 0,
+          "ignored": 0,
+          "passed": 19
+        }
+      ],
+      "name": "canonical-runner",
+      "started_at_utc": "2026-09-27T13:36:28.0258467+00:00",
+      "sha256": "a0b995ff2dcbfaaff197143458c764552e1671309588879cded301cd0fac01f8"
+    }
+  ],
+  "head": "712a30eb018fa2325f889bdc4fd539161e2c0f3a",
+  "head_tree": "354ba6df5dc2512c43e81d68da8a699b3508fed2",
+  "patch": {
+    "sha256": "2fd9fd243627c515ed1df3bbc8fe1999f005565ce71e4fc51af6cc33d89dde88",
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-windows-fix-green-r1.patch"
+  },
+  "source_files": [
+    {
+      "sha256": "ce0ebfa1b753c8de805e2c58912c347067cde08841b5e155ef3071179c849282",
+      "path": "crates/crony-runner/src/deliverable_verification.rs"
+    },
+    {
+      "sha256": "cedc4276c53b01b9f69dc440f682804e9b6fb4ad6ca3a2948328c0513d15b1ff",
+      "path": "crates/crony-runner/src/deliverable_verification_tests.rs"
+    },
+    {
+      "sha256": "e73c1d353991fd8a1b2010f88f96df720dc4101655a09d199a085a6df8f3ae75",
+      "path": "crates/crony-server/src/artifacts.rs"
+    }
+  ],
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-27T13:41:41.4970037+00:00"
+}

@@ -1,0 +1,45 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = '<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp'
+$receiptPath = Join-Path $PSScriptRoot 'pr375-clippy-preflight-r1.json'
+$logPath = Join-Path $PSScriptRoot 'pr375-clippy-preflight-r1.log'
+if ((Test-Path -LiteralPath $receiptPath) -or (Test-Path -LiteralPath $logPath)) { throw 'Preserve the existing preflight evidence.' }
+$greenPath = Join-Path $PSScriptRoot 'pr375-permissions-diagnostics-green-r2.json'
+$green = Get-Content -Raw -LiteralPath $greenPath | ConvertFrom-Json
+if ($green.status -ne 'passed' -or !$green.source_unchanged) { throw 'The focused correction must be verified first.' }
+$target = Join-Path $repo 'target'
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$held = $false
+$record = [ordered]@{pr=375;status='running';started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');command=@('cargo','clippy','--workspace','--all-targets','--locked','--offline','--','-D','warnings');head=$green.head;head_tree=$green.head_tree;source_files=$green.source_files;preceding_failure='issue82-canonical-r13.json';log=$logPath;scope='Full workspace Clippy preflight for the Windows-only permission-fixture cleanup correction; this does not replace pnpm check.'}
+function Save { [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 10)+"`n") }
+try {
+    try { $held = $mutex.WaitOne(1000) } catch [Threading.AbandonedMutexException] { $held = $true }
+    if (!$held) { throw 'Another process owns this Cargo target.' }
+    if ((& git -C $repo rev-parse HEAD).Trim() -cne $green.head) { throw 'The source head changed.' }
+    foreach ($file in $green.source_files) {
+        if ((Get-FileHash -LiteralPath (Join-Path $repo $file.path)).Hash.ToLowerInvariant() -cne $file.sha256) { throw 'The focused source changed.' }
+    }
+    foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+        if ($name -match '^(CRONY_|ECORP_|GH_|GITHUB_|AZURE_|GIT_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+    }
+    $env:CARGO_BUILD_JOBS='2'; $env:CARGO_NET_OFFLINE='true'; $env:RUST_TEST_THREADS='1'; $env:GIT_TERMINAL_PROMPT='0'
+    Save
+    Push-Location -LiteralPath $repo
+    try {
+        & cargo clippy --workspace --all-targets --locked --offline -- -D warnings *> $logPath
+        $record.exit_code = $LASTEXITCODE
+    } finally { Pop-Location }
+    $record.status = if ($record.exit_code -eq 0) { 'passed' } else { 'failed' }
+} catch { $record.status='failed'; $record.failure=$_.Exception.Message }
+finally {
+    $record.source_unchanged = @($green.source_files | Where-Object { $_.sha256 -cne (Get-FileHash -LiteralPath (Join-Path $repo $_.path)).Hash.ToLowerInvariant() }).Count -eq 0
+    if (!$record.source_unchanged) { $record.status='failed' }
+    if (Test-Path -LiteralPath $logPath) { $record.log_sha256=(Get-FileHash -LiteralPath $logPath).Hash.ToLowerInvariant() }
+    $record.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    Save
+    if ($held) { $mutex.ReleaseMutex() }; $mutex.Dispose()
+}
+[pscustomobject]$record | Select-Object status,head,exit_code,source_unchanged,failure,log | ConvertTo-Json
+if ($record.status -ne 'passed') { exit 1 }

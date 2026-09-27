@@ -1,0 +1,26 @@
+   Compiling crony-cli v0.1.0 (<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\crates\crony-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 40.34s
+     Running unittests src\main.rs (target\debug\deps\crony_cli-fe9af0af91ca3850.exe)
+
+running 4 tests
+test publish::tests::canonical_publication_import_accepts_verified_tree_in_each_object_format ... ok
+
+thread 'publish::tests::canonical_publication_import_rejects_a_different_verified_tree' (17852) panicked at crates\crony-cli\src\publish.rs:2111:18:
+a valid identity must not authorize different bundle bytes: ()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test publish::tests::canonical_publication_import_rejects_a_different_verified_tree ... FAILED
+
+thread 'publish::tests::canonical_publication_import_rejects_missing_or_malformed_identity' (21700) panicked at crates\crony-cli\src\publish.rs:2164:17:
+accepted malformed canonical identity case 0 for HEAD
+test publish::tests::canonical_publication_import_rejects_missing_or_malformed_identity ... FAILED
+test publish::tests::legacy_publication_import_retains_documents_without_canonical_identity ... ok
+
+failures:
+
+failures:
+    publish::tests::canonical_publication_import_rejects_a_different_verified_tree
+    publish::tests::canonical_publication_import_rejects_missing_or_malformed_identity
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 141 filtered out; finished in 19.85s
+
+error: test failed, to rerun pass `-p crony-cli --bin crony-cli`

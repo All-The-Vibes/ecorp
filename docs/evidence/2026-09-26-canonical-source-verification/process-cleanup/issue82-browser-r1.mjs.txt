@@ -1,0 +1,348 @@
+// Retrospective acceptance on an explicitly owned native Windows stack.
+// Browser-authored policies; deterministic child protocol, no provider inference or reviewer decisions.
+import assert from 'node:assert/strict'
+import { execFile } from 'node:child_process'
+import { createHash, randomUUID } from 'node:crypto'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { promisify } from 'node:util'
+
+assert.equal(process.env.ECORP_CANONICAL_SOURCE_TEST, '1')
+assert.ok(path.isAbsolute(process.env.ECORP_CANONICAL_SOURCE_SETUP ?? ''))
+const setup = JSON.parse(await readFile(process.env.ECORP_CANONICAL_SOURCE_SETUP, 'utf8'))
+assert.equal(setup.test_owned, true)
+for (const field of ['repository', 'qa_root', 'output', 'source', 'workspace']) assert.ok(path.isAbsolute(setup[field]))
+const { captureOwnedTestServerManifest } = await import(pathToFileURL(path.join(setup.repository, 'tools/owned_test_stack.mjs')).href)
+const execute = promisify(execFile)
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
+const sha384 = bytes => createHash('sha384').update(bytes).digest('hex')
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+const blockedPorts = new Set(['8791', '8793', '5187', '5291', '15191', '15193', '54330'])
+function origin(value) {
+  const url = new URL(value)
+  assert.equal(url.protocol, 'http:')
+  assert.equal(url.hostname, '127.0.0.1')
+  assert.ok(url.port && !blockedPorts.has(url.port))
+  assert.equal(url.pathname, '/')
+  assert.ok(!url.username && !url.password && !url.search && !url.hash)
+  return url.origin
+}
+const server = origin(setup.server_url), web = origin(setup.web_url)
+assert.notEqual(server, web)
+const output = path.join(setup.output, 'issue82-browser-' + new Date().toISOString().replaceAll(':', '-') + '-' + randomUUID().slice(0, 8))
+await mkdir(output, { recursive: false })
+const report = {
+  schema_version: 1, issue: 82, status: 'running', started_at: new Date().toISOString(),
+  scope: 'Real Edge browser, server and native runner; deterministic JSONL child and development fixture identities. No vendor inference, human review, deployment or OS isolation claim.',
+  source_binding: setup.source_binding, source_commit: setup.source_commit,
+  server, web, qa_root: setup.qa_root, missions: [], errors: [], blocked_requests: [],
+}
+const reportPath = path.join(output, 'report.json')
+const save = () => writeFile(reportPath, JSON.stringify(report, null, 2) + '\n')
+let browser, page, demo
+async function git(root, args, ok = true) {
+  try {
+    const result = await execute('git', ['-C', root, ...args], { encoding: 'buffer', maxBuffer: 16 * 1024 * 1024, timeout: 30000, windowsHide: true })
+    assert.equal(ok, true, 'Git object unexpectedly existed before bundle import')
+    return result.stdout
+  } catch (error) {
+    if (!ok && Number.isInteger(error.code) && error.code !== 0) return null
+    throw error
+  }
+}
+async function request(route) {
+  assert.ok(route === '/health' || route.startsWith('/api/corps/' + demo.corp_id + '/snapshot?'))
+  const response = await fetch(server + route, { redirect: 'error', signal: AbortSignal.timeout(15000) })
+  assert.equal(response.status, 200, route.split('?')[0] + ': HTTP ' + response.status)
+  return response.json()
+}
+const snapshot = () => request('/api/corps/' + demo.corp_id + '/snapshot?actor_id=' + demo.alice_actor_id)
+async function until(label, read, predicate, timeout = 120000) {
+  const deadline = Date.now() + timeout
+  while (Date.now() < deadline) {
+    const value = await read()
+    if (predicate(value)) return value
+    await delay(200)
+  }
+  throw new Error('Timed out waiting for ' + label)
+}
+function view(state, missionId) {
+  const s = state.snapshot
+  const mission = s.missions.find(row => row.id === missionId)
+  assert.ok(mission)
+  const tasks = s.tasks.filter(row => row.mission_id === missionId)
+  const taskIds = new Set(tasks.map(row => row.id))
+  return { mission, tasks, runs: s.runs.filter(row => taskIds.has(row.task_id)), state: s }
+}
+async function screenshot(name) {
+  const file = path.join(output, name + '.png')
+  await page.screenshot({ path: file, fullPage: true })
+  return { file, sha256: sha256(await readFile(file)) }
+}
+async function advanced(containing) {
+  const details = page.locator('details.mission-advanced-options').filter({ has: page.locator(containing) })
+  assert.equal(await details.count(), 1)
+  if (!(await details.evaluate(element => element.open))) await details.locator('summary').click()
+}
+const policy = {
+  checks: [
+    { type: 'artifact', min_bytes: 1 },
+    { type: 'command', program: 'node', args: ['tools/check_migrations.mjs'], timeout_ms: 10000 },
+  ],
+  manual_gate: null,
+}
+async function prepareMission(title) {
+  report.stage = 'author ' + title
+  await save()
+  await page.goto(web + '/#missions', { waitUntil: 'networkidle', timeout: 30000 })
+  await page.locator('.live-indicator.live-live').waitFor({ timeout: 30000 })
+  const create = page.getByRole('button', { name: 'New mission', exact: true })
+  if (await create.isVisible()) await create.click()
+  await page.locator('#mission-title').fill(title)
+  await advanced('#mission-description')
+  await page.locator('#mission-description').fill('Owned issue82 canonical Git source regression. Write only the deterministic migration and evidence in the assigned worktree. The real migration verifier decides completion. No external effects.')
+  const targets = await page.locator('#mission-repository option').evaluateAll(items => items.filter(item => item.value).map(item => ({ value: item.value, source: JSON.parse(item.value) })))
+  const matches = targets.filter(item => item.source[0] === setup.source_repository && item.source[2] === setup.source_commit)
+  assert.equal(matches.length, 1)
+  await page.locator('#mission-repository').selectOption(matches[0].value)
+  await page.getByRole('checkbox', { name: /Confirm this target/ }).check()
+  await advanced('#mission-deliverable')
+  await page.getByRole('checkbox', { name: /Developer fixtures/ }).check()
+  await page.locator('#mission-adapter').selectOption('fake-process')
+  await page.locator('#mission-strategy').selectOption('single')
+  await page.locator('#mission-deliverable').selectOption('commit_branch')
+  const commit = page.getByRole('checkbox', { name: /Commit verified work/ })
+  assert.equal(await commit.isChecked(), true)
+  assert.equal(await commit.isDisabled(), true)
+  await page.getByRole('checkbox', { name: /Save without starting/ }).check()
+  await page.getByRole('button', { name: 'Review and build', exact: true }).click()
+  const custom = page.getByRole('checkbox', { name: /Custom verification/ })
+  assert.equal(await custom.isEnabled(), true)
+  await custom.check()
+  const editor = page.getByTestId('mission-verification-editor')
+  const tabs = editor.locator('.verification-check-tabs button')
+  for (const [index, check] of policy.checks.entries()) {
+    while (await tabs.count() <= index) await editor.getByRole('button', { name: 'Add check', exact: true }).click()
+    await tabs.nth(index).click()
+    await editor.getByLabel('Verifier check ' + (index + 1) + ' type', { exact: true }).selectOption(check.type)
+    if (check.type === 'artifact') await editor.getByLabel('Minimum artifact bytes', { exact: true }).fill(String(check.min_bytes))
+    else {
+      await editor.getByLabel('Program', { exact: true }).fill(check.program)
+      await editor.getByLabel('Timeout in milliseconds', { exact: true }).fill(String(check.timeout_ms))
+      await editor.getByLabel('Arguments, one per line').fill(check.args.join('\n'))
+    }
+  }
+  assert.equal(await tabs.count(), policy.checks.length)
+  await editor.getByLabel('Final reviewer gate').selectOption('none')
+}
+async function verifyDownload(final, record) {
+  const run = final.runs[0]
+  const sources = final.state.source_deliverables.filter(item => item.run_id === run.id)
+  assert.equal(sources.length, 1)
+  const source = sources[0]
+  const event = record.final.events.filter(item => item.type === 'run.deliverable')
+  assert.equal(event.length, 1)
+  assert.equal(event[0].payload.sha256, source.sha256)
+  assert.equal(event[0].payload.provenance_signature, source.provenance_signature)
+  const response = await fetch(server + source.uri + '?actor_id=' + demo.alice_actor_id, { redirect: 'error', signal: AbortSignal.timeout(15000) })
+  assert.equal(response.status, 200)
+  assert.equal(response.headers.get('x-crony-artifact-role'), 'source_deliverable')
+  assert.equal(response.headers.get('x-crony-artifact-signature'), source.provenance_signature)
+  const bytes = Buffer.from(await response.arrayBuffer())
+  assert.equal(sha256(bytes), source.sha256)
+  const file = path.join(output, 'accepted-deliverable.json')
+  await writeFile(file, bytes, { flag: 'wx' })
+  const envelope = JSON.parse(bytes)
+  assert.equal(envelope.form, 'commit_branch')
+  assert.equal(envelope.base_commit, setup.source_commit)
+  assert.equal(envelope.head_commit, source.head_commit)
+  assert.equal(envelope.verification_sha256, source.verification_sha256)
+  assert.equal(run.verification_sha256, source.verification_sha256)
+  assert.equal(run.deliverable_sha256, source.sha256)
+  const identity = envelope.source_verification
+  assert.equal(identity.tree, envelope.verified_tree)
+  assert.equal(identity.base_commit, setup.source_commit)
+  assert.equal(identity.ignored_input_count, 0)
+  assert.equal(identity.ignored_input_bytes, 0)
+  assert.deepEqual(event[0].payload.metadata.source_verification, identity)
+  assert.equal(event[0].payload.metadata.verified_tree, identity.tree)
+  assert.equal(event[0].payload.metadata.verification_sha256, source.verification_sha256)
+  for (const row of record.final.evidence) assert.deepEqual(row.payload.source, identity)
+  const verified = record.final.events.filter(item => item.type === 'run.verification_passed')
+  assert.equal(verified.length, 1)
+  assert.deepEqual(verified[0].payload.source_verification, identity)
+  assert.equal(verified[0].payload.verified_tree, identity.tree)
+  assert.equal(verified[0].payload.deliverable_sha256, source.sha256)
+  const completed = record.final.events.filter(item => item.type === 'run.completed')
+  assert.equal(completed.length, 1)
+  assert.ok(record.final.events.indexOf(completed[0]) > record.final.events.indexOf(verified[0]), 'Accepted completion must follow verified linkage')
+  assert.deepEqual(envelope.changes.map(item => item.path).sort(), ['db/migrations/9999_canonical_fixture.sql', 'db/migrations/manifest.json'])
+  assert.equal(envelope.changes.some(item => item.path === 'result.md'), false)
+  const bundle = Buffer.from(envelope.git_bundle_base64, 'base64')
+  assert.equal(sha256(bundle), envelope.git_bundle_sha256)
+  const bundlePath = path.join(output, 'accepted.bundle')
+  await writeFile(bundlePath, bundle, { flag: 'wx' })
+  const checkout = path.join(setup.qa_root, 'accepted-export')
+  await mkdir(checkout, { recursive: false })
+  await git(checkout, ['init', '--template=', '-b', 'accepted'])
+  await git(checkout, ['config', 'core.autocrlf', 'false'])
+  await git(checkout, ['-c', 'protocol.file.allow=always', 'fetch', '--quiet', '--depth=1', '--no-tags', pathToFileURL(setup.source + path.sep).href, setup.source_commit])
+  await git(checkout, ['cat-file', '-e', envelope.head_commit], false)
+  const bundleVerification = (await git(checkout, ['bundle', 'verify', bundlePath])).toString()
+  const imported = (await git(checkout, ['bundle', 'unbundle', bundlePath])).toString().trim().split(/\r?\n/)
+  assert.ok(imported.some(line => line.startsWith(envelope.head_commit + ' ')))
+  await git(checkout, ['update-ref', 'refs/heads/accepted', envelope.head_commit])
+  await git(checkout, ['checkout', '--quiet', 'accepted'])
+  assert.equal((await git(checkout, ['status', '--porcelain=v1', '--untracked-files=all'])).toString(), '')
+  assert.equal((await git(checkout, ['rev-parse', 'HEAD^{tree}'])).toString().trim(), identity.tree)
+  assert.equal((await git(run.workspace_path, ['rev-parse', 'HEAD'])).toString().trim(), envelope.head_commit)
+  const newPath = 'db/migrations/9999_canonical_fixture.sql'
+  const physical = await readFile(path.join(run.workspace_path, newPath))
+  const canonical = await git(checkout, ['cat-file', 'blob', 'HEAD:' + newPath])
+  assert.deepEqual(physical, Buffer.from('SELECT 9999;\r\n'))
+  assert.deepEqual(canonical, Buffer.from('SELECT 9999;\n'))
+  const manifest = JSON.parse(await git(checkout, ['cat-file', 'blob', 'HEAD:db/migrations/manifest.json']))
+  assert.equal(manifest.migrations.length, 57)
+  assert.equal(manifest.migrations.find(item => item.version === 9999).sha384, sha384(canonical))
+  const baseline = JSON.parse(await readFile(path.join(setup.qa_root, 'evidence/source-fixture.json'), 'utf8'))
+  for (const item of baseline.historical_migrations) assert.equal(sha384(await git(checkout, ['cat-file', 'blob', 'HEAD:' + item.path])), item.sha384)
+  const checked = await execute(process.execPath, ['tools/check_migrations.mjs'], { cwd: checkout, timeout: 10000, windowsHide: true })
+  const checker = JSON.parse(checked.stdout)
+  assert.equal(checker.migration_count, 57)
+  assert.equal(checker.immutable_checksums, true)
+  assert.equal((await git(checkout, ['status', '--porcelain=v1', '--untracked-files=all'])).toString(), '')
+  const outsider = await fetch(server + source.uri + '?actor_id=' + demo.eve_actor_id, { redirect: 'error', signal: AbortSignal.timeout(15000) })
+  assert.equal(outsider.status, 404)
+  record.download = {
+    source, source_verification: identity, file, sha256: sha256(bytes), signature_matches_record: true,
+    bundle: { path: bundlePath, sha256: sha256(bundle), verification: bundleVerification, imported },
+    source_commit: setup.source_commit, exported_head: envelope.head_commit, exported_tree: identity.tree,
+    independent_checkout: checkout, clean_export: true, historical_migrations_unchanged: baseline.historical_migrations.length,
+    physical_sha384: sha384(physical), canonical_sha384: sha384(canonical), physical_crlf: true, committed_lf: true,
+    checker, outsider_http_status: outsider.status,
+  }
+}
+async function saveAndLaunch(title, expected) {
+  const creation = page.waitForResponse(response => response.url() === server + '/api/corps/' + demo.corp_id + '/missions' && response.request().method() === 'POST')
+  await page.getByRole('button', { name: 'Save plan', exact: true }).click()
+  const response = await creation
+  assert.equal(response.status(), 200)
+  const authored = response.request().postDataJSON()
+  assert.deepEqual(authored.verification_policy, policy)
+  assert.equal(authored.preferred_adapter, 'fake-process')
+  assert.equal(authored.deliverable.form, 'commit_branch')
+  assert.equal(authored.deliverable.commit_after_verification, true)
+  const created = await response.json()
+  const record = { title, expected, authored, mission_id: created.mission_id, task_id: created.task_id }
+  report.missions.push(record)
+  await save()
+  const saved = view(await snapshot(), created.mission_id)
+  assert.equal(saved.mission.status, 'ready')
+  assert.equal(saved.runs.length, 0)
+  assert.equal(saved.tasks.length, 1)
+  assert.deepEqual(saved.tasks[0].verification_policy, policy)
+  const card = page.locator('[data-mission-id="' + created.mission_id + '"]')
+  await card.locator('.status-chip-ready').waitFor()
+  record.saved_screenshot = await screenshot(expected + '-saved')
+  const launch = page.waitForResponse(value => value.url() === server + '/api/corps/' + demo.corp_id + '/missions/' + created.mission_id + '/launch' && value.request().method() === 'POST')
+  await card.getByTestId('work-result-card').getByRole('button', { name: 'Start mission', exact: true }).click()
+  const launched = await launch
+  assert.equal(launched.status(), 200)
+  record.launch = await launched.json()
+  report.stage = 'native runner ' + expected
+  await save()
+  const final = await until(expected + ' terminal state', async () => view(await snapshot(), created.mission_id), value =>
+    value.runs.length === 1 && ['completed', 'failed'].includes(value.mission.status) && value.runs[0].workspace_disposition === 'preserved')
+  const run = final.runs[0]
+  assert.equal(run.runner_id, setup.runner_id)
+  assert.equal(run.source_base_commit, setup.source_commit)
+  const relative = path.relative(setup.workspace, run.workspace_path)
+  assert.ok(relative && !relative.startsWith('..') && !path.isAbsolute(relative))
+  assert.notEqual(path.resolve(run.workspace_path).toLowerCase(), path.resolve(setup.source).toLowerCase())
+  assert.equal((await git(run.workspace_path, ['config', '--get', 'core.autocrlf'])).toString().trim(), 'true')
+  const evidence = final.state.verification_evidence.filter(item => item.run_id === run.id).sort((a, b) => a.check_index - b.check_index)
+  const events = final.state.events.filter(item => item.aggregate_id === run.id)
+  record.final = { mission: final.mission, tasks: final.tasks, run, evidence, events }
+  await save()
+  assert.equal(evidence.length, 2)
+  assert.deepEqual(final.tasks[0].verification_policy, policy)
+  assert.equal(final.state.verification_requests.filter(row => row.run_id === run.id).length, 0)
+  assert.equal(evidence[0].kind, 'artifact')
+  assert.equal(evidence[0].status, 'passed')
+  assert.equal(evidence[1].kind, 'command')
+  assert.equal(evidence[1].payload.program, 'node')
+  assert.deepEqual(evidence[1].payload.args, ['tools/check_migrations.mjs'])
+  assert.ok(evidence.every(row => row.payload.source?.tree))
+  assert.deepEqual(evidence[0].payload.source, evidence[1].payload.source)
+  if (expected === 'passed') {
+    assert.equal(final.mission.status, 'completed')
+    assert.equal(run.status, 'completed')
+    assert.ok(evidence.every(row => row.status === 'passed'))
+    assert.equal(evidence[1].payload.exit_code, 0)
+    await verifyDownload(final, record)
+  } else {
+    assert.equal(final.mission.status, 'failed')
+    assert.equal(run.status, 'failed')
+    assert.equal(evidence[1].status, 'failed')
+    assert.notEqual(evidence[1].payload.exit_code, 0)
+    assert.equal(events.filter(event => event.type === 'run.completed').length, 0)
+    assert.equal(events.filter(event => event.type === 'run.verification_passed').length, 0)
+    assert.ok(events.some(event => event.type === 'run.verification_failed'))
+    assert.equal(final.state.source_deliverables.filter(item => item.run_id === run.id).length, 0)
+    assert.equal(run.deliverable_sha256, null)
+    assert.equal((await git(run.workspace_path, ['rev-parse', 'HEAD'])).toString().trim(), setup.source_commit)
+  }
+  await until('terminal browser projection', () => card.innerText(), text => expected === 'passed' ? /completed/i.test(text) : /failed/i.test(text), 30000)
+  record.final_screenshot = await screenshot(expected + '-final')
+  await save()
+}
+try {
+  for (const [role, url] of [['server', server], ['web', web]]) {
+    const owned = setup.processes[role]
+    assert.ok(owned?.pid && owned.executable)
+    await captureOwnedTestServerManifest({ root: setup.qa_root, server: url, binary: owned.executable, pid: owned.pid, pidPath: path.join(output, role + '-ownership.json') })
+  }
+  assert.equal((await request('/health')).mode, 'development')
+  const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'msedge', headless: true })
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' })
+  await context.route('**/*', async route => {
+    const url = new URL(route.request().url())
+    if (![server, web].includes(url.origin) || url.pathname === '/api/demo/reset' || /verification-decision|action-approval/.test(url.pathname)) {
+      report.blocked_requests.push({ method: route.request().method(), origin: url.origin, path: url.pathname })
+      await route.abort()
+    } else await route.continue()
+  })
+  page = await context.newPage()
+  page.on('pageerror', error => report.errors.push(error.message.slice(0, 1000)))
+  const bootstrap = page.waitForResponse(response => response.url().startsWith(server + '/api/demo/bootstrap') && response.request().method() === 'POST')
+  await page.goto(web + '/#missions', { waitUntil: 'networkidle', timeout: 30000 })
+  const boot = await bootstrap
+  assert.equal(boot.status(), 200)
+  demo = await boot.json()
+  report.corp_id = demo.corp_id
+  report.development_actor_id = demo.alice_actor_id
+  for (const [token, expected] of [['physical', 'failed'], ['canonical', 'passed']]) {
+    const title = '[issue82-' + token + '-checksum] Native canonical source ' + randomUUID().slice(0, 8)
+    await prepareMission(title)
+    await saveAndLaunch(title, expected)
+  }
+  assert.equal((await git(setup.source, ['rev-parse', 'HEAD'])).toString().trim(), setup.source_commit)
+  assert.equal((await git(setup.source, ['status', '--porcelain=v1', '--untracked-files=all'])).toString(), '')
+  assert.equal(report.errors.length, 0)
+  assert.equal(report.blocked_requests.length, 0)
+  report.source_unchanged = true
+  report.status = 'passed'
+} catch (error) {
+  report.status = 'failed'
+  report.failure = String(error.message).replace(/\bpostgres(?:ql)?:\/\/\S+/g, '[database URL withheld]').slice(0, 2500)
+  if (page) report.failure_screenshot = await screenshot('failure').catch(() => null)
+  process.exitCode = 1
+} finally {
+  await browser?.close()
+  report.finished_at = new Date().toISOString()
+  await save()
+  console.log(JSON.stringify({ status: report.status, stage: report.stage, report: reportPath, failure: report.failure }))
+}

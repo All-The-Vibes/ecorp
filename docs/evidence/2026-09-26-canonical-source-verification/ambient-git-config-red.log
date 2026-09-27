@@ -1,0 +1,32 @@
+✖ inherited Git configuration cannot change canonical line-ending selection (3895.3508ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4054.8805
+
+✖ failing tests:
+
+test at tools\check_deliverable_diff.test.mjs:200:1
+✖ inherited Git configuration cannot change canonical line-ending selection (3895.3508ms)
+  AssertionError [ERR_ASSERTION]: the runner ignores inherited Git configuration when freezing the source tree
+  + actual - expected
+  
+  + '0d48233308071a322b4eeb6f1f89c61957b80f73'
+  - 'c3f1634ce2096b811b7f11efab3fe36adf2feba6'
+  
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/check_deliverable_diff.test.mjs:209:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '0d48233308071a322b4eeb6f1f89c61957b80f73',
+    expected: 'c3f1634ce2096b811b7f11efab3fe36adf2feba6',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

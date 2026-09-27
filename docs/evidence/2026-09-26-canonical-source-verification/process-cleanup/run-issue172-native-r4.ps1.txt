@@ -1,0 +1,151 @@
+#requires -Version 7.5
+param(
+    [Parameter(Mandatory)][string]$Repository,
+    [Parameter(Mandatory)][string]$CanonicalReceipt,
+    [Parameter(Mandatory)][string]$QaRoot,
+    [Parameter(Mandatory)][ValidatePattern('^r[0-9]+$')][string]$Revision,
+    [int]$ServerPort = 18872,
+    [int]$WebPort = 15872,
+    [int]$DatabasePort = 59086
+)
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = (Resolve-Path -LiteralPath $Repository).Path
+$canonical = (Resolve-Path -LiteralPath $CanonicalReceipt).Path
+$qa = [IO.Path]::GetFullPath($QaRoot)
+$pg = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin'
+$nodeDirectory = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64'
+$python = '<USERPROFILE>\AppData\Local\Programs\Python\Python312\python.exe'
+$playwright = '<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+$node = Join-Path $nodeDirectory 'node.exe'
+$target = Join-Path $product 'target'
+$prefix = "issue172-native-$Revision"
+$receiptPath = Join-Path $PSScriptRoot "$prefix-lifecycle.json"
+$supervisor = Join-Path $PSScriptRoot 'issue172-stack-r1.ps1'
+$sourceChecker = Join-Path $PSScriptRoot 'issue82-source-binding-r1.py'
+$driver = Join-Path $PSScriptRoot 'issue172-browser-r2.mjs'
+if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $receiptPath)) { throw 'Preserve existing owned fixtures and evidence.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:PATH = "$nodeDirectory;$pg;$env:PATH"
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_NET_OFFLINE = 'true'
+$env:CARGO_TARGET_DIR = $target
+$env:RUST_TEST_THREADS = '1'
+$bindingText = & $python $sourceChecker $product $canonical
+if ($LASTEXITCODE) { throw 'Source does not match the complete canonical gate; no build or stack started.' }
+$binding = $bindingText | ConvertFrom-Json -AsHashtable
+$receipt = [ordered]@{
+    issue=172;repository=$product;source_binding=$binding;qa_root=$qa;
+    driver_sha256=(Get-FileHash -LiteralPath $driver).Hash.ToLowerInvariant();supervisor_sha256=(Get-FileHash -LiteralPath $supervisor).Hash.ToLowerInvariant();
+    started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');status='running';checks=@();
+    cleanup='pending';source_unchanged=$null;
+    scope='Native Windows server, two native runners and Edge browser with deterministic child protocols. The malformed pending command and missed wakeup are explicit owned PostgreSQL fault injection. No vendor inference, human review, deployment or OS sandbox attestation.'
+}
+function Save-Receipt { $receipt | ConvertTo-Json -Depth 50 | Set-Content -LiteralPath $receiptPath -Encoding utf8 }
+function Record-Check([string]$Name,[string]$Log,[int]$Code) {
+    $receipt.checks += @{name=$Name;exit_code=$Code;log=$Log;sha256=(Get-FileHash -LiteralPath $Log).Hash.ToLowerInvariant()}
+    Save-Receipt
+    Write-Output "$Name exit=$Code"
+    if ($Code) { throw "$Name failed; preserve logs and fixture." }
+}
+Save-Receipt
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false, "Local\ECorpCompletionCargo$key")
+$held = $false
+try {
+    Push-Location -LiteralPath $product
+    try {
+        try { $held = $mutex.WaitOne(1000) } catch [Threading.AbandonedMutexException] { $held = $true }
+        if (!$held) { throw 'Preserve another active Cargo target owner.' }
+        $buildLog = Join-Path $PSScriptRoot "$prefix-build.log"
+        & cargo build --locked --offline -p crony-server -p crony-runner *> $buildLog
+        $buildCode = $LASTEXITCODE
+        Record-Check 'matching-source-native-build' $buildLog $buildCode
+    } finally {
+        Pop-Location
+        if ($held) { $mutex.ReleaseMutex(); $held=$false }
+    }
+    $receipt.binaries = @(
+        foreach ($name in @('crony-server.exe','crony-runner.exe')) {
+            $binary = Join-Path $target "debug/$name"
+            @{path=$binary;sha256=(Get-FileHash -LiteralPath $binary).Hash.ToLowerInvariant()}
+        }
+    )
+    $builtText = & $python $sourceChecker $product $canonical
+    if ($LASTEXITCODE) { throw 'Source changed during native build.' }
+    $built = $builtText | ConvertFrom-Json -AsHashtable
+    if ($built.source_tree -cne $binding.source_tree -or $built.source_files_sha256 -cne $binding.source_files_sha256) { throw 'Native build source changed.' }
+    Save-Receipt
+    & $supervisor -Phase Start -Repository $product -QaRoot $qa -PostgresBin $pg -ServerPort $ServerPort -WebPort $WebPort -DatabasePort $DatabasePort *> (Join-Path $PSScriptRoot "$prefix-stack-start.log")
+    & $supervisor -Phase Status -Repository $product -QaRoot $qa -PostgresBin $pg *> (Join-Path $PSScriptRoot "$prefix-stack-status.log")
+    $state = Get-Content -LiteralPath (Join-Path $qa 'ownership.json') -Raw | ConvertFrom-Json -AsHashtable -Depth 50
+    $setupPath = Join-Path $qa 'evidence/browser-setup.json'
+    @{
+        test_owned=$true;issue=172;repository=$product;qa_root=$qa;output=$PSScriptRoot;
+        sources=$state.sources;demo=$state.demo;psql=(Join-Path $pg 'psql.exe');
+        database=@{host='127.0.0.1';port=$DatabasePort;name='issue172_fairness';user='issue172_qa'};
+        source_binding=$binding;server_url=$state.plan.server;web_url=$state.plan.web;
+        processes=$state.processes
+    } | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $setupPath -Encoding utf8
+    $env:ECORP_ISSUE172_TEST = '1'
+    $env:ECORP_ISSUE172_SETUP = $setupPath
+    $env:CRONY_PLAYWRIGHT_MODULE = $playwright
+    $browserLog = Join-Path $PSScriptRoot "$prefix-browser.log"
+    & $node $driver *> $browserLog
+    $browserCode = $LASTEXITCODE
+    Record-Check 'browser-to-server-to-native-runner' $browserLog $browserCode
+    $result = Get-Content -LiteralPath $browserLog | Select-Object -Last 1 | ConvertFrom-Json -AsHashtable
+    $browserReport = Get-Content -LiteralPath $result.report -Raw | ConvertFrom-Json -AsHashtable -Depth 100
+    if ($browserReport.status -ne 'passed' -or !$browserReport.source_unchanged -or $browserReport.missions.Count -ne 2 -or
+        $browserReport.periodic_failures_before.Count -lt 3 -or $browserReport.periodic_failures_after.Count -lt 5 -or
+        $browserReport.fault_after.status -ne 'pending' -or $browserReport.boundary.rows -ne 1 -or
+        $browserReport.dispatch_latency_ms -lt 0 -or $browserReport.dispatch_latency_ms -ge 15000 -or
+        $browserReport.errors.Count -ne 0 -or $browserReport.blocked_requests.Count -ne 0) {
+        throw 'Incomplete native scheduler fairness acceptance.'
+    }
+    $receipt.acceptance = @{
+        native_runner_count=2;mission_count=2;periodic_failures_before=$browserReport.periodic_failures_before.Count;
+        periodic_failures_after=$browserReport.periodic_failures_after.Count;fault_status=$browserReport.fault_after.status;
+        missed_wakeup_affected_rows=$browserReport.boundary.rows;dispatch_latency_ms=$browserReport.dispatch_latency_ms;
+        browser_mutations_after_boundary=($browserReport.browser_mutations.Count - $browserReport.browser_mutations_at_boundary);
+        inference='deterministic native child protocols only';faults='owned local SQL injection; no synthetic provider events'
+    }
+    $receipt.browser_report = @{path=$result.report;sha256=(Get-FileHash -LiteralPath $result.report).Hash.ToLowerInvariant();status=$browserReport.status}
+    $afterText = & $python $sourceChecker $product $canonical
+    if ($LASTEXITCODE) { throw 'Source changed during browser acceptance.' }
+    $after = $afterText | ConvertFrom-Json -AsHashtable
+    if ($after.source_tree -cne $binding.source_tree -or $after.source_files_sha256 -cne $binding.source_files_sha256) { throw 'Acceptance source changed.' }
+    $receipt.source_after = $after
+    $receipt.source_unchanged = $true
+    $receipt.status = 'passed'
+} catch {
+    $receipt.status = 'failed'
+    $receipt.failure = ($_.Exception.Message -replace '\bpostgres(?:ql)?://\S+', '[database URL withheld]')
+} finally {
+    if ($held) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+    try {
+        if (Test-Path -LiteralPath (Join-Path $qa 'ownership.json')) {
+            & $supervisor -Phase Stop -Repository $product -QaRoot $qa -PostgresBin $pg *> (Join-Path $PSScriptRoot "$prefix-stack-stop.log")
+            Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force
+            $stopped = Read-LocalStackState -Path (Join-Path $qa 'ownership.json') -Workspace $qa
+            foreach ($role in @('web','runner-b','runner-a','server','postgres')) {
+                if ($stopped.processes[$role] -and (Test-LocalOwnedProcess -Record $stopped.processes[$role] -Workspace $qa)) { throw "Owned $role process remains active." }
+            }
+            $receipt.cleanup = 'Verified all exact owned processes stopped. Source, database, worktrees, private credential files and evidence retained.'
+        } else { $receipt.cleanup = 'No service ownership was established; any preparation files retained.' }
+    } catch {
+        $receipt.status = 'failed'
+        $receipt.cleanup = 'Cleanup could not be verified; preserve fixture and ownership.'
+        $receipt.cleanup_error = $_.Exception.Message
+    }
+    foreach ($name in @('ECORP_ISSUE172_TEST','ECORP_ISSUE172_SETUP','CRONY_PLAYWRIGHT_MODULE')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+    $receipt.finished_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+    Save-Receipt
+}
+[pscustomobject]$receipt | Select-Object issue,status,source_unchanged,browser_report,cleanup,failure | ConvertTo-Json -Depth 8
+if ($receipt.status -ne 'passed') { exit 1 }

@@ -7,7 +7,7 @@ use std::{
 use anyhow::{Context, Result, bail};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use clap::Args;
-use crony_domain::{PullRequestPublication, PullRequestPublicationState};
+use crony_domain::{PullRequestPublication, PullRequestPublicationState, SourceVerification};
 use crony_protocol::PullRequestPublicationResponse;
 use reqwest::{Client, Method};
 use serde::Deserialize;
@@ -113,6 +113,10 @@ struct CommitBranchDocument {
     verification_sha256: String,
     git_bundle_sha256: String,
     git_bundle_base64: String,
+    // Retain presence as well as value: null or partial canonical metadata must
+    // not downgrade an artifact to the legacy publication contract.
+    #[serde(flatten)]
+    metadata: serde_json::Map<String, Value>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -897,6 +901,15 @@ fn prepare_repository(
             document.base_commit
         );
     }
+    import_publication_bundle(workspace, document, &plan.commit_sha)?;
+    Ok(resolved_base)
+}
+
+fn import_publication_bundle(
+    workspace: &TemporaryPublisherWorkspace,
+    document: &CommitBranchDocument,
+    expected_commit: &str,
+) -> Result<()> {
     source_git_output(
         &workspace.repository,
         &["bundle", "verify", path_text(&workspace.bundle)?],
@@ -904,7 +917,25 @@ fn prepare_repository(
     .context("verify portable Git bundle prerequisites")?;
     let import_ref = "refs/heads/ecorp-import";
     let bundle_head =
-        portable_bundle_head(&workspace.repository, &workspace.bundle, &plan.commit_sha)?;
+        portable_bundle_head(&workspace.repository, &workspace.bundle, expected_commit)?;
+    let source = if bundle_head
+        .strip_prefix("refs/ecorp/deliverables/")
+        .is_some_and(|suffix| suffix.contains('-'))
+        || document.metadata.contains_key("source_verification")
+        || document.metadata.contains_key("verified_tree")
+    {
+        Some(
+            SourceVerification::from_payload(&json!({
+                "base_commit": document.base_commit,
+                "source_verification": document.metadata.get("source_verification"),
+                "verified_tree": document.metadata.get("verified_tree"),
+            }))
+            .map_err(anyhow::Error::msg)
+            .context("validate portable Git bundle source identity")?,
+        )
+    } else {
+        None
+    };
     let refspec = format!("{bundle_head}:{import_ref}");
     source_git_output(
         &workspace.repository,
@@ -920,11 +951,17 @@ fn prepare_repository(
         &workspace.repository,
         &["rev-parse", "refs/heads/ecorp-import^{commit}"],
     )?;
-    if !imported.eq_ignore_ascii_case(&plan.commit_sha) {
-        bail!(
-            "portable Git bundle imported commit {imported}, expected {}",
-            plan.commit_sha
-        );
+    if !imported.eq_ignore_ascii_case(expected_commit) {
+        bail!("portable Git bundle imported commit {imported}, expected {expected_commit}");
+    }
+    if let Some(source) = source {
+        let imported_tree = git_text(
+            &workspace.repository,
+            &["rev-parse", "refs/heads/ecorp-import^{tree}"],
+        )?;
+        if imported_tree != source.tree {
+            bail!("portable Git bundle tree does not match the verified source tree");
+        }
     }
     source_git_output(
         &workspace.repository,
@@ -932,11 +969,11 @@ fn prepare_repository(
             "merge-base",
             "--is-ancestor",
             &document.base_commit,
-            &plan.commit_sha,
+            expected_commit,
         ],
     )
     .context("verify publication commit descends from the authorized base")?;
-    Ok(resolved_base)
+    Ok(())
 }
 
 fn portable_bundle_head(repository: &Path, bundle: &Path, expected_commit: &str) -> Result<String> {
@@ -963,7 +1000,15 @@ fn parse_portable_bundle_head(output: &str, expected_commit: &str) -> Result<Str
         || reference
             .strip_prefix("refs/ecorp/deliverables/")
             .is_some_and(|suffix| {
-                suffix.len() == 32 && suffix.bytes().all(|byte| byte.is_ascii_hexdigit())
+                let is_id = |part: &str| {
+                    part.len() == 32 && part.bytes().all(|byte| byte.is_ascii_hexdigit())
+                };
+                // Current runners include a unique preparation owner; retain
+                // compatibility with older bundles containing only the run ID.
+                match suffix.split_once('-') {
+                    Some((run, owner)) => is_id(run) && is_id(owner),
+                    None => is_id(suffix),
+                }
             });
     if !valid_reference {
         bail!("portable Git bundle exposed an unauthorized head reference");
@@ -1952,6 +1997,241 @@ fn test_pause(stage: &str) {
 mod tests {
     use super::*;
 
+    fn publication_bundle_fixture(
+        reference: &str,
+        object_format: &str,
+    ) -> (TemporaryPublisherWorkspace, Value) {
+        let workspace = TemporaryPublisherWorkspace::create().expect("publisher workspace");
+        let source = workspace.root.join("source");
+        fs::create_dir(&source).expect("fixture source");
+        let object_format = format!("--object-format={object_format}");
+        source_git_output(
+            &source,
+            &[
+                "init",
+                "--initial-branch=main",
+                "--template=",
+                &object_format,
+            ],
+        )
+        .expect("initialize source");
+        for (key, value) in [
+            ("user.name", "ECorp publication fixture"),
+            ("user.email", "publication@example.invalid"),
+            ("core.autocrlf", "false"),
+        ] {
+            source_git_output(&source, &["config", key, value]).expect("fixture configuration");
+        }
+        let hooks = workspace.root.join("empty-hooks");
+        fs::create_dir(&hooks).expect("empty hooks");
+        source_git_output(
+            &source,
+            &["config", "core.hooksPath", path_text(&hooks).unwrap()],
+        )
+        .expect("isolate fixture hooks");
+        fs::write(source.join("content.txt"), b"base\n").expect("base bytes");
+        source_git_output(&source, &["add", "--", "content.txt"]).expect("stage base");
+        source_git_output(&source, &["commit", "--no-gpg-sign", "-m", "base"])
+            .expect("base commit");
+        let base = git_text(&source, &["rev-parse", "HEAD"]).expect("base identity");
+        fs::write(source.join("content.txt"), b"verified content\n").expect("verified bytes");
+        source_git_output(&source, &["add", "--", "content.txt"]).expect("stage candidate");
+        source_git_output(&source, &["commit", "--no-gpg-sign", "-m", "candidate"])
+            .expect("candidate commit");
+        let candidate = git_text(&source, &["rev-parse", "HEAD"]).expect("candidate identity");
+        let tree = git_text(&source, &["rev-parse", "HEAD^{tree}"]).expect("verified tree");
+        source_git_output(
+            &source,
+            &["commit", "--amend", "--no-gpg-sign", "-m", "exported"],
+        )
+        .expect("export commit with distinct metadata");
+        let head = git_text(&source, &["rev-parse", "HEAD"]).expect("export identity");
+        assert_ne!(
+            head, candidate,
+            "export metadata may change after verification"
+        );
+        assert_eq!(
+            git_text(&source, &["rev-parse", "HEAD^{tree}"]).unwrap(),
+            tree
+        );
+        if reference != "HEAD" {
+            source_git_output(&source, &["update-ref", reference, &head]).expect("bundle ref");
+        }
+        source_git_output(
+            &source,
+            &[
+                "bundle",
+                "create",
+                path_text(&workspace.bundle).unwrap(),
+                reference,
+                &format!("^{base}"),
+            ],
+        )
+        .expect("create native bundle");
+        source_git_output(&workspace.repository, &["init", "--bare", &object_format])
+            .expect("initialize import repository");
+        source_git_output(
+            &workspace.repository,
+            &["fetch", "--no-tags", path_text(&source).unwrap(), &base],
+        )
+        .expect("seed authorized base prerequisite");
+        let bundle = fs::read(&workspace.bundle).expect("bundle bytes");
+        let payload = json!({
+            "schema_version": 1,
+            "form": "commit_branch",
+            "base_commit": base,
+            "head_commit": head,
+            "branch": "fixture",
+            "verification_sha256": "d".repeat(64),
+            "git_bundle_sha256": hex::encode(Sha256::digest(&bundle)),
+            "git_bundle_base64": BASE64.encode(bundle),
+            "verified_tree": tree,
+            "source_verification": {
+                "tree": tree,
+                "base_commit": base,
+                "candidate_commit": candidate,
+                "ignored_input_sha256": hex::encode(Sha256::digest([])),
+                "ignored_input_count": 0,
+                "ignored_input_bytes": 0,
+            },
+        });
+        (workspace, payload)
+    }
+
+    fn owned_bundle_reference() -> String {
+        format!(
+            "refs/ecorp/deliverables/{}-{}",
+            Uuid::new_v4().simple(),
+            Uuid::new_v4().simple()
+        )
+    }
+
+    #[test]
+    fn canonical_publication_import_accepts_verified_tree_in_each_object_format() {
+        for format in ["sha1", "sha256"] {
+            let (workspace, payload) =
+                publication_bundle_fixture(&owned_bundle_reference(), format);
+            let document: CommitBranchDocument = serde_json::from_value(payload.clone()).unwrap();
+            import_publication_bundle(&workspace, &document, &document.head_commit)
+                .expect("matching canonical bundle");
+            assert_eq!(
+                git_text(
+                    &workspace.repository,
+                    &["rev-parse", "refs/heads/ecorp-import^{tree}"]
+                )
+                .unwrap(),
+                payload["verified_tree"].as_str().unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn canonical_publication_import_rejects_a_different_verified_tree() {
+        let legacy = format!("refs/ecorp/deliverables/{}", Uuid::new_v4().simple());
+        for (reference, format) in [
+            ("HEAD".to_owned(), "sha1"),
+            (legacy, "sha1"),
+            (owned_bundle_reference(), "sha1"),
+            (owned_bundle_reference(), "sha256"),
+        ] {
+            let (workspace, mut payload) = publication_bundle_fixture(&reference, format);
+            let base_tree = git_text(
+                &workspace.repository,
+                &[
+                    "rev-parse",
+                    &format!("{}^{{tree}}", payload["base_commit"].as_str().unwrap()),
+                ],
+            )
+            .unwrap();
+            assert_ne!(payload["verified_tree"].as_str().unwrap(), base_tree);
+            payload["verified_tree"] = json!(base_tree);
+            payload["source_verification"]["tree"] = json!(base_tree);
+            let document: CommitBranchDocument = serde_json::from_value(payload).unwrap();
+            let error = import_publication_bundle(&workspace, &document, &document.head_commit)
+                .expect_err("a valid identity must not authorize different bundle bytes");
+            assert!(error.to_string().contains("bundle tree"), "{error:#}");
+        }
+    }
+
+    #[test]
+    fn canonical_publication_import_rejects_missing_or_malformed_identity() {
+        let legacy = format!("refs/ecorp/deliverables/{}", Uuid::new_v4().simple());
+        let owned = owned_bundle_reference();
+        for reference in ["HEAD", &legacy, &owned] {
+            let (workspace, payload) = publication_bundle_fixture(reference, "sha1");
+            let mut malformed = Vec::new();
+            for field in ["verified_tree", "source_verification"] {
+                let mut missing = payload.clone();
+                missing.as_object_mut().unwrap().remove(field);
+                malformed.push(missing);
+                let mut null = payload.clone();
+                null[field] = Value::Null;
+                malformed.push(null);
+            }
+            let mut array = payload.clone();
+            let source = &payload["source_verification"];
+            array["source_verification"] = json!([
+                source["tree"],
+                source["base_commit"],
+                source["candidate_commit"],
+                source["ignored_input_sha256"],
+                source["ignored_input_count"],
+                source["ignored_input_bytes"],
+            ]);
+            malformed.push(array);
+            for (field, value) in [
+                ("tree", json!("a".repeat(40))),
+                ("base_commit", json!("b".repeat(40))),
+                ("candidate_commit", json!("c".repeat(64))),
+                ("ignored_input_sha256", json!("invalid")),
+                ("ignored_input_count", json!(100_001)),
+                ("ignored_input_bytes", json!(4_u64 * 1024 * 1024 * 1024 + 1)),
+                ("unrecognized", json!(true)),
+            ] {
+                let mut invalid = payload.clone();
+                invalid["source_verification"][field] = value;
+                malformed.push(invalid);
+            }
+            let mut only_null = payload.clone();
+            only_null.as_object_mut().unwrap().remove("verified_tree");
+            only_null["source_verification"] = Value::Null;
+            malformed.push(only_null);
+            if reference == owned {
+                let mut absent = payload.clone();
+                absent.as_object_mut().unwrap().remove("verified_tree");
+                absent
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("source_verification");
+                malformed.push(absent);
+            }
+            for (case, invalid) in malformed.into_iter().enumerate() {
+                let document: CommitBranchDocument = serde_json::from_value(invalid).unwrap();
+                assert!(
+                    import_publication_bundle(&workspace, &document, &document.head_commit)
+                        .is_err(),
+                    "accepted malformed canonical identity case {case} for {reference}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn legacy_publication_import_retains_documents_without_canonical_identity() {
+        let legacy = format!("refs/ecorp/deliverables/{}", Uuid::new_v4().simple());
+        for reference in ["HEAD", &legacy] {
+            let (workspace, mut payload) = publication_bundle_fixture(reference, "sha1");
+            payload.as_object_mut().unwrap().remove("verified_tree");
+            payload
+                .as_object_mut()
+                .unwrap()
+                .remove("source_verification");
+            let document: CommitBranchDocument = serde_json::from_value(payload).unwrap();
+            import_publication_bundle(&workspace, &document, &document.head_commit)
+                .expect("historical bundle without canonical metadata");
+        }
+    }
+
     #[test]
     fn default_publication_branch_is_stable() {
         let commit = "a".repeat(40);
@@ -2017,6 +2297,60 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    #[test]
+    fn portable_bundle_head_accepts_runner_owned_reference() {
+        let commit = "a".repeat(40);
+        let run_id = Uuid::new_v4();
+        let owner = Uuid::new_v4().simple().to_string();
+        let reference = format!("refs/ecorp/deliverables/{}-{owner}", run_id.simple());
+        assert_eq!(
+            parse_portable_bundle_head(&format!("{commit} {reference}\n"), &commit)
+                .expect("ownership-qualified runner bundle"),
+            reference
+        );
+    }
+
+    #[test]
+    fn portable_bundle_head_rejects_malformed_owned_references_and_mismatched_heads() {
+        let commit = "a".repeat(40);
+        let run = "0123456789abcdef0123456789abcdef";
+        let owner = "fedcba9876543210fedcba9876543210";
+        for suffix in [
+            String::new(),
+            format!("{run}-"),
+            format!("-{owner}"),
+            format!("{run}--{owner}"),
+            format!("{run}-{owner}-"),
+            format!("{run}-{owner}-{owner}"),
+            format!("{run}0-{owner}"),
+            format!("{}-{owner}", &run[1..]),
+            format!("{run}-{}", &owner[1..]),
+            format!("{run}-{owner}0"),
+            format!("{run}-{}g", &owner[1..]),
+            format!("{}g-{owner}", &run[1..]),
+            format!("{run}/{owner}"),
+        ] {
+            assert!(
+                parse_portable_bundle_head(
+                    &format!("{commit} refs/ecorp/deliverables/{suffix}\n"),
+                    &commit
+                )
+                .is_err(),
+                "accepted malformed reference suffix {suffix}"
+            );
+        }
+        let reference = format!("refs/ecorp/deliverables/{run}-{owner}");
+        for output in [
+            String::new(),
+            format!("{} {reference}\n", "b".repeat(40)),
+            format!("{commit} {reference} extra\n"),
+            format!("{commit} {reference}\n{commit} HEAD\n"),
+            format!("{commit} refs/heads/{run}-{owner}\n"),
+        ] {
+            assert!(parse_portable_bundle_head(&output, &commit).is_err());
+        }
     }
 
     #[test]

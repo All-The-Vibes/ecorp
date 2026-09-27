@@ -1,0 +1,114 @@
+{
+  "pr": 375,
+  "issue": 82,
+  "status": "passed",
+  "started_at_utc": "2026-09-27T10:30:51.3042616+00:00",
+  "source_binding": {
+    "schema_version": 1,
+    "source_head": "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964",
+    "source_branch": "codex/issue82-canonical-verification",
+    "source_tree": "9ddca9d6bbf522827f53a3a5d11554a10c96337a",
+    "source_files_sha256": "aa9ab3cac1caa586050ac64364d0a5f43f102be6d310e0443da35d47aea9c796",
+    "source_file_count": 6702,
+    "tracked_diff_sha256": "2cb203752a90ba61eda06dd417c154398055640a59f2e4d550e9d3e987741187",
+    "untracked_digests": [],
+    "canonical_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-canonical-r9.json",
+    "canonical_receipt_sha256": "612aa0ac946486e0f759db74e2d9d0ba5380ec0fae581abd40e734c8a157c31c",
+    "canonical_report_sha256": "b89d9eb80673bf39aa649d010121ad62dcfab1e84a2138512cb50174d11e354a",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "build_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-factory-native-build-r5.json",
+  "build_receipt_sha256": "962a7fd677588882d9c6b4a1233bef1d6c818ee09ab22a4b3b59b97be2dc027f",
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "58c3735ccb91d745120ee12148061f42118cd4cb5f39b8e11c8dcb24eb477eb2"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "1f0e19a317bc1a555ab7efef41c9b65f60b0beee35f56c6f7d2d4cc6c0a39370"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "8c3fbd0f1f0ff05825edbf221fb1cc9f280c4b6da0ce1d83df984da91e1a4482"
+    }
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r7",
+  "server": "http://127.0.0.1:18884",
+  "driver": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\tools\\e2e_factory_controller.mjs",
+  "driver_sha256": "986192a10f1d5421f8b3d5214c50039484316542cc4da4a7b4692dbdd76118e9",
+  "source_unchanged": true,
+  "cleanup": [
+    {
+      "pid": 24280,
+      "role": "runner",
+      "stopped": true
+    },
+    {
+      "pid": 33168,
+      "role": "server",
+      "stopped": true
+    },
+    {
+      "pid": 21508,
+      "role": "postgres",
+      "stopped": true
+    }
+  ],
+  "scope": "Corrected Factory controller driver, independent native Git pack transfer and Git process cleanup, native Windows CLI/server/runner, fresh owned SCRAM PostgreSQL and deterministic fake-process child. The GitHub CLI is a local fixture: zero actual GitHub effects or vendor inference.",
+  "fixture_correction": "r2 and r3 timed out during private Git transfer and failed snapshot cleanup. r4 timed out during transfer but its cleanup succeeded. This revision uses native pack-objects with an explicit shallow base and reuses native Windows process ownership. It awaits teardown on every return and checks exported source separately from provider evidence. r5 completed its native run and both canonical checks, then observed active workspace disposition before finalization; its immediate preservation assertion failed. This revision polls persisted preservation with a bounded deadline and rejects removal. r6 reached the approval scenario but exceeded its 30-second deadline while the native run was still verifying with no verification evidence or source deliverable. It does not prove eventual verification or approval. This revision gives approval the same bounded 180-second allowance as mission completion because canonical verification precedes the durable approval request. Failed attempts remain preserved.",
+  "acceptance": "The complete controller must pass, exported source bytes must match, provider evidence must remain separate, and persisted verifier evidence must bind the exported Git tree.",
+  "database_authentication": {
+    "method": "scram-sha-256",
+    "server_environment_delivery": "reduced assurance",
+    "wrong_password_rejected": true,
+    "secrets_outside_source_and_runner": true,
+    "authenticated_creation": true
+  },
+  "driver_exit_code": 0,
+  "driver_log": {
+    "sha256": "2c4032b2222c9915029295471143e4fec8bb31361273fb3a6793b7d53dcf8566",
+    "path": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r7\\evidence\\controller.log"
+  },
+  "database_state": {
+    "sha256": "1d5bd3359a56bd974fa95603edc0a26a4f83625bf212d79d03e27e7db0b08f36",
+    "path": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r7\\evidence\\database-state.json"
+  },
+  "verification": [],
+  "generated_files": [
+    {
+      "copy": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r7\\evidence\\fake-github-factory-state.json",
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\output\\fake-github-factory-state.json",
+      "sha256": "269e03c7cbbfe2b880b4082ca6d741b8447a4a1c85bb08f0193a8d552aec755b"
+    },
+    {
+      "copy": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r7\\evidence\\factory-invalid-verification-policy.json",
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\output\\factory-invalid-verification-policy.json",
+      "sha256": "642d4606f01d8d9f0d8638514f2cd8b98d827da77183167b63a678be60288e99"
+    },
+    {
+      "copy": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r7\\evidence\\factory-explicit-verification-policy.json",
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\output\\factory-explicit-verification-policy.json",
+      "sha256": "20ae14aada0ac9a15a5d42e2f55a5cfd64b7ea45e8b68fc600c333d1d159cf17"
+    },
+    {
+      "copy": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r7\\evidence\\e2e-factory-controller.json",
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\output\\e2e-factory-controller.json",
+      "sha256": "153425e10b7d6933f12fbf2e348100d8c87c082a27aee20a8a53634cde1998f9"
+    }
+  ],
+  "binaries_unchanged": true,
+  "finished_at_utc": "2026-09-27T10:42:27.5528291+00:00"
+}

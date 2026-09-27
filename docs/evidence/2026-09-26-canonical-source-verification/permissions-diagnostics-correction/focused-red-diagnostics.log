@@ -1,0 +1,323 @@
+TAP version 13
+# Subtest: task graph requires explicit ownership and a single dry-run option
+ok 1 - task graph requires explicit ownership and a single dry-run option
+  ---
+  duration_ms: 2.8684
+  type: 'test'
+  ...
+# Subtest: task graph refuses manual ports, credentials, remote origins and malformed endpoints even in CI
+ok 2 - task graph refuses manual ports, credentials, remote origins and malformed endpoints even in CI
+  ---
+  duration_ms: 0.6718
+  type: 'test'
+  ...
+# Subtest: obsolete roster SQL cannot be silently re-enabled
+ok 3 - obsolete roster SQL cannot be silently re-enabled
+  ---
+  duration_ms: 0.8001
+  type: 'test'
+  ...
+# Subtest: source-selected staffing reads exact source metadata without mutating the snapshot
+ok 4 - source-selected staffing reads exact source metadata without mutating the snapshot
+  ---
+  duration_ms: 1.1658
+  type: 'test'
+  ...
+# Subtest: source selection rejects wrong Corp, connection, adapter, source, or ambiguous runner
+ok 5 - source selection rejects wrong Corp, connection, adapter, source, or ambiguous runner
+  ---
+  duration_ms: 5.688
+  type: 'test'
+  ...
+# Subtest: normal graph launch keeps its response and never launches a second time
+ok 6 - normal graph launch keeps its response and never launches a second time
+  ---
+  duration_ms: 0.5417
+  type: 'test'
+  ...
+# Subtest: the hosted root-claim conflict reconciles once, only after persisted mission completion
+ok 7 - the hosted root-claim conflict reconciles once, only after persisted mission completion
+  ---
+  duration_ms: 0.5694
+  type: 'test'
+  ...
+# Subtest: graph launch rejects authorization, dispatch, mixed and unknown-task failures without waiting or replaying
+ok 8 - graph launch rejects authorization, dispatch, mixed and unknown-task failures without waiting or replaying
+  ---
+  duration_ms: 0.8591
+  type: 'test'
+  ...
+# Subtest: graph launch never replays a failed, cancelled, incomplete or timed-out mission
+ok 9 - graph launch never replays a failed, cancelled, incomplete or timed-out mission
+  ---
+  duration_ms: 1.0626
+  type: 'test'
+  ...
+# Subtest: failed graph reports bounded identifiers and states without private free text
+not ok 10 - failed graph reports bounded identifiers and states without private free text
+  ---
+  duration_ms: 1.843
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\tools\\task_graph_fixture.test.mjs:125:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input was expected to not match the regular expression /private-canary|000000000112/u. Input:
+    
+    'AssertionError [ERR_ASSERTION]: Task graph did not complete: {"mission":{"id":"00000000-0000-4000-8000-000000000001","status":"failed"},"run_count":20,"runs":[{"id":"00000000-0000-4000-8000-000000000100","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000101","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000102","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000103","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000104","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000105","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000106","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000107","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000108","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000109","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000110","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000111","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"}]}\n' +
+      '+ actual - expected\n' +
+      '\n' +
+      "+ 'failed'\n" +
+      "- 'completed'\n" +
+      '\n' +
+      '    at compl'... 658 more characters
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    AssertionError [ERR_ASSERTION]: Task graph did not complete: {"mission":{"id":"00000000-0000-4000-8000-000000000001","status":"failed"},"run_count":20,"runs":[{"id":"00000000-0000-4000-8000-000000000100","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000101","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000102","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000103","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000104","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000105","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000106","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000107","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000108","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000109","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000110","task_id":"00000000-0000-4000-8000-000000000002","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"},{"id":"00000000-0000-4000-8000-000000000111","task_id":"00000000-0000-4000-8000-000000000003","status":"failed","summary":"command stderr: summary-private-canary","verification_status":"failed","verification_summary":"verification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canaryverification-private-canar","workspace_disposition":"preserved","workspace_detail":"workspace-private-canary"}]}
+    + actual - expected
+    
+    + 'failed'
+    - 'completed'
+    
+        at completeGraphFixtureLaunch (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.mjs:64:10)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:140:3)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: 'failed',
+      expected: 'completed',
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  operator: 'doesNotMatch'
+  stack: |-
+    Object.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:145:12)
+    expectedException (node:assert:578:17)
+    expectsError (node:assert:703:21)
+    strict.rejects (node:assert:769:3)
+    async TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:140:3)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: graph failure diagnostics omit nested values in allowed fields
+ok 11 - graph failure diagnostics omit nested values in allowed fields
+  ---
+  duration_ms: 0.5164
+  type: 'test'
+  ...
+# Subtest: graph failure rejects malformed identifiers and states without assertion value disclosure
+not ok 12 - graph failure rejects malformed identifiers and states without assertion value disclosure
+  ---
+  duration_ms: 0.7419
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\tools\\task_graph_fixture.test.mjs:170:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input was expected to not match the regular expression /private-canary|a{513}/u. Input:
+    
+    'AssertionError [ERR_ASSERTION]: Task graph did not complete: {"mission":{"id":"private-canary","status":"private-canary"},"run_count":1,"runs":[{"id":"private-canary","task_id":"private-canary","status":"private-canary","summary":null,"verification_status":"private-canary","verification_summary":null,"workspace_disposition":"private-canary","workspace_detail":null}]}\n' +
+      '+ actual - expected\n' +
+      '\n' +
+      "+ 'private-canary'\n" +
+      "- 'completed'\n" +
+      '\n' +
+      '    at completeGraphFixtureLaunch (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.mjs:64:10)\n' +
+      '    at async waitForActual (node:assert:646:5)\n' +
+      '    at async strict.rejects (node:assert:769:25)\n' +
+      '    at async TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:173:5)\n' +
+      '    at async Test.run (node:internal/test_runner/test:1409:7)\n' +
+      '    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n' +
+      '  generatedMessage: false,\n' +
+      "  code: 'ERR_ASSERTION',\n" +
+      "  actual: 'private-canary',\n" +
+      "  expected: 'completed',\n" +
+      "  operator: 'strictEqual',\n" +
+      "  diff: 'simple'\n" +
+      '}'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    AssertionError [ERR_ASSERTION]: Task graph did not complete: {"mission":{"id":"private-canary","status":"private-canary"},"run_count":1,"runs":[{"id":"private-canary","task_id":"private-canary","status":"private-canary","summary":null,"verification_status":"private-canary","verification_summary":null,"workspace_disposition":"private-canary","workspace_detail":null}]}
+    + actual - expected
+    
+    + 'private-canary'
+    - 'completed'
+    
+        at completeGraphFixtureLaunch (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.mjs:64:10)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:173:5)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: 'private-canary',
+      expected: 'completed',
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  operator: 'doesNotMatch'
+  stack: |-
+    Object.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:178:14)
+    expectedException (node:assert:578:17)
+    expectsError (node:assert:703:21)
+    strict.rejects (node:assert:769:3)
+    async TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:173:5)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: source-selection assertions do not disclose private Corp or commit values
+not ok 13 - source-selection assertions do not disclose private Corp or commit values
+  ---
+  duration_ms: 0.5793
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\tools\\task_graph_fixture.test.mjs:188:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input was expected to not match the regular expression /private-canary/u. Input:
+    
+    'AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n' +
+      '+ actual - expected\n' +
+      '\n' +
+      "+ 'corp-private-canary'\n" +
+      "- '00000000-0000-4000-8000-000000000001'\n" +
+      '\n' +
+      '    at graphFixtureSource (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.mjs:23:10)\n' +
+      '    at file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:196:25\n' +
+      '    at getActual (node:assert:611:5)\n' +
+      '    at strict.throws (node:assert:759:24)\n' +
+      '    at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:196:12)\n' +
+      '    at Test.runInAsyncScope (node:async_hooks:227:14)\n' +
+      '    at Test.run (node:internal/test_runner/test:1402:25)\n' +
+      '    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n' +
+      '    at Test.postRun (node:internal/test_runner/test:1542:19)\n' +
+      '    at Test.run (node:internal/test_runner/test:1467:12) {\n' +
+      '  generatedMessage: true,\n' +
+      "  code: 'ERR_ASSERTION',\n" +
+      "  actual: 'corp-private-canary',\n" +
+      "  expected: '00000000-0000-4000-8000-000000000001',\n" +
+      "  operator: 'strictEqual',\n" +
+      "  diff: 'simple'\n" +
+      '}'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'corp-private-canary'
+    - '00000000-0000-4000-8000-000000000001'
+    
+        at graphFixtureSource (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.mjs:23:10)
+        at file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:196:25
+        at getActual (node:assert:611:5)
+        at strict.throws (node:assert:759:24)
+        at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:196:12)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: 'corp-private-canary',
+      expected: '00000000-0000-4000-8000-000000000001',
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  operator: 'doesNotMatch'
+  stack: |-
+    Object.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:197:14)
+    expectedException (node:assert:578:17)
+    expectsError (node:assert:703:21)
+    strict.throws (node:assert:759:3)
+    TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:196:12)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+  ...
+# Subtest: launch and replay assertions never print unknown response values
+not ok 14 - launch and replay assertions never print unknown response values
+  ---
+  duration_ms: 0.7411
+  type: 'test'
+  location: '<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\tools\\task_graph_fixture.test.mjs:203:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input was expected to not match the regular expression /private-canary/u. Input:
+    
+    'AssertionError [ERR_ASSERTION]: Graph launch failed: HTTP response-private-canary\n' +
+      '    at completeGraphFixtureLaunch (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.mjs:52:10)\n' +
+      '    at async waitForActual (node:assert:646:5)\n' +
+      '    at async strict.rejects (node:assert:769:25)\n' +
+      '    at async TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:211:7)\n' +
+      '    at async Test.run (node:internal/test_runner/test:1409:7)\n' +
+      '    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n' +
+      '  generatedMessage: false,\n' +
+      "  code: 'ERR_ASSERTION',\n" +
+      '  actual: false,\n' +
+      '  expected: true,\n' +
+      "  operator: '==',\n" +
+      "  diff: 'simple'\n" +
+      '}'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    AssertionError [ERR_ASSERTION]: Graph launch failed: HTTP response-private-canary
+        at completeGraphFixtureLaunch (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.mjs:52:10)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:211:7)
+        at async Test.run (node:internal/test_runner/test:1409:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: false,
+      expected: true,
+      operator: '==',
+      diff: 'simple'
+    }
+  operator: 'doesNotMatch'
+  stack: |-
+    Object.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:213:16)
+    expectedException (node:assert:578:17)
+    expectsError (node:assert:703:21)
+    strict.rejects (node:assert:769:3)
+    async TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue327-clippy/ecorp/tools/task_graph_fixture.test.mjs:211:7)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: graph reconciliation rejects a repeated conflict or a response that dispatched new work
+ok 15 - graph reconciliation rejects a repeated conflict or a response that dispatched new work
+  ---
+  duration_ms: 0.4312
+  type: 'test'
+  ...
+# Subtest: the E2E retains native staffing, source assertions, concurrency, handoff and Windows mixed-provider coverage
+ok 16 - the E2E retains native staffing, source assertions, concurrency, handoff and Windows mixed-provider coverage
+  ---
+  duration_ms: 60.6552
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 12
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 252.7711

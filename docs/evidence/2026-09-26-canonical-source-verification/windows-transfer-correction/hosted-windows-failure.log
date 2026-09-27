@@ -1,0 +1,844 @@
+2026-09-27T13:18:15.0487618Z Current runner version: '2.337.0'
+2026-09-27T13:18:15.0523528Z ##[group]Runner Image Provisioner
+2026-09-27T13:18:15.0524785Z Hosted Compute Agent
+2026-09-27T13:18:15.0525849Z Version: 20260828.587
+2026-09-27T13:18:15.0527026Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-27T13:18:15.0528353Z Build Date: 2026-08-28T16:44:25Z
+2026-09-27T13:18:15.0529594Z Worker ID: {77d0c63e-1ed3-4592-af96-50bf7eea9b3a}
+2026-09-27T13:18:15.0530799Z Azure Region: northcentralus
+2026-09-27T13:18:15.0531852Z ##[endgroup]
+2026-09-27T13:18:15.0533948Z ##[group]Operating System
+2026-09-27T13:18:15.0535012Z Microsoft Windows Server 2025
+2026-09-27T13:18:15.0536187Z 10.0.26100
+2026-09-27T13:18:15.0536984Z Datacenter
+2026-09-27T13:18:15.0537831Z ##[endgroup]
+2026-09-27T13:18:15.0538885Z ##[group]Runner Image
+2026-09-27T13:18:15.0540274Z Image: windows-2025-vs2026
+2026-09-27T13:18:15.0541325Z Version: 20260922.246.2
+2026-09-27T13:18:15.0543891Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260922.246/images/windows/Windows2025-VS2026-Readme.md
+2026-09-27T13:18:15.0547196Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260922.246
+2026-09-27T13:18:15.0548929Z ##[endgroup]
+2026-09-27T13:18:15.0550807Z ##[group]GITHUB_TOKEN Permissions
+2026-09-27T13:18:15.0553850Z Contents: read
+2026-09-27T13:18:15.0554802Z Metadata: read
+2026-09-27T13:18:15.0555666Z ##[endgroup]
+2026-09-27T13:18:15.0558504Z Secret source: Actions
+2026-09-27T13:18:15.0560386Z Cache mode: write
+2026-09-27T13:18:15.0561556Z Prepare workflow directory
+2026-09-27T13:18:15.0949563Z Prepare all required actions
+2026-09-27T13:18:15.0999482Z Getting action download info
+2026-09-27T13:18:15.3398207Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-09-27T13:18:15.4704528Z Download action repository 'dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87' (SHA:6bed0761d98439e5a578e2877258200ad565ba87)
+2026-09-27T13:18:15.6019666Z Download action repository 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' (SHA:820762786026740c76f36085b0efc47a31fe5020)
+2026-09-27T13:18:15.7662651Z Download action repository 'Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6' (SHA:6323deb102c322ba6fcbdcafc7e3dddab59af2b6)
+2026-09-27T13:18:16.0678356Z Download action repository 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+2026-09-27T13:18:16.3186603Z Complete job name: external-adapters-windows
+2026-09-27T13:18:16.4641844Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-09-27T13:18:16.4643020Z with:
+2026-09-27T13:18:16.4643429Z   persist-credentials: false
+2026-09-27T13:18:16.4643932Z   repository: All-The-Vibes/ecorp
+2026-09-27T13:18:16.4647946Z   token: ***
+2026-09-27T13:18:16.4648337Z   ssh-strict: true
+2026-09-27T13:18:16.4648731Z   ssh-user: git
+2026-09-27T13:18:16.4649145Z   clean: true
+2026-09-27T13:18:16.4649548Z   sparse-checkout-cone-mode: true
+2026-09-27T13:18:16.4650029Z   fetch-depth: 1
+2026-09-27T13:18:16.4650419Z   fetch-tags: false
+2026-09-27T13:18:16.4650819Z   show-progress: true
+2026-09-27T13:18:16.4651223Z   lfs: false
+2026-09-27T13:18:16.4651595Z   submodules: false
+2026-09-27T13:18:16.4652002Z   set-safe-directory: true
+2026-09-27T13:18:16.4652460Z   allow-unsafe-pr-checkout: false
+2026-09-27T13:18:16.4653146Z ##[endgroup]
+2026-09-27T13:18:16.6147834Z Syncing repository: All-The-Vibes/ecorp
+2026-09-27T13:18:16.6149791Z ##[group]Getting Git version info
+2026-09-27T13:18:16.6150404Z Working directory is 'D:\a\ecorp\ecorp'
+2026-09-27T13:18:16.7127441Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-09-27T13:18:17.0421274Z git version 2.55.0.windows.5
+2026-09-27T13:18:17.0467246Z ##[endgroup]
+2026-09-27T13:18:17.0482886Z Temporarily overriding HOME='D:\a\_temp\ab15a6e1-335c-42ec-ad85-1a0da0d8aa72' before making global git config changes
+2026-09-27T13:18:17.0486640Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-27T13:18:17.0492577Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\ecorp\ecorp
+2026-09-27T13:18:17.1061757Z Deleting the contents of 'D:\a\ecorp\ecorp'
+2026-09-27T13:18:17.1067805Z ##[group]Determining repository object format
+2026-09-27T13:18:17.1070324Z ##[endgroup]
+2026-09-27T13:18:17.1071127Z ##[group]Initializing the repository
+2026-09-27T13:18:17.1083457Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\ecorp\ecorp
+2026-09-27T13:18:17.1903557Z Initialized empty Git repository in D:/a/ecorp/ecorp/.git/
+2026-09-27T13:18:17.1949733Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/All-The-Vibes/ecorp
+2026-09-27T13:18:17.2503251Z ##[endgroup]
+2026-09-27T13:18:17.2504105Z ##[group]Disabling automatic garbage collection
+2026-09-27T13:18:17.2512603Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-09-27T13:18:17.2809483Z ##[endgroup]
+2026-09-27T13:18:17.2810930Z ##[group]Setting up auth
+2026-09-27T13:18:17.2812013Z Removing SSH command configuration
+2026-09-27T13:18:17.2821182Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-09-27T13:18:17.3119180Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-09-27T13:18:18.5552818Z Removing HTTP extra header
+2026-09-27T13:18:18.5561938Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-27T13:18:18.5850222Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-09-27T13:18:19.0940636Z Removing includeIf entries pointing to credentials config files
+2026-09-27T13:18:19.0952264Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-27T13:18:19.1247030Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-09-27T13:18:19.6628511Z [command]"C:\Program Files\Git\bin\git.exe" config --file D:\a\_temp\git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-09-27T13:18:19.6938836Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:D:/a/ecorp/ecorp/.git.path D:\a\_temp\git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config
+2026-09-27T13:18:19.7230854Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:D:/a/ecorp/ecorp/.git/worktrees/*.path D:\a\_temp\git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config
+2026-09-27T13:18:19.7567220Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config
+2026-09-27T13:18:19.7861088Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config
+2026-09-27T13:18:19.8146819Z ##[endgroup]
+2026-09-27T13:18:19.8147303Z ##[group]Fetching the repository
+2026-09-27T13:18:19.8161381Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +fbcab988b7bc7cab36e3a8a4a7d1a156b15e7787:refs/remotes/pull/375/merge
+2026-09-27T13:18:22.5794439Z From https://github.com/All-The-Vibes/ecorp
+2026-09-27T13:18:22.5796015Z  * [new ref]         fbcab988b7bc7cab36e3a8a4a7d1a156b15e7787 -> pull/375/merge
+2026-09-27T13:18:22.5836455Z ##[endgroup]
+2026-09-27T13:18:22.5836831Z ##[group]Determining the checkout info
+2026-09-27T13:18:22.5837652Z ##[endgroup]
+2026-09-27T13:18:22.5846000Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-09-27T13:18:22.6256508Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-09-27T13:18:22.6537526Z ##[group]Checking out the ref
+2026-09-27T13:18:22.6545875Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/remotes/pull/375/merge
+2026-09-27T13:18:23.7210629Z Updating files:  32% (2213/6853)
+2026-09-27T13:18:23.7403934Z Updating files:  33% (2262/6853)
+2026-09-27T13:18:23.7597580Z Updating files:  34% (2331/6853)
+2026-09-27T13:18:23.7816570Z Updating files:  35% (2399/6853)
+2026-09-27T13:18:23.7973938Z Updating files:  36% (2468/6853)
+2026-09-27T13:18:23.8157477Z Updating files:  37% (2536/6853)
+2026-09-27T13:18:23.8332208Z Updating files:  38% (2605/6853)
+2026-09-27T13:18:23.8529531Z Updating files:  39% (2673/6853)
+2026-09-27T13:18:23.8725509Z Updating files:  40% (2742/6853)
+2026-09-27T13:18:23.8949292Z Updating files:  41% (2810/6853)
+2026-09-27T13:18:23.9138336Z Updating files:  42% (2879/6853)
+2026-09-27T13:18:23.9340871Z Updating files:  43% (2947/6853)
+2026-09-27T13:18:23.9542313Z Updating files:  44% (3016/6853)
+2026-09-27T13:18:23.9749646Z Updating files:  45% (3084/6853)
+2026-09-27T13:18:24.0006389Z Updating files:  46% (3153/6853)
+2026-09-27T13:18:24.0195147Z Updating files:  47% (3221/6853)
+2026-09-27T13:18:24.0377328Z Updating files:  48% (3290/6853)
+2026-09-27T13:18:24.0552322Z Updating files:  49% (3358/6853)
+2026-09-27T13:18:24.0750474Z Updating files:  50% (3427/6853)
+2026-09-27T13:18:24.0911782Z Updating files:  51% (3496/6853)
+2026-09-27T13:18:24.1104852Z Updating files:  52% (3564/6853)
+2026-09-27T13:18:24.1320954Z Updating files:  53% (3633/6853)
+2026-09-27T13:18:24.1536478Z Updating files:  54% (3701/6853)
+2026-09-27T13:18:24.1807246Z Updating files:  55% (3770/6853)
+2026-09-27T13:18:24.2010254Z Updating files:  56% (3838/6853)
+2026-09-27T13:18:24.2280564Z Updating files:  57% (3907/6853)
+2026-09-27T13:18:24.3784273Z Updating files:  58% (3975/6853)
+2026-09-27T13:18:24.4064293Z Updating files:  59% (4044/6853)
+2026-09-27T13:18:24.4308275Z Updating files:  60% (4112/6853)
+2026-09-27T13:18:24.4555531Z Updating files:  61% (4181/6853)
+2026-09-27T13:18:24.4828778Z Updating files:  62% (4249/6853)
+2026-09-27T13:18:24.5173300Z Updating files:  63% (4318/6853)
+2026-09-27T13:18:24.5450335Z Updating files:  64% (4386/6853)
+2026-09-27T13:18:24.5695337Z Updating files:  65% (4455/6853)
+2026-09-27T13:18:24.5964121Z Updating files:  66% (4523/6853)
+2026-09-27T13:18:24.6253611Z Updating files:  67% (4592/6853)
+2026-09-27T13:18:24.6478052Z Updating files:  68% (4661/6853)
+2026-09-27T13:18:24.6718954Z Updating files:  69% (4729/6853)
+2026-09-27T13:18:24.6937979Z Updating files:  70% (4798/6853)
+2026-09-27T13:18:24.6999071Z Updating files:  71% (4866/6853)
+2026-09-27T13:18:24.7184466Z Updating files:  71% (4880/6853)
+2026-09-27T13:18:24.7419870Z Updating files:  72% (4935/6853)
+2026-09-27T13:18:24.7645985Z Updating files:  73% (5003/6853)
+2026-09-27T13:18:24.7963008Z Updating files:  74% (5072/6853)
+2026-09-27T13:18:24.8387967Z Updating files:  75% (5140/6853)
+2026-09-27T13:18:24.8584678Z Updating files:  76% (5209/6853)
+2026-09-27T13:18:24.8805538Z Updating files:  77% (5277/6853)
+2026-09-27T13:18:24.8992624Z Updating files:  78% (5346/6853)
+2026-09-27T13:18:24.9203307Z Updating files:  79% (5414/6853)
+2026-09-27T13:18:24.9395992Z Updating files:  80% (5483/6853)
+2026-09-27T13:18:24.9596636Z Updating files:  81% (5551/6853)
+2026-09-27T13:18:24.9771950Z Updating files:  82% (5620/6853)
+2026-09-27T13:18:24.9991303Z Updating files:  83% (5688/6853)
+2026-09-27T13:18:25.0237085Z Updating files:  84% (5757/6853)
+2026-09-27T13:18:25.0452976Z Updating files:  85% (5826/6853)
+2026-09-27T13:18:25.0729217Z Updating files:  86% (5894/6853)
+2026-09-27T13:18:25.0902496Z Updating files:  87% (5963/6853)
+2026-09-27T13:18:25.1062595Z Updating files:  88% (6031/6853)
+2026-09-27T13:18:25.1255952Z Updating files:  89% (6100/6853)
+2026-09-27T13:18:25.1420772Z Updating files:  90% (6168/6853)
+2026-09-27T13:18:25.1607239Z Updating files:  91% (6237/6853)
+2026-09-27T13:18:25.1762005Z Updating files:  92% (6305/6853)
+2026-09-27T13:18:25.2291860Z Updating files:  93% (6374/6853)
+2026-09-27T13:18:25.2627165Z Updating files:  94% (6442/6853)
+2026-09-27T13:18:25.2905070Z Updating files:  95% (6511/6853)
+2026-09-27T13:18:25.3142047Z Updating files:  96% (6579/6853)
+2026-09-27T13:18:25.3367361Z Updating files:  97% (6648/6853)
+2026-09-27T13:18:25.3550800Z Updating files:  98% (6716/6853)
+2026-09-27T13:18:25.3739155Z Updating files:  99% (6785/6853)
+2026-09-27T13:18:25.3739573Z Updating files: 100% (6853/6853)
+2026-09-27T13:18:25.3739966Z Updating files: 100% (6853/6853), done.
+2026-09-27T13:18:25.3918956Z Note: switching to 'refs/remotes/pull/375/merge'.
+2026-09-27T13:18:25.3919621Z 
+2026-09-27T13:18:25.3919871Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-09-27T13:18:25.3920391Z changes and commit them, and you can discard any commits you make in this
+2026-09-27T13:18:25.3920941Z state without impacting any branches by switching back to a branch.
+2026-09-27T13:18:25.3921431Z 
+2026-09-27T13:18:25.3921756Z If you want to create a new branch to retain commits you create, you may
+2026-09-27T13:18:25.3922400Z do so (now or later) by using -c with the switch command. Example:
+2026-09-27T13:18:25.3922670Z 
+2026-09-27T13:18:25.3922825Z   git switch -c <new-branch-name>
+2026-09-27T13:18:25.3923000Z 
+2026-09-27T13:18:25.3923088Z Or undo this operation with:
+2026-09-27T13:18:25.3923245Z 
+2026-09-27T13:18:25.3923323Z   git switch -
+2026-09-27T13:18:25.3923432Z 
+2026-09-27T13:18:25.3923648Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-09-27T13:18:25.3923966Z 
+2026-09-27T13:18:25.3924332Z HEAD is now at fbcab98 Merge 712a30eb018fa2325f889bdc4fd539161e2c0f3a into 95d41f9b6594bbc4d96f4d589f04db32fc0bcaad
+2026-09-27T13:18:25.4180429Z ##[endgroup]
+2026-09-27T13:18:25.4584725Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-09-27T13:18:25.4865480Z fbcab988b7bc7cab36e3a8a4a7d1a156b15e7787
+2026-09-27T13:18:25.4908541Z ##[group]Removing auth
+2026-09-27T13:18:25.4908873Z Removing SSH command configuration
+2026-09-27T13:18:25.4916491Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-09-27T13:18:25.5220782Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-09-27T13:18:26.1284169Z Removing HTTP extra header
+2026-09-27T13:18:26.1292403Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-27T13:18:26.1613533Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-09-27T13:18:26.7027399Z Removing includeIf entries pointing to credentials config files
+2026-09-27T13:18:26.7035807Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-27T13:18:26.7319486Z includeif.gitdir:D:/a/ecorp/ecorp/.git.path
+2026-09-27T13:18:26.7320032Z includeif.gitdir:D:/a/ecorp/ecorp/.git/worktrees/*.path
+2026-09-27T13:18:26.7320394Z includeif.gitdir:/github/workspace/.git.path
+2026-09-27T13:18:26.7320748Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-09-27T13:18:26.7364332Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:D:/a/ecorp/ecorp/.git.path
+2026-09-27T13:18:26.7626446Z D:\a\_temp\git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config
+2026-09-27T13:18:26.7668160Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:D:/a/ecorp/ecorp/.git.path D\:\\a\\_temp\\git\-credentials\-fe264b0e\-df39\-4149\-b136\-b58d955f1964\.config
+2026-09-27T13:18:26.7964454Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:D:/a/ecorp/ecorp/.git/worktrees/*.path
+2026-09-27T13:18:26.8216673Z D:\a\_temp\git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config
+2026-09-27T13:18:26.8259945Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:D:/a/ecorp/ecorp/.git/worktrees/*.path D\:\\a\\_temp\\git\-credentials\-fe264b0e\-df39\-4149\-b136\-b58d955f1964\.config
+2026-09-27T13:18:26.8560871Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-09-27T13:18:26.8810808Z /github/runner_temp/git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config
+2026-09-27T13:18:26.8853346Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-fe264b0e\-df39\-4149\-b136\-b58d955f1964\.config
+2026-09-27T13:18:26.9139585Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-09-27T13:18:26.9388029Z /github/runner_temp/git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config
+2026-09-27T13:18:26.9428476Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-fe264b0e\-df39\-4149\-b136\-b58d955f1964\.config
+2026-09-27T13:18:26.9716199Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-09-27T13:18:27.5190812Z Removing credentials config 'D:\a\_temp\git-credentials-fe264b0e-df39-4149-b136-b58d955f1964.config'
+2026-09-27T13:18:27.5203441Z ##[endgroup]
+2026-09-27T13:18:27.5687593Z ##[group]Run dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+2026-09-27T13:18:27.5688044Z with:
+2026-09-27T13:18:27.5688217Z   toolchain: 1.98.1
+2026-09-27T13:18:27.5688404Z ##[endgroup]
+2026-09-27T13:18:27.5753406Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+2026-09-27T13:18:27.5922939Z ##[group]Run if [[ -z $toolchain ]]; then
+2026-09-27T13:18:27.5923303Z [36;1mif [[ -z $toolchain ]]; then[0m
+2026-09-27T13:18:27.5923823Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2026-09-27T13:18:27.5924380Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2026-09-27T13:18:27.5924649Z [36;1m  exit 1[0m
+2026-09-27T13:18:27.5924954Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2026-09-27T13:18:27.5925348Z [36;1m  if [[ Windows == macOS ]]; then[0m
+2026-09-27T13:18:27.5925938Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-09-27T13:18:27.5926444Z [36;1m  else[0m
+2026-09-27T13:18:27.5926828Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-09-27T13:18:27.5927270Z [36;1m  fi[0m
+2026-09-27T13:18:27.5927537Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2026-09-27T13:18:27.5928048Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2026-09-27T13:18:27.5928491Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2026-09-27T13:18:27.5928991Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2026-09-27T13:18:27.5929752Z [36;1melse[0m
+2026-09-27T13:18:27.5929973Z [36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT[0m
+2026-09-27T13:18:27.5931097Z [36;1mfi[0m
+2026-09-27T13:18:27.5989377Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:27.5989770Z env:
+2026-09-27T13:18:27.5989941Z   toolchain: 1.98.1
+2026-09-27T13:18:27.5990120Z ##[endgroup]
+2026-09-27T13:18:27.7631153Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=187]
+2026-09-27T13:18:27.7645185Z ##[start-action display=Construct rustup command line;id=__dtolnay_rust-toolchain.flags]
+2026-09-27T13:18:27.7792868Z ##[group]Run echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+2026-09-27T13:18:27.7793498Z [36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT[0m
+2026-09-27T13:18:27.7794112Z [36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT[0m
+2026-09-27T13:18:27.7795074Z [36;1mecho "downgrade=" >> $GITHUB_OUTPUT[0m
+2026-09-27T13:18:27.7810228Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:27.7810617Z env:
+2026-09-27T13:18:27.7810777Z   targets: 
+2026-09-27T13:18:27.7810936Z   components: 
+2026-09-27T13:18:27.7811103Z ##[endgroup]
+2026-09-27T13:18:27.8478971Z ##[end-action id=__dtolnay_rust-toolchain.flags;outcome=success;conclusion=success;duration_ms=83]
+2026-09-27T13:18:27.8481504Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+2026-09-27T13:18:27.8619954Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$USERPROFILE\.cargo"} >> $GITHUB_ENV
+2026-09-27T13:18:27.8620459Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$USERPROFILE\.cargo"} >> $GITHUB_ENV[0m
+2026-09-27T13:18:27.8636891Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:27.8637280Z ##[endgroup]
+2026-09-27T13:18:27.9026582Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=54]
+2026-09-27T13:18:27.9031035Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+2026-09-27T13:18:27.9042112Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-09-27T13:18:27.9044842Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+2026-09-27T13:18:27.9176338Z ##[group]Run if ! command -v rustup &>/dev/null; then
+2026-09-27T13:18:27.9176688Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2026-09-27T13:18:27.9177438Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://win.rustup.rs/x86_64 --output 'D:\a\_temp\rustup-init.exe'[0m
+2026-09-27T13:18:27.9178281Z [36;1m  'D:\a\_temp\rustup-init.exe' --default-toolchain none --no-modify-path -y[0m
+2026-09-27T13:18:27.9178696Z [36;1m  echo "$CARGO_HOME\bin" >> $GITHUB_PATH[0m
+2026-09-27T13:18:27.9178949Z [36;1mfi[0m
+2026-09-27T13:18:27.9195193Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:27.9195568Z env:
+2026-09-27T13:18:27.9195748Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:27.9195988Z ##[endgroup]
+2026-09-27T13:18:27.9803195Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=success;conclusion=success;duration_ms=75]
+2026-09-27T13:18:27.9814832Z ##[start-action display=rustup toolchain install 1.98.1;id=__dtolnay_rust-toolchain.__run_4]
+2026-09-27T13:18:27.9943799Z ##[group]Run rustup toolchain install 1.98.1 --profile minimal --no-self-update
+2026-09-27T13:18:27.9944325Z [36;1mrustup toolchain install 1.98.1 --profile minimal --no-self-update[0m
+2026-09-27T13:18:27.9960852Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:27.9961240Z env:
+2026-09-27T13:18:27.9961427Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:27.9961686Z   RUSTUP_PERMIT_COPY_RENAME: 1
+2026-09-27T13:18:27.9962058Z ##[endgroup]
+2026-09-27T13:18:28.5655607Z info: syncing channel updates for 1.98.1-x86_64-pc-windows-msvc
+2026-09-27T13:18:29.0658510Z info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+2026-09-27T13:18:29.0703525Z info: downloading 3 components
+2026-09-27T13:18:36.8009285Z 
+2026-09-27T13:18:36.8310520Z   1.98.1-x86_64-pc-windows-msvc installed - rustc 1.98.1 (48a229cea 2026-09-01)
+2026-09-27T13:18:36.8310907Z 
+2026-09-27T13:18:36.8419239Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=8860]
+2026-09-27T13:18:36.8427852Z ##[start-action display=rustup default 1.98.1;id=__dtolnay_rust-toolchain.__run_5]
+2026-09-27T13:18:36.8573189Z ##[group]Run rustup default 1.98.1
+2026-09-27T13:18:36.8573445Z [36;1mrustup default 1.98.1[0m
+2026-09-27T13:18:36.8588691Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:36.8589058Z env:
+2026-09-27T13:18:36.8589242Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:36.8589505Z ##[endgroup]
+2026-09-27T13:18:36.9347102Z info: using existing install for 1.98.1-x86_64-pc-windows-msvc
+2026-09-27T13:18:36.9385568Z info: default toolchain set to 1.98.1-x86_64-pc-windows-msvc
+2026-09-27T13:18:36.9386049Z 
+2026-09-27T13:18:36.9604309Z   1.98.1-x86_64-pc-windows-msvc unchanged - rustc 1.98.1 (48a229cea 2026-09-01)
+2026-09-27T13:18:36.9604990Z 
+2026-09-27T13:18:36.9609238Z info: note that the toolchain '1.98.1-x86_64-pc-windows-msvc' is currently in use (overridden by 'D:\a\ecorp\ecorp\rust-toolchain.toml')
+2026-09-27T13:18:36.9705115Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=127]
+2026-09-27T13:18:36.9708787Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+2026-09-27T13:18:36.9864220Z ##[group]Run DATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+2026-09-27T13:18:36.9866461Z [36;1mDATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')[0m
+2026-09-27T13:18:36.9867568Z [36;1mHASH=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-hash: //p')[0m
+2026-09-27T13:18:36.9868374Z [36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT[0m
+2026-09-27T13:18:36.9888979Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:36.9889604Z env:
+2026-09-27T13:18:36.9889895Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:36.9890305Z ##[endgroup]
+2026-09-27T13:18:37.6999068Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=728]
+2026-09-27T13:18:37.7003885Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+2026-09-27T13:18:37.7196185Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+2026-09-27T13:18:37.7196765Z [36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then[0m
+2026-09-27T13:18:37.7197304Z [36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV[0m
+2026-09-27T13:18:37.7197734Z [36;1mfi[0m
+2026-09-27T13:18:37.7217064Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:37.7217687Z env:
+2026-09-27T13:18:37.7217985Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:37.7218394Z ##[endgroup]
+2026-09-27T13:18:37.7986563Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=98]
+2026-09-27T13:18:37.7988969Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+2026-09-27T13:18:37.8152481Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+2026-09-27T13:18:37.8152843Z [36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then[0m
+2026-09-27T13:18:37.8153154Z [36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV[0m
+2026-09-27T13:18:37.8153422Z [36;1mfi[0m
+2026-09-27T13:18:37.8167863Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:37.8168415Z env:
+2026-09-27T13:18:37.8168609Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:37.8168861Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:18:37.8169051Z ##[endgroup]
+2026-09-27T13:18:37.8931786Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=94]
+2026-09-27T13:18:37.8934657Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+2026-09-27T13:18:37.9074885Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+2026-09-27T13:18:37.9075382Z [36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70[0m
+2026-09-27T13:18:37.9076016Z [36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "D:\a\_temp"/.implicit_cargo_registries_crates_io_protocol ]; then[0m
+2026-09-27T13:18:37.9076663Z [36;1m  if rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[89]\.'; then[0m
+2026-09-27T13:18:37.9077166Z [36;1m    touch "D:\a\_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-09-27T13:18:37.9077634Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV[0m
+2026-09-27T13:18:37.9078098Z [36;1m  elif rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[67]\.'; then[0m
+2026-09-27T13:18:37.9078580Z [36;1m    touch "D:\a\_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-09-27T13:18:37.9079020Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV[0m
+2026-09-27T13:18:37.9079336Z [36;1m  fi[0m
+2026-09-27T13:18:37.9079495Z [36;1mfi[0m
+2026-09-27T13:18:37.9095632Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:37.9096021Z env:
+2026-09-27T13:18:37.9096214Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:37.9096472Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:18:37.9096670Z   CARGO_TERM_COLOR: always
+2026-09-27T13:18:37.9096874Z ##[endgroup]
+2026-09-27T13:18:38.2129064Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=319]
+2026-09-27T13:18:38.2132782Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+2026-09-27T13:18:38.2285645Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+2026-09-27T13:18:38.2286975Z [36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation[0m
+2026-09-27T13:18:38.2288786Z [36;1mif rustc +1.98.1 --version --verbose | grep -q '^release: 1\.7[01]\.'; then[0m
+2026-09-27T13:18:38.2289561Z [36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV[0m
+2026-09-27T13:18:38.2290088Z [36;1mfi[0m
+2026-09-27T13:18:38.2316516Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:38.2317163Z env:
+2026-09-27T13:18:38.2317525Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:38.2317990Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:18:38.2318337Z   CARGO_TERM_COLOR: always
+2026-09-27T13:18:38.2318690Z ##[endgroup]
+2026-09-27T13:18:38.3511050Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=137]
+2026-09-27T13:18:38.3514612Z ##[start-action display=rustc +1.98.1 --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+2026-09-27T13:18:38.3657827Z ##[group]Run rustc +1.98.1 --version --verbose
+2026-09-27T13:18:38.3658366Z [36;1mrustc +1.98.1 --version --verbose[0m
+2026-09-27T13:18:38.3683512Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-09-27T13:18:38.3684198Z env:
+2026-09-27T13:18:38.3684528Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:38.3684981Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:18:38.3685336Z   CARGO_TERM_COLOR: always
+2026-09-27T13:18:38.3685685Z ##[endgroup]
+2026-09-27T13:18:38.4699959Z rustc 1.98.1 (48a229cea 2026-09-01)
+2026-09-27T13:18:38.4700946Z binary: rustc
+2026-09-27T13:18:38.4702039Z commit-hash: 48a229ceaefd4985c50990b14116b6d856af0985
+2026-09-27T13:18:38.4702538Z commit-date: 2026-09-01
+2026-09-27T13:18:38.4702882Z host: x86_64-pc-windows-msvc
+2026-09-27T13:18:38.4703255Z release: 1.98.1
+2026-09-27T13:18:38.4704374Z LLVM version: 22.1.8
+2026-09-27T13:18:38.4836585Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=132]
+2026-09-27T13:18:38.5061884Z ##[group]Run actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+2026-09-27T13:18:38.5062311Z with:
+2026-09-27T13:18:38.5062503Z   node-version-file: .node-version
+2026-09-27T13:18:38.5062754Z   check-latest: false
+2026-09-27T13:18:38.5065741Z   token: ***
+2026-09-27T13:18:38.5065964Z   package-manager-cache: true
+2026-09-27T13:18:38.5066190Z env:
+2026-09-27T13:18:38.5066372Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:38.5066624Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:18:38.5066816Z   CARGO_TERM_COLOR: always
+2026-09-27T13:18:38.5067029Z ##[endgroup]
+2026-09-27T13:18:38.6650074Z Node version file is not JSON file
+2026-09-27T13:18:38.6652709Z Resolved .node-version as 24.19.0
+2026-09-27T13:18:38.7435991Z Attempting to download 24.19.0...
+2026-09-27T13:18:39.3905527Z Acquiring 24.19.0 - x64 from https://github.com/actions/node-versions/releases/download/24.19.0-30872449280/node-24.19.0-win32-x64.7z
+2026-09-27T13:18:39.7479946Z Extracting ...
+2026-09-27T13:18:42.2032487Z Adding to the cache ...
+2026-09-27T13:18:45.8501460Z ##[group]Environment details
+2026-09-27T13:18:47.0885265Z node: v24.19.0
+2026-09-27T13:18:47.0885614Z npm: 11.17.0
+2026-09-27T13:18:47.0885844Z yarn: 1.22.22
+2026-09-27T13:18:47.0886255Z ##[endgroup]
+2026-09-27T13:18:47.1239708Z ##[group]Run Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+2026-09-27T13:18:47.1240166Z with:
+2026-09-27T13:18:47.1240354Z   prefix-key: v0-rust
+2026-09-27T13:18:47.1240569Z   add-job-id-key: true
+2026-09-27T13:18:47.1240788Z   add-rust-environment-hash-key: true
+2026-09-27T13:18:47.1241060Z   cache-targets: true
+2026-09-27T13:18:47.1241269Z   cache-all-crates: false
+2026-09-27T13:18:47.1241490Z   cache-workspace-crates: false
+2026-09-27T13:18:47.1241708Z   save-if: true
+2026-09-27T13:18:47.1241891Z   cache-provider: github
+2026-09-27T13:18:47.1242103Z   cache-bin: true
+2026-09-27T13:18:47.1242291Z   lookup-only: false
+2026-09-27T13:18:47.1242491Z   cmd-format: {0}
+2026-09-27T13:18:47.1242661Z env:
+2026-09-27T13:18:47.1242842Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:18:47.1243106Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:18:47.1243303Z   CARGO_TERM_COLOR: always
+2026-09-27T13:18:47.1243501Z ##[endgroup]
+2026-09-27T13:18:53.2256689Z ##[group]Cache Configuration
+2026-09-27T13:18:53.2268352Z Cache Provider:
+2026-09-27T13:18:53.2268772Z     github
+2026-09-27T13:18:53.2269081Z Workspaces:
+2026-09-27T13:18:53.2269415Z     D:\a\ecorp\ecorp
+2026-09-27T13:18:53.2269768Z Cache Paths:
+2026-09-27T13:18:53.2270163Z     <USERPROFILE>\.cargo\bin
+2026-09-27T13:18:53.2270695Z     <USERPROFILE>\.cargo\.crates.toml
+2026-09-27T13:18:53.2271259Z     <USERPROFILE>\.cargo\.crates2.json
+2026-09-27T13:18:53.2271814Z     <USERPROFILE>\.cargo\registry
+2026-09-27T13:18:53.2272321Z     <USERPROFILE>\.cargo\git
+2026-09-27T13:18:53.2272808Z     D:\a\ecorp\ecorp\target
+2026-09-27T13:18:53.2273190Z Restore Key:
+2026-09-27T13:18:53.2273715Z     v0-rust-external-adapters-windows-Windows_NT-x64-2113753f
+2026-09-27T13:18:53.2274296Z Cache Key:
+2026-09-27T13:18:53.2274868Z     v0-rust-external-adapters-windows-Windows_NT-x64-2113753f-a835d06c
+2026-09-27T13:18:53.2275519Z .. Prefix:
+2026-09-27T13:18:53.2275997Z   - v0-rust-external-adapters-windows-Windows_NT-x64
+2026-09-27T13:18:53.2276581Z .. Environment considered:
+2026-09-27T13:18:53.2276971Z   - Rust Versions:
+2026-09-27T13:18:53.2277545Z     - 1.98.1 x86_64-pc-windows-msvc 48a229ceaefd4985c50990b14116b6d856af0985
+2026-09-27T13:18:53.2278179Z   - CARGO_HOME
+2026-09-27T13:18:53.2279784Z   - CARGO_INCREMENTAL
+2026-09-27T13:18:53.2280169Z   - CARGO_TERM_COLOR
+2026-09-27T13:18:53.2280543Z .. Lockfiles considered:
+2026-09-27T13:18:53.2280951Z   - D:\a\ecorp\ecorp\Cargo.lock
+2026-09-27T13:18:53.2281446Z   - D:\a\ecorp\ecorp\crates\crony-audit\Cargo.toml
+2026-09-27T13:18:53.2282106Z   - D:\a\ecorp\ecorp\crates\crony-base-gateway\Cargo.toml
+2026-09-27T13:18:53.2282721Z   - D:\a\ecorp\ecorp\crates\crony-base\Cargo.toml
+2026-09-27T13:18:53.2283274Z   - D:\a\ecorp\ecorp\crates\crony-cli\Cargo.toml
+2026-09-27T13:18:53.2283853Z   - D:\a\ecorp\ecorp\crates\crony-domain\Cargo.toml
+2026-09-27T13:18:53.2284454Z   - D:\a\ecorp\ecorp\crates\crony-gateways\Cargo.toml
+2026-09-27T13:18:53.2285063Z   - D:\a\ecorp\ecorp\crates\crony-protocol\Cargo.toml
+2026-09-27T13:18:53.2285791Z   - D:\a\ecorp\ecorp\crates\crony-runner\Cargo.toml
+2026-09-27T13:18:53.2286755Z   - D:\a\ecorp\ecorp\crates\crony-server\Cargo.toml
+2026-09-27T13:18:53.2287347Z   - D:\a\ecorp\ecorp\crates\crony-store\Cargo.toml
+2026-09-27T13:18:53.2287907Z   - D:\a\ecorp\ecorp\rust-toolchain.toml
+2026-09-27T13:18:53.2288578Z ##[endgroup]
+2026-09-27T13:18:53.2288752Z 
+2026-09-27T13:18:53.2288921Z ... Restoring cache ...
+2026-09-27T13:18:53.4705709Z Cache hit for: v0-rust-external-adapters-windows-Windows_NT-x64-2113753f-a835d06c
+2026-09-27T13:18:54.5807905Z Received 138412032 of 972924814 (14.2%), 131.3 MBs/sec
+2026-09-27T13:18:55.5812144Z Received 335544320 of 972924814 (34.5%), 159.5 MBs/sec
+2026-09-27T13:18:56.6859985Z Received 536870912 of 972924814 (55.2%), 164.7 MBs/sec
+2026-09-27T13:18:57.6872269Z Received 704643072 of 972924814 (72.4%), 163.5 MBs/sec
+2026-09-27T13:18:58.6937206Z Received 884998144 of 972924814 (91.0%), 164.9 MBs/sec
+2026-09-27T13:18:59.3119966Z Received 972924814 of 972924814 (100.0%), 161.7 MBs/sec
+2026-09-27T13:18:59.3122696Z Cache Size: ~928 MB (972924814 B)
+2026-09-27T13:18:59.3182806Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/b0052187-1377-4e60-9668-db4d1b61cc61/cache.tzst -P -C D:/a/ecorp/ecorp --force-local --use-compress-program "zstd -d"
+2026-09-27T13:19:15.8351147Z Cache restored successfully
+2026-09-27T13:19:15.8946982Z Restored from cache key "v0-rust-external-adapters-windows-Windows_NT-x64-2113753f-a835d06c" full match: true.
+2026-09-27T13:19:15.9235686Z ##[group]Run cargo build --locked -p crony-server -p crony-runner
+2026-09-27T13:19:15.9236249Z [36;1mcargo build --locked -p crony-server -p crony-runner[0m
+2026-09-27T13:19:15.9814486Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-09-27T13:19:15.9814909Z env:
+2026-09-27T13:19:15.9815153Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:19:15.9815535Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:19:15.9815816Z   CARGO_TERM_COLOR: always
+2026-09-27T13:19:15.9816070Z   CACHE_ON_FAILURE: false
+2026-09-27T13:19:15.9816314Z ##[endgroup]
+2026-09-27T13:19:16.4412012Z [1m[92m    Updating[0m crates.io index
+2026-09-27T13:19:38.8372462Z [1m[92m   Compiling[0m crony-domain v0.1.0 (D:\a\ecorp\ecorp\crates\crony-domain)
+2026-09-27T13:19:38.8423783Z [1m[92m   Compiling[0m crony-audit v0.1.0 (D:\a\ecorp\ecorp\crates\crony-audit)
+2026-09-27T13:19:40.8810099Z [1m[92m   Compiling[0m crony-base v0.1.0 (D:\a\ecorp\ecorp\crates\crony-base)
+2026-09-27T13:19:42.3693102Z [1m[92m   Compiling[0m crony-protocol v0.1.0 (D:\a\ecorp\ecorp\crates\crony-protocol)
+2026-09-27T13:19:45.8341572Z [1m[92m   Compiling[0m crony-store v0.1.0 (D:\a\ecorp\ecorp\crates\crony-store)
+2026-09-27T13:19:45.9495086Z [1m[92m   Compiling[0m crony-runner v0.1.0 (D:\a\ecorp\ecorp\crates\crony-runner)
+2026-09-27T13:20:04.8077576Z [1m[92m   Compiling[0m crony-server v0.1.0 (D:\a\ecorp\ecorp\crates\crony-server)
+2026-09-27T13:20:51.2045622Z [1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 1m 34s
+2026-09-27T13:20:51.3692418Z ##[group]Run node --test tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/ci_external_adapters_windows.test.mjs tools/factory_budget_process.test.mjs tools/e2e_predispatch_failure.test.mjs tools/factory_budget_provenance.test.mjs
+2026-09-27T13:20:51.3694518Z [36;1mnode --test tools/owned_test_stack.test.mjs tools/ci_owned_test_server.test.mjs tools/ci_external_adapters_windows.test.mjs tools/factory_budget_process.test.mjs tools/e2e_predispatch_failure.test.mjs tools/factory_budget_provenance.test.mjs[0m
+2026-09-27T13:20:51.3771436Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-09-27T13:20:51.3771842Z env:
+2026-09-27T13:20:51.3772102Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:20:51.3772450Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:20:51.3772709Z   CARGO_TERM_COLOR: always
+2026-09-27T13:20:51.3772978Z   CACHE_ON_FAILURE: false
+2026-09-27T13:20:51.3773247Z   ECORP_OWNED_PROCESS_TEST: 1
+2026-09-27T13:20:51.3773620Z ##[endgroup]
+2026-09-27T13:20:56.5356939Z ✔ Windows external-adapter fixture rejects manual PostgreSQL port before creating state (1978.7437ms)
+2026-09-27T13:20:56.5358887Z ✔ Windows bounded fixture command retains both streams after terminating its timed-out child (2764.183ms)
+2026-09-27T13:20:56.5361260Z ℹ Retained bounded-command timeout evidence <USERPROFILE>\AppData\Local\Temp\ecorp-fixture-timeout-BL1i52
+2026-09-27T13:20:56.5463765Z ✔ CI server preview is explicit, isolated, read-only and credential-free (1.6625ms)
+2026-09-27T13:20:56.5465539Z ✔ CI server refuses missing scope, legacy/manual targets and unexpected database configuration (4.4187ms)
+2026-09-27T13:20:56.5467289Z ✔ owned cleanup wiring accepts LF and CRLF but still requires unconditional exact cleanup (0.6304ms)
+2026-09-27T13:20:56.5468999Z ✔ all CI restart fixtures consume the same explicit ownership manifest without numeric-PID fallbacks (2.2036ms)
+2026-09-27T13:20:56.5470522Z ▶ predispatch ownership uses the native receipt contract
+2026-09-27T13:20:56.5474830Z   ✔ matching native receipt passes the actual caller (3.9194ms)
+2026-09-27T13:20:56.5476185Z   ✔ one native tick changed is denied (2.6166ms)
+2026-09-27T13:20:56.5477107Z   ✔ native ticks missing is denied (2.6087ms)
+2026-09-27T13:20:56.5478007Z   ✔ native ticks rounded to number is denied (1.9722ms)
+2026-09-27T13:20:56.5478898Z   ✔ PID changed is denied (1.9962ms)
+2026-09-27T13:20:56.5479995Z   ✔ PID missing is denied (1.137ms)
+2026-09-27T13:20:56.5480742Z   ✔ platform changed is denied (1.2086ms)
+2026-09-27T13:20:56.5481586Z   ✔ platform missing is denied (1.4628ms)
+2026-09-27T13:20:56.5482364Z   ✔ executable changed is denied (1.7004ms)
+2026-09-27T13:20:56.5483185Z   ✔ listener not owned is denied (1.5528ms)
+2026-09-27T13:20:56.5484296Z ✔ predispatch ownership uses the native receipt contract (37.9396ms)
+2026-09-27T13:21:15.5463816Z ✔ shared native identity distinguishes inspection uncertainty from absence (23592.2381ms)
+2026-09-27T13:21:22.7259227Z ✔ recovery cleanup preserves live uncertain or mismatched children and receipts; only proven absence succeeds (7180.571ms)
+2026-09-27T13:21:22.7284890Z ✔ budget process adapter delegates exact identity and stop to the existing native helper (2.4184ms)
+2026-09-27T13:21:30.9371982Z ✔ actual lock helper cleans its handshake on release and preserves a pre-existing marker on failure (8208.4588ms)
+2026-09-27T13:21:36.6976086Z ✔ actual Windows budget-fixture child stop preserves mismatches and terminates only the verified receipt (5760.2502ms)
+2026-09-27T13:21:36.7091926Z ✔ actual budget source-admission block rejects redirected or non-synthetic retained sources (11.5687ms)
+2026-09-27T13:21:36.7331940Z ▶ actual budget attempt admission refuses linked and unknown paths before effects, including finally
+2026-09-27T13:21:36.7334110Z   ✔ attempts-junction (21.5502ms)
+2026-09-27T13:21:36.7506473Z   ✔ dangling-attempts-junction (17.0548ms)
+2026-09-27T13:21:36.7664790Z   ✔ attempt-junction (15.9601ms)
+2026-09-27T13:21:36.7880390Z   ✔ unknown-attempt (20.8072ms)
+2026-09-27T13:21:36.8054221Z   ✔ invalid-owner (17.7687ms)
+2026-09-27T13:21:36.8279026Z   ✔ new-attempt-junction (22.2618ms)
+2026-09-27T13:21:36.8540944Z   ✔ finally-attempt-junction (26.108ms)
+2026-09-27T13:21:36.8835540Z   ✔ plain (29.0759ms)
+2026-09-27T13:21:36.8837609Z ✔ actual budget attempt admission refuses linked and unknown paths before effects, including finally (174.8074ms)
+2026-09-27T13:21:36.8858794Z ℹ {"scenario":"attempts-junction","root":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-jBTtkd","outside":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-outside-QYWTIO","links":["<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-jBTtkd\\qa\\issue-50-factory-recovery\\attempts"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"],["test",[]]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"],["test",[]]],"calls":[],"report":{"cleanup":[],"source_code_commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","provenance":{"schema_version":1,"assurance":"input identity only; not build or native-scenario proof","before":{"source":{"head":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":"input.mjs","bytes":19,"sha256":"1c54444bf566e664f6891e1ccf595b2cde8a7b0a65f9428535158cd9a6618878"}],"sha256":"1bfe8cd7492f9830a6975e0a5b1a8cd85d46b58d429560f394e6877cd7d07f3a"},"executables":{"fixture":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-jBTtkd\\inert.exe","sha256":"cd0d8cac57f1e3fbc235acd09ca7b9bcd0fa847fd128544a43d5b6e26a753efc"}}},"consistent":null},"status":"fixture_error","error":"Refuse linked or non-directory QA path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-jBTtkd\\qa\\issue-50-factory-recovery\\attempts"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"],["test",[]]]}
+2026-09-27T13:21:36.8892306Z ℹ {"scenario":"dangling-attempts-junction","root":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-1Io0LO","outside":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-outside-tKbPL3","links":["<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-1Io0LO\\qa\\issue-50-factory-recovery\\attempts"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"source_code_commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","provenance":{"schema_version":1,"assurance":"input identity only; not build or native-scenario proof","before":{"source":{"head":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":"input.mjs","bytes":19,"sha256":"1c54444bf566e664f6891e1ccf595b2cde8a7b0a65f9428535158cd9a6618878"}],"sha256":"1bfe8cd7492f9830a6975e0a5b1a8cd85d46b58d429560f394e6877cd7d07f3a"},"executables":{"fixture":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-1Io0LO\\inert.exe","sha256":"cd0d8cac57f1e3fbc235acd09ca7b9bcd0fa847fd128544a43d5b6e26a753efc"}}},"consistent":null},"status":"fixture_error","error":"Refuse linked or non-directory QA path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-1Io0LO\\qa\\issue-50-factory-recovery\\attempts"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+2026-09-27T13:21:36.8929908Z ℹ {"scenario":"attempt-junction","root":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-y2sghF","outside":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-outside-ToRuSM","links":["<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-y2sghF\\qa\\issue-50-factory-recovery\\attempts\\test"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"source_code_commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","provenance":{"schema_version":1,"assurance":"input identity only; not build or native-scenario proof","before":{"source":{"head":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":"input.mjs","bytes":19,"sha256":"1c54444bf566e664f6891e1ccf595b2cde8a7b0a65f9428535158cd9a6618878"}],"sha256":"1bfe8cd7492f9830a6975e0a5b1a8cd85d46b58d429560f394e6877cd7d07f3a"},"executables":{"fixture":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-y2sghF\\inert.exe","sha256":"cd0d8cac57f1e3fbc235acd09ca7b9bcd0fa847fd128544a43d5b6e26a753efc"}}},"consistent":null},"status":"fixture_error","error":"Refuse linked or non-directory QA path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-y2sghF\\qa\\issue-50-factory-recovery\\attempts\\test"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+2026-09-27T13:21:36.8954619Z ℹ {"scenario":"unknown-attempt","root":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-pxloW5","outside":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-outside-zJbQmJ","links":[],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"source_code_commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","provenance":{"schema_version":1,"assurance":"input identity only; not build or native-scenario proof","before":{"source":{"head":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":"input.mjs","bytes":19,"sha256":"1c54444bf566e664f6891e1ccf595b2cde8a7b0a65f9428535158cd9a6618878"}],"sha256":"1bfe8cd7492f9830a6975e0a5b1a8cd85d46b58d429560f394e6877cd7d07f3a"},"executables":{"fixture":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-pxloW5\\inert.exe","sha256":"cd0d8cac57f1e3fbc235acd09ca7b9bcd0fa847fd128544a43d5b6e26a753efc"}}},"consistent":null},"status":"fixture_error","error":"EEXIST: file already exists, mkdir '<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-pxloW5\\qa\\issue-50-factory-recovery\\attempts\\test'"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+2026-09-27T13:21:36.8973470Z ℹ {"scenario":"invalid-owner","root":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-bZkXzJ","outside":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-outside-YpoG7g","links":[],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"source_code_commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","provenance":{"schema_version":1,"assurance":"input identity only; not build or native-scenario proof","before":{"source":{"head":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":"input.mjs","bytes":19,"sha256":"1c54444bf566e664f6891e1ccf595b2cde8a7b0a65f9428535158cd9a6618878"}],"sha256":"1bfe8cd7492f9830a6975e0a5b1a8cd85d46b58d429560f394e6877cd7d07f3a"},"executables":{"fixture":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-bZkXzJ\\inert.exe","sha256":"cd0d8cac57f1e3fbc235acd09ca7b9bcd0fa847fd128544a43d5b6e26a753efc"}}},"consistent":null},"status":"fixture_error","error":"Expected values to be strictly equal:\n+ actual - expected\n\n+ 'unknown'\n- 'issue-50-factory-budget-recovery-v1'\n"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+2026-09-27T13:21:36.9000548Z ℹ {"scenario":"new-attempt-junction","root":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-GAjdGp","outside":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-outside-EjvMst","links":["<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-GAjdGp\\qa\\issue-50-factory-recovery\\attempts\\test"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":[],"report":{"cleanup":[],"source_code_commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","provenance":{"schema_version":1,"assurance":"input identity only; not build or native-scenario proof","before":{"source":{"head":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":"input.mjs","bytes":19,"sha256":"1c54444bf566e664f6891e1ccf595b2cde8a7b0a65f9428535158cd9a6618878"}],"sha256":"1bfe8cd7492f9830a6975e0a5b1a8cd85d46b58d429560f394e6877cd7d07f3a"},"executables":{"fixture":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-GAjdGp\\inert.exe","sha256":"cd0d8cac57f1e3fbc235acd09ca7b9bcd0fa847fd128544a43d5b6e26a753efc"}}},"consistent":null},"status":"fixture_error","error":"Refuse linked or non-directory QA path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-GAjdGp\\qa\\issue-50-factory-recovery\\attempts\\test"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+2026-09-27T13:21:36.9052700Z ℹ {"scenario":"finally-attempt-junction","root":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-3Whtqu","outside":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-outside-xObNuf","links":["<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-3Whtqu\\qa\\issue-50-factory-recovery\\attempts\\test"],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":["lifecycle"],"report":{"cleanup":[{"name":"qa-attempt-path","status":"unverified_preserved","error":"Refuse linked or non-directory QA path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-3Whtqu\\qa\\issue-50-factory-recovery\\attempts\\test"}],"source_code_commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","provenance":{"schema_version":1,"assurance":"input identity only; not build or native-scenario proof","before":{"source":{"head":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":"input.mjs","bytes":19,"sha256":"1c54444bf566e664f6891e1ccf595b2cde8a7b0a65f9428535158cd9a6618878"}],"sha256":"1bfe8cd7492f9830a6975e0a5b1a8cd85d46b58d429560f394e6877cd7d07f3a"},"executables":{"fixture":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-3Whtqu\\inert.exe","sha256":"cd0d8cac57f1e3fbc235acd09ca7b9bcd0fa847fd128544a43d5b6e26a753efc"}}},"consistent":null},"status":"fixture_error","path_error":"Refuse linked or non-directory QA path: <USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-3Whtqu\\qa\\issue-50-factory-recovery\\attempts\\test"},"exitCode":1,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+2026-09-27T13:21:36.9095247Z ℹ {"scenario":"plain","root":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-C1hBPd","outside":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-outside-GsPITD","links":[],"before":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"cleanup":"owned links removed and verified absent; owned roots retained","after":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]],"calls":["lifecycle","ports","reference"],"report":{"cleanup":[],"source_code_commit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","provenance":{"schema_version":1,"assurance":"input identity only; not build or native-scenario proof","before":{"source":{"head":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":"input.mjs","bytes":19,"sha256":"1c54444bf566e664f6891e1ccf595b2cde8a7b0a65f9428535158cd9a6618878"}],"sha256":"1bfe8cd7492f9830a6975e0a5b1a8cd85d46b58d429560f394e6877cd7d07f3a"},"executables":{"fixture":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-C1hBPd\\inert.exe","sha256":"cd0d8cac57f1e3fbc235acd09ca7b9bcd0fa847fd128544a43d5b6e26a753efc"}}},"consistent":true,"after":{"source":{"head":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":"input.mjs","bytes":19,"sha256":"1c54444bf566e664f6891e1ccf595b2cde8a7b0a65f9428535158cd9a6618878"}],"sha256":"1bfe8cd7492f9830a6975e0a5b1a8cd85d46b58d429560f394e6877cd7d07f3a"},"executables":{"fixture":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-attempt-owned-C1hBPd\\inert.exe","sha256":"cd0d8cac57f1e3fbc235acd09ca7b9bcd0fa847fd128544a43d5b6e26a753efc"}}}},"ports_after":[],"retained_after":null,"retained_unchanged":null,"finished_at":"2026-09-27T13:21:36.878Z"},"exitCode":0,"outside_final":[["sentinel.txt","6f757473696465206d7573742072656d61696e20756e6368616e6765640a"]]}
+2026-09-27T13:21:36.9116221Z ✔ private recovery credentials accept native local and Entra account SIDs (3.6119ms)
+2026-09-27T13:21:36.9117603Z ✔ malformed account SIDs fail before changing credential ACLs (2.2609ms)
+2026-09-27T13:21:36.9118894Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9120620Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9122184Z ✔ same HEAD with different dirty tracked bytes has a different binding (1082.6066ms)
+2026-09-27T13:21:36.9123631Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-s4g3LF
+2026-09-27T13:21:36.9145328Z ℹ {"case":"dirty-tracked","before":{"source":{"head":"c2eb38057b4965bbeb317f04454c9cc0de62d450","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":17,"sha256":"b175a5e4baa1a0193288f3a7fd388b870791248f2d1f22f275a5d03671dcd41c"}],"sha256":"deac54722590eced2257d5ae47b73ecff60fc00c5022b72284c06d4797eec09d"},"executables":{"server":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-s4g3LF\\server.exe","sha256":"23240ef9f8b0a9a324110b1c2331de31dc1b0e08f5359cb707e51a939af56cd3"}}},"after":{"source":{"head":"c2eb38057b4965bbeb317f04454c9cc0de62d450","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":16,"sha256":"d0e9aebbc8a3e81013bcb7f1f2c9e0892e9c7085489d8ee4cb4f9d721f12215c"}],"sha256":"1927eb15bfc4f2367295b478d6ac19c747c2cb0cfa6332ce4e5a5dfb3a68fa3f"},"executables":{"server":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-s4g3LF\\server.exe","sha256":"23240ef9f8b0a9a324110b1c2331de31dc1b0e08f5359cb707e51a939af56cd3"}}}}
+2026-09-27T13:21:36.9161482Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9162930Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9164890Z ✔ nonignored untracked test input changes, additions and deletion are bound (1318.6172ms)
+2026-09-27T13:21:36.9166451Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-e6jcdU
+2026-09-27T13:21:36.9188818Z ℹ {"case":"untracked-input","before":{"source":{"head":"211000e833ebad309894db2b01e8b7221458cdb6","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":17,"sha256":"b175a5e4baa1a0193288f3a7fd388b870791248f2d1f22f275a5d03671dcd41c"},{"path":"tools/new-input.json","bytes":12,"sha256":"3a37782e8974c48eebf2a0517c866ad15641c53b3d31993188796b56aeb79624"}],"sha256":"3cff8a8277f334970d9948af2c2a4b70adbccdf9a0cbafd153e72392aa028e5a"},"executables":{"server":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-e6jcdU\\server.exe","sha256":"23240ef9f8b0a9a324110b1c2331de31dc1b0e08f5359cb707e51a939af56cd3"}}},"after":{"source":{"head":"211000e833ebad309894db2b01e8b7221458cdb6","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":17,"sha256":"b175a5e4baa1a0193288f3a7fd388b870791248f2d1f22f275a5d03671dcd41c"},{"path":"tools/new-input.json","bytes":12,"sha256":"6e0d9d0268c35e8b9c620e4f529378b20d9e71af3a03cd57ad43c1f74a9ebc40"}],"sha256":"93906fa22975099bfd0aab2e8b499c7df516ccab4d9112561353dd7b83c51662"},"executables":{"server":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-e6jcdU\\server.exe","sha256":"23240ef9f8b0a9a324110b1c2331de31dc1b0e08f5359cb707e51a939af56cd3"}}}}
+2026-09-27T13:21:36.9207374Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9208898Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9210610Z ✔ actual executable bytes, not name or HEAD, are hashed and drift fails finalization (1013.6116ms)
+2026-09-27T13:21:36.9212153Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-Frvur5
+2026-09-27T13:21:36.9234196Z ℹ {"case":"binary-drift","before":{"source":{"head":"5e036b2dbe3acb7a6bdaf95c8768607517f544e5","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":17,"sha256":"b175a5e4baa1a0193288f3a7fd388b870791248f2d1f22f275a5d03671dcd41c"}],"sha256":"deac54722590eced2257d5ae47b73ecff60fc00c5022b72284c06d4797eec09d"},"executables":{"server":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-Frvur5\\server.exe","sha256":"23240ef9f8b0a9a324110b1c2331de31dc1b0e08f5359cb707e51a939af56cd3"}}},"consistent":false,"after":{"source":{"head":"5e036b2dbe3acb7a6bdaf95c8768607517f544e5","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":17,"sha256":"b175a5e4baa1a0193288f3a7fd388b870791248f2d1f22f275a5d03671dcd41c"}],"sha256":"deac54722590eced2257d5ae47b73ecff60fc00c5022b72284c06d4797eec09d"},"executables":{"server":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-Frvur5\\server.exe","sha256":"8ff283fb7a282a9b2b30235016669dfe795665bcbb254fd17ac31fa9308d89d9"}}}}
+2026-09-27T13:21:36.9250541Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9252051Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9253628Z ✔ unchanged input finalizes; source drift and missing executables fail closed (964.8153ms)
+2026-09-27T13:21:36.9254978Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-5QmvYZ
+2026-09-27T13:21:36.9256350Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9257782Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9259249Z ✔ ignored contents and unrelated private directories are never hashed (781.9075ms)
+2026-09-27T13:21:36.9260699Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-7FY1Ko
+2026-09-27T13:21:36.9262148Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9263712Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9265815Z ✔ tracked private configuration is excluded without reading its contents (720.1956ms)
+2026-09-27T13:21:36.9267300Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-NeAS0t
+2026-09-27T13:21:36.9268700Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9270207Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9271673Z ✔ tracked parent junction escape and executable symlink are rejected (597.7996ms)
+2026-09-27T13:21:36.9273083Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-88RLBG
+2026-09-27T13:21:36.9274483Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9275923Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9277448Z ✔ source hard links and unsafe Git path listings fail without outside reads (597.8931ms)
+2026-09-27T13:21:36.9278886Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-bgTIWA
+2026-09-27T13:21:36.9280265Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9281771Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9283405Z ✔ owned Node directory alias is resolved once and pinned for binding and every launch (828.4976ms)
+2026-09-27T13:21:36.9284881Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-uRhTWb
+2026-09-27T13:21:36.9337799Z ℹ {"case":"pinned-node-alias","execPath":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\node-alias\\node.exe","selectedNode":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\node-target\\node.exe","resolutions":1,"launches":[{"name":"runner","program":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\repo\\target\\debug\\crony-runner.exe","args":["--server-ws","ws://127.0.0.1:18450/ws/runner","--runner-id","inert","--corp-id","inert","--credential-file","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\credential.json","--enrollment-token-file","inert","--workspace","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\runner-workspaces","--source-repository","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\repo","--source-base-ref","HEAD","--codex-command","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\node-target\\node.exe","--codex-command-arg","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\repo\\scripts\\fake-codex-app-server.mjs","--claude-command","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\disabled-claude.exe","--opencode-command","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\disabled-opencode.exe","--copilot-cli-path","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\disabled-copilot.exe","--copilot-home","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\copilot-home","--connections-directory","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\connections","--github-command","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\disabled-gh.exe","--fake-agent-script","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\repo\\scripts\\fake-agent.mjs"]},{"name":"controller","program":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\repo\\target\\debug\\crony-cli.exe","args":["--server","inert","factory","inert","inert","--owner","ecorp-qa","--project-number","50","--repository","All-The-Vibes/ecorp","--source-repository-path","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\repo","--source-base-ref","HEAD","--adapter","codex","--strategy","single","--budget-tokens","6000","--budget-cost-microusd","10000000","--lease-seconds","300","--github-cli","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\node-target\\node.exe","--issue","9050","--write-scope","**","--verification-policy-file","inert","--dry-run"]},{"name":"controller","program":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\repo\\target\\debug\\crony-cli.exe","args":["--server","inert","factory","inert","inert","--owner","ecorp-qa","--project-number","50","--repository","All-The-Vibes/ecorp","--source-repository-path","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\repo","--source-base-ref","HEAD","--adapter","codex","--strategy","single","--budget-tokens","6000","--budget-cost-microusd","10000000","--lease-seconds","300","--github-cli","<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\node-target\\node.exe","--issue","9050","--write-scope","**","--verification-policy-file","inert"]}],"provenance":{"before":{"source":{"head":"054514ae814949513d90a2a7bd96e8cc61c47adb","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":17,"sha256":"b175a5e4baa1a0193288f3a7fd388b870791248f2d1f22f275a5d03671dcd41c"}],"sha256":"deac54722590eced2257d5ae47b73ecff60fc00c5022b72284c06d4797eec09d"},"executables":{"node":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\node-target\\node.exe","sha256":"23240ef9f8b0a9a324110b1c2331de31dc1b0e08f5359cb707e51a939af56cd3"}}},"consistent":true,"after":{"source":{"head":"054514ae814949513d90a2a7bd96e8cc61c47adb","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":17,"sha256":"b175a5e4baa1a0193288f3a7fd388b870791248f2d1f22f275a5d03671dcd41c"}],"sha256":"deac54722590eced2257d5ae47b73ecff60fc00c5022b72284c06d4797eec09d"},"executables":{"node":{"path":"<USERPROFILE>\\AppData\\Local\\Temp\\ecorp-source-binding-uRhTWb\\node-target\\node.exe","sha256":"23240ef9f8b0a9a324110b1c2331de31dc1b0e08f5359cb707e51a939af56cd3"}}}}}
+2026-09-27T13:21:36.9375348Z warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9376812Z warning: in the working copy of 'tools/input.mjs', LF will be replaced by CRLF the next time Git touches it
+2026-09-27T13:21:36.9378556Z ✔ actual selected Windows Node passes the real read-only digest and before/after binding (1088.2279ms)
+2026-09-27T13:21:36.9380030Z ℹ owned_fixture=<USERPROFILE>\AppData\Local\Temp\ecorp-source-binding-nQNd1t
+2026-09-27T13:21:36.9404672Z ℹ {"case":"actual-selected-node","execPath":"C:\\hostedtoolcache\\windows\\node\\24.19.0\\x64\\node.exe","selectedNode":"C:\\hostedtoolcache\\windows\\node\\24.19.0\\x64\\node.exe","canonicalNode":"C:\\hostedtoolcache\\windows\\node\\24.19.0\\x64\\node.exe","selectedDigest":"3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237","provenance":{"before":{"source":{"head":"3698729af73b8fe39b7ab23dcd2201ac9497c714","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":17,"sha256":"b175a5e4baa1a0193288f3a7fd388b870791248f2d1f22f275a5d03671dcd41c"}],"sha256":"deac54722590eced2257d5ae47b73ecff60fc00c5022b72284c06d4797eec09d"},"executables":{"node":{"path":"C:\\hostedtoolcache\\windows\\node\\24.19.0\\x64\\node.exe","sha256":"3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237"}}},"consistent":true,"after":{"source":{"head":"3698729af73b8fe39b7ab23dcd2201ac9497c714","untracked_roots":["apps","crates","db/migrations","deploy","scenarios","scripts","tests","tools",".github",".gitignore",".gitattributes",".npmrc",".env.example",":(top,glob)*.toml",":(top,glob)*.lock",":(top,glob)*.json",":(top,glob)*.yaml",":(top,glob)*.yml",":(top,glob)*.mjs",":(top,glob)*.js",":(top,glob)*.ps1",":(top,glob)*.py"],"excluded_pathspecs":[":(exclude,glob)**/.git/**",":(exclude,glob)**/.codex/**",":(exclude,glob)**/.omx/**",":(exclude,glob)**/credentials/**",":(exclude,glob)**/pg-data/**",":(exclude,glob)**/runner-workspaces/**",":(exclude,glob)**/worktrees/**",":(exclude,glob)**/target/**",":(exclude,glob)**/node_modules/**",":(exclude,glob)**/output/**"],"files":[{"path":".gitignore","bytes":15,"sha256":"33e45938e83d9ffd00a78453599af866d902f2317238fd212fb58d535025e22b"},{"path":"tools/input.mjs","bytes":17,"sha256":"b175a5e4baa1a0193288f3a7fd388b870791248f2d1f22f275a5d03671dcd41c"}],"sha256":"deac54722590eced2257d5ae47b73ecff60fc00c5022b72284c06d4797eec09d"},"executables":{"node":{"path":"C:\\hostedtoolcache\\windows\\node\\24.19.0\\x64\\node.exe","sha256":"3602f2bb1a10f2cbab4c36886218a33c1ab3db87290e73b033c46c77147d0237"}}}}}
+2026-09-27T13:21:36.9422088Z ✔ native admission binds before effects; dry-run does not require executables (0.6872ms)
+2026-09-27T13:21:45.4904197Z ✔ read-only manifest parsing retains ownership scope for existing evidence drivers (4.9228ms)
+2026-09-27T13:21:45.4905801Z ▶ database query options are refused before filesystem or lifecycle effects
+2026-09-27T13:21:45.4906994Z   ✔ startOwnedTestServer rejects query case host (1.2169ms)
+2026-09-27T13:21:45.4925727Z   ✔ startOwnedTestServer rejects query case hostaddr (0.2789ms)
+2026-09-27T13:21:45.4927910Z   ✔ startOwnedTestServer rejects query case port (0.2592ms)
+2026-09-27T13:21:45.4930393Z   ✔ startOwnedTestServer rejects query case dbname (0.3283ms)
+2026-09-27T13:21:45.4931272Z   ✔ startOwnedTestServer rejects query case user (0.3538ms)
+2026-09-27T13:21:45.4932195Z   ✔ startOwnedTestServer rejects query case port (0.1905ms)
+2026-09-27T13:21:45.4934342Z   ✔ startOwnedTestServer rejects query case host (0.3174ms)
+2026-09-27T13:21:45.4935618Z   ✔ startOwnedTestServer rejects query case unknown (0.4543ms)
+2026-09-27T13:21:45.4936583Z   ✔ startOwnedTestServer rejects query case %68ost (0.3974ms)
+2026-09-27T13:21:45.4937501Z   ✔ startOwnedTestServer rejects query case HOST (0.2935ms)
+2026-09-27T13:21:45.4938189Z   ✔ startOwnedTestServer rejects query case HostAddr (0.1985ms)
+2026-09-27T13:21:45.4938758Z   ✔ startOwnedTestServer rejects query case DBNAME (0.1995ms)
+2026-09-27T13:21:45.4939320Z   ✔ startOwnedTestServer rejects query case port (0.2539ms)
+2026-09-27T13:21:45.4939866Z   ✔ startOwnedTestServer rejects query case sslmode (0.2507ms)
+2026-09-27T13:21:45.4940402Z   ✔ startOwnedTestServer rejects query case options (0.1579ms)
+2026-09-27T13:21:45.4940969Z   ✔ startOwnedTestServer rejects query case password (0.1099ms)
+2026-09-27T13:21:45.4941494Z   ✔ startOwnedTestServer rejects query case host (0.1136ms)
+2026-09-27T13:21:45.4941994Z   ✔ startOwnedTestServer rejects query case && (0.1065ms)
+2026-09-27T13:21:45.4942713Z   ✔ startOwnedTestServer rejects query case % (0.1226ms)
+2026-09-27T13:21:45.4943321Z   ✔ startOwnedTestServer allows URL without query options (0) (0.8674ms)
+2026-09-27T13:21:45.4944143Z   ✔ startOwnedTestServer allows URL without query options (1) (0.2087ms)
+2026-09-27T13:21:45.4944743Z   ✔ restartOwnedTestServer rejects query case host (0.1714ms)
+2026-09-27T13:21:45.4945289Z   ✔ restartOwnedTestServer rejects query case hostaddr (0.1652ms)
+2026-09-27T13:21:45.4945847Z   ✔ restartOwnedTestServer rejects query case port (0.1402ms)
+2026-09-27T13:21:45.4946413Z   ✔ restartOwnedTestServer rejects query case dbname (0.1149ms)
+2026-09-27T13:21:45.4946944Z   ✔ restartOwnedTestServer rejects query case user (0.1024ms)
+2026-09-27T13:21:45.4947672Z   ✔ restartOwnedTestServer rejects query case port (0.1856ms)
+2026-09-27T13:21:45.4948240Z   ✔ restartOwnedTestServer rejects query case host (0.2346ms)
+2026-09-27T13:21:45.4948786Z   ✔ restartOwnedTestServer rejects query case unknown (0.1503ms)
+2026-09-27T13:21:45.4949336Z   ✔ restartOwnedTestServer rejects query case %68ost (0.1157ms)
+2026-09-27T13:21:45.4950153Z   ✔ restartOwnedTestServer rejects query case HOST (0.1184ms)
+2026-09-27T13:21:45.4950730Z   ✔ restartOwnedTestServer rejects query case HostAddr (0.1567ms)
+2026-09-27T13:21:45.4951416Z   ✔ restartOwnedTestServer rejects query case DBNAME (0.1915ms)
+2026-09-27T13:21:45.4951976Z   ✔ restartOwnedTestServer rejects query case port (0.1659ms)
+2026-09-27T13:21:45.4952503Z   ✔ restartOwnedTestServer rejects query case sslmode (0.201ms)
+2026-09-27T13:21:45.4953045Z   ✔ restartOwnedTestServer rejects query case options (0.1784ms)
+2026-09-27T13:21:45.4953597Z   ✔ restartOwnedTestServer rejects query case password (0.1805ms)
+2026-09-27T13:21:45.4954078Z   ✔ restartOwnedTestServer rejects query case host (0.2096ms)
+2026-09-27T13:21:45.4954539Z   ✔ restartOwnedTestServer rejects query case && (0.1741ms)
+2026-09-27T13:21:45.4954982Z   ✔ restartOwnedTestServer rejects query case % (0.2318ms)
+2026-09-27T13:21:45.4955500Z   ✔ restartOwnedTestServer allows URL without query options (0) (1.4736ms)
+2026-09-27T13:21:45.4956088Z   ✔ restartOwnedTestServer allows URL without query options (1) (0.3841ms)
+2026-09-27T13:21:45.4956583Z   ✔ stopOwnedTestServer rejects query case host (0.2355ms)
+2026-09-27T13:21:45.4957050Z   ✔ stopOwnedTestServer rejects query case hostaddr (0.2507ms)
+2026-09-27T13:21:45.4957507Z   ✔ stopOwnedTestServer rejects query case port (0.1532ms)
+2026-09-27T13:21:45.4957949Z   ✔ stopOwnedTestServer rejects query case dbname (0.1551ms)
+2026-09-27T13:21:45.4958388Z   ✔ stopOwnedTestServer rejects query case user (0.1432ms)
+2026-09-27T13:21:45.4958820Z   ✔ stopOwnedTestServer rejects query case port (0.1497ms)
+2026-09-27T13:21:45.4959246Z   ✔ stopOwnedTestServer rejects query case host (0.296ms)
+2026-09-27T13:21:45.4959683Z   ✔ stopOwnedTestServer rejects query case unknown (0.2384ms)
+2026-09-27T13:21:45.4960140Z   ✔ stopOwnedTestServer rejects query case %68ost (0.1544ms)
+2026-09-27T13:21:45.4961527Z   ✔ stopOwnedTestServer rejects query case HOST (0.143ms)
+2026-09-27T13:21:45.4964082Z   ✔ stopOwnedTestServer rejects query case HostAddr (0.1429ms)
+2026-09-27T13:21:45.4965049Z   ✔ stopOwnedTestServer rejects query case DBNAME (0.151ms)
+2026-09-27T13:21:45.4965565Z   ✔ stopOwnedTestServer rejects query case port (0.1417ms)
+2026-09-27T13:21:45.4966070Z   ✔ stopOwnedTestServer rejects query case sslmode (0.1616ms)
+2026-09-27T13:21:45.4966553Z   ✔ stopOwnedTestServer rejects query case options (0.1419ms)
+2026-09-27T13:21:45.4967023Z   ✔ stopOwnedTestServer rejects query case password (0.1775ms)
+2026-09-27T13:21:45.4967479Z   ✔ stopOwnedTestServer rejects query case host (0.153ms)
+2026-09-27T13:21:45.4967909Z   ✔ stopOwnedTestServer rejects query case && (0.1735ms)
+2026-09-27T13:21:45.4968319Z   ✔ stopOwnedTestServer rejects query case % (0.1673ms)
+2026-09-27T13:21:45.4968799Z   ✔ stopOwnedTestServer allows URL without query options (0) (0.3222ms)
+2026-09-27T13:21:45.4969346Z   ✔ stopOwnedTestServer allows URL without query options (1) (0.2662ms)
+2026-09-27T13:21:45.4970015Z ✔ database query options are refused before filesystem or lifecycle effects (24.736ms)
+2026-09-27T13:21:45.4970795Z ✔ upstream restart environment remains bounded and cannot override database authority (0.6848ms)
+2026-09-27T13:21:45.4971563Z ✔ owned server requires matching executable, creation, endpoint, and workspace (1.1226ms)
+2026-09-27T13:21:45.4972251Z ✔ manual, remote, stale, or non-owned manifests never authorize restart (0.4908ms)
+2026-09-27T13:21:45.4973040Z ✔ Windows native receipts preserve sub-millisecond creation identity without numeric rounding (0.9928ms)
+2026-09-27T13:21:45.4973789Z ✔ owned endpoints reject every reserved/manual port and non-origin URL (0.583ms)
+2026-09-27T13:21:45.4974526Z ✔ Linux receipts require exact kernel identity and case-sensitive executable paths (1.1297ms)
+2026-09-27T13:21:45.4975368Z ✔ legacy PID files and pre-existing locks are preserved without signalling or starting a process (4.7768ms)
+2026-09-27T13:21:45.4976362Z ✔ native start retains diagnostics and stops its child after identity failure (4332.2041ms)
+2026-09-27T13:21:45.4977231Z ℹ Retained owned launch failure fixture <USERPROFILE>\AppData\Local\Temp\ecorp-owned-test-gW8Fvc
+2026-09-27T13:21:45.4978178Z ✔ native start retains diagnostics and stops its child after starting-publication failure (887.5516ms)
+2026-09-27T13:21:45.4978997Z ℹ Retained owned launch failure fixture <USERPROFILE>\AppData\Local\Temp\ecorp-owned-test-IUy62Y
+2026-09-27T13:21:45.4979816Z ✔ native start retains diagnostics and stops its child after running-publication failure (1746.4929ms)
+2026-09-27T13:21:45.4980622Z ℹ Retained owned launch failure fixture <USERPROFILE>\AppData\Local\Temp\ecorp-owned-test-AJwHmG
+2026-09-27T13:21:45.4981434Z ✔ native start retains diagnostics and stops its child after rollback-publication failure (2166.0327ms)
+2026-09-27T13:21:45.4982241Z ℹ Retained owned launch failure fixture <USERPROFILE>\AppData\Local\Temp\ecorp-owned-test-KKDfYV
+2026-09-27T13:21:45.4983009Z ✔ native restart retains diagnostics and stops its child after identity failure (3703.7611ms)
+2026-09-27T13:21:45.4984243Z ℹ Retained owned launch failure fixture <USERPROFILE>\AppData\Local\Temp\ecorp-owned-test-vhyRLv
+2026-09-27T13:21:45.4985103Z ✔ native restart retains diagnostics and stops its child after starting-publication failure (3669.478ms)
+2026-09-27T13:21:45.4986327Z ℹ Retained owned launch failure fixture <USERPROFILE>\AppData\Local\Temp\ecorp-owned-test-UwSkrX
+2026-09-27T13:21:45.4987623Z ✔ native restart retains diagnostics and stops its child after running-publication failure (5221.8777ms)
+2026-09-27T13:21:45.4988465Z ℹ Retained owned launch failure fixture <USERPROFILE>\AppData\Local\Temp\ecorp-owned-test-1sOlsT
+2026-09-27T13:21:45.4989285Z ✔ native restart retains diagnostics and stops its child after rollback-publication failure (5957.55ms)
+2026-09-27T13:21:45.4990100Z ℹ Retained owned launch failure fixture <USERPROFILE>\AppData\Local\Temp\ecorp-owned-test-jJhsMU
+2026-09-27T13:21:45.4990946Z ✔ native owned child startup, two restarts, refusal of database drift and idempotent stop (21141.2475ms)
+2026-09-27T13:21:45.5046744Z ℹ tests 126
+2026-09-27T13:21:45.5047434Z ℹ suites 0
+2026-09-27T13:21:45.5047856Z ℹ pass 126
+2026-09-27T13:21:45.5048183Z ℹ fail 0
+2026-09-27T13:21:45.5048516Z ℹ cancelled 0
+2026-09-27T13:21:45.5048891Z ℹ skipped 0
+2026-09-27T13:21:45.5049206Z ℹ todo 0
+2026-09-27T13:21:45.5049607Z ℹ duration_ms 53812.7811
+2026-09-27T13:21:45.6296320Z ##[group]Run $ErrorActionPreference = 'Stop'
+2026-09-27T13:21:45.6296753Z [36;1m$ErrorActionPreference = 'Stop'[0m
+2026-09-27T13:21:45.6297336Z [36;1m$candidates = @($env:PGBIN, (Join-Path $env:ProgramFiles 'PostgreSQL\17\bin')) | Where-Object { $_ } | Select-Object -Unique[0m
+2026-09-27T13:21:45.6297914Z [36;1m$verifiedPgBin = $null[0m
+2026-09-27T13:21:45.6298190Z [36;1mforeach ($candidate in $candidates) {[0m
+2026-09-27T13:21:45.6298566Z [36;1m  if (![IO.Path]::IsPathFullyQualified($candidate)) { continue }[0m
+2026-09-27T13:21:45.6299077Z [36;1m  $missing = @('initdb.exe', 'postgres.exe', 'psql.exe', 'pg_ctl.exe') | Where-Object {[0m
+2026-09-27T13:21:45.6299628Z [36;1m    !(Test-Path -LiteralPath (Join-Path $candidate $_) -PathType Leaf)[0m
+2026-09-27T13:21:45.6300015Z [36;1m  }[0m
+2026-09-27T13:21:45.6300208Z [36;1m  if ($missing) { continue }[0m
+2026-09-27T13:21:45.6300539Z [36;1m  $version = & (Join-Path $candidate 'postgres.exe') --version[0m
+2026-09-27T13:21:45.6301062Z [36;1m  if ($LASTEXITCODE -eq 0 -and $version -match '^postgres \(PostgreSQL\) 17\.') {[0m
+2026-09-27T13:21:45.6301616Z [36;1m    $verifiedPgBin = (Resolve-Path -LiteralPath $candidate).Path[0m
+2026-09-27T13:21:45.6301965Z [36;1m    break[0m
+2026-09-27T13:21:45.6302155Z [36;1m  }[0m
+2026-09-27T13:21:45.6302322Z [36;1m}[0m
+2026-09-27T13:21:45.6302842Z [36;1mif (!$verifiedPgBin -or $verifiedPgBin -match '[\r\n]') { throw 'A validated PostgreSQL 17 toolchain is required; no fixture was started.' }[0m
+2026-09-27T13:21:45.6303626Z [36;1m"ECORP_QA_PG_BIN=$verifiedPgBin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append[0m
+2026-09-27T13:21:45.6371685Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-09-27T13:21:45.6372188Z env:
+2026-09-27T13:21:45.6372395Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:21:45.6372662Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:21:45.6372872Z   CARGO_TERM_COLOR: always
+2026-09-27T13:21:45.6373096Z   CACHE_ON_FAILURE: false
+2026-09-27T13:21:45.6373314Z ##[endgroup]
+2026-09-27T13:21:46.6334735Z ##[group]Run ./tools/ci_external_adapters_windows.ps1 -FixtureRoot (Join-Path $env:RUNNER_TEMP 'ecorp-external-adapters-ci') -PgBin $env:ECORP_QA_PG_BIN -DryRun
+2026-09-27T13:21:46.6336171Z [36;1m./tools/ci_external_adapters_windows.ps1 -FixtureRoot (Join-Path $env:RUNNER_TEMP 'ecorp-external-adapters-ci') -PgBin $env:ECORP_QA_PG_BIN -DryRun[0m
+2026-09-27T13:21:46.6405911Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-09-27T13:21:46.6406257Z env:
+2026-09-27T13:21:46.6406451Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:21:46.6406721Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:21:46.6406926Z   CARGO_TERM_COLOR: always
+2026-09-27T13:21:46.6407155Z   CACHE_ON_FAILURE: false
+2026-09-27T13:21:46.6407419Z   ECORP_QA_PG_BIN: C:\Program Files\PostgreSQL\17\bin
+2026-09-27T13:21:46.6407728Z ##[endgroup]
+2026-09-27T13:21:47.7847654Z {
+2026-09-27T13:21:47.7848832Z   "suite": "external-adapters-windows-ci-v1",
+2026-09-27T13:21:47.7849955Z   "fixture_root": "D:\\a\\_temp\\ecorp-external-adapters-ci",
+2026-09-27T13:21:47.7850887Z   "source_worktree": "D:\\a\\ecorp\\ecorp",
+2026-09-27T13:21:47.7851694Z   "server": "http://127.0.0.1:18437",
+2026-09-27T13:21:47.7852457Z   "postgres_port": 55437,
+2026-09-27T13:21:47.7853443Z   "node": "C:\\hostedtoolcache\\windows\\node\\24.19.0\\x64\\node.exe",
+2026-09-27T13:21:47.7854612Z   "evidence": "D:\\a\\_temp\\ecorp-external-adapters-ci\\evidence",
+2026-09-27T13:21:47.7855749Z   "proposed": [
+2026-09-27T13:21:47.7856669Z     "Initialize one fresh loopback-only PostgreSQL cluster with synthetic trust-authenticated data.",
+2026-09-27T13:21:47.7857976Z     "Start receipt-owned native server and runner using the existing local_stack.psm1 helpers.",
+2026-09-27T13:21:47.7859270Z     "Execute Claude Code and OpenCode through deterministic protocol fixtures, never real accounts.",
+2026-09-27T13:21:47.7860528Z     "Verify signed artifact download, session, usage and provider termination before completion.",
+2026-09-27T13:21:47.7861877Z     "Verify the original mixed Codex/Claude parallel graph, dependency artifacts and bounded retries.",
+2026-09-27T13:21:47.7863382Z     "Verify controlled-runner readiness and exact assignment using one synthetic artifact; no fault injection or restart.",
+2026-09-27T13:21:47.7865170Z     "Verify synthetic runner identity readiness, rotation, replay fencing and active revocation; no OIDC service.",
+2026-09-27T13:21:47.7866722Z     "Verify the upstream native budget-stop suite, including the physical retained late-completion source.",
+2026-09-27T13:21:47.7868385Z     "Stop only owned fixture processes and preserve all data, worktrees and evidence."
+2026-09-27T13:21:47.7869338Z   ],
+2026-09-27T13:21:47.7869730Z   "services_started": false,
+2026-09-27T13:21:47.7870209Z   "database_writes": false,
+2026-09-27T13:21:47.7870594Z   "real_provider_calls": 0,
+2026-09-27T13:21:47.7871674Z   "real_github_mutations": 0
+2026-09-27T13:21:47.7872426Z }
+2026-09-27T13:21:47.8658895Z ##[group]Run ./tools/ci_external_adapters_windows.ps1 -FixtureRoot (Join-Path $env:RUNNER_TEMP 'ecorp-external-adapters-ci') -PgBin $env:ECORP_QA_PG_BIN -Execute
+2026-09-27T13:21:47.8660115Z [36;1m./tools/ci_external_adapters_windows.ps1 -FixtureRoot (Join-Path $env:RUNNER_TEMP 'ecorp-external-adapters-ci') -PgBin $env:ECORP_QA_PG_BIN -Execute[0m
+2026-09-27T13:21:47.8727891Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-09-27T13:21:47.8728227Z env:
+2026-09-27T13:21:47.8728414Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:21:47.8728672Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:21:47.8728866Z   CARGO_TERM_COLOR: always
+2026-09-27T13:21:47.8729075Z   CACHE_ON_FAILURE: false
+2026-09-27T13:21:47.8729485Z   ECORP_QA_PG_BIN: C:\Program Files\PostgreSQL\17\bin
+2026-09-27T13:21:47.8729779Z ##[endgroup]
+2026-09-27T13:22:05.6736525Z {
+2026-09-27T13:22:05.6737021Z   "source_worktree": "D:\\a\\ecorp\\ecorp",
+2026-09-27T13:22:05.6737567Z   "cleanup": [
+2026-09-27T13:22:05.6737854Z     {
+2026-09-27T13:22:05.6738119Z       "role": "runner",
+2026-09-27T13:22:05.6738472Z       "stopped": true
+2026-09-27T13:22:05.6739146Z     },
+2026-09-27T13:22:05.6739425Z     {
+2026-09-27T13:22:05.6739703Z       "role": "server",
+2026-09-27T13:22:05.6740058Z       "stopped": true
+2026-09-27T13:22:05.6740419Z     },
+2026-09-27T13:22:05.6740684Z     {
+2026-09-27T13:22:05.6740974Z       "role": "postgres",
+2026-09-27T13:22:05.6741325Z       "stopped": true
+2026-09-27T13:22:05.6741632Z     }
+2026-09-27T13:22:05.6741886Z   ],
+2026-09-27T13:22:05.6742158Z   "postgres_port": 55437,
+2026-09-27T13:22:05.6742593Z   "server": "http://127.0.0.1:18437",
+2026-09-27T13:22:05.6743136Z   "status": "failed",
+2026-09-27T13:22:05.6743734Z   "fixture_source_commit": "4239a62cf056010679cc09e56caea4f0399f5d17",
+2026-09-27T13:22:05.6744463Z   "suite": "external-adapters-windows-ci-v1",
+2026-09-27T13:22:05.6745049Z   "started_at": "2026-09-27T13:21:48.9383849Z",
+2026-09-27T13:22:05.6745542Z   "real_github_mutations": 0,
+2026-09-27T13:22:05.6746103Z   "fixture_root": "D:\\a\\_temp\\ecorp-external-adapters-ci",
+2026-09-27T13:22:05.6746723Z   "finished_at": "2026-09-27T13:22:05.6658326Z",
+2026-09-27T13:22:05.6747210Z   "real_provider_calls": 0,
+2026-09-27T13:22:05.6747872Z   "failure": "task-graph failed (exit 1); inspect its retained fixture logs.",
+2026-09-27T13:22:05.6748621Z   "postgres_start_unverified": false
+2026-09-27T13:22:05.6748883Z }
+2026-09-27T13:22:05.7490023Z [31;1mException: [0mD:\a\ecorp\ecorp\tools\ci_external_adapters_windows.ps1:144[0m
+2026-09-27T13:22:05.7490845Z [31;1m[0m[36;1mLine |[0m
+2026-09-27T13:22:05.7492047Z [31;1m[0m[36;1m[36;1m 144 | [0m … de -ne 0) { [36;1mthrow "$Role failed (exit $($process.ExitCode)); inspect [0m …[0m
+2026-09-27T13:22:05.7492980Z [31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+2026-09-27T13:22:05.7493956Z [31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mtask-graph failed (exit 1); inspect its retained fixture logs.[0m
+2026-09-27T13:22:05.7770717Z ##[error]Process completed with exit code 1.
+2026-09-27T13:22:05.7971336Z ##[group]Run actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+2026-09-27T13:22:05.7971792Z with:
+2026-09-27T13:22:05.7972010Z   name: external-adapters-windows-evidence
+2026-09-27T13:22:05.7972364Z   path: D:\a\_temp/ecorp-external-adapters-ci/evidence/
+2026-09-27T13:22:05.7972681Z   if-no-files-found: warn
+2026-09-27T13:22:05.7972898Z   compression-level: 6
+2026-09-27T13:22:05.7973096Z   overwrite: false
+2026-09-27T13:22:05.7973289Z   include-hidden-files: false
+2026-09-27T13:22:05.7973527Z   archive: true
+2026-09-27T13:22:05.7973695Z env:
+2026-09-27T13:22:05.7973874Z   CARGO_HOME: <USERPROFILE>\.cargo
+2026-09-27T13:22:05.7974123Z   CARGO_INCREMENTAL: 0
+2026-09-27T13:22:05.7974319Z   CARGO_TERM_COLOR: always
+2026-09-27T13:22:05.7974526Z   CACHE_ON_FAILURE: false
+2026-09-27T13:22:05.7974769Z   ECORP_QA_PG_BIN: C:\Program Files\PostgreSQL\17\bin
+2026-09-27T13:22:05.7975051Z ##[endgroup]
+2026-09-27T13:22:05.9851474Z With the provided path, there will be 31 files uploaded
+2026-09-27T13:22:05.9858113Z Artifact name is valid!
+2026-09-27T13:22:05.9859687Z Root directory input is valid!
+2026-09-27T13:22:06.2349892Z Uploading artifact: external-adapters-windows-evidence.zip
+2026-09-27T13:22:06.2396423Z Beginning upload of artifact content to blob storage
+2026-09-27T13:22:06.4149837Z Uploaded bytes 10826
+2026-09-27T13:22:06.4492084Z Finished uploading artifact content to blob storage!
+2026-09-27T13:22:06.4493386Z SHA256 digest of uploaded artifact is c71448d5a51e3d8db12a0b5b14daca21fa27a63796402fb0e6e1689011fec595
+2026-09-27T13:22:06.4495044Z Finalizing artifact upload
+2026-09-27T13:22:06.6864517Z Artifact external-adapters-windows-evidence successfully finalized. Artifact ID 10931889197
+2026-09-27T13:22:06.6865697Z Artifact external-adapters-windows-evidence has been successfully uploaded! Final size is 10826 bytes. Artifact ID is 10931889197
+2026-09-27T13:22:06.6872636Z Artifact download URL: https://github.com/All-The-Vibes/ecorp/actions/runs/36321919325/artifacts/10931889197
+2026-09-27T13:22:06.7217530Z Post job cleanup.
+2026-09-27T13:22:06.9142084Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-09-27T13:22:06.9494726Z git version 2.55.0.windows.5
+2026-09-27T13:22:06.9565934Z Temporarily overriding HOME='D:\a\_temp\7b88a5d0-5a88-49a5-92f9-b5371f062c2f' before making global git config changes
+2026-09-27T13:22:06.9567312Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-27T13:22:06.9579967Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\ecorp\ecorp
+2026-09-27T13:22:06.9887833Z Removing SSH command configuration
+2026-09-27T13:22:06.9899998Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-09-27T13:22:07.0221597Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-09-27T13:22:07.5635353Z Removing HTTP extra header
+2026-09-27T13:22:07.5645523Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-27T13:22:07.5935495Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-09-27T13:22:08.1117298Z Removing includeIf entries pointing to credentials config files
+2026-09-27T13:22:08.1134172Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-27T13:22:08.1426686Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-09-27T13:22:08.6767182Z Cleaning up orphan processes
+2026-09-27T13:22:08.7213391Z Terminate orphan process: pid (5956) (vctip)

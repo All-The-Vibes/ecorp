@@ -1,0 +1,79 @@
+{
+  "pr": 375,
+  "issue": 82,
+  "recorded_at_utc": "2026-09-27T12:01:26.153644+00:00",
+  "head": "68d044d224593caaed42c4cdbde846b97882ffe5",
+  "head_tree": "d9b44a6e070f2dc96b25d2585080354c5a5a3fd7",
+  "status": "focused-regressions-passed; canonical-and-native-acceptance-pending",
+  "changes": [
+    {
+      "path": "crates/crony-cli/src/publish.rs",
+      "sha256": "df6661b5867040ce2d1e92dda4ea72ba649d66e96e3f0e6814a07ce5d10682b7"
+    },
+    {
+      "path": "tools/task_graph_fixture.mjs",
+      "sha256": "d40abe9d488f4ec44316073015d4c807f660612436aa29ac0991a45e2c909adc"
+    },
+    {
+      "path": "tools/task_graph_fixture.test.mjs",
+      "sha256": "ee08946245c83de54e93f15078b9f671ee49ef17fa3d50cf9d757ebe228936b3"
+    }
+  ],
+  "patch": {
+    "path": "pr375-integration-correction-r1.patch",
+    "sha256": "0d42a95187811d44ea55628e7c77697a4274a2c56431592e90dee49459b0a01a"
+  },
+  "tests": [
+    {
+      "path": "pr375-bundle-reference-red-r1.log",
+      "sha256": "97dc80565c3d4985d17d8a342111ab743a82a2f463a15a21e7f63cc3b637970b",
+      "observed_exit_code": 101,
+      "counts": {
+        "passed": 2,
+        "failed": 1,
+        "ignored": 0,
+        "filtered": 138
+      }
+    },
+    {
+      "path": "pr375-bundle-reference-green-r1.log",
+      "sha256": "97b8d82ce68b588d912bf81f1dc0ac4dd49319bf20631bb02de5ebdb23b3c32a",
+      "observed_exit_code": 0,
+      "counts": {
+        "passed": 9,
+        "failed": 0,
+        "ignored": 0,
+        "filtered": 132
+      }
+    },
+    {
+      "path": "pr375-graph-diagnostics-red-r1.log",
+      "sha256": "9caa1a7d8cc2fc6bb90421ca1fe390bc1837e08c9becf2c8d1635b1995938786",
+      "observed_exit_code": 1,
+      "counts": {
+        "passed": 11,
+        "failed": 2
+      }
+    },
+    {
+      "path": "pr375-graph-diagnostics-green-r1.log",
+      "sha256": "b9b7e48435b6645e7a44bdedab0852e59a10d2150ae44594a3478fb0a87f1d3b",
+      "observed_exit_code": 0,
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "todo": 0
+      }
+    }
+  ],
+  "findings": [
+    "Hosted Linux native publication rejects the runner-owned refs/ecorp/deliverables/<32hex>-<32hex> reference. Importer now accepts exact current and historical forms while retaining single-head, verified-commit, namespace and ancestry fences.",
+    "Hosted Windows first fake-process graph reached a failed persisted mission. The unchanged published source passed six local native suites, leaving the hosted cause unexplained. Added allowlisted bounded persisted run failure details, without changing success or replay semantics."
+  ],
+  "limitations": [
+    "No canonical, native acceptance or hosted success is claimed for this uncommitted correction.",
+    "Diagnostics omit unrelated fields but are not a generic secret-redaction mechanism."
+  ]
+}

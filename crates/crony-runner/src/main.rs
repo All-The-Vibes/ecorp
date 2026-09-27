@@ -812,6 +812,16 @@ async fn run_connection(
     });
     capabilities.push(RunnerCapability {
         workspace_connection_id: None,
+        name: crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY.to_owned(),
+        available: true,
+        detail: Some("Persisted checks and exports share a frozen native Git tree".to_owned()),
+        models: Vec::new(),
+        source_repository: None,
+        source_base_ref: None,
+        source_base_commit: None,
+    });
+    capabilities.push(RunnerCapability {
+        workspace_connection_id: None,
         name: "retained-provider-receipt-v1".to_owned(),
         available: true,
         detail: Some(
@@ -3190,6 +3200,7 @@ async fn verify_isolated_recovery_checks(
             },
             checks,
             manual_gate: policy.manual_gate.clone(),
+            source: None,
         },
     ))
 }
@@ -3274,80 +3285,163 @@ async fn send_verification_events(
         .lock()
         .map(|artifacts| artifacts.clone())
         .unwrap_or_default();
-    let mut report = match (
-        verification_baseline,
-        active_check_snapshot,
-        artifact_snapshot,
-    ) {
-        (Some(baseline), Some(active_check_snapshot), Some(artifact_snapshot)) => {
-            match verify_isolated_recovery_checks(
-                &assignment.verification_policy,
-                assignment.run_id,
-                baseline,
-                active_check_snapshot,
-                artifact_snapshot,
-                &artifacts,
-                cancellation
-                    .as_deref_mut()
-                    .expect("isolated verification requires cancellation state"),
-            )
-            .await
-            {
-                Ok(IsolatedVerificationOutcome::Report(report)) => report,
-                Ok(IsolatedVerificationOutcome::Cancelled) => {
-                    return VerificationRunOutcome::Cancelled;
-                }
-                Err(error) => {
-                    let cleanup = cleanup_verification_snapshots(
-                        active_check_snapshot,
-                        baseline,
-                        artifact_snapshot,
-                    )
-                    .await;
-                    send_run_event(
-                        outbound,
-                        runner_id,
-                        assignment,
-                        "run.failed",
-                        json!({
-                            "error": format!(
-                                "verifier-only isolated verification failed: {error:#}{}",
-                                cleanup.err().map_or_else(String::new, |cleanup_error| {
-                                    format!("; snapshot cleanup also failed: {cleanup_error:#}")
-                                }),
-                            ),
-                        }),
-                    );
-                    return VerificationRunOutcome::Failed;
-                }
+    let mut prepared = if let Some(spec) = &assignment.deliverable {
+        match deliverable::prepare(
+            assignment.run_id,
+            spec,
+            workspace,
+            source_artifacts.unwrap_or(&artifacts),
+            &assignment.write_scope,
+            preserve_head_commit,
+        )
+        .await
+        {
+            Ok(prepared) => Some(prepared),
+            Err(error) => {
+                let cleanup = match (
+                    verification_baseline,
+                    active_check_snapshot,
+                    artifact_snapshot,
+                ) {
+                    (Some(baseline), Some(active), Some(artifacts)) => {
+                        cleanup_verification_snapshots(active, baseline, artifacts).await
+                    }
+                    (None, None, None) => Ok(()),
+                    _ => Err(anyhow!("verifier snapshot state was incomplete")),
+                };
+                send_run_event(
+                    outbound,
+                    runner_id,
+                    assignment,
+                    "run.failed",
+                    json!({
+                        "failure_kind": RunFailureKind::DeliverableExport,
+                        "error": format!("Deliverable candidate preparation failed: {error:#}. Automatic fresh-worktree retry is disabled. Keep the preserved worktree and review the complete source delta against the accepted deliverable/write scope. Use preserved-session Resume only when the complete delta fits the current contract; otherwise a new authorized full-scope mission is required.{}",
+                            cleanup.err().map_or_else(String::new, |error| format!(" Snapshot cleanup also failed: {error:#}"))),
+                    }),
+                );
+                return VerificationRunOutcome::Failed;
             }
         }
-        (None, None, None) => {
-            if let Some(cancellation) = cancellation.as_deref_mut() {
-                match verifier::verify_cancellable(
+    } else {
+        None
+    };
+    let mut report = if let Some(prepared) = prepared.as_mut() {
+        let (_sender, mut uncancelled) = watch::channel(false);
+        let result = prepared
+            .verify(
+                &assignment.verification_policy,
+                &artifacts,
+                cancellation.as_deref_mut().unwrap_or(&mut uncancelled),
+            )
+            .await;
+        let cleanup = match (
+            verification_baseline,
+            active_check_snapshot,
+            artifact_snapshot,
+        ) {
+            (Some(baseline), Some(active), Some(artifacts)) => {
+                cleanup_verification_snapshots(active, baseline, artifacts).await
+            }
+            (None, None, None) => Ok(()),
+            _ => Err(anyhow!("verifier snapshot state was incomplete")),
+        };
+        match (result, cleanup) {
+            (Ok(Some(report)), Ok(())) => report,
+            (Ok(None), Ok(())) => return VerificationRunOutcome::Cancelled,
+            (result, cleanup) => {
+                send_run_event(
+                    outbound,
+                    runner_id,
+                    assignment,
+                    "run.failed",
+                    json!({
+                        "failure_kind": RunFailureKind::DeliverableExport,
+                        "error": format!("Canonical deliverable verification could not finish: {}. Keep the preserved worktree; automatic fresh-worktree retry is disabled.{}",
+                            result.err().map_or_else(|| "snapshot cleanup failed".to_owned(), |error| format!("{error:#}")),
+                            cleanup.err().map_or_else(String::new, |error| format!(" Cleanup: {error:#}"))),
+                    }),
+                );
+                return VerificationRunOutcome::Failed;
+            }
+        }
+    } else {
+        match (
+            verification_baseline,
+            active_check_snapshot,
+            artifact_snapshot,
+        ) {
+            (Some(baseline), Some(active_check_snapshot), Some(artifact_snapshot)) => {
+                match verify_isolated_recovery_checks(
                     &assignment.verification_policy,
-                    &workspace.path,
+                    assignment.run_id,
+                    baseline,
+                    active_check_snapshot,
+                    artifact_snapshot,
                     &artifacts,
-                    cancellation,
+                    cancellation
+                        .as_deref_mut()
+                        .expect("isolated verification requires cancellation state"),
                 )
                 .await
                 {
-                    Some(report) => report,
-                    None => return VerificationRunOutcome::Cancelled,
+                    Ok(IsolatedVerificationOutcome::Report(report)) => report,
+                    Ok(IsolatedVerificationOutcome::Cancelled) => {
+                        return VerificationRunOutcome::Cancelled;
+                    }
+                    Err(error) => {
+                        let cleanup = cleanup_verification_snapshots(
+                            active_check_snapshot,
+                            baseline,
+                            artifact_snapshot,
+                        )
+                        .await;
+                        send_run_event(
+                            outbound,
+                            runner_id,
+                            assignment,
+                            "run.failed",
+                            json!({
+                                "error": format!(
+                                    "verifier-only isolated verification failed: {error:#}{}",
+                                    cleanup.err().map_or_else(String::new, |cleanup_error| {
+                                        format!("; snapshot cleanup also failed: {cleanup_error:#}")
+                                    }),
+                                ),
+                            }),
+                        );
+                        return VerificationRunOutcome::Failed;
+                    }
                 }
-            } else {
-                verifier::verify(&assignment.verification_policy, &workspace.path, &artifacts).await
             }
-        }
-        _ => {
-            send_run_event(
-                outbound,
-                runner_id,
-                assignment,
-                "run.failed",
-                json!({"error": "verifier snapshot state was incomplete"}),
-            );
-            return VerificationRunOutcome::Failed;
+            (None, None, None) => {
+                if let Some(cancellation) = cancellation.as_deref_mut() {
+                    match verifier::verify_cancellable(
+                        &assignment.verification_policy,
+                        &workspace.path,
+                        &artifacts,
+                        cancellation,
+                    )
+                    .await
+                    {
+                        Some(report) => report,
+                        None => return VerificationRunOutcome::Cancelled,
+                    }
+                } else {
+                    verifier::verify(&assignment.verification_policy, &workspace.path, &artifacts)
+                        .await
+                }
+            }
+            _ => {
+                send_run_event(
+                    outbound,
+                    runner_id,
+                    assignment,
+                    "run.failed",
+                    json!({"error": "verifier snapshot state was incomplete"}),
+                );
+                return VerificationRunOutcome::Failed;
+            }
         }
     };
     if cancellation
@@ -3413,18 +3507,8 @@ async fn send_verification_events(
     {
         return VerificationRunOutcome::Cancelled;
     }
-    let deliverable_linkage = if let Some(spec) = &assignment.deliverable {
-        let exported = match deliverable::export(
-            assignment.run_id,
-            spec,
-            workspace,
-            &report,
-            source_artifacts.unwrap_or(&artifacts),
-            &assignment.write_scope,
-            preserve_head_commit,
-        )
-        .await
-        {
+    let deliverable_linkage = if let Some(prepared) = prepared.as_ref() {
+        let exported = match prepared.export(&report).await {
             Ok(exported) => exported,
             Err(error) => {
                 send_run_event(
@@ -3493,6 +3577,8 @@ async fn send_verification_events(
             "artifact_role": "source_deliverable",
             "form": exported.form.as_str(),
             "verification_sha256": exported.verification_sha256,
+            "verified_tree": exported.verified_tree,
+            "source_verification": report.source,
             "base_commit": exported.base_commit,
             "head_commit": exported.head_commit,
             "branch": exported.branch,
@@ -3623,6 +3709,8 @@ async fn send_verification_events(
             "summary": report.summary,
             "verification_sha256": verification_sha256,
             "deliverable_sha256": deliverable_sha256,
+            "verified_tree": report.source.as_ref().map(|source| &source.tree),
+            "source_verification": report.source,
         }),
         None => json!({"summary": report.summary}),
     };
@@ -5336,15 +5424,11 @@ mod tests {
                 .iter()
                 .map(|(kind, _)| kind.as_str())
                 .collect::<Vec<_>>(),
-            [
-                "run.verification_started",
-                "run.verification_evidence",
-                "run.failed"
-            ]
+            ["run.verification_started", "run.failed"]
         );
-        assert_eq!(events[1].1["status"], "passed");
-        assert_eq!(events[2].1["failure_kind"], "deliverable_export");
-        let error = events[2].1["error"].as_str().unwrap();
+        // Selection fails before a canonical candidate can be checked. No passed evidence exists.
+        assert_eq!(events[1].1["failure_kind"], "deliverable_export");
+        let error = events[1].1["error"].as_str().unwrap();
         assert!(error.contains("outside the task write scope: scenarios/scope-89/.gitignore"));
         assert!(error.contains("Automatic fresh-worktree retry is disabled"));
         assert!(error.contains("preserved-session Resume"));
@@ -5356,19 +5440,24 @@ mod tests {
         assert_eq!(std::fs::read(&index_path).unwrap(), index);
 
         // A narrower-than-** scope is legal when it still covers the complete scenario.
-        let report = verifier::verify(&assignment.verification_policy, &workspace.path, &[]).await;
-        assert!(report.passed);
-        let exported = deliverable::export(
+        let mut prepared = deliverable::prepare(
             Uuid::new_v4(),
             assignment.deliverable.as_ref().unwrap(),
             &workspace,
-            &report,
             &[],
             &[format!("{relative}/**")],
             None,
         )
         .await
         .unwrap();
+        let (_cancel, mut cancellation) = watch::channel(false);
+        let report = prepared
+            .verify(&assignment.verification_policy, &[], &mut cancellation)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(report.passed, "{report:?}");
+        let exported = prepared.export(&report).await.unwrap();
         assert!(exported.publication_ready);
         assert_ne!(exported.head_commit.as_deref(), Some(head.as_str()));
         let document: Value = serde_json::from_slice(&exported.bytes).unwrap();
@@ -5408,6 +5497,8 @@ mod tests {
             std::fs::read(scenario.join("ignored.log")).unwrap(),
             b"retained but not exported\n"
         );
+        // Release the pinned workspace directory before deleting the owned Windows fixture.
+        drop(prepared);
         std::fs::remove_dir_all(root).unwrap();
     }
 

@@ -1,0 +1,52 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$product = '<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp'
+$qa = '<USERPROFILE>\code\qa\pr375-factory-native-r6'
+$priorPath = Join-Path $PSScriptRoot 'pr375-factory-native-r6.json'
+$receiptPath = Join-Path $PSScriptRoot 'pr375-factory-native-fixture-correction-r6.json'
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve the existing output correction receipt.' }
+$prior = Get-Content -LiteralPath $priorPath -Raw | ConvertFrom-Json -AsHashtable -Depth 100
+if ($prior.status -ne 'failed' -or $prior.generated_files.Count -ne 3) { throw 'Unexpected prior Factory attempt.' }
+Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force
+$state = Read-LocalStackState -Path (Join-Path $qa 'ownership.json') -Workspace $qa
+foreach ($role in @('runner','server','postgres')) {
+    if (!$state.processes[$role]) { throw 'Missing prior process ownership.' }
+    if (Test-LocalOwnedProcess -Record $state.processes[$role] -Workspace $qa) { throw 'Preserve the active prior fixture.' }
+}
+$outputRoot = [IO.Path]::GetFullPath((Join-Path $product 'output'))
+$copyRoot = [IO.Path]::GetFullPath((Join-Path $qa 'evidence'))
+$allowed = @('fake-github-factory-state.json','factory-invalid-verification-policy.json','factory-explicit-verification-policy.json')
+$verified = @(
+    foreach ($file in $prior.generated_files) {
+        $path = [IO.Path]::GetFullPath($file.path)
+        $copy = [IO.Path]::GetFullPath($file.copy)
+        if ([IO.Path]::GetDirectoryName($path) -ine $outputRoot -or [IO.Path]::GetFileName($path) -notin $allowed) { throw 'Generated output is outside the exact owned file set.' }
+        if ([IO.Path]::GetDirectoryName($copy) -ine $copyRoot -or [IO.Path]::GetFileName($copy) -cne [IO.Path]::GetFileName($path)) { throw 'Preserved copy is outside the exact prior evidence directory.' }
+        foreach ($item in @($path,$copy)) {
+            $entry = Get-Item -LiteralPath $item
+            if ($entry.PSIsContainer -or ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Preserve unexpected output type.' }
+            if ((Get-FileHash -LiteralPath $item).Hash.ToLowerInvariant() -cne $file.sha256) { throw 'Preserve output whose content changed.' }
+        }
+        @{path=$path;preserved_copy=$copy;sha256=$file.sha256}
+    }
+)
+$receipt = [ordered]@{
+    pr=375;prior_receipt='pr375-factory-native-r6.json';status='verified';
+    purpose='Prepare a fresh Factory run with a bounded 180-second approval wait. Retain the failed r6 database, logs and workspace. At its 30-second approval deadline the native run was still verifying, with no verification evidence or source deliverable; eventual verification and approval remain unproven.';
+    verified_outputs=$verified;removed_verified_outputs=@();preserved_failed_run_workspace=$true;
+    observed_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+}
+function Save { $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $receiptPath -Encoding utf8 }
+Save
+try {
+    foreach ($file in $verified) {
+        if ((Get-FileHash -LiteralPath $file.path).Hash.ToLowerInvariant() -cne $file.sha256) { throw 'Output changed after verification.' }
+        Remove-Item -LiteralPath $file.path
+        if (Test-Path -LiteralPath $file.path) { throw 'Owned output remains after removal.' }
+        $receipt.removed_verified_outputs += $file
+        Save
+    }
+    $receipt.status='completed'
+} catch { $receipt.status='failed';$receipt.failure=$_.Exception.Message;throw }
+finally { $receipt.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o');Save }
+[pscustomobject]$receipt | Select-Object pr,status,@{n='removed_count';e={$_.removed_verified_outputs.Count}},preserved_failed_run_workspace | ConvertTo-Json

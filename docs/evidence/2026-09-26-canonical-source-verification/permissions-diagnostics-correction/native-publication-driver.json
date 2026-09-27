@@ -1,0 +1,212 @@
+{
+  "pr": 375,
+  "issue": 82,
+  "status": "passed",
+  "started_at_utc": "2026-09-27T18:33:39.315169+00:00",
+  "source_binding": {
+    "schema_version": 1,
+    "source_head": "e9caa3b4580dc73032d3498881940a9785e67737",
+    "source_branch": "codex/issue82-canonical-verification",
+    "source_tree": "4a83a09cd20c83c457fe960b58ce1c5c34cb7152",
+    "source_files_sha256": "4c78455d09122021c2432e42cea0f68c828e5b12b23132010f104b5d79ce486c",
+    "source_file_count": 6938,
+    "tracked_diff_sha256": "0088b97febbc8e25f5b90c8c05602978d0968a7a4a09d350d1d709d43707af88",
+    "untracked_digests": [],
+    "canonical_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-canonical-r14.json",
+    "canonical_receipt_sha256": "2b7f7f1e4e7c94021a45ac0f08ceecaadbf64dc8322ca123ccc5fc0d6c96d1ca",
+    "canonical_report_sha256": "e50d3ad3da471aa64f1e401a78f1a1fdf0cfaba07408dee0ee63f44268e5dea1",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "build_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-factory-native-build-r10.json",
+  "build_sha256": "37720ad2b8aefcb5113ed187b1bdc46f4b6fe2591d2f6c243f33d57870633243",
+  "binaries": [
+    {
+      "sha256": "d167c0a8a9b083c53b57a9bf8f16a9cde61c8664f5c249c2700ae8f47b994fed",
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\target\\debug\\crony-server.exe"
+    },
+    {
+      "sha256": "53c095f3671dc332db555676ecc717ff102fd7e257ec0c0b81652ad7d96b3928",
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\target\\debug\\crony-runner.exe"
+    },
+    {
+      "sha256": "240437cb5cda643b82ec60e4845edefc8a5a47a7cafb3513c1d611f2ea2a603b",
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\target\\debug\\crony-cli.exe"
+    }
+  ],
+  "fixture": "<USERPROFILE>\\code\\qa\\ecorp-publication-pr375-r4",
+  "original_driver": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\tools\\ci_external_adapters_windows.ps1",
+  "original_driver_sha256": "df5af634980231bd0e823e4f89b84c3a0d5caad151b131bf755d8b6931610981",
+  "driver": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-publication-native-r4-driver.ps1",
+  "driver_sha256": "c61fdec8c04f004648b76cc3951b3eea58f7d47762863c54238fffd1e86e7934",
+  "driver_changes": [
+    "Reuse native Windows fixture guards, private configuration, PostgreSQL restricted-process startup and exact ownership cleanup.",
+    "Replace graph suite with the original native publication assertions in a path-only copy and a fresh synthetic source repository.",
+    "Use existing owned_test_stack.mjs for receipt capture, in-suite server restarts and current-manifest cleanup.",
+    "Record original driver results, source preservation and available native portable bundle heads."
+  ],
+  "copied_helpers": [
+    {
+      "source": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\tools\\e2e_factory_publication.mjs",
+      "source_sha256": "57683c0efec375ff21ede11b9c608b31add92d90bfa1fe17f6b1ad4315f881ac",
+      "copy": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-publication-native-r4-driver.mjs",
+      "copy_sha256": "8eac8ff279ff8a50a25b7cada0ecaba8b5017c14cb8dbf4046f1c4a2d3b17029",
+      "changes": "Only the two import URLs, owned output root and fake-GitHub driver path; all assertions and behavior preserved."
+    },
+    {
+      "copy": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-publication-native-r4-server.mjs",
+      "copy_sha256": "ad2760c24196c8e678521a9f2e7e454656fc588f9f4be5c30322ccc9ec2bf61c",
+      "purpose": "Thin calls to existing receipt-owned server capture/stop helpers; the publication driver owns restarts."
+    }
+  ],
+  "scope": "Native Windows runner/server/CLI and local Git with fresh owned loopback fixtures. Deterministic providers and fake GitHub only; no real inference or remote mutation.",
+  "exit_code": 0,
+  "fixture_report": {
+    "postgres_start_unverified": false,
+    "finished_at": "2026-09-27T18:37:51.5127028Z",
+    "suite": "pr375-native-publication-r4",
+    "fixture_root": "<USERPROFILE>\\code\\qa\\ecorp-publication-pr375-r4",
+    "cleanup": [
+      {
+        "stopped": true,
+        "role": "runner",
+        "pid": 21264
+      },
+      {
+        "stopped": true,
+        "manifest": "<USERPROFILE>\\code\\qa\\ecorp-publication-pr375-r4\\evidence\\server-manifest.json",
+        "role": "server",
+        "pid": 25124
+      },
+      {
+        "stopped": true,
+        "role": "postgres",
+        "pid": 26752
+      }
+    ],
+    "source_worktree": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp",
+    "status": "passed",
+    "started_at": "2026-09-27T18:33:41.3514139Z",
+    "bundle_heads": [],
+    "publication_sha256": "615265d56bb55e9b897806176a5357c980a9a90991d4856f3b561b2ccba5559e",
+    "real_provider_calls": 0,
+    "fixture_source_commit": "2780935378bab90c9d270e03a9b8778d4f68ff94",
+    "real_github_mutations": 0,
+    "server": "http://127.0.0.1:18895",
+    "publication": {
+      "checked_at": "2026-09-27T18:37:42.305Z",
+      "base_branch_collision_rejected": true,
+      "invalid_git_branches_rejected_before_start": true,
+      "custom_title_normalized": true,
+      "mixed_case_repository_normalized": true,
+      "mixed_case_pull_request_url_accepted": true,
+      "implicit_authorization_retry_stable": true,
+      "cross_publisher_default_start_recovery": true,
+      "body_file_crlf_normalized": true,
+      "implicit_authorization_restart_pid": 2896,
+      "actor_handoff_authorization_distinct": true,
+      "published_retry_after_base_move": true,
+      "exact_publication_context_lookup": true,
+      "publisher_enrollment_manage_only": 403,
+      "human_only_start_rejection": 403,
+      "missing_publisher_credential_no_start": {
+        "redacted": "sha256",
+        "digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      "invalid_publisher_credential_no_start": {
+        "redacted": "sha256",
+        "digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      "cross_room_publication_context_denial": 404,
+      "cross_room_publication_start_rejection": 403,
+      "cross_room_publication_recovery_rejection": 403,
+      "cross_room_publication_status_denial": 404,
+      "pre_branch_room_membership_renewal_rejection": 403,
+      "pre_pull_request_room_membership_renewal_rejection": 403,
+      "pre_project_room_membership_renewal_rejection": 403,
+      "pr_revalidated_after_project_renewal": true,
+      "stale_publisher_blocked_before_project_effect": true,
+      "bounded_snapshot_work_item_and_deliverable_absent": true,
+      "published_retry_outside_bounded_snapshot": true,
+      "exact_project_item_lookup": true,
+      "exact_project_field_lookup": true,
+      "project_item_count_during_publication": 1003,
+      "project_field_count_during_publication": 32,
+      "unauthorized_pr_content_rejected": true,
+      "factory_work_item_id": "089adc0f-753e-4cea-bf60-71c1816284d7",
+      "mission_id": "4d0b9fee-66be-49ad-8a9a-5cb9c4b713e9",
+      "source_deliverable_id": "3bd43d2e-1d19-4998-888e-691c9f71a9e2",
+      "source_sha256": "2cfab8219b6e0eb050109e809da553534301d3eb5455abf1f0fde4e5820f2946",
+      "verification_sha256": "c5209b0fe51da8e25527f538dac5a86b134be72730d767a3b99e885eca277d3f",
+      "commit_sha": "f78e47d46f0de2363cf8bf9ff1a6fee17d251f59",
+      "branch": "ecorp/issue-9101-f78e47d46f0d",
+      "publication_id": "f8917877-cc18-4514-9a09-c52184bfe5d3",
+      "publication_attempts": 11,
+      "pull_request_number": 41,
+      "pull_request_url": "https://github.com/ALL-THE-VIBES/ECORP/pull/41",
+      "pull_request_head_sha": "f78e47d46f0de2363cf8bf9ff1a6fee17d251f59",
+      "pull_request_head_repository_owner": "all-the-vibes",
+      "fork_pull_request_rejected": true,
+      "pull_request_create_calls": 1,
+      "publication_base_ref": "HEAD",
+      "resolved_pull_request_base_ref": "main",
+      "remote_branch_count": 1,
+      "project_status": "In Review",
+      "project_after_pull_request": true,
+      "server_restart_pid": 25124,
+      "policy_rejection": 400,
+      "role_rejection": 403,
+      "corp_rejection": 403,
+      "budget_rejection": 400,
+      "breaker_rejection": 400,
+      "post_start_role_renewal_rejection": 400,
+      "post_start_breaker_renewal_rejection": 400,
+      "pre_pull_request_budget_renewal_rejection": 400,
+      "pre_project_corp_budget_renewal_rejection": 400,
+      "human_only_renew_rejection": 403,
+      "human_only_branch_checkpoint_rejection": 403,
+      "human_only_failure_checkpoint_rejection": 403,
+      "human_only_completion_checkpoint_rejection": 403,
+      "mismatched_publisher_identity_rejection": 409,
+      "revoked_publisher_credential_rejection": {
+        "redacted": "sha256",
+        "digest": "d26eae87829adde551bf4b852f9da6b8c3c2db9b65b8b68870632a2db5f53e00"
+      },
+      "expired_publisher_credential_rejection": {
+        "redacted": "sha256",
+        "digest": "d26eae87829adde551bf4b852f9da6b8c3c2db9b65b8b68870632a2db5f53e00"
+      },
+      "cross_corp_publisher_credential_rejection": {
+        "redacted": "sha256",
+        "digest": "d26eae87829adde551bf4b852f9da6b8c3c2db9b65b8b68870632a2db5f53e00"
+      },
+      "publisher_workload_auth_survived_restart": true,
+      "legacy_provenance_upgraded": true,
+      "credential_non_disclosure": {
+        "redacted": "sha256",
+        "digest": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b"
+      },
+      "auto_merge": false,
+      "merge_authorized": false,
+      "deployment_authorized": false
+    },
+    "postgres_port": 59095,
+    "database_assurance": "Fresh loopback-only trust-authenticated synthetic database. No production data or database password; this is not an authentication acceptance test.",
+    "source_checkout_unchanged": true
+  },
+  "fixture_report_sha256": "f23361fde5c9cf23b5d342a1c77a43e487a7e13d5fd3181da2fd81c02bfb8f84",
+  "source_and_binaries_unchanged": true,
+  "log_sha256": "c5c9e1821fba8b141655485f0be67d66fe04267e47620d3dfee10934c0a4ca61",
+  "finished_at_utc": "2026-09-27T18:38:55.430993+00:00"
+}

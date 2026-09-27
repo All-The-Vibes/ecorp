@@ -1,0 +1,86 @@
+{
+  "issue": 82,
+  "purpose": "Native canonical-source completion linkage, budget checkpoint regression and cache-policy admission on issue82 source",
+  "source_head": "640a144f3d4832a23a6b30701946ac0af3ee1506",
+  "source_tree": "eb5819240ab343c549757346b18a68db88e25476",
+  "source_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "crates/crony-domain/src/source_verification.rs",
+      "sha256": "83d306178a658e816d31feb214b20559d47491abc7b396f0bc0e236ab4381724"
+    },
+    {
+      "path": "crates/crony-runner/src/deliverable.rs",
+      "sha256": "bb114c4aabcda2690e31ac30edc2087b484fbc110aa06806fdeac91386e1c56e"
+    },
+    {
+      "path": "crates/crony-server/src/dependency_source.rs",
+      "sha256": "c77e83db408187668320eaafd7f5080e0bca703a5c987fc4a913b34bd979ea94"
+    },
+    {
+      "path": "crates/crony-store/src/canonical_source_verification_tests.rs",
+      "sha256": "4420898a9ae0408dfac09393f166bbc9b0235381eff9832e6e7e96f3fc9e4cfb"
+    },
+    {
+      "path": "crates/crony-store/src/lib.rs",
+      "sha256": "3636bd573aa58817523968d06dda426d0860071f1d41940e5173c80295247d8d"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-r5",
+  "started_at_utc": "2026-09-27T02:36:26.9058309Z",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r5-initdb.log",
+      "sha256": "6fe7162973e41bdc494bfb38b9c3e6aecaca71eca8431bcc89422bf33819763f",
+      "counts": {
+        "passed": 0,
+        "summaries": 0,
+        "ignored": 0,
+        "failed": 0
+      }
+    },
+    {
+      "name": "canonical-source-review-regressions-after-store-fix",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r5-budget-checkpoints.log",
+      "sha256": "3afeca9b5b5f9483fe0487a35726e5f77b68eed7d7d102584c5501791408fe49",
+      "counts": {
+        "passed": 7,
+        "summaries": 1,
+        "ignored": 0,
+        "failed": 0
+      }
+    },
+    {
+      "name": "cache-admission-lifecycle",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r5-cache-admission.log",
+      "sha256": "3c4394430a7b874111dd5cc7d9d6b2076b51f3413265754406b16d58c9775e8b",
+      "counts": {
+        "passed": 12,
+        "summaries": 2,
+        "ignored": 0,
+        "failed": 0
+      }
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+  "authentication": {
+    "authenticated_query": true,
+    "wrong_password_rejected": true,
+    "delivery": "Private PGPASSFILE for clients. SQLx environment-only delivery is reduced assurance.",
+    "method": "scram-sha-256"
+  },
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-27T02:40:16.5933577Z"
+}
