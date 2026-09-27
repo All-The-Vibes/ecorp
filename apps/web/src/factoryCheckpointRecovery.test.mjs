@@ -12,7 +12,7 @@ import {
 
 const id = (value) => `00000000-0000-4000-8000-${String(value).padStart(12, '0')}`
 const nil = '00000000-0000-0000-0000-000000000000'
-const scope = { corpId: id(1), actorId: id(11), missionId: id(20), itemId: id(30), version: 60, reload: 0 }
+const scope = { corpId: id(1), actorId: id(11), missionId: id(20), itemId: id(30), version: 60, reload: 0, budgetRevision: 'original-budget' }
 const context = () => ({
   work_item: {
     id: scope.itemId, corp_id: scope.corpId, mission_id: scope.missionId,
@@ -38,6 +38,56 @@ const correctionContext = () => {
     remaining_mission_cost_microusd: 500_000,
   }
 }
+
+const budgetSuspendedRun = () => ({
+  id: id(50), task_id: id(40), provider_session_id: 'native-budget-session',
+  status: 'cancelled', execution_mode: 'provider', breaker_stage: 'suspend',
+  verification_status: 'pending', workspace_disposition: 'preserved',
+  workspace_run_id: id(50), workspace_fingerprint: 'b'.repeat(64),
+  input_tokens: 6000, output_tokens: 0, cost_microusd: 500,
+})
+const budgetSuspendedContext = () => ({
+  ...context(), work_item: { ...context().work_item, state: 'running' },
+  checkpoint_verification_available: true, checkpoint_source_correction: false,
+  checkpoint_cancellation_event_id: null,
+})
+
+test('issue50 exact ordinary budget suspension retains native provider resume beside optional checkpoint verification', () => {
+  const source = budgetSuspendedRun()
+  const value = budgetSuspendedContext()
+  const original = structuredClone({ source, value })
+  assert.equal(factoryRecoveryBlocksProviderResume(true, value, source), false,
+    'optional checkpoint verification must not suppress ordinary budget continuation')
+  for (const verification_status of ['pending', 'running']) {
+    assert.equal(factoryRecoveryBlocksProviderResume(true, value, { ...source, verification_status }), false)
+  }
+  for (const changes of [
+    { id: id(51) }, { task_id: id(41) }, { execution_mode: 'verification_only' },
+    { breaker_stage: 'stop' }, { breaker_stage: null }, { status: 'running' },
+    { status: 'completed' }, { verification_status: 'failed' }, { verification_status: 'passed' },
+    { provider_session_id: null }, { provider_session_id: '' },
+    { workspace_disposition: 'quarantined' }, { workspace_disposition: 'active' },
+    { workspace_fingerprint: null }, { workspace_fingerprint: 'a'.repeat(64) },
+  ]) assert.equal(factoryRecoveryBlocksProviderResume(true, value, { ...source, ...changes }), true,
+    `selected source cannot borrow checkpoint permission: ${JSON.stringify(changes)}`)
+  for (const changes of [
+    { source_run_id: id(51) }, { task_id: id(41) },
+    { checkpoint_verification: false }, { checkpoint_verification: undefined },
+    { checkpoint_verification_available: false }, { checkpoint_verification_available: undefined },
+    { checkpoint_source_correction: true }, { checkpoint_source_correction: undefined },
+    { checkpoint_cancellation_event_id: id(60) },
+    { expected_head_commit: null }, { expected_head_commit: 'not-a-head' },
+    { workspace_fingerprint: null }, { workspace_fingerprint: 'b'.repeat(63) },
+    { work_item: { ...value.work_item, state: 'cancelled' } },
+    { work_item: { ...value.work_item, state: 'verification_failed' } },
+    { recoveries: [{ status: 'authorized' }] }, { recoveries: [{ status: 'running' }] },
+  ]) assert.equal(factoryRecoveryBlocksProviderResume(true, { ...value, ...changes }, source), true,
+    `missing or governed context stays blocked: ${JSON.stringify(changes)}`)
+  assert.equal(factoryRecoveryBlocksProviderResume(true, null, source), true)
+  assert.equal(factoryRecoveryBlocksProviderResume(true, value), true,
+    'a checkpoint without the exact ordinary suspended source grants no provider affordance')
+  assert.deepEqual({ source, value }, original)
+})
 
 test('issue210 only the explicit server flag adds correction to a native checkpoint', () => {
   const value = correctionContext()
@@ -213,6 +263,173 @@ function evaluate(source, globals) {
   }).outputText
   vm.runInNewContext(output, globals)
 }
+
+function budgetRecoveryScopeHarness(extra = {}) {
+  let previousDependencies, previousScope
+  const globals = {
+    corpId: scope.corpId, actorId: scope.actorId,
+    mission: { id: scope.missionId, budget_tokens: 6000, budget_cost_microusd: 10000 },
+    revisions: [], recoveryItemId: scope.itemId, recoveryItemVersion: scope.version,
+    recoveryItemState: 'running', recoveryReload: 0, needsFactoryRecoveryContext,
+    useMemo: (create, dependencies) => {
+      if (!previousDependencies || dependencies.some((value, index) => !Object.is(value, previousDependencies[index]))) {
+        previousScope = create()
+        previousDependencies = dependencies
+      }
+      return previousScope
+    },
+    ...extra,
+  }
+  evaluate(`${functionNode('factoryRecoveryScopeKey').getText(app)}
+    ${functionNode('currentFactoryRecoveryLoad').getText(app)}
+    globalThis.readScope = () => {
+      const recoveryBudgetRevision = ${initializer('recoveryBudgetRevision')};
+      return ${initializer('recoveryScope')};
+    };`, globals)
+  return globals
+}
+
+test('issue50 actual recovery scope invalidates old responses on budget proposals and decisions without a Factory version change', async () => {
+  const loads = []
+  let respond
+  const globals = budgetRecoveryScopeHarness({
+    AbortController, setTimeout: () => 1, clearTimeout: () => {},
+    api: () => new Promise((resolve) => { respond = resolve }),
+  })
+  evaluate(functionNode('requestFactoryRecoveryContext').getText(app), globals)
+  const before = globals.readScope()
+  const cleanup = globals.requestFactoryRecoveryContext(before, (load) => loads.push(load))
+  globals.revisions = [{ id: id(90), version: 1, status: 'pending' }]
+  const pending = globals.readScope()
+  assert.notEqual(pending, before, 'the actual useMemo dependencies must request fresh context')
+  assert.equal(pending.version, before.version)
+  respond(budgetSuspendedContext())
+  await new Promise(setImmediate)
+  cleanup()
+  const oldResponse = loads.at(-1)
+  assert.equal(oldResponse.status, 'ready')
+  assert.equal(globals.currentFactoryRecoveryLoad(pending, oldResponse), null,
+    'even a late, successful old response is hidden synchronously')
+  let previous = pending
+  for (const update of [
+    () => { globals.revisions[0] = { ...globals.revisions[0], version: 2, status: 'rejected' } },
+    () => { globals.revisions = [{ id: id(91), version: 1, status: 'pending' }, ...globals.revisions] },
+    () => { globals.revisions[0] = { ...globals.revisions[0], version: 2, status: 'approved' } },
+    () => { globals.mission = { ...globals.mission, budget_tokens: 20000 } },
+    () => { globals.mission = { ...globals.mission, budget_cost_microusd: 20000 } },
+  ]) {
+    update()
+    const current = globals.readScope()
+    assert.notEqual(current, previous)
+    assert.equal(current.version, before.version)
+    assert.equal(globals.currentFactoryRecoveryLoad(current, {
+      ...oldResponse, scopeKey: globals.factoryRecoveryScopeKey(previous),
+    }), null)
+    globals.revisions = globals.revisions.map((revision) => ({ ...revision }))
+    assert.equal(globals.readScope(), current, 'an unchanged snapshot must not restart the read')
+    previous = current
+  }
+})
+
+test('issue50 actual App budget controls require a fresh approved context and explicitly POST the same suspended source', async () => {
+  const calls = [], remembered = []
+  const source = budgetSuspendedRun()
+  let nativeContext = budgetSuspendedContext()
+  const globals = budgetRecoveryScopeHarness({
+    AbortController, setTimeout: () => 1, clearTimeout: () => {},
+    api: async (path, init) => { calls.push({ path, init }); return init.method === 'GET' ? nativeContext : {} },
+    factoryRecoveryBlocksProviderResume, recoveryContextLoad: null,
+    factoryItem: nativeContext.work_item,
+    tasks: [{ id: source.task_id, mission_id: scope.missionId, status: 'cancelled', verification_status: 'pending' }],
+    runs: [source], evidenceRun: source, factoryRecoveries: [], busy: false,
+    rememberEvidenceRun: (runId) => remembered.push(runId),
+    bootstrap: { corp_id: scope.corpId }, selectedActor: { id: scope.actorId },
+    setBusy: () => {}, setError: () => {},
+    refresh: async () => ({ snapshot: { runs: [{ id: id(51), task_id: source.task_id, resumed_from_run_id: source.id }] } }),
+  })
+  evaluate(`${functionNode('requestFactoryRecoveryContext').getText(app)}
+    ${functionNode('terminalRun').getText(app)}
+    globalThis.onResume = ${initializer('resumeAgentRun', functionNode('App'))};`, globals)
+  const guard = all(card, (node) => ts.isConditionalExpression(node)
+    && node.whenTrue.getText(app).includes('onClick={() => void resumeEvidence()}'))[0]
+  const rendered = ts.transpileModule(`globalThis.renderResume = () => (${guard.getText(app)});`, {
+    compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
+  })
+  globals.require = (name) => { assert.equal(name, 'react/jsx-runtime'); return jsxRuntime }
+  globals.exports = {}
+  vm.runInNewContext(rendered.outputText, globals)
+  const controls = () => {
+    globals.recoveryScope = globals.readScope()
+    for (const name of ['scopedRecoveryLoad', 'recoveryContext', 'consumedTokens', 'consumedCostMicrousd',
+      'hasUnfinishedRuns', 'resumeBudgetBlocked', 'pendingBudgetRevision', 'resumableRun', 'resumeStopBlocked',
+      'resumeLineageRuns', 'requiresFactoryRecovery', 'resumeRecoveryBlocked', 'resumeEvidence']) {
+      evaluate(`globalThis.${name} = ${initializer(name)};`, globals)
+    }
+    return globals.renderResume()
+  }
+  const load = async () => {
+    const cleanup = globals.requestFactoryRecoveryContext(globals.readScope(), (value) => { globals.recoveryContextLoad = value })
+    await new Promise(setImmediate)
+    cleanup()
+    assert.equal(globals.recoveryContextLoad.status, 'ready')
+  }
+  const disabled = async (label) => {
+    const html = renderToStaticMarkup(controls())
+    assert.ok(html.includes(label), html)
+    assert.match(html, /disabled=/)
+    await globals.resumeEvidence()
+    assert.equal(calls.filter((call) => call.init.method === 'POST').length, 0)
+  }
+  await load()
+  await disabled('Budget revision required')
+  globals.revisions = [{ id: id(90), version: 1, status: 'pending' }]
+  assert.equal(controls(), null)
+  await load()
+  await disabled('Budget decision required')
+  globals.revisions[0] = { ...globals.revisions[0], version: 2, status: 'rejected' }
+  assert.equal(controls(), null)
+  await load()
+  await disabled('Budget revision required')
+  globals.revisions = [{ id: id(91), version: 2, status: 'approved' }, ...globals.revisions]
+  globals.mission = { ...globals.mission, budget_tokens: 20000 }
+  assert.equal(controls(), null, 'raising the ceiling must not admit cached checkpoint context')
+  await globals.resumeEvidence()
+  nativeContext = { ...nativeContext, remaining_mission_tokens: 14000, remaining_mission_cost_microusd: 9500 }
+  await load()
+  assert.equal(globals.recoveryScope.version, scope.version, 'budget approval need not change Factory version')
+  for (const changes of [
+    { factoryRecoveries: [{ factory_work_item_id: scope.itemId, mission_id: scope.missionId,
+      task_id: source.task_id, source_run_id: source.id, mode: 'checkpoint_verification', status: 'authorized' }] },
+    { runs: [source, { ...source, id: id(52), breaker_stage: 'stop' }] },
+    { runs: [source, { ...source, id: id(52), workspace_disposition: 'quarantined' }] },
+    { runs: [source, { ...source, id: id(52), execution_mode: 'verification_only' }] },
+    { tasks: [{ ...globals.tasks[0], status: 'verification_failed' }] },
+  ]) {
+    const previous = Object.fromEntries(Object.keys(changes).map((key) => [key, globals[key]]))
+    Object.assign(globals, changes)
+    assert.equal(controls(), null, 'approved budget cannot override governed or unsafe lineage')
+    await globals.resumeEvidence()
+    Object.assign(globals, previous)
+  }
+  const tree = controls()
+  const html = renderToStaticMarkup(tree)
+  assert.match(html, /Resume agent session/)
+  assert.doesNotMatch(html, /disabled=/)
+  assert.equal(calls.filter((call) => call.init.method === 'POST').length, 0,
+    'a decision or context refresh never starts a provider')
+  tree.props.children.find((node) => node?.type === 'button').props.onClick()
+  await new Promise(setImmediate)
+  const posts = calls.filter((call) => call.init.method === 'POST')
+  assert.equal(posts.length, 1)
+  assert.equal(posts[0].path, `/api/corps/${scope.corpId}/runs/${source.id}/resume`)
+  const body = JSON.parse(posts[0].init.body)
+  assert.deepEqual(Object.keys(body).sort(), ['prompt', 'requested_by'])
+  assert.equal(body.requested_by, scope.actorId)
+  assert.match(body.prompt, /prior session in the same repository/)
+  assert.deepEqual(remembered, [id(51)])
+  assert.equal(globals.consumedTokens, 6000, 'UI recovery never resets original spend')
+})
+
 function presentation(value, runs = []) {
   const globals = { factoryRecoveryModes, value, runs }
   evaluate(`${functionNode('factoryRecoveryPresentation').getText(app)}
@@ -461,7 +678,7 @@ function revisionHarness({
     factoryContractRevisionSource,
     recoveryScope: selectedScope,
     recoveryLoad: status === null ? null : {
-      scopeKey: JSON.stringify([scope.corpId, scope.actorId, scope.missionId, scope.itemId, scope.version, scope.reload]),
+      scopeKey: JSON.stringify([scope.corpId, scope.actorId, scope.missionId, scope.itemId, scope.version, scope.reload, scope.budgetRevision]),
       status, data: status === 'ready' ? value : null, error: status === 'error' ? 'lookup failed' : null,
     },
     mission: { id: scope.missionId, requested_by: scope.actorId, status: missionStatus },
@@ -724,7 +941,7 @@ test('actual App Resume control survives an ineligible ordinary Factory recovery
     Object.assign(globals, original)
   }
   globals.recoveryContextLoad = {
-    scopeKey: JSON.stringify([scope.corpId, scope.actorId, scope.missionId, scope.itemId, scope.version, scope.reload]),
+    scopeKey: JSON.stringify([scope.corpId, scope.actorId, scope.missionId, scope.itemId, scope.version, scope.reload, scope.budgetRevision]),
     status: 'ready', error: null, data: { ...context(),
       work_item: { ...globals.factoryItem }, checkpoint_cancellation_event_id: null },
   }

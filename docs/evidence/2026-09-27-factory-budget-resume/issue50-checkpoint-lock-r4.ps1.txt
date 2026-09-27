@@ -1,0 +1,77 @@
+# Synthetic fault injection only: hold one QA file unreadable, without changing its bytes.
+#requires -Version 7.4
+param(
+    [Parameter(Mandatory)][string]$QaRoot,
+    [Parameter(Mandatory)][string]$Workspace,
+    [Parameter(Mandatory)][string]$ReleaseSignal,
+    [Parameter(Mandatory)][string]$ProbeReceipt
+)
+$ErrorActionPreference = 'Stop'
+$qaPath = (Resolve-Path -LiteralPath $QaRoot).Path
+$workspacePath = (Resolve-Path -LiteralPath $Workspace).Path
+if ([IO.Path]::GetFileName($qaPath) -cne 'issue-50-factory-recovery' -or
+    [IO.Path]::GetFileName([IO.Path]::GetDirectoryName($qaPath)) -cne 'qa') {
+    throw 'Not the explicitly owned QA root.'
+}
+$prefix = $qaPath.TrimEnd('\') + '\attempts\'
+if (!$workspacePath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) -or
+    !$workspacePath.Contains('\runner-workspaces\worktrees\') -or
+    !([IO.Path]::GetFullPath($ReleaseSignal)).StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Lock and release signal must stay within the QA attempt.'
+}
+if (!([IO.Path]::GetFullPath($ProbeReceipt)).StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) -or
+    (Test-Path -LiteralPath $ProbeReceipt)) { throw 'Probe receipt must be a new owned attempt file.' }
+
+$walkPath = $workspacePath
+while ($walkPath.Length -ge $qaPath.Length) {
+    $item = Get-Item -LiteralPath $walkPath -Force
+    if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Refuse redirected QA path.' }
+    if ($walkPath.Equals($qaPath, [StringComparison]::OrdinalIgnoreCase)) { break }
+    $walkPath = [IO.Path]::GetDirectoryName($walkPath)
+}
+# An unchanged tracked file is outside the Codex adapter's changed-file evidence
+# scan but remains inside the native full-workspace checkpoint fingerprint.
+$file = Join-Path $workspacePath 'README.md'
+$item = Get-Item -LiteralPath $file -Force
+if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Refuse redirected QA file.' }
+$marker = Join-Path $workspacePath '.qa-checkpoint-lock-ready'
+$markerBytes = 'Synthetic QA lock ready'
+$markerCreated = $false
+$handle = [IO.File]::Open($file, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::None)
+try {
+    $readDenied=$false
+    try { $null=[IO.File]::ReadAllBytes($file) } catch [IO.IOException] { $readDenied=$true }
+    if (!$readDenied) { throw 'The actual checkpoint read fault is not established.' }
+    $gitStatus=@(& git -C $workspacePath status --porcelain=v1 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $statusExit=$LASTEXITCODE
+    if ($statusExit) { throw 'Git status is blocked by the synthetic fault before provider execution.' }
+    $gitDiff=@(& git -C $workspacePath diff --binary --no-ext-diff HEAD -- 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $diffExit=$LASTEXITCODE
+    if ($diffExit -or $gitDiff) { throw 'Git diff is blocked or source differs before checkpoint fault injection.' }
+    [ordered]@{observed_at_utc=[DateTimeOffset]::UtcNow.ToString('o');exclusive_read_denied=$readDenied;
+        git_status_exit=$statusExit;git_status=$gitStatus;git_diff_exit=$diffExit;git_diff_bytes=0;
+        source_file='README.md';scope='Synthetic fixture precondition only; native acceptance assertions remain unchanged'} |
+        ConvertTo-Json | Set-Content -LiteralPath $ProbeReceipt -Encoding utf8NoBOM
+    # CreateNew preserves any unknown pre-existing file; never overwrite it.
+    $markerStream = [IO.File]::Open($marker, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+    $markerCreated = $true
+    try {
+        $markerBuffer = [Text.Encoding]::UTF8.GetBytes($markerBytes)
+        $markerStream.Write($markerBuffer, 0, $markerBuffer.Length)
+    }
+    finally { $markerStream.Dispose() }
+    $deadline = [DateTime]::UtcNow.AddSeconds(30)
+    while (!(Test-Path -LiteralPath $ReleaseSignal) -and [DateTime]::UtcNow -lt $deadline) {
+        Start-Sleep -Milliseconds 100
+    }
+} finally {
+    $handle.Dispose()
+    if ($markerCreated -and (Test-Path -LiteralPath $marker)) {
+        $markerItem = Get-Item -LiteralPath $marker -Force
+        if (($markerItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+            !(Test-Path -LiteralPath $workspacePath -PathType Container) -or
+            !([IO.Path]::GetFullPath($marker)).StartsWith($workspacePath + '\', [StringComparison]::OrdinalIgnoreCase) -or
+            [IO.File]::ReadAllText($marker) -cne $markerBytes) { throw 'Changed lock marker preserved; cleanup is unverified.' }
+        Remove-Item -LiteralPath $marker -ErrorAction Stop
+    }
+}

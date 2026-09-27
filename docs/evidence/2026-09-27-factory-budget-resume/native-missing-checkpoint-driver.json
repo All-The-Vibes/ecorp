@@ -1,0 +1,132 @@
+{
+  "issue": 50,
+  "mode": "missing-checkpoint",
+  "status": "native-passed",
+  "started_at_utc": "2026-09-27T22:22:30.995184+00:00",
+  "repository": "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp",
+  "qa_root": "<USERPROFILE>\\code\\q50-nm4\\qa\\issue-50-factory-recovery",
+  "source_binding": {
+    "schema_version": 1,
+    "source_head": "ee7bdb1b75f3ce5e7f315feeec6583777b0c4ff7",
+    "source_branch": "codex/issue50-factory-budget-resume",
+    "source_tree": "9a039c63c4d7e57d0f0c46c9058f35b5ac2a73f9",
+    "source_files_sha256": "2eb9c9ed4d85713917024c8f03b9aba30b881b0e9fe62169e097e2cfb2ab2d8c",
+    "source_file_count": 6994,
+    "tracked_diff_sha256": "91791cbbe21ce8ab309285b533b63cafa22735ac180c9b1bfa0f15930d1c05c4",
+    "untracked_digests": [],
+    "canonical_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-canonical-r1.json",
+    "canonical_receipt_sha256": "e1b1344d47b9e47c4d0fe812ff775db8520423043be45d44491f8669f17b6479",
+    "canonical_report_sha256": "9550c2b1f6857e58f5441754d287354d7af538fcb8546ac2ddee78bb331b4382",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "canonical_validation": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-canonical-r1.json",
+    "sha256": "e1b1344d47b9e47c4d0fe812ff775db8520423043be45d44491f8669f17b6479"
+  },
+  "native_build": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-build-r1.json",
+    "sha256": "505b654e849dc2fc94464b4a072163661f024c9da47a49e3c050ce3ed8beaf4c"
+  },
+  "fixture": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-missing-checkpoint-r4.mjs",
+    "sha256": "a34b9a91e4c67a3c4e4f9534116f6083f949ebbae0ebeb7d394f7c78d4b8b897"
+  },
+  "derivation": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-checkpoint-derivation-r4.json",
+    "sha256": "38c9b167af07e449a1424d6e174e1f3d318e2fd6cd10898f6482e6771a1f40cb"
+  },
+  "driver": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue50-native-r4.py",
+    "sha256": "233bf3747628eda8d5959cce909e31454993deb7e932c04339e61e5aa2527a7b"
+  },
+  "node": {
+    "path": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+    "sha256": "ba4e6d110e8c1592a1ecd390f6b05f3da124b13871a5be62b341a07a853c6c32"
+  },
+  "checks": [
+    {
+      "lane": "dry-run",
+      "command": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-missing-checkpoint-r4.mjs",
+        "--dry-run",
+        "--missing-checkpoint"
+      ],
+      "exit_code": 0,
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-missing-checkpoint-r4-dry-run.log",
+      "sha256": "e5d1ef28e08fd1074587cbf34c6d137b25f203e9a678ad45ca85b188bfe417cc"
+    },
+    {
+      "lane": "execute",
+      "command": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-missing-checkpoint-r4.mjs",
+        "--execute",
+        "--missing-checkpoint"
+      ],
+      "exit_code": 0,
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-missing-checkpoint-r4-execute.log",
+      "sha256": "b250c1672745097f7e2bbc244916d345b890dd12b1e610c038d435cb6b6c6f45"
+    }
+  ],
+  "source_unchanged": true,
+  "limitations": "Retrospective native Windows CLI/server/runner acceptance with a fresh owned PostgreSQL fixture and deterministic Codex/GitHub children. All actors and reviews are synthetic. No real model, human approval, GitHub mutation or OS sandbox proof. This run includes the recorded uncommitted UI candidate.",
+  "process_id": 15380,
+  "fixture_report": {
+    "path": "<USERPROFILE>\\code\\q50-nm4\\qa\\issue-50-factory-recovery\\attempts\\20260927222233129\\report.json",
+    "sha256": "ecdd28f202eaa846272ac3d8f1a31d602335db8f396057020b3998b9c878f6af"
+  },
+  "fixture_status": "recovery_passed",
+  "fixture_error": null,
+  "cleanup": [
+    {
+      "name": "qa-read-lock",
+      "status": "already_exited"
+    },
+    {
+      "name": "runner",
+      "status": "stopped_verified_qa_process",
+      "pid": 17756
+    },
+    {
+      "name": "server",
+      "status": "stopped_verified_qa_process",
+      "pid": 32080
+    },
+    {
+      "name": "postgres",
+      "status": "stopped_verified_qa_process",
+      "pid": 33980
+    }
+  ],
+  "ports_after": [],
+  "summary": {
+    "proposal_replay_verified": true,
+    "decision_replay_verified": true,
+    "same_session_and_workspace": true,
+    "original_spend_and_breaker_preserved": true,
+    "hard_stop_protected": null,
+    "recovery_proof_verified": true,
+    "resume_run": {
+      "id": "b3e33763-b68f-41a9-a7e3-0e9bb6192a73",
+      "status": "completed",
+      "breaker_stage": "healthy",
+      "budget_tokens_limit": 4000,
+      "input_tokens": 10,
+      "output_tokens": 2
+    }
+  },
+  "finished_at_utc": "2026-09-27T22:25:55.376347+00:00"
+}

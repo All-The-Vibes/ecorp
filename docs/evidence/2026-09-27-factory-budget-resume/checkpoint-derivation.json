@@ -1,0 +1,45 @@
+{
+  "created_at_utc": "2026-09-27T22:22:12.436476+00:00",
+  "original_fixture": {
+    "path": "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp\\tools\\e2e_factory_budget_recovery.mjs",
+    "sha256": "07bdffe6703961cd4d1ab6049f6aed209004fbfa32747db138dad083f2aeab46"
+  },
+  "original_lock_helper": {
+    "path": "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp\\tools\\qa_hold_checkpoint_file.ps1",
+    "sha256": "d309264afe807dc104717a3a7610838208e7fc7b3d298c28632739a6719d0e16"
+  },
+  "derived_fixture": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-missing-checkpoint-r4.mjs",
+    "sha256": "a34b9a91e4c67a3c4e4f9534116f6083f949ebbae0ebeb7d394f7c78d4b8b897"
+  },
+  "derived_lock_helper": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-checkpoint-lock-r4.ps1",
+    "sha256": "a30ef9ad58bb37289c74cadfdd4cc067f4206490e852e2265ca8f35035dae1e7"
+  },
+  "driver": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue50-native-r4.py",
+    "sha256": "233bf3747628eda8d5959cce909e31454993deb7e932c04339e61e5aa2527a7b"
+  },
+  "failed_r3": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-missing-checkpoint-r3.json",
+    "sha256": "cfab5a4ba59e2b0e1b674df769a695b007ce2b3bb9a6aa71ac61bdfe137ba75a"
+  },
+  "diagnosis": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-checkpoint-lock-diagnosis-r1.json",
+    "sha256": "aa070ba7a1e36da7419645846e91727a32368afb0b55270f37382d8e69c6387f"
+  },
+  "failed_workspace_cached_index": "README.md\n  ctime: 1790547280:142341800\n  mtime: 1790547280:144353700\n  dev: 0\tino: 0\n  uid: 0\tgid: 0\n  size: 0\tflags: 0\n",
+  "failed_workspace_physical_readme": {
+    "path": "<USERPROFILE>\\code\\q50-nm\\qa\\issue-50-factory-recovery\\attempts\\20260927221342271\\runner-workspaces\\worktrees\\d33c10abccaf49fc818c24369a91b782\\f61c1082aab44b06aa92fe2c79bbca23\\README.md",
+    "sha256": "ddbd36a752e6cfe59e711cedd8d26178e525b536e0d0b65ccf907d3b7467da06"
+  },
+  "changes": [
+    "External module imports and product-root binding",
+    "Wait 1500ms and refresh only the synthetic worktree index metadata before locking",
+    "Assert unchanged source bytes and index blob identity after metadata refresh",
+    "Prove actual file reads fail and original Git status/diff commands succeed while the lock is held before provider handshake",
+    "Record the fault precondition alongside all unchanged native checkpoint/recovery assertions"
+  ],
+  "diagnosis_limit": "The failed native workspace has a zero-size cached index entry for a 64-byte README. The immediate standalone probe did not reproduce that failure. The timestamp hypothesis is not treated as a confirmed product defect; r4 establishes the missing precondition explicitly.",
+  "scope": "Retrospective acceptance driver only; no product source, native verifier, database proof, approval, or fixture source bytes changed."
+}
