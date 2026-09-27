@@ -61,6 +61,33 @@ production-identity, cross-owner, or ledger-network acceptance exercise.
 
 ## Evidence rule
 
+### Canonical source verification (#82)
+
+Portable source checks run against the complete selected Git tree, materialized from raw
+blobs without checkout filters or line-ending conversion. The runner freezes the candidate
+before verification and exports that same tree. Each persisted check's `payload.source` must
+match `source_verification` in `run.verification_passed` and signed deliverable metadata.
+`run.completed` remains gated by that persisted linkage. Physical worktree hashes and a
+normalized `git diff` are not substitutes for this identity.
+
+The runner's `deliverable::canonical_tests` cover Windows line-ending conversion, explicit
+attributes, omitted manifest changes, unchanged historical migration bytes, and the actual
+migration checker in clean runner-created commits. They also exercise fresh command snapshots,
+separate ignored build inputs, source/index/HEAD mutation, symlink containment, inherited Git
+routing, cancellation, and export/report tampering. Ignored inputs have a separate bounded
+digest; they are not delivered source or operating-system isolation evidence. Checks cannot
+borrow omitted tracked source or provider artifacts as build inputs.
+
+The opt-in `budget_checkpoint_tests::issue82_` cases and the
+`cache_admission_lifecycle_tests` suite use real migrations in an explicitly owned disposable
+PostgreSQL fixture. They check current-runner capability admission, canonical completion
+linkage, and preservation of validated source identity during artifact-evidence sanitization.
+Ordinary workspace tests leave database cases ignored; record their native execution
+separately. Product acceptance additionally requires browser-authored policies, native runner
+rejection of a CRLF-only migration checksum, successful canonical-checksum completion,
+downloaded signed-bundle verification, and the actual checker in its clean exported commit.
+Deterministic protocol fixtures do not establish real-provider inference or human review.
+
 ### Claim-authority contribution (#161)
 
 The [claim-authority contract](FACTORY_CLAIM_AUTHORITY.md) and September 13, 2026

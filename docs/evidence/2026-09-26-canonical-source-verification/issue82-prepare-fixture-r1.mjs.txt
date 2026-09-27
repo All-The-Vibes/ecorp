@@ -1,0 +1,48 @@
+// Prepare a new owned fixture from exact Git blobs, including the real checker.
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { mkdir, readdir, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+
+const [product, source] = process.argv.slice(2)
+assert.ok(path.isAbsolute(product) && path.isAbsolute(source))
+assert.equal((await readdir(source)).length, 0, 'Never adopt or reset an existing source')
+function git(root, args) {
+  const result = spawnSync('git', ['-C', root, ...args], { maxBuffer: 16 * 1024 * 1024, windowsHide: true })
+  assert.equal(result.status, 0, result.stderr.toString())
+  return result.stdout
+}
+const implementationHead = git(product, ['rev-parse', 'HEAD']).toString().trim()
+const blob = file => git(product, ['cat-file', 'blob', `${implementationHead}:${file}`])
+const manifestBytes = blob('db/migrations/manifest.json')
+const manifest = JSON.parse(manifestBytes)
+assert.equal(manifest.schema_version, 1)
+assert.equal(manifest.migrations.length, 56)
+await mkdir(path.join(source, 'db/migrations'), { recursive: true })
+await mkdir(path.join(source, 'tools'), { recursive: true })
+const history = []
+for (const migration of manifest.migrations) {
+  const file = `db/migrations/${migration.file}`
+  const bytes = blob(file)
+  const digest = createHash('sha384').update(bytes).digest('hex')
+  assert.equal(digest, migration.sha384)
+  await writeFile(path.join(source, file), bytes, { flag: 'wx' })
+  history.push({ path: file, bytes: bytes.length, sha384: digest })
+}
+await writeFile(path.join(source, 'db/migrations/manifest.json'), manifestBytes, { flag: 'wx' })
+await writeFile(path.join(source, 'tools/check_migrations.mjs'), blob('tools/check_migrations.mjs'), { flag: 'wx' })
+await writeFile(path.join(source, '.gitattributes'), history.map(item => `${item.path} -text`).join('\n') + '\n', { flag: 'wx' })
+await writeFile(path.join(source, 'README.md'), '# Issue 82 canonical-source acceptance fixture\n\nHistorical migration bytes are exact current-main Git objects. A deterministic child adds one new CRLF migration.\n', { flag: 'wx' })
+git(source, ['init', '-b', 'main'])
+git(source, ['config', 'core.autocrlf', 'true'])
+git(source, ['add', '--all'])
+git(source, ['-c', 'user.name=ECorp QA', '-c', 'user.email=qa@ecorp.invalid', 'commit', '-m', 'Prepare issue82 exact historical migrations and real checker'])
+git(source, ['remote', 'add', 'origin', 'https://github.com/ecorp-fixture/issue82-canonical-source.git'])
+const sourceCommit = git(source, ['rev-parse', 'HEAD']).toString().trim()
+for (const item of history) assert.equal(createHash('sha384').update(git(source, ['cat-file', 'blob', `${sourceCommit}:${item.path}`])).digest('hex'), item.sha384)
+const check = spawnSync(process.execPath, ['tools/check_migrations.mjs'], { cwd: source, encoding: 'utf8', windowsHide: true })
+assert.equal(check.status, 0, check.stderr)
+const receipt = { implementation_head: implementationHead, source_commit: sourceCommit, source_repository: 'ecorp-fixture/issue82-canonical-source', historical_migrations: history, checker: JSON.parse(check.stdout), core_autocrlf: 'true' }
+await writeFile(path.join(path.dirname(source), 'evidence/source-fixture.json'), JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ source_commit: sourceCommit, historical_migrations: history.length, checker: receipt.checker }))

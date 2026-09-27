@@ -1,0 +1,26 @@
+// Native deterministic child protocol. No vendor inference or external effects.
+import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
+import { readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+
+const args = new Map()
+for (let index = 2; index < process.argv.length; index += 2) args.set(process.argv[index], process.argv[index + 1])
+const runId = args.get('--run-id'), workdir = args.get('--workdir'), mission = args.get('--mission')
+assert.ok(runId && path.isAbsolute(workdir) && mission)
+const wrongChecksum = mission.includes('[issue82-physical-checksum]')
+assert.ok(wrongChecksum || mission.includes('[issue82-canonical-checksum]'))
+const emit = event => process.stdout.write(JSON.stringify(event) + '\n')
+emit({ type: 'status', status: 'working', station: 'terminal', message: 'Writing a deterministic CRLF migration in the assigned isolated worktree.' })
+const physical = Buffer.from('SELECT 9999;\r\n'), canonical = Buffer.from('SELECT 9999;\n')
+const file = '9999_canonical_fixture.sql'
+const manifestPath = path.join(workdir, 'db/migrations/manifest.json')
+const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+assert.equal(manifest.migrations.length, 56)
+manifest.migrations.push({ version: 9999, file, sha384: createHash('sha384').update(wrongChecksum ? physical : canonical).digest('hex') })
+await writeFile(path.join(workdir, 'db/migrations', file), physical, { flag: 'wx' })
+await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
+const artifact = path.join(workdir, 'result.md')
+await writeFile(artifact, `# Deterministic issue82 fixture\n\nRun: ${runId}\nNew migration physical bytes: CRLF.\nManifest checksum input: ${wrongChecksum ? 'physical CRLF (expected rejection)' : 'canonical LF (expected acceptance)'}.\n`, { flag: 'wx' })
+emit({ type: 'artifact', path: artifact, media_type: 'text/markdown' })
+emit({ type: 'completed', summary: 'Deterministic migration and artifact prepared; the authoritative verifier decides completion.' })

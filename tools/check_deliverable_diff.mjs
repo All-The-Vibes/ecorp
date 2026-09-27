@@ -125,17 +125,19 @@ export function checkDeliverableDiff({
   mkdirSync(directory, { mode: 0o700 })
   const index = path.join(directory, 'index')
   const deadline = performance.now() + timeoutMs
-  const env = {
-    ...process.env,
+  const env = { ...process.env }
+  // Match the runner's canonical selection: inherited Git configuration,
+  // attributes, routing and tracing must not change the candidate or source.
+  for (const key of Object.keys(env)) {
+    if (/^GIT_/i.test(key)) delete env[key]
+  }
+  Object.assign(env, {
     GIT_INDEX_FILE: index,
     GIT_LITERAL_PATHSPECS: '1',
     GIT_OPTIONAL_LOCKS: '0',
-  }
-  // Tracing can create files during the first rev-parse and add them to the
-  // candidate on the later add -A. Remove it before every native Git child.
-  for (const key of Object.keys(env)) {
-    if (/^GIT_TRACE/i.test(key) || /^GIT_CURL_VERBOSE$/i.test(key)) delete env[key]
-  }
+    GIT_NO_REPLACE_OBJECTS: '1',
+    GIT_TERMINAL_PROMPT: '0',
+  })
   function git(args, check = false) {
     const command = args[0] === '-c' ? args[2] : args[0]
     const operation = GIT_OPERATIONS.includes(command) ? command : 'unknown'

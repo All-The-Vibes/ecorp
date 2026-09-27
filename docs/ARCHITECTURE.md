@@ -1134,16 +1134,32 @@ artifact events, separately from source state and requested verifier controls.
 ## Portable source-deliverable boundary
 
 Provider artifacts and application deliverables are separate object roles. After the provider
-process terminates, the runner executes the persisted verifier policy in the assigned worktree. A
-passing report is normalized and hashed. The runner then uses a temporary Git index to construct
-the requested patch, archive, typed set, commit/branch bundle, or review report from tracked and
-non-ignored untracked changes.
+process terminates, the runner selects the requested deliverable into a temporary native Git index
+rooted at the assigned base commit. Git clean filters and line-ending normalization run during
+selection. The resulting complete tree is frozen before verification: selected changes overlay the
+base, while omitted physical changes cannot satisfy source checks.
+
+The runner materializes raw blobs in an independent private Git repository, with its own objects,
+index and temporary candidate commit. Bounded local build inputs classified by the candidate's
+ignore rules are copied separately and fingerprinted; tracked source, provider artifacts, Git
+metadata and sensitive paths are excluded from those inputs. Provider artifacts remain inputs to
+Artifact checks only. Every Command/Test check starts from a fresh snapshot. Changed source bytes,
+executable modes, HEAD, index tree or newly created nonignored source reject that check.
+
+A passing report records the verified tree, base and temporary candidate commit, plus the ignored
+input digest and bounds. Export uses that frozen tree without restaging the physical worktree to
+construct the requested patch, archive, typed set, commit/branch bundle or review report. A later
+runner commit may have different metadata from the temporary candidate, but must retain its tree.
 
 The resulting bytes use the existing reservation, staging, validation, finalization, and recovery
 path. `source_deliverables` links the ready object to its task, run, verification digest, base
 commit, optional post-verification commit, task branch, retention, and integration state. The
 server returns a runner-only storage acknowledgment; only then can the runner emit passing
-verification and evaluate safe worktree cleanup.
+verification and evaluate safe worktree cleanup. New source-deliverable assignments require
+`canonical-source-verification-v1`. Signed upload metadata, `run.verification_passed` and every
+persisted check must agree on the source identity. `run.completed` is gated by that persisted
+linkage. Historical artifacts remain readable, while new completion
+must satisfy this admission rule and any independent manual gate.
 
 Pull-request publication, merge, and deployment are outside this boundary. A ready source
 deliverable proves portable review material exists; it does not imply external integration. See

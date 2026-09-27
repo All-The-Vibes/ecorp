@@ -831,13 +831,29 @@ pub async fn empty_verification_snapshot(run_id: Uuid) -> Result<VerificationSna
 }
 
 pub async fn verification_snapshot(root: &Path, run_id: Uuid) -> Result<VerificationSnapshot> {
+    verification_snapshot_inner(root, run_id, false).await
+}
+
+/// Copy only runner-created Git metadata from a private canonical baseline, never source .git.
+pub(crate) async fn canonical_verification_snapshot(
+    baseline: &VerificationSnapshot,
+    run_id: Uuid,
+) -> Result<VerificationSnapshot> {
+    verification_snapshot_inner(baseline.path(), run_id, true).await
+}
+
+async fn verification_snapshot_inner(
+    root: &Path,
+    run_id: Uuid,
+    include_private_git: bool,
+) -> Result<VerificationSnapshot> {
     let root = tokio::fs::canonicalize(root)
         .await
         .context("canonicalize verifier-only source workspace")?;
     let path = fresh_verification_snapshot_path(run_id).await?;
     let snapshot_root = path.clone();
     let result = tokio::task::spawn_blocking(move || {
-        copy_workspace_snapshot(&root, &snapshot_root)?;
+        copy_workspace_snapshot(&root, &snapshot_root, include_private_git)?;
         Ok::<_, anyhow::Error>(snapshot_root)
     })
     .await
@@ -910,7 +926,11 @@ fn prepare_snapshot_cleanup(path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-fn copy_workspace_snapshot(root: &Path, destination: &Path) -> Result<()> {
+fn copy_workspace_snapshot(
+    root: &Path,
+    destination: &Path,
+    include_private_git: bool,
+) -> Result<()> {
     const MAX_ENTRIES: usize = 100_000;
     const MAX_BYTES: u64 = 4 * 1024 * 1024 * 1024;
     if destination.exists() {
@@ -945,6 +965,7 @@ fn copy_workspace_snapshot(root: &Path, destination: &Path) -> Result<()> {
         &mut bytes,
         MAX_ENTRIES,
         MAX_BYTES,
+        include_private_git,
     )
 }
 
@@ -957,13 +978,16 @@ fn copy_snapshot_directory(
     bytes: &mut u64,
     max_entries: usize,
     max_bytes: u64,
+    include_private_git: bool,
 ) -> Result<()> {
     for entry in fs::read_dir(source)
         .with_context(|| format!("read verifier snapshot directory {}", source.display()))?
     {
         let entry = entry?;
         let source_path = entry.path();
-        if is_git_control_path(root, &source_path) {
+        if is_git_control_path(root, &source_path)
+            && !(include_private_git && source_path.starts_with(root.join(".git")))
+        {
             continue;
         }
         *entries += 1;
@@ -994,6 +1018,7 @@ fn copy_snapshot_directory(
                 bytes,
                 max_entries,
                 max_bytes,
+                include_private_git,
             )?;
             // The root stays private (0700), but entry modes must match the sealed source.
             fs::set_permissions(&destination_path, metadata.permissions()).with_context(|| {
@@ -1049,7 +1074,7 @@ pub(crate) fn snapshot_entry_is_link(metadata: &fs::Metadata) -> bool {
         || metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
 }
 
-fn validated_snapshot_symlink_target(root: &Path, source: &Path) -> Result<PathBuf> {
+pub(crate) fn validated_snapshot_symlink_target(root: &Path, source: &Path) -> Result<PathBuf> {
     let target = fs::read_link(source)
         .with_context(|| format!("read verifier snapshot symlink {}", source.display()))?;
     if target.is_absolute()
@@ -1082,7 +1107,7 @@ fn validated_snapshot_symlink_target(root: &Path, source: &Path) -> Result<PathB
 }
 
 #[cfg(unix)]
-fn copy_snapshot_symlink(root: &Path, source: &Path, destination: &Path) -> Result<()> {
+pub(crate) fn copy_snapshot_symlink(root: &Path, source: &Path, destination: &Path) -> Result<()> {
     let target = validated_snapshot_symlink_target(root, source)?;
     std::os::unix::fs::symlink(&target, destination).with_context(|| {
         format!(
@@ -1094,7 +1119,7 @@ fn copy_snapshot_symlink(root: &Path, source: &Path, destination: &Path) -> Resu
 }
 
 #[cfg(windows)]
-fn copy_snapshot_symlink(root: &Path, source: &Path, destination: &Path) -> Result<()> {
+pub(crate) fn copy_snapshot_symlink(root: &Path, source: &Path, destination: &Path) -> Result<()> {
     let target = validated_snapshot_symlink_target(root, source)?;
     let target_is_directory = fs::metadata(source)
         .with_context(|| format!("inspect verifier snapshot symlink {}", source.display()))?
@@ -1435,7 +1460,7 @@ async fn canonicalize_path(path: &Path) -> std::io::Result<PathBuf> {
 }
 
 #[cfg(windows)]
-fn normalize_path(path: PathBuf) -> PathBuf {
+pub(crate) fn normalize_path(path: PathBuf) -> PathBuf {
     let text = path.to_string_lossy();
     if let Some(rest) = text.strip_prefix(r"\\?\UNC\") {
         return PathBuf::from(format!(r"\\{rest}"));
@@ -1447,7 +1472,7 @@ fn normalize_path(path: PathBuf) -> PathBuf {
 }
 
 #[cfg(not(windows))]
-fn normalize_path(path: PathBuf) -> PathBuf {
+pub(crate) fn normalize_path(path: PathBuf) -> PathBuf {
     path
 }
 
@@ -1945,6 +1970,7 @@ mod tests {
             &mut bytes,
             10,
             3,
+            false,
         )
         .expect_err("byte bound");
         assert!(error.to_string().contains("exceeds 3 bytes"));

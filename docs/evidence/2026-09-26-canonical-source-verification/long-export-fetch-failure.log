@@ -1,0 +1,30 @@
+   Compiling crony-runner v0.1.0 (<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\crates\crony-runner)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 27.51s
+     Running unittests src\bin\crony-evidence-paths.rs (target\debug\deps\crony_evidence_paths-2d177a78041ec1ab.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\crony_runner-bef4c6df3726e249.exe)
+
+running 1 test
+test deliverable::canonical_tests::canonical_export_supports_long_windows_paths_without_changing_git_config ... canonical fixture: <USERPROFILE>\AppData\Local\Temp\ecorp-canonical-test-57b456e8-80c6-49b7-99c6-e8f037e530de
+
+thread 'deliverable::canonical_tests::canonical_export_supports_long_windows_paths_without_changing_git_config' (24440) panicked at crates\crony-runner\src\deliverable_verification_tests.rs:139:10:
+canonical verification setup: private Git operation failed: error: unable to open loose object 1bc210edbc68bf4b6bc08d59619965346a80c6bc: Filename too long
+error: unable to open loose object 1bc210edbc68bf4b6bc08d59619965346a80c6bc: Filename too long
+error: unable to open loose object 1bc210edbc68bf4b6bc08d59619965346a80c6bc: Filename too long
+fatal: git upload-pack: not our ref 1bc210edbc68bf4b6bc08d59619965346a80c6bc
+fatal: remote error: upload-pack: not our ref 1bc210edbc68bf4b6bc08d59619965346a80c6bc
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    deliverable::canonical_tests::canonical_export_supports_long_windows_paths_without_changing_git_config
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 275 filtered out; finished in 1.72s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

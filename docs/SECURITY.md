@@ -449,13 +449,35 @@ Consumed recovery commands are not replayed, and terminal-target commands are re
 execution. Capability negotiation describes this transfer protocol; it is not OS-isolation
 attestation and does not relax source-path, budget, or hard-stop authority.
 
-Portable source exports use a temporary Git index rooted in the assigned worktree. They include
-tracked changes and non-ignored untracked files, exclude provider evidence, and reject symbolic
-links, Git links, path escapes, runner-internal directories, ignored files, and secret-like names.
-The server signs the artifact role, filename, and exact deliverable metadata in addition to the
-content digest. A run cannot pass verification until the ready source object links the exact
-normalized verification digest to the exact exported-byte digest. The runner waits for durable
-storage acknowledgment before worktree cleanup.
+Portable source exports freeze a temporary native Git index before verification, including selected
+tracked changes and nonignored untracked files after Git normalization. Changed symbolic links, Git
+links, path escapes, runner-internal directories, ignored files and secret-like names remain rejected
+as deliverable changes. Verification reads the complete frozen tree as raw blobs, with omitted paths
+retaining their base contents. Export never restages later physical edits.
+
+The private verifier repository does not inherit source Git metadata, routing/tracing environment,
+global/system Git configuration or credentials. Canonical ignore rules select bounded local build
+inputs separately from source, and their content, paths, link targets and permissions are
+fingerprinted. Capability-based no-follow reads retain the source directory and its ancestors.
+Internal absolute dependency junctions are rebased into the private snapshot; escaping, dangling,
+cyclic or excessively deep links fail closed. Canonical symlink blobs remain unchanged. Windows
+materializes native separators and verifies their portable Git representation; unrepresentable
+backslash-containing canonical targets fail closed.
+Provider evidence cannot satisfy missing source-file checks.
+
+Every Command/Test check receives a fresh private snapshot and must leave canonical source bytes,
+executable modes, HEAD and index tree intact, without creating nonignored source. Snapshot cleanup
+must finish before a passing report is authorized for export. This protects the source/evidence
+boundary; it is not OS sandbox attestation, and verifier commands retain their existing trusted
+authority. The native harness remains responsible for its supported execution and permissions.
+
+The server signs the artifact role, filename, exact source identity and deliverable metadata with
+the content digest. New source-deliverable assignments require the canonical-verification runner
+capability. A run cannot pass until its ready source object links the exact verification digest and
+exported-byte digest, and its `run.verification_passed` event and every persisted check match the signed source
+identity within the same Corp, task and run. Independent manual gates still apply. Historical
+artifact reads remain compatible; new completion must supply canonical evidence. The runner waits
+for durable storage acknowledgment before worktree cleanup.
 
 Post-verification commit creation is fixed runner behavior on the isolated task branch. It does not
 authorize credential use, branch publication, pull-request creation, auto-merge, merge, or deploy.

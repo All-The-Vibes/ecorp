@@ -197,14 +197,32 @@ for (const name of ['GIT_TRACE', 'GIT_TRACE_PERFORMANCE', 'GIT_TRACE_SETUP',
   })
 }
 
+test('inherited Git configuration cannot change canonical line-ending selection', (t) => {
+  const f = fixture(t)
+  f.write('canonical.txt', 'canonical\r\nsource\r\n')
+  const expected = f.check()
+  const before = f.snapshot()
+  const actual = withEnv('GIT_CONFIG_COUNT', '1', () =>
+    withEnv('GIT_CONFIG_KEY_0', 'core.autocrlf', () =>
+      withEnv('GIT_CONFIG_VALUE_0', 'true', () => checkDeliverableDiff(f.options))))
+  assert.deepEqual(f.snapshot(), before, 'ambient configuration must not alter the owned source')
+  assert.equal(actual.candidateTree, expected.candidateTree,
+    'the runner ignores inherited Git configuration when freezing the source tree')
+  assert.deepEqual(readdirSync(f.scratchRoot), [])
+})
+
 // Independent replay of deliverable.rs's native Git recipe. The source hash
 // below requires re-auditing this oracle when that recipe changes.
 function nativeCandidate(f, { paths = [], providerArtifacts = [], preserveHead } = {}) {
   const index = path.join(f.scratchRoot, 'oracle.index')
-  const env = { ...process.env, GIT_INDEX_FILE: index, GIT_LITERAL_PATHSPECS: '1' }
+  const env = { ...process.env }
   for (const name of Object.keys(env)) {
-    if (/^GIT_TRACE|^GIT_CURL_VERBOSE$/i.test(name)) delete env[name]
+    if (/^GIT_/i.test(name)) delete env[name]
   }
+  Object.assign(env, {
+    GIT_INDEX_FILE: index, GIT_LITERAL_PATHSPECS: '1',
+    GIT_NO_REPLACE_OBJECTS: '1', GIT_TERMINAL_PROMPT: '0',
+  })
   const git = (args) => f.git(args, { env })
   const changes = () => git(['diff', '--cached', '--name-status', '-z', '--no-renames', f.base, '--'])
   try {
@@ -229,7 +247,8 @@ function nativeCandidate(f, { paths = [], providerArtifacts = [], preserveHead }
       git(['reset', '-q', f.base, '--', relative.split(path.sep).join('/')])
     }
     const tree = git(['write-tree']).trim()
-    const patch = git(['diff', '--cached', '--binary', '--full-index', '--no-color', f.base, '--'])
+    const patch = git(['diff', '--binary', '--full-index', '--no-ext-diff', '--no-textconv',
+      '--no-color', f.base, tree, '--'])
     return { tree, patch, changes: changes() }
   } finally {
     if (existsSync(index)) rmSync(index)
@@ -240,9 +259,12 @@ test('native source-selection recipe is pinned; drift requires an explicit parit
   const start = nativeSource.indexOf('    for path in &spec.paths {')
   const end = nativeSource.indexOf('    let changes = changed_paths(', start)
   assert.ok(start >= 0 && end > start)
-  assert.equal(hash(nativeSource.slice(start, end)), '6f6ded948c846fa95c5fb8fe7b0c748e444c1f16800e72dfb42fb781090e4519')
+  // #82 extracts the unchanged selection sequence into select_index and freezes
+  // its tree before checking. Git environment handling now matches the runner.
+  assert.equal(hash(nativeSource.slice(start, end)), 'b675055bee7b582cf6b997ff096dda2a0840684fb087a8bf7eee4955b6db7e9d')
   const output = nativeSource.slice(nativeSource.indexOf('async fn git_output('))
-  assert.match(output, /\.env\("GIT_INDEX_FILE", index\)/)
+  assert.match(output, /verification::clear_git_environment\(&mut command\)/)
+  assert.match(output, /\.env\(\s*"GIT_INDEX_FILE",\s*crate::workspace::normalize_path\(index\.to_path_buf\(\)\),\s*\)/)
   assert.match(output, /\.env\("GIT_LITERAL_PATHSPECS", "1"\)/)
 })
 

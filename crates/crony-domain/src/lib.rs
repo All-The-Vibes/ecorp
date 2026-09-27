@@ -17,11 +17,13 @@ pub use planning_cost::{
     validate_factory_cost_policy,
 };
 mod retained_provider_receipt;
+mod source_verification;
 pub use retained_provider_receipt::{
     MAX_RETAINED_PROVIDER_RECEIPT_BYTES, RETAINED_COPILOT_RECEIPT_FILE,
     RETAINED_COPILOT_RECEIPT_KIND, RetainedProviderReceiptGrant,
     retained_provider_receipt_metadata, validate_retained_copilot_receipt,
 };
+pub use source_verification::{CANONICAL_SOURCE_VERIFICATION_CAPABILITY, SourceVerification};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

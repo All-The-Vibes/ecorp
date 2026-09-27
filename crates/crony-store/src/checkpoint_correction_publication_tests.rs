@@ -54,6 +54,61 @@ fn fixture_artifact(
     }
 }
 
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned SQLx maintenance database"]
+async fn issue82_artifact_evidence_retains_valid_source_without_retaining_local_paths(
+    pool: PgPool,
+) {
+    // The fixture completes the actual event/storage/review path with two
+    // checks, including a newly stored artifact. Its metadata is synthetic.
+    let fixture = corrected_publication_fixture(pool).await;
+    let store = &fixture.store;
+    let evidence: Value = sqlx::query_scalar(
+        "SELECT payload FROM verification_evidence
+         WHERE run_id = $1 AND kind = 'artifact' AND status = 'passed'",
+    )
+    .bind(fixture.verifier_run_id)
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    assert_eq!(evidence["source"], json!(fixture_source_verification()));
+    assert!(evidence.get("path").is_none());
+    assert!(evidence.get("object_key").is_none());
+    assert!(evidence["artifact_id"].is_string());
+
+    let before = state(store).await;
+    let mut tx = store.pool.begin().await.unwrap();
+    let mut raw = evidence;
+    raw["path"] = json!("C:/private-fixture/provider-receipt.json");
+    raw["untrusted_extra"] = json!({"path":"C:/private-fixture/extra"});
+    let input = json!({"kind":"artifact","status":"passed","payload":raw});
+    let sanitized =
+        sanitize_verification_evidence_tx(&mut tx, fixture.verifier_run_id, input.clone())
+            .await
+            .unwrap();
+    assert_eq!(
+        sanitized["payload"]["source"],
+        json!(fixture_source_verification())
+    );
+    assert!(!sanitized.to_string().contains("private-fixture"));
+    assert!(sanitized["payload"].get("untrusted_extra").is_none());
+    for (field, value) in [
+        ("tree", json!("invalid")),
+        ("candidate_commit", Value::Null),
+        ("ignored_input_bytes", json!(4_u64 * 1024 * 1024 * 1024 + 1)),
+        ("path", json!("C:/private-fixture/untrusted-source")),
+    ] {
+        let mut malformed = input.clone();
+        malformed["payload"]["source"][field] = value;
+        let error = sanitize_verification_evidence_tx(&mut tx, fixture.verifier_run_id, malformed)
+            .await
+            .unwrap_err();
+        assert!(format!("{error:#}").contains("canonical source identity"));
+    }
+    tx.rollback().await.unwrap();
+    assert_eq!(state(store).await, before);
+}
+
 fn run_journal(snapshot: &Value, run_id: Uuid) -> Vec<Value> {
     snapshot["events"]
         .as_array()
@@ -347,7 +402,8 @@ async fn corrected_publication_fixture(pool: PgPool) -> PublicationFixture {
             "run.verification_evidence",
             json!({
                 "evidence_id":Uuid::new_v4(),"check_index":0,"kind":"file","status":"passed",
-                "summary":"SQLx current source-file check metadata","payload":{}
+                "summary":"SQLx current source-file check metadata",
+                "payload":{"source":fixture_source_verification()}
             }),
         ),
     ] {
@@ -426,7 +482,8 @@ async fn corrected_publication_fixture(pool: PgPool) -> PublicationFixture {
                 "summary":"Current verifier references its newly ready fixture receipt",
                 "payload":{
                     "path":receipt.uri,"sha256":receipt.sha256,
-                    "bytes":receipt.bytes,"media_type":receipt.media_type
+                    "bytes":receipt.bytes,"media_type":receipt.media_type,
+                    "source":fixture_source_verification()
                 }
             }),
         ))
@@ -453,7 +510,9 @@ async fn corrected_publication_fixture(pool: PgPool) -> PublicationFixture {
             "base_commit":"a".repeat(40),"head_commit":"f".repeat(40),
             "branch":"crony/fixture","integration_state":"ready_for_review",
             "git_bundle_sha256":hex::encode(Sha256::digest(b"issue216 SQLx-only bundle metadata")),
-            "publication_ready":true
+            "publication_ready":true,
+            "verified_tree":fixture_source_verification().tree,
+            "source_verification":fixture_source_verification()
         }),
     );
     store
@@ -474,7 +533,9 @@ async fn corrected_publication_fixture(pool: PgPool) -> PublicationFixture {
             "run.verification_passed",
             json!({
                 "summary":"All current SQLx fixture checks passed",
-                "verification_sha256":"e".repeat(64),"deliverable_sha256":export.sha256
+                "verification_sha256":"e".repeat(64),"deliverable_sha256":export.sha256,
+                "verified_tree":fixture_source_verification().tree,
+                "source_verification":fixture_source_verification()
             }),
         ),
         (
@@ -2377,13 +2438,14 @@ async fn issue216_ordinary_source_only_predecessor_correction_stop_checkpoint_pu
         ("run.verification_started", json!({})),
         ("run.verification_evidence", json!({
             "evidence_id":Uuid::new_v4(),"check_index":0,"kind":"file","status":"passed",
-            "summary":"SQLx current source-file metadata","payload":{}
+            "summary":"SQLx current source-file metadata",
+            "payload":{"source":fixture_source_verification()}
         })),
         ("run.verification_evidence", json!({
             "evidence_id":Uuid::new_v4(),"check_index":1,"kind":"artifact","status":"passed",
             "summary":"Reuse the ordinary provider's accepted fixture artifact",
             "payload":{"path":receipt.uri,"sha256":receipt.sha256,"bytes":receipt.bytes,
-                "media_type":receipt.media_type}
+                "media_type":receipt.media_type,"source":fixture_source_verification()}
         })),
     ]).await;
     let export_input = event(
@@ -2403,14 +2465,18 @@ async fn issue216_ordinary_source_only_predecessor_correction_stop_checkpoint_pu
             "base_commit":"a".repeat(40),"head_commit":"f".repeat(40),
             "branch":"crony/fixture","integration_state":"ready_for_review",
             "git_bundle_sha256":hex::encode(Sha256::digest(b"ordinary source-only SQLx bundle")),
-            "publication_ready":true
+            "publication_ready":true,
+            "verified_tree":fixture_source_verification().tree,
+            "source_verification":fixture_source_verification()
         }),
     );
     ready_fixture_artifact(&store, export_input, &export).await;
     apply_fixture_events(&store, verifier.run_id, verifier.assignment_token, vec![
         ("run.verification_passed", json!({
             "summary":"Current ordinary-correction fixture checks passed",
-            "verification_sha256":"e".repeat(64),"deliverable_sha256":export.sha256
+            "verification_sha256":"e".repeat(64),"deliverable_sha256":export.sha256,
+            "verified_tree":fixture_source_verification().tree,
+            "source_verification":fixture_source_verification()
         })),
         ("run.verification_waiting", json!({"gate":gate(),"gate_type":"independent_review"})),
         ("run.workspace_preserved", json!({

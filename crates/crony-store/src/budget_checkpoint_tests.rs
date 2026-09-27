@@ -15,6 +15,9 @@ mod correction_publication;
 #[path = "retained_provider_receipt_tests.rs"]
 mod retained_receipts;
 
+#[path = "canonical_source_verification_tests.rs"]
+mod canonical_source;
+
 const CORP: Uuid = Uuid::from_u128(1);
 const MISSION: Uuid = Uuid::from_u128(2);
 const TASK: Uuid = Uuid::from_u128(3);
@@ -44,6 +47,19 @@ fn event(run_id: Uuid, token: Uuid, kind: &str, payload: Value) -> RunnerEventIn
 
 fn digest(value: &impl serde::Serialize) -> String {
     hex::encode(Sha256::digest(serde_json::to_vec(value).unwrap()))
+}
+
+// Synthetic SQLx linkage identity. This does not attest physical source, a Git
+// invocation, a provider outcome, or a server-signed artifact.
+fn fixture_source_verification() -> crony_domain::SourceVerification {
+    crony_domain::SourceVerification {
+        tree: "b".repeat(40),
+        base_commit: "a".repeat(40),
+        candidate_commit: "e".repeat(40),
+        ignored_input_sha256: hex::encode(Sha256::digest([])),
+        ignored_input_count: 0,
+        ignored_input_bytes: 0,
+    }
 }
 
 fn gate() -> Value {
@@ -1330,6 +1346,44 @@ async fn waiting_export_fixture_with_publication(
     pool: PgPool,
     publication_authorized: bool,
 ) -> (PgStore, PendingRunnerCommand, Uuid) {
+    let (store, command, artifact) =
+        ready_export_fixture_with_publication(pool, publication_authorized).await;
+    let token = retention_event(&command).assignment_token;
+    for (kind, payload) in [
+        (
+            "run.verification_passed",
+            json!({"summary":"Fixture checks passed",
+            "verification_sha256":"c".repeat(64),"deliverable_sha256":artifact.sha256,
+            "verified_tree":fixture_source_verification().tree,
+            "source_verification":fixture_source_verification()}),
+        ),
+        (
+            "run.verification_waiting",
+            json!({"gate":gate(),"gate_type":"independent_review"}),
+        ),
+    ] {
+        store
+            .apply_runner_event(event(command.run_id, token, kind, payload))
+            .await
+            .unwrap();
+    }
+    store
+        .acknowledge_runner_command(command.id, RUNNER)
+        .await
+        .unwrap();
+    let snapshot = state(&store).await;
+    let run = retained_run(&snapshot, command.run_id);
+    assert_eq!(run["status"], "waiting_for_approval");
+    assert_eq!(run["verification_status"], "waiting_for_approval");
+    assert_eq!(run["workspace_disposition"], "active");
+    assert!(run["workspace_fingerprint"].is_null());
+    (store, command, artifact.id)
+}
+
+async fn ready_export_fixture_with_publication(
+    pool: PgPool,
+    publication_authorized: bool,
+) -> (PgStore, PendingRunnerCommand, StoredArtifact) {
     let store = fixture_with_publication_policy(
         pool,
         false,
@@ -1365,7 +1419,8 @@ async fn waiting_export_fixture_with_publication(
         (
             "run.verification_evidence",
             json!({"evidence_id":Uuid::new_v4(),"check_index":0,
-            "kind":"file","status":"passed","summary":"Fixture file verified","payload":{}}),
+            "kind":"file","status":"passed","summary":"Fixture file verified",
+            "payload":{"source":fixture_source_verification()}}),
         ),
     ] {
         store
@@ -1400,6 +1455,8 @@ async fn waiting_export_fixture_with_publication(
             "branch":"crony/fixture","integration_state":"ready_for_review",
             "git_bundle_sha256":hex::encode(Sha256::digest(b"SQLx bundle metadata")),
             "publication_ready":true,
+            "verified_tree":fixture_source_verification().tree,
+            "source_verification":fixture_source_verification(),
         }),
         provenance_signature: "0".repeat(64),
         retention_until: Utc::now() + chrono::Duration::hours(1),
@@ -1407,7 +1464,7 @@ async fn waiting_export_fixture_with_publication(
     store
         .prepare_artifact_upload(
             upload,
-            artifact,
+            artifact.clone(),
             &format!("staging/corps/{CORP}/{artifact_id}"),
         )
         .await
@@ -1416,33 +1473,7 @@ async fn waiting_export_fixture_with_publication(
         .finalize_artifact_upload(CORP, artifact_id)
         .await
         .unwrap();
-    for (kind, payload) in [
-        (
-            "run.verification_passed",
-            json!({"summary":"Fixture checks passed",
-            "verification_sha256":"c".repeat(64),"deliverable_sha256":sha256}),
-        ),
-        (
-            "run.verification_waiting",
-            json!({"gate":gate(),"gate_type":"independent_review"}),
-        ),
-    ] {
-        store
-            .apply_runner_event(event(command.run_id, token, kind, payload))
-            .await
-            .unwrap();
-    }
-    store
-        .acknowledge_runner_command(command.id, RUNNER)
-        .await
-        .unwrap();
-    let snapshot = state(&store).await;
-    let run = retained_run(&snapshot, command.run_id);
-    assert_eq!(run["status"], "waiting_for_approval");
-    assert_eq!(run["verification_status"], "waiting_for_approval");
-    assert_eq!(run["workspace_disposition"], "active");
-    assert!(run["workspace_fingerprint"].is_null());
-    (store, command, artifact_id)
+    (store, command, artifact)
 }
 
 async fn retention_request(

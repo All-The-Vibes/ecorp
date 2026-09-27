@@ -368,7 +368,9 @@ impl ArtifactStore {
             }
             metadata
         } else if artifact_role == "source_deliverable" {
-            source_deliverable_metadata(payload)?
+            let metadata = source_deliverable_metadata(payload)?;
+            validate_source_deliverable_envelope(&metadata, &bytes)?;
+            metadata
         } else if let Some(path) = payload
             .get("workspace_relative_path")
             .and_then(Value::as_str)
@@ -699,6 +701,8 @@ fn source_deliverable_metadata(payload: &Value) -> Result<Value> {
     }
     let verification_sha256 = required("verification_sha256")?;
     let base_commit = required("base_commit")?;
+    let source =
+        crony_domain::SourceVerification::from_payload(payload).map_err(anyhow::Error::msg)?;
     let head_commit = payload.get("head_commit").and_then(Value::as_str);
     let branch = required("branch")?;
     let integration_state = required("integration_state")?;
@@ -736,6 +740,8 @@ fn source_deliverable_metadata(payload: &Value) -> Result<Value> {
     Ok(json!({
         "form": form,
         "verification_sha256": verification_sha256,
+        "verified_tree": source.tree,
+        "source_verification": source,
         "base_commit": base_commit,
         "head_commit": head_commit,
         "branch": branch,
@@ -743,6 +749,37 @@ fn source_deliverable_metadata(payload: &Value) -> Result<Value> {
         "git_bundle_sha256": git_bundle_sha256,
         "publication_ready": publication_ready,
     }))
+}
+
+fn validate_source_deliverable_envelope(metadata: &Value, bytes: &[u8]) -> Result<()> {
+    // Patches carry their source identity in signed upload metadata. All other forms
+    // contain an envelope whose provenance must agree before the server signs it.
+    if metadata["form"] == "patch" {
+        return Ok(());
+    }
+    let envelope: Value =
+        serde_json::from_slice(bytes).context("source deliverable envelope is not JSON")?;
+    if envelope["schema_version"] != 1 {
+        return Err(anyhow!("source deliverable envelope schema is unsupported"));
+    }
+    crony_domain::SourceVerification::from_payload(&envelope).map_err(anyhow::Error::msg)?;
+    for field in [
+        "form",
+        "base_commit",
+        "head_commit",
+        "branch",
+        "verification_sha256",
+        "verified_tree",
+        "source_verification",
+        "git_bundle_sha256",
+    ] {
+        if envelope.get(field) != metadata.get(field) {
+            return Err(anyhow!(
+                "source deliverable envelope disagrees with upload {field}"
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn valid_hex(value: &str, minimum: usize, maximum: usize) -> bool {
@@ -868,6 +905,130 @@ mod tests {
             store: Arc::new(InMemory::new()),
             signing_key: Arc::new(vec![0x4c; 32]),
             max_bytes: 1_024,
+        }
+    }
+
+    // Synthetic signing-boundary input, not evidence of a native Git export.
+    fn issue82_source_upload_fixture(form: &str) -> Value {
+        let mut payload = json!({
+            "form": form, "verification_sha256": "a".repeat(64),
+            "verified_tree": "d".repeat(40),
+            "source_verification": {
+                "tree": "d".repeat(40), "base_commit": "b".repeat(40),
+                "candidate_commit": "c".repeat(40), "ignored_input_sha256": "e".repeat(64),
+                "ignored_input_count": 1, "ignored_input_bytes": 42,
+            },
+            "base_commit": "b".repeat(40),
+            "head_commit": if form == "commit_branch" { json!("f".repeat(40)) } else { Value::Null },
+            "branch": "crony/task-test/run-test", "integration_state": "ready_for_review",
+            "git_bundle_sha256": if form == "commit_branch" { json!("f".repeat(64)) } else { Value::Null },
+            "publication_ready": form == "commit_branch",
+        });
+        let mut envelope = payload.clone();
+        envelope["schema_version"] = json!(1);
+        let content = if form == "patch" {
+            b"diff --git a/test b/test\n".to_vec()
+        } else {
+            serde_json::to_vec(&envelope).unwrap()
+        };
+        payload["media_type"] = json!(if form == "patch" {
+            "text/x-diff"
+        } else {
+            "application/vnd.ecorp.deliverable+json"
+        });
+        payload["artifact_role"] = json!("source_deliverable");
+        payload["file_name"] = json!("ecorp-source-fixture.json");
+        issue82_replace_upload_content(&mut payload, &content);
+        payload
+    }
+
+    fn issue82_replace_upload_content(payload: &mut Value, content: &[u8]) {
+        payload["sha256"] = json!(hex::encode(Sha256::digest(content)));
+        payload["bytes"] = json!(content.len());
+        payload["content_base64"] = json!(BASE64.encode(content));
+    }
+
+    #[test]
+    fn issue82_source_envelope_must_match_signed_upload_identity() {
+        let mut store = memory_store();
+        store.max_bytes = 8192;
+        for form in [
+            "archive",
+            "commit_branch",
+            "typed_artifact_set",
+            "review_only_report",
+            "patch",
+        ] {
+            let payload = issue82_source_upload_fixture(form);
+            assert!(
+                store
+                    .prepare_staging(identity(), &payload, Utc::now() + chrono::Duration::days(1))
+                    .is_ok(),
+                "{form}"
+            );
+            for field in ["source_verification", "verified_tree"] {
+                let mut missing = payload.clone();
+                missing.as_object_mut().unwrap().remove(field);
+                assert!(
+                    store
+                        .prepare_staging(
+                            identity(),
+                            &missing,
+                            Utc::now() + chrono::Duration::days(1)
+                        )
+                        .is_err(),
+                    "{form}: missing {field}"
+                );
+            }
+            if form == "patch" {
+                continue;
+            }
+            let bytes = BASE64
+                .decode(payload["content_base64"].as_str().unwrap())
+                .unwrap();
+            let original: Value = serde_json::from_slice(&bytes).unwrap();
+            for field in [
+                "schema_version",
+                "form",
+                "base_commit",
+                "head_commit",
+                "branch",
+                "verification_sha256",
+                "verified_tree",
+                "source_verification",
+                "git_bundle_sha256",
+            ] {
+                let mut envelope = original.clone();
+                envelope.as_object_mut().unwrap().remove(field);
+                let mut changed = payload.clone();
+                issue82_replace_upload_content(
+                    &mut changed,
+                    &serde_json::to_vec(&envelope).unwrap(),
+                );
+                assert!(
+                    store
+                        .prepare_staging(
+                            identity(),
+                            &changed,
+                            Utc::now() + chrono::Duration::days(1)
+                        )
+                        .is_err(),
+                    "{form}: missing envelope {field}"
+                );
+            }
+            let mut envelope = original;
+            envelope["verified_tree"] = json!("9".repeat(40));
+            envelope["source_verification"]["tree"] = envelope["verified_tree"].clone();
+            let mut changed = payload;
+            issue82_replace_upload_content(&mut changed, &serde_json::to_vec(&envelope).unwrap());
+            let error = store
+                .prepare_staging(identity(), &changed, Utc::now() + chrono::Duration::days(1))
+                .err()
+                .unwrap();
+            assert!(
+                error.to_string().contains("disagrees with upload"),
+                "{error:#}"
+            );
         }
     }
 
@@ -1137,32 +1298,17 @@ mod tests {
             false,
         )
         .expect("initialize artifact store");
-        let content = br#"{"form":"archive"}"#;
+        let payload = issue82_source_upload_fixture("archive");
         let artifact = store
             .ingest(
                 identity(),
-                &json!({
-                    "sha256": hex::encode(Sha256::digest(content)),
-                    "bytes": content.len(),
-                    "media_type": "application/vnd.ecorp.deliverable+json",
-                    "content_base64": BASE64.encode(content),
-                    "artifact_role": "source_deliverable",
-                    "file_name": "ecorp-source-archive.json",
-                    "form": "archive",
-                    "verification_sha256": "a".repeat(64),
-                    "base_commit": "b".repeat(40),
-                    "head_commit": Value::Null,
-                    "branch": "crony/task-test/run-test",
-                    "integration_state": "ready_for_review",
-                    "git_bundle_sha256": Value::Null,
-                    "publication_ready": false,
-                }),
+                &payload,
                 Utc::now() + chrono::Duration::days(30),
             )
             .await
             .expect("ingest source deliverable");
         assert_eq!(artifact.artifact_role, "source_deliverable");
-        assert_eq!(artifact.file_name, "ecorp-source-archive.json");
+        assert_eq!(artifact.file_name, "ecorp-source-fixture.json");
         assert_eq!(
             artifact.metadata["verification_sha256"].as_str(),
             Some("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
@@ -1174,6 +1320,31 @@ mod tests {
         let mut tampered = artifact.clone();
         tampered.metadata["verification_sha256"] = json!("c".repeat(64));
         assert!(store.read_verified(&tampered).await.is_err());
+        for field in [
+            "tree",
+            "base_commit",
+            "candidate_commit",
+            "ignored_input_sha256",
+            "ignored_input_count",
+            "ignored_input_bytes",
+        ] {
+            let mut tampered = artifact.clone();
+            tampered.metadata["source_verification"]
+                .as_object_mut()
+                .unwrap()
+                .remove(field);
+            assert!(
+                store.read_verified(&tampered).await.is_err(),
+                "unsigned source {field}"
+            );
+        }
+        let mut tampered = artifact.clone();
+        tampered.metadata["verified_tree"] = json!("9".repeat(40));
+        assert!(store.read_verified(&tampered).await.is_err());
+        assert_eq!(
+            artifact.metadata["source_verification"],
+            payload["source_verification"]
+        );
         std::fs::remove_dir_all(root).expect("remove source deliverable test directory");
     }
 

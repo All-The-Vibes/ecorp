@@ -1,0 +1,25 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.40s
+     Running unittests src\main.rs (target\debug\deps\crony_runner-bef4c6df3726e249.exe)
+
+running 8 tests
+test retained_provider_receipt_tests::issue211_retained_receipt_is_excluded_from_export_without_changing_source_bytes ... ok
+test source_checkpoint::tests::issue190_late_stop_cancels_held_ack_without_acceptance_or_post_verifier_seal ... ok
+test tests::checkpoint_verifier_cancellation_does_not_quarantine_own_commit ... ok
+test tests::checkpoint_verifier_cancellation_still_quarantines_unexpected_head ... ok
+test tests::checkpoint_verifier_exports_uncommitted_source_without_a_provider ... ok
+test tests::checkpoint_verifier_rejects_head_drift_after_its_owned_commit ... ok
+test tests::checkpoint_verifier_retains_own_commit_after_ack_failure ... ok
+
+thread 'tests::issue89_complete_scenario_export_failure_is_typed_and_preserves_source' (35112) panicked at crates\crony-runner\src\main.rs:5500:39:
+called `Result::unwrap()` on an `Err` value: Os { code: 32, kind: Uncategorized, message: "The process cannot access the file because it is being used by another process." }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test tests::issue89_complete_scenario_export_failure_is_typed_and_preserves_source ... FAILED
+
+failures:
+
+failures:
+    tests::issue89_complete_scenario_export_failure_is_typed_and_preserves_source
+
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 268 filtered out; finished in 44.96s
+
+error: test failed, to rerun pass `-p crony-runner --bin crony-runner`

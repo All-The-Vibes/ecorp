@@ -1,0 +1,118 @@
+{
+  "issue": 82,
+  "purpose": "Native canonical-source completion linkage, budget checkpoint regression and cache-policy admission on issue82 source",
+  "source_head": "95d41f9b6594bbc4d96f4d589f04db32fc0bcaad",
+  "source_tree": "c66d78187df4248258fc0104e63fcc51935a298a",
+  "source_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "crates/crony-domain/src/lib.rs",
+      "sha256": "a843e10c9308f1ee88236373d8e38d9421d229d92be56076c4346418ff163c1e"
+    },
+    {
+      "path": "crates/crony-domain/src/source_verification.rs",
+      "sha256": "570f14680af72babaf4d8a90952dcc3b0335cd299890006d8dc16cb386731283"
+    },
+    {
+      "path": "crates/crony-runner/src/deliverable_verification_tests.rs",
+      "sha256": "3fb4e5b32c1f40a68cd4bb5e8f3d6bd8cb6b00063bb634e6afd6eac2bb2e52e6"
+    },
+    {
+      "path": "crates/crony-runner/src/deliverable_verification.rs",
+      "sha256": "10d335a40f0f9940ce390856d39c9313af701e31a70440450c2851ed7916512e"
+    },
+    {
+      "path": "crates/crony-runner/src/deliverable.rs",
+      "sha256": "c9fbca95fca3e19dc993f2e96eaca3f4679d9ecca595cd062ac05c2146c88e7d"
+    },
+    {
+      "path": "crates/crony-runner/src/main.rs",
+      "sha256": "157940efd03bf2099606ce2813cfb18b93435d06467058cd763f56fec49a077f"
+    },
+    {
+      "path": "crates/crony-runner/src/verifier.rs",
+      "sha256": "88d85b6a4edd290379d5aae8fb8dbff06eee31aee3ae6c16c8a70e9e468a2378"
+    },
+    {
+      "path": "crates/crony-runner/src/workspace.rs",
+      "sha256": "98a6a9679f2fedc4a0f9879948ba0803c63d698d5318918c48a8af7516fbaaff"
+    },
+    {
+      "path": "crates/crony-server/src/artifacts.rs",
+      "sha256": "746c26f44a62388dd62d14d284b1048f143881aed66118ac539938a55710c355"
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "c4abe4adcb8532462ae5e469270faa2d37b057e352be3d55861b599068a77e88"
+    },
+    {
+      "path": "crates/crony-store/src/budget_checkpoint_tests.rs",
+      "sha256": "85cafeca92dc97847e8a1a1769172fb7618ff506ec90cb9c66662c43684d1131"
+    },
+    {
+      "path": "crates/crony-store/src/canonical_source_verification_tests.rs",
+      "sha256": "0b8a1e025337e5447354b9a4f540c17f996e603697cc8b378097757f61c73294"
+    },
+    {
+      "path": "crates/crony-store/src/checkpoint_correction_publication_tests.rs",
+      "sha256": "d60f7ef41f151d45e9e7e2def4f4e79e3f4d33699873d9a311070b134878cfb7"
+    },
+    {
+      "path": "crates/crony-store/src/lib.rs",
+      "sha256": "d13d4a4bfc54a3f05d3afe6d8a6f75bc9b28126051dcd505728d2dd33ced72c0"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "sha256": "4835ea3d2acecbd3511ec4f920a20d2b6930b358c04b6ac48b1e2eeb8411d2ac"
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "sha256": "c89002cd3218ee2fc73ab5da05d6fcd2011eed868cce2be627cfd28226dccc74"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260926-r1",
+  "started_at_utc": "2026-09-26T22:09:31.2372927Z",
+  "status": "failed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r1-initdb.log",
+      "sha256": "3b3a9e206ebba775a01e1df33c0d0e7fd0eef5458df6e66c176a90ed99e34c84",
+      "counts": {
+        "summaries": 0,
+        "ignored": 0,
+        "failed": 0,
+        "passed": 0
+      }
+    },
+    {
+      "name": "budget-checkpoints-and-canonical-source-linkage",
+      "exit_code": 101,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-native-database-r1-budget-checkpoints.log",
+      "sha256": "cb04b228674947432a32f9a13f3b588c82a59c090627e6cbfbc59320c4d6dfb1",
+      "counts": {
+        "summaries": 1,
+        "ignored": 0,
+        "failed": 14,
+        "passed": 157
+      }
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+  "authentication": {
+    "authenticated_query": true,
+    "method": "scram-sha-256",
+    "delivery": "Private PGPASSFILE for clients. SQLx environment-only delivery is reduced assurance.",
+    "wrong_password_rejected": true
+  },
+  "failure": "budget-checkpoints-and-canonical-source-linkage did not satisfy its native acceptance.",
+  "finished_at_utc": "2026-09-26T22:21:34.4045099Z"
+}

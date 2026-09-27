@@ -521,6 +521,7 @@ pub struct LaunchRecord {
 pub struct SchedulableTask {
     pub task_id: Uuid,
     pub requires_dependency_files: bool,
+    pub requires_canonical_source: bool,
     pub required_adapter: String,
     pub required_model: Option<String>,
     pub required_reasoning_effort: Option<String>,
@@ -6296,6 +6297,7 @@ impl PgStore {
                        WHERE d.task_id = t.id
                          AND p.contract #>> '{deliverable,form}' = 'typed_artifact_set'
                    ) AS requires_dependency_files,
+                   COALESCE(t.contract->'deliverable' <> 'null'::jsonb, false) AS requires_canonical_source,
                    COALESCE(t.required_adapter, a.adapter) AS required_adapter,
                    t.contract->>'model' AS required_model,
                    t.contract->>'reasoning_effort' AS required_reasoning_effort,
@@ -6344,6 +6346,7 @@ impl PgStore {
                 task_id: row.get("task_id"),
                 verification_policy: row.get("verification_policy"),
                 requires_dependency_files: row.get("requires_dependency_files"),
+                requires_canonical_source: row.get("requires_canonical_source"),
                 required_adapter: row.get("required_adapter"),
                 required_model: row.get("required_model"),
                 required_reasoning_effort: row.get("required_reasoning_effort"),
@@ -8754,6 +8757,14 @@ impl PgStore {
                 .await?;
             }
             "run.verification_passed" => {
+                let source = task_contract
+                    .deliverable
+                    .as_ref()
+                    .map(|_| {
+                        crony_domain::SourceVerification::from_payload(&payload)
+                            .map_err(anyhow::Error::msg)
+                    })
+                    .transpose()?;
                 let (verification_sha256, deliverable_sha256) =
                     if task_contract.deliverable.is_some() {
                         let verification_sha256 = payload
@@ -8766,28 +8777,41 @@ impl PgStore {
                             .and_then(Value::as_str)
                             .context("verification passed event omitted deliverable digest")?
                             .to_owned();
-                        let linked: bool = sqlx::query_scalar(
+                        let linked: Option<Value> = sqlx::query_scalar(
                             r#"
-                            SELECT EXISTS(
-                                SELECT 1
+                                SELECT artifact.metadata
                                 FROM source_deliverables deliverable
                                 JOIN artifacts artifact ON artifact.id = deliverable.artifact_id
+                                  AND artifact.corp_id = deliverable.corp_id
+                                  AND artifact.task_id = deliverable.task_id
+                                  AND artifact.run_id = deliverable.run_id
                                 WHERE deliverable.run_id = $1
                                   AND deliverable.verification_sha256 = $2
                                   AND artifact.sha256 = $3
                                   AND artifact.status = 'ready'
                                   AND artifact.artifact_role = 'source_deliverable'
-                            )
+                                  AND deliverable.corp_id = $4
+                                  AND deliverable.task_id = $5
                             "#,
                         )
                         .bind(run_id)
                         .bind(&verification_sha256)
                         .bind(&deliverable_sha256)
-                        .fetch_one(&mut *tx)
+                        .bind(corp_id)
+                        .bind(task_id)
+                        .fetch_optional(&mut *tx)
                         .await?;
-                        if !linked {
+                        let Some(metadata) = linked else {
                             return Err(anyhow!(
                                 "verification passed without an exact ready deliverable linkage"
+                            ));
+                        };
+                        let signed_source =
+                            crony_domain::SourceVerification::from_payload(&metadata)
+                                .map_err(anyhow::Error::msg)?;
+                        if Some(&signed_source) != source.as_ref() {
+                            return Err(anyhow!(
+                                "verification identity does not match the signed source deliverable"
                             ));
                         }
                         (Some(verification_sha256), Some(deliverable_sha256))
@@ -8813,13 +8837,15 @@ impl PgStore {
                 }
                 let evidence_rows = sqlx::query(
                     r#"
-                    SELECT check_index, kind, status
+                    SELECT check_index, kind, status, payload
                     FROM verification_evidence
-                    WHERE run_id = $1
+                    WHERE run_id = $1 AND corp_id = $2 AND task_id = $3
                     ORDER BY check_index
                     "#,
                 )
                 .bind(run_id)
+                .bind(corp_id)
+                .bind(task_id)
                 .fetch_all(&mut *tx)
                 .await?;
                 if evidence_rows.len() != verification_policy.checks.len() {
@@ -8834,6 +8860,18 @@ impl PgStore {
                     let kind: String = row.get("kind");
                     let status: String = row.get("status");
                     let expected = &verification_policy.checks[index];
+                    if let Some(source) = &source {
+                        let evidence: Value = row.get("payload");
+                        let observed = serde_json::from_value::<crony_domain::SourceVerification>(
+                            evidence.get("source").cloned().unwrap_or(Value::Null),
+                        )
+                        .context("verification evidence omitted canonical source identity")?;
+                        if &observed != source {
+                            return Err(anyhow!(
+                                "verification evidence checked a different source tree or input set"
+                            ));
+                        }
+                    }
                     if check_index != index as i32 || kind != expected.kind() || status != "passed"
                     {
                         return Err(anyhow!("verification evidence does not satisfy policy"));
@@ -14554,7 +14592,7 @@ async fn sanitize_verification_evidence_tx(
     .await?
     .map(map_stored_artifact);
 
-    let sanitized = match artifact {
+    let mut sanitized = match artifact {
         Some(artifact) => {
             if status == "passed" {
                 let evidence = payload
@@ -14621,6 +14659,19 @@ async fn sanitize_verification_evidence_tx(
             json!({"stored": false})
         }
     };
+    // Artifact fields come from durable storage, but canonical source identity
+    // describes the verifier's selected tree. Preserve only its typed, bounded
+    // fields; completion separately binds it to every check and signed export.
+    if let Some(source) = payload.get("payload").and_then(|value| value.get("source")) {
+        let source: crony_domain::SourceVerification = serde_json::from_value(source.clone())
+            .context("artifact evidence canonical source identity is malformed")?;
+        if !source.is_valid() {
+            return Err(anyhow!(
+                "artifact evidence canonical source identity is invalid"
+            ));
+        }
+        sanitized["source"] = serde_json::to_value(source)?;
+    }
     payload
         .as_object_mut()
         .context("verification evidence payload is not an object")?
