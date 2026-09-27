@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
+import { inspect } from 'node:util'
 import { completeGraphFixtureLaunch, graphFixtureSource, taskGraphFixtureConfig } from './task_graph_fixture.mjs'
 
 const corp = '00000000-0000-4000-8000-000000000001'
@@ -70,6 +71,7 @@ test('source selection rejects wrong Corp, connection, adapter, source, or ambig
     state => { state.runners[0].capabilities[1].available = false },
     state => { state.runners[0].capabilities[1].workspace_connection_id = 'other' },
     state => { state.runners[0].capabilities[1].source_base_commit = 'HEAD' },
+    state => { state.runners[0].capabilities[1].source_base_commit = source.base_commit + '\n' },
     state => { state.runners[0].capabilities[1].source_repository = null },
     state => { state.runners[0].capabilities.push(structuredClone(state.runners[0].capabilities[1])) },
   ]) { const state = snapshot(); change(state); assert.throws(() => graphFixtureSource(state, corp)) }
@@ -121,14 +123,15 @@ test('graph launch never replays a failed, cancelled, incomplete or timed-out mi
   }
 })
 
-test('failed graph reports bounded persisted run causes without unrelated snapshot contents', async () => {
+test('failed graph reports bounded identifiers and states without private free text', async () => {
   const failed = {
     mission: { id: corp, status: 'failed', secret: 'mission-private-canary' },
     runs: Array.from({ length: 20 }, (_, index) => ({
-      id: `run-${index}`, task_id: roots[index % 2], status: 'failed',
-      summary: 'trusted Git could not export the verified deliverable',
-      verification_status: 'failed', verification_summary: 'a'.repeat(2000),
-      workspace_disposition: 'preserved', workspace_detail: 'failure preserved for inspection',
+      id: `00000000-0000-4000-8000-${String(100 + index).padStart(12, '0')}`,
+      task_id: roots[index % 2], status: 'failed',
+      summary: 'command stderr: summary-private-canary',
+      verification_status: 'failed', verification_summary: 'verification-private-canary'.repeat(100),
+      workspace_disposition: 'preserved', workspace_detail: 'workspace-private-canary',
       artifact_uri: 'artifact-private-canary', credentials: { password: 'credential-private-canary' },
     })),
     state: { snapshot: { secrets: ['snapshot-private-canary'] } },
@@ -140,17 +143,14 @@ test('failed graph reports bounded persisted run causes without unrelated snapsh
     return conflict(claimed(roots[1]))
   }, async () => failed, roots), error => {
     assert.match(error.message, /Task graph did not complete:/u)
-    assert.match(error.message, /trusted Git could not export the verified deliverable/u)
-    assert.doesNotMatch(error.message, /private-canary|a{513}|run-12/u)
+    assert.doesNotMatch(inspect(error), /private-canary|000000000112/u)
     const detail = JSON.parse(error.message.split('\n')[0].split('Task graph did not complete: ')[1])
     assert.deepEqual(detail.mission, { id: corp, status: 'failed' })
     assert.equal(detail.run_count, 20)
     assert.equal(detail.runs.length, 12)
     assert.deepEqual(detail.runs[0], {
-      id: 'run-0', task_id: roots[0], status: 'failed',
-      summary: failed.runs[0].summary, verification_status: 'failed',
-      verification_summary: 'a'.repeat(512), workspace_disposition: 'preserved',
-      workspace_detail: 'failure preserved for inspection',
+      id: failed.runs[0].id, task_id: roots[0], status: 'failed',
+      verification_status: 'failed', workspace_disposition: 'preserved',
     })
     return true
   })
@@ -166,6 +166,57 @@ test('graph failure diagnostics omit nested values in allowed fields', async () 
     assert.doesNotMatch(error.message, /nested-private-canary/u)
     return true
   })
+})
+
+test('graph failure rejects malformed identifiers and states without assertion value disclosure', async () => {
+  for (const invalid of ['private-canary', `${corp}\nprivate-canary`, 'a'.repeat(2000),
+    { secret: 'nested-private-canary' }, null, 123]) {
+    await assert.rejects(completeGraphFixtureLaunch(async () => ({ status: 200, body: {} }),
+      async () => ({ mission: { id: invalid, status: invalid }, runs: [{
+        id: invalid, task_id: invalid, status: invalid,
+        verification_status: invalid, workspace_disposition: invalid,
+      }] }), roots), error => {
+      assert.doesNotMatch(inspect(error), /private-canary|a{513}/u)
+      const detail = JSON.parse(error.message.split('\n')[0].split('Task graph did not complete: ')[1])
+      assert.deepEqual(detail, { mission: { id: null, status: null }, run_count: 1,
+        runs: [{ id: null, task_id: null, status: null, verification_status: null, workspace_disposition: null }] })
+      assert.equal(error.actual, false)
+      return true
+    })
+  }
+})
+
+test('source-selection assertions do not disclose private Corp or commit values', () => {
+  for (const change of [
+    state => { state.runners[0].corp_id = 'corp-private-canary' },
+    state => { state.runners[0].capabilities[1].source_base_commit = 'commit-private-canary' },
+    state => { state.runners[0].capabilities[1].source_base_commit = { secret: 'nested-private-canary' } },
+  ]) {
+    const state = snapshot()
+    change(state)
+    assert.throws(() => graphFixtureSource(state, corp), error => {
+      assert.doesNotMatch(inspect(error), /private-canary/u)
+      return true
+    })
+  }
+})
+
+test('launch and replay assertions never print unknown response values', async () => {
+  for (const invalid of ['response-private-canary', { secret: 'nested-private-canary' }]) {
+    for (const responses of [
+      [{ status: invalid, body: {} }],
+      [conflict(claimed(roots[1])), { status: invalid, body: {} }],
+      [conflict(claimed(roots[1])), { status: 200, body: { replayed: invalid } }],
+    ]) {
+      let calls = 0
+      await assert.rejects(completeGraphFixtureLaunch(async () => responses[calls++],
+        async () => completed, roots), error => {
+        assert.doesNotMatch(inspect(error), /private-canary/u)
+        return true
+      })
+      assert.equal(calls, responses.length)
+    }
+  }
 })
 
 test('graph reconciliation rejects a repeated conflict or a response that dispatched new work', async () => {

@@ -20,40 +20,49 @@ export function graphFixtureSource(state, corpId) {
   const runners = state.runners.filter(runner => runner.connected)
   assert.equal(runners.length, 1, 'Task-graph fixture requires exactly one connected runner')
   const runner = runners[0]
-  assert.equal(runner.corp_id, corpId)
+  assert.ok(runner.corp_id === corpId, 'Task-graph runner must belong to the selected Corp')
   assert.ok(runner.capabilities.some(cap => cap.name === 'fake-process' && cap.available && cap.workspace_connection_id == null),
     'Native deterministic staffing must be available')
   const sources = runner.capabilities.filter(cap => cap.name === 'workspace-isolation' && cap.available && cap.workspace_connection_id == null)
   assert.equal(sources.length, 1, 'Task-graph fixture requires one unambiguous legacy source')
   const source = sources[0]
   assert.ok(source.source_repository && source.source_base_ref)
-  assert.match(source.source_base_commit, /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/iu)
+  assert.ok(typeof source.source_base_commit === 'string'
+    && [40, 64].includes(source.source_base_commit.length)
+    && /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/iu.test(source.source_base_commit),
+  'Task-graph source must have an exact Git commit')
   return { runner, source: { repository: source.source_repository, base_ref: source.source_base_ref, base_commit: source.source_base_commit } }
 }
 
 function graphFailureDetails(result) {
-  // Only bounded persisted metadata from this owned fixture belongs in CI logs.
-  // Never serialize the full snapshot, artifact locations or nested values.
-  const select = (value, fields) => Object.fromEntries(fields.map(field =>
-    [field, typeof value?.[field] === 'string' ? value[field].slice(0, 512) : null]))
-  const runs = Array.isArray(result.runs) ? result.runs : []
+  // Only validated identifiers, known states and counts belong in CI logs.
+  // Free-text summaries/details may contain private output; truncation is not redaction.
+  const id = value => typeof value === 'string' && value.length === 36
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(value) ? value : null
+  const state = (value, allowed) => allowed.includes(value) ? value : null
+  const runs = Array.isArray(result?.runs) ? result.runs : []
   return {
-    mission: select(result.mission, ['id', 'status']),
+    mission: { id: id(result?.mission?.id),
+      status: state(result?.mission?.status, ['draft', 'ready', 'running', 'completed', 'failed', 'cancelled']) },
     run_count: runs.length,
-    runs: runs.slice(0, 12).map(run => select(run, [
-      'id', 'task_id', 'status', 'summary', 'verification_status',
-      'verification_summary', 'workspace_disposition', 'workspace_detail',
-    ])),
+    runs: runs.slice(0, 12).map(run => ({
+      id: id(run?.id), task_id: id(run?.task_id),
+      status: state(run?.status, ['provisioning', 'starting', 'running', 'waiting_for_input',
+        'waiting_for_approval', 'verifying', 'completed', 'failed', 'cancelled', 'lost']),
+      verification_status: state(run?.verification_status, ['pending', 'running', 'passed', 'failed', 'waiting_for_approval']),
+      workspace_disposition: state(run?.workspace_disposition, ['removed', 'preserved']),
+    })),
   }
 }
 
 export async function completeGraphFixtureLaunch(launch, waitForMission, rootTaskIds) {
   const initial = await launch()
-  assert.ok([200, 409].includes(initial.status), `Graph launch failed: HTTP ${initial.status}`)
+  assert.ok([200, 409].includes(initial?.status), 'Graph launch failed: expected HTTP 200 or a known root-claim conflict')
   if (initial.status === 409) {
     // A native scheduling sweep may claim another root after the first explicit
     // dispatch admits the mission. Do not reconcile any other dispatch failure.
-    const conflict = /^mission dispatch incomplete \(\d+ new runs dispatched\): (.+)$/u.exec(initial.body?.error)
+    const conflict = typeof initial.body?.error === 'string'
+      && /^mission dispatch incomplete \(\d+ new runs dispatched\): (.+)$/u.exec(initial.body.error)
     assert.ok(conflict, 'Graph launch did not report a root-claim conflict')
     for (const failure of conflict[1].split('; ')) {
       const claim = /^task ([0-9a-f-]{36}) could not create a run: task is not schedulable from status (?:claimed|running|verifying|completed)$/u.exec(failure)
@@ -61,12 +70,12 @@ export async function completeGraphFixtureLaunch(launch, waitForMission, rootTas
     }
   }
   const result = await waitForMission()
-  assert.equal(result.mission.status, 'completed',
+  assert.ok(result?.mission?.status === 'completed',
     'Task graph did not complete: ' + JSON.stringify(graphFailureDetails(result)))
   // Reconcile only after completion, when the native endpoint cannot dispatch a
   // dependency or retry. A successful replay requires persisted run.started.
   const reconciled = initial.status === 409 ? await launch() : initial
-  assert.equal(reconciled.status, 200, 'Completed graph launch did not reconcile')
-  if (initial.status === 409) assert.equal(reconciled.body.replayed, true)
+  assert.ok(reconciled?.status === 200, 'Completed graph launch did not reconcile')
+  if (initial.status === 409) assert.ok(reconciled.body?.replayed === true, 'Completed graph launch must replay existing work')
   return { launched: reconciled.body, result, initialStatus: initial.status }
 }

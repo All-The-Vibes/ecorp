@@ -1,0 +1,324 @@
+"""Run source-bound native acceptance for the uncommitted r14 permissions and diagnostics correction.
+
+This task-owned supervisor preserves the canonical product source and records
+all path-only fixture copies. The fixture uses synthetic local data and no
+actual GitHub or inference-provider effects.
+"""
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+EV = Path(__file__).resolve().parent
+WT = Path(r'<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp')
+NODEDIR = Path(r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64')
+PG = Path(r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin')
+CANONICAL = EV / 'issue82-canonical-r14.json'
+BUILD = EV / 'pr375-factory-native-build-r10.json'
+MODE = sys.argv[1]
+assert MODE in {'graph', 'publication'}
+tag = 'graph-native-r11' if MODE == 'graph' else 'publication-native-r4'
+QA = Path(r'<USERPROFILE>\code\qa') / (
+    'ecorp-external-adapters-pr375-r11' if MODE == 'graph' else 'ecorp-publication-pr375-r4')
+DRIVER = EV / f'pr375-{tag}-driver.ps1'
+RECEIPT = EV / f'pr375-{tag}.json'
+LOG = EV / f'pr375-{tag}.log'
+for path in [QA, DRIVER, RECEIPT, LOG]:
+    assert not path.exists(), f'Preserve existing resource: {path}'
+
+
+def sha(path):
+    with Path(path).open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def bind():
+    result = subprocess.run([sys.executable, str(EV / 'issue82-source-binding-r1.py'),
+        str(WT), str(CANONICAL)], check=True, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    return json.loads(result.stdout)
+
+
+binding = bind()
+build = json.loads(BUILD.read_text(encoding='utf-8-sig'))
+assert build['status'] == 'passed' and build['source_unchanged']
+assert build['source_binding'] == binding
+assert len(build['binaries']) == 3
+
+
+def verify():
+    assert bind() == binding, 'Source changed during native acceptance'
+    for binary in build['binaries']:
+        assert sha(binary['path']) == binary['sha256'], 'Native binary changed'
+
+
+verify()
+original = WT / 'tools/ci_external_adapters_windows.ps1'
+template = original.read_text(encoding='utf-8-sig')
+old_root = "$repo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path"
+old_import = "Import-Module (Join-Path $PSScriptRoot 'local_stack.psm1') -Force"
+assert template.count(old_root) == template.count(old_import) == 1
+template = template.replace(old_root, "$repo = '" + str(WT).replace("'", "''") + "'")
+template = template.replace(old_import, "Import-Module (Join-Path $repo 'tools/local_stack.psm1') -Force")
+copied = []
+if MODE == 'graph':
+    driver = template
+    changes = ['Resolve the unchanged product root and local_stack.psm1 module explicitly.']
+    server_port, pg_port = 18894, 59094
+else:
+    server_port, pg_port = 18895, 59095
+    publication_original = WT / 'tools/e2e_factory_publication.mjs'
+    publication = publication_original.read_text(encoding='utf-8-sig')
+    replacements = {
+        "from './fixture_source_identity.mjs'": 'from ' + json.dumps((WT / 'tools/fixture_source_identity.mjs').as_uri()),
+        "from './owned_test_stack.mjs'": 'from ' + json.dumps((WT / 'tools/owned_test_stack.mjs').as_uri()),
+        "const root = path.resolve(import.meta.dirname, '..')": 'const root = ' + json.dumps(str(QA)),
+        "const fakeGithub = path.join(root, 'tools', 'fake_github_cli.mjs')": 'const fakeGithub = ' + json.dumps(str(WT / 'tools/fake_github_cli.mjs')),
+    }
+    for old, new in replacements.items():
+        assert publication.count(old) == 1, old
+        publication = publication.replace(old, new)
+    pub_path = EV / 'pr375-publication-native-r4-driver.mjs'
+    control_path = EV / 'pr375-publication-native-r4-server.mjs'
+    for path in [pub_path, control_path]:
+        assert not path.exists(), f'Preserve existing resource: {path}'
+    pub_path.write_text(publication, encoding='utf-8')
+    control_path.write_text(
+        'import { captureOwnedTestServerManifest, stopOwnedTestServer } from ' +
+        json.dumps((WT / 'tools/owned_test_stack.mjs').as_uri()) + ';\n' + r'''
+const context = {
+  root: process.env.ECORP_TEST_FIXTURE_ROOT,
+  server: process.env.CRONY_SERVER_HTTP,
+  binary: process.env.CRONY_TEST_SERVER_BINARY,
+  manifestPath: process.env.CRONY_TEST_SERVER_PID_FILE,
+  databaseUrl: process.env.DATABASE_URL,
+};
+if (process.argv[2] === 'capture') {
+  const manifest = await captureOwnedTestServerManifest({ ...context,
+    pidPath: context.manifestPath, pid: Number(process.env.ECORP_QA_SERVER_PID) });
+  console.log(JSON.stringify({ action: 'capture', server: manifest.server, state: manifest.server_state }));
+} else if (process.argv[2] === 'stop') {
+  const stopped = await stopOwnedTestServer(context);
+  console.log(JSON.stringify({ action: 'stop', stopped }));
+} else throw new Error('Unknown owned fixture lifecycle action');
+''', encoding='utf-8')
+    copied = [
+        {'source': str(publication_original), 'source_sha256': sha(publication_original),
+         'copy': str(pub_path), 'copy_sha256': sha(pub_path),
+         'changes': 'Only the two import URLs, owned output root and fake-GitHub driver path; all assertions and behavior preserved.'},
+        {'copy': str(control_path), 'copy_sha256': sha(control_path),
+         'purpose': 'Thin calls to existing receipt-owned server capture/stop helpers; the publication driver owns restarts.'},
+    ]
+    prefix = template.split('$preview = [ordered]@{', 1)[0]
+    prefix = prefix.replace(".StartsWith('ecorp-external-adapters-')", ".StartsWith('ecorp-publication-')")
+    init_start = template.index('New-Item -ItemType Directory -Path $fixture | Out-Null')
+    init_end = template.index('\ntry {\n    Save-FixtureReceipts', init_start)
+    helpers = template[init_start:init_end]
+    helpers = helpers.replace("'Synthetic external-adapter source'", "'Synthetic publication source'")
+    driver = prefix + """$preview = @{suite='pr375-native-publication-r4'}
+if (!$Execute) { throw 'This task-owned driver requires explicit execution.' }
+""" + helpers
+    driver += "\n$publicationDriver = '" + str(pub_path).replace("'", "''") + "'\n"
+    driver += "$serverControl = '" + str(control_path).replace("'", "''") + "'\n"
+    driver += r'''
+$serverManifest = Join-Path $evidence 'server-manifest.json'
+$driverEnv = $null
+$demo = $null
+New-Item -ItemType Directory -Path (Join-Path $fixture 'output') | Out-Null
+$sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+& icacls.exe $fixture /inheritance:r /grant:r ('*{0}:(OI)(CI)F' -f $sid) '*S-1-5-18:(OI)(CI)F' | Out-Null
+if ($LASTEXITCODE) { throw 'Could not restrict the synthetic fixture directory.' }
+try {
+    Save-FixtureReceipts
+    Invoke-FixtureCommand 'git-init' $git @('init', '--initial-branch=main', $source) | Out-Null
+    Invoke-FixtureCommand 'git-add' $git @('-C', $source, 'add', 'README.md') | Out-Null
+    Invoke-FixtureCommand 'git-commit' $git @('-C', $source, '-c', 'user.name=ECorp fixture', '-c',
+        'user.email=fixture@example.invalid', 'commit', '-m', 'Synthetic publication source') | Out-Null
+    Invoke-FixtureCommand 'git-origin' $git @('-C', $source, 'remote', 'add', 'origin',
+        'https://github.com/All-The-Vibes/ecorp.git') | Out-Null
+    $report.fixture_source_commit = Invoke-FixtureCommand 'source-before' $git @('-C', $source, 'rev-parse', 'HEAD')
+    Invoke-FixtureCommand 'initdb' $pg.initdb @('-D', $data, '-U', 'ecorp_publication_ci', '-A', 'trust', '--encoding=UTF8', '--locale=C') | Out-Null
+    Start-FixturePostgres
+    Wait-FixtureReady 'postgres' {
+        @(Get-NetTCPConnection -State Listen -LocalPort $PostgresPort -ErrorAction SilentlyContinue |
+            Where-Object OwningProcess -eq $state.processes.postgres.pid).Count -eq 1
+    }
+    $pgEnv = $childEnv.Clone()
+    $pgEnv.PGHOST = '127.0.0.1'; $pgEnv.PGPORT = [string]$PostgresPort
+    $pgEnv.PGUSER = 'ecorp_publication_ci'; $pgEnv.PGDATABASE = 'postgres'
+    $observed = (Invoke-FixtureCommand 'pg-identity' $pg.psql @('-X', '-At', '-v', 'ON_ERROR_STOP=1', '-c',
+        "SELECT current_setting('data_directory') || '|' || current_setting('port') || '|' || current_user") $pgEnv).Split('|')
+    if (!(Test-LocalPathEqual $observed[0] $data) -or $observed[1] -ne [string]$PostgresPort -or
+        $observed[2] -ne 'ecorp_publication_ci') { throw 'Synthetic PostgreSQL identity mismatch.' }
+    Invoke-FixtureCommand 'create-database' $pg.psql @('-X', '-v', 'ON_ERROR_STOP=1', '-c',
+        'CREATE DATABASE ecorp_publication_ci') $pgEnv | Out-Null
+    $report.database_assurance = 'Fresh loopback-only trust-authenticated synthetic database. No production data or database password; this is not an authentication acceptance test.'
+    $serverEnv = $childEnv.Clone()
+    $serverEnv.DATABASE_URL = "postgres://ecorp_publication_ci@127.0.0.1:$PostgresPort/ecorp_publication_ci"
+    $serverEnv.CRONY_MODE = 'development'
+    $serverEnv.CRONY_OBJECT_STORE_LOCAL_ROOT = Join-Path $fixture 'artifact-objects'
+    $serverEnv.ECORP_FACTORY_WATCH = '0'
+    Start-FixtureProcess 'server' $serverBinary @('--bind', "127.0.0.1:$ServerPort") $serverEnv
+    Wait-FixtureReady 'server' {
+        try { (Invoke-RestMethod "$api/health" -TimeoutSec 2 -MaximumRedirection 0).status -eq 'ok' }
+        catch { $false }
+    }
+    $driverEnv = $serverEnv.Clone()
+    $driverEnv.CRONY_SERVER_HTTP = $api
+    $driverEnv.CRONY_CLI_BINARY = Join-Path $repo 'target/debug/crony-cli.exe'
+    $driverEnv.CRONY_TEST_SERVER_BINARY = $serverBinary
+    $driverEnv.CRONY_TEST_SERVER_PID_FILE = $serverManifest
+    $driverEnv.ECORP_TEST_SOURCE_REPOSITORY = $source
+    $driverEnv.ECORP_TEST_FIXTURE_ROOT = $fixture
+    $driverEnv.ECORP_QA_SERVER_PID = [string]$state.processes.server.pid
+    Invoke-FixtureCommand 'server-capture' $node @($serverControl, 'capture') $driverEnv | Out-Null
+    $demo = Invoke-FixturePost '/api/demo/bootstrap' @{}
+    $runnerId = 'runner-publication-pr375'
+    $enrollment = Invoke-FixturePost "/api/corps/$($demo.corp_id)/runners/enroll" @{
+        actor_id = $demo.alice_actor_id; runner_id = $runnerId; expires_in_seconds = 3600
+    }
+    $tokenFile = Join-Path $private 'enrollment.token'
+    [IO.File]::WriteAllText($tokenFile, $enrollment.enrollment_token)
+    $enrollment = $null
+    $runnerArgs = @(
+        '--server-ws', "ws://127.0.0.1:$ServerPort/ws/runner", '--runner-id', $runnerId, '--corp-id', $demo.corp_id,
+        '--credential-file', (Join-Path $private 'credential.json'), '--enrollment-token-file', $tokenFile,
+        '--workspace', (Join-Path $fixture 'runner-workspaces'), '--source-repository', $source, '--source-base-ref', 'HEAD',
+        '--fake-agent-script', (Join-Path $repo 'scripts/fake-agent.mjs'),
+        '--claude-command', (Join-Path $private 'disabled-claude.exe'),
+        '--opencode-command', (Join-Path $private 'disabled-opencode.exe'),
+        '--codex-command', (Join-Path $private 'disabled-codex.exe'),
+        '--copilot-cli-path', (Join-Path $private 'disabled-copilot.exe'), '--copilot-home', (Join-Path $private 'copilot-home'),
+        '--connections-directory', (Join-Path $private 'connections'), '--github-command', (Join-Path $private 'disabled-gh.exe')
+    )
+    Start-FixtureProcess 'runner' $runnerBinary $runnerArgs
+    Wait-FixtureReady 'runner' {
+        $snapshot = Invoke-RestMethod "$api/api/corps/$($demo.corp_id)/snapshot?actor_id=$($demo.alice_actor_id)" -TimeoutSec 3 -MaximumRedirection 0
+        @($snapshot.runners | Where-Object { $_.id -eq $runnerId -and $_.connected }).Count -eq 1
+    }
+    Invoke-FixtureCommand 'publication' $node @($publicationDriver) $driverEnv -TimeoutSeconds 1200 | Out-Null
+    $publicationReport = Join-Path $fixture 'output/e2e-factory-publication.json'
+    if (!(Test-Path -LiteralPath $publicationReport)) { throw 'Publication assertions did not produce their report.' }
+    $report.publication = Get-Content -LiteralPath $publicationReport -Raw | ConvertFrom-Json -AsHashtable
+    $report.publication_sha256 = (Get-FileHash -LiteralPath $publicationReport).Hash.ToLowerInvariant()
+    $report.bundle_heads = @()
+    $bundleIndex = 0
+    foreach ($bundle in @(Get-ChildItem -LiteralPath (Join-Path $fixture 'runner-workspaces') -Recurse -File -Filter '*.bundle')) {
+        $bundleIndex++
+        $heads = Invoke-FixtureCommand "bundle-heads-$bundleIndex" $git @('bundle', 'list-heads', $bundle.FullName)
+        $report.bundle_heads += @{path=$bundle.FullName;sha256=(Get-FileHash -LiteralPath $bundle.FullName).Hash.ToLowerInvariant();heads=$heads}
+    }
+    $after = Invoke-FixtureCommand 'source-after' $git @('-C', $source, 'rev-parse', 'HEAD')
+    $status = Invoke-FixtureCommand 'source-status' $git @('-C', $source, 'status', '--porcelain')
+    if ($after -ne $report.fixture_source_commit -or $status) { throw 'The synthetic source checkout changed.' }
+    $report.source_checkout_unchanged = $true
+    $report.status = 'passed'
+} catch {
+    $report.status = 'failed'
+    $report.failure = $_.Exception.Message
+    throw
+} finally {
+    $cleanupFailed = $report.ContainsKey('postgres_start_unverified') -and $report.postgres_start_unverified
+    foreach ($role in @('runner', 'server', 'postgres')) {
+        if (!$state.processes.ContainsKey($role)) { continue }
+        $record = $state.processes[$role]
+        try {
+            if ($role -eq 'server' -and (Test-Path -LiteralPath $serverManifest)) {
+                Invoke-FixtureCommand 'server-stop' $node @($serverControl, 'stop') $driverEnv | Out-Null
+                $currentManifest = Get-Content -LiteralPath $serverManifest -Raw | ConvertFrom-Json -AsHashtable
+                if ($currentManifest.server_state -ne 'stopped') { throw 'Current owned server was not stopped.' }
+                $report.cleanup += @{role=$role;stopped=$true;pid=$currentManifest.server;manifest=$serverManifest}
+                continue
+            }
+            if ($role -eq 'postgres' -and (Test-LocalOwnedProcess -Record $record -Workspace $fixture)) {
+                if ([int](Get-Content -LiteralPath (Join-Path $data 'postmaster.pid') -First 1) -ne [int]$record.pid) {
+                    throw 'PostgreSQL PID file does not match the owned process.'
+                }
+                Invoke-FixtureCommand 'pg-stop' $pg.pg_ctl @('-D', $data, '-m', 'fast', '-w', '-t', '30', 'stop') | Out-Null
+            } else {
+                [void](Stop-LocalOwnedProcess -Record $record -Workspace $fixture)
+            }
+            if (Get-Process -Id ([int]$record.pid) -ErrorAction SilentlyContinue) {
+                throw 'Process exit could not be verified; its receipt and data are retained.'
+            }
+            $report.cleanup += @{role=$role;stopped=$true;pid=$record.pid}
+        } catch {
+            $cleanupFailed = $true
+            $report.cleanup += @{role=$role;stopped=$false;detail=$_.Exception.Message}
+        }
+    }
+    $report.finished_at = [DateTime]::UtcNow.ToString('o')
+    if ($cleanupFailed) { $report.status='failed';$report.cleanup_unverified=$true }
+    Save-FixtureReceipts
+    [IO.File]::WriteAllText((Join-Path $evidence 'fixture-report.json'), ($report | ConvertTo-Json -Depth 20))
+    $report | ConvertTo-Json -Depth 20
+    if ($driverEnv) { $driverEnv.Clear() }
+    if ($cleanupFailed) { throw 'Fixture cleanup is unverified; preserve its current receipts.' }
+}
+'''
+    changes = ['Reuse native Windows fixture guards, private configuration, PostgreSQL restricted-process startup and exact ownership cleanup.',
+        'Replace graph suite with the original native publication assertions in a path-only copy and a fresh synthetic source repository.',
+        'Use existing owned_test_stack.mjs for receipt capture, in-suite server restarts and current-manifest cleanup.',
+        'Record original driver results, source preservation and available native portable bundle heads.']
+DRIVER.write_text(driver, encoding='utf-8')
+receipt = {
+    'pr':375, 'issue':82, 'status':'running', 'started_at_utc':now(),
+    'source_binding':binding, 'build_receipt':str(BUILD), 'build_sha256':sha(BUILD),
+    'binaries':build['binaries'], 'fixture':str(QA),
+    'original_driver':str(original), 'original_driver_sha256':sha(original),
+    'driver':str(DRIVER), 'driver_sha256':sha(DRIVER), 'driver_changes':changes,
+    'copied_helpers':copied, 'scope':'Native Windows runner/server/CLI and local Git with fresh owned loopback fixtures. Deterministic providers and fake GitHub only; no real inference or remote mutation.',
+}
+
+
+def save():
+    RECEIPT.write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf-8')
+
+
+save()
+child_env = dict(os.environ)
+for key in list(child_env):
+    if key.startswith(('CRONY_', 'ECORP_', 'PG', 'GH_', 'GITHUB_', 'AZURE_', 'GIT_')) or key in {
+        'DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN'
+    }:
+        child_env.pop(key,None)
+child_env['PATH'] = str(NODEDIR)+';'+str(PG)+';'+child_env['PATH']
+child_env['GIT_TERMINAL_PROMPT'] = '0'
+child_env['GCM_INTERACTIVE'] = 'Never'
+args=['pwsh','-NoProfile','-File',str(DRIVER),'-FixtureRoot',str(QA),'-PgBin',str(PG),
+      '-ServerPort',str(server_port),'-PostgresPort',str(pg_port),'-Execute']
+try:
+    with LOG.open('wb') as output:
+        result=subprocess.run(args,cwd=WT,env=child_env,stdout=output,stderr=subprocess.STDOUT,
+                              creationflags=subprocess.CREATE_NO_WINDOW)
+    receipt['exit_code']=result.returncode
+    report_path=QA/'evidence/fixture-report.json'
+    if report_path.exists():
+        report=json.loads(report_path.read_text(encoding='utf-8-sig'))
+        receipt['fixture_report']=report
+        receipt['fixture_report_sha256']=sha(report_path)
+        receipt['status']='passed' if result.returncode==0 and report['status']=='passed' else 'failed'
+    else:
+        receipt['status']='failed'
+        receipt['missing_fixture_report']=True
+finally:
+    try:
+        verify()
+        receipt['source_and_binaries_unchanged']=True
+    except Exception as error:
+        receipt['status']='failed'
+        receipt['source_and_binaries_unchanged']=False
+        receipt['identity_failure']=str(error)
+    receipt['log_sha256']=sha(LOG) if LOG.exists() else None
+    receipt['finished_at_utc']=now()
+    save()
+    child_env.clear()
+print(json.dumps({k:receipt.get(k) for k in ['status','exit_code','source_and_binaries_unchanged','fixture']},indent=2))
+raise SystemExit(0 if receipt['status']=='passed' else 1)

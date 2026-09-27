@@ -1,0 +1,91 @@
+{
+  "pr": 375,
+  "mode": "red",
+  "status": "failed",
+  "started_at_utc": "2026-09-27T16:46:19.2462992+00:00",
+  "scope": "Retrospective canary diagnostics and real-file permission regressions. The red runner extracts the prior open/copy behavior unchanged and adds deterministic tests; this is not historical development or full-stack acceptance.",
+  "checks": [
+    {
+      "finished_at_utc": "2026-09-27T16:46:20.0545487+00:00",
+      "rust_summaries": [],
+      "program": "node",
+      "node_counts": {
+        "tests": 16,
+        "pass": 12,
+        "cancelled": 0,
+        "todo": 0,
+        "skipped": 0,
+        "fail": 4,
+        "suites": 0
+      },
+      "exit_code": 1,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-permissions-diagnostics-red-r1-diagnostics.log",
+      "sha256": "c03f486a2a5e7a5bfc3d75c767ef720614dd180829b15fc8d76e67cf46b6132b",
+      "name": "diagnostics",
+      "arguments": [
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1",
+        "tools/task_graph_fixture.test.mjs"
+      ],
+      "started_at_utc": "2026-09-27T16:46:19.6447913+00:00"
+    },
+    {
+      "finished_at_utc": "2026-09-27T16:47:15.0711462+00:00",
+      "rust_summaries": [
+        {
+          "ignored": 0,
+          "passed": 0,
+          "filtered": 25,
+          "failed": 0
+        },
+        {
+          "ignored": 0,
+          "passed": 1,
+          "filtered": 282,
+          "failed": 2
+        }
+      ],
+      "program": "cargo",
+      "node_counts": {},
+      "exit_code": 101,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-permissions-diagnostics-red-r1-native-permissions.log",
+      "sha256": "43b2d604df9e661e85eb26a07f81f7f40cbe8eb6892186bc4872af9da13fae87",
+      "name": "native-permissions",
+      "arguments": [
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "crony-runner",
+        "canonical_ignored_input_",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "started_at_utc": "2026-09-27T16:46:20.0617317+00:00"
+    }
+  ],
+  "head": "e9caa3b4580dc73032d3498881940a9785e67737",
+  "head_tree": "b5dc4be060736fa6e15f262c694dc27b012e22f8",
+  "patch": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-permissions-diagnostics-red-r1.patch",
+    "sha256": "0fa7092dec170f15f1fbcaf9e0a0f372ad797576d26f36240ea403c1905670bf"
+  },
+  "source_files": [
+    {
+      "path": "crates/crony-runner/src/deliverable_verification.rs",
+      "sha256": "a560ea889daa7a8e82bff6cf9b6431b2f7440002c1ac017315bc40fd2b5ba0a1"
+    },
+    {
+      "path": "tools/task_graph_fixture.mjs",
+      "sha256": "d40abe9d488f4ec44316073015d4c807f660612436aa29ac0991a45e2c909adc"
+    },
+    {
+      "path": "tools/task_graph_fixture.test.mjs",
+      "sha256": "0aac2a1e08cf617507bdf9e1ca239138074647c3ee0866e36c35a13bef26f581"
+    }
+  ],
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-27T16:47:15.1208020+00:00"
+}
