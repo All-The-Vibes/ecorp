@@ -77,10 +77,33 @@ export function factoryRecoveryConnection(policy: Record<string, unknown>): stri
 export function factoryRecoveryBlocksProviderResume(
   contextExpected: boolean,
   context: NativeRecoveryContext | null,
+  source?: {
+    id: string; task_id: string; status: string; execution_mode: string
+    breaker_stage: string | null; verification_status: string
+    provider_session_id: string | null; workspace_disposition: string | null
+    workspace_fingerprint: string | null
+  },
 ): boolean {
-  return contextExpected && (!context || context.checkpoint_verification === true
-    || context.checkpoint_source_correction === true
-    || context.work_item.state === 'cancelled')
+  if (!contextExpected) return false
+  if (!context) return true
+  if (source?.breaker_stage === 'suspend' || context.checkpoint_verification === true) {
+    // An ordinary budget checkpoint also offers provider-free verification. That
+    // optional mode must not hide explicit native resume of the same suspended
+    // provider. The server still admits the resume under current budget/role locks.
+    return !(source?.breaker_stage === 'suspend' && source.execution_mode === 'provider'
+      && ['failed', 'cancelled'].includes(source.status)
+      && ['pending', 'running'].includes(source.verification_status)
+      && source.provider_session_id && source.workspace_disposition === 'preserved'
+      && source.id === context.source_run_id && source.task_id === context.task_id
+      && source.workspace_fingerprint === context.workspace_fingerprint
+      && ['running', 'blocked', 'awaiting_approval'].includes(context.work_item.state)
+      && context.checkpoint_verification === true
+      && context.checkpoint_verification_available === true
+      && context.checkpoint_source_correction === false
+      && context.checkpoint_cancellation_event_id == null
+      && factoryRecoveryModes(context).includes('checkpoint-verification'))
+  }
+  return context.checkpoint_source_correction === true || context.work_item.state === 'cancelled'
 }
 
 export function factoryContractRevisionSource(

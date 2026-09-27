@@ -1,0 +1,30 @@
+✖ issue50 exact ordinary budget suspension retains native provider resume beside optional checkpoint verification (2.1016ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1270.3862
+
+✖ failing tests:
+
+test at apps\web\src\factoryCheckpointRecovery.test.mjs:55:1
+✖ issue50 exact ordinary budget suspension retains native provider resume beside optional checkpoint verification (2.1016ms)
+  AssertionError [ERR_ASSERTION]: optional checkpoint verification must not suppress ordinary budget continuation
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/apps/web/src/factoryCheckpointRecovery.test.mjs:59:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

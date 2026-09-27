@@ -1,0 +1,135 @@
+"""Qualify budget recovery using the exact canonical-validated issue 50 candidate."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r'<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp')
+PG = Path(r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin')
+NODE = Path(r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe')
+parser = argparse.ArgumentParser()
+parser.add_argument('--mode', choices=['bounded', 'overrun', 'missing-checkpoint'], required=True)
+args = parser.parse_args()
+suffix = {'bounded': 'b', 'overrun': 'o', 'missing-checkpoint': 'm'}[args.mode]
+QA = Path(f'<USERPROFILE>/code/q50-n{suffix}/qa/issue-50-factory-recovery')
+RECEIPT = EV / f'issue50-native-{args.mode}-r3.json'
+assert not RECEIPT.exists(), 'Preserve and reconcile the existing execution.'
+assert not QA.parents[1].exists(), 'Do not adopt an existing fixture parent.'
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding='utf-8-sig'))
+
+
+def sha(path):
+    with Path(path).open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def bound(path):
+    return {'path': str(path), 'sha256': sha(path)}
+
+
+canonical_path = EV / 'issue50-canonical-r1.json'
+checker_path = EV / 'issue50-source-binding-r1.py'
+
+
+def verify_source():
+    result = subprocess.run([sys.executable, '-B', str(checker_path), str(ROOT), str(canonical_path)],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True,
+        creationflags=subprocess.CREATE_NO_WINDOW)
+    return json.loads(result.stdout)
+
+
+binding = verify_source()
+build_path = EV / 'issue50-native-build-r1.json'
+build = load(build_path)
+assert build['issue'] == 50 and build['status'] == 'passed' and build['source_unchanged']
+assert build['source_binding'] == binding
+for binary in build['binaries']:
+    assert sha(binary['path']) == binary['sha256'], binary['path']
+fixture = ROOT / 'tools/e2e_factory_budget_recovery.mjs'
+allow = {'path', 'systemroot', 'windir', 'comspec', 'pathext', 'temp', 'tmp', 'userprofile',
+         'homedrive', 'homepath', 'localappdata', 'appdata', 'programfiles', 'programfiles(x86)',
+         'programdata', 'systemdrive', 'number_of_processors', 'processor_architecture'}
+env = {key: value for key, value in os.environ.items() if key.lower() in allow}
+env.update(ECORP_ISSUE50_QA_ROOT=str(QA), ECORP_ISSUE50_PG_BIN=str(PG),
+           GIT_TERMINAL_PROMPT='0', GCM_INTERACTIVE='Never')
+record = {'issue': 50, 'mode': args.mode, 'status': 'preflight',
+          'started_at_utc': datetime.now(timezone.utc).isoformat(),
+          'repository': str(ROOT), 'qa_root': str(QA), 'source_binding': binding,
+          'canonical_validation': bound(canonical_path), 'native_build': bound(build_path),
+          'fixture': bound(fixture), 'driver': bound(Path(__file__)), 'node': bound(NODE),
+          'checks': [], 'source_unchanged': False,
+          'limitations': 'Retrospective native Windows CLI/server/runner acceptance with a fresh owned '
+                        'PostgreSQL fixture and deterministic Codex/GitHub children. All actors and '
+                        'reviews are synthetic. No real model, human approval, GitHub mutation or '
+                        'OS sandbox proof. This run includes the recorded uncommitted UI candidate.'}
+
+
+def save():
+    RECEIPT.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+
+
+save()
+try:
+    flags = [] if args.mode == 'bounded' else ['--' + args.mode]
+    for lane in ['dry-run', 'execute']:
+        log = EV / f'issue50-native-{args.mode}-r3-{lane}.log'
+        command = [str(NODE), str(fixture), '--' + lane, *flags]
+        with log.open('xb') as stream:
+            process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=stream,
+                stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
+            record.update(status='running-' + lane, process_id=process.pid)
+            save()
+            code = process.wait()
+        record['checks'].append({'lane': lane, 'command': command, 'exit_code': code, **bound(log)})
+        save()
+        if code:
+            record['status'] = 'failed-' + lane
+            break
+    else:
+        record['status'] = 'native-passed'
+    reports = sorted((QA / 'attempts').glob('*/report.json'))
+    if reports:
+        assert len(reports) == 1, 'Reconcile multiple native attempts.'
+        native = load(reports[0])
+        record.update(fixture_report=bound(reports[0]), fixture_status=native.get('status'),
+                      fixture_error=native.get('error'), cleanup=native.get('cleanup'),
+                      ports_after=native.get('ports_after'),
+                      summary={key: native.get(key) for key in ['proposal_replay_verified',
+                          'decision_replay_verified', 'same_session_and_workspace',
+                          'original_spend_and_breaker_preserved', 'hard_stop_protected',
+                          'recovery_proof_verified', 'resume_run']})
+        if record['status'] == 'native-passed':
+            expected = 'hard_stop_protected' if args.mode == 'overrun' else 'recovery_passed'
+            assert native['status'] == expected and native['provenance']['consistent']
+            assert native['source_code_commit'] == binding['source_head']
+            assert not native['ports_after'] and len(native['cleanup']) >= 3
+            assert all(item['status'] in ['stopped_verified_qa_process', 'already_exited']
+                       for item in native['cleanup'])
+            for flag in ['proposal_replay_verified', 'decision_replay_verified',
+                         'same_session_and_workspace', 'original_spend_and_breaker_preserved']:
+                assert native[flag], flag
+    elif record['status'] == 'native-passed':
+        raise AssertionError('Passing execution requires its native report.')
+    assert verify_source() == binding
+    for binary in build['binaries']:
+        assert sha(binary['path']) == binary['sha256']
+    assert sha(fixture) == record['fixture']['sha256']
+    record['source_unchanged'] = True
+except Exception as error:
+    record.update(status='driver-failed', error=str(error))
+    raise
+finally:
+    record['finished_at_utc'] = datetime.now(timezone.utc).isoformat()
+    save()
+    print(json.dumps({key: record.get(key) for key in ['issue', 'mode', 'status',
+          'fixture_status', 'fixture_error', 'error', 'ports_after', 'source_unchanged']}))
+if record['status'] != 'native-passed':
+    raise SystemExit(1)

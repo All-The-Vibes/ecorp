@@ -1,0 +1,124 @@
+{
+  "issue": 50,
+  "mode": "overrun",
+  "status": "native-passed",
+  "started_at_utc": "2026-09-27T22:11:24.663233+00:00",
+  "repository": "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp",
+  "qa_root": "<USERPROFILE>\\code\\q50-no\\qa\\issue-50-factory-recovery",
+  "source_binding": {
+    "schema_version": 1,
+    "source_head": "ee7bdb1b75f3ce5e7f315feeec6583777b0c4ff7",
+    "source_branch": "codex/issue50-factory-budget-resume",
+    "source_tree": "9a039c63c4d7e57d0f0c46c9058f35b5ac2a73f9",
+    "source_files_sha256": "2eb9c9ed4d85713917024c8f03b9aba30b881b0e9fe62169e097e2cfb2ab2d8c",
+    "source_file_count": 6994,
+    "tracked_diff_sha256": "91791cbbe21ce8ab309285b533b63cafa22735ac180c9b1bfa0f15930d1c05c4",
+    "untracked_digests": [],
+    "canonical_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-canonical-r1.json",
+    "canonical_receipt_sha256": "e1b1344d47b9e47c4d0fe812ff775db8520423043be45d44491f8669f17b6479",
+    "canonical_report_sha256": "9550c2b1f6857e58f5441754d287354d7af538fcb8546ac2ddee78bb331b4382",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "canonical_validation": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-canonical-r1.json",
+    "sha256": "e1b1344d47b9e47c4d0fe812ff775db8520423043be45d44491f8669f17b6479"
+  },
+  "native_build": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-build-r1.json",
+    "sha256": "505b654e849dc2fc94464b4a072163661f024c9da47a49e3c050ce3ed8beaf4c"
+  },
+  "fixture": {
+    "path": "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp\\tools\\e2e_factory_budget_recovery.mjs",
+    "sha256": "07bdffe6703961cd4d1ab6049f6aed209004fbfa32747db138dad083f2aeab46"
+  },
+  "driver": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue50-native-r3.py",
+    "sha256": "ce38ea1dc53fb5947fecb99d2936188a9bf3ae145eeb5841dc25631f41c103ca"
+  },
+  "node": {
+    "path": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+    "sha256": "ba4e6d110e8c1592a1ecd390f6b05f3da124b13871a5be62b341a07a853c6c32"
+  },
+  "checks": [
+    {
+      "lane": "dry-run",
+      "command": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp\\tools\\e2e_factory_budget_recovery.mjs",
+        "--dry-run",
+        "--overrun"
+      ],
+      "exit_code": 0,
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-overrun-r3-dry-run.log",
+      "sha256": "d2356b78325bde4f1ba62459a2aea1bb51dd68caf292f0e655b84b201bfb98be"
+    },
+    {
+      "lane": "execute",
+      "command": [
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+        "<USERPROFILE>\\.codex\\worktrees\\issue270-oidc\\ecorp\\tools\\e2e_factory_budget_recovery.mjs",
+        "--execute",
+        "--overrun"
+      ],
+      "exit_code": 0,
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue50-native-overrun-r3-execute.log",
+      "sha256": "95ee08db2655994cf3e13ff4d592c982c983edc7aa1febeac882c5c18d7671df"
+    }
+  ],
+  "source_unchanged": true,
+  "limitations": "Retrospective native Windows CLI/server/runner acceptance with a fresh owned PostgreSQL fixture and deterministic Codex/GitHub children. All actors and reviews are synthetic. No real model, human approval, GitHub mutation or OS sandbox proof. This run includes the recorded uncommitted UI candidate.",
+  "process_id": 5732,
+  "fixture_report": {
+    "path": "<USERPROFILE>\\code\\q50-no\\qa\\issue-50-factory-recovery\\attempts\\20260927221128064\\report.json",
+    "sha256": "f7dd39b5ad7dcc64490f8cdde40826b987ef9cddde77b67e9c57e0c9a9ac93af"
+  },
+  "fixture_status": "hard_stop_protected",
+  "fixture_error": null,
+  "cleanup": [
+    {
+      "name": "runner",
+      "status": "stopped_verified_qa_process",
+      "pid": 21228
+    },
+    {
+      "name": "server",
+      "status": "stopped_verified_qa_process",
+      "pid": 32424
+    },
+    {
+      "name": "postgres",
+      "status": "stopped_verified_qa_process",
+      "pid": 35820
+    }
+  ],
+  "ports_after": [],
+  "summary": {
+    "proposal_replay_verified": true,
+    "decision_replay_verified": true,
+    "same_session_and_workspace": true,
+    "original_spend_and_breaker_preserved": true,
+    "hard_stop_protected": true,
+    "recovery_proof_verified": null,
+    "resume_run": {
+      "id": "9bbb9939-8e3a-40be-882b-327ebeadbe44",
+      "status": "cancelled",
+      "breaker_stage": "stop",
+      "budget_tokens_limit": 4000,
+      "input_tokens": 6000,
+      "output_tokens": 0
+    }
+  },
+  "finished_at_utc": "2026-09-27T22:13:30.961639+00:00"
+}
