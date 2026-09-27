@@ -963,7 +963,15 @@ fn parse_portable_bundle_head(output: &str, expected_commit: &str) -> Result<Str
         || reference
             .strip_prefix("refs/ecorp/deliverables/")
             .is_some_and(|suffix| {
-                suffix.len() == 32 && suffix.bytes().all(|byte| byte.is_ascii_hexdigit())
+                let is_id = |part: &str| {
+                    part.len() == 32 && part.bytes().all(|byte| byte.is_ascii_hexdigit())
+                };
+                // Current runners include a unique preparation owner; retain
+                // compatibility with older bundles containing only the run ID.
+                match suffix.split_once('-') {
+                    Some((run, owner)) => is_id(run) && is_id(owner),
+                    None => is_id(suffix),
+                }
             });
     if !valid_reference {
         bail!("portable Git bundle exposed an unauthorized head reference");
@@ -2017,6 +2025,60 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    #[test]
+    fn portable_bundle_head_accepts_runner_owned_reference() {
+        let commit = "a".repeat(40);
+        let run_id = Uuid::new_v4();
+        let owner = Uuid::new_v4().simple().to_string();
+        let reference = format!("refs/ecorp/deliverables/{}-{owner}", run_id.simple());
+        assert_eq!(
+            parse_portable_bundle_head(&format!("{commit} {reference}\n"), &commit)
+                .expect("ownership-qualified runner bundle"),
+            reference
+        );
+    }
+
+    #[test]
+    fn portable_bundle_head_rejects_malformed_owned_references_and_mismatched_heads() {
+        let commit = "a".repeat(40);
+        let run = "0123456789abcdef0123456789abcdef";
+        let owner = "fedcba9876543210fedcba9876543210";
+        for suffix in [
+            String::new(),
+            format!("{run}-"),
+            format!("-{owner}"),
+            format!("{run}--{owner}"),
+            format!("{run}-{owner}-"),
+            format!("{run}-{owner}-{owner}"),
+            format!("{run}0-{owner}"),
+            format!("{}-{owner}", &run[1..]),
+            format!("{run}-{}", &owner[1..]),
+            format!("{run}-{owner}0"),
+            format!("{run}-{}g", &owner[1..]),
+            format!("{}g-{owner}", &run[1..]),
+            format!("{run}/{owner}"),
+        ] {
+            assert!(
+                parse_portable_bundle_head(
+                    &format!("{commit} refs/ecorp/deliverables/{suffix}\n"),
+                    &commit
+                )
+                .is_err(),
+                "accepted malformed reference suffix {suffix}"
+            );
+        }
+        let reference = format!("refs/ecorp/deliverables/{run}-{owner}");
+        for output in [
+            String::new(),
+            format!("{} {reference}\n", "b".repeat(40)),
+            format!("{commit} {reference} extra\n"),
+            format!("{commit} {reference}\n{commit} HEAD\n"),
+            format!("{commit} refs/heads/{run}-{owner}\n"),
+        ] {
+            assert!(parse_portable_bundle_head(&output, &commit).is_err());
+        }
     }
 
     #[test]

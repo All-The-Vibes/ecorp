@@ -121,6 +121,53 @@ test('graph launch never replays a failed, cancelled, incomplete or timed-out mi
   }
 })
 
+test('failed graph reports bounded persisted run causes without unrelated snapshot contents', async () => {
+  const failed = {
+    mission: { id: corp, status: 'failed', secret: 'mission-private-canary' },
+    runs: Array.from({ length: 20 }, (_, index) => ({
+      id: `run-${index}`, task_id: roots[index % 2], status: 'failed',
+      summary: 'trusted Git could not export the verified deliverable',
+      verification_status: 'failed', verification_summary: 'a'.repeat(2000),
+      workspace_disposition: 'preserved', workspace_detail: 'failure preserved for inspection',
+      artifact_uri: 'artifact-private-canary', credentials: { password: 'credential-private-canary' },
+    })),
+    state: { snapshot: { secrets: ['snapshot-private-canary'] } },
+  }
+  const before = structuredClone(failed)
+  let calls = 0
+  await assert.rejects(completeGraphFixtureLaunch(async () => {
+    calls++
+    return conflict(claimed(roots[1]))
+  }, async () => failed, roots), error => {
+    assert.match(error.message, /Task graph did not complete:/u)
+    assert.match(error.message, /trusted Git could not export the verified deliverable/u)
+    assert.doesNotMatch(error.message, /private-canary|a{513}|run-12/u)
+    const detail = JSON.parse(error.message.split('\n')[0].split('Task graph did not complete: ')[1])
+    assert.deepEqual(detail.mission, { id: corp, status: 'failed' })
+    assert.equal(detail.run_count, 20)
+    assert.equal(detail.runs.length, 12)
+    assert.deepEqual(detail.runs[0], {
+      id: 'run-0', task_id: roots[0], status: 'failed',
+      summary: failed.runs[0].summary, verification_status: 'failed',
+      verification_summary: 'a'.repeat(512), workspace_disposition: 'preserved',
+      workspace_detail: 'failure preserved for inspection',
+    })
+    return true
+  })
+  assert.equal(calls, 1)
+  assert.deepEqual(failed, before)
+})
+
+test('graph failure diagnostics omit nested values in allowed fields', async () => {
+  await assert.rejects(completeGraphFixtureLaunch(async () => ({ status: 200, body: {} }),
+    async () => ({ mission: { status: 'failed' }, runs: [null, { summary: { secret: 'nested-private-canary' } }] }),
+    roots), error => {
+    assert.match(error.message, /Task graph did not complete:/u)
+    assert.doesNotMatch(error.message, /nested-private-canary/u)
+    return true
+  })
+})
+
 test('graph reconciliation rejects a repeated conflict or a response that dispatched new work', async () => {
   for (const response of [conflict(claimed(roots[1])), { status: 200, body: { replayed: false } }]) {
     let calls = 0

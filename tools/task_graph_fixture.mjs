@@ -31,6 +31,22 @@ export function graphFixtureSource(state, corpId) {
   return { runner, source: { repository: source.source_repository, base_ref: source.source_base_ref, base_commit: source.source_base_commit } }
 }
 
+function graphFailureDetails(result) {
+  // Only bounded persisted metadata from this owned fixture belongs in CI logs.
+  // Never serialize the full snapshot, artifact locations or nested values.
+  const select = (value, fields) => Object.fromEntries(fields.map(field =>
+    [field, typeof value?.[field] === 'string' ? value[field].slice(0, 512) : null]))
+  const runs = Array.isArray(result.runs) ? result.runs : []
+  return {
+    mission: select(result.mission, ['id', 'status']),
+    run_count: runs.length,
+    runs: runs.slice(0, 12).map(run => select(run, [
+      'id', 'task_id', 'status', 'summary', 'verification_status',
+      'verification_summary', 'workspace_disposition', 'workspace_detail',
+    ])),
+  }
+}
+
 export async function completeGraphFixtureLaunch(launch, waitForMission, rootTaskIds) {
   const initial = await launch()
   assert.ok([200, 409].includes(initial.status), `Graph launch failed: HTTP ${initial.status}`)
@@ -45,7 +61,8 @@ export async function completeGraphFixtureLaunch(launch, waitForMission, rootTas
     }
   }
   const result = await waitForMission()
-  assert.equal(result.mission.status, 'completed')
+  assert.equal(result.mission.status, 'completed',
+    'Task graph did not complete: ' + JSON.stringify(graphFailureDetails(result)))
   // Reconcile only after completion, when the native endpoint cannot dispatch a
   // dependency or retry. A successful replay requires persisted run.started.
   const reconciled = initial.status === 409 ? await launch() : initial

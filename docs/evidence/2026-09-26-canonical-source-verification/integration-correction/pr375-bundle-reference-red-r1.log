@@ -1,0 +1,25 @@
+   Compiling crony-protocol v0.1.0 (<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\crates\crony-protocol)
+   Compiling crony-cli v0.1.0 (<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\crates\crony-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 54.49s
+     Running unittests src\main.rs (target\debug\deps\crony_cli-fe9af0af91ca3850.exe)
+
+running 3 tests
+test publish::tests::portable_bundle_head_accepts_runner_owned_reference ... FAILED
+test publish::tests::portable_bundle_head_is_single_exact_and_bounded ... ok
+test publish::tests::portable_bundle_head_rejects_malformed_owned_references_and_mismatched_heads ... ok
+
+failures:
+
+---- publish::tests::portable_bundle_head_accepts_runner_owned_reference stdout ----
+
+thread 'publish::tests::portable_bundle_head_accepts_runner_owned_reference' (11836) panicked at crates\crony-cli\src\publish.rs:2030:18:
+ownership-qualified runner bundle: portable Git bundle exposed an unauthorized head reference
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    publish::tests::portable_bundle_head_accepts_runner_owned_reference
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 138 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p crony-cli --bin crony-cli`
