@@ -5,7 +5,8 @@ use std::{
     collections::BTreeSet,
     ffi::OsString,
     path::{Component, Path, PathBuf},
-    process::Stdio,
+    process::{Output, Stdio},
+    time::Duration,
 };
 
 use anyhow::{Context, Result, bail};
@@ -26,6 +27,9 @@ use crate::{
     verifier::{self, CancellableCheckResult, SourceVerification, VerificationReport},
     workspace::{self, VerificationSnapshot},
 };
+
+#[cfg(windows)]
+use crate::adapter::process_tree::{OwnedProcessTree, OwnedProcessTreeSpawn};
 
 const MAX_ENTRIES: usize = 100_000;
 const MAX_BYTES: u64 = 4 * 1024 * 1024 * 1024;
@@ -132,34 +136,36 @@ async fn verify_inner(
         &[],
     )
     .await?;
-    // A verbatim Windows path is not a Git transport address. Use an encoded local
-    // URL so drive colons, spaces and UNC paths cannot be parsed as SSH syntax.
-    let source_url =
-        url::Url::from_directory_path(workspace::normalize_path(prepared.workspace_root.clone()))
-            .map_err(|_| {
-            anyhow::anyhow!("canonical source cannot be represented as a local Git URL")
-        })?;
+    // Native pack output writes independent objects directly, avoiding the costly local
+    // upload-pack/index-pack pipe chain on Windows. Limit history to candidate + base;
+    // no source config, refs, hooks, alternates or older history enter the snapshot.
+    let pack_prefix = workspace::normalize_path(baseline.path().join(".git/objects/pack/pack"));
+    let revisions = format!(
+        "--shallow {}\n{}\n",
+        prepared.workspace.base_commit, candidate_commit
+    );
     private_git(
-        baseline.path(),
+        &prepared.workspace_root,
         &[
-            "-c".into(),
-            "protocol.file.allow=always".into(),
-            "fetch".into(),
+            "pack-objects".into(),
+            "--revs".into(),
+            "--shallow".into(),
             "--quiet".into(),
-            // Fetch sanitizes repository-local configuration before launching upload-pack.
-            // The fixed local command must opt in too; never edit the source Git config.
-            #[cfg(windows)]
-            "--upload-pack=git -c core.longpaths=true upload-pack".into(),
-            "--depth=2".into(),
-            "--no-tags".into(),
-            "--no-write-fetch-head".into(),
-            "--no-recurse-submodules".into(),
-            source_url.as_str().into(),
-            candidate_commit.clone().into(),
+            // Temporary snapshots need neither delta searches nor recompression.
+            "--window=0".into(),
+            "--compression=0".into(),
+            pack_prefix.into_os_string(),
         ],
-        &[],
+        revisions.as_bytes(),
     )
-    .await?;
+    .await
+    .context("pack independent canonical source objects")?;
+    tokio::fs::write(
+        baseline.path().join(".git/shallow"),
+        format!("{}\n", prepared.workspace.base_commit),
+    )
+    .await
+    .context("record private canonical history boundary")?;
     private_git(
         baseline.path(),
         &[
@@ -321,13 +327,113 @@ async fn private_git_with_index(
             workspace::normalize_path(index.to_path_buf()),
         );
     }
-    let mut child = command
-        .args(args)
+    command.args(args);
+    let output = run_private_git(&mut command, input, super::GIT_TIMEOUT).await?;
+    // check-ignore returns 1 for a successful query with no ignored paths.
+    if !output.status.success()
+        && !(args.first().is_some_and(|arg| arg == "check-ignore")
+            && output.status.code() == Some(1))
+    {
+        bail!(
+            "private Git operation failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
+    Ok(output.stdout)
+}
+
+/// Own trusted Git children until their pipes and workspace handles are released.
+/// Windows reuses the runner's native Job Object adapter; this adds no harness permissions.
+struct PrivateGitProcess {
+    #[cfg(windows)]
+    tree: OwnedProcessTree,
+    #[cfg(not(windows))]
+    child: tokio::process::Child,
+}
+
+impl PrivateGitProcess {
+    async fn spawn(command: &mut Command) -> Result<Self> {
+        #[cfg(windows)]
+        {
+            let tree = match OwnedProcessTree::spawn(command)? {
+                OwnedProcessTreeSpawn::Ready(tree) => tree,
+                OwnedProcessTreeSpawn::CleanupRequired { mut tree, error } => {
+                    let cleanup = tree.terminate_and_wait().await;
+                    return Err(match cleanup {
+                        Ok(_) => anyhow::Error::new(error)
+                            .context("private Git process ownership setup failed"),
+                        Err(cleanup) => anyhow::Error::new(error).context(format!(
+                            "private Git process ownership setup failed and cleanup was unverified: {cleanup}"
+                        )),
+                    });
+                }
+            };
+            Ok(Self { tree })
+        }
+        #[cfg(not(windows))]
+        {
+            Ok(Self {
+                child: command.kill_on_drop(true).spawn()?,
+            })
+        }
+    }
+
+    fn child_mut(&mut self) -> &mut tokio::process::Child {
+        #[cfg(windows)]
+        {
+            self.tree.child_mut()
+        }
+        #[cfg(not(windows))]
+        {
+            &mut self.child
+        }
+    }
+
+    async fn finish<T>(&mut self, result: Result<T>) -> Result<T> {
+        #[cfg(windows)]
+        let cleanup = self.tree.terminate_and_wait().await.map(|_| ());
+        #[cfg(not(windows))]
+        let cleanup = async {
+            if self.child.try_wait()?.is_none() {
+                self.child.start_kill()?;
+                tokio::time::timeout(Duration::from_secs(5), self.child.wait()).await??;
+            }
+            Ok::<_, std::io::Error>(())
+        }
+        .await;
+        match (result, cleanup) {
+            (Err(error), Err(cleanup)) => {
+                Err(error.context(format!("private Git cleanup also failed: {cleanup}")))
+            }
+            (Ok(_), Err(cleanup)) => {
+                Err(anyhow::Error::new(cleanup).context("private Git cleanup failed"))
+            }
+            (result, Ok(())) => result,
+        }
+    }
+}
+
+pub(super) async fn run_private_git(
+    command: &mut Command,
+    input: &[u8],
+    timeout: Duration,
+) -> Result<Output> {
+    command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+        .stderr(Stdio::piped());
+    let mut process = PrivateGitProcess::spawn(command)
+        .await
         .context("start private Git operation")?;
+    let result = collect_private_git(process.child_mut(), input, timeout).await;
+    process.finish(result).await
+}
+
+async fn collect_private_git(
+    child: &mut tokio::process::Child,
+    input: &[u8],
+    timeout: Duration,
+) -> Result<Output> {
     let mut stdin = child.stdin.take().context("Git stdin")?;
     let mut stdout = child
         .stdout
@@ -337,7 +443,7 @@ async fn private_git_with_index(
     let mut stderr = child.stderr.take().context("Git stderr")?.take(64 * 1024);
     let mut output = Vec::new();
     let mut errors = Vec::new();
-    let (status, _, _, _) = tokio::time::timeout(super::GIT_TIMEOUT, async {
+    let (status, _, _, _) = tokio::time::timeout(timeout, async {
         tokio::try_join!(
             child.wait(),
             async move {
@@ -355,16 +461,11 @@ async fn private_git_with_index(
     if output.len() as u64 > MAX_GIT_OUTPUT {
         bail!("private Git output exceeds its bound");
     }
-    // check-ignore returns 1 for a successful query with no ignored paths.
-    if !status.success()
-        && !(args.first().is_some_and(|arg| arg == "check-ignore") && status.code() == Some(1))
-    {
-        bail!(
-            "private Git operation failed: {}",
-            String::from_utf8_lossy(&errors).trim()
-        );
-    }
-    Ok(output)
+    Ok(Output {
+        status,
+        stdout: output,
+        stderr: errors,
+    })
 }
 
 async fn tree_files(root: &Path, tree: &str) -> Result<Vec<SourceFile>> {
@@ -422,13 +523,24 @@ async fn tree_files(root: &Path, tree: &str) -> Result<Vec<SourceFile>> {
 }
 
 async fn materialize(root: &Path, files: &mut [SourceFile]) -> Result<Vec<(PathBuf, PathBuf)>> {
-    let mut child = git_command(root)
+    let mut command = git_command(root);
+    command
         .args(["cat-file", "--batch"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
+        .stderr(Stdio::null());
+    let mut process = PrivateGitProcess::spawn(&mut command)
+        .await
         .context("start raw Git blob reader")?;
+    let result = materialize_blobs(process.child_mut(), root, files).await;
+    process.finish(result).await
+}
+
+async fn materialize_blobs(
+    child: &mut tokio::process::Child,
+    root: &Path,
+    files: &mut [SourceFile],
+) -> Result<Vec<(PathBuf, PathBuf)>> {
     let mut stdin = child.stdin.take().context("blob reader stdin")?;
     let mut stdout = BufReader::new(child.stdout.take().context("blob reader stdout")?);
     let mut links = Vec::new();
@@ -983,4 +1095,33 @@ async fn check_source_integrity(
     }
     // Raw-file comparisons above deliberately do not use Git diff: clean filters can hide drift.
     Ok(())
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn canonical_raw_blob_rejection_waits_for_process_exit() {
+        let root =
+            std::env::temp_dir().join(format!("ecorp-raw-blob-error-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&root).unwrap();
+        private_git(
+            &root,
+            &["init".into(), "--quiet".into(), "--template=".into()],
+            &[],
+        )
+        .await
+        .unwrap();
+        let mut files = [SourceFile {
+            path: "missing.txt".into(),
+            mode: "100644".into(),
+            object: "0".repeat(40),
+            bytes: 1,
+            sha256: String::new(),
+        }];
+        let error = materialize(&root, &mut files).await.unwrap_err();
+        assert!(format!("{error:#}").contains("unexpected raw Git blob header"));
+        std::fs::remove_dir_all(&root).expect("rejected blob reader must release the snapshot");
+    }
 }

@@ -164,6 +164,72 @@ fn assert_snapshots_removed(run_id: Uuid) {
 
 #[cfg(windows)]
 #[tokio::test]
+async fn canonical_private_git_timeout_reaps_descendants_before_snapshot_cleanup() {
+    let root = std::env::temp_dir().join(format!("ecorp-private-git-timeout-{}", Uuid::new_v4()));
+    fs::create_dir(&root).unwrap();
+    let mut command = tokio::process::Command::new("node");
+    command.current_dir(&root).kill_on_drop(true).args([
+        "-e",
+        r#"const {spawn}=require('node:child_process');
+spawn(process.execPath,['-e',"require('node:fs').writeFileSync('child-ready.txt',String(process.pid));setTimeout(()=>{},6000)"],{cwd:process.cwd(),stdio:'ignore'});
+setTimeout(()=>{},6000);"#,
+    ]);
+    let error = verification::run_private_git(&mut command, &[], Duration::from_secs(2))
+        .await
+        .unwrap_err();
+    assert!(format!("{error:#}").contains("timed out"), "{error:#}");
+    assert!(
+        root.join("child-ready.txt").exists(),
+        "descendant must start before timeout"
+    );
+    let child_pid: u32 = fs::read_to_string(root.join("child-ready.txt"))
+        .unwrap()
+        .parse()
+        .unwrap();
+    let child_alive = crate::adapter::process_tree::process_is_alive(child_pid);
+    let cleanup = fs::remove_dir_all(&root);
+    if cleanup.is_err() {
+        // The negative regression must not leave an indefinitely running child.
+        // Its own fixed lifetime expires; retain the failed fixture for diagnosis.
+        tokio::time::sleep(Duration::from_secs(6)).await;
+    }
+    assert!(
+        cleanup.is_ok(),
+        "private Git descendant still owns the snapshot: {cleanup:?}"
+    );
+    assert!(
+        !child_alive,
+        "private Git descendant survived awaited cleanup"
+    );
+}
+
+#[cfg(windows)]
+#[tokio::test]
+async fn canonical_private_git_success_reaps_descendants_before_snapshot_cleanup() {
+    let root = std::env::temp_dir().join(format!("ecorp-private-git-success-{}", Uuid::new_v4()));
+    fs::create_dir(&root).unwrap();
+    let mut command = tokio::process::Command::new("node");
+    command.current_dir(&root).args([
+        "-e",
+        r#"const fs=require('node:fs'),{spawn}=require('node:child_process');
+spawn(process.execPath,['-e',"require('node:fs').writeFileSync('child-ready.txt',String(process.pid));setTimeout(()=>{},6000)"],{cwd:process.cwd(),stdio:'ignore'});
+const poll=setInterval(()=>{if(fs.existsSync('child-ready.txt'))process.exit(0)},10);
+setTimeout(()=>process.exit(1),6000);"#,
+    ]);
+    let output = verification::run_private_git(&mut command, &[], Duration::from_secs(10))
+        .await
+        .unwrap();
+    assert!(output.status.success());
+    let child_pid: u32 = fs::read_to_string(root.join("child-ready.txt"))
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!(!crate::adapter::process_tree::process_is_alive(child_pid));
+    fs::remove_dir_all(&root).expect("successful private Git must release the snapshot");
+}
+
+#[cfg(windows)]
+#[tokio::test]
 async fn canonical_export_supports_long_windows_paths_without_changing_git_config() {
     let mut fixture = Fixture::new();
     let mut long_source = fixture.root.join("native-git-path");
@@ -616,6 +682,86 @@ async fn canonical_checks_reject_raw_source_index_head_and_untracked_mutation() 
         drop(prepared);
         fixture.cleanup();
     }
+}
+
+#[tokio::test]
+async fn canonical_private_git_contains_only_candidate_and_base_history() {
+    let mut fixture = Fixture::new();
+    fixture.write("ancestor-only.txt", b"excluded historical bytes\n");
+    fixture.commit_base();
+    let ancestor = fixture.lease.base_commit.clone();
+    let ancestor_blob = git(
+        &fixture.lease.path,
+        &["rev-parse", "HEAD:ancestor-only.txt"],
+    );
+    git(
+        &fixture.lease.path,
+        &["tag", "historical-fixture", &ancestor],
+    );
+    fs::remove_file(fixture.lease.path.join("ancestor-only.txt")).unwrap();
+    fixture.write("tracked.txt", b"base bytes\n");
+    fixture.commit_base();
+    // Exercise already-packed objects and preserve a real source config/ref/index.
+    git(&fixture.lease.path, &["repack", "-adq"]);
+    git(
+        &fixture.lease.path,
+        &["config", "ecorp.fixture", "source-only"],
+    );
+    fixture.write("other.txt", b"unselected staged bytes\n");
+    git(&fixture.lease.path, &["add", "other.txt"]);
+    let config = fs::read(fixture.lease.path.join(".git/config")).unwrap();
+    let index = fs::read(fixture.lease.path.join(".git/index")).unwrap();
+    let refs = git(&fixture.lease.path, &["show-ref"]);
+    fixture.write("tracked.txt", b"candidate bytes\n");
+    let mut prepared = fixture.prepare(&["tracked.txt"], &[]).await;
+    let script = format!(
+        "const expected = {};{}",
+        json!({
+            "base": fixture.lease.base_commit,
+            "tree": prepared.tree,
+            "excluded": [ancestor, ancestor_blob],
+        }),
+        r#"
+const fs = require('node:fs'), cp = require('node:child_process'), a = require('node:assert/strict');
+const git = (...args) => cp.execFileSync('git', args, {encoding:'utf8'}).trim();
+const head = git('rev-parse', 'HEAD');
+a.deepEqual(git('rev-list', 'HEAD').split('\n'), [head, expected.base]);
+a.equal(git('rev-parse', 'HEAD^{tree}'), expected.tree);
+a.equal(fs.readFileSync('.git/shallow', 'utf8'), expected.base + '\n');
+for (const oid of expected.excluded) a.notEqual(cp.spawnSync('git', ['cat-file', '-e', oid]).status, 0);
+const commits = git('cat-file', '--batch-all-objects', '--batch-check=%(objectname) %(objecttype)')
+    .split('\n').filter(line => line.endsWith(' commit')).map(line => line.split(' ')[0]).sort();
+a.deepEqual(commits, [head, expected.base].sort());
+a.equal(git('for-each-ref'), '');
+a.equal(cp.spawnSync('git', ['config', '--get', 'ecorp.fixture']).status, 1);
+for (const path of ['.git/objects/info/alternates', '.git/commondir']) a.equal(fs.existsSync(path), false);
+git('fsck', '--connectivity-only', '--no-reflogs', '--no-progress');
+a.equal(fs.readFileSync('tracked.txt', 'utf8'), 'candidate bytes\n');
+a.equal(fs.readFileSync('other.txt', 'utf8'), 'other before\n');
+"#,
+    );
+    let report = verify(&mut prepared, &policy(vec![node(&script)]), &[]).await;
+    assert!(report.passed, "{report:?}");
+    assert_eq!(
+        fs::read(fixture.lease.path.join(".git/config")).unwrap(),
+        config
+    );
+    assert_eq!(
+        fs::read(fixture.lease.path.join(".git/index")).unwrap(),
+        index
+    );
+    assert_eq!(git(&fixture.lease.path, &["show-ref"]), refs);
+    assert_eq!(
+        git(&fixture.lease.path, &["rev-parse", "HEAD"]),
+        fixture.lease.base_commit
+    );
+    assert!(!fixture.lease.path.join(".git/shallow").exists());
+    assert_eq!(
+        fs::read(fixture.lease.path.join("other.txt")).unwrap(),
+        b"unselected staged bytes\n"
+    );
+    drop(prepared);
+    fixture.cleanup();
 }
 
 #[tokio::test]

@@ -1,0 +1,2130 @@
+2026-09-27T05:11:45.0965909Z Current runner version: '2.337.0'
+2026-09-27T05:11:45.0990847Z ##[group]Runner Image Provisioner
+2026-09-27T05:11:45.0991950Z Hosted Compute Agent
+2026-09-27T05:11:45.0992675Z Version: 20260828.587
+2026-09-27T05:11:45.0993385Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-27T05:11:45.0994274Z Build Date: 2026-08-28T16:44:25Z
+2026-09-27T05:11:45.0995059Z Worker ID: {f7c4be01-ece8-4f41-9013-db06379f617a}
+2026-09-27T05:11:45.0995922Z Azure Region: westcentralus
+2026-09-27T05:11:45.0996668Z ##[endgroup]
+2026-09-27T05:11:45.0998453Z ##[group]Operating System
+2026-09-27T05:11:45.0999328Z Ubuntu
+2026-09-27T05:11:45.0999957Z 24.04.5
+2026-09-27T05:11:45.1000585Z LTS
+2026-09-27T05:11:45.1001234Z ##[endgroup]
+2026-09-27T05:11:45.1001873Z ##[group]Runner Image
+2026-09-27T05:11:45.1002604Z Image: ubuntu-24.04
+2026-09-27T05:11:45.1003262Z Version: 20260920.314.1
+2026-09-27T05:11:45.1004685Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260920.314/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-27T05:11:45.1006372Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260920.314
+2026-09-27T05:11:45.1007506Z ##[endgroup]
+2026-09-27T05:11:45.1008981Z ##[group]GITHUB_TOKEN Permissions
+2026-09-27T05:11:45.1011007Z Contents: read
+2026-09-27T05:11:45.1011707Z Metadata: read
+2026-09-27T05:11:45.1012334Z ##[endgroup]
+2026-09-27T05:11:45.1014541Z Secret source: Actions
+2026-09-27T05:11:45.1015595Z Cache mode: write
+2026-09-27T05:11:45.1016499Z Prepare workflow directory
+2026-09-27T05:11:45.1664820Z Prepare all required actions
+2026-09-27T05:11:45.1719532Z Getting action download info
+2026-09-27T05:11:45.5048822Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-09-27T05:11:45.5941486Z Download action repository 'dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87' (SHA:6bed0761d98439e5a578e2877258200ad565ba87)
+2026-09-27T05:11:45.7773209Z Download action repository 'pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413' (SHA:ea17c68df8912ef543352723c149a84f56e3d413)
+2026-09-27T05:11:46.2121736Z Download action repository 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' (SHA:820762786026740c76f36085b0efc47a31fe5020)
+2026-09-27T05:11:46.2989173Z Download action repository 'Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6' (SHA:6323deb102c322ba6fcbdcafc7e3dddab59af2b6)
+2026-09-27T05:11:47.0478275Z Download action repository 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+2026-09-27T05:11:47.3941594Z Complete job name: integration
+2026-09-27T05:11:47.4888127Z ##[group]Checking docker version
+2026-09-27T05:11:47.4904008Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2026-09-27T05:11:47.5787118Z '1.48'
+2026-09-27T05:11:47.5807818Z Docker daemon API version: '1.48'
+2026-09-27T05:11:47.5809430Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2026-09-27T05:11:47.5977821Z '1.48'
+2026-09-27T05:11:47.5993958Z Docker client API version: '1.48'
+2026-09-27T05:11:47.6000326Z ##[endgroup]
+2026-09-27T05:11:47.6003494Z ##[group]Clean up resources from previous jobs
+2026-09-27T05:11:47.6010030Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=47fc83"
+2026-09-27T05:11:47.6161538Z ##[command]/usr/bin/docker network prune --force --filter "label=47fc83"
+2026-09-27T05:11:47.6295365Z ##[endgroup]
+2026-09-27T05:11:47.6296348Z ##[group]Create local container network
+2026-09-27T05:11:47.6307336Z ##[command]/usr/bin/docker network create --label 47fc83 github_network_f4fd7a220b9240f9913334cdb9f4b9e1
+2026-09-27T05:11:47.6821335Z 34f9d6087a53442f642b96385a9a5594e4c2b350805809ff4145d8b40f7bf3a2
+2026-09-27T05:11:47.6842424Z ##[endgroup]
+2026-09-27T05:11:47.6869252Z ##[group]Starting postgres service container
+2026-09-27T05:11:47.6890681Z ##[command]/usr/bin/docker pull postgres:17-alpine
+2026-09-27T05:11:48.3861434Z 17-alpine: Pulling from library/postgres
+2026-09-27T05:11:48.5850033Z e2de96513ba9: Pulling fs layer
+2026-09-27T05:11:48.5851284Z 4ece9a32c307: Pulling fs layer
+2026-09-27T05:11:48.5852344Z 43f9814c9a3b: Pulling fs layer
+2026-09-27T05:11:48.5852711Z 3333950675b2: Pulling fs layer
+2026-09-27T05:11:48.5853096Z f3b07e8a357c: Pulling fs layer
+2026-09-27T05:11:48.5853547Z eb805f20f060: Pulling fs layer
+2026-09-27T05:11:48.5853884Z 7ccdb0dcae74: Pulling fs layer
+2026-09-27T05:11:48.5854161Z 93a3470d5852: Pulling fs layer
+2026-09-27T05:11:48.5854419Z b0a0d9d2abf2: Pulling fs layer
+2026-09-27T05:11:48.5854847Z a8a481ae6efc: Pulling fs layer
+2026-09-27T05:11:48.5855087Z eb805f20f060: Waiting
+2026-09-27T05:11:48.5855325Z b0a0d9d2abf2: Waiting
+2026-09-27T05:11:48.5855541Z 7ccdb0dcae74: Waiting
+2026-09-27T05:11:48.5855886Z a8a481ae6efc: Waiting
+2026-09-27T05:11:48.5856163Z 93a3470d5852: Waiting
+2026-09-27T05:11:48.5856366Z 3333950675b2: Waiting
+2026-09-27T05:11:48.5856583Z f3b07e8a357c: Waiting
+2026-09-27T05:11:48.7727809Z 4ece9a32c307: Verifying Checksum
+2026-09-27T05:11:48.7729319Z 4ece9a32c307: Download complete
+2026-09-27T05:11:48.8635935Z 43f9814c9a3b: Verifying Checksum
+2026-09-27T05:11:48.8636493Z 43f9814c9a3b: Download complete
+2026-09-27T05:11:48.9265060Z e2de96513ba9: Verifying Checksum
+2026-09-27T05:11:48.9268032Z e2de96513ba9: Download complete
+2026-09-27T05:11:48.9640380Z 3333950675b2: Verifying Checksum
+2026-09-27T05:11:48.9643278Z 3333950675b2: Download complete
+2026-09-27T05:11:49.0601280Z e2de96513ba9: Pull complete
+2026-09-27T05:11:49.1206001Z eb805f20f060: Verifying Checksum
+2026-09-27T05:11:49.1206596Z eb805f20f060: Download complete
+2026-09-27T05:11:49.1751698Z 7ccdb0dcae74: Verifying Checksum
+2026-09-27T05:11:49.1753007Z 7ccdb0dcae74: Download complete
+2026-09-27T05:11:49.2987896Z 93a3470d5852: Verifying Checksum
+2026-09-27T05:11:49.2988486Z 93a3470d5852: Download complete
+2026-09-27T05:11:49.3786435Z b0a0d9d2abf2: Verifying Checksum
+2026-09-27T05:11:49.3786870Z b0a0d9d2abf2: Download complete
+2026-09-27T05:11:49.4951881Z a8a481ae6efc: Verifying Checksum
+2026-09-27T05:11:49.4952431Z a8a481ae6efc: Download complete
+2026-09-27T05:11:50.1030034Z f3b07e8a357c: Verifying Checksum
+2026-09-27T05:11:50.1030432Z f3b07e8a357c: Download complete
+2026-09-27T05:11:51.3780430Z 4ece9a32c307: Pull complete
+2026-09-27T05:11:51.6686209Z 43f9814c9a3b: Pull complete
+2026-09-27T05:11:51.6819543Z 3333950675b2: Pull complete
+2026-09-27T05:11:54.1693365Z f3b07e8a357c: Pull complete
+2026-09-27T05:11:54.1822984Z eb805f20f060: Pull complete
+2026-09-27T05:11:54.1922120Z 7ccdb0dcae74: Pull complete
+2026-09-27T05:11:54.2016073Z 93a3470d5852: Pull complete
+2026-09-27T05:11:54.2133475Z b0a0d9d2abf2: Pull complete
+2026-09-27T05:11:54.2221056Z a8a481ae6efc: Pull complete
+2026-09-27T05:11:54.2261785Z Digest: sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+2026-09-27T05:11:54.2274183Z Status: Downloaded newer image for postgres:17-alpine
+2026-09-27T05:11:54.2284055Z docker.io/library/postgres:17-alpine
+2026-09-27T05:11:54.2359124Z ##[command]/usr/bin/docker create --name 18e067c7881b4739ade535d83ba2f0f0_postgres17alpine_7e0d21 --label 47fc83 --network github_network_f4fd7a220b9240f9913334cdb9f4b9e1 --network-alias postgres -p 55471:5432 --health-cmd "pg_isready -U crony -d crony" --health-interval 2s --health-timeout 3s --health-retries 30 -e "POSTGRES_USER=crony" -e "POSTGRES_PASSWORD=crony" -e "POSTGRES_DB=crony" -e GITHUB_ACTIONS=true -e CI=true postgres:17-alpine
+2026-09-27T05:11:54.2613712Z 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17
+2026-09-27T05:11:54.2639155Z ##[command]/usr/bin/docker start 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17
+2026-09-27T05:11:54.4678582Z 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17
+2026-09-27T05:11:54.4703125Z ##[command]/usr/bin/docker ps --all --filter id=6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17 --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2026-09-27T05:11:54.4849601Z 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17 Up Less than a second (health: starting)
+2026-09-27T05:11:54.4876467Z ##[command]/usr/bin/docker port 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17
+2026-09-27T05:11:54.5006775Z 5432/tcp -> 0.0.0.0:55471
+2026-09-27T05:11:54.5007765Z 5432/tcp -> [::]:55471
+2026-09-27T05:11:54.5063431Z ##[endgroup]
+2026-09-27T05:11:54.5072412Z ##[group]Waiting for all services to be ready
+2026-09-27T05:11:54.5085319Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17
+2026-09-27T05:11:54.5286870Z starting
+2026-09-27T05:11:54.5315005Z postgres service is starting, waiting 2 seconds before checking again.
+2026-09-27T05:11:56.5358403Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17
+2026-09-27T05:11:56.5491645Z healthy
+2026-09-27T05:11:56.5510049Z postgres service is healthy.
+2026-09-27T05:11:56.5510474Z ##[endgroup]
+2026-09-27T05:11:56.5831620Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-09-27T05:11:56.5832397Z with:
+2026-09-27T05:11:56.5832637Z   persist-credentials: false
+2026-09-27T05:11:56.5832895Z   fetch-depth: 0
+2026-09-27T05:11:56.5833123Z   repository: All-The-Vibes/ecorp
+2026-09-27T05:11:56.5835636Z   token: ***
+2026-09-27T05:11:56.5835854Z   ssh-strict: true
+2026-09-27T05:11:56.5836064Z   ssh-user: git
+2026-09-27T05:11:56.5836261Z   clean: true
+2026-09-27T05:11:56.5836478Z   sparse-checkout-cone-mode: true
+2026-09-27T05:11:56.5836737Z   fetch-tags: false
+2026-09-27T05:11:56.5836950Z   show-progress: true
+2026-09-27T05:11:56.5837161Z   lfs: false
+2026-09-27T05:11:56.5837352Z   submodules: false
+2026-09-27T05:11:56.5837756Z   set-safe-directory: true
+2026-09-27T05:11:56.5838027Z   allow-unsafe-pr-checkout: false
+2026-09-27T05:11:56.5838718Z env:
+2026-09-27T05:11:56.5838938Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:11:56.5839251Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:11:56.5839757Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:11:56.5840310Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:11:56.5840919Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:11:56.5841195Z ##[endgroup]
+2026-09-27T05:11:56.6878553Z Syncing repository: All-The-Vibes/ecorp
+2026-09-27T05:11:56.6880681Z ##[group]Getting Git version info
+2026-09-27T05:11:56.6881295Z Working directory is '/home/runner/work/ecorp/ecorp'
+2026-09-27T05:11:56.6882252Z [command]/usr/bin/git version
+2026-09-27T05:11:56.6951043Z git version 2.55.0
+2026-09-27T05:11:56.6973269Z ##[endgroup]
+2026-09-27T05:11:56.6985491Z Temporarily overriding HOME='/home/runner/work/_temp/06a088e7-5a17-426a-9d89-2ef58f7c64d7' before making global git config changes
+2026-09-27T05:11:56.6986919Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-27T05:11:56.6992415Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ecorp/ecorp
+2026-09-27T05:11:56.7046478Z Deleting the contents of '/home/runner/work/ecorp/ecorp'
+2026-09-27T05:11:56.7050242Z ##[group]Determining repository object format
+2026-09-27T05:11:56.7051875Z ##[endgroup]
+2026-09-27T05:11:56.7052568Z ##[group]Initializing the repository
+2026-09-27T05:11:56.7056646Z [command]/usr/bin/git init /home/runner/work/ecorp/ecorp
+2026-09-27T05:11:56.7169953Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-27T05:11:56.7171330Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-27T05:11:56.7172335Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-27T05:11:56.7173063Z hint: call:
+2026-09-27T05:11:56.7173406Z hint:
+2026-09-27T05:11:56.7173881Z hint: 	git config --global init.defaultBranch <name>
+2026-09-27T05:11:56.7174488Z hint:
+2026-09-27T05:11:56.7175100Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-27T05:11:56.7176333Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-27T05:11:56.7177038Z hint:
+2026-09-27T05:11:56.7177405Z hint: 	git branch -m <name>
+2026-09-27T05:11:56.7178146Z hint:
+2026-09-27T05:11:56.7178792Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-27T05:11:56.7179725Z Initialized empty Git repository in /home/runner/work/ecorp/ecorp/.git/
+2026-09-27T05:11:56.7183567Z [command]/usr/bin/git remote add origin https://github.com/All-The-Vibes/ecorp
+2026-09-27T05:11:56.7279563Z ##[endgroup]
+2026-09-27T05:11:56.7280881Z ##[group]Disabling automatic garbage collection
+2026-09-27T05:11:56.7284868Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-27T05:11:56.7334577Z ##[endgroup]
+2026-09-27T05:11:56.7335268Z ##[group]Setting up auth
+2026-09-27T05:11:56.7335813Z Removing SSH command configuration
+2026-09-27T05:11:56.7336849Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-27T05:11:56.7395119Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-27T05:11:56.7871554Z Removing HTTP extra header
+2026-09-27T05:11:56.7877146Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-27T05:11:56.7915059Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-27T05:11:56.8141146Z Removing includeIf entries pointing to credentials config files
+2026-09-27T05:11:56.8147150Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-27T05:11:56.8183665Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-27T05:11:56.8415140Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-27T05:11:56.8456046Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/ecorp/ecorp/.git.path /home/runner/work/_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config
+2026-09-27T05:11:56.8490193Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/ecorp/ecorp/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config
+2026-09-27T05:11:56.8530698Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config
+2026-09-27T05:11:56.8566767Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config
+2026-09-27T05:11:56.8597224Z ##[endgroup]
+2026-09-27T05:11:56.8597981Z ##[group]Fetching the repository
+2026-09-27T05:11:56.8606254Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +9916bd90b1792eea23d3ee0d22c1c17d46a8796a:refs/remotes/pull/375/merge
+2026-09-27T05:12:01.3707927Z From https://github.com/All-The-Vibes/ecorp
+2026-09-27T05:12:01.3709656Z  * [new branch]      afateen/issue-136-browser-selection      -> origin/afateen/issue-136-browser-selection
+2026-09-27T05:12:01.3710871Z  * [new branch]      afateen/issue-230-startup-preflight      -> origin/afateen/issue-230-startup-preflight
+2026-09-27T05:12:01.3712057Z  * [new branch]      afateen/issue-256-factory-readiness      -> origin/afateen/issue-256-factory-readiness
+2026-09-27T05:12:01.3713261Z  * [new branch]      afateen/issue-327-msrv-clippy            -> origin/afateen/issue-327-msrv-clippy
+2026-09-27T05:12:01.3715053Z  * [new branch]      afateen/issue-340-secret-scan-diagnostics -> origin/afateen/issue-340-secret-scan-diagnostics
+2026-09-27T05:12:01.3716136Z  * [new branch]      afateen/issue-48-agent-pinning           -> origin/afateen/issue-48-agent-pinning
+2026-09-27T05:12:01.3717077Z  * [new branch]      afateen/issue-56-aggregate-breaker       -> origin/afateen/issue-56-aggregate-breaker
+2026-09-27T05:12:01.3718604Z  * [new branch]      afateen/issue-79-factory-cost-preflight  -> origin/afateen/issue-79-factory-cost-preflight
+2026-09-27T05:12:01.3720075Z  * [new branch]      afateen/issue-81-deliverable-diff-check  -> origin/afateen/issue-81-deliverable-diff-check
+2026-09-27T05:12:01.3721316Z  * [new branch]      afateen/issue-89-preserved-scope         -> origin/afateen/issue-89-preserved-scope
+2026-09-27T05:12:01.3722023Z  * [new branch]      codex/67-factory-pagination-safe         -> origin/codex/67-factory-pagination-safe
+2026-09-27T05:12:01.3722947Z  * [new branch]      codex/ai-readiness-improvements          -> origin/codex/ai-readiness-improvements
+2026-09-27T05:12:01.3724104Z  * [new branch]      codex/arcade-readme-docs                 -> origin/codex/arcade-readme-docs
+2026-09-27T05:12:01.3724870Z  * [new branch]      codex/arcade-ux-taste                    -> origin/codex/arcade-ux-taste
+2026-09-27T05:12:01.3725586Z  * [new branch]      codex/ci-maintenance-observer-20260918   -> origin/codex/ci-maintenance-observer-20260918
+2026-09-27T05:12:01.3726324Z  * [new branch]      codex/ci-workflow-observation-20260919   -> origin/codex/ci-workflow-observation-20260919
+2026-09-27T05:12:01.3726993Z  * [new branch]      codex/codeblend-readiness                -> origin/codex/codeblend-readiness
+2026-09-27T05:12:01.3727975Z  * [new branch]      codex/contributor-startup-docs-20260908  -> origin/codex/contributor-startup-docs-20260908
+2026-09-27T05:12:01.3728772Z  * [new branch]      codex/dark-factory-contributor-guide     -> origin/codex/dark-factory-contributor-guide
+2026-09-27T05:12:01.3729491Z  * [new branch]      codex/dark-factory-pr-management         -> origin/codex/dark-factory-pr-management
+2026-09-27T05:12:01.3730248Z  * [new branch]      codex/docs-site-multiplayer-fabric-20260919 -> origin/codex/docs-site-multiplayer-fabric-20260919
+2026-09-27T05:12:01.3731014Z  * [new branch]      codex/ecorp-dependency-queue-20260925    -> origin/codex/ecorp-dependency-queue-20260925
+2026-09-27T05:12:01.3731726Z  * [new branch]      codex/ecorp-docs-launch-20260906         -> origin/codex/ecorp-docs-launch-20260906
+2026-09-27T05:12:01.3732568Z  * [new branch]      codex/ecorp-pr-queue-completion-20260923 -> origin/codex/ecorp-pr-queue-completion-20260923
+2026-09-27T05:12:01.3733273Z  * [new branch]      codex/hackathon-pixel-office             -> origin/codex/hackathon-pixel-office
+2026-09-27T05:12:01.3733917Z  * [new branch]      codex/issue-110-stop-checkpoint          -> origin/codex/issue-110-stop-checkpoint
+2026-09-27T05:12:01.3734613Z  * [new branch]      codex/issue-112-verification-checkpoint  -> origin/codex/issue-112-verification-checkpoint
+2026-09-27T05:12:01.3735722Z  * [new branch]      codex/issue-113-verification-recovery-v2 -> origin/codex/issue-113-verification-recovery-v2
+2026-09-27T05:12:01.3737035Z  * [new branch]      codex/issue-118-budget-checkpoint        -> origin/codex/issue-118-budget-checkpoint
+2026-09-27T05:12:01.3738450Z  * [new branch]      codex/issue-119-final-checkpoint         -> origin/codex/issue-119-final-checkpoint
+2026-09-27T05:12:01.3739625Z  * [new branch]      codex/issue-120-final-checkpoint         -> origin/codex/issue-120-final-checkpoint
+2026-09-27T05:12:01.3740828Z  * [new branch]      codex/issue-124-budget-checkpoint        -> origin/codex/issue-124-budget-checkpoint
+2026-09-27T05:12:01.3742081Z  * [new branch]      codex/issue-125-contributor-copilot      -> origin/codex/issue-125-contributor-copilot
+2026-09-27T05:12:01.3743288Z  * [new branch]      codex/issue-141-clean-ui                 -> origin/codex/issue-141-clean-ui
+2026-09-27T05:12:01.3744670Z  * [new branch]      codex/issue-144-native-copilot           -> origin/codex/issue-144-native-copilot
+2026-09-27T05:12:01.3745873Z  * [new branch]      codex/issue-145-controller-service       -> origin/codex/issue-145-controller-service
+2026-09-27T05:12:01.3747074Z  * [new branch]      codex/issue-148-governed-recovery        -> origin/codex/issue-148-governed-recovery
+2026-09-27T05:12:01.3748574Z  * [new branch]      codex/issue-155-durable-dispatch         -> origin/codex/issue-155-durable-dispatch
+2026-09-27T05:12:01.3749734Z  * [new branch]      codex/issue-157-quota-intake             -> origin/codex/issue-157-quota-intake
+2026-09-27T05:12:01.3750911Z  * [new branch]      codex/issue-161-shared-authority         -> origin/codex/issue-161-shared-authority
+2026-09-27T05:12:01.3752051Z  * [new branch]      codex/issue-174-local-start              -> origin/codex/issue-174-local-start
+2026-09-27T05:12:01.3753190Z  * [new branch]      codex/issue-181-transport-ports          -> origin/codex/issue-181-transport-ports
+2026-09-27T05:12:01.3754578Z  * [new branch]      codex/issue-186-cleanup-negatives        -> origin/codex/issue-186-cleanup-negatives
+2026-09-27T05:12:01.3755709Z  * [new branch]      codex/issue-259-factory-ux               -> origin/codex/issue-259-factory-ux
+2026-09-27T05:12:01.3756760Z  * [new branch]      codex/issue-316-parity-map               -> origin/codex/issue-316-parity-map
+2026-09-27T05:12:01.3758594Z  * [new branch]      codex/issue-48-copilot-staffing          -> origin/codex/issue-48-copilot-staffing
+2026-09-27T05:12:01.3759784Z  * [new branch]      codex/issue-50-budget-revision           -> origin/codex/issue-50-budget-revision
+2026-09-27T05:12:01.3760980Z  * [new branch]      codex/issue-50-factory-recovery          -> origin/codex/issue-50-factory-recovery
+2026-09-27T05:12:01.3762340Z  * [new branch]      codex/issue-53-portable-deliverables     -> origin/codex/issue-53-portable-deliverables
+2026-09-27T05:12:01.3763777Z  * [new branch]      codex/issue-61-idempotent-pr-publication -> origin/codex/issue-61-idempotent-pr-publication
+2026-09-27T05:12:01.3765196Z  * [new branch]      codex/issue-66-immutable-source-commit   -> origin/codex/issue-66-immutable-source-commit
+2026-09-27T05:12:01.3766578Z  * [new branch]      codex/issue-76-verification-checkpoint   -> origin/codex/issue-76-verification-checkpoint
+2026-09-27T05:12:01.3768566Z  * [new branch]      codex/issue-80-budget-ceiling-recovery   -> origin/codex/issue-80-budget-ceiling-recovery
+2026-09-27T05:12:01.3769971Z  * [new branch]      codex/issue-93-arcade-command-center     -> origin/codex/issue-93-arcade-command-center
+2026-09-27T05:12:01.3771258Z  * [new branch]      codex/issue-97-stop-checkpoint           -> origin/codex/issue-97-stop-checkpoint
+2026-09-27T05:12:01.3772272Z  * [new branch]      codex/issue-98-recovered-suspend-publication -> origin/codex/issue-98-recovered-suspend-publication
+2026-09-27T05:12:01.3773050Z  * [new branch]      codex/issue136-140-230-completion        -> origin/codex/issue136-140-230-completion
+2026-09-27T05:12:01.3773765Z  * [new branch]      codex/issue145-project-connections       -> origin/codex/issue145-project-connections
+2026-09-27T05:12:01.3774444Z  * [new branch]      codex/issue145-result-cockpit            -> origin/codex/issue145-result-cockpit
+2026-09-27T05:12:01.3775192Z  * [new branch]      codex/issue148-budget-checkpoint-20260908 -> origin/codex/issue148-budget-checkpoint-20260908
+2026-09-27T05:12:01.3776414Z  * [new branch]      codex/issue148-checkpoint-publication    -> origin/codex/issue148-checkpoint-publication
+2026-09-27T05:12:01.3777962Z  * [new branch]      codex/issue148-checkpoint-recovery       -> origin/codex/issue148-checkpoint-recovery
+2026-09-27T05:12:01.3779079Z  * [new branch]      codex/issue193-terminal-telemetry        -> origin/codex/issue193-terminal-telemetry
+2026-09-27T05:12:01.3779809Z  * [new branch]      codex/issue198-connections-backend       -> origin/codex/issue198-connections-backend
+2026-09-27T05:12:01.3780556Z  * [new branch]      codex/issue199-work-item-context         -> origin/codex/issue199-work-item-context
+2026-09-27T05:12:01.3781515Z  * [new branch]      codex/issue204-factory-connections       -> origin/codex/issue204-factory-connections
+2026-09-27T05:12:01.3782300Z  * [new branch]      codex/issue205-factory-controller-context -> origin/codex/issue205-factory-controller-context
+2026-09-27T05:12:01.3783147Z  * [new branch]      codex/issue206-checkpoint-cancellation   -> origin/codex/issue206-checkpoint-cancellation
+2026-09-27T05:12:01.3784312Z  * [new branch]      codex/issue210-checkpoint-source-correction -> origin/codex/issue210-checkpoint-source-correction
+2026-09-27T05:12:01.3785463Z  * [new branch]      codex/issue211-retained-native-evidence  -> origin/codex/issue211-retained-native-evidence
+2026-09-27T05:12:01.3786269Z  * [new branch]      codex/issue211-stopped-session-evidence  -> origin/codex/issue211-stopped-session-evidence
+2026-09-27T05:12:01.3787004Z  * [new branch]      codex/issue216-checkpoint-publication    -> origin/codex/issue216-checkpoint-publication
+2026-09-27T05:12:01.3788157Z  * [new branch]      codex/issue221-correction-retry          -> origin/codex/issue221-correction-retry
+2026-09-27T05:12:01.3788904Z  * [new branch]      codex/issue224-planned-attempt-policy    -> origin/codex/issue224-planned-attempt-policy
+2026-09-27T05:12:01.3789587Z  * [new branch]      codex/issue270-oidc-discovery            -> origin/codex/issue270-oidc-discovery
+2026-09-27T05:12:01.3790208Z  * [new branch]      codex/issue327-msrv-clippy               -> origin/codex/issue327-msrv-clippy
+2026-09-27T05:12:01.3790850Z  * [new branch]      codex/issue360-container-cleanup         -> origin/codex/issue360-container-cleanup
+2026-09-27T05:12:01.3791545Z  * [new branch]      codex/issue82-canonical-verification     -> origin/codex/issue82-canonical-verification
+2026-09-27T05:12:01.3792859Z  * [new branch]      codex/mcp-recovery-inspection-20260918   -> origin/codex/mcp-recovery-inspection-20260918
+2026-09-27T05:12:01.3794285Z  * [new branch]      codex/multiplayer-contract-traceability  -> origin/codex/multiplayer-contract-traceability
+2026-09-27T05:12:01.3795452Z  * [new branch]      codex/multiplayer-ui                     -> origin/codex/multiplayer-ui
+2026-09-27T05:12:01.3796666Z  * [new branch]      codex/multiplayer-ui-working-session     -> origin/codex/multiplayer-ui-working-session
+2026-09-27T05:12:01.3798297Z  * [new branch]      codex/native-feedback-review-20260918    -> origin/codex/native-feedback-review-20260918
+2026-09-27T05:12:01.3799625Z  * [new branch]      codex/pr-drain-foundation-20260910       -> origin/codex/pr-drain-foundation-20260910
+2026-09-27T05:12:01.3800802Z  * [new branch]      codex/pr-template                        -> origin/codex/pr-template
+2026-09-27T05:12:01.3801896Z  * [new branch]      codex/pr326-review-followup              -> origin/codex/pr326-review-followup
+2026-09-27T05:12:01.3803247Z  * [new branch]      codex/programbench-gron-results-20260914 -> origin/codex/programbench-gron-results-20260914
+2026-09-27T05:12:01.3804505Z  * [new branch]      codex/repo-steward                       -> origin/codex/repo-steward
+2026-09-27T05:12:01.3805651Z  * [new branch]      codex/security-remediation-20260921      -> origin/codex/security-remediation-20260921
+2026-09-27T05:12:01.3806877Z  * [new branch]      codex/stack/01-workflow-reviews          -> origin/codex/stack/01-workflow-reviews
+2026-09-27T05:12:01.3808406Z  * [new branch]      codex/stack/02-factory-retry-recovery    -> origin/codex/stack/02-factory-retry-recovery
+2026-09-27T05:12:01.3809692Z  * [new branch]      codex/stack/03-worker-reactivation       -> origin/codex/stack/03-worker-reactivation
+2026-09-27T05:12:01.3810812Z  * [new branch]      codex/stack/04-build-setup               -> origin/codex/stack/04-build-setup
+2026-09-27T05:12:01.3811919Z  * [new branch]      codex/stack/05-runner-fairness-qa        -> origin/codex/stack/05-runner-fairness-qa
+2026-09-27T05:12:01.3813078Z  * [new branch]      codex/team-code-review-skill             -> origin/codex/team-code-review-skill
+2026-09-27T05:12:01.3814545Z  * [new branch]      codex/ui-enterprise-journey-audit        -> origin/codex/ui-enterprise-journey-audit
+2026-09-27T05:12:01.3815772Z  * [new branch]      contrib/287-base-validation-source       -> origin/contrib/287-base-validation-source
+2026-09-27T05:12:01.3816967Z  * [new branch]      contrib/287-manifest-checkpoint          -> origin/contrib/287-manifest-checkpoint
+2026-09-27T05:12:01.3818738Z  * [new branch]      copilot/deep-research-dynamic-workflows  -> origin/copilot/deep-research-dynamic-workflows
+2026-09-27T05:12:01.3820166Z  * [new branch]      copilot/issue-240-isolated-acceptance    -> origin/copilot/issue-240-isolated-acceptance
+2026-09-27T05:12:01.3821350Z  * [new branch]      ecorp/factory-live-225                   -> origin/ecorp/factory-live-225
+2026-09-27T05:12:01.3822464Z  * [new branch]      ecorp/incident-command-91                -> origin/ecorp/incident-command-91
+2026-09-27T05:12:01.3824012Z  * [new branch]      ecorp/incident-command-final-104         -> origin/ecorp/incident-command-final-104
+2026-09-27T05:12:01.3825440Z  * [new branch]      ecorp/incident-command-review-fixes-96   -> origin/ecorp/incident-command-review-fixes-96
+2026-09-27T05:12:01.3826939Z  * [new branch]      ecorp/incident-command-scope-hardening-101 -> origin/ecorp/incident-command-scope-hardening-101
+2026-09-27T05:12:01.3828616Z  * [new branch]      ecorp/issue-106-9ca4f4b108c5             -> origin/ecorp/issue-106-9ca4f4b108c5
+2026-09-27T05:12:01.3830208Z  * [new branch]      ecorp/issue-114-claude-permission-bridge -> origin/ecorp/issue-114-claude-permission-bridge
+2026-09-27T05:12:01.3831566Z  * [new branch]      ecorp/issue-146-fe9db18be733             -> origin/ecorp/issue-146-fe9db18be733
+2026-09-27T05:12:01.3832690Z  * [new branch]      ecorp/issue-233-97012e2e9dc0             -> origin/ecorp/issue-233-97012e2e9dc0
+2026-09-27T05:12:01.3833757Z  * [new branch]      ecorp/vendor-guard-85                    -> origin/ecorp/vendor-guard-85
+2026-09-27T05:12:01.3834823Z  * [new branch]      feature/281-state-audit-v1               -> origin/feature/281-state-audit-v1
+2026-09-27T05:12:01.3835890Z  * [new branch]      feature/285-entra-local-obo              -> origin/feature/285-entra-local-obo
+2026-09-27T05:12:01.3837155Z  * [new branch]      gh-pages                                 -> origin/gh-pages
+2026-09-27T05:12:01.3838340Z  * [new branch]      main                                     -> origin/main
+2026-09-27T05:12:01.3839331Z  * [new branch]      poc/287-signed-evidence-20260917         -> origin/poc/287-signed-evidence-20260917
+2026-09-27T05:12:01.3840385Z  * [new ref]         9916bd90b1792eea23d3ee0d22c1c17d46a8796a -> pull/375/merge
+2026-09-27T05:12:01.3841762Z ##[endgroup]
+2026-09-27T05:12:01.3842139Z ##[group]Determining the checkout info
+2026-09-27T05:12:01.3842548Z ##[endgroup]
+2026-09-27T05:12:01.3842797Z [command]/usr/bin/git sparse-checkout disable
+2026-09-27T05:12:01.3843482Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-27T05:12:01.3844288Z ##[group]Checking out the ref
+2026-09-27T05:12:01.3844677Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/375/merge
+2026-09-27T05:12:02.3405677Z Note: switching to 'refs/remotes/pull/375/merge'.
+2026-09-27T05:12:02.3406384Z 
+2026-09-27T05:12:02.3406754Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-09-27T05:12:02.3407446Z changes and commit them, and you can discard any commits you make in this
+2026-09-27T05:12:02.3408418Z state without impacting any branches by switching back to a branch.
+2026-09-27T05:12:02.3408718Z 
+2026-09-27T05:12:02.3408912Z If you want to create a new branch to retain commits you create, you may
+2026-09-27T05:12:02.3409388Z do so (now or later) by using -c with the switch command. Example:
+2026-09-27T05:12:02.3409660Z 
+2026-09-27T05:12:02.3409773Z   git switch -c <new-branch-name>
+2026-09-27T05:12:02.3409949Z 
+2026-09-27T05:12:02.3410057Z Or undo this operation with:
+2026-09-27T05:12:02.3410547Z 
+2026-09-27T05:12:02.3410656Z   git switch -
+2026-09-27T05:12:02.3410786Z 
+2026-09-27T05:12:02.3411004Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-09-27T05:12:02.3411327Z 
+2026-09-27T05:12:02.3411689Z HEAD is now at 9916bd9 Merge b5a84b182e07d7bb6ebff4b959f1e74ca41fc964 into 95d41f9b6594bbc4d96f4d589f04db32fc0bcaad
+2026-09-27T05:12:02.3467097Z ##[endgroup]
+2026-09-27T05:12:02.3519091Z [command]/usr/bin/git log -1 --format=%H
+2026-09-27T05:12:02.3549623Z 9916bd90b1792eea23d3ee0d22c1c17d46a8796a
+2026-09-27T05:12:02.3560992Z ##[group]Removing auth
+2026-09-27T05:12:02.3561450Z Removing SSH command configuration
+2026-09-27T05:12:02.3565942Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-27T05:12:02.3604062Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-27T05:12:02.3844033Z Removing HTTP extra header
+2026-09-27T05:12:02.3849394Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-27T05:12:02.3890405Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-27T05:12:02.4137042Z Removing includeIf entries pointing to credentials config files
+2026-09-27T05:12:02.4141472Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-27T05:12:02.4176969Z includeif.gitdir:/home/runner/work/ecorp/ecorp/.git.path
+2026-09-27T05:12:02.4178180Z includeif.gitdir:/home/runner/work/ecorp/ecorp/.git/worktrees/*.path
+2026-09-27T05:12:02.4178964Z includeif.gitdir:/github/workspace/.git.path
+2026-09-27T05:12:02.4179617Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-09-27T05:12:02.4189497Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/ecorp/ecorp/.git.path
+2026-09-27T05:12:02.4217281Z /home/runner/work/_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config
+2026-09-27T05:12:02.4264822Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/ecorp/ecorp/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-2d405eb1\-6400\-4af2\-b01f\-2159d7eb27b2\.config
+2026-09-27T05:12:02.4306141Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/ecorp/ecorp/.git/worktrees/*.path
+2026-09-27T05:12:02.4333354Z /home/runner/work/_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config
+2026-09-27T05:12:02.4343503Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/ecorp/ecorp/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-2d405eb1\-6400\-4af2\-b01f\-2159d7eb27b2\.config
+2026-09-27T05:12:02.4382060Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-09-27T05:12:02.4412044Z /github/runner_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config
+2026-09-27T05:12:02.4420603Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-2d405eb1\-6400\-4af2\-b01f\-2159d7eb27b2\.config
+2026-09-27T05:12:02.4459196Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-09-27T05:12:02.4486085Z /github/runner_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config
+2026-09-27T05:12:02.4501063Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-2d405eb1\-6400\-4af2\-b01f\-2159d7eb27b2\.config
+2026-09-27T05:12:02.4538363Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-27T05:12:02.4766778Z Removing credentials config '/home/runner/work/_temp/git-credentials-2d405eb1-6400-4af2-b01f-2159d7eb27b2.config'
+2026-09-27T05:12:02.4776557Z ##[endgroup]
+2026-09-27T05:12:02.5092799Z ##[group]Run dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+2026-09-27T05:12:02.5093237Z with:
+2026-09-27T05:12:02.5093435Z   toolchain: 1.98.1
+2026-09-27T05:12:02.5093639Z env:
+2026-09-27T05:12:02.5093830Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:02.5094105Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:02.5094558Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:02.5095127Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:02.5095760Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:02.5096032Z ##[endgroup]
+2026-09-27T05:12:02.5161803Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+2026-09-27T05:12:02.5201886Z ##[group]Run if [[ -z $toolchain ]]; then
+2026-09-27T05:12:02.5202311Z [36;1mif [[ -z $toolchain ]]; then[0m
+2026-09-27T05:12:02.5203314Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2026-09-27T05:12:02.5203998Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2026-09-27T05:12:02.5204457Z [36;1m  exit 1[0m
+2026-09-27T05:12:02.5204903Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2026-09-27T05:12:02.5205536Z [36;1m  if [[ Linux == macOS ]]; then[0m
+2026-09-27T05:12:02.5206190Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-09-27T05:12:02.5206797Z [36;1m  else[0m
+2026-09-27T05:12:02.5207354Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2026-09-27T05:12:02.5208368Z [36;1m  fi[0m
+2026-09-27T05:12:02.5208773Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2026-09-27T05:12:02.5209568Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2026-09-27T05:12:02.5210137Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2026-09-27T05:12:02.5210823Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2026-09-27T05:12:02.5211465Z [36;1melse[0m
+2026-09-27T05:12:02.5211803Z [36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT[0m
+2026-09-27T05:12:02.5212267Z [36;1mfi[0m
+2026-09-27T05:12:02.5421318Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:02.5421791Z env:
+2026-09-27T05:12:02.5422088Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:02.5422612Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:02.5423210Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:02.5423938Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:02.5424751Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:02.5425193Z   toolchain: 1.98.1
+2026-09-27T05:12:02.5425515Z ##[endgroup]
+2026-09-27T05:12:02.5586975Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=42]
+2026-09-27T05:12:02.5598209Z ##[start-action display=Construct rustup command line;id=__dtolnay_rust-toolchain.flags]
+2026-09-27T05:12:02.5627045Z ##[group]Run echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+2026-09-27T05:12:02.5628032Z [36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT[0m
+2026-09-27T05:12:02.5628707Z [36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT[0m
+2026-09-27T05:12:02.5629203Z [36;1mecho "downgrade=" >> $GITHUB_OUTPUT[0m
+2026-09-27T05:12:02.5688988Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:02.5689515Z env:
+2026-09-27T05:12:02.5689719Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:02.5690195Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:02.5690633Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:02.5691203Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:02.5691812Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:02.5692084Z   targets: 
+2026-09-27T05:12:02.5692279Z   components: 
+2026-09-27T05:12:02.5692477Z ##[endgroup]
+2026-09-27T05:12:02.5786148Z ##[end-action id=__dtolnay_rust-toolchain.flags;outcome=success;conclusion=success;duration_ms=18]
+2026-09-27T05:12:02.5788739Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+2026-09-27T05:12:02.5808482Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV
+2026-09-27T05:12:02.5808963Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV[0m
+2026-09-27T05:12:02.5869881Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:02.5870225Z env:
+2026-09-27T05:12:02.5870437Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:02.5870713Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:02.5871151Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:02.5871707Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:02.5872402Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:02.5872676Z ##[endgroup]
+2026-09-27T05:12:02.5966793Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=17]
+2026-09-27T05:12:02.5969610Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+2026-09-27T05:12:02.6002067Z ##[group]Run if ! command -v rustup &>/dev/null; then
+2026-09-27T05:12:02.6002688Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2026-09-27T05:12:02.6003986Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y[0m
+2026-09-27T05:12:02.6005209Z [36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH[0m
+2026-09-27T05:12:02.6005682Z [36;1mfi[0m
+2026-09-27T05:12:02.6079017Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:02.6079610Z env:
+2026-09-27T05:12:02.6079954Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:02.6080404Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:02.6081245Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:02.6082251Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:02.6083369Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:02.6083872Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:02.6084294Z ##[endgroup]
+2026-09-27T05:12:02.6186525Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=success;conclusion=success;duration_ms=21]
+2026-09-27T05:12:02.6189359Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+2026-09-27T05:12:02.6197238Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-09-27T05:12:02.6210216Z ##[start-action display=rustup toolchain install 1.98.1;id=__dtolnay_rust-toolchain.__run_4]
+2026-09-27T05:12:02.6231080Z ##[group]Run rustup toolchain install 1.98.1 --profile minimal --no-self-update
+2026-09-27T05:12:02.6231647Z [36;1mrustup toolchain install 1.98.1 --profile minimal --no-self-update[0m
+2026-09-27T05:12:02.6292952Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:02.6293298Z env:
+2026-09-27T05:12:02.6293502Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:02.6293778Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:02.6294215Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:02.6294982Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:02.6295790Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:02.6296087Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:02.6296350Z   RUSTUP_PERMIT_COPY_RENAME: 1
+2026-09-27T05:12:02.6296588Z ##[endgroup]
+2026-09-27T05:12:02.7329129Z info: syncing channel updates for 1.98.1-x86_64-unknown-linux-gnu
+2026-09-27T05:12:03.1912776Z info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+2026-09-27T05:12:03.1913410Z info: downloading 3 components
+2026-09-27T05:12:10.8376608Z 
+2026-09-27T05:12:10.8447942Z   1.98.1-x86_64-unknown-linux-gnu installed - rustc 1.98.1 (48a229cea 2026-09-01)
+2026-09-27T05:12:10.8448461Z 
+2026-09-27T05:12:10.8493482Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=8228]
+2026-09-27T05:12:10.8499711Z ##[start-action display=rustup default 1.98.1;id=__dtolnay_rust-toolchain.__run_5]
+2026-09-27T05:12:10.8519695Z ##[group]Run rustup default 1.98.1
+2026-09-27T05:12:10.8519989Z [36;1mrustup default 1.98.1[0m
+2026-09-27T05:12:10.8581611Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:10.8581954Z env:
+2026-09-27T05:12:10.8582151Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:10.8582425Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:10.8582849Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:10.8583390Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:10.8584140Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:10.8584429Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:10.8584678Z ##[endgroup]
+2026-09-27T05:12:10.8708034Z info: using existing install for 1.98.1-x86_64-unknown-linux-gnu
+2026-09-27T05:12:10.8713261Z info: default toolchain set to 1.98.1-x86_64-unknown-linux-gnu
+2026-09-27T05:12:10.8713718Z 
+2026-09-27T05:12:10.8780715Z   1.98.1-x86_64-unknown-linux-gnu unchanged - rustc 1.98.1 (48a229cea 2026-09-01)
+2026-09-27T05:12:10.8781100Z 
+2026-09-27T05:12:10.8781602Z info: note that the toolchain '1.98.1-x86_64-unknown-linux-gnu' is currently in use (overridden by '/home/runner/work/ecorp/ecorp/rust-toolchain.toml')
+2026-09-27T05:12:10.8797204Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=29]
+2026-09-27T05:12:10.8799928Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+2026-09-27T05:12:10.8831456Z ##[group]Run DATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+2026-09-27T05:12:10.8832847Z [36;1mDATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')[0m
+2026-09-27T05:12:10.8833939Z [36;1mHASH=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-hash: //p')[0m
+2026-09-27T05:12:10.8834821Z [36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT[0m
+2026-09-27T05:12:10.8923778Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:10.8924365Z env:
+2026-09-27T05:12:10.8924700Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:10.8925155Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:10.8925892Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:10.8926834Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:10.8928216Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:10.8928716Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:10.8929155Z ##[endgroup]
+2026-09-27T05:12:10.9300743Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=50]
+2026-09-27T05:12:10.9304290Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+2026-09-27T05:12:10.9333047Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+2026-09-27T05:12:10.9333687Z [36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then[0m
+2026-09-27T05:12:10.9334184Z [36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV[0m
+2026-09-27T05:12:10.9334479Z [36;1mfi[0m
+2026-09-27T05:12:10.9398296Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:10.9398664Z env:
+2026-09-27T05:12:10.9398872Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:10.9399161Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:10.9399615Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:10.9400154Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:10.9400861Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:10.9401158Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:10.9401411Z ##[endgroup]
+2026-09-27T05:12:10.9500837Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=19]
+2026-09-27T05:12:10.9503085Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+2026-09-27T05:12:10.9548973Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+2026-09-27T05:12:10.9549361Z [36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then[0m
+2026-09-27T05:12:10.9549694Z [36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV[0m
+2026-09-27T05:12:10.9549987Z [36;1mfi[0m
+2026-09-27T05:12:10.9611270Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:10.9611621Z env:
+2026-09-27T05:12:10.9611821Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:10.9612094Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:10.9612523Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:10.9613084Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:10.9613788Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:10.9614075Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:10.9614328Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:12:10.9614557Z ##[endgroup]
+2026-09-27T05:12:10.9702320Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=19]
+2026-09-27T05:12:10.9704552Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+2026-09-27T05:12:10.9724999Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+2026-09-27T05:12:10.9725522Z [36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70[0m
+2026-09-27T05:12:10.9726249Z [36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then[0m
+2026-09-27T05:12:10.9726979Z [36;1m  if rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[89]\.'; then[0m
+2026-09-27T05:12:10.9727855Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-09-27T05:12:10.9728453Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV[0m
+2026-09-27T05:12:10.9728973Z [36;1m  elif rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[67]\.'; then[0m
+2026-09-27T05:12:10.9729531Z [36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2026-09-27T05:12:10.9730056Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV[0m
+2026-09-27T05:12:10.9730406Z [36;1m  fi[0m
+2026-09-27T05:12:10.9730602Z [36;1mfi[0m
+2026-09-27T05:12:10.9789761Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:10.9790108Z env:
+2026-09-27T05:12:10.9790312Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:10.9790590Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:10.9791047Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:10.9791598Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:10.9792211Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:10.9792716Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:10.9792974Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:12:10.9793344Z   CARGO_TERM_COLOR: always
+2026-09-27T05:12:10.9793582Z ##[endgroup]
+2026-09-27T05:12:11.0122088Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=41]
+2026-09-27T05:12:11.0124483Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+2026-09-27T05:12:11.0144018Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+2026-09-27T05:12:11.0144769Z [36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation[0m
+2026-09-27T05:12:11.0145386Z [36;1mif rustc +1.98.1 --version --verbose | grep -q '^release: 1\.7[01]\.'; then[0m
+2026-09-27T05:12:11.0145846Z [36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV[0m
+2026-09-27T05:12:11.0146161Z [36;1mfi[0m
+2026-09-27T05:12:11.0208153Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:11.0208518Z env:
+2026-09-27T05:12:11.0208735Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:11.0209019Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:11.0209463Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:11.0210003Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:11.0210632Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:11.0210919Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:11.0211189Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:12:11.0211415Z   CARGO_TERM_COLOR: always
+2026-09-27T05:12:11.0211644Z ##[endgroup]
+2026-09-27T05:12:11.0419892Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=29]
+2026-09-27T05:12:11.0423632Z ##[start-action display=rustc +1.98.1 --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+2026-09-27T05:12:11.0443524Z ##[group]Run rustc +1.98.1 --version --verbose
+2026-09-27T05:12:11.0443901Z [36;1mrustc +1.98.1 --version --verbose[0m
+2026-09-27T05:12:11.0505788Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:12:11.0506139Z env:
+2026-09-27T05:12:11.0506345Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:11.0506629Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:11.0507077Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:11.0507922Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:11.0508587Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:11.0508879Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:11.0509143Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:12:11.0509368Z   CARGO_TERM_COLOR: always
+2026-09-27T05:12:11.0509595Z ##[endgroup]
+2026-09-27T05:12:11.0699468Z rustc 1.98.1 (48a229cea 2026-09-01)
+2026-09-27T05:12:11.0700493Z binary: rustc
+2026-09-27T05:12:11.0701048Z commit-hash: 48a229ceaefd4985c50990b14116b6d856af0985
+2026-09-27T05:12:11.0701527Z commit-date: 2026-09-01
+2026-09-27T05:12:11.0701816Z host: x86_64-unknown-linux-gnu
+2026-09-27T05:12:11.0702288Z release: 1.98.1
+2026-09-27T05:12:11.0702652Z LLVM version: 22.1.8
+2026-09-27T05:12:11.0716190Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=29]
+2026-09-27T05:12:11.0785468Z ##[group]Run pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+2026-09-27T05:12:11.0785868Z with:
+2026-09-27T05:12:11.0786060Z   version: 11.19.0
+2026-09-27T05:12:11.0786272Z   dest: ~/setup-pnpm
+2026-09-27T05:12:11.0786487Z   run_install: null
+2026-09-27T05:12:11.0786687Z   cache: false
+2026-09-27T05:12:11.0786906Z   cache_dependency_path: pnpm-lock.yaml
+2026-09-27T05:12:11.0787204Z   package_json_file: package.json
+2026-09-27T05:12:11.0787467Z   standalone: false
+2026-09-27T05:12:11.0787990Z env:
+2026-09-27T05:12:11.0788196Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:11.0788468Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:11.0789103Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:11.0789648Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:11.0790267Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:11.0790571Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:11.0790843Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:12:11.0791067Z   CARGO_TERM_COLOR: always
+2026-09-27T05:12:11.0791298Z ##[endgroup]
+2026-09-27T05:12:11.2331020Z ##[group]Running self-installer...
+2026-09-27T05:12:12.6884091Z 
+2026-09-27T05:12:12.6884769Z added 1 package, and audited 2 packages in 1s
+2026-09-27T05:12:12.6885067Z 
+2026-09-27T05:12:12.6885194Z 1 package is looking for funding
+2026-09-27T05:12:12.6885483Z   run `npm fund` for details
+2026-09-27T05:12:12.6892131Z 
+2026-09-27T05:12:12.6892293Z found 0 vulnerabilities
+2026-09-27T05:12:13.3489393Z Checking for updates...
+2026-09-27T05:12:13.6051019Z Switching pnpm from v11.25.0 to v11.19.0...
+2026-09-27T05:12:14.2119915Z .../v11/bff-1a0e1472fda-f8af60539ba831f7 | Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-09-27T05:12:14.2138356Z .../v11/bff-1a0e1472fda-f8af60539ba831f7 |   +1 +
+2026-09-27T05:12:14.6364390Z .../v11/bff-1a0e1472fda-f8af60539ba831f7 | Progress: resolved 1, reused 0, downloaded 1, added 1, done
+2026-09-27T05:12:15.2769992Z [WARN] Detected a pnpm v10 installation layout at PNPM_HOME. The pnpm shims at PNPM_HOME have been refreshed so the new version is active, but pnpm v11 expects bins in PNPM_HOME/bin. Run "pnpm setup" to migrate your PATH to the v11 layout.
+2026-09-27T05:12:15.2813886Z Successfully updated pnpm to v11.19.0
+2026-09-27T05:12:15.3169388Z ##[endgroup]
+2026-09-27T05:12:15.3170033Z Installation Completed!
+2026-09-27T05:12:15.3309632Z ##[group]Run actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+2026-09-27T05:12:15.3310044Z with:
+2026-09-27T05:12:15.3310261Z   node-version-file: .node-version
+2026-09-27T05:12:15.3310540Z   cache: pnpm
+2026-09-27T05:12:15.3310740Z   check-latest: false
+2026-09-27T05:12:15.3313040Z   token: ***
+2026-09-27T05:12:15.3313262Z   package-manager-cache: true
+2026-09-27T05:12:15.3313505Z env:
+2026-09-27T05:12:15.3313697Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:15.3313960Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:15.3314390Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:15.3314928Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:15.3315442Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:15.3315725Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:15.3315977Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:12:15.3316199Z   CARGO_TERM_COLOR: always
+2026-09-27T05:12:15.3316498Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:12:15.3316809Z ##[endgroup]
+2026-09-27T05:12:15.4577059Z Node version file is not JSON file
+2026-09-27T05:12:15.4579408Z Resolved .node-version as 24.19.0
+2026-09-27T05:12:15.4595529Z Attempting to download 24.19.0...
+2026-09-27T05:12:16.3117338Z Acquiring 24.19.0 - x64 from https://github.com/actions/node-versions/releases/download/24.19.0-30872449280/node-24.19.0-linux-x64.tar.gz
+2026-09-27T05:12:17.0491075Z Extracting ...
+2026-09-27T05:12:17.0623101Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/1964cade-00db-4a7f-824d-f55c10e679e7 -f /home/runner/work/_temp/cf056125-28e7-44d7-8895-87c7d2738ea9
+2026-09-27T05:12:18.2711032Z Adding to the cache ...
+2026-09-27T05:12:20.3588879Z ##[group]Environment details
+2026-09-27T05:12:20.5819494Z node: v24.19.0
+2026-09-27T05:12:20.5819765Z npm: 11.17.0
+2026-09-27T05:12:20.5819989Z yarn: 1.22.22
+2026-09-27T05:12:20.5820483Z ##[endgroup]
+2026-09-27T05:12:20.5842149Z [command]/home/runner/setup-pnpm/node_modules/.bin/bin/pnpm store path --silent
+2026-09-27T05:12:21.1793748Z /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-09-27T05:12:21.3639753Z Cache hit for: node-cache-Linux-x64-pnpm-35ff2b297a9592a136519f3ce38795a3bef191d4dd52aaf4645da97c47c3e00c
+2026-09-27T05:12:22.4884563Z Received 40024290 of 40024290 (100.0%), 41.7 MBs/sec
+2026-09-27T05:12:22.4885485Z Cache Size: ~38 MB (40024290 B)
+2026-09-27T05:12:22.4922749Z [command]/usr/bin/tar -xf /home/runner/work/_temp/f2fbcfa1-d03f-4f7d-96e7-0518304165ff/cache.tzst -P -C /home/runner/work/ecorp/ecorp --use-compress-program unzstd
+2026-09-27T05:12:22.8007844Z Cache restored successfully
+2026-09-27T05:12:22.8034704Z Cache restored from key: node-cache-Linux-x64-pnpm-35ff2b297a9592a136519f3ce38795a3bef191d4dd52aaf4645da97c47c3e00c
+2026-09-27T05:12:22.8227519Z ##[group]Run Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+2026-09-27T05:12:22.8228227Z with:
+2026-09-27T05:12:22.8228430Z   prefix-key: v0-rust
+2026-09-27T05:12:22.8228669Z   add-job-id-key: true
+2026-09-27T05:12:22.8228916Z   add-rust-environment-hash-key: true
+2026-09-27T05:12:22.8229196Z   cache-targets: true
+2026-09-27T05:12:22.8229440Z   cache-all-crates: false
+2026-09-27T05:12:22.8229684Z   cache-workspace-crates: false
+2026-09-27T05:12:22.8229941Z   save-if: true
+2026-09-27T05:12:22.8230155Z   cache-provider: github
+2026-09-27T05:12:22.8230383Z   cache-bin: true
+2026-09-27T05:12:22.8230593Z   lookup-only: false
+2026-09-27T05:12:22.8230812Z   cmd-format: {0}
+2026-09-27T05:12:22.8231012Z env:
+2026-09-27T05:12:22.8231207Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:22.8231477Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:22.8231920Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:22.8232504Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:22.8233082Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:22.8233382Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:22.8233644Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:12:22.8233873Z   CARGO_TERM_COLOR: always
+2026-09-27T05:12:22.8234154Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:12:22.8234479Z ##[endgroup]
+2026-09-27T05:12:25.0393777Z ##[group]Cache Configuration
+2026-09-27T05:12:25.0404116Z Cache Provider:
+2026-09-27T05:12:25.0405214Z     github
+2026-09-27T05:12:25.0405940Z Workspaces:
+2026-09-27T05:12:25.0406727Z     /home/runner/work/ecorp/ecorp
+2026-09-27T05:12:25.0407254Z Cache Paths:
+2026-09-27T05:12:25.0408018Z     /home/runner/.cargo/bin
+2026-09-27T05:12:25.0408373Z     /home/runner/.cargo/.crates.toml
+2026-09-27T05:12:25.0408711Z     /home/runner/.cargo/.crates2.json
+2026-09-27T05:12:25.0409023Z     /home/runner/.cargo/registry
+2026-09-27T05:12:25.0409324Z     /home/runner/.cargo/git
+2026-09-27T05:12:25.0409625Z     /home/runner/work/ecorp/ecorp/target
+2026-09-27T05:12:25.0409911Z Restore Key:
+2026-09-27T05:12:25.0410182Z     v0-rust-integration-Linux-x64-6ff13d87
+2026-09-27T05:12:25.0410487Z Cache Key:
+2026-09-27T05:12:25.0410782Z     v0-rust-integration-Linux-x64-6ff13d87-f6995cda
+2026-09-27T05:12:25.0411116Z .. Prefix:
+2026-09-27T05:12:25.0411384Z   - v0-rust-integration-Linux-x64
+2026-09-27T05:12:25.0411869Z .. Environment considered:
+2026-09-27T05:12:25.0412313Z   - Rust Versions:
+2026-09-27T05:12:25.0412965Z     - 1.98.1 x86_64-unknown-linux-gnu 48a229ceaefd4985c50990b14116b6d856af0985
+2026-09-27T05:12:25.0413406Z   - CARGO_HOME
+2026-09-27T05:12:25.0413630Z   - CARGO_INCREMENTAL
+2026-09-27T05:12:25.0413862Z   - CARGO_TERM_COLOR
+2026-09-27T05:12:25.0414118Z .. Lockfiles considered:
+2026-09-27T05:12:25.0414416Z   - /home/runner/work/ecorp/ecorp/Cargo.lock
+2026-09-27T05:12:25.0415102Z   - /home/runner/work/ecorp/ecorp/crates/crony-audit/Cargo.toml
+2026-09-27T05:12:25.0415691Z   - /home/runner/work/ecorp/ecorp/crates/crony-base-gateway/Cargo.toml
+2026-09-27T05:12:25.0416191Z   - /home/runner/work/ecorp/ecorp/crates/crony-base/Cargo.toml
+2026-09-27T05:12:25.0416804Z   - /home/runner/work/ecorp/ecorp/crates/crony-cli/Cargo.toml
+2026-09-27T05:12:25.0417381Z   - /home/runner/work/ecorp/ecorp/crates/crony-domain/Cargo.toml
+2026-09-27T05:12:25.0418891Z   - /home/runner/work/ecorp/ecorp/crates/crony-gateways/Cargo.toml
+2026-09-27T05:12:25.0419406Z   - /home/runner/work/ecorp/ecorp/crates/crony-protocol/Cargo.toml
+2026-09-27T05:12:25.0419878Z   - /home/runner/work/ecorp/ecorp/crates/crony-runner/Cargo.toml
+2026-09-27T05:12:25.0420581Z   - /home/runner/work/ecorp/ecorp/crates/crony-server/Cargo.toml
+2026-09-27T05:12:25.0421073Z   - /home/runner/work/ecorp/ecorp/crates/crony-store/Cargo.toml
+2026-09-27T05:12:25.0421502Z   - /home/runner/work/ecorp/ecorp/rust-toolchain.toml
+2026-09-27T05:12:25.0422256Z ##[endgroup]
+2026-09-27T05:12:25.0422395Z 
+2026-09-27T05:12:25.0422793Z ... Restoring cache ...
+2026-09-27T05:12:25.2102103Z Cache hit for: v0-rust-integration-Linux-x64-6ff13d87-f6995cda
+2026-09-27T05:12:26.3901673Z Received 50331648 of 1131463450 (4.4%), 48.0 MBs/sec
+2026-09-27T05:12:27.3848588Z Received 209715200 of 1131463450 (18.5%), 100.0 MBs/sec
+2026-09-27T05:12:28.3907140Z Received 398458880 of 1131463450 (35.2%), 126.6 MBs/sec
+2026-09-27T05:12:29.3872496Z Received 536870912 of 1131463450 (47.4%), 127.9 MBs/sec
+2026-09-27T05:12:30.3909131Z Received 725614592 of 1131463450 (64.1%), 138.3 MBs/sec
+2026-09-27T05:12:31.3928974Z Received 931135488 of 1131463450 (82.3%), 147.9 MBs/sec
+2026-09-27T05:12:32.3918637Z Received 1098907648 of 1131463450 (97.1%), 149.6 MBs/sec
+2026-09-27T05:12:32.5476977Z Received 1131463450 of 1131463450 (100.0%), 150.6 MBs/sec
+2026-09-27T05:12:32.5477960Z Cache Size: ~1079 MB (1131463450 B)
+2026-09-27T05:12:32.5623825Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d58466af-3567-4624-99da-897dd12647c8/cache.tzst -P -C /home/runner/work/ecorp/ecorp --use-compress-program unzstd
+2026-09-27T05:12:38.8973312Z Cache restored successfully
+2026-09-27T05:12:39.4163951Z Restored from cache key "v0-rust-integration-Linux-x64-6ff13d87-f6995cda" full match: true.
+2026-09-27T05:12:39.4351111Z ##[group]Run pnpm install --frozen-lockfile
+2026-09-27T05:12:39.4351499Z [36;1mpnpm install --frozen-lockfile[0m
+2026-09-27T05:12:39.4416391Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:12:39.4416668Z env:
+2026-09-27T05:12:39.4416882Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:39.4417176Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:39.4418000Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:39.4418596Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:39.4419207Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:39.4419510Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:39.4419786Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:12:39.4420022Z   CARGO_TERM_COLOR: always
+2026-09-27T05:12:39.4420321Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:12:39.4420647Z   CACHE_ON_FAILURE: false
+2026-09-27T05:12:39.4420884Z ##[endgroup]
+2026-09-27T05:12:40.2289791Z Scope: all 2 workspace projects
+2026-09-27T05:12:40.2608436Z ? Verifying lockfile against supply-chain policies (93 entries)...
+2026-09-27T05:12:40.2683082Z Lockfile is up to date, resolution step is skipped
+2026-09-27T05:12:40.3587858Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-09-27T05:12:40.3719170Z Packages: +31
+2026-09-27T05:12:40.3720059Z +++++++++++++++++++++++++++++++
+2026-09-27T05:12:40.6534734Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-09-27T05:12:40.6536114Z   Content-addressable store is at: /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-09-27T05:12:40.6537144Z   Virtual store is at:             node_modules/.pnpm
+2026-09-27T05:12:40.7524493Z Progress: resolved 31, reused 31, downloaded 0, added 31, done
+2026-09-27T05:12:41.6634719Z ✓ Lockfile passes supply-chain policies (93 entries in 1.4s)
+2026-09-27T05:12:41.7217222Z 
+2026-09-27T05:12:41.7218003Z devDependencies:
+2026-09-27T05:12:41.7218451Z + ws 8.21.3
+2026-09-27T05:12:41.7218697Z 
+2026-09-27T05:12:41.7437511Z Done in 1.9s using pnpm v11.19.0
+2026-09-27T05:12:41.7804733Z ##[group]Run cargo build --locked -p crony-server -p crony-runner -p crony-cli -p crony-gateways
+2026-09-27T05:12:41.7805638Z [36;1mcargo build --locked -p crony-server -p crony-runner -p crony-cli -p crony-gateways[0m
+2026-09-27T05:12:41.7868196Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:12:41.7868470Z env:
+2026-09-27T05:12:41.7868687Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:12:41.7868984Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:12:41.7869439Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:12:41.7869988Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:12:41.7870600Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:12:41.7870902Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:12:41.7871167Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:12:41.7871401Z   CARGO_TERM_COLOR: always
+2026-09-27T05:12:41.7871702Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:12:41.7872071Z   CACHE_ON_FAILURE: false
+2026-09-27T05:12:41.7872309Z ##[endgroup]
+2026-09-27T05:12:41.8590494Z [1m[92m    Updating[0m crates.io index
+2026-09-27T05:12:43.9168817Z [1m[92m   Compiling[0m crony-domain v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-domain)
+2026-09-27T05:12:43.9274286Z [1m[92m   Compiling[0m crony-audit v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-audit)
+2026-09-27T05:12:44.7869993Z [1m[92m   Compiling[0m crony-base v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-base)
+2026-09-27T05:12:46.5136371Z [1m[92m   Compiling[0m crony-protocol v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-protocol)
+2026-09-27T05:12:46.5168352Z [1m[92m   Compiling[0m crony-gateways v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-gateways)
+2026-09-27T05:12:49.8489738Z [1m[92m   Compiling[0m crony-store v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-store)
+2026-09-27T05:12:50.2330607Z [1m[92m   Compiling[0m crony-runner v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-runner)
+2026-09-27T05:12:51.0440551Z [1m[92m   Compiling[0m crony-cli v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-cli)
+2026-09-27T05:13:02.2626684Z [1m[92m   Compiling[0m crony-server v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-server)
+2026-09-27T05:13:27.0580851Z [1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 45.23s
+2026-09-27T05:13:27.1122098Z ##[group]Run node --test tools/probe_mcp.test.mjs tools/operation_receipt.test.mjs tools/consume_operation_receipt.test.mjs
+2026-09-27T05:13:27.1123404Z [36;1mnode --test tools/probe_mcp.test.mjs tools/operation_receipt.test.mjs tools/consume_operation_receipt.test.mjs[0m
+2026-09-27T05:13:27.1192470Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:13:27.1192755Z env:
+2026-09-27T05:13:27.1192973Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:13:27.1193276Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:13:27.1193735Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:13:27.1194299Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:13:27.1194982Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:13:27.1195287Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:13:27.1195550Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:13:27.1195782Z   CARGO_TERM_COLOR: always
+2026-09-27T05:13:27.1196104Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:13:27.1196441Z   CACHE_ON_FAILURE: false
+2026-09-27T05:13:27.1196801Z   CRONY_MCP_TEST_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-mcp
+2026-09-27T05:13:27.1197200Z ##[endgroup]
+2026-09-27T05:13:27.2978663Z ✔ consumer rereads native state using trusted routing and tolerates only observation timing changes (9.788956ms)
+2026-09-27T05:13:27.2980989Z ✔ consumer refuses task contract revision drift in a fresh observation (2.250751ms)
+2026-09-27T05:13:27.2993944Z ✔ consumer refuses source base commit drift in a fresh observation (1.240396ms)
+2026-09-27T05:13:27.2995903Z ✔ consumer refuses verifier digest drift in a fresh observation (1.505272ms)
+2026-09-27T05:13:27.2998375Z ✔ consumer refuses another actor scope drift in a fresh observation (1.276524ms)
+2026-09-27T05:13:27.3000015Z ✔ explicit run and mode selections fail before contacting a server (1.643792ms)
+2026-09-27T05:13:27.3001859Z ✔ denied or unavailable current data does not fall back to a previously passing receipt (0.518192ms)
+2026-09-27T05:13:27.3008609Z ✔ a matching failed native outcome cannot be consumed as accepted completion (0.980429ms)
+2026-09-27T05:13:27.3010417Z ✔ file consumption requires the exact expected byte hash and a bounded valid receipt (3.393493ms)
+2026-09-27T05:13:27.3012210Z ✔ receipt file reads accumulate short native reads before validating bytes (15.944148ms)
+2026-09-27T05:13:27.3013797Z ✔ receipt file truncate during short reads fails before parsing (2.137678ms)
+2026-09-27T05:13:27.3015179Z ✔ receipt file grow during short reads fails before parsing (7.11888ms)
+2026-09-27T05:13:27.3559963Z ✔ receipt whitelists metadata and distinguishes persisted acceptance from optional verifier digests (7.822238ms)
+2026-09-27T05:13:27.3562065Z ✔ native runner, model and ref metadata preserves valid punctuation, spaces, Unicode and UTF-8 limits (4.697289ms)
+2026-09-27T05:13:27.3563826Z ✔ native metadata keeps bounded invalid text and malformed source tuples out of receipts (13.95073ms)
+2026-09-27T05:13:27.3565574Z ✔ native source identity accepts uppercase hexadecimal commits and full bounded repository components (0.909596ms)
+2026-09-27T05:13:27.3567425Z ✔ published native refs and native MIME token punctuation are observed without a custom identifier alphabet (1.401618ms)
+2026-09-27T05:13:27.3598935Z ✔ historical evidence never borrows the current task verifier policy count (1.7916ms)
+2026-09-27T05:13:27.3659255Z ✔ conflicting or invalid run-bound check counts remain unknown (4.034535ms)
+2026-09-27T05:13:27.3689471Z ✔ missing and duplicate check indices cannot establish completeness; malformed indices fail (1.207425ms)
+2026-09-27T05:13:27.3690815Z ✔ receipt rejects mismatched run Corp (0.449012ms)
+2026-09-27T05:13:27.3691602Z ✔ receipt rejects mismatched task Corp (0.443221ms)
+2026-09-27T05:13:27.3692703Z ✔ receipt rejects mismatched mission Corp (0.304761ms)
+2026-09-27T05:13:27.3693540Z ✔ receipt rejects mismatched room Corp (0.213861ms)
+2026-09-27T05:13:27.3694875Z ✔ receipt rejects mismatched exact actor (0.202279ms)
+2026-09-27T05:13:27.3695760Z ✔ receipt rejects mismatched exact room (0.182552ms)
+2026-09-27T05:13:27.3697336Z ✔ receipt rejects mismatched exact mission (0.206588ms)
+2026-09-27T05:13:27.3698585Z ✔ receipt rejects mismatched evidence task (0.239639ms)
+2026-09-27T05:13:27.3699505Z ✔ receipt rejects mismatched event room (0.231835ms)
+2026-09-27T05:13:27.3700443Z ✔ receipt rejects mismatched partial source (0.203902ms)
+2026-09-27T05:13:27.3701711Z ✔ current-run rejects later same-task runs and tied times, retaining nanosecond ordering (1.273358ms)
+2026-09-27T05:13:27.3703487Z ✔ typed resume lineage requires same task and producer, and records unavailable ancestors honestly (2.560571ms)
+2026-09-27T05:13:27.3728487Z ✔ exact recovery count is run-bound; private policy and notes are omitted (0.696126ms)
+2026-09-27T05:13:27.3729509Z ✔ published-result binds its exact source artifact and hashes opaque source revisions (0.879018ms)
+2026-09-27T05:13:27.3730734Z ✔ published-result accepts an exact historical publication despite a later same-task run (1.07143ms)
+2026-09-27T05:13:27.3731984Z ✔ published-result refuses mismatched Factory mission (0.314119ms)
+2026-09-27T05:13:27.3733022Z ✔ published-result refuses mismatched deliverable task (0.310041ms)
+2026-09-27T05:13:27.3734117Z ✔ published-result refuses mismatched deliverable source base (0.294953ms)
+2026-09-27T05:13:27.3735254Z ✔ published-result refuses mismatched run deliverable digest (0.269686ms)
+2026-09-27T05:13:27.3736306Z ✔ published-result refuses mismatched publication run (0.246324ms)
+2026-09-27T05:13:27.3737381Z ✔ published-result refuses mismatched provenance mission (0.211907ms)
+2026-09-27T05:13:27.3738883Z ✔ published-result refuses mismatched provenance source issue (0.217197ms)
+2026-09-27T05:13:27.3740647Z ✔ published-result refuses mismatched provenance target (0.281628ms)
+2026-09-27T05:13:27.3741797Z ✔ published-result refuses mismatched recorded PR head (0.269796ms)
+2026-09-27T05:13:27.3743000Z ✔ published-result refuses mismatched recorded PR repository (0.249027ms)
+2026-09-27T05:13:27.3744247Z ✔ published-result refuses mismatched recorded PR provenance (0.546625ms)
+2026-09-27T05:13:27.3745806Z ✔ byte verification rejects tampering and each missing or conflicting native response boundary (1.511354ms)
+2026-09-27T05:13:27.3747966Z ✔ receipt validator rejects extra content, contradictory acceptance, and mixed origin/artifact roles (7.859217ms)
+2026-09-27T05:13:27.3749733Z ✔ fingerprint tolerates observation timestamps and detects selected source, contract and artifact drift (6.6338ms)
+2026-09-27T05:13:27.5500079Z ✔ compiled native MCP export performs two captures and downloads only selected-origin artifact IDs (214.115472ms)
+2026-09-27T05:13:27.5529294Z ✔ artifact retention selection is bounded before reading host configuration (0.701646ms)
+2026-09-27T05:13:27.9310224Z ✔ compiled native evidence retains only explicitly selected verified bytes and preserves public receipt schema (383.948611ms)
+2026-09-27T05:13:27.9874297Z ✔ compiled native evidence rejects an unowned artifact selection before any artifact download (56.446754ms)
+2026-09-27T05:13:28.1509279Z ✔ compiled native evidence never returns retained bytes from a tampered artifact or changed source (163.656433ms)
+2026-09-27T05:13:28.2724009Z ✔ compiled native exporter keeps opaque runner/model/ref metadata out of every request route (121.043152ms)
+2026-09-27T05:13:28.3818767Z ✔ compiled native export rejects state drift during its artifact read (110.265409ms)
+2026-09-27T05:13:28.4338543Z ✔ compiled native export rejects mismatched context before downloading artifacts (51.81243ms)
+2026-09-27T05:13:28.4929663Z ✔ compiled native export refuses artifact redirects without forwarding credentials (57.620574ms)
+2026-09-27T05:13:28.5978985Z ✔ compiled native export rejects oversized bodies and withholds HTTP error content (106.250413ms)
+2026-09-27T05:13:29.5979405Z ✔ compiled native export bounds a stalled exact-context body by its whole-operation timeout (1002.766473ms)
+2026-09-27T05:13:30.0560229Z ✔ receipt CLI writes a create-only metadata file and a compact redacted summary (457.437ms)
+2026-09-27T05:13:30.0914739Z ✔ probe requires explicit scope and forwards only its scoped credential environment (4.688733ms)
+2026-09-27T05:13:30.0916518Z ✔ probe summary contains collection counts, never snapshot data or private paths (0.742152ms)
+2026-09-27T05:13:30.0918512Z ✔ probe permits HTTP only for normalized canonical loopback origins and requires HTTPS elsewhere (10.0529ms)
+2026-09-27T05:13:30.0920551Z ✔ recovery probe reports only native metadata and never infers missing capability or exposes policy (1.019401ms)
+2026-09-27T05:13:30.0922300Z ✔ recovery probe rejects malformed work-item IDs before spawning any gateway (1.93051ms)
+2026-09-27T05:13:30.0924156Z ✔ compiled recovery probe rejects impossible native numeric metadata and preserves exhausted authority (461.24397ms)
+2026-09-27T05:13:30.0926065Z ✔ compiled recovery tool makes exactly the selected authorized GET in both modes (120.806067ms)
+2026-09-27T05:13:30.0928282Z ✔ compiled recovery probe selects one context without reading the broad snapshot or exposing private fields (56.762936ms)
+2026-09-27T05:13:30.0930278Z ✔ compiled recovery tool refuses malformed IDs, extra scope or effect arguments before HTTP (96.392647ms)
+2026-09-27T05:13:30.0932090Z ✔ compiled recovery tool rejects mismatched Corp or work-item responses (206.037176ms)
+2026-09-27T05:13:30.0933879Z ✔ compiled recovery probe preserves authorization and not-found failures without private diagnostics (151.245555ms)
+2026-09-27T05:13:30.0935778Z ✔ compiled recovery inspection never follows redirects in either gateway mode (101.975695ms)
+2026-09-27T05:13:30.0937848Z ✔ compiled recovery inspection caps HTTP bodies even in the legacy write-capable gateway mode (94.671906ms)
+2026-09-27T05:13:30.0940183Z ✔ compiled read-only MCP completes the real stdio handshake and makes only one scoped GET (50.442308ms)
+2026-09-27T05:13:30.0941356Z ✔ compiled MCP ignores notifications and denies mutating calls before HTTP while preserving the default catalog (92.957324ms)
+2026-09-27T05:13:30.0942320Z ✔ compiled MCP keeps malformed omitted-ID objects silent and effect-free (read-only) (45.857114ms)
+2026-09-27T05:13:30.0943183Z ✔ compiled MCP keeps malformed omitted-ID objects silent and effect-free (unrestricted) (45.772899ms)
+2026-09-27T05:13:30.0944032Z ✔ compiled probe withholds API error content and enforces its whole-probe timeout (1051.861986ms)
+2026-09-27T05:13:30.0944855Z ✔ compiled MCP rejects redirects in both modes without contacting a second origin (124.499951ms)
+2026-09-27T05:13:30.0945748Z ✔ compiled read-only startup requires every routing variable before serving even initialization (92.517086ms)
+2026-09-27T05:13:30.0976834Z ✔ compiled read-only flag rejects command-line tokens (split option, CLI only) (6.580139ms)
+2026-09-27T05:13:30.1027057Z ✔ compiled read-only flag rejects command-line tokens (split option, CLI plus environment) (4.907296ms)
+2026-09-27T05:13:30.1079142Z ✔ compiled read-only flag rejects command-line tokens (equals option, CLI only) (5.095935ms)
+2026-09-27T05:13:30.1132996Z ✔ compiled read-only flag rejects command-line tokens (equals option, CLI plus environment) (4.857849ms)
+2026-09-27T05:13:30.1603827Z ✔ compiled read-only flag accepts only the environment token and exposes the restricted catalog (47.331441ms)
+2026-09-27T05:13:30.1657328Z ✔ compiled read-only environment rejects command-line tokens (split option, CLI only) (5.401909ms)
+2026-09-27T05:13:30.1709851Z ✔ compiled read-only environment rejects command-line tokens (split option, CLI plus environment) (5.227191ms)
+2026-09-27T05:13:30.1761066Z ✔ compiled read-only environment rejects command-line tokens (equals option, CLI only) (5.102058ms)
+2026-09-27T05:13:30.1812207Z ✔ compiled read-only environment rejects command-line tokens (equals option, CLI plus environment) (5.152011ms)
+2026-09-27T05:13:30.2286854Z ✔ compiled read-only environment accepts only the environment token and exposes the restricted catalog (46.657126ms)
+2026-09-27T05:13:30.3220928Z ✔ compiled unrestricted MCP preserves legacy CLI token precedence (split option) (93.666324ms)
+2026-09-27T05:13:30.4154613Z ✔ compiled unrestricted MCP preserves legacy CLI token precedence (equals option) (93.182888ms)
+2026-09-27T05:13:30.4616992Z ✔ compiled native read-only HTTP body rejects oversized declared length before end (200) (46.054628ms)
+2026-09-27T05:13:30.5435099Z ✔ compiled native read-only HTTP body rejects streamed overflow before end (200) (81.271562ms)
+2026-09-27T05:13:30.5882091Z ✔ compiled native read-only HTTP body rejects oversized declared length before end (403) (45.553248ms)
+2026-09-27T05:13:30.6638976Z ✔ compiled native read-only HTTP body rejects streamed overflow before end (403) (75.271993ms)
+2026-09-27T05:13:31.2442484Z ✔ compiled native HTTP body accepts the inclusive read-only limit and preserves unrestricted transport (580.059624ms)
+2026-09-27T05:13:31.5209674Z ✔ compiled native HTTP body preserves small successful and error response behavior (278.852524ms)
+2026-09-27T05:13:31.5333477Z ℹ tests 99
+2026-09-27T05:13:31.5337374Z ℹ suites 0
+2026-09-27T05:13:31.5338115Z ℹ pass 99
+2026-09-27T05:13:31.5338570Z ℹ fail 0
+2026-09-27T05:13:31.5339005Z ℹ cancelled 0
+2026-09-27T05:13:31.5339460Z ℹ skipped 0
+2026-09-27T05:13:31.5339895Z ℹ todo 0
+2026-09-27T05:13:31.5340393Z ℹ duration_ms 4372.985976
+2026-09-27T05:13:31.5422414Z ##[group]Run mkdir -p output
+2026-09-27T05:13:31.5422797Z [36;1mmkdir -p output[0m
+2026-09-27T05:13:31.5423116Z [36;1mnode tools/ci_owned_test_server.mjs --dry-run[0m
+2026-09-27T05:13:31.5423490Z [36;1mnode tools/ci_owned_test_server.mjs --start[0m
+2026-09-27T05:13:31.5423849Z [36;1mDEMO_JSON="$(curl --fail --silent -X POST \[0m
+2026-09-27T05:13:31.5424430Z [36;1m  -H 'content-type: application/json' \[0m
+2026-09-27T05:13:31.5424743Z [36;1m  -d '{}' \[0m
+2026-09-27T05:13:31.5425042Z [36;1m  http://127.0.0.1:18471/api/demo/bootstrap)"[0m
+2026-09-27T05:13:31.5425549Z [36;1mCORP_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).corp_id)' "$DEMO_JSON")"[0m
+2026-09-27T05:13:31.5426188Z [36;1mALICE_ID="$(node -e 'console.log(JSON.parse(process.argv[1]).alice_actor_id)' "$DEMO_JSON")"[0m
+2026-09-27T05:13:31.5426722Z [36;1mENROLLMENT_JSON="$(curl --fail --silent -X POST \[0m
+2026-09-27T05:13:31.5427105Z [36;1m  -H 'content-type: application/json' \[0m
+2026-09-27T05:13:31.5429164Z [36;1m  -d "{\"actor_id\":\"$ALICE_ID\",\"runner_id\":\"runner-local\",\"expires_in_seconds\":600}" \[0m
+2026-09-27T05:13:31.5429802Z [36;1m  "http://127.0.0.1:18471/api/corps/$CORP_ID/runners/enroll")"[0m
+2026-09-27T05:13:31.5430209Z [36;1mmkdir -p output/runner[0m
+2026-09-27T05:13:31.5430654Z [36;1mnode -e 'process.stdout.write(JSON.parse(process.argv[1]).enrollment_token)' \[0m
+2026-09-27T05:13:31.5431194Z [36;1m  "$ENROLLMENT_JSON" > output/runner/enrollment.token[0m
+2026-09-27T05:13:31.5431596Z [36;1mchmod 600 output/runner/enrollment.token[0m
+2026-09-27T05:13:31.5431929Z [36;1mtarget/debug/crony-runner \[0m
+2026-09-27T05:13:31.5432276Z [36;1m  --server-ws ws://127.0.0.1:18471/ws/runner \[0m
+2026-09-27T05:13:31.5432613Z [36;1m  --runner-id runner-local \[0m
+2026-09-27T05:13:31.5432909Z [36;1m  --corp-id "$CORP_ID" \[0m
+2026-09-27T05:13:31.5433277Z [36;1m  --credential-file "$PWD/output/runner/credential.json" \[0m
+2026-09-27T05:13:31.5433769Z [36;1m  --enrollment-token-file "$PWD/output/runner/enrollment.token" \[0m
+2026-09-27T05:13:31.5434208Z [36;1m  --workspace "$PWD/output/runner" \[0m
+2026-09-27T05:13:31.5434531Z [36;1m  --source-repository "$PWD" \[0m
+2026-09-27T05:13:31.5434831Z [36;1m  --source-base-ref HEAD \[0m
+2026-09-27T05:13:31.5435181Z [36;1m  --fake-agent-script "$PWD/scripts/fake-agent.mjs" \[0m
+2026-09-27T05:13:31.5435546Z [36;1m  --codex-command node \[0m
+2026-09-27T05:13:31.5435936Z [36;1m  --codex-command-arg "$PWD/scripts/fake-codex-app-server.mjs" \[0m
+2026-09-27T05:13:31.5436335Z [36;1m  --claude-command node \[0m
+2026-09-27T05:13:31.5436706Z [36;1m  --claude-command-arg "$PWD/scripts/fake-external-agent.mjs" \[0m
+2026-09-27T05:13:31.5437108Z [36;1m  --opencode-command node \[0m
+2026-09-27T05:13:31.5437489Z [36;1m  --opencode-command-arg "$PWD/scripts/fake-external-agent.mjs" \[0m
+2026-09-27T05:13:31.5438174Z [36;1m  --copilot-fixture \[0m
+2026-09-27T05:13:31.5438449Z [36;1m  > output/runner-ci.log 2>&1 &[0m
+2026-09-27T05:13:31.5438746Z [36;1mecho $! > output/runner-ci.pid[0m
+2026-09-27T05:13:31.5502014Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:13:31.5502391Z env:
+2026-09-27T05:13:31.5502610Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:13:31.5502900Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:13:31.5503357Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:13:31.5503939Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:13:31.5504625Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:13:31.5504927Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:13:31.5505201Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:13:31.5505434Z   CARGO_TERM_COLOR: always
+2026-09-27T05:13:31.5505735Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:13:31.5506060Z   CACHE_ON_FAILURE: false
+2026-09-27T05:13:31.5506298Z ##[endgroup]
+2026-09-27T05:13:31.5972492Z {
+2026-09-27T05:13:31.5973237Z   "operation": "dry-run",
+2026-09-27T05:13:31.5973669Z   "server": "http://127.0.0.1:18471",
+2026-09-27T05:13:31.5974198Z   "binary": "/home/runner/work/ecorp/ecorp/target/debug/crony-server",
+2026-09-27T05:13:31.5974839Z   "manifest": "/home/runner/work/ecorp/ecorp/output/server-ci.json",
+2026-09-27T05:13:31.5975314Z   "database_port": 55471,
+2026-09-27T05:13:31.5976293Z   "ownership": "new child receipt; Linux boot ID, start ticks, executable, cwd, uid, network namespace and listener; pidfd-only stop",
+2026-09-27T05:13:31.5977063Z   "services_started": false,
+2026-09-27T05:13:31.5977399Z   "database_writes": false,
+2026-09-27T05:13:31.5978024Z   "database_url_disclosed": false
+2026-09-27T05:13:31.5978369Z }
+2026-09-27T05:13:32.8301454Z {"operation":"start","result":4942,"manifest":"/home/runner/work/ecorp/ecorp/output/server-ci.json"}
+2026-09-27T05:13:32.9678035Z ##[group]Run for attempt in $(seq 1 60); do
+2026-09-27T05:13:32.9678663Z [36;1mfor attempt in $(seq 1 60); do[0m
+2026-09-27T05:13:32.9679461Z [36;1m  if curl --fail --silent http://127.0.0.1:18471/health | grep -q '"runners":1'; then[0m
+2026-09-27T05:13:32.9680197Z [36;1m    exit 0[0m
+2026-09-27T05:13:32.9680575Z [36;1m  fi[0m
+2026-09-27T05:13:32.9680926Z [36;1m  sleep 1[0m
+2026-09-27T05:13:32.9681281Z [36;1mdone[0m
+2026-09-27T05:13:32.9681825Z [36;1mcat output/server-ci.stdout.log output/server-ci.stderr.log || true[0m
+2026-09-27T05:13:32.9682578Z [36;1mcat output/runner-ci.log || true[0m
+2026-09-27T05:13:32.9683084Z [36;1mexit 1[0m
+2026-09-27T05:13:32.9752219Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-27T05:13:32.9752593Z env:
+2026-09-27T05:13:32.9752806Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:13:32.9753103Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:13:32.9753613Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:13:32.9754176Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:13:32.9754825Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:13:32.9755129Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:13:32.9755409Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:13:32.9755648Z   CARGO_TERM_COLOR: always
+2026-09-27T05:13:32.9755943Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:13:32.9756282Z   CACHE_ON_FAILURE: false
+2026-09-27T05:13:32.9756530Z ##[endgroup]
+2026-09-27T05:13:34.0169281Z ##[group]Run node tools/e2e_demo_lifecycle.mjs
+2026-09-27T05:13:34.0169667Z [36;1mnode tools/e2e_demo_lifecycle.mjs[0m
+2026-09-27T05:13:34.0231355Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:13:34.0231627Z env:
+2026-09-27T05:13:34.0231837Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:13:34.0232130Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:13:34.0232592Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:13:34.0233150Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:13:34.0233765Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:13:34.0234066Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:13:34.0234341Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:13:34.0234587Z   CARGO_TERM_COLOR: always
+2026-09-27T05:13:34.0234884Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:13:34.0235214Z   CACHE_ON_FAILURE: false
+2026-09-27T05:13:34.0235470Z ##[endgroup]
+2026-09-27T05:13:34.6936762Z {
+2026-09-27T05:13:34.6937347Z   "checked_at": "2026-09-27T05:13:34.691Z",
+2026-09-27T05:13:34.6938102Z   "concurrent_calls": 12,
+2026-09-27T05:13:34.6938378Z   "status": "ok",
+2026-09-27T05:13:34.6938692Z   "corp_id": "00000000-0000-4000-8000-000000000001"
+2026-09-27T05:13:34.6938996Z }
+2026-09-27T05:13:34.7060519Z ##[group]Run ./tools/e2e_smoke.ps1 -Server $env:CRONY_SERVER_HTTP
+2026-09-27T05:13:34.7061160Z [36;1m./tools/e2e_smoke.ps1 -Server $env:CRONY_SERVER_HTTP[0m
+2026-09-27T05:13:34.7089641Z shell: /usr/bin/pwsh -command ". '{0}'"
+2026-09-27T05:13:34.7090213Z env:
+2026-09-27T05:13:34.7090608Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:13:34.7091184Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:13:34.7092090Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:13:34.7093202Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:13:34.7106168Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:13:34.7107067Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:13:34.7107546Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:13:34.7108312Z   CARGO_TERM_COLOR: always
+2026-09-27T05:13:34.7108843Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:13:34.7109440Z   CACHE_ON_FAILURE: false
+2026-09-27T05:13:34.7109895Z ##[endgroup]
+2026-09-27T05:13:51.3762805Z {
+2026-09-27T05:13:51.3763296Z   "checked_at": "2026-09-27T05:13:51.3556173Z",
+2026-09-27T05:13:51.3763825Z   "corp_id": "00000000-0000-4000-8000-000000000001",
+2026-09-27T05:13:51.3764337Z   "mission_id": "f5ce6318-9874-4183-8a34-26e961faf4e0",
+2026-09-27T05:13:51.3764845Z   "run_id": "15f54028-9540-4433-b7b1-70bad55ae127",
+2026-09-27T05:13:51.3765280Z   "runner_id": "runner-local",
+2026-09-27T05:13:51.3765671Z   "alice_lease_acquired": true,
+2026-09-27T05:13:51.3766056Z   "bob_conflict_enforced": true,
+2026-09-27T05:13:51.3766510Z   "live_message_delivery": "immediate",
+2026-09-27T05:13:51.3766908Z   "run_status": "completed",
+2026-09-27T05:13:51.3767369Z   "artifact_id": "6bc673c4-5509-4754-9104-c67a757e5a12",
+2026-09-27T05:13:51.3768975Z   "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/6bc673c4-5509-4754-9104-c67a757e5a12",
+2026-09-27T05:13:51.3769870Z   "artifact_media_type": "text/markdown",
+2026-09-27T05:13:51.3770574Z   "artifact_signature": "3f29ba31aa94093c0ad0e8524f3ba9033c09b34e2974e4a955137e65b5e5e5e9",
+2026-09-27T05:13:51.3771454Z   "artifact_sha256": "fba65606d972a0ba8d8d97c8a2a941637a41763e93026c4a7cebc440d4219088",
+2026-09-27T05:13:51.3772057Z   "event_count": 21,
+2026-09-27T05:13:51.3772346Z   "control_acknowledged": true,
+2026-09-27T05:13:51.3773124Z   "adapter_capability": "Deterministic process; spawn=yes, stream=yes, steer=yes, interrupt=no, stop=yes, resume=no, usage=no, artifacts=yes",
+2026-09-27T05:13:51.3774325Z   "workspace_path": "/home/runner/work/ecorp/ecorp/output/runner/worktrees/3f8bafd42b4249c79a77e1d984e21dfb/15f5402895404433b7b170bad55ae127",
+2026-09-27T05:13:51.3775381Z   "workspace_branch": "crony/task-3f8bafd42b4249c79a77e1d984e21dfb/run-15f5402895404433b7b170bad55ae127",
+2026-09-27T05:13:51.3776007Z   "workspace_disposition": "preserved"
+2026-09-27T05:13:51.3776340Z }
+2026-09-27T05:13:51.5420172Z ##[group]Run node tools/e2e_artifacts.mjs
+2026-09-27T05:13:51.5420542Z [36;1mnode tools/e2e_artifacts.mjs[0m
+2026-09-27T05:13:51.5482917Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:13:51.5483209Z env:
+2026-09-27T05:13:51.5483429Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:13:51.5483724Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:13:51.5484198Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:13:51.5484762Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:13:51.5485426Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:13:51.5485736Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:13:51.5486006Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:13:51.5486255Z   CARGO_TERM_COLOR: always
+2026-09-27T05:13:51.5486562Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:13:51.5486901Z   CACHE_ON_FAILURE: false
+2026-09-27T05:13:51.5487139Z ##[endgroup]
+2026-09-27T05:14:03.3480221Z {
+2026-09-27T05:14:03.3480832Z   "checked_at": "2026-09-27T05:14:03.346Z",
+2026-09-27T05:14:03.3481502Z   "run_id": "48b6e388-d88e-4162-9695-5e5e06991af9",
+2026-09-27T05:14:03.3482199Z   "artifact_id": "1c57ef87-00bb-4b22-8b9a-bc9b5e3beada",
+2026-09-27T05:14:03.3483304Z   "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/1c57ef87-00bb-4b22-8b9a-bc9b5e3beada",
+2026-09-27T05:14:03.3484188Z   "artifact_sha256": "74fbe93cb01dcd015646707e52521335487f595c19148f03a7974dbd6ec99da2",
+2026-09-27T05:14:03.3484721Z   "artifact_media_type": "text/markdown",
+2026-09-27T05:14:03.3485290Z   "provenance_signature": "bb774e97031ea353dff739e90c4156107efb9957d55273698f4668ef2222ea1a",
+2026-09-27T05:14:03.3485858Z   "verifier": "crony-server:artifact-ingest-v1",
+2026-09-27T05:14:03.3486617Z   "retention_until": "2026-10-27T05:13:55.354026Z",
+2026-09-27T05:14:03.3486978Z   "downloaded_bytes": 1385,
+2026-09-27T05:14:03.3487302Z   "unauthorized_download_status": 404,
+2026-09-27T05:14:03.3488142Z   "local_path_exposed": false
+2026-09-27T05:14:03.3488457Z }
+2026-09-27T05:14:03.3593185Z ##[group]Run node tools/e2e_portable_deliverables.mjs
+2026-09-27T05:14:03.3593622Z [36;1mnode tools/e2e_portable_deliverables.mjs[0m
+2026-09-27T05:14:03.3658509Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:14:03.3658818Z env:
+2026-09-27T05:14:03.3659037Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:14:03.3659335Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:14:03.3659808Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:14:03.3660378Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:14:03.3661059Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:14:03.3661363Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:14:03.3661652Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:14:03.3661884Z   CARGO_TERM_COLOR: always
+2026-09-27T05:14:03.3662181Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:14:03.3662500Z   CACHE_ON_FAILURE: false
+2026-09-27T05:14:03.3662772Z ##[endgroup]
+2026-09-27T05:15:12.9341231Z {
+2026-09-27T05:15:12.9342408Z   "checked_at": "2026-09-27T05:15:12.931Z",
+2026-09-27T05:15:12.9343446Z   "archive_run_id": "4fedb228-cf51-4273-b1fc-7995df8ab61a",
+2026-09-27T05:15:12.9344469Z   "archive_artifact_id": "9db5e068-f3a5-4a1c-a5c2-8dbf8f9f10ae",
+2026-09-27T05:15:12.9345619Z   "archive_sha256": "ae08fc74a64c1244fe1fe804c7c2bfce81b9b8df22ee42843901e2c9052998d6",
+2026-09-27T05:15:12.9347039Z   "archive_verification_sha256": "be28a1e814c0e7f2209460f378c1460601581a5adfcb16315d9fe4c5ed265fba",
+2026-09-27T05:15:12.9348740Z   "committed_run_id": "d89ef90f-4742-4fbd-9a68-1875ca6f2cf6",
+2026-09-27T05:15:12.9349821Z   "committed_artifact_id": "d94dcdbb-344c-4db4-b7b6-91115c9d62a2",
+2026-09-27T05:15:12.9350826Z   "committed_head": "46d7650031d5da9b2bd941a307c33ecee13f9ccf",
+2026-09-27T05:15:12.9352161Z   "committed_branch": "crony/task-84552dc3956144fd9fc8ee5c46163fee/run-d89ef90f47424fbd9a681875ca6f2cf6",
+2026-09-27T05:15:12.9353428Z   "reclaimed_run_id": "87790ecd-65f2-4aa1-9677-037a11527eae",
+2026-09-27T05:15:12.9354300Z   "reclaimed_artifact_id": "a46ba57a-e153-4bc1-b6bc-36c125bda847",
+2026-09-27T05:15:12.9355053Z   "retained_before_cleanup": true,
+2026-09-27T05:15:12.9355687Z   "unauthorized_download_status": 404
+2026-09-27T05:15:12.9356216Z }
+2026-09-27T05:15:12.9483037Z ##[group]Run node tools/e2e_codex.mjs
+2026-09-27T05:15:12.9483389Z [36;1mnode tools/e2e_codex.mjs[0m
+2026-09-27T05:15:12.9546158Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:15:12.9546448Z env:
+2026-09-27T05:15:12.9546660Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:15:12.9546952Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:15:12.9547430Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:15:12.9548341Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:15:12.9549015Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:15:12.9549313Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:15:12.9549583Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:15:12.9549815Z   CARGO_TERM_COLOR: always
+2026-09-27T05:15:12.9550108Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:15:12.9550434Z   CACHE_ON_FAILURE: false
+2026-09-27T05:15:12.9550671Z ##[endgroup]
+2026-09-27T05:15:58.8223295Z {
+2026-09-27T05:15:58.8224990Z   "checked_at": "2026-09-27T05:15:12.998Z",
+2026-09-27T05:15:58.8225713Z   "start_steer_resume": {
+2026-09-27T05:15:58.8226202Z     "corp_id": "00000000-0000-4000-8000-000000000001",
+2026-09-27T05:15:58.8226995Z     "mission_id": "1270f157-7e93-4b45-b985-e065521aedd9",
+2026-09-27T05:15:58.8228172Z     "run_id": "d62994d9-162f-4baa-bf56-bb19fb32fa71",
+2026-09-27T05:15:58.8228979Z     "resume_run_id": "b9f02251-00b5-4d64-a73d-c51465462e6a",
+2026-09-27T05:15:58.8230221Z     "second_resume_run_id": "75099599-9147-40f1-ae9c-523e7634c974",
+2026-09-27T05:15:58.8231222Z     "provider_session_id": "f3bdc9c8-aa4c-445f-9537-16414ea2ef16",
+2026-09-27T05:15:58.8232072Z     "steer_delivery": "immediate",
+2026-09-27T05:15:58.8232750Z     "start_status": "completed",
+2026-09-27T05:15:58.8233349Z     "resume_status": "completed",
+2026-09-27T05:15:58.8233962Z     "second_resume_status": "completed",
+2026-09-27T05:15:58.8234533Z     "start_usage": {
+2026-09-27T05:15:58.8235016Z       "input_tokens": 10,
+2026-09-27T05:15:58.8235471Z       "output_tokens": 2
+2026-09-27T05:15:58.8235907Z     },
+2026-09-27T05:15:58.8236283Z     "resume_usage": {
+2026-09-27T05:15:58.8236718Z       "input_tokens": 10,
+2026-09-27T05:15:58.8237189Z       "output_tokens": 2
+2026-09-27T05:15:58.8237845Z     },
+2026-09-27T05:15:58.8238866Z     "start_artifact": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/7eefad61-359b-4c84-8ccc-e9bc91e41e70",
+2026-09-27T05:15:58.8239914Z     "resume_artifact": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/36634537-00c5-4da6-816c-4fea88705b02",
+2026-09-27T05:15:58.8240879Z     "second_resume_artifact": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/4740eea9-4f52-4599-a71e-1fe0dc88c419"
+2026-09-27T05:15:58.8241479Z   },
+2026-09-27T05:15:58.8241688Z   "interrupt": {
+2026-09-27T05:15:58.8242034Z     "run_id": "47d8230c-fece-4e1b-940d-75e9697cfc4b",
+2026-09-27T05:15:58.8242490Z     "provider_session_id": "2f7e9690-af34-436f-a3a0-1bc8a74ce941",
+2026-09-27T05:15:58.8242891Z     "status": "cancelled",
+2026-09-27T05:15:58.8243471Z     "artifact": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/bb727caa-e9cb-4282-859b-a7f5475b02e6"
+2026-09-27T05:15:58.8244006Z   },
+2026-09-27T05:15:58.8244196Z   "stop": {
+2026-09-27T05:15:58.8244504Z     "run_id": "aa78d738-9266-40c3-b4a9-f9716afdc9c1",
+2026-09-27T05:15:58.8244862Z     "status": "cancelled",
+2026-09-27T05:15:58.8245423Z     "artifact": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/b0dba582-c0d2-4ed9-a5dc-cdb121114968"
+2026-09-27T05:15:58.8245975Z   },
+2026-09-27T05:15:58.8246192Z   "budget_stop": {
+2026-09-27T05:15:58.8246537Z     "mission_id": "98eadeae-0630-4052-a3ee-c811785b5141",
+2026-09-27T05:15:58.8246948Z     "run_id": "d96edaf1-c6d3-4930-9a46-c66b318c56b0",
+2026-09-27T05:15:58.8247289Z     "status": "cancelled",
+2026-09-27T05:15:58.8247561Z     "breaker_stage": "stop",
+2026-09-27T05:15:58.8248273Z     "input_tokens": 6000,
+2026-09-27T05:15:58.8248591Z     "accepted_artifact": null,
+2026-09-27T05:15:58.8249263Z     "workspace_disposition": "preserved",
+2026-09-27T05:15:58.8249762Z     "termination_event_id": "a760f84f-f1b3-4ce5-8b88-6f375edd102a",
+2026-09-27T05:15:58.8250311Z     "preservation_event_id": "831f5509-2cc2-409a-9f18-906c22c484cb",
+2026-09-27T05:15:58.8250838Z     "cancellation_event_id": "4d79c2f7-9774-4a17-a787-c164c0b4ca01",
+2026-09-27T05:15:58.8251330Z     "breaker_command_id": "bba03d62-3157-42c2-beeb-7007e76c55c0",
+2026-09-27T05:15:58.8251737Z     "completed_events": 0
+2026-09-27T05:15:58.8251989Z   }
+2026-09-27T05:15:58.8252187Z }
+2026-09-27T05:15:58.8345865Z ##[group]Run node tools/e2e_external_adapters.mjs --expect-unix --dry-run
+2026-09-27T05:15:58.8346470Z [36;1mnode tools/e2e_external_adapters.mjs --expect-unix --dry-run[0m
+2026-09-27T05:15:58.8346926Z [36;1mnode tools/e2e_external_adapters.mjs --expect-unix[0m
+2026-09-27T05:15:58.8409573Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:15:58.8409850Z env:
+2026-09-27T05:15:58.8410057Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:15:58.8410347Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:15:58.8410801Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:15:58.8411358Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:15:58.8411992Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:15:58.8412316Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:15:58.8412825Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:15:58.8413064Z   CARGO_TERM_COLOR: always
+2026-09-27T05:15:58.8413401Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:15:58.8413730Z   CACHE_ON_FAILURE: false
+2026-09-27T05:15:58.8413983Z   CRONY_EXTERNAL_ADAPTER_TEST: 1
+2026-09-27T05:15:58.8414243Z ##[endgroup]
+2026-09-27T05:15:58.8832451Z {
+2026-09-27T05:15:58.8832982Z   "server": "http://127.0.0.1:18471",
+2026-09-27T05:15:58.8833344Z   "expectedPlatform": "unix",
+2026-09-27T05:15:58.8833635Z   "dryRun": true,
+2026-09-27T05:15:58.8834065Z   "output": "/home/runner/work/ecorp/ecorp/output/e2e-external-adapters.json",
+2026-09-27T05:15:58.8834532Z   "proposed": [
+2026-09-27T05:15:58.8834849Z     "reset only the explicitly owned demo fixture",
+2026-09-27T05:15:58.8835365Z     "verify the connected runner OS and both external adapter capabilities",
+2026-09-27T05:15:58.8836019Z     "attempt both unavailable adapters and require HTTP 409, zero runs and held missions"
+2026-09-27T05:15:58.8836706Z   ],
+2026-09-27T05:15:58.8837123Z   "services_started": false,
+2026-09-27T05:15:58.8838017Z   "database_writes": false
+2026-09-27T05:15:58.8838551Z }
+2026-09-27T05:15:59.1455797Z {
+2026-09-27T05:15:59.1456093Z   "schema_version": 2,
+2026-09-27T05:15:59.1456440Z   "checked_at": "2026-09-27T05:15:59.143Z",
+2026-09-27T05:15:59.1456789Z   "expected_platform": "unix",
+2026-09-27T05:15:59.1457063Z   "runner_os": "linux",
+2026-09-27T05:15:59.1457345Z   "runner_id": "runner-local",
+2026-09-27T05:15:59.1458071Z   "runner_platform": "linux",
+2026-09-27T05:15:59.1458646Z   "execution_supported": false,
+2026-09-27T05:15:59.1459272Z   "coverage": "unsupported_admission",
+2026-09-27T05:15:59.1459879Z   "common_sample": false,
+2026-09-27T05:15:59.1460403Z   "real_provider_inference": false,
+2026-09-27T05:15:59.1460863Z   "providers": [
+2026-09-27T05:15:59.1473132Z     {
+2026-09-27T05:15:59.1473449Z       "adapter": "claude-code",
+2026-09-27T05:15:59.1473980Z       "outcome": "unsupported_rejected",
+2026-09-27T05:15:59.1474534Z       "dispatched": false,
+2026-09-27T05:15:59.1475192Z       "mission_id": "57304fd4-ccb8-42c5-8a58-130dd328850f",
+2026-09-27T05:15:59.1475829Z       "launch_status": 409,
+2026-09-27T05:15:59.1476350Z       "runs_created": 0
+2026-09-27T05:15:59.1476833Z     },
+2026-09-27T05:15:59.1477243Z     {
+2026-09-27T05:15:59.1478314Z       "adapter": "opencode",
+2026-09-27T05:15:59.1478945Z       "outcome": "unsupported_rejected",
+2026-09-27T05:15:59.1479488Z       "dispatched": false,
+2026-09-27T05:15:59.1480142Z       "mission_id": "53dc609f-2ed7-4e74-a093-31e07bbf3518",
+2026-09-27T05:15:59.1480734Z       "launch_status": 409,
+2026-09-27T05:15:59.1481218Z       "runs_created": 0
+2026-09-27T05:15:59.1481649Z     }
+2026-09-27T05:15:59.1481993Z   ]
+2026-09-27T05:15:59.1482356Z }
+2026-09-27T05:15:59.1549838Z ##[group]Run node tools/e2e_copilot.mjs
+2026-09-27T05:15:59.1550220Z [36;1mnode tools/e2e_copilot.mjs[0m
+2026-09-27T05:15:59.1613279Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:15:59.1613561Z env:
+2026-09-27T05:15:59.1613788Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:15:59.1614084Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:15:59.1614528Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:15:59.1615086Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:15:59.1615716Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:15:59.1616020Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:15:59.1616285Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:15:59.1616518Z   CARGO_TERM_COLOR: always
+2026-09-27T05:15:59.1616812Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:15:59.1617135Z   CACHE_ON_FAILURE: false
+2026-09-27T05:15:59.1617373Z ##[endgroup]
+2026-09-27T05:16:15.1327457Z {
+2026-09-27T05:16:15.1328169Z   "checked_at": "2026-09-27T05:16:15.131Z",
+2026-09-27T05:16:15.1328536Z   "adapter_available": true,
+2026-09-27T05:16:15.1328866Z   "exposed_model_count": 3,
+2026-09-27T05:16:15.1329126Z   "exposed_models": [
+2026-09-27T05:16:15.1329638Z     {
+2026-09-27T05:16:15.1329892Z       "id": "copilot-test-fast",
+2026-09-27T05:16:15.1330202Z       "name": "Copilot Test Fast",
+2026-09-27T05:16:15.1330508Z       "policy_state": "enabled",
+2026-09-27T05:16:15.1330809Z       "supported_reasoning_efforts": []
+2026-09-27T05:16:15.1331150Z     },
+2026-09-27T05:16:15.1331375Z     {
+2026-09-27T05:16:15.1331621Z       "id": "copilot-test-reasoning",
+2026-09-27T05:16:15.1331942Z       "name": "Copilot Test Reasoning",
+2026-09-27T05:16:15.1332248Z       "policy_state": "enabled",
+2026-09-27T05:16:15.1332582Z       "supported_reasoning_efforts": [
+2026-09-27T05:16:15.1332859Z         "low",
+2026-09-27T05:16:15.1333077Z         "medium",
+2026-09-27T05:16:15.1333305Z         "high"
+2026-09-27T05:16:15.1333526Z       ]
+2026-09-27T05:16:15.1333715Z     },
+2026-09-27T05:16:15.1333925Z     {
+2026-09-27T05:16:15.1334170Z       "id": "copilot-test-disabled",
+2026-09-27T05:16:15.1334507Z       "name": "Copilot Test Disabled",
+2026-09-27T05:16:15.1334823Z       "policy_state": "disabled",
+2026-09-27T05:16:15.1335147Z       "supported_reasoning_efforts": []
+2026-09-27T05:16:15.1335426Z     }
+2026-09-27T05:16:15.1335611Z   ],
+2026-09-27T05:16:15.1335840Z   "invalid_model_status": 400,
+2026-09-27T05:16:15.1336200Z   "selected_model": "copilot-test-reasoning",
+2026-09-27T05:16:15.1336541Z   "reasoning_effort": "high",
+2026-09-27T05:16:15.1337036Z   "provider_session_id": "copilot-fixture-fde178dc-9710-49a9-a621-543572d10217",
+2026-09-27T05:16:15.1337515Z   "resumed_same_session": true,
+2026-09-27T05:16:15.1338470Z   "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/8cabd1b7-e12f-4f5a-8160-e360cfdaa4bf",
+2026-09-27T05:16:15.1339054Z   "input_tokens": 321,
+2026-09-27T05:16:15.1339302Z   "output_tokens": 123
+2026-09-27T05:16:15.1339528Z }
+2026-09-27T05:16:15.1443375Z ##[group]Run node tools/e2e_gateways.mjs
+2026-09-27T05:16:15.1443971Z [36;1mnode tools/e2e_gateways.mjs[0m
+2026-09-27T05:16:15.1514156Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:16:15.1514470Z env:
+2026-09-27T05:16:15.1514685Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:16:15.1514987Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:16:15.1515444Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:16:15.1516012Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:16:15.1516647Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:16:15.1516943Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:16:15.1517212Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:16:15.1517445Z   CARGO_TERM_COLOR: always
+2026-09-27T05:16:15.1518166Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:16:15.1518506Z   CACHE_ON_FAILURE: false
+2026-09-27T05:16:15.1518743Z ##[endgroup]
+2026-09-27T05:16:15.5754827Z {
+2026-09-27T05:16:15.5755634Z   "checked_at": "2026-09-27T05:16:15.573Z",
+2026-09-27T05:16:15.5756278Z   "mcp_protocol_version": "2025-06-18",
+2026-09-27T05:16:15.5756788Z   "mcp_tool_count": 4,
+2026-09-27T05:16:15.5757251Z   "acp_protocol_version": 1,
+2026-09-27T05:16:15.5757963Z   "acp_session_created": true,
+2026-09-27T05:16:15.5758502Z   "a2a_protocol_version": "1.0",
+2026-09-27T05:16:15.5758983Z   "a2a_streaming": true
+2026-09-27T05:16:15.5759386Z }
+2026-09-27T05:16:15.6205488Z ##[group]Run node tools/e2e_worktrees.mjs
+2026-09-27T05:16:15.6206115Z [36;1mnode tools/e2e_worktrees.mjs[0m
+2026-09-27T05:16:15.6298050Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:16:15.6298542Z env:
+2026-09-27T05:16:15.6298877Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:16:15.6299348Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:16:15.6300078Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:16:15.6301011Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:16:15.6302041Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:16:15.6302531Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:16:15.6302962Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:16:15.6303624Z   CARGO_TERM_COLOR: always
+2026-09-27T05:16:15.6304120Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:16:15.6304687Z   CACHE_ON_FAILURE: false
+2026-09-27T05:16:15.6305086Z ##[endgroup]
+2026-09-27T05:16:56.4022755Z {
+2026-09-27T05:16:56.4025080Z   "checked_at": "2026-09-27T05:16:56.395Z",
+2026-09-27T05:16:56.4025727Z   "source_head_unchanged": true,
+2026-09-27T05:16:56.4026298Z   "source_status_unchanged": true,
+2026-09-27T05:16:56.4026797Z   "fake": {
+2026-09-27T05:16:56.4027314Z     "run_id": "ac9e0f29-ae8c-4027-99d1-c68729ccf2cf",
+2026-09-27T05:16:56.4028292Z     "task_id": "af818679-0f83-4289-9950-cc9670d0fbe8",
+2026-09-27T05:16:56.4029645Z     "workspace_path": "/home/runner/work/ecorp/ecorp/output/runner/worktrees/af8186790f8342899950cc9670d0fbe8/ac9e0f29ae8c402799d1c68729ccf2cf",
+2026-09-27T05:16:56.4031290Z     "workspace_branch": "crony/task-af8186790f8342899950cc9670d0fbe8/run-ac9e0f29ae8c402799d1c68729ccf2cf",
+2026-09-27T05:16:56.4032257Z     "disposition": "preserved"
+2026-09-27T05:16:56.4032689Z   },
+2026-09-27T05:16:56.4033025Z   "codex": {
+2026-09-27T05:16:56.4033497Z     "run_id": "c555dad5-6858-4f00-81b6-9630555cc897",
+2026-09-27T05:16:56.4034146Z     "task_id": "cd7f9aca-c754-4144-81ab-cfd843426ac7",
+2026-09-27T05:16:56.4035057Z     "workspace_path": "/home/runner/work/ecorp/ecorp/output/runner/worktrees/cd7f9acac754414481abcfd843426ac7/c555dad568584f0081b69630555cc897",
+2026-09-27T05:16:56.4036003Z     "workspace_branch": "crony/task-cd7f9acac754414481abcfd843426ac7/run-c555dad568584f0081b69630555cc897",
+2026-09-27T05:16:56.4036553Z     "disposition": "preserved"
+2026-09-27T05:16:56.4036813Z   },
+2026-09-27T05:16:56.4037014Z   "clean_cleanup": {
+2026-09-27T05:16:56.4037315Z     "run_id": "08348f83-8849-479a-8bef-efd99eea07ed",
+2026-09-27T05:16:56.4038536Z     "workspace_path": "/home/runner/work/ecorp/ecorp/output/runner/worktrees/8ce1679615714cf7b304bceec27b13ec/08348f838849479a8befefd99eea07ed",
+2026-09-27T05:16:56.4039502Z     "workspace_branch": "crony/task-8ce1679615714cf7b304bceec27b13ec/run-08348f838849479a8befefd99eea07ed",
+2026-09-27T05:16:56.4040043Z     "disposition": "removed",
+2026-09-27T05:16:56.4040320Z     "workspace_removed": true
+2026-09-27T05:16:56.4040567Z   },
+2026-09-27T05:16:56.4040773Z   "ignored_cleanup": {
+2026-09-27T05:16:56.4041077Z     "run_id": "69603d56-fcd5-4b53-b558-b91b2f6e200c",
+2026-09-27T05:16:56.4041823Z     "workspace_path": "/home/runner/work/ecorp/ecorp/output/runner/worktrees/948da2e9d8ac4d2e9e3d2b5c22c5e17c/69603d56fcd54b53b558b91b2f6e200c",
+2026-09-27T05:16:56.4042736Z     "workspace_branch": "crony/task-948da2e9d8ac4d2e9e3d2b5c22c5e17c/run-69603d56fcd54b53b558b91b2f6e200c",
+2026-09-27T05:16:56.4043266Z     "disposition": "preserved",
+2026-09-27T05:16:56.4044397Z     "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=0; ignored_files=1; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately"
+2026-09-27T05:16:56.4045410Z   }
+2026-09-27T05:16:56.4045600Z }
+2026-09-27T05:16:56.4166524Z ##[group]Run node tools/e2e_task_graph.mjs --dry-run
+2026-09-27T05:16:56.4166950Z [36;1mnode tools/e2e_task_graph.mjs --dry-run[0m
+2026-09-27T05:16:56.4167286Z [36;1mnode tools/e2e_task_graph.mjs[0m
+2026-09-27T05:16:56.4229907Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:16:56.4230173Z env:
+2026-09-27T05:16:56.4230378Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:16:56.4230663Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:16:56.4231116Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:16:56.4231689Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:16:56.4232285Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:16:56.4232586Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:16:56.4232849Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:16:56.4233085Z   CARGO_TERM_COLOR: always
+2026-09-27T05:16:56.4233553Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:16:56.4233897Z   CACHE_ON_FAILURE: false
+2026-09-27T05:16:56.4234136Z   CRONY_TASK_GRAPH_TEST: 1
+2026-09-27T05:16:56.4234366Z ##[endgroup]
+2026-09-27T05:16:56.4665592Z {
+2026-09-27T05:16:56.4666141Z   "server": "http://127.0.0.1:18471",
+2026-09-27T05:16:56.4666983Z   "output": "/home/runner/work/ecorp/ecorp/output/e2e-task-graph.json",
+2026-09-27T05:16:56.4667935Z   "dryRun": true,
+2026-09-27T05:16:56.4668426Z   "services_started": false,
+2026-09-27T05:16:56.4668728Z   "database_writes": false,
+2026-09-27T05:16:56.4668985Z   "proposed": [
+2026-09-27T05:16:56.4669288Z     "reset only the explicitly owned demo fixture",
+2026-09-27T05:16:56.4669905Z     "verify native source-selected staffing, concurrent roots, dependency artifacts and bounded retries",
+2026-09-27T05:16:56.4670641Z     "also verify the original mixed Codex/Claude graph on Windows; no roster SQL mutations"
+2026-09-27T05:16:56.4671074Z   ]
+2026-09-27T05:16:56.4671290Z }
+2026-09-27T05:17:59.2555674Z {
+2026-09-27T05:17:59.2555978Z   "schema_version": 2,
+2026-09-27T05:17:59.2556349Z   "checked_at": "2026-09-27T05:17:45.000Z",
+2026-09-27T05:17:59.2556687Z   "parallel_graph": {
+2026-09-27T05:17:59.2556931Z     "root_adapters": [
+2026-09-27T05:17:59.2557369Z       "fake-process",
+2026-09-27T05:17:59.2558095Z       "fake-process"
+2026-09-27T05:17:59.2558496Z     ],
+2026-09-27T05:17:59.2558996Z     "mission_id": "e709c34e-cbb3-43f9-aa79-c08bc1e26245",
+2026-09-27T05:17:59.2559650Z     "runner_os": "linux",
+2026-09-27T05:17:59.2560101Z     "source_selected": true,
+2026-09-27T05:17:59.2560512Z     "source": {
+2026-09-27T05:17:59.2560954Z       "repository": "All-The-Vibes/ecorp",
+2026-09-27T05:17:59.2561445Z       "base_ref": "HEAD",
+2026-09-27T05:17:59.2562078Z       "base_commit": "9916bd90b1792eea23d3ee0d22c1c17d46a8796a"
+2026-09-27T05:17:59.2562695Z     },
+2026-09-27T05:17:59.2563100Z     "task_ids": [
+2026-09-27T05:17:59.2563409Z       "67591f79-f7eb-44f5-a5a2-9e0787eb1fc6",
+2026-09-27T05:17:59.2563821Z       "f0507940-5d9b-4c4b-8756-493940be4c82",
+2026-09-27T05:17:59.2564195Z       "c3ddb43b-d551-403f-bc79-ff744856b593"
+2026-09-27T05:17:59.2564510Z     ],
+2026-09-27T05:17:59.2564745Z     "initial_run_ids": [
+2026-09-27T05:17:59.2565056Z       "e4c1224d-2701-40d1-b267-19a4ac5f8f99",
+2026-09-27T05:17:59.2565415Z       "17556edb-2739-425f-b7d1-2e1d3c175640"
+2026-09-27T05:17:59.2565710Z     ],
+2026-09-27T05:17:59.2565942Z     "initial_launch_status": 200,
+2026-09-27T05:17:59.2566249Z     "launch_replayed": false,
+2026-09-27T05:17:59.2566531Z     "all_run_ids": [
+2026-09-27T05:17:59.2566827Z       "b7bfb631-9409-48b4-a128-02f1bb07d7b0",
+2026-09-27T05:17:59.2567200Z       "17556edb-2739-425f-b7d1-2e1d3c175640",
+2026-09-27T05:17:59.2567547Z       "e4c1224d-2701-40d1-b267-19a4ac5f8f99"
+2026-09-27T05:17:59.2568167Z     ],
+2026-09-27T05:17:59.2568416Z     "max_active_runs": 2,
+2026-09-27T05:17:59.2568737Z     "synthesis_requested_after_roots": true,
+2026-09-27T05:17:59.2569122Z     "synthesis_consumed_verified_specialists": true,
+2026-09-27T05:17:59.2569905Z     "final_status": "completed"
+2026-09-27T05:17:59.2570211Z   },
+2026-09-27T05:17:59.2570481Z   "legacy_mixed_provider_graph": null,
+2026-09-27T05:17:59.2570787Z   "retry_bound": {
+2026-09-27T05:17:59.2571117Z     "mission_id": "8999775a-0c1a-4d38-9a86-3f82c479e4ca",
+2026-09-27T05:17:59.2571568Z     "task_id": "3c7657bf-3aea-4ad6-bd25-37179dddcba8",
+2026-09-27T05:17:59.2571909Z     "attempts": 2,
+2026-09-27T05:17:59.2572160Z     "max_attempts": 2,
+2026-09-27T05:17:59.2572404Z     "run_ids": [
+2026-09-27T05:17:59.2572694Z       "b6d5cc28-1a40-4875-aef5-39289e68fffd",
+2026-09-27T05:17:59.2573044Z       "8e94bb89-9872-433b-a475-563e6df49d02"
+2026-09-27T05:17:59.2573342Z     ],
+2026-09-27T05:17:59.2573570Z     "final_status": "failed"
+2026-09-27T05:17:59.2573839Z   }
+2026-09-27T05:17:59.2574044Z }
+2026-09-27T05:17:59.2664092Z ##[group]Run node tools/e2e_verification.mjs
+2026-09-27T05:17:59.2664466Z [36;1mnode tools/e2e_verification.mjs[0m
+2026-09-27T05:17:59.2729997Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:17:59.2730267Z env:
+2026-09-27T05:17:59.2730479Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:17:59.2730763Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:17:59.2731226Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:17:59.2731785Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:17:59.2732398Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:17:59.2732700Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:17:59.2732962Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:17:59.2733193Z   CARGO_TERM_COLOR: always
+2026-09-27T05:17:59.2733485Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:17:59.2733815Z   CACHE_ON_FAILURE: false
+2026-09-27T05:17:59.2734054Z ##[endgroup]
+2026-09-27T05:18:38.0735762Z {
+2026-09-27T05:18:38.0736449Z   "checked_at": "2026-09-27T05:17:59.308Z",
+2026-09-27T05:18:38.0737133Z   "automated_matrix": {
+2026-09-27T05:18:38.0738103Z     "mission_id": "bd374c78-c560-47ae-bcab-9828e798b2cd",
+2026-09-27T05:18:38.0738917Z     "task_id": "83f1c001-c30e-4f2e-a7a6-406ead1da925",
+2026-09-27T05:18:38.0739680Z     "run_id": "5115590f-888e-45f9-b016-ed65fe249c1c",
+2026-09-27T05:18:38.0740303Z     "evidence_kinds": [
+2026-09-27T05:18:38.0740762Z       "artifact",
+2026-09-27T05:18:38.0741189Z       "file",
+2026-09-27T05:18:38.0741615Z       "command",
+2026-09-27T05:18:38.0742048Z       "test",
+2026-09-27T05:18:38.0742453Z       "json_schema",
+2026-09-27T05:18:38.0742907Z       "screenshot"
+2026-09-27T05:18:38.0743298Z     ],
+2026-09-27T05:18:38.0743777Z     "status": "passed"
+2026-09-27T05:18:38.0744285Z   },
+2026-09-27T05:18:38.0744789Z   "failed_verification": {
+2026-09-27T05:18:38.0745517Z     "mission_id": "e105ac3a-9e0e-44e7-999f-5423830c7063",
+2026-09-27T05:18:38.0746432Z     "task_id": "7fa5eb05-1e7b-4c9a-be9b-2b30cfb21400",
+2026-09-27T05:18:38.0747216Z     "run_id": "e89d337f-a363-4dfa-996d-17dd3e914eaa",
+2026-09-27T05:18:38.0748101Z     "failed_checks": [
+2026-09-27T05:18:38.0748549Z       "file"
+2026-09-27T05:18:38.0748928Z     ],
+2026-09-27T05:18:38.0749344Z     "task_status": "verification_failed"
+2026-09-27T05:18:38.0749875Z   },
+2026-09-27T05:18:38.0750225Z   "human_approval": {
+2026-09-27T05:18:38.0750810Z     "mission_id": "2645f0a6-d295-40a9-b326-22d5e82fe7e8",
+2026-09-27T05:18:38.0751509Z     "run_id": "c86e0231-7ce1-4df7-9532-988bb5628c35",
+2026-09-27T05:18:38.0752147Z     "gate_type": "human_approval",
+2026-09-27T05:18:38.0752730Z     "repeated_decision_status": 400,
+2026-09-27T05:18:38.0753312Z     "final_status": "completed"
+2026-09-27T05:18:38.0753767Z   },
+2026-09-27T05:18:38.0754293Z   "independent_review": {
+2026-09-27T05:18:38.0754928Z     "mission_id": "d8118329-3869-4f05-b1a5-d919366c0a8e",
+2026-09-27T05:18:38.0755650Z     "run_id": "2dbb58c2-3b09-479b-af21-4fd1a58e7b50",
+2026-09-27T05:18:38.0756249Z     "requester_status": 403,
+2026-09-27T05:18:38.0756903Z     "reviewer_actor_id": "00000000-0000-4000-8000-000000000012",
+2026-09-27T05:18:38.0758508Z     "final_status": "completed"
+2026-09-27T05:18:38.0759969Z   }
+2026-09-27T05:18:38.0760749Z }
+2026-09-27T05:18:38.0861529Z ##[group]Run node tools/e2e_replay.mjs
+2026-09-27T05:18:38.0861867Z [36;1mnode tools/e2e_replay.mjs[0m
+2026-09-27T05:18:38.0953440Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:18:38.0953710Z env:
+2026-09-27T05:18:38.0953923Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:18:38.0954214Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:18:38.0954698Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:18:38.0955259Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:18:38.0956012Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:18:38.0956519Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:18:38.0956942Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:18:38.0957361Z   CARGO_TERM_COLOR: always
+2026-09-27T05:18:38.0958303Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:18:38.0959186Z   CACHE_ON_FAILURE: false
+2026-09-27T05:18:38.0959610Z ##[endgroup]
+2026-09-27T05:18:38.3070802Z {
+2026-09-27T05:18:38.3080345Z   "corp_id": "00000000-0000-4000-8000-000000000001",
+2026-09-27T05:18:38.3081240Z   "initial_replay_count": 1,
+2026-09-27T05:18:38.3082074Z   "reconnect_replay_count": 3,
+2026-09-27T05:18:38.3083090Z   "duplicate_replay_count": 0,
+2026-09-27T05:18:38.3084174Z   "replayed_through": 484,
+2026-09-27T05:18:38.3088040Z   "event_types": [
+2026-09-27T05:18:38.3108242Z     "mission.created",
+2026-09-27T05:18:38.3108772Z     "task.created",
+2026-09-27T05:18:38.3109213Z     "mission.planned"
+2026-09-27T05:18:38.3109587Z   ]
+2026-09-27T05:18:38.3109918Z }
+2026-09-27T05:18:38.3253001Z ##[group]Run node tools/e2e_leases.mjs
+2026-09-27T05:18:38.3253569Z [36;1mnode tools/e2e_leases.mjs[0m
+2026-09-27T05:18:38.3317383Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:18:38.3317783Z env:
+2026-09-27T05:18:38.3317998Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:18:38.3318571Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:18:38.3319048Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:18:38.3319612Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:18:38.3320205Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:18:38.3320513Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:18:38.3320776Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:18:38.3321007Z   CARGO_TERM_COLOR: always
+2026-09-27T05:18:38.3321297Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:18:38.3321622Z   CACHE_ON_FAILURE: false
+2026-09-27T05:18:38.3321854Z ##[endgroup]
+2026-09-27T05:18:44.8721988Z {
+2026-09-27T05:18:44.8748424Z   "checked_at": "2026-09-27T05:18:44.866Z",
+2026-09-27T05:18:44.8749001Z   "concurrent_winner": "Bob",
+2026-09-27T05:18:44.8749508Z   "concurrent_loser": "Alice",
+2026-09-27T05:18:44.8750005Z   "renewal_rotated_token": true,
+2026-09-27T05:18:44.8750493Z   "stale_token_status": 409,
+2026-09-27T05:18:44.8750928Z   "release_then_claim": true,
+2026-09-27T05:18:44.8751569Z   "transfer_holder": "00000000-0000-4000-8000-000000000012",
+2026-09-27T05:18:44.8752269Z   "shared_snapshot_hides_token": true,
+2026-09-27T05:18:44.8752832Z   "transferred_controller_fenced": true,
+2026-09-27T05:18:44.8753389Z   "queued_note_delivered": true,
+2026-09-27T05:18:44.8753933Z   "queued_note_observed_by_provider": true,
+2026-09-27T05:18:44.8754498Z   "unauthorized_stop_status": 403,
+2026-09-27T05:18:44.8755033Z   "emergency_stop_run_status": "cancelled"
+2026-09-27T05:18:44.8755516Z }
+2026-09-27T05:18:44.8903955Z ##[group]Run node tools/e2e_rooms.mjs
+2026-09-27T05:18:44.8904486Z [36;1mnode tools/e2e_rooms.mjs[0m
+2026-09-27T05:18:44.9032516Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:18:44.9032946Z env:
+2026-09-27T05:18:44.9033283Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:18:44.9033742Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:18:44.9034547Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:18:44.9035541Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:18:44.9036510Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:18:44.9036999Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:18:44.9037440Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:18:44.9038221Z   CARGO_TERM_COLOR: always
+2026-09-27T05:18:44.9038725Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:18:44.9039268Z   CACHE_ON_FAILURE: false
+2026-09-27T05:18:44.9039655Z ##[endgroup]
+2026-09-27T05:18:45.3176976Z {
+2026-09-27T05:18:45.3188544Z   "root_message_id": "659cd7f1-c3ba-4cad-88d9-3c7528f5affb",
+2026-09-27T05:18:45.3227497Z   "reply_message_id": "a90935e3-1b8c-4f6c-9195-509109d92d1a",
+2026-09-27T05:18:45.3249033Z   "member_message_count": 2,
+2026-09-27T05:18:45.3268826Z   "reply_thread_root": "659cd7f1-c3ba-4cad-88d9-3c7528f5affb",
+2026-09-27T05:18:45.3278678Z   "structured_mentions": true,
+2026-09-27T05:18:45.3308902Z   "structured_links": true,
+2026-09-27T05:18:45.3338549Z   "non_member_rooms": 0,
+2026-09-27T05:18:45.3348467Z   "non_member_messages": 0,
+2026-09-27T05:18:45.3349112Z   "non_member_write_status": 403,
+2026-09-27T05:18:45.3349835Z   "non_member_mission_status": 403,
+2026-09-27T05:18:45.3350585Z   "member_replay_messages": 2,
+2026-09-27T05:18:45.3351248Z   "non_member_replay_types": [
+2026-09-27T05:18:45.3351874Z     "corp.demo_bootstrapped"
+2026-09-27T05:18:45.3352460Z   ]
+2026-09-27T05:18:45.3352945Z }
+2026-09-27T05:18:45.3407228Z ##[group]Run cargo test -p crony-server cache_admission_lifecycle_tests --locked -- --ignored --test-threads=1
+2026-09-27T05:18:45.3408842Z [36;1mcargo test -p crony-server cache_admission_lifecycle_tests --locked -- --ignored --test-threads=1[0m
+2026-09-27T05:18:45.3495260Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:18:45.3495678Z env:
+2026-09-27T05:18:45.3496020Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:18:45.3496493Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:18:45.3497251Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:18:45.3498415Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:18:45.3499370Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:18:45.3499860Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:18:45.3500304Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:18:45.3500699Z   CARGO_TERM_COLOR: always
+2026-09-27T05:18:45.3501211Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:18:45.3501759Z   CACHE_ON_FAILURE: false
+2026-09-27T05:18:45.3502154Z ##[endgroup]
+2026-09-27T05:18:45.8609555Z [1m[92m   Compiling[0m crony-audit v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-audit)
+2026-09-27T05:18:46.8154742Z [1m[92m   Compiling[0m crony-base v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-base)
+2026-09-27T05:18:49.8846330Z [1m[92m   Compiling[0m crony-store v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-store)
+2026-09-27T05:18:58.6129028Z [1m[92m   Compiling[0m crony-server v0.1.0 (/home/runner/work/ecorp/ecorp/crates/crony-server)
+2026-09-27T05:19:23.3537163Z [1m[92m    Finished[0m `test` profile [unoptimized + debuginfo] target(s) in 37.95s
+2026-09-27T05:19:23.3781519Z [1m[92m     Running[0m unittests src/base_worker.rs (target/debug/deps/crony_base_worker-1eba2544c51109d0)
+2026-09-27T05:19:23.3802171Z 
+2026-09-27T05:19:23.3802504Z running 0 tests
+2026-09-27T05:19:23.3802829Z 
+2026-09-27T05:19:23.3803414Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+2026-09-27T05:19:23.3803871Z 
+2026-09-27T05:19:23.3806982Z [1m[92m     Running[0m unittests src/main.rs (target/debug/deps/crony_server-3bbe03fb14365bd3)
+2026-09-27T05:19:23.3827772Z 
+2026-09-27T05:19:23.3827948Z running 12 tests
+2026-09-27T05:19:24.6267118Z test cache_admission_lifecycle_tests::issue140_capable_resume_reaches_dependency_canary ... ok
+2026-09-27T05:19:25.7760075Z test cache_admission_lifecycle_tests::issue140_capable_resume_reaches_secret_canary ... ok
+2026-09-27T05:19:26.9358279Z test cache_admission_lifecycle_tests::issue140_future_policy_does_not_starve_healthy_sibling ... ok
+2026-09-27T05:19:28.5272924Z test cache_admission_lifecycle_tests::issue140_grant_expiry_rolls_back_with_failed_transition ... ok
+2026-09-27T05:19:29.6975608Z test cache_admission_lifecycle_tests::issue140_late_loss_keeps_shared_attempt_and_expires_grants ... ok
+2026-09-27T05:19:30.8450426Z test cache_admission_lifecycle_tests::issue140_legacy_resume_handler_fails_before_preparation ... ok
+2026-09-27T05:19:32.1854541Z test cache_admission_lifecycle_tests::issue140_legacy_source_recovery_fails_before_secret_preparation ... ok
+2026-09-27T05:19:33.6312268Z test cache_admission_lifecycle_tests::issue140_legacy_verifier_recovery_fails_before_artifact_hydration ... ok
+2026-09-27T05:19:34.7873360Z test cache_admission_lifecycle_tests::issue140_malformed_policy_does_not_starve_healthy_sibling ... ok
+2026-09-27T05:19:35.9258415Z test cache_admission_lifecycle_tests::issue140_rejected_failure_guard_preserves_grants ... ok
+2026-09-27T05:19:37.0656548Z test cache_admission_lifecycle_tests::issue140_source_recovery_expires_only_its_grants ... ok
+2026-09-27T05:19:38.2231313Z test cache_admission_lifecycle_tests::issue140_verifier_recovery_expires_only_its_grants ... ok
+2026-09-27T05:19:38.2231968Z 
+2026-09-27T05:19:38.2232838Z test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 246 filtered out; finished in 14.84s
+2026-09-27T05:19:38.2233386Z 
+2026-09-27T05:19:38.2344769Z ##[group]Run node tools/e2e_runner_reconnect.mjs
+2026-09-27T05:19:38.2345180Z [36;1mnode tools/e2e_runner_reconnect.mjs[0m
+2026-09-27T05:19:38.2407481Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:19:38.2407930Z env:
+2026-09-27T05:19:38.2408141Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:19:38.2408435Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:19:38.2408899Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:19:38.2409491Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:19:38.2410103Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:19:38.2410409Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:19:38.2410677Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:19:38.2410911Z   CARGO_TERM_COLOR: always
+2026-09-27T05:19:38.2411207Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:19:38.2411531Z   CACHE_ON_FAILURE: false
+2026-09-27T05:19:38.2411762Z ##[endgroup]
+2026-09-27T05:20:14.2267550Z {
+2026-09-27T05:20:14.2268437Z   "initial_runner_status": "connected",
+2026-09-27T05:20:14.2269024Z   "grace_observed": true,
+2026-09-27T05:20:14.2269491Z   "short_reconnect_status": "connected",
+2026-09-27T05:20:14.2269989Z   "short_run_status": "completed",
+2026-09-27T05:20:14.2270470Z   "reconciliation_event": true,
+2026-09-27T05:20:14.2271058Z   "lost_run_status": "lost",
+2026-09-27T05:20:14.2271562Z   "stale_claim_preserved_lost_state": true,
+2026-09-27T05:20:14.2272147Z   "heartbeat_advanced": true
+2026-09-27T05:20:14.2272551Z }
+2026-09-27T05:20:14.2370594Z ##[group]Run node tools/e2e_idempotency.mjs
+2026-09-27T05:20:14.2370957Z [36;1mnode tools/e2e_idempotency.mjs[0m
+2026-09-27T05:20:14.2433347Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:20:14.2433612Z env:
+2026-09-27T05:20:14.2433824Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:20:14.2434109Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:20:14.2434577Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:20:14.2435139Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:20:14.2435730Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:20:14.2436033Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:20:14.2436308Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:20:14.2436544Z   CARGO_TERM_COLOR: always
+2026-09-27T05:20:14.2436846Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:20:14.2437182Z   CACHE_ON_FAILURE: false
+2026-09-27T05:20:14.2437439Z ##[endgroup]
+2026-09-27T05:20:18.5707902Z {
+2026-09-27T05:20:18.5708770Z   "run_id": "5f525ad2-4f21-485b-b559-3d15ff013ba4",
+2026-09-27T05:20:18.5709698Z   "duplicate_deliveries_sent": 2,
+2026-09-27T05:20:18.5710557Z   "persisted_run_started_events": 1,
+2026-09-27T05:20:18.5711189Z   "unique_event_ids": 16,
+2026-09-27T05:20:18.5711628Z   "run_status": "completed"
+2026-09-27T05:20:18.5712091Z }
+2026-09-27T05:20:18.5825481Z ##[group]Run node tools/e2e_artifact_staging.mjs --dry-run
+2026-09-27T05:20:18.5826194Z [36;1mnode tools/e2e_artifact_staging.mjs --dry-run[0m
+2026-09-27T05:20:18.5826794Z [36;1mnode tools/e2e_artifact_staging.mjs[0m
+2026-09-27T05:20:18.5914191Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:20:18.5914610Z env:
+2026-09-27T05:20:18.5914945Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:20:18.5915414Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:20:18.5916162Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:20:18.5917339Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:20:18.5918719Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:20:18.5919215Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:20:18.5919730Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:20:18.5920147Z   CARGO_TERM_COLOR: always
+2026-09-27T05:20:18.5920643Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:20:18.5921228Z   CACHE_ON_FAILURE: false
+2026-09-27T05:20:18.5921644Z   CRONY_ARTIFACT_STAGING_TEST: 1
+2026-09-27T05:20:18.5922076Z ##[endgroup]
+2026-09-27T05:20:18.6454378Z {
+2026-09-27T05:20:18.6454990Z   "server": "http://127.0.0.1:18471",
+2026-09-27T05:20:18.6455590Z   "readinessSmoke": false,
+2026-09-27T05:20:18.6456098Z   "dryRun": true,
+2026-09-27T05:20:18.6456759Z   "output": "/home/runner/work/ecorp/ecorp/output/e2e-artifact-staging.json",
+2026-09-27T05:20:18.6457437Z   "services_started": false,
+2026-09-27T05:20:18.6458201Z   "database_writes": false,
+2026-09-27T05:20:18.6458670Z   "proposed": [
+2026-09-27T05:20:18.6459498Z     "run the complete artifact staging, fault-injection and restart suite on the existing Actions fixture"
+2026-09-27T05:20:18.6460331Z   ]
+2026-09-27T05:20:18.6460641Z }
+2026-09-27T05:20:27.5851645Z {
+2026-09-27T05:20:27.5852247Z   "checked_at": "2026-09-27T05:20:27.584Z",
+2026-09-27T05:20:27.5853176Z   "controlled_runner_id": "zz-artifact-staging-bb2e9ef3-f6cf-49f6-a15b-35f9aa08f227",
+2026-09-27T05:20:27.5853862Z   "readiness_previews": 9,
+2026-09-27T05:20:27.5854411Z   "accepted_shared_digest": {
+2026-09-27T05:20:27.5855091Z     "run_id": "33d55440-84f2-449c-9776-3716955925c1",
+2026-09-27T05:20:27.5855816Z     "artifact_id": "8e4d11db-4739-40db-884d-999f24ecfebb",
+2026-09-27T05:20:27.5856642Z     "sha256": "0330414656e9eca438293ca17d6e56af4bf08b428ddf92e6d805c8413103c247",
+2026-09-27T05:20:27.5857451Z     "duplicate_event_id": "5fc425ff-61c0-47bd-9e6b-f7bb24d717d8",
+2026-09-27T05:20:27.5858432Z     "distinct_duplicate_event_collapsed": true,
+2026-09-27T05:20:27.5859192Z     "remains_downloadable_after_rejected_duplicate": true
+2026-09-27T05:20:27.5859936Z   },
+2026-09-27T05:20:27.5860261Z   "breaker_rejection_before_staging": {
+2026-09-27T05:20:27.5860639Z     "run_id": "b856157a-fa48-4eb0-b2e8-0b00369cb926",
+2026-09-27T05:20:27.5861094Z     "event_id": "5aab32c6-4b79-4900-8428-78397883a250",
+2026-09-27T05:20:27.5861490Z     "staged_bytes_never_written": true,
+2026-09-27T05:20:27.5861905Z     "final_shared_object_preserved": true
+2026-09-27T05:20:27.5862287Z   },
+2026-09-27T05:20:27.5862565Z   "database_reservation_failure": {
+2026-09-27T05:20:27.5862997Z     "run_id": "1a8f4831-6990-4ebb-ad44-d1471f358e7a",
+2026-09-27T05:20:27.5863453Z     "event_id": "5245c1e3-daf6-4587-9f06-9215bc80fe12",
+2026-09-27T05:20:27.5863881Z     "insert_trigger_fired": true,
+2026-09-27T05:20:27.5864280Z     "staged_bytes_never_written": true,
+2026-09-27T05:20:27.5864644Z     "final_object_absent": true
+2026-09-27T05:20:27.5864962Z   },
+2026-09-27T05:20:27.5865264Z   "database_failure_after_object_publication": {
+2026-09-27T05:20:27.5865716Z     "run_id": "f564275c-8872-4fd1-9a9e-4ed35794717c",
+2026-09-27T05:20:27.5866172Z     "event_id": "f199aa60-08bf-4848-baf1-f77df0689abb",
+2026-09-27T05:20:27.5866575Z     "finalization_trigger_fired": true,
+2026-09-27T05:20:27.5866961Z     "staged_metadata_recovered": true,
+2026-09-27T05:20:27.5867351Z     "final_object_preserved": true
+2026-09-27T05:20:27.5869547Z   },
+2026-09-27T05:20:27.5869832Z   "restart_recovery": {
+2026-09-27T05:20:27.5870275Z     "recovered_artifact_id": "63dbc7a0-9c06-46e1-b1d6-dfba2a318967",
+2026-09-27T05:20:27.5870840Z     "missing_object_artifact_id": "d16559cd-86c0-42fc-aac4-be0ed2166126",
+2026-09-27T05:20:27.5871406Z     "cleanup_retry_artifact_id": "589382fa-3f47-44e5-b1e4-d33f37c83f58",
+2026-09-27T05:20:27.5872132Z     "orphan_staging_key": "staging/corps/00000000-0000-4000-8000-000000000001/c76ea0d7-63a2-4843-902e-34a3ecc75771",
+2026-09-27T05:20:27.5872738Z     "staged_metadata_finalized": true,
+2026-09-27T05:20:27.5873356Z     "missing_object_reservation_released": true,
+2026-09-27T05:20:27.5873746Z     "ready_staging_cleanup_retried": true,
+2026-09-27T05:20:27.5874095Z     "orphan_staging_removed": true
+2026-09-27T05:20:27.5874384Z   },
+2026-09-27T05:20:27.5874620Z   "periodic_recovery": {
+2026-09-27T05:20:27.5875011Z     "recovered_artifact_id": "589382fa-3f47-44e5-b1e4-d33f37c83f58",
+2026-09-27T05:20:27.5875440Z     "websocket_event_seq": 655,
+2026-09-27T05:20:27.5875797Z     "connected_client_notified": true
+2026-09-27T05:20:27.5876099Z   }
+2026-09-27T05:20:27.5876314Z }
+2026-09-27T05:20:27.5960269Z ##[group]Run node tools/e2e_factory_claims.mjs
+2026-09-27T05:20:27.5960639Z [36;1mnode tools/e2e_factory_claims.mjs[0m
+2026-09-27T05:20:27.6023959Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:20:27.6024239Z env:
+2026-09-27T05:20:27.6024449Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:20:27.6024734Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:20:27.6025193Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:20:27.6025763Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:20:27.6026363Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:20:27.6026664Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:20:27.6026935Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:20:27.6027173Z   CARGO_TERM_COLOR: always
+2026-09-27T05:20:27.6027475Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:20:27.6028076Z   CACHE_ON_FAILURE: false
+2026-09-27T05:20:27.6028315Z ##[endgroup]
+2026-09-27T05:21:18.7402199Z {
+2026-09-27T05:21:18.7402730Z   "checked_at": "2026-09-27T05:21:18.738Z",
+2026-09-27T05:21:18.7403479Z   "source_repository": "all-the-vibes/ecorp",
+2026-09-27T05:21:18.7404257Z   "source_base_commit": "9916bd90b1792eea23d3ee0d22c1c17d46a8796a",
+2026-09-27T05:21:18.7404996Z   "initial_readiness_previews": 1,
+2026-09-27T05:21:18.7405614Z   "restart_readiness_previews": 1,
+2026-09-27T05:21:18.7406316Z   "source_issue": "https://github.com/all-the-vibes/ecorp/issues/59",
+2026-09-27T05:21:18.7407146Z   "work_item_id": "e75dba99-4ad1-4143-af47-0a86851f7e08",
+2026-09-27T05:21:18.7408166Z   "mission_id": "8463b451-5a64-41f7-85fe-cfd7936c8c24",
+2026-09-27T05:21:18.7408901Z   "task_id": "075f0134-fb29-428b-b30b-b1ceb2f3b847",
+2026-09-27T05:21:18.7409713Z   "run_id": "5eea29be-674f-413f-aa09-4ec52551ba17",
+2026-09-27T05:21:18.7410411Z   "concurrent_claims_collapsed": true,
+2026-09-27T05:21:18.7411028Z   "concurrent_renewals_collapsed": true,
+2026-09-27T05:21:18.7411654Z   "concurrent_materialization_collapsed": true,
+2026-09-27T05:21:18.7412284Z   "server_restart_recovered": true,
+2026-09-27T05:21:18.7412860Z   "unauthorized_claim_rejected": true,
+2026-09-27T05:21:18.7413495Z   "guest_snapshot_hides_factory_work": true,
+2026-09-27T05:21:18.7414236Z   "cross_corp_claim_rejected": true,
+2026-09-27T05:21:18.7414676Z   "active_duplicate_rejected": true,
+2026-09-27T05:21:18.7415089Z   "same_owner_recovered_active_token": true,
+2026-09-27T05:21:18.7415486Z   "github_identity_case_normalized": true,
+2026-09-27T05:21:18.7415839Z   "stale_version_rejected": true,
+2026-09-27T05:21:18.7416156Z   "stale_token_rejected": true,
+2026-09-27T05:21:18.7416476Z   "policy_widening_rejected": true,
+2026-09-27T05:21:18.7416825Z   "tool_and_secret_widening_rejected": true,
+2026-09-27T05:21:18.7417210Z   "pre_verification_transition_rejected": true,
+2026-09-27T05:21:18.7417960Z   "completion_automatically_verified_factory": true,
+2026-09-27T05:21:18.7418405Z   "stale_post_completion_transition_rejected": true,
+2026-09-27T05:21:18.7418864Z   "publication_state_requires_dedicated_operation": true,
+2026-09-27T05:21:18.7419274Z   "invalid_state_regression_rejected": true,
+2026-09-27T05:21:18.7419670Z   "expired_reclaim_policy_widening_rejected": true,
+2026-09-27T05:21:18.7420115Z   "expired_reclaim_source_revision_change_rejected": true,
+2026-09-27T05:21:18.7420640Z   "expired_reclaim_preserved_source_and_policy": true,
+2026-09-27T05:21:18.7421120Z   "expired_blocked_claim_recovered": true,
+2026-09-27T05:21:18.7421778Z   "expired_claim_taken_over_by_second_operator": true,
+2026-09-27T05:21:18.7422190Z   "expired_claimed_policy_widening_rejected": true,
+2026-09-27T05:21:18.7422646Z   "expired_claimed_source_revision_change_rejected": true,
+2026-09-27T05:21:18.7423080Z   "expired_claimed_preserved_source_and_policy": true,
+2026-09-27T05:21:18.7423509Z   "expired_claimed_taken_over_by_second_operator": true,
+2026-09-27T05:21:18.7423937Z   "expired_claimed_cleanup_state": "cancelled",
+2026-09-27T05:21:18.7424521Z   "fencing_token_absent_from_snapshot_and_events": true,
+2026-09-27T05:21:18.7424939Z   "issue_contract_persisted": true,
+2026-09-27T05:21:18.7425278Z   "factory_state": "verified",
+2026-09-27T05:21:18.7425565Z   "factory_event_types": [
+2026-09-27T05:21:18.7425849Z     "factory.work_item_claimed",
+2026-09-27T05:21:18.7426152Z     "factory.claim_renewed",
+2026-09-27T05:21:18.7426436Z     "factory.mission_linked",
+2026-09-27T05:21:18.7426727Z     "factory.state_changed",
+2026-09-27T05:21:18.7427009Z     "factory.verified"
+2026-09-27T05:21:18.7427245Z   ],
+2026-09-27T05:21:18.7427501Z   "mission_status": "completed",
+2026-09-27T05:21:18.7428047Z   "run_status": "completed"
+2026-09-27T05:21:18.7428315Z }
+2026-09-27T05:21:18.7510617Z ##[group]Run node tools/e2e_factory_controller.mjs
+2026-09-27T05:21:18.7511023Z [36;1mnode tools/e2e_factory_controller.mjs[0m
+2026-09-27T05:21:18.7573805Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:21:18.7574075Z env:
+2026-09-27T05:21:18.7574283Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:21:18.7574576Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:21:18.7575024Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:21:18.7575588Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:21:18.7576238Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:21:18.7576541Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:21:18.7576812Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:21:18.7577069Z   CARGO_TERM_COLOR: always
+2026-09-27T05:21:18.7577363Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:21:18.7577943Z   CACHE_ON_FAILURE: false
+2026-09-27T05:21:18.7578193Z ##[endgroup]
+2026-09-27T05:21:44.7107495Z node:internal/modules/run_main:107
+2026-09-27T05:21:44.7108894Z     triggerUncaughtException(
+2026-09-27T05:21:44.7109342Z     ^
+2026-09-27T05:21:44.7109537Z 
+2026-09-27T05:21:44.7110061Z AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+2026-09-27T05:21:44.7110832Z + actual - expected
+2026-09-27T05:21:44.7111070Z 
+2026-09-27T05:21:44.7111227Z + 'failed'
+2026-09-27T05:21:44.7111621Z - 'completed'
+2026-09-27T05:21:44.7111839Z 
+2026-09-27T05:21:44.7112403Z     at file:///home/runner/work/ecorp/ecorp/tools/e2e_factory_controller.mjs:1075:8
+2026-09-27T05:21:44.7113523Z     at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+2026-09-27T05:21:44.7114415Z   generatedMessage: true,
+2026-09-27T05:21:44.7115024Z   code: 'ERR_ASSERTION',
+2026-09-27T05:21:44.7115506Z   actual: 'failed',
+2026-09-27T05:21:44.7115984Z   expected: 'completed',
+2026-09-27T05:21:44.7116414Z   operator: 'strictEqual',
+2026-09-27T05:21:44.7116803Z   diff: 'simple'
+2026-09-27T05:21:44.7117154Z }
+2026-09-27T05:21:44.7117325Z 
+2026-09-27T05:21:44.7117472Z Node.js v24.19.0
+2026-09-27T05:21:44.7217207Z ##[error]Process completed with exit code 1.
+2026-09-27T05:21:44.7294023Z ##[group]Run node tools/ci_owned_test_server.mjs --stop
+2026-09-27T05:21:44.7294443Z [36;1mnode tools/ci_owned_test_server.mjs --stop[0m
+2026-09-27T05:21:44.7356250Z shell: /usr/bin/bash -e {0}
+2026-09-27T05:21:44.7356526Z env:
+2026-09-27T05:21:44.7356736Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:21:44.7357031Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:21:44.7357487Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:21:44.7358201Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:21:44.7358964Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:21:44.7359269Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:21:44.7359534Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:21:44.7359769Z   CARGO_TERM_COLOR: always
+2026-09-27T05:21:44.7360060Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:21:44.7360384Z   CACHE_ON_FAILURE: false
+2026-09-27T05:21:44.7360645Z ##[endgroup]
+2026-09-27T05:21:44.8802473Z {"operation":"stop","result":true,"manifest":"/home/runner/work/ecorp/ecorp/output/server-ci.json"}
+2026-09-27T05:21:44.8892767Z ##[group]Run actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+2026-09-27T05:21:44.8893206Z with:
+2026-09-27T05:21:44.8893423Z   name: integration-evidence
+2026-09-27T05:21:44.8898707Z   path: output/e2e-smoke.json
+output/e2e-artifacts.json
+output/e2e-portable-deliverables.json
+output/e2e-artifact-staging.json
+output/e2e-demo-lifecycle.json
+output/e2e-codex.json
+output/e2e-external-adapters.json
+output/e2e-copilot.json
+output/e2e-gateways.json
+output/e2e-worktrees.json
+output/e2e-task-graph.json
+output/e2e-verification.json
+output/e2e-identity.json
+output/e2e-secrets.json
+output/e2e-approvals.json
+output/e2e-budgets.json
+output/e2e-idle-cleanup.json
+output/e2e-chaos.json
+output/eval-report.json
+output/e2e-runner-reconnect.json
+output/e2e-idempotency.json
+output/e2e-factory-claims.json
+output/e2e-factory-controller.json
+output/e2e-factory-publication.json
+output/fake-github-factory-state.json
+output/fake-github-publication-*.json
+output/publication-server-restart.stdout.log
+output/publication-server-restart.stderr.log
+output/e2e-replay.json
+output/e2e-leases.json
+output/server-ci.json
+output/server-ci.stdout.log
+output/server-ci.stderr.log
+output/factory-server-restart.stdout.log
+output/factory-server-restart.stderr.log
+output/server-restart.stdout.log
+output/server-restart.stderr.log
+output/*restart*.stdout.log
+output/*restart*.stderr.log
+output/artifact-recovery-server.stdout.log
+output/artifact-recovery-server.stderr.log
+output/runner-ci.log
+output/runner/**/result.md
+output/runner/**/evidence/*.json
+
+2026-09-27T05:21:44.8903880Z   if-no-files-found: warn
+2026-09-27T05:21:44.8904135Z   compression-level: 6
+2026-09-27T05:21:44.8904365Z   overwrite: false
+2026-09-27T05:21:44.8904592Z   include-hidden-files: false
+2026-09-27T05:21:44.8904850Z   archive: true
+2026-09-27T05:21:44.8905051Z env:
+2026-09-27T05:21:44.8905251Z   ECORP_CI_OWNED_SERVER: 1
+2026-09-27T05:21:44.8905530Z   CRONY_SERVER_HTTP: http://127.0.0.1:18471
+2026-09-27T05:21:44.8905990Z   CRONY_TEST_SERVER_BINARY: /home/runner/work/ecorp/ecorp/target/debug/crony-server
+2026-09-27T05:21:44.8906565Z   CRONY_TEST_SERVER_PID_FILE: /home/runner/work/ecorp/ecorp/output/server-ci.json
+2026-09-27T05:21:44.8907133Z   DATABASE_URL: ***127.0.0.1:55471/crony
+2026-09-27T05:21:44.8907430Z   CARGO_HOME: /home/runner/.cargo
+2026-09-27T05:21:44.8907928Z   CARGO_INCREMENTAL: 0
+2026-09-27T05:21:44.8908176Z   CARGO_TERM_COLOR: always
+2026-09-27T05:21:44.8908470Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-09-27T05:21:44.8908802Z   CACHE_ON_FAILURE: false
+2026-09-27T05:21:44.8909041Z ##[endgroup]
+2026-09-27T05:22:42.7534868Z With the provided path, there will be 508 files uploaded
+2026-09-27T05:22:42.7540663Z Artifact name is valid!
+2026-09-27T05:22:42.7541329Z Root directory input is valid!
+2026-09-27T05:22:43.0634133Z Uploading artifact: integration-evidence.zip
+2026-09-27T05:22:43.0677516Z Beginning upload of artifact content to blob storage
+2026-09-27T05:22:43.9678760Z Uploaded bytes 1166339
+2026-09-27T05:22:44.0272127Z Finished uploading artifact content to blob storage!
+2026-09-27T05:22:44.0275541Z SHA256 digest of uploaded artifact is 667b039ead3db813f6c9e2c7254828364befd4d14a6aad1507b591229131fd05
+2026-09-27T05:22:44.0276318Z Finalizing artifact upload
+2026-09-27T05:22:44.3578632Z Artifact integration-evidence successfully finalized. Artifact ID 10923899265
+2026-09-27T05:22:44.3580271Z Artifact integration-evidence has been successfully uploaded! Final size is 1166339 bytes. Artifact ID is 10923899265
+2026-09-27T05:22:44.3586259Z Artifact download URL: https://github.com/All-The-Vibes/ecorp/actions/runs/36296490240/artifacts/10923899265
+2026-09-27T05:22:44.3890317Z Post job cleanup.
+2026-09-27T05:22:44.5374518Z Pruning is unnecessary.
+2026-09-27T05:22:44.5593583Z Post job cleanup.
+2026-09-27T05:22:44.6514779Z [command]/usr/bin/git version
+2026-09-27T05:22:44.6558565Z git version 2.55.0
+2026-09-27T05:22:44.6602787Z Temporarily overriding HOME='/home/runner/work/_temp/d9404c1c-5789-4713-8e38-c7a45a66f80b' before making global git config changes
+2026-09-27T05:22:44.6604295Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-27T05:22:44.6609248Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ecorp/ecorp
+2026-09-27T05:22:44.6643370Z Removing SSH command configuration
+2026-09-27T05:22:44.6650550Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-27T05:22:44.6697260Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-27T05:22:44.6948648Z Removing HTTP extra header
+2026-09-27T05:22:44.6955005Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-27T05:22:44.6995525Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-27T05:22:44.7260347Z Removing includeIf entries pointing to credentials config files
+2026-09-27T05:22:44.7269799Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-27T05:22:44.7308119Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-27T05:22:44.7705173Z Print service container logs: 18e067c7881b4739ade535d83ba2f0f0_postgres17alpine_7e0d21
+2026-09-27T05:22:44.7710269Z ##[command]/usr/bin/docker logs --details 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17
+2026-09-27T05:22:44.7835123Z  The files belonging to this database system will be owned by user "postgres".
+2026-09-27T05:22:44.7836677Z  sh: locale: not found
+2026-09-27T05:22:44.7837470Z  This user must also own the server process.
+2026-09-27T05:22:44.7838679Z  
+2026-09-27T05:22:44.7839556Z  The database cluster will be initialized with locale "en_US.utf8".
+2026-09-27T05:22:44.7840700Z  The default database encoding has accordingly been set to "UTF8".
+2026-09-27T05:22:44.7841791Z  2026-09-27 05:11:54.953 UTC [35] WARNING:  no usable system locales were found
+2026-09-27T05:22:44.7842806Z  initdb: warning: enabling "trust" authentication for local connections
+2026-09-27T05:22:44.7844139Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2026-09-27T05:22:44.7845678Z  2026-09-27 05:11:55.783 UTC [1] LOG:  starting PostgreSQL 17.11 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-09-27T05:22:44.7846721Z  2026-09-27 05:11:55.783 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2026-09-27T05:22:44.7847263Z  2026-09-27 05:11:55.783 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2026-09-27T05:22:44.7848282Z  2026-09-27 05:11:55.784 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-09-27T05:22:44.7849368Z  2026-09-27 05:11:55.787 UTC [57] LOG:  database system was shut down at 2026-09-27 05:11:55 UTC
+2026-09-27T05:22:44.7850294Z  2026-09-27 05:11:55.791 UTC [1] LOG:  database system is ready to accept connections
+2026-09-27T05:22:44.7851091Z  2026-09-27 05:16:55.887 UTC [55] LOG:  checkpoint starting: time
+2026-09-27T05:22:44.7852699Z  2026-09-27 05:17:56.320 UTC [55] LOG:  checkpoint complete: wrote 607 buffers (3.7%); 1 WAL file(s) added, 0 removed, 0 recycled; write=60.399 s, sync=0.014 s, total=60.434 s; sync files=480, longest=0.009 s, average=0.001 s; distance=4951 kB, estimate=4951 kB; lsn=0/1E686A0, redo lsn=0/1DF4528
+2026-09-27T05:22:44.7854953Z  2026-09-27 05:19:24.602 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7857052Z  2026-09-27 05:19:24.608 UTC [55] LOG:  checkpoint complete: wrote 209 buffers (1.3%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.004 s, sync=0.002 s, total=0.007 s; sync files=128, longest=0.001 s, average=0.001 s; distance=8560 kB, estimate=8560 kB; lsn=0/26505E0, redo lsn=0/2650588
+2026-09-27T05:22:44.7858491Z  2026-09-27 05:19:25.755 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7859608Z  2026-09-27 05:19:25.757 UTC [55] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=8, longest=0.001 s, average=0.001 s; distance=7342 kB, estimate=8438 kB; lsn=0/2D7C120, redo lsn=0/2D7C0C8
+2026-09-27T05:22:44.7860709Z  2026-09-27 05:19:26.916 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7861795Z  2026-09-27 05:19:26.918 UTC [55] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=7, longest=0.001 s, average=0.001 s; distance=7343 kB, estimate=8328 kB; lsn=0/34A7D80, redo lsn=0/34A7D28
+2026-09-27T05:22:44.7862854Z  2026-09-27 05:19:28.435 UTC [1670] ERROR:  owned cleanup rollback fault
+2026-09-27T05:22:44.7863394Z  2026-09-27 05:19:28.435 UTC [1670] CONTEXT:  PL/pgSQL function reject_cleanup_event() line 2 at RAISE
+2026-09-27T05:22:44.7863886Z  2026-09-27 05:19:28.435 UTC [1670] STATEMENT:  
+2026-09-27T05:22:44.7864201Z  	        INSERT INTO events
+2026-09-27T05:22:44.7864572Z  	            (id, schema_version, corp_id, room_id, actor_id, type, aggregate_type,
+2026-09-27T05:22:44.7865293Z  	             aggregate_id, aggregate_version, correlation_id, causation_id,
+2026-09-27T05:22:44.7865731Z  	             idempotency_key, visibility, payload)
+2026-09-27T05:22:44.7866103Z  	        VALUES ($1, 1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+2026-09-27T05:22:44.7866524Z  	        ON CONFLICT (corp_id, idempotency_key) DO NOTHING
+2026-09-27T05:22:44.7876979Z  	        RETURNING seq, id, schema_version, corp_id, room_id, actor_id, type,
+2026-09-27T05:22:44.7878018Z  	                  aggregate_type, aggregate_id, aggregate_version, correlation_id,
+2026-09-27T05:22:44.7878847Z  	                  causation_id, idempotency_key, visibility, payload, created_at
+2026-09-27T05:22:44.7879371Z  	        
+2026-09-27T05:22:44.7879678Z  2026-09-27 05:19:28.458 UTC [1670] ERROR:  owned cleanup rollback fault
+2026-09-27T05:22:44.7880227Z  2026-09-27 05:19:28.458 UTC [1670] CONTEXT:  PL/pgSQL function reject_cleanup_event() line 2 at RAISE
+2026-09-27T05:22:44.7880719Z  2026-09-27 05:19:28.458 UTC [1670] STATEMENT:  
+2026-09-27T05:22:44.7881044Z  	        INSERT INTO events
+2026-09-27T05:22:44.7881418Z  	            (id, schema_version, corp_id, room_id, actor_id, type, aggregate_type,
+2026-09-27T05:22:44.7881913Z  	             aggregate_id, aggregate_version, correlation_id, causation_id,
+2026-09-27T05:22:44.7882332Z  	             idempotency_key, visibility, payload)
+2026-09-27T05:22:44.7882697Z  	        VALUES ($1, 1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+2026-09-27T05:22:44.7883100Z  	        ON CONFLICT (corp_id, idempotency_key) DO NOTHING
+2026-09-27T05:22:44.7883535Z  	        RETURNING seq, id, schema_version, corp_id, room_id, actor_id, type,
+2026-09-27T05:22:44.7884019Z  	                  aggregate_type, aggregate_id, aggregate_version, correlation_id,
+2026-09-27T05:22:44.7884514Z  	                  causation_id, idempotency_key, visibility, payload, created_at
+2026-09-27T05:22:44.7884892Z  	        
+2026-09-27T05:22:44.7885213Z  2026-09-27 05:19:28.505 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7886580Z  2026-09-27 05:19:28.508 UTC [55] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.004 s; sync files=7, longest=0.001 s, average=0.001 s; distance=7356 kB, estimate=8231 kB; lsn=0/3BD7020, redo lsn=0/3BD6FC8
+2026-09-27T05:22:44.7887991Z  2026-09-27 05:19:29.677 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7889096Z  2026-09-27 05:19:29.680 UTC [55] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=7, longest=0.001 s, average=0.001 s; distance=7351 kB, estimate=8143 kB; lsn=0/4304F88, redo lsn=0/4304F30
+2026-09-27T05:22:44.7890159Z  2026-09-27 05:19:30.825 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7891235Z  2026-09-27 05:19:30.828 UTC [55] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=7, longest=0.001 s, average=0.001 s; distance=7346 kB, estimate=8063 kB; lsn=0/4A31B30, redo lsn=0/4A31AD8
+2026-09-27T05:22:44.7892324Z  2026-09-27 05:19:32.166 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7893393Z  2026-09-27 05:19:32.168 UTC [55] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=7, longest=0.001 s, average=0.001 s; distance=7354 kB, estimate=7993 kB; lsn=0/51605A0, redo lsn=0/5160548
+2026-09-27T05:22:44.7894469Z  2026-09-27 05:19:33.611 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7895678Z  2026-09-27 05:19:33.613 UTC [55] LOG:  checkpoint complete: wrote 8 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=8, longest=0.001 s, average=0.001 s; distance=7356 kB, estimate=7929 kB; lsn=0/588F778, redo lsn=0/588F720
+2026-09-27T05:22:44.7896760Z  2026-09-27 05:19:34.767 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7898233Z  2026-09-27 05:19:34.770 UTC [55] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=7, longest=0.001 s, average=0.001 s; distance=7346 kB, estimate=7871 kB; lsn=0/5FBC110, redo lsn=0/5FBC0B8
+2026-09-27T05:22:44.7899478Z  2026-09-27 05:19:35.905 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7900544Z  2026-09-27 05:19:35.908 UTC [55] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=7, longest=0.001 s, average=0.001 s; distance=7353 kB, estimate=7819 kB; lsn=0/66EA878, redo lsn=0/66EA820
+2026-09-27T05:22:44.7901646Z  2026-09-27 05:19:37.045 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7902723Z  2026-09-27 05:19:37.048 UTC [55] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=7, longest=0.001 s, average=0.001 s; distance=7360 kB, estimate=7773 kB; lsn=0/6E1A990, redo lsn=0/6E1A938
+2026-09-27T05:22:44.7903790Z  2026-09-27 05:19:38.203 UTC [55] LOG:  checkpoint starting: immediate force wait
+2026-09-27T05:22:44.7904855Z  2026-09-27 05:19:38.206 UTC [55] LOG:  checkpoint complete: wrote 7 buffers (0.0%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.001 s, sync=0.001 s, total=0.003 s; sync files=7, longest=0.001 s, average=0.001 s; distance=7360 kB, estimate=7732 kB; lsn=0/754AC30, redo lsn=0/754ABD8
+2026-09-27T05:22:44.7905925Z  2026-09-27 05:20:21.550 UTC [413] ERROR:  injected artifact metadata insert failure
+2026-09-27T05:22:44.7906523Z  2026-09-27 05:20:21.550 UTC [413] CONTEXT:  PL/pgSQL function crony_test_fail_artifact_insert() line 4 at RAISE
+2026-09-27T05:22:44.7907075Z  2026-09-27 05:20:21.550 UTC [413] STATEMENT:  
+2026-09-27T05:22:44.7907866Z  	            INSERT INTO artifacts
+2026-09-27T05:22:44.7908383Z  	                (id, corp_id, task_id, run_id, producer_agent_id, producer_runner_id,
+2026-09-27T05:22:44.7908948Z  	                 verifier, object_key, uri, sha256, media_type, bytes, artifact_role, file_name,
+2026-09-27T05:22:44.7909523Z  	                 metadata, retention_until, provenance_signature, status, staging_key)
+2026-09-27T05:22:44.7910012Z  	            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+2026-09-27T05:22:44.7910380Z  	                    $15, $16, $17, 'staged', $18)
+2026-09-27T05:22:44.7910691Z  	            RETURNING created_at
+2026-09-27T05:22:44.7910955Z  	            
+2026-09-27T05:22:44.7911314Z  2026-09-27 05:20:23.682 UTC [411] ERROR:  injected artifact metadata finalization failure
+2026-09-27T05:22:44.7911955Z  2026-09-27 05:20:23.682 UTC [411] CONTEXT:  PL/pgSQL function crony_test_fail_artifact_finalize() line 4 at RAISE
+2026-09-27T05:22:44.7912503Z  2026-09-27 05:20:23.682 UTC [411] STATEMENT:  
+2026-09-27T05:22:44.7912819Z  	            UPDATE artifacts
+2026-09-27T05:22:44.7913121Z  	            SET status = 'ready', finalized_at = now(),
+2026-09-27T05:22:44.7913455Z  	                rejection_reason = NULL
+2026-09-27T05:22:44.7913765Z  	            WHERE id = $1 AND status = 'staged'
+2026-09-27T05:22:44.7914050Z  	            
+2026-09-27T05:22:44.7914384Z  The default text search configuration will be set to "english".
+2026-09-27T05:22:44.7914744Z  
+2026-09-27T05:22:44.7914961Z  Data page checksums are disabled.
+2026-09-27T05:22:44.7915233Z  
+2026-09-27T05:22:44.7915553Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2026-09-27T05:22:44.7915977Z  creating subdirectories ... ok
+2026-09-27T05:22:44.7916313Z  selecting dynamic shared memory implementation ... posix
+2026-09-27T05:22:44.7916703Z  selecting default "max_connections" ... 100
+2026-09-27T05:22:44.7917170Z  selecting default "shared_buffers" ... 128MB
+2026-09-27T05:22:44.7917502Z  selecting default time zone ... UTC
+2026-09-27T05:22:44.7918050Z  creating configuration files ... ok
+2026-09-27T05:22:44.7918343Z  running bootstrap script ... ok
+2026-09-27T05:22:44.7918667Z  performing post-bootstrap initialization ... ok
+2026-09-27T05:22:44.7919002Z  syncing data to disk ... ok
+2026-09-27T05:22:44.7919249Z  
+2026-09-27T05:22:44.7919440Z  
+2026-09-27T05:22:44.7919685Z  Success. You can now start the database server using:
+2026-09-27T05:22:44.7920006Z  
+2026-09-27T05:22:44.7920257Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2026-09-27T05:22:44.7920580Z  
+2026-09-27T05:22:44.7921171Z  waiting for server to start....2026-09-27 05:11:55.514 UTC [41] LOG:  starting PostgreSQL 17.11 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+2026-09-27T05:22:44.7922005Z  2026-09-27 05:11:55.515 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2026-09-27T05:22:44.7922607Z  2026-09-27 05:11:55.518 UTC [44] LOG:  database system was shut down at 2026-09-27 05:11:55 UTC
+2026-09-27T05:22:44.7923151Z  2026-09-27 05:11:55.521 UTC [41] LOG:  database system is ready to accept connections
+2026-09-27T05:22:44.7923554Z   done
+2026-09-27T05:22:44.7923761Z  server started
+2026-09-27T05:22:44.7923978Z  CREATE DATABASE
+2026-09-27T05:22:44.7924193Z  
+2026-09-27T05:22:44.7924396Z  
+2026-09-27T05:22:44.7924733Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2026-09-27T05:22:44.7925151Z  
+2026-09-27T05:22:44.7925536Z  waiting for server to shut down...2026-09-27 05:11:55.662 UTC [41] LOG:  received fast shutdown request
+2026-09-27T05:22:44.7926092Z  .2026-09-27 05:11:55.663 UTC [41] LOG:  aborting any active transactions
+2026-09-27T05:22:44.7926698Z  2026-09-27 05:11:55.666 UTC [41] LOG:  background worker "logical replication launcher" (PID 47) exited with exit code 1
+2026-09-27T05:22:44.7927256Z  2026-09-27 05:11:55.667 UTC [42] LOG:  shutting down
+2026-09-27T05:22:44.7927998Z  2026-09-27 05:11:55.668 UTC [42] LOG:  checkpoint starting: shutdown immediate
+2026-09-27T05:22:44.7929304Z  2026-09-27 05:11:55.683 UTC [42] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.013 s, sync=0.002 s, total=0.016 s; sync files=301, longest=0.001 s, average=0.001 s; distance=4266 kB, estimate=4266 kB; lsn=0/191E810, redo lsn=0/191E810
+2026-09-27T05:22:44.7930390Z  2026-09-27 05:11:55.691 UTC [41] LOG:  database system is shut down
+2026-09-27T05:22:44.7930744Z   done
+2026-09-27T05:22:44.7930949Z  server stopped
+2026-09-27T05:22:44.7931165Z  
+2026-09-27T05:22:44.7931423Z  PostgreSQL init process complete; ready for start up.
+2026-09-27T05:22:44.7931780Z  
+2026-09-27T05:22:44.7936892Z Stop and remove container: 18e067c7881b4739ade535d83ba2f0f0_postgres17alpine_7e0d21
+2026-09-27T05:22:44.7942169Z ##[command]/usr/bin/docker rm --force 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17
+2026-09-27T05:22:44.9252111Z 6064d3b35424830f11ffdc452a094193210f4f64519dc2b8bb8fce8510ec5f17
+2026-09-27T05:22:44.9279383Z Remove container network: github_network_f4fd7a220b9240f9913334cdb9f4b9e1
+2026-09-27T05:22:44.9283976Z ##[command]/usr/bin/docker network rm github_network_f4fd7a220b9240f9913334cdb9f4b9e1
+2026-09-27T05:22:45.0450650Z github_network_f4fd7a220b9240f9913334cdb9f4b9e1
+2026-09-27T05:22:45.0527420Z Cleaning up orphan processes
+2026-09-27T05:22:45.0986573Z Terminate orphan process: pid (4978) (crony-runner)

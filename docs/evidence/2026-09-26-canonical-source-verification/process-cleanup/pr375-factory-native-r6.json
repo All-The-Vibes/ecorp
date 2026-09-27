@@ -1,0 +1,110 @@
+{
+  "pr": 375,
+  "issue": 82,
+  "status": "failed",
+  "started_at_utc": "2026-09-27T09:22:02.8244133+00:00",
+  "source_binding": {
+    "schema_version": 1,
+    "source_head": "b5a84b182e07d7bb6ebff4b959f1e74ca41fc964",
+    "source_branch": "codex/issue82-canonical-verification",
+    "source_tree": "fdbffb3ca01357460d59f5e0c8c2915ac2eef242",
+    "source_files_sha256": "bce39f36536da87eae5abeaf7f733ff47553e174b74be42e9da83ed142f96e9d",
+    "source_file_count": 6702,
+    "tracked_diff_sha256": "733ddc85310ce2e8ccff7112bdf1c7540cf88f285dece5efdbfba5f64ee5ca60",
+    "untracked_digests": [],
+    "canonical_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-canonical-r8.json",
+    "canonical_receipt_sha256": "eb206fab49a166dc80b129d324ba07ca111b69d7964c98bbdbc3ef48a664bfea",
+    "canonical_report_sha256": "00d9865e3dfe5cc465fb411c2e88484d3c33a237cd189e2f7b15f815f31aef59",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "build_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-factory-native-build-r4.json",
+  "build_receipt_sha256": "c750fb1307dfcb50d19f30b1ac69336676883dd81d0168327dab071a5e208bcc",
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "58c3735ccb91d745120ee12148061f42118cd4cb5f39b8e11c8dcb24eb477eb2"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "1f0e19a317bc1a555ab7efef41c9b65f60b0beee35f56c6f7d2d4cc6c0a39370"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "8c3fbd0f1f0ff05825edbf221fb1cc9f280c4b6da0ce1d83df984da91e1a4482"
+    }
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r6",
+  "server": "http://127.0.0.1:18884",
+  "driver": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\tools\\e2e_factory_controller.mjs",
+  "driver_sha256": "99f37c1c39143587531db765a33c678391d0148dca1168abc09913399f1a4b95",
+  "source_unchanged": true,
+  "cleanup": [
+    {
+      "pid": 23120,
+      "role": "runner",
+      "stopped": true
+    },
+    {
+      "pid": 26304,
+      "role": "server",
+      "stopped": true
+    },
+    {
+      "pid": 12620,
+      "role": "postgres",
+      "stopped": true
+    }
+  ],
+  "scope": "Corrected Factory controller driver, independent native Git pack transfer and Git process cleanup, native Windows CLI/server/runner, fresh owned SCRAM PostgreSQL and deterministic fake-process child. The GitHub CLI is a local fixture: zero actual GitHub effects or vendor inference.",
+  "fixture_correction": "r2 and r3 timed out during private Git transfer and failed snapshot cleanup. r4 timed out during transfer but its cleanup succeeded. This revision uses native pack-objects with an explicit shallow base and reuses native Windows process ownership. It awaits teardown on every return and checks exported source separately from provider evidence. r5 completed its native run and both canonical checks, then observed active workspace disposition before finalization; its immediate preservation assertion failed. This revision polls persisted preservation with a bounded deadline and rejects removal. Failed attempts remain preserved.",
+  "acceptance": "The complete controller must pass, exported source bytes must match, provider evidence must remain separate, and persisted verifier evidence must bind the exported Git tree.",
+  "database_authentication": {
+    "wrong_password_rejected": true,
+    "secrets_outside_source_and_runner": true,
+    "server_environment_delivery": "reduced assurance",
+    "authenticated_creation": true,
+    "method": "scram-sha-256"
+  },
+  "driver_exit_code": 1,
+  "driver_log": {
+    "path": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r6\\evidence\\controller.log",
+    "sha256": "2648e8fc9f5ce76ace97bed3ca614c714ffef0791a77061a679d4dd97fa68469"
+  },
+  "database_state": {
+    "path": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r6\\evidence\\database-state.json",
+    "sha256": "4b48bce572e28acfcd2503b90e07400c47269f8564b1ccdb40c2c535588645a9"
+  },
+  "verification": [],
+  "generated_files": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\output\\fake-github-factory-state.json",
+      "sha256": "1a5e65b72dc3e9acf2a482caa66f1131b858d36686b2f7116f060559232b8aad",
+      "copy": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r6\\evidence\\fake-github-factory-state.json"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\output\\factory-invalid-verification-policy.json",
+      "sha256": "642d4606f01d8d9f0d8638514f2cd8b98d827da77183167b63a678be60288e99",
+      "copy": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r6\\evidence\\factory-invalid-verification-policy.json"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue327-clippy\\ecorp\\output\\factory-explicit-verification-policy.json",
+      "sha256": "20ae14aada0ac9a15a5d42e2f55a5cfd64b7ea45e8b68fc600c333d1d159cf17",
+      "copy": "<USERPROFILE>\\code\\qa\\pr375-factory-native-r6\\evidence\\factory-explicit-verification-policy.json"
+    }
+  ],
+  "failure": "Native Factory driver exited nonzero; inspect the exact driver log and persisted state to identify the reached phase.",
+  "binaries_unchanged": true,
+  "finished_at_utc": "2026-09-27T09:32:39.4446373+00:00"
+}

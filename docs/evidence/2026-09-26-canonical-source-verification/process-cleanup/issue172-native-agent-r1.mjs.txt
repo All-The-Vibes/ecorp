@@ -1,0 +1,21 @@
+// Native deterministic child protocol; no provider inference or external effects.
+import assert from 'node:assert/strict'
+import { readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+
+const args = new Map()
+for (let i = 2; i < process.argv.length; i += 2) args.set(process.argv[i], process.argv[i + 1])
+const runId = args.get('--run-id'), workdir = args.get('--workdir'), mission = args.get('--mission')
+assert.ok(runId && path.isAbsolute(workdir) && mission?.includes('[issue172-native-'))
+const fixture = JSON.parse(await readFile(path.join(workdir, 'fixture.json'), 'utf8'))
+assert.equal(fixture.issue, 172)
+assert.equal(fixture.test_owned, true)
+assert.ok(['a', 'b'].includes(fixture.side))
+assert.ok(mission.includes(`[issue172-native-${fixture.side}]`))
+const emit = event => process.stdout.write(JSON.stringify(event) + '\n')
+emit({ type: 'status', status: 'working', station: 'terminal', message: 'Writing the owned scheduler acceptance output in the assigned isolated worktree.' })
+await writeFile(path.join(workdir, 'output.txt'), `Issue 172 native runner ${fixture.side} completed.\n`, { flag: 'wx' })
+const artifact = path.join(workdir, 'result.md')
+await writeFile(artifact, `# Native issue172 diagnostic\n\nRunner fixture: ${fixture.side}\nRun: ${runId}\nThe persisted verifier decides completion.\n`, { flag: 'wx' })
+emit({ type: 'artifact', path: artifact, media_type: 'text/markdown' })
+emit({ type: 'completed', summary: 'Owned scheduler output prepared for the authoritative verifier.' })

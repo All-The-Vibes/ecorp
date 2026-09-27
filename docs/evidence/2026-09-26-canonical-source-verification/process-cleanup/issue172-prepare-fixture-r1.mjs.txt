@@ -1,0 +1,38 @@
+// Prepare one new independent source. This script performs no network operation.
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { readdir, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+
+const [product, source, side] = process.argv.slice(2)
+assert.ok(path.isAbsolute(product) && path.isAbsolute(source))
+assert.ok(['a', 'b'].includes(side))
+assert.equal(path.basename(source), `source-${side}`)
+assert.match(path.basename(path.dirname(source)), /^issue172-scheduler-fairness-/)
+assert.equal((await readdir(source)).length, 0, 'Never adopt or reset an existing source')
+function git(root, args) {
+  const result = spawnSync('git', ['-C', root, ...args], { maxBuffer: 1024 * 1024, windowsHide: true })
+  assert.equal(result.status, 0, result.stderr.toString())
+  return result.stdout.toString().trim()
+}
+const files = {
+  'fixture.json': JSON.stringify({ issue: 172, side, test_owned: true }) + '\n',
+  'README.md': `# Issue 172 native runner ${side.toUpperCase()} fixture\n\nIndependent source; no external effects.\n`,
+  'verify.mjs': "import assert from 'node:assert/strict';\nimport {readFile} from 'node:fs/promises';\nconst fixture=JSON.parse(await readFile('fixture.json','utf8'));\nassert.equal(fixture.issue,172); assert.equal(fixture.test_owned,true);\nassert.equal(await readFile('output.txt','utf8'),`Issue 172 native runner ${fixture.side} completed.\\n`);\nconsole.log('Owned native scheduler output verified.');\n",
+  '.gitattributes': '* text=auto eol=lf\n',
+}
+for (const [file, bytes] of Object.entries(files)) await writeFile(path.join(source, file), bytes, { flag: 'wx' })
+git(source, ['init', '--template=', '-b', 'main'])
+git(source, ['config', 'core.autocrlf', 'false'])
+git(source, ['add', '--', ...Object.keys(files)])
+git(source, ['-c', 'user.name=ECorp QA', '-c', 'user.email=qa@ecorp.invalid', 'commit', '-m', `Prepare independent issue172 runner ${side} fixture`])
+git(source, ['remote', 'add', 'origin', `https://github.com/ecorp-fixture/issue172-${side}.git`])
+assert.equal(git(source, ['status', '--porcelain=v1']), '')
+const receipt = {
+  test_owned: true, issue: 172, side, product_head: git(product, ['rev-parse', 'HEAD']),
+  source_commit: git(source, ['rev-parse', 'HEAD']), source_repository: `ecorp-fixture/issue172-${side}`,
+  files: Object.entries(files).map(([file, bytes]) => ({ file, sha256: createHash('sha256').update(bytes).digest('hex') })),
+}
+await writeFile(path.join(path.dirname(source), `evidence/source-${side}.json`), JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(receipt))
