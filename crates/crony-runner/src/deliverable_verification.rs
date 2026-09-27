@@ -5,7 +5,7 @@ use std::{
     collections::BTreeSet,
     ffi::OsString,
     path::{Component, Path, PathBuf},
-    process::{Output, Stdio},
+    process::{ExitStatus, Output, Stdio},
     time::Duration,
 };
 
@@ -16,7 +16,7 @@ use crony_domain::{VerificationPolicy, VerifierCheck};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use tokio::{
-    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
+    io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, BufReader},
     process::Command,
     sync::watch,
 };
@@ -34,6 +34,8 @@ use crate::adapter::process_tree::{OwnedProcessTree, OwnedProcessTreeSpawn};
 const MAX_ENTRIES: usize = 100_000;
 const MAX_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 const MAX_GIT_OUTPUT: u64 = 16 * 1024 * 1024;
+// Candidate and base blobs, plus bounded tree/commit/pack framing. Never buffer a pack in memory.
+const MAX_GIT_PACK_BYTES: u64 = 2 * MAX_BYTES + 64 * 1024 * 1024;
 
 #[derive(Debug)]
 struct SourceFile {
@@ -136,30 +138,7 @@ async fn verify_inner(
         &[],
     )
     .await?;
-    // Native pack output writes independent objects directly, avoiding the costly local
-    // upload-pack/index-pack pipe chain on Windows. Limit history to candidate + base;
-    // no source config, refs, hooks, alternates or older history enter the snapshot.
-    let pack_prefix = workspace::normalize_path(baseline.path().join(".git/objects/pack/pack"));
-    let revisions = format!(
-        "--shallow {}\n{}\n",
-        prepared.workspace.base_commit, candidate_commit
-    );
-    private_git(
-        &prepared.workspace_root,
-        &[
-            "pack-objects".into(),
-            "--revs".into(),
-            "--shallow".into(),
-            "--quiet".into(),
-            // Temporary snapshots need neither delta searches nor recompression.
-            "--window=0".into(),
-            "--compression=0".into(),
-            pack_prefix.into_os_string(),
-        ],
-        revisions.as_bytes(),
-    )
-    .await
-    .context("pack independent canonical source objects")?;
+    transfer_canonical_objects(prepared, baseline.path(), &candidate_commit).await?;
     tokio::fs::write(
         baseline.path().join(".git/shallow"),
         format!("{}\n", prepared.workspace.base_commit),
@@ -260,6 +239,78 @@ async fn verify_inner(
     let mut report = verifier::verification_report(policy, checks);
     report.source = Some(source);
     Ok(Some(report))
+}
+
+async fn transfer_canonical_objects(
+    prepared: &PreparedDeliverable,
+    snapshot: &Path,
+    candidate_commit: &str,
+) -> Result<()> {
+    // A named pack makes Git finalize files from the source object database. That rename
+    // fails when checkout and snapshot are on different volumes. Stream to an exclusively
+    // created snapshot file, await the producer, then let native index-pack install locally.
+    // Only candidate + base history enters; source config, refs, hooks and alternates do not.
+    let transfer_path = snapshot.join(".git/ecorp-transfer.pack");
+    let mut transfer = tokio::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&transfer_path)
+        .await
+        .context("create owned canonical pack transfer")?;
+    let revisions = format!(
+        "--shallow {}\n{}\n",
+        prepared.workspace.base_commit, candidate_commit
+    );
+    let mut pack = git_command(&prepared.workspace_root);
+    pack.args([
+        "pack-objects",
+        "--revs",
+        "--shallow",
+        "--quiet",
+        // Temporary snapshots need neither delta searches nor recompression.
+        "--window=0",
+        "--compression=0",
+        "--stdout",
+    ]);
+    let (status, errors) = run_private_git_stream(
+        &mut pack,
+        revisions.as_bytes(),
+        &mut transfer,
+        MAX_GIT_PACK_BYTES,
+        super::GIT_TIMEOUT,
+    )
+    .await
+    .context("pack independent canonical source objects")?;
+    if !status.success() {
+        bail!(
+            "pack canonical objects failed: {}",
+            String::from_utf8_lossy(&errors).trim()
+        );
+    }
+    drop(transfer);
+    let input = tokio::fs::File::open(&transfer_path).await?;
+    let mut index = git_command(snapshot);
+    index.args(["index-pack", "--stdin", "--threads=1"]);
+    let (status, errors) = run_private_git_stream(
+        &mut index,
+        input,
+        &mut Vec::new(),
+        MAX_GIT_OUTPUT,
+        super::GIT_TIMEOUT,
+    )
+    .await
+    .context("install independent canonical source objects")?;
+    if !status.success() {
+        bail!(
+            "index canonical objects failed: {}",
+            String::from_utf8_lossy(&errors).trim()
+        );
+    }
+    // Every process and file handle is released before removing this snapshot-owned scratch.
+    tokio::fs::remove_file(transfer_path)
+        .await
+        .context("remove canonical pack transfer")?;
+    Ok(())
 }
 
 /// Sanitize Git routing/config only. This is not a verifier command or an OS sandbox.
@@ -418,6 +469,23 @@ pub(super) async fn run_private_git(
     input: &[u8],
     timeout: Duration,
 ) -> Result<Output> {
+    let mut output = Vec::new();
+    let (status, stderr) =
+        run_private_git_stream(command, input, &mut output, MAX_GIT_OUTPUT, timeout).await?;
+    Ok(Output {
+        status,
+        stdout: output,
+        stderr,
+    })
+}
+
+async fn run_private_git_stream(
+    command: &mut Command,
+    input: impl AsyncRead + Unpin,
+    output: &mut (impl AsyncWrite + Unpin),
+    output_limit: u64,
+    timeout: Duration,
+) -> Result<(ExitStatus, Vec<u8>)> {
     command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -425,47 +493,49 @@ pub(super) async fn run_private_git(
     let mut process = PrivateGitProcess::spawn(command)
         .await
         .context("start private Git operation")?;
-    let result = collect_private_git(process.child_mut(), input, timeout).await;
+    let result =
+        collect_private_git(process.child_mut(), input, output, output_limit, timeout).await;
     process.finish(result).await
 }
 
 async fn collect_private_git(
     child: &mut tokio::process::Child,
-    input: &[u8],
+    mut input: impl AsyncRead + Unpin,
+    output: &mut (impl AsyncWrite + Unpin),
+    output_limit: u64,
     timeout: Duration,
-) -> Result<Output> {
+) -> Result<(ExitStatus, Vec<u8>)> {
     let mut stdin = child.stdin.take().context("Git stdin")?;
     let mut stdout = child
         .stdout
         .take()
         .context("Git stdout")?
-        .take(MAX_GIT_OUTPUT + 1);
+        .take(output_limit + 1);
     let mut stderr = child.stderr.take().context("Git stderr")?.take(64 * 1024);
-    let mut output = Vec::new();
     let mut errors = Vec::new();
     let (status, _, _, _) = tokio::time::timeout(timeout, async {
         tokio::try_join!(
             child.wait(),
             async move {
-                stdin.write_all(input).await?;
+                tokio::io::copy(&mut input, &mut stdin).await?;
                 drop(stdin);
                 Ok::<_, std::io::Error>(())
             },
-            stdout.read_to_end(&mut output),
+            async {
+                if tokio::io::copy(&mut stdout, output).await? > output_limit {
+                    return Err(std::io::Error::other(
+                        "private Git output exceeds its bound",
+                    ));
+                }
+                output.flush().await
+            },
             stderr.read_to_end(&mut errors),
         )
     })
     .await
     .context("private Git operation timed out")?
     .context("private Git I/O failed")?;
-    if output.len() as u64 > MAX_GIT_OUTPUT {
-        bail!("private Git output exceeds its bound");
-    }
-    Ok(Output {
-        status,
-        stdout: output,
-        stderr: errors,
-    })
+    Ok((status, errors))
 }
 
 async fn tree_files(root: &Path, tree: &str) -> Result<Vec<SourceFile>> {

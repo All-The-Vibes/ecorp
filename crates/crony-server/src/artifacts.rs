@@ -713,7 +713,7 @@ fn source_deliverable_metadata(payload: &Value) -> Result<Value> {
         .unwrap_or(false);
     if !valid_hex(verification_sha256, 64, 64)
         || !valid_hex(base_commit, 40, 64)
-        || head_commit.is_some_and(|value| !valid_hex(value, 40, 64))
+        || head_commit.is_some_and(|value| !valid_hex(value, source.tree.len(), source.tree.len()))
         || branch.is_empty()
         || branch.len() > 512
         || !matches!(
@@ -946,6 +946,42 @@ mod tests {
         payload["sha256"] = json!(hex::encode(Sha256::digest(content)));
         payload["bytes"] = json!(content.len());
         payload["content_base64"] = json!(BASE64.encode(content));
+    }
+
+    #[test]
+    fn canonical_upload_requires_head_in_the_verified_object_format() {
+        let mut store = memory_store();
+        store.max_bytes = 8192;
+        for object_length in [40, 64] {
+            let mut payload = issue82_source_upload_fixture("commit_branch");
+            payload["verified_tree"] = json!("d".repeat(object_length));
+            payload["base_commit"] = json!("b".repeat(object_length));
+            payload["source_verification"]["tree"] = payload["verified_tree"].clone();
+            payload["source_verification"]["base_commit"] = payload["base_commit"].clone();
+            payload["source_verification"]["candidate_commit"] = json!("c".repeat(object_length));
+            for head_length in 39..=65 {
+                payload["head_commit"] = json!("f".repeat(head_length));
+                let mut envelope = payload.clone();
+                for field in ["content_base64", "bytes", "sha256"] {
+                    envelope.as_object_mut().unwrap().remove(field);
+                }
+                envelope["schema_version"] = json!(1);
+                issue82_replace_upload_content(
+                    &mut payload,
+                    &serde_json::to_vec(&envelope).unwrap(),
+                );
+                let result = store.prepare_staging(
+                    identity(),
+                    &payload,
+                    Utc::now() + chrono::Duration::days(1),
+                );
+                assert_eq!(
+                    result.is_ok(),
+                    head_length == object_length,
+                    "verified object length {object_length}, head length {head_length}"
+                );
+            }
+        }
     }
 
     #[test]

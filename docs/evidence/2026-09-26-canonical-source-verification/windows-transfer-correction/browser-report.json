@@ -1,0 +1,1360 @@
+{
+  "schema_version": 1,
+  "issue": 82,
+  "status": "passed",
+  "started_at": "2026-09-27T14:49:46.357Z",
+  "scope": "Real Edge browser, server and native runner; deterministic JSONL child and development fixture identities. No vendor inference, human review, deployment or OS isolation claim.",
+  "source_binding": {
+    "schema_version": 1,
+    "source_head": "712a30eb018fa2325f889bdc4fd539161e2c0f3a",
+    "source_branch": "codex/issue82-canonical-verification",
+    "source_tree": "d3b0f0d56e4dd7e81518cf808d67bcaef02b5c3a",
+    "source_files_sha256": "a5f08ca99a25b12e89d5e3b8c959a8c620e6cd85503cc63239226b9f9d6ea01f",
+    "source_file_count": 6853,
+    "tracked_diff_sha256": "2fd9fd243627c515ed1df3bbc8fe1999f005565ce71e4fc51af6cc33d89dde88",
+    "untracked_digests": [],
+    "canonical_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-canonical-r11.json",
+    "canonical_receipt_sha256": "4ccc5bf1faa0ee6c8f365ce446a24241544db6a207855e2b06e2a00dac13b1aa",
+    "canonical_report_sha256": "5549149c0cdc1632d391f2848a8b827ab1af3c2c3e210e41bf7ca05e253144ef",
+    "canonical_gate_names": [
+      "migrations",
+      "state-audit-compatibility",
+      "state-audit-evm",
+      "docs",
+      "repository-docs",
+      "node-tests",
+      "format",
+      "clippy",
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ]
+  },
+  "source_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+  "server": "http://127.0.0.1:18892",
+  "web": "http://127.0.0.1:15892",
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-native-r5",
+  "missions": [
+    {
+      "title": "[issue82-physical-checksum] Native canonical source 7f8a19d6",
+      "expected": "failed",
+      "authored": {
+        "title": "[issue82-physical-checksum] Native canonical source 7f8a19d6",
+        "description": "Owned issue82 canonical Git source regression. Write only the deterministic migration and evidence in the assigned worktree. The real migration verifier decides completion. No external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue82-canonical-source",
+          "base_ref": "HEAD",
+          "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "commit_branch",
+          "commit_after_verification": true,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "command",
+              "program": "node",
+              "args": [
+                "tools/check_migrations.mjs"
+              ],
+              "timeout_ms": 10000
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "mission_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+      "task_id": "c9be1490-4fc7-419d-925b-ebd2df4b98e4",
+      "saved_screenshot": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-browser-2026-09-27T14-49-46.356Z-e3a9465b\\failed-saved.png",
+        "sha256": "082aa419074b1436a9d0de0c2d03522db81ee5f861994e78be2b2479f4a9c189"
+      },
+      "launch": {
+        "run_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+        "runner_id": "issue82-canonical-qa",
+        "run_ids": [
+          "c74d2c94-b09b-4049-88a8-aba09ebe4edd"
+        ],
+        "runner_ids": [
+          "issue82-canonical-qa"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[issue82-physical-checksum] Native canonical source 7f8a19d6",
+          "description": "Owned issue82 canonical Git source regression. Write only the deterministic migration and evidence in the assigned worktree. The real migration verifier decides completion. No external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "failed",
+          "created_at": "2026-09-27T14:49:54.766809Z",
+          "updated_at": "2026-09-27T14:50:05.326877Z"
+        },
+        "tasks": [
+          {
+            "id": "c9be1490-4fc7-419d-925b-ebd2df4b98e4",
+            "mission_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned issue82 canonical Git source regression. Write only the deterministic migration and evidence in the assigned worktree. The real migration verifier decides completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue82-physical-checksum] Native canonical source 7f8a19d6",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned issue82 canonical Git source regression. Write only the deterministic migration and evidence in the assigned worktree. The real migration verifier decides completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue82-physical-checksum] Native canonical source 7f8a19d6",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue82-canonical-source",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": {
+                "redacted": "sha256",
+                "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+              },
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "commit_branch",
+                "commit_after_verification": true,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 1
+                },
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "tools/check_migrations.mjs"
+                  ],
+                  "timeout_ms": 10000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "failed",
+            "status": "verification_failed",
+            "assigned_agent_id": "d25de5de-b204-496c-aec0-78effbf17e2f",
+            "created_at": "2026-09-27T14:49:54.766809Z",
+            "updated_at": "2026-09-27T14:50:05.326877Z"
+          }
+        ],
+        "run": {
+          "id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "c9be1490-4fc7-419d-925b-ebd2df4b98e4",
+          "agent_id": "d25de5de-b204-496c-aec0-78effbf17e2f",
+          "runner_id": "issue82-canonical-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/issue82-canonical-source",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+          "workspace_path": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-native-r5\\runner\\worktrees\\c9be14904fc7419d925bebd2df4b98e4\\c74d2c94b09b404988a8aba09ebe4edd",
+          "workspace_branch": "crony/task-c9be14904fc7419d925bebd2df4b98e4/run-c74d2c94b09b404988a8aba09ebe4edd",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+          "workspace_fingerprint": "539f001a0441f92220c462c81de635d550ea63793eaf244c3cb13bac2fff878d",
+          "execution_mode": "provider",
+          "verification_status": "failed",
+          "verification_summary": "1 of 2 verifier checks failed",
+          "verification_sha256": null,
+          "deliverable_sha256": null,
+          "status": "failed",
+          "summary": "1 of 2 verifier checks failed",
+          "artifact_id": "01bfb0ac-e177-482e-8ebb-83dc3d144811",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/01bfb0ac-e177-482e-8ebb-83dc3d144811",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "ef6c0ca1a49ed7e603dc64994d8383387d796349c441052427ca5dad00e81e4c",
+          "artifact_sha256": "4ce90f955de445aa661aeb3f676460e4918349ff2562b53d4927c1256cd1c8d8",
+          "created_at": "2026-09-27T14:49:55.368195Z",
+          "updated_at": "2026-09-27T14:50:05.397615Z"
+        },
+        "evidence": [
+          {
+            "id": "da3abc30-d62a-416d-b4ee-ffb18b213016",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "c9be1490-4fc7-419d-925b-ebd2df4b98e4",
+            "run_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "passed",
+            "summary": "durable artifact 01bfb0ac-e177-482e-8ebb-83dc3d144811 has 172 verified bytes",
+            "payload": {
+              "artifact_id": "01bfb0ac-e177-482e-8ebb-83dc3d144811",
+              "bytes": 172,
+              "media_type": "text/markdown",
+              "producer_agent_id": "d25de5de-b204-496c-aec0-78effbf17e2f",
+              "producer_runner_id": "issue82-canonical-qa",
+              "provenance_signature": "ef6c0ca1a49ed7e603dc64994d8383387d796349c441052427ca5dad00e81e4c",
+              "retention_until": "2026-10-27T14:49:56.070441Z",
+              "sha256": "4ce90f955de445aa661aeb3f676460e4918349ff2562b53d4927c1256cd1c8d8",
+              "source": {
+                "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                "candidate_commit": "82c8f2f90785d77fc58a1ed851ccf23bb482a1bc",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "4772c7ece9cf8e4e1716e39cd2f1fb26a4a00492"
+              },
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/01bfb0ac-e177-482e-8ebb-83dc3d144811",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T14:50:05.281312Z"
+          },
+          {
+            "id": "e61ae672-0ac3-410c-8691-f370693ed1f7",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "c9be1490-4fc7-419d-925b-ebd2df4b98e4",
+            "run_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "check_index": 1,
+            "kind": "command",
+            "status": "failed",
+            "summary": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: migration 9999 was modified; append a new migration instead\r\n+ actual - expected\r\n\r\n+ '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6'\r\n- 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658'\r\n\r\n    at file:///<USERPROFILE>/AppData/Local/Temp/ecorp-verification-snapshots/c74d2c94b09b404988a8aba09ebe4edd-441aaf71a7fb4b6c94899f6250fba61f/tools/check_migrations.mjs:35:10 {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6',\r\n  expected: 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658',\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v24.21.0\r\n",
+            "payload": {
+              "args": [
+                "tools/check_migrations.mjs"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: migration 9999 was modified; append a new migration instead\r\n+ actual - expected\r\n\r\n+ '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6'\r\n- 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658'\r\n\r\n    at file:///<USERPROFILE>/AppData/Local/Temp/ecorp-verification-snapshots/c74d2c94b09b404988a8aba09ebe4edd-441aaf71a7fb4b6c94899f6250fba61f/tools/check_migrations.mjs:35:10 {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6',\r\n  expected: 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658',\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v24.21.0\r\n",
+              "exit_code": 1,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "source": {
+                "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                "candidate_commit": "82c8f2f90785d77fc58a1ed851ccf23bb482a1bc",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "4772c7ece9cf8e4e1716e39cd2f1fb26a4a00492"
+              },
+              "stderr": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: migration 9999 was modified; append a new migration instead\r\n+ actual - expected\r\n\r\n+ '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6'\r\n- 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658'\r\n\r\n    at file:///<USERPROFILE>/AppData/Local/Temp/ecorp-verification-snapshots/c74d2c94b09b404988a8aba09ebe4edd-441aaf71a7fb4b6c94899f6250fba61f/tools/check_migrations.mjs:35:10 {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6',\r\n  expected: 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658',\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v24.21.0\r\n",
+              "stdout": ""
+            },
+            "created_at": "2026-09-27T14:50:05.303767Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 9,
+            "id": "01c9b838-ecc8-4259-9fdb-60d683f50b42",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "run:c74d2c94-b09b-4049-88a8-aba09ebe4edd:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "d25de5de-b204-496c-aec0-78effbf17e2f",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "issue82-canonical-qa",
+              "status": "starting",
+              "task_id": "c9be1490-4fc7-419d-925b-ebd2df4b98e4"
+            },
+            "created_at": "2026-09-27T14:49:55.368195Z"
+          },
+          {
+            "seq": 10,
+            "id": "06d64bc6-7ba7-410a-a984-02efe6d0944a",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:06d64bc6-7ba7-410a-a984-02efe6d0944a",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "c9be1490-4fc7-419d-925b-ebd2df4b98e4",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-native-r5\\runner\\worktrees\\c9be14904fc7419d925bebd2df4b98e4\\c74d2c94b09b404988a8aba09ebe4edd",
+              "workspace_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-c9be14904fc7419d925bebd2df4b98e4/run-c74d2c94b09b404988a8aba09ebe4edd"
+            },
+            "created_at": "2026-09-27T14:49:55.951311Z"
+          },
+          {
+            "seq": 11,
+            "id": "afa2c791-ec90-44f9-b71f-e5e98e024608",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:afa2c791-ec90-44f9-b71f-e5e98e024608",
+            "visibility": "corp",
+            "payload": {
+              "message": "Writing a deterministic CRLF migration in the assigned isolated worktree.",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-27T14:49:56.035327Z"
+          },
+          {
+            "seq": 12,
+            "id": "6fcf55ca-cb02-4899-8022-741259fc2677",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "artifact:01bfb0ac-e177-482e-8ebb-83dc3d144811:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "01bfb0ac-e177-482e-8ebb-83dc3d144811",
+              "artifact_role": "provider_evidence",
+              "bytes": 172,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "d25de5de-b204-496c-aec0-78effbf17e2f",
+              "producer_runner_id": "issue82-canonical-qa",
+              "provenance_signature": "ef6c0ca1a49ed7e603dc64994d8383387d796349c441052427ca5dad00e81e4c",
+              "retention_until": "2026-10-27T14:49:56.070441Z",
+              "sha256": "4ce90f955de445aa661aeb3f676460e4918349ff2562b53d4927c1256cd1c8d8",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/01bfb0ac-e177-482e-8ebb-83dc3d144811",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T14:49:56.107719Z"
+          },
+          {
+            "seq": 13,
+            "id": "10ea4e0e-0b4e-4f5b-9767-b268a9239b71",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:10ea4e0e-0b4e-4f5b-9767-b268a9239b71",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-27T14:49:56.134272Z"
+          },
+          {
+            "seq": 14,
+            "id": "2d7e33c8-fbec-4a3c-b181-7a9bb1e18f9b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:2d7e33c8-fbec-4a3c-b181-7a9bb1e18f9b",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 2
+            },
+            "created_at": "2026-09-27T14:49:56.137607Z"
+          },
+          {
+            "seq": 15,
+            "id": "f436cf8c-ee0e-4bf6-a2ee-895216660970",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:f436cf8c-ee0e-4bf6-a2ee-895216660970",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "da3abc30-d62a-416d-b4ee-ffb18b213016",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "01bfb0ac-e177-482e-8ebb-83dc3d144811",
+                "bytes": 172,
+                "media_type": "text/markdown",
+                "producer_agent_id": "d25de5de-b204-496c-aec0-78effbf17e2f",
+                "producer_runner_id": "issue82-canonical-qa",
+                "provenance_signature": "ef6c0ca1a49ed7e603dc64994d8383387d796349c441052427ca5dad00e81e4c",
+                "retention_until": "2026-10-27T14:49:56.070441Z",
+                "sha256": "4ce90f955de445aa661aeb3f676460e4918349ff2562b53d4927c1256cd1c8d8",
+                "source": {
+                  "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                  "candidate_commit": "82c8f2f90785d77fc58a1ed851ccf23bb482a1bc",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "4772c7ece9cf8e4e1716e39cd2f1fb26a4a00492"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/01bfb0ac-e177-482e-8ebb-83dc3d144811",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "passed",
+              "summary": "durable artifact 01bfb0ac-e177-482e-8ebb-83dc3d144811 has 172 verified bytes"
+            },
+            "created_at": "2026-09-27T14:50:05.281312Z"
+          },
+          {
+            "seq": 16,
+            "id": "fa90007d-81ca-4a60-ae93-783f9aa94a92",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:fa90007d-81ca-4a60-ae93-783f9aa94a92",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 1,
+              "evidence_id": "e61ae672-0ac3-410c-8691-f370693ed1f7",
+              "kind": "command",
+              "payload": {
+                "args": [
+                  "tools/check_migrations.mjs"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: migration 9999 was modified; append a new migration instead\r\n+ actual - expected\r\n\r\n+ '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6'\r\n- 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658'\r\n\r\n    at file:///<USERPROFILE>/AppData/Local/Temp/ecorp-verification-snapshots/c74d2c94b09b404988a8aba09ebe4edd-441aaf71a7fb4b6c94899f6250fba61f/tools/check_migrations.mjs:35:10 {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6',\r\n  expected: 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658',\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v24.21.0\r\n",
+                "exit_code": 1,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "source": {
+                  "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                  "candidate_commit": "82c8f2f90785d77fc58a1ed851ccf23bb482a1bc",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "4772c7ece9cf8e4e1716e39cd2f1fb26a4a00492"
+                },
+                "stderr": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: migration 9999 was modified; append a new migration instead\r\n+ actual - expected\r\n\r\n+ '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6'\r\n- 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658'\r\n\r\n    at file:///<USERPROFILE>/AppData/Local/Temp/ecorp-verification-snapshots/c74d2c94b09b404988a8aba09ebe4edd-441aaf71a7fb4b6c94899f6250fba61f/tools/check_migrations.mjs:35:10 {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6',\r\n  expected: 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658',\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v24.21.0\r\n",
+                "stdout": ""
+              },
+              "status": "failed",
+              "summary": "\"node\" exited with exit code: 1; resolution_mode=path_pathext; resolved_executable=node.exe; stderr=node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: migration 9999 was modified; append a new migration instead\r\n+ actual - expected\r\n\r\n+ '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6'\r\n- 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658'\r\n\r\n    at file:///<USERPROFILE>/AppData/Local/Temp/ecorp-verification-snapshots/c74d2c94b09b404988a8aba09ebe4edd-441aaf71a7fb4b6c94899f6250fba61f/tools/check_migrations.mjs:35:10 {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: '86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6',\r\n  expected: 'e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658',\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v24.21.0\r\n"
+            },
+            "created_at": "2026-09-27T14:50:05.303767Z"
+          },
+          {
+            "seq": 17,
+            "id": "93b03499-ed44-40e8-8da8-8d4767c3e467",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_failed",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:93b03499-ed44-40e8-8da8-8d4767c3e467",
+            "visibility": "corp",
+            "payload": {
+              "completion_summary": "Deterministic migration and artifact prepared; the authoritative verifier decides completion.",
+              "error": "1 of 2 verifier checks failed"
+            },
+            "created_at": "2026-09-27T14:50:05.326877Z"
+          },
+          {
+            "seq": 18,
+            "id": "d1cad384-c67d-4b09-9f4c-142ae4fc0d7f",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "c74d2c94-b09b-4049-88a8-aba09ebe4edd",
+            "aggregate_version": 1,
+            "correlation_id": "e84211bc-e2a1-4764-a624-08140faf1a05",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:d1cad384-c67d-4b09-9f4c-142ae4fc0d7f",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "provider recovery, failure, or teardown requires the exact worktree to be retained",
+              "dirty": null,
+              "workspace": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-native-r5\\runner\\worktrees\\c9be14904fc7419d925bebd2df4b98e4\\c74d2c94b09b404988a8aba09ebe4edd",
+              "workspace_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-c9be14904fc7419d925bebd2df4b98e4/run-c74d2c94b09b404988a8aba09ebe4edd",
+              "workspace_fingerprint": "539f001a0441f92220c462c81de635d550ea63793eaf244c3cb13bac2fff878d",
+              "workspace_quarantined": false
+            },
+            "created_at": "2026-09-27T14:50:05.397615Z"
+          }
+        ]
+      },
+      "final_screenshot": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-browser-2026-09-27T14-49-46.356Z-e3a9465b\\failed-final.png",
+        "sha256": "2760e84078c1dbb040218ad91e725bfec1ebbb6c5487ba7feef481cb7813ac0d"
+      }
+    },
+    {
+      "title": "[issue82-canonical-checksum] Native canonical source f1793e36",
+      "expected": "passed",
+      "authored": {
+        "title": "[issue82-canonical-checksum] Native canonical source f1793e36",
+        "description": "Owned issue82 canonical Git source regression. Write only the deterministic migration and evidence in the assigned worktree. The real migration verifier decides completion. No external effects.",
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "preferred_adapter": "fake-process",
+        "preferred_model": null,
+        "reasoning_effort": null,
+        "strategy": "single",
+        "source": {
+          "repository": "ecorp-fixture/issue82-canonical-source",
+          "base_ref": "HEAD",
+          "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66"
+        },
+        "budget_tokens": 1000000,
+        "deliverable": {
+          "form": "commit_branch",
+          "commit_after_verification": true,
+          "paths": []
+        },
+        "contract": null,
+        "verification_policy": {
+          "checks": [
+            {
+              "type": "artifact",
+              "min_bytes": 1
+            },
+            {
+              "type": "command",
+              "program": "node",
+              "args": [
+                "tools/check_migrations.mjs"
+              ],
+              "timeout_ms": 10000
+            }
+          ],
+          "manual_gate": null
+        }
+      },
+      "mission_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+      "task_id": "c3d986bf-01e2-40d6-8be2-ec26475c1214",
+      "saved_screenshot": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-browser-2026-09-27T14-49-46.356Z-e3a9465b\\passed-saved.png",
+        "sha256": "4536441e2b7526650ae586b4e26666080cbea5465b55de0e4118e627792a04ce"
+      },
+      "launch": {
+        "run_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+        "runner_id": "issue82-canonical-qa",
+        "run_ids": [
+          "d7008b3b-c1ea-4878-afc0-9a472cef0c7b"
+        ],
+        "runner_ids": [
+          "issue82-canonical-qa"
+        ],
+        "replayed": false
+      },
+      "final": {
+        "mission": {
+          "id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "room_id": "00000000-0000-4000-8000-000000000041",
+          "requested_by": "00000000-0000-4000-8000-000000000011",
+          "title": "[issue82-canonical-checksum] Native canonical source f1793e36",
+          "description": "Owned issue82 canonical Git source regression. Write only the deterministic migration and evidence in the assigned worktree. The real migration verifier decides completion. No external effects.",
+          "specification_version": 1,
+          "strategy": "single",
+          "max_nodes": 1,
+          "max_depth": 0,
+          "original_budget_tokens": 1000000,
+          "original_budget_cost_microusd": 1000000,
+          "budget_tokens": 1000000,
+          "budget_cost_microusd": 1000000,
+          "status": "completed",
+          "created_at": "2026-09-27T14:50:07.016874Z",
+          "updated_at": "2026-09-27T14:50:18.859762Z"
+        },
+        "tasks": [
+          {
+            "id": "c3d986bf-01e2-40d6-8be2-ec26475c1214",
+            "mission_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "title": "Produce the mission outcome",
+            "objective": "Owned issue82 canonical Git source regression. Write only the deterministic migration and evidence in the assigned worktree. The real migration verifier decides completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue82-canonical-checksum] Native canonical source f1793e36",
+            "plan_key": "deliver",
+            "contract": {
+              "objective": "Owned issue82 canonical Git source regression. Write only the deterministic migration and evidence in the assigned worktree. The real migration verifier decides completion. No external effects.\n\nTASK-SPECIFIC OBJECTIVE:\nComplete the mission outcome: [issue82-canonical-checksum] Native canonical source f1793e36",
+              "expected_output": "A source-backed, verified mission artifact",
+              "source_repository": "ecorp-fixture/issue82-canonical-source",
+              "source_base_ref": "HEAD",
+              "source_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+              "acceptance_tests": [
+                "the declared artifact exists",
+                "the task reports concrete verification evidence"
+              ],
+              "allowed_tools": [
+                "filesystem",
+                "shell"
+              ],
+              "prohibited_actions": [
+                "modify files outside the assigned worktree",
+                "use undeclared long-lived credentials"
+              ],
+              "references": [],
+              "write_scope": [
+                "**"
+              ],
+              "budget_tokens": 1000000,
+              "budget_cost_microusd": 1000000,
+              "deadline_at": null,
+              "escalation": "ask the current human controller or mission owner",
+              "secret_refs": {
+                "redacted": "sha256",
+                "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+              },
+              "model": null,
+              "reasoning_effort": null,
+              "deliverable": {
+                "form": "commit_branch",
+                "commit_after_verification": true,
+                "paths": []
+              }
+            },
+            "contract_version": 1,
+            "depth": 0,
+            "max_attempts": 2,
+            "attempt_count": 1,
+            "required_adapter": "fake-process",
+            "depends_on": [],
+            "verification_policy": {
+              "checks": [
+                {
+                  "type": "artifact",
+                  "min_bytes": 1
+                },
+                {
+                  "type": "command",
+                  "program": "node",
+                  "args": [
+                    "tools/check_migrations.mjs"
+                  ],
+                  "timeout_ms": 10000
+                }
+              ],
+              "manual_gate": null
+            },
+            "verification_status": "passed",
+            "status": "completed",
+            "assigned_agent_id": "0a5b6e64-82a9-46d7-a2c4-c95995b40147",
+            "created_at": "2026-09-27T14:50:07.016874Z",
+            "updated_at": "2026-09-27T14:50:18.859762Z"
+          }
+        ],
+        "run": {
+          "id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "c3d986bf-01e2-40d6-8be2-ec26475c1214",
+          "agent_id": "0a5b6e64-82a9-46d7-a2c4-c95995b40147",
+          "runner_id": "issue82-canonical-qa",
+          "provider_session_id": null,
+          "resumed_from_run_id": null,
+          "workspace_run_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+          "model": null,
+          "reasoning_effort": null,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_microusd": 0,
+          "budget_tokens_limit": 1000000,
+          "budget_cost_microusd_limit": 1000000,
+          "breaker_stage": "healthy",
+          "no_progress_events": 0,
+          "repeated_tool_count": 0,
+          "source_repository": "ecorp-fixture/issue82-canonical-source",
+          "source_base_ref": "HEAD",
+          "source_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+          "workspace_path": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-native-r5\\runner\\worktrees\\c3d986bf01e240d68be2ec26475c1214\\d7008b3bc1ea4878afc09a472cef0c7b",
+          "workspace_branch": "crony/task-c3d986bf01e240d68be2ec26475c1214/run-d7008b3bc1ea4878afc09a472cef0c7b",
+          "workspace_base_ref": "HEAD",
+          "workspace_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+          "workspace_disposition": "preserved",
+          "workspace_detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=1; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+          "workspace_fingerprint": "a67f298e48d83107c5f31794756faf98c2fad542633dac49b69d5510763d391d",
+          "execution_mode": "provider",
+          "verification_status": "passed",
+          "verification_summary": "all 2 verifier checks passed",
+          "verification_sha256": "ffdb2961df3bb88819f58a189b7c02ad4cb4801a5254b639741fbe63f4446393",
+          "deliverable_sha256": "89f4e9b07b50baa5a05f59b28f21cd8fd53ba22055c39cf60e1185c66d3e86e2",
+          "status": "completed",
+          "summary": "Deterministic migration and artifact prepared; the authoritative verifier decides completion.",
+          "artifact_id": "0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d",
+          "artifact_uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d",
+          "artifact_media_type": "text/markdown",
+          "artifact_signature": "4e3254c12eaadbdf432380ef0bc77792039db7feec572d5b07561276d721023a",
+          "artifact_sha256": "1b3b2220cb5d48ba9f77b85c6512a3d08e0fa29d797b6283fb4b1b51490f45d4",
+          "created_at": "2026-09-27T14:50:07.508387Z",
+          "updated_at": "2026-09-27T14:50:19.378545Z"
+        },
+        "evidence": [
+          {
+            "id": "4cb5d1c4-2d34-4194-af4b-8615a84d184c",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "c3d986bf-01e2-40d6-8be2-ec26475c1214",
+            "run_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "check_index": 0,
+            "kind": "artifact",
+            "status": "passed",
+            "summary": "durable artifact 0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d has 172 verified bytes",
+            "payload": {
+              "artifact_id": "0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d",
+              "bytes": 172,
+              "media_type": "text/markdown",
+              "producer_agent_id": "0a5b6e64-82a9-46d7-a2c4-c95995b40147",
+              "producer_runner_id": "issue82-canonical-qa",
+              "provenance_signature": "4e3254c12eaadbdf432380ef0bc77792039db7feec572d5b07561276d721023a",
+              "retention_until": "2026-10-27T14:50:08.154752Z",
+              "sha256": "1b3b2220cb5d48ba9f77b85c6512a3d08e0fa29d797b6283fb4b1b51490f45d4",
+              "source": {
+                "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                "candidate_commit": "79c5b85007c8ffaa64e5f4b687dd041d126b82fe",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0"
+              },
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T14:50:17.482476Z"
+          },
+          {
+            "id": "258dd51f-eb29-44e5-a09b-6b75d9552c64",
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "task_id": "c3d986bf-01e2-40d6-8be2-ec26475c1214",
+            "run_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "check_index": 1,
+            "kind": "command",
+            "status": "passed",
+            "summary": "\"node\" exited successfully",
+            "payload": {
+              "args": [
+                "tools/check_migrations.mjs"
+              ],
+              "cache_suppression": {
+                "cleanup_authorized": false,
+                "policy": null,
+                "requested_argument_prefix": [],
+                "requested_environment": {},
+                "scope": "verifier_child",
+                "source": "none",
+                "zero_cache_writes_verified": false
+              },
+              "error": null,
+              "exit_code": 0,
+              "program": "node",
+              "requested_program": "node",
+              "resolution_mode": "path_pathext",
+              "resolved_executable": {
+                "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                "file_name": "node.exe"
+              },
+              "source": {
+                "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                "candidate_commit": "79c5b85007c8ffaa64e5f4b687dd041d126b82fe",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0"
+              },
+              "stderr": "",
+              "stdout": "{\n  \"schema_version\": 1,\n  \"migration_count\": 57,\n  \"latest_version\": 9999,\n  \"immutable_checksums\": true\n}\n"
+            },
+            "created_at": "2026-09-27T14:50:17.505821Z"
+          }
+        ],
+        "events": [
+          {
+            "seq": 24,
+            "id": "448c6aca-c803-4200-a020-1a3ebd4e0fa5",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": "00000000-0000-4000-8000-000000000011",
+            "type": "run.requested",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "run:d7008b3b-c1ea-4878-afc0-9a472cef0c7b:requested",
+            "visibility": "corp",
+            "payload": {
+              "agent_id": "0a5b6e64-82a9-46d7-a2c4-c95995b40147",
+              "attempt": 1,
+              "max_attempts": 2,
+              "mission_launch": true,
+              "model": null,
+              "reasoning_effort": null,
+              "runner_id": "issue82-canonical-qa",
+              "status": "starting",
+              "task_id": "c3d986bf-01e2-40d6-8be2-ec26475c1214"
+            },
+            "created_at": "2026-09-27T14:50:07.508387Z"
+          },
+          {
+            "seq": 25,
+            "id": "22617e34-82ab-496e-975c-cf54ee1b25d0",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.started",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:22617e34-82ab-496e-975c-cf54ee1b25d0",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "mission_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+              "room_id": "00000000-0000-4000-8000-000000000041",
+              "task_id": "c3d986bf-01e2-40d6-8be2-ec26475c1214",
+              "workspace": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-native-r5\\runner\\worktrees\\c3d986bf01e240d68be2ec26475c1214\\d7008b3bc1ea4878afc09a472cef0c7b",
+              "workspace_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-c3d986bf01e240d68be2ec26475c1214/run-d7008b3bc1ea4878afc09a472cef0c7b"
+            },
+            "created_at": "2026-09-27T14:50:08.054653Z"
+          },
+          {
+            "seq": 26,
+            "id": "d4b7e237-9fd1-457f-a07a-0b394e19ff0c",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.status",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:d4b7e237-9fd1-457f-a07a-0b394e19ff0c",
+            "visibility": "corp",
+            "payload": {
+              "message": "Writing a deterministic CRLF migration in the assigned isolated worktree.",
+              "station": "terminal",
+              "status": "working"
+            },
+            "created_at": "2026-09-27T14:50:08.121663Z"
+          },
+          {
+            "seq": 27,
+            "id": "9f846018-72f4-4db2-866f-e7a59d0c4e7d",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.artifact",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "artifact:0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d",
+              "artifact_role": "provider_evidence",
+              "bytes": 172,
+              "file_name": "result.md",
+              "media_type": "text/markdown",
+              "metadata": {
+                "workspace_relative_path": "result.md"
+              },
+              "producer_agent_id": "0a5b6e64-82a9-46d7-a2c4-c95995b40147",
+              "producer_runner_id": "issue82-canonical-qa",
+              "provenance_signature": "4e3254c12eaadbdf432380ef0bc77792039db7feec572d5b07561276d721023a",
+              "retention_until": "2026-10-27T14:50:08.154752Z",
+              "sha256": "1b3b2220cb5d48ba9f77b85c6512a3d08e0fa29d797b6283fb4b1b51490f45d4",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T14:50:08.184932Z"
+          },
+          {
+            "seq": 28,
+            "id": "9c041c20-63c7-4eb7-b3a7-2dc8bd3474ae",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.session_terminated",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:9c041c20-63c7-4eb7-b3a7-2dc8bd3474ae",
+            "visibility": "corp",
+            "payload": {
+              "adapter": "fake-process",
+              "message": "Provider session stopped; no idle agent process remains.",
+              "outcome": "completed",
+              "provider_process_alive": false
+            },
+            "created_at": "2026-09-27T14:50:08.211532Z"
+          },
+          {
+            "seq": 29,
+            "id": "e88140bc-6e3d-44e3-8928-62f5bb45a163",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_started",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:e88140bc-6e3d-44e3-8928-62f5bb45a163",
+            "visibility": "corp",
+            "payload": {
+              "check_count": 2
+            },
+            "created_at": "2026-09-27T14:50:08.214862Z"
+          },
+          {
+            "seq": 30,
+            "id": "9ecb11f4-a7c8-4363-bbdb-a43738c5db75",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:9ecb11f4-a7c8-4363-bbdb-a43738c5db75",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 0,
+              "evidence_id": "4cb5d1c4-2d34-4194-af4b-8615a84d184c",
+              "kind": "artifact",
+              "payload": {
+                "artifact_id": "0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d",
+                "bytes": 172,
+                "media_type": "text/markdown",
+                "producer_agent_id": "0a5b6e64-82a9-46d7-a2c4-c95995b40147",
+                "producer_runner_id": "issue82-canonical-qa",
+                "provenance_signature": "4e3254c12eaadbdf432380ef0bc77792039db7feec572d5b07561276d721023a",
+                "retention_until": "2026-10-27T14:50:08.154752Z",
+                "sha256": "1b3b2220cb5d48ba9f77b85c6512a3d08e0fa29d797b6283fb4b1b51490f45d4",
+                "source": {
+                  "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                  "candidate_commit": "79c5b85007c8ffaa64e5f4b687dd041d126b82fe",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0"
+                },
+                "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d",
+                "verifier": "crony-server:artifact-ingest-v1"
+              },
+              "status": "passed",
+              "summary": "durable artifact 0a4ecaf2-b557-42c2-9cef-5d9d7818ce9d has 172 verified bytes"
+            },
+            "created_at": "2026-09-27T14:50:17.482476Z"
+          },
+          {
+            "seq": 31,
+            "id": "f487e1aa-3b12-4ae1-b75d-399ca30b6a8b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_evidence",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:f487e1aa-3b12-4ae1-b75d-399ca30b6a8b",
+            "visibility": "corp",
+            "payload": {
+              "check_index": 1,
+              "evidence_id": "258dd51f-eb29-44e5-a09b-6b75d9552c64",
+              "kind": "command",
+              "payload": {
+                "args": [
+                  "tools/check_migrations.mjs"
+                ],
+                "cache_suppression": {
+                  "cleanup_authorized": false,
+                  "policy": null,
+                  "requested_argument_prefix": [],
+                  "requested_environment": {},
+                  "scope": "verifier_child",
+                  "source": "none",
+                  "zero_cache_writes_verified": false
+                },
+                "error": null,
+                "exit_code": 0,
+                "program": "node",
+                "requested_program": "node",
+                "resolution_mode": "path_pathext",
+                "resolved_executable": {
+                  "canonical_path_sha256": "f2926d0d08f10bd3d13c0997104f0072ad5d4f632d828bae37cc964cf0536b69",
+                  "file_name": "node.exe"
+                },
+                "source": {
+                  "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                  "candidate_commit": "79c5b85007c8ffaa64e5f4b687dd041d126b82fe",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0"
+                },
+                "stderr": "",
+                "stdout": "{\n  \"schema_version\": 1,\n  \"migration_count\": 57,\n  \"latest_version\": 9999,\n  \"immutable_checksums\": true\n}\n"
+              },
+              "status": "passed",
+              "summary": "\"node\" exited successfully"
+            },
+            "created_at": "2026-09-27T14:50:17.505821Z"
+          },
+          {
+            "seq": 32,
+            "id": "a785461d-e0bf-4640-8a1e-3f04daf8dce5",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.deliverable",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "artifact:424f7349-b318-411a-85a3-2d140fcb68bc:ready",
+            "visibility": "corp",
+            "payload": {
+              "artifact_id": "424f7349-b318-411a-85a3-2d140fcb68bc",
+              "artifact_role": "source_deliverable",
+              "bytes": 19291,
+              "file_name": "ecorp-commit-branch.json",
+              "media_type": "application/vnd.ecorp.deliverable+json",
+              "metadata": {
+                "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                "branch": "crony/task-c3d986bf01e240d68be2ec26475c1214/run-d7008b3bc1ea4878afc09a472cef0c7b",
+                "form": "commit_branch",
+                "git_bundle_sha256": "3539cc6937a08c6e16b158ad0872a902be23cfdc9d07e8cb500356d3a3465db0",
+                "head_commit": "bd733690c77bc2f4200d28b6015caf81d756112b",
+                "integration_state": "ready_for_review",
+                "publication_ready": true,
+                "source_verification": {
+                  "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                  "candidate_commit": "79c5b85007c8ffaa64e5f4b687dd041d126b82fe",
+                  "ignored_input_bytes": 0,
+                  "ignored_input_count": 0,
+                  "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0"
+                },
+                "verification_sha256": "ffdb2961df3bb88819f58a189b7c02ad4cb4801a5254b639741fbe63f4446393",
+                "verified_tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0"
+              },
+              "producer_agent_id": "0a5b6e64-82a9-46d7-a2c4-c95995b40147",
+              "producer_runner_id": "issue82-canonical-qa",
+              "provenance_signature": "0d98973c12092bb8100ed434ff2b3271794af10e7645de2118626e0d7eb73687",
+              "retention_until": "2026-10-27T14:50:18.778303Z",
+              "sha256": "89f4e9b07b50baa5a05f59b28f21cd8fd53ba22055c39cf60e1185c66d3e86e2",
+              "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/424f7349-b318-411a-85a3-2d140fcb68bc",
+              "verifier": "crony-server:artifact-ingest-v1"
+            },
+            "created_at": "2026-09-27T14:50:18.822961Z"
+          },
+          {
+            "seq": 33,
+            "id": "885705a8-c5f1-4a8e-ad56-e20caa95fca8",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.verification_passed",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:885705a8-c5f1-4a8e-ad56-e20caa95fca8",
+            "visibility": "corp",
+            "payload": {
+              "deliverable_sha256": "89f4e9b07b50baa5a05f59b28f21cd8fd53ba22055c39cf60e1185c66d3e86e2",
+              "source_verification": {
+                "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+                "candidate_commit": "79c5b85007c8ffaa64e5f4b687dd041d126b82fe",
+                "ignored_input_bytes": 0,
+                "ignored_input_count": 0,
+                "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0"
+              },
+              "summary": "all 2 verifier checks passed",
+              "verification_sha256": "ffdb2961df3bb88819f58a189b7c02ad4cb4801a5254b639741fbe63f4446393",
+              "verified_tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0"
+            },
+            "created_at": "2026-09-27T14:50:18.852279Z"
+          },
+          {
+            "seq": 34,
+            "id": "c9caff8f-a990-46e9-9eee-db9e7e1245d2",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.completed",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:c9caff8f-a990-46e9-9eee-db9e7e1245d2",
+            "visibility": "corp",
+            "payload": {
+              "summary": "Deterministic migration and artifact prepared; the authoritative verifier decides completion."
+            },
+            "created_at": "2026-09-27T14:50:18.859762Z"
+          },
+          {
+            "seq": 35,
+            "id": "88e78f39-ec81-48b7-8ce3-27966329ae0b",
+            "schema_version": 1,
+            "corp_id": "00000000-0000-4000-8000-000000000001",
+            "room_id": "00000000-0000-4000-8000-000000000041",
+            "actor_id": null,
+            "type": "run.workspace_preserved",
+            "aggregate_type": "run",
+            "aggregate_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+            "aggregate_version": 1,
+            "correlation_id": "6074d59a-cfa8-4682-803a-b47a47a3bdbc",
+            "causation_id": null,
+            "idempotency_key": "runner:issue82-canonical-qa:event:88e78f39-ec81-48b7-8ce3-27966329ae0b",
+            "visibility": "corp",
+            "payload": {
+              "branch_deleted": false,
+              "commits_ahead": null,
+              "detail": "working tree contains uncommitted, untracked or ignored files that cleanup must not discard; tracked_changes=0; untracked_files=1; ignored_files=0; ignored_ownership=unattributed; runner_cache_allocations=0; provider_artifacts=recorded_separately",
+              "dirty": true,
+              "workspace": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-native-r5\\runner\\worktrees\\c3d986bf01e240d68be2ec26475c1214\\d7008b3bc1ea4878afc09a472cef0c7b",
+              "workspace_base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+              "workspace_base_ref": "HEAD",
+              "workspace_branch": "crony/task-c3d986bf01e240d68be2ec26475c1214/run-d7008b3bc1ea4878afc09a472cef0c7b",
+              "workspace_fingerprint": "a67f298e48d83107c5f31794756faf98c2fad542633dac49b69d5510763d391d"
+            },
+            "created_at": "2026-09-27T14:50:19.378545Z"
+          }
+        ]
+      },
+      "download": {
+        "source": {
+          "id": "424f7349-b318-411a-85a3-2d140fcb68bc",
+          "corp_id": "00000000-0000-4000-8000-000000000001",
+          "task_id": "c3d986bf-01e2-40d6-8be2-ec26475c1214",
+          "run_id": "d7008b3b-c1ea-4878-afc0-9a472cef0c7b",
+          "artifact_id": "424f7349-b318-411a-85a3-2d140fcb68bc",
+          "form": "commit_branch",
+          "file_name": "ecorp-commit-branch.json",
+          "uri": "/api/corps/00000000-0000-4000-8000-000000000001/artifacts/424f7349-b318-411a-85a3-2d140fcb68bc",
+          "sha256": "89f4e9b07b50baa5a05f59b28f21cd8fd53ba22055c39cf60e1185c66d3e86e2",
+          "media_type": "application/vnd.ecorp.deliverable+json",
+          "bytes": 19291,
+          "provenance_signature": "0d98973c12092bb8100ed434ff2b3271794af10e7645de2118626e0d7eb73687",
+          "verification_sha256": "ffdb2961df3bb88819f58a189b7c02ad4cb4801a5254b639741fbe63f4446393",
+          "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+          "head_commit": "bd733690c77bc2f4200d28b6015caf81d756112b",
+          "branch": "crony/task-c3d986bf01e240d68be2ec26475c1214/run-d7008b3bc1ea4878afc09a472cef0c7b",
+          "integration_state": "ready_for_review",
+          "retention_until": "2026-10-27T14:50:18.778303Z",
+          "created_at": "2026-09-27T14:50:18.822961Z"
+        },
+        "source_verification": {
+          "base_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+          "candidate_commit": "79c5b85007c8ffaa64e5f4b687dd041d126b82fe",
+          "ignored_input_bytes": 0,
+          "ignored_input_count": 0,
+          "ignored_input_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0"
+        },
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-browser-2026-09-27T14-49-46.356Z-e3a9465b\\accepted-deliverable.json",
+        "sha256": "89f4e9b07b50baa5a05f59b28f21cd8fd53ba22055c39cf60e1185c66d3e86e2",
+        "signature_matches_record": true,
+        "bundle": {
+          "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-browser-2026-09-27T14-49-46.356Z-e3a9465b\\accepted.bundle",
+          "sha256": "3539cc6937a08c6e16b158ad0872a902be23cfdc9d07e8cb500356d3a3465db0",
+          "verification": "The bundle contains this ref:\nbd733690c77bc2f4200d28b6015caf81d756112b refs/ecorp/deliverables/d7008b3bc1ea4878afc09a472cef0c7b-1cbd839f36a0464595902194d5f2d3f7\nThe bundle requires this ref:\n8642ad6fdd8cf51d1b34efe28f7371788f1b1e66 \nThe bundle uses this hash algorithm: sha1\n",
+          "imported": [
+            "bd733690c77bc2f4200d28b6015caf81d756112b refs/ecorp/deliverables/d7008b3bc1ea4878afc09a472cef0c7b-1cbd839f36a0464595902194d5f2d3f7"
+          ]
+        },
+        "source_commit": "8642ad6fdd8cf51d1b34efe28f7371788f1b1e66",
+        "exported_head": "bd733690c77bc2f4200d28b6015caf81d756112b",
+        "exported_tree": "e06121f8397371eaa52c84c4f2a8204e57e9d6f0",
+        "independent_checkout": "<USERPROFILE>\\code\\qa\\issue82-canonical-source-20260927-native-r5\\accepted-export",
+        "clean_export": true,
+        "historical_migrations_unchanged": 56,
+        "physical_sha384": "e28a421a1aa2db21fc3e3102e9d08b3f45c80e7c19bca30b62032bd5b81c3b87f9e2d641ab95ddd329c519de11cc9658",
+        "canonical_sha384": "86653ea76cc127a46ab9e830f5a3d3372a2caa2c64b786e0469e08a4607b406ed7a23dc33b7a9066ae8474cbf9e74fb6",
+        "physical_crlf": true,
+        "committed_lf": true,
+        "checker": {
+          "schema_version": 1,
+          "migration_count": 57,
+          "latest_version": 9999,
+          "immutable_checksums": true
+        },
+        "outsider_http_status": 404
+      },
+      "final_screenshot": {
+        "file": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue82-browser-2026-09-27T14-49-46.356Z-e3a9465b\\passed-final.png",
+        "sha256": "382e99541d0851cad6f61e3ef9af12867edef796ce74a8e1eeb4838cee8acd59"
+      }
+    }
+  ],
+  "errors": [],
+  "blocked_requests": [],
+  "corp_id": "00000000-0000-4000-8000-000000000001",
+  "development_actor_id": "00000000-0000-4000-8000-000000000011",
+  "stage": "native runner passed",
+  "source_unchanged": true,
+  "finished_at": "2026-09-27T14:50:29.707Z"
+}

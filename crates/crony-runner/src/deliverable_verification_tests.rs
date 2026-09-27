@@ -17,7 +17,11 @@ struct Fixture {
 
 impl Fixture {
     fn new() -> Self {
-        let root = std::env::temp_dir().join(format!("ecorp-canonical-test-{}", Uuid::new_v4()));
+        Self::new_in(&std::env::temp_dir())
+    }
+
+    fn new_in(parent: &Path) -> Self {
+        let root = parent.join(format!("ecorp-canonical-test-{}", Uuid::new_v4()));
         let source = root.join("source");
         fs::create_dir_all(&source).unwrap();
         println!("canonical fixture: {}", root.display());
@@ -299,6 +303,22 @@ async fn canonical_export_supports_long_windows_paths_without_changing_git_confi
     );
     drop(prepared);
     fixture.cleanup();
+}
+
+#[tokio::test]
+async fn canonical_private_git_rejects_excess_diagnostic_output() {
+    let mut command = tokio::process::Command::new("node");
+    command.args([
+        "-e",
+        "process.stdout.write(Buffer.alloc(17*1024*1024));setTimeout(()=>{},6000)",
+    ]);
+    let error = verification::run_private_git(&mut command, &[], Duration::from_secs(10))
+        .await
+        .unwrap_err();
+    assert!(
+        format!("{error:#}").contains("output exceeds its bound"),
+        "{error:#}"
+    );
 }
 
 #[tokio::test]
@@ -686,7 +706,10 @@ async fn canonical_checks_reject_raw_source_index_head_and_untracked_mutation() 
 
 #[tokio::test]
 async fn canonical_private_git_contains_only_candidate_and_base_history() {
-    let mut fixture = Fixture::new();
+    // Hosted Windows keeps the checkout on D: and verification snapshots on C:.
+    // A temp-only source fixture cannot exercise that native cross-volume export.
+    let mut fixture = Fixture::new_in(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target"));
+    println!("canonical snapshots: {}", std::env::temp_dir().display());
     fixture.write("ancestor-only.txt", b"excluded historical bytes\n");
     fixture.commit_base();
     let ancestor = fixture.lease.base_commit.clone();
@@ -759,6 +782,39 @@ a.equal(fs.readFileSync('other.txt', 'utf8'), 'other before\n');
     assert_eq!(
         fs::read(fixture.lease.path.join("other.txt")).unwrap(),
         b"unselected staged bytes\n"
+    );
+    drop(prepared);
+    fixture.cleanup();
+}
+
+#[tokio::test]
+async fn canonical_snapshot_streams_packs_larger_than_diagnostic_output_limit() {
+    let mut fixture = Fixture::new();
+    let bytes = vec![b'x'; 17 * 1024 * 1024];
+    fixture.write("large-base.txt", &bytes);
+    fixture.commit_base();
+    fixture.write("tracked.txt", b"candidate bytes\n");
+    let mut prepared = fixture.prepare(&["tracked.txt"], &[]).await;
+    let report = verify(
+        &mut prepared,
+        &policy(vec![
+            VerifierCheck::File {
+                path: "large-base.txt".into(),
+                min_bytes: bytes.len() as u64,
+            },
+            node("const fs=require('node:fs'),a=require('node:assert/strict');const p='.git/objects/pack/';a.ok(fs.readdirSync(p).filter(f=>f.endsWith('.pack')).some(f=>fs.statSync(p+f).size>16*1024*1024));a.equal(fs.existsSync('.git/ecorp-transfer.pack'),false)"),
+        ]),
+        &[],
+    )
+    .await;
+    assert!(report.passed, "{report:?}");
+    assert_eq!(
+        report.checks[0].payload["sha256"],
+        hex::encode(Sha256::digest(&bytes))
+    );
+    assert_eq!(
+        git(&fixture.lease.path, &["rev-parse", "HEAD"]),
+        fixture.lease.base_commit
     );
     drop(prepared);
     fixture.cleanup();
