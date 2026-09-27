@@ -19,13 +19,14 @@ impl SourceVerification {
     /// New verification events and signed upload metadata must agree on the same tree.
     /// Historical artifacts can still be read; this is an admission rule for new completion.
     pub fn from_payload(payload: &serde_json::Value) -> Result<Self, &'static str> {
-        let source: Self = serde_json::from_value(
-            payload
-                .get("source_verification")
-                .cloned()
-                .ok_or("source verification identity is missing")?,
-        )
-        .map_err(|_| "source verification identity is malformed")?;
+        let source_payload = payload
+            .get("source_verification")
+            .ok_or("source verification identity is missing")?;
+        if !source_payload.is_object() {
+            return Err("source verification identity is malformed");
+        }
+        let source: Self = serde_json::from_value(source_payload.clone())
+            .map_err(|_| "source verification identity is malformed")?;
         if !source.is_valid()
             || payload
                 .get("verified_tree")
@@ -115,6 +116,22 @@ mod tests {
                 "malformed {field}"
             );
         }
+    }
+
+    #[test]
+    fn source_payload_rejects_positional_array_identity() {
+        let payload = serde_json::json!({
+            "verified_tree": "a".repeat(40),
+            "base_commit": "b".repeat(40),
+            "source_verification": [
+                "a".repeat(40), "b".repeat(40), "c".repeat(40),
+                "d".repeat(64), 1, 128,
+            ],
+        });
+        assert_eq!(
+            SourceVerification::from_payload(&payload),
+            Err("source verification identity is malformed")
+        );
     }
 
     #[test]

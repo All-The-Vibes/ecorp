@@ -1,0 +1,634 @@
+{
+  "issue": 82,
+  "pr": 375,
+  "status": "local-review-followup-validated",
+  "published_head_before_fixes": "640a144f3d4832a23a6b30701946ac0af3ee1506",
+  "tested_tree": "f69171224d33401c1391568901a44a71a93e8629",
+  "source_files_sha256": "677aa8c716fe4ef96611fbc4d56f7187d6ecaa7d2a362e3c43a114ef494f7434",
+  "original_physical_file_count": 6644,
+  "tested_code_patch_sha256": "88cba091a540d1acd0562ec31a459d1366d072f380ff868101870d3af72fc9f5",
+  "canonical_original_sha256": "cde483d66589bd0295e7b7a3aed76ce025d9a55c43a97b313653f868cf7f267e",
+  "node_counts": {
+    "tests": 3089,
+    "passed": 3024,
+    "failed": 0,
+    "skipped": 65,
+    "todo": 0,
+    "cancelled": 0
+  },
+  "rust_counts": {
+    "passed": 849,
+    "failed": 0,
+    "ignored": 558,
+    "summaries": 41
+  },
+  "database_checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "counts": {
+        "ignored": 0,
+        "failed": 0,
+        "summaries": 0,
+        "passed": 0
+      }
+    },
+    {
+      "name": "budget-checkpoints-and-canonical-source-linkage-after-store-fix",
+      "exit_code": 0,
+      "counts": {
+        "ignored": 0,
+        "failed": 0,
+        "summaries": 1,
+        "passed": 178
+      }
+    },
+    {
+      "name": "cache-admission-lifecycle",
+      "exit_code": 0,
+      "counts": {
+        "ignored": 0,
+        "failed": 0,
+        "summaries": 2,
+        "passed": 12
+      }
+    }
+  ],
+  "retained_results": [
+    {
+      "receipt": "pr375-focused-r2.json",
+      "exit_code": 0,
+      "interpretation": "28 typed-envelope decoder regressions, before the additional common-parser fix; final workspace rerun covers both."
+    },
+    {
+      "receipt": "pr375-focused-r3.json",
+      "exit_code": 101,
+      "interpretation": "A positional-array common-parser regression failed before its production guard was added."
+    },
+    {
+      "receipt": "pr375-focused-r4.json",
+      "exit_code": 0,
+      "interpretation": "Three common source-identity parser regressions passed after the object-only guard."
+    },
+    {
+      "receipt": "pr375-node22-lock-r1.json",
+      "exit_code": 0,
+      "interpretation": "Exact Node 22 focused reproduction passed; does not erase the hosted full-lane cancellation."
+    },
+    {
+      "receipt": "pr375-recipe-parity-r1.json",
+      "exit_code": 0,
+      "interpretation": "The equivalent platform-expression change was reviewed and its recipe pin updated; native source-selection regressions passed."
+    },
+    {
+      "receipt": "issue82-native-database-r4.json",
+      "status": "failed",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "ignored": 0,
+            "failed": 0,
+            "summaries": 0,
+            "passed": 0
+          }
+        },
+        {
+          "name": "canonical-source-review-regressions-before-store-fix",
+          "exit_code": 101,
+          "counts": {
+            "ignored": 0,
+            "failed": 6,
+            "summaries": 1,
+            "passed": 1
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue82-native-database-r5.json",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "passed": 0,
+            "summaries": 0,
+            "ignored": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "canonical-source-review-regressions-after-store-fix",
+          "exit_code": 0,
+          "counts": {
+            "passed": 7,
+            "summaries": 1,
+            "ignored": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "cache-admission-lifecycle",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12,
+            "summaries": 2,
+            "ignored": 0,
+            "failed": 0
+          }
+        }
+      ]
+    },
+    {
+      "status": "failed",
+      "source_head": "640a144f3d4832a23a6b30701946ac0af3ee1506",
+      "tracked_diff_sha256": "bcc3aeb91ad22586ce9efbd3e0d79752d7756d443177456d7618073a2aac994a",
+      "original_receipt_sha256": "3e9008d8dc03a213c8e7b84f07e5fb84ce0f6844a019ebc6fa74f51ef76768c2",
+      "original_report_sha256": "ca48fd1f3f2b66e7bfb1ee3f399eada5c09f4e6fbd3c00ba69a24d082539dbca",
+      "node_counts": {
+        "tests": 3089,
+        "passed": 3023,
+        "failed": 1,
+        "skipped": 65,
+        "todo": 0,
+        "cancelled": 0
+      },
+      "not_run": [
+        "format",
+        "clippy",
+        "rust-tests",
+        "web-build",
+        "web-lint"
+      ],
+      "interpretation": "One stale source-recipe pin failed after the equivalent Linux/Windows index-base expression fix. Retained as failed; the later full gate is a separate execution."
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue82-canonical-r5.json",
+      "original_sha256": "ccf71f9a2eaa309a6a0fdd2e216b55f09742b2b2a379b6a8b8e06b22dfab501d",
+      "published_sha256": "941a534223124472f8cce46795f494a7ebb92f745ed856079c453d41ad896a14",
+      "bytes": 547823,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-27T03-51-32-406Z-dafcd27e-bc2e-4ecf-add4-19c3f9dd9801-full.json",
+      "original_sha256": "cde483d66589bd0295e7b7a3aed76ce025d9a55c43a97b313653f868cf7f267e",
+      "published_sha256": "cde483d66589bd0295e7b7a3aed76ce025d9a55c43a97b313653f868cf7f267e",
+      "bytes": 524100,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue82-canonical-r5-install-root.log",
+      "original_sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+      "published_sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+      "bytes": 87,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue82-canonical-r5-install-web.log",
+      "original_sha256": "ec3dda31a19059f264ccd8110f5b57f118827ec1a8c502fd2a7900f3ba6a4422",
+      "published_sha256": "ec3dda31a19059f264ccd8110f5b57f118827ec1a8c502fd2a7900f3ba6a4422",
+      "bytes": 88,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue82-canonical-r5-install-steward.log",
+      "original_sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "published_sha256": "731fccdffdae6f9a256697d9912e6532e6efdf35b3456d2402db2d054341740b",
+      "bytes": 28,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue82-canonical-r5-pnpm-check.log",
+      "original_sha256": "02be3cc5c0ce595a03e1eecffda39abb45610b09359e4fc9694d9d22ba309afc",
+      "published_sha256": "62df8892d7fce66180a15cada883bc420c480027685c30392fa5d3c1127b6de5",
+      "bytes": 11171,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-database.json",
+      "source_name": "issue82-native-database-r7.json",
+      "original_sha256": "bc5ea325c82e47cead163bc1522e7ea0e8dca5c2992aeb5e5c24c7cb5364084b",
+      "published_sha256": "3fcaba27080b2c10bedd7bd44bb688a647fc1bfd1781f680c92bef046039219a",
+      "bytes": 3438,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "database-owned-postgresql-initialization.log",
+      "source_name": "issue82-native-database-r7-initdb.log",
+      "original_sha256": "248fa92c550d8e380be177a0afcbc2dff0da64432d2a0203ecd077a0233825c1",
+      "published_sha256": "03daeed76cacbe28dc0fc57a278c975e5c21d4e9c1865e90005820fdda9d98fb",
+      "bytes": 1033,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "database-budget-checkpoints-and-canonical-source-linkage-after-store-fix.log",
+      "source_name": "issue82-native-database-r7-budget-checkpoints.log",
+      "original_sha256": "8f82cbd8df0e9119550eb983af638bd1b566b79eb4f9365a6bb322c80bd8146f",
+      "published_sha256": "8f82cbd8df0e9119550eb983af638bd1b566b79eb4f9365a6bb322c80bd8146f",
+      "bytes": 21155,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "database-cache-admission-lifecycle.log",
+      "source_name": "issue82-native-database-r7-cache-admission.log",
+      "original_sha256": "5a56bb556565124d99dfba9b37237f7f31e8e8954d6bb01cc35cac913d505e4a",
+      "published_sha256": "5a56bb556565124d99dfba9b37237f7f31e8e8954d6bb01cc35cac913d505e4a",
+      "bytes": 1718,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-lifecycle.json",
+      "source_name": "issue82-native-r2-lifecycle.json",
+      "original_sha256": "26abe0049126b864390cccb0f1647de37117ee6dadf7910234a17ec7498f0da8",
+      "published_sha256": "90bf3a207a9c08751c454cf322ae52c4167ab01da634cc150caacda21cac5691",
+      "bytes": 4197,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-browser.json",
+      "source_name": "report.json",
+      "original_sha256": "fd40eab3149cb00862e292cae8fe75e74ba5c74fd1398c6b1d351b41e14b88fa",
+      "published_sha256": "9c4c6f190e177d32570c47363ef77139edf19dd62b8980e89f74be2394651dfb",
+      "bytes": 72383,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-matching-source-native-build.log",
+      "source_name": "issue82-native-r2-build.log",
+      "original_sha256": "fc6b9432c36a66f489b0bb878ad2ae26acad8f36dfb386b34671630791a82c94",
+      "published_sha256": "3e744bb1b4292b485ba4c92c7fc924c25489b846034854359787cee84f5ea3cb",
+      "bytes": 399,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-browser-to-server-to-native-runner.log",
+      "source_name": "issue82-native-r2-browser.log",
+      "original_sha256": "f80e6b2dcf692cd4f5f87b59458df2e84308a79832d164ce21b585c6c9063104",
+      "published_sha256": "c85e3013f88db2a8ed0a880215ac7f9f07f5972356e199988dd0a9317e8d2de5",
+      "bytes": 198,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-failed-saved.png",
+      "source_name": "failed-saved.png",
+      "original_sha256": "db42eaf5fc22058e19e34918e2cecc6b63fe05e7d7def82d54733f64215bff6f",
+      "published_sha256": "db42eaf5fc22058e19e34918e2cecc6b63fe05e7d7def82d54733f64215bff6f",
+      "bytes": 226306,
+      "transform": "none"
+    },
+    {
+      "file": "native-failed-final.png",
+      "source_name": "failed-final.png",
+      "original_sha256": "7a0d42d1f833407644260e8ce8758dd38101d2431e3ded9752114938848b3328",
+      "published_sha256": "7a0d42d1f833407644260e8ce8758dd38101d2431e3ded9752114938848b3328",
+      "bytes": 270279,
+      "transform": "none"
+    },
+    {
+      "file": "native-passed-saved.png",
+      "source_name": "passed-saved.png",
+      "original_sha256": "c10269d8a05a7ffbe6976b7e822d9b9c75573663c300504bcd14d0c977c07d99",
+      "published_sha256": "c10269d8a05a7ffbe6976b7e822d9b9c75573663c300504bcd14d0c977c07d99",
+      "bytes": 232139,
+      "transform": "none"
+    },
+    {
+      "file": "native-passed-final.png",
+      "source_name": "passed-final.png",
+      "original_sha256": "d212a5c2fd27c35b84069a08b2e3b6fae8fbc1d6195db1beadd79855ffed1dbf",
+      "published_sha256": "d212a5c2fd27c35b84069a08b2e3b6fae8fbc1d6195db1beadd79855ffed1dbf",
+      "bytes": 303050,
+      "transform": "none"
+    },
+    {
+      "file": "native-graph-driver.json",
+      "source_name": "pr375-graph-regression-r2.json",
+      "original_sha256": "6cf5c78f2226094c4d8b6320b8d0221c0bfe1a223d773655ac689b36e29fcd80",
+      "published_sha256": "99a02a60f04752fdb6a0eb029bdfee252382177642be8f9c8bb426ad6eb0ac57",
+      "bytes": 5300,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "native-graph.log",
+      "source_name": "pr375-graph-regression-r2.log",
+      "original_sha256": "5747071798271b286f92a52192a6bcee386c59ee3bb947b21fa6bb322772205d",
+      "published_sha256": "19454b77fa9e1f911b86f8a2b0686c9d5e373291e8b44ac13b56f397ba5237eb",
+      "bytes": 971,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-fixture-report.json",
+      "source_name": "fixture-report.json",
+      "original_sha256": "51728e7b3e50087783a380b210e2a550965d0ccd01612f031d9fe84d54c0f4ce",
+      "published_sha256": "734bc4bf6e052523bb7588f534b4eb9f658385636dd4ee1439bd1d95f297e719",
+      "bytes": 969,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-external-adapters.json",
+      "source_name": "e2e-external-adapters.json",
+      "original_sha256": "340516453b96e5fce40a863794b0a7caca78fd7026429b075acffe6e36f17c0f",
+      "published_sha256": "340516453b96e5fce40a863794b0a7caca78fd7026429b075acffe6e36f17c0f",
+      "bytes": 1379,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-task-graph.json",
+      "source_name": "e2e-task-graph.json",
+      "original_sha256": "b5de78beff223d8349f0a8734c2b15e0718d35296893542618dca6e4173ef2fb",
+      "published_sha256": "b5de78beff223d8349f0a8734c2b15e0718d35296893542618dca6e4173ef2fb",
+      "bytes": 2351,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-controlled-runner-readiness.json",
+      "source_name": "e2e-controlled-runner-readiness.json",
+      "original_sha256": "435ed8c815ab38d69541a9a733f642f174c96e59dce31e38cf83a6ddeaec7c9f",
+      "published_sha256": "435ed8c815ab38d69541a9a733f642f174c96e59dce31e38cf83a6ddeaec7c9f",
+      "bytes": 527,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-identity-lifecycle.json",
+      "source_name": "e2e-identity-lifecycle.json",
+      "original_sha256": "cd84383235f960ebadc725e5f55967a7fef55b17a94fb281b0967185edddfecc",
+      "published_sha256": "cd84383235f960ebadc725e5f55967a7fef55b17a94fb281b0967185edddfecc",
+      "bytes": 773,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "graph-e2e-budgets.json",
+      "source_name": "e2e-budgets.json",
+      "original_sha256": "a331d0b1de9f1991124212bfd54596aefc3f7791d324c0dfb910b4794db24ba8",
+      "published_sha256": "a331d0b1de9f1991124212bfd54596aefc3f7791d324c0dfb910b4794db24ba8",
+      "bytes": 1471,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-focused-r2.json",
+      "source_name": "pr375-focused-r2.json",
+      "original_sha256": "d6abfca2b4543ac66549cbfbc25ec6cec827cf5fb73db6be389c841cd0b88d0b",
+      "published_sha256": "679aa2557022519bec5fa13aafee4497d62234424c6e337cd5916b837eaa7a42",
+      "bytes": 1741,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-focused-r2.log",
+      "source_name": "pr375-focused-r2.log",
+      "original_sha256": "f6c98b13fd1bc4158257264dd49a943b6f7ceb1d7e5aec0b495f31489df80b92",
+      "published_sha256": "4b7a8d1b8e94d0397902a19e9ed3a54cb3175086718b5c4dc0339872d71af866",
+      "bytes": 3464,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-focused-r3.json",
+      "source_name": "pr375-focused-r3.json",
+      "original_sha256": "101ab06c756bfe48f0498b9884c343d186a826b9374828ac63b1821f73824006",
+      "published_sha256": "982c58467ffea3bd3fa592609b43edce19920d076f8fc2865842c9d177b7f6ed",
+      "bytes": 1944,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-focused-r3.log",
+      "source_name": "pr375-focused-r3.log",
+      "original_sha256": "9b9af5adef243efa4e749a83b0084cb86d85ec02cfd9484edf6d0d95998679bd",
+      "published_sha256": "78ab7b0c3b2ee57ed9b6a1aebe48550b0e637e2cc723172655e71be2c32ae9ff",
+      "bytes": 1151,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-focused-r4.json",
+      "source_name": "pr375-focused-r4.json",
+      "original_sha256": "9ffeb2395ca5e153b7e1aa2d11031e3194d7f066c655198dba9f93958fe1a14c",
+      "published_sha256": "6bd4d4e67e2bacc7ce701e0a71c130cabb543d405f86d53a431b28ca7a159b1b",
+      "bytes": 1887,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-focused-r4.log",
+      "source_name": "pr375-focused-r4.log",
+      "original_sha256": "a2501f603e44af05b52728585a75e365665319e3de21171d3b9de0208825087b",
+      "published_sha256": "6470c40da0b5203e9ebf734ddefa15dd9591ceaf900e085eb06a584dfc05a87b",
+      "bytes": 698,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-node22-lock-r1.json",
+      "source_name": "pr375-node22-lock-r1.json",
+      "original_sha256": "81fa3a159d1e59417f34f4b84181cfbd3cdd1a2fe32dccb3b1d6462d04ccaadb",
+      "published_sha256": "a91d582ae1a28777a328ef3d4eef04ce129a63878d26071c58afb30ca7ff9e29",
+      "bytes": 1362,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-node22-lock-r1.log",
+      "source_name": "pr375-node22-lock-r1.log",
+      "original_sha256": "93d042b11caaa1ea4099c9c2eb2b86e82ea53ca619f60b63bfa64187ca652a20",
+      "published_sha256": "93d042b11caaa1ea4099c9c2eb2b86e82ea53ca619f60b63bfa64187ca652a20",
+      "bytes": 400,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-recipe-parity-r1.json",
+      "source_name": "pr375-recipe-parity-r1.json",
+      "original_sha256": "ac157c79e525ab39872881194235fe2bed681c8e68dc1d341dc49de1408d0a35",
+      "published_sha256": "dd111b4241f06b7b216fdd32f70f1e5843587bf217ec938e15217a57dab1543d",
+      "bytes": 2040,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-recipe-parity-r1.log",
+      "source_name": "pr375-recipe-parity-r1.log",
+      "original_sha256": "647271a27cdbdaee6315f796b49511ab70698106224998d8d164d5ce789c38ac",
+      "published_sha256": "647271a27cdbdaee6315f796b49511ab70698106224998d8d164d5ce789c38ac",
+      "bytes": 11767,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-native-database-r4.json",
+      "source_name": "issue82-native-database-r4.json",
+      "original_sha256": "de9281f26ce33e62590e79f0ec696dae8b60212ef92a7ef701199a2a45de0c67",
+      "published_sha256": "54bca9d9729919103b907a013b16126e5956016456b61cfc8ebdb7ed8b3c3398",
+      "bytes": 2491,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-native-database-r4-initdb.log",
+      "source_name": "issue82-native-database-r4-initdb.log",
+      "original_sha256": "c5b094a8f736da4036369078ea392731d62dc51fedb34a930fc473ec6ff55f1f",
+      "published_sha256": "65c7d2f0cf7a5a281776d1b98b918d95cc55abcc1f331fee41065ead14a99afa",
+      "bytes": 1033,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-native-database-r4-budget-checkpoints.log",
+      "source_name": "issue82-native-database-r4-budget-checkpoints.log",
+      "original_sha256": "5dc563760c4e7c868d4a4ae2470a736bf19aad1a0abfe6f60ee5b57511de91aa",
+      "published_sha256": "af5c8b22584ec08dca679850397f1b2cc33965cdf917afcd7b530283b541cc4b",
+      "bytes": 7595,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-native-database-r5.json",
+      "source_name": "issue82-native-database-r5.json",
+      "original_sha256": "34817ae63dc79d5b979b7c985657c566a713223b8cf904c54f7b343a7276cc1f",
+      "published_sha256": "af7f2e76776cd703e82ee32d21ccd1acbae3c8634482d74b75b98b05e05045fd",
+      "bytes": 3269,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-native-database-r5-initdb.log",
+      "source_name": "issue82-native-database-r5-initdb.log",
+      "original_sha256": "6fe7162973e41bdc494bfb38b9c3e6aecaca71eca8431bcc89422bf33819763f",
+      "published_sha256": "f5f14d7556ba069052c73a5ed28a84d8d64e77847b4bea5bea2dc3624d0ad3f9",
+      "bytes": 1033,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-native-database-r5-budget-checkpoints.log",
+      "source_name": "issue82-native-database-r5-budget-checkpoints.log",
+      "original_sha256": "3afeca9b5b5f9483fe0487a35726e5f77b68eed7d7d102584c5501791408fe49",
+      "published_sha256": "592686c2b38da1a4a8e3845c15b22191abb8f1d535e6af7058b11be6a7a857ce",
+      "bytes": 1388,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-native-database-r5-cache-admission.log",
+      "source_name": "issue82-native-database-r5-cache-admission.log",
+      "original_sha256": "3c4394430a7b874111dd5cc7d9d6b2076b51f3413265754406b16d58c9775e8b",
+      "published_sha256": "5ce99848373351e15aa70f8a9dd4677a71cb9706e4f708786f3230b493f3ee44",
+      "bytes": 2157,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "pr375-graph-reproduction-r1.json",
+      "source_name": "pr375-graph-reproduction-r1.json",
+      "original_sha256": "621278e319b18020363a8445100b119187c988fe3902f3c7e20030f446960706",
+      "published_sha256": "6c5443a18ea7842176ea8ffda96282e2c11cb5ff7973eed008320ffbf4e46abf",
+      "bytes": 1234,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-r4-failed.log",
+      "source_name": "issue82-canonical-r4-pnpm-check.log",
+      "original_sha256": "8546fa6fe3ade62d5e595ec88747b9246b7d76f354cb9d186fa7f18854198111",
+      "published_sha256": "34f0c22bbd70a1739a63e47e5043c23f179187b25a2c7e3fce3c4d375ec92659",
+      "bytes": 748774,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "canonical-r4-failure.json",
+      "source_name": "issue82-canonical-r4.json",
+      "original_sha256": "ac1782462ca1999dbbc6b4161f7a3ed0e19ad224ea48e2056755a8b5dea049d2",
+      "published_sha256": "ac1782462ca1999dbbc6b4161f7a3ed0e19ad224ea48e2056755a8b5dea049d2",
+      "bytes": 788,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "tested-code.patch",
+      "source_name": "Git candidate diff before evidence additions",
+      "original_sha256": "88cba091a540d1acd0562ec31a459d1366d072f380ff868101870d3af72fc9f5",
+      "published_sha256": "88cba091a540d1acd0562ec31a459d1366d072f380ff868101870d3af72fc9f5",
+      "bytes": 32464,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-canonical-r3.ps1.txt",
+      "source_name": "run-canonical-r3.ps1",
+      "original_sha256": "40fe63022b7cdcc1de1cdb0e8b81b64fa22c1c7b4db72f80b1d0d8d3dac7605c",
+      "published_sha256": "08e5612d9fbb2e6d49ab7c3d3332dc34efe8a500a93656c7e4fcd462d8c73c48",
+      "bytes": 4621,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-issue82-native-db-r7.ps1.txt",
+      "source_name": "run-issue82-native-db-r7.ps1",
+      "original_sha256": "29a85cb38c51bdf1dbfc08f6582a3b1b5a7669edc6031ee96c23b03653d57595",
+      "published_sha256": "7a60b2e9a2944de4764d318467059d0fed13a4d7e6731d35ba34a121f9b7c45f",
+      "bytes": 9521,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-issue82-native-r1.ps1.txt",
+      "source_name": "run-issue82-native-r1.ps1",
+      "original_sha256": "83231fb096581b3538f7f1c74603d6cce9e4565d778c389777b3a22cbf5655d5",
+      "published_sha256": "11b5b5451985d3af80970a97398259a4a12aff48c4f845da7fb4b576bbcdbc16",
+      "bytes": 8667,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-stack-r1.ps1.txt",
+      "source_name": "issue82-stack-r1.ps1",
+      "original_sha256": "6675c2ffacbc166976e75fb9b1ddcdd540d722e652f827f07d945bf67ec7d0bc",
+      "published_sha256": "6675c2ffacbc166976e75fb9b1ddcdd540d722e652f827f07d945bf67ec7d0bc",
+      "bytes": 11903,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-browser-r1.mjs.txt",
+      "source_name": "issue82-browser-r1.mjs",
+      "original_sha256": "abf823a10f5e552a9b9495794ce3ec58075003bad820ed386a184d35c4e1e937",
+      "published_sha256": "abf823a10f5e552a9b9495794ce3ec58075003bad820ed386a184d35c4e1e937",
+      "bytes": 21687,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "issue82-source-binding-r1.py.txt",
+      "source_name": "issue82-source-binding-r1.py",
+      "original_sha256": "4d8c3cf40547ecdcfcdff360f26bc12adcb0aabca18b0e8ee41c9d01e77b1a79",
+      "published_sha256": "4d8c3cf40547ecdcfcdff360f26bc12adcb0aabca18b0e8ee41c9d01e77b1a79",
+      "bytes": 3945,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-pr375-graph-regression-r2.ps1.txt",
+      "source_name": "run-pr375-graph-regression-r2.ps1",
+      "original_sha256": "94e48baab77711d43fd9b4252982883339572254e466a9dd642baa80e6e3a4c6",
+      "published_sha256": "6e8512d92e0ace339b10220117fefbe189b17dbd3ec301a19d67860add249bb5",
+      "bytes": 6623,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": "run-pr375-recipe-parity-r1.py.txt",
+      "source_name": "run-pr375-recipe-parity-r1.py",
+      "original_sha256": "c2310e7f8b6c092e52e099dcddfd5a8c4a5b543e9f6f0773f5afc250b9aba5f2",
+      "published_sha256": "f8000df41883acda657e442e6e15173bdaea097bbb403d9af28e92403a2c9184",
+      "bytes": 4507,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    },
+    {
+      "file": ".gitattributes",
+      "source_name": "Publication byte-preservation attributes with CRLF script-copy recognition",
+      "original_sha256": "7eb420264b2a8f036b4e0c81fb2ed2ee48674c0fbb1232607831ddc4af731433",
+      "published_sha256": "7eb420264b2a8f036b4e0c81fb2ed2ee48674c0fbb1232607831ddc4af731433",
+      "bytes": 197,
+      "transform": "UTF-8 without BOM; profile roots including shell escaping replaced with <USERPROFILE>; other text preserved"
+    }
+  ],
+  "limits": [
+    "Follow-up source validation precedes publication-only additions; final-head hosted checks remain required.",
+    "Deterministic native adapters and local fixtures; no live inference, independent human decision or OS-isolation attestation.",
+    "Canonical/database full suites overlap focused regressions; counts are not additive.",
+    "Historical Cargo advisory debt remains unqualified; this is not a clean dependency audit."
+  ],
+  "publication_preflight": {
+    "initial_status": "failed",
+    "initial_receipt_sha256": "70129098d407c7fc1cc5a440b9fdebb387febba7bae7d0c3d6701fa0a5d3cd5a",
+    "initial_log_sha256": "c54ef1b8d7acb0772f6426a2a7fcc2554e01c16053db020d2954deb985989458",
+    "diagnostic_count": 114,
+    "reason": "Preserved CRLF in one .ps1.txt evidence copy was reported as trailing whitespace.",
+    "repair": "Recognize carriage returns at line endings for .txt copies; retain blank/trailing-space checks and every observed script byte.",
+    "product_source_changed": false
+  }
+}

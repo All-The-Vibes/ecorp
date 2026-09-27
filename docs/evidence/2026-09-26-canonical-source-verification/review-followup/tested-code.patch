@@ -1,0 +1,670 @@
+diff --git a/crates/crony-domain/src/source_verification.rs b/crates/crony-domain/src/source_verification.rs
+index 1137c39..b485f06 100644
+--- a/crates/crony-domain/src/source_verification.rs
++++ b/crates/crony-domain/src/source_verification.rs
+@@ -19,13 +19,14 @@ impl SourceVerification {
+     /// New verification events and signed upload metadata must agree on the same tree.
+     /// Historical artifacts can still be read; this is an admission rule for new completion.
+     pub fn from_payload(payload: &serde_json::Value) -> Result<Self, &'static str> {
+-        let source: Self = serde_json::from_value(
+-            payload
+-                .get("source_verification")
+-                .cloned()
+-                .ok_or("source verification identity is missing")?,
+-        )
+-        .map_err(|_| "source verification identity is malformed")?;
++        let source_payload = payload
++            .get("source_verification")
++            .ok_or("source verification identity is missing")?;
++        if !source_payload.is_object() {
++            return Err("source verification identity is malformed");
++        }
++        let source: Self = serde_json::from_value(source_payload.clone())
++            .map_err(|_| "source verification identity is malformed")?;
+         if !source.is_valid()
+             || payload
+                 .get("verified_tree")
+@@ -117,6 +118,22 @@ mod tests {
+         }
+     }
+ 
++    #[test]
++    fn source_payload_rejects_positional_array_identity() {
++        let payload = serde_json::json!({
++            "verified_tree": "a".repeat(40),
++            "base_commit": "b".repeat(40),
++            "source_verification": [
++                "a".repeat(40), "b".repeat(40), "c".repeat(40),
++                "d".repeat(64), 1, 128,
++            ],
++        });
++        assert_eq!(
++            SourceVerification::from_payload(&payload),
++            Err("source verification identity is malformed")
++        );
++    }
++
+     #[test]
+     fn source_verification_requires_full_consistent_object_ids_and_bounded_inputs() {
+         for len in [40, 64] {
+diff --git a/crates/crony-runner/src/deliverable.rs b/crates/crony-runner/src/deliverable.rs
+index 8786b1d..fb67013 100644
+--- a/crates/crony-runner/src/deliverable.rs
++++ b/crates/crony-runner/src/deliverable.rs
+@@ -264,10 +264,11 @@ async fn select_index(
+     for path in &spec.paths {
+         validate_relative(path)?;
+     }
+-    #[cfg(windows)]
+-    let index_base = preserve_head_commit.unwrap_or(&workspace.base_commit);
+-    #[cfg(not(windows))]
+-    let index_base = &workspace.base_commit;
++    let index_base = if cfg!(windows) {
++        preserve_head_commit.unwrap_or(&workspace.base_commit)
++    } else {
++        &workspace.base_commit
++    };
+     git_success(
+         workspace_root,
+         index,
+diff --git a/crates/crony-server/src/dependency_source.rs b/crates/crony-server/src/dependency_source.rs
+index 8de84ac..110cfc3 100644
+--- a/crates/crony-server/src/dependency_source.rs
++++ b/crates/crony-server/src/dependency_source.rs
+@@ -16,7 +16,7 @@
+ use std::{collections::BTreeSet, fmt, marker::PhantomData};
+ 
+ use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+-use crony_domain::{DeliverableForm, SourceDeliverable};
++use crony_domain::{DeliverableForm, SourceDeliverable, SourceVerification};
+ use crony_protocol::dependency_files::dependency_path_is_safe as safe_path;
+ use serde::{
+     Deserialize, Deserializer,
+@@ -163,6 +163,15 @@ pub fn decode_typed_source(
+     if document.verification_sha256 != expected.verification_sha256 {
+         return Err(Error::ContractMismatch("verification SHA-256"));
+     }
++    match (&document.verified_tree, &document.source_verification) {
++        // Immutable historical v1 envelopes predate the canonical-source fields.
++        (None, None) => {}
++        (Some(tree), Some(Object(source)))
++            if source.is_valid()
++                && tree == &source.tree
++                && source.base_commit == expected.base_commit => {}
++        _ => return Err(Error::InvalidEnvelope),
++    }
+     if document
+         .head_commit
+         .as_deref()
+@@ -372,6 +381,10 @@ struct ArtifactSet {
+     head_commit: Option<String>,
+     branch: String,
+     verification_sha256: String,
++    #[serde(default, deserialize_with = "present_non_null")]
++    verified_tree: Option<String>,
++    #[serde(default, deserialize_with = "present_non_null")]
++    source_verification: Option<Object<SourceVerification>>,
+     patch_sha256: String,
+     patch_base64: String,
+     // Unit fields require explicit null, not missing fields or embedded bundles.
+@@ -401,6 +414,14 @@ fn required_nullable_string<'de, D: Deserializer<'de>>(
+     Option::<String>::deserialize(deserializer)
+ }
+ 
++// Missing extension fields identify historical envelopes. Explicit null is not
++// historical absence, and must not defeat duplicate-field or paired-field checks.
++fn present_non_null<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
++    deserializer: D,
++) -> Result<Option<T>, D::Error> {
++    T::deserialize(deserializer).map(Some)
++}
++
+ // Serde structs otherwise also accept positional arrays. Both the envelope and
+ // each change must be JSON objects, with derived duplicate/unknown-field checks.
+ struct Object<T>(T);
+@@ -532,6 +553,98 @@ mod tests {
+         (document, paths)
+     }
+ 
++    fn canonical_fixture() -> (Value, Vec<String>) {
++        let (mut document, paths) = fixture();
++        document["verified_tree"] = json!("b".repeat(40));
++        document["source_verification"] = json!({
++            "tree": "b".repeat(40),
++            "base_commit": BASE,
++            "candidate_commit": "c".repeat(40),
++            "ignored_input_sha256": digest(b""),
++            "ignored_input_count": 0,
++            "ignored_input_bytes": 0,
++        });
++        (document, paths)
++    }
++
++    #[test]
++    fn canonical_source_extension_preserves_exact_legacy_handoff_content() {
++        let (document, paths) = canonical_fixture();
++        let bytes = serde_json::to_vec(&document).unwrap();
++        let source = source_record(&document, &bytes);
++        let expected = ExpectedTypedSource {
++            source: Some(&source),
++            ..contract(&paths)
++        };
++        let files = decode_typed_source(&bytes, &expected).unwrap();
++        assert_eq!(files, decode(&fixture().0, &paths).unwrap());
++    }
++
++    #[test]
++    fn canonical_source_extension_rejects_partial_null_and_mismatched_identities() {
++        let (original, paths) = canonical_fixture();
++        for field in ["verified_tree", "source_verification"] {
++            let mut document = original.clone();
++            document.as_object_mut().unwrap().remove(field);
++            assert!(decode(&document, &paths).is_err(), "missing {field}");
++            document[field] = Value::Null;
++            assert!(decode(&document, &paths).is_err(), "null {field}");
++        }
++        let mut document = original.clone();
++        document["verified_tree"] = json!("d".repeat(40));
++        assert!(decode(&document, &paths).is_err());
++        for (field, value) in [
++            ("base_commit", json!("d".repeat(40))),
++            ("tree", json!("d".repeat(40))),
++            ("candidate_commit", json!("short")),
++            ("ignored_input_sha256", json!("D".repeat(64))),
++            ("ignored_input_count", json!(100_001)),
++            ("ignored_input_bytes", json!(4_u64 * 1024 * 1024 * 1024 + 1)),
++            ("unknown", json!(true)),
++        ] {
++            let mut document = original.clone();
++            document["source_verification"][field] = value;
++            assert!(decode(&document, &paths).is_err(), "invalid {field}");
++        }
++        for field in original["source_verification"].as_object().unwrap().keys() {
++            let mut document = original.clone();
++            document["source_verification"]
++                .as_object_mut()
++                .unwrap()
++                .remove(field);
++            assert!(decode(&document, &paths).is_err(), "missing source {field}");
++        }
++        let source = &original["source_verification"];
++        document["source_verification"] = json!([
++            source["tree"],
++            source["base_commit"],
++            source["candidate_commit"],
++            source["ignored_input_sha256"],
++            source["ignored_input_count"],
++            source["ignored_input_bytes"],
++        ]);
++        assert!(decode(&document, &paths).is_err(), "array-shaped source");
++    }
++
++    #[test]
++    fn canonical_source_extension_rejects_duplicate_fields_at_both_levels() {
++        let (document, paths) = canonical_fixture();
++        let serialized = serde_json::to_string(&document).unwrap();
++        for key in ["verified_tree", "source_verification"] {
++            for value in [document[key].clone(), Value::Null] {
++                let duplicate = format!("{{\"{key}\":{value},{}", &serialized[1..]);
++                assert!(decode_typed_source(duplicate.as_bytes(), &contract(&paths)).is_err());
++            }
++        }
++        let source = &document["source_verification"];
++        let serialized_source = serde_json::to_string(source).unwrap();
++        for (key, value) in source.as_object().unwrap() {
++            let duplicate = format!("{{\"{key}\":{value},{}", &serialized_source[1..]);
++            let bytes = serialized.replacen(&serialized_source, &duplicate, 1);
++            assert!(decode_typed_source(bytes.as_bytes(), &contract(&paths)).is_err());
++        }
++    }
++
+     fn decode(document: &Value, paths: &[String]) -> DecodeResult<Vec<DependencySourceFile>> {
+         decode_typed_source(&serde_json::to_vec(document).unwrap(), &contract(paths))
+     }
+diff --git a/crates/crony-store/src/canonical_source_verification_tests.rs b/crates/crony-store/src/canonical_source_verification_tests.rs
+index 41bfec9..8004379 100644
+--- a/crates/crony-store/src/canonical_source_verification_tests.rs
++++ b/crates/crony-store/src/canonical_source_verification_tests.rs
+@@ -156,3 +156,286 @@ async fn issue82_canonical_completion_requires_event_artifact_and_every_evidence
+     );
+     assert_eq!(state(&store).await, after, "exact replay is idempotent");
+ }
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned SQLx maintenance database"]
++async fn issue82_consistent_runner_claims_cannot_replace_persisted_source_authority(pool: PgPool) {
++    let (store, command, artifact) = ready_export_fixture_with_publication(pool, false).await;
++    let mut source = fixture_source_verification();
++    source.base_commit = "9".repeat(40);
++    let mut metadata = artifact.metadata.clone();
++    metadata["base_commit"] = json!(source.base_commit);
++    metadata["source_verification"] = json!(source);
++    sqlx::query("UPDATE artifacts SET metadata=$1 WHERE id=$2")
++        .bind(metadata)
++        .bind(artifact.id)
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    sqlx::query("UPDATE verification_evidence SET payload=$1 WHERE run_id=$2")
++        .bind(json!({"source":source}))
++        .bind(command.run_id)
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    // The upload and run.started event also originate at the runner. Even if
++    // they agree, they cannot replace the immutable dispatched run/task base.
++    for sql in [
++        "UPDATE source_deliverables SET base_commit=repeat('9',40) WHERE run_id=$1",
++        "UPDATE runs SET workspace_base_commit=repeat('9',40) WHERE id=$1",
++    ] {
++        sqlx::query(sql)
++            .bind(command.run_id)
++            .execute(&store.pool)
++            .await
++            .unwrap();
++    }
++    let mut payload = passed_payload(&artifact);
++    payload["source_verification"] = json!(source);
++    rejected_passed_event(&store, &command, payload, "persisted source base").await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned SQLx maintenance database"]
++async fn issue82_canonical_completion_rechecks_each_persisted_base(pool: PgPool) {
++    let (store, command, artifact) = ready_export_fixture_with_publication(pool, false).await;
++    for (changed, restored) in [
++        (
++            "UPDATE runs SET workspace_base_commit=repeat('9',40) WHERE id=$1",
++            "UPDATE runs SET workspace_base_commit=repeat('a',40) WHERE id=$1",
++        ),
++        (
++            "UPDATE runs SET workspace_base_commit=NULL WHERE id=$1",
++            "UPDATE runs SET workspace_base_commit=repeat('a',40) WHERE id=$1",
++        ),
++        (
++            // Preserve the checkpoint's source/replacement lineage so this case
++            // isolates canonical acceptance, rather than the budget exception.
++            "UPDATE runs SET source_base_commit=repeat('9',40) WHERE task_id=(SELECT task_id FROM runs WHERE id=$1)",
++            "UPDATE runs SET source_base_commit=repeat('a',40) WHERE task_id=(SELECT task_id FROM runs WHERE id=$1)",
++        ),
++        (
++            "UPDATE tasks SET contract=jsonb_set(contract,'{source_base_commit}',to_jsonb(repeat('9',40))) WHERE id=(SELECT task_id FROM runs WHERE id=$1)",
++            "UPDATE tasks SET contract=jsonb_set(contract,'{source_base_commit}',to_jsonb(repeat('a',40))) WHERE id=(SELECT task_id FROM runs WHERE id=$1)",
++        ),
++        (
++            "UPDATE source_deliverables SET base_commit=repeat('9',40) WHERE run_id=$1",
++            "UPDATE source_deliverables SET base_commit=repeat('a',40) WHERE run_id=$1",
++        ),
++    ] {
++        sqlx::query(changed)
++            .bind(command.run_id)
++            .execute(&store.pool)
++            .await
++            .unwrap();
++        rejected_passed_event(
++            &store,
++            &command,
++            passed_payload(&artifact),
++            "persisted source base",
++        )
++        .await;
++        sqlx::query(restored)
++            .bind(command.run_id)
++            .execute(&store.pool)
++            .await
++            .unwrap();
++    }
++}
++
++async fn accept_canonical_export(
++    store: &PgStore,
++    command: &PendingRunnerCommand,
++    artifact: &StoredArtifact,
++) {
++    store
++        .apply_runner_event(event(
++            command.run_id,
++            retention_event(command).assignment_token,
++            "run.verification_passed",
++            passed_payload(artifact),
++        ))
++        .await
++        .unwrap();
++}
++
++async fn assert_downloadable(store: &PgStore, artifact_id: Uuid, allowed: bool) {
++    for actor in [OWNER, REVIEWER] {
++        assert_eq!(
++            store
++                .artifact_for_download(CORP, artifact_id, actor)
++                .await
++                .unwrap()
++                .is_some(),
++            allowed,
++            "authorized reviewer download availability"
++        );
++    }
++    assert!(
++        store
++            .artifact_for_download(Uuid::new_v4(), artifact_id, OWNER)
++            .await
++            .unwrap()
++            .is_none()
++    );
++    assert!(
++        store
++            .artifact_for_download(CORP, artifact_id, Uuid::new_v4())
++            .await
++            .unwrap()
++            .is_none()
++    );
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned SQLx maintenance database"]
++async fn issue82_canonical_completion_supports_legacy_absent_source_tuple(pool: PgPool) {
++    let (store, command, artifact) = ready_export_fixture_with_publication(pool, false).await;
++    // Model an absent tuple consistently in both the original and resumed run;
++    // changing only the replacement would invalidate its budget recovery lineage.
++    sqlx::query("UPDATE runs SET source_repository=NULL,source_base_ref=NULL,source_base_commit=NULL WHERE task_id=$1")
++        .bind(TASK).execute(&store.pool).await.unwrap();
++    sqlx::query("UPDATE tasks SET contract=contract-'source_repository'-'source_base_ref'-'source_base_commit' WHERE id=$1")
++        .bind(TASK).execute(&store.pool).await.unwrap();
++    accept_canonical_export(&store, &command, &artifact).await;
++    assert_downloadable(&store, artifact.id, true).await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned SQLx maintenance database"]
++async fn issue82_canonical_download_waits_for_acceptance_but_allows_manual_review(pool: PgPool) {
++    let (store, command, artifact) = ready_export_fixture_with_publication(pool, false).await;
++    assert_downloadable(&store, artifact.id, false).await;
++    let mut invalid = passed_payload(&artifact);
++    invalid["source_verification"]["tree"] = json!("9".repeat(40));
++    rejected_passed_event(&store, &command, invalid, "source verification").await;
++    assert_downloadable(&store, artifact.id, false).await;
++
++    accept_canonical_export(&store, &command, &artifact).await;
++    assert_downloadable(&store, artifact.id, true).await;
++    store
++        .apply_runner_event(event(
++            command.run_id,
++            retention_event(&command).assignment_token,
++            "run.verification_waiting",
++            json!({"gate":gate(),"gate_type":"independent_review"}),
++        ))
++        .await
++        .unwrap();
++    assert_eq!(
++        retained_run(&state(&store).await, command.run_id)["verification_status"],
++        "waiting_for_approval"
++    );
++    assert_downloadable(&store, artifact.id, true).await;
++    sqlx::query("DELETE FROM verification_requests WHERE run_id=$1")
++        .bind(command.run_id)
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    assert_downloadable(&store, artifact.id, false).await;
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned SQLx maintenance database"]
++async fn issue82_canonical_download_rechecks_accepted_linkage_and_metadata(pool: PgPool) {
++    let (store, command, artifact) = ready_export_fixture_with_publication(pool, false).await;
++    accept_canonical_export(&store, &command, &artifact).await;
++    let original = state(&store).await;
++    let original_run = retained_run(&original, command.run_id);
++    for changed in [
++        "UPDATE runs SET verification_status='failed' WHERE id=$1",
++        "UPDATE runs SET verification_status='pending' WHERE id=$1",
++        "UPDATE runs SET verification_sha256=repeat('9',64) WHERE id=$1",
++        "UPDATE runs SET deliverable_sha256=repeat('9',64) WHERE id=$1",
++        "UPDATE runs SET workspace_base_commit=repeat('9',40) WHERE id=$1",
++        "UPDATE runs SET workspace_base_commit=NULL WHERE id=$1",
++        "UPDATE runs SET source_base_commit=repeat('9',40) WHERE id=$1",
++        "UPDATE runs SET runner_id='different-runner' WHERE id=$1",
++        "UPDATE source_deliverables SET verification_sha256=repeat('9',64) WHERE run_id=$1",
++        "UPDATE source_deliverables SET base_commit=repeat('9',40) WHERE run_id=$1",
++        "UPDATE artifacts SET sha256=repeat('9',64) WHERE run_id=$1",
++        "UPDATE artifacts SET run_id='00000000-0000-0000-0000-000000000004' WHERE run_id=$1",
++        "UPDATE tasks SET contract=jsonb_set(contract,'{source_base_commit}',to_jsonb(repeat('9',40))) WHERE id=(SELECT task_id FROM runs WHERE id=$1)",
++    ] {
++        sqlx::query(changed)
++            .bind(command.run_id)
++            .execute(&store.pool)
++            .await
++            .unwrap();
++        assert_downloadable(&store, artifact.id, false).await;
++        sqlx::query("UPDATE runs r SET verification_status=p.verification_status,verification_sha256=p.verification_sha256,deliverable_sha256=p.deliverable_sha256,workspace_base_commit=p.workspace_base_commit,source_base_commit=p.source_base_commit,runner_id=p.runner_id FROM jsonb_populate_record(NULL::runs,$2) p WHERE r.id=$1")
++            .bind(command.run_id).bind(original_run).execute(&store.pool).await.unwrap();
++        sqlx::query("UPDATE source_deliverables SET verification_sha256=repeat('c',64),base_commit=repeat('a',40) WHERE run_id=$1")
++            .bind(command.run_id).execute(&store.pool).await.unwrap();
++        sqlx::query("UPDATE artifacts SET run_id=$1,sha256=$2 WHERE id=$3")
++            .bind(command.run_id)
++            .bind(&artifact.sha256)
++            .bind(artifact.id)
++            .execute(&store.pool)
++            .await
++            .unwrap();
++        sqlx::query("UPDATE tasks SET contract=$1 WHERE id=$2")
++            .bind(&original["task"]["contract"])
++            .bind(TASK)
++            .execute(&store.pool)
++            .await
++            .unwrap();
++        assert_downloadable(&store, artifact.id, true).await;
++    }
++    for (field, value) in [
++        ("verified_tree", json!("9".repeat(40))),
++        ("verification_sha256", json!("9".repeat(64))),
++        ("base_commit", json!("9".repeat(40))),
++        ("source_verification", Value::Null),
++        ("source_verification", json!({})),
++    ] {
++        let mut metadata = artifact.metadata.clone();
++        metadata[field] = value;
++        sqlx::query("UPDATE artifacts SET metadata=$1 WHERE id=$2")
++            .bind(metadata)
++            .bind(artifact.id)
++            .execute(&store.pool)
++            .await
++            .unwrap();
++        assert_downloadable(&store, artifact.id, false).await;
++    }
++}
++
++#[sqlx::test(migrations = "../../db/migrations")]
++#[ignore = "requires explicitly owned SQLx maintenance database"]
++async fn issue82_historical_sources_and_provider_evidence_keep_their_download_contract(
++    pool: PgPool,
++) {
++    let (store, _, artifact) = ready_export_fixture_with_publication(pool, false).await;
++    let mut historical = artifact.metadata.clone();
++    for field in ["verified_tree", "source_verification"] {
++        historical.as_object_mut().unwrap().remove(field);
++    }
++    sqlx::query("UPDATE artifacts SET metadata=$1 WHERE id=$2")
++        .bind(&historical)
++        .bind(artifact.id)
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    assert_downloadable(&store, artifact.id, true).await;
++    // A present null or a partial extension must never masquerade as history.
++    for field in ["verified_tree", "source_verification"] {
++        for value in [Value::Null, artifact.metadata[field].clone()] {
++            let mut partial = historical.clone();
++            partial[field] = value;
++            sqlx::query("UPDATE artifacts SET metadata=$1 WHERE id=$2")
++                .bind(partial)
++                .bind(artifact.id)
++                .execute(&store.pool)
++                .await
++                .unwrap();
++            assert_downloadable(&store, artifact.id, false).await;
++        }
++    }
++    sqlx::query("UPDATE artifacts SET artifact_role='provider_evidence' WHERE id=$1")
++        .bind(artifact.id)
++        .execute(&store.pool)
++        .await
++        .unwrap();
++    assert_downloadable(&store, artifact.id, true).await;
++}
+diff --git a/crates/crony-store/src/lib.rs b/crates/crony-store/src/lib.rs
+index 84a4ea1..eda7aba 100644
+--- a/crates/crony-store/src/lib.rs
++++ b/crates/crony-store/src/lib.rs
+@@ -7950,12 +7950,46 @@ impl PgStore {
+                     artifact.artifact_role, artifact.file_name, artifact.metadata,
+                     artifact.provenance_signature, artifact.retention_until
+             FROM artifacts artifact
+-            JOIN tasks task ON task.id = artifact.task_id
+-            JOIN missions mission ON mission.id = task.mission_id
++            JOIN tasks task ON task.id = artifact.task_id AND task.corp_id = artifact.corp_id
++            JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
+             JOIN room_memberships membership
+               ON membership.room_id = mission.room_id AND membership.actor_id = $3
+             WHERE artifact.id = $1 AND artifact.corp_id = $2
+               AND artifact.status = 'ready'
++              AND (
++                artifact.artifact_role <> 'source_deliverable'
++                -- Only absence of both fields identifies immutable historical exports.
++                OR NOT (artifact.metadata ? 'verified_tree' OR artifact.metadata ? 'source_verification')
++                OR EXISTS (
++                    SELECT 1 FROM source_deliverables deliverable
++                    JOIN runs run ON run.id = deliverable.run_id
++                      AND run.corp_id = deliverable.corp_id AND run.task_id = deliverable.task_id
++                    WHERE deliverable.artifact_id = artifact.id
++                      AND deliverable.corp_id = artifact.corp_id
++                      AND deliverable.task_id = artifact.task_id
++                      AND run.id = artifact.run_id
++                      AND run.agent_id = artifact.producer_agent_id
++                      AND run.runner_id = artifact.producer_runner_id
++                      AND deliverable.form = artifact.metadata->>'form'
++                      AND deliverable.verification_sha256 = run.verification_sha256
++                      AND deliverable.verification_sha256 = artifact.metadata->>'verification_sha256'
++                      AND artifact.sha256 = run.deliverable_sha256
++                      AND deliverable.base_commit = run.workspace_base_commit
++                      AND deliverable.base_commit = artifact.metadata->>'base_commit'
++                      AND (run.source_base_commit IS NULL OR run.source_base_commit = deliverable.base_commit)
++                      AND (task.contract->>'source_base_commit' IS NULL
++                           OR task.contract->>'source_base_commit' = deliverable.base_commit)
++                      AND (
++                        run.verification_status = 'passed'
++                        -- Reviewers must inspect the accepted automated result before deciding.
++                        OR (run.verification_status = 'waiting_for_approval' AND EXISTS (
++                            SELECT 1 FROM verification_requests request
++                            WHERE request.run_id = run.id AND request.corp_id = run.corp_id
++                              AND request.task_id = run.task_id AND request.status = 'pending'
++                        ))
++                      )
++                )
++              )
+             "#,
+         )
+         .bind(artifact_id)
+@@ -7963,7 +7997,12 @@ impl PgStore {
+         .bind(actor_id)
+         .fetch_optional(&self.pool)
+         .await?;
+-        Ok(row.map(map_stored_artifact))
++        Ok(row.map(map_stored_artifact).filter(|artifact| {
++            artifact.artifact_role != "source_deliverable"
++                || (artifact.metadata.get("verified_tree").is_none()
++                    && artifact.metadata.get("source_verification").is_none())
++                || crony_domain::SourceVerification::from_payload(&artifact.metadata).is_ok()
++        }))
+     }
+ 
+     pub async fn verification_artifact_for_recovery(
+@@ -8241,6 +8280,7 @@ impl PgStore {
+             SELECT r.task_id, r.verification_status AS run_verification_status,
+                    r.breaker_stage, r.workspace_fingerprint AS existing_workspace_fingerprint,
+                    r.workspace_disposition AS existing_workspace_disposition,
++                   r.workspace_base_commit, r.source_base_commit,
+                    r.execution_mode, r.status AS run_status,
+                    t.mission_id, t.contract, t.verification_policy, m.room_id,
+                    t.status AS task_status, m.status AS mission_status,
+@@ -8777,9 +8817,9 @@ impl PgStore {
+                             .and_then(Value::as_str)
+                             .context("verification passed event omitted deliverable digest")?
+                             .to_owned();
+-                        let linked: Option<Value> = sqlx::query_scalar(
++                        let linked = sqlx::query(
+                             r#"
+-                                SELECT artifact.metadata
++                                SELECT artifact.metadata, deliverable.base_commit
+                                 FROM source_deliverables deliverable
+                                 JOIN artifacts artifact ON artifact.id = deliverable.artifact_id
+                                   AND artifact.corp_id = deliverable.corp_id
+@@ -8792,6 +8832,8 @@ impl PgStore {
+                                   AND artifact.artifact_role = 'source_deliverable'
+                                   AND deliverable.corp_id = $4
+                                   AND deliverable.task_id = $5
++                                  AND artifact.producer_agent_id = $6
++                                  AND artifact.producer_runner_id = $7
+                             "#,
+                         )
+                         .bind(run_id)
+@@ -8799,13 +8841,16 @@ impl PgStore {
+                         .bind(&deliverable_sha256)
+                         .bind(corp_id)
+                         .bind(task_id)
++                        .bind(agent_id)
++                        .bind(&runner_id)
+                         .fetch_optional(&mut *tx)
+                         .await?;
+-                        let Some(metadata) = linked else {
++                        let Some(linked) = linked else {
+                             return Err(anyhow!(
+                                 "verification passed without an exact ready deliverable linkage"
+                             ));
+                         };
++                        let metadata: Value = linked.get("metadata");
+                         let signed_source =
+                             crony_domain::SourceVerification::from_payload(&metadata)
+                                 .map_err(anyhow::Error::msg)?;
+@@ -8814,6 +8859,25 @@ impl PgStore {
+                                 "verification identity does not match the signed source deliverable"
+                             ));
+                         }
++                        // Runner events and uploads can agree with one another while lying
++                        // about the dispatched source. Anchor them to every persisted base.
++                        if linked.get::<String, _>("base_commit") != signed_source.base_commit
++                            || row
++                                .get::<Option<String>, _>("workspace_base_commit")
++                                .as_deref()
++                                != Some(signed_source.base_commit.as_str())
++                            || row
++                                .get::<Option<String>, _>("source_base_commit")
++                                .is_some_and(|base| base != signed_source.base_commit)
++                            || task_contract
++                                .source_base_commit
++                                .as_ref()
++                                .is_some_and(|base| base != &signed_source.base_commit)
++                        {
++                            return Err(anyhow!(
++                                "verification identity does not match the persisted source base"
++                            ));
++                        }
+                         (Some(verification_sha256), Some(deliverable_sha256))
+                     } else {
+                         (None, None)
+diff --git a/tools/check_deliverable_diff.test.mjs b/tools/check_deliverable_diff.test.mjs
+index 48e85f8..b0c28ca 100644
+--- a/tools/check_deliverable_diff.test.mjs
++++ b/tools/check_deliverable_diff.test.mjs
+@@ -260,8 +260,9 @@ test('native source-selection recipe is pinned; drift requires an explicit parit
+   const end = nativeSource.indexOf('    let changes = changed_paths(', start)
+   assert.ok(start >= 0 && end > start)
+   // #82 extracts the unchanged selection sequence into select_index and freezes
+-  // its tree before checking. Git environment handling now matches the runner.
+-  assert.equal(hash(nativeSource.slice(start, end)), 'b675055bee7b582cf6b997ff096dda2a0840684fb087a8bf7eee4955b6db7e9d')
++  // its tree before checking. cfg!(windows) preserves the same platform-specific
++  // index bases while keeping preserve_head_commit referenced on Linux.
++  assert.equal(hash(nativeSource.slice(start, end)), '22a8887f0f2c84779ac0ae875683da62643eb1358c066a3e4777015050988e10')
+   const output = nativeSource.slice(nativeSource.indexOf('async fn git_output('))
+   assert.match(output, /verification::clear_git_environment\(&mut command\)/)
+   assert.match(output, /\.env\(\s*"GIT_INDEX_FILE",\s*crate::workspace::normalize_path\(index\.to_path_buf\(\)\),\s*\)/)

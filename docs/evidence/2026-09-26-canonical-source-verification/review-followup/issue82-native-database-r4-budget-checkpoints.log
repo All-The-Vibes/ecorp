@@ -1,0 +1,64 @@
+   Compiling crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 50s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-eddbee591ca35258.exe)
+
+running 7 tests
+test budget_checkpoint_tests::canonical_source::issue82_canonical_completion_rechecks_each_persisted_base ... FAILED
+test budget_checkpoint_tests::canonical_source::issue82_canonical_completion_requires_event_artifact_and_every_evidence_identity ... ok
+test budget_checkpoint_tests::canonical_source::issue82_canonical_completion_supports_legacy_absent_source_tuple ... FAILED
+test budget_checkpoint_tests::canonical_source::issue82_canonical_download_rechecks_accepted_linkage_and_metadata ... FAILED
+test budget_checkpoint_tests::canonical_source::issue82_canonical_download_waits_for_acceptance_but_allows_manual_review ... FAILED
+test budget_checkpoint_tests::canonical_source::issue82_consistent_runner_claims_cannot_replace_persisted_source_authority ... FAILED
+test budget_checkpoint_tests::canonical_source::issue82_historical_sources_and_provider_evidence_keep_their_download_contract ... FAILED
+
+failures:
+
+---- budget_checkpoint_tests::canonical_source::issue82_canonical_completion_rechecks_each_persisted_base stdout ----
+
+thread 'budget_checkpoint_tests::canonical_source::issue82_canonical_completion_rechecks_each_persisted_base' (26128) panicked at crates\crony-store\src\canonical_source_verification_tests.rs:28:55:
+called `Result::unwrap_err()` on an `Ok` value: RunnerEventOutcome { event: Some(DomainEvent { seq: 13, id: 9845986f-61c2-472d-a484-a130b250347f, schema_version: 1, corp_id: 00000000-0000-0000-0000-000000000001, room_id: Some(00000000-0000-0000-0000-000000000006), actor_id: None, event_type: "run.verification_passed", aggregate_type: "run", aggregate_id: 0c82d389-8e16-4699-ba70-a5767bbf32d0, aggregate_version: 1, correlation_id: Some(00000000-0000-0000-0000-000000000002), causation_id: None, idempotency_key: "runner:issue148-checkpoint-runner:event:9845986f-61c2-472d-a484-a130b250347f", visibility: "corp", payload: Object {"deliverable_sha256": String("5f98047cb30dd8b3a41f2c1ec9e7f32151ca72c9a29898168cb4c19a15bf8e9c"), "source_verification": Object {"base_commit": String("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), "candidate_commit": String("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"), "ignored_input_bytes": Number(0), "ignored_input_count": Number(0), "ignored_input_sha256": String("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"), "tree": String("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")}, "summary": String("SQLx canonical linkage fixture"), "verification_sha256": String("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"), "verified_tree": String("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")}, created_at: 2026-09-27T02:26:48.764379Z }), related_events: [], breaker_commands: [] }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- budget_checkpoint_tests::canonical_source::issue82_canonical_completion_supports_legacy_absent_source_tuple stdout ----
+
+thread 'budget_checkpoint_tests::canonical_source::issue82_canonical_completion_supports_legacy_absent_source_tuple' (34292) panicked at crates\crony-store\src\canonical_source_verification_tests.rs:248:10:
+called `Result::unwrap()` on an `Err` value: run event run.verification_passed is blocked because current budget or loop metrics require a hard breaker
+
+---- budget_checkpoint_tests::canonical_source::issue82_canonical_download_rechecks_accepted_linkage_and_metadata stdout ----
+
+thread 'budget_checkpoint_tests::canonical_source::issue82_canonical_download_rechecks_accepted_linkage_and_metadata' (28140) panicked at crates\crony-store\src\canonical_source_verification_tests.rs:253:9:
+assertion `left == right` failed: authorized reviewer download availability
+  left: true
+ right: false
+
+---- budget_checkpoint_tests::canonical_source::issue82_canonical_download_waits_for_acceptance_but_allows_manual_review stdout ----
+
+thread 'budget_checkpoint_tests::canonical_source::issue82_canonical_download_waits_for_acceptance_but_allows_manual_review' (16224) panicked at crates\crony-store\src\canonical_source_verification_tests.rs:253:9:
+assertion `left == right` failed: authorized reviewer download availability
+  left: true
+ right: false
+
+---- budget_checkpoint_tests::canonical_source::issue82_consistent_runner_claims_cannot_replace_persisted_source_authority stdout ----
+
+thread 'budget_checkpoint_tests::canonical_source::issue82_consistent_runner_claims_cannot_replace_persisted_source_authority' (32632) panicked at crates\crony-store\src\canonical_source_verification_tests.rs:28:55:
+called `Result::unwrap_err()` on an `Ok` value: RunnerEventOutcome { event: Some(DomainEvent { seq: 13, id: 5984e800-5490-4d63-a8f9-c12a5e6bbd60, schema_version: 1, corp_id: 00000000-0000-0000-0000-000000000001, room_id: Some(00000000-0000-0000-0000-000000000006), actor_id: None, event_type: "run.verification_passed", aggregate_type: "run", aggregate_id: e8add0d7-a59f-48b0-bfef-c324eee33f46, aggregate_version: 1, correlation_id: Some(00000000-0000-0000-0000-000000000002), causation_id: None, idempotency_key: "runner:issue148-checkpoint-runner:event:5984e800-5490-4d63-a8f9-c12a5e6bbd60", visibility: "corp", payload: Object {"deliverable_sha256": String("5f98047cb30dd8b3a41f2c1ec9e7f32151ca72c9a29898168cb4c19a15bf8e9c"), "source_verification": Object {"base_commit": String("9999999999999999999999999999999999999999"), "candidate_commit": String("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"), "ignored_input_bytes": Number(0), "ignored_input_count": Number(0), "ignored_input_sha256": String("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"), "tree": String("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")}, "summary": String("SQLx canonical linkage fixture"), "verification_sha256": String("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"), "verified_tree": String("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")}, created_at: 2026-09-27T02:26:59.767387Z }), related_events: [], breaker_commands: [] }
+
+---- budget_checkpoint_tests::canonical_source::issue82_historical_sources_and_provider_evidence_keep_their_download_contract stdout ----
+
+thread 'budget_checkpoint_tests::canonical_source::issue82_historical_sources_and_provider_evidence_keep_their_download_contract' (18612) panicked at crates\crony-store\src\canonical_source_verification_tests.rs:253:9:
+assertion `left == right` failed: authorized reviewer download availability
+  left: true
+ right: false
+
+
+failures:
+    budget_checkpoint_tests::canonical_source::issue82_canonical_completion_rechecks_each_persisted_base
+    budget_checkpoint_tests::canonical_source::issue82_canonical_completion_supports_legacy_absent_source_tuple
+    budget_checkpoint_tests::canonical_source::issue82_canonical_download_rechecks_accepted_linkage_and_metadata
+    budget_checkpoint_tests::canonical_source::issue82_canonical_download_waits_for_acceptance_but_allows_manual_review
+    budget_checkpoint_tests::canonical_source::issue82_consistent_runner_claims_cannot_replace_persisted_source_authority
+    budget_checkpoint_tests::canonical_source::issue82_historical_sources_and_provider_evidence_keep_their_download_contract
+
+test result: FAILED. 1 passed; 6 failed; 0 ignored; 0 measured; 544 filtered out; finished in 14.95s
+
+error: test failed, to rerun pass `-p crony-store --lib`

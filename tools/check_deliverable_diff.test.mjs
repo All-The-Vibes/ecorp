@@ -260,8 +260,9 @@ test('native source-selection recipe is pinned; drift requires an explicit parit
   const end = nativeSource.indexOf('    let changes = changed_paths(', start)
   assert.ok(start >= 0 && end > start)
   // #82 extracts the unchanged selection sequence into select_index and freezes
-  // its tree before checking. Git environment handling now matches the runner.
-  assert.equal(hash(nativeSource.slice(start, end)), 'b675055bee7b582cf6b997ff096dda2a0840684fb087a8bf7eee4955b6db7e9d')
+  // its tree before checking. cfg!(windows) preserves the same platform-specific
+  // index bases while keeping preserve_head_commit referenced on Linux.
+  assert.equal(hash(nativeSource.slice(start, end)), '22a8887f0f2c84779ac0ae875683da62643eb1358c066a3e4777015050988e10')
   const output = nativeSource.slice(nativeSource.indexOf('async fn git_output('))
   assert.match(output, /verification::clear_git_environment\(&mut command\)/)
   assert.match(output, /\.env\(\s*"GIT_INDEX_FILE",\s*crate::workspace::normalize_path\(index\.to_path_buf\(\)\),\s*\)/)

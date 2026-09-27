@@ -7950,12 +7950,46 @@ impl PgStore {
                     artifact.artifact_role, artifact.file_name, artifact.metadata,
                     artifact.provenance_signature, artifact.retention_until
             FROM artifacts artifact
-            JOIN tasks task ON task.id = artifact.task_id
-            JOIN missions mission ON mission.id = task.mission_id
+            JOIN tasks task ON task.id = artifact.task_id AND task.corp_id = artifact.corp_id
+            JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
             JOIN room_memberships membership
               ON membership.room_id = mission.room_id AND membership.actor_id = $3
             WHERE artifact.id = $1 AND artifact.corp_id = $2
               AND artifact.status = 'ready'
+              AND (
+                artifact.artifact_role <> 'source_deliverable'
+                -- Only absence of both fields identifies immutable historical exports.
+                OR NOT (artifact.metadata ? 'verified_tree' OR artifact.metadata ? 'source_verification')
+                OR EXISTS (
+                    SELECT 1 FROM source_deliverables deliverable
+                    JOIN runs run ON run.id = deliverable.run_id
+                      AND run.corp_id = deliverable.corp_id AND run.task_id = deliverable.task_id
+                    WHERE deliverable.artifact_id = artifact.id
+                      AND deliverable.corp_id = artifact.corp_id
+                      AND deliverable.task_id = artifact.task_id
+                      AND run.id = artifact.run_id
+                      AND run.agent_id = artifact.producer_agent_id
+                      AND run.runner_id = artifact.producer_runner_id
+                      AND deliverable.form = artifact.metadata->>'form'
+                      AND deliverable.verification_sha256 = run.verification_sha256
+                      AND deliverable.verification_sha256 = artifact.metadata->>'verification_sha256'
+                      AND artifact.sha256 = run.deliverable_sha256
+                      AND deliverable.base_commit = run.workspace_base_commit
+                      AND deliverable.base_commit = artifact.metadata->>'base_commit'
+                      AND (run.source_base_commit IS NULL OR run.source_base_commit = deliverable.base_commit)
+                      AND (task.contract->>'source_base_commit' IS NULL
+                           OR task.contract->>'source_base_commit' = deliverable.base_commit)
+                      AND (
+                        run.verification_status = 'passed'
+                        -- Reviewers must inspect the accepted automated result before deciding.
+                        OR (run.verification_status = 'waiting_for_approval' AND EXISTS (
+                            SELECT 1 FROM verification_requests request
+                            WHERE request.run_id = run.id AND request.corp_id = run.corp_id
+                              AND request.task_id = run.task_id AND request.status = 'pending'
+                        ))
+                      )
+                )
+              )
             "#,
         )
         .bind(artifact_id)
@@ -7963,7 +7997,12 @@ impl PgStore {
         .bind(actor_id)
         .fetch_optional(&self.pool)
         .await?;
-        Ok(row.map(map_stored_artifact))
+        Ok(row.map(map_stored_artifact).filter(|artifact| {
+            artifact.artifact_role != "source_deliverable"
+                || (artifact.metadata.get("verified_tree").is_none()
+                    && artifact.metadata.get("source_verification").is_none())
+                || crony_domain::SourceVerification::from_payload(&artifact.metadata).is_ok()
+        }))
     }
 
     pub async fn verification_artifact_for_recovery(
@@ -8241,6 +8280,7 @@ impl PgStore {
             SELECT r.task_id, r.verification_status AS run_verification_status,
                    r.breaker_stage, r.workspace_fingerprint AS existing_workspace_fingerprint,
                    r.workspace_disposition AS existing_workspace_disposition,
+                   r.workspace_base_commit, r.source_base_commit,
                    r.execution_mode, r.status AS run_status,
                    t.mission_id, t.contract, t.verification_policy, m.room_id,
                    t.status AS task_status, m.status AS mission_status,
@@ -8777,9 +8817,9 @@ impl PgStore {
                             .and_then(Value::as_str)
                             .context("verification passed event omitted deliverable digest")?
                             .to_owned();
-                        let linked: Option<Value> = sqlx::query_scalar(
+                        let linked = sqlx::query(
                             r#"
-                                SELECT artifact.metadata
+                                SELECT artifact.metadata, deliverable.base_commit
                                 FROM source_deliverables deliverable
                                 JOIN artifacts artifact ON artifact.id = deliverable.artifact_id
                                   AND artifact.corp_id = deliverable.corp_id
@@ -8792,6 +8832,8 @@ impl PgStore {
                                   AND artifact.artifact_role = 'source_deliverable'
                                   AND deliverable.corp_id = $4
                                   AND deliverable.task_id = $5
+                                  AND artifact.producer_agent_id = $6
+                                  AND artifact.producer_runner_id = $7
                             "#,
                         )
                         .bind(run_id)
@@ -8799,19 +8841,41 @@ impl PgStore {
                         .bind(&deliverable_sha256)
                         .bind(corp_id)
                         .bind(task_id)
+                        .bind(agent_id)
+                        .bind(&runner_id)
                         .fetch_optional(&mut *tx)
                         .await?;
-                        let Some(metadata) = linked else {
+                        let Some(linked) = linked else {
                             return Err(anyhow!(
                                 "verification passed without an exact ready deliverable linkage"
                             ));
                         };
+                        let metadata: Value = linked.get("metadata");
                         let signed_source =
                             crony_domain::SourceVerification::from_payload(&metadata)
                                 .map_err(anyhow::Error::msg)?;
                         if Some(&signed_source) != source.as_ref() {
                             return Err(anyhow!(
                                 "verification identity does not match the signed source deliverable"
+                            ));
+                        }
+                        // Runner events and uploads can agree with one another while lying
+                        // about the dispatched source. Anchor them to every persisted base.
+                        if linked.get::<String, _>("base_commit") != signed_source.base_commit
+                            || row
+                                .get::<Option<String>, _>("workspace_base_commit")
+                                .as_deref()
+                                != Some(signed_source.base_commit.as_str())
+                            || row
+                                .get::<Option<String>, _>("source_base_commit")
+                                .is_some_and(|base| base != signed_source.base_commit)
+                            || task_contract
+                                .source_base_commit
+                                .as_ref()
+                                .is_some_and(|base| base != &signed_source.base_commit)
+                        {
+                            return Err(anyhow!(
+                                "verification identity does not match the persisted source base"
                             ));
                         }
                         (Some(verification_sha256), Some(deliverable_sha256))

@@ -264,10 +264,11 @@ async fn select_index(
     for path in &spec.paths {
         validate_relative(path)?;
     }
-    #[cfg(windows)]
-    let index_base = preserve_head_commit.unwrap_or(&workspace.base_commit);
-    #[cfg(not(windows))]
-    let index_base = &workspace.base_commit;
+    let index_base = if cfg!(windows) {
+        preserve_head_commit.unwrap_or(&workspace.base_commit)
+    } else {
+        &workspace.base_commit
+    };
     git_success(
         workspace_root,
         index,

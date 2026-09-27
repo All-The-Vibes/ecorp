@@ -1,0 +1,71 @@
+"""Record the exact selection-recipe parity review and execute its native regressions."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+from datetime import datetime, timezone
+
+ev = Path(__file__).resolve().parent
+repo = Path(r"<USERPROFILE>\.codex\worktrees\issue327-clippy\ecorp")
+node = Path(r"<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe")
+receipt = ev / "pr375-recipe-parity-r1.json"
+log = ev / "pr375-recipe-parity-r1.log"
+assert not receipt.exists() and not log.exists()
+env = {k: v for k, v in os.environ.items() if not re.match(r"^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)", k, re.I)
+       and k.upper() not in {"DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "COPILOT_GITHUB_TOKEN", "NODE_OPTIONS"}}
+env.update(GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="Never")
+env["PATH"] = str(node.parent) + os.pathsep + env["PATH"]
+sha = lambda raw: hashlib.sha256(raw).hexdigest()
+name = "crates/crony-runner/src/deliverable.rs"
+prior = subprocess.check_output(["git", "-C", str(repo), "show", "HEAD:" + name], env=env).decode().replace("\r\n", "\n")
+current = (repo / name).read_text(encoding="utf-8")
+old_clause = '''    #[cfg(windows)]
+    let index_base = preserve_head_commit.unwrap_or(&workspace.base_commit);
+    #[cfg(not(windows))]
+    let index_base = &workspace.base_commit;'''
+new_clause = '''    let index_base = if cfg!(windows) {
+        preserve_head_commit.unwrap_or(&workspace.base_commit)
+    } else {
+        &workspace.base_commit
+    };'''
+assert prior.count(old_clause) == 1 and current == prior.replace(old_clause, new_clause)
+def recipe(text):
+    start = text.index("    for path in &spec.paths {")
+    return text[start:text.index("    let changes = changed_paths(", start)]
+assert sha(recipe(prior).encode()) == "b675055bee7b582cf6b997ff096dda2a0840684fb087a8bf7eee4955b6db7e9d"
+assert sha(recipe(current).encode()) == "22a8887f0f2c84779ac0ae875683da62643eb1358c066a3e4777015050988e10"
+files = [name, "tools/check_deliverable_diff.test.mjs", "tools/check_deliverable_diff.mjs"]
+before = {p: sha((repo / p).read_bytes()) for p in files}
+record = {"issue": 82, "pr": 375, "status": "running", "started_at_utc": datetime.now(timezone.utc).isoformat(),
+          "head": subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], env=env).decode().strip(),
+          "source_files": before, "review": {
+              "only_runner_change": "Replace mutually exclusive cfg attributes with the same compile-time platform condition in one expression.",
+              "windows": "Optional verification-linked head still seeds executable bits, otherwise workspace base; unselected-path reset unchanged.",
+              "other_platforms": "Immutable workspace base remains the index seed; preserve_head_commit stays referenced for strict Clippy.",
+              "remaining_selection_recipe_unchanged": True,
+              "prior_recipe_sha256": sha(recipe(prior).encode()), "reviewed_recipe_sha256": sha(recipe(current).encode()),
+              "historical_failure": "Canonical r4: 3089 Node cases; 3023 passed, 1 stale recipe pin failed, 65 skipped; later gates not run."}}
+def save():
+    receipt.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+save()
+try:
+    args = [str(node), "--test", "--test-concurrency=1", "--test-timeout=180000", "--test-reporter=tap", "tools/check_deliverable_diff.test.mjs"]
+    with log.open("xb") as stream:
+        result = subprocess.run(args, cwd=repo, env=env, stdout=stream, stderr=subprocess.STDOUT, timeout=1200,
+                                creationflags=subprocess.CREATE_NO_WINDOW)
+    output = log.read_text(encoding="utf-8")
+    counts = {key: int(re.search(r"^# " + key + r" (\d+)$", output, re.M)[1])
+              for key in ["tests", "pass", "fail", "cancelled", "skipped", "todo"]}
+    record.update(arguments=args, exit_code=result.returncode, counts=counts, log=str(log), log_sha256=sha(log.read_bytes()))
+    assert result.returncode == 0 and counts["tests"] > 0 and counts["fail"] == counts["cancelled"] == 0
+    assert before == {p: sha((repo / p).read_bytes()) for p in files}
+    record.update(status="passed", source_unchanged=True)
+except Exception as error:
+    record.update(status="failed", failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+    save()
+    print(json.dumps({k: record.get(k) for k in ["issue", "pr", "status", "counts", "failure"]}))

@@ -1,0 +1,42 @@
+{
+  "issue": 82,
+  "pr": 375,
+  "status": "passed",
+  "started_at_utc": "2026-09-27T03:33:51.391959+00:00",
+  "head": "640a144f3d4832a23a6b30701946ac0af3ee1506",
+  "source_files": {
+    "crates/crony-runner/src/deliverable.rs": "bb114c4aabcda2690e31ac30edc2087b484fbc110aa06806fdeac91386e1c56e",
+    "tools/check_deliverable_diff.test.mjs": "f3575c576b1250ba476d5d2559229c8b7ee20e8a7681e00337e366996b2f64b1",
+    "tools/check_deliverable_diff.mjs": "d18a6f5b87629a9e384a37273da344ffa745016fcf343440eb11a92e6bcb6f9e"
+  },
+  "review": {
+    "only_runner_change": "Replace mutually exclusive cfg attributes with the same compile-time platform condition in one expression.",
+    "windows": "Optional verification-linked head still seeds executable bits, otherwise workspace base; unselected-path reset unchanged.",
+    "other_platforms": "Immutable workspace base remains the index seed; preserve_head_commit stays referenced for strict Clippy.",
+    "remaining_selection_recipe_unchanged": true,
+    "prior_recipe_sha256": "b675055bee7b582cf6b997ff096dda2a0840684fb087a8bf7eee4955b6db7e9d",
+    "reviewed_recipe_sha256": "22a8887f0f2c84779ac0ae875683da62643eb1358c066a3e4777015050988e10",
+    "historical_failure": "Canonical r4: 3089 Node cases; 3023 passed, 1 stale recipe pin failed, 65 skipped; later gates not run."
+  },
+  "arguments": [
+    "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+    "--test",
+    "--test-concurrency=1",
+    "--test-timeout=180000",
+    "--test-reporter=tap",
+    "tools/check_deliverable_diff.test.mjs"
+  ],
+  "exit_code": 0,
+  "counts": {
+    "tests": 53,
+    "pass": 53,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\pr375-recipe-parity-r1.log",
+  "log_sha256": "647271a27cdbdaee6315f796b49511ab70698106224998d8d164d5ce789c38ac",
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-27T03:36:57.655843+00:00"
+}
