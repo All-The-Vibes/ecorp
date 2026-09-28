@@ -1,0 +1,205 @@
+"""Verify evidence-only additions and equivalence to completed code acceptance."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r"<USERPROFILE>\.codex\worktrees\issue136-browser-docs\ecorp")
+PACKET = ROOT / "docs/evidence/2026-09-27-factory-exact-membership"
+RECEIPT = EV / "issue232-publication-validation-r4.json"
+NODE = Path(r"<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe")
+GITLEAKS = Path(r"<USERPROFILE>\code\ecorp\output\pr-completion\20260922T123548Z\gitleaks-8.30.1\gitleaks.exe")
+assert not RECEIPT.exists()
+ENV = {key: value for key, value in os.environ.items()
+       if not re.match(r"^(CRONY_|ECORP_|PG|GH_|GITHUB_|GITLEAKS_|AZURE_|GIT_)", key, re.I)
+       and key.upper() not in {"DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
+                               "COPILOT_GITHUB_TOKEN", "NODE_OPTIONS"}}
+ENV["GIT_TERMINAL_PROMPT"] = "0"
+ENV["PATH"] = str(NODE.parent) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + ENV["PATH"]
+record = {"issue": 232, "status": "running", "started_at_utc": datetime.now(timezone.utc).isoformat(),
+          "checks": [], "scope": "Publication files only; original physical source, tested Git tree and full canonical plan remain unchanged."}
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
+
+
+def save():
+    RECEIPT.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+
+def git(*arguments, env=ENV, data=None):
+    return subprocess.run(["git", "-C", str(ROOT), *arguments], env=env, input=data,
+                          capture_output=True, check=True, timeout=180,
+                          creationflags=subprocess.CREATE_NO_WINDOW).stdout
+
+
+def check(name, arguments, env=ENV):
+    log = EV / f"issue232-publication-r4-{name}.log"
+    assert not log.exists()
+    started = datetime.now(timezone.utc).isoformat()
+    process = subprocess.run([str(value) for value in arguments], cwd=ROOT, env=env,
+                             capture_output=True, timeout=900, creationflags=subprocess.CREATE_NO_WINDOW)
+    raw = process.stdout + process.stderr
+    log.write_bytes(raw)
+    record["checks"].append({
+        "name": name, "arguments": [str(value) for value in arguments], "exit_code": process.returncode,
+        "started_at_utc": started, "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+        "log": str(log), "sha256": sha(raw),
+    })
+    save()
+    assert process.returncode == 0, f"{name} failed; inspect the preserved log"
+
+
+save()
+try:
+    source_path = EV / "issue232-publication-source-r1.json"
+    source = load(source_path)
+    assembly = load(EV / "issue232-packet-r4.json")
+    assert assembly["status"] == "assembled" and sha(source_path.read_bytes()) == assembly["source_receipt_sha256"]
+    binding = source["binding"]
+    canonical = load(binding["canonical_receipt"])
+    gate = canonical["canonical_report"]
+    summary = load(PACKET / "summary.json")
+    assert canonical["status"] == gate["status"] == "passed"
+    assert not gate["sourceChangedDuringValidation"] and not gate["notRun"]
+    assert all(check["passed"] and check["exitCode"] == 0 for check in gate["checks"])
+    assert sha(Path(gate["path"]).read_bytes()) == summary["canonical_original_sha256"] == binding["canonical_report_sha256"]
+    assert git("rev-parse", "HEAD").decode().strip() == binding["source_head"]
+    assert git("branch", "--show-current").decode().strip() == binding["source_branch"] == "codex/issue232-project-membership"
+    assert not git("diff", "--name-only").strip()
+    assert not git("ls-files", "--unmerged").strip()
+    assert git("rev-parse", "MERGE_HEAD").decode().strip() == source["integration_base"]
+    assert source["parents"] == [binding["source_head"], source["integration_base"]]
+    base_index = git("write-tree").decode().strip()
+    assert base_index == binding["source_tree"]
+
+    def check_original():
+        for name, expected in source["physical_files"]:
+            file = ROOT / name
+            assert (sha(file.read_bytes()) if file.is_file() else None) == expected, name
+
+    check_original()
+    assert sha(json.dumps(source["physical_files"], separators=(",", ":"), ensure_ascii=False).encode()) == binding["source_files_sha256"]
+    assert summary["integration_base"] == source["integration_base"] and summary["parents"] == source["parents"]
+    assert summary["issue_completion_proven"] is False
+    original_names = [name for name, _ in source["physical_files"]]
+    packet_files = [{"path": file.relative_to(ROOT).as_posix(), "sha256": sha(file.read_bytes()),
+                     "bytes": file.stat().st_size}
+                    for file in sorted(PACKET.rglob("*")) if file.is_file()]
+    packet_names = {item["path"] for item in packet_files}
+    current_names = set(git("ls-files", "-z", "--cached", "--others", "--exclude-standard").decode().split("\0")) - {""}
+    assert set(original_names) <= current_names
+    assert current_names - set(original_names) <= packet_names
+    assert all(name.startswith(source["publication_directory"] + "/") for name in packet_names)
+    for item in summary["artifacts"]:
+        assert sha((PACKET / item["file"]).read_bytes()) == item["published_sha256"]
+    assert sha((PACKET / "summary.json").read_bytes()) == assembly["summary_sha256"]
+
+    descriptor, temporary_name = tempfile.mkstemp(prefix="issue232-publication-index-", dir=EV)
+    os.close(descriptor)
+    index = Path(temporary_name).resolve()
+    assert index.parent == EV.resolve() and index.name.startswith("issue232-publication-index-")
+    index.unlink()
+    try:
+        temporary = dict(ENV, GIT_INDEX_FILE=str(index), GIT_LITERAL_PATHSPECS="1")
+        seed_names = set(git("ls-tree", "-r", "--name-only", "-z", binding["source_tree"]).decode().split("\0")) - {""}
+        assert seed_names == set(original_names)
+        git("read-tree", binding["source_tree"], env=temporary)
+        git("add", "--force", "--all", "--pathspec-from-file=-", "--pathspec-file-nul", env=temporary,
+            data=("\0".join(original_names) + "\0").encode())
+        tested_tree = git("write-tree", env=temporary).decode().strip()
+        assert tested_tree == binding["source_tree"] == summary["tested_tree"]
+        assert sha(git("diff", "--binary", "--no-ext-diff", "--no-textconv", source["integration_base"], tested_tree)) == source["candidate_patch_sha256"]
+        git("add", "--force", "--all", "--pathspec-from-file=-", "--pathspec-file-nul", env=temporary,
+            data=("\0".join(sorted(packet_names)) + "\0").encode())
+        publication_tree = git("write-tree", env=temporary).decode().strip()
+        check("publication-diff-check", ["git", "diff", "--cached", "--check", source["integration_base"]], env=temporary)
+    finally:
+        if index.exists():
+            index.unlink()
+
+    personal = re.compile(rb"(?:[a-z]:)?[/\\]+Users[/\\]+[^/\\\s\"'<>]+", re.I)
+    for item in packet_files:
+        file = ROOT / item["path"]
+        assert not file.is_symlink() and file.stat().st_nlink == 1
+        if file.suffix != ".png":
+            raw = file.read_bytes()
+            raw.decode("utf-8")
+            assert not personal.search(raw.replace(b"^", b"")), file.name
+        assert git("hash-object", "--no-filters", "--", str(file)).strip() == git(
+            "hash-object", "--path=" + item["path"], "--", str(file)).strip(), file.name
+
+    plan_script = "import {readFileSync} from 'node:fs';import {checkPlan} from './tools/run_checks.mjs';console.log(JSON.stringify(checkPlan('full',JSON.parse(readFileSync(0,'utf8')))));"
+    result = subprocess.run([str(NODE), "--input-type=module", "-e", plan_script], cwd=ROOT, env=ENV,
+                            input=json.dumps(sorted(current_names | packet_names)).encode(),
+                            capture_output=True, check=True, timeout=180, creationflags=subprocess.CREATE_NO_WINDOW)
+    plan = json.loads(result.stdout)
+    assert len(plan) == len(gate["checks"]) == 11
+    for observed, expected in zip(plan, gate["checks"]):
+        assert observed["name"] == expected["name"] and observed["argv"] == expected["argv"], observed["name"]
+    node_argv = next(item["argv"] for item in plan if item["name"] == "node-tests")
+    record.update(base=binding["source_head"], branch=binding["source_branch"], tested_tree=tested_tree,
+                  publication_tree=publication_tree, source_files_sha256=binding["source_files_sha256"],
+                  integration_base=source["integration_base"], parents=source["parents"],
+                  source_reconstruction="Fresh temporary index seeded from tested tree; exact seed inventory, modes and CRLF context retained; every physical file literally force-added including tracked ignored logs",
+                  evidence_added_after_code_execution=True, issue_completion_proven=False,
+                  source_receipt_sha256=sha(source_path.read_bytes()), files=packet_files,
+                  original_physical_files_unchanged=True, candidate_tree_unchanged=True,
+                  full_plan_unchanged=True, git_preserves_packet_bytes=True, final_plan=plan,
+                  node_discovery_files=len(node_argv) - node_argv.index("--test-reporter=tap") - 1)
+    save()
+    check("docs", [NODE, "tools/check_docs.mjs"])
+    check("repository-docs", [NODE, "tools/check_documentation.mjs"])
+    check("native-personal-paths", [NODE, "tools/check_evidence_personal_paths.mjs", PACKET])
+    assert sha(GITLEAKS.read_bytes()) == load(EV / "issue340-gitleaks-native-provenance-r1.json")["native_sha256"]
+    assert subprocess.check_output([str(GITLEAKS), "version"], env=ENV).decode().strip() == "8.30.1"
+    policy = {name: sha((ROOT / name).read_bytes()) if (ROOT / name).is_file() else None
+              for name in [".gitleaksignore", ".gitleaks.toml"]}
+    with tempfile.TemporaryDirectory(prefix="issue232-packet-scan-", dir=EV) as owned:
+        assert Path(owned).resolve().parent == EV.resolve()
+        scan_path = Path(owned) / "report.json"
+        result = subprocess.run([
+            str(GITLEAKS), "dir", str(PACKET), "--redact=100", "--no-banner", "--no-color",
+            "--ignore-gitleaks-allow", "--gitleaks-ignore-path", str(ROOT / ".gitleaksignore"),
+            "--exit-code=42", "--timeout=300", "--report-format=json", "--report-path", str(scan_path),
+        ], cwd=ROOT, env=ENV, capture_output=True, timeout=360, creationflags=subprocess.CREATE_NO_WINDOW)
+        findings = load(scan_path) if scan_path.exists() else None
+        record["secret_scan"] = {
+            "native_version": "8.30.1", "native_sha256": sha(GITLEAKS.read_bytes()),
+            "exit_code": result.returncode, "finding_count": len(findings) if isinstance(findings, list) else None,
+            "scope": "All publication files; pinned native defaults and unchanged repository ignore policy.",
+        }
+        if findings:
+            record["secret_scan"]["finding_metadata"] = [
+                {"rule": item.get("RuleID"), "start_line": item.get("StartLine"),
+                 "file": str(item.get("File", "")).replace(str(PACKET), "<PACKET>")}
+                for item in findings[:50]]
+        save()
+        assert isinstance(findings, list) and not findings and result.returncode == 0, "Publication secret scan requires triage"
+    check("diff-check", ["git", "diff", "--check"])
+    check_original()
+    for item in packet_files:
+        assert sha((ROOT / item["path"]).read_bytes()) == item["sha256"]
+    assert policy == {name: sha((ROOT / name).read_bytes()) if (ROOT / name).is_file() else None for name in policy}
+    assert git("write-tree").decode().strip() == base_index
+    record["status"] = "passed"
+except Exception as error:
+    record.update(status="failed", failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+    save()
+    print(json.dumps({key: record.get(key) for key in [
+        "issue", "status", "base", "tested_tree", "publication_tree", "failure",
+        "original_physical_files_unchanged", "full_plan_unchanged", "secret_scan"]}))

@@ -323,7 +323,8 @@ try {
     $graphEnv = $childEnv.Clone()
     $graphEnv.CRONY_TASK_GRAPH_TEST = '1'; $graphEnv.CRONY_SERVER_HTTP = $api
     $graphEnv.CRONY_TASK_GRAPH_OUTPUT = Join-Path $evidence 'e2e-task-graph.json'
-    Invoke-FixtureCommand 'task-graph' $node @((Join-Path $repo 'tools/e2e_task_graph.mjs')) $graphEnv 180 | Out-Null
+    # Three bounded five-minute scenarios, plus native dispatch readiness and report writes.
+    Invoke-FixtureCommand 'task-graph' $node @((Join-Path $repo 'tools/e2e_task_graph.mjs')) $graphEnv 960 | Out-Null
     $graphReport = Get-Content -LiteralPath $graphEnv.CRONY_TASK_GRAPH_OUTPUT -Raw | ConvertFrom-Json
     if (!$graphReport.parallel_graph.source_selected -or
         @(Compare-Object @('fake-process', 'fake-process') @($graphReport.parallel_graph.root_adapters)).Count -or

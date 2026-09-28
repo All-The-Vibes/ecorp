@@ -1,0 +1,57 @@
+"""Version external acceptance wrappers after correcting Git reconstruction only."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+
+EV = Path(__file__).resolve().parent
+OUT = EV / 'issue232-binding-derivation-r3.json'
+assert not OUT.exists()
+
+def bound(path):
+    path = Path(path)
+    return {'path': str(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+
+def derive(old, new, replacements):
+    original, target = EV / old, EV / new
+    assert not target.exists()
+    text = original.read_text(encoding='utf-8-sig')
+    for before, after in replacements:
+        assert before in text, (old, before)
+        text = text.replace(before, after)
+    target.write_text(text, encoding='utf-8', newline='\n')
+    return {'original': bound(original), 'derived': bound(target)}
+
+items = [derive('build-issue232-native-r3.ps1', 'build-issue232-native-r4.ps1', [
+    ('issue232-source-binding-r2.py','issue232-source-binding-r3.py'),
+    ('issue232-native-build-r3','issue232-native-build-r4')]),
+    derive('run-issue232-native-r4.ps1','run-issue232-native-r5.ps1', [
+    ('# R4 repeats', '# R5 repeats'),
+    ('issue232-source-binding-r2.py','issue232-source-binding-r3.py'),
+    ('issue232-native-build-r3','issue232-native-build-r4'),
+    ('issue232-native-r4','issue232-native-r5')]),
+    derive('build-issue232-browser-r1.ps1','build-issue232-browser-r2.ps1', [
+    ('issue232-source-binding-r2.py','issue232-source-binding-r3.py'),
+    ('issue232-browser-build-r1','issue232-browser-build-r2')]),
+    derive('run-issue232-browser-r1.py','run-issue232-browser-r2.py', [
+    ('issue232-source-binding-r2.py','issue232-source-binding-r3.py'),
+    ('issue232-browser-build-r1','issue232-browser-build-r2'),
+    ('issue232-browser-derivation-r1','issue232-browser-derivation-r2'),
+    ('issue232-browser-r1','issue232-browser-r2'),
+    ('q232-b1','q232-b2')])]
+derivation_path = EV / 'issue232-browser-derivation-r2.json'
+assert not derivation_path.exists()
+browser = json.loads((EV / 'issue232-browser-derivation-r1.json').read_text(encoding='utf-8-sig'))
+browser['build_script'] = bound(EV / 'build-issue232-browser-r2.ps1')
+browser['driver'] = bound(EV / 'run-issue232-browser-r2.py')
+browser['prior_derivation'] = bound(EV / 'issue232-browser-derivation-r1.json')
+browser['source_binding_correction'] = bound(EV / 'issue232-source-binding-correction-r2.json')
+browser['revision_note'] = 'Only external build/driver paths and source binding changed. All product, native, browser, fake GitHub and acceptance assertions remain unchanged.'
+derivation_path.write_text(json.dumps(browser, indent=2) + '\n', encoding='utf-8')
+record = {'issue':232, 'created_at_utc':datetime.now(timezone.utc).isoformat(),
+    'reason':'Native r3 preflight failed before build because an empty Git index changed existing modes and CRLF normalization. Corrected binding r3 exactly matches the preserved staged tree.',
+    'wrappers':items, 'source_binding_correction':bound(EV / 'issue232-source-binding-correction-r2.json'),
+    'browser_derivation':bound(derivation_path),
+    'acceptance_assertions_unchanged':True, 'product_source_unchanged':True}
+OUT.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'issue':232, 'wrappers_versioned':len(items), 'product_source_unchanged':True}))

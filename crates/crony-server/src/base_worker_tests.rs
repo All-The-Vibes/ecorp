@@ -11,7 +11,7 @@ use crony_base::{
     Bytes, U256,
     abi::ECorpCheckpointRegistryV1,
     config::{Assurance, BaseDestinationConfig},
-    fees::SpendingPolicy,
+    fees::{FeeQuote, SpendingPolicy},
     gateway::{GatewayAccess, router},
     manifest::{CheckpointKey, DestinationManifestV1, NetworkIdentity, SignedManifest, TrustPin},
     signing::{
@@ -20,7 +20,10 @@ use crony_base::{
     },
 };
 use crony_domain::{MissionContractRevisionAction, TaskGraphPlan};
-use crony_store::{CreateMissionContractRevisionInput, base_audit::BaseDestinationInput};
+use crony_store::{
+    CreateMissionContractRevisionInput,
+    base_audit::{BaseAttempt, BaseDestinationInput},
+};
 use futures_util::FutureExt;
 use sqlx::{ConnectOptions, PgPool, postgres::PgPoolOptions};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -178,6 +181,8 @@ struct ObservationRpc {
     forks: Arc<std::sync::Mutex<BTreeMap<u64, B256>>>,
     event: Arc<std::sync::Mutex<Option<ObservationEvent>>>,
     receipts: Arc<AtomicUsize>,
+    nonce: Arc<std::sync::Mutex<Option<u64>>>,
+    include_on_nonce: Arc<std::sync::Mutex<Option<ObservationEvent>>>,
     unexpected_effects: Arc<AtomicUsize>,
 }
 
@@ -294,6 +299,18 @@ async fn observation_rpc(
                 }
                 None => Value::Null,
             }
+        }
+        "eth_getTransactionCount" => {
+            assert_eq!(request["params"][1], "latest");
+            let nonce = state
+                .nonce
+                .lock()
+                .unwrap()
+                .expect("configured fixture nonce");
+            if let Some(event) = state.include_on_nonce.lock().unwrap().take() {
+                *state.event.lock().unwrap() = Some(event);
+            }
+            json!(format!("0x{nonce:x}"))
         }
         "eth_call" => match state.event.lock().unwrap().as_ref() {
             Some(event) => json!(event.head),
@@ -622,8 +639,11 @@ async fn base_worker_terminal_fee_reverted_after_restart(pool: PgPool) -> Result
     terminal_fee_after_restart(pool, false).await
 }
 
-async fn terminal_fee_after_restart(pool: PgPool, success: bool) -> Result<()> {
-    let (store, ids, input, secrets, providers, _servers) = observation_fixture(&pool).await?;
+async fn signed_observation_attempt(
+    store: &PgStore,
+    ids: &crony_store::DemoIds,
+    input: &BaseDestinationInput,
+) -> Result<(BaseClaim, BaseAttempt, SignedTransaction, FeeQuote)> {
     store
         .complete_base_validation(
             ids.corp_id,
@@ -670,7 +690,7 @@ async fn terminal_fee_after_restart(pool: PgPool, success: bool) -> Result<()> {
         .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
         .await?
         .context("claim")?;
-    let quote = crony_base::fees::FeeQuote {
+    let quote = FeeQuote {
         gas_limit: 100_000,
         max_fee_per_gas: 5,
         max_priority_fee_per_gas: 1,
@@ -689,6 +709,132 @@ async fn terminal_fee_after_restart(pool: PgPool, success: bool) -> Result<()> {
     store
         .persist_base_signed(&claim, &attempt.request, &signed, 1)
         .await?;
+    Ok((claim, attempt, signed, quote))
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports"]
+async fn base_worker_nonce_race_known_inclusion(pool: PgPool) -> Result<()> {
+    nonce_consumption_after_receipt_absence(pool, 2).await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports"]
+async fn base_worker_nonce_race_unknown_consumption(pool: PgPool) -> Result<()> {
+    nonce_consumption_after_receipt_absence(pool, 0).await
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires owned PostgreSQL; synthetic HTTP providers on fresh loopback ports"]
+async fn base_worker_nonce_race_independent_receipt_missing(pool: PgPool) -> Result<()> {
+    nonce_consumption_after_receipt_absence(pool, 1).await
+}
+
+async fn nonce_consumption_after_receipt_absence(
+    pool: PgPool,
+    providers_with_inclusion: usize,
+) -> Result<()> {
+    let (store, ids, input, secrets, providers, _servers) = observation_fixture(&pool).await?;
+    let (claim, _attempt, signed, _quote) =
+        signed_observation_attempt(&store, &ids, &input).await?;
+    let block = observation_header(19_999);
+    // A reverted transaction consumes its nonce too. No successful anchor or finality
+    // may be inferred from this later inclusion observation.
+    let event = ObservationEvent {
+        number: block.number,
+        log: Value::Null,
+        receipt: json!({"type":"0x2","status":"0x0","transactionHash":signed.hash(),
+            "transactionIndex":"0x0","blockHash":block.hash,"blockNumber":"0x4e1f",
+            "from":input.config.publisher,"to":input.config.contract_address,
+            "cumulativeGasUsed":"0x2710","gasUsed":"0x2710","effectiveGasPrice":"0x5",
+            "l1Fee":"0x1","logsBloom":format!("0x{}","00".repeat(256)),
+            "logs":[],"contractAddress":null}),
+        head: Bytes::new(),
+    };
+    for (index, provider) in providers.iter().enumerate() {
+        *provider.nonce.lock().unwrap() = Some(1);
+        if index < providers_with_inclusion {
+            // Both receipt queries first observe absence. The known transaction
+            // becomes visible while the worker observes the consumed nonce.
+            *provider.include_on_nonce.lock().unwrap() = Some(event.clone());
+        }
+    }
+    let connected = observation_connection(&input, &secrets).await?;
+    let destination = store
+        .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
+        .await?;
+    let result = drive_intent(&store, &destination, &connected, &claim).await;
+    let after = store
+        .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
+        .await?;
+    let paused: bool = sqlx::query_scalar(
+        "SELECT paused FROM base_audit_sender_lanes WHERE chain_id=$1 AND sender=$2",
+    )
+    .bind(i64::try_from(input.config.chain_id)?)
+    .bind(input.config.publisher.as_slice())
+    .fetch_one(&pool)
+    .await?;
+    eprintln!(
+        "nonce observation providers={providers_with_inclusion} result={result:?} enabled={} restore_required={} status={} paused={paused}",
+        after.enabled, after.restore_required, after.status
+    );
+    match providers_with_inclusion {
+        2 => {
+            result.context("known inclusion must not quarantine its publisher")?;
+            assert!(after.enabled && !after.restore_required && !paused);
+            let state: String = sqlx::query_scalar(
+                "SELECT state FROM base_audit_intents WHERE corp_id=$1 AND id=$2",
+            )
+            .bind(ids.corp_id)
+            .bind(claim.intent.id)
+            .fetch_one(&pool)
+            .await?;
+            assert_eq!(state, "included");
+        }
+        1 => {
+            let error = result.expect_err("one provider cannot establish inclusion");
+            assert!(
+                matches!(
+                    error.downcast_ref::<crony_base::Error>(),
+                    Some(crony_base::Error::Evidence(
+                        "independent receipt unavailable"
+                    ))
+                ),
+                "unexpected disagreement: {error:#}"
+            );
+            assert!(after.enabled && !after.restore_required && !paused);
+        }
+        0 => {
+            assert_eq!(
+                result
+                    .expect_err("unknown consumption must fail closed")
+                    .to_string(),
+                "unknown transaction consumed publisher nonce"
+            );
+            assert!(!after.enabled && after.restore_required && paused);
+            assert_eq!(after.status, "nonce_conflict");
+        }
+        _ => unreachable!(),
+    }
+    let (attempts, terminal, finalized): (i64, bool, i64) = sqlx::query_as(
+        "SELECT (SELECT count(*) FROM base_audit_attempts a WHERE a.corp_id=i.corp_id AND a.intent_id=i.id),i.terminal,(SELECT count(*) FROM base_audit_evidence e WHERE e.corp_id=i.corp_id AND e.intent_id=i.id AND e.kind='spend_finalized') FROM base_audit_intents i WHERE i.corp_id=$1 AND i.id=$2",
+    )
+    .bind(ids.corp_id)
+    .bind(claim.intent.id)
+    .fetch_one(&pool)
+    .await?;
+    assert_eq!(attempts, 1, "no replacement may be reserved");
+    assert!(!terminal, "inclusion alone does not establish completion");
+    assert_eq!(finalized, 0, "no finality evidence may be fabricated");
+    for provider in providers {
+        assert_eq!(provider.unexpected_effects.load(Ordering::SeqCst), 0);
+    }
+    Ok(())
+}
+
+async fn terminal_fee_after_restart(pool: PgPool, success: bool) -> Result<()> {
+    let (store, ids, input, secrets, providers, _servers) = observation_fixture(&pool).await?;
+    let (claim, attempt, signed, quote) = signed_observation_attempt(&store, &ids, &input).await?;
     // Older than the scanner's overlap: reverted receipts have no event to discover.
     let block = observation_header(10);
     let call = &attempt.request.transaction.call;
@@ -1475,16 +1621,25 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
             .fetch_one(pool)
             .await?;
     assert!(raw == journaled.raw(), "broadcast exactly journaled bytes");
+    node_receipt(json!(journaled.hash()))
+        .await
+        .context("fixture inclusion before finality probe")?;
     let tentative = store
         .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())
         .await?
         .context("tentative inclusion claim")?;
     step("tentative_inclusion");
+    let finality_error = drive_intent(&store, &d, &restarted, &tentative)
+        .await
+        .expect_err("recent receipt is not finalized");
     assert!(
-        drive_intent(&store, &d, &restarted, &tentative)
-            .await
-            .is_err(),
-        "recent receipt is not finalized"
+        matches!(
+            finality_error.downcast_ref::<crony_base::Error>(),
+            Some(crony_base::Error::Evidence(
+                "invalid retained ancestry binding"
+            ))
+        ),
+        "unexpected tentative-inclusion error: {finality_error:#}"
     );
     store.release_base_claim(&tentative, "included").await?;
     let d = store
@@ -1500,7 +1655,13 @@ async fn run_acceptance(pool: &PgPool, journal_pool: &PgPool) -> Result<()> {
     let pending = store
         .base_destination(ids.corp_id, ids.alice_actor_id, input.id)
         .await?;
-    assert!(pending.enabled && pending.restore_required);
+    assert!(
+        pending.enabled && pending.restore_required,
+        "pending inclusion validation: enabled={} restore_required={} status={}",
+        pending.enabled,
+        pending.restore_required,
+        pending.status
+    );
     assert!(
         store
             .claim_base_intent(ids.corp_id, input.id, Uuid::new_v4())

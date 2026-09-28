@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import { writeFile } from 'node:fs/promises'
 import { downloadVerifiedArtifact } from './artifact_client.mjs'
-import { completeGraphFixtureLaunch, graphFixtureSource, taskGraphFixtureConfig } from './task_graph_fixture.mjs'
+import { waitForControlledRunnerDispatch } from './controlled_runner_fixture.mjs'
+import { completeGraphFixtureLaunch, graphFixtureSource, taskGraphFixtureConfig, waitForGraphFixtureMission } from './task_graph_fixture.mjs'
 
 const config = taskGraphFixtureConfig(process.argv.slice(2), process.env)
 const server = config.server
@@ -13,15 +14,6 @@ if (config.dryRun) {
   }, null, 2))
   process.exit(0)
 }
-const activeStatuses = new Set([
-  'provisioning',
-  'starting',
-  'running',
-  'waiting_for_input',
-  'waiting_for_approval',
-  'verifying',
-])
-
 async function request(url, init, { withStatus = false } = {}) {
   const response = await fetch(`${server}${url}`, {
     ...init, redirect: 'error', signal: AbortSignal.timeout(15_000),
@@ -48,33 +40,8 @@ async function snapshot(demo) {
   )
 }
 
-async function waitForMission(demo, missionId, timeoutMs = 60_000) {
-  const deadline = Date.now() + timeoutMs
-  let maxActiveRuns = 0
-  while (Date.now() < deadline) {
-    const state = await snapshot(demo)
-    const mission = state.snapshot.missions.find((item) => item.id === missionId)
-    const taskIds = new Set(
-      state.snapshot.tasks
-        .filter((task) => task.mission_id === missionId)
-        .map((task) => task.id),
-    )
-    const runs = state.snapshot.runs.filter((run) => taskIds.has(run.task_id))
-    maxActiveRuns = Math.max(
-      maxActiveRuns,
-      runs.filter((run) => activeStatuses.has(run.status)).length,
-    )
-    if (mission && ['completed', 'failed', 'cancelled'].includes(mission.status)) {
-      const allSettled = runs.every(
-        (run) =>
-          !activeStatuses.has(run.status) &&
-          ['preserved', 'removed'].includes(run.workspace_disposition),
-      )
-      if (allSettled) return { state, mission, runs, maxActiveRuns }
-    }
-    await new Promise((resolve) => setTimeout(resolve, 75))
-  }
-  throw new Error(`timed out waiting for mission ${missionId}`)
+function waitForMission(demo, missionId) {
+  return waitForGraphFixtureMission(() => snapshot(demo), missionId)
 }
 
 async function parallelGraphScenario({ sourceSelected = false } = {}) {
@@ -87,6 +54,13 @@ async function parallelGraphScenario({ sourceSelected = false } = {}) {
   let source
   if (sourceSelected) {
     source = graphFixtureSource(initial, demo.corp_id).source
+    await waitForControlledRunnerDispatch({
+      demo, runner: { runnerId: runner.id, readinessSource: source },
+      request: async (route, init) => {
+        const result = await request(route, init, { withStatus: true })
+        return { response: { status: result.status }, body: result.body }
+      },
+    })
   }
   const created = await post(`/api/corps/${demo.corp_id}/missions`, {
     requested_by: demo.alice_actor_id,
@@ -160,6 +134,7 @@ async function parallelGraphScenario({ sourceSelected = false } = {}) {
   assert.ok(finalTasks.every((task) => task.attempt_count === 1))
   assert.equal(result.runs.length, 3)
   assert.ok(result.runs.every((run) => run.status === 'completed'))
+  assert.ok(result.runs.every((run) => run.verification_status === 'passed'))
   assert.equal(new Set(result.runs.map((run) => run.workspace_path)).size, 3)
 
   const taskById = new Map(finalTasks.map((task) => [task.id, task]))
@@ -225,6 +200,9 @@ async function parallelGraphScenario({ sourceSelected = false } = {}) {
     max_active_runs: result.maxActiveRuns,
     synthesis_requested_after_roots: true,
     synthesis_consumed_verified_specialists: true,
+    verification_passed: true,
+    settled_after_ms: result.elapsedMs,
+    deadline_ms: result.timeoutMs,
     final_status: result.mission.status,
   }
 }
@@ -264,6 +242,8 @@ async function retryBoundScenario() {
     attempts: task.attempt_count,
     max_attempts: task.max_attempts,
     run_ids: result.runs.map((run) => run.id),
+    settled_after_ms: result.elapsedMs,
+    deadline_ms: result.timeoutMs,
     final_status: result.mission.status,
   }
 }
