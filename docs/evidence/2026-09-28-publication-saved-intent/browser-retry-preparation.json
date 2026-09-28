@@ -1,0 +1,32 @@
+{
+  "prepared_at_utc": "2026-09-28T22:08:15.322740+00:00",
+  "reason": "Browser r15 observed the correct native rejected result for malformed saved intent but its fixture expected failed. The existing CLI contract and rejected_intent_is_reported_without_source_context_or_git test use rejected. Correct only this assertion and allocate a fresh r16 fixture; preserve product source, limits, traces and remaining acceptance assertions.",
+  "failed_receipt": "issue219-browser-r15.json",
+  "contract_source": "crates/crony-cli/src/publish/requests.rs:209,592",
+  "files": [
+    {
+      "source": "run-issue219-browser-r15.py",
+      "source_sha256": "e631dbad0ef4f3ef8a3255114c11ba016e2672b4948b6a819d5a7214e11e53e5",
+      "prepared": "run-issue219-browser-r16.py",
+      "prepared_sha256": "b3eb64ba3b368d5e4a51f9ad9ce2d27c40da141963e20b144c0e141f18fb4244"
+    },
+    {
+      "source": "issue219-browser-driver-r15.ps1",
+      "source_sha256": "2d52cffdbaa67034096472ffacd7d6aa9d3f6cc116820e0ba9518ae308ecd922",
+      "prepared": "issue219-browser-driver-r16.ps1",
+      "prepared_sha256": "9245c4998e306c5e773234e0bcba98b2674861310d1c6d9b5b04701137c600f8"
+    },
+    {
+      "source": "issue219-browser-native-r15.mjs",
+      "source_sha256": "90a303cdce194cc5e2016181b52a3729bdf9f889a154463bb4d8cfc4d86ee289",
+      "prepared": "issue219-browser-native-r16.mjs",
+      "prepared_sha256": "3b63bb225cbded5b0c9dcd5a0f289de5debd1b04f4ccbd4f94026d84ef420c75"
+    }
+  ],
+  "canonical_driver": {
+    "path": "run-issue219-canonical-r8.ps1",
+    "before_sha256": "0b6bdcb973f1c78280a0bf9b04d3dbe9f11cdff2844005c3859fc9fd8649ec2a",
+    "after_sha256": "e83efeba05dcb3d497f77ab2a42c5734f684140d2be14b0a85bd99dea4393740",
+    "change": "Require fresh r16 acceptance; no gate or count changed."
+  }
+}

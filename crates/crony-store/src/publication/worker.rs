@@ -179,40 +179,117 @@ impl PgStore {
         idempotency_key: String,
         lease_seconds: i64,
     ) -> Result<PullRequestPublicationOutcome> {
-        let requested = self
-            .human_requested_publication_for_publisher(scope, publication_id, None)
-            .await?;
-        let publication = requested.publication;
+        let idempotency_key =
+            normalize_factory_identifier(&idempotency_key, "publication idempotency key", 500)?;
+        let lease_seconds = validate_publication_lease_seconds(lease_seconds)?;
+        let mut tx = self.pool.begin().await?;
+        // Authenticate before taking the native gates, without holding a row lock
+        // while waiting for them. Broken saved intent is still a scoped row, not
+        // authority to manufacture a native start input or operation.
+        let (observed, _) =
+            publication_for_publisher_tx(&mut tx, scope, publication_id, false).await?;
+        let keys = publication_start_keys(
+            observed.corp_id,
+            observed.factory_work_item_id,
+            &observed.effect_key,
+            &observed.target_repository,
+            &observed.branch,
+            &idempotency_key,
+        );
+        lock_factory_keys_tx(&mut tx, &keys).await?;
+        let (publication, _) =
+            publication_for_publisher_tx(&mut tx, scope, publication_id, true).await?;
+        if keys
+            != publication_start_keys(
+                publication.corp_id,
+                publication.factory_work_item_id,
+                &publication.effect_key,
+                &publication.target_repository,
+                &publication.branch,
+                &idempotency_key,
+            )
+        {
+            return Err(anyhow!(
+                "conflict: publication changed its native claim gates"
+            ));
+        }
+        let intent = match request::human_request_tx(&mut tx, &publication).await {
+            Ok(intent) => intent
+                .context("forbidden: workload access requires a saved human publication request")?,
+            Err(error) => {
+                let Some(denial) = error.downcast_ref::<admission::Denied>() else {
+                    return Err(error);
+                };
+                if publication
+                    .provenance
+                    .pointer("/intent/kind")
+                    .and_then(Value::as_str)
+                    != Some("human_requested")
+                    || publication
+                        .publisher_lease_expires_at
+                        .is_some_and(|expiry| expiry > Utc::now())
+                {
+                    return Err(error);
+                }
+                // A previously issued start key can identify a tokenless failure
+                // for that exact publication and publisher request. It cannot be
+                // reused for another operation, nor authorize a new start.
+                if idempotency_key == publication.idempotency_key {
+                    return Err(anyhow!(
+                        "publication claim cannot reuse the human request key"
+                    ));
+                }
+                if let Some(operation) =
+                    publication_operation_tx(&mut tx, scope.corp_id, &idempotency_key).await?
+                    && (operation.operation != "start"
+                        || operation.publication_id != publication.id
+                        || operation.actor_id != publication.actor_id
+                        || operation.request.get("publisher_id")
+                            != Some(&json!(scope.publisher_id))
+                        || operation.request.get("lease_seconds") != Some(&json!(lease_seconds)))
+                {
+                    return Err(anyhow!(
+                        "publication idempotency key was reused for a different operation"
+                    ));
+                }
+                let outcome = if publication.state == PullRequestPublicationState::Published
+                    || publication.failure_detail.is_some()
+                {
+                    PullRequestPublicationOutcome {
+                        publication,
+                        publisher_token: None,
+                        events: Vec::new(),
+                        replayed: true,
+                        busy: false,
+                    }
+                } else {
+                    reject_saved_human_request_tx(&mut tx, scope, &publication, denial).await?
+                };
+                tx.commit().await?;
+                return Ok(outcome);
+            }
+        };
         // The native start transaction rechecks this exact intent, current human
         // authority, source/policy, credential, collision and fencing state.
         let input = normalize_start_input(StartPullRequestPublicationInput {
             corp_id: scope.corp_id,
             work_item_id: publication.factory_work_item_id,
             actor_id: publication.actor_id,
-            actor_role: requested.actor_role,
+            actor_role: intent.actor_role.clone(),
             source_deliverable_id: publication.source_deliverable_id,
-            target_repository: publication.target_repository,
-            base_ref: publication.base_ref,
-            branch: publication.branch,
-            title: publication.title,
-            body: publication.body,
+            target_repository: publication.target_repository.clone(),
+            base_ref: publication.base_ref.clone(),
+            branch: publication.branch.clone(),
+            title: publication.title.clone(),
+            body: publication.body.clone(),
             authorization_id: publication.authorization_id,
-            authorization_reason: requested.authorization_reason,
-            effect_key: publication.effect_key,
+            authorization_reason: intent.authorization_reason.clone(),
+            effect_key: publication.effect_key.clone(),
             idempotency_key,
             publisher_id: scope.publisher_id.clone(),
             publisher_credential_hash: scope.credential_hash.clone(),
             lease_seconds,
         })?;
-        let mut tx = self.pool.begin().await?;
-        // Native start locks the credential before the shared publication gates.
-        // Keep that ordering when a worker and a direct claim run concurrently.
-        revalidate_publisher_repository_tx(&mut tx, scope).await?;
-        lock_publication_start_tx(&mut tx, &input).await?;
-        // Re-read the exact authenticated request before deciding whether it can
-        // be retired. The credential lock above remains held by this transaction.
-        let (publication, _, intent) =
-            human_requested_publication_tx(&mut tx, scope, publication_id).await?;
         ensure_publication_matches_start(&publication, &input)?;
         request::ensure_human_request_matches_start(&intent, &input)?;
         let operation_request = start_operation_request(&input);
@@ -255,52 +332,63 @@ impl PgStore {
             let Some(denial) = error.downcast_ref::<admission::Denied>() else {
                 return Err(error);
             };
-            let detail = format!("Saved human publication request rejected: {denial}");
-            let rejected = fail_publication_tx(&mut tx, &publication, &detail).await?;
+            let outcome =
+                reject_saved_human_request_tx(&mut tx, scope, &publication, denial).await?;
             if operation.is_none() {
                 record_publication_operation_tx(
                     &mut tx,
                     NewPublicationOperation {
                         corp_id: scope.corp_id,
                         idempotency_key: &input.idempotency_key,
-                        publication_id: rejected.id,
+                        publication_id: outcome.publication.id,
                         actor_id: intent.actor_id,
                         operation: "start",
-                        resulting_version: rejected.version,
+                        resulting_version: outcome.publication.version,
                         publisher_token: None,
                         request: &operation_request,
                     },
                 )
                 .await?;
             }
-            let events = publication_event_tx(
-                &mut tx,
-                &rejected,
-                intent.actor_id,
-                "factory.publication_failed",
-                json!({
-                    "state": rejected.state.as_str(), "attempt": rejected.attempt_count,
-                    "failure_detail": rejected.failure_detail, "admission": "rejected",
-                    "publisher_id": scope.publisher_id,
-                }),
-            )
-            .await?
-            .into_iter()
-            .collect();
             tx.commit().await?;
-            return Ok(PullRequestPublicationOutcome {
-                publication: rejected,
-                publisher_token: None,
-                events,
-                replayed: false,
-                busy: false,
-            });
+            return Ok(outcome);
         }
         tx.commit().await?;
         // Recheck every native prerequisite after preflight; a concurrent change
         // never inherits authority from this earlier, non-authorizing read.
         self.start_pull_request_publication(input).await
     }
+}
+
+async fn reject_saved_human_request_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    scope: &PublicationPublisherScope,
+    publication: &PullRequestPublication,
+    denial: &admission::Denied,
+) -> Result<PullRequestPublicationOutcome> {
+    let detail = format!("Saved human publication request rejected: {denial}");
+    let rejected = fail_publication_tx(tx, publication, &detail).await?;
+    let events = publication_event_tx(
+        tx,
+        &rejected,
+        publication.actor_id,
+        "factory.publication_failed",
+        json!({
+            "state": rejected.state.as_str(), "attempt": rejected.attempt_count,
+            "failure_detail": rejected.failure_detail, "admission": "rejected",
+            "publisher_id": scope.publisher_id,
+        }),
+    )
+    .await?
+    .into_iter()
+    .collect();
+    Ok(PullRequestPublicationOutcome {
+        publication: rejected,
+        publisher_token: None,
+        events,
+        replayed: false,
+        busy: false,
+    })
 }
 
 async fn human_requested_publication_tx(
@@ -312,8 +400,22 @@ async fn human_requested_publication_tx(
     Option<Uuid>,
     request::HumanPublicationRequest,
 )> {
+    let (publication, token) =
+        publication_for_publisher_tx(tx, scope, publication_id, true).await?;
+    let intent = request::human_request_tx(tx, &publication)
+        .await?
+        .context("forbidden: workload access requires a saved human publication request")?;
+    Ok((publication, token, intent))
+}
+
+async fn publication_for_publisher_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    scope: &PublicationPublisherScope,
+    publication_id: Uuid,
+    lock: bool,
+) -> Result<(PullRequestPublication, Option<Uuid>)> {
     let repository = revalidate_publisher_repository_tx(tx, scope).await?;
-    let (publication, token) = publication_by_id_tx(tx, scope.corp_id, publication_id, true)
+    let (publication, token) = publication_by_id_tx(tx, scope.corp_id, publication_id, lock)
         .await?
         .context("not found: requested publication was not found")?;
     if !publication
@@ -322,10 +424,7 @@ async fn human_requested_publication_tx(
     {
         return Err(anyhow!("not found: requested publication was not found"));
     }
-    let intent = request::human_request_tx(tx, &publication)
-        .await?
-        .context("forbidden: workload access requires a saved human publication request")?;
-    Ok((publication, token, intent))
+    Ok((publication, token))
 }
 
 async fn revalidate_publisher_repository_tx(

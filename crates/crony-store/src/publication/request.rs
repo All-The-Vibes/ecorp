@@ -320,23 +320,20 @@ pub(super) async fn human_request_tx(
                 && value.publisher_token.is_some()
         }) || publication.attempt_count == 0
         {
-            return Err(anyhow!(
-                "forbidden: publication omitted its saved human request provenance"
+            return Err(admission::denied(
+                "forbidden: publication omitted its saved human request provenance",
             ));
         }
         return Ok(None);
     };
     let request: HumanPublicationRequest = serde_json::from_value(intent.clone())
-        .context("forbidden: malformed human publication request provenance")?;
-    let operation =
-        operation.context("forbidden: human publication request operation is missing")?;
-    ensure_publication_operation_matches(
-        &operation,
-        "request",
-        publication.actor_id,
-        None,
-        intent,
-    )?;
+        .context("forbidden: malformed human publication request provenance")
+        .map_err(admission::validation)?;
+    let operation = operation.context(admission::Denied(
+        "forbidden: human publication request operation is missing".into(),
+    ))?;
+    ensure_publication_operation_matches(&operation, "request", publication.actor_id, None, intent)
+        .map_err(admission::validation)?;
     let plan = &request.preview.plan;
     let authorized_at: chrono::DateTime<Utc> = serde_json::from_value(
         publication
@@ -345,7 +342,8 @@ pub(super) async fn human_request_tx(
             .cloned()
             .unwrap_or(Value::Null),
     )
-    .context("forbidden: human publication authorization omitted its timestamp")?;
+    .context("forbidden: human publication authorization omitted its timestamp")
+    .map_err(admission::validation)?;
     let expected_authorization = explicit_publication_authorization(
         request.actor_id,
         &request.actor_role,
@@ -377,8 +375,8 @@ pub(super) async fn human_request_tx(
         || publication.authorization_snapshot != expected_authorization
         || publication.provenance.get("authorization_snapshot") != Some(&expected_authorization)
     {
-        return Err(anyhow!(
-            "forbidden: human publication request does not match its durable authority and plan"
+        return Err(admission::denied(
+            "forbidden: human publication request does not match its durable authority and plan",
         ));
     }
     Ok(Some(request))

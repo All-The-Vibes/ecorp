@@ -8,6 +8,9 @@ mod repository_grants;
 #[path = "human_publication_denial_tests.rs"]
 mod admission_denials;
 
+#[path = "human_publication_provenance_tests.rs"]
+mod saved_intent;
+
 async fn queued_request(
     pool: PgPool,
 ) -> (

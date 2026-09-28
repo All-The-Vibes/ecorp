@@ -1,0 +1,73 @@
+   Compiling crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 40s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-eddbee591ca35258.exe)
+
+running 11 tests
+
+thread 'budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_actor_mismatch' (13908) panicked at crates\crony-store\src\human_publication_provenance_tests.rs:36:10:
+invalid saved intent must become one durable, tokenless rejection: forbidden: human publication request does not match its durable authority and plan
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_actor_mismatch ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_event_failure_rolls_back' (23712) panicked at crates\crony-store\src\human_publication_provenance_tests.rs:275:5:
+the genuine failure-event write must be attempted
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_event_failure_rolls_back ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_invalid_authorization_timestamp' (35368) panicked at crates\crony-store\src\human_publication_provenance_tests.rs:36:10:
+invalid saved intent must become one durable, tokenless rejection: forbidden: human publication authorization omitted its timestamp
+
+Caused by:
+    invalid type: null, expected an RFC 3339 formatted date and time string
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_invalid_authorization_timestamp ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_malformed' (25940) panicked at crates\crony-store\src\human_publication_provenance_tests.rs:36:10:
+invalid saved intent must become one durable, tokenless rejection: forbidden: malformed human publication request provenance
+
+Caused by:
+    missing field `preview`
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_malformed ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_missing_operation' (28028) panicked at crates\crony-store\src\human_publication_provenance_tests.rs:36:10:
+invalid saved intent must become one durable, tokenless rejection: forbidden: human publication request operation is missing
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_missing_operation ... FAILED
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_operation_database_failure ... ok
+
+thread 'budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_operation_mismatch' (2112) panicked at crates\crony-store\src\human_publication_provenance_tests.rs:36:10:
+invalid saved intent must become one durable, tokenless rejection: publication idempotency key was reused for a different operation
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_operation_mismatch ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_plan_mismatch' (18052) panicked at crates\crony-store\src\human_publication_provenance_tests.rs:36:10:
+invalid saved intent must become one durable, tokenless rejection: forbidden: human publication request does not match its durable authority and plan
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_plan_mismatch ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_preserves_live_lease' (22616) panicked at crates\crony-store\src\human_publication_provenance_tests.rs:36:10:
+invalid saved intent must become one durable, tokenless rejection: forbidden: malformed human publication request provenance
+
+Caused by:
+    missing field `preview`
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_preserves_live_lease ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_rechecks_after_native_lock' (35112) panicked at crates\crony-store\src\human_publication_provenance_tests.rs:358:10:
+the locked reread must durably reject replaced provenance: forbidden: malformed human publication request provenance
+
+Caused by:
+    missing field `preview`
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_rechecks_after_native_lock ... FAILED
+test budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_respects_operation_collision ... ok
+
+failures:
+
+failures:
+    budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_actor_mismatch
+    budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_event_failure_rolls_back
+error: test failed, to rerun pass `-p crony-store --lib`
+    budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_invalid_authorization_timestamp
+    budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_malformed
+    budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_missing_operation
+    budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_operation_mismatch
+    budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_plan_mismatch
+    budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_preserves_live_lease
+    budget_checkpoint_tests::human_requests::saved_intent::issue219_native_publication_saved_intent_rechecks_after_native_lock
+
+test result: FAILED. 2 passed; 9 failed; 0 ignored; 0 measured; 592 filtered out; finished in 39.72s
+

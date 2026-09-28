@@ -1806,26 +1806,32 @@ async fn lock_publication_start_tx(
 ) -> Result<()> {
     lock_factory_keys_tx(
         tx,
-        &[
-            format!(
-                "publication:idempotency:{}:{}",
-                normalized.corp_id, normalized.idempotency_key
-            ),
-            format!(
-                "publication:factory:{}:{}",
-                normalized.corp_id, normalized.work_item_id
-            ),
-            format!(
-                "publication:effect:{}:{}",
-                normalized.corp_id, normalized.effect_key
-            ),
-            format!(
-                "publication:branch:{}:{}:{}",
-                normalized.corp_id, normalized.target_repository, normalized.branch
-            ),
-        ],
+        &publication_start_keys(
+            normalized.corp_id,
+            normalized.work_item_id,
+            &normalized.effect_key,
+            &normalized.target_repository,
+            &normalized.branch,
+            &normalized.idempotency_key,
+        ),
     )
     .await
+}
+
+fn publication_start_keys(
+    corp_id: Uuid,
+    work_item_id: Uuid,
+    effect_key: &str,
+    target_repository: &str,
+    branch: &str,
+    idempotency_key: &str,
+) -> [String; 4] {
+    [
+        format!("publication:idempotency:{corp_id}:{idempotency_key}"),
+        format!("publication:factory:{corp_id}:{work_item_id}"),
+        format!("publication:effect:{corp_id}:{effect_key}"),
+        format!("publication:branch:{corp_id}:{target_repository}:{branch}"),
+    ]
 }
 
 async fn fail_publication_tx(
