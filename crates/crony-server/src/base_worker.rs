@@ -985,6 +985,19 @@ async fn drive_intent(
     let nonce = c.chain.latest_nonce(d.input.config.publisher).await?;
     let mut attempt = attempts.last().context("frozen attempt absent")?.clone();
     if nonce > attempt.request.transaction.nonce {
+        // A known transaction can mine between the receipt and nonce reads. Recheck
+        // every same-nonce hash before quarantining its publisher. Inclusion still
+        // requires the normal finality path on a subsequent claim.
+        for signed in attempts
+            .iter()
+            .filter_map(|attempt| attempt.signed.as_ref())
+        {
+            if let Some((receipt, block)) = c.chain.receipt_inclusion(signed.hash()).await? {
+                store.record_base_inclusion(claim, &receipt, &block).await?;
+                store.release_base_claim(claim, "included").await?;
+                return Ok(());
+            }
+        }
         store
             .quarantine_base_wallet(claim, "nonce_conflict")
             .await?;
