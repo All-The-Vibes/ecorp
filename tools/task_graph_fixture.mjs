@@ -34,6 +34,36 @@ export function graphFixtureSource(state, corpId) {
   return { runner, source: { repository: source.source_repository, base_ref: source.source_base_ref, base_commit: source.source_base_commit } }
 }
 
+export async function waitForGraphFixtureMission(readSnapshot, missionId, {
+  now = Date.now, wait = ms => new Promise(resolve => setTimeout(resolve, ms)),
+} = {}) {
+  // Whole-repository verification and preserved-workspace fingerprints can take
+  // several minutes. Keep one fixed deadline across every lifecycle transition.
+  const timeoutMs = 300_000
+  const startedAt = now()
+  const deadline = startedAt + timeoutMs
+  const activeStatuses = new Set(['provisioning', 'starting', 'running',
+    'waiting_for_input', 'waiting_for_approval', 'verifying'])
+  const terminalStatuses = new Set(['completed', 'failed', 'cancelled', 'lost'])
+  let maxActiveRuns = 0
+  let result = { mission: { id: missionId }, runs: [] }
+  while (now() < deadline) {
+    const state = await readSnapshot()
+    const mission = state.snapshot.missions.find(item => item.id === missionId)
+    const taskIds = new Set(state.snapshot.tasks.filter(task => task.mission_id === missionId).map(task => task.id))
+    const runs = state.snapshot.runs.filter(run => taskIds.has(run.task_id))
+    maxActiveRuns = Math.max(maxActiveRuns, runs.filter(run => activeStatuses.has(run.status)).length)
+    result = { state, mission: mission ?? { id: missionId }, runs, maxActiveRuns,
+      elapsedMs: now() - startedAt, timeoutMs }
+    if (now() >= deadline) break
+    if (mission && ['completed', 'failed', 'cancelled'].includes(mission.status)
+      && runs.length > 0 && runs.every(run => terminalStatuses.has(run.status)
+        && ['preserved', 'removed'].includes(run.workspace_disposition))) return result
+    await wait(75)
+  }
+  throw new Error('Timed out waiting for task-graph mission: ' + JSON.stringify(graphFailureDetails(result)))
+}
+
 function graphFailureDetails(result) {
   // Only validated identifiers, known states and counts belong in CI logs.
   // Free-text summaries/details may contain private output; truncation is not redaction.

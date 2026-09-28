@@ -1043,7 +1043,12 @@ async fn run_git(workspace: &Path, args: &[&str]) -> Result<(), AdapterError> {
 }
 
 async fn git_output(workspace: &Path, args: &[&str]) -> Result<Vec<u8>, AdapterError> {
-    let output = Command::new("git")
+    let mut command = Command::new("git");
+    // Match native workspace operations: deep Windows files must remain readable
+    // when collecting status, diffs and fingerprints without changing user config.
+    #[cfg(windows)]
+    command.args(["-c", "core.longpaths=true"]);
+    let output = command
         .args(args)
         .current_dir(workspace)
         .stdin(Stdio::null())
@@ -1386,6 +1391,126 @@ mod tests {
             .expect("collect usage");
         assert!(usage.input_tokens > 0);
         let _ = std::fs::remove_dir_all(workspace);
+    }
+
+    #[cfg(windows)]
+    #[tokio::test]
+    async fn evidence_preserves_native_windows_long_paths() {
+        let mut request = test_request("collect evidence for deep tracked files");
+        let root =
+            std::env::temp_dir().join(format!("crony-codex-long-path-test-{}", request.run_id));
+        assert!(!root.exists(), "the fixture must own a new directory");
+        request.workspace = root.join("source");
+        let workspace = &request.workspace;
+        let directory = "long-directory/".repeat(22);
+        let unchanged = format!("{directory}unchanged.txt");
+        let changed = format!("{directory}changed.txt");
+        assert!(workspace.join(&unchanged).as_os_str().len() > 260);
+        tokio::fs::create_dir_all(workspace.join(&directory))
+            .await
+            .expect("create owned deep directory");
+        for path in [&unchanged, &changed] {
+            tokio::fs::write(workspace.join(path), b"original\n")
+                .await
+                .expect("write tracked fixture");
+        }
+        run_git(workspace, &["init", "-b", "main"])
+            .await
+            .expect("initialize owned repository");
+        // Model a normal Git for Windows checkout, where long paths are disabled.
+        run_git(workspace, &["config", "core.longpaths", "false"])
+            .await
+            .expect("disable repository-local long paths");
+        run_git(
+            workspace,
+            &[
+                "-c",
+                "core.longpaths=true",
+                "add",
+                "--",
+                &unchanged,
+                &changed,
+            ],
+        )
+        .await
+        .expect("stage both deep fixture files with native support");
+        run_git(
+            workspace,
+            &[
+                "-c",
+                "core.longpaths=true",
+                "-c",
+                "user.name=ECorp Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "-c",
+                "commit.gpgsign=false",
+                "commit",
+                "-m",
+                "Create owned long-path fixture",
+            ],
+        )
+        .await
+        .expect("commit deep fixture files");
+        let artifact = write_evidence(
+            &request,
+            None,
+            "completed",
+            "unchanged",
+            &UsageSnapshot::default(),
+        )
+        .await
+        .expect("collect unchanged evidence");
+        let evidence: Value = serde_json::from_slice(
+            &tokio::fs::read(&artifact.path)
+                .await
+                .expect("read evidence"),
+        )
+        .expect("parse unchanged evidence");
+        assert_eq!(evidence["git"]["status"], "");
+        assert_eq!(evidence["git"]["changed_paths"], json!([]));
+        assert_eq!(evidence["git"]["files"], json!([]));
+        assert_eq!(evidence["git"]["diff_bytes"], 0);
+
+        tokio::fs::write(workspace.join(&changed), b"updated\n")
+            .await
+            .expect("change one deep tracked file");
+        tokio::fs::write(workspace.join("base.txt"), b"base\n")
+            .await
+            .expect("create one untracked file");
+        let artifact = write_evidence(
+            &request,
+            None,
+            "completed",
+            "changed",
+            &UsageSnapshot::default(),
+        )
+        .await
+        .expect("collect actual changes");
+        let evidence: Value = serde_json::from_slice(
+            &tokio::fs::read(&artifact.path)
+                .await
+                .expect("read evidence"),
+        )
+        .expect("parse changed evidence");
+        assert_eq!(
+            evidence["git"]["changed_paths"],
+            json!(["base.txt", changed])
+        );
+        assert_eq!(
+            evidence["git"]["files"],
+            json!([
+                {"path": "base.txt", "kind": "file", "bytes": 5,
+                 "sha256": hex::encode(Sha256::digest(b"base\n"))},
+                {"path": changed, "kind": "file", "bytes": 8,
+                 "sha256": hex::encode(Sha256::digest(b"updated\n"))},
+            ])
+        );
+        assert!(evidence["git"]["diff_bytes"].as_u64().unwrap() > 0);
+        assert!(artifact.bytes < 8192);
+        tokio::fs::remove_dir_all(root)
+            .await
+            .expect("remove this test's owned fixture");
     }
 
     #[tokio::test]

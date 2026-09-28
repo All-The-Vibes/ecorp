@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
 import { inspect } from 'node:util'
-import { completeGraphFixtureLaunch, graphFixtureSource, taskGraphFixtureConfig } from './task_graph_fixture.mjs'
+import { completeGraphFixtureLaunch, graphFixtureSource, taskGraphFixtureConfig, waitForGraphFixtureMission } from './task_graph_fixture.mjs'
 
 const corp = '00000000-0000-4000-8000-000000000001'
 const env = { CRONY_TASK_GRAPH_TEST: '1', CRONY_SERVER_HTTP: 'http://127.0.0.1:18437' }
@@ -19,6 +19,110 @@ function snapshot() {
       source_base_ref: source.base_ref, source_base_commit: source.base_commit },
   ] }] }
 }
+
+function missionSnapshot(missionStatus, runs) {
+  return { snapshot: {
+    missions: [{ id: corp, status: missionStatus }],
+    tasks: roots.map(id => ({ id, mission_id: corp })),
+    runs: runs.map((run, index) => ({ id: roots[index], task_id: roots[index], ...run })),
+  } }
+}
+
+test('graph wait retains concurrency and waits beyond one minute for verified workspaces to settle', async () => {
+  const stages = [
+    [0, missionSnapshot('running', [{ status: 'running' }, { status: 'verifying' }])],
+    [60_001, missionSnapshot('running', [{ status: 'verifying' }, { status: 'verifying' }])],
+    [177_938, missionSnapshot('completed', roots.map(() => ({ status: 'completed', verification_status: 'passed' })))],
+    [230_743, missionSnapshot('completed', roots.map(() => ({
+      status: 'completed', verification_status: 'passed', workspace_disposition: 'preserved',
+    })))],
+  ]
+  const before = structuredClone(stages)
+  let time = 0, reads = 0
+  const result = await waitForGraphFixtureMission(async () => {
+    const [observedAt, state] = stages[reads++]
+    time = observedAt
+    return state
+  }, corp, { now: () => time, wait: async () => {} })
+  assert.equal(reads, 4)
+  assert.equal(result.state, stages[3][1])
+  assert.equal(result.maxActiveRuns, 2)
+  assert.equal(result.elapsedMs, 230_743)
+  assert.equal(result.timeoutMs, 300_000)
+  assert.deepEqual(stages, before)
+})
+
+test('graph wait requires persisted terminal runs and workspace settlement for every mission outcome', async () => {
+  for (const status of ['completed', 'failed', 'cancelled']) {
+    let time = 0, reads = 0
+    const result = await waitForGraphFixtureMission(async () => {
+      reads++
+      return missionSnapshot(status, reads === 1 ? [] : roots.map((_, index) => ({
+        status: reads === 2 ? 'verifying' : status,
+        workspace_disposition: reads < 4 ? null : index ? 'removed' : 'preserved',
+      })))
+    }, corp, { now: () => time, wait: async ms => { time += ms } })
+    assert.equal(reads, 4)
+    assert.equal(result.mission.status, status)
+    assert.equal(result.runs.length, 2)
+  }
+})
+
+test('graph wait ignores another mission and its active runs', async () => {
+  const state = missionSnapshot('completed', [{ status: 'completed', workspace_disposition: 'preserved' }])
+  state.snapshot.missions.push({ id: 'other', status: 'running' })
+  state.snapshot.tasks.push({ id: 'other-task', mission_id: 'other' })
+  state.snapshot.runs.push({ id: 'other-run', task_id: 'other-task', status: 'running' })
+  const result = await waitForGraphFixtureMission(async () => state, corp)
+  assert.equal(result.runs.length, 1)
+  assert.equal(result.maxActiveRuns, 0)
+})
+
+test('graph wait never extends its deadline for progress or an unsettled workspace', async () => {
+  for (const unsettled of [false, true]) {
+    let time = 0, reads = 0
+    await assert.rejects(waitForGraphFixtureMission(async () => {
+      reads++
+      return missionSnapshot(unsettled ? 'completed' : 'running', roots.map(() => ({
+        status: unsettled ? 'completed' : reads % 2 ? 'running' : 'verifying',
+        verification_status: unsettled ? 'passed' : 'pending',
+      })))
+    }, corp, { now: () => time, wait: async () => { time += 60_000 } }), /Timed out waiting for task-graph mission/u)
+    assert.equal(time, 300_000)
+    assert.equal(reads, 5)
+  }
+})
+
+test('graph wait refuses a response arriving after the fixed deadline even if it has settled', async () => {
+  let time = 0
+  await assert.rejects(waitForGraphFixtureMission(async () => {
+    time = 300_001
+    return missionSnapshot('completed', [{ status: 'completed', workspace_disposition: 'removed' }])
+  }, corp, { now: () => time, wait: async () => assert.fail('Expired wait cannot poll again') }),
+  /Timed out waiting for task-graph mission/u)
+})
+
+test('graph timeout reports only bounded identifiers and lifecycle states from its last snapshot', async () => {
+  let time = 0
+  const state = missionSnapshot('completed', roots.map(() => ({
+    status: 'unknown-state-private-canary', verification_status: 'passed', workspace_disposition: null,
+    summary: 'summary-private-canary', artifact_uri: 'artifact-private-canary',
+    workspace_path: 'path-private-canary', verification_summary: 'verification-private-canary',
+  })))
+  state.snapshot.secrets = ['snapshot-private-canary']
+  const before = structuredClone(state)
+  await assert.rejects(waitForGraphFixtureMission(async () => state, corp,
+    { now: () => time, wait: async () => { time += 300_000 } }), error => {
+    assert.doesNotMatch(inspect(error), /private-canary/u)
+    const details = JSON.parse(error.message.split('Timed out waiting for task-graph mission: ')[1])
+    assert.deepEqual(details.mission, { id: corp, status: 'completed' })
+    assert.equal(details.run_count, 2)
+    assert.deepEqual(details.runs[0], { id: roots[0], task_id: roots[0], status: null,
+      verification_status: 'passed', workspace_disposition: null })
+    return true
+  })
+  assert.deepEqual(state, before)
+})
 
 test('task graph requires explicit ownership and a single dry-run option', () => {
   assert.equal(taskGraphFixtureConfig([], env).server, env.CRONY_SERVER_HTTP)
