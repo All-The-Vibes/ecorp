@@ -1,0 +1,128 @@
+"""Scan the actual committed delta plus merge-inclusive history before pushing."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import tempfile
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r"<USERPROFILE>\.codex\worktrees\issue136-browser-docs\ecorp")
+NATIVE = Path(r"<USERPROFILE>\code\ecorp\output\pr-completion\20260922T123548Z\gitleaks-8.30.1\gitleaks.exe")
+RECEIPT = EV / "issue232-commit-secret-scan-r1.json"
+assert not RECEIPT.exists()
+ENV = {k: v for k, v in os.environ.items()
+       if not re.match(r"^(CRONY_|ECORP_|PG|GH_|GITHUB_|GITLEAKS_|AZURE_|GIT_)", k, re.I)
+       and k.upper() not in {"DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "COPILOT_GITHUB_TOKEN", "NODE_OPTIONS"}}
+ENV.update(GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="Never")
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
+
+
+def git(*args):
+    return subprocess.run(["git", "-C", str(ROOT), *args], env=ENV, capture_output=True,
+                          check=True, timeout=240, creationflags=subprocess.CREATE_NO_WINDOW).stdout
+
+
+commit_path = EV / "issue232-publication-commit-r1.json"
+commit = load(commit_path)
+assert commit["status"] == "committed-and-verified"
+head, base = commit["head"], commit["integration_base"]
+assert git("rev-parse", "HEAD").decode().strip() == head
+assert git("rev-parse", "HEAD^{tree}").decode().strip() == commit["publication_tree"]
+assert git("show", "-s", "--format=%P", head).decode().strip().split() == commit["parents"]
+assert git("branch", "--show-current").decode().strip() == "codex/issue232-project-membership"
+assert not git("status", "--porcelain").strip()
+assert sha(NATIVE.read_bytes()) == "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c"
+assert subprocess.check_output([str(NATIVE), "version"], env=ENV).decode().strip() == "8.30.1"
+git("merge-base", "--is-ancestor", base, head)
+policy = {name: sha((ROOT / name).read_bytes()) if (ROOT / name).is_file() else None
+          for name in [".gitleaksignore", ".gitleaks.toml"]}
+assert not git("diff", "--name-only", base, head, "--", *policy).strip()
+paths = git("diff", "--name-only", "-z", "--no-renames", base, head).decode().split("\0")[:-1]
+assert set(paths) == set(commit["changed_files"])
+assert "crates/crony-cli/src/factory.rs" in paths
+assert all(p == "crates/crony-cli/src/factory.rs" or
+           p.startswith("docs/evidence/2026-09-27-factory-exact-membership/") for p in paths)
+record = {"issue": 232, "status": "running", "started_at_utc": datetime.now(timezone.utc).isoformat(),
+          "head": head, "base": base, "tree": commit["publication_tree"], "parents": commit["parents"],
+          "native_version": "8.30.1", "native_sha256": sha(NATIVE.read_bytes()),
+          "policy_sha256": policy, "commit_receipt_sha256": sha(commit_path.read_bytes()), "scans": [],
+          "scope": "Every changed final blob read from the committed tree, plus all introduced history with merge diffs explicitly enabled; unchanged native defaults and repository policy."}
+
+
+def save():
+    RECEIPT.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+
+def scan(lane, args, report):
+    flags = ["--redact=100", "--no-banner", "--no-color", "--ignore-gitleaks-allow",
+             "--gitleaks-ignore-path", str(ROOT / ".gitleaksignore"), "--exit-code=42", "--timeout=300",
+             "--report-format=json", "--report-path", str(report)]
+    if policy[".gitleaks.toml"] is not None:
+        flags += ["--config", str(ROOT / ".gitleaks.toml")]
+    result = subprocess.run([str(NATIVE), *args, *flags], cwd=ROOT, env=ENV, capture_output=True,
+                            timeout=360, creationflags=subprocess.CREATE_NO_WINDOW)
+    findings = load(report) if report.exists() else None
+    log = EV / f"issue232-commit-secret-scan-r1-{lane}.log"
+    with log.open("xb") as stream:
+        stream.write(result.stdout + result.stderr)
+    item = {"lane": lane, "exit_code": result.returncode,
+            "finding_count": len(findings) if isinstance(findings, list) else None,
+            "log": str(log), "redacted_log_sha256": sha(log.read_bytes())}
+    if findings:
+        item["finding_metadata"] = [{"rule": f.get("RuleID"), "file": f.get("File"),
+                                      "start_line": f.get("StartLine")} for f in findings]
+    record["scans"].append(item)
+    save()
+    assert result.returncode == 0 and isinstance(findings, list) and not findings, "Triage secret scan findings before push."
+
+
+save()
+try:
+    with tempfile.TemporaryDirectory(prefix="issue232-commit-scan-", dir=EV) as owned:
+        owned_path = Path(owned).resolve()
+        assert owned_path.parent == EV.resolve() and owned_path.name.startswith("issue232-commit-scan-")
+        materialized = owned_path / "committed"
+        materialized.mkdir()
+        blobs = []
+        for name in paths:
+            entry = git("ls-tree", "-z", head, "--", name).split(b"\0")
+            assert len(entry) == 2 and not entry[1]
+            meta, observed_name = entry[0].split(b"\t", 1)
+            mode, kind, oid = meta.decode().split()
+            assert observed_name.decode() == name and kind == "blob" and mode in {"100644", "100755"}
+            target = (materialized / name).resolve()
+            assert target.is_relative_to(materialized.resolve()) and not target.exists()
+            raw = git("cat-file", "blob", oid)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+            blobs.append({"path": name, "git_blob": oid, "bytes": len(raw), "sha256": sha(raw)})
+        record.update(committed_blobs=blobs, committed_blob_count=len(blobs),
+                      implementation_blob_present=True, merge_diff_explicitly_enabled=True)
+        save()
+        scan("final-blobs", ["dir", str(materialized)], owned_path / "final-blobs.json")
+        log_opts = "-m " + base + ".." + head
+        proof = git("log", "-m", "--format=%H", "--name-only", base + ".." + head)
+        assert head.encode() in proof and b"crates/crony-cli/src/factory.rs" in proof
+        record.update(history_log_options=log_opts, merge_history_paths_sha256=sha(proof))
+        save()
+        scan("merge-history", ["git", str(ROOT), "--log-opts=" + log_opts], owned_path / "merge-history.json")
+    assert git("rev-parse", "HEAD").decode().strip() == head and not git("status", "--porcelain").strip()
+    assert policy == {name: sha((ROOT / name).read_bytes()) if (ROOT / name).is_file() else None for name in policy}
+    record.update(status="passed", finding_count=0, exit_code=0, worktree_unchanged=True)
+except Exception as error:
+    record.update(status="failed", failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+    save()
+    print(json.dumps({key: record.get(key) for key in ["issue", "status", "head", "base", "finding_count", "exit_code", "failure"]}))
