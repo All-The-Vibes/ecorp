@@ -1188,8 +1188,15 @@ start a direct-CLI publication as queued human intent. Claims, renewals, artifac
 effect checkpoints reuse the native publication transactions and fencing. Before effects they
 recheck the recorded human's current authority, exact source and policy, and live attempt ownership.
 The watcher invokes the existing `factory-publish` effect engine. Direct human-authorized CLI
-publication remains supported. Failed requests are visible and are not retried in a tight loop;
-expired attempts can adopt their matching external effects after a restart.
+publication remains supported. The watcher claims the saved intent before reading its source
+context. A known admission denial, such as changed source or policy or revoked human room access,
+is recorded durably with failure detail and one failure event, without granting an effect token.
+The claim transaction uses the native credential-before-publication lock order, preserves any
+active lease, and clears an expired lease while failing its running attempt. Database failures and
+unclassified admission errors roll back and remain retryable. Published or failed intent returns
+tokenless readback; failed intent leaves the watcher queue and requires manual reconciliation.
+There is no automatic replacement-human-request flow. Expired attempts whose source and authority
+remain valid can adopt their matching external effects after a restart.
 
 The browser projects the saved request and native attempt state, including waiting for a trusted
 publisher, working, failed with any existing PR link, and published. A caller disconnect does not

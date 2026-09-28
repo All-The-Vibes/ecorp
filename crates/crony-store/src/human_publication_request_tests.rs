@@ -28,6 +28,345 @@ fn publisher_scope(input: &StartPullRequestPublicationInput) -> PublicationPubli
     }
 }
 
+async fn wait_for_publication_lock(pool: &PgPool, application: &str) {
+    tokio::time::timeout(std::time::Duration::from_secs(10), async {
+        loop {
+            let waiting: bool = sqlx::query_scalar(
+                "SELECT EXISTS (SELECT 1 FROM pg_stat_activity
+                 WHERE datname = current_database() AND application_name = $1
+                   AND wait_event_type = 'Lock')",
+            )
+            .bind(application)
+            .fetch_one(pool)
+            .await
+            .unwrap();
+            if waiting {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .expect("publication claim did not reach the controlled lock contention");
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_worker_and_direct_claim_share_lock_order(pool: PgPool) {
+    let (store, mut input, queued) = queued_request(pool).await;
+    let scope = publisher_scope(&input);
+    let worker_pool = PgPoolOptions::new()
+        .max_connections(1)
+        .connect_with(
+            store
+                .pool
+                .connect_options()
+                .as_ref()
+                .clone()
+                .application_name("issue219-worker-claim"),
+        )
+        .await
+        .unwrap();
+    let direct_pool = PgPoolOptions::new()
+        .max_connections(1)
+        .connect_with(
+            store
+                .pool
+                .connect_options()
+                .as_ref()
+                .clone()
+                .application_name("issue219-direct-claim"),
+        )
+        .await
+        .unwrap();
+    // Hold the shared branch gate until both real claim paths are waiting.
+    // If the worker takes this gate before the credential row while native
+    // start does the reverse, releasing it creates a deterministic deadlock.
+    let mut blocker = store.pool.begin().await.unwrap();
+    lock_factory_keys_tx(
+        &mut blocker,
+        &[format!(
+            "publication:branch:{}:{}:{}",
+            input.corp_id, input.target_repository, input.branch
+        )],
+    )
+    .await
+    .unwrap();
+    let worker = PgStore {
+        pool: worker_pool.clone(),
+    };
+    let mut claims = tokio::task::JoinSet::new();
+    claims.spawn(async move {
+        worker
+            .claim_human_requested_publication(
+                &scope,
+                queued.publication.id,
+                "worker-lock-order".into(),
+                300,
+            )
+            .await
+    });
+    wait_for_publication_lock(&store.pool, "issue219-worker-claim").await;
+    let direct = PgStore {
+        pool: direct_pool.clone(),
+    };
+    input.idempotency_key = "direct-lock-order".into();
+    claims.spawn(async move { direct.start_pull_request_publication(input).await });
+    wait_for_publication_lock(&store.pool, "issue219-direct-claim").await;
+    blocker.commit().await.unwrap();
+    let mut tokens = 0;
+    let mut busy = 0;
+    for _ in 0..2 {
+        let outcome = tokio::time::timeout(std::time::Duration::from_secs(20), claims.join_next())
+            .await
+            .expect("publication claims did not finish after the gate was released")
+            .expect("both claim tasks must be retained")
+            .expect("publication claim task panicked")
+            .expect("concurrent worker and native publication claims must not deadlock");
+        assert_eq!(outcome.publication.id, queued.publication.id);
+        assert_eq!(outcome.publication.attempt_count, 1);
+        tokens += usize::from(outcome.publisher_token.is_some());
+        busy += usize::from(outcome.busy);
+    }
+    assert_eq!(
+        (tokens, busy),
+        (1, 1),
+        "only one claim may acquire effect authority"
+    );
+    let attempts: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM pull_request_publication_attempts WHERE publication_id = $1",
+    )
+    .bind(queued.publication.id)
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    assert_eq!(attempts, 1);
+    worker_pool.close().await;
+    direct_pool.close().await;
+}
+
+async fn assert_stale_worker_request_rejected(pool: PgPool, change: &str) {
+    let (store, input, queued) = queued_request(pool).await;
+    let scope = publisher_scope(&input);
+    let id = queued.publication.id;
+    sqlx::query(change).execute(&store.pool).await.unwrap();
+    // A scoped workload may report a server-proven stale request; a different
+    // repository or credential must not be able to reject it.
+    for alteration in ["repository", "credential"] {
+        let mut other = scope.clone();
+        if alteration == "repository" {
+            other.repository = "other/repository".into();
+        } else {
+            other.credential_hash = digest(&"wrong stale-request credential");
+        }
+        let before = publication_state(&store).await;
+        assert!(
+            store
+                .claim_human_requested_publication(&other, id, "stale-denial".into(), 300)
+                .await
+                .is_err()
+        );
+        assert!(publication_state(&store).await == before);
+    }
+    let rejected = store
+        .claim_human_requested_publication(&scope, id, "stale-denial".into(), 300)
+        .await
+        .unwrap();
+    assert!(rejected.publisher_token.is_none() && !rejected.busy && !rejected.replayed);
+    assert_eq!(rejected.publication.version, queued.publication.version + 1);
+    assert_eq!(
+        rejected.publication.state,
+        PullRequestPublicationState::Requested
+    );
+    assert_eq!(rejected.publication.attempt_count, 0);
+    assert!(
+        rejected
+            .publication
+            .failure_detail
+            .as_deref()
+            .is_some_and(|detail| detail.contains("rejected"))
+    );
+    assert!(
+        rejected.publication.publisher_id.is_none()
+            && rejected.publication.publisher_lease_expires_at.is_none()
+    );
+    assert_eq!(
+        rejected.publication.authorization_snapshot,
+        queued.publication.authorization_snapshot
+    );
+    assert_eq!(
+        rejected.publication.provenance,
+        queued.publication.provenance
+    );
+    assert_eq!(rejected.events.len(), 1);
+    for key in ["stale-denial", "later-worker-poll"] {
+        let before = publication_state(&store).await;
+        let replay = store
+            .claim_human_requested_publication(&scope, id, key.into(), 300)
+            .await
+            .unwrap();
+        assert!(replay.replayed && !replay.busy && replay.publisher_token.is_none());
+        assert_eq!(replay.publication.version, rejected.publication.version);
+        assert!(replay.events.is_empty());
+        assert_only_publisher_use_audited(&before, &publication_state(&store).await, &scope);
+    }
+    assert!(
+        store
+            .requested_publications_for_publisher(&scope, None, 25)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_worker_rejects_changed_policy(pool: PgPool) {
+    assert_stale_worker_request_rejected(
+        pool,
+        "UPDATE factory_work_items SET policy=policy || '{\"human_request_revision\":2}'::jsonb",
+    )
+    .await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_worker_rejects_withdrawn_policy(pool: PgPool) {
+    assert_stale_worker_request_rejected(
+        pool,
+        "UPDATE factory_work_items SET policy=jsonb_set(policy, '{publication,allowed}', 'false')",
+    )
+    .await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_worker_rejects_changed_source_commit(pool: PgPool) {
+    assert_stale_worker_request_rejected(
+        pool,
+        "UPDATE source_deliverables SET head_commit=repeat('c',40)",
+    )
+    .await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_worker_rejects_changed_source_digest(pool: PgPool) {
+    assert_stale_worker_request_rejected(pool, "UPDATE artifacts SET sha256=repeat('c',64)").await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_worker_rejects_revoked_role(pool: PgPool) {
+    assert_stale_worker_request_rejected(
+        pool,
+        "UPDATE actors SET role='member' WHERE kind='human'",
+    )
+    .await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_worker_rejects_revoked_membership(pool: PgPool) {
+    assert_stale_worker_request_rejected(pool, "DELETE FROM room_memberships").await;
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_worker_preserves_live_lease_then_rejects_expired_intent(
+    pool: PgPool,
+) {
+    let (store, input, queued) = queued_request(pool).await;
+    let scope = publisher_scope(&input);
+    let id = queued.publication.id;
+    let started = store
+        .claim_human_requested_publication(&scope, id, "before-revocation".into(), 300)
+        .await
+        .unwrap();
+    sqlx::query(
+        "UPDATE factory_work_items SET policy=policy || '{\"human_request_revision\":2}'::jsonb",
+    )
+    .execute(&store.pool)
+    .await
+    .unwrap();
+    let before = publication_state(&store).await;
+    assert!(
+        store
+            .claim_human_requested_publication(&scope, id, "after-revocation".into(), 300)
+            .await
+            .is_err()
+    );
+    assert_only_publisher_use_audited(&before, &publication_state(&store).await, &scope);
+    sqlx::query("UPDATE pull_request_publications SET publisher_lease_expires_at=now()-interval '1 second' WHERE id=$1").bind(id).execute(&store.pool).await.unwrap();
+    let rejected = store
+        .claim_human_requested_publication(&scope, id, "before-revocation".into(), 300)
+        .await
+        .unwrap();
+    assert!(rejected.publisher_token.is_none() && rejected.publication.failure_detail.is_some());
+    assert_eq!(
+        rejected.publication.version,
+        started.publication.version + 1
+    );
+    assert_eq!(
+        rejected.publication.attempt_count,
+        started.publication.attempt_count
+    );
+    let attempt: String = sqlx::query_scalar(
+        "SELECT state FROM pull_request_publication_attempts WHERE publication_id=$1",
+    )
+    .bind(id)
+    .fetch_one(&store.pool)
+    .await
+    .unwrap();
+    assert_eq!(attempt, "failed");
+    assert!(
+        store
+            .record_pull_request_publication_checkpoint(branch_checkpoint(&input, &started))
+            .await
+            .is_err()
+    );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_native_publication_worker_keeps_database_failures_retryable(pool: PgPool) {
+    let (store, input, queued) = queued_request(pool).await;
+    let scope = publisher_scope(&input);
+    let id = queued.publication.id;
+    sqlx::query("ALTER TABLE source_deliverables RENAME TO temporarily_unavailable_source")
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    let failed = store
+        .claim_human_requested_publication(&scope, id, "temporary-unavailability".into(), 300)
+        .await;
+    sqlx::query("ALTER TABLE temporarily_unavailable_source RENAME TO source_deliverables")
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    assert!(failed.is_err());
+    let saved = store
+        .human_requested_publication_for_publisher(&scope, id, None)
+        .await
+        .unwrap()
+        .publication;
+    assert_eq!(saved.version, queued.publication.version);
+    assert_eq!(saved.attempt_count, 0);
+    assert!(saved.failure_detail.is_none());
+    assert_eq!(
+        store
+            .requested_publications_for_publisher(&scope, None, 25)
+            .await
+            .unwrap(),
+        [id]
+    );
+    let recovered = store
+        .claim_human_requested_publication(&scope, id, "temporary-unavailability".into(), 300)
+        .await
+        .unwrap();
+    assert!(recovered.publisher_token.is_some());
+}
+
 fn assert_only_publisher_use_audited(
     before: &Value,
     after: &Value,

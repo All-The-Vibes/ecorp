@@ -92,8 +92,8 @@ pub(super) async fn authority_tx(
             .as_deref()
             != Some(verified_head)
     {
-        return Err(anyhow!(
-            "checkpoint publication does not match its native source and verified export"
+        return Err(publication::publication_admission_denied(
+            "checkpoint publication does not match its native source and verified export",
         ));
     }
     let explicit_stop: bool = sqlx::query_scalar(

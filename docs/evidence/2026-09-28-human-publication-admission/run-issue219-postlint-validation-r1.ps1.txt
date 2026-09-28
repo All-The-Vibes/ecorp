@@ -1,0 +1,35 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$recordPath = Join-Path $PSScriptRoot 'issue219-postlint-validation-r1.json'
+if (Test-Path -LiteralPath $recordPath) { throw 'Preserve existing validation invocation.' }
+$record = [ordered]@{issue=219;started_at_utc=[DateTime]::UtcNow.ToString('o');status='preparing';expected_tree='84dc8e65f6d13cba2722e2a9e4969741bf0aca52';steps=@()}
+function Save { [IO.File]::WriteAllText($recordPath,($record | ConvertTo-Json -Depth 10)+"`n") }
+function Step([string]$Name,[scriptblock]$Run) {
+    $record.current_step=$Name
+    Save
+    $start=[DateTime]::UtcNow.ToString('o')
+    & $Run
+    $code=$LASTEXITCODE
+    $record.steps += [ordered]@{name=$Name;started_at_utc=$start;finished_at_utc=[DateTime]::UtcNow.ToString('o');exit_code=$code}
+    Save
+    if ($code) { throw "$Name failed; preserve its receipt." }
+}
+try {
+    $lint = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue219-lint-correction-r1.json') -Raw | ConvertFrom-Json
+    if ($lint.status -cne 'passed' -or !$lint.source_unchanged -or $lint.tree -cne $record.expected_tree) { throw 'Early source-bound lint validation is required.' }
+    $repo='<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp'
+    if ((& git -C $repo write-tree).Trim() -cne $record.expected_tree -or @(& git -C $repo diff --name-only).Count) { throw 'Reconcile changed source.' }
+    $record.status='running'
+    Save
+    Step 'native-store' { & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue219-stale-regressions-r2.ps1') -Revision stalegreen-r4 }
+    Step 'native-watcher' { & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue219-watcher-regressions-r2.ps1') -Revision green4 }
+    Step 'native-handlers' { & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue219-native-handlers-r3.ps1') }
+    Step 'acceptance-build' { & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'build-issue219-acceptance-r5.ps1') }
+    Step 'native-browser' { & '<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' (Join-Path $PSScriptRoot 'run-issue219-browser-r10.py') }
+    Step 'canonical' { & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue219-canonical-r4.ps1') }
+    $record.status='passed'
+} catch { $record.status='failed'; $record.failure=$_.Exception.Message }
+finally { $record.finished_at_utc=[DateTime]::UtcNow.ToString('o'); Save }
+[pscustomobject]$record | Select-Object issue,status,current_step,failure | ConvertTo-Json
+if ($record.status -cne 'passed') { exit 1 }

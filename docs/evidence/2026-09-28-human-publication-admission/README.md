@@ -1,0 +1,31 @@
+# Human publication admission corrections
+
+PR #380 now retires a saved human request when current authorization, source or policy makes it permanently ineligible. The exact stored intent, enrolled credential and operation key are checked first. Known domain denials durably record one failure event and retire an expired attempt; database and unclassified errors roll back. Active leases are preserved. Failed or published readback stays tokenless. A failed intent requires manual reconciliation and is not automatically replaced.
+
+The trusted watcher claims before requesting source context, so missing stale context cannot strand an eligible queued request. Its stable claim key includes the authenticated nonsecret publisher identifier. Typed saved-intent UUID routing rejects malformed or substituted authority metadata; the native publisher remains the only effect engine. Native and worker claims acquire credential and publication locks in the same order. The shared failure SQL and typed verification denial retain existing direct-CLI, HTTP and error-display behavior.
+
+The original [implementation](../2026-09-28-human-publication-request/README.md) and [watcher correction](../2026-09-28-human-publication-corrections/README.md) packets are unchanged. Their observed failures and conclusions remain historical. This packet adds the stale-intent, lock-contention and withdrawn-verification regressions on the corrected source.
+
+## Source and validation
+
+Main base: `878a1774774b0630c904cbaf4b05e1b346777817`. Parent: `e13d7ab246ed19c4a2da9b9d63f0b8f1e0e1945a`. Tested staged tree: `84dc8e65f6d13cba2722e2a9e4969741bf0aca52`. All 7,290 physical source files match the native build, r10 browser acceptance and canonical run. [source-equivalence.json](source-equivalence.json) binds that inventory. [review-corrections.patch](review-corrections.patch) contains the 13 corrections; [tested-code.patch](tested-code.patch) contains all 35 implementation paths against main.
+
+Locked dependencies and canonical `pnpm check` passed all 11 named gates, including immutable migrations, state-audit compatibility, native EVM and full Node discovery. Node: 3,126 total, 3,061 passed, 0 failed, 65 skipped, 0 cancelled and 0 todo. Rust workspace: 884 passed, 0 failed and 593 ignored across 41 summaries. The separate EVM gate passed one test. Raw results are in [canonical-report.json](canonical-report.json) and [canonical-pnpm-check.log](canonical-pnpm-check.log).
+
+Focused real-migration store execution passed 22 cases, HTTP authorization passed seven and watcher/routing passed seven, all with zero failures or ignored cases. They cover stale/withdrawn source policy, revoked human authority, exact intent/operation binding, expired versus live leases, tokenless replay, rollback on a database error, PostgreSQL lock contention, changed publisher identity and malformed routing. Counts overlap the full suite. Native store/handler fixtures use synthetic prerequisite metadata and real native transactions; they do not claim genuine verifier execution or a human decision.
+
+[correction-history.json](correction-history.json) preserves the actual sequence: seven stale-intent failures, a separately reproduced PostgreSQL deadlock, one invalid handler-fixture failure, and a subsequently reproduced withdrawn-verification denial defect before the successful focused runs. The first full canonical r3 attempt then failed Clippy; Rust workspace tests and web build/lint were not reached. After the equivalent short-circuiting condition correction, native regressions, a fresh r5 build, r10 browser acceptance and all canonical r4 gates passed. Setup failures are distinguished from implementation failures. Potentially sensitive failing snapshots remain private; their counts and hashes are retained.
+
+The previous web coverage input hashes remain identical. Its receipt remains in the prior packet; no new local coverage run is claimed. Final-head hosted coverage is still required.
+
+## Controlled browser-to-runner acceptance
+
+Real Edge, server, runner, CLI publisher, SCRAM PostgreSQL and private Git executed two native verified results and two durable tokenless human requests. Development authentication, deterministic providers and simulated GitHub produced zero real provider calls and zero real GitHub mutations. The same surviving watcher encountered a busy lease, server restart and actual lease expiry, then adopted the PR created before the other publisher crashed. There were two recovery attempts, no competing/repeated effects and no duplicate PR.
+
+An injected Project-update failure retained the second PR link and a visible durable failure without retry. Caller disconnection did not cancel intent. No extra coding runs, browser publisher credentials or remote-main changes occurred. All owned native processes stopped; fixture data is preserved. Ten unmodified screenshots at 390px and 1440px were inspected, with readable controls and no horizontal overflow. The existing focused skip link remains visible. See [controlled-browser-report.json](controlled-browser-report.json), [controlled-native-report.json](controlled-native-report.json) and [screenshot-review.json](screenshot-review.json).
+
+## Remaining gates and limits
+
+Final-head hosted CI, CodeQL, security, code quality, integration and coverage remain merge gates. Typed routing is a candidate resolution of the current CodeQL finding; actual hosted clearance is still required. No security finding was dismissed or suppressed. A reviewed exact-head merge and verified issue state are required before #219 is complete. Parent #145 and machine-intent #348 remain open.
+
+Evidence additions are validated separately for exact physical-source and Git-tree equivalence, the complete named plan and Node discovery, documentation, personal paths, whitespace and secrets. Evidence was added after execution. This fixture does not establish production OIDC, real inference, live GitHub mutation, OS isolation or independent human approval. Environment-only database credentials remain reduced assurance. Serial Rust validation does not resolve Windows concurrency issue #213. Skipped and ignored cases are not passes. Historical Cargo debt remains 12 advisories (2 high, 1 moderate, 9 low); no clean audit is claimed.

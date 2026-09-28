@@ -30,6 +30,7 @@ const fn default_queue_limit() -> i64 {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PublisherQueueResponse {
+    pub publisher_id: String,
     pub publication_ids: Vec<Uuid>,
 }
 

@@ -235,7 +235,10 @@ async fn queue(
         .requested_publications_for_publisher(&scope, query.after, query.limit)
         .await
         .map_err(workload_error)?;
-    Ok(Json(PublisherQueueResponse { publication_ids }))
+    Ok(Json(PublisherQueueResponse {
+        publisher_id: scope.publisher_id,
+        publication_ids,
+    }))
 }
 
 async fn context(

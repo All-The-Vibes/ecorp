@@ -1,9 +1,13 @@
 //! Actual workload HTTP routes with real migrations and explicitly synthetic
-//! saved publication metadata. This fixture proves read/authority boundaries;
-//! it does not claim a verifier run, human decision, Git effect or browser test.
+//! source/verifier metadata. Requests use the native preview/request transactions.
+//! This proves admission/read boundaries, not a verifier execution, human
+//! decision, Git effect or browser test.
 use super::*;
 use anyhow::Result;
-use crony_store::DemoIds;
+use crony_domain::PullRequestPublicationPlan;
+use crony_store::{
+    DemoIds, PreviewPullRequestPublicationInput, RequestPullRequestPublicationInput,
+};
 use serde_json::Value;
 use sqlx::{ConnectOptions, PgPool};
 
@@ -39,7 +43,6 @@ impl Fixture {
         let artifact_id = Uuid::new_v4();
         let deliverable_id = Uuid::new_v4();
         let work_item_id = Uuid::new_v4();
-        let publication_id = Uuid::new_v4();
         let authorization_id = Uuid::new_v4();
         let credential = format!("fixture-{}", Uuid::new_v4());
         store
@@ -62,34 +65,19 @@ impl Fixture {
             })
             .await?;
 
-        let authorization = json!({
-            "id": authorization_id, "kind": "explicit_human",
-            "permission": "publish_pull_request", "actor_id": ids.alice_actor_id,
-            "actor_role": "owner", "reason": "Synthetic saved-request metadata",
-            "authorized_at": Utc::now(), "auto_merge": false, "merge": false, "deploy": false,
-        });
-        let intent = json!({
-            "schema_version": 1, "kind": "human_requested", "corp_id": ids.corp_id,
-            "work_item_id": work_item_id, "actor_id": ids.alice_actor_id,
-            "actor_role": "owner", "authorization_id": authorization_id,
-            "authorization_reason": "Synthetic saved-request metadata",
-            "preview": {
-                "plan": {
-                    "source_deliverable_id": deliverable_id, "target_repository": REPOSITORY,
-                    "base_ref": "main", "branch": "ecorp/issue219-handler",
-                    "title": "Synthetic publication", "body": "Synthetic metadata only",
-                },
-                "commit_sha": "b".repeat(40), "artifact_sha256": "c".repeat(64),
-                "verification_sha256": "d".repeat(64), "source_revision": "synthetic",
-                "fingerprint": "e".repeat(64),
-            },
-        });
         let fixture = json!({
             "corp": ids.corp_id, "room": ids.room_id, "actor": ids.alice_actor_id,
             "agent": ids.worker_agent_id, "mission": mission_id, "task": task_id,
             "run": run_id, "artifact": artifact_id, "deliverable": deliverable_id,
-            "work_item": work_item_id, "publication": publication_id,
-            "authorization": authorization, "intent": intent,
+            "work_item": work_item_id,
+            "policy": {
+                "auto_merge": false, "source_base_commit": "a".repeat(40),
+                "publication": {
+                    "allowed": true, "repository_allowlist": [REPOSITORY],
+                    "base_ref": "main", "branch_prefix": "ecorp/",
+                    "status_before": "In Progress", "review_status": "In Review",
+                },
+            },
             "task_contract": {
                 "objective": "Handler authorization only", "expected_output": "synthetic.bundle",
                 "acceptance_tests": [], "allowed_tools": [], "prohibited_actions": [],
@@ -112,28 +100,41 @@ impl Fixture {
                        100, 100, 1000000, 1000000 FROM f RETURNING id
             ), task AS (
                 INSERT INTO tasks (id, mission_id, corp_id, title, objective, status,
-                    plan_key, contract, verification_policy)
+                    plan_key, contract, verification_policy, verification_status)
                 SELECT (j->>'task')::uuid, mission.id, (j->>'corp')::uuid,
                        'Synthetic metadata', 'Handler authorization only', 'completed',
-                       'synthetic-handler', j->'task_contract', '{"checks":[],"manual_gate":null}'
+                       'synthetic-handler', j->'task_contract', '{"checks":[],"manual_gate":null}',
+                       'passed'
                 FROM f, mission RETURNING id
             ), run AS (
                 INSERT INTO runs (id, corp_id, task_id, agent_id, runner_id, status,
-                    assignment_token, workspace_run_id)
+                    assignment_token, workspace_run_id, verification_status,
+                    verification_sha256, deliverable_sha256)
                 SELECT (j->>'run')::uuid, (j->>'corp')::uuid, task.id, (j->>'agent')::uuid,
                        'issue219-handler-publisher', 'completed', gen_random_uuid(),
-                       (j->>'run')::uuid
+                       (j->>'run')::uuid, 'passed', repeat('d',64), repeat('c',64)
                 FROM f, task RETURNING id
+            ), evidence AS (
+                INSERT INTO verification_evidence (id, corp_id, task_id, run_id,
+                    check_index, kind, status, summary, payload)
+                SELECT gen_random_uuid(), (j->>'corp')::uuid, (j->>'task')::uuid, run.id,
+                       0, 'synthetic', 'passed', 'Synthetic metadata; no verifier executed',
+                       '{"synthetic":true}'::jsonb
+                FROM f, run RETURNING id
             ), artifact AS (
                 INSERT INTO artifacts (id, corp_id, task_id, run_id, producer_agent_id,
                     producer_runner_id, verifier, object_key, uri, sha256, media_type,
-                    bytes, retention_until, provenance_signature, finalized_at, artifact_role)
-                SELECT (j->>'artifact')::uuid, (j->>'corp')::uuid, (j->>'task')::uuid, run.id,
+                    bytes, retention_until, provenance_signature, finalized_at, artifact_role,
+                    metadata)
+                SELECT (j->>'artifact')::uuid, (j->>'corp')::uuid, (j->>'task')::uuid,
+                       (j->>'run')::uuid,
                        (j->>'agent')::uuid, 'issue219-handler-publisher', 'synthetic',
                        'synthetic.bundle', 'artifact://synthetic', repeat('c',64),
                        'application/octet-stream', 0, now() + interval '1 day', repeat('f',64),
-                       now(), 'source_deliverable'
-                FROM f, run RETURNING id
+                       now(), 'source_deliverable',
+                       jsonb_build_object('synthetic', true, 'publication_ready', true,
+                           'git_bundle_sha256', repeat('f',64))
+                FROM f, evidence RETURNING id
             ), deliverable AS (
                 INSERT INTO source_deliverables (id, corp_id, task_id, run_id, artifact_id,
                     form, file_name, verification_sha256, base_commit, head_commit, branch,
@@ -148,42 +149,54 @@ impl Fixture {
                     source_project_number, source_project_item_id, source_repository_owner,
                     source_repository_name, source_issue_number, source_issue_node_id,
                     source_issue_url, source_title, source_revision, state, claim_owner_id,
-                    claim_token, lease_expires_at, mission_id)
+                    claim_token, lease_expires_at, mission_id, policy)
                 SELECT (j->>'work_item')::uuid, (j->>'corp')::uuid, 'github_project_issue',
                        'fixture', 1, 'synthetic-item', 'fixture', 'publication', 219,
                        'synthetic-issue', 'https://github.com/fixture/publication/issues/219',
                        'Synthetic publication', 'synthetic', 'verified', (j->>'actor')::uuid,
-                       gen_random_uuid(), now() + interval '10 minutes', (j->>'mission')::uuid
+                       gen_random_uuid(), now() + interval '10 minutes', (j->>'mission')::uuid,
+                       j->'policy'
                 FROM f, deliverable RETURNING id
-            ), publication AS (
-                INSERT INTO pull_request_publications (id, corp_id, factory_work_item_id,
-                    mission_id, source_deliverable_id, artifact_id, task_id, run_id,
-                    source_issue_number, source_issue_url, target_repository, base_ref, branch,
-                    commit_sha, title, body, actor_id, authorization_id, authorization_snapshot,
-                    effect_key, idempotency_key, state, project_owner, project_number,
-                    project_item_id, project_status_before, provenance)
-                SELECT (j->>'publication')::uuid, (j->>'corp')::uuid, item.id,
-                       (j->>'mission')::uuid, (j->>'deliverable')::uuid, (j->>'artifact')::uuid,
-                       (j->>'task')::uuid, (j->>'run')::uuid, 219,
-                       'https://github.com/fixture/publication/issues/219', 'fixture/publication',
-                       'main', 'ecorp/issue219-handler', repeat('b',40), 'Synthetic publication',
-                       'Synthetic metadata only', (j->>'actor')::uuid,
-                       (j->'authorization'->>'id')::uuid, j->'authorization',
-                       'github-pr:' || item.id || ':' || repeat('e',64), 'synthetic-request',
-                       'requested', 'fixture', 1, 'synthetic-item', 'In Progress',
-                       jsonb_build_object('intent', j->'intent', 'authorization_snapshot', j->'authorization')
-                FROM f, item RETURNING id
             )
-            INSERT INTO pull_request_publication_operations
-                (corp_id, idempotency_key, publication_id, actor_id, operation, resulting_version, request)
-            SELECT (j->>'corp')::uuid, 'synthetic-request', publication.id,
-                   (j->>'actor')::uuid, 'request', 1, j->'intent'
-            FROM f, publication
+            SELECT id FROM item
             "#,
         )
         .bind(fixture)
         .execute(&pool)
         .await?;
+
+        let preview = store
+            .preview_pull_request_publication(PreviewPullRequestPublicationInput {
+                corp_id: ids.corp_id,
+                work_item_id,
+                actor_id: ids.alice_actor_id,
+                actor_role: "owner".into(),
+                plan: PullRequestPublicationPlan {
+                    source_deliverable_id: deliverable_id,
+                    target_repository: REPOSITORY.into(),
+                    base_ref: "main".into(),
+                    branch: "ecorp/issue219-handler".into(),
+                    title: "Synthetic publication".into(),
+                    body:
+                        "Synthetic metadata only: https://github.com/fixture/publication/issues/219"
+                            .into(),
+                },
+            })
+            .await?;
+        let requested = store
+            .request_pull_request_publication(RequestPullRequestPublicationInput {
+                corp_id: ids.corp_id,
+                work_item_id,
+                actor_id: ids.alice_actor_id,
+                actor_role: "owner".into(),
+                preview,
+                authorization_id,
+                authorization_reason: "Synthetic saved-request metadata".into(),
+                idempotency_key: "synthetic-request".into(),
+            })
+            .await?;
+        assert!(requested.publisher_token.is_none());
+        let publication_id = requested.publication.id;
 
         let artifact_root =
             std::env::temp_dir().join(format!("ecorp-issue219-handler-{}", Uuid::new_v4()));
@@ -293,6 +306,89 @@ impl Fixture {
         assert_eq!(response.status(), reqwest::StatusCode::NOT_FOUND);
         assert_eq!(response.headers()["cache-control"], "no-store");
     }
+
+    async fn claim(&self, key: &str) -> Value {
+        let response = reqwest::Client::builder()
+            .no_proxy()
+            .build()
+            .unwrap()
+            .post(format!(
+                "{}/api/corps/{}/factory/publisher/publications/{}/claim",
+                self.base, self.ids.corp_id, self.publication_id
+            ))
+            .header("x-crony-publication-publisher-credential", &self.credential)
+            .json(&json!({
+                "repository": REPOSITORY, "idempotency_key": key, "lease_seconds": 60,
+            }))
+            .send()
+            .await
+            .unwrap();
+        let status = response.status();
+        assert_eq!(response.headers()["cache-control"], "no-store");
+        let text = response.text().await.unwrap();
+        assert!(!text.contains(&self.credential));
+        let body: Value = serde_json::from_str(&text).unwrap();
+        assert_eq!(status, reqwest::StatusCode::OK, "{}", body["error"]);
+        body
+    }
+
+    async fn queue(&self) -> Value {
+        let response = reqwest::Client::builder()
+            .no_proxy()
+            .build()
+            .unwrap()
+            .get(format!(
+                "{}/api/corps/{}/factory/publisher/queue",
+                self.base, self.ids.corp_id
+            ))
+            .header("x-crony-publication-publisher-credential", &self.credential)
+            .query(&[("repository", REPOSITORY)])
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(response.status(), reqwest::StatusCode::OK);
+        assert_eq!(response.headers()["cache-control"], "no-store");
+        let body: Value = response.json().await.unwrap();
+        assert_eq!(body["publisher_id"], PUBLISHER);
+        body["publication_ids"].clone()
+    }
+
+    async fn assert_durable_rejection(&self, reason: &str) -> Value {
+        let rejected = self.claim("rejected-request").await;
+        assert!(rejected["publisher_token"].is_null());
+        assert_eq!(rejected["replayed"], false);
+        assert_eq!(rejected["busy"], false);
+        let publication = &rejected["publication"];
+        assert_eq!(publication["id"], self.publication_id.to_string());
+        assert_eq!(publication["state"], "requested");
+        assert_eq!(publication["attempt_count"], 0);
+        assert_eq!(
+            publication["failure_detail"],
+            format!("Saved human publication request rejected: {reason}")
+        );
+        assert!(publication["publisher_id"].is_null());
+        assert!(publication["publisher_lease_expires_at"].is_null());
+        for key in ["rejected-request", "later-worker-poll"] {
+            let replay = self.claim(key).await;
+            assert_eq!(replay["replayed"], true);
+            assert!(replay["publisher_token"].is_null());
+            assert_eq!(&replay["publication"], publication);
+        }
+        assert_eq!(self.queue().await, json!([]));
+        let (tokenless, attempts, failures): (bool, i64, i64) = sqlx::query_as(
+            "SELECT publication.publisher_token IS NULL,
+                (SELECT count(*) FROM pull_request_publication_attempts WHERE publication_id=$1),
+                (SELECT count(*) FROM events WHERE aggregate_id=$1 AND type='factory.publication_failed')
+             FROM pull_request_publications publication WHERE id=$1",
+        )
+        .bind(self.publication_id)
+        .fetch_one(&self.pool)
+        .await
+        .unwrap();
+        assert!(tokenless);
+        assert_eq!((attempts, failures), (0, 1));
+        rejected
+    }
 }
 
 impl Drop for Fixture {
@@ -308,6 +404,7 @@ impl Drop for Fixture {
 async fn issue219_publication_handler_tokenless_context_survives_human_revocation(pool: PgPool) {
     let fixture = Fixture::new(pool).await.unwrap();
     fixture.assert_context().await;
+    assert_eq!(fixture.queue().await, json!([fixture.publication_id]));
     sqlx::query("DELETE FROM room_memberships WHERE room_id=$1 AND actor_id=$2")
         .bind(fixture.ids.room_id)
         .bind(fixture.ids.alice_actor_id)
@@ -335,31 +432,11 @@ async fn issue219_publication_handler_tokenless_context_survives_human_revocatio
         .unwrap();
     fixture.assert_context().await;
     let client = reqwest::Client::builder().no_proxy().build().unwrap();
-    let claim = client
-        .post(format!(
-            "{}/api/corps/{}/factory/publisher/publications/{}/claim",
-            fixture.base, fixture.ids.corp_id, fixture.publication_id
-        ))
-        .header(
-            "x-crony-publication-publisher-credential",
-            &fixture.credential,
+    let rejected = fixture
+        .assert_durable_rejection(
+            "forbidden: current human room membership and Publish permission are required",
         )
-        .json(&json!({
-            "repository": REPOSITORY,
-            "idempotency_key": "revoked-authorizer-must-not-claim",
-            "lease_seconds": 60,
-        }))
-        .send()
-        .await
-        .unwrap();
-    // Preserve the native start gate's existing error contract for a changed
-    // saved role, and prove that this is the gate rejecting the claim.
-    assert_eq!(claim.status(), reqwest::StatusCode::BAD_REQUEST);
-    let claim_error: Value = claim.json().await.unwrap();
-    assert_eq!(
-        claim_error["error"],
-        "publication authorization role changed from owner to guest"
-    );
+        .await;
     let artifact = client
         .post(format!(
             "{}/api/corps/{}/factory/publisher/publications/{}/artifact",
@@ -370,16 +447,19 @@ async fn issue219_publication_handler_tokenless_context_survives_human_revocatio
             &fixture.credential,
         )
         .json(&json!({
-            "repository": REPOSITORY, "publisher_token": Uuid::new_v4(), "expected_version": 1,
+            "repository": REPOSITORY, "publisher_token": Uuid::new_v4(),
+            "expected_version": rejected["publication"]["version"],
         }))
         .send()
         .await
         .unwrap();
     assert_eq!(artifact.status(), reqwest::StatusCode::CONFLICT);
-    let unchanged = fixture.assert_context().await;
-    assert_eq!(unchanged["publication"]["attempt_count"], 0);
+    let saved = fixture.assert_context().await;
+    assert_eq!(saved["publication"], rejected["publication"]);
+    // Synthetic completed-state readback only; this is not a native Git effect
+    // or a transition that a failed request is permitted to perform itself.
     sqlx::query(
-        "UPDATE pull_request_publications SET state='published', attempt_count=1,
+        "UPDATE pull_request_publications SET state='published', attempt_count=1, failure_detail=NULL,
         pull_request_number=219, pull_request_node_id='synthetic-pr',
         pull_request_url='https://github.com/fixture/publication/pull/219',
         pull_request_state='OPEN', pull_request_draft=true,
@@ -397,6 +477,39 @@ async fn issue219_publication_handler_tokenless_context_survives_human_revocatio
         completed["publication"]["pull_request_url"],
         "https://github.com/fixture/publication/pull/219"
     );
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_publication_handler_claim_uses_native_admission(pool: PgPool) {
+    let fixture = Fixture::new(pool).await.unwrap();
+    assert_eq!(fixture.queue().await, json!([fixture.publication_id]));
+    let claim = fixture.claim("current-request").await;
+    assert!(claim["publisher_token"].as_str().is_some());
+    assert_eq!(claim["publication"]["attempt_count"], 1);
+    assert_eq!(claim["publication"]["publisher_id"], PUBLISHER);
+    assert!(claim["publication"]["failure_detail"].is_null());
+    assert_eq!(fixture.queue().await, json!([]));
+    let replay = fixture.claim("current-request").await;
+    assert_eq!(replay["replayed"], true);
+    assert_eq!(replay["publisher_token"], claim["publisher_token"]);
+    assert_eq!(replay["publication"], claim["publication"]);
+}
+
+#[sqlx::test(migrations = "../../db/migrations")]
+#[ignore = "requires explicitly owned disposable PostgreSQL"]
+async fn issue219_publication_handler_rejects_withdrawn_verification(pool: PgPool) {
+    let fixture = Fixture::new(pool).await.unwrap();
+    sqlx::query("UPDATE tasks SET verification_status='failed' WHERE id=$1")
+        .bind(fixture.task_id)
+        .execute(&fixture.pool)
+        .await
+        .unwrap();
+    fixture
+        .assert_durable_rejection(
+            "conflict: factory work item cannot enter verified before its mission and task verification pass",
+        )
+        .await;
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]

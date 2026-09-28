@@ -192,7 +192,7 @@ impl PgStore {
         let publication = requested.publication;
         // The native start transaction rechecks this exact intent, current human
         // authority, source/policy, credential, collision and fencing state.
-        self.start_pull_request_publication(StartPullRequestPublicationInput {
+        let input = normalize_start_input(StartPullRequestPublicationInput {
             corp_id: scope.corp_id,
             work_item_id: publication.factory_work_item_id,
             actor_id: publication.actor_id,
@@ -210,8 +210,109 @@ impl PgStore {
             publisher_id: scope.publisher_id.clone(),
             publisher_credential_hash: scope.credential_hash.clone(),
             lease_seconds,
-        })
-        .await
+        })?;
+        let mut tx = self.pool.begin().await?;
+        // Native start locks the credential before the shared publication gates.
+        // Keep that ordering when a worker and a direct claim run concurrently.
+        revalidate_publication_publisher_credential_tx(
+            &mut tx,
+            scope.corp_id,
+            &scope.publisher_id,
+            &scope.credential_hash,
+        )
+        .await?;
+        lock_publication_start_tx(&mut tx, &input).await?;
+        // Re-read the exact authenticated request before deciding whether it can
+        // be retired. The credential lock above remains held by this transaction.
+        let (publication, _, intent) =
+            human_requested_publication_tx(&mut tx, scope, publication_id).await?;
+        ensure_publication_matches_start(&publication, &input)?;
+        request::ensure_human_request_matches_start(&intent, &input)?;
+        let operation_request = start_operation_request(&input);
+        let operation =
+            publication_operation_tx(&mut tx, scope.corp_id, &input.idempotency_key).await?;
+        if let Some(operation) = &operation {
+            ensure_publication_operation_matches(
+                operation,
+                "start",
+                intent.actor_id,
+                None,
+                &operation_request,
+            )?;
+            if operation.publication_id != publication.id {
+                return Err(anyhow!(
+                    "conflict: publication claim key belongs to another request"
+                ));
+            }
+        }
+        if publication.state == PullRequestPublicationState::Published
+            || publication.failure_detail.is_some()
+        {
+            tx.commit().await?;
+            return Ok(PullRequestPublicationOutcome {
+                publication,
+                publisher_token: None,
+                events: Vec::new(),
+                replayed: true,
+                busy: false,
+            });
+        }
+        // A competing or replayed live claim retains the existing native lease
+        // checks. Admission rejection must never terminate an active publisher.
+        if publication
+            .publisher_lease_expires_at
+            .is_none_or(|expiry| expiry <= Utc::now())
+            && let Err(error) =
+                request::revalidate_human_request_tx(&mut tx, &publication, &intent).await
+        {
+            let Some(denial) = error.downcast_ref::<PublicationAdmissionDenied>() else {
+                return Err(error);
+            };
+            let detail = format!("Saved human publication request rejected: {denial}");
+            let rejected = fail_publication_tx(&mut tx, &publication, &detail).await?;
+            if operation.is_none() {
+                record_publication_operation_tx(
+                    &mut tx,
+                    NewPublicationOperation {
+                        corp_id: scope.corp_id,
+                        idempotency_key: &input.idempotency_key,
+                        publication_id: rejected.id,
+                        actor_id: intent.actor_id,
+                        operation: "start",
+                        resulting_version: rejected.version,
+                        publisher_token: None,
+                        request: &operation_request,
+                    },
+                )
+                .await?;
+            }
+            let events = publication_event_tx(
+                &mut tx,
+                &rejected,
+                intent.actor_id,
+                "factory.publication_failed",
+                json!({
+                    "state": rejected.state.as_str(), "attempt": rejected.attempt_count,
+                    "failure_detail": rejected.failure_detail, "admission": "rejected",
+                    "publisher_id": scope.publisher_id,
+                }),
+            )
+            .await?
+            .into_iter()
+            .collect();
+            tx.commit().await?;
+            return Ok(PullRequestPublicationOutcome {
+                publication: rejected,
+                publisher_token: None,
+                events,
+                replayed: false,
+                busy: false,
+            });
+        }
+        tx.commit().await?;
+        // Recheck every native prerequisite after preflight; a concurrent change
+        // never inherits authority from this earlier, non-authorizing read.
+        self.start_pull_request_publication(input).await
     }
 }
 

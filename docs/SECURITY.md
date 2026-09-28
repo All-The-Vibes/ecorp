@@ -512,6 +512,15 @@ current effect authority. Tokenless context readback remains narrower than permi
 The bounded watcher reuses the trusted native effect engine; browser and producing agents receive
 neither the workload credential nor GitHub credentials.
 
+The workload claim may durably reject a saved request only after authenticating the enrolled
+credential and matching the exact Corp, repository, original human intent and operation key.
+Known source, policy and human-access denials record failure without issuing a token, terminate
+only an expired attempt, and leave an active lease intact. The native credential lock precedes
+publication advisory and row locks on both worker and direct start paths. A database error or
+unclassified admission failure rolls back instead of retiring the request. Failed and published
+claims return tokenless readback, and failed intent is excluded from the watcher queue. Manual
+reconciliation is required; tokenless readback does not authorize a replacement request or effect.
+
 Publication revalidates persisted verifier, deliverable, policy, budget, breaker, Corp, role, target,
 base, branch, and source-issue authority before acquiring an attempt. The publisher accepts only an
 exact signed Git bundle, never force-pushes a conflicting branch, refuses closed or auto-merge

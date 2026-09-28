@@ -13858,6 +13858,19 @@ async fn factory_event_room_id_tx(
         .map(Some)
 }
 
+#[derive(Debug)]
+struct FactoryMissionVerificationDenied;
+
+impl std::fmt::Display for FactoryMissionVerificationDenied {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(
+            "conflict: factory work item cannot enter verified before its mission and task verification pass",
+        )
+    }
+}
+
+impl std::error::Error for FactoryMissionVerificationDenied {}
+
 async fn ensure_factory_mission_verified_tx(
     tx: &mut Transaction<'_, Postgres>,
     corp_id: Uuid,
@@ -13893,9 +13906,7 @@ async fn ensure_factory_mission_verified_tx(
     .fetch_one(&mut **tx)
     .await?;
     if !verified {
-        return Err(anyhow!(
-            "conflict: factory work item cannot enter verified before its mission and task verification pass"
-        ));
+        return Err(FactoryMissionVerificationDenied.into());
     }
     Ok(())
 }

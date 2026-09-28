@@ -414,6 +414,14 @@ async fn wait_or_recover_publication(
     plan: &PublicationPlan,
     mut response: PullRequestPublicationResponse,
 ) -> Result<PullRequestPublicationResponse> {
+    if args.requested_publication_id.is_some()
+        && let Some(detail) = &response.publication.failure_detail
+    {
+        bail!(
+            "saved publication request failed: {}",
+            sanitize_failure_detail(detail)
+        );
+    }
     let deadline = Instant::now() + Duration::from_secs(args.wait_seconds);
     while response.busy && Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(250));

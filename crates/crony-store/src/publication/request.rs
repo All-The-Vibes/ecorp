@@ -435,8 +435,8 @@ pub(super) async fn revalidate_human_request_prerequisites_tx(
         &request.actor_role,
     )? != request.preview
     {
-        return Err(anyhow!(
-            "conflict: saved human publication intent no longer matches current authority, policy or verified source"
+        return Err(publication_admission_denied(
+            "conflict: saved human publication intent no longer matches current authority, policy or verified source",
         ));
     }
     Ok(())
@@ -466,8 +466,8 @@ async fn lock_request_membership_tx(
     if role.as_deref() != Some(expected_role)
         || !matches!(expected_role, "owner" | "admin" | "manager")
     {
-        return Err(anyhow!(
-            "forbidden: current human room membership and Publish permission are required"
+        return Err(publication_admission_denied(
+            "forbidden: current human room membership and Publish permission are required",
         ));
     }
     Ok(())

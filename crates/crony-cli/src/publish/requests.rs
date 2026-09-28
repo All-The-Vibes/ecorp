@@ -4,6 +4,15 @@ use super::*;
 
 use crony_protocol::publication_requests::PublisherQueueResponse;
 
+#[derive(serde::Deserialize)]
+struct SavedHumanRequestRouting {
+    kind: String,
+    corp_id: Uuid,
+    actor_id: Uuid,
+    work_item_id: Uuid,
+    authorization_reason: String,
+}
+
 #[derive(Debug, Args)]
 pub struct FactoryPublisherWatchArgs {
     pub corp_id: Uuid,
@@ -83,11 +92,12 @@ pub async fn watch(
                 // The authoritative queue excludes published/failed requests
                 // and active leases. Reconsider a later eligible request after
                 // losing a lease race or encountering a transient read error.
-                let result = publish_requested(client, server, &args, id).await;
+                let result = publish_requested(client, server, &args, &page.publisher_id, id).await;
                 results.push(match result {
                     Ok(value) => json!({
                         "publication_id": id, "status": value.get("mode"),
                         "pull_request_url": value.pointer("/publication/pull_request_url"),
+                        "detail": value.get("detail"),
                     }),
                     Err(error) => json!({
                         "publication_id": id, "status": "failed",
@@ -153,8 +163,58 @@ async fn publish_requested(
     client: &Client,
     server: &str,
     watch: &FactoryPublisherWatchArgs,
+    publisher_id: &str,
     publication_id: Uuid,
 ) -> Result<Value> {
+    // Claim before reading source context: stale source can make context
+    // unavailable, and only the native claim gate can durably reject intent.
+    // The authenticated workload identifier is metadata, never a credential.
+    let identity = serde_json::to_vec(&(
+        watch.corp_id,
+        publication_id,
+        publisher_id,
+        &watch.repository,
+        watch.lease_seconds,
+    ))?;
+    let claim_key = format!(
+        "human-publication-claim:{}",
+        hex::encode(Sha256::digest(identity))
+    );
+    let response = publisher_json(
+        client,
+        Method::POST,
+        &format!(
+            "{server}/api/corps/{}/factory/publisher/publications/{publication_id}/claim",
+            watch.corp_id
+        ),
+        Some(json!({
+            "repository": watch.repository, "idempotency_key": claim_key,
+            "lease_seconds": watch.lease_seconds,
+        })),
+        &watch.publisher_credential_file,
+    )
+    .await?;
+    let response: PullRequestPublicationResponse =
+        serde_json::from_value(response).context("decode requested publication admission")?;
+    let publication = &response.publication;
+    if publication.id != publication_id
+        || publication.corp_id != watch.corp_id
+        || !publication
+            .target_repository
+            .eq_ignore_ascii_case(&watch.repository)
+    {
+        bail!("publisher claim does not match the requested publication");
+    }
+    if let Some(detail) = &publication.failure_detail {
+        return Ok(json!({"mode": "rejected", "publication": publication,
+            "detail": sanitize_failure_detail(detail)}));
+    }
+    if publication.state == PullRequestPublicationState::Published {
+        return Ok(json!({"mode": "recovered", "publication": publication}));
+    }
+    if response.busy {
+        bail!("publication {publication_id} remains leased to another trusted publisher");
+    }
     let context = read_context(
         client,
         server,
@@ -164,7 +224,12 @@ async fn publish_requested(
         &watch.publisher_credential_file,
     )
     .await?;
-    let args = requested_args(watch, publication_id, &context)?;
+    let mut args = requested_args(watch, publication_id, &context)?;
+    if args.publisher_id.as_deref() != Some(publisher_id) {
+        bail!("publisher identity changed between admission and context");
+    }
+    // Reuse native replay and recovery with exactly the preliminary claim key.
+    args.idempotency_key = Some(claim_key);
     run_context(client, server, args, context).await
 }
 
@@ -182,19 +247,23 @@ fn requested_args(
             .clone(),
     )
     .context("decode saved publication metadata")?;
-    let intent = publication
-        .provenance
-        .get("intent")
-        .context("saved human intent is missing")?;
+    let intent: SavedHumanRequestRouting = serde_json::from_value(
+        publication
+            .provenance
+            .get("intent")
+            .context("saved human intent is missing")?
+            .clone(),
+    )
+    .context("decode saved human intent routing")?;
     if publication.id != publication_id
         || publication.corp_id != watch.corp_id
         || !publication
             .target_repository
             .eq_ignore_ascii_case(&watch.repository)
-        || intent.get("kind").and_then(Value::as_str) != Some("human_requested")
-        || value_uuid(intent, "/corp_id")? != watch.corp_id
-        || value_uuid(intent, "/actor_id")? != publication.actor_id
-        || value_uuid(intent, "/work_item_id")? != publication.factory_work_item_id
+        || intent.kind != "human_requested"
+        || intent.corp_id != watch.corp_id
+        || intent.actor_id != publication.actor_id
+        || intent.work_item_id != publication.factory_work_item_id
     {
         bail!("publisher context does not match the requested human publication");
     }
@@ -209,7 +278,7 @@ fn requested_args(
         title: None,
         body_file: None,
         authorization_id: None,
-        authorization_reason: value_string(intent, "/authorization_reason")?,
+        authorization_reason: intent.authorization_reason,
         effect_key: None,
         idempotency_key: None,
         publisher_id: Some(value_string(context, "/publisher_id")?),
@@ -275,6 +344,10 @@ mod tests {
         BusyThenPublished,
         UnavailableContextThenPublished,
         AlwaysBusy,
+        RejectedBeforeContext,
+        ChangedIntentActor,
+        InvalidIntentUuid,
+        ChangedPublisher,
     }
 
     // The server controls later eligibility. These loopback tests model its
@@ -327,7 +400,7 @@ mod tests {
             let prefix = format!("/api/corps/{corp}/factory/publisher");
             let mut claims = 0;
             let mut contexts = 0;
-            let mut published = false;
+            let mut finished = false;
             let mut claim_key = None;
             loop {
                 let (mut stream, _) = tokio::select! {
@@ -367,14 +440,24 @@ mod tests {
                 }
                 let mut status = "200 OK";
                 let body = if headers.starts_with(&format!("GET {prefix}/queue?")) {
-                    json!({ "publication_ids": if published { vec![] } else { vec![id] } })
+                    json!({ "publisher_id": "fixture-survivor", "publication_ids": if finished { vec![] } else { vec![id] } })
                 } else if headers.starts_with(&format!("GET {prefix}/publications/{id}?")) {
                     contexts += 1;
                     if matches!(scenario, QueueScenario::UnavailableContextThenPublished) && contexts == 1 {
                         status = "503 Service Unavailable";
                         json!({})
                     } else {
-                        context.clone()
+                        let mut context = context.clone();
+                        if matches!(scenario, QueueScenario::ChangedIntentActor) {
+                            context["publication"]["provenance"]["intent"]["actor_id"] = json!(Uuid::from_u128(99));
+                        }
+                        if matches!(scenario, QueueScenario::InvalidIntentUuid) {
+                            context["publication"]["provenance"]["intent"]["work_item_id"] = json!("not-a-uuid");
+                        }
+                        if matches!(scenario, QueueScenario::ChangedPublisher) {
+                            context["publisher_id"] = json!("another-publisher");
+                        }
+                        context
                     }
                 } else {
                     assert!(headers.starts_with(&format!("POST {prefix}/publications/{id}/claim HTTP/1.1")));
@@ -388,12 +471,24 @@ mod tests {
                     let busy = matches!(scenario, QueueScenario::AlwaysBusy)
                         || (matches!(scenario, QueueScenario::BusyThenPublished) && claims == 1);
                     let mut response = publication.clone();
-                    if !busy {
+                    let admitted = (matches!(scenario, QueueScenario::UnavailableContextThenPublished) && claims < 3)
+                        || matches!(scenario, QueueScenario::ChangedIntentActor | QueueScenario::InvalidIntentUuid | QueueScenario::ChangedPublisher);
+                    let rejected = matches!(scenario, QueueScenario::RejectedBeforeContext);
+                    if rejected {
+                        response["state"] = json!("requested");
+                        response["failure_detail"] = json!("Saved human publication request rejected: source changed");
+                        response["publisher_id"] = Value::Null;
+                        response["publisher_lease_expires_at"] = Value::Null;
+                        response["attempt_count"] = json!(0);
+                        finished = true;
+                    } else if admitted {
+                        response["publisher_id"] = json!("fixture-survivor");
+                    } else if !busy {
                         response["state"] = json!("published");
                         response["pull_request_url"] = json!("https://github.com/owner/repo/pull/2");
-                        published = true;
+                        finished = true;
                     }
-                    json!({ "publication": response, "publisher_token": null, "replayed": true, "busy": busy })
+                    json!({ "publication": response, "publisher_token": if admitted { Some(Uuid::from_u128(11)) } else { None }, "replayed": true, "busy": busy })
                 }.to_string();
                 stream.write_all(format!(
                     "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()
@@ -417,10 +512,11 @@ mod tests {
                     polls: 3,
                     page_size: 2,
                     max_pages: 2,
-                    max_attempts: if matches!(scenario, QueueScenario::AlwaysBusy) {
-                        2
-                    } else {
-                        3
+                    max_attempts: match scenario {
+                        QueueScenario::AlwaysBusy => 2,
+                        QueueScenario::BusyThenPublished
+                        | QueueScenario::UnavailableContextThenPublished => 3,
+                        _ => 1,
                     },
                 },
             ),
@@ -439,7 +535,7 @@ mod tests {
     async fn same_watcher_reconsiders_busy_request_on_later_eligible_poll() {
         let (result, claims, contexts) =
             watch_repeated_request(QueueScenario::BusyThenPublished).await;
-        assert_eq!((claims, contexts), (2, 2));
+        assert_eq!((claims, contexts), (2, 0));
         assert_eq!(result["attempted"], 2);
         assert_eq!(result["results"][0]["status"], "failed");
         assert!(
@@ -460,7 +556,7 @@ mod tests {
     async fn same_watcher_reconsiders_transient_context_failure() {
         let (result, claims, contexts) =
             watch_repeated_request(QueueScenario::UnavailableContextThenPublished).await;
-        assert_eq!((claims, contexts), (1, 2));
+        assert_eq!((claims, contexts), (3, 2));
         assert_eq!(result["attempted"], 2);
         assert!(
             result["results"][0]["detail"]
@@ -474,7 +570,7 @@ mod tests {
     #[tokio::test]
     async fn repeated_eligibility_still_stops_at_attempt_limit() {
         let (result, claims, contexts) = watch_repeated_request(QueueScenario::AlwaysBusy).await;
-        assert_eq!((claims, contexts), (2, 2));
+        assert_eq!((claims, contexts), (2, 0));
         assert_eq!(result["attempted"], 2);
         assert_eq!(result["polls"], 2);
         assert_eq!(result["pages"], 2);
@@ -485,5 +581,45 @@ mod tests {
                 .iter()
                 .all(|item| item["detail"].as_str().unwrap().contains("remains leased"))
         );
+    }
+
+    #[tokio::test]
+    async fn rejected_intent_is_reported_without_source_context_or_git() {
+        let (result, claims, contexts) =
+            watch_repeated_request(QueueScenario::RejectedBeforeContext).await;
+        assert_eq!((claims, contexts), (1, 0));
+        assert_eq!(result["attempted"], 1);
+        assert_eq!(result["results"][0]["status"], "rejected");
+        assert_eq!(
+            result["results"][0]["detail"],
+            "Saved human publication request rejected: source changed"
+        );
+        assert!(result["results"][0]["pull_request_url"].is_null());
+    }
+
+    #[tokio::test]
+    async fn watcher_rejects_changed_or_malformed_routing_before_effects() {
+        for (scenario, expected) in [
+            (QueueScenario::ChangedIntentActor, "context does not match"),
+            (
+                QueueScenario::InvalidIntentUuid,
+                "decode saved human intent routing",
+            ),
+            (
+                QueueScenario::ChangedPublisher,
+                "publisher identity changed",
+            ),
+        ] {
+            let (result, claims, contexts) = watch_repeated_request(scenario).await;
+            assert_eq!((claims, contexts), (1, 1));
+            assert_eq!(result["attempted"], 1);
+            assert_eq!(result["results"][0]["status"], "failed");
+            assert!(
+                result["results"][0]["detail"]
+                    .as_str()
+                    .unwrap()
+                    .contains(expected)
+            );
+        }
     }
 }
