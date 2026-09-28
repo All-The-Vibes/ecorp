@@ -240,13 +240,14 @@ impl PgStore {
         let operation_request = start_operation_request(&normalized);
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, normalized.corp_id, normalized.actor_id).await?;
-        revalidate_publication_publisher_credential_tx(
+        let publisher_grant = revalidate_publication_publisher_credential_tx(
             &mut tx,
             normalized.corp_id,
             &normalized.publisher_id,
             &normalized.publisher_credential_hash,
         )
         .await?;
+        publisher_grant.ensure_target(&normalized.target_repository)?;
         ensure_actor_role_tx(
             &mut tx,
             normalized.corp_id,
@@ -271,6 +272,7 @@ impl PgStore {
                 publication_by_id_tx(&mut tx, normalized.corp_id, operation.publication_id, true)
                     .await?
                     .context("idempotent publication start references a missing publication")?;
+            publisher_grant.ensure_target(&publication.target_repository)?;
             assert_publication_room_membership_tx(&mut tx, &publication, normalized.actor_id)
                 .await?;
             // A live-token replay grants effect authority; a tokenless readback does not.
@@ -663,7 +665,7 @@ impl PgStore {
         let lease_expires_at = now + Duration::seconds(lease_seconds);
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
-        revalidate_publication_publisher_credential_tx(
+        let publisher_grant = revalidate_publication_publisher_credential_tx(
             &mut tx,
             input.corp_id,
             &publisher_id,
@@ -698,6 +700,7 @@ impl PgStore {
                 publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, true)
                     .await?
                     .context("idempotent publication renewal references a missing publication")?;
+            publisher_grant.ensure_target(&publication.target_repository)?;
             revalidate_publication_authority_tx(&mut tx, &publication, input.actor_id).await?;
             let (publication, current_token) =
                 publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, false)
@@ -718,6 +721,7 @@ impl PgStore {
             publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, true)
                 .await?
                 .context("pull-request publication not found")?;
+        publisher_grant.ensure_target(&current.target_repository)?;
         ensure_active_publication_control_tx(
             &mut tx,
             &current,
@@ -810,7 +814,7 @@ impl PgStore {
         let now = Utc::now();
         let mut tx = self.pool.begin().await?;
         assert_actor_scope_tx(&mut tx, input.corp_id, input.actor_id).await?;
-        revalidate_publication_publisher_credential_tx(
+        let publisher_grant = revalidate_publication_publisher_credential_tx(
             &mut tx,
             input.corp_id,
             &publisher_id,
@@ -847,6 +851,7 @@ impl PgStore {
                     .context(
                         "idempotent publication checkpoint references a missing publication",
                     )?;
+            publisher_grant.ensure_target(&publication.target_repository)?;
             // Keep completed and failure-only readbacks non-authorizing.
             if replayable_publication_token(
                 &publication,
@@ -881,6 +886,7 @@ impl PgStore {
             publication_by_id_tx(&mut tx, input.corp_id, input.publication_id, true)
                 .await?
                 .context("pull-request publication not found")?;
+        publisher_grant.ensure_target(&current.target_repository)?;
         ensure_active_publication_control_tx(
             &mut tx,
             &current,
@@ -2867,7 +2873,7 @@ async fn ensure_active_publication_control_tx(
 // This transaction touches last_used_at below. Take its write lock immediately:
 // concurrent FOR SHARE readers cannot both upgrade without a deadlock.
 const PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL: &str = r#"
-    SELECT id
+    SELECT id, repository
     FROM publication_publisher_credentials
     WHERE corp_id = $1
       AND publisher_id = $2
@@ -2877,24 +2883,53 @@ const PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL: &str = r#"
     FOR UPDATE
 "#;
 
+struct PublicationPublisherRepositoryGrant(Option<String>);
+
+impl PublicationPublisherRepositoryGrant {
+    fn ensure_target(&self, repository: &str) -> Result<()> {
+        // Unscoped legacy credentials remain usable only with the separate
+        // human-authenticated direct CLI path. A scoped credential never widens.
+        if self
+            .0
+            .as_ref()
+            .is_some_and(|grant| !grant.eq_ignore_ascii_case(repository))
+        {
+            return Err(anyhow!(
+                "forbidden: publication publisher credential does not authorize this repository"
+            ));
+        }
+        Ok(())
+    }
+
+    fn require_workload_target(&self, repository: &str) -> Result<()> {
+        if self.0.is_none() {
+            return Err(anyhow!(
+                "forbidden: publication workload access requires a repository grant"
+            ));
+        }
+        self.ensure_target(repository)
+    }
+}
+
 async fn revalidate_publication_publisher_credential_tx(
     tx: &mut Transaction<'_, Postgres>,
     corp_id: Uuid,
     publisher_id: &str,
     credential_hash: &str,
-) -> Result<()> {
-    let credential_id = sqlx::query_scalar::<_, Uuid>(PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL)
-        .bind(corp_id)
-        .bind(publisher_id)
-        .bind(credential_hash)
-        .fetch_optional(&mut **tx)
-        .await?
-        .context("forbidden: publication publisher credential is no longer authorized")?;
+) -> Result<PublicationPublisherRepositoryGrant> {
+    let (credential_id, repository) =
+        sqlx::query_as::<_, (Uuid, Option<String>)>(PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL)
+            .bind(corp_id)
+            .bind(publisher_id)
+            .bind(credential_hash)
+            .fetch_optional(&mut **tx)
+            .await?
+            .context("forbidden: publication publisher credential is no longer authorized")?;
     sqlx::query("UPDATE publication_publisher_credentials SET last_used_at = now() WHERE id = $1")
         .bind(credential_id)
         .execute(&mut **tx)
         .await?;
-    Ok(())
+    Ok(PublicationPublisherRepositoryGrant(repository))
 }
 
 fn replayable_publication_token(

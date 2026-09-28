@@ -1,0 +1,18 @@
+#requires -Version 7.5
+param([Parameter(Mandatory)][ValidatePattern('^r[0-9]+$')][string]$Revision)
+$ErrorActionPreference = 'Stop'
+$target = '<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp\target'
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$locked = $false
+try {
+    try { $locked = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked = $true }
+    if (!$locked) { throw 'An active validation owns this Cargo target; no tests started.' }
+    & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue219-execution-regressions-r2.ps1') -Revision "repository-$Revision"
+    if ($LASTEXITCODE) { throw 'Native store regressions failed; preserve their receipt.' }
+    & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'run-issue219-handler-regressions-r4.ps1') -Revision "repository-$Revision"
+    if ($LASTEXITCODE) { throw 'Native HTTP regressions failed; preserve their receipt.' }
+} finally {
+    if ($locked) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+}

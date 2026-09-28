@@ -1,0 +1,64 @@
+{
+  "issue": 219,
+  "purpose": "Focused actual CLI watcher loopback regressions; responses model queue eligibility, not native lease-expiry acceptance",
+  "revision": "green5",
+  "repository": "<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp",
+  "started_at_utc": "2026-09-28T16:51:31.1332457Z",
+  "status": "passed",
+  "head": "a953c6e0c15ab523bf6f124068b7a6a1c96146f2",
+  "source": [
+    {
+      "path": "crates/crony-cli/src/publish/requests.rs",
+      "sha256": "3fcc3ebd7259a2b0f0ce0b47a591231841b95f37cc00ce5397e4a40dd1889af9"
+    },
+    {
+      "path": "crates/crony-cli/src/publish.rs",
+      "sha256": "579fc3249c5bd3795e239d8e69ef78d0bea66297ee1dc7340ce2c8a4522579a8"
+    },
+    {
+      "path": "crates/crony-cli/src/transport.rs",
+      "sha256": "91b88367e2e66dbe4cf1b6ad288a7b837533ff4f814e4d9e3c588329b25c1e72"
+    },
+    {
+      "path": "crates/crony-protocol/src/publication_requests.rs",
+      "sha256": "f6156308c566f963c39c5a4f28d66ed4d3f400cea5f423ef26bc35d1ce25ecfa"
+    },
+    {
+      "path": "crates/crony-protocol/src/lib.rs",
+      "sha256": "9d4ac20da4b935bd5fc422ec1d6134c28a6edc848945ffa665aebadfbd6b7f87"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "arguments": [
+    "test",
+    "--locked",
+    "--offline",
+    "-p",
+    "crony-cli",
+    "publish::requests::tests",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-watcher-green5.log",
+  "log_sha256": "6959f546d376c76a926dddd6f5f61dfd1dbc91385ad0251f73c82984bba21ad0",
+  "source_unchanged": true,
+  "counts": {
+    "passed": 7,
+    "failed": 0,
+    "ignored": 0,
+    "summaries": 1
+  },
+  "test_summary": [
+    "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 156 filtered out; finished in 5.25s"
+  ],
+  "finished_at_utc": "2026-09-28T16:51:51.6073215Z"
+}

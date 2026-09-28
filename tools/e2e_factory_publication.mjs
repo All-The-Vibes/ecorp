@@ -751,6 +751,7 @@ async function enrollPublicationPublisher(
     {
       actor_id: demo.alice_actor_id,
       publisher_id: publisherId,
+      repository: fixtureSource.repository,
       expires_in_seconds: 3600,
     },
   )
@@ -996,6 +997,7 @@ const memberPublisherEnrollment = await post(
   {
     actor_id: demo.bob_actor_id,
     publisher_id: 'member-must-not-enroll',
+    repository: fixtureSource.repository,
     expires_in_seconds: 3600,
   },
 )
@@ -1052,6 +1054,7 @@ const crossCorpPublisherCredential = await postOk(
   {
     actor_id: otherCorpOwnerId,
     publisher_id: 'trusted-publication-e2e',
+    repository: fixtureSource.repository,
     expires_in_seconds: 3600,
   },
 )

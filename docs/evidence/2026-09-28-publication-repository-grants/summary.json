@@ -1,0 +1,979 @@
+{
+  "schema_version": 1,
+  "issue": 219,
+  "pr": 380,
+  "assembled_at_utc": "2026-09-28T18:14:31.649964+00:00",
+  "integration_base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "a953c6e0c15ab523bf6f124068b7a6a1c96146f2"
+  ],
+  "tested_head": "a953c6e0c15ab523bf6f124068b7a6a1c96146f2",
+  "tested_tree": "5c3871a05a2b320ed9d2dc5c7608f6ec59ba6f14",
+  "tested_physical_files_sha256": "36449907754febb8b5838b07ba11632a077ff6454f7436832ae39f44301fe344",
+  "tested_code_patch_sha256": "6c9850b938c7afb444400158156ddfec029296094a876b651fa2d52b1bab4765",
+  "correction_patch_sha256": "7fc8bd1d5f51d43e370c1b0d224e3c16733a6596fad25639a7fecec343d85563",
+  "correction_paths": [
+    "crates/crony-protocol/src/lib.rs",
+    "crates/crony-server/src/main.rs",
+    "crates/crony-server/src/publication_repository_tests.rs",
+    "crates/crony-server/src/publication_request_tests.rs",
+    "crates/crony-server/src/publication_requests.rs",
+    "crates/crony-store/src/budget_checkpoint_tests.rs",
+    "crates/crony-store/src/checkpoint_correction_publication_tests.rs",
+    "crates/crony-store/src/human_publication_repository_tests.rs",
+    "crates/crony-store/src/human_publication_request_tests.rs",
+    "crates/crony-store/src/lib.rs",
+    "crates/crony-store/src/publication.rs",
+    "crates/crony-store/src/publication/worker.rs",
+    "db/migrations/0058_publication_publisher_repository_grants.sql",
+    "db/migrations/manifest.json",
+    "docs/ARCHITECTURE.md",
+    "docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md",
+    "docs/SECURITY.md",
+    "tools/e2e_factory_cockpit_publication.mjs",
+    "tools/e2e_factory_publication.mjs",
+    "tools/e2e_publication_credential_lock.mjs"
+  ],
+  "canonical_original_sha256": "547f6836d0e3988c05de1cce501a28b5d28882fae4e621afeb52f1a9202cbb84",
+  "canonical_checks": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3127,
+          "passed": 3062,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 884,
+          "failed": 0,
+          "ignored": 600,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "code_files": [
+    {
+      "path": "apps/web/src/App.tsx",
+      "sha256": "3acea53c32fbf78b796e8d9fc91576801db11eb9381e117fc8afe3dc14b5a518"
+    },
+    {
+      "path": "apps/web/src/PublicationRequestCard.tsx",
+      "sha256": "7006933b001b807719d9065e1b25da1aaf323de41aaaed8dcfa63b5b506aec37"
+    },
+    {
+      "path": "apps/web/src/PublishedResultCard.tsx",
+      "sha256": "24c9712087191c1a251a7150ebe8d42f5e812a19555e3711150e88207cd1f303"
+    },
+    {
+      "path": "apps/web/src/WorkResultCard.css",
+      "sha256": "ef05a9552bfc5d875d4cbc886ffdcffcd1961b173da073a4f10323f1676f0a5e"
+    },
+    {
+      "path": "apps/web/src/humanPublicationRequest.test.mjs",
+      "sha256": "63756e2a007e8b178977ff521f7e1915f314e812a77da9e8dcbacce1b67978a3"
+    },
+    {
+      "path": "apps/web/src/humanPublicationRequest.ts",
+      "sha256": "ab50a9a1eac013bb1b17c7b89cbf23da4c3f03874aa9d1527c832c988a274aa4"
+    },
+    {
+      "path": "apps/web/src/missionResultContext.test.mjs",
+      "sha256": "b6d0b4d6d842f489040030af8216b05c64b7c8e297f0fa64714439007f49aa0f"
+    },
+    {
+      "path": "apps/web/src/missionResultContext.ts",
+      "sha256": "136adb805f9ebd5532e1f5ad808f37670dde15e0263e2015153fe94cfc57a8d4"
+    },
+    {
+      "path": "apps/web/src/publicationRequestCard.test.mjs",
+      "sha256": "c34736f6800938500f027c37d5e012694de1879dac7a3a39343e59ba64b67d91"
+    },
+    {
+      "path": "apps/web/src/useHumanPublicationRequest.ts",
+      "sha256": "d3d2bcbc1f0d884e3b2f2e8f88094147f4990d5afb098444983d71929ab439e6"
+    },
+    {
+      "path": "apps/web/src/workResultCard.test.mjs",
+      "sha256": "44f3a85e34159520dacc45eeb0331bdcaf0fb282f8328e29b13160c5f59bae61"
+    },
+    {
+      "path": "crates/crony-cli/src/main.rs",
+      "sha256": "b0772138d0fa93dc17ab34607b49254301d4268e0e9d79af321d3f2b007165a9"
+    },
+    {
+      "path": "crates/crony-cli/src/publish.rs",
+      "sha256": "579fc3249c5bd3795e239d8e69ef78d0bea66297ee1dc7340ce2c8a4522579a8"
+    },
+    {
+      "path": "crates/crony-cli/src/publish/requests.rs",
+      "sha256": "3fcc3ebd7259a2b0f0ce0b47a591231841b95f37cc00ce5397e4a40dd1889af9"
+    },
+    {
+      "path": "crates/crony-domain/src/lib.rs",
+      "sha256": "b3dd3023ecc27d848881a172888820b9432ae4a65343fb1a2eda531401b44ba6"
+    },
+    {
+      "path": "crates/crony-protocol/src/lib.rs",
+      "sha256": "9d4ac20da4b935bd5fc422ec1d6134c28a6edc848945ffa665aebadfbd6b7f87"
+    },
+    {
+      "path": "crates/crony-protocol/src/publication_requests.rs",
+      "sha256": "f6156308c566f963c39c5a4f28d66ed4d3f400cea5f423ef26bc35d1ce25ecfa"
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "c329cc1d885a50860bdfabb0c10e7722d66c343cadcdfe78bace1592335916ee"
+    },
+    {
+      "path": "crates/crony-server/src/publication_repository_tests.rs",
+      "sha256": "ca4f50194a5bae8adc0449f6dcb96f3afc0e62fad9cd0e1368a65c7c374b44ac"
+    },
+    {
+      "path": "crates/crony-server/src/publication_request_tests.rs",
+      "sha256": "52dc79cc889830b731ad83e039796bef697d4acb41eaaa369c06b9863b8be440"
+    },
+    {
+      "path": "crates/crony-server/src/publication_requests.rs",
+      "sha256": "0e9567018923588b608cd4d00f296af109c63cdefb3b6acd6686e30c73833cf0"
+    },
+    {
+      "path": "crates/crony-store/src/budget_checkpoint_tests.rs",
+      "sha256": "0ecd798e03d898d21bcc946f4a7cb6a981c244ba9ce8f39a4a74061e171b391a"
+    },
+    {
+      "path": "crates/crony-store/src/checkpoint_correction_publication_tests.rs",
+      "sha256": "6ee1ee0a3f137fea83443ec90462561a6694514c25f2471763317ec6caee54bb"
+    },
+    {
+      "path": "crates/crony-store/src/checkpoint_publication.rs",
+      "sha256": "efc125279a7b43ea7f9d4d94c710cf4943c6348de1e6742f48b0ed5e55752e2a"
+    },
+    {
+      "path": "crates/crony-store/src/human_publication_repository_tests.rs",
+      "sha256": "2697542a0d4040f04f6c1751224c5101754de88f0b3a6762ebfbdb0b5e593e11"
+    },
+    {
+      "path": "crates/crony-store/src/human_publication_request_tests.rs",
+      "sha256": "1e51e6e314be57522b045cd4f93f004b00406d34ee64c5fdaf1976d3319d4794"
+    },
+    {
+      "path": "crates/crony-store/src/lib.rs",
+      "sha256": "cb5cd1d9d6e741b68a9bd8e6529d70323e5427bc9542e029f54bff12b2cadf6b"
+    },
+    {
+      "path": "crates/crony-store/src/publication.rs",
+      "sha256": "d501607b79b454bc3eccee02566c17e4b362a3678c8cf6d5c1305665678c6890"
+    },
+    {
+      "path": "crates/crony-store/src/publication/request.rs",
+      "sha256": "fd86125fa38596fa97b60721f73e27b33c31b2c20f7f776229ea3b0c61567395"
+    },
+    {
+      "path": "crates/crony-store/src/publication/worker.rs",
+      "sha256": "43e8d66290172a01cd114f597ef84fdbcc6d4e2bff4b8b04b71e80fee16f78d4"
+    },
+    {
+      "path": "db/migrations/0057_human_publication_requests.sql",
+      "sha256": "572f844bab7a75f7d6035aab71c7e6063e212164f29059765025d7d35c861d9c"
+    },
+    {
+      "path": "db/migrations/0058_publication_publisher_repository_grants.sql",
+      "sha256": "86fd4be22687e5eda4d8e6fddce33a4dd58e2bc1366a4ad533a77d5d45e0097e"
+    },
+    {
+      "path": "db/migrations/manifest.json",
+      "sha256": "4611390b00072da1748eb4365a35441027173b9584b7436ca0755f0bb1f6c57e"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "sha256": "bf80c327ae9a49da1971c98991a49ae7c8bfb5730f6b6059372521594f2eb165"
+    },
+    {
+      "path": "docs/DARK_FACTORY_CONTRIBUTOR_GUIDE.md",
+      "sha256": "b580300c85a0a95f92c0f305be0233e12629b7a6efca857d505b8d2ef8bf0c1b"
+    },
+    {
+      "path": "docs/EVALS.md",
+      "sha256": "e8576922d01242102a1a7de3388e4e56db7b47bb1fa40b89bf57938ea3eed0a3"
+    },
+    {
+      "path": "docs/PRODUCT_AND_TECHNICAL_PLAN.md",
+      "sha256": "9261f66bf13360ded55b09da32f07a8464b5edcfd84249e1e141f0d5857a99c8"
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "sha256": "9fb3eec6b3ad670e9c6acece92fcc135041cc27d0828d2f1103b3fb20b30cb37"
+    },
+    {
+      "path": "tools/coverage_web_models.mjs",
+      "sha256": "24bcb3e1b5d7a7b3a32ebdf843faf4c068c6a0248656d16639b4a59a2852721d"
+    },
+    {
+      "path": "tools/e2e_factory_cockpit_publication.mjs",
+      "sha256": "4df44d93467d6f1bc69730af0390ecc2c2a9406526d86c299e1bff13421b5948"
+    },
+    {
+      "path": "tools/e2e_factory_publication.mjs",
+      "sha256": "99704d3ce00d28a5a61843f0bb70724a216d44fafd708a9b4490110e3c923302"
+    },
+    {
+      "path": "tools/e2e_publication_credential_lock.mjs",
+      "sha256": "93bc0585c7834e230df44380435611e8e66e39b3340eca099f745b8ea9f25ba4"
+    }
+  ],
+  "acceptance_source_equivalence": {
+    "acceptance_parent": "a953c6e0c15ab523bf6f124068b7a6a1c96146f2",
+    "canonical_parent": "a953c6e0c15ab523bf6f124068b7a6a1c96146f2",
+    "identical_parent_tree": "e3ce516acb07a1f4b4d6d13b0dbf447ce6412de4",
+    "all_physical_source_files_equal": true,
+    "file_count": 7351,
+    "acceptance_build_receipt_sha256": "3e7059348d544e5db353e0e51515f75d5dc97125e63246113edbcab1394400e0",
+    "browser_receipt_sha256": "0b2090a0a1dc438f6ce5792502ffdd8df3d251be7af5b6c3e1bfd2b814ea5cf2",
+    "native_receipts": {
+      "issue219-execution-repository-r2.json": "e53351165e84a9489bf49f27b81afda1af86225a2877e3161e813dede741bdc0",
+      "issue219-handler-repository-r2.json": "d62335ba0822436d28e6039bc8845a395fda39e20efa48cf28fc513df29553c5",
+      "issue219-watcher-green5.json": "b45c629597c6f95e4191817972631c655bcfbed1c6ac43fd3b152bc38196a5ad"
+    }
+  },
+  "controlled_acceptance": {
+    "mobile_flow_width": 390,
+    "screenshot_widths": [
+      390,
+      1440
+    ],
+    "no_horizontal_overflow": true,
+    "genuine_native_verified_results": 2,
+    "publication_intents": 2,
+    "simulated_pr_create_calls": 2,
+    "caller_disconnect_survived": true,
+    "native_crash_adopted": true,
+    "same_watcher_recovered_after_busy": true,
+    "failed_request_retry_loop": false,
+    "no_extra_coding_runs": true,
+    "no_browser_publisher_credential": true,
+    "remote_main_unchanged": true,
+    "project_after_pr": true,
+    "all_browser_requests_loopback_only": true
+  },
+  "recovery": {
+    "publication_id": "593d5c19-e77f-4d74-90ff-4d3a938f70f2",
+    "state": "published",
+    "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/51",
+    "attempts": 2,
+    "competing_attempts": 0,
+    "repeated_attempts": 0,
+    "auto_merge_enabled": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
+  },
+  "same_watcher_recovery": {
+    "process_id": 32568,
+    "watcher_invocations": 1,
+    "attempted": 2,
+    "results": [
+      {
+        "detail": "publication 593d5c19-e77f-4d74-90ff-4d3a938f70f2 remains leased to another trusted publisher",
+        "publication_id": "593d5c19-e77f-4d74-90ff-4d3a938f70f2",
+        "status": "failed"
+      },
+      {
+        "detail": null,
+        "publication_id": "593d5c19-e77f-4d74-90ff-4d3a938f70f2",
+        "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/51",
+        "status": "published"
+      }
+    ],
+    "events": [
+      {
+        "event": "native_queue_reply",
+        "ordinal": 1,
+        "at": "2026-09-28T17:06:31.866Z",
+        "publication_id": "593d5c19-e77f-4d74-90ff-4d3a938f70f2"
+      },
+      {
+        "event": "first_queue_released_after_winner_claim",
+        "at": "2026-09-28T17:06:32.161Z"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": true,
+        "at": "2026-09-28T17:06:32.244Z",
+        "publication_id": "593d5c19-e77f-4d74-90ff-4d3a938f70f2"
+      },
+      {
+        "event": "second_queue_waiting_before_native_request",
+        "at": "2026-09-28T17:06:33.251Z"
+      },
+      {
+        "event": "second_queue_released_after_observed_expiry",
+        "at": "2026-09-28T17:07:08.740Z"
+      },
+      {
+        "event": "native_queue_reply",
+        "ordinal": 2,
+        "at": "2026-09-28T17:07:08.757Z",
+        "publication_id": "593d5c19-e77f-4d74-90ff-4d3a938f70f2"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": false,
+        "at": "2026-09-28T17:07:08.868Z",
+        "publication_id": "593d5c19-e77f-4d74-90ff-4d3a938f70f2"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": false,
+        "at": "2026-09-28T17:07:09.029Z",
+        "publication_id": "593d5c19-e77f-4d74-90ff-4d3a938f70f2"
+      }
+    ],
+    "queue_and_claim_responses": "Unmodified actual server replies; the proxy only schedules delivery and request forwarding."
+  },
+  "controlled_failure": {
+    "publication_id": "35d3bc0b-ea6d-4783-a532-fff7b8b8c586",
+    "state": "pull_request_created",
+    "failure_persisted": true,
+    "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/52",
+    "attempted_after_failure": 0
+  },
+  "native_regressions": {
+    "issue219-execution-repository-r2.json": [
+      {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "summaries": 0
+      },
+      {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "summaries": 0
+      },
+      {
+        "passed": 27,
+        "failed": 0,
+        "ignored": 0,
+        "summaries": 1
+      }
+    ],
+    "issue219-handler-repository-r2.json": [
+      {
+        "failed": 0,
+        "summaries": 0,
+        "passed": 0,
+        "ignored": 0
+      },
+      {
+        "failed": 0,
+        "summaries": 0,
+        "passed": 0,
+        "ignored": 0
+      },
+      {
+        "failed": 0,
+        "summaries": 2,
+        "passed": 9,
+        "ignored": 0
+      }
+    ],
+    "issue219-watcher-green5.json": [
+      {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "summaries": 1
+      }
+    ]
+  },
+  "prior_local_coverage": {
+    "receipt": "../2026-09-28-human-publication-corrections/web-coverage-run.json",
+    "original_receipt_sha256": "a7fba981d9ff7e697022381b94db1a3842e742fc34823149ef3f8e4fc61e4a3c",
+    "input_files_unchanged": true,
+    "new_local_coverage_run": false,
+    "final_head_hosted_coverage_required": true
+  },
+  "screenshots": 10,
+  "implementation_acceptance_passed": true,
+  "issue_completed": false,
+  "completion_pending": [
+    "Final-head hosted checks and actual CodeQL clearance",
+    "Reviewed exact-head merge",
+    "Verified issue state"
+  ],
+  "prior_evidence_packets_unchanged": true,
+  "limitations": [
+    "Final-head hosted CI, CodeQL, code quality, security, native integration and coverage remain required; no dismissal, suppressed finding or earlier-head check is final clearance.",
+    "Controlled acceptance uses real Edge, server, runner, CLI publisher, native PostgreSQL and private Git with development authentication, deterministic providers and simulated GitHub. There are zero real provider calls and zero real GitHub mutations. Production OIDC, live inference, OS isolation and independent human approval are not established.",
+    "Native store/handler fixtures use synthetic source/verifier metadata with real migrations and transactions. They are authorization regressions, not genuine verifier runs or human decisions. The browser fixture separately executes the native verifier.",
+    "Evidence was added after code execution. Separate publication validation must prove all original physical source bytes, tested tree, full canonical plan and Node discovery unchanged. Earlier commands did not execute on the later evidence commit.",
+    "Rust canonical execution uses RUST_TEST_THREADS=1 and CARGO_BUILD_JOBS=2. This does not resolve concurrent Windows stability issue213.",
+    "Node skipped 65 and Rust ignored 600 cases remain unexecuted by those lanes. Focused and full-suite counts overlap.",
+    "Docker Desktop engine remains unavailable; its dedicated credential-lock fixture was not executed. The native PostgreSQL production lock-order regression passed within the 27 focused store cases.",
+    "The r11 Git-fetch timeout remains a retained failed acceptance with unconfirmed cause; the fresh r12 acceptance passed with the same source, binaries, timeout and assertions.",
+    "Prior local web coverage input hashes are unchanged. No fresh local coverage execution is claimed; final-head hosted coverage remains required.",
+    "Historical Cargo debt remains 12 advisories (2 high, 1 moderate, 9 low); no clean dependency audit is claimed.",
+    "Publication grants no merge, auto-merge or deployment authority. Parent145 and machine-intent348 remain open.",
+    "Environment-only database credentials remain reduced assurance. Private credential files are excluded from publication inputs."
+  ],
+  "artifacts": [
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue219-canonical-r6.json",
+      "original_sha256": "fa0788a77f781ddc961614769de19012e82ef59b513a848726131d2cb10512f7",
+      "published_sha256": "1cb5fbe2b7e7db6b35eaf406351c23394f4d5b6ad87226ff86c2ce46c38d2fac",
+      "bytes": 622106,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-28T17-11-14-374Z-7a71d6da-e258-4b5d-b69a-26f7495158ea-full.json",
+      "original_sha256": "547f6836d0e3988c05de1cce501a28b5d28882fae4e621afeb52f1a9202cbb84",
+      "published_sha256": "547f6836d0e3988c05de1cce501a28b5d28882fae4e621afeb52f1a9202cbb84",
+      "bytes": 596221,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue219-canonical-r6-install-root.log",
+      "original_sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+      "published_sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+      "bytes": 87,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue219-canonical-r6-install-web.log",
+      "original_sha256": "e9999b49e34b37164245d9c7df3fa030cd919abdb6b546adc70a10ca4a2162a9",
+      "published_sha256": "e9999b49e34b37164245d9c7df3fa030cd919abdb6b546adc70a10ca4a2162a9",
+      "bytes": 88,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue219-canonical-r6-install-steward.log",
+      "original_sha256": "0631057522dd2a47bf224ae79634d66bbb2340efb894d76fb2cdae0b9d951d5f",
+      "published_sha256": "0631057522dd2a47bf224ae79634d66bbb2340efb894d76fb2cdae0b9d951d5f",
+      "bytes": 28,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue219-canonical-r6-pnpm-check.log",
+      "original_sha256": "6d51985ee0e00efa1614e16927162a0baf3dcff2eef614ab0d6d264a15383fab",
+      "published_sha256": "09c315f007508684d5ecc770538922fe7f4a0fbf2e6049a90da84dd5889aa73a",
+      "bytes": 11158,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-invocation.json",
+      "source_name": "issue219-canonical-invocation-r6.json",
+      "original_sha256": "7274130cc0221cf828e273794ed95ff6bd78e992fd67c8546b9a27a704644d41",
+      "published_sha256": "955112071c1724d083d925d547e2fdda20f739e51502c0a0b31e6940f534f3ac",
+      "bytes": 1856,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "acceptance-build.json",
+      "source_name": "issue219-acceptance-build-r6.json",
+      "original_sha256": "3e7059348d544e5db353e0e51515f75d5dc97125e63246113edbcab1394400e0",
+      "published_sha256": "a897ef2d60f1cd439b4cc98190291702979ec82bf5ae154238026c243aec9da7",
+      "bytes": 1442560,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "acceptance-build-install-root.log",
+      "source_name": "issue219-acceptance-build-r6-install-root.log",
+      "original_sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+      "published_sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+      "bytes": 87,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "acceptance-build-install-web.log",
+      "source_name": "issue219-acceptance-build-r6-install-web.log",
+      "original_sha256": "73b14a95e23cb390492f305b6d2a99f075f5983877146ea15b4b6dbd87eff090",
+      "published_sha256": "73b14a95e23cb390492f305b6d2a99f075f5983877146ea15b4b6dbd87eff090",
+      "bytes": 88,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "acceptance-build-native.log",
+      "source_name": "issue219-acceptance-build-r6-native.log",
+      "original_sha256": "c6b1bcdc198f9d20b1b3ef4e273fc63c747aebad63412b161fb345892098bb60",
+      "published_sha256": "3e7ddaeb123d2fbb9eec630bf465ac9960cbf42d5f44d94dd318ad0a13053025",
+      "bytes": 522,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "acceptance-build-web.log",
+      "source_name": "issue219-acceptance-build-r6-web.log",
+      "original_sha256": "4bcdb5590b54f102c28a14bebb03930c8f9505f860b6a2d6396be3f50e740a09",
+      "published_sha256": "4bcdb5590b54f102c28a14bebb03930c8f9505f860b6a2d6396be3f50e740a09",
+      "bytes": 940,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "controlled-browser-driver.json",
+      "source_name": "issue219-browser-r12.json",
+      "original_sha256": "0b2090a0a1dc438f6ce5792502ffdd8df3d251be7af5b6c3e1bfd2b814ea5cf2",
+      "published_sha256": "f177700fb644e94e68f2327483b5259c1d7d01262d25e73c05a4967b363eee6c",
+      "bytes": 5399,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "controlled-browser-driver.log",
+      "source_name": "issue219-browser-r12.log",
+      "original_sha256": "44bcdf38912ccaed8c421c6d891088f369ff983f0096d023bf0ad75f00a937ea",
+      "published_sha256": "90e2f7fabe6f0c3487dd107fcb191b1d4fa9da8a62a9f27b204851a4deb479e6",
+      "bytes": 2241,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "controlled-native-report.json",
+      "source_name": "fixture-report.json",
+      "original_sha256": "42a4b7298a4422094770e454c115a4a633423bca448f18915fa5ac91fce4e53b",
+      "published_sha256": "8f9bc89437bf4766aad60af4209a19acb9a82c69e9cce241fcade1a5ad89e18f",
+      "bytes": 2239,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "controlled-browser-report.json",
+      "source_name": "browser-publication-report.json",
+      "original_sha256": "1bfe62808d2f5d721b3b2ccc739d5249f7bed35cc4f9ee401c6b38c31d59adaa",
+      "published_sha256": "ea20fd9b6599275d21a4861c8434a6f128cc5543d0373a24912e7dd866d5a12e",
+      "bytes": 17859,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "screenshot-review.json",
+      "source_name": "issue219-screenshot-review-r5.json",
+      "original_sha256": "6146f0d77248f4d6276c92f65d204161dc52f31d092ae6b9beaa7c2ff6415ed6",
+      "published_sha256": "543b3d9cd6c357e6419710530b57245af31ed05281353fc3c54b2b9485e3ffcd",
+      "bytes": 8818,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "01-exact-result-preview-390px.png",
+      "source_name": "01-exact-result-preview-390px.png",
+      "original_sha256": "3bc145ca27afee31e1882fbef60a72035ed528427f65ecb0673be2a30522b902",
+      "published_sha256": "3bc145ca27afee31e1882fbef60a72035ed528427f65ecb0673be2a30522b902",
+      "bytes": 233149,
+      "transform": "none"
+    },
+    {
+      "file": "01-exact-result-preview-1440px.png",
+      "source_name": "01-exact-result-preview-1440px.png",
+      "original_sha256": "088e377ecc7147e350e5c2b1f635573ec92e8becbb9ad0b97cad7fee66dbe5c3",
+      "published_sha256": "088e377ecc7147e350e5c2b1f635573ec92e8becbb9ad0b97cad7fee66dbe5c3",
+      "bytes": 253593,
+      "transform": "none"
+    },
+    {
+      "file": "02-waiting-for-trusted-publisher-390px.png",
+      "source_name": "02-waiting-for-trusted-publisher-390px.png",
+      "original_sha256": "490929bb6c15554cd786723d2607c96b4b1cb44c5f7ff688349613ba409c05a1",
+      "published_sha256": "490929bb6c15554cd786723d2607c96b4b1cb44c5f7ff688349613ba409c05a1",
+      "bytes": 218011,
+      "transform": "none"
+    },
+    {
+      "file": "02-waiting-for-trusted-publisher-1440px.png",
+      "source_name": "02-waiting-for-trusted-publisher-1440px.png",
+      "original_sha256": "25382e5a805f80d99603293769ec6c0fad4e0141400f42fe4cbbdbe0d8a7214a",
+      "published_sha256": "25382e5a805f80d99603293769ec6c0fad4e0141400f42fe4cbbdbe0d8a7214a",
+      "bytes": 240546,
+      "transform": "none"
+    },
+    {
+      "file": "03-working-after-caller-reconnect-390px.png",
+      "source_name": "03-working-after-caller-reconnect-390px.png",
+      "original_sha256": "713fb17a2d269b907dddd43ae20760ccc8e1a70e2a06b01338be88c8dc1d12ba",
+      "published_sha256": "713fb17a2d269b907dddd43ae20760ccc8e1a70e2a06b01338be88c8dc1d12ba",
+      "bytes": 216985,
+      "transform": "none"
+    },
+    {
+      "file": "03-working-after-caller-reconnect-1440px.png",
+      "source_name": "03-working-after-caller-reconnect-1440px.png",
+      "original_sha256": "2e7b795a1d9c182c0d3ed9e5e7b3ac380898784901569384b389f8983a305787",
+      "published_sha256": "2e7b795a1d9c182c0d3ed9e5e7b3ac380898784901569384b389f8983a305787",
+      "bytes": 237815,
+      "transform": "none"
+    },
+    {
+      "file": "04-published-exact-link-390px.png",
+      "source_name": "04-published-exact-link-390px.png",
+      "original_sha256": "5dd223455185876c985926d33df96b43a005a934ad459ed45898a4928cfcdba5",
+      "published_sha256": "5dd223455185876c985926d33df96b43a005a934ad459ed45898a4928cfcdba5",
+      "bytes": 217481,
+      "transform": "none"
+    },
+    {
+      "file": "04-published-exact-link-1440px.png",
+      "source_name": "04-published-exact-link-1440px.png",
+      "original_sha256": "e64d6486053fcebd97915c9c261659ad728b1780923beaebd7a41193208764df",
+      "published_sha256": "e64d6486053fcebd97915c9c261659ad728b1780923beaebd7a41193208764df",
+      "bytes": 241165,
+      "transform": "none"
+    },
+    {
+      "file": "05-failure-with-existing-pr-390px.png",
+      "source_name": "05-failure-with-existing-pr-390px.png",
+      "original_sha256": "a507b13e587fc4e2e7c1825d1a09c406f1adfac2d3c0f8dad032bbfe50007230",
+      "published_sha256": "a507b13e587fc4e2e7c1825d1a09c406f1adfac2d3c0f8dad032bbfe50007230",
+      "bytes": 219768,
+      "transform": "none"
+    },
+    {
+      "file": "05-failure-with-existing-pr-1440px.png",
+      "source_name": "05-failure-with-existing-pr-1440px.png",
+      "original_sha256": "69185f2f1bf2b459e79cdf8b584a5e1ceea4191346bdcfa00dda685a903788a8",
+      "published_sha256": "69185f2f1bf2b459e79cdf8b584a5e1ceea4191346bdcfa00dda685a903788a8",
+      "bytes": 252640,
+      "transform": "none"
+    },
+    {
+      "file": "issue219-execution-repository-r2.json",
+      "source_name": "issue219-execution-repository-r2.json",
+      "original_sha256": "e53351165e84a9489bf49f27b81afda1af86225a2877e3161e813dede741bdc0",
+      "published_sha256": "88afdc90ba9fbfb1fb50499bb18b87c94235a7b69b5b4ab164800cf9088c899a",
+      "bytes": 10612,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-execution-repository-r2-initdb.log",
+      "source_name": "issue219-execution-repository-r2-initdb.log",
+      "original_sha256": "f2696a2522501e1707b001074ac0d923d4b41687bacf147526cf2af6c824cdde",
+      "published_sha256": "e4a713de2e5301e50d95641a4728081a6c859a2d6216575db8de04089d3932e0",
+      "bytes": 1043,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-execution-repository-r2-discovery.log",
+      "source_name": "issue219-execution-repository-r2-discovery.log",
+      "original_sha256": "10355574b1af65ec723686fd09b1d56c44c608145ab5d6f6f2b84d71049771a9",
+      "published_sha256": "10355574b1af65ec723686fd09b1d56c44c608145ab5d6f6f2b84d71049771a9",
+      "bytes": 3364,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-execution-repository-r2-tests.log",
+      "source_name": "issue219-execution-repository-r2-tests.log",
+      "original_sha256": "409827f793830c54aad09cd804e733b10848cb856394eac9522f81e02556c751",
+      "published_sha256": "409827f793830c54aad09cd804e733b10848cb856394eac9522f81e02556c751",
+      "bytes": 3623,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-handler-repository-r2.json",
+      "source_name": "issue219-handler-repository-r2.json",
+      "original_sha256": "d62335ba0822436d28e6039bc8845a395fda39e20efa48cf28fc513df29553c5",
+      "published_sha256": "563148cac002d90747ff9736a27a5a5846ace53cb12a826be9b72758c8fc7107",
+      "bytes": 8909,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-handler-repository-r2-initdb.log",
+      "source_name": "issue219-handler-repository-r2-initdb.log",
+      "original_sha256": "9ad758f9e45639b70c555fad21f515338031f3f5750bf691d8108d16169f74a0",
+      "published_sha256": "b392a0d41e6bdf8bfd3b618ee1758da759502b16ad6f484249adaad1c399832f",
+      "bytes": 1039,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-handler-repository-r2-discovery.log",
+      "source_name": "issue219-handler-repository-r2-discovery.log",
+      "original_sha256": "f960df577d8c5809ad9e7ce17541e86a51e3deebfb8ac47e4aaa52df4695ff5e",
+      "published_sha256": "f960df577d8c5809ad9e7ce17541e86a51e3deebfb8ac47e4aaa52df4695ff5e",
+      "bytes": 1239,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-handler-repository-r2-tests.log",
+      "source_name": "issue219-handler-repository-r2-tests.log",
+      "original_sha256": "121e113f86a19959511338a8c3a73caafcab68745c5cf74c472042aae64c1d0b",
+      "published_sha256": "121e113f86a19959511338a8c3a73caafcab68745c5cf74c472042aae64c1d0b",
+      "bytes": 1484,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-watcher-green5.json",
+      "source_name": "issue219-watcher-green5.json",
+      "original_sha256": "b45c629597c6f95e4191817972631c655bcfbed1c6ac43fd3b152bc38196a5ad",
+      "published_sha256": "9477f456ee77d4e2e818f071a4bbba22dc9456968046e794bfc611ee1134150c",
+      "bytes": 2170,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-watcher-green5.log",
+      "source_name": "issue219-watcher-green5.log",
+      "original_sha256": "6959f546d376c76a926dddd6f5f61dfd1dbc91385ad0251f73c82984bba21ad0",
+      "published_sha256": "497f53150869f2321deeb5fbd71baf13686c1b61cb7a82b3d6d1eafa32812774",
+      "bytes": 1175,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "source-equivalence.json",
+      "source_name": "issue219-repository-source-r1.json",
+      "original_sha256": "1556109627cf18bbea79b7572e94e8d36af028e398a2b546572d747bf071de43",
+      "published_sha256": "daf402f7ab5f4f47ee8f2ff53ffcbfa14f13b338663b6185940213b03a2e50a2",
+      "bytes": 1223982,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-source-binding-r1.py.txt",
+      "source_name": "issue219-source-binding-r1.py",
+      "original_sha256": "4146ba231569a11136ed4b6332f362db46e8a58aaf02f7258e0423fc19823c39",
+      "published_sha256": "4146ba231569a11136ed4b6332f362db46e8a58aaf02f7258e0423fc19823c39",
+      "bytes": 5960,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-canonical-r6.ps1.txt",
+      "source_name": "run-issue219-canonical-r6.ps1",
+      "original_sha256": "775a52ab3c35bd399e79c45aa1b8abfe496a9b4e6eeab18b8ed1da37e0786178",
+      "published_sha256": "9a67e2181d608ef9da1fd466caf0ee1606618e39a794e2ffdfa67e89969b339e",
+      "bytes": 6104,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-canonical-r4.ps1.txt",
+      "source_name": "run-canonical-r4.ps1",
+      "original_sha256": "24710f508cbc4e23575f457b21fb3a929e4a3928f28b72b8ee10c2b129329b1b",
+      "published_sha256": "f91f754934aefab74d44db1dbe19559a371d8581aa6f352a810828902cfd9f13",
+      "bytes": 4645,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "build-issue219-acceptance-r6.ps1.txt",
+      "source_name": "build-issue219-acceptance-r6.ps1",
+      "original_sha256": "ecdd720e1542ff471c77e91321b23686e2d25134f93ecb70597b6192e0d1994b",
+      "published_sha256": "aa5c233eef2b7f4f114d8f4d14010ea43a64eae555a437fa15a2513b359a0b25",
+      "bytes": 4418,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-browser-r12.py.txt",
+      "source_name": "run-issue219-browser-r12.py",
+      "original_sha256": "752bdae2f32f29df082d41ab720114ae87b57fbad7a6fc97b6327cbed4f1dbf2",
+      "published_sha256": "55af5094d0d644842110b3978625eba8e98adebdd3a93e9811097975882879d1",
+      "bytes": 4694,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-browser-driver-r12.ps1.txt",
+      "source_name": "issue219-browser-driver-r12.ps1",
+      "original_sha256": "117577756d0bdc5592d1ff8e047d827d02e3c783fd6590e3fb546abc95e37523",
+      "published_sha256": "5126c48d8de99f563af94375b2191e536cc062d39771c05345327e74906c7f93",
+      "bytes": 26589,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-browser-native-r12.mjs.txt",
+      "source_name": "issue219-browser-native-r12.mjs",
+      "original_sha256": "1d14a84748bdf277cbdc086ab8c6fa5722d7b4a01f05ece29a576f556f800fb0",
+      "published_sha256": "b0aeaf923bcd455b30dc0183ca9f7e884663ac67a1cb7b6bf33e484738f1f5b1",
+      "bytes": 43619,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-repository-native-r1.ps1.txt",
+      "source_name": "run-issue219-repository-native-r1.ps1",
+      "original_sha256": "64b910ea7be3bb791e0defba18ad46f0f083eef0d4ce07c3d369dd00c32c6075",
+      "published_sha256": "8597c34c03876b524d842dbd05a8009feca5c808324dd647b3036e32f0ce86d6",
+      "bytes": 1153,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-execution-regressions-r2.ps1.txt",
+      "source_name": "run-issue219-execution-regressions-r2.ps1",
+      "original_sha256": "94d994e72b4d45b805836ec9f9698f563396b555740d5945da1c9d28bfc1e4b0",
+      "published_sha256": "816abeb69b5d58a989070af22acb65a1561a25a3850552994ed39c80239fa7fe",
+      "bytes": 10168,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-handler-regressions-r4.ps1.txt",
+      "source_name": "run-issue219-handler-regressions-r4.ps1",
+      "original_sha256": "07a9fabb5e71edb6c47370d6304fc13ca034083af22b280f3880708fa399173e",
+      "published_sha256": "2f2272fd26aec529d4938abe5acc451c6cb56bc13b79eeaf1a5cb99f9e10416b",
+      "bytes": 10380,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-watcher-regressions-r3.ps1.txt",
+      "source_name": "run-issue219-watcher-regressions-r3.ps1",
+      "original_sha256": "24674f61c5018b08bf20df54ef81f4506c6c34b4476b624f1ddf329b3f5174b4",
+      "published_sha256": "e5444c95476e8a584ec22dd386ce02a8367f6e296aa267bdcd3bc98f504754df",
+      "bytes": 4240,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "diagnose-issue219-fetch-r1.py.txt",
+      "source_name": "diagnose-issue219-fetch-r1.py",
+      "original_sha256": "ca0c570aff2aee3d1d312d0dbb934c0494a0018529f4785b27e4d0147452207d",
+      "published_sha256": "ff5e64837c8713f235948ca1da973466faff8c34368c827a1afd1ba0e4bb6bfd",
+      "bytes": 3955,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "prepare-issue219-browser-r12.py.txt",
+      "source_name": "prepare-issue219-browser-r12.py",
+      "original_sha256": "bf4559c302383a92e9f91cb01466c430ee6ec0c67a21b155d5d418a782022ef7",
+      "published_sha256": "62f9ff82287ae61a2387adf1dd6b17ea0f85ee5fc16eb9dfebb8bcd94603dd73",
+      "bytes": 2926,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "helper-inventory.json",
+      "source_name": "retrospective actual-helper inspection",
+      "original_sha256": "5b481bdeadfd1f74842af7105b3ff4152a8d6ec51fe95e9df8eac3590530a065",
+      "published_sha256": "5b481bdeadfd1f74842af7105b3ff4152a8d6ec51fe95e9df8eac3590530a065",
+      "bytes": 2240,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "tested-code.patch",
+      "source_name": "reviewed 42-path implementation diff against current main",
+      "original_sha256": "6c9850b938c7afb444400158156ddfec029296094a876b651fa2d52b1bab4765",
+      "published_sha256": "6c9850b938c7afb444400158156ddfec029296094a876b651fa2d52b1bab4765",
+      "bytes": 348605,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "review-corrections.patch",
+      "source_name": "20-path repository-grant correction against the published a953 head",
+      "original_sha256": "7fc8bd1d5f51d43e370c1b0d224e3c16733a6596fad25639a7fecec343d85563",
+      "published_sha256": "7fc8bd1d5f51d43e370c1b0d224e3c16733a6596fad25639a7fecec343d85563",
+      "bytes": 59842,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "retained-fetch-diagnostic.json",
+      "source_name": "issue219-fetch-diagnostic-r1.json",
+      "original_sha256": "65332a8e2e374615faab2f5800df4df86f73df1ce20fdbfdd3fc0fdad6a7061d",
+      "published_sha256": "ea9bc7a5eeeb0bf370c44f6a850a2178e983dd2cf12c08320f5cd0435c4c8731",
+      "bytes": 4278,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "correction-history.json",
+      "source_name": "allowlisted observed validation history",
+      "original_sha256": "ab562335818abddc45acfc6cd3fab3ca51673d1a79de0025d84c89642765359e",
+      "published_sha256": "ab562335818abddc45acfc6cd3fab3ca51673d1a79de0025d84c89642765359e",
+      "bytes": 1671,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "docker-availability.json",
+      "source_name": "issue219-repository-docker-availability-r1.json",
+      "original_sha256": "f5a873540887d3af927b739a6365f433a08c1f9e4515f4781df8618a02f6c5f0",
+      "published_sha256": "88ccb2c92b234131ca7cb3da0ef7f2846736cd11f13a810d83d552425b66c74e",
+      "bytes": 718,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+
+EV = Path(__file__).resolve().parent
+receipt = EV / 'issue219-browser-retry-preparation-r12.json'
+assert not receipt.exists()
+failure = json.loads((EV / 'issue219-browser-r11.json').read_text(encoding='utf-8-sig'))
+diagnostic = json.loads((EV / 'issue219-fetch-diagnostic-r1.json').read_text(encoding='utf-8-sig'))
+assert failure['status'] == 'failed' and failure['source_and_binaries_unchanged']
+assert diagnostic['status'] == 'passed'
+assert not (EV / 'issue219-canonical-invocation-r5.json').exists()
+assert not (EV / 'issue219-canonical-r5.json').exists()
+mapping = [
+    ('run-issue219-browser-r11.py', 'run-issue219-browser-r12.py', [('-r11', '-r12'), ("'18919'", "'18920'"), ("'59119'", "'59120'"), ("'18559'", "'18560'")]),
+    ('issue219-browser-driver-r11.ps1', 'issue219-browser-driver-r12.ps1', [('-r11', '-r12')]),
+    ('issue219-browser-native-r11.mjs', 'issue219-browser-native-r12.mjs', []),
+    ('run-issue219-canonical-r5.ps1', 'run-issue219-canonical-r6.ps1', [('issue219-browser-r11.json', 'issue219-browser-r12.json'), ('issue219-canonical-invocation-r5.json', 'issue219-canonical-invocation-r6.json'), ('issue219-canonical-r5.json', 'issue219-canonical-r6.json'), ('-Revision r5', '-Revision r6')]),
+]
+files = []
+for original, name, changes in mapping:
+    source = EV / original
+    target = EV / name
+    assert not target.exists()
+    text = source.read_text(encoding='utf-8-sig')
+    for old, new in changes:
+        assert old in text, (original, old)
+        text = text.replace(old, new)
+    with target.open('x', encoding='utf-8', newline='\n') as output:
+        output.write(text)
+    files.append({'original': original, 'original_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
+                  'prepared': name, 'sha256': hashlib.sha256(target.read_bytes()).hexdigest()})
+value = {'recorded_at_utc': datetime.now(timezone.utc).isoformat(), 'status': 'prepared',
+         'reason': 'Browser r11 recovery fetch exceeded the existing native 30-second cap. Two read-only replays from its retained remote passed in 3.438 and 6.547 seconds. Root cause is unconfirmed; preserve that failure and repeat the complete acceptance run in a fresh owned fixture with unchanged product, assertions and timeout.',
+         'failed_browser_receipt': 'issue219-browser-r11.json', 'diagnostic': 'issue219-fetch-diagnostic-r1.json',
+         'product_source_unchanged': True, 'browser_assertions_unchanged': True,
+         'new_fixture': r'<USERPROFILE>\code\qa\ecorp-issue219-browser-r12',
+         'ports': [18920, 59120, 18560], 'prepared_files': files,
+         'unexecuted_canonical_wrapper_r5_preserved': True, 'active_canonical_revision': 'r6'}
+receipt.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'status': 'prepared', 'files': [f['prepared'] for f in files]}))

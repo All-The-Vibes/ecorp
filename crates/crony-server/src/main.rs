@@ -313,6 +313,7 @@ struct RunnerConnection {
 
 struct AuthenticatedPublicationPublisher {
     publisher_id: String,
+    repository: Option<String>,
     credential_hash: String,
 }
 
@@ -4444,6 +4445,7 @@ async fn create_publication_publisher_credential(
             actor_id,
             &request.publisher_id,
             &hash_secret(&credential),
+            request.repository.as_deref(),
             expires_at,
         )
         .await
@@ -4452,6 +4454,7 @@ async fn create_publication_publisher_credential(
     Ok(Json(CreatePublicationPublisherCredentialResponse {
         credential_id: outcome.credential_id,
         publisher_id: outcome.publisher_id,
+        repository: outcome.repository,
         credential,
         expires_at: outcome.expires_at.to_rfc3339(),
     }))
@@ -4505,7 +4508,7 @@ async fn authenticate_publication_publisher(
         ));
     }
     let credential_hash = hash_secret(credential);
-    let publisher_id = state
+    let identity = state
         .store
         .authenticate_publication_publisher(corp_id, &credential_hash)
         .await
@@ -4513,7 +4516,8 @@ async fn authenticate_publication_publisher(
             ApiError::forbidden("trusted publication publisher credential was rejected")
         })?;
     Ok(AuthenticatedPublicationPublisher {
-        publisher_id,
+        publisher_id: identity.publisher_id,
+        repository: identity.repository,
         credential_hash,
     })
 }

@@ -2,6 +2,9 @@
 //! authority and do not establish browser or native publisher acceptance.
 use super::*;
 
+#[path = "human_publication_repository_tests.rs"]
+mod repository_grants;
+
 async fn queued_request(
     pool: PgPool,
 ) -> (
@@ -10,6 +13,20 @@ async fn queued_request(
     PullRequestPublicationOutcome,
 ) {
     let (store, _, _, mut input) = publication_fixture(pool).await;
+    // Enroll a separate repository grant. The shared fixture retains its
+    // unscoped credential to exercise legacy human-authenticated CLI behavior.
+    input.publisher_credential_hash = digest(&"issue219 SQLx-only repository publisher");
+    store
+        .create_publication_publisher_credential(
+            input.corp_id,
+            input.actor_id,
+            &input.publisher_id,
+            &input.publisher_credential_hash,
+            Some(&input.target_repository),
+            Utc::now() + Duration::hours(1),
+        )
+        .await
+        .unwrap();
     let request = human_publication_request(&store, &input).await;
     let queued = store
         .request_pull_request_publication(request)
@@ -420,6 +437,7 @@ async fn issue219_native_publication_worker_scopes_queue_and_readback(pool: PgPo
             OWNER,
             "unrelated-publication-worker",
             &digest(&"unrelated SQLx-only publisher credential"),
+            Some("other/repository"),
             Utc::now() + Duration::hours(1),
         )
         .await
@@ -462,16 +480,8 @@ async fn issue219_native_publication_worker_scopes_queue_and_readback(pool: PgPo
         let page = store
             .requested_publications_for_publisher(&other, None, 25)
             .await;
-        if alteration == "repository" {
-            assert!(page.unwrap().is_empty());
-            assert_only_publisher_use_audited(&before, &publication_state(&store).await, &scope);
-        } else {
-            assert!(page.is_err());
-            assert!(publication_state(&store).await == before);
-        }
-        // An authorized empty queue still audits credential use. Denied
-        // readback and adoption must roll back against that fresh baseline.
-        let before = publication_state(&store).await;
+        assert!(page.is_err());
+        assert!(publication_state(&store).await == before);
         assert!(
             store
                 .human_requested_publication_for_publisher(&other, id, None)
@@ -602,7 +612,19 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
 #[sqlx::test(migrations = "../../db/migrations")]
 #[ignore = "requires explicitly owned disposable PostgreSQL"]
 async fn issue219_native_publication_worker_cannot_adopt_direct_cli_intent(pool: PgPool) {
-    let (store, _, _, input) = publication_fixture(pool).await;
+    let (store, _, _, mut input) = publication_fixture(pool).await;
+    input.publisher_credential_hash = digest(&"issue219 scoped direct-only fixture");
+    store
+        .create_publication_publisher_credential(
+            input.corp_id,
+            input.actor_id,
+            &input.publisher_id,
+            &input.publisher_credential_hash,
+            Some(&input.target_repository),
+            Utc::now() + Duration::hours(1),
+        )
+        .await
+        .unwrap();
     let scope = publisher_scope(&input);
     let direct = store.start_pull_request_publication(input).await.unwrap();
     let before = publication_state(&store).await;
@@ -704,6 +726,7 @@ async fn issue219_native_publication_claim_preserves_intent_and_factory_state(po
             OWNER,
             &competitor.publisher_id,
             &competitor.publisher_credential_hash,
+            Some(&competitor.target_repository),
             Utc::now() + Duration::hours(1),
         )
         .await

@@ -492,7 +492,8 @@ portable bundle, persisted in authorization/provenance records, or included in c
 Publisher fencing tokens are opaque, expiring capabilities omitted from shared state and events.
 They are insufficient by themselves: each publication mutation also requires a separate enrolled
 publisher workload credential. Enrollment and revocation require owner/admin `Manage` authority;
-only credential hashes are stored. Corp, publisher ID, hash, expiry, and revocation are rechecked and
+only credential hashes are stored. Enrollment can bind each credential to one normalized repository.
+Corp, publisher ID, exact credential hash, repository grant, expiry, and revocation are rechecked and
 row-locked inside the same transaction that starts, renews, fails, or checkpoints publication. The
 authenticated credential determines the publisher ID; a caller cannot choose another workload
 identity while presenting a valid credential.
@@ -503,8 +504,13 @@ the human authorizer plus the original request operation. Its `requested` aggreg
 lease, or token and performs no external effect. Human intent provenance is distinct from direct
 CLI authorization and prospective machine intent; missing or malformed provenance fails closed.
 
-Dedicated workload routes can deliver only this saved human intent in the credential's Corp and
-the requested repository. They derive its human authorizer and plan server-side, then reuse the
+Dedicated workload routes require an explicit repository grant persisted on that credential and
+can deliver only saved human intent in the granted Corp and repository. Caller-selected repository
+strings never grant access, and another credential with the same publisher ID cannot inherit a
+repository grant. Existing unscoped credentials retain only the separately human-authenticated
+direct CLI path; scoped credentials also constrain that path, including replay and failure cleanup.
+Grant changes require enrollment/revocation rather than request parameters. Workload routes derive
+the human authorizer and plan server-side, then reuse the
 native start, renewal, and checkpoint authority checks. A workload cannot mint intent, substitute
 another human's authority, or use these routes for general Corp, runner, or secret access. Signed
 artifact access additionally requires the live attempt's exact publisher token and version plus

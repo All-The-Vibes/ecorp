@@ -868,6 +868,9 @@ pub struct FactoryPublicationContextResponse {
 pub struct CreatePublicationPublisherCredentialRequest {
     pub actor_id: Uuid,
     pub publisher_id: String,
+    /// Required for workload queue access; omission retains direct CLI access only.
+    #[serde(default)]
+    pub repository: Option<String>,
     #[serde(default = "default_publication_publisher_credential_ttl_seconds")]
     pub expires_in_seconds: i64,
 }
@@ -876,6 +879,7 @@ pub struct CreatePublicationPublisherCredentialRequest {
 pub struct CreatePublicationPublisherCredentialResponse {
     pub credential_id: Uuid,
     pub publisher_id: String,
+    pub repository: Option<String>,
     pub credential: String,
     pub expires_at: String,
 }

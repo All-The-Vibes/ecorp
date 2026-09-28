@@ -1181,8 +1181,10 @@ provenance. It creates no publisher attempt, token, lease, coding run, or remote
 request converges on the same intent; changed source, policy, or authorizer cannot silently replace
 it. This provenance does not authorize the prospective machine-intent path.
 
-The trusted publisher can watch a bounded queue for one Corp and repository using its separately
-enrolled workload credential. Dedicated request routes derive the human and immutable plan from
+The trusted publisher can watch a bounded queue for the Corp and repository explicitly granted on
+its separately enrolled workload credential. Repository selection must match that persisted grant;
+queue and publication transactions revalidate the exact credential, including when another credential
+shares its publisher ID. Dedicated request routes derive the human and immutable plan from
 the saved intent; they accept no caller-selected authorizer, grant, or replacement plan and cannot
 start a direct-CLI publication as queued human intent. Claims, renewals, artifact access, and
 effect checkpoints reuse the native publication transactions and fencing. Before effects they
@@ -1222,7 +1224,11 @@ checkpoint upgrades are combined, and renewal replay returns the upgraded persis
 
 Publisher workloads have a separate Corp-scoped identity and credential from the authorizing human.
 Owners or admins enroll bounded credentials whose plaintext is returned once and whose SHA-256 hash,
-expiry, revocation state, and last-use time are stored. Start, renewal and effect advancement require
+optional normalized repository grant, expiry, revocation state, and last-use time are stored.
+Workload routes require an explicit repository grant. Legacy unscoped credentials remain limited to
+the separately human-authenticated direct CLI path. A scoped credential constrains both paths,
+including idempotent replay and failure-only checkpoints. Changing the grant requires enrollment
+and revocation; caller parameters cannot change it. Start, renewal and effect advancement require
 current publication authority and the independently authenticated publisher identity. Failure
 reporting retains authenticated Corp identity plus exact actor, publisher, token, version and lease
 ownership, but can close that attempt after effect authority changes. It advances no external

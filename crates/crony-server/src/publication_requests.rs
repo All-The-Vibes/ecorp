@@ -207,9 +207,19 @@ async fn publisher_scope(
     repository: String,
 ) -> Result<PublicationPublisherScope, ApiError> {
     let publisher = authenticate_publication_publisher(state, headers, corp_id).await?;
+    let granted_repository = publisher.repository.ok_or_else(|| {
+        ApiError::forbidden("publication workload access requires a repository grant")
+    })?;
+    if !granted_repository.eq_ignore_ascii_case(repository.trim()) {
+        return Err(ApiError::forbidden(
+            "publication publisher credential does not authorize this repository",
+        ));
+    }
     Ok(PublicationPublisherScope {
         corp_id,
-        repository,
+        // Caller input selects a grant; it cannot establish one. Each store
+        // transaction independently rechecks this exact credential's grant.
+        repository: granted_repository,
         publisher_id: publisher.publisher_id,
         credential_hash: publisher.credential_hash,
     })

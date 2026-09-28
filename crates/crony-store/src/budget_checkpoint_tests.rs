@@ -1998,6 +1998,7 @@ async fn publication_fixture(
             OWNER,
             "issue148-store-publisher",
             &publisher_hash,
+            None,
             Utc::now() + Duration::hours(1),
         )
         .await

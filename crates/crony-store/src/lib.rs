@@ -500,8 +500,14 @@ pub struct FactoryPublicationContext {
 pub struct PublicationPublisherCredentialOutcome {
     pub credential_id: Uuid,
     pub publisher_id: String,
+    pub repository: Option<String>,
     pub expires_at: chrono::DateTime<Utc>,
     pub event: DomainEvent,
+}
+
+pub struct PublicationPublisherCredentialIdentity {
+    pub publisher_id: String,
+    pub repository: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -2349,9 +2355,13 @@ impl PgStore {
         actor_id: Uuid,
         publisher_id: &str,
         credential_hash: &str,
+        repository: Option<&str>,
         expires_at: chrono::DateTime<Utc>,
     ) -> Result<PublicationPublisherCredentialOutcome> {
         let publisher_id = normalize_factory_identifier(publisher_id, "trusted publisher id", 160)?;
+        let repository = repository
+            .map(normalize_publication_repository)
+            .transpose()?;
         let credential_hash = credential_hash.trim().to_ascii_lowercase();
         if credential_hash.len() != 64
             || !credential_hash.bytes().all(|byte| byte.is_ascii_hexdigit())
@@ -2384,8 +2394,8 @@ impl PgStore {
         sqlx::query(
             r#"
             INSERT INTO publication_publisher_credentials
-                (id, corp_id, publisher_id, credential_hash, created_by, expires_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
+                (id, corp_id, publisher_id, credential_hash, created_by, expires_at, repository)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
         .bind(credential_id)
@@ -2394,6 +2404,7 @@ impl PgStore {
         .bind(&credential_hash)
         .bind(actor_id)
         .bind(expires_at)
+        .bind(&repository)
         .execute(&mut *tx)
         .await?;
         let event = append_event_tx(
@@ -2407,6 +2418,7 @@ impl PgStore {
                 format!("publication-publisher-enrolled:{credential_id}"),
                 json!({
                     "publisher_id": publisher_id,
+                    "repository": repository,
                     "expires_at": expires_at
                 }),
             ),
@@ -2417,6 +2429,7 @@ impl PgStore {
         Ok(PublicationPublisherCredentialOutcome {
             credential_id,
             publisher_id,
+            repository,
             expires_at,
             event,
         })
@@ -2426,7 +2439,7 @@ impl PgStore {
         &self,
         corp_id: Uuid,
         credential_hash: &str,
-    ) -> Result<String> {
+    ) -> Result<PublicationPublisherCredentialIdentity> {
         let credential_hash = credential_hash.trim().to_ascii_lowercase();
         if credential_hash.len() != 64
             || !credential_hash.bytes().all(|byte| byte.is_ascii_hexdigit())
@@ -2435,7 +2448,7 @@ impl PgStore {
                 "forbidden: invalid publication publisher credential"
             ));
         }
-        let publisher_id = sqlx::query_scalar(
+        let row = sqlx::query(
             r#"
             UPDATE publication_publisher_credentials
             SET last_used_at = now()
@@ -2448,7 +2461,7 @@ impl PgStore {
                   AND expires_at > now()
                 FOR UPDATE
             )
-            RETURNING publisher_id
+            RETURNING publisher_id, repository
             "#,
         )
         .bind(corp_id)
@@ -2456,7 +2469,10 @@ impl PgStore {
         .fetch_optional(&self.pool)
         .await?
         .context("forbidden: unknown, expired, or revoked publication publisher credential")?;
-        Ok(publisher_id)
+        Ok(PublicationPublisherCredentialIdentity {
+            publisher_id: row.try_get("publisher_id")?,
+            repository: row.try_get("repository")?,
+        })
     }
 
     pub async fn revoke_publication_publisher_credential(
@@ -12490,6 +12506,18 @@ fn normalize_factory_source(input: FactorySourceInput) -> Result<FactorySourceIn
         title,
         revision,
     })
+}
+
+fn normalize_publication_repository(repository: &str) -> Result<String> {
+    let (owner, name) = repository
+        .trim()
+        .split_once('/')
+        .context("publication repository must use owner/name form")?;
+    Ok(format!(
+        "{}/{}",
+        normalize_github_component(owner, "publication repository owner", 100)?,
+        normalize_github_component(name, "publication repository name", 100)?,
+    ))
 }
 
 fn normalize_github_component(value: &str, field: &str, max_len: usize) -> Result<String> {

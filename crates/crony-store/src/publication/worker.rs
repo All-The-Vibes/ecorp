@@ -12,15 +12,8 @@ impl PgStore {
         if !(1..=100).contains(&limit) {
             return Err(anyhow!("publication queue limit must be between 1 and 100"));
         }
-        let repository = publisher_repository(&scope.repository)?;
         let mut tx = self.pool.begin().await?;
-        revalidate_publication_publisher_credential_tx(
-            &mut tx,
-            scope.corp_id,
-            &scope.publisher_id,
-            &scope.credential_hash,
-        )
-        .await?;
+        let repository = revalidate_publisher_repository_tx(&mut tx, scope).await?;
         // A failed attempt requires explicit recovery. Lease expiry after a
         // process crash remains recoverable through the normal start gate.
         let ids = sqlx::query_scalar(
@@ -214,13 +207,7 @@ impl PgStore {
         let mut tx = self.pool.begin().await?;
         // Native start locks the credential before the shared publication gates.
         // Keep that ordering when a worker and a direct claim run concurrently.
-        revalidate_publication_publisher_credential_tx(
-            &mut tx,
-            scope.corp_id,
-            &scope.publisher_id,
-            &scope.credential_hash,
-        )
-        .await?;
+        revalidate_publisher_repository_tx(&mut tx, scope).await?;
         lock_publication_start_tx(&mut tx, &input).await?;
         // Re-read the exact authenticated request before deciding whether it can
         // be retired. The credential lock above remains held by this transaction.
@@ -325,14 +312,7 @@ async fn human_requested_publication_tx(
     Option<Uuid>,
     request::HumanPublicationRequest,
 )> {
-    let repository = publisher_repository(&scope.repository)?;
-    revalidate_publication_publisher_credential_tx(
-        tx,
-        scope.corp_id,
-        &scope.publisher_id,
-        &scope.credential_hash,
-    )
-    .await?;
+    let repository = revalidate_publisher_repository_tx(tx, scope).await?;
     let (publication, token) = publication_by_id_tx(tx, scope.corp_id, publication_id, true)
         .await?
         .context("not found: requested publication was not found")?;
@@ -348,14 +328,18 @@ async fn human_requested_publication_tx(
     Ok((publication, token, intent))
 }
 
-fn publisher_repository(repository: &str) -> Result<String> {
-    let (owner, name) = repository
-        .trim()
-        .split_once('/')
-        .context("publication repository must use owner/name form")?;
-    Ok(format!(
-        "{}/{}",
-        normalize_github_component(owner, "publication repository owner", 100)?,
-        normalize_github_component(name, "publication repository name", 100)?,
-    ))
+async fn revalidate_publisher_repository_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    scope: &PublicationPublisherScope,
+) -> Result<String> {
+    let repository = normalize_publication_repository(&scope.repository)?;
+    let grant = revalidate_publication_publisher_credential_tx(
+        tx,
+        scope.corp_id,
+        &scope.publisher_id,
+        &scope.credential_hash,
+    )
+    .await?;
+    grant.require_workload_target(&repository)?;
+    Ok(repository)
 }

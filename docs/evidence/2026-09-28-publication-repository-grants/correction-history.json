@@ -1,0 +1,32 @@
+{
+  "test_chronology": "Repository-grant regressions are retrospective tests of the corrected source. No pre-fix red run is asserted. Earlier publication/admission development history remains in its unchanged packets.",
+  "failed_browser": {
+    "receipt": "issue219-browser-r11.json",
+    "receipt_sha256": "72544658aeb2d2c684ae3f3674e1949603b65be99b7cb0a7d0f9b78b540b6a89",
+    "status": "failed",
+    "exit_code": 1,
+    "source_and_binaries_unchanged": true,
+    "started_at_utc": "2026-09-28T16:54:47.817918+00:00",
+    "finished_at_utc": "2026-09-28T16:58:21.800021+00:00",
+    "log_sha256": "7d9dcdec1aae374bac104ef5a5be19157fde8ca48a689267032b60e0918458a0",
+    "finding": "During r11 recovery, the surviving publisher's local Git fetch exceeded the existing 30-second cap. Browser acceptance correctly failed when publication became failed instead of published. Private fixture, original logs and diagnostic screenshots are preserved. Its root cause is unconfirmed."
+  },
+  "diagnostic": {
+    "receipt": "retained-fetch-diagnostic.json",
+    "original_sha256": "65332a8e2e374615faab2f5800df4df86f73df1ce20fdbfdd3fc0fdad6a7061d",
+    "fetch_seconds": [
+      3.438,
+      6.547
+    ],
+    "retained_remote_unchanged": true,
+    "interpretation": "Two fresh local fetches passed. They do not prove why the acceptance fetch timed out."
+  },
+  "successful_browser": {
+    "receipt": "issue219-browser-r12.json",
+    "receipt_sha256": "0b2090a0a1dc438f6ce5792502ffdd8df3d251be7af5b6c3e1bfd2b814ea5cf2",
+    "status": "passed",
+    "fixture": "fresh owned r12 fixture",
+    "same_product_timeout_and_assertions": true,
+    "source_and_binaries_unchanged": true
+  }
+}

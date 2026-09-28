@@ -1078,6 +1078,7 @@ $Publisher = Invoke-RestMethod `
   -Body (@{
     actor_id = $ActorId
     publisher_id = $PublisherId
+    repository = 'owner/repository'
     expires_in_seconds = 600
   } | ConvertTo-Json)
 
@@ -1086,6 +1087,14 @@ Set-Content `
   -Value $Publisher.credential `
   -NoNewline
 ```
+
+Replace `owner/repository` with the exact publication target. The server records the normalized
+repository on this credential and returns it as `repository`. Queue, context, claim, renewal,
+checkpoint and artifact workload routes require that persisted grant; choosing a repository in
+a request cannot widen it. Enroll a separate credential for another repository and revoke an
+obsolete credential. Credentials issued without a repository remain usable only through the
+separately human-authenticated direct CLI path and cannot use workload routes. Scoped credentials
+remain restricted to their repository through either path, including replay and failure cleanup.
 
 The plaintext is returned once. Production requests also require the configured human
 authentication token.

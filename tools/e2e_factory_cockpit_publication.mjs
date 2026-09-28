@@ -201,6 +201,7 @@ async function enrollPublisher(demo, publisherId) {
     {
       actor_id: demo.alice_actor_id,
       publisher_id: publisherId,
+      repository: 'shyamsridhar123/ecorp',
       expires_in_seconds: 3600,
     },
   )

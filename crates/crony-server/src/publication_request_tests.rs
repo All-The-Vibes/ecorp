@@ -11,6 +11,9 @@ use crony_store::{
 use serde_json::Value;
 use sqlx::{ConnectOptions, PgPool};
 
+#[path = "publication_repository_tests.rs"]
+mod repository_grants;
+
 const REPOSITORY: &str = "fixture/publication";
 const PUBLISHER: &str = "issue219-handler-publisher";
 
@@ -51,6 +54,7 @@ impl Fixture {
                 ids.alice_actor_id,
                 PUBLISHER,
                 &hash_secret(&credential),
+                Some(REPOSITORY),
                 Utc::now() + chrono::Duration::minutes(10),
             )
             .await?;
@@ -530,7 +534,7 @@ async fn issue219_publication_handler_rejects_other_scope_and_malformed_intent(p
             fixture.publication_id,
             "fixture/other",
             true,
-            404,
+            403,
         ),
         (
             fixture.ids.corp_id,
