@@ -1,0 +1,17 @@
+{
+  "issue": 232,
+  "label": "issue232-format-r1",
+  "status": "evidence-wrapper-failed",
+  "command": [
+    "cargo",
+    "fmt",
+    "--check"
+  ],
+  "observed_tool_exit": 1,
+  "underlying_cargo_exit": null,
+  "failure": "The wrapper attempted regex matching on a null value after a zero-byte formatter log. Cargo exit was not retained, so this attempt is not acceptance evidence.",
+  "log": "issue232-format-r1.log",
+  "log_bytes": 0,
+  "observed_at_utc": "2026-09-27T04:27:34.0199475+00:00",
+  "replacement": "run-focused-r2.ps1 explicitly converts empty output to a string; re-run with a fresh receipt."
+}

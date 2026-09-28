@@ -1,0 +1,25 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$repo = '<USERPROFILE>\.codex\worktrees\issue136-browser-docs\ecorp'
+$source = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'issue232-integration-r3.json') | ConvertFrom-Json
+if ($source.status -cne 'current-main-integration-staged') { throw 'Integration must be reconciled first.' }
+if ((& git -C $repo rev-parse HEAD).Trim() -cne $source.source_head -or
+    (& git -C $repo rev-parse MERGE_HEAD).Trim() -cne $source.merge_head -or
+    (& git -C $repo write-tree).Trim() -cne $source.candidate_tree -or
+    (& git -C $repo branch --show-current).Trim() -cne 'codex/issue232-project-membership') { throw 'Unexpected integration source.' }
+& git -C $repo diff --quiet
+if ($LASTEXITCODE -or @(& git -C $repo ls-files --others --exclude-standard).Count) { throw 'Reconcile unstaged or untracked work.' }
+$target = Join-Path $repo 'target'
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$held = $false
+try {
+    try { $held = $mutex.WaitOne(1000) } catch [Threading.AbandonedMutexException] { $held = $true }
+    if (!$held) { throw 'Another process owns this Cargo target.' }
+    & (Join-Path $PSScriptRoot 'run-canonical-r3.ps1') -RepositoryPath $repo -Issue 232 -Revision r3
+    if ($LASTEXITCODE) { exit $LASTEXITCODE }
+    if ((& git -C $repo write-tree).Trim() -cne $source.candidate_tree) { throw 'The integration index changed during validation.' }
+} finally {
+    if ($held) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+}

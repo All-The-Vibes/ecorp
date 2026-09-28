@@ -510,6 +510,7 @@ type FactoryRecoveryContextScope = {
   missionId: string
   itemId: string
   version: number
+  budgetRevision: string
   reload: number
 }
 
@@ -2841,7 +2842,7 @@ function automatedVerificationPresentation(
 
 function factoryRecoveryScopeKey(scope: FactoryRecoveryContextScope): string {
   return JSON.stringify([
-    scope.corpId, scope.actorId, scope.missionId, scope.itemId, scope.version, scope.reload,
+    scope.corpId, scope.actorId, scope.missionId, scope.itemId, scope.version, scope.reload, scope.budgetRevision,
   ])
 }
 
@@ -3066,11 +3067,18 @@ function MissionCard({
   const recoveryItemId = factoryItem?.id
   const recoveryItemVersion = factoryItem?.version
   const recoveryItemState = factoryItem?.state
+  // A budget decision changes native recovery context without necessarily
+  // changing the Factory version. Fence old responses in the same render.
+  const recoveryBudgetRevision = JSON.stringify([
+    mission.budget_tokens, mission.budget_cost_microusd,
+    revisions.map((revision) => [revision.id, revision.version, revision.status]),
+  ])
   const recoveryScope = useMemo<FactoryRecoveryContextScope | null>(() =>
     recoveryItemId && recoveryItemVersion !== undefined && needsFactoryRecoveryContext(recoveryItemState)
-      ? { corpId, actorId, missionId: mission.id, itemId: recoveryItemId, version: recoveryItemVersion, reload: recoveryReload }
+      ? { corpId, actorId, missionId: mission.id, itemId: recoveryItemId, version: recoveryItemVersion,
+        budgetRevision: recoveryBudgetRevision, reload: recoveryReload }
       : null,
-  [corpId, actorId, mission.id, recoveryItemId, recoveryItemVersion, recoveryItemState, recoveryReload])
+  [corpId, actorId, mission.id, recoveryItemId, recoveryItemVersion, recoveryItemState, recoveryBudgetRevision, recoveryReload])
   useEffect(() => {
     if (!recoveryScope) return
     return requestFactoryRecoveryContext(recoveryScope, setRecoveryContextLoad)
@@ -3201,7 +3209,7 @@ function MissionCard({
     tasks.some((task) => task.id === resumableRun?.task_id &&
       (task.status === 'verification_failed' || task.verification_status === 'failed')) ||
     resumeLineageRuns.some((run) => run.execution_mode === 'verification_only' ||
-      run.breaker_stage === 'suspend' || run.breaker_stage === 'stop') ||
+      run.breaker_stage === 'stop' || run.workspace_disposition === 'quarantined') ||
     factoryRecoveries.some((entry) =>
       entry.factory_work_item_id === recoveryScope.itemId && entry.mission_id === mission.id &&
       entry.task_id === resumableRun?.task_id &&
@@ -3211,8 +3219,9 @@ function MissionCard({
       ['authorized', 'running'].includes(entry.status))
   ))
   const resumeRecoveryBlocked = requiresFactoryRecovery ||
-    factoryRecoveryBlocksProviderResume(Boolean(recoveryScope && recoveryContext &&
-      recoveryContext.task_id === resumableRun?.task_id), recoveryContext)
+    factoryRecoveryBlocksProviderResume(Boolean(recoveryScope && (
+      resumeLineageRuns.some((run) => run.breaker_stage === 'suspend') ||
+      recoveryContext?.task_id === resumableRun?.task_id)), recoveryContext, resumableRun)
   const canAuthorizeRecovery = ['owner', 'admin', 'manager'].includes(actorRole)
   const recoveryAgent = recoveryTask?.assigned_agent_id
     ? agents.find((agent) => agent.id === recoveryTask.assigned_agent_id)
@@ -3290,7 +3299,8 @@ function MissionCard({
     void onVerificationDecision(pendingRun, approved)
   }
   const resumeEvidence = async () => {
-    if (!resumableRun || resumeRecoveryBlocked) return
+    if (!resumableRun || resumeRecoveryBlocked || resumeStopBlocked || resumeBudgetBlocked
+      || pendingBudgetRevision || busy || hasUnfinishedRuns) return
     const resumedRunId = await onResume(resumableRun)
     if (resumedRunId) rememberEvidenceRun(resumedRunId)
   }

@@ -1,0 +1,292 @@
+{
+  "started_at_utc": "2026-09-27T22:20:53.3908136+00:00",
+  "status": "passed",
+  "owned_root": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1",
+  "cases": [
+    {
+      "name": "immediate",
+      "workspace": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+      "initial_index": "README.md\n  ctime: 1790547653:915383800\n  mtime: 1790547653:917392200\n  dev: 0\tino: 0\n  uid: 0\tgid: 0\n  size: 64\tflags: 0",
+      "prepared_index": "README.md\n  ctime: 1790547653:915383800\n  mtime: 1790547653:917392200\n  dev: 0\tino: 0\n  uid: 0\tgid: 0\n  size: 64\tflags: 0",
+      "exclusive_read_denied": true,
+      "git_status_exit": 0,
+      "git_diff_exit": 0,
+      "git_diff_error": "",
+      "source_bytes_unchanged": true,
+      "index_blob_unchanged": true
+    },
+    {
+      "name": "settled",
+      "workspace": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+      "initial_index": "README.md\n  ctime: 1790547654:820625000\n  mtime: 1790547654:821099100\n  dev: 0\tino: 0\n  uid: 0\tgid: 0\n  size: 64\tflags: 0",
+      "prepared_index": "README.md\n  ctime: 1790547654:820625000\n  mtime: 1790547654:821099100\n  dev: 0\tino: 0\n  uid: 0\tgid: 0\n  size: 64\tflags: 0",
+      "exclusive_read_denied": true,
+      "git_status_exit": 0,
+      "git_diff_exit": 0,
+      "git_diff_error": "",
+      "source_bytes_unchanged": true,
+      "index_blob_unchanged": true
+    }
+  ],
+  "commands": [
+    {
+      "args": [
+        "init",
+        "--initial-branch=main",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\source"
+      ],
+      "exit_code": 0,
+      "output": "Initialized empty Git repository in <USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/checkpoint-lock-probe-r1/source/.git/"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\source",
+        "add",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\source",
+        "-c",
+        "user.name=ECorp QA",
+        "-c",
+        "user.email=qa@example.invalid",
+        "commit",
+        "-m",
+        "Synthetic checkpoint lock diagnosis"
+      ],
+      "exit_code": 0,
+      "output": "[main (root-commit) 1aa8321] Synthetic checkpoint lock diagnosis\n 1 file changed, 2 insertions(+)\n create mode 100644 README.md"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\source",
+        "worktree",
+        "add",
+        "--detach",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "output": "Preparing worktree (detached HEAD 1aa8321)\nHEAD is now at 1aa8321 Synthetic checkpoint lock diagnosis"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+        "ls-files",
+        "--stage",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": "100644 36e99bbb726ebe2ec54d400276e6712865285c78 0\tREADME.md"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+        "diff",
+        "--quiet",
+        "HEAD",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+        "ls-files",
+        "--debug",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": "README.md\n  ctime: 1790547653:915383800\n  mtime: 1790547653:917392200\n  dev: 0\tino: 0\n  uid: 0\tgid: 0\n  size: 64\tflags: 0"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+        "ls-files",
+        "--debug",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": "README.md\n  ctime: 1790547653:915383800\n  mtime: 1790547653:917392200\n  dev: 0\tino: 0\n  uid: 0\tgid: 0\n  size: 64\tflags: 0"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+        "status",
+        "--porcelain=v1"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+        "diff",
+        "--binary",
+        "--no-ext-diff",
+        "HEAD",
+        "--"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\immediate",
+        "ls-files",
+        "--stage",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": "100644 36e99bbb726ebe2ec54d400276e6712865285c78 0\tREADME.md"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\source",
+        "worktree",
+        "add",
+        "--detach",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "output": "Preparing worktree (detached HEAD 1aa8321)\nHEAD is now at 1aa8321 Synthetic checkpoint lock diagnosis"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "ls-files",
+        "--stage",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": "100644 36e99bbb726ebe2ec54d400276e6712865285c78 0\tREADME.md"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "diff",
+        "--quiet",
+        "HEAD",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "ls-files",
+        "--debug",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": "README.md\n  ctime: 1790547654:820625000\n  mtime: 1790547654:821099100\n  dev: 0\tino: 0\n  uid: 0\tgid: 0\n  size: 64\tflags: 0"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "update-index",
+        "--refresh"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "ls-files",
+        "--debug",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": "README.md\n  ctime: 1790547654:820625000\n  mtime: 1790547654:821099100\n  dev: 0\tino: 0\n  uid: 0\tgid: 0\n  size: 64\tflags: 0"
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "status",
+        "--porcelain=v1"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "diff",
+        "--binary",
+        "--no-ext-diff",
+        "HEAD",
+        "--"
+      ],
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "args": [
+        "-C",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\checkpoint-lock-probe-r1\\settled",
+        "ls-files",
+        "--stage",
+        "--",
+        "README.md"
+      ],
+      "exit_code": 0,
+      "output": "100644 36e99bbb726ebe2ec54d400276e6712865285c78 0\tREADME.md"
+    }
+  ],
+  "finished_at_utc": "2026-09-27T22:20:57.1264340+00:00"
+}

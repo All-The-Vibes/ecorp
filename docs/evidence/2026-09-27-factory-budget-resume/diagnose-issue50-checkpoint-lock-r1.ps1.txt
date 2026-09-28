@@ -1,0 +1,73 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$probeRoot = Join-Path $PSScriptRoot 'checkpoint-lock-probe-r1'
+$receipt = Join-Path $PSScriptRoot 'issue50-checkpoint-lock-diagnosis-r1.json'
+if ((Test-Path -LiteralPath $probeRoot) -or (Test-Path -LiteralPath $receipt)) { throw 'Preserve existing diagnosis.' }
+$null = New-Item -ItemType Directory -Path $probeRoot
+$emptyConfig = Join-Path $probeRoot 'empty.gitconfig'
+[IO.File]::WriteAllText($emptyConfig, '')
+$env:GIT_CONFIG_GLOBAL = $emptyConfig
+$env:GIT_CONFIG_NOSYSTEM = '1'
+$env:GIT_CONFIG_COUNT = '0'
+$env:GIT_TERMINAL_PROMPT = '0'
+$env:GCM_INTERACTIVE = 'Never'
+$source = Join-Path $probeRoot 'source'
+$null = New-Item -ItemType Directory -Path $source
+$bytes = [Text.Encoding]::UTF8.GetBytes("# Synthetic issue 50 source`nNo real application or credentials.`n")
+[IO.File]::WriteAllBytes((Join-Path $source 'README.md'), $bytes)
+$commands = [Collections.Generic.List[object]]::new()
+function Invoke-ProbeGit {
+    param([string[]]$GitArgs, [switch]$AllowFailure)
+    $output = @(& git @GitArgs 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $exit = $LASTEXITCODE
+    $entry = [ordered]@{args=$GitArgs;exit_code=$exit;output=$output}
+    $commands.Add($entry)
+    if ($exit -and !$AllowFailure) { throw "Probe Git failed: $output" }
+    return [pscustomobject]$entry
+}
+$record = [ordered]@{started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');status='running';owned_root=$probeRoot;cases=@();commands=$commands}
+try {
+    $null=Invoke-ProbeGit -GitArgs @('init','--initial-branch=main',$source)
+    $null=Invoke-ProbeGit -GitArgs @('-C',$source,'add','README.md')
+    $null=Invoke-ProbeGit -GitArgs @('-C',$source,'-c','user.name=ECorp QA','-c','user.email=qa@example.invalid','commit','-m','Synthetic checkpoint lock diagnosis')
+    foreach ($settle in @($false,$true)) {
+        $name=if($settle){'settled'}else{'immediate'}
+        $workspace=Join-Path $probeRoot $name
+        $null=Invoke-ProbeGit -GitArgs @('-C',$source,'worktree','add','--detach',$workspace,'HEAD')
+        $readme=Join-Path $workspace 'README.md'
+        $before=(Get-FileHash -LiteralPath $readme -Algorithm SHA256).Hash
+        $stage=(Invoke-ProbeGit -GitArgs @('-C',$workspace,'ls-files','--stage','--','README.md')).output
+        $null=Invoke-ProbeGit -GitArgs @('-C',$workspace,'diff','--quiet','HEAD','--','README.md')
+        $null=Invoke-ProbeGit -GitArgs @('-C',$workspace,'status','--porcelain')
+        $initial=(Invoke-ProbeGit -GitArgs @('-C',$workspace,'ls-files','--debug','--','README.md')).output
+        if ($settle) {
+            Start-Sleep -Milliseconds 1500
+            $null=Invoke-ProbeGit -GitArgs @('-C',$workspace,'update-index','--refresh')
+        }
+        $prepared=(Invoke-ProbeGit -GitArgs @('-C',$workspace,'ls-files','--debug','--','README.md')).output
+        $handle=[IO.File]::Open($readme,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None)
+        try {
+            $readDenied=$false
+            try { $null=[IO.File]::ReadAllBytes($readme) } catch [IO.IOException] { $readDenied=$true }
+            if (!$readDenied) { throw 'Exclusive read fault was not established.' }
+            $status=Invoke-ProbeGit -GitArgs @('-C',$workspace,'status','--porcelain=v1') -AllowFailure
+            $diff=Invoke-ProbeGit -GitArgs @('-C',$workspace,'diff','--binary','--no-ext-diff','HEAD','--') -AllowFailure
+        } finally { $handle.Dispose() }
+        $after=(Get-FileHash -LiteralPath $readme -Algorithm SHA256).Hash
+        $stageAfter=(Invoke-ProbeGit -GitArgs @('-C',$workspace,'ls-files','--stage','--','README.md')).output
+        if ($stageAfter -cne $stage -or $after -cne $before) { throw 'Synthetic source content changed.' }
+        $case=[ordered]@{name=$name;workspace=$workspace;initial_index=$initial;prepared_index=$prepared;exclusive_read_denied=$readDenied;git_status_exit=$status.exit_code;git_diff_exit=$diff.exit_code;git_diff_error=$diff.output;source_bytes_unchanged=$true;index_blob_unchanged=$true}
+        $record.cases+=,$case
+        if ($settle -and ($status.exit_code -or $diff.exit_code -or $diff.output)) { throw 'Metadata refresh failed to isolate checkpoint read fault.' }
+    }
+    $record.status='passed'
+} catch {
+    $record.status='failed'
+    $record.error=$_.Exception.Message
+    throw
+} finally {
+    $record.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    $record | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $receipt -Encoding utf8
+    [pscustomobject]$record | Select-Object status,cases,error | ConvertTo-Json -Depth 5
+}

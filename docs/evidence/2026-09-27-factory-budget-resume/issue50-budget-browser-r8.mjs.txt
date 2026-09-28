@@ -1,0 +1,296 @@
+// Retrospective browser acceptance on an exclusively owned synthetic native stack.
+// Real production UI requests are observed, never rewritten or fabricated.
+import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
+import { readFile, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+const digest = bytes => createHash('sha256').update(bytes).digest('hex')
+export async function openBudgetBrowser({ attempt, environment, demo, mission, task, run }) {
+  const server = 'http://127.0.0.1:18450', web = 'http://127.0.0.1:18550'
+  const prefix = `/api/corps/${demo.corp_id}`
+  const proposalPath = `${prefix}/missions/${mission.id}/budget-revisions`
+  const resumePath = `${prefix}/runs/${run.id}/resume`
+  const reportPath = path.join(attempt, 'browser-report.json')
+  const state = { issue: 50, status: 'starting', started_at: new Date().toISOString(),
+    scope: 'Real Edge UI, native Windows server and runner, persisted synthetic development actors and deterministic Codex protocol child. No real model call, GitHub effect, human approval or OS isolation claim.',
+    corp_id: demo.corp_id, development_actor_id: demo.alice_actor_id,
+    mission_id: mission.id, task_id: task.id, original_run_id: run.id,
+    page_errors: [], blocked_requests: [], mutations: [], screenshots: [], ledgers: [] }
+  let browser, page
+  const save = () => writeFile(reportPath, JSON.stringify(state, null, 2) + '\n')
+  const recordError = error => { state.status = 'failed'; state.error = error.message; return save() }
+  async function until(label, read, accept, timeout = 45000) {
+    const deadline = Date.now() + timeout
+    while (Date.now() < deadline) {
+      const value = await read()
+      if (accept(value)) return value
+      await sleep(150)
+    }
+    throw new Error('Browser timeout: ' + label)
+  }
+  const card = () => page.locator(`[data-mission-id="${mission.id}"]`)
+  async function ledger() {
+    const panel = card().getByTestId('mission-budget-ledger')
+    await panel.waitFor({ state: 'attached' })
+    const details = panel.locator('..')
+    assert.equal(await details.evaluate(element => element.tagName), 'DETAILS')
+    const toggle = details.locator(':scope > summary')
+    assert.equal(await toggle.count(), 1, 'The outer ledger has one direct summary')
+    if (!(await details.evaluate(element => element.open))) await toggle.click()
+    await panel.waitFor({ state: 'visible' })
+    return panel
+  }
+  async function shot(name) {
+    const file = path.join(attempt, 'browser-' + name + '.png')
+    await page.screenshot({ path: file, fullPage: true })
+    const item = { name, file, sha256: digest(await readFile(file)) }
+    state.screenshots.push(item)
+    await save()
+    return item
+  }
+  async function checkLedger(label, consumed, current, remaining, approvingActor = false) {
+    const panel = await ledger()
+    const expected = [consumed, 6000, current, remaining]
+    const metrics = await until(label + ' ledger', () => panel.locator('.budget-metrics > div').evaluateAll(rows =>
+      rows.map(row => ({ label: row.querySelector('span')?.textContent,
+        tokens: row.querySelector('strong')?.textContent,
+        cost: row.querySelector('small')?.textContent }))), rows => rows.length === 4 &&
+      rows.every((row, index) => Number(row.tokens.replace(/[^0-9]/g, '')) === expected[index]))
+    assert.deepEqual(metrics.map(row => row.label), ['Consumed', 'Original', 'Current', 'Remaining'])
+    let proof = null
+    if (approvingActor) {
+      const element = panel.getByTestId('budget-approval-proof')
+      await element.waitFor({ state: 'visible' })
+      proof = await element.innerText()
+      assert.match(proof, /Alice/)
+      assert.match(proof, /authorized the revised mission ceiling/)
+    }
+    const result = { label, metrics, proof }
+    state.ledgers.push(result)
+    await save()
+    return result
+  }
+  async function postThroughUI(route, click) {
+    const responsePromise = page.waitForResponse(response => response.url() === server + route && response.request().method() === 'POST')
+    await click()
+    const response = await responsePromise
+    const body = await response.json()
+    const payload = response.request().postDataJSON()
+    return { status: response.status(), body, payload }
+  }
+  async function fillTextareaByOwnLabel(form, label, value) {
+    // A populated textarea contributes its initial value to its enclosing
+    // label's textContent, possibly immediately after the visible label text.
+    // Record and match only the observed label's own text nodes.
+    const labels = form.locator('label')
+    const observed = await labels.evaluateAll(elements => elements.map((element, index) => ({
+      index,
+      own_text: Array.from(element.childNodes).filter(node => node.nodeType === 3)
+        .map(node => node.textContent).join(' ').replace(/\s+/g, ' ').trim(),
+      textarea_count: element.querySelectorAll('textarea').length,
+    })))
+    const matches = observed.filter(item => item.own_text === label && item.textarea_count === 1)
+    state.textarea_fields ??= []
+    state.textarea_fields.push({ label, observed, matches })
+    await save()
+    assert.equal(matches.length, 1, 'Exactly one observed textarea label: ' + label)
+    const textarea = labels.nth(matches[0].index).locator('textarea')
+    assert.equal(await textarea.count(), 1)
+    await textarea.fill(value)
+    assert.equal(await textarea.inputValue(), value)
+  }
+  async function propose(expected) {
+    state.stage = 'author scoped budget revision in production UI'; await save()
+    const panel = await ledger()
+    await panel.getByRole('button', { name: 'Authorize recovery budget', exact: true }).click()
+    const form = panel.getByTestId('budget-revision-form')
+    await form.getByLabel('Token ceiling', { exact: true }).fill(String(expected.proposed_budget_tokens))
+    await form.getByLabel('Cost ceiling · USD', { exact: true }).fill(String(expected.proposed_budget_cost_microusd / 1000000))
+    await fillTextareaByOwnLabel(form, 'Authorization rationale', expected.rationale)
+    await form.getByRole('checkbox', { name: /Narrow the remaining task/ }).check()
+    const finishFields = form.getByTestId('finish-scope-fields')
+    await finishFields.waitFor({ state: 'visible' })
+    const taskSelect = finishFields.getByRole('combobox')
+    assert.equal(await taskSelect.count(), 1)
+    state.task_select = {
+      enclosing_label: await taskSelect.locator('..').innerText(),
+      option_values: await taskSelect.locator('option').evaluateAll(options => options.map(option => option.value)),
+    }
+    await save()
+    assert.ok(state.task_select.option_values.includes(task.id))
+    await taskSelect.selectOption(task.id)
+    assert.equal(await taskSelect.inputValue(), task.id)
+    const finish = expected.finish_scope
+    await fillTextareaByOwnLabel(form, 'Bounded finish objective', finish.objective)
+    await fillTextareaByOwnLabel(form, 'Expected output', finish.expected_output)
+    await fillTextareaByOwnLabel(form, 'Acceptance tests · one per line', finish.acceptance_tests.join('\n'))
+    await fillTextareaByOwnLabel(form, 'Authorized write paths · one per line', finish.write_scope.join('\n'))
+    await form.getByLabel('Finish token budget', { exact: true }).fill(String(finish.budget_tokens))
+    await form.getByLabel('Finish cost budget · USD', { exact: true }).fill(String(finish.budget_cost_microusd / 1000000))
+    const result = await postThroughUI(proposalPath, () => form.getByRole('button', { name: 'Propose revision', exact: true }).click())
+    assert.equal(result.status, 200)
+    const { idempotency_key: ignoredExpectedKey, ...expectedFields } = expected
+    const { idempotency_key: actualKey, ...actualFields } = result.payload
+    assert.deepEqual(actualFields, expectedFields, 'The production UI must preserve the authorized proposal')
+    assert.match(actualKey, /^[0-9a-f-]{36}$/i)
+    await panel.getByTestId('budget-revision-pending').waitFor({ state: 'visible' })
+    const disabled = card().getByRole('button', { name: 'Budget decision required', exact: true })
+    state.pending_resume_controls ??= []
+    state.pending_resume_controls.push({ count: await disabled.count(),
+      buttons: await card().getByRole('button').allTextContents() })
+    await disabled.waitFor({ state: 'visible', timeout: 30000 })
+    assert.equal(await disabled.count(), 1)
+    assert.equal(await disabled.isDisabled(), true)
+    assert.equal(await card().getByRole('button', { name: 'Resume agent session', exact: true }).count(), 0)
+    state.proposals ??= []; state.proposals.push(result)
+    await shot('pending-' + state.proposals.length)
+    return result
+  }
+  async function decide(revision, approved) {
+    state.stage = approved ? 'approve synthetic budget in UI' : 'reject synthetic budget in UI'; await save()
+    const panel = await ledger()
+    const result = await postThroughUI(proposalPath + `/${revision.id}/decision`, () =>
+      panel.getByRole('button', { name: approved ? 'Approve revision' : 'Reject revision', exact: true }).click())
+    assert.equal(result.status, 200)
+    assert.equal(result.payload.actor_id, demo.alice_actor_id)
+    assert.equal(result.payload.expected_version, revision.version)
+    assert.equal(result.payload.approved, approved)
+    assert.match(result.payload.decision_key, /^[0-9a-f-]{36}$/i)
+    assert.match(result.payload.note, approved ? /Alice authorized the revised mission ceiling/ : /Alice rejected the proposed mission ceiling/)
+    await panel.getByTestId('budget-revision-pending').waitFor({ state: 'hidden' })
+    state.decisions ??= []; state.decisions.push(result)
+    await save()
+    return result
+  }
+  try {
+    const modulePath = process.env.CRONY_PLAYWRIGHT_MODULE
+    assert.ok(modulePath && path.isAbsolute(modulePath))
+    const { chromium } = createRequire(import.meta.url)(modulePath)
+    browser = await chromium.launch({ channel: 'msedge', headless: true, env: environment })
+    state.browser_version = browser.version()
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' })
+    await context.route('**/*', async route => {
+      const request = route.request(), url = new URL(request.url())
+      const read = ['GET', 'HEAD', 'OPTIONS'].includes(request.method())
+      const allowedPost = request.method() === 'POST' && url.origin === server &&
+        (url.pathname === '/api/demo/bootstrap' || url.pathname === proposalPath || url.pathname === resumePath ||
+          (url.pathname.startsWith(proposalPath + '/') && /^\/[0-9a-f-]{36}\/decision$/i.test(url.pathname.slice(proposalPath.length))))
+      if (![server, web].includes(url.origin) || url.pathname === '/api/demo/reset' || (!read && !allowedPost)) {
+        state.blocked_requests.push({ method: request.method(), origin: url.origin, path: url.pathname })
+        await route.abort()
+      } else {
+        if (!read) state.mutations.push({ method: request.method(), path: url.pathname })
+        await route.continue()
+      }
+    })
+    await context.routeWebSocket('**/*', socket => {
+      const url = new URL(socket.url())
+      const allowed = (url.origin === 'ws://127.0.0.1:18450' && url.pathname === `/ws/corps/${demo.corp_id}`) ||
+        url.origin === 'ws://127.0.0.1:18550'
+      if (!allowed) { state.blocked_requests.push({ method: 'WEBSOCKET', origin: url.origin, path: url.pathname }); socket.close() }
+      else socket.connectToServer()
+    })
+    page = await context.newPage()
+    page.on('pageerror', error => state.page_errors.push(error.message.slice(0, 1000)))
+    const bootstrap = page.waitForResponse(response => {
+      const url = new URL(response.url())
+      return url.origin === server && url.pathname === '/api/demo/bootstrap'
+        && url.search === '?seed_crew=false' && response.request().method() === 'POST'
+    })
+    await page.goto(web + '/#missions', { waitUntil: 'networkidle', timeout: 45000 })
+    const response = await bootstrap
+    assert.equal(response.status(), 200)
+    const browserDemo = await response.json()
+    assert.equal(browserDemo.corp_id, demo.corp_id)
+    assert.equal(browserDemo.alice_actor_id, demo.alice_actor_id)
+    await page.locator('.live-indicator.live-live').waitFor({ timeout: 45000 })
+    await checkLedger('suspended', 6000, 6000, 0)
+    const disabled = card().getByRole('button', { name: 'Budget revision required', exact: true })
+    state.initial_resume_controls = {
+      budget_revision_required_count: await disabled.count(),
+      buttons: await card().getByRole('button').allTextContents(),
+      recovery: await card().getByTestId('factory-verification-recovery').evaluateAll(elements =>
+        elements.map(element => ({ text: element.innerText, attributes: Object.fromEntries(
+          Array.from(element.attributes).filter(attribute => attribute.name.startsWith('data-'))
+            .map(attribute => [attribute.name, attribute.value])) }))),
+    }
+    await save()
+    await disabled.waitFor({ state: 'visible', timeout: 30000 })
+    assert.equal(await disabled.count(), 1)
+    assert.equal(await disabled.isDisabled(), true)
+    assert.equal(await card().getByRole('button', { name: 'Resume agent session', exact: true }).count(), 0)
+    state.initial_budget_guidance_verified = true
+    await shot('suspended')
+    state.status = 'ready'; await save()
+  } catch (error) {
+    await recordError(error)
+    try { if (page) await shot('initialization-failed') } finally { if (browser) await browser.close() }
+    throw error
+  }
+  return {
+    state, propose, decide, checkLedger,
+    async beforeRestart() {
+      const button = card().getByRole('button', { name: 'Resume agent session', exact: true })
+      state.stage = 'inspect resume control after actual durable budget approval'
+      state.approved_resume_controls = { count: await button.count(),
+        buttons: await card().getByRole('button').allTextContents(),
+        recovery: await card().getByTestId('factory-verification-recovery').allTextContents() }
+      await save()
+      await checkLedger('approved-before-restart', 6000, 20000, 14000, true)
+      await shot('approved-before-restart')
+      await until('approved Factory resume control', () => button.count(), count => count === 1, 6000)
+      await button.waitFor({ state: 'visible' }); assert.equal(await button.isEnabled(), true)
+    },
+    async observeDisconnect() {
+      await page.locator('.live-indicator.live-live').waitFor({ state: 'hidden', timeout: 45000 })
+      state.server_disconnect_observed = true; await save()
+    },
+    async afterRestart() {
+      await page.locator('.live-indicator.live-live').waitFor({ state: 'visible', timeout: 60000 })
+      await checkLedger('approved-after-server-and-runner-restart', 6000, 20000, 14000, true)
+      state.server_reconnect_observed = true
+      await shot('approved-after-restart')
+    },
+    async resume() {
+      state.stage = 'resume preserved provider through UI'; await save()
+      const result = await postThroughUI(resumePath, () => card().getByRole('button', { name: 'Resume agent session', exact: true }).click())
+      assert.equal(result.status, 200)
+      assert.equal(result.payload.requested_by, demo.alice_actor_id)
+      assert.equal(result.payload.prompt, 'Continue the prior session in the same repository. Inspect the current state, complete any remaining mission work, and verify the result.')
+      state.resume = result; await save(); return result
+    },
+    async pendingReview() {
+      const button = card().getByRole('button', { name: 'Accept evidence', exact: true })
+      await button.waitFor({ state: 'visible', timeout: 45000 })
+      assert.equal(await button.isDisabled(), true, 'Production UI must deny requester self-review')
+      state.requester_review_disabled = true
+      await shot('independent-review-required')
+    },
+    async completed() {
+      await checkLedger('completed', 6012, 20000, 13988, true)
+      await until('completed mission', () => (card().innerText()), text => text.includes('Completed · recorded spend'))
+      await shot('completed')
+      await page.setViewportSize({ width: 390, height: 844 })
+      await checkLedger('completed-mobile', 6012, 20000, 13988, true)
+      const width = await page.evaluate(() => ({ viewport: window.innerWidth, content: document.documentElement.scrollWidth }))
+      assert.ok(width.content <= width.viewport, '390px recovery ledger must not overflow horizontally')
+      state.mobile_width = width
+      await shot('completed-mobile')
+      assert.deepEqual(state.page_errors, [])
+      assert.deepEqual(state.blocked_requests, [])
+      assert.equal(state.server_disconnect_observed, true)
+      assert.equal(state.server_reconnect_observed, true)
+      assert.equal(state.requester_review_disabled, true)
+      state.status = 'passed'; state.finished_at = new Date().toISOString(); await save()
+    },
+    async close(error) {
+      try {
+        if (error || state.status !== 'passed') { await recordError(error ?? new Error('Native fixture did not complete browser assertions')); await shot('failed') }
+      } finally { await browser.close(); state.browser_closed = true; await save() }
+      return { path: reportPath, sha256: digest(await readFile(reportPath)), status: state.status }
+    },
+  }
+}

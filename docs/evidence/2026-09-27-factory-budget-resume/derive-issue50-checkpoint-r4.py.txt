@@ -1,0 +1,147 @@
+"""Isolate the synthetic unreadable-file fault from Git's cached stat refresh."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r'<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp')
+FIXTURE = ROOT / 'tools/e2e_factory_budget_recovery.mjs'
+HELPER = ROOT / 'tools/qa_hold_checkpoint_file.ps1'
+DERIVED = EV / 'issue50-native-missing-checkpoint-r4.mjs'
+LOCK = EV / 'issue50-checkpoint-lock-r4.ps1'
+DRIVER = EV / 'run-issue50-native-r4.py'
+RECEIPT = EV / 'issue50-checkpoint-derivation-r4.json'
+for destination in [DERIVED, LOCK, DRIVER, RECEIPT]:
+    assert not destination.exists(), str(destination)
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def bind(path):
+    return {'path': str(path), 'sha256': sha(path)}
+
+
+def replace_once(text, old, new):
+    assert text.count(old) == 1, old
+    return text.replace(old, new, 1)
+
+
+original = FIXTURE.read_text(encoding='utf-8')
+assert sha(FIXTURE) == '07bdffe6703961cd4d1ab6049f6aed209004fbfa32747db138dad083f2aeab46'
+fixture = original
+for module in ['factory_budget_fixture_config.mjs', 'factory_budget_process.mjs',
+               'owned_test_stack.mjs', 'e2e_stopped_source_checkpoint.mjs',
+               'e2e_checkpoint_verification.mjs']:
+    fixture = replace_once(fixture, f"'./{module}'", json.dumps((ROOT / 'tools' / module).as_uri()))
+fixture = replace_once(fixture, "const root = path.resolve(import.meta.dirname, '..')",
+                       'const root = ' + json.dumps(str(ROOT)))
+fixture = replace_once(fixture, "const suite = 'issue-50-factory-budget-recovery-v1'",
+                       "const suite = 'issue-50-factory-budget-recovery-checkpoint-r4'")
+fixture = replace_once(fixture,
+    "    await run('git',['-C',lockedWorkspace,'status','--porcelain'])\n",
+    """    await run('git',['-C',lockedWorkspace,'status','--porcelain'])
+    const indexBefore=(await run('git',['-C',lockedWorkspace,'ls-files','--stage','--','README.md'])).stdout
+    const cachedBefore=(await run('git',['-C',lockedWorkspace,'ls-files','--debug','--','README.md'])).stdout
+    // This fresh synthetic worktree can retain zero-sized cached stat metadata.
+    // Settle one timestamp interval and refresh metadata before fault injection.
+    // No source bytes, index object identities or persisted proof are changed.
+    await sleep(1500)
+    await run('git',['-C',lockedWorkspace,'update-index','--refresh'])
+    assert.equal((await run('git',['-C',lockedWorkspace,'ls-files','--stage','--','README.md'])).stdout,indexBefore)
+    assert.deepEqual(await readFile(path.join(lockedWorkspace,'README.md')),lockedFileBytes)
+    const cachedAfter=(await run('git',['-C',lockedWorkspace,'ls-files','--debug','--','README.md'])).stdout
+    report.checkpoint_lock_preparation={cached_before:cachedBefore,cached_after:cachedAfter,
+      index_blob_unchanged:true,physical_bytes_unchanged:true,metadata_refresh_only:true}
+""")
+fixture = replace_once(fixture, "path.join(root,'tools/qa_hold_checkpoint_file.ps1')", json.dumps(str(LOCK)))
+fixture = replace_once(fixture,
+    "'-QaRoot',qa,'-Workspace',lockedWorkspace,'-ReleaseSignal',releaseSignal])",
+    "'-QaRoot',qa,'-Workspace',lockedWorkspace,'-ReleaseSignal',releaseSignal,'-ProbeReceipt',path.join(attempt,'checkpoint-git-preflight.json')])")
+fixture = replace_once(fixture,
+    "    assert.equal(initial.run.workspace_fingerprint,null,'Fault injection must not create checkpoint proof')",
+    """    report.checkpoint_lock_preflight=JSON.parse(await readFile(path.join(attempt,'checkpoint-git-preflight.json'),'utf8'))
+    assert.equal(report.checkpoint_lock_preflight.exclusive_read_denied,true)
+    assert.equal(report.checkpoint_lock_preflight.git_status_exit,0)
+    assert.equal(report.checkpoint_lock_preflight.git_diff_exit,0)
+    assert.equal(report.checkpoint_lock_preflight.git_diff_bytes,0)
+    assert.equal(initial.run.workspace_fingerprint,null,'Fault injection must not create checkpoint proof')""")
+
+helper = HELPER.read_text(encoding='utf-8')
+helper = replace_once(helper, '[Parameter(Mandatory)][string]$ReleaseSignal\n',
+    '[Parameter(Mandatory)][string]$ReleaseSignal,\n    [Parameter(Mandatory)][string]$ProbeReceipt\n')
+helper = replace_once(helper,
+    "    throw 'Lock and release signal must stay within the QA attempt.'\n}",
+    """    throw 'Lock and release signal must stay within the QA attempt.'
+}
+if (!([IO.Path]::GetFullPath($ProbeReceipt)).StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) -or
+    (Test-Path -LiteralPath $ProbeReceipt)) { throw 'Probe receipt must be a new owned attempt file.' }
+""")
+helper = replace_once(helper, "try {\n    # CreateNew", """try {
+    $readDenied=$false
+    try { $null=[IO.File]::ReadAllBytes($file) } catch [IO.IOException] { $readDenied=$true }
+    if (!$readDenied) { throw 'The actual checkpoint read fault is not established.' }
+    $gitStatus=@(& git -C $workspacePath status --porcelain=v1 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $statusExit=$LASTEXITCODE
+    if ($statusExit) { throw 'Git status is blocked by the synthetic fault before provider execution.' }
+    $gitDiff=@(& git -C $workspacePath diff --binary --no-ext-diff HEAD -- 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $diffExit=$LASTEXITCODE
+    if ($diffExit -or $gitDiff) { throw 'Git diff is blocked or source differs before checkpoint fault injection.' }
+    [ordered]@{observed_at_utc=[DateTimeOffset]::UtcNow.ToString('o');exclusive_read_denied=$readDenied;
+        git_status_exit=$statusExit;git_status=$gitStatus;git_diff_exit=$diffExit;git_diff_bytes=0;
+        source_file='README.md';scope='Synthetic fixture precondition only; native acceptance assertions remain unchanged'} |
+        ConvertTo-Json | Set-Content -LiteralPath $ProbeReceipt -Encoding utf8NoBOM
+    # CreateNew""")
+
+driver = (EV / 'run-issue50-native-r3.py').read_text(encoding='utf-8')
+driver = replace_once(driver, "args = parser.parse_args()", "args = parser.parse_args()\nassert args.mode == 'missing-checkpoint'")
+driver = replace_once(driver, "q50-n{suffix}/qa/issue-50-factory-recovery", "q50-n{suffix}4/qa/issue-50-factory-recovery")
+driver = driver.replace('-r3', '-r4')
+driver = replace_once(driver, "fixture = ROOT / 'tools/e2e_factory_budget_recovery.mjs'", """fixture = EV / 'issue50-native-missing-checkpoint-r4.mjs'
+derivation_path = EV / 'issue50-checkpoint-derivation-r4.json'
+derivation = load(derivation_path)
+for key in ['original_fixture', 'original_lock_helper', 'derived_fixture', 'derived_lock_helper']:
+    assert sha(derivation[key]['path']) == derivation[key]['sha256']
+""")
+driver = replace_once(driver, "'fixture': bound(fixture), 'driver': bound(Path(__file__)), 'node': bound(NODE),",
+    "'fixture': bound(fixture), 'derivation': bound(derivation_path), 'driver': bound(Path(__file__)), 'node': bound(NODE),")
+driver = replace_once(driver, "    record['source_unchanged'] = True", """    for key in ['original_fixture', 'original_lock_helper', 'derived_fixture', 'derived_lock_helper']:
+        assert sha(derivation[key]['path']) == derivation[key]['sha256']
+    if record['status'] == 'native-passed':
+        assert native['checkpoint_lock_preparation']['index_blob_unchanged']
+        assert native['checkpoint_lock_preparation']['physical_bytes_unchanged']
+        assert native['checkpoint_lock_preflight']['exclusive_read_denied']
+        assert native['checkpoint_lock_preflight']['git_diff_exit'] == 0
+    record['source_unchanged'] = True""")
+
+for path, text in [(DERIVED, fixture), (LOCK, helper), (DRIVER, driver)]:
+    with path.open('x', encoding='utf-8', newline='\n') as stream:
+        stream.write(text)
+
+failed = json.loads((EV / 'issue50-native-missing-checkpoint-r3.json').read_text(encoding='utf-8-sig'))
+diagnosis = json.loads((EV / 'issue50-checkpoint-lock-diagnosis-r1.json').read_text(encoding='utf-8-sig'))
+assert failed['status'] == 'failed-execute' and diagnosis['status'] == 'passed'
+workspace = Path(r'<USERPROFILE>\code\q50-nm\qa\issue-50-factory-recovery\attempts\20260927221342271\runner-workspaces\worktrees\d33c10abccaf49fc818c24369a91b782\f61c1082aab44b06aa92fe2c79bbca23')
+cached = subprocess.run(['git', '-C', str(workspace), 'ls-files', '--debug', '--', 'README.md'],
+    capture_output=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW).stdout.decode()
+record = {'created_at_utc': datetime.now(timezone.utc).isoformat(),
+    'original_fixture': bind(FIXTURE), 'original_lock_helper': bind(HELPER),
+    'derived_fixture': bind(DERIVED), 'derived_lock_helper': bind(LOCK), 'driver': bind(DRIVER),
+    'failed_r3': bind(EV / 'issue50-native-missing-checkpoint-r3.json'),
+    'diagnosis': bind(EV / 'issue50-checkpoint-lock-diagnosis-r1.json'),
+    'failed_workspace_cached_index': cached,
+    'failed_workspace_physical_readme': bind(workspace / 'README.md'),
+    'changes': ['External module imports and product-root binding',
+        'Wait 1500ms and refresh only the synthetic worktree index metadata before locking',
+        'Assert unchanged source bytes and index blob identity after metadata refresh',
+        'Prove actual file reads fail and original Git status/diff commands succeed while the lock is held before provider handshake',
+        'Record the fault precondition alongside all unchanged native checkpoint/recovery assertions'],
+    'diagnosis_limit': 'The failed native workspace has a zero-size cached index entry for a 64-byte README. The immediate standalone probe did not reproduce that failure. The timestamp hypothesis is not treated as a confirmed product defect; r4 establishes the missing precondition explicitly.',
+    'scope': 'Retrospective acceptance driver only; no product source, native verifier, database proof, approval, or fixture source bytes changed.'}
+with RECEIPT.open('x', encoding='utf-8') as stream:
+    json.dump(record, stream, indent=2)
+    stream.write('\n')
+print(json.dumps({'status': 'derived', 'fixture': bind(DERIVED), 'lock': bind(LOCK), 'driver': bind(DRIVER)}))

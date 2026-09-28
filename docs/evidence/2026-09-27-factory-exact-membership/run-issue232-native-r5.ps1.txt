@@ -1,0 +1,259 @@
+# R5 repeats the real read-only Project3 preview on current main integration, canonical r3, corrected complete-source binding and matching binaries. Historical acceptance remains unproven; earlier receipts are preserved.
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<USERPROFILE>\.codex\worktrees\issue136-browser-docs\ecorp'
+$qa = '<USERPROFILE>\code\qa\issue232-native-r5'
+$pg = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin'
+$python = '<USERPROFILE>\AppData\Local\Programs\Python\Python312\python.exe'
+$github = 'C:\Program Files\GitHub CLI\gh.exe'
+$checker = Join-Path $PSScriptRoot 'issue232-source-binding-r3.py'
+$canonical = Join-Path $PSScriptRoot 'issue232-canonical-r3.json'
+$buildPath = Join-Path $PSScriptRoot 'issue232-native-build-r4.json'
+$receiptPath = Join-Path $PSScriptRoot 'issue232-native-r5.json'
+$authHelper = '<USERPROFILE>\code\ecorp\output\pr-completion\20260922T123548Z\github-session.ps1'
+$serverPort = 18887
+$databasePort = 59090
+$sourceBase = 'b28fd4d26309794f38c0455bbf42d22aedf7cfd1'
+if ((Test-Path -LiteralPath $qa) -or (Test-Path -LiteralPath $receiptPath)) { throw 'Preserve existing native fixtures and receipts.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:GIT_TERMINAL_PROMPT = '0'
+$env:GCM_INTERACTIVE = 'Never'
+$bindingText = & $python $checker $product $canonical
+if ($LASTEXITCODE) { throw 'Source no longer matches issue232 canonical validation.' }
+$binding = $bindingText | ConvertFrom-Json -AsHashtable
+$build = Get-Content -LiteralPath $buildPath -Raw | ConvertFrom-Json -AsHashtable -Depth 60
+if ($build.status -ne 'passed' -or !$build.source_unchanged -or $build.binaries.Count -ne 2 -or
+    $build.source_binding.source_tree -cne $binding.source_tree -or
+    $build.source_binding.source_files_sha256 -cne $binding.source_files_sha256) {
+    throw 'Require matching-source native server and CLI build.'
+}
+foreach ($binary in $build.binaries) {
+    if ((Get-FileHash -LiteralPath $binary.path).Hash.ToLowerInvariant() -cne $binary.sha256) { throw 'Native binary changed.' }
+}
+$ports = @(Get-NetTCPConnection -State Listen | Select-Object -ExpandProperty LocalPort)
+if ($ports -contains $serverPort -or $ports -contains $databasePort) { throw 'Existing process owns a requested fixture port.' }
+Import-Module (Join-Path $product 'tools/local_stack.psm1') -Force
+$statePath = Join-Path $qa 'ownership.json'
+$state = @{schema_version=2;workspace=$qa;purpose='issue232-native-read-only';test_owned=$true;processes=@{};source=$product;source_binding=$binding}
+$receipt = [ordered]@{
+    issue=232;status='running';started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');source_binding=$binding;
+    build_receipt=$buildPath;build_receipt_sha256=(Get-FileHash -LiteralPath $buildPath).Hash.ToLowerInvariant();
+    binaries=$build.binaries;qa_root=$qa;cleanup=@();
+    scope='Native CLI and server with a fresh owned PostgreSQL database, real read-only GitHub discovery of issue231 in personal Project3, and no runner. The real item is Done and issue is closed; execution must remain ineligible.';
+    qualification_policy=@{source_base=$sourceBase;adapter='fake-process';budget_tokens=100000;budget_cost_microusd=3000000;write_scope=@('tools/e2e_factory_claims.mjs','tools/e2e_budgets.mjs')};
+    limitation='This new read-only qualification does not reproduce the September11 eligible preview, claim the historical provider policy, or reconstruct the original checkpoint lineage. Issue232 remains open until its historical read-only checkpoint acceptance is demonstrated.';
+    issue_completion_proven=$false
+}
+function Save { $receipt | ConvertTo-Json -Depth 70 | Set-Content -LiteralPath $receiptPath -Encoding utf8 }
+function Launch([string]$Role,[string]$Exe,[string[]]$ArgumentList,[string]$Cwd,[hashtable]$Environment) {
+    $state.processes[$Role] = Start-LocalOwnedProcess -Role $Role -Workspace $qa -FilePath $Exe -ArgumentList $ArgumentList -WorkingDirectory $Cwd -LogDirectory (Join-Path $qa 'logs') -Environment $Environment
+    Save-LocalStackState -Path $statePath -State $state -Workspace $qa
+}
+function Wait-Ready([scriptblock]$Probe,[string]$Description) {
+    $deadline=[DateTime]::UtcNow.AddSeconds(60)
+    do { try { if (& $Probe) { return } } catch { }; Start-Sleep -Milliseconds 250 } while ([DateTime]::UtcNow -lt $deadline)
+    throw "$Description did not become ready."
+}
+function Save-Ledger([string]$Name) {
+    $path=Join-Path $qa "evidence/$Name.json"
+    $query=@'
+SELECT jsonb_build_object(
+  'factory_work_items',(SELECT count(*) FROM factory_work_items),
+  'missions',(SELECT count(*) FROM missions),
+  'tasks',(SELECT count(*) FROM tasks),
+  'runs',(SELECT count(*) FROM runs),
+  'verification_evidence',(SELECT count(*) FROM verification_evidence),
+  'source_deliverables',(SELECT count(*) FROM source_deliverables),
+  'artifacts',(SELECT count(*) FROM artifacts));
+'@
+    $env:PGPASSFILE=Join-Path $qa 'credentials/pgpass.conf'
+    try {
+        $query | & (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $databasePort -U issue232_qa -d issue232_native -v ON_ERROR_STOP=1 -At -o $path
+        if ($LASTEXITCODE) { throw 'Could not capture fixture ledger counts.' }
+    } finally { Remove-Item -LiteralPath Env:PGPASSFILE -ErrorAction SilentlyContinue }
+    return @{path=$path;sha256=(Get-FileHash -LiteralPath $path).Hash.ToLowerInvariant();counts=(Get-Content -LiteralPath $path -Raw | ConvertFrom-Json -AsHashtable)}
+}
+$databasePassword=$null
+$serverEnvironment=$null
+Save
+try {
+    New-Item -ItemType Directory -Path $qa | Out-Null
+    $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+    & icacls.exe $qa /inheritance:r /grant:r ('*{0}:(OI)(CI)F' -f $sid) '*S-1-5-18:(OI)(CI)F' | Out-Null
+    if ($LASTEXITCODE) { throw 'Could not restrict the fixture directory.' }
+    foreach ($dir in @('logs','credentials','evidence')) { New-Item -ItemType Directory -Path (Join-Path $qa $dir) | Out-Null }
+    Save-LocalStackState -Path $statePath -State $state -Workspace $qa
+    $databasePassword=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+    $passwordPath=Join-Path $qa 'credentials/postgres-password.txt'
+    [IO.File]::WriteAllText($passwordPath,$databasePassword,[Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $qa 'credentials/pgpass.conf'),(('127.0.0.1:{0}:*:issue232_qa:{1}' -f $databasePort,$databasePassword)+[Environment]::NewLine),[Text.UTF8Encoding]::new($false))
+    & (Join-Path $pg 'initdb.exe') -D (Join-Path $qa 'database') -U issue232_qa --auth=scram-sha-256 --encoding=UTF8 --locale=C --pwfile=$passwordPath *> (Join-Path $qa 'logs/initdb.log')
+    if ($LASTEXITCODE) { throw 'Fresh PostgreSQL initialization failed.' }
+    Launch 'postgres' (Join-Path $pg 'postgres.exe') @('-D',(Join-Path $qa 'database'),'-h','127.0.0.1','-p',"$databasePort") $qa @{}
+    Wait-Ready { & (Join-Path $pg 'pg_isready.exe') -h 127.0.0.1 -p $databasePort -U issue232_qa *> $null; $LASTEXITCODE -eq 0 } 'PostgreSQL'
+    $env:PGPASSWORD='invalid-owned-fixture-probe'
+    $env:PGPASSFILE=Join-Path $qa 'credentials/intentionally-absent.pgpass'
+    & (Join-Path $pg 'psql.exe') -X -w -h 127.0.0.1 -p $databasePort -U issue232_qa -d postgres -c 'SELECT 1' *> $null
+    if ($LASTEXITCODE -eq 0) { throw 'PostgreSQL accepted an incorrect password.' }
+    Remove-Item -LiteralPath Env:PGPASSWORD
+    $env:PGPASSFILE=Join-Path $qa 'credentials/pgpass.conf'
+    & (Join-Path $pg 'createdb.exe') -w -h 127.0.0.1 -p $databasePort -U issue232_qa issue232_native
+    if ($LASTEXITCODE) { throw 'Authenticated fixture database creation failed.' }
+    Remove-Item -LiteralPath Env:PGPASSFILE
+    $receipt.database_authentication=@{method='scram-sha-256';wrong_password_rejected=$true;authenticated_creation=$true;secrets_outside_source=$true;server_environment_delivery='reduced assurance'}
+    $serverEnvironment=@{
+        DATABASE_URL=('postgres://issue232_qa:{0}@127.0.0.1:{1}/issue232_native' -f $databasePassword,$databasePort);
+        CRONY_BIND="127.0.0.1:$serverPort";CRONY_MODE='development';ECORP_FACTORY_WATCH='0';
+        CRONY_OBJECT_STORE_LOCAL_ROOT=(Join-Path $qa 'objects');
+        CRONY_SECRET_MASTER_KEY_HEX=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32));
+        CRONY_ARTIFACT_SIGNING_KEY_HEX=[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+    }
+    Launch 'server' (Join-Path $product 'target/debug/crony-server.exe') @() $product $serverEnvironment
+    $serverEnvironment.Clear()
+    $databasePassword=$null
+    $server="http://127.0.0.1:$serverPort"
+    Wait-Ready { (Invoke-RestMethod "$server/health" -TimeoutSec 2).status -eq 'ok' } 'Server'
+    $demo=Invoke-RestMethod "$server/api/demo/bootstrap?seed_crew=false" -Method Post -ContentType 'application/json' -Body '{}'
+    $authority=Invoke-RestMethod "$server/api/corps/$($demo.corp_id)/factory/authority?actor_id=$($demo.alice_actor_id)"
+    if ($authority.authority.corp_id -ne $demo.corp_id -or !$authority.authority.claim_authority_id) { throw 'Fresh Corp authority is invalid.' }
+    $receipt.authority=$authority.authority
+    $receipt.ledger_before=Save-Ledger 'ledger-before'
+    foreach ($entry in @(@('server',$serverPort),@('postgres',$databasePort))) {
+        $owners=@(Get-NetTCPConnection -State Listen -LocalPort $entry[1] | Select-Object -ExpandProperty OwningProcess -Unique)
+        if ($owners.Count -ne 1 -or $owners[0] -ne $state.processes[$entry[0]].pid) { throw 'Listener ownership changed.' }
+    }
+    $arguments=@('--server',$server,'factory',$demo.corp_id,$demo.alice_actor_id,'--claim-authority-id',$authority.authority.claim_authority_id,
+        '--owner','shyamsridhar123','--project-number','3','--repository','All-The-Vibes/ecorp','--source-base-ref',$sourceBase,
+        '--source-repository-path',$product,'--publication-base-ref','main','--adapter','fake-process','--budget-tokens','100000',
+        '--budget-cost-microusd','3000000','--write-scope','tools/e2e_factory_claims.mjs','--write-scope','tools/e2e_budgets.mjs',
+        '--issue','231','--dry-run','--github-cli',$github)
+    $receipt.cli_arguments=$arguments
+    & $authHelper -Operation {
+        $receipt.actor=$automationIdentity.login
+        $query='query { node(id:"PVTI_lAHOBwBdFs4Bh3Clzg6lo6w") { ... on ProjectV2Item { id isArchived updatedAt project { id number owner { ... on User { login } ... on Organization { login } } } fieldValueByName(name:"Status") { ... on ProjectV2ItemFieldSingleSelectValue { name } } content { ... on Issue { id number state updatedAt url repository { nameWithOwner } } } } } repository(owner:"All-The-Vibes",name:"ecorp") { issue(number:231) { id state updatedAt projectItems(first:100) { pageInfo { hasNextPage } nodes { id project { number owner { ... on User { login } ... on Organization { login } } } } } } } }'
+        $before=Invoke-EcorpGitHub -Path '/graphql' -Method Post -Body @{query=$query}
+        if ($before.errors -or $before.data.node.isArchived -ne $false -or
+            $before.data.node.project.number -ne 3 -or $before.data.node.project.owner.login -cne 'shyamsridhar123' -or
+            $before.data.node.content.id -cne 'I_kwDOUIQ-ns8AAAABQ53gIw' -or $before.data.node.content.number -ne 231 -or
+            $before.data.node.content.repository.nameWithOwner -cne 'All-The-Vibes/ecorp' -or
+            $before.data.node.content.state -cne 'CLOSED' -or $before.data.node.fieldValueByName.name -cne 'Done') {
+            throw 'The exact historical target changed; preserve the observation without adapting eligibility.'
+        }
+        if ($before.data.repository.issue.projectItems.pageInfo.hasNextPage -ne $false -or
+            @($before.data.repository.issue.projectItems.nodes | Where-Object { $_.project.number -eq 3 -and $_.project.owner.login -eq 'shyamsridhar123' }).Count) {
+            throw 'This observation no longer exercises the missing-backlink fallback.'
+        }
+        $before.data | ConvertTo-Json -Depth 40 | Set-Content -LiteralPath (Join-Path $qa 'evidence/github-before.json') -Encoding utf8
+        $process=[Diagnostics.Process]::new()
+        $start=[Diagnostics.ProcessStartInfo]::new((Join-Path $product 'target/debug/crony-cli.exe'))
+        $start.UseShellExecute=$false
+        $start.CreateNoWindow=$true
+        $start.WorkingDirectory=$product
+        $start.RedirectStandardOutput=$true
+        $start.RedirectStandardError=$true
+        foreach ($argument in $arguments) { $start.ArgumentList.Add([string]$argument) }
+        $start.Environment['GH_TOKEN']=$automationCredentialMap['password']
+        $start.Environment['GH_HOST']='github.com'
+        $start.Environment['GH_PROMPT_DISABLED']='1'
+        $process.StartInfo=$start
+        try {
+            if (!$process.Start()) { throw 'Native CLI did not start.' }
+            $receipt.cli_pid=$process.Id
+            $receipt.cli_started_at_utc=$process.StartTime.ToUniversalTime().ToString('o')
+            $stdoutTask=$process.StandardOutput.ReadToEndAsync()
+            $stderrTask=$process.StandardError.ReadToEndAsync()
+            if (!$process.WaitForExit(180000)) {
+                $process.Kill($true)
+                $process.WaitForExit()
+                throw 'Native read-only CLI exceeded its bounded execution window.'
+            }
+            $stdout=$stdoutTask.GetAwaiter().GetResult()
+            $stderr=$stderrTask.GetAwaiter().GetResult()
+            if ($stdout.Contains($automationCredentialMap['password']) -or $stderr.Contains($automationCredentialMap['password'])) {
+                throw 'Credential-bearing CLI output withheld from evidence.'
+            }
+            $receipt.cli_exit_code=$process.ExitCode
+            [IO.File]::WriteAllText((Join-Path $qa 'evidence/cli-report.json'),$stdout,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText((Join-Path $qa 'evidence/cli-stderr.log'),$stderr,[Text.UTF8Encoding]::new($false))
+            if ($process.ExitCode) { throw 'Native CLI failed; inspect the bounded redacted stderr receipt.' }
+            $report=$stdout | ConvertFrom-Json -AsHashtable -Depth 80
+            if ($report.mode -cne 'dry_run' -or $report.project_owner -cne 'shyamsridhar123' -or $report.project_number -ne 3 -or
+                $report.repository -cne 'all-the-vibes/ecorp' -or $report.source_base_ref -cne $sourceBase -or
+                $null -ne $report.selected -or $report.mutations.Count -ne 0 -or $report.evaluated.Count -ne 1 -or
+                $report.evaluated[0].project_item_id -cne 'PVTI_lAHOBwBdFs4Bh3Clzg6lo6w' -or
+                $report.evaluated[0].issue_number -ne 231 -or $report.evaluated[0].project_status -cne 'Done' -or
+                $report.evaluated[0].eligible -ne $false -or !$report.claim_authority.pin_verified) {
+                throw 'Native preview did not preserve exact scope and current ineligibility.'
+            }
+            $receipt.evaluated=$report.evaluated
+            $receipt.github_polling=$report.github_polling
+            $receipt.native_preview_passed=$true
+        } finally {
+            $start.Environment.Remove('GH_TOKEN') | Out-Null
+            if ($receipt.cli_pid -and !$process.HasExited) { $process.Kill($true); $process.WaitForExit() }
+            $process.Dispose()
+            $stdout=$null
+            $stderr=$null
+        }
+        $after=Invoke-EcorpGitHub -Path '/graphql' -Method Post -Body @{query=$query}
+        if ($after.errors) { throw 'Unable to verify the live target after native preview.' }
+        $after.data | ConvertTo-Json -Depth 40 | Set-Content -LiteralPath (Join-Path $qa 'evidence/github-after.json') -Encoding utf8
+        if (($before.data | ConvertTo-Json -Depth 40 -Compress) -cne ($after.data | ConvertTo-Json -Depth 40 -Compress)) { throw 'Remote target changed during qualification.' }
+        $receipt.remote_target_unchanged=$true
+        $receipt.credential_delivery='Existing verified actor, credential only in native CLI process memory/environment; environment delivery has reduced assurance; never recorded.'
+    }
+    $receipt.ledger_after=Save-Ledger 'ledger-after'
+    if ($receipt.ledger_after.sha256 -cne $receipt.ledger_before.sha256) { throw 'Native preview changed the isolated execution ledger.' }
+    if ((Invoke-RestMethod "$server/health").runners -ne 0) { throw 'Unexpected runner joined the isolated acceptance server.' }
+    $receipt.ledger_unchanged=$true
+    $receipt.status='passed'
+} catch {
+    $receipt.status='failed'
+    $receipt.failure=($_.Exception.Message -replace '\bpostgres(?:ql)?://\S+','[database URL withheld]')
+} finally {
+    if ($serverEnvironment) { $serverEnvironment.Clear() }
+    $databasePassword=$null
+    foreach ($name in @('PGPASSWORD','PGPASSFILE')) { [Environment]::SetEnvironmentVariable($name,$null,'Process') }
+    foreach ($role in @('server','postgres')) {
+        try {
+            $owned=$state.processes[$role]
+            if ($owned) {
+                if (Test-LocalOwnedProcess -Record $owned -Workspace $qa) {
+                    if ($role -eq 'postgres') {
+                        & (Join-Path $pg 'pg_ctl.exe') -D (Join-Path $qa 'database') -m fast -w stop *> (Join-Path $qa 'logs/postgres-stop.log')
+                        if ($LASTEXITCODE) { throw 'Owned database did not stop.' }
+                    } elseif (!(Stop-LocalOwnedProcess -Record $owned -Workspace $qa)) { throw 'Owned server stop is unverified.' }
+                }
+                if (Test-LocalOwnedProcess -Record $owned -Workspace $qa) { throw 'Owned fixture process is still active.' }
+                $receipt.cleanup+=@{role=$role;pid=$owned.pid;stopped=$true}
+            }
+        } catch { $receipt.status='failed';$receipt.cleanup+=@{role=$role;stopped=$false;error=$_.Exception.Message} }
+    }
+    if (Test-Path -LiteralPath $statePath) {
+        $state.stopped_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+        Save-LocalStackState -Path $statePath -State $state -Workspace $qa
+    }
+    try {
+        $afterText=& $python $checker $product $canonical
+        if ($LASTEXITCODE) { throw 'Source changed during native qualification.' }
+        $afterBinding=$afterText | ConvertFrom-Json -AsHashtable
+        if ($afterBinding.source_tree -cne $binding.source_tree -or $afterBinding.source_files_sha256 -cne $binding.source_files_sha256) { throw 'Source changed during native qualification.' }
+        $receipt.source_unchanged=$true
+        foreach ($binary in $build.binaries) {
+            if ((Get-FileHash -LiteralPath $binary.path).Hash.ToLowerInvariant() -cne $binary.sha256) { throw 'Native binary changed during qualification.' }
+        }
+        $receipt.binaries_unchanged=$true
+    } catch { $receipt.status='failed';$receipt.binding_failure=$_.Exception.Message }
+    if (Test-Path -LiteralPath (Join-Path $qa 'evidence')) {
+        $receipt.evidence=@(Get-ChildItem -LiteralPath (Join-Path $qa 'evidence') -File | ForEach-Object { @{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant()} })
+    }
+    $receipt.finished_at_utc=[DateTimeOffset]::UtcNow.ToString('o')
+    Save
+}
+[pscustomobject]$receipt | Select-Object issue,status,cli_exit_code,native_preview_passed,remote_target_unchanged,ledger_unchanged,source_unchanged,binaries_unchanged,issue_completion_proven,cleanup,failure,binding_failure | ConvertTo-Json -Depth 8
+if ($receipt.status -ne 'passed') { exit 1 }

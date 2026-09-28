@@ -1,0 +1,158 @@
+"""Run UI/restart acceptance on the canonical-validated issue 232 integration candidate."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r'<USERPROFILE>\.codex\worktrees\issue136-browser-docs\ecorp')
+QA = Path(r'<USERPROFILE>\code\q232-b2\qa\issue-50-factory-recovery')
+PG = Path(r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin')
+NODE = Path(r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe')
+PLAYWRIGHT = Path(r'<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright')
+RECEIPT = EV / 'issue232-browser-r2.json'
+assert not RECEIPT.exists(), 'Preserve previous execution and reconcile its outcome.'
+assert not QA.parents[1].exists(), 'Use only a newly admitted fixture parent.'
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding='utf-8-sig'))
+
+
+def sha(path):
+    with Path(path).open('rb') as handle:
+        return hashlib.file_digest(handle, 'sha256').hexdigest()
+
+
+def bound(path):
+    return {'path': str(path), 'sha256': sha(path)}
+
+
+canonical_path = EV / 'issue232-canonical-r3.json'
+checker_path = EV / 'issue232-source-binding-r3.py'
+
+def verify_source():
+    result = subprocess.run([sys.executable, '-B', str(checker_path), str(ROOT), str(canonical_path)],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True,
+        creationflags=subprocess.CREATE_NO_WINDOW)
+    return json.loads(result.stdout)
+
+binding = verify_source()
+build_path = EV / 'issue232-browser-build-r2.json'
+build = load(build_path)
+assert build['issue'] == 232 and build['status'] == 'passed' and build['source_unchanged']
+assert build['source_binding'] == binding
+assert len(build['binaries']) == 3
+assert {Path(item['path']).name for item in build['binaries']} == {'crony-server.exe','crony-cli.exe','crony-runner.exe'}
+for binary in build['binaries']:
+    assert sha(binary['path']) == binary['sha256'], binary['path']
+derivation_path = EV / 'issue232-browser-derivation-r2.json'
+derivation = load(derivation_path)
+for key in ['original', 'derived', 'browser', 'fake_original', 'fake', 'template', 'build_script', 'driver']:
+    item = derivation[key]
+    assert sha(item['path']) == item['sha256'], key
+assert NODE.is_file() and (PLAYWRIGHT / 'package.json').is_file()
+allow = {'path', 'systemroot', 'windir', 'comspec', 'pathext', 'temp', 'tmp', 'userprofile',
+         'homedrive', 'homepath', 'localappdata', 'appdata', 'programfiles', 'programfiles(x86)',
+         'programdata', 'systemdrive', 'number_of_processors', 'processor_architecture'}
+env = {key: value for key, value in os.environ.items() if key.lower() in allow}
+env.update(ECORP_ISSUE50_QA_ROOT=str(QA), ECORP_ISSUE50_PG_BIN=str(PG),
+           CRONY_PLAYWRIGHT_MODULE=str(PLAYWRIGHT), GIT_TERMINAL_PROMPT='0', GCM_INTERACTIVE='Never')
+record = {'issue': 232, 'status': 'preflight', 'started_at_utc': datetime.now(timezone.utc).isoformat(),
+          'head': binding['source_head'], 'tree': binding['source_tree'], 'integration_base_commit': '078eb986352c8f219baeea5fddf4b8e9ff25e51e',
+          'repository': str(ROOT), 'qa_root': str(QA), 'source_binding': binding,
+          'native_build': bound(build_path), 'canonical_validation': bound(canonical_path),
+          'derivation': bound(derivation_path), 'driver': bound(Path(__file__)),
+          'node': bound(NODE), 'playwright_package': bound(PLAYWRIGHT / 'package.json'),
+          'checks': [], 'source_unchanged': False,
+          'limitations': 'Retrospective synthetic Project50/issue9050 acceptance using a deliberately omitted '
+                        'issue backlink, real Edge UI, native server/CLI/runner, and deterministic Codex. '
+                        'The original issue231 eligible preview and retained workflow are unavailable and '
+                        'are not recreated or replaced by this fixture. No hosted GitHub mutation, real '
+                        'model inference, human decision, or operating-system isolation is claimed. '
+                        'Source includes the exact staged merge and membership fix bound to canonical r3.'}
+
+
+def save():
+    RECEIPT.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+
+
+save()
+try:
+    for lane in ['dry-run', 'execute']:
+        log = EV / f'issue232-browser-r2-{lane}.log'
+        command = [str(NODE), derivation['derived']['path'], '--' + lane]
+        with log.open('xb') as stream:
+            process = subprocess.Popen(command, cwd=ROOT, env=env, stdout=stream,
+                stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
+            record.update(status='running-' + lane, process_id=process.pid)
+            save()
+            code = process.wait()
+        record['checks'].append({'lane': lane, 'command': command, 'exit_code': code, **bound(log)})
+        save()
+        if code:
+            record['status'] = 'failed-' + lane
+            break
+    else:
+        record['status'] = 'browser-native-passed'
+    reports = sorted((QA / 'attempts').glob('*/report.json'))
+    if reports:
+        assert len(reports) == 1, 'Reconcile multiple fixture attempts.'
+        native = load(reports[0])
+        record.update(fixture_report=bound(reports[0]), fixture_status=native.get('status'),
+                      fixture_error=native.get('error'), cleanup=native.get('cleanup'),
+                      ports_after=native.get('ports_after'), browser=native.get('browser'),
+                      restart=native.get('restart'))
+        if record['status'] == 'browser-native-passed':
+            assert native['status'] == 'recovery_passed' and native['provenance']['consistent']
+            assert native['source_code_commit'] == binding['source_head']
+            assert not native['ports_after'] and len(native['cleanup']) >= 3
+            assert all(item['status'] in ['stopped_verified_qa_process', 'already_exited'] for item in native['cleanup'])
+            for flag in ['proposal_replay_verified', 'decision_replay_verified',
+                         'same_session_and_workspace', 'original_spend_and_breaker_preserved',
+                         'recovery_proof_verified', 'independent_review_verified',
+                         'rejected_revision_grants_no_authority']:
+                assert native[flag], flag
+            assert native['restart']['persisted_ledger_task_lineage_and_idempotency_verified']
+            membership = native['membership_fallback']
+            assert membership['status'] == 'passed' and membership['same_lineage_verified']
+            assert membership['synthetic_only'] and membership['original_issue231_acceptance'] is False
+            assert [item['label'] for item in membership['previews']] == ['initial', 'recovery']
+            assert all(item['execution_unchanged'] and item['github_items_unchanged'] and item['mutations'] == [] for item in membership['previews'])
+            record['membership_fallback'] = membership
+            browser = native['browser']
+            assert browser['status'] == 'passed' and sha(browser['path']) == browser['sha256']
+            ui = load(browser['path'])
+            assert ui['status'] == 'passed' and ui['browser_closed']
+            assert not ui['page_errors'] and not ui['blocked_requests']
+            assert ui['server_disconnect_observed'] and ui['server_reconnect_observed']
+            assert len(ui['proposals']) == 2 and len(ui['decisions']) == 2
+            assert [item['payload']['approved'] for item in ui['decisions']] == [False, True]
+            assert ui['requester_review_disabled'] and ui['initial_budget_guidance_verified'] and len(ui['ledgers']) >= 6
+            assert ui['mobile_width']['viewport'] == 390
+            assert ui['mobile_width']['content'] <= ui['mobile_width']['viewport']
+            assert len(ui['screenshots']) >= 7
+            for item in ui['screenshots']:
+                assert sha(item['file']) == item['sha256']
+    elif record['status'] == 'browser-native-passed':
+        raise AssertionError('Passing execution requires native and browser receipts.')
+    after = verify_source()
+    assert after == binding
+    for binary in build['binaries']:
+        assert sha(binary['path']) == binary['sha256']
+    for key in ['original', 'derived', 'browser', 'fake_original', 'fake', 'template', 'build_script', 'driver']:
+        assert sha(derivation[key]['path']) == derivation[key]['sha256']
+    record['source_unchanged'] = True
+except Exception as error:
+    record['status'] = 'driver-failed'
+    record['error'] = str(error)
+    raise
+finally:
+    record['finished_at_utc'] = datetime.now(timezone.utc).isoformat()
+    save()
+print(json.dumps({key: record.get(key) for key in ['issue', 'status', 'head', 'fixture_status', 'fixture_error', 'ports_after']}))
+if record['status'] != 'browser-native-passed':
+    raise SystemExit(1)
