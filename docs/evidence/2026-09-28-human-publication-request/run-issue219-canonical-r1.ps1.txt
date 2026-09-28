@@ -1,0 +1,53 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = '<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp'
+$expected = '878a1774774b0630c904cbaf4b05e1b346777817'
+$receiptPath = Join-Path $PSScriptRoot 'issue219-canonical-invocation-r1.json'
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve the existing invocation.' }
+$target = [IO.Path]::GetFullPath((Join-Path $repo 'target'))
+$key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+$acquired = $false
+$record = [ordered]@{issue=219;repository=$repo;started_at_utc=[DateTime]::UtcNow.ToString('o');status='preparing'}
+try {
+    try { $acquired = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $acquired = $true }
+    if (!$acquired) { throw 'An active validation owns this target.' }
+    $integration = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue219-dependency-integration-r3.json') -Raw | ConvertFrom-Json
+    if ($integration.status -cne 'passed' -or !$integration.work_unchanged -or $integration.new_head -cne $expected) { throw 'Source integration not verified.' }
+    if ((& git -C $repo rev-parse HEAD).Trim() -cne $expected -or (& git -C $repo branch --show-current).Trim() -cne 'codex/issue219-publication-intent') { throw 'Unexpected source identity.' }
+    $paths = @(& git -C $repo ls-files --cached --others --exclude-standard | Sort-Object -Unique)
+    if ($paths.Count -ne $integration.source_after.Count) { throw 'Source inventory changed.' }
+    foreach ($item in $integration.source_after) {
+        if ($item.path -cnotin $paths -or (Get-FileHash -LiteralPath (Join-Path $repo $item.path)).Hash.ToLowerInvariant() -cne $item.sha256) { throw "Source changed: $($item.path)" }
+    }
+    $changes = @(@(& git -C $repo diff HEAD --name-only) + @(& git -C $repo ls-files --others --exclude-standard) | Sort-Object -Unique)
+    if ($changes.Count -ne 32) { throw 'Unexpected unpublished change inventory.' }
+    & git -C $repo add -- @changes
+    if ($LASTEXITCODE) { throw 'Staging failed.' }
+    & git -C $repo diff --cached --check
+    if ($LASTEXITCODE) { throw 'Staged whitespace validation failed.' }
+    if (@(& git -C $repo diff --name-only).Count -or @(& git -C $repo ls-files --others --exclude-standard).Count) { throw 'Source is not completely staged.' }
+    $record.head = $expected
+    $record.staged_tree = (& git -C $repo write-tree).Trim()
+    $record.source_file_count = $paths.Count
+    $record.staged_paths = $changes
+    $record.status = 'running'
+    [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 10)+"`n")
+    & (Join-Path $PSScriptRoot 'run-canonical-r4.ps1') -RepositoryPath $repo -Issue 219 -Revision r1
+    $record.canonical_exit_code = $LASTEXITCODE
+    $canonical = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'issue219-canonical-r1.json') -Raw | ConvertFrom-Json
+    if ($LASTEXITCODE -or $canonical.status -cne 'passed') { throw 'Canonical validation failed; preserve its actual results.' }
+    if ((& git -C $repo write-tree).Trim() -cne $record.staged_tree) { throw 'Staged source changed during validation.' }
+    $record.status = 'passed'
+} catch {
+    $record.status = 'failed'
+    $record.failure = $_.Exception.Message
+} finally {
+    $record.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 10)+"`n")
+    if ($acquired) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+}
+[pscustomobject]$record | Select-Object issue,status,head,staged_tree,canonical_exit_code,failure | ConvertTo-Json
+if ($record.status -cne 'passed') { exit 1 }

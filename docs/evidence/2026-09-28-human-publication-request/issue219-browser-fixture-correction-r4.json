@@ -1,0 +1,31 @@
+{
+  "created_at_utc": "2026-09-28T07:59:01.416964+00:00",
+  "reason": "r3 produced a native verified commit but Edge rejected its redirected Windows known-directory environment before browser assertions.",
+  "fix": "Restore only the original HOME/USERPROFILE/APPDATA/LOCALAPPDATA public directory values for the fresh ephemeral browser process. Keep native workers in private homes, omit all browser credentials, retain loopback-only browser routing, all acceptance assertions and a fresh owned fixture.",
+  "product_changed": false,
+  "prior_failed_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-r3.json",
+  "diagnostic_probe": {
+    "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-environment-probe-r1.json",
+    "sha256": "fda619672fb598ef300854342ccf4ef02e38ea690dcd02299ee96a974854ef01"
+  },
+  "derivations": [
+    {
+      "original": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-native-r3.mjs",
+      "original_sha256": "20d471b226bdf782750021ec2986a3c1586fdaf9f11a3a09faaefa4159b5a846",
+      "derivative": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-native-r4.mjs",
+      "derivative_sha256": "e717d55a20457a73d2838e748a496b40b40f74abe7fc4f82aefe7dbd46493e3d"
+    },
+    {
+      "original": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-driver-r3.ps1",
+      "original_sha256": "d9b16f9d32740ca9cf4e6f26d2ad6d1d3954bc03a0af2658de3f53fb00a15425",
+      "derivative": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-driver-r4.ps1",
+      "derivative_sha256": "d0e31f8d302e3b0469c12f71a50de1283829adbde9578c7ddc91d1aed42a25d5"
+    },
+    {
+      "original": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue219-browser-r3.py",
+      "original_sha256": "981e8d36b8da34d09e8cd6d58cb3a460504a1d4c5e30f6d6f603c7841efed219",
+      "derivative": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue219-browser-r4.py",
+      "derivative_sha256": "b2ef8f72e3b2bf26ba63b30351558cf2d8a1569c5efb9495a21295741ed9bde0"
+    }
+  ]
+}

@@ -363,6 +363,47 @@ pub struct FactoryMissionOutcome {
 }
 
 #[derive(Debug, Clone)]
+pub struct PreviewPullRequestPublicationInput {
+    pub corp_id: Uuid,
+    pub work_item_id: Uuid,
+    pub actor_id: Uuid,
+    pub actor_role: String,
+    pub plan: crony_domain::PullRequestPublicationPlan,
+}
+
+#[derive(Clone)]
+pub struct PublicationPublisherScope {
+    pub corp_id: Uuid,
+    pub repository: String,
+    pub publisher_id: String,
+    pub credential_hash: String,
+}
+
+#[derive(Clone, Copy)]
+pub struct PublicationLeaseControl {
+    pub publisher_token: Uuid,
+    pub expected_version: i64,
+}
+
+pub struct HumanRequestedPublication {
+    pub publication: PullRequestPublication,
+    pub actor_role: String,
+    pub authorization_reason: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct RequestPullRequestPublicationInput {
+    pub corp_id: Uuid,
+    pub work_item_id: Uuid,
+    pub actor_id: Uuid,
+    pub actor_role: String,
+    pub preview: crony_domain::PullRequestPublicationPreview,
+    pub authorization_id: Uuid,
+    pub authorization_reason: String,
+    pub idempotency_key: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct StartPullRequestPublicationInput {
     pub corp_id: Uuid,
     pub work_item_id: Uuid,

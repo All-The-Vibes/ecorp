@@ -497,6 +497,21 @@ row-locked inside the same transaction that starts, renews, fails, or checkpoint
 authenticated credential determines the publisher ID; a caller cannot choose another workload
 identity while presenting a valid credential.
 
+Human preview and request routes retain normal human authentication, Corp and mission-room scope,
+and `Publish` authority. Request persistence rechecks the exact preview/source/policy and records
+the human authorizer plus the original request operation. Its `requested` aggregate has no attempt,
+lease, or token and performs no external effect. Human intent provenance is distinct from direct
+CLI authorization and prospective machine intent; missing or malformed provenance fails closed.
+
+Dedicated workload routes can deliver only this saved human intent in the credential's Corp and
+the requested repository. They derive its human authorizer and plan server-side, then reuse the
+native start, renewal, and checkpoint authority checks. A workload cannot mint intent, substitute
+another human's authority, or use these routes for general Corp, runner, or secret access. Signed
+artifact access additionally requires the live attempt's exact publisher token and version plus
+current effect authority. Tokenless context readback remains narrower than permission to execute.
+The bounded watcher reuses the trusted native effect engine; browser and producing agents receive
+neither the workload credential nor GitHub credentials.
+
 Publication revalidates persisted verifier, deliverable, policy, budget, breaker, Corp, role, target,
 base, branch, and source-issue authority before acquiring an attempt. The publisher accepts only an
 exact signed Git bundle, never force-pushes a conflicting branch, refuses closed or auto-merge
@@ -522,8 +537,9 @@ The publisher's mission-room membership is rechecked in the same transaction on 
 idempotent replay, expired-lease recovery, and every renewal. Removing a still-manager actor from
 the room therefore blocks branch, pull-request, and Project effects.
 
-Failure-only checkpoints do not renew or advance publication authority. Their HTTP route still
-authenticates the human Corp identity, then requires the independently authenticated publisher
+Failure-only checkpoints do not renew or advance publication authority. The direct CLI HTTP route
+authenticates the human Corp identity; the saved-intent workload route derives that human from the
+validated original request instead. Both require the independently authenticated publisher
 credential and the exact attempt actor, token, version and unexpired lease in the store. This
 allows an owned attempt to record its failure after role, room or artifact authority changes.
 It does not grant publication permission, relax ordinary room-scoped reads, or accept a revoked
@@ -560,8 +576,10 @@ characters before durable claim. When omitted, it derives from the selected sour
 than independently assuming `HEAD` or `main`.
 
 The resolved PR base can never also be the publication head branch. A read-only remote preflight
-rejects that configuration before the server persists a publication, and the guard repeats before
-push, so publication cannot mutate the default branch as a substitute for merge authorization.
+rejects that configuration before a direct CLI start. A human request may already be durably
+waiting; its worker runs the same native preflight after claiming the attempt and before any remote
+effect, so a preflight failure can be recorded against that attempt. The guard repeats before push,
+so publication cannot mutate the default branch as a substitute for merge authorization.
 Generated authorization IDs remain stable across restart and duplicate invocation. A different
 recovery actor receives a new actor-bound ID rather than inheriting the first actor's grant. Local
 body-file normalization matches server canonicalization so idempotency cannot fail on CRLF or a

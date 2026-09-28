@@ -10,6 +10,7 @@ import * as originReader from './missionOriginContext.ts'
 import * as evidenceSelection from './evidenceSelection.ts'
 import * as workflow from './workflowContext.ts'
 import * as checkpointRecovery from './factoryCheckpointRecovery.ts'
+import * as publicationRequests from './humanPublicationRequest.ts'
 
 // Actual components, hook and reader; only hook scheduling, transport and timers
 // are controlled. SSR/callback tests are not browser, download or runtime proof.
@@ -41,6 +42,8 @@ const { PublishedResultCard } = evaluate(await compile('PublishedResultCard.tsx'
   'react/jsx-runtime': jsxRuntime, './WorkResultCard': { WorkResultCard },
 })
 const hookSource = await compile('useMissionResultContext.ts')
+const requestHookSource = await compile('useHumanPublicationRequest.ts')
+const requestCardSource = await compile('PublicationRequestCard.tsx')
 const ids = {
   corpId: 'corp-a', actorId: 'alice', roomId: 'room-a', missionId: 'mission-a',
   workItemId: 'item-a', sourceRepository: 'owner/repo',
@@ -384,6 +387,17 @@ test('a historical review mismatch changes selection only through explicit Go to
   assert.deepEqual(selectedRun, { id: 'older-review-run', task_id: 'older-review-task' })
 })
 
+test('a durable requested publication waits for a trusted publisher without claiming work has started', async () => {
+  const result = await presentation({ phase: 'requested' })
+  const view = card(result)
+  assert.match(text(view.tree), /Waiting for a trusted publisher/)
+  assert.doesNotMatch(text(view.tree), /\bPublishing\b|Preparing the pull request/)
+  assert.equal(elements(view.tree, 'a').length, 0)
+  assertNoAutomaticActions(view.calls)
+  button(view.tree, /^Refresh result$/).props.onClick()
+  assert.deepEqual(view.calls, { refresh: 1, select: 0, downloads: [] })
+})
+
 test('an unavailable delivered-run target preserves the historical selection and only offers refresh', async () => {
   const result = await presentation({}, { id: 'older-review-run' })
   const view = card(result, { onSelectDelivered: undefined })
@@ -688,7 +702,7 @@ async function compileAppResultSlice() {
   const importedModules = new Set([
     'react', './workflowContext', './evidenceSelection', './useMissionOriginContext',
     './useMissionResultContext', './missionResultContext', './WorkResultCard', './PublishedResultCard',
-    './factoryCheckpointRecovery',
+    './factoryCheckpointRecovery', './PublicationRequestCard',
   ])
   const imports = file.statements.filter((node) =>
     ts.isImportDeclaration(node) && importedModules.has(node.moduleSpecifier.text))
@@ -716,8 +730,8 @@ const deliveredRunId = '00000000-0000-4000-8000-000000000145'
 const olderRunId = '00000000-0000-4000-8000-000000000144'
 const newerRunId = '00000000-0000-4000-8000-000000000146'
 
-function appContext() {
-  const value = contextFor()
+function appContext(options) {
+  const value = contextFor(scope, options)
   value.publication.run_id = deliveredRunId
   value.publication.provenance.run_ids = [deliveredRunId]
   value.source_deliverables[0].run_id = deliveredRunId
@@ -736,40 +750,46 @@ function appOrigin(kind = 'factory') {
 
 function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
   const slots = [], effects = [], calls = [], storageWrites = [], actions = [], clock = fakeClock()
+  const requestSlots = []
   const animationFrames = [], focusCalls = []
-  let cursor = 0, dirty = false, tree
+  let cursor = 0, dirty = false, tree, activeSlots = slots, requestRendered = false, publicationClick = false
   const different = (before, after) =>
     !before || before.length !== after.length || after.some((value, index) => !Object.is(value, before[index]))
   const react = {
     useMemo(create, deps) {
       const index = cursor++
-      if (different(slots[index]?.deps, deps)) slots[index] = { deps, value: create() }
-      return slots[index].value
+      if (different(activeSlots[index]?.deps, deps)) activeSlots[index] = { deps, value: create() }
+      return activeSlots[index].value
     },
     useCallback(callback, deps) { return react.useMemo(() => callback, deps) },
+    useRef(value) { return react.useMemo(() => ({ current: value }), []) },
     useState(initial) {
       const index = cursor++
-      if (!slots[index]) {
+      if (!activeSlots[index]) {
         const slot = { value: typeof initial === 'function' ? initial() : initial }
         slot.set = (next) => {
           slot.value = typeof next === 'function' ? next(slot.value) : next
           dirty = true
         }
-        slots[index] = slot
+        activeSlots[index] = slot
       }
-      return [slots[index].value, slots[index].set]
+      return [activeSlots[index].value, activeSlots[index].set]
     },
     useEffect(create, deps) {
       const index = cursor++
-      if (different(slots[index]?.deps, deps)) {
-        const effect = { deps, create, cleanup: slots[index]?.cleanup }
-        slots[index] = effect
+      if (different(activeSlots[index]?.deps, deps)) {
+        const effect = { deps, create, cleanup: activeSlots[index]?.cleanup }
+        activeSlots[index] = effect
         effects.push(effect)
       }
     },
   }
   const api = (path, init) => {
-    assert.equal(init.method, 'GET', 'the App result slice may only read through the controlled API')
+    if (init.method !== 'GET') {
+      assert.equal(init.method, 'POST')
+      assert.equal(publicationClick, true, 'publication requires an explicit click in the actual App')
+      assert.match(path, /\/factory\/work-items\/item-a\/publication\/(preview|request)$/)
+    }
     const response = deferred()
     calls.push({ path, init, response })
     return response.promise
@@ -792,17 +812,42 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
       },
     },
   })
+  const requestHook = evaluate(requestHookSource, {
+    react,
+    './humanPublicationRequest': {
+      ...publicationRequests,
+      humanPublicationRequest(selected, source, transport, publish, onSaved) {
+        return publicationRequests.humanPublicationRequest(selected, source, transport, publish, onSaved, clock)
+      },
+    },
+  })
+  const { PublicationRequestCard } = evaluate(requestCardSource, {
+    react, 'react/jsx-runtime': jsxRuntime,
+    './useHumanPublicationRequest': requestHook, './WorkResultCard': { WorkResultCard },
+  })
+  // Render the hook-bearing child once, in its own hook scope. Tree inspection
+  // and SSR then visit only its returned elements; they never rerun its hooks.
+  const renderJsx = (create) => (type, props, key) => {
+    if (type !== PublicationRequestCard) return create(type, props, key)
+    requestRendered = true
+    const parentSlots = activeSlots, parentCursor = cursor
+    activeSlots = requestSlots
+    cursor = 0
+    try { return PublicationRequestCard(props) }
+    finally { activeSlots = parentSlots; cursor = parentCursor }
+  }
   const storageKey = evidenceSelection.evidenceSelectionKey({
     server: appApiUrl, corpId: ids.corpId, actorId: ids.actorId, missionId: ids.missionId,
   })
   const storage = new Map([[storageKey, pinnedRunId]])
   const { AppMissionResult } = evaluate(appResultSource, {
-    react, 'react/jsx-runtime': jsxRuntime,
+    react, 'react/jsx-runtime': { ...jsxRuntime, jsx: renderJsx(jsxRuntime.jsx), jsxs: renderJsx(jsxRuntime.jsxs) },
     './workflowContext': workflow, './evidenceSelection': evidenceSelection,
     './factoryCheckpointRecovery': checkpointRecovery,
     './useMissionOriginContext': origin, './useMissionResultContext': result,
     './missionResultContext': reader, './WorkResultCard': { WorkResultCard },
     './PublishedResultCard': { PublishedResultCard },
+    './PublicationRequestCard': { PublicationRequestCard },
     'app-test-environment': {
       API_URL: appApiUrl, api,
       window: {
@@ -854,7 +899,12 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
     props = next
     cursor = 0
     dirty = false
+    requestRendered = false
     tree = AppMissionResult(props)
+    if (!requestRendered) {
+      requestSlots.forEach((slot) => slot.cleanup?.())
+      requestSlots.length = 0
+    }
     return renderToStaticMarkup(tree)
   }
   const commit = () => {
@@ -874,10 +924,17 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
     get props() { return props },
     get tree() { return tree },
     get pinned() { return storage.get(storageKey) },
+    clickPublication(name) {
+      const action = button(tree, name)
+      assert.equal(action.props.disabled, false)
+      publicationClick = true
+      try { action.props.onClick() } finally { publicationClick = false }
+    },
     async flush() { await tick(); update() },
     flushAnimationFrames() { animationFrames.splice(0).forEach((callback) => callback()) },
     unmount() {
       slots.forEach((slot) => slot.cleanup?.())
+      requestSlots.forEach((slot) => slot.cleanup?.())
       effects.length = 0
       animationFrames.length = 0
       assert.equal(clock.timers.size, 0)
@@ -903,6 +960,122 @@ function assertResultRefocus(view) {
   ])
   assert.equal(view.animationFrames.length, 0)
 }
+
+function appUnpublishedContext() {
+  const value = appContext({ phase: 'requested' })
+  value.publication = null
+  return value
+}
+
+function appPublicationPreview() {
+  const context = appContext({ phase: 'requested' })
+  const source = context.source_deliverables[0]
+  return {
+    plan: {
+      source_deliverable_id: source.id, target_repository: ids.sourceRepository,
+      base_ref: context.publication.base_ref, branch: context.publication.branch,
+      title: 'Review the selected result', body: 'Review this exact result.\nNo merge or deployment is requested.',
+    },
+    commit_sha: source.head_commit, artifact_sha256: source.sha256,
+    verification_sha256: source.verification_sha256, source_revision: 'source-a', fingerprint: 'f'.repeat(64),
+  }
+}
+
+async function loadAppPublicationContext(view, context) {
+  view.update()
+  await view.flush()
+  assert.equal(view.calls.length, 1)
+  view.calls[0].response.resolve(appOrigin())
+  await view.flush()
+  assert.equal(view.calls.length, 2)
+  view.calls[1].response.resolve(context)
+  await view.flush()
+  assert.ok(view.calls.every((call) => call.init.method === 'GET'), 'loading an available result never creates intent')
+}
+
+test('actual App requests the exact verified result and then shows durable waiting, including a running mission', async () => {
+  for (const status of ['completed', 'running']) {
+    const view = appResultFixture()
+    try {
+      view.update({ ...view.props, mission: { ...view.props.mission, status } })
+      await loadAppPublicationContext(view, appUnpublishedContext())
+      assert.equal(view.calls.length, 2)
+      assert.equal(view.tree.props['data-run-id'], deliveredRunId)
+      assert.equal(elements(view.tree, 'a').length, 0)
+      view.clickPublication(/^Preview pull request$/)
+      assert.equal(view.calls.length, 3)
+      assert.deepEqual(JSON.parse(view.calls[2].init.body), {
+        actor_id: ids.actorId, source_deliverable_id: appUnpublishedContext().source_deliverables[0].id,
+      })
+      view.calls[2].response.resolve(appPublicationPreview())
+      await view.flush()
+      assert.match(text(view.tree), /Review the pull request target/)
+      assert.ok(text(view.tree).includes(headCommit))
+      assert.ok(text(view.tree).includes(deliveredRunId))
+      view.clickPublication(/^Request pull request$/)
+      view.clickPublication(/^Request pull request$/)
+      assert.equal(view.calls.length, 4, 'a repeated click shares the pending request')
+      const request = view.calls[3]
+      assert.match(request.path, /\/publication\/request$/)
+      assert.deepEqual(JSON.parse(request.init.body), { actor_id: ids.actorId, preview: appPublicationPreview() })
+      assert.equal(Object.hasOwn(request.init, 'signal'), false, 'view lifecycle cannot cancel durable intent')
+      const requested = appContext({ phase: 'requested' })
+      request.response.resolve({
+        publisher_token: null,
+        publication: { ...requested.publication, title: appPublicationPreview().plan.title, body: appPublicationPreview().plan.body },
+      })
+      await view.flush()
+      assert.equal(view.calls.length, 5, 'confirmed intent refreshes the authoritative result once')
+      assert.equal(view.calls[4].init.method, 'GET')
+      view.calls[4].response.resolve(requested)
+      await view.flush()
+      assert.match(text(view.tree), /Waiting for a trusted publisher/)
+      assert.doesNotMatch(text(view.tree), /\bPublishing\b|Preparing the pull request|Preview pull request/)
+      assert.equal(elements(view.tree, 'a').length, 0)
+      assert.equal(view.pinned, deliveredRunId)
+      assert.deepEqual(view.storageWrites, [])
+      assert.deepEqual(view.actions, [])
+      assert.equal(view.calls.length, 5)
+    } finally { view.unmount() }
+  }
+})
+
+test('actual App disconnect leaves an explicit request in flight without retry or late refresh', async () => {
+  const view = appResultFixture()
+  let unmounted = false
+  try {
+    await loadAppPublicationContext(view, appUnpublishedContext())
+    view.clickPublication(/^Preview pull request$/)
+    view.calls[2].response.resolve(appPublicationPreview())
+    await view.flush()
+    view.clickPublication(/^Request pull request$/)
+    const request = view.calls[3]
+    assert.equal(Object.hasOwn(request.init, 'signal'), false)
+    view.unmount()
+    unmounted = true
+    const requested = appContext({ phase: 'requested' })
+    request.response.resolve({ publisher_token: null, publication: {
+      ...requested.publication, title: appPublicationPreview().plan.title, body: appPublicationPreview().plan.body,
+    } })
+    await tick()
+    assert.equal(view.calls.length, 4, 'an unmounted requester does not retry or refresh')
+    assert.deepEqual(view.storageWrites, [])
+    assert.deepEqual(view.actions, [])
+  } finally { if (!unmounted) view.unmount() }
+})
+
+test('actual App keeps a historical pin and does not offer another run for publication', async () => {
+  const view = appResultFixture({ pinnedRunId: olderRunId })
+  try {
+    await loadAppPublicationContext(view, appUnpublishedContext())
+    assert.doesNotMatch(text(view.tree), /Preview pull request|Request pull request/)
+    assert.equal(view.tree.props['data-run-id'], olderRunId)
+    assert.equal(view.pinned, olderRunId)
+    assert.equal(view.calls.length, 2)
+    assert.deepEqual(view.storageWrites, [])
+    assert.deepEqual(view.actions, [])
+  } finally { view.unmount() }
+})
 
 test('actual App origin-unavailable branch offers manual Refresh work context with no PR CTA', async () => {
   const view = appResultFixture()

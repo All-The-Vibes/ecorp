@@ -214,6 +214,7 @@ test('published DTO retains only bound result metadata and leaves raw input unto
 test('only explicit null publication in a correctly scoped response is known absence', async () => {
   const input = contextFor()
   input.publication = null
+  input.source_deliverables = []
   const load = await readResult(input)
   assert.equal(load.status, 'ready')
   assert.equal(load.context.publication, null)
@@ -225,6 +226,66 @@ test('only explicit null publication in a correctly scoped response is known abs
     unavailable(await readResult(bad))
   }
   for (const bad of [null, {}, [], { ...input, source_deliverables: null }]) unavailable(await readResult(bad))
+})
+
+test('unpublished source stays bound to the selected run and contains no raw authority', async () => {
+  const input = contextFor(scope, 'requested')
+  input.publication = null
+  const load = await readResult(input)
+  const view = missionResultPresentation(scope, load, {
+    id: 'run-a', task_id: 'task-a', verification_sha256: verification, deliverable_sha256: digest,
+  })
+  assert.equal(view.state, 'available')
+  assert.equal(view.deliverable.id, 'deliverable-a')
+  assert.equal(view.deliverable.head_commit, headCommit)
+  assert.equal(view.pullRequestUrl, null)
+  assert.equal(view.publication, null)
+  assert.doesNotMatch(JSON.stringify(view), /policy|workspace_path|private-native-path|arbitrary_url/)
+  assert.equal(missionResultPresentation(scope, load, { id: 'old-run' }).state, 'none')
+  for (const selected of [
+    { id: 'run-a', task_id: 'other-task' },
+    { id: 'run-a', verification_sha256: 'f'.repeat(64) },
+    { id: 'run-a', deliverable_sha256: null },
+  ]) assert.equal(missionResultPresentation(scope, load, selected).state, 'unavailable')
+})
+
+test('unpublished alternatives require explicit selection and never pick the first available run', async () => {
+  const input = contextFor(scope, 'requested')
+  input.publication = null
+  input.source_deliverables.push({
+    ...input.source_deliverables[0], id: 'deliverable-b', task_id: 'task-b', run_id: 'run-b',
+    artifact_id: 'artifact-b', uri: '/api/corps/corp-a/artifacts/artifact-b',
+    head_commit: 'f'.repeat(40),
+  })
+  const load = await readResult(input)
+  const view = missionResultPresentation(scope, load)
+  assert.equal(view.state, 'available')
+  assert.equal(view.deliverable, null, 'mission-level view cannot silently choose a source')
+  assert.equal(view.candidates.length, 2)
+  assert.equal(missionResultPresentation(scope, load, { id: 'run-b' }).deliverable.id, 'deliverable-b')
+  input.source_deliverables.reverse()
+  assert.equal(missionResultPresentation(scope, await readResult(input)).deliverable, null)
+})
+
+test('unpublished candidates reject foreign scope, invalid metadata and duplicate identities', async () => {
+  for (const [key, value] of [
+    ['corp_id', 'other-corp'], ['run_id', ''], ['task_id', ''],
+    ['uri', 'https://untrusted.invalid/'], ['head_commit', headCommit.slice(0, 12)],
+    ['verification_sha256', null], ['provenance_signature', 'not-signed'],
+    ['file_name', '../source.bundle'], ['bytes', -1],
+  ]) {
+    const input = contextFor(scope, 'requested')
+    input.publication = null
+    input.source_deliverables[0][key] = value
+    unavailable(await readResult(input))
+  }
+  const duplicate = contextFor(scope, 'requested')
+  duplicate.publication = null
+  duplicate.source_deliverables.push({ ...duplicate.source_deliverables[0] })
+  unavailable(await readResult(duplicate))
+  const alreadyIntegrated = contextFor()
+  alreadyIntegrated.publication = null
+  assert.equal(missionResultPresentation(scope, await readResult(alreadyIntegrated)).state, 'none')
 })
 
 test('item and publication scope mismatches never expose links or known absence', async () => {

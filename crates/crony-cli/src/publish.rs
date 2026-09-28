@@ -20,6 +20,9 @@ use crate::factory::{
     source_git_output,
 };
 
+mod requests;
+pub use requests::{FactoryPublisherWatchArgs, watch};
+
 #[derive(Debug, Args)]
 pub struct FactoryPublishArgs {
     pub corp_id: Uuid,
@@ -76,6 +79,11 @@ pub struct FactoryPublishArgs {
 
     #[arg(long)]
     pub dry_run: bool,
+
+    // Only the enrolled-worker adapter can choose this transport. It derives
+    // the plan and authorizer from saved intent, never command-line options.
+    #[arg(skip)]
+    requested_publication_id: Option<Uuid>,
 }
 
 #[derive(Debug)]
@@ -279,13 +287,23 @@ pub async fn run(client: &Client, server: &str, args: FactoryPublishArgs) -> Res
         None,
     )
     .await?;
+    run_context(client, server, args, context).await
+}
+
+async fn run_context(
+    client: &Client,
+    server: &str,
+    args: FactoryPublishArgs,
+    context: Value,
+) -> Result<Value> {
+    validate_args(&args)?;
     let publication_is_complete = published_publication_exists(&context, args.work_item_id);
     let plan = publication_plan(&args, &context)?;
     validate_publication_branch(&plan.branch)?;
     if args.dry_run {
         return Ok(plan_json(&args, &plan, "dry_run", None));
     }
-    if !publication_is_complete {
+    if !publication_is_complete && args.requested_publication_id.is_none() {
         preflight_publication_target(&plan)?;
     }
 
@@ -346,6 +364,21 @@ async fn start_publication(
     plan: &PublicationPlan,
     idempotency_key: &str,
 ) -> Result<PullRequestPublicationResponse> {
+    if let Some(publication_id) = args.requested_publication_id {
+        let response = publisher_server_json(
+            client,
+            Method::POST,
+            publication_endpoint(server, args, publication_id, "/claim"),
+            Some(json!({
+                "repository": plan.target_repository,
+                "idempotency_key": idempotency_key,
+                "lease_seconds": args.lease_seconds,
+            })),
+            args,
+        )
+        .await?;
+        return serde_json::from_value(response).context("decode requested publication claim");
+    }
     let response = publisher_server_json(
         client,
         Method::POST,
@@ -414,6 +447,38 @@ async fn get_publication(
     server: &str,
     args: &FactoryPublishArgs,
 ) -> Result<PullRequestPublicationResponse> {
+    if let Some(publication_id) = args.requested_publication_id {
+        let context = requests::read_context(
+            client,
+            server,
+            args.corp_id,
+            args.repository
+                .as_deref()
+                .context("requested publication repository is missing")?,
+            publication_id,
+            args.publisher_credential_file
+                .as_deref()
+                .context("publisher credential file is missing")?,
+        )
+        .await?;
+        let publication: PullRequestPublication = serde_json::from_value(
+            context
+                .get("publication")
+                .cloned()
+                .context("requested publication is missing")?,
+        )
+        .context("decode requested publication status")?;
+        let busy = publication.state != PullRequestPublicationState::Published
+            && publication
+                .publisher_lease_expires_at
+                .is_some_and(|expiry| expiry > chrono::Utc::now());
+        return Ok(PullRequestPublicationResponse {
+            publication,
+            publisher_token: None,
+            replayed: false,
+            busy,
+        });
+    }
     let response = server_json(
         client,
         Method::GET,
@@ -436,6 +501,10 @@ async fn execute_publication(
     publisher_token: Uuid,
 ) -> Result<()> {
     ensure_publication_matches_plan(&response.publication, plan)?;
+    if args.requested_publication_id.is_some() {
+        // Failure after claiming is persisted by the same native cleanup path.
+        preflight_publication_target(plan)?;
+    }
     test_crash("after_plan_validation");
     renew_publication(
         client,
@@ -447,7 +516,8 @@ async fn execute_publication(
         "prepare",
     )
     .await?;
-    let bytes = download_deliverable(client, server, args, plan.artifact_id).await?;
+    let bytes =
+        download_deliverable(client, server, args, &response.publication, publisher_token).await?;
     let document: CommitBranchDocument =
         serde_json::from_slice(&bytes).context("decode commit/branch deliverable")?;
     let bundle = validate_deliverable_document(&document, &response.publication)?;
@@ -712,20 +782,14 @@ async fn renew_publication(
     stage: &str,
 ) -> Result<()> {
     let version = response.publication.version;
+    let mut body = publication_control_body(args, publisher_token, version);
+    body["idempotency_key"] = json!(format!("{}:renew:{stage}:{version}", plan.effect_key));
+    body["lease_seconds"] = json!(effect_lease_seconds(args));
     let value = publisher_server_json(
         client,
         Method::POST,
-        format!(
-            "{server}/api/corps/{}/factory/publications/{}/renew",
-            args.corp_id, response.publication.id
-        ),
-        Some(json!({
-            "actor_id": args.actor_id,
-            "publisher_token": publisher_token,
-            "expected_version": version,
-            "idempotency_key": format!("{}:renew:{stage}:{version}", plan.effect_key),
-            "lease_seconds": effect_lease_seconds(args),
-        })),
+        publication_endpoint(server, args, response.publication.id, "/renew"),
+        Some(body),
         args,
     )
     .await?;
@@ -748,20 +812,14 @@ async fn checkpoint(
     checkpoint: Value,
 ) -> Result<()> {
     let version = response.publication.version;
+    let mut body = publication_control_body(args, publisher_token, version);
+    body["idempotency_key"] = json!(format!("{}:checkpoint:{stage}:{version}", plan.effect_key));
+    body["checkpoint"] = checkpoint;
     let value = publisher_server_json(
         client,
         Method::POST,
-        format!(
-            "{server}/api/corps/{}/factory/publications/{}/checkpoint",
-            args.corp_id, response.publication.id
-        ),
-        Some(json!({
-            "actor_id": args.actor_id,
-            "publisher_token": publisher_token,
-            "expected_version": version,
-            "idempotency_key": format!("{}:checkpoint:{stage}:{version}", plan.effect_key),
-            "checkpoint": checkpoint
-        })),
+        publication_endpoint(server, args, response.publication.id, "/checkpoint"),
+        Some(body),
         args,
     )
     .await?;
@@ -803,13 +861,32 @@ async fn download_deliverable(
     client: &Client,
     server: &str,
     args: &FactoryPublishArgs,
-    artifact_id: Uuid,
+    publication: &PullRequestPublication,
+    publisher_token: Uuid,
 ) -> Result<Vec<u8>> {
-    let response = client
-        .get(format!(
-            "{server}/api/corps/{}/artifacts/{artifact_id}?actor_id={}",
-            args.corp_id, args.actor_id
+    let request = if args.requested_publication_id.is_some() {
+        publisher_request(
+            client,
+            Method::POST,
+            &publication_endpoint(server, args, publication.id, "/artifact"),
+            args.publisher_credential_file
+                .as_deref()
+                .context("publisher credential file is missing")?,
+        )?
+        .json(&publication_control_body(
+            args,
+            publisher_token,
+            publication.version,
         ))
+    } else {
+        client.get(format!(
+            "{server}/api/corps/{}/artifacts/{artifact_id}?actor_id={}",
+            args.corp_id,
+            args.actor_id,
+            artifact_id = publication.artifact_id
+        ))
+    };
+    let response = request
         .send()
         .await
         .context("download source deliverable")?;
@@ -819,10 +896,7 @@ async fn download_deliverable(
         .await
         .context("read source deliverable response")?;
     if !status.is_success() {
-        bail!(
-            "source deliverable download failed with HTTP {status}: {}",
-            sanitize_failure_detail(&String::from_utf8_lossy(&bytes))
-        );
+        bail!("source deliverable download failed with HTTP {status}");
     }
     Ok(bytes.to_vec())
 }
@@ -1888,15 +1962,37 @@ async fn publisher_server_json(
         .publisher_credential_file
         .as_ref()
         .context("trusted publication publisher credential file is required")?;
-    let credential =
-        fs::read_to_string(path).context("read trusted publication publisher credential file")?;
+    publisher_json(client, method, &url, body, path).await
+}
+
+fn publisher_request(
+    client: &Client,
+    method: Method,
+    url: &str,
+    credential_file: &Path,
+) -> Result<reqwest::RequestBuilder> {
+    let credential = fs::read_to_string(credential_file)
+        .context("read trusted publication publisher credential file")?;
     let credential = credential.trim();
     if credential.is_empty() || credential.len() > 256 || credential.chars().any(char::is_control) {
         bail!("trusted publication publisher credential file is invalid");
     }
-    let mut request = client
-        .request(method, &url)
-        .header("x-crony-publication-publisher-credential", credential);
+    let mut header = reqwest::header::HeaderValue::from_str(credential)
+        .context("invalid trusted publication publisher credential")?;
+    header.set_sensitive(true);
+    Ok(client
+        .request(method, url)
+        .header("x-crony-publication-publisher-credential", header))
+}
+
+async fn publisher_json(
+    client: &Client,
+    method: Method,
+    url: &str,
+    body: Option<Value>,
+    credential_file: &Path,
+) -> Result<Value> {
+    let mut request = publisher_request(client, method, url, credential_file)?;
     if let Some(body) = body {
         request = request.json(&body);
     }
@@ -1905,13 +2001,42 @@ async fn publisher_server_json(
         .await
         .with_context(|| format!("request {url}"))?;
     let status = response.status();
-    let text = response.text().await?;
-    let body: Value = serde_json::from_str(&text)
-        .with_context(|| format!("decode response from {url}: {text}"))?;
     if !status.is_success() {
-        bail!("ECorp API returned {status}: {body}");
+        bail!("trusted publisher API returned HTTP {status}");
     }
-    Ok(body)
+    // Do not put raw response bodies in errors: successful lease responses
+    // contain fencing tokens, and an intermediary could return malformed JSON.
+    response
+        .json()
+        .await
+        .context("decode trusted publisher API response")
+}
+
+fn publication_endpoint(
+    server: &str,
+    args: &FactoryPublishArgs,
+    publication_id: Uuid,
+    suffix: &str,
+) -> String {
+    let workload = if args.requested_publication_id.is_some() {
+        "publisher/"
+    } else {
+        ""
+    };
+    format!(
+        "{server}/api/corps/{}/factory/{workload}publications/{publication_id}{suffix}",
+        args.corp_id
+    )
+}
+
+fn publication_control_body(args: &FactoryPublishArgs, token: Uuid, version: i64) -> Value {
+    let mut body = json!({ "publisher_token": token, "expected_version": version });
+    if args.requested_publication_id.is_some() {
+        body["repository"] = json!(args.repository);
+    } else {
+        body["actor_id"] = json!(args.actor_id);
+    }
+    body
 }
 
 fn default_publisher_id() -> String {

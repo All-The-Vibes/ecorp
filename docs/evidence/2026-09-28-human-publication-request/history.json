@@ -1,0 +1,1166 @@
+{
+  "scope": "Observed development and fixture history; failed assertion snapshots remain private; no original chronology is invented.",
+  "runs": [
+    {
+      "receipt": "issue219-unpublished-reader-red-r1.json",
+      "original_receipt_sha256": "ff6a6df091e272f0557b3960da089cbe210446dbae7d127f0282d2eb97bd5e3d",
+      "head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "exit_code": 1,
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-unpublished-reader-red-r1.log",
+          "original_sha256": "2503deec7098b7fb661c98c1e47c85efc197d698d8ed8394690ba105cff048ec",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-request-ui-red-r1.json",
+      "original_receipt_sha256": "676503769cf94b8c238e30157b0b5541dbbb2084ce0ba7f64764033718a9783b",
+      "status": "assertion-red-observed",
+      "started_at_utc": "2026-09-28T01:25:23.6161520Z",
+      "finished_at_utc": "2026-09-28T01:25:29.5015793Z",
+      "head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "counts": {
+        "tests": 18,
+        "pass": 17,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "assertion_failure_observed": true,
+      "checks": [
+        {
+          "name": "install-root",
+          "exit_code": 0
+        },
+        {
+          "name": "install-web",
+          "exit_code": 0
+        },
+        {
+          "name": "node",
+          "exit_code": 1
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-request-ui-red-r1-install-root.log",
+          "original_sha256": "69a9dcd5ec47841ad2002b969d319a60684953bd5f0df8549db1d0b61b4c9cd7",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-request-ui-red-r1-install-web.log",
+          "original_sha256": "5ad1dc5d1152081fca940458c0fad36160917122abf13805b9989d0c08c2f087",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-request-ui-red-r1-node.log",
+          "original_sha256": "7d8536c762e873a4b4bf0597c6dd0c4b9e5fb70d1fbe11be1216f0334f322773",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-request-ui-green-r1.json",
+      "original_receipt_sha256": "1ca1cde7b1ab26be4c1a84300e5faccabd5a84e95fb376c5e03660cd0fb538e9",
+      "status": "focused-passed",
+      "started_at_utc": "2026-09-28T01:26:14.429488+00:00",
+      "finished_at_utc": "2026-09-28T01:26:15.908247+00:00",
+      "head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "exit_code": 0,
+      "counts": {
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-request-ui-green-r1.log",
+          "original_sha256": "d7bd6c804b8a3468169d0c1106b5bb4ef3076d370d9e2dc91a70a59f08515e51",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-publication-red-r1.json",
+      "original_receipt_sha256": "161270e575802bf941eb57ddca6065ff3dfd542be43dd71c5103b5636c90089d",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T03:16:14.1752189Z",
+      "finished_at_utc": "2026-09-28T03:23:31.2529297Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 0,
+            "passed": 0
+          }
+        },
+        {
+          "name": "human-publication-permission",
+          "exit_code": 101,
+          "counts": {
+            "failed": 1,
+            "ignored": 0,
+            "summaries": 1,
+            "passed": 0
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-publication-red-r1-initdb.log",
+          "original_sha256": "d6754bf27270ed8f8cff354669f1ccaa5812c24075e91c60077243bb7f442239",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-publication-red-r1-tests.log",
+          "original_sha256": "9c902aae254f3a5bf490d13cad0ac85ff8d047cdcba4d5bc52f3ad76296a688f",
+          "selected_result_lines": 3,
+          "excerpt": "history/publication-red-r1-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-publication-green-r1.json",
+      "original_receipt_sha256": "79cd86f40f2c12213caea71edec4734882a10d4deead572fe3573758ee3ce57e",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T03:26:36.2200019Z",
+      "finished_at_utc": "2026-09-28T03:29:15.3752280Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 0,
+            "summaries": 0
+          }
+        },
+        {
+          "name": "human-publication-permission",
+          "exit_code": 0,
+          "counts": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "summaries": 1
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-publication-green-r1-initdb.log",
+          "original_sha256": "9917e355818ae03fb37d4d89bb94a655b89585c4fc8e01f939c4d6e1a09f0082",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-publication-green-r1-tests.log",
+          "original_sha256": "9d17620fab93a545a46b2d60416f7ccdad7b86c51f8eaa05c7f89940974de8a8",
+          "selected_result_lines": 3,
+          "excerpt": "history/publication-green-r1-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-request-red-r1.json",
+      "original_receipt_sha256": "58228d20604eb25e9beba1d2d79fe627dba94dc7c66297aab2d49488550d10af",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T03:55:42.3625989Z",
+      "finished_at_utc": "2026-09-28T03:59:08.2249833Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "ignored": 0,
+            "passed": 0,
+            "failed": 0,
+            "summaries": 0
+          }
+        },
+        {
+          "name": "human-publication-request",
+          "exit_code": 101,
+          "counts": {
+            "ignored": 0,
+            "passed": 1,
+            "failed": 2,
+            "summaries": 1
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-request-red-r1-initdb.log",
+          "original_sha256": "ac2705f0ddf8192a4f6f8faa6a3253b057f77ff8d4b90b0b0c85ebc4e28a0eb4",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-request-red-r1-tests.log",
+          "original_sha256": "f597f01e0077b767e19295cdfc927fda9141e5b5d19f8dfd56ddfb21d1774d3c",
+          "selected_result_lines": 5,
+          "excerpt": "history/request-red-r1-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-request-green-r1.json",
+      "original_receipt_sha256": "d06d0bf6ed5c8f050601339484a511d57ee398a6f71c77c8d6c67d8da6a71b74",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T04:02:16.5326428Z",
+      "finished_at_utc": "2026-09-28T04:05:00.1414263Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 0,
+            "passed": 0,
+            "ignored": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "human-publication-request",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 1,
+            "passed": 3,
+            "ignored": 0,
+            "failed": 0
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-request-green-r1-initdb.log",
+          "original_sha256": "0992f3acee7c46ae680f265d434912b5bc96c1af1a3d3be7e23b9704123adb7a",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-request-green-r1-tests.log",
+          "original_sha256": "a98f483e576767d392865c1555e79ff3fac1a7d6e85532b219cf2810810dc19a",
+          "selected_result_lines": 5,
+          "excerpt": "history/request-green-r1-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-red-r2.json",
+      "original_receipt_sha256": "f29479f994d37e726717be132e45226524c5851b4e3a29a4ca9223856cff1ebc",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T04:46:16.3246905Z",
+      "finished_at_utc": "2026-09-28T04:49:26.3854982Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 0
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 101,
+          "counts": {
+            "passed": 4,
+            "failed": 6,
+            "ignored": 0,
+            "summaries": 1
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-execution-red-r2-initdb.log",
+          "original_sha256": "6d69a963ed66d816505b543b87da9c983d81c121c39ab34542516677d8c7a281",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-execution-red-r2-tests.log",
+          "original_sha256": "3373b6c75fec77d8eceb505c57fd750f4a6ae2fd5fb554345bf49ac66e0f440c",
+          "selected_result_lines": 12,
+          "excerpt": "history/execution-red-r2-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-green-r1.json",
+      "original_receipt_sha256": "efcab3de1f77b9d33b5182c4ac1f9b306c8b71edddafd8493101504e72ebb711",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T04:51:54.2810861Z",
+      "finished_at_utc": "2026-09-28T04:54:36.0476063Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 0,
+            "passed": 0,
+            "ignored": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 1,
+            "passed": 10,
+            "ignored": 0,
+            "failed": 0
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-execution-green-r1-initdb.log",
+          "original_sha256": "ea408f68cca2840c6af39e6b19bc6dcd88a06ed17293540e6576eecd59bbceee",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-execution-green-r1-tests.log",
+          "original_sha256": "5516ba94ed548d52a8c8f57a150382e620cc4a461a5feaf16cb567efcd9b39c5",
+          "selected_result_lines": 12,
+          "excerpt": "history/execution-green-r1-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-worker-r1.json",
+      "original_receipt_sha256": "0044cf13b8f88eb079883da54c6ff43ab412d35f96c11725eea20ddf72638c85",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T05:13:45.0602654Z",
+      "finished_at_utc": "2026-09-28T05:21:52.2367019Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 0,
+            "ignored": 0,
+            "failed": 0,
+            "passed": 0
+          }
+        },
+        {
+          "name": "server-and-cli-compile",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 0,
+            "ignored": 0,
+            "failed": 0,
+            "passed": 0
+          }
+        },
+        {
+          "name": "publisher-watcher-unit-regressions",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 1,
+            "ignored": 0,
+            "failed": 0,
+            "passed": 2
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 101,
+          "counts": {
+            "summaries": 1,
+            "ignored": 0,
+            "failed": 2,
+            "passed": 11
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-execution-worker-r1-initdb.log",
+          "original_sha256": "f3560db48952079e8658084f13ca8abba4d2e962352ace95b672ffd870abf1e2",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-execution-worker-r1-compile.log",
+          "original_sha256": "d68bc7f77a278ef9318af1566ce26059b1db1df77c62af7807897348c5726c8c",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-execution-worker-r1-cli-tests.log",
+          "original_sha256": "366b7b03e12eda09a58bbd2e78b4f7863849e699456d12da39498e955314d1af",
+          "selected_result_lines": 4,
+          "excerpt": "history/execution-worker-r1-3.txt"
+        },
+        {
+          "source_name": "issue219-execution-worker-r1-tests.log",
+          "original_sha256": "e128a4d6e91b489231e220cf7582c703102db9dce617c2c16112f524537afffd",
+          "selected_result_lines": 15,
+          "excerpt": "history/execution-worker-r1-4.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-worker-r2.json",
+      "original_receipt_sha256": "02b719c3bf860e6f06f40a3f383b005a93206a3f3f58c980fc08fef2342df73f",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T05:29:09.8712065Z",
+      "finished_at_utc": "2026-09-28T05:32:05.3337085Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "failed": 0,
+            "passed": 0,
+            "ignored": 0,
+            "summaries": 0
+          }
+        },
+        {
+          "name": "server-and-cli-compile",
+          "exit_code": 0,
+          "counts": {
+            "failed": 0,
+            "passed": 0,
+            "ignored": 0,
+            "summaries": 0
+          }
+        },
+        {
+          "name": "publisher-watcher-unit-regressions",
+          "exit_code": 0,
+          "counts": {
+            "failed": 0,
+            "passed": 2,
+            "ignored": 0,
+            "summaries": 1
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 0,
+          "counts": {
+            "failed": 0,
+            "passed": 13,
+            "ignored": 0,
+            "summaries": 1
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-execution-worker-r2-initdb.log",
+          "original_sha256": "87c324dfbc6b5abd445544636729f8407d672a442f9c7f9b94b65c0620316e87",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-execution-worker-r2-compile.log",
+          "original_sha256": "e769c67f2bc6ef1a93c7a80a01257393d2acf46d738845b2f5a074840898fcca",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-execution-worker-r2-cli-tests.log",
+          "original_sha256": "dc31977de9916f6aa7451ed3c914661d3ec62ac0127d57f05f44ae7aca943912",
+          "selected_result_lines": 4,
+          "excerpt": "history/execution-worker-r2-3.txt"
+        },
+        {
+          "source_name": "issue219-execution-worker-r2-tests.log",
+          "original_sha256": "9e7562db4601065fb4d41b86f0bf09ff326bc24ab96268f6ac677764637d437c",
+          "selected_result_lines": 15,
+          "excerpt": "history/execution-worker-r2-4.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-publication-controller-red-r1.json",
+      "original_receipt_sha256": "6ca2f8bc59dc18a99e1846ed86f4279e8b98f8b38ab00f9202248946958326f2",
+      "started_at_utc": "2026-09-28T05:30:47.5219187+00:00",
+      "finished_at_utc": "2026-09-28T05:30:47.9544370+00:00",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "exit_code": 1,
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-publication-controller-red-r1.log",
+          "original_sha256": "817feca51b061c5464bc0f97e91ab4ac9a93cc0122d598472d33e37c3f1ccfd6",
+          "selected_result_lines": 8,
+          "excerpt": "history/publication-controller-red-r1-1.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-ui-cards-red-r1.json",
+      "original_receipt_sha256": "0e55ecc859bfe92a52eab285f7a76773363c75f458ac31d79dfa30bdbc306951",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T05:35:45.1464559+00:00",
+      "finished_at_utc": "2026-09-28T05:35:46.3489448+00:00",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "exit_code": 1,
+      "source_unchanged": true,
+      "counts": {
+        "tests": 12,
+        "todo": 0,
+        "pass": 11,
+        "skipped": 0,
+        "fail": 1,
+        "suites": 0,
+        "cancelled": 0
+      },
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-ui-cards-red-r1.log",
+          "original_sha256": "931c73b69d4a98240b58093487123772c4c62a927e6a5d0f2a963dcf72d0bdc2",
+          "selected_result_lines": 8,
+          "excerpt": "history/ui-cards-red-r1-1.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-ui-cards-green-r1.json",
+      "original_receipt_sha256": "42b61046f315416d592a2557799833d6e67a4793979b7123342a9c7d602bf234",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T05:36:41.0186923+00:00",
+      "finished_at_utc": "2026-09-28T05:36:42.4463966+00:00",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "exit_code": 0,
+      "source_unchanged": true,
+      "counts": {
+        "fail": 0,
+        "cancelled": 0,
+        "pass": 55,
+        "todo": 0,
+        "skipped": 0,
+        "suites": 0,
+        "tests": 55
+      },
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-ui-cards-green-r1.log",
+          "original_sha256": "ae0081800721b3515ae1b16300bc1ecaa17374f06b6c27af496e541f569fab72",
+          "selected_result_lines": 8,
+          "excerpt": "history/ui-cards-green-r1-1.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-ui-app-red-r1.json",
+      "original_receipt_sha256": "a3d487726fc4652f7be024af778d8d22537e8a106ef07a3ca882c479e1307e86",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T05:53:39.1472000+00:00",
+      "finished_at_utc": "2026-09-28T05:53:41.2389518+00:00",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "exit_code": 1,
+      "source_unchanged": true,
+      "counts": {
+        "skipped": 0,
+        "pass": 19,
+        "tests": 21,
+        "cancelled": 0,
+        "suites": 0,
+        "todo": 0,
+        "fail": 2
+      },
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-ui-app-red-r1.log",
+          "original_sha256": "5d1b21872e20122dde90503f67ace18fe76af944c088d5c1171b73858afd9da4",
+          "selected_result_lines": 8,
+          "excerpt": "history/ui-app-red-r1-1.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-ui-app-green-r1.json",
+      "original_receipt_sha256": "3b08772699ac2b66ebefec39a1619990addf27f89ccec849b3475b214eedc0af",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T05:54:18.6116830+00:00",
+      "finished_at_utc": "2026-09-28T05:54:20.1464830+00:00",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "exit_code": 0,
+      "source_unchanged": true,
+      "counts": {
+        "skipped": 0,
+        "cancelled": 0,
+        "suites": 0,
+        "pass": 58,
+        "todo": 0,
+        "fail": 0,
+        "tests": 58
+      },
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-ui-app-green-r1.log",
+          "original_sha256": "3f801f03bec3f9bf6a7e87b39bf95efad0d065a5d4cdaf180805a1a4946597c9",
+          "selected_result_lines": 8,
+          "excerpt": "history/ui-app-green-r1-1.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-red-r1.json",
+      "original_receipt_sha256": "fc58f2a18bcc90de3caf3dd805c7ec8266a853afe7eeddd61b240ad0d9b7fb5f",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T06:45:44.1753647Z",
+      "finished_at_utc": "2026-09-28T06:49:55.2547893Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "ignored": 0,
+            "failed": 0,
+            "passed": 0,
+            "summaries": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "counts": {
+            "ignored": 0,
+            "failed": 0,
+            "passed": 0,
+            "summaries": 0
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-handler-red-r1-initdb.log",
+          "original_sha256": "4ecd7bd8544c1cb6b23e9146f73bd7819a68206755032e134506dc0b8267c8ea",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-handler-red-r1-tests.log",
+          "original_sha256": "4010f2a8b736e872456361a73c647bf96ba7c52512cd0dec132d483fcc61c427",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-red-r2.json",
+      "original_receipt_sha256": "08cfef1d4651ae3fa62f4a10f74755642496e01a4a9cb6a1d23987401f97f790",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T06:51:17.1859281Z",
+      "finished_at_utc": "2026-09-28T06:52:57.1515681Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "failed": 0,
+            "ignored": 0,
+            "summaries": 0,
+            "passed": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "counts": {
+            "failed": 3,
+            "ignored": 0,
+            "summaries": 2,
+            "passed": 0
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-handler-red-r2-initdb.log",
+          "original_sha256": "4263764b9ef544f29fd7993ee10369f9598cabc9ad86ad85c650a37299c90e29",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-handler-red-r2-tests.log",
+          "original_sha256": "4bc57271013c8dec1ee6fa6ce75bbb9973ffdb07e091ef06b2757181f60c60ab",
+          "selected_result_lines": 7,
+          "excerpt": "history/handler-red-r2-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-red-r3.json",
+      "original_receipt_sha256": "d174e8e7a1688b5a592a08bbb9395bcf988d238d7d8e0d96a634d776dc4073d7",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T06:57:36.6707401Z",
+      "finished_at_utc": "2026-09-28T06:58:41.4057850Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 0,
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "counts": {
+            "summaries": 2,
+            "passed": 0,
+            "failed": 3,
+            "ignored": 0
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-handler-red-r3-initdb.log",
+          "original_sha256": "d09fe0eff225bc6717a012409f38fc493832cde31873a2efc93b077852c52947",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-handler-red-r3-tests.log",
+          "original_sha256": "da9ad9b5779e2a5035027adc9a17c13d8489595e202af9f6325a6d60b1747c2c",
+          "selected_result_lines": 7,
+          "excerpt": "history/handler-red-r3-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-red-r4.json",
+      "original_receipt_sha256": "8856a0ca378295ab2a5fb4c97c6a4fd2118d2303be53cae14a5489f8f5b9bc3a",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T06:59:39.6709415Z",
+      "finished_at_utc": "2026-09-28T07:00:38.2525556Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 0,
+            "failed": 0,
+            "passed": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "counts": {
+            "summaries": 2,
+            "failed": 2,
+            "passed": 1,
+            "ignored": 0
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-handler-red-r4-initdb.log",
+          "original_sha256": "6574f6de2533c0420cbdf303d366e6d3a165e17c9607fe19dda8e37b9c40d893",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-handler-red-r4-tests.log",
+          "original_sha256": "70809ce6f9902b895efbffd5d3887fc2bdb1d83c088a47c15ab03a94a0b18d5c",
+          "selected_result_lines": 7,
+          "excerpt": "history/handler-red-r4-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-green-r1.json",
+      "original_receipt_sha256": "180ffbc91a067447cd02c19b6300617a50ed5e090fc580cffbb1d5a82987c00f",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T07:10:23.6143280Z",
+      "finished_at_utc": "2026-09-28T07:11:58.6277940Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 0,
+            "passed": 0,
+            "ignored": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "counts": {
+            "summaries": 2,
+            "passed": 4,
+            "ignored": 0,
+            "failed": 1
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-handler-green-r1-initdb.log",
+          "original_sha256": "2629ee0fc61056f025882a1a07d77079bb6e05e3533798061f4c9bf30af85bb0",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-handler-green-r1-tests.log",
+          "original_sha256": "0633423e93110c8435803f41a5bd10ca8a06f7bfc5dc8204a37e44f11fcc4034",
+          "selected_result_lines": 9,
+          "excerpt": "history/handler-green-r1-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-green-r2.json",
+      "original_receipt_sha256": "6996c899f4de5adff04f4c8c40f490996d0e525b80a31c0fd53a8e8486429847",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T07:15:13.4844584Z",
+      "finished_at_utc": "2026-09-28T07:16:13.9748641Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "passed": 0,
+            "summaries": 0,
+            "ignored": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "counts": {
+            "passed": 4,
+            "summaries": 2,
+            "ignored": 0,
+            "failed": 1
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-handler-green-r2-initdb.log",
+          "original_sha256": "18aeac3538e7b7d0ce9973d5f7460bc3a3c9d472a9938c6e6d6380dd8949f4fc",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-handler-green-r2-tests.log",
+          "original_sha256": "699e99e3bb2d155906650c39eacee9433092914b756dbba0d257375229cf21b2",
+          "selected_result_lines": 9,
+          "excerpt": "history/handler-green-r2-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-handler-green-r3.json",
+      "original_receipt_sha256": "e62c7cb1a9abacc528c25214ebe0f4496ac029ffb647be2a9de58d761e37c89c",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T07:18:36.1930419Z",
+      "finished_at_utc": "2026-09-28T07:19:32.8900560Z",
+      "source_head": "078eb986352c8f219baeea5fddf4b8e9ff25e51e",
+      "parent_tree": "aa8fc9ca1b9c51e4a5eea2ff6571e90aee4537f1",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 0,
+            "passed": 0,
+            "ignored": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 2,
+            "passed": 5,
+            "ignored": 0,
+            "failed": 0
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-handler-green-r3-initdb.log",
+          "original_sha256": "b42b6d1869d7c2322756c9117096c3ceb1891b7872a36aef6526a9d5124aa72c",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-handler-green-r3-tests.log",
+          "original_sha256": "2750fb4e4e3db756ec7de816b4ad507de55d124a58393efc802140a883606981",
+          "selected_result_lines": 9,
+          "excerpt": "history/handler-green-r3-2.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-execution-worker-r3.json",
+      "original_receipt_sha256": "11bf8e6851c651b9dfb75f09935a648fc65e5136e9d1673dd2e1454111a16c89",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T07:22:55.1001286Z",
+      "finished_at_utc": "2026-09-28T07:26:32.1232240Z",
+      "source_head": "1f515103b7c4e6d02631fe2006921085f8e8d79e",
+      "parent_tree": "eeb7f0bee8fae7266cc3f2274a66d9b09516717a",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "summaries": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "server-and-cli-compile",
+          "exit_code": 0,
+          "counts": {
+            "passed": 0,
+            "failed": 0,
+            "summaries": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "publisher-watcher-unit-regressions",
+          "exit_code": 0,
+          "counts": {
+            "passed": 2,
+            "failed": 0,
+            "summaries": 1,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-request-and-execution",
+          "exit_code": 0,
+          "counts": {
+            "passed": 13,
+            "failed": 0,
+            "summaries": 1,
+            "ignored": 0
+          }
+        }
+      ],
+      "logs": [
+        {
+          "source_name": "issue219-execution-worker-r3-initdb.log",
+          "original_sha256": "623ab88a6be0806385ed8f0fc2ca59fe2788c21291d9ee449f08ae77c7b2314e",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-execution-worker-r3-compile.log",
+          "original_sha256": "36f74083ce422c0702c6aaad767d56f6df3db0e4095e0f4d70396cc2d7228ed9",
+          "selected_result_lines": 0
+        },
+        {
+          "source_name": "issue219-execution-worker-r3-cli-tests.log",
+          "original_sha256": "734a782018cc2dd51e24e91910612f81e39c0a1073c645fc9a37e98be7014827",
+          "selected_result_lines": 4,
+          "excerpt": "history/execution-worker-r3-3.txt"
+        },
+        {
+          "source_name": "issue219-execution-worker-r3-tests.log",
+          "original_sha256": "f60efc7a139a6994fe7f98c2427242ae77df4b6a05082d1e04b2378421da55a5",
+          "selected_result_lines": 15,
+          "excerpt": "history/execution-worker-r3-4.txt"
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-browser-r1.json",
+      "original_receipt_sha256": "d67ef69474f77bcc51e8a3629f012954ac70cb25a20c935e1b488404d2d43fd3",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T07:42:39.660372+00:00",
+      "finished_at_utc": "2026-09-28T07:43:23.762244+00:00",
+      "head": "1f515103b7c4e6d02631fe2006921085f8e8d79e",
+      "head_tree": "eeb7f0bee8fae7266cc3f2274a66d9b09516717a",
+      "exit_code": 1,
+      "source_and_binaries_unchanged": true,
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-browser-r1.log",
+          "original_sha256": "bb22f72a30166fde2c0f258c80c5835818c19f4ac2db440ec4d9ce9da07d5ddc",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-browser-r2.json",
+      "original_receipt_sha256": "2b7d50f8e6eff837a766707e54084613a6e5e6e33c0480ed064431d0e8b792b6",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T07:45:36.299816+00:00",
+      "finished_at_utc": "2026-09-28T07:46:15.118463+00:00",
+      "head": "1f515103b7c4e6d02631fe2006921085f8e8d79e",
+      "head_tree": "eeb7f0bee8fae7266cc3f2274a66d9b09516717a",
+      "exit_code": 1,
+      "source_and_binaries_unchanged": true,
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-browser-r2.log",
+          "original_sha256": "740627c728cd818af19cbad581a2dd5dfa30ccbf40a3688b660be15ae2f6065f",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-browser-r3.json",
+      "original_receipt_sha256": "5c7a35d560c0407b1e73fdf2509bf1f6903e4c0856caeec143d102c7b71ca9a4",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T07:49:36.438712+00:00",
+      "finished_at_utc": "2026-09-28T07:55:44.112947+00:00",
+      "head": "1f515103b7c4e6d02631fe2006921085f8e8d79e",
+      "head_tree": "eeb7f0bee8fae7266cc3f2274a66d9b09516717a",
+      "exit_code": 1,
+      "source_and_binaries_unchanged": true,
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-browser-r3.log",
+          "original_sha256": "d1f3316e73e7c33366dd4c2e1c11cc6e4286dbb064271b38cda672cf811fd8dd",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-browser-r4.json",
+      "original_receipt_sha256": "1f7b78e09116d8f880d0b9fcd0e20f28c112c9dcf255291676b8c8dca59a2ae3",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T08:00:21.703840+00:00",
+      "finished_at_utc": "2026-09-28T08:03:43.078029+00:00",
+      "head": "1f515103b7c4e6d02631fe2006921085f8e8d79e",
+      "head_tree": "eeb7f0bee8fae7266cc3f2274a66d9b09516717a",
+      "exit_code": 1,
+      "source_and_binaries_unchanged": true,
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-browser-r4.log",
+          "original_sha256": "a407e3b61d6a3b969a444df316b4e64dfcea9c0552f450a398c091ca5d45822a",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-browser-r5.json",
+      "original_receipt_sha256": "57f06bbd7c53f344e34f2dfca0579a12f4b13cc9875876cd480e00aebc364d82",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T08:06:41.990438+00:00",
+      "finished_at_utc": "2026-09-28T08:10:52.470387+00:00",
+      "head": "1f515103b7c4e6d02631fe2006921085f8e8d79e",
+      "head_tree": "eeb7f0bee8fae7266cc3f2274a66d9b09516717a",
+      "exit_code": 1,
+      "source_and_binaries_unchanged": true,
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-browser-r5.log",
+          "original_sha256": "789e8ea59fedf3f648383a54be306b720d9b3b13b8103680fef3ec11fdfd4a74",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-browser-r6.json",
+      "original_receipt_sha256": "9cfb0f125f972e7880fb822f91f7891a2e97a0f2561fe957caaeb26297feda8b",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T08:22:59.778976+00:00",
+      "finished_at_utc": "2026-09-28T08:28:02.889998+00:00",
+      "head": "1f515103b7c4e6d02631fe2006921085f8e8d79e",
+      "head_tree": "eeb7f0bee8fae7266cc3f2274a66d9b09516717a",
+      "exit_code": 0,
+      "source_and_binaries_unchanged": true,
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-browser-r6.log",
+          "original_sha256": "6a2bd352c847a66421a8c4427ae35743d40865d51c12315d4beb808aef289856",
+          "selected_result_lines": 0
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-browser-r7.json",
+      "original_receipt_sha256": "8e0f0b074098e8f862239283e1aa628e3b50748326237ce3d9f86e091eb9f215",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T09:01:42.401307+00:00",
+      "finished_at_utc": "2026-09-28T09:07:06.721740+00:00",
+      "head": "fea25059c0af95a86a2fde39209d82e61a1a1385",
+      "head_tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+      "exit_code": 0,
+      "source_and_binaries_unchanged": true,
+      "checks": [],
+      "logs": [
+        {
+          "source_name": "issue219-browser-r7.log",
+          "original_sha256": "fd239603fae4cc76fe01fab2f0a1e64f54fdfe11e5d6b4603440d6896cc9498c",
+          "selected_result_lines": 0
+        }
+      ]
+    }
+  ]
+}

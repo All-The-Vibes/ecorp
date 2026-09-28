@@ -45,6 +45,7 @@ import { useMissionResultContext } from './useMissionResultContext'
 import { missionResultPresentation } from './missionResultContext'
 import { WorkResultCard } from './WorkResultCard'
 import { PublishedResultCard } from './PublishedResultCard'
+import { PublicationRequestCard } from './PublicationRequestCard'
 import { RunActivityDetails } from './RunActivityDetails'
 import { presentRunActivity, selectActivityRun } from './runActivity'
 import {
@@ -1525,12 +1526,23 @@ function FactoryPanel({
                   </h3>
                   {selected.mission_id && selectedResult.state !== 'none' ? (
                     <div data-testid="factory-publication">
-                      <PublishedResultCard
-                        result={selectedResult}
-                        busy={busy}
-                        onRefresh={resultRead.refresh}
-                        onDownload={(deliverable) => void onDownloadDeliverable(deliverable)}
-                      />
+                      {selectedResult.state === 'available' ? (
+                        <PublicationRequestCard
+                          scope={resultRead.scope}
+                          result={selectedResult}
+                          api={api}
+                          busy={busy}
+                          onRefresh={resultRead.refresh}
+                          onDownload={(deliverable) => void onDownloadDeliverable(deliverable)}
+                        />
+                      ) : (
+                        <PublishedResultCard
+                          result={selectedResult}
+                          busy={busy}
+                          onRefresh={resultRead.refresh}
+                          onDownload={(deliverable) => void onDownloadDeliverable(deliverable)}
+                        />
+                      )}
                       {runActivity ? <RunActivityDetails key={runActivity.runId} view={runActivity} /> : null}
                     </div>
                   ) : (
@@ -3182,7 +3194,8 @@ function MissionCard({
     : undefined
   const showPublicationResult = exactOrigin?.kind === 'factory' &&
     deliveredResult.state !== 'none' &&
-    (mission.status === 'completed' || Boolean(resultRead.current?.status === 'ready' && resultRead.current.context.publication))
+    (deliveredResult.state === 'available' || mission.status === 'completed' ||
+      Boolean(resultRead.current?.status === 'ready' && resultRead.current.context.publication))
   const refreshWorkContext = () => {
     originRead.refresh()
     window.requestAnimationFrame(() => focusWorkSection(`mission-result-${mission.id}`))
@@ -3346,6 +3359,15 @@ function MissionCard({
       ) : originRead.pending && mission.status === 'completed' ? (
         <WorkResultCard heading="Finding the work item" status="Loading" pending
           description="Checking the work item’s source and delivery context. Your selected evidence stays unchanged." />
+      ) : showPublicationResult && deliveredResult.state === 'available' ? (
+        <PublicationRequestCard
+          scope={resultRead.scope}
+          result={deliveredResult}
+          api={api}
+          busy={busy}
+          onRefresh={resultRead.refresh}
+          onDownload={(deliverable) => void onDownloadDeliverable(deliverable)}
+        />
       ) : showPublicationResult ? (
         <PublishedResultCard
           result={deliveredResult}

@@ -143,6 +143,13 @@ plan into a claim that every planned surface has shipped.
   credential-owning publisher. Durable attempts recover matching branch, pull-request, and Project
   effects after duplicate calls, restart, timeout, or partial remote success; merge, auto-merge, and
   deployment remain separately unauthorized.
+- An authorized human can preview the selected verified result and request publication from the
+  browser. The server saves the exact human intent without a publisher attempt, token, lease, or
+  external effect. A bounded repository-scoped trusted publisher watcher reuses the native
+  publication engine and rechecks the recorded human's current authority before effects. The
+  browser shows waiting, working, failed, and published states and the exact PR link; disconnecting
+  it does not cancel the request or start another coding run. This human intent remains distinct
+  from prospective machine-authorized publication.
 - Factory dry runs and executions now validate the exact mission payload, policy, provider
   selection, graph budgets, verifier policy, write scope, operation size, and room authorization
   before a durable Project claim. A post-claim validation race moves the exact claim generation to a

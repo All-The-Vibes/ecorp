@@ -1,0 +1,27 @@
+{
+  "created_at_utc": "2026-09-28T07:45:06.916484+00:00",
+  "reason": "r1 failed before native execution because the fake GitHub CLI compares its repository key literally while the native controller canonicalizes the requested repository to lowercase.",
+  "fix": "Use a lowercase fake lookup key and retain the mixed-case canonical GitHub URL. Preserve all product source and assertions; use a fresh fixture.",
+  "product_changed": false,
+  "prior_failed_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-r1.json",
+  "derivations": [
+    {
+      "original": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-native-r1.mjs",
+      "original_sha256": "33f51dc16585ce3d22b0309048beb0ff51a7f166c243330ddf1dd9621a8bb54a",
+      "derivative": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-native-r2.mjs",
+      "derivative_sha256": "8babd0d7185baeb9ded74fb604da30712ac6673f88d1dcbfccb3425e3218dd63"
+    },
+    {
+      "original": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-driver-r1.ps1",
+      "original_sha256": "01ead5ad1e3e95d49bde9bae21303f573899cb702a3980e41255d0a4c671a00d",
+      "derivative": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-browser-driver-r2.ps1",
+      "derivative_sha256": "886a4981d757ec549db1d3a042961a2fbfef301a5c77afb494b7fe6ed17ccdf3"
+    },
+    {
+      "original": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue219-browser-r1.py",
+      "original_sha256": "87b1b4d5902b41b48098613883795e4588c233e4839a14b0d5aec352109f9257",
+      "derivative": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue219-browser-r2.py",
+      "derivative_sha256": "3b66c7addd802c17b23c927979acfea200b5ce54e335517b3dfcae06571c7097"
+    }
+  ]
+}

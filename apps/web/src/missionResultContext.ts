@@ -55,6 +55,7 @@ export type MissionResultContext = Readonly<{
   source_repository: string
   publication: MissionResultPublication | null
   deliverable: MissionResultDeliverable | null
+  candidates?: readonly MissionResultDeliverable[]
 }>
 
 export type MissionResultLoad =
@@ -69,11 +70,12 @@ export type MissionResultRun = Readonly<{
 }>
 
 export type MissionResultPresentation = {
-  state: 'loading' | 'unavailable' | 'none' | 'mismatch' | 'pending' | 'failed' | 'pr_created' | 'published'
+  state: 'loading' | 'unavailable' | 'none' | 'available' | 'mismatch' | 'pending' | 'failed' | 'pr_created' | 'published'
   publication: MissionResultPublication | null
   deliverable: MissionResultDeliverable | null
   pullRequestUrl: string | null
   resultRunId: string | null
+  candidates?: readonly MissionResultDeliverable[]
 }
 
 function identifier(value: unknown): value is string {
@@ -128,6 +130,37 @@ function containsIdentity(value: unknown, id: string): boolean {
     new Set(value).size === value.length && value.includes(id)
 }
 
+function unpublishedCandidate(d: Record<string, unknown>, scope: MissionResultScope): MissionResultDeliverable {
+  const commit = hash(d.head_commit, true)
+  const bytesDigest = hash(d.sha256)
+  const verificationDigest = hash(d.verification_sha256)
+  const baseCommit = hash(d.base_commit, true)
+  const signature = hash(d.provenance_signature)
+  if (d.corp_id !== scope.corpId || !identifier(d.id) || !identifier(d.task_id) ||
+    !identifier(d.run_id) || !identifier(d.artifact_id) || d.form !== 'commit_branch' ||
+    !commit || !bytesDigest || !verificationDigest || !baseCommit || !signature ||
+    !text(d.branch) || !text(d.file_name, 255) || /[\\/:]/.test(d.file_name) ||
+    ['.', '..'].includes(d.file_name) || !text(d.media_type, 128) ||
+    !/^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/i.test(d.media_type) ||
+    !positiveInteger(d.bytes) || typeof d.integration_state !== 'string' ||
+    !['not_applicable', 'ready_for_review', 'published', 'integrated'].includes(d.integration_state) ||
+    !text(d.retention_until, 64) || !Number.isFinite(Date.parse(d.retention_until))) {
+    throw new Error('Invalid unpublished source')
+  }
+  const uri = `/api/corps/${encodeURIComponent(scope.corpId)}/artifacts/${encodeURIComponent(d.artifact_id)}`
+  if (d.uri !== uri) throw new Error('Mismatched unpublished artifact')
+  // This is a candidate from the room-authorized mission endpoint. Its preview
+  // must still pass native accepted-lineage, source, policy and Publish gates.
+  return Object.freeze({
+    id: d.id, task_id: d.task_id, run_id: d.run_id, artifact_id: d.artifact_id,
+    form: 'commit_branch', file_name: d.file_name, uri, sha256: bytesDigest,
+    media_type: d.media_type, bytes: d.bytes, provenance_signature: signature,
+    verification_sha256: verificationDigest, base_commit: baseCommit, head_commit: commit,
+    branch: d.branch, integration_state: d.integration_state as MissionResultDeliverable['integration_state'],
+    retention_until: d.retention_until,
+  })
+}
+
 /** Recreate on view/identity/API/role changes or an explicit retry, including A -> B -> A. */
 export function missionResultScope(input: {
   corpId: string | null | undefined
@@ -171,7 +204,21 @@ function readContext(value: unknown, scope: MissionResultScope): MissionResultCo
   }
   // This endpoint does not echo actor/room. Those remain bound to this request
   // generation; current Operate and mission-room authorization belong to the server.
-  if (value.publication === null) return { ...identity, publication: null, deliverable: null }
+  if (value.publication === null) {
+    const seen = new Set<string>()
+    const candidates: MissionResultDeliverable[] = []
+    for (const source of value.source_deliverables) {
+      if (!record(source) || source.corp_id !== scope.corpId || !identifier(source.id) ||
+        seen.has(source.id) || !['commit_branch', 'patch', 'archive', 'typed_artifact_set', 'review_only_report'].includes(String(source.form))) {
+        throw new Error('Invalid or ambiguous unpublished sources')
+      }
+      seen.add(source.id)
+      if (source.form !== 'commit_branch') continue
+      const candidate = unpublishedCandidate(source, scope)
+      if (candidate.integration_state === 'ready_for_review') candidates.push(candidate)
+    }
+    return { ...identity, publication: null, deliverable: null, candidates: Object.freeze(candidates) }
+  }
   const p = value.publication
   if (!record(p) || p.corp_id !== scope.corpId || p.mission_id !== scope.missionId ||
     p.factory_work_item_id !== scope.workItemId ||
@@ -342,7 +389,25 @@ export function missionResultPresentation(
   if (!current) return empty('unavailable')
   if (current.status !== 'ready') return empty(current.status === 'pending' ? 'loading' : 'unavailable')
   const { publication, deliverable } = current.context
-  if (!publication) return empty('none')
+  if (!publication) {
+    let candidates = current.context.candidates ?? []
+    if (selectedRun !== undefined && selectedRun !== null) {
+      if (!record(selectedRun) || !identifier(selectedRun.id)) return empty('unavailable')
+      candidates = candidates.filter((source) => source.run_id === selectedRun.id)
+      if (candidates.some((source) =>
+        (selectedRun.task_id !== undefined && selectedRun.task_id !== source.task_id) ||
+        (selectedRun.verification_sha256 !== undefined && hash(selectedRun.verification_sha256) !== source.verification_sha256) ||
+        (selectedRun.deliverable_sha256 !== undefined && hash(selectedRun.deliverable_sha256) !== source.sha256))) {
+        return empty('unavailable')
+      }
+    }
+    if (!candidates.length) return empty('none')
+    const source = candidates.length === 1 ? candidates[0] : null
+    return {
+      state: 'available', publication: null, deliverable: source, candidates,
+      pullRequestUrl: null, resultRunId: source?.run_id ?? null,
+    }
+  }
   if (!deliverable) return empty('unavailable')
   if (selectedRun !== undefined && selectedRun !== null) {
     if (!record(selectedRun) || !identifier(selectedRun.id)) return empty('unavailable')

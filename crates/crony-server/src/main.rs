@@ -17,6 +17,9 @@ mod factory_readiness;
 #[cfg(test)]
 mod factory_source_audit_tests;
 mod planning;
+#[cfg(test)]
+mod publication_request_tests;
+mod publication_requests;
 mod secrets;
 mod staffing;
 mod startup;
@@ -621,6 +624,7 @@ async fn run_server() -> anyhow::Result<()> {
         .route("/api/corps/{corp_id}/base-audit",post(base_audit::handle))
         .merge(workspace_connections::routes())
         .merge(delegated::routes())
+        .merge(publication_requests::human_routes())
         .route("/api/corps/{corp_id}/snapshot", get(snapshot))
         .route("/api/corps/{corp_id}/factory/authority", get(factory_authority::inspect))
         .route(
@@ -806,6 +810,7 @@ async fn run_server() -> anyhow::Result<()> {
         .route("/ws/runner", get(runner_websocket))
         .layer(TraceLayer::new_for_http());
     app = app.merge(delegated::private_routes());
+    app = app.merge(publication_requests::publisher_routes());
 
     if args.mode == ServerMode::Development {
         app = app
@@ -2667,9 +2672,16 @@ async fn download_artifact(
         .await
         .map_err(ApiError::internal)?
         .ok_or_else(|| ApiError::not_found("artifact was not found"))?;
+    verified_artifact_response(&state, &artifact).await
+}
+
+async fn verified_artifact_response(
+    state: &AppState,
+    artifact: &crony_store::StoredArtifact,
+) -> Result<Response, ApiError> {
     let bytes = state
         .artifacts
-        .read_verified(&artifact)
+        .read_verified(artifact)
         .await
         .map_err(ApiError::internal)?;
     let mut response = Response::new(Body::from(bytes.clone()));
@@ -4672,7 +4684,30 @@ async fn record_pull_request_publication_checkpoint(
     )
     .await?;
     let publisher = authenticate_publication_publisher(&state, &headers, corp_id).await?;
-    let checkpoint = match request.checkpoint {
+    let checkpoint = publication_checkpoint_input(request.checkpoint);
+    let outcome = state
+        .store
+        .record_pull_request_publication_checkpoint(RecordPullRequestPublicationCheckpointInput {
+            corp_id,
+            publication_id,
+            actor_id,
+            publisher_id: publisher.publisher_id,
+            publisher_credential_hash: publisher.credential_hash,
+            publisher_token: request.publisher_token,
+            expected_version: request.expected_version,
+            idempotency_key: request.idempotency_key,
+            checkpoint,
+        })
+        .await
+        .map_err(map_store_error)?;
+    publish_publication_events(&state, &outcome);
+    Ok(Json(publication_response(outcome)))
+}
+
+fn publication_checkpoint_input(
+    checkpoint: PullRequestPublicationCheckpoint,
+) -> PullRequestPublicationCheckpointInput {
+    match checkpoint {
         PullRequestPublicationCheckpoint::BranchPushed { commit_sha } => {
             PullRequestPublicationCheckpointInput::BranchPushed { commit_sha }
         }
@@ -4717,24 +4752,7 @@ async fn record_pull_request_publication_checkpoint(
         PullRequestPublicationCheckpoint::Failed { failure_detail } => {
             PullRequestPublicationCheckpointInput::Failed { failure_detail }
         }
-    };
-    let outcome = state
-        .store
-        .record_pull_request_publication_checkpoint(RecordPullRequestPublicationCheckpointInput {
-            corp_id,
-            publication_id,
-            actor_id,
-            publisher_id: publisher.publisher_id,
-            publisher_credential_hash: publisher.credential_hash,
-            publisher_token: request.publisher_token,
-            expected_version: request.expected_version,
-            idempotency_key: request.idempotency_key,
-            checkpoint,
-        })
-        .await
-        .map_err(map_store_error)?;
-    publish_publication_events(&state, &outcome);
-    Ok(Json(publication_response(outcome)))
+    }
 }
 
 fn publish_publication_events(state: &AppState, outcome: &PullRequestPublicationOutcome) {

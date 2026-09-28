@@ -1,0 +1,257 @@
+{
+  "issue": 219,
+  "purpose": "Human publication worker compilation and execution-authority regressions with current real migrations and an owned database; source hashes bind Rust and migration inputs only; not browser or remote effect acceptance",
+  "source_head": "fea25059c0af95a86a2fde39209d82e61a1a1385",
+  "parent_tree": "70ca1719de097ef9b27819acc847e9dce14b19b2",
+  "source_files": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "crates/crony-cli/src/main.rs",
+      "sha256": "b0772138d0fa93dc17ab34607b49254301d4268e0e9d79af321d3f2b007165a9"
+    },
+    {
+      "path": "crates/crony-cli/src/publish.rs",
+      "sha256": "f48eae2c11b2f1e8fc3e34f837e9c8a2a14e4beffb37d75bd1934125596c59d7"
+    },
+    {
+      "path": "crates/crony-cli/src/publish/requests.rs",
+      "sha256": "d9b2b1725323202342061730d945243850fefae710a532e8e2c96d7337b4567a"
+    },
+    {
+      "path": "crates/crony-domain/src/lib.rs",
+      "sha256": "b3dd3023ecc27d848881a172888820b9432ae4a65343fb1a2eda531401b44ba6"
+    },
+    {
+      "path": "crates/crony-protocol/src/lib.rs",
+      "sha256": "6ee4ad04d30c199a88d4306cc3b594bddc73ed2b776794620dc02a7175df531c"
+    },
+    {
+      "path": "crates/crony-protocol/src/publication_requests.rs",
+      "sha256": "c51f29141213438a2d6d7053a8c5ca3b3f6ac5006e2c9bf32028e5343f22f5fb"
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "ca48f52ecd497caed3a8521311860b729e29a19b666e1ad50993630654d798b0"
+    },
+    {
+      "path": "crates/crony-server/src/publication_request_tests.rs",
+      "sha256": "89409bc02e83742ce02d4d054f9b6612438c55fb4b63733d245627fc06d64a1a"
+    },
+    {
+      "path": "crates/crony-server/src/publication_requests.rs",
+      "sha256": "f6442e36a4306e1d7e31b689502e35f1445e1b99cd2543f1124d7f2ad0c58401"
+    },
+    {
+      "path": "crates/crony-store/src/budget_checkpoint_tests.rs",
+      "sha256": "88151b5b79424557ce6be7dbff707feb68cd735b8f26a5c2fb282a57ec99b30d"
+    },
+    {
+      "path": "crates/crony-store/src/human_publication_request_tests.rs",
+      "sha256": "0e1d60d5098977f5de9c98efd08439cb6e8b1fb32f7be5cb81d5a6294ed08bf2"
+    },
+    {
+      "path": "crates/crony-store/src/lib.rs",
+      "sha256": "27b890b2ea7d80da1132735c3d54d81e136c3ff32383bf64b032e55d21795764"
+    },
+    {
+      "path": "crates/crony-store/src/publication.rs",
+      "sha256": "78b642015343508b95966e85255522da57a15793e01350bea88ecac9f5290dd8"
+    },
+    {
+      "path": "crates/crony-store/src/publication/request.rs",
+      "sha256": "3301957a35a9136961e21067c9100718e431005ea62cf00468ed0139c5506145"
+    },
+    {
+      "path": "crates/crony-store/src/publication/worker.rs",
+      "sha256": "0635a27fabad079956378fed7afc60b817c8630f99539f96f34dadcccb707cb1"
+    },
+    {
+      "path": "db/migrations/0057_human_publication_requests.sql",
+      "sha256": "572f844bab7a75f7d6035aab71c7e6063e212164f29059765025d7d35c861d9c"
+    },
+    {
+      "path": "db/migrations/manifest.json",
+      "sha256": "f830fb8769d68b060b74a8b3656f4f27158cacaf77db4f9c3a91111c946340e2"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "dirty_source": [
+    " M apps/web/src/App.tsx",
+    " M apps/web/src/PublishedResultCard.tsx",
+    " M apps/web/src/WorkResultCard.css",
+    " M apps/web/src/missionResultContext.test.mjs",
+    " M apps/web/src/missionResultContext.ts",
+    " M apps/web/src/workResultCard.test.mjs",
+    " M crates/crony-cli/src/main.rs",
+    " M crates/crony-cli/src/publish.rs",
+    " M crates/crony-domain/src/lib.rs",
+    " M crates/crony-protocol/src/lib.rs",
+    " M crates/crony-server/src/main.rs",
+    " M crates/crony-store/src/budget_checkpoint_tests.rs",
+    " M crates/crony-store/src/lib.rs",
+    " M crates/crony-store/src/publication.rs",
+    " M db/migrations/manifest.json",
+    " M docs/ARCHITECTURE.md",
+    " M docs/EVALS.md",
+    " M docs/PRODUCT_AND_TECHNICAL_PLAN.md",
+    " M docs/SECURITY.md",
+    "?? apps/web/src/PublicationRequestCard.tsx",
+    "?? apps/web/src/humanPublicationRequest.test.mjs",
+    "?? apps/web/src/humanPublicationRequest.ts",
+    "?? apps/web/src/publicationRequestCard.test.mjs",
+    "?? apps/web/src/useHumanPublicationRequest.ts",
+    "?? crates/crony-cli/src/publish/",
+    "?? crates/crony-protocol/src/publication_requests.rs",
+    "?? crates/crony-server/src/publication_request_tests.rs",
+    "?? crates/crony-server/src/publication_requests.rs",
+    "?? crates/crony-store/src/human_publication_request_tests.rs",
+    "?? crates/crony-store/src/publication/",
+    "?? db/migrations/0057_human_publication_requests.sql"
+  ],
+  "qa_root": "<USERPROFILE>\\code\\qa\\issue219-execution-20260928-integrated-r1",
+  "started_at_utc": "2026-09-28T08:56:06.2279598Z",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "owned-postgresql-initialization",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-execution-integrated-r1-initdb.log",
+      "sha256": "63782014e8eb17f7389c94f201f2877fa78007bf7972c386cfcd355300e9c893",
+      "counts": {
+        "ignored": 0,
+        "passed": 0,
+        "summaries": 0,
+        "failed": 0
+      }
+    },
+    {
+      "name": "server-and-cli-compile",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-execution-integrated-r1-compile.log",
+      "sha256": "e194098cf16c592a0b2f91b8e229c99c94a24d1db01de193ed8baeebe38d9429",
+      "counts": {
+        "ignored": 0,
+        "passed": 0,
+        "summaries": 0,
+        "failed": 0
+      }
+    },
+    {
+      "name": "publisher-watcher-unit-regressions",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-execution-integrated-r1-cli-tests.log",
+      "sha256": "516686b5a44e77d5fccebe92ccdf8628e33c42ecf299e0c871cca146876e2189",
+      "counts": {
+        "ignored": 0,
+        "passed": 2,
+        "summaries": 1,
+        "failed": 0
+      }
+    },
+    {
+      "name": "human-publication-request-and-execution",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue219-execution-integrated-r1-tests.log",
+      "sha256": "01fba7d17ce55e3ceb41c3a06f28ff6653e670614a6862a64dd9a9399c3a359b",
+      "counts": {
+        "ignored": 0,
+        "passed": 13,
+        "summaries": 1,
+        "failed": 0
+      }
+    }
+  ],
+  "cleanup": "Only the exact owned PostgreSQL stopped; fixture data, credentials and logs retained.",
+  "authentication": {
+    "wrong_password_rejected": true,
+    "authenticated_query": true,
+    "method": "scram-sha-256",
+    "delivery": "Private PGPASSFILE for clients. SQLx environment-only delivery is reduced assurance."
+  },
+  "source_after": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "121c1f903f0a5b79d55840270b78791d43c5d3c5c9474be6ae5c369bffa6dd8b"
+    },
+    {
+      "path": "crates/crony-cli/src/main.rs",
+      "sha256": "b0772138d0fa93dc17ab34607b49254301d4268e0e9d79af321d3f2b007165a9"
+    },
+    {
+      "path": "crates/crony-cli/src/publish.rs",
+      "sha256": "f48eae2c11b2f1e8fc3e34f837e9c8a2a14e4beffb37d75bd1934125596c59d7"
+    },
+    {
+      "path": "crates/crony-cli/src/publish/requests.rs",
+      "sha256": "d9b2b1725323202342061730d945243850fefae710a532e8e2c96d7337b4567a"
+    },
+    {
+      "path": "crates/crony-domain/src/lib.rs",
+      "sha256": "b3dd3023ecc27d848881a172888820b9432ae4a65343fb1a2eda531401b44ba6"
+    },
+    {
+      "path": "crates/crony-protocol/src/lib.rs",
+      "sha256": "6ee4ad04d30c199a88d4306cc3b594bddc73ed2b776794620dc02a7175df531c"
+    },
+    {
+      "path": "crates/crony-protocol/src/publication_requests.rs",
+      "sha256": "c51f29141213438a2d6d7053a8c5ca3b3f6ac5006e2c9bf32028e5343f22f5fb"
+    },
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "sha256": "ca48f52ecd497caed3a8521311860b729e29a19b666e1ad50993630654d798b0"
+    },
+    {
+      "path": "crates/crony-server/src/publication_request_tests.rs",
+      "sha256": "89409bc02e83742ce02d4d054f9b6612438c55fb4b63733d245627fc06d64a1a"
+    },
+    {
+      "path": "crates/crony-server/src/publication_requests.rs",
+      "sha256": "f6442e36a4306e1d7e31b689502e35f1445e1b99cd2543f1124d7f2ad0c58401"
+    },
+    {
+      "path": "crates/crony-store/src/budget_checkpoint_tests.rs",
+      "sha256": "88151b5b79424557ce6be7dbff707feb68cd735b8f26a5c2fb282a57ec99b30d"
+    },
+    {
+      "path": "crates/crony-store/src/human_publication_request_tests.rs",
+      "sha256": "0e1d60d5098977f5de9c98efd08439cb6e8b1fb32f7be5cb81d5a6294ed08bf2"
+    },
+    {
+      "path": "crates/crony-store/src/lib.rs",
+      "sha256": "27b890b2ea7d80da1132735c3d54d81e136c3ff32383bf64b032e55d21795764"
+    },
+    {
+      "path": "crates/crony-store/src/publication.rs",
+      "sha256": "78b642015343508b95966e85255522da57a15793e01350bea88ecac9f5290dd8"
+    },
+    {
+      "path": "crates/crony-store/src/publication/request.rs",
+      "sha256": "3301957a35a9136961e21067c9100718e431005ea62cf00468ed0139c5506145"
+    },
+    {
+      "path": "crates/crony-store/src/publication/worker.rs",
+      "sha256": "0635a27fabad079956378fed7afc60b817c8630f99539f96f34dadcccb707cb1"
+    },
+    {
+      "path": "db/migrations/0057_human_publication_requests.sql",
+      "sha256": "572f844bab7a75f7d6035aab71c7e6063e212164f29059765025d7d35c861d9c"
+    },
+    {
+      "path": "db/migrations/manifest.json",
+      "sha256": "f830fb8769d68b060b74a8b3656f4f27158cacaf77db4f9c3a91111c946340e2"
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "86810d0ace88a635a96ed7a8d7d432afa6950c0c0b99f78f6e905ed9616a9882"
+    }
+  ],
+  "source_unchanged": true,
+  "finished_at_utc": "2026-09-28T08:58:05.9640712Z"
+}

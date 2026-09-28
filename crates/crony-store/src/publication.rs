@@ -1,5 +1,8 @@
 use super::*;
 
+mod request;
+mod worker;
+
 const PUBLICATION_SELECT: &str = r#"
     SELECT publication.id, publication.corp_id, publication.factory_work_item_id,
            publication.mission_id, publication.source_deliverable_id,
@@ -157,9 +160,17 @@ impl PgStore {
                        deliverable.created_at
                 FROM source_deliverables deliverable
                 JOIN artifacts artifact
-                  ON artifact.id = deliverable.artifact_id AND artifact.status = 'ready'
-                JOIN tasks task ON task.id = deliverable.task_id
-                JOIN missions mission ON mission.id = task.mission_id
+                  ON artifact.id = deliverable.artifact_id
+                 AND artifact.corp_id = deliverable.corp_id
+                 AND artifact.task_id = deliverable.task_id
+                 AND artifact.run_id = deliverable.run_id AND artifact.status = 'ready'
+                JOIN runs run
+                  ON run.id = deliverable.run_id AND run.corp_id = deliverable.corp_id
+                 AND run.task_id = deliverable.task_id
+                JOIN tasks task
+                  ON task.id = deliverable.task_id AND task.corp_id = deliverable.corp_id
+                JOIN missions mission
+                  ON mission.id = task.mission_id AND mission.corp_id = deliverable.corp_id
                 JOIN room_memberships membership ON membership.room_id = mission.room_id
                 WHERE deliverable.corp_id = $1
                   AND task.mission_id = $2
@@ -336,12 +347,23 @@ impl PgStore {
                     busy: false,
                 });
             }
-            validate_publication_prerequisites(
+            let prerequisites = validate_publication_prerequisites(
                 &mut tx,
                 &PublicationPrerequisiteRequest::from_start(&normalized),
                 true,
             )
             .await?;
+            let human_request = request::human_request_tx(&mut tx, &publication).await?;
+            if let Some(request) = &human_request {
+                request::ensure_human_request_matches_start(request, &normalized)?;
+                request::revalidate_human_request_prerequisites_tx(
+                    &mut tx,
+                    &publication,
+                    request,
+                    &prerequisites,
+                )
+                .await?;
+            }
             if publication
                 .publisher_lease_expires_at
                 .is_some_and(|expiry| expiry > now)
@@ -377,7 +399,11 @@ impl PgStore {
             .await?;
 
             let publisher_token = Uuid::new_v4();
-            let authorization = publication_authorization(&normalized, now);
+            let authorization = if human_request.is_some() {
+                publication.authorization_snapshot.clone()
+            } else {
+                publication_authorization(&normalized, now)
+            };
             let row = sqlx::query(&format!(
                 r#"
                 UPDATE pull_request_publications publication
@@ -428,25 +454,39 @@ impl PgStore {
                 },
             )
             .await?;
-            let event = publication_event_tx(
-                &mut tx,
-                &recovered,
-                normalized.actor_id,
-                "factory.publication_attempt_started",
-                json!({
-                    "factory_work_item_id": recovered.factory_work_item_id,
-                    "attempt": recovered.attempt_count,
-                    "publisher_id": recovered.publisher_id,
-                    "state": recovered.state.as_str(),
-                    "recovered": true
-                }),
-            )
-            .await?;
+            let mut events = Vec::new();
+            if publication.state == PullRequestPublicationState::Requested {
+                events.extend(
+                    advance_factory_to_publishing_tx(
+                        &mut tx,
+                        &prerequisites,
+                        &recovered,
+                        normalized.actor_id,
+                    )
+                    .await?,
+                );
+            }
+            events.extend(
+                publication_event_tx(
+                    &mut tx,
+                    &recovered,
+                    normalized.actor_id,
+                    "factory.publication_attempt_started",
+                    json!({
+                        "factory_work_item_id": recovered.factory_work_item_id,
+                        "attempt": recovered.attempt_count,
+                        "publisher_id": recovered.publisher_id,
+                        "state": recovered.state.as_str(),
+                        "recovered": true
+                    }),
+                )
+                .await?,
+            );
             tx.commit().await?;
             return Ok(PullRequestPublicationOutcome {
                 publication: recovered,
                 publisher_token: Some(publisher_token),
-                events: event.into_iter().collect(),
+                events,
                 replayed: false,
                 busy: false,
             });
@@ -468,53 +508,20 @@ impl PgStore {
         let publication_id = Uuid::new_v4();
         let publisher_token = Uuid::new_v4();
         let authorization = publication_authorization(&normalized, now);
-        let provenance = json!({
-            "schema_version": if prerequisites.checkpoint.is_some() { 3 } else { 2 },
-            "source_issue": {
-                "number": prerequisites.work_item.source_issue_number,
-                "node_id": prerequisites.work_item.source_issue_node_id,
-                "url": prerequisites.work_item.source_issue_url,
-                "revision": prerequisites.effective_source_revision,
-                "claimed_revision": prerequisites.work_item.source_revision,
-                "recovery_id": prerequisites.source_recovery_id,
-            },
-            "factory_work_item_id": prerequisites.work_item.id,
-            "mission_id": prerequisites.mission_id,
-            "task_ids": prerequisites.task_ids,
-            "run_ids": prerequisites.run_ids,
-            "verification_evidence_ids": prerequisites.evidence_ids,
-            "verification_sha256": prerequisites.verification_sha256,
-            "checkpoint": prerequisites.checkpoint.as_ref().map(|checkpoint| checkpoint.provenance()),
-            "deliverable": {
-                "id": normalized.source_deliverable_id,
-                "artifact_id": prerequisites.artifact_id,
-                "sha256": prerequisites.deliverable_sha256,
-                "base_commit": prerequisites.base_commit,
-                "head_commit": prerequisites.commit_sha,
-                "source_branch": prerequisites.source_branch,
-            },
-            "target": {
-                "repository": normalized.target_repository,
-                "base_ref": normalized.base_ref,
-                "branch": normalized.branch,
-                "commit": prerequisites.commit_sha,
-            },
-            "pull_request": Value::Null,
-            "project": {
-                "owner": prerequisites.work_item.source_project_owner,
-                "number": prerequisites.work_item.source_project_number,
-                "item_id": prerequisites.work_item.source_project_item_id,
-                "status_before": prerequisites.project_status_before,
-                "review_status": prerequisites.review_status,
-            },
-            "authorization_snapshot": authorization,
-            "effects": {
-                "effect_key": normalized.effect_key,
-                "auto_merge": false,
-                "merge": false,
-                "deploy": false,
-            }
-        });
+        let plan = crony_domain::PullRequestPublicationPlan {
+            source_deliverable_id: normalized.source_deliverable_id,
+            target_repository: normalized.target_repository.clone(),
+            base_ref: normalized.base_ref.clone(),
+            branch: normalized.branch.clone(),
+            title: normalized.title.clone(),
+            body: normalized.body.clone(),
+        };
+        let provenance = publication_provenance(
+            &prerequisites,
+            &plan,
+            &normalized.effect_key,
+            &authorization,
+        );
         let row = sqlx::query(&format!(
             r#"
             INSERT INTO pull_request_publications
@@ -590,51 +597,16 @@ impl PgStore {
         )
         .await?;
 
-        let factory_version: i64 = sqlx::query_scalar(
-            r#"
-            UPDATE factory_work_items
-            SET state = 'publishing',
-                version = version + 1,
-                failure_detail = NULL,
-                updated_at = now()
-            WHERE id = $1 AND corp_id = $2 AND state = 'verified'
-            RETURNING version
-            "#,
-        )
-        .bind(prerequisites.work_item.id)
-        .bind(normalized.corp_id)
-        .fetch_one(&mut *tx)
-        .await?;
         let mut events = Vec::new();
-        if let Some(event) = append_event_tx(
-            &mut tx,
-            NewEvent {
-                room_id: Some(prerequisites.room_id),
-                aggregate_version: factory_version,
-                correlation_id: Some(prerequisites.mission_id),
-                ..NewEvent::new(
-                    normalized.corp_id,
-                    Some(normalized.actor_id),
-                    "factory.state_changed",
-                    "factory_work_item",
-                    prerequisites.work_item.id,
-                    format!(
-                        "factory:{}:state:publishing:{factory_version}",
-                        prerequisites.work_item.id
-                    ),
-                    json!({
-                        "previous_state": "verified",
-                        "state": "publishing",
-                        "mission_id": prerequisites.mission_id,
-                        "publication_id": publication.id
-                    }),
-                )
-            },
-        )
-        .await?
-        {
-            events.push(event);
-        }
+        events.extend(
+            advance_factory_to_publishing_tx(
+                &mut tx,
+                &prerequisites,
+                &publication,
+                normalized.actor_id,
+            )
+            .await?,
+        );
         if let Some(event) = publication_event_tx(
             &mut tx,
             &publication,
@@ -1566,17 +1538,88 @@ fn start_operation_request(input: &StartPullRequestPublicationInput) -> Value {
     })
 }
 
+fn publication_provenance(
+    prerequisites: &PublicationPrerequisites,
+    plan: &crony_domain::PullRequestPublicationPlan,
+    effect_key: &str,
+    authorization: &Value,
+) -> Value {
+    json!({
+        "schema_version": if prerequisites.checkpoint.is_some() { 3 } else { 2 },
+        "source_issue": {
+            "number": prerequisites.work_item.source_issue_number,
+            "node_id": prerequisites.work_item.source_issue_node_id,
+            "url": prerequisites.work_item.source_issue_url,
+            "revision": prerequisites.effective_source_revision,
+            "claimed_revision": prerequisites.work_item.source_revision,
+            "recovery_id": prerequisites.source_recovery_id,
+        },
+        "factory_work_item_id": prerequisites.work_item.id,
+        "mission_id": prerequisites.mission_id,
+        "task_ids": prerequisites.task_ids,
+        "run_ids": prerequisites.run_ids,
+        "verification_evidence_ids": prerequisites.evidence_ids,
+        "verification_sha256": prerequisites.verification_sha256,
+        "checkpoint": prerequisites.checkpoint.as_ref().map(|checkpoint| checkpoint.provenance()),
+        "deliverable": {
+            "id": plan.source_deliverable_id,
+            "artifact_id": prerequisites.artifact_id,
+            "sha256": prerequisites.deliverable_sha256,
+            "base_commit": prerequisites.base_commit,
+            "head_commit": prerequisites.commit_sha,
+            "source_branch": prerequisites.source_branch,
+        },
+        "target": {
+            "repository": plan.target_repository,
+            "base_ref": plan.base_ref,
+            "branch": plan.branch,
+            "commit": prerequisites.commit_sha,
+        },
+        "pull_request": Value::Null,
+        "project": {
+            "owner": prerequisites.work_item.source_project_owner,
+            "number": prerequisites.work_item.source_project_number,
+            "item_id": prerequisites.work_item.source_project_item_id,
+            "status_before": prerequisites.project_status_before,
+            "review_status": prerequisites.review_status,
+        },
+        "authorization_snapshot": authorization,
+        "effects": {
+            "effect_key": effect_key,
+            "auto_merge": false,
+            "merge": false,
+            "deploy": false,
+        }
+    })
+}
+
 fn publication_authorization(
     input: &StartPullRequestPublicationInput,
     authorized_at: chrono::DateTime<Utc>,
 ) -> Value {
+    explicit_publication_authorization(
+        input.actor_id,
+        &input.actor_role,
+        input.authorization_id,
+        &input.authorization_reason,
+        authorized_at,
+    )
+}
+
+fn explicit_publication_authorization(
+    actor_id: Uuid,
+    actor_role: &str,
+    authorization_id: Uuid,
+    reason: &str,
+    authorized_at: chrono::DateTime<Utc>,
+) -> Value {
     json!({
-        "id": input.authorization_id,
+        "id": authorization_id,
         "kind": "explicit_human",
         "permission": "publish_pull_request",
-        "actor_id": input.actor_id,
-        "actor_role": input.actor_role,
-        "reason": input.authorization_reason,
+        "actor_id": actor_id,
+        "actor_role": actor_role,
+        "reason": reason,
         "authorized_at": authorized_at,
         "auto_merge": false,
         "merge": false,
@@ -1600,6 +1643,11 @@ async fn ensure_actor_role_tx(
     if role != expected_role {
         return Err(anyhow!(
             "publication authorization role changed from {expected_role} to {role}"
+        ));
+    }
+    if !matches!(role.as_str(), "owner" | "admin" | "manager") {
+        return Err(anyhow!(
+            "forbidden: publication requires a human with Publish permission"
         ));
     }
     Ok(())
@@ -1631,14 +1679,61 @@ impl<'a> PublicationPrerequisiteRequest<'a> {
     }
 }
 
+async fn advance_factory_to_publishing_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    prerequisites: &PublicationPrerequisites,
+    publication: &PullRequestPublication,
+    actor_id: Uuid,
+) -> Result<Option<DomainEvent>> {
+    let factory_version: i64 = sqlx::query_scalar(
+        r#"
+        UPDATE factory_work_items
+        SET state = 'publishing', version = version + 1,
+            failure_detail = NULL, updated_at = now()
+        WHERE id = $1 AND corp_id = $2 AND state = 'verified'
+        RETURNING version
+        "#,
+    )
+    .bind(prerequisites.work_item.id)
+    .bind(publication.corp_id)
+    .fetch_one(&mut **tx)
+    .await?;
+    append_event_tx(
+        tx,
+        NewEvent {
+            room_id: Some(prerequisites.room_id),
+            aggregate_version: factory_version,
+            correlation_id: Some(prerequisites.mission_id),
+            ..NewEvent::new(
+                publication.corp_id,
+                Some(actor_id),
+                "factory.state_changed",
+                "factory_work_item",
+                prerequisites.work_item.id,
+                format!(
+                    "factory:{}:state:publishing:{factory_version}",
+                    prerequisites.work_item.id
+                ),
+                json!({
+                    "previous_state": "verified",
+                    "state": "publishing",
+                    "mission_id": prerequisites.mission_id,
+                    "publication_id": publication.id
+                }),
+            )
+        },
+    )
+    .await
+}
+
 async fn revalidate_publication_authority_tx(
     tx: &mut Transaction<'_, Postgres>,
     publication: &PullRequestPublication,
     actor_id: Uuid,
 ) -> Result<()> {
-    let expected_role: String = sqlx::query_scalar(
+    let attempt = sqlx::query(
         r#"
-        SELECT authorization_snapshot->>'actor_role'
+        SELECT authorization_id, authorization_snapshot
         FROM pull_request_publication_attempts
         WHERE publication_id = $1
           AND corp_id = $2
@@ -1653,14 +1748,36 @@ async fn revalidate_publication_authority_tx(
     .bind(actor_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("active publication attempt omitted its authorization role")?;
-    ensure_actor_role_tx(tx, publication.corp_id, actor_id, &expected_role).await?;
+    .context("active publication attempt omitted its authorization")?;
+    let attempt_authorization: Value = attempt.get("authorization_snapshot");
+    let expected_role = attempt_authorization
+        .get("actor_role")
+        .and_then(Value::as_str)
+        .context("active publication attempt omitted its authorization role")?;
+    ensure_actor_role_tx(tx, publication.corp_id, actor_id, expected_role).await?;
     let prerequisites = validate_publication_prerequisites(
         tx,
         &PublicationPrerequisiteRequest::from_publication(publication),
         true,
     )
     .await?;
+    if let Some(request) = request::human_request_tx(tx, publication).await? {
+        if actor_id != request.actor_id
+            || attempt.get::<Uuid, _>("authorization_id") != request.authorization_id
+            || attempt_authorization != publication.authorization_snapshot
+        {
+            return Err(anyhow!(
+                "forbidden: active attempt differs from the saved human publication authorization"
+            ));
+        }
+        request::revalidate_human_request_prerequisites_tx(
+            tx,
+            publication,
+            &request,
+            &prerequisites,
+        )
+        .await?;
+    }
     assert_room_membership_tx(tx, publication.corp_id, prerequisites.room_id, actor_id).await?;
     let provenance_deliverable_sha = publication
         .provenance

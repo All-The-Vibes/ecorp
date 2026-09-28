@@ -40,23 +40,27 @@ export function PublishedResultCard({
   const hasLink = Boolean(result.pullRequestUrl)
   const failed = result.state === 'failed'
   const published = result.state === 'published'
+  const waiting = publication.state === 'requested'
   const heading = failed ? 'Publication needs attention'
     : published ? 'Your pull request is ready'
-      : hasLink ? 'Pull request created' : 'Preparing the pull request'
+      : waiting ? 'Waiting for a trusted publisher'
+        : hasLink ? 'Pull request created' : 'Preparing the pull request'
   const description = failed
     ? hasLink
       ? 'A pull request exists, but publication has not finished. Open it to inspect the result; no new run is needed to view it.'
       : 'Publication has not finished. The existing source and verification history are preserved.'
     : published
       ? 'Open the verified result on GitHub. Publication does not merge or deploy the application.'
-      : hasLink
-        ? 'The pull request is available. ECorp is still finishing the publication record.'
-        : 'ECorp has a publication record, but no pull request link has been confirmed yet.'
+      : waiting
+        ? 'Your request is saved. Delivery starts when a trusted publisher is available; you can leave this page.'
+        : hasLink
+          ? 'The pull request is available. ECorp is still finishing the publication record.'
+          : 'ECorp has a publication record, but no pull request link has been confirmed yet.'
   return (
     <WorkResultCard
       heading={heading}
-      status={failed ? 'Needs attention' : published ? 'Published' : 'Publishing'}
-      tone={failed ? 'attention' : published ? 'success' : 'working'}
+      status={failed ? 'Needs attention' : published ? 'Published' : waiting ? 'Waiting' : 'Publishing'}
+      tone={failed ? 'attention' : published ? 'success' : waiting ? 'neutral' : 'working'}
       description={description}
       actions={<>
         {result.pullRequestUrl ? (
