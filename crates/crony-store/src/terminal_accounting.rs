@@ -33,8 +33,8 @@ pub(super) async fn validate_termination_tx(
         (Some(adapter), [Some(started)]) if adapter == *started => adapter,
         (None, [Some(started)]) => started.clone(),
         _ => {
-            return Err(anyhow!(
-                "provider-termination assignment adapter is unproven"
+            return Err(admission::denied(
+                "provider-termination assignment adapter is unproven",
             ));
         }
     };
@@ -66,7 +66,9 @@ fn validate_termination(payload: &Value, adapter: &str, execution_mode: &str) ->
             })
         });
     if !valid {
-        return Err(anyhow!("invalid native provider-termination evidence"));
+        return Err(admission::denied(
+            "invalid native provider-termination evidence",
+        ));
     }
     Ok(())
 }

@@ -53,8 +53,8 @@ async fn ensure_no_explicit_stop_tx(
     .fetch_one(&mut **tx)
     .await?;
     if stopped {
-        return Err(anyhow!(
-            "checkpoint verification cannot bypass an explicit stop request"
+        return Err(admission::denied(
+            "checkpoint verification cannot bypass an explicit stop request",
         ));
     }
     Ok(())
@@ -108,7 +108,7 @@ pub(super) async fn source_authority_with_contract_tx(
     .bind(work_item_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("checkpoint verification source is not in this factory item")?;
+    .context(admission::Denied("checkpoint verification source is not in this factory item".into()))?;
     let source_mode: String = source.get("execution_mode");
     if !matches!(
         source.get::<String, _>("status").as_str(),
@@ -121,8 +121,8 @@ pub(super) async fn source_authority_with_contract_tx(
             .get::<Option<String>, _>("workspace_path")
             .is_none_or(|p| p.is_empty())
     {
-        return Err(anyhow!(
-            "checkpoint verification requires a terminal preserved source"
+        return Err(admission::denied(
+            "checkpoint verification requires a terminal preserved source",
         ));
     }
     ensure_no_explicit_stop_tx(tx, corp_id, source.get("workspace_run_id")).await?;
@@ -131,18 +131,25 @@ pub(super) async fn source_authority_with_contract_tx(
             != source.get::<Option<Uuid>, _>("resumed_from_run_id")
             || source.get::<Option<Uuid>, _>("parent_id").is_none()
         {
-            return Err(anyhow!("checkpoint retry has no exact recovery parent"));
+            return Err(admission::denied(
+                "checkpoint retry has no exact recovery parent",
+            ));
         }
-        Some(serde_json::from_value::<Authority>(
-            source
-                .get::<Option<Value>, _>("checkpoint_authority")
-                .context("checkpoint retry has no persisted checkpoint authority")?,
-        )?)
+        Some(
+            serde_json::from_value::<Authority>(
+                source
+                    .get::<Option<Value>, _>("checkpoint_authority")
+                    .context(admission::Denied(
+                        "checkpoint retry has no persisted checkpoint authority".into(),
+                    ))?,
+            )
+            .map_err(admission::validation)?,
+        )
     } else if source_mode == "provider" && source.get::<String, _>("status") != "lost" {
         None
     } else {
-        return Err(anyhow!(
-            "checkpoint verification has no proven provider source"
+        return Err(admission::denied(
+            "checkpoint verification has no proven provider source",
         ));
     };
     let origin_id = inherited
@@ -166,7 +173,7 @@ pub(super) async fn source_authority_with_contract_tx(
     .bind(corp_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("checkpoint origin is missing")?;
+    .context(admission::Denied("checkpoint origin is missing".into()))?;
     let stage: String = origin.get("breaker_stage");
     if !matches!(stage.as_str(), "suspend" | "stop")
         || !matches!(
@@ -179,8 +186,8 @@ pub(super) async fn source_authority_with_contract_tx(
             .as_deref()
             != Some("preserved")
     {
-        return Err(anyhow!(
-            "checkpoint origin is not preserved budget-stopped provider work"
+        return Err(admission::denied(
+            "checkpoint origin is not preserved budget-stopped provider work",
         ));
     }
     for (count, limit) in [
@@ -194,8 +201,8 @@ pub(super) async fn source_authority_with_contract_tx(
         ),
     ] {
         if limit > 0 && count >= limit {
-            return Err(anyhow!(
-                "checkpoint verification cannot waive a loop breaker"
+            return Err(admission::denied(
+                "checkpoint verification cannot waive a loop breaker",
             ));
         }
     }
@@ -208,7 +215,9 @@ pub(super) async fn source_authority_with_contract_tx(
     .bind(&stage)
     .fetch_optional(&mut **tx)
     .await?
-    .context("checkpoint origin has no native budget incident")?;
+    .context(admission::Denied(
+        "checkpoint origin has no native budget incident".into(),
+    ))?;
     if !incident
         .get("metric")
         .and_then(Value::as_str)
@@ -219,8 +228,8 @@ pub(super) async fn source_authority_with_contract_tx(
             (Some(used), Some(limit)) if limit > 0 && used >= limit
         )
     {
-        return Err(anyhow!(
-            "checkpoint verification requires a measured model-budget boundary"
+        return Err(admission::denied(
+            "checkpoint verification requires a measured model-budget boundary",
         ));
     }
     let event = sqlx::query(
@@ -233,20 +242,22 @@ pub(super) async fn source_authority_with_contract_tx(
     .bind(origin_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("checkpoint origin has no native preservation event")?;
+    .context(admission::Denied(
+        "checkpoint origin has no native preservation event".into(),
+    ))?;
     if event.get::<String, _>("event_type") != "run.workspace_preserved" {
-        return Err(anyhow!(
-            "checkpoint origin has a newer unverified cleanup state"
+        return Err(admission::denied(
+            "checkpoint origin has a newer unverified cleanup state",
         ));
     }
     let payload: Value = event.get("payload");
-    let proof: StoppedSourceCheckpoint = serde_json::from_value(
-        payload
-            .get("source_checkpoint")
-            .cloned()
-            .context("source preservation has no stopped-source checkpoint proof")?,
-    )
-    .context("invalid stopped-source checkpoint proof")?;
+    let proof: StoppedSourceCheckpoint =
+        serde_json::from_value(payload.get("source_checkpoint").cloned().context(
+            admission::Denied("source preservation has no stopped-source checkpoint proof".into()),
+        )?)
+        .context(admission::Denied(
+            "invalid stopped-source checkpoint proof".into(),
+        ))?;
     let termination = sqlx::query(
         "SELECT id,seq,payload,room_id,correlation_id FROM events
          WHERE corp_id=$1 AND aggregate_id=$2 AND aggregate_type='run'
@@ -256,7 +267,9 @@ pub(super) async fn source_authority_with_contract_tx(
     .bind(origin_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("checkpoint source provider termination is not proven")?;
+    .context(admission::Denied(
+        "checkpoint source provider termination is not proven".into(),
+    ))?;
     let termination_payload: Value = termination.get("payload");
     if termination.get::<i64, _>("seq") >= event.get::<i64, _>("seq")
         || termination_payload
@@ -264,8 +277,8 @@ pub(super) async fn source_authority_with_contract_tx(
             .and_then(Value::as_bool)
             != Some(false)
     {
-        return Err(anyhow!(
-            "checkpoint source provider quiescence is not proven"
+        return Err(admission::denied(
+            "checkpoint source provider quiescence is not proven",
         ));
     }
     for journal_row in [&event, &termination] {
@@ -273,8 +286,8 @@ pub(super) async fn source_authority_with_contract_tx(
             || journal_row.get::<Option<Uuid>, _>("correlation_id")
                 != Some(source.get("mission_id"))
         {
-            return Err(anyhow!(
-                "checkpoint journal does not match the source mission room"
+            return Err(admission::denied(
+                "checkpoint journal does not match the source mission room",
             ));
         }
     }
@@ -290,8 +303,10 @@ pub(super) async fn source_authority_with_contract_tx(
     let (contract, policy) = match archived {
         Some((contract, policy)) => (contract.clone(), policy.clone()),
         None => (
-            serde_json::from_value::<TaskContract>(source.get("contract"))?,
-            serde_json::from_value::<VerificationPolicy>(source.get("verification_policy"))?,
+            serde_json::from_value::<TaskContract>(source.get("contract"))
+                .map_err(admission::validation)?,
+            serde_json::from_value::<VerificationPolicy>(source.get("verification_policy"))
+                .map_err(admission::validation)?,
         ),
     };
     if proof.schema_version != 1
@@ -315,12 +330,12 @@ pub(super) async fn source_authority_with_contract_tx(
         || proof.deliverable_policy_sha256 != digest(&contract.deliverable)?
         || !valid_sha256(&proof.workspace_fingerprint)
     {
-        return Err(anyhow!(
-            "stopped checkpoint does not match its exact assignment and policy"
+        return Err(admission::denied(
+            "stopped checkpoint does not match its exact assignment and policy",
         ));
     }
-    validate_factory_base_commit(&proof.head_commit)?;
-    validate_factory_base_commit(&proof.source_base_commit)?;
+    validate_factory_base_commit(&proof.head_commit).map_err(admission::validation)?;
+    validate_factory_base_commit(&proof.source_base_commit).map_err(admission::validation)?;
     for row in [&source, &origin] {
         for (field, expected) in [
             ("source_repository", &proof.source_repository),
@@ -331,7 +346,9 @@ pub(super) async fn source_authority_with_contract_tx(
             ("workspace_fingerprint", &proof.workspace_fingerprint),
         ] {
             if row.get::<Option<String>, _>(field).as_ref() != Some(expected) {
-                return Err(anyhow!("stopped checkpoint {field} no longer matches"));
+                return Err(admission::denied(format!(
+                    "stopped checkpoint {field} no longer matches"
+                )));
             }
         }
     }
@@ -339,8 +356,8 @@ pub(super) async fn source_authority_with_contract_tx(
         || payload.get("workspace_fingerprint").and_then(Value::as_str)
             != Some(proof.workspace_fingerprint.as_str())
     {
-        return Err(anyhow!(
-            "stopped checkpoint disagrees with its native preservation event"
+        return Err(admission::denied(
+            "stopped checkpoint disagrees with its native preservation event",
         ));
     }
     let authority = Authority {
@@ -351,8 +368,8 @@ pub(super) async fn source_authority_with_contract_tx(
     if let Some(inherited) = inherited
         && serde_json::to_value(inherited)? != serde_json::to_value(&authority)?
     {
-        return Err(anyhow!(
-            "checkpoint authority changed after recovery authorization"
+        return Err(admission::denied(
+            "checkpoint authority changed after recovery authorization",
         ));
     }
     Ok(authority)
@@ -429,8 +446,8 @@ async fn validate_lineage_prefix_tx(
     .fetch_all(&mut **tx)
     .await?;
     if rows.is_empty() || rows.len() > 64 {
-        return Err(anyhow!(
-            "checkpoint lineage is missing or exceeds the native bound"
+        return Err(admission::denied(
+            "checkpoint lineage is missing or exceeds the native bound",
         ));
     }
     let proof = &authority.checkpoint;
@@ -459,8 +476,8 @@ async fn validate_lineage_prefix_tx(
             || (id != proof.run_id && stage == "stop")
             || (after_origin && stage == "suspend")
         {
-            return Err(anyhow!(
-                "checkpoint lineage contains active, changed, quarantined or stopped work"
+            return Err(admission::denied(
+                "checkpoint lineage contains active, changed, quarantined or stopped work",
             ));
         }
         if after_origin
@@ -468,8 +485,8 @@ async fn validate_lineage_prefix_tx(
                 || row.get::<Option<bool>, _>("parent_matches") != Some(true)
                 || row.get::<Option<Value>, _>("checkpoint_authority").as_ref() != Some(&expected))
         {
-            return Err(anyhow!(
-                "checkpoint lineage contains an unauthorized replacement"
+            return Err(admission::denied(
+                "checkpoint lineage contains an unauthorized replacement",
             ));
         }
     }

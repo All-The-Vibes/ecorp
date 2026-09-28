@@ -1,0 +1,61 @@
+   Compiling crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 33s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-eddbee591ca35258.exe)
+
+running 11 tests
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_keeps_checkpoint_database_failure_retryable ... ok
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_keeps_pending_audit_retryable ... ok
+
+thread 'budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_changed_checkpoint_proof' (12824) panicked at crates\crony-store\src\human_publication_request_tests.rs:194:10:
+called `Result::unwrap()` on an `Err` value: stopped checkpoint disagrees with its native preservation event
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_changed_checkpoint_proof ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_current_loop_breaker' (32432) panicked at crates\crony-store\src\human_publication_request_tests.rs:194:10:
+called `Result::unwrap()` on an `Err` value: pull-request publication is blocked because current budget or loop metrics require a hard breaker
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_current_loop_breaker ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_invalid_termination' (13164) panicked at crates\crony-store\src\human_publication_request_tests.rs:194:10:
+called `Result::unwrap()` on an `Err` value: invalid native provider-termination evidence
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_invalid_termination ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_origin_loop_breaker' (35268) panicked at crates\crony-store\src\human_publication_request_tests.rs:194:10:
+called `Result::unwrap()` on an `Err` value: checkpoint verification cannot waive a loop breaker
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_origin_loop_breaker ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_stopped_run' (14784) panicked at crates\crony-store\src\human_publication_request_tests.rs:194:10:
+called `Result::unwrap()` on an `Err` value: pull-request publication is blocked by circuit breaker stage stop
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_stopped_run ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_suspended_run' (25188) panicked at crates\crony-store\src\human_publication_request_tests.rs:194:10:
+called `Result::unwrap()` on an `Err` value: pull-request publication is blocked by circuit breaker stage suspend
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_suspended_run ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_withdrawn_budget_incident' (33324) panicked at crates\crony-store\src\human_publication_request_tests.rs:194:10:
+called `Result::unwrap()` on an `Err` value: checkpoint origin has no native budget incident
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_withdrawn_budget_incident ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_withdrawn_checkpoint' (14084) panicked at crates\crony-store\src\human_publication_request_tests.rs:194:10:
+called `Result::unwrap()` on an `Err` value: checkpoint origin has no native preservation event
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_withdrawn_checkpoint ... FAILED
+
+thread 'budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_withdrawn_termination' (1644) panicked at crates\crony-store\src\human_publication_request_tests.rs:194:10:
+called `Result::unwrap()` on an `Err` value: checkpoint source provider termination is not proven
+test budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_withdrawn_termination ... FAILED
+
+failures:
+
+failures:
+    budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_changed_checkpoint_proof
+    budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_current_loop_breaker
+    budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_invalid_termination
+    budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_origin_loop_breaker
+    budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_stopped_run
+    budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_suspended_run
+    budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_withdrawn_budget_incident
+    budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_withdrawn_checkpoint
+    budget_checkpoint_tests::human_requests::admission_denials::issue219_native_publication_worker_retires_withdrawn_termination
+
+test result: FAILED. 2 passed; 9 failed; 0 ignored; 0 measured; 578 filtered out; finished in 29.75s
+
+error: test failed, to rerun pass `-p crony-store --lib`

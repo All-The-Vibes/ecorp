@@ -20,6 +20,7 @@ use sha2::{Digest, Sha256};
 use sqlx::{Acquire, PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions};
 use uuid::Uuid;
 
+mod admission;
 mod agent_pinning;
 mod aggregate_breaker;
 use crate::state_audit::native_policy;
@@ -13010,8 +13011,8 @@ fn checkpoint_head_commit(
     if let (Some(deliverable), Some(authorized)) = (&deliverable_head, &authorized_head)
         && deliverable != authorized
     {
-        return Err(anyhow!(
-            "verifier source head conflicts with its authorized checkpoint"
+        return Err(admission::denied(
+            "verifier source head conflicts with its authorized checkpoint",
         ));
     }
     Ok(authorized_head.or(deliverable_head))
@@ -13079,7 +13080,7 @@ async fn source_workspace_checkpoint_with_lock_tx(
     .bind(corp_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("source workspace checkpoint was not found")?;
+    .context(admission::Denied("source workspace checkpoint was not found".into()))?;
     let execution_mode: String = row.get("execution_mode");
     let status: String = row.get("status");
     // A lost ordinary provider remains ineligible. Only this exact governed
@@ -13096,14 +13097,16 @@ async fn source_workspace_checkpoint_with_lock_tx(
             || (status == "lost"
                 && row.get::<Option<String>, _>("recovery_status").as_deref() != Some("failed"))
         {
-            return Err(anyhow!(
-                "verifier source checkpoint has no matching recovery lineage"
+            return Err(admission::denied(
+                "verifier source checkpoint has no matching recovery lineage",
             ));
         }
         let fingerprint: String = row
             .get::<Option<String>, _>("authorized_fingerprint")
             .filter(|value| valid_sha256(value))
-            .context("verifier source checkpoint omitted its authorized fingerprint")?;
+            .context(admission::Denied(
+                "verifier source checkpoint omitted its authorized fingerprint".into(),
+            ))?;
         // Native verifier cleanup emits this fingerprint only after checking both
         // assigned guards. Keep the authorized head even when a lost/cancelled
         // run never exported a deliverable; never weaken Some(head) to None.
@@ -13114,8 +13117,8 @@ async fn source_workspace_checkpoint_with_lock_tx(
             && row.get::<Option<String>, _>("deliverable_sha256").is_some()
             && exported_head.is_none()
         {
-            return Err(anyhow!(
-                "checkpoint export head has no exact ready artifact binding"
+            return Err(admission::denied(
+                "checkpoint export head has no exact ready artifact binding",
             ));
         }
         head = match exported_head {
@@ -13127,7 +13130,7 @@ async fn source_workspace_checkpoint_with_lock_tx(
         None
     };
     if let Some(head) = head.as_deref() {
-        validate_factory_base_commit(head)?;
+        validate_factory_base_commit(head).map_err(admission::validation)?;
     }
     Ok(SourceWorkspaceCheckpoint {
         status,
@@ -13161,14 +13164,16 @@ async fn ensure_factory_recovery_authorizer_tx(
     .bind(actor_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("factory recovery mission or actor was not found")?;
+    .context(admission::Denied(
+        "factory recovery mission or actor was not found".into(),
+    ))?;
     let room_id: Uuid = row.get("room_id");
     assert_room_membership_tx(tx, corp_id, room_id, actor_id).await?;
     let kind: String = row.get("kind");
     let role: String = row.get("role");
     if kind != "human" || !matches!(role.as_str(), "owner" | "admin" | "manager") {
-        return Err(anyhow!(
-            "forbidden: factory verification recovery requires owner, admin, or manager authority"
+        return Err(admission::denied(
+            "forbidden: factory verification recovery requires owner, admin, or manager authority",
         ));
     }
     Ok(())
@@ -14598,7 +14603,9 @@ async fn assert_room_membership_tx(
     .fetch_optional(&mut **tx)
     .await?;
     if member.is_none() {
-        return Err(anyhow!("forbidden: actor is not a member of this room"));
+        return Err(admission::denied(
+            "forbidden: actor is not a member of this room",
+        ));
     }
     Ok(())
 }
@@ -15758,9 +15765,9 @@ fn should_retry_runner_failure(
 
 fn ensure_breaker_allows_human_progress(stage: &str, action: &str) -> Result<()> {
     if breaker_is_hard(stage) {
-        return Err(anyhow!(
+        return Err(admission::denied(format!(
             "{action} is blocked by circuit breaker stage {stage}"
-        ));
+        )));
     }
     Ok(())
 }
@@ -15859,9 +15866,9 @@ async fn ensure_run_not_hard_blocked_tx(
 ) -> Result<()> {
     ensure_breaker_allows_human_progress(stage, action)?;
     if hard_breaker_reached_tx(tx, corp_id, run_id).await? {
-        return Err(anyhow!(
+        return Err(admission::denied(format!(
             "{action} is blocked because current budget or loop metrics require a hard breaker"
-        ));
+        )));
     }
     Ok(())
 }

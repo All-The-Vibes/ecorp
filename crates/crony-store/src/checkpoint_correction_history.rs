@@ -40,7 +40,9 @@ async fn run_tx(
     .bind(item.mission_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("correction history has a missing or foreign run")
+    .context(admission::Denied(
+        "correction history has a missing or foreign run".into(),
+    ))
 }
 
 async fn revision_tx(
@@ -69,7 +71,9 @@ async fn revision_tx(
     .bind(item.mission_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("source correction has no exact immutable Resume revision")?;
+    .context(admission::Denied(
+        "source correction has no exact immutable Resume revision".into(),
+    ))?;
     if current
         && (row.get::<i64, _>("version") != row.get::<i64, _>("contract_version")
             || row.get::<Value, _>("replacement_contract")
@@ -77,7 +81,9 @@ async fn revision_tx(
             || row.get::<Value, _>("replacement_verification_policy")
                 != row.get::<Value, _>("current_policy"))
     {
-        return Err(anyhow!("source correction revision was superseded"));
+        return Err(admission::denied(
+            "source correction revision was superseded",
+        ));
     }
     let revision = Revision {
         id,
@@ -86,18 +92,26 @@ async fn revision_tx(
             .get::<Value, _>("request")
             .get("expected_contract_version")
             .and_then(Value::as_i64)
-            .context("correction revision omitted its previous task version")?,
+            .context(admission::Denied(
+                "correction revision omitted its previous task version".into(),
+            ))?,
         source_run_id: source,
-        previous_contract: serde_json::from_value(row.get("previous_contract"))?,
-        contract: serde_json::from_value(row.get("replacement_contract"))?,
-        previous_policy: serde_json::from_value(row.get("previous_verification_policy"))?,
-        policy: serde_json::from_value(row.get("replacement_verification_policy"))?,
+        previous_contract: serde_json::from_value(row.get("previous_contract"))
+            .map_err(admission::validation)?,
+        contract: serde_json::from_value(row.get("replacement_contract"))
+            .map_err(admission::validation)?,
+        previous_policy: serde_json::from_value(row.get("previous_verification_policy"))
+            .map_err(admission::validation)?,
+        policy: serde_json::from_value(row.get("replacement_verification_policy"))
+            .map_err(admission::validation)?,
     };
     ensure_factory_recovery_verification_policy_not_weakened(
         &revision.previous_policy,
         &revision.policy,
-    )?;
-    ensure_factory_recovery_policy(item, &revision.contract, &revision.policy)?;
+    )
+    .map_err(admission::validation)?;
+    ensure_factory_recovery_policy(item, &revision.contract, &revision.policy)
+        .map_err(admission::validation)?;
     validate_revision_record_tx(tx, item, &row, &revision).await?;
     Ok(revision)
 }
@@ -109,7 +123,9 @@ async fn validate_revision_record_tx(
     revision: &Revision,
 ) -> Result<()> {
     if revision.previous_version < 1 || revision.previous_version >= revision.version {
-        return Err(anyhow!("correction revision has invalid version ancestry"));
+        return Err(admission::denied(
+            "correction revision has invalid version ancestry",
+        ));
     }
     let request: Value = row.get("request");
     let description: String = row.get("replacement_description");
@@ -126,22 +142,23 @@ async fn validate_revision_record_tx(
         ),
     ] {
         if request.get(field) != Some(&expected) {
-            return Err(anyhow!(
+            return Err(admission::denied(format!(
                 "native revision request changed its {field} binding"
-            ));
+            )));
         }
     }
     // Native revision admission composes the task objective from descriptions;
     // the immutable event binds that normalized objective and the whole contract.
-    let mut requested: TaskContract = serde_json::from_value(
-        request
-            .get("contract")
-            .cloned()
-            .context("native revision request omitted its contract")?,
-    )?;
+    let mut requested: TaskContract =
+        serde_json::from_value(request.get("contract").cloned().context(admission::Denied(
+            "native revision request omitted its contract".into(),
+        ))?)
+        .map_err(admission::validation)?;
     requested.objective = revision.contract.objective.clone();
     if serde_json::to_value(&requested)? != serde_json::to_value(&revision.contract)? {
-        return Err(anyhow!("native revision contract differs from its request"));
+        return Err(admission::denied(
+            "native revision contract differs from its request",
+        ));
     }
     let event: Value = sqlx::query_scalar(
         "SELECT payload FROM events WHERE corp_id=$1 AND aggregate_id=$2
@@ -156,7 +173,9 @@ async fn validate_revision_record_tx(
     .bind(format!("mission-contract-revision:{}", revision.id))
     .fetch_optional(&mut **tx)
     .await?
-    .context("correction revision omitted its native event")?;
+    .context(admission::Denied(
+        "correction revision omitted its native event".into(),
+    ))?;
     for (field, expected) in [
         ("mission_id", json!(item.mission_id)),
         ("task_id", json!(row.get::<Uuid, _>("task_id"))),
@@ -174,7 +193,9 @@ async fn validate_revision_record_tx(
         ),
     ] {
         if event.get(field) != Some(&expected) {
-            return Err(anyhow!("native revision event changed its {field} binding"));
+            return Err(admission::denied(format!(
+                "native revision event changed its {field} binding"
+            )));
         }
     }
     Ok(())
@@ -199,8 +220,8 @@ async fn revision_bridge_tx(
     .fetch_all(&mut **tx)
     .await?;
     if rows.len() > 64 {
-        return Err(anyhow!(
-            "correction revision bridge exceeds its native bound"
+        return Err(admission::denied(
+            "correction revision bridge exceeds its native bound",
         ));
     }
     let mut version = previous.revision_version;
@@ -222,7 +243,9 @@ async fn revision_bridge_tx(
             || serde_json::to_value(&next.previous_contract)? != contract
             || serde_json::to_value(&next.previous_policy)? != policy
         {
-            return Err(anyhow!("correction revision bridge is not contiguous"));
+            return Err(admission::denied(
+                "correction revision bridge is not contiguous",
+            ));
         }
         version = next.version;
         contract = serde_json::to_value(&next.contract)?;
@@ -232,8 +255,8 @@ async fn revision_bridge_tx(
         || serde_json::to_value(&current.previous_contract)? != contract
         || serde_json::to_value(&current.previous_policy)? != policy
     {
-        return Err(anyhow!(
-            "correction revision does not continue its historical policy"
+        return Err(admission::denied(
+            "correction revision does not continue its historical policy",
         ));
     }
     Ok(())
@@ -332,8 +355,8 @@ pub(super) async fn source_context_tx(
     if current.get::<Value, _>("contract") != serde_json::to_value(&previous.contract)?
         || current.get::<Value, _>("verification_policy") != serde_json::to_value(&previous.policy)?
     {
-        return Err(anyhow!(
-            "correction context requires the current source-bound revision"
+        return Err(admission::denied(
+            "correction context requires the current source-bound revision",
         ));
     }
     validate_admission_suffix_tx(tx, item, source_id).await?;
@@ -349,8 +372,8 @@ async fn historical_inner_tx(
     seen: &mut HashSet<Uuid>,
 ) -> Result<Option<HistoricalCorrection>> {
     if seen.len() >= 64 || !seen.insert(replacement_id) {
-        return Err(anyhow!(
-            "correction history is cyclic or exceeds its native bound"
+        return Err(admission::denied(
+            "correction history is cyclic or exceeds its native bound",
         ));
     }
     let required = requires_authority_tx(tx, item, replacement_id).await?;
@@ -364,8 +387,8 @@ async fn historical_inner_tx(
     .await?;
     let Some(correction) = correction else {
         if required {
-            return Err(anyhow!(
-                "checkpoint correction history omitted its native recovery"
+            return Err(admission::denied(
+                "checkpoint correction history omitted its native recovery",
             ));
         }
         seen.remove(&replacement_id);
@@ -374,15 +397,16 @@ async fn historical_inner_tx(
     let saved: Option<Value> = correction.get("source_correction_authority");
     let Some(saved) = saved else {
         if required {
-            return Err(anyhow!(
-                "checkpoint correction history omitted its authority"
+            return Err(admission::denied(
+                "checkpoint correction history omitted its authority",
             ));
         }
         seen.remove(&replacement_id);
         return Ok(None);
     };
-    let expected: Authority = serde_json::from_value(saved.clone())
-        .context("historical correction authority is malformed")?;
+    let expected: Authority = serde_json::from_value(saved.clone()).context(admission::Denied(
+        "historical correction authority is malformed".into(),
+    ))?;
     let replacement = run_tx(tx, item, replacement_id).await?;
     let source_id: Uuid = correction.get("source_run_id");
     if correction.get::<String, _>("mode") != "source_correction"
@@ -400,8 +424,8 @@ async fn historical_inner_tx(
         || correction.get::<Option<Uuid>, _>("contract_revision_id")
             != Some(expected.contract_revision_id)
     {
-        return Err(anyhow!(
-            "historical correction does not match its exact replacement"
+        return Err(admission::denied(
+            "historical correction does not match its exact replacement",
         ));
     }
     let revision = revision_tx(
@@ -446,15 +470,15 @@ async fn historical_inner_tx(
         || correction.get::<Value, _>("replacement_verification_policy")
             != serde_json::to_value(&revision.policy)?
     {
-        return Err(anyhow!(
-            "historical correction contract or provider binding changed"
+        return Err(admission::denied(
+            "historical correction contract or provider binding changed",
         ));
     }
     validate_native_edge_tx(tx, item, &correction, &replacement, &revision, &expected).await?;
     let authority = Box::pin(derive_tx(tx, item, &revision, seen)).await?;
     if serde_json::to_value(&authority)? != saved {
-        return Err(anyhow!(
-            "historical correction no longer matches its persisted authority"
+        return Err(admission::denied(
+            "historical correction no longer matches its persisted authority",
         ));
     }
     seen.remove(&replacement_id);
@@ -490,7 +514,9 @@ async fn validate_native_edge_tx(
     .bind(format!("factory-verification-recovery:{recovery_id}"))
     .fetch_optional(&mut **tx)
     .await?
-    .context("historical correction omitted its exact runner command")?;
+    .context(admission::Denied(
+        "historical correction omitted its exact runner command".into(),
+    ))?;
     for (field, value) in [
         ("work_item_id", json!(item.id)),
         ("source_run_id", json!(revision.source_run_id)),
@@ -507,9 +533,9 @@ async fn validate_native_edge_tx(
         ),
     ] {
         if request.get(field) != Some(&value) {
-            return Err(anyhow!(
+            return Err(admission::denied(format!(
                 "historical correction request changed its {field} binding"
-            ));
+            )));
         }
     }
     for (field, value) in [
@@ -562,22 +588,24 @@ async fn validate_native_edge_tx(
         ("secret_refs", json!(revision.contract.secret_refs)),
     ] {
         if command.get(field) != Some(&value) {
-            return Err(anyhow!(
+            return Err(admission::denied(format!(
                 "historical correction command changed its {field} binding"
-            ));
+            )));
         }
     }
     for field in ["expected_workspace_fingerprint", "expected_head_commit"] {
         if command.get(field) != request.get(field) {
-            return Err(anyhow!(
-                "historical correction command changed its source checkpoint"
+            return Err(admission::denied(
+                "historical correction command changed its source checkpoint",
             ));
         }
     }
     let checkpoint =
         source_workspace_checkpoint_with_lock_tx(tx, item.corp_id, revision.source_run_id, false)
             .await?;
-    checkpoint.ensure_preserved()?;
+    checkpoint
+        .ensure_preserved()
+        .map_err(admission::validation)?;
     if request.get("expected_workspace_fingerprint") != Some(&json!(checkpoint.fingerprint))
         || request.get("expected_head_commit") != Some(&json!(checkpoint.expected_head_commit))
         || command.get("workspace_base_commit")
@@ -589,8 +617,8 @@ async fn validate_native_edge_tx(
             && replacement.get::<Option<String>, _>("workspace_base_commit")
                 != source.get::<Option<String>, _>("workspace_base_commit"))
     {
-        return Err(anyhow!(
-            "historical command does not match its immutable source checkpoint"
+        return Err(admission::denied(
+            "historical command does not match its immutable source checkpoint",
         ));
     }
     let authorized_row = sqlx::query(
@@ -610,7 +638,9 @@ async fn validate_native_edge_tx(
     ))
     .fetch_optional(&mut **tx)
     .await?
-    .context("historical correction omitted its native authorization event")?;
+    .context(admission::Denied(
+        "historical correction omitted its native authorization event".into(),
+    ))?;
     let authorized: Value = authorized_row.get("payload");
     let seal = sqlx::query(
         "SELECT type,payload,room_id,correlation_id FROM events
@@ -623,7 +653,9 @@ async fn validate_native_edge_tx(
     .bind(authorized_row.get::<i64, _>("seq"))
     .fetch_optional(&mut **tx)
     .await?
-    .context("historical source has no native preservation seal")?;
+    .context(admission::Denied(
+        "historical source has no native preservation seal".into(),
+    ))?;
     let seal_payload: Value = seal.get("payload");
     if seal.get::<String, _>("type") != "run.workspace_preserved"
         || seal.get::<Option<Uuid>, _>("room_id") != Some(source.get("room_id"))
@@ -636,8 +668,8 @@ async fn validate_native_edge_tx(
             == Some(true)
         || !source_seal_head_matches(&checkpoint, &seal_payload)
     {
-        return Err(anyhow!(
-            "historical request no longer matches its native source seal"
+        return Err(admission::denied(
+            "historical request no longer matches its native source seal",
         ));
     }
     for (field, value) in [
@@ -659,9 +691,9 @@ async fn validate_native_edge_tx(
         ),
     ] {
         if authorized.get(field) != Some(&value) {
-            return Err(anyhow!(
+            return Err(admission::denied(format!(
                 "historical correction event changed its {field} binding"
-            ));
+            )));
         }
     }
     Ok(())
@@ -712,7 +744,9 @@ async fn derive_tx(
         Some(
             Box::pin(historical_inner_tx(tx, item, source_id, seen))
                 .await?
-                .context("provider correction has no proven historical authority")?,
+                .context(admission::Denied(
+                    "provider correction has no proven historical authority".into(),
+                ))?,
         )
     } else {
         // Native pre-dispatch failures do not become the source, but their
@@ -734,15 +768,17 @@ async fn derive_tx(
         .fetch_all(&mut **tx)
         .await?;
         if prior.len() > 64 {
-            return Err(anyhow!(
-                "correction revision history exceeds its native bound"
+            return Err(admission::denied(
+                "correction revision history exceeds its native bound",
             ));
         }
         if let Some(prior) = prior.iter().find(|run| pre_dispatch_failure(run)) {
             Some(
                 Box::pin(historical_inner_tx(tx, item, prior.get("id"), seen))
                     .await?
-                    .context("failed pre-dispatch correction omitted its historical authority")?,
+                    .context(admission::Denied(
+                        "failed pre-dispatch correction omitted its historical authority".into(),
+                    ))?,
             )
         } else {
             None
@@ -766,7 +802,7 @@ async fn derive_tx(
                AND source.verification_status='failed' AND source.provider_session_id IS NULL",
         ).bind(item.corp_id).bind(item.id).bind(source_id).bind(item.mission_id)
             .fetch_optional(&mut **tx).await?
-            .context("source correction requires the exact failed checkpoint")?;
+            .context(admission::Denied("source correction requires the exact failed checkpoint".into()))?;
         let proof = budget_checkpoint::source_authority_with_contract_tx(
             tx,
             item.corp_id,
@@ -778,7 +814,9 @@ async fn derive_tx(
         if checkpoint.get::<Option<Value>, _>("checkpoint_authority")
             != Some(serde_json::to_value(&proof)?)
         {
-            return Err(anyhow!("historical failed checkpoint proof changed"));
+            return Err(admission::denied(
+                "historical failed checkpoint proof changed",
+            ));
         }
         budget_checkpoint::validate_lineage_until_tx(
             tx,
@@ -795,7 +833,7 @@ async fn derive_tx(
                ON incident.run_id=origin.id AND incident.corp_id=origin.corp_id AND incident.stage='suspend'
              WHERE origin.corp_id=$1 AND origin.id=$2 AND origin.breaker_stage='suspend'",
         ).bind(item.corp_id).bind(proof.checkpoint.run_id).fetch_optional(&mut **tx).await?
-            .context("historical correction no longer has its native suspension")?;
+            .context(admission::Denied("historical correction no longer has its native suspension".into()))?;
         Authority {
             schema_version: 1,
             checkpoint_recovery_id: checkpoint.get("id"),
@@ -812,7 +850,9 @@ async fn derive_tx(
             provider_session_id: origin
                 .get::<Option<String>, _>("provider_session_id")
                 .filter(|session| !session.is_empty())
-                .context("historical correction origin lost its provider session")?,
+                .context(admission::Denied(
+                    "historical correction origin lost its provider session".into(),
+                ))?,
             prefix_run_ids: Vec::new(),
         }
     };
@@ -820,15 +860,15 @@ async fn derive_tx(
     if source.get::<Option<Uuid>, _>("workspace_connection_id") != connection
         || revision.previous_contract.workspace_connection_id != connection
         || revision.contract.workspace_connection_id != connection
-        || factory_workspace_connection_id(&item.policy).map_err(anyhow::Error::msg)? != connection
+        || factory_workspace_connection_id(&item.policy).map_err(admission::denied)? != connection
         || (source.get::<String, _>("execution_mode") == "provider"
             && source
                 .get::<Option<String>, _>("provider_session_id")
                 .as_ref()
                 != Some(&authority.provider_session_id))
     {
-        return Err(anyhow!(
-            "source correction execution connection or session changed"
+        return Err(admission::denied(
+            "source correction execution connection or session changed",
         ));
     }
     let lineage =
@@ -849,7 +889,9 @@ async fn derive_tx(
     .await?;
     let prefix_ids: Vec<Uuid> = prefix.iter().map(|run| run.get("id")).collect();
     if prefix_ids.is_empty() || prefix_ids.len() > 64 || prefix_ids.last() != Some(&source_id) {
-        return Err(anyhow!("source correction checkpoint prefix is invalid"));
+        return Err(admission::denied(
+            "source correction checkpoint prefix is invalid",
+        ));
     }
     for run in &prefix {
         let id: Uuid = run.get("id");
@@ -865,19 +907,21 @@ async fn derive_tx(
             || (run.get::<i32, _>("tool_limit") > 0
                 && run.get::<i32, _>("repeated_tool_count") >= run.get::<i32, _>("tool_limit"))
         {
-            return Err(anyhow!(
-                "historical correction prefix has unrelated protected work"
+            return Err(admission::denied(
+                "historical correction prefix has unrelated protected work",
             ));
         }
         if !lineage.contains(&id) {
             if !pre_dispatch_failure(run) {
-                return Err(anyhow!(
-                    "correction prefix contains an unrelated source generation"
+                return Err(admission::denied(
+                    "correction prefix contains an unrelated source generation",
                 ));
             }
             Box::pin(historical_inner_tx(tx, item, id, seen))
                 .await?
-                .context("pre-dispatch generation omitted its historical correction proof")?;
+                .context(admission::Denied(
+                    "pre-dispatch generation omitted its historical correction proof".into(),
+                ))?;
         }
     }
     authority.contract_revision_id = revision.id;
@@ -907,15 +951,21 @@ pub(super) async fn validate_admission_suffix_tx(
     .fetch_all(&mut **tx)
     .await?;
     if suffix.len() > 64 {
-        return Err(anyhow!("correction source suffix exceeds its native bound"));
+        return Err(admission::denied(
+            "correction source suffix exceeds its native bound",
+        ));
     }
     for run in suffix {
         if !pre_dispatch_failure(&run) {
-            return Err(anyhow!("correction source has a newer unproven generation"));
+            return Err(admission::denied(
+                "correction source has a newer unproven generation",
+            ));
         }
         historical_tx(tx, item, run.get("id"))
             .await?
-            .context("failed pre-dispatch generation has no historical correction proof")?;
+            .context(admission::Denied(
+                "failed pre-dispatch generation has no historical correction proof".into(),
+            ))?;
     }
     Ok(())
 }
@@ -933,8 +983,8 @@ pub(super) async fn previous_context_tx(
     if serde_json::to_value(&previous.contract)? != serde_json::to_value(contract)?
         || serde_json::to_value(&previous.policy)? != serde_json::to_value(policy)?
     {
-        return Err(anyhow!(
-            "historical correction contract or policy chain changed"
+        return Err(admission::denied(
+            "historical correction contract or policy chain changed",
         ));
     }
     let origin = previous.authority.checkpoint.checkpoint.run_id;

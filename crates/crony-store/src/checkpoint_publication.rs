@@ -32,8 +32,8 @@ impl CheckpointPublication {
             || self.authority.checkpoint.corp_id != item.corp_id
             || Some(self.authority.checkpoint.mission_id) != item.mission_id
         {
-            return Err(anyhow!(
-                "publication checkpoint receipt belongs to another scope"
+            return Err(admission::denied(
+                "publication checkpoint receipt belongs to another scope",
             ));
         }
         Ok(&self.authority)
@@ -72,8 +72,8 @@ pub(super) async fn authority_tx(
         return Ok(None);
     };
     if !budget_checkpoint::zero_provider_allocation_tx(tx, corp_id, run_id).await? {
-        return Err(anyhow!(
-            "checkpoint publication lost its zero-provider authority"
+        return Err(admission::denied(
+            "checkpoint publication lost its zero-provider authority",
         ));
     }
     let authority =
@@ -92,7 +92,7 @@ pub(super) async fn authority_tx(
             .as_deref()
             != Some(verified_head)
     {
-        return Err(publication::publication_admission_denied(
+        return Err(admission::denied(
             "checkpoint publication does not match its native source and verified export",
         ));
     }
@@ -112,8 +112,8 @@ pub(super) async fn authority_tx(
     .fetch_one(&mut **tx)
     .await?;
     if explicit_stop {
-        return Err(anyhow!(
-            "checkpoint publication cannot override an explicit stop"
+        return Err(admission::denied(
+            "checkpoint publication cannot override an explicit stop",
         ));
     }
     Ok(Some(CheckpointPublication {
@@ -152,16 +152,22 @@ pub(super) fn revalidated_provenance(persisted: &Value, expected: Option<&Value>
     let schema = persisted.get("schema_version").and_then(Value::as_u64);
     let legacy = matches!(schema, Some(1 | 2));
     if !legacy && schema != Some(3) {
-        return Err(anyhow!("unsupported publication provenance schema"));
+        return Err(admission::denied(
+            "unsupported publication provenance schema",
+        ));
     }
     let mut upgraded = persisted.clone();
     if let Some(expected) = expected {
         match persisted.get("checkpoint") {
             Some(proof) if !proof.is_null() && proof != expected => {
-                return Err(anyhow!("publication checkpoint provenance changed"));
+                return Err(admission::denied(
+                    "publication checkpoint provenance changed",
+                ));
             }
             None | Some(Value::Null) if !legacy => {
-                return Err(anyhow!("publication checkpoint provenance is missing"));
+                return Err(admission::denied(
+                    "publication checkpoint provenance is missing",
+                ));
             }
             _ => {}
         }
@@ -170,11 +176,13 @@ pub(super) fn revalidated_provenance(persisted: &Value, expected: Option<&Value>
             upgraded["schema_version"] = json!(3);
         }
     } else if schema == Some(3) {
-        return Err(anyhow!("checkpoint publication lost its native authority"));
+        return Err(admission::denied(
+            "checkpoint publication lost its native authority",
+        ));
     }
     if !provenance_matches(&upgraded, expected) {
-        return Err(anyhow!(
-            "publication authority no longer matches its checkpoint provenance"
+        return Err(admission::denied(
+            "publication authority no longer matches its checkpoint provenance",
         ));
     }
     Ok(upgraded)

@@ -24,6 +24,13 @@ struct PublicationFixture {
     publisher_credential_id: Uuid,
 }
 
+pub(super) async fn human_request_fixture(
+    pool: PgPool,
+) -> (PgStore, StartPullRequestPublicationInput) {
+    let fixture = corrected_publication_fixture(pool).await;
+    (fixture.store, fixture.input)
+}
+
 fn fixture_artifact(
     input: &RunnerEventInput,
     bytes: &[u8],

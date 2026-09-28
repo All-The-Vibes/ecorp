@@ -59,12 +59,14 @@ async fn lock_authorizer_tx(
         .bind(item.corp_id)
         .fetch_optional(&mut **tx)
         .await?
-        .context("source correction author is unavailable")?;
+        .context(admission::Denied(
+            "source correction author is unavailable".into(),
+        ))?;
     ensure_factory_recovery_authorizer_tx(
         tx,
         item.corp_id,
         item.mission_id
-            .context("source correction has no mission")?,
+            .context(admission::Denied("source correction has no mission".into()))?,
         actor_id,
     )
     .await
@@ -127,8 +129,8 @@ async fn origin_with_publication_tx(
     .fetch_one(&mut **tx)
     .await?;
     if invalid_lineage {
-        return Err(anyhow!(
-            "source correction lineage has another stop, suspension or quarantine"
+        return Err(admission::denied(
+            "source correction lineage has another stop, suspension or quarantine",
         ));
     }
     Ok(authority)
@@ -720,34 +722,39 @@ pub(super) async fn publication_authority_tx(
     ).bind(item.corp_id).bind(selected_run_id).bind(item.id).fetch_optional(&mut **tx).await?;
     let Some(row) = row else {
         if history::requires_authority_tx(tx, item, selected_run_id).await? {
-            return Err(anyhow!(
-                "source-correction publication provenance is missing"
+            return Err(admission::denied(
+                "source-correction publication provenance is missing",
             ));
         }
         return Ok(());
     };
     let Some(encoded) = row.get::<Option<Value>, _>("source_correction_authority") else {
         if history::requires_authority_tx(tx, item, selected_run_id).await? {
-            return Err(anyhow!(
-                "source-correction publication provenance is missing"
+            return Err(admission::denied(
+                "source-correction publication provenance is missing",
             ));
         }
         return Ok(());
     };
-    let expected: Authority = serde_json::from_value(encoded)
-        .context("invalid source-correction publication provenance")?;
+    let expected: Authority = serde_json::from_value(encoded).context(admission::Denied(
+        "invalid source-correction publication provenance".into(),
+    ))?;
     let current = origin_tx(
         tx,
         item,
         row.get("source_run_id"),
         row.get::<Option<Uuid>, _>("contract_revision_id")
-            .context("publication correction revision is absent")?,
+            .context(admission::Denied(
+                "publication correction revision is absent".into(),
+            ))?,
         row.get("authorized_by"),
         true,
     )
     .await?;
     if serde_json::to_value(expected)? != serde_json::to_value(current)? {
-        return Err(anyhow!("source-correction publication authority changed"));
+        return Err(admission::denied(
+            "source-correction publication authority changed",
+        ));
     }
     Ok(())
 }
@@ -769,8 +776,8 @@ async fn checkpoint_publication_lineage_tx(
         // Native admission bounds the source prefix at 64; the completed
         // verifier itself is the one additional node.
         if seen.len() == 65 || !seen.insert(run_id) {
-            return Err(anyhow!(
-                "publication correction lineage is cyclic or exceeds its bound"
+            return Err(admission::denied(
+                "publication correction lineage is cyclic or exceeds its bound",
             ));
         }
         let row = sqlx::query(
@@ -784,7 +791,9 @@ async fn checkpoint_publication_lineage_tx(
         .bind(run_id)
         .fetch_optional(&mut **tx)
         .await?
-        .context("publication correction lineage has a missing or foreign parent")?;
+        .context(admission::Denied(
+            "publication correction lineage has a missing or foreign parent".into(),
+        ))?;
         if row.get::<Uuid, _>("task_id") != proof.task_id
             || row.get::<Uuid, _>("mission_id") != proof.mission_id
             || row.get::<Uuid, _>("agent_id") != proof.agent_id
@@ -798,16 +807,16 @@ async fn checkpoint_publication_lineage_tx(
             || row.get::<Option<String>, _>("source_base_commit").as_ref()
                 != Some(&proof.source_base_commit)
         {
-            return Err(anyhow!(
-                "publication correction lineage changed assignment or source"
+            return Err(admission::denied(
+                "publication correction lineage changed assignment or source",
             ));
         }
         lineage.push(run_id);
         next = row.get("resumed_from_run_id");
     }
     if lineage.last() != Some(&proof.workspace_run_id) || !seen.contains(&proof.run_id) {
-        return Err(anyhow!(
-            "publication checkpoint is outside the exact workspace ancestry"
+        return Err(admission::denied(
+            "publication checkpoint is outside the exact workspace ancestry",
         ));
     }
     Ok(lineage)
@@ -916,7 +925,7 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
     .bind(proof.mission_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context("publication checkpoint origin is missing")?;
+    .context(admission::Denied("publication checkpoint origin is missing".into()))?;
     let connection_id: Option<Uuid> = origin.get("workspace_connection_id");
     let lineage =
         checkpoint_publication_lineage_tx(tx, selected_run_id, authority, connection_id).await?;
@@ -951,16 +960,16 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
             Some("checkpoint_verification") => {}
             Some("verifier_only") if !requires_origin => {}
             _ => {
-                return Err(anyhow!(
-                    "publication correction predecessor provenance is missing or inconsistent"
+                return Err(admission::denied(
+                    "publication correction predecessor provenance is missing or inconsistent",
                 ));
             }
         }
     }
     let Some(correction) = correction else {
         if requires_origin || verifier_predecessor {
-            return Err(anyhow!(
-                "checkpoint source-correction publication provenance is missing"
+            return Err(admission::denied(
+                "checkpoint source-correction publication provenance is missing",
             ));
         }
         return publication_authority_tx(tx, item, selected_run_id).await;
@@ -973,28 +982,34 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
         || correction.get::<Option<Uuid>, _>("replacement_run_id") != Some(proof.run_id)
         || origin.get::<Option<Uuid>, _>("resumed_from_run_id") != Some(source_run_id)
     {
-        return Err(anyhow!(
-            "publication checkpoint lost its exact correction parent binding"
+        return Err(admission::denied(
+            "publication checkpoint lost its exact correction parent binding",
         ));
     }
     let Some(encoded) = correction.get::<Option<Value>, _>("source_correction_authority") else {
         if requires_origin {
-            return Err(anyhow!(
-                "source-correction publication provenance is missing"
+            return Err(admission::denied(
+                "source-correction publication provenance is missing",
             ));
         }
         return publication_authority_tx(tx, item, selected_run_id).await;
     };
-    let expected: Authority = serde_json::from_value(encoded)
-        .context("invalid source-correction publication provenance")?;
-    let origin_index = lineage
-        .iter()
-        .position(|id| *id == proof.run_id)
-        .context("publication checkpoint origin is outside the selected ancestry")?;
+    let expected: Authority = serde_json::from_value(encoded).context(admission::Denied(
+        "invalid source-correction publication provenance".into(),
+    ))?;
+    let origin_index =
+        lineage
+            .iter()
+            .position(|id| *id == proof.run_id)
+            .context(admission::Denied(
+                "publication checkpoint origin is outside the selected ancestry".into(),
+            ))?;
     let historical_index = lineage
         .iter()
         .position(|id| *id == expected.checkpoint.checkpoint.run_id)
-        .context("publication correction suspension is outside the selected ancestry")?;
+        .context(admission::Denied(
+            "publication correction suspension is outside the selected ancestry".into(),
+        ))?;
     if lineage.get(origin_index + 1) != Some(&source_run_id)
         || historical_index <= origin_index + 1
         || expected.workspace_connection_id != connection_id
@@ -1003,8 +1018,8 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
             .as_ref()
             != Some(&expected.provider_session_id)
     {
-        return Err(anyhow!(
-            "publication correction suffix no longer matches its historical grant"
+        return Err(admission::denied(
+            "publication correction suffix no longer matches its historical grant",
         ));
     }
     let current = origin_with_publication_tx(
@@ -1013,14 +1028,18 @@ pub(super) async fn publication_authority_with_checkpoint_tx(
         source_run_id,
         correction
             .get::<Option<Uuid>, _>("contract_revision_id")
-            .context("publication correction revision is absent")?,
+            .context(admission::Denied(
+                "publication correction revision is absent".into(),
+            ))?,
         correction.get("authorized_by"),
         true,
         Some(checkpoint),
     )
     .await?;
     if serde_json::to_value(expected)? != serde_json::to_value(current)? {
-        return Err(anyhow!("source-correction publication authority changed"));
+        return Err(admission::denied(
+            "source-correction publication authority changed",
+        ));
     }
     Ok(())
 }

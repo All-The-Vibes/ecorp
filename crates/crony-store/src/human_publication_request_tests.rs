@@ -5,6 +5,9 @@ use super::*;
 #[path = "human_publication_repository_tests.rs"]
 mod repository_grants;
 
+#[path = "human_publication_denial_tests.rs"]
+mod admission_denials;
+
 async fn queued_request(
     pool: PgPool,
 ) -> (
@@ -12,7 +15,18 @@ async fn queued_request(
     StartPullRequestPublicationInput,
     PullRequestPublicationOutcome,
 ) {
-    let (store, _, _, mut input) = publication_fixture(pool).await;
+    let (store, _, _, input) = publication_fixture(pool).await;
+    queue_request(store, input).await
+}
+
+async fn queue_request(
+    store: PgStore,
+    mut input: StartPullRequestPublicationInput,
+) -> (
+    PgStore,
+    StartPullRequestPublicationInput,
+    PullRequestPublicationOutcome,
+) {
     // Enroll a separate repository grant. The shared fixture retains its
     // unscoped credential to exercise legacy human-authenticated CLI behavior.
     input.publisher_credential_hash = digest(&"issue219 SQLx-only repository publisher");
@@ -162,8 +176,17 @@ async fn issue219_native_publication_worker_and_direct_claim_share_lock_order(po
     direct_pool.close().await;
 }
 
-async fn assert_stale_worker_request_rejected(pool: PgPool, change: &str) {
+async fn assert_stale_worker_request_rejected(pool: PgPool, change: &str) -> String {
     let (store, input, queued) = queued_request(pool).await;
+    assert_request_retired(store, input, queued, change).await
+}
+
+async fn assert_request_retired(
+    store: PgStore,
+    input: StartPullRequestPublicationInput,
+    queued: PullRequestPublicationOutcome,
+    change: &str,
+) -> String {
     let scope = publisher_scope(&input);
     let id = queued.publication.id;
     sqlx::query(change).execute(&store.pool).await.unwrap();
@@ -234,6 +257,7 @@ async fn assert_stale_worker_request_rejected(pool: PgPool, change: &str) {
             .unwrap()
             .is_empty()
     );
+    rejected.publication.failure_detail.unwrap()
 }
 
 #[sqlx::test(migrations = "../../db/migrations")]

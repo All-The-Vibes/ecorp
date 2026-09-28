@@ -1,0 +1,540 @@
+{
+  "suite": "issue219-human-intent-native-publisher-browser-v1",
+  "status": "passed",
+  "started_at_utc": "2026-09-28T19:17:29.179Z",
+  "real_provider_calls": 0,
+  "real_github_mutations": 0,
+  "environment": "Fresh owned PostgreSQL, native server/runner/publisher, actual Edge, deterministic agent and simulated GitHub CLI with a real private Git remote.",
+  "limitations": [
+    "Development authentication; production OIDC is covered separately.",
+    "GitHub effects are controlled local simulations, not hosted publication."
+  ],
+  "stage": "second actual native result and visible publication failure",
+  "screenshots": [
+    {
+      "label": "01-exact-result-preview-390px",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "layout": {
+        "viewport_width": 390,
+        "document_width": 390,
+        "card_x": 37,
+        "card_right": 353,
+        "card_width": 316,
+        "card_client_width": 316,
+        "card_scroll_width": 316
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\01-exact-result-preview-390px.png",
+      "sha256": "eef8d3ca850f995d5a26c5a042902bd4574fb9cfe14266ae2725c728cee3ed77"
+    },
+    {
+      "label": "01-exact-result-preview-1440px",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      },
+      "layout": {
+        "viewport_width": 1440,
+        "document_width": 1440,
+        "card_x": 505.453125,
+        "card_right": 1347.453125,
+        "card_width": 842,
+        "card_client_width": 842,
+        "card_scroll_width": 842
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\01-exact-result-preview-1440px.png",
+      "sha256": "58e8d92f1f00f51c5b4bfba8b4c5314f8969c7431ab4d84edca444e0c98d4d10"
+    },
+    {
+      "label": "02-waiting-for-trusted-publisher-390px",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "layout": {
+        "viewport_width": 390,
+        "document_width": 390,
+        "card_x": 37,
+        "card_right": 353,
+        "card_width": 316,
+        "card_client_width": 316,
+        "card_scroll_width": 316
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\02-waiting-for-trusted-publisher-390px.png",
+      "sha256": "27f4804b08572f83b13ef0d5b45b4e2b37c19a84228243cc5cbfc1b79d259529"
+    },
+    {
+      "label": "02-waiting-for-trusted-publisher-1440px",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      },
+      "layout": {
+        "viewport_width": 1440,
+        "document_width": 1440,
+        "card_x": 505.453125,
+        "card_right": 1347.453125,
+        "card_width": 842,
+        "card_client_width": 842,
+        "card_scroll_width": 842
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\02-waiting-for-trusted-publisher-1440px.png",
+      "sha256": "b86434d8e2f4f04dc283d29577e40d93510c72ac0e5014f983afa6e7acd4c8f0"
+    },
+    {
+      "label": "03-working-after-caller-reconnect-390px",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "layout": {
+        "viewport_width": 390,
+        "document_width": 390,
+        "card_x": 37,
+        "card_right": 353,
+        "card_width": 316,
+        "card_client_width": 316,
+        "card_scroll_width": 316
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\03-working-after-caller-reconnect-390px.png",
+      "sha256": "5375e1adba30c5f86fbea6c56f874133e4915e8f7ea3c4b3b8dc967b15fb6f5e"
+    },
+    {
+      "label": "03-working-after-caller-reconnect-1440px",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      },
+      "layout": {
+        "viewport_width": 1440,
+        "document_width": 1440,
+        "card_x": 505.453125,
+        "card_right": 1347.453125,
+        "card_width": 842,
+        "card_client_width": 842,
+        "card_scroll_width": 842
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\03-working-after-caller-reconnect-1440px.png",
+      "sha256": "99098ee9d7449951fc42b609bee6773b9842dc3821d9f2f77a2f86db921f4910"
+    },
+    {
+      "label": "04-published-exact-link-390px",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "layout": {
+        "viewport_width": 390,
+        "document_width": 390,
+        "card_x": 37,
+        "card_right": 353,
+        "card_width": 316,
+        "card_client_width": 316,
+        "card_scroll_width": 316
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\04-published-exact-link-390px.png",
+      "sha256": "b5a02557486ed2edebefc4b9f116494e74b0101be6dc492a04c64efc756739b2"
+    },
+    {
+      "label": "04-published-exact-link-1440px",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      },
+      "layout": {
+        "viewport_width": 1440,
+        "document_width": 1440,
+        "card_x": 505.453125,
+        "card_right": 1347.453125,
+        "card_width": 842,
+        "card_client_width": 842,
+        "card_scroll_width": 842
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\04-published-exact-link-1440px.png",
+      "sha256": "7738774171c1a07933ae6daaa68603d83f1cb670b837288d5374b0004c5a6055"
+    },
+    {
+      "label": "05-failure-with-existing-pr-390px",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "layout": {
+        "viewport_width": 390,
+        "document_width": 390,
+        "card_x": 37,
+        "card_right": 353,
+        "card_width": 316,
+        "card_client_width": 316,
+        "card_scroll_width": 316
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\05-failure-with-existing-pr-390px.png",
+      "sha256": "a3244e2169a755f8714f4d5e5fee990e879d728f269645c1ee07bd075f9d09fc"
+    },
+    {
+      "label": "05-failure-with-existing-pr-1440px",
+      "viewport": {
+        "width": 1440,
+        "height": 1050
+      },
+      "layout": {
+        "viewport_width": 1440,
+        "document_width": 1440,
+        "card_x": 505.453125,
+        "card_right": 1347.453125,
+        "card_width": 842,
+        "card_client_width": 842,
+        "card_scroll_width": 842
+      },
+      "path": "<USERPROFILE>\\code\\qa\\ecorp-issue219-browser-r13\\evidence\\browser\\05-failure-with-existing-pr-1440px.png",
+      "sha256": "a33f0dd7f8f03bd15dac41c012aa2d739490934073fbc86afa8fe85c925013cd"
+    }
+  ],
+  "browser_mutations": [
+    {
+      "method": "POST",
+      "path": "/api/demo/bootstrap"
+    },
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/4d0f18ec-9279-474e-93b1-ed7568caac4d/publication/preview"
+    },
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/4d0f18ec-9279-474e-93b1-ed7568caac4d/publication/request"
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/bootstrap"
+    },
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/e0df8fa8-dce7-40bd-a477-e5d343c4e686/publication/preview"
+    },
+    {
+      "method": "POST",
+      "path": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/e0df8fa8-dce7-40bd-a477-e5d343c4e686/publication/request"
+    }
+  ],
+  "blocked_requests": [],
+  "page_errors": [],
+  "watcher_runs": [
+    {
+      "label": "active-lease-excluded-from-queue",
+      "process_id": 9096,
+      "started_at_utc": "2026-09-28T19:19:16.064Z",
+      "finished_at_utc": "2026-09-28T19:19:16.144Z",
+      "exit_code": 0,
+      "result": {
+        "attempted": 0,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "pages": 1,
+        "polls": 1,
+        "repository": "all-the-vibes/ecorp",
+        "results": []
+      }
+    },
+    {
+      "label": "first-with-native-crash",
+      "process_id": 32220,
+      "started_at_utc": "2026-09-28T19:19:14.529Z",
+      "finished_at_utc": "2026-09-28T19:19:35.865Z",
+      "exit_code": 86,
+      "result": {
+        "crashed": true,
+        "stage": "after_pull_request_remote"
+      }
+    },
+    {
+      "label": "same-watcher-busy-then-adopt",
+      "process_id": 23628,
+      "started_at_utc": "2026-09-28T19:19:14.435Z",
+      "finished_at_utc": "2026-09-28T19:20:26.142Z",
+      "exit_code": 0,
+      "result": {
+        "attempted": 2,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "pages": 2,
+        "polls": 2,
+        "repository": "all-the-vibes/ecorp",
+        "results": [
+          {
+            "detail": "publication 52f365bd-dd90-439b-b9fa-f74a8abdb840 remains leased to another trusted publisher",
+            "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840",
+            "status": "failed"
+          },
+          {
+            "detail": null,
+            "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840",
+            "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/51",
+            "status": "published"
+          }
+        ]
+      }
+    },
+    {
+      "label": "completed-publication-not-repeated",
+      "process_id": 25364,
+      "started_at_utc": "2026-09-28T19:20:26.925Z",
+      "finished_at_utc": "2026-09-28T19:20:26.986Z",
+      "exit_code": 0,
+      "result": {
+        "attempted": 0,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "pages": 1,
+        "polls": 1,
+        "repository": "all-the-vibes/ecorp",
+        "results": []
+      }
+    },
+    {
+      "label": "controlled-project-update-failure",
+      "process_id": 26380,
+      "started_at_utc": "2026-09-28T19:21:52.317Z",
+      "finished_at_utc": "2026-09-28T19:22:00.067Z",
+      "exit_code": 0,
+      "result": {
+        "attempted": 1,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "pages": 1,
+        "polls": 1,
+        "repository": "all-the-vibes/ecorp",
+        "results": [
+          {
+            "detail": "move GitHub Project item into review: <USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe project item-edit --id PVTI_HUMAN_FAILURE_d3d8f243-bbe5-4073-a6b6-605ad03c0e31 --project-id PVT_COCKPIT_PUBLICATION --field-id PVTSSF_COCKPIT_PUBLICATION --single-select-option-id in-review failed: injected GitHub Project status update failure",
+            "publication_id": "60deedd7-81e5-44b1-ae5a-66da59c96cf6",
+            "status": "failed"
+          }
+        ]
+      }
+    },
+    {
+      "label": "failed-request-is-not-automatically-retried",
+      "process_id": 7980,
+      "started_at_utc": "2026-09-28T19:22:00.855Z",
+      "finished_at_utc": "2026-09-28T19:22:00.921Z",
+      "exit_code": 0,
+      "result": {
+        "attempted": 0,
+        "corp_id": "00000000-0000-4000-8000-000000000001",
+        "pages": 1,
+        "polls": 1,
+        "repository": "all-the-vibes/ecorp",
+        "results": []
+      }
+    }
+  ],
+  "remote_preparation": {
+    "native_packing": true,
+    "complete_history_preserved": true,
+    "refs_unchanged": true,
+    "fsck_passed": true,
+    "preparation_elapsed_ms": 5971,
+    "product_git_timeout_ms": 30000
+  },
+  "native_source": {
+    "work_item_id": "4d0f18ec-9279-474e-93b1-ed7568caac4d",
+    "mission_id": "bf2aff5d-ab41-4c5c-8389-225abb8fd055",
+    "task_id": "069b5dc7-bc32-4e1a-b289-a2126219902d",
+    "run_id": "457d3332-93ac-4bad-a1c2-a04f0b53b311",
+    "source_deliverable_id": "dc27ea1d-f376-4d07-90c9-7547f581eeb1",
+    "commit": "1737819bd4728b0a0d21005e9a19b9c2f811afd0",
+    "artifact_sha256": "4662c49abd60c8b2d3cc007fed6b9111d67db4425d7dca5c5ce25437cf9c2063",
+    "verification_sha256": "5c4bdcb6069eaf200449da565d1b2415bb6e6767e4fc8ce9cf7b3123c598d9ec",
+    "integration_state": "ready_for_review"
+  },
+  "browser_version": "154.0.4258.37",
+  "item_selections": [
+    {
+      "item_id": "4d0f18ec-9279-474e-93b1-ed7568caac4d",
+      "issue_number": 9201,
+      "mode": "mobile-quick-switch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "item_id": "4d0f18ec-9279-474e-93b1-ed7568caac4d",
+      "issue_number": 9201,
+      "mode": "mobile-quick-switch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "item_id": "4d0f18ec-9279-474e-93b1-ed7568caac4d",
+      "issue_number": 9201,
+      "mode": "mobile-quick-switch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "item_id": "e0df8fa8-dce7-40bd-a477-e5d343c4e686",
+      "issue_number": 9202,
+      "mode": "mobile-quick-switch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "item_id": "e0df8fa8-dce7-40bd-a477-e5d343c4e686",
+      "issue_number": 9202,
+      "mode": "mobile-quick-switch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ],
+  "human_requests": [
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/4d0f18ec-9279-474e-93b1-ed7568caac4d/publication/request",
+      "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840",
+      "selected_source": "dc27ea1d-f376-4d07-90c9-7547f581eeb1",
+      "commit": "1737819bd4728b0a0d21005e9a19b9c2f811afd0",
+      "fingerprint": "f0e010b994c9da0faa6471d34f42b39ff506d827a699abce932e8974f72a0702",
+      "state": "requested",
+      "attempt_count": 0,
+      "tokenless": true
+    },
+    {
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/e0df8fa8-dce7-40bd-a477-e5d343c4e686/publication/request",
+      "publication_id": "60deedd7-81e5-44b1-ae5a-66da59c96cf6",
+      "selected_source": "96587bcf-e301-4989-bd71-db44a36ea212",
+      "commit": "8ecc88a4a5a9d02cafcd9156183cf05d789e8763",
+      "fingerprint": "f16b3ab6885adae092a4fef839b5bb332e2227ec0edb5202820741dfe861246c",
+      "state": "requested",
+      "attempt_count": 0,
+      "tokenless": true
+    }
+  ],
+  "duplicate_request": {
+    "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840",
+    "replayed": true,
+    "attempts": 0
+  },
+  "caller_disconnected_before_publisher": true,
+  "active_winner_lease": {
+    "publisher_id": "trusted-human-publication-a",
+    "expires_at": "2026-09-28T19:19:19.784280Z"
+  },
+  "server_restart": {
+    "previous_pid": 32392,
+    "result": 29344,
+    "ordered_replay_events": 1
+  },
+  "crash_lease_expiry": {
+    "persisted": "2026-09-28T19:19:58.475623Z",
+    "observed_at": "2026-09-28T19:19:58.514Z"
+  },
+  "same_watcher_recovery": {
+    "process_id": 23628,
+    "watcher_invocations": 1,
+    "attempted": 2,
+    "results": [
+      {
+        "detail": "publication 52f365bd-dd90-439b-b9fa-f74a8abdb840 remains leased to another trusted publisher",
+        "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840",
+        "status": "failed"
+      },
+      {
+        "detail": null,
+        "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840",
+        "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/51",
+        "status": "published"
+      }
+    ],
+    "events": [
+      {
+        "event": "native_queue_reply",
+        "ordinal": 1,
+        "at": "2026-09-28T19:19:14.529Z",
+        "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840"
+      },
+      {
+        "event": "first_queue_released_after_winner_claim",
+        "at": "2026-09-28T19:19:14.952Z"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": true,
+        "at": "2026-09-28T19:19:15.052Z",
+        "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840"
+      },
+      {
+        "event": "second_queue_waiting_before_native_request",
+        "at": "2026-09-28T19:19:16.064Z"
+      },
+      {
+        "event": "second_queue_released_after_observed_expiry",
+        "at": "2026-09-28T19:19:58.515Z"
+      },
+      {
+        "event": "native_queue_reply",
+        "ordinal": 2,
+        "at": "2026-09-28T19:19:58.530Z",
+        "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": false,
+        "at": "2026-09-28T19:19:58.634Z",
+        "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": false,
+        "at": "2026-09-28T19:19:58.780Z",
+        "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840"
+      }
+    ],
+    "queue_and_claim_responses": "Unmodified actual server replies; the proxy only schedules delivery and request forwarding."
+  },
+  "recovery": {
+    "publication_id": "52f365bd-dd90-439b-b9fa-f74a8abdb840",
+    "state": "published",
+    "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/51",
+    "attempts": 2,
+    "competing_attempts": 0,
+    "repeated_attempts": 0,
+    "auto_merge_enabled": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
+  },
+  "controlled_failure": {
+    "publication_id": "60deedd7-81e5-44b1-ae5a-66da59c96cf6",
+    "state": "pull_request_created",
+    "failure_persisted": true,
+    "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/52",
+    "attempted_after_failure": 0
+  },
+  "acceptance": {
+    "mobile_flow_width": 390,
+    "screenshot_widths": [
+      390,
+      1440
+    ],
+    "no_horizontal_overflow": true,
+    "genuine_native_verified_results": 2,
+    "publication_intents": 2,
+    "simulated_pr_create_calls": 2,
+    "caller_disconnect_survived": true,
+    "native_crash_adopted": true,
+    "same_watcher_recovered_after_busy": true,
+    "failed_request_retry_loop": false,
+    "no_extra_coding_runs": true,
+    "no_browser_publisher_credential": true,
+    "remote_main_unchanged": true,
+    "project_after_pr": true,
+    "all_browser_requests_loopback_only": true
+  },
+  "owned_server_stopped": true,
+  "finished_at_utc": "2026-09-28T19:22:05.843Z"
+}

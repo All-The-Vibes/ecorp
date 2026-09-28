@@ -3,23 +3,6 @@ use super::*;
 mod request;
 mod worker;
 
-// Only known domain denials may terminalize saved intent. Database failures and
-// unclassified admission errors keep their native retry/rollback semantics.
-#[derive(Debug)]
-struct PublicationAdmissionDenied(String);
-
-impl std::fmt::Display for PublicationAdmissionDenied {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
-impl std::error::Error for PublicationAdmissionDenied {}
-
-pub(super) fn publication_admission_denied(message: impl Into<String>) -> anyhow::Error {
-    PublicationAdmissionDenied(message.into()).into()
-}
-
 const PUBLICATION_SELECT: &str = r#"
     SELECT publication.id, publication.corp_id, publication.factory_work_item_id,
            publication.mission_id, publication.source_deliverable_id,
@@ -1898,9 +1881,7 @@ async fn validate_publication_prerequisites(
     PgStore::ensure_audit_workflow_gates_tx(tx, request.corp_id).await?;
     let (work_item, _) = factory_work_item_tx(tx, request.corp_id, request.work_item_id, true)
         .await?
-        .context(PublicationAdmissionDenied(
-            "factory work item not found".into(),
-        ))?;
+        .context(admission::Denied("factory work item not found".into()))?;
     let allowed_state = if existing {
         matches!(
             work_item.state,
@@ -1910,49 +1891,46 @@ async fn validate_publication_prerequisites(
         work_item.state == FactoryWorkItemState::Verified
     };
     if !allowed_state {
-        return Err(publication_admission_denied(format!(
+        return Err(admission::denied(format!(
             "conflict: pull-request publication requires a verified factory work item, not {}",
             work_item.state.as_str()
         )));
     }
-    let mission_id = work_item.mission_id.context(PublicationAdmissionDenied(
+    let mission_id = work_item.mission_id.context(admission::Denied(
         "verified factory work item has no mission".into(),
     ))?;
     ensure_factory_mission_verified_tx(tx, request.corp_id, mission_id)
         .await
         .map_err(|error| {
             if error.is::<FactoryMissionVerificationDenied>() {
-                publication_admission_denied(error.to_string())
+                admission::denied(error.to_string())
             } else {
                 error
             }
         })?;
-    let policy = work_item
-        .policy
-        .as_object()
-        .context(PublicationAdmissionDenied(
-            "factory policy snapshot must be an object".into(),
-        ))?;
+    let policy = work_item.policy.as_object().context(admission::Denied(
+        "factory policy snapshot must be an object".into(),
+    ))?;
     if policy.get("auto_merge").and_then(Value::as_bool) != Some(false) {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "factory policy must explicitly disable auto_merge before publication",
         ));
     }
     let publication_policy = policy
         .get("publication")
         .and_then(Value::as_object)
-        .context(PublicationAdmissionDenied(
+        .context(admission::Denied(
             "factory policy does not authorize pull-request publication".into(),
         ))?;
     if publication_policy.get("allowed").and_then(Value::as_bool) != Some(true) {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "factory policy does not authorize pull-request publication",
         ));
     }
     let target_allowlist = publication_policy
         .get("repository_allowlist")
         .and_then(Value::as_array)
-        .context(PublicationAdmissionDenied(
+        .context(admission::Denied(
             "publication policy omitted repository_allowlist".into(),
         ))?;
     if !target_allowlist
@@ -1960,7 +1938,7 @@ async fn validate_publication_prerequisites(
         .filter_map(Value::as_str)
         .any(|repository| repository.eq_ignore_ascii_case(request.target_repository))
     {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "publication target repository is outside the factory policy allowlist",
         ));
     }
@@ -1969,7 +1947,7 @@ async fn validate_publication_prerequisites(
         work_item.source_repository_owner, work_item.source_repository_name
     );
     if request.target_repository != expected_repository {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "publication target repository must match the claimed source repository",
         ));
     }
@@ -1977,29 +1955,29 @@ async fn validate_publication_prerequisites(
         .get("base_ref")
         .and_then(Value::as_str)
         .filter(|value| !value.trim().is_empty() && value.len() <= 240)
-        .context(PublicationAdmissionDenied(
+        .context(admission::Denied(
             "publication policy omitted base_ref".into(),
         ))?
         .to_owned();
     validate_factory_publication_base_ref(&expected_base_ref)
-        .map_err(|error| publication_admission_denied(error.to_string()))?;
+        .map_err(|error| admission::denied(error.to_string()))?;
     if request.base_ref != expected_base_ref {
-        return Err(publication_admission_denied(format!(
+        return Err(admission::denied(format!(
             "publication base ref {} does not match factory policy {}",
             request.base_ref, expected_base_ref
         )));
     }
     let expected_base_commit = factory_policy_required_string(policy, "source_base_commit", 64)
-        .map_err(|error| publication_admission_denied(error.to_string()))?
+        .map_err(|error| admission::denied(error.to_string()))?
         .to_ascii_lowercase();
     validate_factory_base_commit(&expected_base_commit)
-        .map_err(|error| publication_admission_denied(error.to_string()))?;
+        .map_err(|error| admission::denied(error.to_string()))?;
     let branch_prefix = publication_policy
         .get("branch_prefix")
         .and_then(Value::as_str)
         .unwrap_or("ecorp/");
     if !request.branch.starts_with(branch_prefix) {
-        return Err(publication_admission_denied(format!(
+        return Err(admission::denied(format!(
             "publication branch must start with the authorized prefix {branch_prefix}"
         )));
     }
@@ -2007,7 +1985,7 @@ async fn validate_publication_prerequisites(
         .get("review_status")
         .and_then(Value::as_str)
         .filter(|value| !value.trim().is_empty())
-        .context(PublicationAdmissionDenied(
+        .context(admission::Denied(
             "publication policy omitted review_status".into(),
         ))?
         .to_owned();
@@ -2015,12 +1993,12 @@ async fn validate_publication_prerequisites(
         .get("status_before")
         .and_then(Value::as_str)
         .filter(|value| !value.trim().is_empty())
-        .context(PublicationAdmissionDenied(
+        .context(admission::Denied(
             "publication policy omitted status_before".into(),
         ))?
         .to_owned();
     if !request.body.contains(&work_item.source_issue_url) {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "pull request body must link the claimed source issue URL",
         ));
     }
@@ -2065,26 +2043,26 @@ async fn validate_publication_prerequisites(
     .bind(mission_id)
     .fetch_optional(&mut **tx)
     .await?
-    .context(PublicationAdmissionDenied(
+    .context(admission::Denied(
         "source deliverable is not linked to the factory mission".into(),
     ))?;
     let form: String = row.get("form");
     let head_commit: Option<String> = row.get("head_commit");
     let commit_sha = head_commit
         .filter(|value| !value.is_empty())
-        .context(PublicationAdmissionDenied(
+        .context(admission::Denied(
             "merge-ready publication requires a committed deliverable".into(),
         ))?
         .to_ascii_lowercase();
     validate_factory_base_commit(&commit_sha)
-        .map_err(|error| publication_admission_denied(error.to_string()))?;
+        .map_err(|error| admission::denied(error.to_string()))?;
     let base_commit: String = row.get::<String, _>("base_commit").to_ascii_lowercase();
     if form != "commit_branch"
         || row.get::<String, _>("integration_state") != "ready_for_review"
         || base_commit != expected_base_commit
         || commit_sha == base_commit
     {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "source deliverable is not a merge-ready commit/branch result",
         ));
     }
@@ -2098,7 +2076,7 @@ async fn validate_publication_prerequisites(
             .and_then(Value::as_str)
             .is_none_or(str::is_empty)
     {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "source deliverable does not include a verified portable Git bundle",
         ));
     }
@@ -2123,7 +2101,7 @@ async fn validate_publication_prerequisites(
             .as_deref()
             != Some(deliverable_sha256.as_str())
     {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "source deliverable is not linked to passing persisted verifier state",
         ));
     }
@@ -2195,7 +2173,7 @@ async fn validate_publication_prerequisites(
                 .as_deref()
                 == Some("quarantined")
     }) {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "quarantined source lineage cannot be published",
         ));
     }
@@ -2308,7 +2286,7 @@ async fn validate_publication_prerequisites(
     .fetch_all(&mut **tx)
     .await?;
     if evidence_ids.is_empty() {
-        return Err(publication_admission_denied(
+        return Err(admission::denied(
             "pull-request publication requires persisted passing verification evidence",
         ));
     }
@@ -2738,22 +2716,22 @@ fn publication_resume_lineage(
 ) -> Result<HashSet<Uuid>> {
     let parents = resume_edges.iter().copied().collect::<HashMap<_, _>>();
     if parents.len() != resume_edges.len() {
-        return Err(anyhow!(
-            "pull-request publication run lineage contains duplicate run identifiers"
+        return Err(admission::denied(
+            "pull-request publication run lineage contains duplicate run identifiers",
         ));
     }
     let mut lineage = HashSet::new();
     let mut current = Some(selected_run_id);
     while let Some(run_id) = current {
         if !lineage.insert(run_id) {
-            return Err(anyhow!(
-                "pull-request publication run lineage contains a resume cycle"
+            return Err(admission::denied(
+                "pull-request publication run lineage contains a resume cycle",
             ));
         }
         current = *parents.get(&run_id).with_context(|| {
-            format!(
+            admission::Denied(format!(
                 "pull-request publication run lineage references run {run_id} outside the factory mission"
-            )
+            ))
         })?;
     }
     Ok(lineage)
@@ -2777,8 +2755,8 @@ fn ensure_recovered_suspend_loop_metrics_allow_publication(
     if (no_progress_limit > 0 && no_progress_events >= no_progress_limit)
         || (repeated_tool_limit > 0 && repeated_tool_count >= repeated_tool_limit)
     {
-        return Err(anyhow!(
-            "pull-request publication is blocked because current loop metrics require a hard breaker"
+        return Err(admission::denied(
+            "pull-request publication is blocked because current loop metrics require a hard breaker",
         ));
     }
     Ok(())
@@ -3421,30 +3399,36 @@ mod tests {
             selected, selected, "suspend", &lineage
         ));
         assert!(ensure_recovered_suspend_loop_metrics_allow_publication(7, 4, 8, 5).is_ok());
-        assert!(ensure_recovered_suspend_loop_metrics_allow_publication(8, 4, 8, 5).is_err());
-        assert!(ensure_recovered_suspend_loop_metrics_allow_publication(7, 5, 8, 5).is_err());
+        for (progress, repeated) in [(8, 4), (7, 5)] {
+            let error =
+                ensure_recovered_suspend_loop_metrics_allow_publication(progress, repeated, 8, 5)
+                    .unwrap_err();
+            assert!(error.downcast_ref::<admission::Denied>().is_some());
+        }
     }
 
     #[test]
-    fn publication_resume_lineage_fails_closed_on_missing_or_cyclic_parents() {
+    fn publication_resume_lineage_denies_missing_cyclic_or_duplicate_parents() {
         let selected = Uuid::from_u128(1);
         let missing = Uuid::from_u128(2);
-        assert!(
-            publication_resume_lineage(selected, &[(selected, Some(missing))])
-                .unwrap_err()
-                .to_string()
-                .contains("outside the factory mission")
-        );
-
         let other = Uuid::from_u128(3);
-        assert!(
-            publication_resume_lineage(
-                selected,
-                &[(selected, Some(other)), (other, Some(selected))]
-            )
-            .unwrap_err()
-            .to_string()
-            .contains("resume cycle")
-        );
+        for (edges, reason) in [
+            (
+                vec![(selected, Some(missing))],
+                "outside the factory mission",
+            ),
+            (
+                vec![(selected, Some(other)), (other, Some(selected))],
+                "resume cycle",
+            ),
+            (
+                vec![(selected, None), (selected, None)],
+                "duplicate run identifiers",
+            ),
+        ] {
+            let error = publication_resume_lineage(selected, &edges).unwrap_err();
+            assert!(error.to_string().contains(reason), "{error}");
+            assert!(error.downcast_ref::<admission::Denied>().is_some());
+        }
     }
 }

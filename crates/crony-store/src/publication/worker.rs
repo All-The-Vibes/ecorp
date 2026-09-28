@@ -252,7 +252,7 @@ impl PgStore {
             && let Err(error) =
                 request::revalidate_human_request_tx(&mut tx, &publication, &intent).await
         {
-            let Some(denial) = error.downcast_ref::<PublicationAdmissionDenied>() else {
+            let Some(denial) = error.downcast_ref::<admission::Denied>() else {
                 return Err(error);
             };
             let detail = format!("Saved human publication request rejected: {denial}");
