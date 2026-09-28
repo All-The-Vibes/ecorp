@@ -44,7 +44,7 @@ function previewFor(selected = source) {
   return {
     plan: {
       source_deliverable_id: selected.id, target_repository: ids.sourceRepository,
-      base_ref: 'main', branch: 'ecorp/result-review', title: '<script>plain title</script>',
+      base_ref: 'main', branch: 'ecorp/result-review', title: '<ScRiPt data-purpose="preview">plain title</ScRiPt>',
       body: 'Review this exact result.\nNo deployment is requested.',
     },
     commit_sha: selected.head_commit, artifact_sha256: selected.sha256,
@@ -167,7 +167,8 @@ test('card requires a source choice and exact preview before offering the reques
     assert.ok(text(f.tree).includes(otherSource.head_commit))
     assert.ok(text(f.tree).includes(otherSource.run_id))
     assert.equal(button(f.tree, /^Request pull request$/).props.disabled, false)
-    assert.doesNotMatch(f.html, /<script>/)
+    assert.ok(f.html.includes('&lt;ScRiPt data-purpose=&quot;preview&quot;&gt;plain title&lt;/ScRiPt&gt;'),
+      'React renders the exact mixed-case, attributed markup as escaped title text')
     assert.equal(hosts(f.tree).filter((node) => node.type === 'a').length, 0)
     assert.equal(f.calls.length, 1, 'preview never starts publication')
     button(f.tree, /^Download source bundle$/).props.onClick()

@@ -1,0 +1,27 @@
+# Human publication review corrections
+
+PR #380 now retries an eligible saved human request on a later poll in the same trusted publisher process. The previous permanent seen set could strand a request after a lease race or transient context failure. The authoritative queue excludes active leases, published requests and recorded failures; expired leases can return. Every poll resets the ordered page cursor, and poll, page and attempt bounds still apply. Effects continue through the existing native publisher.
+
+This supersedes the earlier local review conclusion that visiting each ID once per invocation was correct. The original [implementation packet](../2026-09-28-human-publication-request/README.md), review and r7 acceptance receipts remain historical evidence. r7 restarted a watcher after expiry; this packet's r8 run demonstrates recovery in one surviving watcher process. It does not rewrite that chronology.
+
+The other corrections deserialize routing metadata with the native `PullRequestPublication` type, assert exact escaped mixed-case markup, include the new web model in coverage, and align the native integration fixture with the CLI's sanitized HTTP 403 denial. Transport still requires HTTPS except explicit loopback, rejects URL credentials and redirects, and keeps publisher credentials out of URLs and errors. Coverage thresholds remain 99% lines, 95% functions and 97% branches. Direct API membership assertions and the no-effect snapshots remain in the integration fixture.
+
+## Source and observed validation
+
+Main base: `878a1774774b0630c904cbaf4b05e1b346777817`. Parent: `35eaa7010ab46edb23361795a43ad7c9cca7ec6c`. Corrected tested tree: `e4e3f0ae93eae5bd76692a24c3f91a22ddb50345`. All 7,242 physical source files match the native build, browser acceptance and canonical validation. [source-equivalence.json](source-equivalence.json) records the complete inventory; [review-corrections.patch](review-corrections.patch) contains the five corrections and [tested-code.patch](tested-code.patch) contains the complete 34-file implementation diff against main. The original evidence packet is unchanged.
+
+Locked dependency installation and canonical `pnpm check` passed all 11 named gates, including immutable migrations, state-audit compatibility, native EVM and full Node discovery. Node: 3,126 total, 3,061 passed, 0 failed, 65 skipped, 0 cancelled, 0 todo. Rust workspace: 882 passed, 0 failed and 582 ignored across 41 summaries. The separate EVM gate passed one test. See [canonical-report.json](canonical-report.json) and [canonical-pnpm-check.log](canonical-pnpm-check.log).
+
+The watcher regression first observed two passes and three failures, then five passes and no failures. Its final focused run passed five cases with 156 filtered out. The three new cases cover a busy lease race, transient context failure and the hard attempt limit. [correction-history.json](correction-history.json) retains the observed failures and the first coverage run's 96.97% branch result. Twenty-one focused web and coverage-policy tests passed. Final web model coverage passed with 20 models and 31 test files: 99.67% lines, 96.63% functions and 97.31% branches. Focused counts overlap the full suite.
+
+## Controlled browser-to-runner acceptance
+
+Real Edge, native server, runner, publisher, private SCRAM PostgreSQL and private Git produced two verified results and two tokenless human publication intents. Providers and GitHub were simulated. After publisher A exited 86 following simulated PR creation, the same watcher B process (PID 4268) remained alive after a busy claim, server restart and actual persisted lease expiry. Its one invocation made two polls and two attempts, then adopted the existing PR with no duplicate creation. Proxy gates scheduled unmodified authoritative queue/claim replies; they did not edit persisted state. Active-lease and completed-request probes made no attempts.
+
+An injected Project-update failure retained the second PR and visible durable failure, with no automatic retry. There were no extra coding runs, browser publisher credentials, remote-main changes or non-loopback browser requests. All owned native fixture processes stopped. Ten unmodified screenshots at 390px and 1440px were inspected, with no horizontal overflow. The existing focused mobile skip link overlaps the work-item title without obscuring publication controls. [controlled-browser-report.json](controlled-browser-report.json), [controlled-native-report.json](controlled-native-report.json) and [screenshot-review.json](screenshot-review.json) contain the receipts.
+
+## Remaining gates and limits
+
+At assembly, final-head hosted CodeQL, coverage and integration checks are still pending. Local acceptance does not prove the corrected stale-membership integration assertion has passed. A reviewed exact-head merge and verified issue state are also required before #219 is complete. Parent #145 and machine-intent #348 remain open.
+
+Evidence additions are checked separately for exact source equivalence, complete named plan and Node discovery, docs, paths and secrets. The serial Rust run does not close Windows concurrency issue #213. Ignored/skipped cases are not passes. This fixture does not establish live GitHub publication, real inference, production OIDC or an independent human decision. Environment-only database credentials remain reduced assurance. Historical Cargo advisory debt remains 12 advisories (2 high, 1 moderate, 9 low); no clean audit is claimed.

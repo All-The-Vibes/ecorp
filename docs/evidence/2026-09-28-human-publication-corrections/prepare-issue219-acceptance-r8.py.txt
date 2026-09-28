@@ -1,0 +1,239 @@
+import hashlib
+import json
+from pathlib import Path
+
+EV = Path(__file__).resolve().parent
+
+
+def derive(source, destination, transform):
+    source, destination = EV / source, EV / destination
+    assert not destination.exists(), f'Preserve existing evidence: {destination}'
+    original = source.read_text(encoding='utf-8-sig')
+    updated = transform(original)
+    assert updated != original
+    destination.write_text(updated, encoding='utf-8', newline='\n')
+    return {'source': str(source), 'destination': str(destination),
+            'sha256': hashlib.sha256(destination.read_bytes()).hexdigest()}
+
+
+def replace_once(text, old, new):
+    assert text.count(old) == 1, repr(old[:120])
+    return text.replace(old, new)
+
+
+def browser(text):
+    text = replace_once(text, "import { promisify } from 'node:util'", "import { promisify } from 'node:util'\nimport { createServer } from 'node:http'")
+    text = replace_once(text, "let browser, page, context", "let browser, page, context, queueProxy")
+    start = text.index('function runWatcher(')
+    end = text.index('async function updateFake(', start)
+    text = text[:start] + r'''function runWatcher(demo, credential, label, crashAfter, options = {}) {
+  const token = `synthetic-github-${crypto.randomUUID()}`
+  secrets.push(token)
+  let child
+  const promise = (async () => {
+    const startedAt = new Date().toISOString()
+    let result, exitCode = 0
+    try {
+      const invocation = execFile(cli, [
+        '--server', options.server ?? server,
+        'factory-publisher-watch', demo.corp_id,
+        '--repository', 'All-The-Vibes/ecorp', '--publisher-credential-file', credential,
+        '--github-cli', process.execPath, '--polls', String(options.polls ?? 1),
+        '--poll-interval-seconds', String(options.interval ?? 1),
+        '--max-attempts', String(options.attempts ?? 4),
+        '--page-size', '2', '--max-pages', '3', '--lease-seconds', '5',
+      ], {
+        cwd: fixture, windowsHide: true, timeout: 240000, maxBuffer: 4 * 1024 * 1024,
+        env: {
+          ...process.env, GH_TOKEN: token, ECORP_FAKE_GITHUB_EXPECT_TOKEN: token,
+          ECORP_GITHUB_CLI_PREFIX_ARGS_JSON: JSON.stringify([fakeGithub]),
+          ECORP_FAKE_GITHUB_STATE: statePath, ECORP_PUBLICATION_TEST_REMOTE_URL: remotePath,
+          ECORP_PUBLICATION_EFFECT_LEASE_SECONDS: '30', ECORP_GITHUB_COMMAND_TIMEOUT_MS: '15000',
+          ECORP_SOURCE_GIT_COMMAND_TIMEOUT_MS: '30000',
+          ...(crashAfter ? { ECORP_PUBLICATION_TEST_CRASH_AFTER: crashAfter } : {}),
+        },
+      })
+      child = invocation.child
+      assert.ok(child?.pid > 0, 'Retain the exact native watcher process identity')
+      const { stdout } = await invocation
+      result = JSON.parse(stdout)
+      assert.equal(Boolean(crashAfter), false, 'The requested native crash hook must terminate the publisher')
+    } catch (error) {
+      if (crashAfter && error.code === 86) { exitCode = 86; result = { crashed: true, stage: crashAfter } }
+      else throw new Error(`Watcher ${label}: ${safeError(error)}`)
+    }
+    report.watcher_runs.push({ label, process_id: child.pid, started_at_utc: startedAt,
+      finished_at_utc: new Date().toISOString(), exit_code: exitCode, result })
+    await save()
+    return result
+  })().then(value => ({ value }), error => ({ error }))
+  pendingWatchers.push(promise)
+  const completed = async () => { const result = await promise; if (result.error) throw result.error; return result.value }
+  completed.pid = () => child?.pid
+  completed.isRunning = () => child?.exitCode === null && child?.signalCode === null
+  return completed
+}
+
+// Fixture-only scheduling proxy: all responses come from the real native server.
+// It never changes eligibility, lease timestamps, publication state or replies.
+async function createQueueSchedulingProxy(demo, publicationId) {
+  const gate = () => {
+    let resolve
+    const promise = new Promise(done => { resolve = done })
+    return { promise, resolve }
+  }
+  const firstObserved = gate(), firstRelease = gate(), busyObserved = gate()
+  const secondObserved = gate(), secondRelease = gate()
+  const events = [], errors = []
+  let queueReads = 0, closed = false
+  const wait = async (signal, label) => {
+    let timer
+    try {
+      return await Promise.race([signal.promise, new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Scheduling proxy timed out: ${label}`)), 60000)
+      })])
+    } finally { clearTimeout(timer) }
+  }
+  const proxy = createServer((incoming, outgoing) => {
+    const handle = async () => {
+      const url = new URL(incoming.url, server)
+      assert.equal(url.origin, server)
+      assert.ok(url.pathname.startsWith(`/api/corps/${demo.corp_id}/factory/`))
+      const queue = incoming.method === 'GET' && url.pathname.endsWith('/publisher/queue')
+      const ordinal = queue ? ++queueReads : null
+      if (ordinal === 2) {
+        events.push({ event: 'second_queue_waiting_before_native_request', at: new Date().toISOString() })
+        secondObserved.resolve()
+        await secondRelease.promise
+      }
+      if (closed) { outgoing.writeHead(503); outgoing.end(); return }
+      const chunks = []
+      let length = 0
+      for await (const chunk of incoming) {
+        length += chunk.length
+        assert.ok(length <= 4 * 1024 * 1024)
+        chunks.push(chunk)
+      }
+      const headers = Object.fromEntries(Object.entries(incoming.headers).filter(([name]) =>
+        !['host', 'connection', 'content-length', 'transfer-encoding'].includes(name)))
+      const response = await fetch(url, {
+        method: incoming.method, headers,
+        ...(chunks.length ? { body: Buffer.concat(chunks) } : {}),
+        redirect: 'error', signal: AbortSignal.timeout(60000),
+      })
+      const bytes = Buffer.from(await response.arrayBuffer())
+      if (queue) {
+        assert.equal(response.status, 200)
+        const page = JSON.parse(bytes.toString('utf8'))
+        assert.deepEqual(page.publication_ids, [publicationId])
+        events.push({ event: 'native_queue_reply', ordinal, at: new Date().toISOString(), publication_id: publicationId })
+        if (ordinal === 1) {
+          firstObserved.resolve()
+          await firstRelease.promise
+        }
+      }
+      if (incoming.method === 'POST' && url.pathname.endsWith(`/publications/${publicationId}/claim`)) {
+        assert.equal(response.status, 200)
+        const reply = JSON.parse(bytes.toString('utf8'))
+        const busy = reply.busy === true
+        events.push({ event: 'native_claim_reply', busy, at: new Date().toISOString(), publication_id: reply.publication.id })
+        if (busy) busyObserved.resolve()
+      }
+      outgoing.writeHead(response.status, {
+        'content-type': response.headers.get('content-type') ?? 'application/octet-stream',
+        'content-length': String(bytes.length),
+      })
+      outgoing.end(bytes)
+    }
+    void handle().catch(error => {
+      errors.push(safeError(error))
+      outgoing.destroy()
+    })
+  })
+  await new Promise((resolve, reject) => {
+    proxy.once('error', reject)
+    proxy.listen(0, '127.0.0.1', resolve)
+  })
+  return {
+    origin: `http://127.0.0.1:${proxy.address().port}`, events, errors,
+    firstObserved: () => wait(firstObserved, 'eligible first native queue response'),
+    busyObserved: () => wait(busyObserved, 'actual busy claim'),
+    secondObserved: () => wait(secondObserved, 'same watcher second poll'),
+    releaseFirst: () => { events.push({ event: 'first_queue_released_after_winner_claim', at: new Date().toISOString() }); firstRelease.resolve() },
+    releaseSecond: () => { events.push({ event: 'second_queue_released_after_observed_expiry', at: new Date().toISOString() }); secondRelease.resolve() },
+    releaseAll: () => { closed = true; firstRelease.resolve(); secondRelease.resolve() },
+    close: async () => { proxy.closeAllConnections(); await new Promise(resolve => proxy.close(resolve)) },
+  }
+}
+''' + text[end:]
+    text = replace_once(text,
+        "  const firstWatch = runWatcher(demo, credentialPath, 'first-with-native-crash', 'after_pull_request_remote')\n  await resultState(demo, requested.id, value => value.state === 'publishing' || value.state === 'branch_pushed', 'active native publisher')\n  const competingWatch = runWatcher(demo, secondCredential, 'competing-independent-worker')",
+        """  queueProxy = await createQueueSchedulingProxy(demo, requested.id)
+  const survivingWatch = runWatcher(demo, secondCredential, 'same-watcher-busy-then-adopt', undefined,
+    { server: queueProxy.origin, polls: 2, attempts: 2, interval: 1 })
+  await queueProxy.firstObserved()
+  const survivingPid = survivingWatch.pid()
+  assert.ok(survivingPid > 0 && survivingWatch.isRunning())
+  const firstWatch = runWatcher(demo, credentialPath, 'first-with-native-crash', 'after_pull_request_remote')
+  const activeWinner = await resultState(demo, requested.id, value =>
+    (value.state === 'publishing' || value.state === 'branch_pushed') &&
+    value.publisher_id === 'trusted-human-publication-a' && Date.parse(value.publisher_lease_expires_at) > Date.now(),
+    'active native winning publisher lease')
+  report.active_winner_lease = { publisher_id: activeWinner.publisher_id, expires_at: activeWinner.publisher_lease_expires_at }
+  queueProxy.releaseFirst()
+  await queueProxy.busyObserved()
+  await queueProxy.secondObserved()
+  assert.ok(survivingWatch.isRunning())
+  const competingWatch = runWatcher(demo, secondCredential, 'active-lease-excluded-from-queue')""")
+    text = replace_once(text,
+        "  const recovered = await runWatcher(demo, secondCredential, 'recover-and-adopt-after-crash')()\n  assert.equal(recovered.attempted, 1)\n  assert.equal(recovered.results[0].status, 'published')",
+        """  assert.equal(survivingWatch.pid(), survivingPid)
+  assert.ok(survivingWatch.isRunning(), 'The exact process that lost the claim must survive through expiry')
+  queueProxy.releaseSecond()
+  const recovered = await survivingWatch()
+  assert.equal(recovered.attempted, 2)
+  assert.equal(recovered.polls, 2)
+  assert.equal(recovered.results[0].publication_id, requested.id)
+  assert.equal(recovered.results[0].status, 'failed')
+  assert.match(recovered.results[0].detail, /remains leased/)
+  assert.equal(recovered.results[1].publication_id, requested.id)
+  assert.equal(recovered.results[1].status, 'published')
+  assert.deepEqual(queueProxy.errors, [])
+  assert.equal(queueProxy.events.filter(event => event.event === 'native_queue_reply').length, 2)
+  assert.equal(queueProxy.events.filter(event => event.event === 'native_claim_reply' && event.busy).length, 1)
+  report.same_watcher_recovery = { process_id: survivingPid, watcher_invocations: 1,
+    attempted: recovered.attempted, results: recovered.results, events: queueProxy.events,
+    queue_and_claim_responses: 'Unmodified actual server replies; the proxy only schedules delivery and request forwarding.' }
+  const remoteAfterRecovery = JSON.parse(await readFile(statePath, 'utf8'))
+  assert.equal(remoteAfterRecovery.pr_create_calls, 1)
+  assert.equal(remoteAfterRecovery.pull_requests.length, 1)""")
+    text = replace_once(text, 'caller_disconnect_survived: true, native_crash_adopted: true, failed_request_retry_loop: false,',
+        'caller_disconnect_survived: true, native_crash_adopted: true, same_watcher_recovered_after_busy: true, failed_request_retry_loop: false,')
+    text = replace_once(text, '} finally {\n  await Promise.all(pendingWatchers)',
+        '} finally {\n  // Release fixture gates before awaiting native workers, including failed runs.\n  queueProxy?.releaseAll()\n  await Promise.all(pendingWatchers)\n  if (queueProxy) await queueProxy.close()')
+    return text
+
+
+def driver(text):
+    text = text.replace('browser-r7', 'browser-r8')
+    text = text.replace('fea25059c0af95a86a2fde39209d82e61a1a1385', '878a1774774b0630c904cbaf4b05e1b346777817')
+    text = text.replace('issue219-browser-native-r7.mjs', 'issue219-browser-native-r8.mjs')
+    text = replace_once(text, '        !$browserReport.acceptance.native_crash_adopted -or',
+        '        !$browserReport.acceptance.native_crash_adopted -or\n        !$browserReport.acceptance.same_watcher_recovered_after_busy -or')
+    return text
+
+
+records = []
+records.append(derive('build-issue219-acceptance-r2.ps1', 'build-issue219-acceptance-r3.ps1',
+    lambda text: text.replace('acceptance-build-r2', 'acceptance-build-r3').replace(
+        'fea25059c0af95a86a2fde39209d82e61a1a1385', '35eaa7010ab46edb23361795a43ad7c9cca7ec6c')))
+records.append(derive('issue219-browser-native-r7.mjs', 'issue219-browser-native-r8.mjs', browser))
+records.append(derive('issue219-browser-driver-r7.ps1', 'issue219-browser-driver-r8.ps1', driver))
+records.append(derive('run-issue219-browser-r7.py', 'run-issue219-browser-r8.py',
+    lambda text: text.replace('browser-r7', 'browser-r8').replace('driver-r7', 'driver-r8').replace('native-r7', 'native-r8').replace('acceptance-build-r2', 'acceptance-build-r3')))
+receipt = EV / 'issue219-acceptance-derivation-r8.json'
+assert not receipt.exists()
+receipt.write_text(json.dumps({'purpose': 'Extend native browser acceptance to actual same-watcher busy-lease recovery, preserving r7 chronology',
+    'input_main': '878a1774774b0630c904cbaf4b05e1b346777817',
+    'runtime_parent_head': '35eaa7010ab46edb23361795a43ad7c9cca7ec6c', 'files': records}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'files': len(records), 'receipt': str(receipt)}))

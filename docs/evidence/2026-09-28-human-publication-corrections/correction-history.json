@@ -1,0 +1,79 @@
+{
+  "watcher_regressions": [
+    {
+      "receipt": "issue219-watcher-red1.json",
+      "sha256": "479ca2b843eaadec23a8fb4104cb085ba143746d7508c568000ee774e7f72a9d",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T11:04:56.8051001Z",
+      "finished_at_utc": "2026-09-28T11:05:32.1448168Z",
+      "head": "35eaa7010ab46edb23361795a43ad7c9cca7ec6c",
+      "exit_code": 101,
+      "test_summary": [
+        "test result: FAILED. 2 passed; 3 failed; 0 ignored; 0 measured; 156 filtered out; finished in 6.29s"
+      ],
+      "log_sha256": "05ddbb712e0c3e69f8c7019b9b012a1433fa20772019d15a20c848373f7b5472"
+    },
+    {
+      "receipt": "issue219-watcher-green1.json",
+      "sha256": "065d5c994b8cf03ecb1511c674f35838dcae2cbca6694b0864240683c6b9e6be",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T11:05:50.1958082Z",
+      "finished_at_utc": "2026-09-28T11:06:08.8035641Z",
+      "head": "35eaa7010ab46edb23361795a43ad7c9cca7ec6c",
+      "exit_code": 0,
+      "test_summary": [
+        "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 156 filtered out; finished in 5.55s"
+      ],
+      "log_sha256": "10285270c675e8a884b44e913321f5a1d915b2c364331f140574cd62cb59727c"
+    },
+    {
+      "receipt": "issue219-watcher-green2.json",
+      "sha256": "b58645c45025080194040b33741c2ed51c455e0d6ea4a611fc1ec6b677311624",
+      "status": "passed",
+      "started_at_utc": "2026-09-28T11:15:20.9508199Z",
+      "finished_at_utc": "2026-09-28T11:16:06.5088948Z",
+      "head": "35eaa7010ab46edb23361795a43ad7c9cca7ec6c",
+      "exit_code": 0,
+      "test_summary": [
+        "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 156 filtered out; finished in 5.56s"
+      ],
+      "log_sha256": "c10dd49ad075947e23be23b0ee2115d3a0815010f966eadd735e7b9bac09cbf9"
+    }
+  ],
+  "coverage_r1": {
+    "sha256": "d62473e3b320b373e5709d1ae096b9e038699f58be1cf892be77aebb8c8f5b15",
+    "summary": {
+      "ok": false,
+      "output": "<USERPROFILE>\\.codex\\worktrees\\issue219-publication\\ecorp\\output\\coverage\\issue219-hosted-correction-r1",
+      "scope": "All 20 framework-independent web TypeScript models; excludes the 3 React hooks, TSX rendering, Rust, and other tools",
+      "thresholds": {
+        "lines": 99,
+        "functions": 95,
+        "branches": 97
+      },
+      "node": "v24.21.0",
+      "files": 20,
+      "testFiles": 31,
+      "exitCode": 1,
+      "sourceStable": true,
+      "coverage": {
+        "lines": {
+          "found": 3075,
+          "hit": 3065,
+          "percent": 99.67
+        },
+        "functions": {
+          "found": 297,
+          "hit": 287,
+          "percent": 96.63
+        },
+        "branches": {
+          "found": 1520,
+          "hit": 1474,
+          "percent": 96.97
+        }
+      }
+    }
+  },
+  "chronology": "The original r7 acceptance restarted the watcher after lease expiry. r8 separately proves recovery in one surviving watcher process. The original once-per-ID local review conclusion is superseded; historical receipts are preserved."
+}

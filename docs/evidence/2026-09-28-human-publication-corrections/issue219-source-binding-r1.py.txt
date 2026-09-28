@@ -1,0 +1,117 @@
+"""Bind staged native acceptance to every file in the canonical source inventory.
+
+Revision 3 preserves staged modes and existing CRLF normalization context,
+re-adds every inventoried file with literal forced pathspecs in a fresh temporary index, and verifies reconstruction against the untouched real index.
+Historical helpers and receipts remain unchanged; see the r3 diagnosis and r2 correction.
+"""
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+
+repository = Path(sys.argv[1]).resolve(strict=True)
+receipt_path = Path(sys.argv[2]).resolve(strict=True)
+receipt = json.loads(receipt_path.read_text(encoding="utf-8-sig"))
+assert receipt["issue"] == 219 and receipt["status"] == "passed"
+assert Path(receipt["repository"]).resolve() == repository
+gate = receipt["canonical_report"]
+assert gate["status"] == "passed" and gate["sourceChangedDuringValidation"] is False
+assert gate["notRun"] == []
+expected = [
+    "migrations", "state-audit-compatibility", "state-audit-evm", "docs",
+    "repository-docs", "node-tests", "format", "clippy", "rust-tests",
+    "web-build", "web-lint",
+]
+assert [item["name"] for item in gate["checks"]] == expected
+assert all(item["passed"] and item["exitCode"] == 0 for item in gate["checks"])
+assert all(item["exit_code"] == 0 for item in receipt["checks"])
+assert hashlib.sha256(Path(gate["path"]).read_bytes()).hexdigest() == gate["sha256"]
+original = json.loads(Path(gate["path"]).read_text(encoding="utf-8-sig"))
+assert original["source"] == gate["source"]
+assert original["checks"] == gate["checks"]
+environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+environment["GIT_TERMINAL_PROMPT"] = "0"
+
+
+def git(arguments, env=environment, data=None):
+    result = subprocess.run(
+        ["git", "-C", str(repository), *arguments], env=env, input=data,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+        timeout=240, creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+    if result.returncode:
+        raise RuntimeError("Native Git source binding failed: " + arguments[0])
+    return result.stdout
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+source = gate["source"]
+head = git(["rev-parse", "HEAD"]).decode().strip()
+branch = git(["branch", "--show-current"]).decode().strip()
+assert source["commit"] == head and source["branch"] == branch
+files = [item for item in git(["ls-files", "-z", "--cached", "--others", "--exclude-standard"]).decode().split("\0") if item]
+assert files == source["files"]
+assert len(files) == len(set(files)), "Require an unambiguous staged file inventory"
+tracked_diff = digest(git(["diff", "--binary", "--no-ext-diff", "--no-textconv", "HEAD"]))
+assert tracked_diff == source["trackedDiffSha256"]
+untracked = [item for item in git(["ls-files", "-z", "--others", "--exclude-standard"]).decode().split("\0") if item]
+untracked_digests = [[item, digest((repository / item).read_bytes())] for item in untracked]
+assert untracked_digests == source["untrackedDigests"] == [], "Stage the exact source before validation"
+assert not git(["diff", "--name-only"]).strip(), "Require no unstaged source changes"
+assert not git(["ls-files", "--unmerged"]).strip(), "Require no unresolved merge entries"
+assert digest((repository / "test.config.json").read_bytes()) == source["testConfigSha256"]
+index_before = git(["write-tree"]).decode().strip()
+status_before = git(["status", "--porcelain=v1"])
+physical = []
+for name in sorted(files):
+    file = repository / name
+    assert file.is_file(), "Missing canonical source file: " + name
+    physical.append([name, digest(file.read_bytes())])
+
+file_descriptor, index_name = tempfile.mkstemp(prefix="ecorp-issue219-index-r1-", dir=receipt_path.parent)
+os.close(file_descriptor)
+index = Path(index_name).resolve()
+assert index.parent == receipt_path.parent and index.name.startswith("ecorp-issue219-index-r1-")
+index.unlink()
+try:
+    temporary = dict(environment, GIT_INDEX_FILE=str(index), GIT_LITERAL_PATHSPECS="1")
+    # Seed the exact staged tree only for modes and Git CRLF normalization context.
+    # The fresh index has no cached stat data; re-add every physical source file.
+    # Require the seed to contain exactly the inventoried paths, including ignored files.
+    seed_names = [name for name in git(["ls-tree", "-r", "--name-only", "-z", index_before]).decode().split("\0") if name]
+    assert sorted(seed_names) == sorted(files)
+    git(["read-tree", index_before], temporary)
+    git(["add", "--force", "--all", "--pathspec-from-file=-", "--pathspec-file-nul"],
+        temporary, ("\0".join(files) + "\0").encode())
+    source_tree = git(["write-tree"], temporary).decode().strip()
+    assert source_tree == index_before, "Literal complete-source reconstruction differs from staged source"
+finally:
+    if index.exists():
+        index.unlink()
+assert git(["write-tree"]).decode().strip() == index_before
+assert git(["status", "--porcelain=v1"]) == status_before
+result = {
+    "schema_version": 3,
+    "source_head": head,
+    "source_branch": branch,
+    "source_tree": source_tree,
+    "source_files_sha256": digest(json.dumps(physical, separators=(",", ":"), ensure_ascii=False).encode()),
+    "source_file_count": len(physical),
+    "tracked_diff_sha256": tracked_diff,
+    "untracked_digests": untracked_digests,
+    "canonical_receipt": str(receipt_path),
+    "canonical_receipt_sha256": digest(receipt_path.read_bytes()),
+    "canonical_report_sha256": gate["sha256"],
+    "canonical_gate_names": expected,
+    "literal_force_add_matches_staged_tree": True,
+    "real_index_unchanged": True,
+    "reconstruction": "Fresh temporary index seeded from the staged tree for native modes and existing CRLF context; every inventoried file re-added literally with --force; exact seed path inventory required",
+    "binding_helper_sha256": digest(Path(__file__).read_bytes()),
+}
+print(json.dumps(result))

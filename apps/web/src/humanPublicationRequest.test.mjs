@@ -86,6 +86,13 @@ test('preview retains only exact human-visible plan and selected source hashes',
   assert.ok(Object.isFrozen(result) && Object.isFrozen(result.plan))
 })
 
+test('preview preserves Unicode and multiline text as the exact literal plan', () => {
+  const value = { ...preview, plan: { ...preview.plan,
+    title: 'Review the résumé 📝', body: 'First line\n\tExact résumé result\r\nFinal line',
+  } }
+  assert.deepEqual(readHumanPublicationPreview(value, scope, source), value)
+})
+
 test('preview rejects mismatched scope, lineage, unsafe text and malformed fingerprints', () => {
   const changes = [
     (value) => { value.plan.source_deliverable_id = 'other-result' },
@@ -176,6 +183,50 @@ test('preview timeout is bounded and a late preview cannot enable submission', a
     f.controller.submit()
     assert.equal(f.view.phase, 'unavailable')
     assert.equal(f.calls.length, 1)
+    assert.equal(f.refreshes, 0)
+  } finally { f.controller.dispose() }
+})
+
+test('malformed previews and transport failures require a new explicit preview', async () => {
+  for (const value of [null, [], {}, { plan: null }, { plan: [] }, new Error('PRIVATE TRANSPORT FAILURE')]) {
+    const f = fixture()
+    try {
+      f.controller.preview()
+      const response = f.calls[0].response
+      if (value instanceof Error) response.reject(value)
+      else response.resolve(value)
+      await tick()
+      assert.equal(f.view.phase, 'unavailable')
+      assert.equal(f.view.preview, null)
+      assert.equal(f.timers.size, 0)
+      assert.equal(f.refreshes, 0)
+      assert.doesNotMatch(JSON.stringify(f.views), /PRIVATE|TRANSPORT|FAILURE/)
+      f.controller.submit()
+      assert.equal(f.calls.length, 1, 'a failed preview cannot submit or retry itself')
+      await f.ready()
+      assert.equal(f.calls.length, 2, 'the user may explicitly request a new preview')
+    } finally { f.controller.dispose() }
+  }
+})
+
+test('a queued timeout and late rejection cannot overwrite a replacement preview', async () => {
+  const f = fixture()
+  try {
+    f.controller.preview()
+    const queuedTimeout = [...f.timers.values()][0]
+    f.expire()
+    assert.equal(f.view.phase, 'unavailable')
+    f.controller.preview()
+    queuedTimeout()
+    f.calls[0].response.reject(new Error('old preview failure'))
+    await tick()
+    assert.equal(f.view.phase, 'previewing')
+    assert.equal(f.timers.size, 1)
+    f.calls[1].response.resolve(preview)
+    await tick()
+    assert.equal(f.view.phase, 'ready')
+    assert.equal(f.calls.length, 2)
+    assert.equal(f.timers.size, 0)
     assert.equal(f.refreshes, 0)
   } finally { f.controller.dispose() }
 })
