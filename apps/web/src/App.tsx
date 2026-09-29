@@ -36,6 +36,11 @@ import { canPostRoomMessage, discussionScopeKey, missionOrigin, resolveDiscussio
 import type { DiscussionScope } from './missionProjection'
 import { createSnapshotRefresher } from './snapshotRefresh'
 import { evidenceSelectionKey, readEvidenceSelection, rememberEvidenceSelection } from './evidenceSelection'
+import { HistoryPanel } from './HistoryPanel'
+import type { HistoryKind } from './history'
+import { missionWorkSelection, workSelectionForLink } from './workSelection'
+import type { WorkSelection } from './workSelection'
+import { useWorkSelection } from './useWorkSelection'
 import { ConnectionsPanel } from './ConnectionsPanel'
 import { AuditEvidencePanel } from './AuditEvidencePanel'
 import { DelegatedPanel } from './DelegatedPanel'
@@ -3004,6 +3009,8 @@ function MissionCard({
   discussion,
   onViewAgent,
   publicationRevision = '',
+  workSelection,
+  onRememberWork,
 }: {
   corpId: string
   mission: Mission
@@ -3052,15 +3059,31 @@ function MissionCard({
   discussion?: ReactNode
   onViewAgent?: (agentId: string) => void
   publicationRevision?: string
+  workSelection?: WorkSelection | null
+  onRememberWork?: (choice: WorkSelection) => boolean
 }) {
   const [copiedRecoveryCommand, setCopiedRecoveryCommand] = useState<string | null>(null)
   const evidenceStorageKey = evidenceSelectionKey({ server: API_URL, corpId, actorId, missionId: mission.id })
-  const [selectedEvidenceRunId, setSelectedEvidenceRunId] = useState<string | null>(
-    () => readEvidenceSelection(() => window.sessionStorage, evidenceStorageKey),
+  const [savedEvidenceRunId, setSelectedEvidenceRunId] = useState<string | null>(
+    () => workSelection === undefined ? readEvidenceSelection(() => window.sessionStorage, evidenceStorageKey) : null,
   )
-  const rememberEvidenceRun = (runId: string) => {
-    rememberEvidenceSelection(() => window.sessionStorage, evidenceStorageKey, runId)
+  const [evidenceSelectionError, setEvidenceSelectionError] = useState<string | null>(null)
+  const selectedEvidenceRunId = evidenceSelectionError ? ''
+    : workSelection === undefined ? savedEvidenceRunId : workSelection?.runId ?? null
+  const selectedTaskId = workSelection?.taskId ?? null
+  const rememberEvidenceRun = (runId: string, resumedTaskId?: string): boolean => {
+    const taskId = runs.find((run) => run.id === runId)?.task_id ?? resumedTaskId
+    if (!taskId || !tasks.some((task) => task.id === taskId && task.mission_id === mission.id)) return false
+    const remembered = onRememberWork
+      ? onRememberWork({ missionId: mission.id, taskId, runId })
+      : rememberEvidenceSelection(() => window.sessionStorage, evidenceStorageKey, runId)
+    if (!remembered) {
+      setEvidenceSelectionError('The exact work selection could not be saved or is no longer current. Choose it again before acting.')
+      return false
+    }
+    setEvidenceSelectionError(null)
     setSelectedEvidenceRunId(runId)
+    return true
   }
   const [recoveryContextLoad, setRecoveryContextLoad] = useState<FactoryRecoveryContextLoad | null>(null)
   const [recoveryReload, setRecoveryReload] = useState(0)
@@ -3089,19 +3112,34 @@ function MissionCard({
     left.depth - right.depth || left.plan_key.localeCompare(right.plan_key),
   )
   const taskById = new Map(tasks.map((task) => [task.id, task]))
-  const evidenceRun = selectMissionEvidenceRun(runs, verificationRequests, selectedEvidenceRunId)
+  const evidenceCandidates = selectedTaskId ? runs.filter((run) => run.task_id === selectedTaskId) : runs
+  const evidenceRun = selectMissionEvidenceRun(evidenceCandidates, verificationRequests, selectedEvidenceRunId)
   const displayedEvidenceRunId = evidenceRun?.id
+  const displayedEvidenceTaskId = evidenceRun?.task_id
+  const initialEvidencePin = useRef<string | null>(null)
   useEffect(() => {
-    if (selectedEvidenceRunId !== null || !displayedEvidenceRunId) return
+    if (selectedEvidenceRunId !== null ||
+      (!displayedEvidenceRunId && (!onRememberWork || workSelection !== null))) return
+    const pinKey = JSON.stringify([evidenceStorageKey, selectedTaskId, displayedEvidenceTaskId, displayedEvidenceRunId])
+    // Mount effects can repeat before the parent's saved choice rerenders. Do
+    // not replay a successful initial save through that now-obsolete callback.
+    // Explicit selections and decisions still require the current callback.
+    if (initialEvidencePin.current === pinKey) return
     // Pin the initial viewed run too: another reviewer completing it, a newer
     // worker, navigation or reload must not silently move this review context.
-    const remembered = rememberEvidenceSelection(
-      () => window.sessionStorage, evidenceStorageKey, displayedEvidenceRunId,
-    )
+    const remembered = onRememberWork
+      ? onRememberWork({ missionId: mission.id, taskId: displayedEvidenceTaskId ?? selectedTaskId, runId: displayedEvidenceRunId ?? null })
+      : rememberEvidenceSelection(() => window.sessionStorage, evidenceStorageKey, displayedEvidenceRunId!)
+    if (remembered) initialEvidencePin.current = pinKey
     // One guarded synchronization when the first run arrives, never per streamed event.
     // oxlint-disable-next-line react/set-state-in-effect
-    setSelectedEvidenceRunId(remembered ? displayedEvidenceRunId : '')
-  }, [displayedEvidenceRunId, evidenceStorageKey, selectedEvidenceRunId])
+    setSelectedEvidenceRunId(remembered ? displayedEvidenceRunId ?? null : '')
+    if (!remembered) {
+      // oxlint-disable-next-line react/set-state-in-effect
+      setEvidenceSelectionError('The exact work selection could not be saved. Choose it again before acting.')
+    }
+  }, [displayedEvidenceRunId, displayedEvidenceTaskId, evidenceStorageKey, selectedEvidenceRunId,
+    selectedTaskId, onRememberWork, workSelection, mission.id])
   const completedTasks = tasks.filter((task) => task.status === 'completed').length
   const activeRuns = runs.filter((run) => isProviderLiveRun(run, verificationRequests)).length
   const hasUnfinishedRuns = runs.some((run) => !terminalRun(run.status))
@@ -3295,14 +3333,14 @@ function MissionCard({
     if (!pendingRun || !pendingRequest) return
     // Keep the decided run visible across snapshot refresh, reload and navigation.
     // Another review needs an explicit selector/next-review action.
-    rememberEvidenceRun(pendingRun.id)
+    if (!rememberEvidenceRun(pendingRun.id)) return
     void onVerificationDecision(pendingRun, approved)
   }
   const resumeEvidence = async () => {
     if (!resumableRun || resumeRecoveryBlocked || resumeStopBlocked || resumeBudgetBlocked
       || pendingBudgetRevision || busy || hasUnfinishedRuns) return
     const resumedRunId = await onResume(resumableRun)
-    if (resumedRunId) rememberEvidenceRun(resumedRunId)
+    if (resumedRunId) rememberEvidenceRun(resumedRunId, resumableRun.task_id)
   }
   return (
     <article
@@ -3318,6 +3356,13 @@ function MissionCard({
         <span className="mission-id">#{shortId(mission.id)}</span>
       </div>
       <h3>{mission.title}</h3>
+      {workSelection ? <div className="selected-work-context" data-testid="selected-work-context">
+        <p>Selected mission: {mission.id}{selectedTaskId ? ' · Task: ' + selectedTaskId : ''}
+          {workSelection.runId ? ' · Run: ' + workSelection.runId : ''}</p>
+        {(selectedTaskId && !taskById.has(selectedTaskId)) || (workSelection.runId && !evidenceRun)
+          ? <p role="status">The exact selected task or run is unavailable in this view. No other work was substituted.</p> : null}
+      </div> : null}
+      {evidenceSelectionError ? <p role="alert">{evidenceSelectionError}</p> : null}
       {collaborationInput && onViewAgent ? <MissionCollaborationPanel
         input={collaborationInput}
         onViewAgent={onViewAgent}
@@ -3480,6 +3525,7 @@ function MissionCard({
               className="task-graph-item"
               key={task.id}
               data-task-id={task.id}
+              open={selectedTaskId === task.id ? true : undefined}
               tabIndex={-1}
             >
               <summary className="task-graph-row">
@@ -4059,29 +4105,6 @@ function MissionCard({
   )
 }
 
-function EventRow({ event, actors }: { event: DomainEvent; actors: Actor[] }) {
-  const actor = actors.find((candidate) => candidate.id === event.actor_id)
-  const label = event.type.replaceAll('.', ' / ')
-  const detail =
-    typeof event.payload.message === 'string'
-      ? event.payload.message
-      : typeof event.payload.summary === 'string'
-        ? event.payload.summary
-        : typeof event.payload.title === 'string'
-          ? event.payload.title
-          : event.aggregate_type
-
-  return (
-    <li className="event-row">
-      <span className="event-seq">{String(event.seq).padStart(4, '0')}</span>
-      <span className="event-type">{label}</span>
-      <span className="event-detail">{detail}</span>
-      <span className="event-actor">{actor?.name ?? 'system'}</span>
-      <time dateTime={event.created_at}>{time(event.created_at)}</time>
-    </li>
-  )
-}
-
 function RoomPanel({
   room,
   scope,
@@ -4466,8 +4489,12 @@ function App() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [showRegisteredCrew, setShowRegisteredCrew] = useState(false)
   const [floorInspectorOpen, setFloorInspectorOpen] = useState(false)
-  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null)
+  const { selection: selectedWork, remember: rememberSelectedWork } = useWorkSelection({
+    server: API_URL, corpId: bootstrap?.corp_id ?? '', actorId: selectedActorId ?? '',
+  })
+  const selectedMissionId = selectedWork?.missionId ?? null
   const [evidenceNavigationVersion, setEvidenceNavigationVersion] = useState(0)
+  const [historyView, setHistoryView] = useState<{ kind: HistoryKind; version: number }>({ kind: 'event', version: 0 })
   const [roomMissionId, setRoomMissionId] = useState<string | null>(null)
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [selectedFactoryItemId, setSelectedFactoryItemId] = useState<string | null>(null)
@@ -4501,6 +4528,17 @@ function App() {
   const composerInitialized = useRef(false)
   const initialWorkspaceHash = useRef(window.location.hash)
   const missionComposerHeading = useRef<HTMLHeadingElement | null>(null)
+
+  const rememberCurrentWork = useCallback((choice: WorkSelection): boolean => {
+    const viewer = currentViewer.current
+    return Boolean(data && viewer?.corpId === data.snapshot.corp.id && viewer.actorId === selectedActorId &&
+      rememberSelectedWork(choice))
+  }, [data, selectedActorId, rememberSelectedWork])
+  const setSelectedMissionId = useCallback((missionId: string): boolean => {
+    if (rememberCurrentWork(missionWorkSelection(selectedWork, missionId))) return true
+    setError('The requested work selection could not be saved or is no longer current. No different work was opened.')
+    return false
+  }, [rememberCurrentWork, selectedWork])
 
   useEffect(() => {
     if (missionComposerCollapsed || activeWorkspaceView !== 'missions') return
@@ -4561,6 +4599,12 @@ function App() {
   const navigateToWorkspaceEntity = useCallback(
     (kind: EntityLink['kind'] | 'room', targetId: string) => {
       if (kind === 'room') {
+        const viewer = currentViewer.current
+        if (!data || viewer?.corpId !== data.snapshot.corp.id || viewer.actorId !== selectedActorId ||
+          !data.snapshot.rooms.some((room) => room.id === targetId)) {
+          setError('The linked room is unavailable in the current view.')
+          return
+        }
         setRoomMissionId(null)
         setSelectedRoomId(targetId)
         setActiveWorkspaceView('room')
@@ -4570,43 +4614,24 @@ function App() {
         return
       }
 
-      const linkedRun =
-        kind === 'run'
-          ? data?.snapshot.runs.find((run) => run.id === targetId)
-          : kind === 'artifact'
-            ? data?.snapshot.runs.find((run) => run.artifact_id === targetId)
-            : undefined
-      const linkedTask =
-        kind === 'task'
-          ? data?.snapshot.tasks.find((task) => task.id === targetId)
-          : linkedRun
-            ? data?.snapshot.tasks.find((task) => task.id === linkedRun.task_id)
-            : undefined
-      const missionId = kind === 'mission' ? targetId : linkedTask?.mission_id
-      if (!missionId || !data?.snapshot.missions.some((mission) => mission.id === missionId)) {
-        setError('The linked mission is unavailable in the current view.')
+      const choice = data ? workSelectionForLink({ kind, id: targetId }, data.snapshot, selectedWork) : null
+      if (!choice) {
+        setError('The exact linked work is unavailable in the current view. No other record was substituted.')
         return
       }
-      if (linkedRun) {
-        const viewer = currentViewer.current
-        if (!viewer || viewer.corpId !== data.snapshot.corp.id || viewer.actorId !== selectedActorId ||
-          !rememberEvidenceSelection(() => window.sessionStorage, evidenceSelectionKey({
-            server: API_URL, corpId: viewer.corpId, actorId: viewer.actorId, missionId,
-          }), linkedRun.id)) {
-          setError('The requested evidence selection could not be saved. No different run has been opened.')
-          return
-        }
-        // Explicit run/artifact navigation is a deliberate evidence choice, not
-        // just a scroll target. Remount even within the same mission so its
-        // initializer reads this exact viewer-scoped choice before any decision.
+      if (!rememberCurrentWork(choice)) {
+        setError('The requested evidence selection could not be saved or is no longer current. No different run has been opened.')
+        return
+      }
+      const missionId = choice.missionId
+      if (kind !== 'mission') {
+        // Exact task/run/artifact navigation clears a previous task's evidence
+        // before the current mission renders again.
         setEvidenceNavigationVersion((version) => version + 1)
       }
-      if (missionId) {
-        setSelectedMissionId(missionId)
-        setMissionComposerCollapsed(true)
-        setRoomMissionId(missionId)
-        setSelectedRoomId(null)
-      }
+      setMissionComposerCollapsed(true)
+      setRoomMissionId(missionId)
+      setSelectedRoomId(null)
       setActiveWorkspaceView('missions')
       window.history.replaceState(null, '', '#missions')
       setAnnouncement(`${statusLabel(kind)} opened in Missions.`)
@@ -4615,7 +4640,7 @@ function App() {
         if (missionId) revealEntityTarget('mission', missionId)
       }, 80)
     },
-    [data, selectedActorId],
+    [data, selectedActorId, selectedWork, rememberCurrentWork],
   )
 
   useEffect(() => {
@@ -5098,6 +5123,8 @@ function App() {
           },
         )
       }
+      const refreshed = await refresh(bootstrap.corp_id, selectedActor.id)
+      if (!setSelectedMissionId(created.mission_id)) return
       setMissionTitle('')
       setMissionDescription('')
       setMissionObjective('')
@@ -5117,10 +5144,8 @@ function App() {
       setMissionComposerStep('brief')
       setMissionContractTab('outcome')
       setMissionComposerCollapsed(true)
-      setSelectedMissionId(created.mission_id)
       setActiveWorkspaceView('missions')
       window.history.replaceState(null, '', '#missions')
-      const refreshed = await refresh(bootstrap.corp_id, selectedActor.id)
       if (launched) {
         const launchedRun = refreshed.snapshot.runs.find(
           (run) => run.id === launched?.run_id,
@@ -5820,7 +5845,6 @@ function App() {
   }
 
   const latestMissions = data.snapshot.missions.slice(0, 8)
-  const latestEvents = data.snapshot.events.toReversed().slice(0, 28)
   const connectedRunners = data.runners.filter((runner) => runner.connected)
   const snapshotCurrent = collaborationSnapshotIsCurrent({
     connection, now: Date.parse(snapshotLoad?.receivedAt ?? ''),
@@ -5884,12 +5908,12 @@ function App() {
     : []
 
   const selectDiscussionMission = (missionId: string | null) => {
+    if (missionId && !setSelectedMissionId(missionId)) return
     const destination = missionId === null ? room : resolveDiscussionRoom(
       data.snapshot.rooms, data.snapshot.missions, missionId,
     )
     setSelectedRoomId(destination?.id ?? selectedRoomId)
     setRoomMissionId(missionId)
-    if (missionId) setSelectedMissionId(missionId)
   }
 
   const activateWorkspaceView = (view: WorkspaceView) => {
@@ -6279,7 +6303,8 @@ function App() {
                 const run = data.snapshot.runs.find((candidate) => candidate.id === agent?.current_run_id)
                 const task = data.snapshot.tasks.find((candidate) => candidate.id === run?.task_id)
                 const missionId = task?.mission_id ?? agent?.mission_id
-                if (missionId) setSelectedMissionId(missionId)
+                if (run) { navigateToWorkspaceEntity('run', run.id); return }
+                if (missionId && !setSelectedMissionId(missionId)) return
                 setMissionComposerCollapsed(true)
                 activateWorkspaceView('missions')
               }}
@@ -7024,9 +7049,16 @@ function App() {
               missionChoices.length ? '' : 'mission-console-empty'
             }`}
           >
+            <div className="history-browse">
+              <p>Recent mission shortcuts · up to eight recent missions and your selected work.</p>
+              <button className="button button-secondary" type="button" onClick={() => {
+                setHistoryView((previous) => ({ kind: 'mission', version: previous.version + 1 }))
+                activateWorkspaceView('activity')
+              }}>Browse all missions</button>
+            </div>
             {missionChoices.length ? (
               <div className="work-quick-switch">
-                <label htmlFor="mission-work-switch">Work item</label>
+                <label htmlFor="mission-work-switch">Recent work item</label>
                 <select id="mission-work-switch" value={selectedMission?.id ?? ''}
                   aria-controls={selectedMission ? `mission-detail-${selectedMission.id}` : undefined}
                   onChange={(event) => setSelectedMissionId(event.target.value)}>
@@ -7070,6 +7102,8 @@ function App() {
                 <MissionCard
                   key={`${bootstrap.corp_id}:${selectedActor.id}:${selectedMission.id}:${evidenceNavigationVersion}`}
                   corpId={bootstrap.corp_id}
+                  workSelection={selectedWork}
+                  onRememberWork={rememberCurrentWork}
                   mission={selectedMission}
                   tasks={selectedMissionTasks}
                   runs={selectedMissionRuns}
@@ -7198,14 +7232,8 @@ function App() {
       >
         <div className="panel-heading operations-heading">
           <div>
-            <span className="section-code">Audit trail</span>
-            <h2>Immutable activity</h2>
-          </div>
-          <div className="operations-summary">
-            <span>{data.snapshot.missions.length} missions</span>
-            <span>{data.snapshot.runs.length} runs</span>
-            <span>{data.snapshot.circuit_breaker_incidents.length} breaker events</span>
-            <span>Showing {latestEvents.length} of {data.snapshot.events.length} events</span>
+            <span className="section-code">Authorized history</span>
+            <h2>Work history</h2>
           </div>
         </div>
         {data.snapshot.action_approvals.some((approval) => approval.status === 'pending') ? (
@@ -7224,11 +7252,16 @@ function App() {
               ))}
           </div>
         ) : null}
-        <ol className="event-list" data-testid="event-list">
-          {latestEvents.map((event) => (
-            <EventRow key={event.id} event={event} actors={data.snapshot.actors} />
-          ))}
-        </ol>
+        {activeWorkspaceView === 'activity' ? <HistoryPanel
+          key={`${bootstrap.corp_id}:${selectedActor.id}:${historyView.version}`}
+          corpId={bootstrap.corp_id} corpName={data.snapshot.corp.name}
+          actorId={selectedActor.id} actorName={selectedActor.name}
+          rooms={data.snapshot.rooms} actors={data.snapshot.actors}
+          initialKind={historyView.kind}
+          revision={JSON.stringify([selectedActor.role, data.snapshot.rooms.map((room) => room.id).sort(), snapshotLoad?.refreshFailed])}
+          connected={connection === 'live' && !snapshotLoad?.refreshFailed}
+          api={api} onNavigate={(link) => navigateToWorkspaceEntity(link.kind, link.id)}
+        /> : null}
       </section>
       {bootstrap && selectedActor && connectionRoom && (
         <DelegatedPanel corpId={bootstrap.corp_id} roomId={connectionRoom.id}

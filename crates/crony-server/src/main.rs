@@ -16,6 +16,7 @@ mod factory_connection_tests;
 mod factory_readiness;
 #[cfg(test)]
 mod factory_source_audit_tests;
+mod history;
 mod planning;
 mod secrets;
 mod staffing;
@@ -320,6 +321,16 @@ struct ApiError {
 }
 
 impl ApiError {
+    fn authorization_unavailable(_error: impl std::fmt::Display) -> Self {
+        // Identity lookups may fail with database diagnostics containing secrets
+        // or user-controlled input. Retain only the static failure category.
+        error!("authorization lookup unavailable");
+        Self {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            message: "Authorization is temporarily unavailable.".to_owned(),
+        }
+    }
+
     fn internal(error: impl std::fmt::Display) -> Self {
         error!("request failed: {error}");
         Self {
@@ -622,6 +633,7 @@ async fn run_server() -> anyhow::Result<()> {
         .merge(workspace_connections::routes())
         .merge(delegated::routes())
         .route("/api/corps/{corp_id}/snapshot", get(snapshot))
+        .route("/api/corps/{corp_id}/history", get(history::read))
         .route("/api/corps/{corp_id}/factory/authority", get(factory_authority::inspect))
         .route(
             "/api/corps/{corp_id}/artifacts/{artifact_id}",
@@ -880,7 +892,7 @@ async fn authorize_actor(
                 .store
                 .human_authorization(corp_id, actor_id)
                 .await
-                .map_err(ApiError::internal)?
+                .map_err(ApiError::authorization_unavailable)?
         }
         Principal::Oidc {
             issuer,
@@ -892,7 +904,7 @@ async fn authorize_actor(
                 .store
                 .resolve_human_identity(corp_id, issuer, subject)
                 .await
-                .map_err(ApiError::internal)?
+                .map_err(ApiError::authorization_unavailable)?
         }
     }
     .ok_or_else(|| ApiError::forbidden("identity is not a human member of this Corp"))?;

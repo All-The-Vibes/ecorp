@@ -1,0 +1,176 @@
+PASS all_kinds_beyond_caps_no_gaps_or_duplicates
+PASS late_event_requires_explicit_refresh
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+ExpectError: expect(locator).toBeVisible() failed
+
+Locator:  getByTestId('history-browser').getByTestId('history-entries')
+Expected: visible
+Received: hidden
+Timeout:  15000ms
+
+Call log:
+  - Expect "to.be.visible" with timeout 15000ms
+  - waiting for getByTestId('history-browser').getByTestId('history-entries')
+    33 × locator resolved to <ol class="history-entries" data-testid="history-entries"></ol>
+       - unexpected value "hidden"
+
+    at captureRawStack (<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright-core\lib\coreBundle.js:9681:17)
+    at callMatcherAsStep (<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright\lib\matchers\expect.js:13310:57)
+    at Object.toBeVisible (<USERPROFILE>\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright\lib\matchers\expect.js:13300:23)
+    at ready (<USERPROFILE>\code\ecorp\output\issue-completion\20260926T112626Z\issue258-browser-r3.mjs:138:56)
+    at async apply (<USERPROFILE>\code\ecorp\output\issue-completion\20260926T112626Z\issue258-browser-r3.mjs:160:49)
+    at async file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue258-browser-r3.mjs:234:3 {
+  matcherResult: {
+    message: 'expect(locator).toBeVisible() failed\n' +
+      '\n' +
+      "Locator:  getByTestId('history-browser').getByTestId('history-entries')\n" +
+      'Expected: visible\n' +
+      'Received: hidden\n' +
+      'Timeout:  15000ms\n' +
+      '\n' +
+      'Call log:\n' +
+      '  - Expect "to.be.visible" with timeout 15000ms\n' +
+      "  - waiting for getByTestId('history-browser').getByTestId('history-entries')\n" +
+      '    33 × locator resolved to <ol class="history-entries" data-testid="history-entries"></ol>\n' +
+      '       - unexpected value "hidden"\n',
+    pass: false,
+    actual: 'hidden',
+    name: 'toBeVisible',
+    expected: 'visible',
+    log: [
+      '  - Expect "to.be.visible" with timeout 15000ms',
+      "  - waiting for getByTestId('history-browser').getByTestId('history-entries')",
+      '    33 × locator resolved to <ol class="history-entries" data-testid="history-entries"></ol>',
+      '       - unexpected value "hidden"'
+    ],
+    timeout: 15000,
+    ariaSnapshot: '- main:\n' +
+      '  - link "Skip to workspace":\n' +
+      '    - /url: "#activity"\n' +
+      '  - status: Room.Message Posted\n' +
+      '  - heading "ECORP" [level=1]\n' +
+      '  - text: Local preview live 1 runner online Demo operator\n' +
+      '  - combobox "Demo operator":\n' +
+      '    - option "Alice · owner" [selected]\n' +
+      '    - option "Bob · member"\n' +
+      '    - option "Eve · guest"\n' +
+      '  - text: Local demo permissions—not GitHub sign-in.\n' +
+      '  - navigation "ECorp workspace sections":\n' +
+      '    - link "Control floor":\n' +
+      '      - /url: "#floor"\n' +
+      '      - strong: Control floor\n' +
+      '    - link "Factory":\n' +
+      '      - /url: "#factory"\n' +
+      '      - strong: Factory\n' +
+      '    - link "Missions":\n' +
+      '      - /url: "#missions"\n' +
+      '      - strong: Missions\n' +
+      '    - link "Comms":\n' +
+      '      - /url: "#room"\n' +
+      '      - strong: Comms\n' +
+      '    - link "Audit":\n' +
+      '      - /url: "#activity"\n' +
+      '      - strong: Audit\n' +
+      '    - button "Start guide":\n' +
+      '      - strong: Start guide\n' +
+      '  - region "Operations overview":\n' +
+      '    - strong: Audit\n' +
+      '    - button "Live runs 0 Take control":\n' +
+      '      - text: Live runs\n' +
+      '      - strong: "0"\n' +
+      '      - text: Take control\n' +
+      '    - button "Decisions 0 Review gates":\n' +
+      '      - text: Decisions\n' +
+      '      - strong: "0"\n' +
+      '      - text: Review gates\n' +
+      '    - button "Factory 1 Active items":\n' +
+      '      - text: Factory\n' +
+      '      - strong: "1"\n' +
+      '      - text: Active items\n' +
+      '    - button "Results 0 Completed missions":\n' +
+      '      - text: Results\n' +
+      '      - strong: "0"\n' +
+      '      - text: Completed missions\n' +
+      '  - group: Audit evidence\n' +
+      '  - text: Authorized history\n' +
+      '  - heading "Work history" [level=2]\n' +
+      '  - region "Searchable work history":\n' +
+      '    - paragraph:\n' +
+      '      - text: "Corp:"\n' +
+      '      - strong: ECorp Operations Network\n' +
+      '      - text: "· Viewer:"\n' +
+      '      - strong: Alice\n' +
+      '      - text: . Only records currently authorized for this viewer are returned.\n' +
+      '    - text: Record type\n' +
+      '    - combobox "Record type":\n' +
+      '      - option "Mission history"\n' +
+      '      - option "Task history"\n' +
+      '      - option "Run history"\n' +
+      '      - option "Event history" [selected]\n' +
+      '    - text: Search titles, IDs or status\n' +
+      '    - searchbox "Search titles, IDs or status": issue258-private-payload-canary\n' +
+      '    - text: Room\n' +
+      '    - combobox "Room":\n' +
+      '      - option "All authorized rooms"\n' +
+      '      - option "Automation Division" [selected]\n' +
+      '    - text: Attributed actor\n' +
+      '    - combobox "Attributed actor":\n' +
+      '      - option "Any recorded actor" [selected]\n' +
+      '      - option "Alice"\n' +
+      '      - option "Bob"\n' +
+      '      - option "Eve"\n' +
+      '      - option "Claudia"\n' +
+      '      - option "Cody"\n' +
+      '      - option "Margo"\n' +
+      '      - option "Opal"\n' +
+      '      - option "Piper"\n' +
+      '      - option "Wally"\n' +
+      '    - text: Event type\n' +
+      '    - textbox "Event type":\n' +
+      '      - /placeholder: Any; e.g. run.started\n' +
+      '    - text: Mission ID (optional)\n' +
+      '    - textbox "Mission ID (optional)":\n' +
+      '      - /placeholder: Exact mission UUID\n' +
+      '    - button "Apply filters"\n' +
+      '    - button "Clear filters"\n' +
+      '    - strong: Applied filters\n' +
+      '    - term: Kind\n' +
+      '    - definition: event\n' +
+      '    - term: Search\n' +
+      '    - definition: issue258-private-payload-canary\n' +
+      '    - term: Room\n' +
+      '    - definition: Automation Division\n' +
+      '    - term: Actor\n' +
+      '    - definition: Any\n' +
+      '    - term: Status / event type\n' +
+      '    - definition: Any\n' +
+      '    - term: Mission\n' +
+      '    - definition: Any\n' +
+      '    - paragraph: This is a live, paged view, not a complete export or a count of all work. Events are ordered by journal sequence, descending; gaps do not imply missing authorized records. New commits, changing status or access can change earlier pages. Refresh from the beginning for late records. Summaries exclude raw payloads; actor attribution does not establish approval or accepted completion.\n' +
+      '    - heading "History results · page 1" [level=3]\n' +
+      '    - button "Refresh history"\n' +
+      '    - status:\n' +
+      '      - text: 0 records on this page. Search started\n' +
+      '      - time: 9/29/2026, 3:25:20 PM\n' +
+      '      - text: .\n' +
+      '    - paragraph: No authorized records match the applied filters. This is not a statement about hidden or retained history.\n' +
+      '    - list\n' +
+      '    - navigation "History pages":\n' +
+      '      - button "Previous page" [disabled]\n' +
+      '      - button "Next page" [disabled]\n' +
+      '      - text: End of the currently available matching pages. Refresh for changes.\n' +
+      '  - region "Protected resource jobs":\n' +
+      '    - heading "Protected resource jobs" [level=2]\n' +
+      '    - text: Microsoft Entra\n' +
+      '    - paragraph: Run an ECorp job using your delegated identity. Sign-in happens in your browser; credentials never appear in this panel. A private receipt stays private until you release it.\n' +
+      '    - status: "Delegated jobs are unavailable: no enabled provider is configured."\n' +
+      '    - button "Run protected resource job" [disabled]\n' +
+      '    - button "Refresh status"\n' +
+      '    - paragraph: No delegated operations for this actor.'
+  }
+}
+
+Node.js v24.21.0

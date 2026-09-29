@@ -1,0 +1,30 @@
+   Compiling crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue258-history\ecorp\crates\crony-store)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 45s
+     Running unittests src\lib.rs (target\debug\deps\crony_store-eddbee591ca35258.exe)
+
+running 7 tests
+test history_tests::issue258_access_rechecked_for_each_page_and_explicit_scope_never_broadens ... ok
+test history_tests::issue258_all_kinds_page_past_caps_without_duplicates_or_writes ... FAILED
+Error: error returned from database: canceling statement due to statement timeout
+
+Caused by:
+    canceling statement due to statement timeout
+test history_tests::issue258_causal_links_require_visible_earlier_events ... ok
+test history_tests::issue258_cursors_are_positions_not_authority_and_bind_normalized_queries ... ok
+test history_tests::issue258_event_gaps_bigint_and_late_commit_require_explicit_refresh ... ok
+test history_tests::issue258_literal_search_exact_links_and_safe_event_details ... ok
+
+thread 'history_tests::issue258_unresolved_room_and_mismatched_aggregate_events_fail_closed' (26388) panicked at crates\crony-store\src\history_tests.rs:225:9:
+inaccessible/corrupt event c8e561c9-962d-4d2c-ac21-4fa4594e6a3d exposed
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test history_tests::issue258_unresolved_room_and_mismatched_aggregate_events_fail_closed ... FAILED
+
+failures:
+
+failures:
+    history_tests::issue258_all_kinds_page_past_caps_without_duplicates_or_writes
+    history_tests::issue258_unresolved_room_and_mismatched_aggregate_events_fail_closed
+
+test result: FAILED. 5 passed; 2 failed; 0 ignored; 0 measured; 552 filtered out; finished in 19.75s
+
+error: test failed, to rerun pass `-p crony-store --lib`

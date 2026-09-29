@@ -43,6 +43,24 @@ Development mode still enforces room membership in persistence, snapshots, write
 replay, and live delivery. Eve is a deliberate non-member fixture used to prove that room-scoped
 missions, tasks, runs, messages, and events are not returned.
 
+Searchable history uses the same protected HTTP authentication and human Read permission.
+The store rechecks the current Corp-local human role and room membership within each read-only
+page transaction. Room/mission filters and exact unavailable records fail closed; cursors and
+client-persisted selections never confer access. Every navigation relationship matches the Corp
+and current room visibility, including causal events. Private visibility and inconsistent
+aggregate/room relationships are excluded.
+
+History searches only bounded shared titles, IDs and normalized statuses/event types. Known
+event types have static summaries; unknown types appear as `other`. Event payloads, provider
+output, tool arguments, diagnostics, message bodies and credentials are neither returned nor
+searched. Control and bidi override characters are removed from shared labels. Actor attribution
+and an event describing completion do not constitute a human decision or verified acceptance.
+The bounded unsigned cursor is only a query-specific position; its freshness check is not
+authenticated expiry. Database/extractor failures return static errors, history responses are
+`no-store`, and authorization lookup failures omit underlying database diagnostics from logs.
+The browser suppresses obsolete history responses and scopes its exact selection by
+server/Corp/actor; unavailable work cannot silently select a substitute.
+
 Identity Pin/Unpin uses the existing `Operate` permission (human owner/admin/manager/member),
 not a control lease or provider-native permission. The store transaction rechecks and locks
 current Corp-local role and owning-room membership even for an exact replay. OIDC principal

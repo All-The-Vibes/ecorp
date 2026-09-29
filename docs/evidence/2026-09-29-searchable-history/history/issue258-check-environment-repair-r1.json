@@ -1,0 +1,42 @@
+{
+  "issue": 258,
+  "status": "passed",
+  "started_at_utc": "2026-09-29T21:16:14.7717819+00:00",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp",
+  "original_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-check-r1.json",
+  "original_receipt_sha256": "a044f0b04d4c0b3ab80bdf2ab0586ef51aff95c4ee2518c0b3bcd0f83ebe0584",
+  "original_node_counts": {
+    "tests": 3135,
+    "passed": 3068,
+    "failed": 2,
+    "skipped": 65,
+    "todo": 0,
+    "cancelled": 0
+  },
+  "diagnosis": "Both failed Node tests could not import the scenario-local locked @microsoft/teams.apps package. No implementation failure was established by these two import errors.",
+  "install": {
+    "exit_code": 0,
+    "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-check-environment-repair-r1-install.log",
+    "log_sha256": "e7329e9bb3c37bed8619eb4912ad1d4d548a3618e6c4a94de06cdf9f2a64fbd9",
+    "command": "npm ci --ignore-scripts --no-fund --workspaces=false"
+  },
+  "focused": {
+    "exit_code": 0,
+    "counts": {
+      "tests": 18,
+      "pass": 18,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-check-environment-repair-r1-focused.log",
+    "log_sha256": "d2bc2c731ab4753811ce3bc513430b09c3cf73cc20ac50764ead9e83d24fdf61",
+    "command": "node --test --test-concurrency=1 --test-timeout=180000 --test-reporter=tap scenarios/repo-steward/teams-host.test.mjs"
+  },
+  "physical_source_unchanged": true,
+  "note": "Install the existing scenario lockfile with lifecycle scripts disabled and npm audit reporting retained. No source, lockfile, TLS, pnpm protection, hosted-check policy or test discovery change is authorized by this repair.",
+  "lock_sha256_before": "bf5f1c7af71f4526079e5ec8ed6d86b1296bbfd5b3fa1bdfc24f8b045235af1d",
+  "lock_sha256_after": "bf5f1c7af71f4526079e5ec8ed6d86b1296bbfd5b3fa1bdfc24f8b045235af1d",
+  "completed_at_utc": "2026-09-29T21:17:00.3469297+00:00"
+}

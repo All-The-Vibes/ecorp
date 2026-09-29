@@ -1,0 +1,180 @@
+{
+  "issue": 258,
+  "status": "failed",
+  "qa_root": "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r4",
+  "worktree": "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp",
+  "started_at_utc": "2026-09-29T20:26:52.0669582+00:00",
+  "steps": [
+    {
+      "started_at_utc": "2026-09-29T20:26:52.1394932+00:00",
+      "name": "source-before",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r4-source-before.log",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue258-source-r1.py",
+        "--phase",
+        "before-native-r4"
+      ],
+      "finished_at_utc": "2026-09-29T20:27:03.9768067+00:00",
+      "sha256": "ea49d6d3164681bcadff907d152735b3f7951b7cf4e1d9de57c4c6a0fa274899"
+    },
+    {
+      "started_at_utc": "2026-09-29T20:27:04.0028491+00:00",
+      "name": "build",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r4-build.log",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "crony-server",
+        "-p",
+        "crony-runner",
+        "--bins"
+      ],
+      "finished_at_utc": "2026-09-29T20:27:05.5283662+00:00",
+      "sha256": "058009977afd1dabd5c01aa7e4b2b7c5a77e0c5f841ff7dc9bc1d200c6d19912"
+    },
+    {
+      "started_at_utc": "2026-09-29T20:27:05.8629822+00:00",
+      "name": "dry-run",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r4-dry-run.log",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "DryRun",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r4",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-29T20:27:07.2471868+00:00",
+      "sha256": "19e212cd98f9de4a745046c5fc348e7543e39c27e8b4a362b873be1920fbaf5d"
+    },
+    {
+      "started_at_utc": "2026-09-29T20:27:07.2640994+00:00",
+      "name": "start",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r4-start.log",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Start",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r4",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-29T20:27:20.9978811+00:00",
+      "sha256": "2dfda58eff2d842d5eaafab5d61fd7d1b74baf151a54c83f5eaae6313be25b46"
+    },
+    {
+      "started_at_utc": "2026-09-29T20:27:21.0138969+00:00",
+      "name": "status",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r4-status.log",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Status",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r4",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-29T20:27:22.9402285+00:00",
+      "sha256": "50855e237d8a6d2855a2fd5f6617ac88f22186caeb166deea178ca2e7c01f5fc"
+    },
+    {
+      "started_at_utc": "2026-09-29T20:27:22.9465305+00:00",
+      "name": "prepare",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r4-prepare.log",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "tools/e2e_factory_run_activity.py",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r4",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--phase",
+        "prepare"
+      ],
+      "finished_at_utc": "2026-09-29T20:27:26.9310288+00:00",
+      "sha256": "5eaf671b9387fd46d1e26ba8db690244fad9af38d3e80677436a8b3af31ba48e"
+    },
+    {
+      "started_at_utc": "2026-09-29T20:27:26.9590608+00:00",
+      "name": "browser",
+      "exit_code": 1,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r4-browser.log",
+      "command": [
+        "node",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-browser-r4.mjs",
+        "--qa-root",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r4",
+        "--postgres-bin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin",
+        "--source-receipt",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-source-before-native-r4.json"
+      ],
+      "finished_at_utc": "2026-09-29T20:28:19.1582085+00:00",
+      "sha256": "34d24f9e3d973afd2fe27d9cd1d3737f006fc34ac1937babe0a99284129b6f6e"
+    },
+    {
+      "started_at_utc": "2026-09-29T20:28:19.1940470+00:00",
+      "name": "source-after",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r4-source-after.log",
+      "command": [
+        "<USERPROFILE>\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\capture-issue258-source-r1.py",
+        "--phase",
+        "after-native-r4",
+        "--equals",
+        "before-native-r4"
+      ],
+      "finished_at_utc": "2026-09-29T20:28:31.1325758+00:00",
+      "sha256": "5bcd02d6c3e782ec146be084433d221ff56024cb27b642972c7495a08b5d32d5"
+    },
+    {
+      "started_at_utc": "2026-09-29T20:28:31.1517750+00:00",
+      "name": "stop",
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-native-r4-stop.log",
+      "command": [
+        "<USERPROFILE>\\.codex\\worktrees\\issue258-history\\ecorp\\tools\\qa_factory_run_activity.ps1",
+        "-Phase",
+        "Stop",
+        "-QaRoot",
+        "<USERPROFILE>\\qa\\pr265-run-activity-issue258-20260929-r4",
+        "-PostgresBin",
+        "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin"
+      ],
+      "finished_at_utc": "2026-09-29T20:28:32.5154830+00:00",
+      "sha256": "65abe6fe9cb60eacc967eff94e7f98a3a958644944f9ce7caffa07021c10ae9e"
+    }
+  ],
+  "stopped": true,
+  "reason": "Fourth owned browser/server/native-runner history acceptance attempt. r1 setup budget, r2 label locator and r3 empty-list visibility failures are retained; r4 checks the attached results list and visible result-count status, including zero results. Seeded cancelled history is separate from genuinely prepared, launched and reviewed native tasks. No provider inference, production identity, real GitHub effects or source checkout mutation.",
+  "drivers": {
+    "capture-issue258-source-r1.py": "4427cf45eb50f8037e79ec7fc252fecd1e32cee7704ad829e685fe11c1929ef1",
+    "issue258-browser-r4.mjs": "7d392a924be07339f3643ffbe25540a8f615c9429dd9d3d12fd70383782e3d66"
+  },
+  "binaries": {
+    "crony-runner.exe": {
+      "sha256": "ebbaccd43e397c27f43c7004266ea4b518a4536b6dce67ec9345b9f1830c2d73",
+      "length": 132572672
+    },
+    "crony-server.exe": {
+      "sha256": "d509ddb9802961beb77c1bb22f7fa3b95b16a413bf60ec945d0dc0e052609457",
+      "length": 45195264
+    }
+  },
+  "error": "Native acceptance step browser failed with exit 1; inspect retained evidence.",
+  "physical_source_unchanged": true,
+  "finished_at_utc": "2026-09-29T20:28:32.5295476+00:00"
+}

@@ -45,7 +45,11 @@ mod factory_attempt_policy;
 mod factory_authority;
 mod factory_controller;
 mod factory_run_failure;
+mod history;
 mod mission_context;
+pub use history::HistoryReadError;
+#[cfg(test)]
+mod history_tests;
 mod publication;
 mod retained_provider_receipt;
 mod staffing;

@@ -1,0 +1,14 @@
+file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue258-browser-r1.mjs:71
+  } catch (error) { throw new Error('Owned SQL failed: ' + String(error.stderr ?? '').slice(0, 1200)) }
+                          ^
+
+Error: Owned SQL failed: ERROR:  null value in column "original_budget_tokens" of relation "missions" violates not-null constraint
+
+DETAIL:  Failing row contains (9a6c8484-9e78-4395-8f93-5575720388cc, 2eba384e-813a-4591-8dad-15e352697f94, c9ed664a-04c4-4989-a661-7d334e641a43, 98a1f599-10d8-42bc-a956-82ddd9a13eb0, issue258-outside-corp-canary, cancelled, 2026-09-29 15:18:27.318942-05, 2026-09-29 15:18:27.318942-05, single, 1, 0, 100000, 5000000, null, null, , 1).
+
+
+    at sql (file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue258-browser-r1.mjs:71:27)
+    at file:///<USERPROFILE>/code/ecorp/output/issue-completion/20260926T112626Z/issue258-browser-r1.mjs:86:1
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v24.21.0

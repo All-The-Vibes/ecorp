@@ -1,0 +1,92 @@
+{
+  "issue": 258,
+  "original_attempt": "r1",
+  "status": "failed; retained without replacement",
+  "original_receipt_sha256": "a044f0b04d4c0b3ab80bdf2ab0586ef51aff95c4ee2518c0b3bcd0f83ebe0584",
+  "original_report_sha256": "60899d241ee86a61f67f576a0411902549e8b657535ec3c295a26e4c2b25562a",
+  "original_log_sha256": "d2d8c7ce6d92170afd31bfcb0866714260f647cef903378212c7bcfd5d860595",
+  "node_counts": {
+    "tests": 3135,
+    "passed": 3068,
+    "failed": 2,
+    "skipped": 65,
+    "todo": 0,
+    "cancelled": 0
+  },
+  "passed_gates": [
+    "migrations",
+    "state-audit-compatibility",
+    "state-audit-evm",
+    "docs",
+    "repository-docs"
+  ],
+  "failed_gate": "node-tests",
+  "not_run": [
+    "format",
+    "clippy",
+    "rust-tests",
+    "web-build",
+    "web-lint"
+  ],
+  "failure_excerpts": [
+    {
+      "title": "native Teams SDK rejects unauthenticated requests on an owned loopback endpoint",
+      "start_line": 7662,
+      "end_line": 7681,
+      "normalized_excerpt_sha256": "e34403d9715421dddba4fd4b7e56844c91dea16cec80a1686bcd5095d25f6a4a",
+      "text": "not ok 1235 - native Teams SDK rejects unauthenticated requests on an owned loopback endpoint\n  ---\n  duration_ms: 20.7404\n  type: 'test'\n  location: '<USERPROFILE>\\\\.codex\\\\worktrees\\\\issue258-history\\\\ecorp\\\\scenarios\\\\repo-steward\\\\teams-host.test.mjs:39:1'\n  failureType: 'testCodeFailure'\n  error: \"Cannot find package '@microsoft/teams.apps' imported from <USERPROFILE>\\\\.codex\\\\worktrees\\\\issue258-history\\\\ecorp\\\\scenarios\\\\repo-steward\\\\teams-host.mjs\"\n  code: 'ERR_MODULE_NOT_FOUND'\n  stack: |-\n    Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)\n    packageResolve (node:internal/modules/esm/resolve:784:25)\n    moduleResolve (node:internal/modules/esm/resolve:873:18)\n    defaultResolve (node:internal/modules/esm/resolve:1006:11)\n    #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\n    #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)\n    ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)\n    #resolve (node:internal/modules/esm/loader:687:17)\n    ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)\n    node:internal/modules/esm/loader:636:32\n  ...\n"
+    },
+    {
+      "title": "SDK startup collision is detected and leaves the existing listener untouched",
+      "start_line": 7755,
+      "end_line": 7774,
+      "normalized_excerpt_sha256": "c61c7ec5c8d2d99312c7df143b94b081da2d2ce1973b2bf2638f8b5f3262f26c",
+      "text": "not ok 1248 - SDK startup collision is detected and leaves the existing listener untouched\n  ---\n  duration_ms: 21.8131\n  type: 'test'\n  location: '<USERPROFILE>\\\\.codex\\\\worktrees\\\\issue258-history\\\\ecorp\\\\scenarios\\\\repo-steward\\\\teams-host.test.mjs:126:1'\n  failureType: 'testCodeFailure'\n  error: \"Cannot find package '@microsoft/teams.apps' imported from <USERPROFILE>\\\\.codex\\\\worktrees\\\\issue258-history\\\\ecorp\\\\scenarios\\\\repo-steward\\\\teams-host.mjs\"\n  code: 'ERR_MODULE_NOT_FOUND'\n  stack: |-\n    Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)\n    packageResolve (node:internal/modules/esm/resolve:784:25)\n    moduleResolve (node:internal/modules/esm/resolve:873:18)\n    defaultResolve (node:internal/modules/esm/resolve:1006:11)\n    #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\n    #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)\n    ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)\n    #resolve (node:internal/modules/esm/loader:687:17)\n    ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)\n    node:internal/modules/esm/loader:636:32\n  ...\n"
+    }
+  ],
+  "excerpt_encoding": "One-based lines of the retained UTF-8-sig decoded, LF-normalized log; original complete log hash retained. Publication redacts personal paths and separately binds published bytes.",
+  "diagnosis": "Both failed Node tests could not import the scenario-local locked @microsoft/teams.apps package. No implementation failure was established by these two import errors.",
+  "environment_repair_receipt_sha256": "712f77bfebeb3b00340d15bc2fcac3e8cb2a0cc30abd4a92d86561c682c21a57",
+  "repair": {
+    "install": {
+      "exit_code": 0,
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-check-environment-repair-r1-install.log",
+      "log_sha256": "e7329e9bb3c37bed8619eb4912ad1d4d548a3618e6c4a94de06cdf9f2a64fbd9",
+      "command": "npm ci --ignore-scripts --no-fund --workspaces=false"
+    },
+    "focused": {
+      "exit_code": 0,
+      "counts": {
+        "tests": 18,
+        "pass": 18,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue258-check-environment-repair-r1-focused.log",
+      "log_sha256": "d2bc2c731ab4753811ce3bc513430b09c3cf73cc20ac50764ead9e83d24fdf61",
+      "command": "node --test --test-concurrency=1 --test-timeout=180000 --test-reporter=tap scenarios/repo-steward/teams-host.test.mjs"
+    },
+    "lock_sha256_before": "bf5f1c7af71f4526079e5ec8ed6d86b1296bbfd5b3fa1bdfc24f8b045235af1d",
+    "lock_sha256_after": "bf5f1c7af71f4526079e5ec8ed6d86b1296bbfd5b3fa1bdfc24f8b045235af1d"
+  },
+  "source_receipts": [
+    {
+      "name": "issue258-source-before-check-r1.json",
+      "sha256": "c1f36ab0a633d02aeb479fb6a4f2ea2cdb917ffe416788dcc2a96793f0ea679a"
+    },
+    {
+      "name": "issue258-source-after-check-r1-failed.json",
+      "sha256": "8b0255cdb26409928aa0d4ca5f230eadd19edf53d51f77882eabe23611386838"
+    },
+    {
+      "name": "issue258-source-after-check-environment-repair-r1.json",
+      "sha256": "e54186edc90dd77748b7a6ff681c9761aa58ee2b8c762874615c95134a439836"
+    }
+  ],
+  "physical_source_unchanged": true,
+  "physical_files_sha256": "66fd1ec4c37316bb03041440b9724b8b7978e32e35944a5ff374b707a5eff620",
+  "audit_scope": "npm reported zero vulnerabilities for the 118 audited packages in this scenario. This is not a clean repository-wide or Cargo audit.",
+  "revalidation": "The unchanged source and repaired locked scenario dependencies were subsequently validated by canonical r2. The first attempt remains failed; its unrun gates are not passes."
+}

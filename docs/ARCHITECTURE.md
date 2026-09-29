@@ -417,6 +417,39 @@ Postgres before continuing live delivery.
 The current browser refreshes its bounded materialized snapshot after replay or a live event. Later
 clients may apply typed events directly for lower latency.
 
+## Searchable work history
+
+`GET /api/corps/{corp_id}/history` projects authorized missions, tasks, runs or journal events
+from Postgres. The existing protected router and human Read authorization remain authoritative;
+the read-only, repeatable-read page transaction independently checks the current Corp role and
+room memberships. This adds no execution, session, permission or harness mechanism.
+
+Each request selects one record kind, a page size from 1 to 100, and optional room, mission,
+attributed actor, exact record, status/event type and literal title/ID/status search filters.
+Search is limited to 160 Unicode characters. Entity pages use exclusive `(created_at, id)`
+descending positions; journal pages use descending sequence positions represented as decimal
+strings to preserve PostgreSQL BIGINT values in JavaScript. A page reads one extra record to
+determine continuation, and never advertises snapshot counts as complete totals.
+
+The bounded hex cursor contains a query fingerprint, first-page observation time and exclusive
+position. It is unsigned navigation state, not a capability or authenticated expiry. Its
+30-minute freshness check bounds ordinary continuation; every request independently rechecks
+access. Each page has a consistent database snapshot, but a sequence of pages is a live view,
+not a frozen export. Status/access changes and late transactions require refreshing from the
+first page. SQL statements have a five-second timeout; history responses use `no-store`.
+
+History exposes bounded shared labels, allowlisted event types, static summaries and currently
+authorized causal links derived from persisted relationships, never arbitrary event payloads.
+The console shows applied filters, ordering, current viewer/scope, page and loading/error/empty
+states, and an explicit partial-history explanation. The recent mission shortcuts lead to the
+same paginated history view.
+
+The browser stores one atomic mission/task/run selection in session storage, keyed by server,
+Corp and actor. Exact task/run navigation preserves that tuple across screens, reload and
+reconnect. Missing, denied, stale or unreadable selections remain unavailable rather than
+selecting another record; saving a choice never grants permission. History and selection
+responses from an obsolete viewer or request cannot replace the current view.
+
 ## Rooms and threads
 
 Room membership is a server-side visibility boundary:
