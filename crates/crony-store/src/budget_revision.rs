@@ -152,7 +152,7 @@ impl PgStore {
             ));
         }
         ensure_no_active_mission_run_tx(&mut tx, input.corp_id, input.mission_id).await?;
-        let suspended_task_id =
+        let (suspended_task_id, suspended_run_id) =
             ensure_latest_run_is_resumable_suspension_tx(&mut tx, input.corp_id, input.mission_id)
                 .await?;
 
@@ -262,6 +262,14 @@ impl PgStore {
             replacement.write_scope = scope.write_scope.clone();
             replacement.budget_tokens = scope.budget_tokens;
             replacement.budget_cost_microusd = scope.budget_cost_microusd;
+            preserved_deliverable::ensure_narrowing_tx(
+                &mut tx,
+                input.corp_id,
+                suspended_run_id,
+                &previous_contract,
+                &replacement,
+            )
+            .await?;
             (
                 Some(scope.task_id),
                 Some(previous_contract_value),
@@ -506,12 +514,13 @@ impl PgStore {
                 ));
             }
             ensure_no_active_mission_run_tx(&mut tx, input.corp_id, input.mission_id).await?;
-            let suspended_task_id = ensure_latest_run_is_resumable_suspension_tx(
-                &mut tx,
-                input.corp_id,
-                input.mission_id,
-            )
-            .await?;
+            let (suspended_task_id, suspended_run_id) =
+                ensure_latest_run_is_resumable_suspension_tx(
+                    &mut tx,
+                    input.corp_id,
+                    input.mission_id,
+                )
+                .await?;
             let (consumed_tokens, consumed_cost_microusd) =
                 mission_usage_tx(&mut tx, input.corp_id, input.mission_id).await?;
             let proposed_budget_tokens: i64 = row.get("proposed_budget_tokens");
@@ -581,6 +590,14 @@ impl PgStore {
                         "conflict: finish-scope task contract or verifier policy changed after proposal"
                     ));
                 }
+                preserved_deliverable::ensure_narrowing_tx(
+                    &mut tx,
+                    input.corp_id,
+                    suspended_run_id,
+                    &serde_json::from_value(expected_contract.clone())?,
+                    &serde_json::from_value(contract.clone())?,
+                )
+                .await?;
                 let objective = contract
                     .get("objective")
                     .and_then(Value::as_str)
@@ -962,10 +979,10 @@ async fn ensure_latest_run_is_resumable_suspension_tx(
     tx: &mut Transaction<'_, Postgres>,
     corp_id: Uuid,
     mission_id: Uuid,
-) -> Result<Uuid> {
+) -> Result<(Uuid, Uuid)> {
     let row = sqlx::query(
         r#"
-        SELECT run.task_id, run.breaker_stage, run.workspace_disposition,
+        SELECT run.id, run.task_id, run.breaker_stage, run.workspace_disposition,
                run.provider_session_id, run.status
         FROM runs run
         JOIN tasks task ON task.id = run.task_id
@@ -993,7 +1010,7 @@ async fn ensure_latest_run_is_resumable_suspension_tx(
             "latest mission run is not a terminated, preserved budget suspension"
         ));
     }
-    Ok(row.get("task_id"))
+    Ok((row.get("task_id"), row.get("id")))
 }
 
 pub(super) async fn mission_usage_tx(

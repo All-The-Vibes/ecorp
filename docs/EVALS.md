@@ -120,7 +120,7 @@ is implied by these documentation updates.
 
 ### Export failure regression (#89)
 
-The bounded #89 export-failure regression uses a nonempty native Git scenario
+The original bounded #89 export-failure regression uses a nonempty native Git scenario
 delta: `.gitignore`, modified tracked source, staged source, nonignored untracked
 source, and an evidence-only correction. The runner test checks unchanged source,
 HEAD and index after export rejection, then verifies a real commit/branch bundle
@@ -129,11 +129,33 @@ family uses real migrations, public bootstrap/enrollment/mission/run methods and
 authenticated runner events to check no automatic retry, unchanged attempt/budget/
 contract/evidence history, idempotency, invalid-input rollback and ordinary retries.
 
-This is an increment, not full #89 acceptance. Current preserved checkpoints have
-fingerprints and policy hashes but no complete changed-path inventory, and the
-resume command does not carry prior provider-artifact exclusions. Pre-acceptance
-contract/finish-scope rejection and pre-provider exportability revalidation remain
-unimplemented. A passing exporter regression does not prove those boundaries.
+That contribution did not implement pre-acceptance or pre-provider guards. The
+preserved-deliverable extension adds a complete, checkpoint-bound source inventory
+and authenticated prior artifact exclusions. Domain and native Git tests cover
+literal selection semantics, each changed-source category, staged-only changes,
+exact exclusions and unchanged real source/index/HEAD. Oversized native index and
+cached-deletion regressions exceed the buffered Git-output bound while staying
+below the changed-path count limit and adding no physical files. They require
+rejection before path validation and preserve the real source, index and HEAD.
+The opt-in
+`budget_checkpoint_tests::preserved_deliverables` SQLx family exercises contract and
+finish-scope admission, unchanged-state rejection, complete-scope acceptance,
+termination/freshness checks, foreign or malformed proofs, legacy re-attestation,
+frozen recovery replay and index changes between budget proposal and decision.
+Run those cases with real migrations in an owned database; ordinary workspace
+tests keep database-dependent cases ignored and do not establish their acceptance.
+
+Product acceptance requires the complete browser/server/runner path with a
+nonempty application delta, rejection of an evidence-only revision without state
+or provider effects, explicit same-worktree native-session resume under complete
+authority, fresh verification, signed deliverable download and independent Git
+bundle import. Execute tests and browser behavior from the imported application;
+artifact presence or an empty patch is insufficient. Record synthetic provider and
+actor boundaries explicitly; local fixtures do not establish vendor inference,
+production-human approval, hosted checks or GitHub publication. Preserve failed
+attempts separately from the final source-bound receipt. Record checkpoint timeout
+failures as unavailable source evidence, never as accepted completion or proof of
+general large-workspace performance.
 
 ### Scope of evidence
 

@@ -25,6 +25,10 @@ use crate::{adapter::AdapterArtifact, verifier::VerificationReport, workspace::W
 mod verification;
 pub(crate) use verification::isolate_git_environment;
 
+#[path = "preserved_deliverable.rs"]
+mod preserved;
+pub(super) use preserved::{capture_delta, index_sha256, staged_artifact_matches};
+
 #[cfg(test)]
 #[path = "deliverable_verification_tests.rs"]
 mod canonical_tests;
@@ -187,6 +191,56 @@ pub async fn prepare(
     write_scope: &[String],
     preserve_head_commit: Option<&str>,
 ) -> Result<PreparedDeliverable> {
+    prepare_for(
+        run_id,
+        spec,
+        workspace,
+        provider_artifacts,
+        write_scope,
+        preserve_head_commit,
+        Preparation::Export,
+    )
+    .await
+}
+
+/// The same native candidate and safety checks as export, allowing only selected
+/// paths that do not exist yet to be left for the resumed provider to create.
+pub(super) async fn prepare_resume(
+    run_id: Uuid,
+    spec: &DeliverableSpec,
+    workspace: &WorkspaceLease,
+    provider_artifacts: &[AdapterArtifact],
+    write_scope: &[String],
+) -> Result<PreparedDeliverable> {
+    prepare_for(
+        run_id,
+        spec,
+        workspace,
+        provider_artifacts,
+        write_scope,
+        None,
+        Preparation::Resume,
+    )
+    .await
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Preparation {
+    Export,
+    Resume,
+    Inventory,
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn prepare_for(
+    run_id: Uuid,
+    spec: &DeliverableSpec,
+    workspace: &WorkspaceLease,
+    provider_artifacts: &[AdapterArtifact],
+    write_scope: &[String],
+    preserve_head_commit: Option<&str>,
+    preparation: Preparation,
+) -> Result<PreparedDeliverable> {
     let workspace_root = tokio::fs::canonicalize(&workspace.path)
         .await
         .context("resolve deliverable worktree")?;
@@ -240,6 +294,7 @@ pub async fn prepare(
         write_scope,
         preserve_head_commit,
         &prepared.index,
+        preparation,
     )
     .await?;
     prepared.tree = git_text(
@@ -260,6 +315,7 @@ async fn select_index(
     write_scope: &[String],
     preserve_head_commit: Option<&str>,
     index: &Path,
+    preparation: Preparation,
 ) -> Result<Vec<(String, String)>> {
     for path in &spec.paths {
         validate_relative(path)?;
@@ -312,14 +368,36 @@ async fn select_index(
         OsString::from("-A"),
         OsString::from("--"),
     ]);
+    let paths_offset = add_args.len();
     if spec.paths.is_empty() {
         add_args.push(OsString::from("."));
     } else {
         for path in &spec.paths {
+            if preparation == Preparation::Resume {
+                let selected = git_output(
+                    workspace_root,
+                    index,
+                    &[
+                        "ls-files".into(),
+                        "--cached".into(),
+                        "--others".into(),
+                        "--exclude-standard".into(),
+                        "-z".into(),
+                        "--".into(),
+                        path.into(),
+                    ],
+                )
+                .await?;
+                if selected.stdout.is_empty() {
+                    continue;
+                }
+            }
             add_args.push(OsString::from(path));
         }
     }
-    git_success(workspace_root, index, &add_args).await?;
+    if add_args.len() > paths_offset {
+        git_success(workspace_root, index, &add_args).await?;
+    }
 
     for artifact in provider_artifacts {
         let Ok(artifact_path) = tokio::fs::canonicalize(&artifact.path).await else {
@@ -329,6 +407,11 @@ async fn select_index(
             continue;
         };
         let relative = portable_path(path)?;
+        // An evidence file must never conceal a different staged source blob or
+        // staged deletion at the same path in the preserved native index.
+        if !staged_artifact_matches(workspace, &relative, artifact).await? {
+            continue;
+        }
         git_success(
             workspace_root,
             index,
@@ -344,8 +427,10 @@ async fn select_index(
     }
 
     let changes = changed_paths(workspace_root, index, &workspace.base_commit).await?;
-    reject_out_of_scope_changes(&changes, write_scope)?;
-    reject_unsafe_changes(workspace_root, index, &changes).await?;
+    if preparation != Preparation::Inventory {
+        reject_out_of_scope_changes(&changes, write_scope)?;
+        reject_unsafe_changes(workspace_root, index, &changes).await?;
+    }
     Ok(changes)
 }
 
@@ -597,6 +682,10 @@ async fn changed_paths(
     )
     .await?
     .stdout;
+    parse_changed_paths(&output)
+}
+
+fn parse_changed_paths(output: &[u8]) -> Result<Vec<(String, String)>> {
     let fields = output
         .split(|byte| *byte == 0)
         .filter(|field| !field.is_empty());
@@ -1055,26 +1144,31 @@ async fn git_text_with_env(
 }
 
 async fn git_output(workspace: &Path, index: &Path, args: &[OsString]) -> Result<Output> {
+    git_output_with_index(workspace, Some(index), args).await
+}
+
+async fn git_output_with_index(
+    workspace: &Path,
+    index: Option<&Path>,
+    args: &[OsString],
+) -> Result<Output> {
     let mut command = Command::new("git");
     verification::clear_git_environment(&mut command);
     #[cfg(windows)]
     command.args(["-c", "core.longpaths=true"]);
+    if let Some(index) = index {
+        command.env(
+            "GIT_INDEX_FILE",
+            crate::workspace::normalize_path(index.to_path_buf()),
+        );
+    }
     command
         .args(args)
         .current_dir(workspace)
-        .env(
-            "GIT_INDEX_FILE",
-            crate::workspace::normalize_path(index.to_path_buf()),
-        )
-        .env("GIT_LITERAL_PATHSPECS", "1")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .kill_on_drop(true);
-    let output = tokio::time::timeout(GIT_TIMEOUT, command.output())
+        .env("GIT_LITERAL_PATHSPECS", "1");
+    let output = verification::run_private_git(&mut command, &[], GIT_TIMEOUT)
         .await
-        .context("Git deliverable command timed out")?
-        .context("start Git deliverable command")?;
+        .context("run Git deliverable command")?;
     if !output.status.success() {
         return Err(git_error(&output));
     }
@@ -1096,7 +1190,7 @@ mod tests {
     use super::*;
     use crate::verifier::{VerificationCheckResult, VerificationReport};
 
-    fn git(repo: &Path, args: &[&str]) -> String {
+    pub(super) fn git(repo: &Path, args: &[&str]) -> String {
         let output = Command::new("git")
             .args(args)
             .current_dir(repo)
@@ -1111,7 +1205,7 @@ mod tests {
         String::from_utf8_lossy(&output.stdout).trim().to_owned()
     }
 
-    fn fixture() -> (PathBuf, WorkspaceLease, VerificationReport) {
+    pub(super) fn fixture() -> (PathBuf, WorkspaceLease, VerificationReport) {
         let root = std::env::temp_dir().join(format!("ecorp-deliverable-test-{}", Uuid::new_v4()));
         fs::create_dir_all(&root).expect("create fixture");
         git(&root, &["init", "-b", "main"]);
@@ -1318,6 +1412,176 @@ mod tests {
             );
             // Preserve actual native export, diagnostics, and source fixtures,
             // including failures and any trace file produced by old code.
+        }
+    }
+
+    #[tokio::test]
+    async fn native_export_matches_checker_with_staged_artifact_guards() {
+        let checker =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tools/check_deliverable_diff.mjs");
+        for scenario in [
+            "different-bytes",
+            "deletion",
+            "non-file-mode",
+            "unmerged",
+            "matching-text",
+            "matching-binary",
+            "raw-line-endings",
+        ] {
+            let (root, mut lease, report) = fixture();
+            let evidence = root.with_extension("evidence");
+            let scratch = evidence.join("checker-scratch");
+            fs::create_dir_all(&scratch).expect("owned checker scratch");
+            git(&root, &["config", "core.autocrlf", "false"]);
+            git(
+                &root,
+                &["config", "core.whitespace", "blank-at-eol,cr-at-eol"],
+            );
+            fs::write(root.join("provider.md"), b"original evidence\n").expect("base artifact");
+            git(&root, &["add", "--", "provider.md"]);
+            git(&root, &["commit", "-m", "artifact base"]);
+            lease.base_commit = git(&root, &["rev-parse", "HEAD"]);
+            fs::write(root.join("tracked.txt"), b"actual source change\n").expect("source delta");
+            let bytes = match scenario {
+                "matching-binary" => vec![0, 255, 128, 32, 10],
+                "raw-line-endings" => b"physical evidence \r\n".to_vec(),
+                _ => b"physical evidence \n".to_vec(),
+            };
+            if scenario == "deletion" {
+                git(&root, &["rm", "--cached", "--", "provider.md"]);
+            } else {
+                let staged = if scenario.starts_with("matching-") || scenario == "raw-line-endings"
+                {
+                    bytes.as_slice()
+                } else {
+                    b"different staged source\n"
+                };
+                if scenario == "raw-line-endings" {
+                    fs::write(root.join(".gitattributes"), b"*.md text eol=lf\n")
+                        .expect("native line-ending attributes");
+                }
+                fs::write(root.join("provider.md"), staged).expect("staged artifact bytes");
+                git(&root, &["add", "--", "provider.md"]);
+                let oid = git(&root, &["rev-parse", ":provider.md"]);
+                if scenario == "non-file-mode" {
+                    git(
+                        &root,
+                        &[
+                            "update-index",
+                            "--cacheinfo",
+                            &format!("120000,{oid},provider.md"),
+                        ],
+                    );
+                }
+                if scenario == "unmerged" {
+                    use std::io::Write;
+                    let mut child = Command::new("git")
+                        .args(["update-index", "--index-info"])
+                        .current_dir(&root)
+                        .stdin(Stdio::piped())
+                        .spawn()
+                        .expect("create native unresolved stages");
+                    child
+                        .stdin
+                        .take()
+                        .expect("owned index input")
+                        .write_all(
+                            format!(
+                                "0 {}\tprovider.md\n100644 {oid} 1\tprovider.md\n100644 {oid} 2\tprovider.md\n",
+                                "0".repeat(oid.len())
+                            )
+                            .as_bytes(),
+                        )
+                        .expect("write unresolved stages");
+                    assert!(child.wait().expect("native index update").success());
+                }
+            }
+            fs::write(root.join("provider.md"), &bytes).expect("physical artifact bytes");
+            let provider = AdapterArtifact {
+                path: root.join("provider.md"),
+                sha256: hex::encode(Sha256::digest(&bytes)),
+                bytes: bytes.len(),
+                media_type: "application/octet-stream".to_owned(),
+            };
+            let original_index = fs::read(root.join(".git/index")).expect("real index before");
+            let original_refs = git(&root, &["show-ref"]);
+            let checker_root = git(&root, &["rev-parse", "--show-toplevel"]);
+            let mut command = tokio::process::Command::new("node");
+            command
+                .arg(&checker)
+                .args(["--repo", &checker_root, "--base", &lease.base_commit])
+                .arg("--scratch-root")
+                .arg(&scratch)
+                .args(["--provider-artifact", "provider.md"])
+                .kill_on_drop(true);
+            let checked = tokio::time::timeout(Duration::from_secs(60), command.output())
+                .await
+                .expect("checker watchdog")
+                .expect("actual checker");
+            fs::write(evidence.join("checker.stdout"), &checked.stdout).expect("checker receipt");
+            fs::write(evidence.join("checker.stderr"), &checked.stderr)
+                .expect("checker diagnostics");
+            let excluded = scenario.starts_with("matching-");
+            assert_eq!(checked.status.code(), Some(if excluded { 0 } else { 1 }));
+            let checked: Value = serde_json::from_slice(&checked.stdout).expect("checker result");
+            assert_eq!(checked["passed"], excluded);
+            // This low-level fixture compares actual selection/export code. Its
+            // synthetic report is not persisted verifier or product acceptance.
+            let exported = export(
+                Uuid::new_v4(),
+                &DeliverableSpec {
+                    form: DeliverableForm::Archive,
+                    commit_after_verification: false,
+                    paths: Vec::new(),
+                },
+                &lease,
+                &report,
+                &[provider],
+                &["**".to_owned()],
+                None,
+            )
+            .await
+            .expect("actual native archive exporter");
+            fs::write(evidence.join("export.json"), &exported.bytes).expect("native receipt");
+            fs::write(
+                evidence.join("parity.json"),
+                serde_json::to_vec_pretty(&json!({
+                    "scenario": scenario,
+                    "base": lease.base_commit,
+                    "checker_tree": checked["candidateTree"],
+                    "exporter_tree": exported.verified_tree,
+                    "artifact_excluded": excluded,
+                    "synthetic_verification_report": true,
+                }))
+                .expect("parity record"),
+            )
+            .expect("retain native parity");
+            assert_eq!(
+                checked["candidateTree"].as_str(),
+                Some(exported.verified_tree.as_str())
+            );
+            let artifact_selected = checked["changes"]
+                .as_array()
+                .expect("candidate changes")
+                .iter()
+                .any(|change| change["path"] == "provider.md");
+            assert_ne!(artifact_selected, excluded);
+            assert_eq!(
+                fs::read(root.join(".git/index")).expect("real index after"),
+                original_index
+            );
+            assert_eq!(git(&root, &["show-ref"]), original_refs);
+            assert_eq!(git(&root, &["rev-parse", "HEAD"]), lease.base_commit);
+            assert_eq!(
+                fs::read(root.join("provider.md")).expect("preserved artifact"),
+                bytes
+            );
+            assert_eq!(
+                fs::read(root.join("tracked.txt")).expect("preserved source"),
+                b"actual source change\n"
+            );
+            assert_eq!(fs::read_dir(&scratch).expect("scratch cleanup").count(), 0);
+            println!("{scenario}: source={root:?}; evidence={evidence:?}");
         }
     }
 

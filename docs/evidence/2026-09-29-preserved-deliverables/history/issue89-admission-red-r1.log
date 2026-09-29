@@ -1,0 +1,21 @@
+   Compiling crony-store v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-store)
+   Compiling crony-server v0.1.0 (<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 10s
+     Running unittests src\main.rs (target\debug\deps\crony_server-09b678318e84e874.exe)
+
+running 1 test
+test cache_admission_tests::issue82_canonical_source_support_gates_every_assignment_and_current_epoch ...
+thread 'cache_admission_tests::issue82_canonical_source_support_gates_every_assignment_and_current_epoch' (24260) panicked at crates\crony-server\src\main.rs:10119:13:
+assertion failed: send_command_to_current_runner(&runners, "runner", epoch,
+        canonical_command(kind)).is_ok()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    cache_admission_tests::issue82_canonical_source_support_gates_every_assignment_and_current_epoch
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 261 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p crony-server --bin crony-server`

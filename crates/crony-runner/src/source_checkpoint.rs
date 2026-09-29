@@ -6,8 +6,6 @@
 use super::*;
 use crony_domain::StoppedSourceCheckpoint as SourceCheckpoint;
 
-const CHECKPOINT_REPORT_TIMEOUT: Duration = Duration::from_secs(10);
-
 fn policy_digest(value: &impl Serialize) -> Result<String> {
     Ok(hex::encode(sha2::Sha256::digest(serde_json::to_vec(
         value,
@@ -19,6 +17,18 @@ async fn capture(
     assignment: &Assignment,
     workspace: &WorkspaceLease,
     workspaces: &WorkspaceManager,
+) -> Result<SourceCheckpoint> {
+    validate_assignment_source(workspaces, assignment)?;
+    let identity = workspaces.checkpoint(workspace).await?;
+    bind_source_identity(runner_id, assignment, workspace, workspaces, identity)
+}
+
+fn bind_source_identity(
+    runner_id: &str,
+    assignment: &Assignment,
+    workspace: &WorkspaceLease,
+    workspaces: &WorkspaceManager,
+    (head_commit, workspace_fingerprint): (String, String),
 ) -> Result<SourceCheckpoint> {
     validate_assignment_source(workspaces, assignment)?;
     let repository = assignment
@@ -38,7 +48,6 @@ async fn capture(
             "checkpoint cannot replace its original source base"
         ));
     }
-    let (head_commit, workspace_fingerprint) = workspaces.checkpoint(workspace).await?;
     Ok(SourceCheckpoint {
         schema_version: 1,
         corp_id: assignment.corp_id,
@@ -61,28 +70,65 @@ async fn capture(
     })
 }
 
-async fn bounded_capture(
-    capture: impl std::future::Future<Output = Result<SourceCheckpoint>>,
+async fn bounded_capture<T>(
+    capture: impl std::future::Future<Output = Result<T>>,
     timeout: Duration,
-) -> Result<SourceCheckpoint> {
+) -> Result<T> {
     tokio::time::timeout(timeout, capture)
         .await
         .context("workspace checkpoint capture exceeded its deadline")?
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(super) async fn report(
     outbound: &OutboundBus,
     runner_id: &str,
     assignment: &Assignment,
     workspace: &WorkspaceLease,
     workspaces: &WorkspaceManager,
+    current_artifacts: &[AdapterArtifact],
     checkpoint_capture_allowed: bool,
     workspace_quarantined: bool,
 ) {
     let proof = if checkpoint_capture_allowed && !workspace_quarantined {
         bounded_capture(
-            capture(runner_id, assignment, workspace, workspaces),
-            CHECKPOINT_REPORT_TIMEOUT,
+            async {
+                if assignment.deliverable.is_some() {
+                    // Complete capture already brackets the native delta and
+                    // artifact proof with two identical physical source scans.
+                    let complete = retained_deliverable::capture(
+                        assignment,
+                        workspace,
+                        workspaces,
+                        current_artifacts,
+                    )
+                    .await?;
+                    let proof = bind_source_identity(
+                        runner_id,
+                        assignment,
+                        workspace,
+                        workspaces,
+                        (
+                            complete.head_commit.clone(),
+                            complete.workspace_fingerprint.clone(),
+                        ),
+                    )?;
+                    return Ok((proof, Some(complete)));
+                }
+                let proof = capture(runner_id, assignment, workspace, workspaces).await?;
+                if workspaces.checkpoint(workspace).await?
+                    != (
+                        proof.head_commit.clone(),
+                        proof.workspace_fingerprint.clone(),
+                    )
+                {
+                    return Err(anyhow!(
+                        "stopped source changed during complete checkpoint capture"
+                    ));
+                }
+                Ok((proof, None))
+            },
+            workspace::CHECKPOINT_CAPTURE_TIMEOUT,
         )
         .await
     } else {
@@ -91,7 +137,7 @@ pub(super) async fn report(
         ))
     };
     match proof {
-        Ok(proof) => send_run_event(
+        Ok((proof, deliverable)) => send_run_event(
             outbound,
             runner_id,
             assignment,
@@ -107,6 +153,8 @@ pub(super) async fn report(
                 "branch_deleted": false,
                 "workspace_fingerprint": proof.workspace_fingerprint,
                 "head_commit": proof.head_commit,
+                "workspace_quarantined": false,
+                "deliverable_checkpoint": deliverable,
                 "source_checkpoint": proof,
             }),
         ),
@@ -213,6 +261,8 @@ mod tests {
             verification_command_id: None,
             retained_provider_receipt: None,
             checkpoint_verification: false,
+            preserved_deliverable: None,
+            preserved_provider_artifacts: Vec::new(),
             hard_boundary_checkpoint: Arc::default(),
         };
         (root, workspaces, workspace, assignment)
@@ -600,6 +650,7 @@ mod tests {
             &assignment,
             &workspace,
             &workspaces,
+            &[],
             true,
             true,
         )

@@ -1,0 +1,171 @@
+✖ native source-selection recipe is pinned; drift requires an explicit parity review (3.6659ms)
+✖ #89 provider artifact cannot conceal staged different bytes (2999.1893ms)
+✖ #89 provider artifact cannot conceal staged deletion (2762.6965ms)
+✖ #89 provider artifact cannot conceal staged non-file mode (3013.0605ms)
+✖ #89 provider artifact cannot conceal staged unmerged (3054.2817ms)
+✔ #89 matching staged text artifact is still excluded (4029.7929ms)
+✔ #89 matching staged binary artifact is still excluded (3635.805ms)
+✖ #89 artifact comparison uses raw staged bytes before line-ending conversion (2753.6716ms)
+✖ #89 artifact inspection ignores inherited alternate indexes and tracing (2393.1733ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 2
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24800.7933
+
+✖ failing tests:
+
+test at tools\check_deliverable_diff.test.mjs:271:1
+✖ native source-selection recipe is pinned; drift requires an explicit parity review (3.6659ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + '3f7f297546e3b088253551482501528e1ca97534b1dc51daf0eb88b28d963a3c'
+  - '22a8887f0f2c84779ac0ae875683da62643eb1358c066a3e4777015050988e10'
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:278:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '3f7f297546e3b088253551482501528e1ca97534b1dc51daf0eb88b28d963a3c',
+    expected: '22a8887f0f2c84779ac0ae875683da62643eb1358c066a3e4777015050988e10',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_deliverable_diff.test.mjs:419:3
+✖ #89 provider artifact cannot conceal staged different bytes (2999.1893ms)
+  AssertionError [ERR_ASSERTION]: different staged source prevents the artifact reset
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:437:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at node:internal/test_runner/test:1305:31
+      at node:internal/process/task_queues:151:7
+      at AsyncResource.runInAsyncScope (node:async_hooks:227:14)
+      at AsyncResource.runMicrotask (node:internal/process/task_queues:148:8) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_deliverable_diff.test.mjs:419:3
+✖ #89 provider artifact cannot conceal staged deletion (2762.6965ms)
+  AssertionError [ERR_ASSERTION]: different staged source prevents the artifact reset
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:437:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_deliverable_diff.test.mjs:419:3
+✖ #89 provider artifact cannot conceal staged non-file mode (3013.0605ms)
+  AssertionError [ERR_ASSERTION]: different staged source prevents the artifact reset
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:437:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_deliverable_diff.test.mjs:419:3
+✖ #89 provider artifact cannot conceal staged unmerged (3054.2817ms)
+  AssertionError [ERR_ASSERTION]: different staged source prevents the artifact reset
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:437:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_deliverable_diff.test.mjs:458:1
+✖ #89 artifact comparison uses raw staged bytes before line-ending conversion (2753.6716ms)
+  AssertionError [ERR_ASSERTION]: normalized staged bytes are not the raw artifact bytes
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:465:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\check_deliverable_diff.test.mjs:470:1
+✖ #89 artifact inspection ignores inherited alternate indexes and tracing (2393.1733ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:479:12
+      at withEnv (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:24:12)
+      at file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:478:46
+      at withEnv (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:24:12)
+      at TestContext.<anonymous> (file:///<USERPROFILE>/.codex/worktrees/issue270-oidc/ecorp/tools/check_deliverable_diff.test.mjs:478:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

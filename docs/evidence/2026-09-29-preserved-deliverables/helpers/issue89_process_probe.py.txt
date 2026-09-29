@@ -1,0 +1,89 @@
+"""Read only timing and I/O counters for the receipt-verified fixture runner."""
+import ctypes as ct
+from ctypes import wintypes as wt
+from datetime import datetime
+import json
+import os
+
+
+class IoCounters(ct.Structure):
+    _fields_ = [(name, ct.c_ulonglong) for name in (
+        "read_operations", "write_operations", "other_operations",
+        "read_bytes", "write_bytes", "other_bytes")]
+
+
+kernel = ct.WinDLL("kernel32", use_last_error=True)
+kernel.OpenProcess.argtypes = [wt.DWORD, wt.BOOL, wt.DWORD]
+kernel.OpenProcess.restype = wt.HANDLE
+kernel.CloseHandle.argtypes = [wt.HANDLE]
+kernel.CloseHandle.restype = wt.BOOL
+kernel.GetProcessTimes.argtypes = [wt.HANDLE] + [ct.POINTER(wt.FILETIME)] * 4
+kernel.GetProcessTimes.restype = wt.BOOL
+kernel.GetProcessIoCounters.argtypes = [wt.HANDLE, ct.POINTER(IoCounters)]
+kernel.GetProcessIoCounters.restype = wt.BOOL
+kernel.QueryFullProcessImageNameW.argtypes = [wt.HANDLE, wt.DWORD, wt.LPWSTR, ct.POINTER(wt.DWORD)]
+kernel.QueryFullProcessImageNameW.restype = wt.BOOL
+kernel.GetPriorityClass.argtypes = [wt.HANDLE]
+kernel.GetPriorityClass.restype = wt.DWORD
+kernel.GetProcessAffinityMask.argtypes = [wt.HANDLE, ct.POINTER(ct.c_size_t), ct.POINTER(ct.c_size_t)]
+kernel.GetProcessAffinityMask.restype = wt.BOOL
+
+
+def seconds(value):
+    return ((value.dwHighDateTime << 32) | value.dwLowDateTime) / 10_000_000
+
+
+class Probe:
+    def __init__(self, fixture):
+        self.fixture = fixture
+        self.handle = None
+        self.pid = None
+
+    def close(self):
+        if self.handle:
+            kernel.CloseHandle(self.handle)
+            self.handle = None
+
+    def sample(self):
+        if self.handle is None:
+            receipt_path = self.fixture / "evidence/processes.json"
+            if not receipt_path.is_file():
+                return None
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8-sig"))
+            runner = receipt.get("processes", {}).get("runner")
+            if not runner:
+                return None
+            assert os.path.normcase(runner["workspace"]) == os.path.normcase(str(self.fixture))
+            handle = kernel.OpenProcess(0x1000, False, runner["pid"])
+            if not handle:
+                raise ct.WinError(ct.get_last_error())
+            try:
+                size = wt.DWORD(32768)
+                image = ct.create_unicode_buffer(size.value)
+                if not kernel.QueryFullProcessImageNameW(handle, 0, image, ct.byref(size)):
+                    raise ct.WinError(ct.get_last_error())
+                assert os.path.normcase(image.value) == os.path.normcase(runner["executable"])
+                times = [wt.FILETIME() for _ in range(4)]
+                if not kernel.GetProcessTimes(handle, *(ct.byref(item) for item in times)):
+                    raise ct.WinError(ct.get_last_error())
+                started = seconds(times[0]) - 11_644_473_600
+                expected = datetime.fromisoformat(runner["started_utc"].replace("Z", "+00:00")).timestamp()
+                assert abs(started - expected) < 0.01, "Runner creation identity differs"
+                self.handle, self.pid = handle, runner["pid"]
+            except Exception:
+                kernel.CloseHandle(handle)
+                raise
+        times = [wt.FILETIME() for _ in range(4)]
+        counts = IoCounters()
+        if not kernel.GetProcessTimes(self.handle, *(ct.byref(item) for item in times)):
+            raise ct.WinError(ct.get_last_error())
+        if not kernel.GetProcessIoCounters(self.handle, ct.byref(counts)):
+            raise ct.WinError(ct.get_last_error())
+        process_affinity, system_affinity = ct.c_size_t(), ct.c_size_t()
+        affinity_ok = kernel.GetProcessAffinityMask(self.handle, ct.byref(process_affinity), ct.byref(system_affinity))
+        return {"pid": self.pid, "identity_verified": True,
+                "kernel_seconds": seconds(times[2]), "user_seconds": seconds(times[3]),
+                "exited": seconds(times[1]) != 0,
+                "priority_class": kernel.GetPriorityClass(self.handle),
+                "process_affinity": process_affinity.value if affinity_ok else None,
+                "io": {name: getattr(counts, name) for name, _ in counts._fields_}}

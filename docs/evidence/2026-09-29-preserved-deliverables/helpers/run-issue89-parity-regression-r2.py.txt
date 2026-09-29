@@ -1,0 +1,71 @@
+"""Source-bound real-Git regressions with explicit TAP and retained owned fixtures."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r"<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp")
+NODE = Path(r"<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe")
+revision = sys.argv[1]
+assert re.fullmatch(r"green-r[0-9]+", revision)
+receipt_path = EV / f"issue89-parity-{revision}.json"
+log_path = EV / f"issue89-parity-{revision}.log"
+fixtures = EV / f"issue89-parity-{revision}-fixtures"
+assert not receipt_path.exists() and not log_path.exists() and not fixtures.exists()
+environment = {key: value for key, value in os.environ.items()
+               if not key.upper().startswith(("GIT_", "GH_", "GITHUB_", "CRONY_", "ECORP_", "AZURE_"))
+               and key.upper() not in {"NODE_OPTIONS", "DATABASE_URL", "COPILOT_GITHUB_TOKEN",
+                                       "OPENAI_API_KEY", "ANTHROPIC_API_KEY"}}
+environment["PATH"] = str(NODE.parent) + os.pathsep + environment["PATH"]
+environment["GIT_OPTIONAL_LOCKS"] = "0"
+environment["GIT_TERMINAL_PROMPT"] = "0"
+environment["ECORP_DIFF_TEST_ROOT"] = str(fixtures)
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def git(*args):
+    return subprocess.run(["git", "-C", str(ROOT), *args], env=environment, capture_output=True,
+                          check=True, creationflags=subprocess.CREATE_NO_WINDOW).stdout
+
+
+def source():
+    paths = sorted(set(git("ls-files", "-z", "--cached", "--others", "--exclude-standard")
+                       .decode().split("\0")) - {""})
+    return {"head": git("rev-parse", "HEAD").decode().strip(),
+            "status": git("status", "--porcelain=v1", "--untracked-files=all").decode(),
+            "sha256": {name: sha((ROOT / name).read_bytes()) for name in paths}}
+
+
+command = [str(NODE), "--test", "--test-reporter=tap", "--test-concurrency=1",
+           "--test-timeout=180000", "tools/check_deliverable_diff.test.mjs"]
+record = {"issue": 89, "started_at_utc": datetime.now(timezone.utc).isoformat(),
+          "repository": str(ROOT), "command": command, "source_before": source(),
+          "status": "running", "log": str(log_path), "owned_fixtures": str(fixtures),
+          "helper_sha256": sha(Path(__file__).read_bytes()),
+          "scope": "Standalone checker and real-Git fixtures; not persisted native verifier or product acceptance."}
+receipt_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+with log_path.open("xb") as log:
+    run = subprocess.run(command, cwd=ROOT, env=environment, stdout=log, stderr=subprocess.STDOUT,
+                         creationflags=subprocess.CREATE_NO_WINDOW)
+record.update(exit_code=run.returncode, source_after=source(), log_sha256=sha(log_path.read_bytes()))
+record["source_unchanged"] = record["source_before"] == record["source_after"]
+output = log_path.read_text(encoding="utf-8", errors="replace")
+names = ["tests", "suites", "pass", "fail", "cancelled", "skipped", "todo"]
+record["counts"] = {name: int(matches[-1]) for name in names
+                    if (matches := re.findall(rf"^# {name} ([0-9]+)\r?$", output, re.MULTILINE))}
+record["counts_complete"] = set(record["counts"]) == set(names)
+record["status"] = "passed" if (run.returncode == 0 and record["source_unchanged"]
+                                  and record["counts_complete"] and record["counts"]["tests"] > 0
+                                  and not record["counts"]["fail"] and not record["counts"]["cancelled"]) else "failed"
+record["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+receipt_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+print(json.dumps({key: record[key] for key in ["issue", "status", "exit_code", "counts", "source_unchanged", "log_sha256"]}))
+sys.exit(0 if record["status"] == "passed" else 1)

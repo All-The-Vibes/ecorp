@@ -1607,11 +1607,15 @@ enum RunnerDispatchError {
     UnsupportedVerifierPolicy,
     UnsupportedDependencyFiles,
     UnsupportedCanonicalSource,
+    UnsupportedPreservedDeliverable,
 }
 
 impl RunnerDispatchError {
     fn detail(&self) -> &'static str {
         match self {
+            Self::UnsupportedPreservedDeliverable => {
+                "runner requires preserved-deliverable-checkpoint-v1 before resuming or checkpointing retained source; update the connected runner and keep the preserved worktree"
+            }
             Self::UnsupportedCanonicalSource => {
                 "runner requires canonical-source-verification-v1 before accepting a source deliverable"
             }
@@ -1649,6 +1653,14 @@ fn runner_supports_canonical_source(capabilities: &[RunnerCapability]) -> bool {
     capabilities.iter().any(|cap| {
         cap.workspace_connection_id.is_none()
             && cap.name == crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY
+            && cap.available
+    })
+}
+
+fn runner_supports_preserved_deliverable(capabilities: &[RunnerCapability]) -> bool {
+    capabilities.iter().any(|cap| {
+        cap.workspace_connection_id.is_none()
+            && cap.name == crony_domain::PRESERVED_DELIVERABLE_CAPABILITY
             && cap.available
     })
 }
@@ -1709,10 +1721,29 @@ fn send_command_to_current_runner(
         } | ServerToRunner::VerifyRun {
             deliverable: Some(_),
             ..
+        } | ServerToRunner::CheckpointWorkspace {
+            deliverable: Some(_),
+            ..
         }
     ) && !runner_supports_canonical_source(&connection.capabilities)
     {
         return Err(RunnerDispatchError::UnsupportedCanonicalSource);
+    }
+    if matches!(
+        &command,
+        ServerToRunner::ResumeRun {
+            deliverable: Some(_),
+            ..
+        } | ServerToRunner::VerifyRun {
+            deliverable: Some(_),
+            ..
+        } | ServerToRunner::CheckpointWorkspace {
+            deliverable: Some(_),
+            ..
+        }
+    ) && !runner_supports_preserved_deliverable(&connection.capabilities)
+    {
+        return Err(RunnerDispatchError::UnsupportedPreservedDeliverable);
     }
     if let ServerToRunner::StartRun {
         dependency_files,
@@ -1988,6 +2019,10 @@ async fn dispatch_pending_runner_commands_for_epoch(
 
 #[derive(Debug, Deserialize)]
 struct FactoryRecoveryRunnerCommandPayload {
+    #[serde(default)]
+    preserved_deliverable: Option<Box<crony_domain::PreservedDeliverableCheckpoint>>,
+    #[serde(default)]
+    preserved_provider_artifacts: Vec<crony_domain::PreservedProviderArtifact>,
     mode: FactoryVerificationRecoveryMode,
     corp_id: Uuid,
     room_id: Uuid,
@@ -2023,6 +2058,12 @@ struct FactoryRecoveryRunnerCommandPayload {
 
 #[derive(Debug, Deserialize)]
 struct FactoryWorkspaceCheckpointRunnerCommandPayload {
+    #[serde(default)]
+    expected_workspace_fingerprint: Option<String>,
+    #[serde(default)]
+    deliverable: Option<DeliverableSpec>,
+    #[serde(default)]
+    preserved_provider_artifacts: Vec<crony_domain::PreservedProviderArtifact>,
     corp_id: Uuid,
     room_id: Uuid,
     mission_id: Uuid,
@@ -2046,6 +2087,24 @@ async fn decode_recovery_runner_command(
     control_lease_token: Option<Uuid>,
     durable_control: bool,
 ) -> anyhow::Result<Option<ServerToRunner>> {
+    if command.command_kind == "factory_workspace_checkpoint"
+        && command
+            .payload
+            .get("deliverable")
+            .is_some_and(|value| !value.is_null())
+    {
+        let runner = state
+            .runners
+            .get(&command.runner_id)
+            .filter(|runner| runner.corp_id == command.corp_id && runner.dispatch_ready)
+            .context("checkpoint runner is not ready in this Corp")?;
+        if !runner_supports_canonical_source(&runner.capabilities) {
+            anyhow::bail!(RunnerDispatchError::UnsupportedCanonicalSource.detail());
+        }
+        if !runner_supports_preserved_deliverable(&runner.capabilities) {
+            anyhow::bail!(RunnerDispatchError::UnsupportedPreservedDeliverable.detail());
+        }
+    }
     match command.command_kind.as_str() {
         "factory_verification_recovery" => {
             if !recovery_command_can_dispatch(state, command).await? {
@@ -2077,6 +2136,15 @@ async fn decode_recovery_runner_command(
                 })
             {
                 anyhow::bail!(RunnerDispatchError::UnsupportedCanonicalSource.detail());
+            }
+            if payload.deliverable.is_some()
+                && !state.runners.get(&command.runner_id).is_some_and(|runner| {
+                    runner.corp_id == command.corp_id
+                        && runner.dispatch_ready
+                        && runner_supports_preserved_deliverable(&runner.capabilities)
+                })
+            {
+                anyhow::bail!(RunnerDispatchError::UnsupportedPreservedDeliverable.detail());
             }
             match payload.mode {
                 FactoryVerificationRecoveryMode::SourceCorrection => {
@@ -2125,6 +2193,8 @@ async fn decode_recovery_runner_command(
                         return Ok(None);
                     }
                     Ok(Some(ServerToRunner::ResumeRun {
+                        preserved_deliverable: payload.preserved_deliverable,
+                        preserved_provider_artifacts: payload.preserved_provider_artifacts,
                         dependency_files: dependencies.files,
                         workspace_connection_id: payload.workspace_connection_id,
                         command_id: Some(command.id),
@@ -2200,6 +2270,7 @@ async fn decode_recovery_runner_command(
                         return Ok(None);
                     }
                     Ok(Some(ServerToRunner::VerifyRun {
+                        preserved_provider_artifacts: payload.preserved_provider_artifacts,
                         workspace_connection_id: payload.workspace_connection_id,
                         command_id: command.id,
                         corp_id: payload.corp_id,
@@ -2574,6 +2645,9 @@ fn decode_runner_command(
                 ));
             }
             Ok(ServerToRunner::CheckpointWorkspace {
+                expected_workspace_fingerprint: payload.expected_workspace_fingerprint,
+                deliverable: payload.deliverable,
+                preserved_provider_artifacts: payload.preserved_provider_artifacts,
                 workspace_connection_id: payload.workspace_connection_id,
                 command_id: command.id,
                 corp_id: payload.corp_id,
@@ -5744,6 +5818,20 @@ async fn resume_run(
         }
         return Err(ApiError::conflict(detail));
     }
+    if record.deliverable.is_some() && !runner_supports_preserved_deliverable(&runner.capabilities)
+    {
+        drop(runner);
+        let detail = RunnerDispatchError::UnsupportedPreservedDeliverable.detail();
+        for event in state
+            .store
+            .fail_run_before_dispatch(corp_id, record.run_id, detail)
+            .await
+            .map_err(ApiError::internal)?
+        {
+            publish(&state, event);
+        }
+        return Err(ApiError::conflict(detail));
+    }
     let source_available = if let Some(connection_id) = record.workspace_connection_id {
         // Existing runs keep their original commit. The native connection
         // manager checks its accepted historical source snapshot on resume.
@@ -5903,8 +5991,16 @@ async fn resume_run(
                         source_base_ref: record.source_base_ref,
                         source_base_commit: record.source_base_commit,
                         workspace_base_commit: Some(record.workspace_base_commit),
-                        expected_workspace_fingerprint: None,
-                        expected_head_commit: None,
+                        expected_workspace_fingerprint: record
+                            .preserved_deliverable
+                            .as_ref()
+                            .map(|proof| proof.workspace_fingerprint.clone()),
+                        expected_head_commit: record
+                            .preserved_deliverable
+                            .as_ref()
+                            .map(|proof| proof.head_commit.clone()),
+                        preserved_deliverable: record.preserved_deliverable,
+                        preserved_provider_artifacts: record.preserved_provider_artifacts,
                         verification_policy: record.verification_policy,
                         write_scope: record.write_scope,
                         deliverable: record.deliverable,
@@ -9942,6 +10038,12 @@ mod cache_admission_tests {
                 value["workspace_base_commit"] = "fixture".into();
                 value["expected_workspace_fingerprint"] = "fixture".into();
             }
+            "checkpoint_workspace" => {
+                value["workspace_run_id"] = serde_json::json!(Uuid::nil());
+                value["command_id"] = serde_json::json!(Uuid::nil());
+                value["workspace_base_commit"] = "fixture".into();
+                value["expected_head_commit"] = "fixture".into();
+            }
             _ => panic!("unsupported test command"),
         }
         if explicit {
@@ -9968,7 +10070,8 @@ mod cache_admission_tests {
         match &mut command {
             ServerToRunner::StartRun { deliverable, .. }
             | ServerToRunner::ResumeRun { deliverable, .. }
-            | ServerToRunner::VerifyRun { deliverable, .. } => {
+            | ServerToRunner::VerifyRun { deliverable, .. }
+            | ServerToRunner::CheckpointWorkspace { deliverable, .. } => {
                 *deliverable = Some(crony_domain::DeliverableSpec {
                     form: crony_domain::DeliverableForm::Archive,
                     commit_after_verification: false,
@@ -9982,7 +10085,12 @@ mod cache_admission_tests {
 
     #[test]
     fn issue82_canonical_source_support_gates_every_assignment_and_current_epoch() {
-        for kind in ["start_run", "resume_run", "verify_run"] {
+        for kind in [
+            "start_run",
+            "resume_run",
+            "verify_run",
+            "checkpoint_workspace",
+        ] {
             let runners = DashMap::new();
             let epoch = Uuid::new_v4();
             let (runner, mut rx) = connection(epoch, vec![capability("fake-process")]);
@@ -10020,6 +10128,11 @@ mod cache_admission_tests {
             );
             assert!(rx.try_recv().is_err());
             runners.get_mut("runner").unwrap().capabilities[1].workspace_connection_id = None;
+            runners
+                .get_mut("runner")
+                .unwrap()
+                .capabilities
+                .push(capability(crony_domain::PRESERVED_DELIVERABLE_CAPABILITY));
             assert!(
                 send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind))
                     .is_ok()
@@ -10044,6 +10157,177 @@ mod cache_admission_tests {
             );
             assert!(replacement_rx.try_recv().is_err());
         }
+    }
+
+    #[test]
+    fn issue89_retained_deliverable_requires_current_runner_global_support() {
+        for kind in ["resume_run", "verify_run", "checkpoint_workspace"] {
+            let runners = DashMap::new();
+            let epoch = Uuid::new_v4();
+            let capabilities = vec![
+                capability("fake-process"),
+                capability(crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY),
+            ];
+            let (runner, mut rx) = connection(epoch, capabilities.clone());
+            runners.insert("runner".to_owned(), runner);
+            let mut other_capabilities = capabilities;
+            other_capabilities.push(capability(crony_domain::PRESERVED_DELIVERABLE_CAPABILITY));
+            let (other, mut other_rx) = connection(Uuid::new_v4(), other_capabilities);
+            runners.insert("other".to_owned(), other);
+
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind)),
+                Err(RunnerDispatchError::UnsupportedPreservedDeliverable)
+            );
+            assert!(rx.try_recv().is_err());
+            assert!(other_rx.try_recv().is_err());
+            assert!(
+                send_command_to_current_runner(&runners, "runner", epoch, command(kind, false))
+                    .is_ok()
+            );
+            assert!(rx.try_recv().is_ok());
+
+            let mut support = capability(crony_domain::PRESERVED_DELIVERABLE_CAPABILITY);
+            support.available = false;
+            runners
+                .get_mut("runner")
+                .unwrap()
+                .capabilities
+                .push(support);
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind)),
+                Err(RunnerDispatchError::UnsupportedPreservedDeliverable)
+            );
+            {
+                let mut runner = runners.get_mut("runner").unwrap();
+                runner.capabilities[2].available = true;
+                runner.capabilities[2].workspace_connection_id = Some(Uuid::new_v4());
+            }
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind)),
+                Err(RunnerDispatchError::UnsupportedPreservedDeliverable)
+            );
+            assert!(rx.try_recv().is_err());
+            runners.get_mut("runner").unwrap().capabilities[2].workspace_connection_id = None;
+            assert!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind))
+                    .is_ok()
+            );
+            assert!(rx.try_recv().is_ok());
+
+            runners.get_mut("runner").unwrap().capabilities[2].available = false;
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind)),
+                Err(RunnerDispatchError::UnsupportedPreservedDeliverable)
+            );
+            assert!(rx.try_recv().is_err());
+            assert!(
+                send_command_to_current_runner(
+                    &runners,
+                    "runner",
+                    epoch,
+                    ServerToRunner::StopRun {
+                        run_id: Uuid::nil(),
+                        reason: "capability lost".to_owned(),
+                    },
+                )
+                .is_ok()
+            );
+            assert!(matches!(
+                rx.try_recv().unwrap(),
+                ServerToRunner::StopRun { .. }
+            ));
+            assert!(other_rx.try_recv().is_err());
+        }
+    }
+
+    #[test]
+    fn issue89_retained_deliverable_rechecks_epoch_and_readiness() {
+        for kind in ["resume_run", "verify_run", "checkpoint_workspace"] {
+            let runners = DashMap::new();
+            let old_epoch = Uuid::new_v4();
+            let capabilities = vec![
+                capability("fake-process"),
+                capability(crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY),
+                capability(crony_domain::PRESERVED_DELIVERABLE_CAPABILITY),
+            ];
+            let (old, mut old_rx) = connection(old_epoch, capabilities.clone());
+            runners.insert("runner".to_owned(), old);
+            let epoch = Uuid::new_v4();
+            let (replacement, mut rx) = connection(epoch, capabilities);
+            runners.insert("runner".to_owned(), replacement);
+            assert_eq!(
+                send_command_to_current_runner(
+                    &runners,
+                    "runner",
+                    old_epoch,
+                    canonical_command(kind)
+                ),
+                Err(RunnerDispatchError::Unavailable)
+            );
+            assert!(old_rx.try_recv().is_err());
+            assert!(rx.try_recv().is_err());
+
+            runners.get_mut("runner").unwrap().dispatch_ready = false;
+            assert_eq!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind)),
+                Err(RunnerDispatchError::Unavailable)
+            );
+            assert!(rx.try_recv().is_err());
+            runners.get_mut("runner").unwrap().dispatch_ready = true;
+            assert!(
+                send_command_to_current_runner(&runners, "runner", epoch, canonical_command(kind))
+                    .is_ok()
+            );
+            assert!(rx.try_recv().is_ok());
+
+            let unsupported_epoch = Uuid::new_v4();
+            let (unsupported, mut unsupported_rx) = connection(
+                unsupported_epoch,
+                vec![
+                    capability("fake-process"),
+                    capability(crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY),
+                ],
+            );
+            runners.insert("runner".to_owned(), unsupported);
+            assert_eq!(
+                send_command_to_current_runner(
+                    &runners,
+                    "runner",
+                    unsupported_epoch,
+                    canonical_command(kind)
+                ),
+                Err(RunnerDispatchError::UnsupportedPreservedDeliverable)
+            );
+            assert!(unsupported_rx.try_recv().is_err());
+        }
+    }
+
+    #[test]
+    fn issue89_fresh_deliverable_start_keeps_canonical_only_admission() {
+        let runners = DashMap::new();
+        let epoch = Uuid::new_v4();
+        let (runner, mut rx) = connection(
+            epoch,
+            vec![
+                capability("fake-process"),
+                capability(crony_domain::CANONICAL_SOURCE_VERIFICATION_CAPABILITY),
+            ],
+        );
+        runners.insert("runner".to_owned(), runner);
+        assert!(
+            send_command_to_current_runner(
+                &runners,
+                "runner",
+                epoch,
+                canonical_command("start_run")
+            )
+            .is_ok()
+        );
+        assert!(matches!(
+            rx.try_recv().unwrap(),
+            ServerToRunner::StartRun { .. }
+        ));
     }
 
     #[test]

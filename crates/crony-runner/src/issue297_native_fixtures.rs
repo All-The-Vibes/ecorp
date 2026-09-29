@@ -299,6 +299,8 @@ impl Fixture {
             verification_command_id: None,
             retained_provider_receipt: None,
             checkpoint_verification: false,
+            preserved_deliverable: None,
+            preserved_provider_artifacts: Vec::new(),
             hard_boundary_checkpoint: Arc::default(),
         }
     }

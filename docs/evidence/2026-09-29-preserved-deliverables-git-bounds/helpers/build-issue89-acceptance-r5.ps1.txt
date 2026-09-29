@@ -1,0 +1,76 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$product = '<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp'
+$receiptPath = Join-Path $PSScriptRoot 'issue89-acceptance-build-r5.json'
+if (Test-Path -LiteralPath $receiptPath) { throw 'Preserve the existing build receipt.' }
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:PATH = '<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64;' + $env:PATH
+$env:CARGO_BUILD_JOBS = '2'
+$env:CARGO_NET_OFFLINE = 'true'
+$env:GIT_TERMINAL_PROMPT = '0'
+$target = Join-Path $product 'target'
+$mutexKey = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($target.ToLowerInvariant())))
+$mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$mutexKey")
+$locked = $false
+function SourceBinding {
+    $head = (& git -C $product rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -or $head -cne '361632cf5d70850f28695bd42c2ba178669cd09c') { throw 'Reconcile the changed issue 89 base.' }
+    $branch = (& git -C $product branch --show-current).Trim()
+    if ($LASTEXITCODE -or $branch -cne 'codex/issue89-preserved-deliverables') { throw 'Issue 89 checkout ownership or branch changed.' }
+    $paths = @(& git -C $product ls-files --cached --others --exclude-standard)
+    if ($LASTEXITCODE) { throw 'Cannot inventory source files.' }
+    $files = @($paths | Sort-Object -Unique | ForEach-Object {
+        [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $product $_)).Hash.ToLowerInvariant()}
+    })
+    [ordered]@{head=$head;parent_tree=(& git -C $product rev-parse 'HEAD^{tree}').Trim();files=$files;status=@(& git -C $product status --porcelain=v1)}
+}
+$record = [ordered]@{issue=89;purpose='Build the complete native server, runner and CLI plus web application for controlled acceptance; not a canonical validation result';repository=$product;status='starting';started_at_utc=[DateTime]::UtcNow.ToString('o');checks=@();source_unchanged=$false}
+function Save { [IO.File]::WriteAllText($receiptPath,($record | ConvertTo-Json -Depth 12)+"`n") }
+function Check([string]$Name,[scriptblock]$Run) {
+    $log = Join-Path $PSScriptRoot "issue89-acceptance-build-r5-$Name.log"
+    if (Test-Path -LiteralPath $log) { throw 'Preserve existing build logs.' }
+    $start = [DateTime]::UtcNow.ToString('o')
+    & $Run *> $log
+    $code = $LASTEXITCODE
+    $record.checks += [ordered]@{name=$Name;exit_code=$code;started_at_utc=$start;finished_at_utc=[DateTime]::UtcNow.ToString('o');log=$log;sha256=(Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant()}
+    Save
+    Write-Output "$Name exit=$code"
+    if ($code) { throw "$Name failed; inspect its retained log." }
+}
+try {
+    try { $locked = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked = $true }
+    if (!$locked) { throw 'An existing Cargo operation owns this target; nothing started.' }
+    $record.source = SourceBinding
+    $before = $record.source | ConvertTo-Json -Depth 12 -Compress
+    $record.status = 'running'
+    Save
+    Push-Location -LiteralPath $product
+    try {
+        Check 'install-root' { pnpm install --frozen-lockfile --offline }
+        Check 'install-web' { pnpm --dir apps/web install --frozen-lockfile --offline }
+        Check 'native' { cargo build --locked --offline -p crony-cli -p crony-server -p crony-runner }
+        Check 'web' { pnpm build:web }
+    } finally { Pop-Location }
+    if ($before -cne ((SourceBinding) | ConvertTo-Json -Depth 12 -Compress)) { throw 'Acceptance source changed during the build.' }
+    $record.source_unchanged = $true
+    $record.binaries = @('crony-cli.exe','crony-server.exe','crony-runner.exe' | ForEach-Object {
+        $file=Join-Path $target "debug/$_"
+        [ordered]@{path=$file;sha256=(Get-FileHash -LiteralPath $file).Hash.ToLowerInvariant()}
+    })
+    $record.status = 'passed'
+} catch {
+    $record.status = 'failed'
+    $record.failure = $_.Exception.Message
+} finally {
+    $record.finished_at_utc = [DateTime]::UtcNow.ToString('o')
+    if ($locked) { $mutex.ReleaseMutex() }
+    $mutex.Dispose()
+    Save
+}
+[pscustomobject]$record | Select-Object issue,status,source_unchanged,failure | ConvertTo-Json
+if ($record.status -ne 'passed') { exit 1 }

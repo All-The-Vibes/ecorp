@@ -18,6 +18,9 @@ mod retained_receipts;
 #[path = "canonical_source_verification_tests.rs"]
 mod canonical_source;
 
+#[path = "preserved_deliverable_tests.rs"]
+mod preserved_deliverables;
+
 const CORP: Uuid = Uuid::from_u128(1);
 const MISSION: Uuid = Uuid::from_u128(2);
 const TASK: Uuid = Uuid::from_u128(3);
@@ -83,6 +86,7 @@ struct CheckpointFixtureProfile {
     adapter: &'static str,
     provider_session_id: &'static str,
     native_outcome: Option<&'static str>,
+    write_scope: Option<&'static [&'static str]>,
 }
 
 #[derive(Clone, Copy)]
@@ -111,6 +115,7 @@ impl Default for CheckpointFixtureProfile {
             adapter: "codex",
             provider_session_id: "fixture-session",
             native_outcome: None,
+            write_scope: None,
         }
     }
 }
@@ -246,6 +251,9 @@ async fn fixture_with_profile(
     .unwrap();
     contract.deliverable = deliverable;
     contract.workspace_connection_id = profile.workspace_connection_id;
+    if let Some(scope) = profile.write_scope {
+        contract.write_scope = scope.iter().map(|path| (*path).to_owned()).collect();
+    }
     let mut checks = vec![json!({"type":"file","path":"result.md","min_bytes":1})];
     if needs_artifact {
         checks.push(json!({"type":"artifact","min_bytes":1}));
@@ -294,7 +302,7 @@ async fn fixture_with_profile(
     .unwrap();
     let mut factory_policy = json!({
         "source_base_ref":"main", "source_base_commit":"a".repeat(40),
-        "repository_allowlist":["fixture/source"], "write_scope":["result.md"],
+        "repository_allowlist":["fixture/source"], "write_scope":contract.write_scope,
         "allowed_tools":["filesystem"], "prohibited_actions":["no external effects"]
     });
     if let Some(connection_id) = profile.workspace_connection_id {

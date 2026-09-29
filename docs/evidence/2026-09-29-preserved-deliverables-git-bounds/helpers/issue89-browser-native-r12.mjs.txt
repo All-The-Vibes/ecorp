@@ -1,0 +1,459 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import { createRequire } from 'node:module'
+import { execFile as execFileCallback } from 'node:child_process'
+import { mkdir, readFile, writeFile, realpath, lstat } from 'node:fs/promises'
+import { createServer } from 'node:http'
+import { promisify } from 'node:util'
+import path from 'node:path'
+
+const execFile = promisify(execFileCallback)
+const server = process.env.CRONY_SERVER_HTTP
+const web = process.env.CRONY_TEST_WEB_URL
+const fixture = process.env.CRONY_TEST_FIXTURE_ROOT
+const sourceRepository = process.env.ECORP_TEST_SOURCE_REPOSITORY
+const output = process.env.ECORP_TEST_ARTIFACT_ROOT
+for (const value of [fixture, sourceRepository, output]) assert.ok(value && path.isAbsolute(value))
+for (const value of [server, web]) assert.equal(new URL(value).hostname, '127.0.0.1')
+const BASE = process.env.ECORP_TEST_SOURCE_BASE_COMMIT
+assert.match(BASE ?? '', /^[0-9a-f]{40}$/)
+const APP = 'qa/issue195'
+const appPaths = ['app.mjs', 'app.test.mjs', 'index.html'].map(name => `${APP}/${name}`)
+const originalScope = ['base.txt', 'resumed.txt', 'resume-prompt.txt', `${APP}/**`]
+const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const report = {
+  issue: 89, suite: 'issue89-preserved-deliverable-browser-v1', status: 'running',
+  started_at_utc: new Date().toISOString(), stage: 'setup', real_provider_calls: 0, real_github_mutations: 0,
+  environment: 'Fresh private PostgreSQL, native server/runner, actual Edge, deterministic native Codex protocol fixture; fresh owned dedicated scenario repository, distinct from the product source.',
+  limitations: ['Development authentication; no production OIDC claim.', 'Deterministic provider protocol, not vendor inference.',
+    'Application fixture reused from the documented issue195 lane; original issue88 production lineage is never touched.',
+    'The full ECorp target r6 exceeded the bounded checkpoint read deadline. This scenario fixture does not resolve or validate large-workspace timing.'],
+  fixture_base_commit: BASE,
+  screenshots: [], browser_mutations: [], blocked_requests: [], page_errors: [],
+}
+await mkdir(output, { recursive: true })
+const reportPath = path.join(output, 'browser-preserved-deliverable-report.json')
+const save = () => writeFile(reportPath, JSON.stringify(report, null, 2) + '\n')
+const artifact = (name, value) => writeFile(path.join(output, `${name}.json`), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const events = new Map()
+let browser, context, page, appPage, eventSocket, appServer, appOrigin, demo, finalState
+const browserEnvironment = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
+  /^(PATH|PATHEXT|SystemRoot|windir|ComSpec|TEMP|TMP|USERPROFILE|HOMEDRIVE|HOMEPATH|HOME|APPDATA|LOCALAPPDATA|PROGRAMDATA|PROGRAMFILES|PROGRAMFILES\(X86\)|PROGRAMW6432|SYSTEMDRIVE|USERNAME|USERDOMAIN|COMPUTERNAME|NUMBER_OF_PROCESSORS|PROCESSOR_ARCHITECTURE|OS)$/i.test(name)))
+const publicPaths = JSON.parse(process.env.CRONY_TEST_BROWSER_OS_PATHS ?? '{}')
+const publicKeys = ['HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA']
+assert.ok(Object.keys(publicPaths).every(key => publicKeys.includes(key)))
+for (const key of publicKeys) {
+  for (const existing of Object.keys(browserEnvironment)) if (existing.toLowerCase() === key.toLowerCase()) delete browserEnvironment[existing]
+  if (publicPaths[key] !== undefined) {
+    assert.ok(typeof publicPaths[key] === 'string' && path.isAbsolute(publicPaths[key]) && !publicPaths[key].includes('\0'))
+    browserEnvironment[key] = publicPaths[key]
+  } else assert.equal(key, 'HOME')
+}
+async function git(cwd, ...args) {
+  const result = await execFile('git', ['-C', cwd, ...args], {
+    cwd: fixture, windowsHide: true, timeout: 120_000, maxBuffer: 8 * 1024 * 1024,
+  })
+  return result.stdout.trim()
+}
+async function request(route, body) {
+  const url = new URL(route, server)
+  assert.equal(url.origin, server)
+  const response = await fetch(url, {
+    ...(body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }),
+    redirect: 'error', signal: AbortSignal.timeout(30_000),
+  })
+  const value = await response.json()
+  assert.ok(response.ok, `${response.status} ${url.pathname}: ${JSON.stringify(value)}`)
+  return value
+}
+const snapshot = () => request(`/api/corps/${demo.corp_id}/snapshot?actor_id=${demo.alice_actor_id}`)
+async function waitFor(predicate, label, timeout = 180_000) {
+  const deadline = Date.now() + timeout
+  while (Date.now() < deadline) {
+    const state = await snapshot()
+    const value = predicate(state.snapshot, state)
+    if (value) return { state: state.snapshot, value }
+    await new Promise(resolve => setTimeout(resolve, 200))
+  }
+  const last = await snapshot()
+  await artifact(`timeout-${label.replace(/[^a-z0-9]+/gi, '-')}`, last)
+  throw new Error(`Timed out: ${label}`)
+}
+async function collectJournal() {
+  eventSocket = new WebSocket(`${server.replace(/^http/, 'ws')}/ws/corps/${demo.corp_id}?actor_id=${demo.alice_actor_id}&after_seq=0`)
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Native journal did not become ready')), 15_000)
+    eventSocket.onerror = () => { clearTimeout(timer); reject(new Error('Native journal failed')) }
+    eventSocket.onmessage = message => {
+      const packet = JSON.parse(message.data)
+      if (packet.type === 'event') events.set(packet.event.id, packet.event)
+      if (packet.type === 'ready') { clearTimeout(timer); resolve() }
+    }
+  })
+}
+const journal = (runId, type) => [...events.values()].filter(event => event.aggregate_id === runId && (!type || event.type === type)).sort((a, b) => a.seq - b.seq)
+async function capture(label, target = page) {
+  const file = path.join(output, `${label}.png`)
+  await target.screenshot({ path: file, fullPage: true })
+  report.screenshots.push({ label, path: file, sha256: digest(await readFile(file)), viewport: target.viewportSize() })
+  await save()
+}
+async function ownedWorkspace(run) {
+  const expected = path.join(fixture, 'runner-workspaces')
+  const observed = await realpath(run.workspace_path)
+  assert.ok(observed.toLowerCase().startsWith(expected.toLowerCase() + path.sep))
+  assert.equal((await lstat(run.workspace_path)).isSymbolicLink(), false)
+  assert.equal(await git(observed, 'rev-parse', 'HEAD'), BASE)
+  assert.equal(await git(observed, 'branch', '--show-current'), run.workspace_branch)
+  return observed
+}
+
+try {
+  assert.equal(await git(sourceRepository, 'rev-parse', 'HEAD'), BASE)
+  assert.equal(await git(sourceRepository, 'status', '--porcelain'), '')
+  demo = await request('/api/demo/bootstrap?seed_crew=true', {})
+  report.corp_id = demo.corp_id
+  await collectJournal()
+  const initialDescription = '[checkpoint-app] Create the complete incident desk application. A later preserved-session correction supplies the missing resume evidence.'
+  const policy = {
+    checks: [
+      { type: 'file', path: 'base.txt', min_bytes: 5 },
+      { type: 'artifact', min_bytes: 1 },
+      { type: 'file', path: `${APP}/index.html`, min_bytes: 100 },
+      { type: 'test', program: process.execPath, args: ['--test', `${APP}/app.test.mjs`], timeout_ms: 10_000 },
+      { type: 'file', path: 'resumed.txt', min_bytes: 7 },
+    ], manual_gate: null,
+  }
+  const created = await request(`/api/corps/${demo.corp_id}/missions`, {
+    title: `Issue89 complete preserved application ${crypto.randomUUID()}`,
+    description: initialDescription, requested_by: demo.alice_actor_id,
+    preferred_adapter: 'codex', strategy: 'single', max_task_attempts: 1,
+    source: { repository: 'All-The-Vibes/ecorp', base_ref: 'HEAD', base_commit: BASE },
+    budget_tokens: 100_000, budget_cost_microusd: 1_000_000,
+    deliverable: { form: 'commit_branch', commit_after_verification: true, paths: [] },
+    contract: { objective: initialDescription, expected_output: 'The complete nonempty incident application plus correction evidence, exported as a verified commit and branch.',
+      acceptance_tests: ['All persisted native verifier checks pass and the full application remains in the final deliverable.'],
+      allowed_tools: ['filesystem', 'shell'], prohibited_actions: ['modify files outside the assigned worktree', 'use undeclared long-lived credentials', 'publish external changes'],
+      references: [], write_scope: originalScope },
+    verification_policy: policy,
+  })
+  report.mission_id = created.mission_id
+  report.task_id = created.task_id
+  await artifact('mission-created', created)
+  await request(`/api/corps/${demo.corp_id}/missions/${created.mission_id}/launch`, { requested_by: demo.alice_actor_id })
+  report.stage = 'initial native verification'; await save()
+  const initial = await waitFor(state => {
+    const run = state.runs.find(item => item.task_id === created.task_id && item.status === 'failed')
+    return run && journal(run.id, 'run.verification_failed').length ? run : null
+  }, 'initial genuine verification failure', 180_000)
+  report.stage = 'bounded complete retained checkpoint'; await save()
+  // Product capture has its own 120s deadline AFTER verification. R3 killed
+  // the runner only 28s into this distinct phase after a 142s verifier run.
+  const first = await waitFor(state => {
+    const run = state.runs.find(item => item.id === initial.value.id)
+    const event = run && journal(run.id, 'run.workspace_preserved').at(-1)
+    if (!event) return null
+    assert.ok(event.payload.deliverable_checkpoint, JSON.stringify(event.payload))
+    assert.equal(run.workspace_disposition, 'preserved')
+    return run
+  }, 'complete retained checkpoint after verifier failure', 120_000 + 10_000)
+  const original = first.value
+  const originalTask = first.state.tasks.find(task => task.id === created.task_id)
+  assert.equal(originalTask.verification_status, 'failed')
+  assert.equal(first.state.runs.filter(run => run.task_id === created.task_id).length, 1)
+  assert.ok(original.provider_session_id)
+  assert.equal(original.execution_mode, 'provider')
+  assert.deepEqual(originalTask.contract.write_scope, originalScope)
+  assert.deepEqual(originalTask.verification_policy, policy)
+  const workspace = await ownedWorkspace(original)
+  assert.equal(await git(workspace, 'ls-files', '--error-unmatch', 'base.txt'), 'base.txt')
+  const preservedStatus = await git(workspace, 'status', '--porcelain=v1', '--untracked-files=all')
+  assert.match(preservedStatus, /M base\.txt/)
+  for (const name of appPaths) assert.ok(preservedStatus.split('\n').some(line => line === `?? ${name}`), `Expected new application path ${name}`)
+  report.initial_git_status = preservedStatus
+  const sourceBytes = Object.fromEntries(await Promise.all([...appPaths, 'base.txt'].map(async name => [name, await readFile(path.join(workspace, name))])))
+  assert.ok(sourceBytes[`${APP}/index.html`].length > 5000)
+  const preservation = journal(original.id, 'run.workspace_preserved').at(-1)
+  const proof = preservation.payload.deliverable_checkpoint
+  assert.equal(proof.run_id, original.id)
+  assert.equal(proof.workspace_run_id, original.workspace_run_id)
+  assert.equal(proof.head_commit, BASE)
+  assert.equal(proof.workspace_fingerprint, original.workspace_fingerprint)
+  assert.match(proof.index_sha256, /^[0-9a-f]{64}$/)
+  for (const name of [...appPaths, 'base.txt']) assert.ok(proof.changed_paths.includes(name), `Checkpoint omitted ${name}`)
+  assert.ok(!proof.provider_artifacts.some(item => appPaths.includes(item.path)), 'Application must not be excluded as provider evidence')
+  report.initial = { run_id: original.id, provider_session_id: original.provider_session_id,
+    workspace_run_id: original.workspace_run_id, workspace, preservation_event_id: preservation.id,
+    complete_delta: proof.changed_paths, index_sha256: proof.index_sha256,
+    application: Object.entries(sourceBytes).map(([name, bytes]) => ({ path: name, bytes: bytes.length, sha256: digest(bytes) })) }
+  await artifact('initial-native-snapshot', first.state)
+  await artifact('initial-preservation-event', preservation)
+  const { chromium } = createRequire(import.meta.url)(process.env.CRONY_PLAYWRIGHT_MODULE)
+  browser = await chromium.launch({ channel: 'msedge', headless: true, env: browserEnvironment, timeout: 60_000 })
+  report.browser_version = browser.version()
+  context = await browser.newContext({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' })
+  await context.route('**/*', async route => {
+    const req = route.request(), url = new URL(req.url())
+    const read = ['GET', 'HEAD', 'OPTIONS'].includes(req.method())
+    const allowedWrite = req.method() === 'POST' && url.origin === server &&
+      (url.pathname === '/api/demo/bootstrap' || url.pathname === `/api/corps/${demo.corp_id}/missions/${created.mission_id}/contract-revisions` ||
+       url.pathname === `/api/corps/${demo.corp_id}/runs/${original.id}/resume`)
+    if (![server, web, appOrigin].includes(url.origin) || (!read && !allowedWrite)) {
+      report.blocked_requests.push({ method: req.method(), origin: url.origin, path: url.pathname })
+      await route.abort()
+    } else {
+      if (!read) report.browser_mutations.push({ method: req.method(), path: url.pathname })
+      await route.continue()
+    }
+  })
+  await context.routeWebSocket('**/*', socket => {
+    const url = new URL(socket.url())
+    if ((url.origin === server.replace(/^http/, 'ws') && url.pathname === `/ws/corps/${demo.corp_id}`) || url.origin === web.replace(/^http/, 'ws')) socket.connectToServer()
+    else { report.blocked_requests.push({ method: 'WEBSOCKET', origin: url.origin, path: url.pathname }); socket.close() }
+  })
+  page = await context.newPage()
+  page.on('pageerror', error => report.page_errors.push(String(error)))
+  await page.goto(`${web}/?actor=alice#missions`, { waitUntil: 'domcontentloaded' })
+  await page.locator('.live-indicator.live-live').waitFor({ state: 'visible', timeout: 30_000 })
+  const card = page.getByTestId(`mission-${created.mission_id}`)
+  await card.waitFor({ state: 'visible' })
+  await capture('01-complete-application-preserved-after-verifier-failure')
+  report.stage = 'browser revises preserved contract'; await save()
+  // Both native details disclosures are initially closed. Open them through
+  // their visible summaries; a hidden panel's attribute alone is not evidence
+  // that its editor can be reached by a user.
+  const taskDossier = card.locator('.mission-task-dossier')
+  await taskDossier.locator(':scope > summary').click()
+  assert.notEqual(await taskDossier.getAttribute('open'), null)
+  const taskDisclosure = taskDossier.locator(`.task-graph-item[data-task-id="${created.task_id}"]`)
+  await taskDisclosure.locator(':scope > summary').click()
+  assert.notEqual(await taskDisclosure.getAttribute('open'), null)
+  const panel = card.getByTestId(`contract-revision-${created.task_id}`)
+  await panel.waitFor({ state: 'visible' })
+  assert.equal(await panel.getAttribute('data-source-run-id'), original.id)
+  await panel.getByRole('button', { name: 'Revise contract for resume', exact: true }).click()
+  const description = 'Supply only the missing correction evidence in resumed.txt and resume-prompt.txt. Preserve every existing application byte; export the complete retained application under its unchanged full write scope.'
+  const fullContract = structuredClone(originalTask.contract)
+  fullContract.objective = description
+  fullContract.expected_output = 'The original complete incident application plus the missing correction evidence, verified and exported as a commit and branch.'
+  fullContract.acceptance_tests = ['All unchanged persisted checks pass and the original application bytes remain intact.']
+  assert.ok(!JSON.stringify(fullContract).includes('[checkpoint-app]'))
+  const narrowContract = structuredClone(fullContract)
+  narrowContract.write_scope = ['resumed.txt', 'resume-prompt.txt']
+  // These labels wrap populated textareas. Match the observed label text
+  // and prove uniqueness and initial values before filling the intended fields.
+  const reasonInput = panel.getByLabel('Revision reason', { exact: true })
+  const descriptionInput = panel.getByLabel('Mission description / specification')
+  const contractInput = panel.getByLabel('Typed task contract · JSON')
+  assert.equal(await reasonInput.count(), 1)
+  assert.equal(await descriptionInput.count(), 1)
+  assert.equal(await contractInput.count(), 1)
+  assert.equal(await descriptionInput.inputValue(), initialDescription)
+  assert.deepEqual(JSON.parse(await contractInput.inputValue()), originalTask.contract)
+  report.contract_editor = { unique_fields: 3, initial_description_matches: true, initial_contract_matches: true }
+  await save()
+  await reasonInput.fill('Exercise issue89: evidence-only correction must not discard the existing application from deliverable authority.')
+  await descriptionInput.fill(description)
+  await contractInput.fill(JSON.stringify(narrowContract, null, 2))
+  const revisionRoute = `/api/corps/${demo.corp_id}/missions/${created.mission_id}/contract-revisions`
+  let responsePromise = page.waitForResponse(response => new URL(response.url()).pathname === revisionRoute && response.request().method() === 'POST')
+  await panel.getByRole('button', { name: 'Save revision', exact: true }).click()
+  let response = await responsePromise
+  const rejection = await response.json()
+  // Native contract policy refusal uses map_store_error's existing 400 category.
+  // Record the response before assertions so a future failure preserves diagnosis.
+  report.contract_revision_denial_observed = { http_status: response.status(), body: rejection }
+  await artifact('contract-revision-denial-response', report.contract_revision_denial_observed)
+  await save()
+  assert.equal(response.status(), 400)
+  assert.match(JSON.stringify(rejection), /write scope excludes preserved deliverable path/)
+  assert.match(JSON.stringify(rejection), /Keep the preserved worktree/)
+  assert.match(JSON.stringify(rejection), /[Dd]o not retry this correction in a fresh worktree/)
+  const afterDenied = (await snapshot()).snapshot
+  assert.equal(afterDenied.tasks.find(task => task.id === created.task_id).contract_version, originalTask.contract_version)
+  assert.deepEqual(afterDenied.tasks.find(task => task.id === created.task_id).contract, originalTask.contract)
+  assert.equal(afterDenied.runs.filter(run => run.task_id === created.task_id).length, 1)
+  report.rejection = { http_status: response.status(), body: rejection, unchanged_contract_version: originalTask.contract_version, run_count: 1 }
+  await artifact('narrowing-denial', report.rejection)
+  await capture('02-narrowing-rejected-with-precise-recovery-action')
+  await contractInput.fill(JSON.stringify(fullContract, null, 2))
+  responsePromise = page.waitForResponse(response => new URL(response.url()).pathname === revisionRoute && response.request().method() === 'POST')
+  await panel.getByRole('button', { name: 'Save revision', exact: true }).click()
+  response = await responsePromise
+  const revision = await response.json()
+  assert.ok(response.ok(), JSON.stringify(revision))
+  const revised = await waitFor(state => state.tasks.find(task => task.id === created.task_id && task.contract_version === originalTask.contract_version + 1), 'accepted full-scope revision')
+  // Existing main composes mission specification and task-specific objective.
+  // Assert the complete saved contract, including that exact native composition.
+  const expectedSavedContract = { ...fullContract,
+    objective: `${description}\n\nTASK-SPECIFIC OBJECTIVE:\n${fullContract.objective}` }
+  report.full_scope_revision_observed = { http_status: response.status(),
+    response: revision, saved_contract: revised.value.contract,
+    saved_contract_version: revised.value.contract_version }
+  await artifact('full-scope-revision-observed', report.full_scope_revision_observed)
+  await save()
+  assert.notEqual(description, initialDescription)
+  assert.deepEqual(revised.value.contract, expectedSavedContract)
+  assert.deepEqual(revised.value.contract.write_scope, originalTask.contract.write_scope)
+  assert.deepEqual(revised.value.verification_policy, policy)
+  assert.equal(revised.state.runs.filter(run => run.task_id === created.task_id).length, 1)
+  await artifact('full-scope-revision', revision)
+  await capture('03-full-scope-revision-saved-without-implicit-resume')
+  report.stage = 'browser resumes exact native source'; await save()
+  const resumeRoute = `/api/corps/${demo.corp_id}/runs/${original.id}/resume`
+  responsePromise = page.waitForResponse(response => new URL(response.url()).pathname === resumeRoute && response.request().method() === 'POST')
+  await card.getByRole('button', { name: 'Resume agent session', exact: true }).click()
+  response = await responsePromise
+  const resumed = await response.json()
+  assert.ok(response.ok(), JSON.stringify(resumed))
+  await artifact('browser-resume-response', resumed)
+  report.stage = 'retained identity verification and export preflight'; await save()
+  // Identity verification and export preflight are separate native 120s
+  // deadlines. Provider execution cannot start before both succeed.
+  const admitted = await waitFor(state => {
+    const run = state.runs.find(item => item.task_id === created.task_id && item.resumed_from_run_id === original.id)
+    if (!run) return null
+    assert.ok(!['failed', 'cancelled'].includes(run.status), JSON.stringify(journal(run.id)))
+    return journal(run.id, 'run.started').length ? run : null
+  }, 'resumed provider startup after retained preflight', 2 * 120_000 + 20_000)
+  report.stage = 'fresh native verification and complete export'; await save()
+  const completed = await waitFor(state => {
+    const run = state.runs.find(item => item.id === admitted.value.id && item.status === 'completed')
+    return run && state.source_deliverables.some(item => item.run_id === run.id && item.form === 'commit_branch') ? run : null
+  }, 'fresh verified full source export', 240_000)
+  const corrected = completed.value
+  finalState = completed.state
+  assert.equal(finalState.missions.find(mission => mission.id === created.mission_id).status, 'completed')
+  assert.equal(finalState.tasks.find(task => task.id === created.task_id).status, 'completed')
+  assert.equal(finalState.runs.filter(run => run.task_id === created.task_id).length, 2)
+  for (const key of ['corp_id', 'task_id', 'agent_id', 'runner_id', 'provider_session_id', 'workspace_run_id', 'workspace_path', 'workspace_branch', 'workspace_base_ref', 'workspace_base_commit', 'source_repository', 'source_base_ref', 'source_base_commit']) {
+    assert.equal(corrected[key], original[key], `Same-source resume changed ${key}`)
+  }
+  for (const [name, bytes] of Object.entries(sourceBytes)) assert.deepEqual(await readFile(path.join(workspace, name)), bytes, `Correction modified original ${name}`)
+  const resumePrompt = await readFile(path.join(workspace, 'resume-prompt.txt'), 'utf8')
+  assert.ok(!resumePrompt.includes('[checkpoint-app]'), 'Correction must not regenerate application through fixture marker')
+  assert.match(resumePrompt, /Supply only the missing correction evidence/)
+  assert.equal(await readFile(path.join(workspace, 'resumed.txt'), 'utf8'), 'resumed\n')
+  const source = finalState.source_deliverables.find(item => item.run_id === corrected.id && item.task_id === created.task_id && item.corp_id === demo.corp_id)
+  assert.ok(source)
+  assert.equal(source.form, 'commit_branch')
+  assert.equal(source.base_commit, BASE)
+  assert.equal(source.branch, original.workspace_branch)
+  assert.match(source.head_commit, /^[0-9a-f]{40}$/)
+  assert.notEqual(source.head_commit, BASE)
+  assert.equal(source.verification_sha256, corrected.verification_sha256)
+  assert.equal(source.sha256, corrected.deliverable_sha256)
+  const download = new URL(source.uri, server)
+  assert.equal(download.origin, server)
+  assert.equal(download.pathname, `/api/corps/${demo.corp_id}/artifacts/${source.artifact_id}`)
+  download.searchParams.set('actor_id', demo.alice_actor_id)
+  const downloaded = await fetch(download, { redirect: 'error', signal: AbortSignal.timeout(30_000) })
+  assert.equal(downloaded.status, 200)
+  const bytes = Buffer.from(await downloaded.arrayBuffer())
+  assert.equal(bytes.length, source.bytes)
+  assert.equal(digest(bytes), source.sha256)
+  assert.equal(downloaded.headers.get('content-type'), source.media_type)
+  assert.equal(downloaded.headers.get('x-content-type-options'), 'nosniff')
+  assert.equal(downloaded.headers.get('x-crony-artifact-signature'), source.provenance_signature)
+  const exportPath = path.join(output, 'complete-commit-branch.json')
+  await writeFile(exportPath, bytes, { flag: 'wx' })
+  const document = JSON.parse(bytes.toString('utf8'))
+  assert.equal(document.head_commit, source.head_commit)
+  assert.equal(document.base_commit, BASE)
+  assert.equal(document.verification_sha256, corrected.verification_sha256)
+  const changed = new Map(document.changes.map(change => [change.path, change]))
+  for (const name of [...appPaths, 'base.txt', 'resumed.txt', 'resume-prompt.txt']) {
+    assert.ok(changed.has(name), `Export omitted ${name}`)
+    const archived = Buffer.from(changed.get(name).content_base64, 'base64')
+    assert.deepEqual(archived, await readFile(path.join(workspace, name)), `Exported bytes differ for ${name}`)
+  }
+  const bundle = Buffer.from(document.git_bundle_base64, 'base64')
+  assert.equal(digest(bundle), document.git_bundle_sha256)
+  assert.ok(bundle.length > 1000)
+  const bundlePath = path.join(output, 'complete-source.bundle')
+  await writeFile(bundlePath, bundle, { flag: 'wx' })
+  const imported = path.join(fixture, 'imported-deliverable')
+  await git(fixture, 'clone', '--no-hardlinks', '--no-checkout', sourceRepository, imported)
+  await git(imported, 'bundle', 'verify', bundlePath)
+  const heads = (await git(imported, 'bundle', 'list-heads', bundlePath)).split('\n').map(line => line.trim().split(/\s+/))
+  assert.equal(heads.length, 1)
+  assert.equal(heads[0][0], source.head_commit)
+  await git(imported, 'fetch', '--no-tags', bundlePath, heads[0][1])
+  await git(imported, 'checkout', '--detach', source.head_commit)
+  const exportedNames = (await git(imported, 'diff', '--name-only', BASE, 'HEAD')).split('\n')
+  for (const name of [...appPaths, 'base.txt', 'resumed.txt', 'resume-prompt.txt']) assert.ok(exportedNames.includes(name))
+  for (const [name, originalBytes] of Object.entries(sourceBytes)) assert.deepEqual(await readFile(path.join(imported, name)), originalBytes)
+  const nativeTests = await execFile(process.execPath, ['--test', '--test-reporter=tap', `${APP}/app.test.mjs`], { cwd: imported, windowsHide: true, timeout: 30_000 })
+  assert.match(nativeTests.stdout, /# tests 4/)
+  assert.match(nativeTests.stdout, /# pass 4/)
+  assert.match(nativeTests.stdout, /# fail 0/)
+  await writeFile(path.join(output, 'exported-application-tests.log'), nativeTests.stdout + nativeTests.stderr, { flag: 'wx' })
+  report.export = { artifact_id: source.artifact_id, sha256: source.sha256, bytes: source.bytes, head: source.head_commit,
+    verified_tree: document.verified_tree, git_bundle_sha256: document.git_bundle_sha256, imported, changed_paths: exportedNames,
+    original_application_bytes_identical: true, downloaded_headers_verified: true, independently_executed_application_tests: 4 }
+  await capture('04-complete-source-accepted-and-exported')
+  const publicFiles = new Map(await Promise.all(['index.html', 'app.mjs'].map(async name => [`/${name}`, await readFile(path.join(imported, APP, name))])))
+  appServer = createServer((req, res) => {
+    const name = req.url === '/' ? '/index.html' : req.url
+    if (!['GET', 'HEAD'].includes(req.method) || !publicFiles.has(name)) { res.writeHead(404); res.end(); return }
+    res.writeHead(200, { 'content-type': name.endsWith('.mjs') ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8', 'x-content-type-options': 'nosniff' })
+    res.end(req.method === 'HEAD' ? undefined : publicFiles.get(name))
+  })
+  await new Promise((resolve, reject) => { appServer.once('error', reject); appServer.listen(0, '127.0.0.1', resolve) })
+  appOrigin = `http://127.0.0.1:${appServer.address().port}`
+  report.stage = 'independently imported application browser flow'
+  await save()
+  appPage = await context.newPage()
+  appPage.on('pageerror', error => report.page_errors.push(String(error)))
+  await appPage.goto(appOrigin, { waitUntil: 'networkidle' })
+  await appPage.getByRole('heading', { name: 'Incident desk', exact: true }).waitFor()
+  await appPage.getByLabel('Incident title', { exact: true }).fill('Preserved application remains usable')
+  // Native nested select labels include their option text. Match the inspected
+  // label prefix and require an unambiguous control before interacting.
+  assert.equal(await appPage.getByLabel(/^Priority/).count(), 1)
+  assert.equal(await appPage.getByLabel(/^Show status/).count(), 1)
+  await appPage.getByLabel(/^Priority/).selectOption('critical')
+  await appPage.getByRole('button', { name: 'Add incident', exact: true }).click()
+  await appPage.getByLabel('Search incidents', { exact: true }).fill('preserved application')
+  await appPage.getByRole('button', { name: 'Resolve Preserved application remains usable', exact: true }).click()
+  await appPage.getByLabel(/^Show status/).selectOption('resolved')
+  await appPage.getByRole('button', { name: 'Reopen Preserved application remains usable', exact: true }).waitFor()
+  await capture('05-exported-application-create-filter-resolve', appPage)
+  await appPage.getByRole('button', { name: 'Reopen Preserved application remains usable', exact: true }).click()
+  await appPage.getByLabel(/^Show status/).selectOption('open')
+  await appPage.getByRole('button', { name: 'Resolve Preserved application remains usable', exact: true }).waitFor()
+  await appPage.setViewportSize({ width: 390, height: 844 })
+  assert.ok(await appPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
+  await capture('06-exported-application-reopened-mobile', appPage)
+  assert.equal(report.page_errors.length, 0)
+  assert.equal(report.blocked_requests.length, 0)
+  assert.equal(await git(sourceRepository, 'rev-parse', 'HEAD'), BASE)
+  assert.equal(await git(sourceRepository, 'status', '--porcelain'), '')
+  finalState = (await snapshot()).snapshot
+  assert.equal(finalState.runs.filter(run => run.task_id === created.task_id).length, 2)
+  await artifact('final-native-snapshot', finalState)
+  report.corrected_run_id = corrected.id
+  report.acceptance = {
+    complete_application_preserved: true, narrowing_rejected_without_effects: true,
+    full_scope_evidence_only_correction: true, same_native_session_and_worktree: true,
+    fresh_verification_and_complete_bundle: true, exported_application_exercised: true,
+    source_checkout_unchanged: true, provider_runs: 2,
+  }
+  report.status = 'passed'
+} catch (error) {
+  report.status = 'failed'
+  report.failure = String(error.stack ?? error).slice(0, 8000)
+  if (process.env.DATABASE_URL) report.failure = report.failure.split(process.env.DATABASE_URL).join('[private fixture credential]')
+  if (page && !page.isClosed()) try { await capture('failure-current-browser') } catch {}
+  if (appPage && !appPage.isClosed()) try { await capture('failure-exported-application', appPage) } catch {}
+  if (demo) try { await artifact('failure-native-snapshot', (await snapshot()).snapshot) } catch {}
+  process.exitCode = 1
+} finally {
+  if (eventSocket) eventSocket.close()
+  if (browser) await browser.close()
+  if (appServer) await new Promise(resolve => appServer.close(resolve))
+  await artifact('native-journal', [...events.values()].sort((a, b) => a.seq - b.seq))
+  report.finished_at_utc = new Date().toISOString()
+  await save()
+  console.log(JSON.stringify({ issue: 89, status: report.status, stage: report.stage, acceptance: report.acceptance, failure: report.failure }, null, 2))
+}

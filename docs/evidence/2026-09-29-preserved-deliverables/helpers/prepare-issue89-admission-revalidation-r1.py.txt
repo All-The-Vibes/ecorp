@@ -1,0 +1,126 @@
+"""Preserve the observed admission regression and prepare fresh guarded validation."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import re
+import subprocess
+
+EV = Path(__file__).resolve().parent
+WT = Path(r"<USERPROFILE>\.codex\worktrees\issue270-oidc\ecorp")
+BASE = "878a1774774b0630c904cbaf4b05e1b346777817"
+SERVER = "crates/crony-server/src/main.rs"
+RECEIPT = EV / "issue89-admission-repair-r1.json"
+
+
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load(name):
+    return json.loads((EV / name).read_text(encoding="utf-8-sig"))
+
+
+def write_new(name, text):
+    with (EV / name).open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
+
+
+def test_receipt(name):
+    value = load(name + ".json")
+    assert value["source_unchanged"] and value["source_before"] == value["source_after"]
+    log = EV / (name + ".log")
+    assert digest(log) == value["log_sha256"]
+    text = log.read_text(encoding="utf-8")
+    matches = re.findall(
+        r"test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out;",
+        text,
+    )
+    assert matches, "Actual Rust result summaries are required"
+    counts = dict(zip(["passed", "failed", "ignored", "measured", "filtered_out"],
+                      (sum(int(row[i]) for row in matches) for i in range(5))))
+    return value, {"receipt": name + ".json", "receipt_sha256": digest(EV / (name + ".json")),
+                   "log": str(log), "log_sha256": value["log_sha256"], "command": value["command"],
+                   "exit_code": value["exit_code"], "counts": counts, "summaries": len(matches),
+                   "source_unchanged": True}
+
+
+assert not RECEIPT.exists()
+prior = load("issue89-canonical-r3.json")
+bound = load("issue89-canonical-bound-r3.json")
+assert prior["status"] == bound["status"] == "failed"
+assert bound["source_unchanged"] and bound["source_before"] == bound["source_after"]
+assert prior["head"] == bound["head"] == BASE
+assert bound["canonical_receipt_sha256"] == digest(EV / "issue89-canonical-r3.json")
+assert prior["canonical_report"]["notRun"] == ["web-build", "web-lint"]
+assert [check["name"] for check in prior["canonical_report"]["checks"] if not check["passed"]] == ["rust-tests"]
+old = {item["path"]: item["sha256"] for item in bound["source_before"]["files"]}
+red, red_observation = test_receipt("issue89-admission-red-r1")
+green, green_observation = test_receipt("issue89-admission-green-r1")
+server, server_observation = test_receipt("issue89-admission-server-green-r1")
+fmt = load("issue89-admission-format-r1.json")
+assert red["exit_code"] == 101 and red_observation["counts"] == {
+    "passed": 0, "failed": 1, "ignored": 0, "measured": 0, "filtered_out": 261}
+assert red["source_before"]["sha256"] == old
+assert green["exit_code"] == server["exit_code"] == fmt["exit_code"] == 0
+assert green_observation["counts"] == {
+    "passed": 8, "failed": 0, "ignored": 0, "measured": 0, "filtered_out": 257}
+assert server_observation["counts"]["passed"] >= 200 and server_observation["counts"]["failed"] == 0
+assert fmt["source_unchanged"] and fmt["source_before"] == fmt["source_after"]
+assert digest(EV / "issue89-admission-format-r1.log") == fmt["log_sha256"]
+current = green["source_before"]["sha256"]
+assert green["source_before"] == server["source_before"] == fmt["source_before"]
+assert set(current) == set(old) and len(current) == 7151
+assert {name for name in old if old[name] != current[name]} == {SERVER}
+assert all(digest(WT / name) == value for name, value in current.items())
+assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=WT, text=True).strip() == BASE
+assert subprocess.check_output(["git", "status", "--porcelain=v1"], cwd=WT, text=True) == green["source_before"]["status"]
+
+record = {
+    "issue": 89, "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+    "status": "focused-verified", "head": BASE,
+    "prior_receipt": "issue89-canonical-r3.json",
+    "prior_receipt_sha256": digest(EV / "issue89-canonical-r3.json"),
+    "prior_source_binding_sha256": digest(EV / "issue89-canonical-bound-r3.json"),
+    "failure": "The existing #82 canonical-source admission fixture omitted preserved-deliverable-checkpoint-v1 for retained ResumeRun and VerifyRun assignments. The new gate correctly denied them before send.",
+    "repair": "Advertise both required capabilities in the existing fixture, include CheckpointWorkspace, and cover missing, unavailable, workspace-scoped, unrelated-runner and lost preserved support; stale epochs and readiness; safe stop; legacy commands and fresh canonical-only StartRun. Production admission remains unchanged.",
+    "changed_files": [{"path": SERVER, "before_sha256": old[SERVER], "after_sha256": current[SERVER]}],
+    "prior_checks": [{key: item[key] for key in ["name", "passed", "exitCode", "counts"]}
+                     for item in prior["canonical_report"]["checks"]],
+    "prior_not_run": prior["canonical_report"]["notRun"],
+    "red": red_observation, "green": green_observation, "server": server_observation,
+    "format": {"receipt": "issue89-admission-format-r1.json", "receipt_sha256": digest(EV / "issue89-admission-format-r1.json"),
+               "exit_code": 0, "log_sha256": fmt["log_sha256"], "source_unchanged": True},
+    "source_file_count": len(current), "completion_claim": False,
+    "validation_pending": "Fresh canonical r4 and all six subsequent acceptance phases on the repaired source."
+}
+write_new(RECEIPT.name, json.dumps(record, indent=2) + "\n")
+
+wrapper = (EV / "run-issue89-canonical-bound-r3.ps1").read_text(encoding="utf-8-sig")
+wrapper = wrapper.replace("issue89-canonical-bound-r3", "issue89-canonical-bound-r4").replace("issue89-canonical-r3", "issue89-canonical-r4").replace("-Revision r3", "-Revision r4")
+wrapper = wrapper.replace("and the retained-checkpoint Clippy correction;", "the retained-checkpoint Clippy correction and admission test repair;")
+wrapper = wrapper.replace("'crates/crony-runner/src/retained_deliverable.rs','docs/ARCHITECTURE.md'", "'crates/crony-runner/src/retained_deliverable.rs','crates/crony-server/src/main.rs','docs/ARCHITECTURE.md'")
+needle = "    $record.status = 'running-canonical'\n"
+assert wrapper.count(needle) == 1
+guard = """    $record.admission_repair_receipt = Join-Path $PSScriptRoot 'issue89-admission-repair-r1.json'
+    $record.admission_repair_receipt_sha256 = (Get-FileHash -LiteralPath $record.admission_repair_receipt).Hash.ToLowerInvariant()
+    if ($record.admission_repair_receipt_sha256 -cne '__REPAIR_HASH__') { throw 'Reviewed admission repair evidence changed.' }
+    $admission = Get-Content -LiteralPath $record.admission_repair_receipt -Raw | ConvertFrom-Json
+    if ($admission.status -cne 'focused-verified' -or $admission.green.exit_code -ne 0 -or $admission.server.exit_code -ne 0) { throw 'Focused admission validation is incomplete.' }
+    $green = Get-Content -LiteralPath (Join-Path $PSScriptRoot $admission.green.receipt) -Raw | ConvertFrom-Json
+    if ((Get-FileHash -LiteralPath (Join-Path $PSScriptRoot $admission.green.receipt)).Hash.ToLowerInvariant() -cne $admission.green.receipt_sha256) { throw 'Focused source receipt changed.' }
+    foreach ($file in $record.source_before.files) {
+        if ($green.source_before.sha256.($file.path) -cne $file.sha256) { throw 'Candidate changed since the reviewed admission repair.' }
+    }
+""".replace("__REPAIR_HASH__", digest(RECEIPT))
+wrapper = wrapper.replace(needle, guard + needle)
+write_new("run-issue89-canonical-bound-r4.ps1", wrapper)
+queue = (EV / "queue-issue89-acceptance-r2.ps1").read_text(encoding="utf-8-sig")
+queue = queue.replace("issue89-acceptance-queue-r2", "issue89-acceptance-queue-r3").replace("issue89-canonical-bound-r3", "issue89-canonical-bound-r4").replace("canonical r3", "canonical r4")
+write_new("queue-issue89-acceptance-r3.ps1", queue)
+dependent = (EV / "run-issue213-canonical-bound-r1.ps1").read_text(encoding="utf-8-sig")
+dependent = dependent.replace("issue213-canonical-bound-r1", "issue213-canonical-bound-r2").replace("issue213-canonical-r1", "issue213-canonical-r2").replace("issue89-acceptance-queue-r2", "issue89-acceptance-queue-r3").replace("-Revision r1", "-Revision r2")
+write_new("run-issue213-canonical-bound-r2.ps1", dependent)
+print(json.dumps({"receipt": str(RECEIPT), "status": record["status"], "red": red_observation["counts"],
+                  "green": green_observation["counts"], "server": server_observation["counts"],
+                  "changed_files": record["changed_files"], "prepared": ["issue89-canonical-r4", "issue89-acceptance-queue-r3", "issue213-canonical-r2"]}))

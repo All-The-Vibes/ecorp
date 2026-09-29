@@ -1,0 +1,54 @@
+"""Reconcile observed native results without changing the original receipt."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import re
+
+ROOT = Path(__file__).resolve().parent
+RECEIPT = ROOT / 'issue89-native-parity-r2.json'
+LOG = ROOT / 'issue89-native-parity-r2.log'
+OUT = ROOT / 'issue89-native-parity-counts-r2.json'
+assert not OUT.exists(), 'Preserve the existing reconciliation.'
+
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+raw = json.loads(RECEIPT.read_text(encoding='utf-8-sig'))
+assert raw['exit_code'] == 0 and raw['source_unchanged']
+assert raw['source_before'] == raw['source_after']
+assert raw['log_sha256'] == digest(LOG)
+log = LOG.read_text(encoding='utf-8-sig')
+matches = re.findall(r'test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out; finished in ([0-9.]+)s', log)
+assert len(matches) == 1
+passed, failed, ignored, measured, filtered, duration = matches[0]
+counts = dict(zip(('passed', 'failed', 'ignored', 'measured', 'filtered_out'), map(int, (passed, failed, ignored, measured, filtered))))
+assert counts == {'passed': 2, 'failed': 0, 'ignored': 0, 'measured': 0, 'filtered_out': 291}
+expected = {'different-bytes', 'deletion', 'non-file-mode', 'unmerged', 'matching-text', 'matching-binary', 'raw-line-endings'}
+fixtures = []
+for match in re.finditer(r'([\w-]+): source=("(?:[^"\\]|\\.)*"); evidence=("(?:[^"\\]|\\.)*")', log):
+    scenario = match.group(1)
+    if scenario not in expected:
+        continue
+    evidence = Path(json.loads(match.group(3)))
+    parity_path = evidence / 'parity.json'
+    parity = json.loads(parity_path.read_text(encoding='utf-8-sig'))
+    checked_path = evidence / 'checker.stdout'
+    checked = json.loads(checked_path.read_text(encoding='utf-8-sig'))
+    assert parity['scenario'] == scenario
+    assert parity['checker_tree'] == parity['exporter_tree'] == checked['candidateTree']
+    assert parity['synthetic_verification_report']
+    assert parity['artifact_excluded'] == checked['passed'] == scenario.startswith('matching-')
+    fixtures.append({'scenario': scenario, 'source': json.loads(match.group(2)), 'evidence': str(evidence),
+        'parity': parity, 'files': [{'path': str(evidence / name), 'sha256': digest(evidence / name)}
+            for name in ('parity.json', 'checker.stdout', 'checker.stderr', 'export.json')]})
+assert {fixture['scenario'] for fixture in fixtures} == expected and len(fixtures) == 7
+result = {'issue': 89, 'reconciled_at_utc': datetime.now(timezone.utc).isoformat(),
+    'status': 'passed', 'receipt': str(RECEIPT), 'receipt_sha256': digest(RECEIPT),
+    'log': str(LOG), 'log_sha256': digest(LOG), 'counts': counts, 'duration_seconds': float(duration),
+    'source_unchanged': True, 'source_file_count': len(raw['source_before']['sha256']),
+    'fixtures': fixtures, 'scope': 'Two observed Rust tests; seven staged-artifact cases use the actual native exporter and checker. Synthetic low-level verification reports are not persisted verifier or product acceptance.',
+    'original_receipt_unchanged': True}
+with OUT.open('x', encoding='utf-8') as stream:
+    stream.write(json.dumps(result, indent=2) + '\n')
+print(json.dumps({key: result[key] for key in ('status', 'counts', 'source_file_count')}))

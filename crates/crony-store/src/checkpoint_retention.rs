@@ -150,7 +150,8 @@ pub(super) async fn request_review_checkpoint_tx(
     ensure_factory_recovery_authorizer_tx(tx, input.corp_id, mission_id, input.actor_id).await?;
     let row = sqlx::query(
         r#"
-        SELECT mission.room_id, run.task_id, run.runner_id, run.agent_id, run.assignment_token,
+        SELECT mission.room_id, task.contract AS task_contract,
+               run.task_id, run.runner_id, run.agent_id, run.assignment_token,
                run.workspace_run_id, run.workspace_base_commit,
                run.source_repository, run.source_base_ref, run.source_base_commit, run.workspace_connection_id
         FROM runs run
@@ -215,7 +216,7 @@ pub(super) async fn request_review_checkpoint_tx(
             "checkpoint review has a newer, active or quarantined lineage"
         ));
     }
-    let payload = json!({
+    let mut payload = json!({
         "corp_id":input.corp_id, "room_id":row.get::<Uuid,_>("room_id"), "mission_id":mission_id,
         "task_id":row.get::<Uuid,_>("task_id"), "run_id":input.source_run_id,
         "workspace_run_id":row.get::<Uuid,_>("workspace_run_id"),
@@ -236,7 +237,19 @@ pub(super) async fn request_review_checkpoint_tx(
     .fetch_optional(&mut **tx)
     .await?;
     if let Some(existing) = existing {
-        if existing.get::<Value, _>("payload") != payload {
+        let mut original_authority: Value = existing.get("payload");
+        if let Some(authority) = original_authority.as_object_mut() {
+            // These values are frozen by the original command. Replay compares
+            // the unchanged request authority and does not recapture metadata.
+            for field in [
+                "deliverable",
+                "preserved_provider_artifacts",
+                "expected_workspace_fingerprint",
+            ] {
+                authority.remove(field);
+            }
+        }
+        if original_authority != payload {
             return Err(anyhow!(
                 "checkpoint re-attestation key was reused with different authority"
             ));
@@ -260,19 +273,40 @@ pub(super) async fn request_review_checkpoint_tx(
             "checkpoint operation exists without its native command"
         ));
     }
+    let contract: TaskContract = serde_json::from_value(row.get("task_contract"))
+        .context("decode review checkpoint task contract")?;
     if checkpoint.fingerprint.is_some() {
         checkpoint.ensure_preserved()?;
-        return Ok(Some(FactoryWorkspaceCheckpointOutcome {
-            work_item: item,
-            claim_token: Some(input.claim_token),
-            source_run_id: input.source_run_id,
-            runner_id: row.get("runner_id"),
-            command_id: None,
-            workspace_fingerprint: checkpoint.fingerprint,
-            event: None,
-            replayed: true,
-        }));
+        if contract.deliverable.is_none()
+            || preserved_deliverable::checkpoint_tx(
+                tx,
+                input.corp_id,
+                input.source_run_id,
+                &contract,
+            )
+            .await?
+            .is_some()
+        {
+            return Ok(Some(FactoryWorkspaceCheckpointOutcome {
+                work_item: item,
+                claim_token: Some(input.claim_token),
+                source_run_id: input.source_run_id,
+                runner_id: row.get("runner_id"),
+                command_id: None,
+                workspace_fingerprint: checkpoint.fingerprint,
+                event: None,
+                replayed: true,
+            }));
+        }
     }
+    let preserved_provider_artifacts = if contract.deliverable.is_some() {
+        preserved_deliverable::provider_artifacts_tx(tx, input.corp_id, input.source_run_id).await?
+    } else {
+        Vec::new()
+    };
+    payload["deliverable"] = json!(contract.deliverable);
+    payload["preserved_provider_artifacts"] = json!(preserved_provider_artifacts);
+    payload["expected_workspace_fingerprint"] = json!(checkpoint.fingerprint);
     let command_id = Uuid::new_v4();
     sqlx::query("INSERT INTO runner_commands(id,corp_id,runner_id,run_id,command_kind,payload,idempotency_key)
                 VALUES($1,$2,$3,$4,'factory_workspace_checkpoint',$5,$6)")

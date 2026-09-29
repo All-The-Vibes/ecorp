@@ -1,0 +1,110 @@
+{
+  "issue": 89,
+  "recorded_at_utc": "2026-09-29T04:52:14.217455+00:00",
+  "prior_receipt": "issue89-canonical-r2.json",
+  "prior_receipt_sha256": "60d3c90f92bd0ddbe157a9b3ea79b08a5e4665a81fa92e7de37ca60440f32ad3",
+  "prior_source_binding_sha256": "27518a0a8ca94619f2c3bea22b16e263351c3047077fd78ff9d1cb6bd3b111e4",
+  "failure": "clippy::collapsible_if at retained_deliverable.rs:246; -D warnings retained",
+  "repair": "Collapse the nested proof admission conditional into an equivalent let chain; no warning allowance and no changed condition.",
+  "changed_files": [
+    {
+      "path": "crates/crony-runner/src/retained_deliverable.rs",
+      "before_sha256": "5d8d7b39f09f8409a28f36ff30ab3c961e0e882756c0dd6cc9f692ba64ae0a91",
+      "after_sha256": "a685b64fa45ef62082e473dfc594ad2539758cc31e0d4d624952e4298778d067"
+    }
+  ],
+  "prior_checks": [
+    {
+      "name": "migrations",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3112,
+          "passed": 3047,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "passed": false,
+      "exitCode": 101,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "prior_not_run": [
+    "rust-tests",
+    "web-build",
+    "web-lint"
+  ],
+  "source_file_count": 7151,
+  "completion_claim": false,
+  "validation_pending": "Fresh canonical r3 and subsequent acceptance on the repaired source."
+}

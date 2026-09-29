@@ -1,0 +1,219 @@
+{
+  "issue": 89,
+  "recorded_at_utc": "2026-09-29T06:10:10.082569+00:00",
+  "status": "focused-verified",
+  "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "prior_receipt": "issue89-canonical-r3.json",
+  "prior_receipt_sha256": "a0f16810f1a4feac511bf293ffaca8cf183f6b4bc926213f12f4abcbfc483040",
+  "prior_source_binding_sha256": "e3f44ac0895b155632ebb6b746aa9c49583f466afa24af9736312ab7197857d2",
+  "failure": "The existing #82 canonical-source admission fixture omitted preserved-deliverable-checkpoint-v1 for retained ResumeRun and VerifyRun assignments. The new gate correctly denied them before send.",
+  "repair": "Advertise both required capabilities in the existing fixture, include CheckpointWorkspace, and cover missing, unavailable, workspace-scoped, unrelated-runner and lost preserved support; stale epochs and readiness; safe stop; legacy commands and fresh canonical-only StartRun. Production admission remains unchanged.",
+  "changed_files": [
+    {
+      "path": "crates/crony-server/src/main.rs",
+      "before_sha256": "588b7e1d79af63cd835a3eeab7fd81397caecefe5a5f9ec8eede3aafe972bed4",
+      "after_sha256": "12b3e5aff8dad8ba10a39dc9eace72754e18f71956d694797a32402877556610"
+    }
+  ],
+  "prior_checks": [
+    {
+      "name": "migrations",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3112,
+          "passed": 3047,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "passed": true,
+      "exitCode": 0,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "passed": false,
+      "exitCode": 101,
+      "counts": {
+        "rust": {
+          "passed": 818,
+          "failed": 1,
+          "ignored": 81,
+          "summaries": 33
+        },
+        "node": null
+      }
+    }
+  ],
+  "prior_not_run": [
+    "web-build",
+    "web-lint"
+  ],
+  "red": {
+    "receipt": "issue89-admission-red-r1.json",
+    "receipt_sha256": "83f8a29d91c65db165f708600fda227781b2e339b2cd2399cf7dec1b1834ffba",
+    "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue89-admission-red-r1.log",
+    "log_sha256": "d371a766a72fe1267506303ab7c8f95e8ae975e12a37a42a8d8e233c2a11a992",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "-p",
+      "crony-server",
+      "--bin",
+      "crony-server",
+      "cache_admission_tests::issue82_canonical_source_support_gates_every_assignment_and_current_epoch",
+      "--",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "counts": {
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 261
+    },
+    "summaries": 1,
+    "source_unchanged": true
+  },
+  "green": {
+    "receipt": "issue89-admission-green-r1.json",
+    "receipt_sha256": "7e6c44f815c9c501d0886cf2a875de9c6b96fa4e647843e2a5667aead057c49e",
+    "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue89-admission-green-r1.log",
+    "log_sha256": "17738b38006b249d41d1fb3570de94804fea15a55ac06e574f91b6a48803373a",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "-p",
+      "crony-server",
+      "--bin",
+      "crony-server",
+      "cache_admission_tests::",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "counts": {
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 257
+    },
+    "summaries": 1,
+    "source_unchanged": true
+  },
+  "server": {
+    "receipt": "issue89-admission-server-green-r1.json",
+    "receipt_sha256": "5e3385788f1cabce643540762d533b8299e5069fac679c7d7b69acef782e89d9",
+    "log": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue89-admission-server-green-r1.log",
+    "log_sha256": "7c05a1a85fc59d14b582df1c8e784890112a96da7a5d0fae16b40bd0a65a377c",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--offline",
+      "-p",
+      "crony-server",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "counts": {
+      "passed": 200,
+      "failed": 0,
+      "ignored": 72,
+      "measured": 0,
+      "filtered_out": 0
+    },
+    "summaries": 2,
+    "source_unchanged": true
+  },
+  "format": {
+    "receipt": "issue89-admission-format-r1.json",
+    "receipt_sha256": "795a1bde654bc1d8d297e29c533301f7cd294c1c8f24dae3dce5e661c032a51e",
+    "exit_code": 0,
+    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_unchanged": true
+  },
+  "source_file_count": 7151,
+  "completion_claim": false,
+  "validation_pending": "Fresh canonical r4 and all six subsequent acceptance phases on the repaired source."
+}

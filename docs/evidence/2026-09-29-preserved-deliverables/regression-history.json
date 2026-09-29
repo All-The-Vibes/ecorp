@@ -1,0 +1,229 @@
+{
+  "chronology": "Retrospective regression and acceptance. The September 3 issue88 observation and PR355 chronology are not recreated or changed.",
+  "original_checker_red_parser": "The original helper expected TAP and received spec; separate reconciliation preserves the actual 9/2/7 counts without rewriting the receipt.",
+  "failed_canonical_r1": {
+    "tests": 3103,
+    "passed": 3037,
+    "failed": 1,
+    "skipped": 65,
+    "todo": 0,
+    "cancelled": 0
+  },
+  "failed_canonical_r2": {
+    "node": {
+      "tests": 3112,
+      "passed": 3047,
+      "failed": 0,
+      "skipped": 65,
+      "todo": 0,
+      "cancelled": 0
+    },
+    "failed_gate": "clippy",
+    "finding": "clippy::collapsible_if at retained_deliverable.rs:246; -D warnings retained",
+    "repair": "Collapse the nested proof admission conditional into an equivalent let chain; no warning allowance and no changed condition.",
+    "not_run": [
+      "rust-tests",
+      "web-build",
+      "web-lint"
+    ],
+    "source_unchanged": true
+  },
+  "failed_canonical_r3": {
+    "node": {
+      "tests": 3112,
+      "passed": 3047,
+      "failed": 0,
+      "skipped": 65,
+      "todo": 0,
+      "cancelled": 0
+    },
+    "rust": {
+      "passed": 818,
+      "failed": 1,
+      "ignored": 81,
+      "summaries": 33
+    },
+    "failed_gate": "rust-tests",
+    "finding": "The existing #82 canonical-source admission fixture omitted preserved-deliverable-checkpoint-v1 for retained ResumeRun and VerifyRun assignments. The new gate correctly denied them before send.",
+    "repair": "Advertise both required capabilities in the existing fixture, include CheckpointWorkspace, and cover missing, unavailable, workspace-scoped, unrelated-runner and lost preserved support; stale epochs and readiness; safe stop; legacy commands and fresh canonical-only StartRun. Production admission remains unchanged.",
+    "not_run": [
+      "web-build",
+      "web-lint"
+    ],
+    "source_unchanged": true
+  },
+  "admission_regression": {
+    "red": {
+      "receipt_sha256": "83f8a29d91c65db165f708600fda227781b2e339b2cd2399cf7dec1b1834ffba",
+      "exit_code": 101,
+      "log_sha256": "d371a766a72fe1267506303ab7c8f95e8ae975e12a37a42a8d8e233c2a11a992",
+      "source_unchanged": true,
+      "counts": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 261
+      },
+      "summaries": 1
+    },
+    "green": {
+      "receipt_sha256": "7e6c44f815c9c501d0886cf2a875de9c6b96fa4e647843e2a5667aead057c49e",
+      "exit_code": 0,
+      "log_sha256": "17738b38006b249d41d1fb3570de94804fea15a55ac06e574f91b6a48803373a",
+      "source_unchanged": true,
+      "counts": {
+        "passed": 8,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 257
+      },
+      "summaries": 1
+    },
+    "server": {
+      "receipt_sha256": "5e3385788f1cabce643540762d533b8299e5069fac679c7d7b69acef782e89d9",
+      "exit_code": 0,
+      "log_sha256": "7c05a1a85fc59d14b582df1c8e784890112a96da7a5d0fae16b40bd0a65a377c",
+      "source_unchanged": true,
+      "counts": {
+        "passed": 200,
+        "failed": 0,
+        "ignored": 72,
+        "measured": 0,
+        "filtered_out": 0
+      },
+      "summaries": 2
+    },
+    "format": {
+      "receipt_sha256": "795a1bde654bc1d8d297e29c533301f7cd294c1c8f24dae3dce5e661c032a51e",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_unchanged": true
+    }
+  },
+  "browser_history": [
+    {
+      "receipt": "issue89-browser-r1.json",
+      "original_sha256": "167a8bd8f74af0b817059eafd9387e614da582ec41fac8ade31b6be6f0e9dbe7",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T23:14:58.176126+00:00",
+      "finished_at_utc": "2026-09-28T23:15:36.352066+00:00",
+      "source_binding_sha256": "453921aae4553d96cec8e7a67492b4b44f109c987e8cd5b015a8e7988dee849d",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r2.json",
+      "original_sha256": "1296805be72761de1f5e46907b6dc397ba1cca9a84c16f3ce2d4f7bf4cec8860",
+      "status": "failed",
+      "started_at_utc": "2026-09-28T23:16:34.392839+00:00",
+      "finished_at_utc": "2026-09-28T23:20:07.726666+00:00",
+      "source_binding_sha256": "453921aae4553d96cec8e7a67492b4b44f109c987e8cd5b015a8e7988dee849d",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r3.json",
+      "original_sha256": "781d9865631ea1cfa5e4adaf7aeb14868749a53d4558412141156ed8cf198593",
+      "status": "failed",
+      "started_at_utc": "2026-09-29T00:49:41.268879+00:00",
+      "finished_at_utc": "2026-09-29T00:53:18.659070+00:00",
+      "source_binding_sha256": "1a22442a7ae583761aae064015e2378af21ff11971683f0c18f51861dbb1cffe",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r4.json",
+      "original_sha256": "41d0380b3bfb0f95f10441dc02d44b26d8b0861db2fe0373fe3009087446e53e",
+      "status": "failed",
+      "started_at_utc": "2026-09-29T00:56:06.783436+00:00",
+      "finished_at_utc": "2026-09-29T01:00:16.273995+00:00",
+      "source_binding_sha256": "1a22442a7ae583761aae064015e2378af21ff11971683f0c18f51861dbb1cffe",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r5.json",
+      "original_sha256": "62ecf44404556db4c1785519b18bc232550e37e33b0571d04cee270073a5dc32",
+      "status": "failed",
+      "started_at_utc": "2026-09-29T01:18:37.823049+00:00",
+      "finished_at_utc": "2026-09-29T01:22:41.243738+00:00",
+      "source_binding_sha256": "8f468c5278e55e1b53d9db2dce724ad9b4fd9fbde36703cf2fe72294f9942a9c",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r6.json",
+      "original_sha256": "660a4ecccab5d9edd1bfec250b4768faca6f4f3e80585ce03a581475bc448087",
+      "status": "failed",
+      "started_at_utc": "2026-09-29T01:41:50.783135+00:00",
+      "finished_at_utc": "2026-09-29T01:45:50.954081+00:00",
+      "source_binding_sha256": "8f468c5278e55e1b53d9db2dce724ad9b4fd9fbde36703cf2fe72294f9942a9c",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r7.json",
+      "original_sha256": "21fea835d2193c16945b4692690e3ed12d4dcd3399d0cfaf7949d03346503dfe",
+      "status": "failed",
+      "started_at_utc": "2026-09-29T02:36:55.932775+00:00",
+      "finished_at_utc": "2026-09-29T02:38:11.486715+00:00",
+      "source_binding_sha256": "8f468c5278e55e1b53d9db2dce724ad9b4fd9fbde36703cf2fe72294f9942a9c",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r8.json",
+      "original_sha256": "4d7e7889a6a6d484aef862cbab4daeb4ee077a2c600220f0fe671b5a6018e2c0",
+      "status": "failed",
+      "started_at_utc": "2026-09-29T02:40:58.579481+00:00",
+      "finished_at_utc": "2026-09-29T02:42:11.469290+00:00",
+      "source_binding_sha256": "8f468c5278e55e1b53d9db2dce724ad9b4fd9fbde36703cf2fe72294f9942a9c",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r9.json",
+      "original_sha256": "aeb8852d2c92113e72492ff86e0faa4a9ac70b47f3d75aa08c2a754d808b1fbe",
+      "status": "failed",
+      "started_at_utc": "2026-09-29T02:48:15.287763+00:00",
+      "finished_at_utc": "2026-09-29T02:48:58.867731+00:00",
+      "source_binding_sha256": "8f468c5278e55e1b53d9db2dce724ad9b4fd9fbde36703cf2fe72294f9942a9c",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r10.json",
+      "original_sha256": "b4ee0c5d9e669d9cbacd4bb479715feb7b651c77f90bf557177b9f11c64cc1c2",
+      "status": "failed",
+      "started_at_utc": "2026-09-29T02:53:52.071482+00:00",
+      "finished_at_utc": "2026-09-29T02:54:35.619307+00:00",
+      "source_binding_sha256": "8f468c5278e55e1b53d9db2dce724ad9b4fd9fbde36703cf2fe72294f9942a9c",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r11.json",
+      "original_sha256": "bbe569b38152993e107dbccaf2594e96068bf7fa84e16ade7dc1514fe2ec1a99",
+      "status": "failed",
+      "started_at_utc": "2026-09-29T02:58:21.950822+00:00",
+      "finished_at_utc": "2026-09-29T02:59:54.993450+00:00",
+      "source_binding_sha256": "8f468c5278e55e1b53d9db2dce724ad9b4fd9fbde36703cf2fe72294f9942a9c",
+      "failure": "browser-acceptance failed (exit 1); inspect its retained fixture logs.",
+      "current_source_acceptance": false
+    },
+    {
+      "receipt": "issue89-browser-r12.json",
+      "original_sha256": "739ce2dd8056220c64758478a5ff8a5d190b3f10248906195a326aaf65f592df",
+      "status": "passed",
+      "started_at_utc": "2026-09-29T03:06:55.619447+00:00",
+      "finished_at_utc": "2026-09-29T03:07:59.227029+00:00",
+      "source_binding_sha256": "8f468c5278e55e1b53d9db2dce724ad9b4fd9fbde36703cf2fe72294f9942a9c",
+      "failure": null,
+      "current_source_acceptance": false
+    }
+  ],
+  "historical_r12_is_not_current_source": true,
+  "large_workspace_limitation": "Historical full-ECorp target r6 exceeded its native 60-second checkpoint read deadline. The small fresh scenario r13 does not prove large-workspace performance."
+}

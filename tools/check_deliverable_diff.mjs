@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
-import { randomUUID } from 'node:crypto'
-import { mkdirSync, realpathSync, rmdirSync, unlinkSync } from 'node:fs'
+import { createHash, randomUUID } from 'node:crypto'
+import { closeSync, fstatSync, mkdirSync, openSync, readSync, realpathSync, rmdirSync, unlinkSync } from 'node:fs'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
@@ -9,7 +9,7 @@ import { parseArgs } from 'node:util'
 const MAX_OUTPUT = 8 * 1024 * 1024
 const MAX_PATHS = 256
 const utf8 = new TextDecoder('utf-8', { fatal: true })
-const GIT_OPERATIONS = ['rev-parse', 'read-tree', 'reset', 'add', 'diff', 'write-tree']
+const GIT_OPERATIONS = ['rev-parse', 'read-tree', 'reset', 'add', 'diff', 'write-tree', 'ls-files', 'cat-file']
 const failureReports = new WeakMap()
 
 // Native Windows resolution expands 8.3 aliases before identity and containment
@@ -78,7 +78,8 @@ function changesFromGit(text) {
 }
 
 /**
- * Check the worktree candidate selected by deliverable.rs, not the real index.
+ * Check the worktree candidate selected by deliverable.rs. Read the real index
+ * only to guard provider-artifact exclusions; never modify it.
  * Caller supplies the same base, paths and provider artifacts as the export.
  * This is a whitespace/patch check, not write-scope or export authorization.
  */
@@ -138,18 +139,21 @@ export function checkDeliverableDiff({
     GIT_NO_REPLACE_OBJECTS: '1',
     GIT_TERMINAL_PROMPT: '0',
   })
-  function git(args, check = false) {
+  const sourceEnv = { ...env }
+  delete sourceEnv.GIT_INDEX_FILE
+  function git(args, { check = false, nativeIndex = false, binary = false } = {}) {
     const command = args[0] === '-c' ? args[2] : args[0]
     const operation = GIT_OPERATIONS.includes(command) ? command : 'unknown'
     const remaining = Math.ceil(deadline - performance.now())
     if (remaining <= 0) throw checkError('Deliverable diff check timed out', 'timeout')
     try {
+      const stdout = execFileSync('git', args, {
+        cwd: root, env: nativeIndex ? sourceEnv : env, windowsHide: true,
+        stdio: ['ignore', 'pipe', 'pipe'], timeout: remaining, maxBuffer: MAX_OUTPUT,
+      })
       return {
         status: 0,
-        stdout: utf8.decode(execFileSync('git', args, {
-          cwd: root, env, windowsHide: true,
-          stdio: ['ignore', 'pipe', 'pipe'], timeout: remaining, maxBuffer: MAX_OUTPUT,
-        })),
+        stdout: binary ? stdout : utf8.decode(stdout),
       }
     } catch (error) {
       // --check returns 2 for whitespace/conflict-marker diagnostics. All other
@@ -207,6 +211,45 @@ export function checkDeliverableDiff({
       return oid
     }
     const baseCommit = commit(base)
+    function stagedArtifactMatches(relative, artifact) {
+      // Match the native export guard against the real index, never the freshly
+      // staged candidate. The caller still owns artifact identity/authorization.
+      const changed = git([
+        'diff', '--cached', '--name-only', '-z', '--no-renames', baseCommit, '--', relative,
+      ], { nativeIndex: true }).stdout
+      if (!changed) return true
+      const entries = git(['ls-files', '--stage', '-z', '--', relative], { nativeIndex: true })
+        .stdout.split('\0').filter(Boolean)
+      if (entries.length !== 1) return false
+      const entry = /^(100644|100755) ([0-9a-f]{40}|[0-9a-f]{64}) 0\t(.+)$/u.exec(entries[0])
+      if (!entry || entry[3] !== relative) return false
+      const size = git(['cat-file', '-s', entry[2]], { nativeIndex: true }).stdout.trim()
+      if (!/^(0|[1-9][0-9]*)$/.test(size)) throw checkError('Invalid staged artifact size', 'invalid-output')
+      const descriptor = openSync(artifact, 'r')
+      try {
+        const metadata = fstatSync(descriptor)
+        if (!metadata.isFile() || Number(size) !== metadata.size) return false
+        if (metadata.size > MAX_OUTPUT) throw checkError('Staged artifact comparison exceeds the byte limit', 'output-limit')
+        // Read at most one byte beyond the observed size, even if a concurrent
+        // writer grows the file. This bounds memory; it does not freeze edits.
+        const bytes = Buffer.alloc(metadata.size + 1)
+        let length = 0
+        while (length < bytes.length) {
+          if (performance.now() >= deadline) throw checkError('Deliverable diff check timed out', 'timeout')
+          const count = readSync(descriptor, bytes, length, bytes.length - length, length)
+          if (!count) break
+          length += count
+        }
+        if (length !== metadata.size || fstatSync(descriptor).size !== metadata.size) {
+          throw checkError('Provider artifact changed during comparison', 'invalid-input')
+        }
+        const blob = git(['cat-file', 'blob', entry[2]], { nativeIndex: true, binary: true }).stdout
+        const digest = value => createHash('sha256').update(value).digest('hex')
+        return blob.length === length && digest(blob) === digest(bytes.subarray(0, length))
+      } finally {
+        closeSync(descriptor)
+      }
+    }
     const indexBase = process.platform === 'win32' && preserveHead ? commit(preserveHead) : baseCommit
     const changes = () => changesFromGit(git([
       'diff', '--cached', '--name-status', '-z', '--no-renames', baseCommit, '--',
@@ -232,6 +275,7 @@ export function checkDeliverableDiff({
       const relative = containedRelative(root, canonical)
       if (!relative) continue
       const portable = relativeSourcePath(relative.split(path.sep).join('/'))
+      if (!stagedArtifactMatches(portable, canonical)) continue
       git(['reset', '-q', baseCommit, '--', portable])
     }
     const selectedChanges = changes()
@@ -241,7 +285,7 @@ export function checkDeliverableDiff({
     }
     const checked = git([
       'diff', '--cached', '--check', '--no-color', '--no-ext-diff', '--no-textconv', baseCommit, '--',
-    ], true)
+    ], { check: true })
     result = {
       passed: checked.status === 0, baseCommit, candidateTree,
       changes: selectedChanges, diagnostics: checked.stdout,

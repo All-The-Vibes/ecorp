@@ -2,8 +2,9 @@ use crony_domain::{
     CorpSnapshot, DeliverableSpec, DomainEvent, EntityLink, FactoryController,
     FactoryVerificationRecovery, FactoryVerificationRecoveryMode, FactoryWorkItem,
     FactoryWorkItemState, MissionBudgetRevision, MissionContractRevision,
-    MissionContractRevisionAction, PullRequestPublication, RetainedProviderReceiptGrant,
-    SourceDeliverable, TaskContract, TaskSecretReference, VerificationPolicy,
+    MissionContractRevisionAction, PreservedDeliverableCheckpoint, PreservedProviderArtifact,
+    PullRequestPublication, RetainedProviderReceiptGrant, SourceDeliverable, TaskContract,
+    TaskSecretReference, VerificationPolicy,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -149,6 +150,10 @@ pub enum ServerToRunner {
         secrets: Vec<ResolvedSecret>,
     },
     ResumeRun {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        preserved_deliverable: Option<Box<PreservedDeliverableCheckpoint>>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        preserved_provider_artifacts: Vec<PreservedProviderArtifact>,
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         dependency_files: Vec<dependency_files::VerifiedDependencyFile>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -183,6 +188,8 @@ pub enum ServerToRunner {
         secrets: Vec<ResolvedSecret>,
     },
     VerifyRun {
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        preserved_provider_artifacts: Vec<PreservedProviderArtifact>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         workspace_connection_id: Option<Uuid>,
         command_id: Uuid,
@@ -216,6 +223,12 @@ pub enum ServerToRunner {
         retained_provider_receipt: Option<Box<RetainedProviderReceiptGrant>>,
     },
     CheckpointWorkspace {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        expected_workspace_fingerprint: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        deliverable: Option<DeliverableSpec>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        preserved_provider_artifacts: Vec<PreservedProviderArtifact>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         workspace_connection_id: Option<Uuid>,
         command_id: Uuid,
