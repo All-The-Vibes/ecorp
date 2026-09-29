@@ -17,6 +17,15 @@ Every discovered Node group retains the native 180-second per-test default; indi
 can still set their existing, narrower deadlines.
 Install local hooks with `pre-commit install` only if you want them; CI does not rely on this.
 
+On Windows, `pnpm test` and `pnpm check` pass `-- --test-threads=1` to Cargo's native test
+harness, matching the serial Windows CI lane. `pnpm check:preview` displays that exact command.
+The explicit argument takes precedence over an inherited `RUST_TEST_THREADS` setting;
+contributors do not need to prepare a shell variable. Linux and macOS keep native test scheduling.
+All workspace tests, existing assertions, deadlines and opt-in requirements remain in place.
+The supported serial gate does not establish reliable parallel Windows execution. The original
+failures and remaining scheduling/export investigation are tracked in issue #213; isolated or
+serial passes do not erase them or prove their cause.
+
 <!-- BEGIN GENERATED VALIDATION CONTRACT -->
 Node: **24.19.0**. Rust: **1.98.1**. Package manager: **pnpm@11.19.0**.
 
@@ -39,7 +48,8 @@ Node: **24.19.0**. Rust: **1.98.1**. Package manager: **pnpm@11.19.0**.
 
 Node test roots: `tools/`, `apps/web/src/`, `scenarios/repo-steward/`, `tests/readiness/`, `.github/skills/`.
 Node test exclusions (dedicated fixture/replay lanes): `tools/fixtures/delegated-keycloak/test/live.test.mjs`, `tools/fixtures/pr226-evidence-baseline/`.
-Rust suite: `cargo test --workspace --locked`.
+Rust suite (Linux/macOS): `cargo test --workspace --locked`.
+Rust suite (Windows): `cargo test --workspace --locked -- --test-threads=1`.
 
 Opt-in SQLx/native probes are not passes. Use only explicitly owned fixtures; never supply a retained application database. The delegated Keycloak live suite runs through its owned setup and test:live command. The PR226 baseline runs through tools/replay_pr226_evidence_baseline.py, which verifies its expected historical failures. Their unit-test exclusions are not passes.
 <!-- END GENERATED VALIDATION CONTRACT -->

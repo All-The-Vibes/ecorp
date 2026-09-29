@@ -68,6 +68,23 @@ test('dry run executes no checks, creates no receipt and leaves source unchanged
   assert.equal(f.git(['status', '--porcelain']), before)
   assert.ok(!readdirSync(f.root).includes('output'))
 })
+test('native CLI preview states its platform Rust policy despite ambient parallelism', t => {
+  const f = fixture(t), before = f.git(['status', '--porcelain'])
+  const env = { ...process.env, RUST_TEST_THREADS: '8' }
+  delete env.NODE_TEST_CONTEXT
+  for (const group of ['test', 'full']) {
+    const result = spawnSync(process.execPath, ['tools/run_checks.mjs', '--group', group, '--dry-run'], {
+      cwd: f.root, env, encoding: 'utf8', timeout: 20000,
+    })
+    assert.equal(result.status, 0, result.stderr)
+    const preview = JSON.parse(result.stdout)
+    assert.equal(preview.checks.length, group === 'full' ? 11 : 2)
+    assert.deepEqual(preview.checks.find(check => check.name === 'rust-tests').argv,
+      ['cargo', 'test', '--workspace', '--locked', ...(process.platform === 'win32' ? ['--', '--test-threads=1'] : [])])
+  }
+  assert.equal(f.git(['status', '--porcelain']), before)
+  assert.ok(!readdirSync(f.root).includes('output'))
+})
 test('unknown arguments cannot become commands', t => {
   const f = fixture(t)
   const result = f.invoke(['--group', 'node', '--anything'])

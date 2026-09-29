@@ -1,0 +1,88 @@
+"""Observe the Windows validation-policy regression on an owned local CLI fixture."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+
+EV = Path(__file__).resolve().parent
+ROOT = Path(r"<USERPROFILE>\.codex\worktrees\issue136-browser-docs\ecorp")
+NODE = Path(r"<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe")
+phase = sys.argv[1]
+assert phase in {"red", "green"}
+receipt = EV / f"issue213-plan-{phase}-r1.json"
+log = EV / f"issue213-plan-{phase}-r1.log"
+assert not receipt.exists() and not log.exists()
+env = {key: value for key, value in os.environ.items()
+       if not re.match(r"^(CRONY_|ECORP_|PG|GH_|GITHUB_|AZURE_|GIT_)", key, re.I)
+       and key.upper() not in {"DATABASE_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
+                               "COPILOT_GITHUB_TOKEN", "NODE_OPTIONS", "NODE_TEST_CONTEXT"}}
+env.update(GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="Never", RUST_TEST_THREADS="8")
+env["PATH"] = str(NODE.parent) + os.pathsep + env["PATH"]
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def git(*args):
+    return subprocess.check_output(["git", "-C", str(ROOT), *args], env=env,
+                                   creationflags=subprocess.CREATE_NO_WINDOW)
+
+
+paths = ["tools/run_checks.mjs", "tools/check_docs.mjs", "tools/readiness_contract.test.mjs",
+         "tests/readiness/cli.test.js", "test.config.json", "package.json", "pnpm-lock.yaml",
+         "rust-toolchain.toml", "docs/VALIDATION.md", "CONTRIBUTING.md"]
+source = {name: sha((ROOT / name).read_bytes()) for name in paths}
+head = git("rev-parse", "HEAD").decode().strip()
+assert head == "878a1774774b0630c904cbaf4b05e1b346777817"
+assert git("branch", "--show-current").decode().strip() == "codex/issue213-windows-validation"
+owned = Path(tempfile.mkdtemp(prefix="ecorp-i213-", dir="C:\\")).resolve()
+assert owned.parent == Path("C:\\") and owned.name.startswith("ecorp-i213-")
+outside = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=owned, env=env,
+                         capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+assert outside.returncode != 0, "Fixture root must be outside ambient Git discovery"
+env.update(TEMP=str(owned), TMP=str(owned))
+arguments = [str(NODE), "--test", "--test-concurrency=1", "--test-timeout=180000", "--test-reporter=tap"]
+if phase == "red":
+    arguments += ["--test-name-pattern=Windows workspace|generated docs follow|native CLI preview states"]
+arguments += ["tools/readiness_contract.test.mjs", "tests/readiness/cli.test.js"]
+record = {"issue": 213, "phase": phase, "status": "running",
+          "started_at_utc": datetime.now(timezone.utc).isoformat(), "head": head,
+          "parent_tree": git("rev-parse", "HEAD^{tree}").decode().strip(),
+          "tracked_diff_sha256": sha(git("diff", "--binary", "--no-ext-diff", "--no-textconv", "HEAD")),
+          "source": source, "arguments": arguments, "owned_fixture_root": str(owned),
+          "outside_ambient_git": True, "ambient_rust_test_threads": 8,
+          "scope": "Native Node validation CLI and policy contract regressions; no Cargo suite or product acceptance claim."}
+(owned / "ownership.json").write_text(json.dumps({"issue": 213, "receipt": str(receipt), "head": head}, indent=2) + "\n")
+receipt.write_text(json.dumps(record, indent=2) + "\n")
+try:
+    result = subprocess.run(arguments, cwd=ROOT, env=env, capture_output=True,
+                            timeout=300, creationflags=subprocess.CREATE_NO_WINDOW)
+    raw = result.stdout + result.stderr
+    log.write_bytes(raw)
+    counts = {key: int(value) for key, value in re.findall(
+        r"^# (tests|suites|pass|fail|cancelled|skipped|todo) (\d+)\s*$", result.stdout.decode(errors="replace"), re.M)}
+    record.update(exit_code=result.returncode, counts=counts, log=str(log), log_sha256=sha(raw),
+                  source_unchanged=source == {name: sha((ROOT / name).read_bytes()) for name in paths})
+    assert record["source_unchanged"]
+    if phase == "red":
+        assert result.returncode == 1 and counts["fail"] == 3 and counts["pass"] == 0
+        assert b"ERR_ASSERTION" in raw
+        record["status"] = "expected-regression-observed"
+    else:
+        assert result.returncode == 0 and counts["fail"] == counts["cancelled"] == 0
+        assert counts["pass"] > 3
+        record["status"] = "passed"
+except Exception as error:
+    record.update(status="failed", failure=str(error))
+    raise
+finally:
+    record["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+    record["retained_fixture_entries"] = sorted(item.name for item in owned.iterdir())
+    receipt.write_text(json.dumps(record, indent=2) + "\n")
+    print(json.dumps({key: record.get(key) for key in ["issue", "phase", "status", "exit_code", "counts", "source_unchanged", "failure"]}))

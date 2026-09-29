@@ -15,7 +15,8 @@ export function renderContract(pkg, nodeVersion, rustVersion, config) {
     `| Entry point | Implementation |\n| --- | --- |\n${rows.join('\n')}\n\n` +
     `Node test roots: ${config.nodeTestRoots.map(value => `\`${value}\``).join(', ')}.\n` +
     (config.nodeTestExcludes?.length ? `Node test exclusions (dedicated fixture/replay lanes): ${config.nodeTestExcludes.map(value => `\`${value}\``).join(', ')}.\n` : '') +
-    `Rust suite: \`${config.rustCommand.join(' ')}\`.\n\n${config.ignoredTests}\n${END}`
+    `Rust suite (Linux/macOS): \`${config.rustCommand.join(' ')}\`.\n` +
+    `Rust suite (Windows): \`${config.rustCommand.join(' ')} -- --test-threads=1\`.\n\n${config.ignoredTests}\n${END}`
 }
 
 export function replaceContract(document, generated) {

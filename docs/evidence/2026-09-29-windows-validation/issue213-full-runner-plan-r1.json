@@ -1,0 +1,23 @@
+{
+  "issue": 213,
+  "declared_at_utc": "2026-09-28T12:46:35.908197+00:00",
+  "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "prior_receipt": "issue213-export-diagnostics-r2.json",
+  "prior_sha256": "538b7dbad8c50de539acde4924b993116709a1abd9e52af4a34bd7f8060a70f6",
+  "prior_analysis": "issue213-export-diagnostic-analysis-r2.json",
+  "prior_analysis_sha256": "13bcbb1533a693b7ebee02970fc3fd34fba38d1e76cb12ff3e8ef57ef9d84c68",
+  "helper": "run-issue213-full-runner-comparison-r1.py",
+  "helper_sha256": "aa5fe7bb1920ac84d0404f7d1543796e8eacb20f5ac669cf97f98ddf3202776e",
+  "reason": "The selected eight-thread cohort passed without reproducing the historical failures. Its filters and explicit concurrency do not represent the full default runner. One full-runner comparison will observe that unresolved difference before deciding whether serial scheduling is the supported contributor contract.",
+  "behavioral_invocations": 2,
+  "builds": 1,
+  "lanes": [
+    "Native default scheduling with RUST_TEST_THREADS removed",
+    "Explicit native --test-threads=1"
+  ],
+  "expected_discovery": 286,
+  "per_lane_timeout_seconds": 1800,
+  "source_policy": "One binary; passive cfg(test) spans only; exact source restored in finally. Same assertions, deadlines, permissions, ignored declarations and product behavior. No limiter, guessed sleeps, real inference or application database.",
+  "resource_policy": "Fresh short owned roots outside ambient Git. Existing native suspended-launch JobObject helper owns and reaps descendants; existing target mutex prevents concurrent validation. Build jobs limited to two. Preserve logs and failed fixtures.",
+  "decision_policy": "Retain all outcomes. No repeat-until-green. Missing result summaries are unavailable validation. Neither paired passes nor serial-only success establish the historical cause or substitute for an uninstrumented full canonical gate."
+}

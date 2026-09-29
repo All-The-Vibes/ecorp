@@ -1,0 +1,102 @@
+#requires -Version 7.5
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $false
+$repo = '<USERPROFILE>\.codex\worktrees\issue136-browser-docs\ecorp'
+$expected = '878a1774774b0630c904cbaf4b05e1b346777817'
+$branch = 'codex/issue213-windows-validation'
+$receiptPath = Join-Path $PSScriptRoot 'issue213-canonical-bound-r2.json'
+$canonicalPath = Join-Path $PSScriptRoot 'issue213-canonical-r2.json'
+$upstreamPath = Join-Path $PSScriptRoot 'issue89-acceptance-queue-r3.json'
+$canonicalHelper = Join-Path $PSScriptRoot 'run-issue213-canonical-plan-r1.ps1'
+foreach ($path in @($receiptPath,$canonicalPath)) {
+    if (Test-Path -LiteralPath $path) { throw 'Preserve existing issue213 validation.' }
+}
+foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+    if ($name -match '^(GIT_|CRONY_|ECORP_|GH_|GITHUB_|AZURE_)' -or $name -in @('DATABASE_URL','OPENAI_API_KEY','ANTHROPIC_API_KEY','COPILOT_GITHUB_TOKEN','NODE_OPTIONS','CARGO_TARGET_DIR','RUSTUP_TOOLCHAIN')) {
+        [Environment]::SetEnvironmentVariable($name,$null,'Process')
+    }
+}
+$env:GIT_OPTIONAL_LOCKS = '0'
+$env:GIT_TERMINAL_PROMPT = '0'
+$env:GCM_INTERACTIVE = 'Never'
+$record = [ordered]@{
+    issue=213;repository=$repo;head=$expected;branch=$branch;status='preparing'
+    started_at_utc=[DateTimeOffset]::UtcNow.ToString('o');queue_pid=$PID
+    purpose='Validate the documented native serial Windows contributor policy through all eleven canonical gates, after existing issue89 validation releases its resources.'
+    prerequisite=$upstreamPath;source_unchanged=$false
+    limitations=@('This is the serial Windows contributor gate, not proof of parallel reliability or a diagnosed product defect.', 'Historical failures and inconclusive matched experiments remain retained; issue213 remains open.', 'Local validation does not replace required hosted CI, CodeQL, code-quality, security or review checks.')
+}
+function Save {
+    $temporary = "$receiptPath.tmp"
+    [IO.File]::WriteAllText($temporary,($record | ConvertTo-Json -Depth 18)+[Environment]::NewLine)
+    Move-Item -LiteralPath $temporary -Destination $receiptPath -Force
+}
+function SourceBinding {
+    if ((& git -C $repo rev-parse HEAD).Trim() -cne $expected -or (& git -C $repo branch --show-current).Trim() -cne $branch) { throw 'Reconcile changed issue213 source identity.' }
+    $status = @(& git -C $repo status --porcelain=v1 --untracked-files=all)
+    if ($LASTEXITCODE) { throw 'Cannot read worktree state.' }
+    $expectedPaths = @('CONTRIBUTING.md','docs/VALIDATION.md','tests/readiness/cli.test.js','tools/check_docs.mjs','tools/readiness_contract.test.mjs','tools/run_checks.mjs')
+    if ($status.Count -ne 6 -or @($status | Where-Object { !$_.StartsWith(' M ') }).Count -or @(Compare-Object @($status | ForEach-Object { $_.Substring(3) }) $expectedPaths).Count) { throw 'Preserve unrecognized changes; the reviewed candidate has exactly six unstaged paths.' }
+    $paths = @(& git -C $repo ls-files --cached --others --exclude-standard | Sort-Object -Unique)
+    if ($LASTEXITCODE) { throw 'Cannot read full source inventory.' }
+    $files = @($paths | ForEach-Object { [ordered]@{path=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $repo $_)).Hash.ToLowerInvariant()} })
+    return [ordered]@{head=$expected;branch=$branch;files=$files;status=$status}
+}
+$mutex = $null
+$locked = $false
+try {
+    $record.source_before = SourceBinding
+    $record.source_file_count = $record.source_before.files.Count
+    $greenPath = Join-Path $PSScriptRoot 'issue213-plan-green-r1.json'
+    $green = Get-Content -Raw -LiteralPath $greenPath | ConvertFrom-Json -DateKind String
+    if ($green.status -cne 'passed' -or !$green.source_unchanged -or $green.head -cne $expected -or $green.counts.pass -ne 35 -or $green.counts.fail -ne 0) { throw 'Focused policy regression evidence is incomplete.' }
+    foreach ($property in $green.source.PSObject.Properties) {
+        if ((Get-FileHash -LiteralPath (Join-Path $repo $property.Name)).Hash.ToLowerInvariant() -cne $property.Value) { throw 'Candidate no longer matches the focused green source.' }
+    }
+    $record.focused_receipt_sha256 = (Get-FileHash -LiteralPath $greenPath).Hash.ToLowerInvariant()
+    $record.canonical_helper_sha256 = (Get-FileHash -LiteralPath $canonicalHelper).Hash.ToLowerInvariant()
+    $record.status = 'waiting-for-existing-issue89-acceptance'
+    Save
+    $deadline = [DateTimeOffset]::UtcNow.AddHours(4)
+    while ($true) {
+        if ([DateTimeOffset]::UtcNow -gt $deadline) { throw 'Waiting deadline reached; existing validation remains untouched.' }
+        try { $upstream = Get-Content -Raw -LiteralPath $upstreamPath | ConvertFrom-Json -DateKind String } catch { Start-Sleep -Seconds 5; continue }
+        if ($upstream.status -ceq 'failed') { throw 'Existing acceptance failed; reconcile its resources before another full gate.' }
+        if ($upstream.status -ceq 'passed') { break }
+        Start-Sleep -Seconds 15
+    }
+    $record.prerequisite_receipt_sha256 = (Get-FileHash -LiteralPath $upstreamPath).Hash.ToLowerInvariant()
+    if (($record.source_before | ConvertTo-Json -Depth 12 -Compress) -cne ((SourceBinding) | ConvertTo-Json -Depth 12 -Compress)) { throw 'Issue213 source changed while validation was queued.' }
+    $key = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes((Join-Path $repo 'target').ToLowerInvariant())))
+    $mutex = [Threading.Mutex]::new($false,"Local\ECorpCompletionCargo$key")
+    try { $locked=$mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $locked=$true }
+    if (!$locked) { throw 'Another operation owns this Cargo target; preserve it.' }
+    $record.target_mutex = "Local\ECorpCompletionCargo$key"
+    $record.status = 'running-canonical'
+    Save
+    & pwsh -NoProfile -File $canonicalHelper -RepositoryPath $repo -Issue 213 -Revision r2
+    $record.canonical_exit_code = $LASTEXITCODE
+    $canonical = Get-Content -Raw -LiteralPath $canonicalPath | ConvertFrom-Json -DateKind String
+    $record.canonical_receipt_sha256 = (Get-FileHash -LiteralPath $canonicalPath).Hash.ToLowerInvariant()
+    $record.source_after = SourceBinding
+    $record.source_unchanged = ($record.source_before | ConvertTo-Json -Depth 12 -Compress) -ceq ($record.source_after | ConvertTo-Json -Depth 12 -Compress)
+    if (!$record.source_unchanged -or $record.canonical_exit_code -ne 0 -or $canonical.status -cne 'passed') { throw 'Canonical validation failed or source changed; retain actual evidence.' }
+    $report = $canonical.canonical_report
+    $expectedNames = @('migrations','state-audit-compatibility','state-audit-evm','docs','repository-docs','node-tests','format','clippy','rust-tests','web-build','web-lint')
+    if (($report.checks.name -join ',') -cne ($expectedNames -join ',') -or @($report.checks | Where-Object { !$_.passed -or $_.exitCode -ne 0 }).Count -or @($report.notRun).Count) { throw 'All current named gates must pass.' }
+    $rust = @($report.checks | Where-Object name -eq 'rust-tests')
+    if (($rust.argv -join ' ') -cne 'cargo test --workspace --locked -- --test-threads=1') { throw 'Native Windows serialization is missing from the executed gate.' }
+    if ((Get-FileHash -LiteralPath $canonicalHelper).Hash.ToLowerInvariant() -cne $record.canonical_helper_sha256) { throw 'Validation helper changed during execution.' }
+    $record.ambient_rust_test_threads = 8
+    $record.status = 'passed'
+} catch {
+    $record.status = 'failed'
+    $record.failure = $_.Exception.Message
+} finally {
+    $record.finished_at_utc = [DateTimeOffset]::UtcNow.ToString('o')
+    Save
+    if ($locked) { $mutex.ReleaseMutex() }
+    if ($null -ne $mutex) { $mutex.Dispose() }
+}
+[pscustomobject]$record | Select-Object issue,status,head,source_file_count,source_unchanged,canonical_exit_code,failure | ConvertTo-Json
+if ($record.status -cne 'passed') { exit 1 }

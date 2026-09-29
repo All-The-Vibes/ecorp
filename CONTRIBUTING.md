@@ -323,6 +323,11 @@ pnpm check
 `pnpm check` runs the same sequence. Record exact commands, results, commit identity, and any
 unrelated failure truthfully.
 
+Windows workspace tests use the native `-- --test-threads=1` argument in both `pnpm check`
+and `pnpm test`, matching the supported CI lane without relying on a shell environment setting.
+The preview reports the selected command. Linux and macOS retain native test scheduling.
+See [the validation contract and Windows parallel limitation](docs/VALIDATION.md).
+
 Use Node.js 22.23.2 or newer for `pnpm test:unit`. The native Node test runner discovers
 `apps/web/src/**/*.test.mjs` and `tools/*.test.mjs`, including newly added tests, with two
 test files running concurrently and a three-minute per-test timeout. These local regression
