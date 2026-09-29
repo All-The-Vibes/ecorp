@@ -164,7 +164,8 @@ the runner removes the run from its active-process map, and the employee identit
 ECorp preserves the identity and resumable session metadata without leaving an operating-system
 process alive. Unpinned mission workers retire after terminal missions only when there is no active
 run, unfinished saved/running assignment, control lease, queued message, approval, durable command,
-or teardown uncertainty. An authorized resume can reactivate the preserved worker.
+or teardown uncertainty. An authorized resume can reactivate an automatically retired worker;
+it cannot reverse an operator's manual retirement.
 
 The agent inspector's **Pin identity** keeps an identity reusable after its mission, without
 keeping a provider process alive. **Unpin identity** restores ordinary automatic retirement,
@@ -184,8 +185,27 @@ Keep the same key and exact request when retrying an unknown result. Reusing it 
 actor, identity, value or expected version is a conflict. Exact replay returns the recorded
 result, not necessarily today's pin state; read a fresh snapshot afterward. The browser retains
 its operation key across uncertain requests and refreshes state after success or conflict.
-Clear crew and manual Retire remain tracked in
-[#48](https://github.com/All-The-Vibes/ecorp/issues/48); Pin/Unpin does not complete that umbrella.
+
+The **Crew** panel separates current workers and retired history. **Clear crew** checks every
+visible current identity and retires eligible unpinned workers; it reports the reason for each
+blocked identity. **Retire** checks one worker and also allows an inactive pinned identity to
+retire. Active runs, saved assignments, control leases, pending approvals or verification,
+queued messages/commands and uncertain provider teardown remain blockers. Complete or stop
+work through its existing lifecycle before retrying; retirement never kills active work.
+Mission, run, artifact and audit links remain available in **Retired history**.
+
+The equivalent CLI commands use each worker's current retention version:
+
+```powershell
+crony --server http://127.0.0.1:8791 retire <corp-id> <agent-id> <actor-id> --expected-version 0 --operation-key <uuid>
+crony --server http://127.0.0.1:8791 clear-crew <corp-id> <actor-id> --target <agent-id>:0 --target <another-agent-id>:1 --operation-key <uuid>
+```
+
+If the outcome is uncertain, **Retry saved request** reconciles the original operation after
+a reload. It retains the exact key and targets until a complete response arrives. A new worker
+or pin change never silently changes that saved request. Read the refreshed roster for current
+state; the displayed last-request outcomes remain historical. A manually retired identity cannot
+be reactivated by resuming an older run or through Factory recovery.
 
 Risky commands create durable approval records. After verification passes, the mission card exposes
 provider evidence, verification evidence, the signed source deliverable, and integration state as

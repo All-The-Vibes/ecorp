@@ -26,6 +26,25 @@ and linked repository evidence for implemented behavior.
   - Local research checkout: `C:\Users\shyamsridhar\code\_research\buzz3`
   - Reviewed commit: `00e61eafa917d296104006576b7a2ddbfd58bb5a`
 
+### Manual crew retirement addition - September 29, 2026
+
+The Crew panel, API and CLI now expose Retire and Clear crew on the existing identity model.
+Clear checks the caller's explicit visible roster and reports every identity as retired, already
+retired or blocked; it preserves pinned workers. Retire can retire an inactive pinned worker.
+Both operations preserve historical attribution and reject retirement while work, authority
+leases, approvals, verification, commands or provider teardown remain unresolved. Manual
+retirement also prevents ordinary resume and Factory recovery from silently reactivating the
+identity; automatic retirement remains recoverable under the existing authorization rules.
+See [manual crew retirement](ARCHITECTURE.md#manual-crew-retirement) for authority, replay and
+concurrency semantics. These controls do not by themselves establish every acceptance criterion
+of #48; native lifecycle and browser evidence remain distinct from unit regressions.
+
+The same addition exposes a bounded tester/reviewer team for an explicitly selected source.
+The tester produces verified observations and the distinct reviewer reads those exact files
+alongside the same source. It reuses task dependencies, typed handoff verification, runtime
+matching, budgets and retries. Its report cannot replace a required human approval, and it does
+not claim to test implementation produced after the selected commit.
+
 ### Bounded Pin/Unpin addition - September 19, 2026
 
 The current agent inspector, API and CLI expose authorized versioned Pin/Unpin on the
@@ -33,7 +52,7 @@ existing identity model. Pin retains same-room reusable workers; Unpin preserves
 and all retirement obligations, including a second saved assignment. Room-scoped audit,
 current-authority replay and retired-identity rejection are part of the contract. This extends
 the mission-owned staffing and recovered-activation foundations without replacing either.
-Clear crew and manual Retire remain separate #48 work. See
+At this checkpoint, Clear crew and manual Retire remained separate #48 work. See
 [identity Pin/Unpin](ARCHITECTURE.md#identity-pinunpin) for the exact concurrency/replay semantics.
 The [bounded validation report](evidence/2026-09-19-agent-pinning.md) separates native
 fixture results, the failed full-workspace gate, and remaining evidence limitations.

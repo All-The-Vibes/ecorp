@@ -3,7 +3,7 @@ use anyhow::Result;
 use crony_store::DemoIds;
 use sqlx::{ConnectOptions, PgPool};
 
-async fn fixture(pool: &PgPool) -> Result<(AppState, DemoIds)> {
+pub(super) async fn fixture(pool: &PgPool) -> Result<(AppState, DemoIds)> {
     let store = PgStore::connect(pool.connect_options().to_url_lossy().as_str()).await?;
     let (ids, _) = store.bootstrap_demo().await?;
     let (event_tx, _) = broadcast::channel(64);

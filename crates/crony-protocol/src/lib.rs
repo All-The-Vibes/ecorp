@@ -1105,6 +1105,28 @@ pub struct SetAgentPinResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RetireAgentRequest {
+    pub actor_id: Uuid,
+    pub expected_pin_version: i64,
+    pub idempotency_key: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ClearCrewRequest {
+    pub actor_id: Uuid,
+    pub targets: Vec<crony_domain::AgentRetirementTarget>,
+    pub idempotency_key: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AgentRetirementResponse {
+    pub results: Vec<crony_domain::AgentRetirementResult>,
+    pub replayed: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClaimLeaseRequest {
     pub actor_id: Uuid,
 }

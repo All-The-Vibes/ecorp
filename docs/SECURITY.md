@@ -53,6 +53,25 @@ the owning room's visibility. Pin grants retention/reuse only, never execution a
 Unpin cannot release or discard any active run, lease, approval, queued message or command.
 New operations on retired identities conflict; old replay cannot restore their historical state.
 
+Manual Retire and Clear crew use the same current human `Operate` authority and owning-room
+membership checks, including on replay. Every target must be authorized before any result is
+committed; an unauthorized target rejects the batch. Canonically ordered agent locks serialize
+overlapping batches and grants, and expected pin versions protect concurrent retention changes.
+Clear preserves pinned identities and returns every authorized target's blockers; explicit
+Retire can retire an inactive pinned identity. Neither operation kills processes, resolves
+approvals, consumes messages or deletes history. Per-agent room-scoped audit does not publish
+other rooms' target lists. A manual retirement fences generic and Factory recovery so an older
+run cannot silently put that identity back into service. Automatic retirement is still recoverable
+through existing authorized operations. Browser replay storage is scoped to server, Corp and
+actor and is not an authorization grant.
+An authorization denial does not discard an uncertain earlier request. Its exact key and targets
+remain available for current-authority replay, while only disjoint new retirement operations can
+proceed. Lost responses cannot be bypassed by silently replacing the pending target set.
+
+The staffed tester/reviewer strategy uses existing isolated workspaces, typed dependency-file
+verification and mission authorization. Its agent-authored review is evidence, not a human
+approval. Requested manual verifier decisions and Factory's independent outcome gate still apply.
+
 Runner nodes require one-time enrollment followed by rotating, expiring workload credentials.
 Only credential hashes are stored. Replayed, expired, unknown, and revoked credentials are denied.
 

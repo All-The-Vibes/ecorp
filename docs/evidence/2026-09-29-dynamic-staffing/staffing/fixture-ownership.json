@@ -1,0 +1,118 @@
+{
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "290f7e03a6de7a22a9b07862aed668534fb71b0adf6fd4b58ed61028383544b7"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "4156c82a14f94d2ba65388c8b124e48c9de18a83272c12696ef40e1157b7bf07"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "da0354b6529b51b25cb264debee38cb54432580aeaba0e218dc2075d323f28f3"
+    }
+  ],
+  "source": {
+    "path": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\source",
+    "base_ref": "HEAD",
+    "repository": "ecorp-fixture/issue48-retirement",
+    "base_commit": "1ec844813ab45e5dac8c8e3bc431786130ec40cf"
+  },
+  "source_file_count": 7157,
+  "demo": {
+    "corp_id": "00000000-0000-4000-8000-000000000001",
+    "room_id": "00000000-0000-4000-8000-000000000041",
+    "alice_actor_id": "00000000-0000-4000-8000-000000000011",
+    "bob_actor_id": "00000000-0000-4000-8000-000000000012",
+    "eve_actor_id": "00000000-0000-4000-8000-000000000013",
+    "manager_agent_id": "00000000-0000-4000-8000-000000000031",
+    "worker_agent_id": "00000000-0000-4000-8000-000000000032",
+    "codex_agent_id": "00000000-0000-4000-8000-000000000033"
+  },
+  "processes": {
+    "postgres": {
+      "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+      "started_utc": "2026-09-29T13:52:19.5369912Z",
+      "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\postgres-20260929T135219479-7c0c379b22064c13a1b328df6946dcf0.stderr.log",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\postgresql-17.10\\pgsql\\bin\\postgres.exe",
+      "role": "postgres",
+      "pid": 37316,
+      "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\postgres-20260929T135219479-7c0c379b22064c13a1b328df6946dcf0.stdout.log"
+    },
+    "runner": {
+      "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+      "started_utc": "2026-09-29T13:52:22.6199219Z",
+      "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stderr.log",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "role": "runner",
+      "pid": 3380,
+      "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\runner-20260929T135222612-4c68c113b1de4160a8ef4e756003ae35.stdout.log"
+    },
+    "web": {
+      "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+      "started_utc": "2026-09-29T13:52:22.6525493Z",
+      "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\web-20260929T135222641-e332292dc5ff414b967d71a71d221f40.stderr.log",
+      "executable": "<USERPROFILE>\\AppData\\Local\\Programs\\ecorp-tools\\node-v24.21.0-win-x64\\node.exe",
+      "role": "web",
+      "pid": 36916,
+      "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\web-20260929T135222641-e332292dc5ff414b967d71a71d221f40.stdout.log"
+    },
+    "server": {
+      "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+      "started_utc": "2026-09-29T13:52:20.8863369Z",
+      "stderr": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\server-20260929T135220873-e2e6db6067294270a6bd05609e7a2a3b.stderr.log",
+      "executable": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "role": "server",
+      "pid": 28228,
+      "stdout": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6\\logs\\server-20260929T135220873-e2e6db6067294270a6bd05609e7a2a3b.stdout.log"
+    }
+  },
+  "canonical_receipt_sha256": "be57ba0ac75ac46923e73de010484c5c293d896e0431194cd1883a072d0c00ff",
+  "ready_at": "2026-09-29T13:52:24.1694829Z",
+  "updated_at": "2026-09-29T13:56:10.7623888Z",
+  "purpose": "issue48-native-acceptance",
+  "workspace": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+  "created_at": "2026-09-29T13:52:19.3928684Z",
+  "helper_sha256": "a8415581543ea6c1d041a1d2fea2123dff44014da6e91d0c60329e1887ae68b8",
+  "test_owned": true,
+  "schema_version": 2,
+  "database_authentication": {
+    "authenticated_creation": true,
+    "runner_and_web_environment_secrets_removed": true,
+    "method": "scram-sha-256",
+    "credentials_outside_source_and_runner_workspaces": true,
+    "credential_delivery": "Private PGPASSFILE for fixture SQL. Server environment-only delivery is reduced assurance.",
+    "wrong_password_rejected": true
+  },
+  "plan": {
+    "phase": "Start",
+    "product": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp",
+    "expected_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "qa_root": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r6",
+    "server": "http://127.0.0.1:59031",
+    "web": "http://127.0.0.1:59032",
+    "database": {
+      "user": "issue48",
+      "host": "127.0.0.1",
+      "name": "issue48_app_r1",
+      "port": 59030,
+      "fresh": true
+    },
+    "runner_id": "runner-issue48-42269426",
+    "provider_mode": "fake-only",
+    "provider": "Native deterministic fake-process only; other providers explicitly unavailable",
+    "source": "Fresh independent synthetic Git repository with committed seed.txt",
+    "factory_watcher": false,
+    "github_effects": false,
+    "existing_state_touched": false,
+    "validation_receipt": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue48-canonical-bound-r2.json"
+  },
+  "stopped_at": "2026-09-29T13:56:10.7279647Z",
+  "stopped_roles": [
+    "web",
+    "runner",
+    "server",
+    "postgres"
+  ]
+}

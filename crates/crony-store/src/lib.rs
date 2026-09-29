@@ -21,6 +21,7 @@ use sqlx::{Acquire, PgPool, Postgres, Row, Transaction, postgres::PgPoolOptions}
 use uuid::Uuid;
 
 mod agent_pinning;
+mod agent_retirement;
 mod aggregate_breaker;
 use crate::state_audit::native_policy;
 
@@ -31,6 +32,7 @@ mod base_audit_tests;
 pub mod base_observations;
 mod budget_checkpoint;
 pub use agent_pinning::{SetAgentPinInput, SetAgentPinOutcome};
+pub use agent_retirement::{RetireAgentsInput, RetireAgentsOutcome};
 mod budget_revision;
 mod checkpoint_cancellation;
 mod checkpoint_correction;
@@ -4995,6 +4997,12 @@ impl PgStore {
         let room_id: Uuid = row.get("room_id");
         ensure_factory_recovery_authorizer_tx(&mut tx, input.corp_id, mission_id, input.actor_id)
             .await?;
+        agent_retirement::ensure_not_manually_retired_tx(
+            &mut tx,
+            input.corp_id,
+            row.get("agent_id"),
+        )
+        .await?;
         if row.get::<Uuid, _>("workspace_run_id") != workspace_run_id
             || row.get::<Uuid, _>("requested_by") != requester
         {
@@ -6695,6 +6703,7 @@ impl PgStore {
         )?;
         let task_id: Uuid = row.get("task_id");
         let agent_id: Uuid = row.get("agent_id");
+        agent_retirement::ensure_not_manually_retired_tx(&mut tx, corp_id, agent_id).await?;
         let runner_id: String = row.get("runner_id");
         let provider_session_id: String = row
             .try_get::<Option<String>, _>("provider_session_id")?

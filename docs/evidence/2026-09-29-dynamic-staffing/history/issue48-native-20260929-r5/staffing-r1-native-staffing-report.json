@@ -1,0 +1,169 @@
+{
+  "issue": 48,
+  "status": "failed",
+  "stage": "Browser tester-reviewer",
+  "started_at_utc": "2026-09-29T13:47:58.216Z",
+  "source": {
+    "repository": "ecorp-fixture/issue48-retirement",
+    "base_ref": "HEAD",
+    "base_commit": "8bc4b1668aec1930876d39a05977c89cc8eceb59"
+  },
+  "product_head": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "source_binding_sha256": "be57ba0ac75ac46923e73de010484c5c293d896e0431194cd1883a072d0c00ff",
+  "binaries": [
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-cli.exe",
+      "sha256": "290f7e03a6de7a22a9b07862aed668534fb71b0adf6fd4b58ed61028383544b7"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-server.exe",
+      "sha256": "4156c82a14f94d2ba65388c8b124e48c9de18a83272c12696ef40e1157b7bf07"
+    },
+    {
+      "path": "<USERPROFILE>\\.codex\\worktrees\\issue48-retirement\\ecorp\\target\\debug\\crony-runner.exe",
+      "sha256": "da0354b6529b51b25cb264debee38cb54432580aeaba0e218dc2075d323f28f3"
+    }
+  ],
+  "operations": [
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "request": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 validation request",
+        "strategy": "test-review",
+        "budget_tokens": 240000,
+        "budget_cost_microusd": 2000000,
+        "preferred_adapter": "fake-process"
+      },
+      "checkpoint_at": "2026-09-29T13:48:00.774Z",
+      "status": 400,
+      "response": {
+        "error": "test-review requires an explicitly selected repository, ref and immutable commit"
+      },
+      "finished_at": "2026-09-29T13:48:00.778Z"
+    },
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "request": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 validation request",
+        "strategy": "test-review",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "8bc4b1668aec1930876d39a05977c89cc8eceb59"
+        },
+        "budget_tokens": 240000,
+        "budget_cost_microusd": 2000000,
+        "preferred_adapter": "codex"
+      },
+      "checkpoint_at": "2026-09-29T13:48:00.943Z",
+      "status": 400,
+      "response": {
+        "error": "no connected runner can staff the selected mission runtime, model, and source"
+      },
+      "finished_at": "2026-09-29T13:48:00.950Z"
+    },
+    {
+      "kind": "public-api",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions",
+      "request": {
+        "requested_by": "00000000-0000-4000-8000-000000000011",
+        "title": "[slow] Issue48 validation request",
+        "strategy": "test-review",
+        "source": {
+          "repository": "ecorp-fixture/issue48-retirement",
+          "base_ref": "HEAD",
+          "base_commit": "8bc4b1668aec1930876d39a05977c89cc8eceb59"
+        },
+        "budget_tokens": 240000,
+        "budget_cost_microusd": 2000000,
+        "preferred_adapter": "fake-process",
+        "preferred_model": "nonexistent-issue48-model"
+      },
+      "checkpoint_at": "2026-09-29T13:48:00.998Z",
+      "status": 400,
+      "response": {
+        "error": "model nonexistent-issue48-model is not available from a connected fake-process runner"
+      },
+      "finished_at": "2026-09-29T13:48:01.001Z"
+    }
+  ],
+  "assertions": [
+    {
+      "name": "Native isolated runner and fresh zero-worker Corp are ready",
+      "at": "2026-09-29T13:48:00.743Z",
+      "detail": {
+        "runner": {
+          "runnerId": "runner-issue48-42269426",
+          "readinessSource": {
+            "repository": "ecorp-fixture/issue48-retirement",
+            "base_ref": "HEAD",
+            "base_commit": "8bc4b1668aec1930876d39a05977c89cc8eceb59"
+          }
+        },
+        "initial_counts": {
+          "agents": 0,
+          "missions": 0,
+          "tasks": 0,
+          "runs": 0
+        }
+      }
+    },
+    {
+      "name": "Tester/reviewer requires an explicit immutable source",
+      "at": "2026-09-29T13:48:00.918Z",
+      "detail": {
+        "response": {
+          "error": "test-review requires an explicitly selected repository, ref and immutable commit"
+        },
+        "state_sha256": "7ad8a19bd33ba00f63a66d6d86167aefe2222d505a3c9450c58467633b67435f"
+      }
+    },
+    {
+      "name": "Unavailable adapter rejects before staffing",
+      "at": "2026-09-29T13:48:00.976Z",
+      "detail": {
+        "response": {
+          "error": "no connected runner can staff the selected mission runtime, model, and source"
+        },
+        "state_sha256": "7ad8a19bd33ba00f63a66d6d86167aefe2222d505a3c9450c58467633b67435f"
+      }
+    },
+    {
+      "name": "Unavailable model rejects before staffing",
+      "at": "2026-09-29T13:48:01.034Z",
+      "detail": {
+        "response": {
+          "error": "model nonexistent-issue48-model is not available from a connected fake-process runner"
+        },
+        "state_sha256": "7ad8a19bd33ba00f63a66d6d86167aefe2222d505a3c9450c58467633b67435f"
+      }
+    }
+  ],
+  "missions": [],
+  "screenshots": [
+    {
+      "label": "failure-observation",
+      "file": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r5\\evidence\\staffing-r1\\failure-observation.png",
+      "sha256": "c85f76a9933a94b97604b62b887dfe4f2d9a8f67c6ae45460e6fdb2ca042d521",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    }
+  ],
+  "page_errors": [],
+  "blocked_requests": [],
+  "physical_provider_observations": [],
+  "synthetic_messages": [],
+  "limitations": [
+    "Development principals and native deterministic fake-process; no production identity-provider or vendor inference claim.",
+    "The incompatible higher-priority runtime is an enrolled synthetic capability advertisement, not a vendor provider.",
+    "Agent tester/reviewer output is product evidence, not a human decision or authorization to merge."
+  ],
+  "failure": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'New mission', exact: true })\u001b[22m\n",
+  "finished_at_utc": "2026-09-29T13:48:34.925Z"
+}

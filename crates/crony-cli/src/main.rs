@@ -6,12 +6,14 @@ mod transport;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
-use crony_domain::{DeliverableForm, DeliverableSpec, EntityLink, MAX_TASK_ATTEMPTS};
+use crony_domain::{
+    AgentRetirementTarget, DeliverableForm, DeliverableSpec, EntityLink, MAX_TASK_ATTEMPTS,
+};
 use crony_protocol::{
-    ClaimLeaseRequest, CreateMissionRequest, CreateRoomMessageRequest, EmergencyStopRequest,
-    InterruptRunRequest, LaunchMissionRequest, MissionSource, QueueMessageRequest,
-    ReleaseLeaseRequest, ResumeRunRequest, SetAgentPinRequest, TransferLeaseRequest,
-    VerificationDecisionRequest,
+    ClaimLeaseRequest, ClearCrewRequest, CreateMissionRequest, CreateRoomMessageRequest,
+    EmergencyStopRequest, InterruptRunRequest, LaunchMissionRequest, MissionSource,
+    QueueMessageRequest, ReleaseLeaseRequest, ResumeRunRequest, RetireAgentRequest,
+    SetAgentPinRequest, TransferLeaseRequest, VerificationDecisionRequest,
 };
 use reqwest::{Client, Method};
 use serde_json::Value;
@@ -156,6 +158,22 @@ enum Command {
     Unpin {
         #[command(flatten)]
         args: AgentPinArgs,
+    },
+    /// Retire an inactive identity, including a pinned one, without deleting history.
+    Retire {
+        #[command(flatten)]
+        args: AgentPinArgs,
+    },
+    /// Retire only eligible unpinned targets; print an outcome for every identity.
+    ClearCrew {
+        corp_id: Uuid,
+        actor_id: Uuid,
+        /// Repeat for each identity from the authorized roster snapshot (maximum 100).
+        #[arg(long, required = true, value_name = "AGENT_UUID:PIN_VERSION", value_parser = parse_retirement_target)]
+        target: Vec<AgentRetirementTarget>,
+        /// Retry with this UUID and the exact original targets after a lost response.
+        #[arg(long)]
+        operation_key: Uuid,
     },
     ReleaseLease {
         corp_id: Uuid,
@@ -474,6 +492,40 @@ async fn main() -> Result<()> {
         }
         Command::Pin { args: pin } => set_agent_pin(&client, &args.server, pin, true).await?,
         Command::Unpin { args: pin } => set_agent_pin(&client, &args.server, pin, false).await?,
+        Command::Retire { args: retirement } => {
+            request(
+                &client,
+                Method::POST,
+                format!(
+                    "{}/api/corps/{}/agents/{}/retire",
+                    args.server, retirement.corp_id, retirement.agent_id
+                ),
+                Some(serde_json::to_value(RetireAgentRequest {
+                    actor_id: retirement.actor_id,
+                    expected_pin_version: retirement.expected_version,
+                    idempotency_key: retirement.operation_key,
+                })?),
+            )
+            .await?
+        }
+        Command::ClearCrew {
+            corp_id,
+            actor_id,
+            target,
+            operation_key,
+        } => {
+            request(
+                &client,
+                Method::POST,
+                format!("{}/api/corps/{corp_id}/agents/clear", args.server),
+                Some(serde_json::to_value(ClearCrewRequest {
+                    actor_id,
+                    targets: target,
+                    idempotency_key: operation_key,
+                })?),
+            )
+            .await?
+        }
         Command::Lease {
             corp_id,
             agent_id,
@@ -623,6 +675,21 @@ async fn main() -> Result<()> {
     };
     println!("{}", serde_json::to_string_pretty(&response)?);
     Ok(())
+}
+
+fn parse_retirement_target(value: &str) -> Result<AgentRetirementTarget, String> {
+    let (id, version) = value
+        .split_once(':')
+        .ok_or("expected AGENT_UUID:PIN_VERSION")?;
+    let agent_id = Uuid::parse_str(id).map_err(|error| error.to_string())?;
+    let expected_pin_version = version.parse::<i64>().map_err(|error| error.to_string())?;
+    if agent_id.is_nil() || expected_pin_version < 0 {
+        return Err("target requires a non-nil identity and nonnegative pin version".into());
+    }
+    Ok(AgentRetirementTarget {
+        agent_id,
+        expected_pin_version,
+    })
 }
 
 async fn set_agent_pin(
@@ -791,7 +858,7 @@ mod tests {
     #[test]
     fn issue48_pin_and_unpin_require_explicit_replay_authority() {
         let id = "00000000-0000-4000-8000-000000000011";
-        for command in ["pin", "unpin"] {
+        for command in ["pin", "unpin", "retire"] {
             assert!(Args::try_parse_from(["crony", command, id, id, id]).is_err());
             assert!(
                 Args::try_parse_from(["crony", command, id, id, id, "--expected-version", "0",])
@@ -810,7 +877,7 @@ mod tests {
             ])
             .unwrap();
             let pin = match parsed.command {
-                Command::Pin { args } | Command::Unpin { args } => args,
+                Command::Pin { args } | Command::Unpin { args } | Command::Retire { args } => args,
                 _ => panic!("wrong command"),
             };
             assert_eq!(pin.expected_version, 7);
@@ -830,6 +897,60 @@ mod tests {
                 .is_err()
             );
         }
+    }
+
+    #[test]
+    fn issue48_clear_requires_an_explicit_versioned_roster_and_operation_key() {
+        let id = "00000000-0000-4000-8000-000000000011";
+        assert!(Args::try_parse_from(["crony", "clear-crew", id, id]).is_err());
+        for target in [
+            "all",
+            "00000000-0000-0000-0000-000000000000:0",
+            "bad:1",
+            &format!("{id}:-1"),
+            &format!("{id}:1.5"),
+        ] {
+            assert!(
+                Args::try_parse_from([
+                    "crony",
+                    "clear-crew",
+                    id,
+                    id,
+                    "--target",
+                    target,
+                    "--operation-key",
+                    id,
+                ])
+                .is_err()
+            );
+        }
+        let second = "00000000-0000-4000-8000-000000000012";
+        let parsed = Args::try_parse_from([
+            "crony",
+            "clear-crew",
+            id,
+            id,
+            "--target",
+            &format!("{id}:2"),
+            "--target",
+            &format!("{second}:9"),
+            "--operation-key",
+            id,
+        ])
+        .unwrap();
+        let Command::ClearCrew {
+            target: targets,
+            operation_key,
+            ..
+        } = parsed.command
+        else {
+            panic!("wrong command");
+        };
+        assert_eq!(targets.len(), 2);
+        assert_eq!(targets[0].expected_pin_version, 2);
+        assert_eq!(targets[1].agent_id, Uuid::parse_str(second).unwrap());
+        assert_eq!(targets[1].expected_pin_version, 9);
+        assert_eq!(operation_key, Uuid::parse_str(id).unwrap());
     }
 
     fn copied_recovery_command(mode: &str) -> Vec<String> {

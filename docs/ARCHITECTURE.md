@@ -318,13 +318,23 @@ chooses the plan-only flow; keeping the browser open is not what enforces the ho
 
 ## Mission-owned staffing and studio handoffs
 
-Source-selected single/specialist missions and provider-backed factory plans can propose
+Source-selected single/specialist/test-review missions and provider-backed factory plans can propose
 their required worker identities from connected runtime capabilities. Proposals are
 read-only: actors, room membership and workers are persisted atomically with the accepted
 mission graph. Factory preflight and materialization replay do not allocate extra workers.
 Workers record their owning mission, pin state and retirement timestamp; history is never
 deleted. A pinned mission worker is reusable only in the same destination room. An active
 worker cannot acquire a second run through resume.
+
+The `test-review` strategy provisions one tester and a distinct reviewer against an explicitly
+selected repository/ref/commit. The tester produces the existing bounded, verified Markdown and
+JSON handoff; only after accepted completion does the reviewer receive its exact contents in an
+isolated workspace based on the same source. Runtime admission requires typed dependency-file
+delivery as well as source/model compatibility. Both roles share the mission's bounded budgets
+and retry allowance. They assess the selected source, not a later implementation. Their task
+contracts prohibit modifying that source; these instructions are not an operating-system sandbox.
+The final report honors the requested deliverable and verifier policy. An agent review never
+substitutes for a human decision or grants merge authority; Factory's human outcome gate remains.
 
 The `studio-swarm` strategy requires three distinct GitHub Copilot workers. Visual,
 gameplay and quality roots produce separate UTF-8 Markdown handoffs under an authorized
@@ -346,9 +356,9 @@ Unpinned mission workers retire after terminal missions only when there is no ac
 unfinished assignment in another saved/running mission, live control lease, queued message,
 pending approval, pending command or unresolved
 process-teardown uncertainty. Lease/message grants serialize with retirement. An explicitly
-authorized resume can reactivate its preserved worker but cannot overwrite another active
-assignment. Current office views exclude retired workers; historical missions/runs retain
-their identities.
+authorized resume can reactivate an automatically retired worker but cannot overwrite another
+active assignment or reverse a manual retirement. Current office views exclude retired workers;
+historical missions/runs retain their identities.
 
 The development UI bootstraps humans/rooms without the fixed crew. The explicit legacy
 demo/fixture bootstrap remains available.
@@ -372,15 +382,49 @@ another operator. Only a new committed event is broadcast.
 Exact replay rechecks current authority and returns the **historical operation result**;
 it neither reapplies that value nor emits another event. Clients refresh the authoritative
 snapshot instead of treating the replay result as current state. Retired identities reject
-new operations; replay of an older Pin never resurrects them. Existing explicit authorized
-resume/recovered activation is unchanged.
+new operations; replay of an older Pin never resurrects them. Explicit authorized
+resume/recovered activation remains available for automatically retired workers.
 
 Pin prevents automatic retirement and preserves same-room reuse; it does not keep a provider
 process alive or authorize execution. Unpin does not cancel runs, drop assignments, release
 leases, resolve approvals, consume messages or enqueue a runner command. All existing
 retirement blockers still apply, including a second saved/running mission assigned while
-the identity was pinned. This completes only the bounded Pin/Unpin surface of #48.
-Clear crew and manual Retire remain out of scope and tracked there.
+the identity was pinned.
+
+### Manual crew retirement
+
+The Crew panel, `crony retire` / `crony clear-crew`, and the agent `retire` and `clear`
+API endpoints use the same store transaction. A request names 1–100 distinct identities,
+each with its expected pin version, and a non-nil operation UUID. Retire names exactly one.
+Clear never selects future or hidden workers: its explicit targets are the visible current
+roster the operator reviewed. A roster larger than 100 requires individual operations; the
+browser never silently truncates it.
+
+The transaction locks the current human operator, Corp/operation key and sorted agent rows,
+then checks current membership in each owning room. Any foreign or unauthorized target rejects
+the entire transaction. Authorized targets receive explicit retired, already-retired or blocked
+outcomes. Changed retention versions, saved assignments, active status or runs, leases, queued
+messages, pending approvals/verifications/commands and unresolved provider teardown prevent
+retirement. Clear additionally preserves pinned identities; Retire can retire an inactive
+pinned identity. The mutation changes only retirement time and station; it never cancels work,
+starts a process, removes a workspace or deletes historical records.
+
+A digest binds Corp, actor, operation mode and the canonical target/version set. Exact replay
+rechecks current authority and returns recorded outcomes without another mutation or broadcast.
+Per-identity audit events inherit the owning room's visibility and do not expose another room's
+target list. Actor-attributed retirement provenance prevents both generic resume and Factory
+correction/checkpoint recovery from reactivating a manually retired identity. System retirement
+remains eligible for existing authorized recovery.
+
+The browser persists the exact request in session storage scoped to server, Corp and actor
+before dispatch. Every uncertain request retains its original key and targets, including after
+an authorization denial: a denied retry cannot prove an earlier attempt had no effect.
+Unrelated identities remain actionable, while new operations overlapping unresolved targets
+are blocked. Clear always names the whole visible current roster and never silently filters
+out an unresolved target. Legacy single-request storage is read without changing its request.
+Storage failure fails closed. Historical outcomes never replace the current
+server snapshot. The Crew panel separates current identities from retained history and shows
+individual blockers, while the office floor continues to project only available workers.
 
 ## State and events
 
@@ -577,6 +621,7 @@ The current provider-backed strategies are:
 
 - `single`: one bounded delivery task
 - `parallel-specialists`: two independent specialist roots followed by one synthesis task
+- `test-review`: one tester followed by a distinct reviewer of the selected source and verified test evidence
 - `studio-swarm`: three GitHub Copilot handoff roots followed by one integration task, using three
   mission workers; see [mission-owned staffing and studio handoffs](#mission-owned-staffing-and-studio-handoffs)
 

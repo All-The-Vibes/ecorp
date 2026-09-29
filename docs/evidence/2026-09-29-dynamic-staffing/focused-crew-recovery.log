@@ -1,0 +1,28 @@
+✔ crew renders lifecycle and history separately and retains mission navigation (18.769ms)
+✔ permissions, uncertain snapshots, unavailable versions and oversized rosters cannot send mutations (42.4003ms)
+✔ storage failures cause no API call, including write failure after the initial successful read (5.3468ms)
+✔ lost response survives roster replacement and reload, then retries identical request bytes (12.8299ms)
+✔ double click sends one request; a late response stays with its original actor after unmount (2.1644ms)
+✔ malformed responses keep the pending request and explain blocked responses once confirmed (4.2524ms)
+✔ denied requests preserve exact retries while unrelated identities remain operable after refresh and reload (15.741ms)
+✔ multiple unknown outcomes remain individually retryable and survive unrelated responses (6.2509ms)
+✔ a lost Clear response preserves the exact targets, versions and key across roster changes and reload (4.3752ms)
+✔ server, Corp and actor partition pending requests; a substituted stored scope is rejected (0.5878ms)
+✔ requests require distinct explicit bounded targets and safe versions (1.0856ms)
+✔ read, write and silent storage failures reject preparation before any request is returned (0.4771ms)
+✔ partial, duplicate, foreign and malformed results never consume a pending request (1.3542ms)
+✔ all known blocked outcomes are preserved and a new deliberate request can follow them (0.5634ms)
+✔ unrelated operations preserve every uncertain request and upgrade the single-request storage format (0.9668ms)
+✔ multiple uncertain outcomes can be acknowledged in any order without erasing another retry (0.8409ms)
+✔ a mismatched response, reused key or malformed journal cannot overwrite saved operations (0.8683ms)
+✔ storage failure while acknowledging one outcome retains every original pending request (0.7552ms)
+✔ Retire uses one identity and an expected version; Clear uses the complete explicit list (0.3476ms)
+✔ crew lifecycle distinguishes retired history, provisioning, live work and off-shift identities (0.3286ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1358.1869

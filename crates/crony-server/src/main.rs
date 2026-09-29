@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod agent_pinning_tests;
+mod agent_retirement;
 mod artifacts;
 mod auth;
 mod base_audit;
@@ -744,6 +745,14 @@ async fn run_server() -> anyhow::Result<()> {
         .route(
             "/api/corps/{corp_id}/agents/{agent_id}/pin",
             post(set_agent_pin),
+        )
+        .route(
+            "/api/corps/{corp_id}/agents/{agent_id}/retire",
+            post(agent_retirement::retire_agent),
+        )
+        .route(
+            "/api/corps/{corp_id}/agents/clear",
+            post(agent_retirement::clear_crew),
         )
         .route(
             "/api/corps/{corp_id}/agents/{agent_id}/lease",
@@ -2866,13 +2875,20 @@ async fn plan_mission(
         preferred_model,
         reasoning_effort,
     )?;
+    if strategy == "test-review" && source.is_none() {
+        return Err(ApiError::bad_request(
+            "test-review requires an explicitly selected repository, ref and immutable commit",
+        ));
+    }
+    let uses_handoff_files = strategy == "studio-swarm"
+        || (matches!(strategy, "parallel-specialists" | "test-review") && source.is_some());
     let existing_agents = state
         .store
         .agents_for_planning(corp_id, input.actor_id, destination_room_id)
         .await
         .map_err(ApiError::internal)?;
     let dynamic_staffing = strategy == "studio-swarm"
-        || (matches!(strategy, "single" | "parallel-specialists")
+        || (matches!(strategy, "single" | "parallel-specialists" | "test-review")
             && (source.is_some()
                 || (input.require_factory_manual_gate
                     && preferred_adapter.is_some_and(|adapter| adapter != "fake-process"))));
@@ -2896,7 +2912,7 @@ async fn plan_mission(
                     state,
                     corp_id,
                     &RunnerRequirements {
-                        dependency_files: false,
+                        dependency_files: uses_handoff_files,
                         adapter,
                         model: preferred_model,
                         reasoning_effort,
@@ -2906,7 +2922,7 @@ async fn plan_mission(
                             .as_ref()
                             .map(|source| source.base_commit.as_str()),
                         workspace_connection_id: input.workspace_connection_id,
-                        canonical_source: input.deliverable.is_some(),
+                        canonical_source: input.deliverable.is_some() || uses_handoff_files,
                         requires_cache_suppression: input
                             .verification_policy
                             .is_some_and(VerificationPolicy::requires_cache_suppression),
@@ -2926,12 +2942,11 @@ async fn plan_mission(
     } else {
         (existing_agents, Vec::new())
     };
-    let handoff_root =
-        if strategy == "studio-swarm" || (strategy == "parallel-specialists" && source.is_some()) {
-            Some(studio_handoff_root(input.contract)?)
-        } else {
-            None
-        };
+    let handoff_root = if uses_handoff_files {
+        Some(studio_handoff_root(input.contract)?)
+    } else {
+        None
+    };
     let mut plan = state
         .strategies
         .plan(
@@ -3128,7 +3143,7 @@ fn apply_mission_contract(
     let multi_task = plan.tasks.len() > 1;
     let studio = matches!(
         plan.strategy.as_str(),
-        "studio-swarm" | "parallel-specialists"
+        "studio-swarm" | "parallel-specialists" | "test-review"
     );
     for task in &mut plan.tasks {
         let specialist_handoff =
@@ -4105,7 +4120,7 @@ async fn preflight_factory_mission(
 }
 
 fn needs_factory_staffing_source(strategy: Option<&str>, adapter: Option<&str>) -> bool {
-    strategy == Some("studio-swarm")
+    matches!(strategy, Some("studio-swarm" | "test-review"))
         || (matches!(
             strategy.unwrap_or("single"),
             "single" | "parallel-specialists"
@@ -8182,6 +8197,7 @@ mod tests {
         for (strategy, task_count) in [
             ("single", 1),
             ("parallel-specialists", 3),
+            ("test-review", 2),
             ("studio-swarm", 4),
         ] {
             let (agents, proposed) =

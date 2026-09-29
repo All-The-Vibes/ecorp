@@ -1,0 +1,30 @@
+.crew-management {
+  margin: 0 1rem 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border, #46506a);
+  border-radius: 0.65rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.crew-management-heading, .crew-identity, .crew-identity-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.crew-management-heading, .crew-identity { justify-content: space-between; }
+.crew-management-heading h3, .crew-management-heading p { margin: 0 0 0.35rem; }
+.crew-help, .crew-identity-label span, .crew-identity-label small { font-size: 0.85rem; }
+.crew-identity-label { display: grid; gap: 0.2rem; min-width: 0; }
+.crew-roster summary { cursor: pointer; padding: 0.65rem 0; }
+.crew-roster-list { max-height: 24rem; overflow: auto; }
+.crew-identity { border-top: 1px solid var(--border, #46506a); padding: 0.75rem 0; }
+.crew-pending, .crew-outcomes { margin-top: 0.8rem; padding-top: 0.6rem; border-top: 1px solid var(--border, #46506a); }
+.crew-management ul { padding-left: 1.25rem; }
+.crew-management li { margin: 0.35rem 0; }
+.crew-error { color: var(--danger, #ffb9b9); }
+.crew-management .button { max-width: 100%; white-space: normal; }
+@media (max-width: 480px) {
+  .crew-management { margin: 0 0.5rem 0.5rem; padding: 0.75rem; }
+  .crew-identity-actions { width: 100%; }
+}

@@ -1,0 +1,41 @@
+{
+  "issue": 48,
+  "recorded_at_utc": "2026-09-29T13:51:56.0192930Z",
+  "classification": "External acceptance driver rendering-readiness defect; no product defect established.",
+  "failure": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'New mission', exact: true })\u001b[22m\n",
+  "failed_fixture": "issue48-native-20260929-r5",
+  "fixture_stopped": true,
+  "prior_assertions": [
+    "Native isolated runner and fresh zero-worker Corp are ready",
+    "Tester/reviewer requires an explicit immutable source",
+    "Unavailable adapter rejects before staffing",
+    "Unavailable model rejects before staffing"
+  ],
+  "prior_missions": 0,
+  "observation": "Saved browser screenshot showed the already-open mission form. Immediate isVisible ran before React rendering and then waited for the absent collapsed-composer button.",
+  "repair": "Wait for either mutually exclusive mission form or New mission control, then conditionally expand and wait for the form.",
+  "product_source_modified": false,
+  "next_fixture": "issue48-native-20260929-r6",
+  "artifacts": [
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue48-staffing-native-r1.mjs",
+      "sha256": "a2b8ec173ec99be6cc93c1f47c43df63a9c6c4480816162b8fdd87f86421788e"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\issue48-staffing-native-r2.mjs",
+      "sha256": "80e00bd73c73a2ef3cd1386d4823b71eda660b00caee009d1a8816232aecb123"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue48-staffing-native-r1.ps1",
+      "sha256": "105e0691002d003d5bb2dc08d3bb27de209aaa97b3efd48ab3fbe682aab16544"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\ecorp\\output\\issue-completion\\20260926T112626Z\\run-issue48-staffing-native-r2.ps1",
+      "sha256": "388711772ac31c1c689be7599916f7e164652b5cce63e18b753b276f2a5cb692"
+    },
+    {
+      "path": "<USERPROFILE>\\code\\qa\\issue48-native-20260929-r5\\evidence\\staffing-r1\\native-staffing-report.json",
+      "sha256": "ba6a82a628aefb3539c44d8e367ea60c8650b85e5b6b098e4e9cb3193d98f969"
+    }
+  ]
+}

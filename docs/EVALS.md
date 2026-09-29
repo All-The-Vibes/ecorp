@@ -793,6 +793,35 @@ prove browser behavior or a production deployment.
 See the [Pin/Unpin validation report](evidence/2026-09-19-agent-pinning.md) for exact
 counts, retained evidence and the explicitly qualified full-workspace failure.
 
+**Manual Retire and Clear crew.**
+
+The additional opt-in `issue48_` store/server cases cover per-identity blockers, pinned Clear
+versus explicit Retire, stale retention versions, full-batch authority rejection, room-scoped
+audit, exact replay and key substitutions, overlapping batches with reversed target order,
+role demotion and room revocation before both new requests and replay, and preservation of
+all operational history. They exercise generic resume and Factory correction/checkpoint paths
+with positive controls for automatically retired identities and rejection after manual retirement.
+These are database regressions, not evidence of physical workspace or provider behavior.
+
+`crewRetirement.test.mjs` and `CrewManagement.test.mjs` exercise the production model and React
+component: explicit targets, strict complete responses, pending-request persistence, stable
+retry keys, storage failure, lifecycle projection and current/history separation. Regressions
+also cover first-attempt denial and response loss followed by denial after reload: unresolved
+requests remain intact, overlapping targets stay fenced, and disjoint identities remain usable.
+Simulated responses in those component tests do not establish native authorization behavior. Actual
+browser-to-server-to-runner acceptance must additionally establish active-work rejection,
+provider teardown, pinned reuse, automatic/manual retirement, history and audit persistence,
+two-client propagation, reconnect, keyboard focus after removal and 390px layout. Neither the
+September 19 report nor these unit cases substitutes for current-source native acceptance.
+
+The `test-review` planning regressions cover distinct roles, exact typed tester handoffs,
+adapter/model selection, budgets/retries, immutable source binding, authorized write scopes and
+preservation of required human outcome gates. Native acceptance must additionally exercise the
+tester-to-reviewer dependency through server and runner, verify the received file contents and
+source identity, and observe both identities' terminal lifecycle. The existing specialist/synthesis
+and provider fallback paths also remain part of #48 acceptance; adding a strategy or passing its
+unit tests does not by itself satisfy those end-to-end criteria.
+
 The Codex adapter suite uses a protocol-faithful fake app-server to verify availability reporting,
 start, streaming, usage de-duplication, live `turn/steer`, graceful `turn/interrupt`, stop, durable
 resume, completed evidence, cancelled evidence, and failed evidence without requiring credentials.

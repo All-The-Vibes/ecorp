@@ -1,0 +1,284 @@
+{
+  "issue": 48,
+  "kind": "assistant implementation self-review; not independent or human approval",
+  "recorded_at_utc": "2026-09-29T14:19:55.565986+00:00",
+  "status": "local-implementation-accepted",
+  "reviewed_base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "tested_tree": "47be931d1eee3169c25da7f2d339ac59856f5f51",
+  "source_receipt_sha256": "4410be90e424d8351510170a8e086e47da10fcb75354d761c20a8047bd6ecfec",
+  "supersedes": "issue48-review-before-native-r1.json readiness status only; historical receipt preserved",
+  "scope": [
+    "Versioned bounded Retire and Clear requests, transactionally current actor/Corp/room authority, exact idempotent replay and room-scoped audit.",
+    "All live-work and uncertain-provider obligations; no history deletion, active-run cancellation or worktree deletion.",
+    "Manual retirement fences generic and Factory recovery while automatic retirement retains authorized recovery.",
+    "Browser operation journal preserves unresolved requests after errors and reload, and fences only overlapping identities.",
+    "Tester and distinct reviewer use the selected source, existing bounded task graph, typed dependency-file delivery, native runner and persisted verifier policy."
+  ],
+  "source_references": [
+    "crates/crony-store/src/agent_retirement.rs:26",
+    "crates/crony-store/src/agent_retirement.rs:223",
+    "crates/crony-store/src/agent_retirement.rs:242",
+    "crates/crony-store/src/agent_retirement.rs:302",
+    "crates/crony-store/src/lib.rs:5000",
+    "crates/crony-store/src/lib.rs:6706",
+    "crates/crony-server/src/agent_retirement.rs:49",
+    "apps/web/src/crewRetirement.ts:77",
+    "apps/web/src/crewRetirement.ts:111",
+    "apps/web/src/crewRetirement.ts:160",
+    "apps/web/src/CrewManagement.tsx:38",
+    "crates/crony-server/src/planning/test_review.rs:13"
+  ],
+  "substantive_prior_feedback": [
+    "The earlier #48 Pin/Unpin contribution is already merged; it is reused rather than recreated.",
+    "Clear produces explicit per-identity results; held obligations remain untouched, and pinned identities are preserved by Clear.",
+    "The agent review is not a human approval and cannot authorize a merge."
+  ],
+  "finding": "No unresolved confirmed product defect in the reviewed implementation; native acceptance and all canonical gates now passed on the identical source.",
+  "harness_first": "Reuses existing native adapters, runner lifecycle, bounded planning graph, typed handoffs, durable authorization, idempotency and persisted verifier policies. No custom execution or permission engine, dependency change or migration.",
+  "validation": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3123,
+          "passed": 3058,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 886,
+          "failed": 0,
+          "ignored": 588,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "focused_counts": [
+    {
+      "name": "planning",
+      "counts": {
+        "ignored": 0,
+        "summaries": 2,
+        "passed": 33,
+        "failed": 0
+      }
+    },
+    {
+      "name": "staffing",
+      "counts": {
+        "ignored": 0,
+        "summaries": 2,
+        "passed": 3,
+        "failed": 0
+      }
+    },
+    {
+      "name": "planning-cost",
+      "counts": {
+        "ignored": 0,
+        "summaries": 1,
+        "passed": 3,
+        "failed": 0
+      }
+    },
+    {
+      "name": "crew-recovery",
+      "counts": {
+        "todo": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "fail": 0,
+        "tests": 20,
+        "pass": 20
+      }
+    },
+    {
+      "name": "web-build"
+    },
+    {
+      "name": "web-lint"
+    }
+  ],
+  "sql_counts": {
+    "passed": 43,
+    "failed": 0,
+    "ignored": 0
+  },
+  "native": [
+    {
+      "fixture": "issue48-native-20260929-r4",
+      "original_report_sha256": "ae20f0f0c5b22adc5a09997d4fe5ef36e1dd5f98398aa13b6b557c28087a127c",
+      "status": "passed",
+      "counts": {
+        "agents": 8,
+        "retired": 8,
+        "missions": 3,
+        "tasks": 3,
+        "runs": 3,
+        "completed_runs": 3,
+        "verifier_rows": 6
+      },
+      "assertions": [
+        "Fresh Corp has no static workers; empty crew and unauthorized controls are explicit",
+        "Browser Clear and Retire explain blockers and preserve exact active run/task/mission/lease/approval/message/review/command rows",
+        "Existing native multiplayer Pin/Unpin, exact replay, verifier completion, pinned reuse and automatic retirement driver passed",
+        "Actual browser Start mission reaches native isolated runner, persisted verifier evidence and provider teardown",
+        "Real server 403 and authorized snapshot retain exact denied Retire while Clear retires all six unrelated visible identities",
+        "Reload after exact authority restoration preserves the unresolved request and fences overlapping Clear",
+        "Explicit pinned Retire preserves history; lost response survives reload and retries identical bytes once; other client closes retired inspector with usable focus",
+        "After exact authority restoration, Bob retries the original denied request and reconciles Alice's retirement without a duplicate retirement event",
+        "Crew management and its controls fit 390 CSS pixels",
+        "Cleared identities remain historically resolvable and dynamic worker events remain private-room scoped"
+      ],
+      "stopped_roles": [
+        "web",
+        "runner",
+        "server",
+        "postgres"
+      ]
+    },
+    {
+      "fixture": "issue48-native-20260929-r6",
+      "original_report_sha256": "56ec94e7b701a0c9b65deec943d4d372843c4a04101e07571970da079025b263",
+      "status": "passed",
+      "counts": {
+        "agents": 7,
+        "retired": 7,
+        "missions": 3,
+        "tasks": 7,
+        "runs": 7,
+        "completed_runs": 7,
+        "verifier_rows": 19
+      },
+      "assertions": [
+        "Native isolated runner and fresh zero-worker Corp are ready",
+        "Tester/reviewer requires an explicit immutable source",
+        "Unavailable adapter rejects before staffing",
+        "Unavailable model rejects before staffing",
+        "tester-reviewer: exact roles, native isolation, verified file handoffs, dependency order, retained history and physical provider teardown",
+        "specialists-synthesis: exact roles, native isolation, verified file handoffs, dependency order, retained history and physical provider teardown",
+        "Explicit higher-priority adapter without dependency-file capability rejects before staffing",
+        "automatic-fallback: exact roles, native isolation, verified file handoffs, dependency order, retained history and physical provider teardown",
+        "All seven dynamically staffed identities retain history after verified native completion; incompatible runner receives no work"
+      ],
+      "stopped_roles": [
+        "web",
+        "runner",
+        "server",
+        "postgres"
+      ]
+    }
+  ],
+  "qualifications": [
+    "Development authentication and deterministic fake-process acceptance; no live vendor inference claimed.",
+    "Tester/reviewer instructions are not OS isolation; an agent review is not a human approval.",
+    "Server database environment-only credentials remain reduced assurance; SQL clients use private PGPASSFILE.",
+    "Dynamic worker event privacy is scoped; legacy room-null events are not private-room evidence.",
+    "RUST_TEST_THREADS=1 was used on Windows; issue #213 parallel qualification remains separate.",
+    "588 ignored Rust and 65 skipped Node cases are not passes. Focused lanes overlap full discovery.",
+    "Existing web bundle-size warning; historical Cargo advisory debt is 12 advisories, including 2 high. No clean audit.",
+    "Current main does not contain docs/PROJECT_MEMORY.md.",
+    "Required hosted CI, CodeQL, security and quality remain mandatory and unavailable while Actions is disabled.",
+    "No GitHub approval, merge or issue completion is asserted by this local review."
+  ]
+}
