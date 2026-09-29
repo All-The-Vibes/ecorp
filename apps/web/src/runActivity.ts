@@ -9,12 +9,16 @@ type ActivityEvent = {
   id: string; seq: number; type: string; aggregate_type: string; aggregate_id: string
   created_at: string; payload: Record<string, unknown>; corp_id?: string; room_id?: string | null
 }
+type ActivityMission = { id: string; room_id: string; status: string }
+type ActivityTask = { id: string; mission_id: string; title: string; assigned_agent_id: string | null }
+type ActivityAgent = { id: string; name: string; adapter: string; current_run_id: string | null; mission_id?: string | null; retired_at?: string | null }
 export type RunActivityInput = {
   corpId: string
-  mission: { id: string; room_id: string; status: string }
+  mission?: ActivityMission
   run?: ActivityRun
-  tasks: readonly { id: string; mission_id: string; title: string }[]
-  agents: readonly { id: string; name: string; adapter: string }[]
+  selectionUnavailable?: boolean
+  tasks: readonly ActivityTask[]
+  agents: readonly ActivityAgent[]
   runners: readonly { id: string; corp_id: string; connected: boolean; status: string; last_seen_at: string }[]
   actors: readonly { id: string; name: string }[]
   leases: readonly { agent_id: string; actor_id: string; expires_at: string }[]
@@ -24,10 +28,11 @@ export type RunActivityInput = {
   connection: string
   snapshotReceivedAt: string | null
   snapshotFailed?: boolean
-  factoryState: string
+  factoryState?: string
 }
 export type RunActivityPresentation = {
   runId: string | null
+  providerCurrent: boolean
   heading: string
   status: string
   tone: 'neutral' | 'working' | 'attention' | 'success'
@@ -62,6 +67,13 @@ const adapters: Record<string, string> = {
   codex: 'OpenAI Codex', 'github-copilot': 'GitHub Copilot',
   'claude-code': 'Claude Code', opencode: 'OpenCode', 'fake-process': 'Test harness (no AI)',
 }
+const breakerMetrics: Record<string, string> = {
+  run_tokens: 'Run token budget', run_cost: 'Run cost budget',
+  mission_tokens: 'Mission token budget', mission_cost: 'Mission cost budget',
+  actor_tokens_24h: 'Actor daily token budget', actor_cost_24h: 'Actor daily cost budget',
+  corp_tokens_24h: 'Corp daily token budget', corp_cost_24h: 'Corp daily cost budget',
+  no_progress: 'No-progress limit', repeated_tool: 'Repeated-tool limit',
+}
 
 /** Reuse evidence-review priority, then reveal an exact tool-approval wait before unrelated newer work. */
 export function selectActivityRun<T extends ActivityRun>(
@@ -73,6 +85,32 @@ export function selectActivityRun<T extends ActivityRun>(
   if (evidenceRun && pendingReviewForRun(evidenceRun, [...reviews])) return evidenceRun
   return runs.find((run) => run.status === 'waiting_for_approval' &&
     approvals.some((approval) => approval.run_id === run.id && approval.status === 'pending')) ?? evidenceRun
+}
+
+/** An exact current pointer never falls back after revocation or a bounded snapshot. */
+export function selectAgentActivity<T extends ActivityRun, M extends ActivityMission>(input: {
+  agent: ActivityAgent; tasks: readonly ActivityTask[]; missions: readonly M[]; runs: readonly T[]
+  reviews: RunActivityInput['reviews']; approvals: RunActivityInput['approvals']
+}): { run?: T; mission?: M; selectionUnavailable: boolean } {
+  const { agent } = input
+  const missionFor = (run: T) => {
+    if (run.agent_id !== agent.id) return undefined
+    const tasks = input.tasks.filter((task) => task.id === run.task_id)
+    if (tasks.length !== 1 || (agent.current_run_id && tasks[0].assigned_agent_id !== agent.id)) return undefined
+    const missions = input.missions.filter((mission) => mission.id === tasks[0].mission_id)
+    if (missions.length !== 1 || (agent.mission_id && missions[0].id !== agent.mission_id)) return undefined
+    return missions[0]
+  }
+  if (agent.current_run_id) {
+    const runs = input.runs.filter((run) => run.id === agent.current_run_id)
+    const run = runs.length === 1 ? runs[0] : undefined
+    const mission = run && missionFor(run)
+    return mission ? { run, mission, selectionUnavailable: false } : { selectionUnavailable: true }
+  }
+  // Snapshot runs are newest-first. Retain the native exact-review priority;
+  // a recorded run without a current pointer cannot establish provider control.
+  const run = selectActivityRun(input.runs.filter((candidate) => missionFor(candidate)), input.reviews, input.approvals)
+  return { run, mission: run && missionFor(run), selectionUnavailable: false }
 }
 
 function validTime(value: string | null | undefined): number | null {
@@ -114,11 +152,13 @@ export function presentRunActivity(input: RunActivityInput): RunActivityPresenta
   const received = validTime(input.snapshotReceivedAt)
   const fresh = input.connection === 'live' && !input.snapshotFailed && received !== null
   const view: RunActivityPresentation = {
-    runId: null, heading: 'Waiting for a run', status: 'No run in view', tone: 'neutral',
+    runId: null, providerCurrent: false, heading: 'Waiting for a run', status: 'No run in view', tone: 'neutral',
     summary: 'This snapshot contains no selected run. A missing run is not proof that work never started.',
     notices: [], facts: [], latest: null, timeline: [],
-    context: [{ label: 'Intake record', value: label(input.factoryState) },
-      { label: 'Mission record', value: label(mission.status) }],
+    context: [
+      ...(input.factoryState ? [{ label: 'Intake record', value: label(input.factoryState) }] : []),
+      ...(mission ? [{ label: 'Mission record', value: label(mission.status) }] : []),
+    ],
   }
   if (!fresh) view.notices.push(input.snapshotFailed
     ? 'The last snapshot refresh failed. These are retained observations, not confirmed current execution.'
@@ -130,15 +170,23 @@ export function presentRunActivity(input: RunActivityInput): RunActivityPresenta
       : input.snapshotFailed ? 'Refresh failed; retained snapshot.' : 'Current state unconfirmed.',
   }
   view.facts.push(snapshotFact)
-  if (!run) return view
-  const tasks = input.tasks.filter((task) => task.id === run.task_id && task.mission_id === mission.id)
-  if (tasks.length !== 1) return {
+  if (input.selectionUnavailable || (run && !mission)) return {
+    ...view, heading: 'Run context unavailable', status: 'Context unconfirmed', tone: 'attention',
+    summary: 'The exact selected run and its authorized context are unavailable in this snapshot. No alternative run has been selected.',
+  }
+  if (!run || !mission) return view
+  const tasks = input.tasks.filter((task) => task.id === run.task_id)
+  if (tasks.length !== 1 || tasks[0].mission_id !== mission.id) return {
     ...view, heading: 'Run context unavailable', status: 'Context unconfirmed', tone: 'attention',
     summary: 'The selected run does not have one matching task in this mission. No alternative run has been selected.',
   }
   view.runId = run.id
-  const runner = input.runners.find((node) => node.id === run.runner_id && node.corp_id === input.corpId)
-  const agent = input.agents.find((candidate) => candidate.id === run.agent_id)
+  const runners = input.runners.filter((node) => node.id === run.runner_id && node.corp_id === input.corpId)
+  const runner = runners.length === 1 ? runners[0] : undefined
+  const agents = input.agents.filter((candidate) => candidate.id === run.agent_id)
+  const agent = agents.length === 1 ? agents[0] : undefined
+  const currentOwner = Boolean(agent && agent.retired_at == null && agent.current_run_id === run.id && tasks[0].assigned_agent_id === agent.id &&
+    (!agent.mission_id || agent.mission_id === mission.id))
   const pendingReview = Boolean(pendingReviewForRun(run, input.reviews))
   const pendingAction = !terminal.has(run.status) && input.approvals.some((approval) =>
     approval.run_id === run.id && approval.status === 'pending')
@@ -161,13 +209,16 @@ export function presentRunActivity(input: RunActivityInput): RunActivityPresenta
   const knownMode = !run.execution_mode || run.execution_mode === 'provider' || verifyingOnly
   const reportsProvider = isProviderLiveRun(run, input.reviews) && !terminated && knownMode
   const runnerCurrent = runner?.connected === true && runner.status === 'connected'
+  view.providerCurrent = fresh && runnerCurrent && currentOwner && reportsProvider && !uncertain &&
+    !terminal.has(mission.status) && run.workspace_disposition !== 'quarantined' &&
+    run.breaker_stage !== 'suspend' && run.breaker_stage !== 'stop'
   let execution = 'No active provider reported'
   if (!knownMode) execution = 'Execution mode unrecognized'
   else if (verifyingOnly) execution = 'Verifier-only run; no provider'
   else if (terminated) execution = 'Provider termination confirmed'
   else if (run.status === 'lost' || uncertain) execution = 'Provider termination unconfirmed'
   else if (pendingReview) execution = 'Outcome review pending; no provider run reported'
-  else if (reportsProvider) execution = fresh && runnerCurrent
+  else if (reportsProvider) execution = view.providerCurrent
     ? run.status === 'provisioning' ? 'Preparing a provider run' : run.status === 'starting' ? 'Provider starting' : 'Provider run reported active'
     : 'Last reported active; current execution unconfirmed'
   else if (terminal.has(run.status)) execution = `${label(run.status)} run; termination receipt not in this snapshot`
@@ -211,7 +262,7 @@ export function presentRunActivity(input: RunActivityInput): RunActivityPresenta
   } else if (run.status === 'verifying' || verifyingOnly) {
     view.heading = 'The runner is checking the work'; view.status = 'Verifying'
     view.summary = 'Verification is separate from provider execution. Wait for the recorded checks and any required outcome review.'
-  } else if (reportsProvider && runnerCurrent) {
+  } else if (view.providerCurrent) {
     view.heading = run.status === 'waiting_for_input' ? 'This run is waiting for input' : 'Your team is working'; view.status = run.status === 'waiting_for_input' ? 'Waiting for input' : 'Executing'; view.tone = 'working'
     view.summary = 'The selected task has a provider run reported active. Use the existing controls to inspect or direct that work.'
   } else {
@@ -224,18 +275,42 @@ export function presentRunActivity(input: RunActivityInput): RunActivityPresenta
     view.notices.push(`The intake record says Running, while the mission is ${label(mission.status)} and this run is ${label(run.status)}. Intake state is not proof of an active provider.`)
   }
   if (!knownMode) view.notices.push('This run reports an unsupported execution mode; provider activity is not inferred.')
-  if (run.breaker_stage === 'constrain') view.notices.push('This run is constrained by its recorded safety policy. Existing limits and controls still apply.')
+  if (run.breaker_stage === 'constrain') view.notices.push('A safety constraint was recorded for this run. Its current outcome and decision records are shown separately below.')
+  if (agent && agent.current_run_id !== run.id) view.notices.push('This is a recorded run, not the agent’s current run. Its history does not establish current execution or control.')
+  else if (!currentOwner) view.notices.push('The selected run’s current agent and task assignment cannot be confirmed. Current execution and control remain unconfirmed.')
+  if (terminal.has(mission.status) && !terminal.has(run.status)) view.notices.push('The mission has ended while this run retains an unfinished state. Inspect its recorded recovery context; current provider execution is not established.')
   const lease = input.leases.find((candidate) => candidate.agent_id === run.agent_id && received !== null &&
     (validTime(candidate.expires_at) ?? 0) > received)
-  const control = fresh && runnerCurrent && reportsProvider
+  const control = view.providerCurrent
     ? lease ? `Control at snapshot: ${input.actors.find((actor) => actor.id === lease.actor_id)?.name ?? 'another operator'}.`
       : 'No unexpired control lease in this snapshot.' : 'Current control is not asserted from this record.'
+  const boundary = uniqueEvents.findLast((event) => event.type === 'run.breaker_transition')
+  const boundaryInput = boundary?.payload?.input
+  const metric = boundaryInput && typeof boundaryInput === 'object' && 'metric' in boundaryInput ? boundaryInput.metric : null
+  const boundaryReason = boundary?.payload?.stage === run.breaker_stage && typeof metric === 'string' && Object.hasOwn(breakerMetrics, metric)
+    ? breakerMetrics[metric] : 'Safety boundary reason unavailable'
+  const blocker = run.workspace_disposition === 'quarantined' ? 'Source integrity quarantine'
+    : ['suspend', 'stop'].includes(run.breaker_stage ?? '') ? `${boundaryReason} · ${label(run.breaker_stage!)}`
+    : pendingReview ? 'Human outcome review pending'
+    : pendingAction ? 'Requested action approval pending'
+    : run.status === 'waiting_for_approval' ? 'Decision record unavailable'
+    : run.status === 'waiting_for_input' ? 'Provider input requested'
+    : run.verification_status === 'failed' ? 'Recorded verification failed'
+    : run.status === 'lost' || (uncertain && !terminated) ? 'Provider termination unconfirmed'
+    : !fresh ? 'Live updates unavailable; current blocker unconfirmed'
+    : reportsProvider && !runnerCurrent ? runner?.status === 'grace' ? 'Runner reconnecting' : 'Runner unavailable'
+    : reportsProvider && !view.providerCurrent ? 'Current run assignment or mission state unconfirmed'
+    : terminal.has(run.status) ? `${label(run.status)} run; inspect recorded evidence`
+    : run.status === 'verifying' || verifyingOnly ? 'Verification in progress'
+    : run.breaker_stage === 'constrain' ? `${boundaryReason} · Constrain`
+    : 'No blocker reported in this snapshot'
   view.facts = [
     { label: 'Task in focus', value: tasks[0].title, detail: `Selected run ${run.id.slice(0, 8)}.` },
     { label: 'Assigned agent', value: agent ? `${agent.name} · ${Object.hasOwn(adapters, agent.adapter) ? adapters[agent.adapter] : 'Runtime not recognized'}` : 'Agent attribution unavailable', detail: control },
     { label: 'Provider execution', value: execution, detail: runner
       ? `Runner: ${label(runner.status)}${validTime(runner.last_seen_at) !== null ? ` · last seen ${activityTime(runner.last_seen_at)}` : ''}.`
-      : 'Assigned runner is not in this snapshot.' }, snapshotFact,
+      : 'Assigned runner is not in this snapshot.' },
+    { label: 'Execution blocker', value: blocker }, snapshotFact,
   ]
   view.timeline = uniqueEvents.flatMap((event) => {
     const text = eventLabel(event)

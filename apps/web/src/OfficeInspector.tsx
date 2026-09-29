@@ -35,7 +35,7 @@ export function OfficeInspector({
             onClose()
           } else if (event.key === 'Tab') {
             const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
-              'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]',
+              'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], summary, [tabindex="0"]',
             )).filter((element) => element.getClientRects().length > 0)
             const first = controls[0]
             const last = controls[controls.length - 1]
