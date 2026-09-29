@@ -14,6 +14,9 @@ use sqlx::{ConnectOptions, PgPool};
 #[path = "publication_repository_tests.rs"]
 mod repository_grants;
 
+#[path = "publication_artifact_tests.rs"]
+mod artifact_authority;
+
 const REPOSITORY: &str = "fixture/publication";
 const PUBLISHER: &str = "issue219-handler-publisher";
 

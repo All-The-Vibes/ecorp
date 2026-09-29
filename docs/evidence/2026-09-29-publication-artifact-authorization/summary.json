@@ -1,0 +1,927 @@
+{
+  "issue": 219,
+  "pr": 380,
+  "recorded_at_utc": "2026-09-29T01:23:13.579494+00:00",
+  "status": "local-implementation-accepted",
+  "implementation_acceptance_passed": true,
+  "issue_completed": false,
+  "tested_tree": "79cbed68705e0e67324ac223155067c92ee84c8a",
+  "integration_base": "878a1774774b0630c904cbaf4b05e1b346777817",
+  "parents": [
+    "f822f0929f53b160e568f2569bc9e24e6a2efca4"
+  ],
+  "canonical_original_sha256": "b6f9c8610722f061d9b60372b22bb1b6cd8e373071b5d988ff4a600157867d6c",
+  "canonical_checks": [
+    {
+      "name": "migrations",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-compatibility",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "state-audit-evm",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "summaries": 1
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "repository-docs",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "node-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": {
+          "tests": 3127,
+          "passed": 3062,
+          "failed": 0,
+          "skipped": 65,
+          "todo": 0,
+          "cancelled": 0
+        }
+      }
+    },
+    {
+      "name": "format",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "clippy",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "rust-tests",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": {
+          "passed": 884,
+          "failed": 0,
+          "ignored": 632,
+          "summaries": 41
+        },
+        "node": null
+      }
+    },
+    {
+      "name": "web-build",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    },
+    {
+      "name": "web-lint",
+      "exitCode": 0,
+      "passed": true,
+      "counts": {
+        "rust": null,
+        "node": null
+      }
+    }
+  ],
+  "acceptance_source_equivalence": {
+    "acceptance_parent": "f822f0929f53b160e568f2569bc9e24e6a2efca4",
+    "canonical_parent": "f822f0929f53b160e568f2569bc9e24e6a2efca4",
+    "identical_parent_tree": "1a4ec13e7c33b3ecc83b3200d4781af937cb645c",
+    "all_physical_source_files_equal": true,
+    "file_count": 7538,
+    "acceptance_build_receipt_sha256": "5262cf5b3f80aebaa4598c10f79569a1a3935bf6c9bda6e32d241aae028fc82c",
+    "browser_receipt_sha256": "f48f5f3356533b3edb908acb7165cfc8f2b4bee1a325ed1a10c98b4b13491363",
+    "native_receipts": {
+      "issue219-artifact-green-r2.json": "976bfd8d80c46da93d14a430e566ae851af21c7f0bc73f7cb6ff4a8f06710bbe",
+      "issue219-artifact-store-r2.json": "93d75adee4148fa9c2624c756c0a808647dd9aeb267df054a85b83ea834e5231"
+    }
+  },
+  "native_regressions": [
+    {
+      "receipt": "issue219-artifact-green-r2.json",
+      "checks": [
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 2,
+            "ignored": 0,
+            "passed": 15,
+            "failed": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-artifact-store-r2.json",
+      "checks": [
+        {
+          "name": "publication-family",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 1,
+            "failed": 0,
+            "ignored": 0,
+            "passed": 53
+          }
+        },
+        {
+          "name": "correction-publication",
+          "exit_code": 0,
+          "counts": {
+            "summaries": 1,
+            "failed": 0,
+            "ignored": 0,
+            "passed": 15
+          }
+        },
+        {
+          "name": "canonical-source-download",
+          "exit_code": 0,
+          "counts": {
+            "ignored": 0,
+            "summaries": 1,
+            "failed": 0,
+            "passed": 7
+          }
+        }
+      ]
+    }
+  ],
+  "native_reuse": "r1 backing-file filter selected zero tests; r2 uses the native canonical_source module. The prior 53 and 15 passing results are source/hash verified and reused.",
+  "controlled_acceptance": {
+    "mobile_flow_width": 390,
+    "screenshot_widths": [
+      390,
+      1440
+    ],
+    "no_horizontal_overflow": true,
+    "genuine_native_verified_results": 3,
+    "publication_intents": 3,
+    "simulated_pr_create_calls": 2,
+    "malformed_saved_intent_retired": true,
+    "caller_disconnect_survived": true,
+    "native_crash_adopted": true,
+    "same_watcher_recovered_after_busy": true,
+    "failed_request_retry_loop": false,
+    "no_extra_coding_runs": true,
+    "no_browser_publisher_credential": true,
+    "remote_main_unchanged": true,
+    "project_after_pr": true,
+    "all_browser_requests_loopback_only": true
+  },
+  "same_watcher_recovery": {
+    "process_id": 33300,
+    "watcher_invocations": 1,
+    "attempted": 2,
+    "results": [
+      {
+        "detail": "publication 86b12a8a-177e-4fe9-b961-bfa77d5a4213 remains leased to another trusted publisher",
+        "publication_id": "86b12a8a-177e-4fe9-b961-bfa77d5a4213",
+        "status": "failed"
+      },
+      {
+        "detail": null,
+        "publication_id": "86b12a8a-177e-4fe9-b961-bfa77d5a4213",
+        "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/51",
+        "status": "published"
+      }
+    ],
+    "events": [
+      {
+        "event": "native_queue_reply",
+        "ordinal": 1,
+        "at": "2026-09-29T00:11:44.289Z",
+        "publication_id": "86b12a8a-177e-4fe9-b961-bfa77d5a4213"
+      },
+      {
+        "event": "first_queue_released_after_winner_claim",
+        "at": "2026-09-29T00:11:44.574Z"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": true,
+        "at": "2026-09-29T00:11:44.644Z",
+        "publication_id": "86b12a8a-177e-4fe9-b961-bfa77d5a4213"
+      },
+      {
+        "event": "second_queue_waiting_before_native_request",
+        "at": "2026-09-29T00:11:45.662Z"
+      },
+      {
+        "event": "second_queue_released_after_observed_expiry",
+        "at": "2026-09-29T00:12:24.958Z"
+      },
+      {
+        "event": "native_queue_reply",
+        "ordinal": 2,
+        "at": "2026-09-29T00:12:24.975Z",
+        "publication_id": "86b12a8a-177e-4fe9-b961-bfa77d5a4213"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": false,
+        "at": "2026-09-29T00:12:25.082Z",
+        "publication_id": "86b12a8a-177e-4fe9-b961-bfa77d5a4213"
+      },
+      {
+        "event": "native_claim_reply",
+        "busy": false,
+        "at": "2026-09-29T00:12:25.304Z",
+        "publication_id": "86b12a8a-177e-4fe9-b961-bfa77d5a4213"
+      }
+    ],
+    "queue_and_claim_responses": "Unmodified actual server replies; the proxy only schedules delivery and request forwarding."
+  },
+  "recovery": {
+    "publication_id": "86b12a8a-177e-4fe9-b961-bfa77d5a4213",
+    "state": "published",
+    "pull_request_url": "https://github.com/All-The-Vibes/ecorp/pull/51",
+    "attempts": 2,
+    "competing_attempts": 0,
+    "repeated_attempts": 0,
+    "auto_merge_enabled": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
+  },
+  "saved_intent_corruption": {
+    "publication_id": "396043ba-1644-494a-aae2-10a9b8eb62df",
+    "setup": "Removed only intent.actor_role in the owned fixture database after a genuine native result and actual browser request.",
+    "mutation": "UPDATE pull_request_publications\n    SET provenance = jsonb_set(provenance, '{intent}', (provenance->'intent') - 'actor_role')\n    WHERE corp_id = '00000000-0000-4000-8000-000000000001' AND id = '396043ba-1644-494a-aae2-10a9b8eb62df'\n      AND state = 'requested' AND attempt_count = 0 AND publisher_id IS NULL\n    RETURNING id;",
+    "watcher_invocations": 1,
+    "watcher_polls": 2,
+    "attempted": 1,
+    "native_attempt_count": 0,
+    "fabricated_start_operations": 0,
+    "version_before": 1,
+    "version_after": 2,
+    "failure_detail": "Saved human publication request rejected: forbidden: malformed human publication request provenance",
+    "pull_request_url": null
+  },
+  "screenshots": 12,
+  "review_thread": "PRRT_kwDOUIQ-ns6m5kls",
+  "review_comment_id": 4128050177,
+  "prior_evidence_packets_unchanged": true,
+  "limitations": [
+    "Final-head hosted CI, CodeQL, code quality, security and required native integration remain mandatory; local success is not hosted clearance or issue completion.",
+    "Focused HTTP/store tests use synthetic authorization prerequisites and real PostgreSQL. Deliberately absent/invalid object provenance returns 500 after serialized authorization and is not download acceptance. The separate browser fixture produces native verified results.",
+    "Browser acceptance uses deterministic providers and simulated GitHub: zero real provider calls or GitHub mutations; no production OIDC, live inference, OS isolation or independent human approval is established.",
+    "All twelve screenshots were visually inspected as resized full-page previews with separately verified original hashes; no original-size inspection is claimed.",
+    "Environment-only SQLx database credentials remain reduced assurance. Serial local Rust validation does not resolve Windows concurrency issue213. Skipped and ignored cases are not passes.",
+    "Historical Cargo debt remains twelve advisories (two high, one moderate, nine low); this packet does not claim a clean Cargo audit.",
+    "Evidence additions follow the executions and require separate source/Git-tree, complete-plan, documentation, path, whitespace and secret checks before publication."
+  ],
+  "artifacts": [
+    {
+      "file": "canonical-driver.json",
+      "source_name": "issue219-canonical-r9.json",
+      "original_sha256": "c4ec00f5e77293b0aa18f847fb3af21e67dd953ceec20ad3bedce8426f9e9e41",
+      "published_sha256": "abb1aa2d67054ae31676cc35ebd2f58fcd9b763221aafb2c5ce69a4536ff1c89",
+      "bytes": 631586,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-report.json",
+      "source_name": "2026-09-29T00-18-16-390Z-36dc6f10-5cf6-49ee-86be-f35010a15b02-full.json",
+      "original_sha256": "b6f9c8610722f061d9b60372b22bb1b6cd8e373071b5d988ff4a600157867d6c",
+      "published_sha256": "b6f9c8610722f061d9b60372b22bb1b6cd8e373071b5d988ff4a600157867d6c",
+      "bytes": 613084,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "canonical-install-root.log",
+      "source_name": "issue219-canonical-r9-install-root.log",
+      "original_sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+      "published_sha256": "71a7b4d4f322c818a97b258588e0cfb7c44779f31831fe054cd45de607e50e93",
+      "bytes": 84,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-install-web.log",
+      "source_name": "issue219-canonical-r9-install-web.log",
+      "original_sha256": "09091c4bbed08d261015bb9831071587474ef709bb562c360c3415e2fadbcc1a",
+      "published_sha256": "478081abee765486cac9bd8442cd063b927d505fe5404e6f8f53484769daf7eb",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-install-steward.log",
+      "source_name": "issue219-canonical-r9-install-steward.log",
+      "original_sha256": "a4ea6a5b4ef4ee7c94c343a445a8c4ce77ae5baa79292f89c9c51d64949d559a",
+      "published_sha256": "52995698c9c366ce4723898c79ca26b45e8d26d73587d12fc1135e85227c8915",
+      "bytes": 27,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-pnpm-check.log",
+      "source_name": "issue219-canonical-r9-pnpm-check.log",
+      "original_sha256": "5a89b3076110961c4967a2a8a3e3041513d7802dd56bac2364ffbe9c25fef94d",
+      "published_sha256": "3a9c0426ecc8d2b8de6623d3f1cb3928721910652b65206d8614eb99e1a93bfe",
+      "bytes": 10320,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "canonical-invocation.json",
+      "source_name": "issue219-canonical-invocation-r9.json",
+      "original_sha256": "f27e56fe527fd73f632f3dab76a328972d045208b3a90e1907d18133bd448840",
+      "published_sha256": "7b4876bc1ec97c78032939ddbe843b52fb9da19e578c400532632dd996af06bb",
+      "bytes": 2052,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build.json",
+      "source_name": "issue219-acceptance-build-r9.json",
+      "original_sha256": "5262cf5b3f80aebaa4598c10f79569a1a3935bf6c9bda6e32d241aae028fc82c",
+      "published_sha256": "7ebbe46df791dec4c065a4b882a172acf8ac0a822fc3b450eba01d148cc6f478",
+      "bytes": 1450337,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build-install-root.log",
+      "source_name": "issue219-acceptance-build-r9-install-root.log",
+      "original_sha256": "7f0bc0d76245cb658615b58c9ef63316b8c15db9a42ebac7d23163d70c2f2606",
+      "published_sha256": "62ac20a837d95d9511818796b68a1d6ba8b28df8585fe053b3af720e63951f1b",
+      "bytes": 84,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build-install-web.log",
+      "source_name": "issue219-acceptance-build-r9-install-web.log",
+      "original_sha256": "257bed22fd5b5979fcc9f82823bba9e094b8d760e62426071fa77d6b622a39ce",
+      "published_sha256": "f6101910109458ae8abceaad5f8ebc7c2b023f355be9b94f145cbbed18271a9a",
+      "bytes": 85,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build-native.log",
+      "source_name": "issue219-acceptance-build-r9-native.log",
+      "original_sha256": "f571e8bf45084b3ad9e143d86aa85ed8473a65b4bb80d21f1b9a34ece8ee76c8",
+      "published_sha256": "5dcd9ed4db8c329e0e0b4ba6bcbb8259b5a50c1433cbebac9e2b6a7a94cecbf6",
+      "bytes": 410,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "acceptance-build-web.log",
+      "source_name": "issue219-acceptance-build-r9-web.log",
+      "original_sha256": "3fc03916c78006c15a663a3138f92de70d3abc9cf4aa9045eb7d22e11d2f3140",
+      "published_sha256": "9087e5bd153da72865299f86e257edc93d814e5fa207e2687e82738d84677cfd",
+      "bytes": 920,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "controlled-browser-driver.json",
+      "source_name": "issue219-browser-r17.json",
+      "original_sha256": "f48f5f3356533b3edb908acb7165cfc8f2b4bee1a325ed1a10c98b4b13491363",
+      "published_sha256": "2f70c4d429afc43cd5f8b22648ed8004f304c35c1e486a34d302317daa6c2894",
+      "bytes": 4798,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "controlled-browser-driver.log",
+      "source_name": "issue219-browser-r17.log",
+      "original_sha256": "bf41698188e577167dbfc74e9aad4cbe45de93bd2e6a60a3c76b0fd2e8bbb5df",
+      "published_sha256": "9daf69d2a18e62669384765e9c45cec76a6856ff3c9e4872263a924e640e99c9",
+      "bytes": 2218,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "controlled-native-report.json",
+      "source_name": "fixture-report.json",
+      "original_sha256": "51cfa1cfb3d241a7558ab2229c2372c425870f34fcfcd27860dbe26a2cd8c6fd",
+      "published_sha256": "9daf69d2a18e62669384765e9c45cec76a6856ff3c9e4872263a924e640e99c9",
+      "bytes": 2218,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "controlled-browser-report.json",
+      "source_name": "browser-publication-report.json",
+      "original_sha256": "ea95db12a3f06c4052e457fc986aa973ae9416d72a9608053badea6d76f7bb01",
+      "published_sha256": "dbeb023677490bbfbb81cf29cc3e1664b5f2769db1bb3d7cbcd9b634906c5883",
+      "bytes": 22100,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "screenshot-review.json",
+      "source_name": "issue219-screenshot-review-r8.json",
+      "original_sha256": "65c9ca03a95a94048089f2396a5731c2fe30e76459cd36544010b447c7425297",
+      "published_sha256": "98ad9de133f26c5af3b28b68dbe589ccd4762e1e58dd54361cc1d5954a1b2ebc",
+      "bytes": 10550,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "01-exact-result-preview-390px.png",
+      "source_name": "01-exact-result-preview-390px.png",
+      "original_sha256": "80c7b68c4a16b85c8b07b57ee257a5c022d60919e3df10fe2ac9a143fcecd50f",
+      "published_sha256": "80c7b68c4a16b85c8b07b57ee257a5c022d60919e3df10fe2ac9a143fcecd50f",
+      "bytes": 232666,
+      "transform": "none"
+    },
+    {
+      "file": "01-exact-result-preview-1440px.png",
+      "source_name": "01-exact-result-preview-1440px.png",
+      "original_sha256": "5a9aac5104b9499e0fb48348417ca60bc248c856870c37cd5f1d096fecd7caf1",
+      "published_sha256": "5a9aac5104b9499e0fb48348417ca60bc248c856870c37cd5f1d096fecd7caf1",
+      "bytes": 253161,
+      "transform": "none"
+    },
+    {
+      "file": "02-waiting-for-trusted-publisher-390px.png",
+      "source_name": "02-waiting-for-trusted-publisher-390px.png",
+      "original_sha256": "cd2f2f6ae1b56a4993283c3623e594dd091a5a46ae58aa1689c7c3eca867120a",
+      "published_sha256": "cd2f2f6ae1b56a4993283c3623e594dd091a5a46ae58aa1689c7c3eca867120a",
+      "bytes": 217087,
+      "transform": "none"
+    },
+    {
+      "file": "02-waiting-for-trusted-publisher-1440px.png",
+      "source_name": "02-waiting-for-trusted-publisher-1440px.png",
+      "original_sha256": "91399bfe40ff986ecdf1c731bbc41dd8fd810ed1ecf0940734875137c2538f8f",
+      "published_sha256": "91399bfe40ff986ecdf1c731bbc41dd8fd810ed1ecf0940734875137c2538f8f",
+      "bytes": 239761,
+      "transform": "none"
+    },
+    {
+      "file": "03-working-after-caller-reconnect-390px.png",
+      "source_name": "03-working-after-caller-reconnect-390px.png",
+      "original_sha256": "3ad1c99e8b7d387affe4eca9a305408f8887f44300c40adc7dafb1efbfe267f4",
+      "published_sha256": "3ad1c99e8b7d387affe4eca9a305408f8887f44300c40adc7dafb1efbfe267f4",
+      "bytes": 216278,
+      "transform": "none"
+    },
+    {
+      "file": "03-working-after-caller-reconnect-1440px.png",
+      "source_name": "03-working-after-caller-reconnect-1440px.png",
+      "original_sha256": "865092f226fd0f5942b3e32b413789c7232aae7536ea37e12222562736fa1330",
+      "published_sha256": "865092f226fd0f5942b3e32b413789c7232aae7536ea37e12222562736fa1330",
+      "bytes": 236952,
+      "transform": "none"
+    },
+    {
+      "file": "04-published-exact-link-390px.png",
+      "source_name": "04-published-exact-link-390px.png",
+      "original_sha256": "d32d2745e74534b7da1dc0bcd2ca92ba9a24c9cce1abad2c93e7858232c35eb6",
+      "published_sha256": "d32d2745e74534b7da1dc0bcd2ca92ba9a24c9cce1abad2c93e7858232c35eb6",
+      "bytes": 216795,
+      "transform": "none"
+    },
+    {
+      "file": "04-published-exact-link-1440px.png",
+      "source_name": "04-published-exact-link-1440px.png",
+      "original_sha256": "ef52a2ef78a68037ba334026dac21c00cc61cd81f6b7dab5cba17720ae925a94",
+      "published_sha256": "ef52a2ef78a68037ba334026dac21c00cc61cd81f6b7dab5cba17720ae925a94",
+      "bytes": 240446,
+      "transform": "none"
+    },
+    {
+      "file": "05-failure-with-existing-pr-390px.png",
+      "source_name": "05-failure-with-existing-pr-390px.png",
+      "original_sha256": "3df1151fbc5fabbd428021851f8dbc43462cd47c7af537a5fa057a8a11b26b7c",
+      "published_sha256": "3df1151fbc5fabbd428021851f8dbc43462cd47c7af537a5fa057a8a11b26b7c",
+      "bytes": 219488,
+      "transform": "none"
+    },
+    {
+      "file": "05-failure-with-existing-pr-1440px.png",
+      "source_name": "05-failure-with-existing-pr-1440px.png",
+      "original_sha256": "4ef14a5351ab1ec2cc522c6d5253f03d30ff1c6668993bce747f8764878968cb",
+      "published_sha256": "4ef14a5351ab1ec2cc522c6d5253f03d30ff1c6668993bce747f8764878968cb",
+      "bytes": 252608,
+      "transform": "none"
+    },
+    {
+      "file": "06-malformed-intent-retired-without-effects-390px.png",
+      "source_name": "06-malformed-intent-retired-without-effects-390px.png",
+      "original_sha256": "eb05bf97d2ff37b97ba6d25a8c976a783a16130f7def2e4282fe957371dc829c",
+      "published_sha256": "eb05bf97d2ff37b97ba6d25a8c976a783a16130f7def2e4282fe957371dc829c",
+      "bytes": 218989,
+      "transform": "none"
+    },
+    {
+      "file": "06-malformed-intent-retired-without-effects-1440px.png",
+      "source_name": "06-malformed-intent-retired-without-effects-1440px.png",
+      "original_sha256": "f7718ab0b7c3482ef8fe9abb8013337f28103b15e4f7616bcabd7ae61c8a0eae",
+      "published_sha256": "f7718ab0b7c3482ef8fe9abb8013337f28103b15e4f7616bcabd7ae61c8a0eae",
+      "bytes": 263952,
+      "transform": "none"
+    },
+    {
+      "file": "issue219-artifact-green-r2.json",
+      "source_name": "issue219-artifact-green-r2.json",
+      "original_sha256": "976bfd8d80c46da93d14a430e566ae851af21c7f0bc73f7cb6ff4a8f06710bbe",
+      "published_sha256": "7f7d9b84bc10b0d89cd6f28f3a5c41224922188b4076d59723179f901e0f0ad8",
+      "bytes": 2775855,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "issue219-artifact-green-r2-tests.log",
+      "source_name": "issue219-artifact-green-r2-tests.log",
+      "original_sha256": "1164eff41a4ebce42291d972c6added063a4dfd6d288ed1747b3511d075d61a2",
+      "published_sha256": "2f81bdb41c40a819bbeb3f1963e4cd9c3d8f336633c3f64436e7d76c91a77cc1",
+      "bytes": 2432,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "issue219-artifact-store-r2.json",
+      "source_name": "issue219-artifact-store-r2.json",
+      "original_sha256": "93d75adee4148fa9c2624c756c0a808647dd9aeb267df054a85b83ea834e5231",
+      "published_sha256": "3581554b05126cbc6e14c580dc57fcdbbde905ce3e8ace62c2b611a0d95c661d",
+      "bytes": 2777226,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "issue219-artifact-store-r1-publication-family.log",
+      "source_name": "issue219-artifact-store-r1-publication-family.log",
+      "original_sha256": "2a6eac2140e0aa6b97b3d0cb2385a8d5b24f6728ac445973c1ba0b1e0a6cc2e9",
+      "published_sha256": "2786ec208d005c412451dda5485ab892bbb4fc8c6684ff0db621111af6f4fbb1",
+      "bytes": 7203,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "issue219-artifact-store-r1-correction-publication.log",
+      "source_name": "issue219-artifact-store-r1-correction-publication.log",
+      "original_sha256": "d9500fbeea87b5c05b4873e4e182dac1c906d5c9549611f7a3265fe247a1e4bc",
+      "published_sha256": "3b337be01af60464279dcbc4dff261ea4832b1e46abf0dc99bf5083ab01a78dc",
+      "bytes": 2265,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "issue219-artifact-store-r2-canonical-source-download.log",
+      "source_name": "issue219-artifact-store-r2-canonical-source-download.log",
+      "original_sha256": "05fe52d6607bc93f29ac188fb0d5f0916e0e41f6fd8553849d270f7ec8c9e7be",
+      "published_sha256": "99cf929b87b3c23b9646b48f2ad2e9167d8d32b48dd3e7d61ffa0606596e745a",
+      "bytes": 1156,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "source-equivalence.json",
+      "source_name": "issue219-artifact-source-r1.json",
+      "original_sha256": "ae77091f1ac9aae4293b7f50e7e286b73a187261c6cc874fd9bc08af9bf86498",
+      "published_sha256": "397a75564fd69e1c78a54fec3cbe9f381f11cee3b3cc016dae6e60152d1097b0",
+      "bytes": 1256892,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "tested-code.patch",
+      "source_name": "52-file implementation diff against current main (native zero-context diff)",
+      "original_sha256": "f937876f0c518865b2d5731ecc6dd85699946a95f22fdb6521d4f33fa06efc2b",
+      "published_sha256": "f937876f0c518865b2d5731ecc6dd85699946a95f22fdb6521d4f33fa06efc2b",
+      "bytes": 408016,
+      "transform": "Native Git diff with zero context; patch contents otherwise unchanged; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "review-corrections.patch",
+      "source_name": "nine-file artifact authorization correction against f822f092 (native zero-context diff)",
+      "original_sha256": "e45da28c36380b6db07886c200f05bb85114cdf73d1c388b1eeda07cfcf5ebdb",
+      "published_sha256": "e45da28c36380b6db07886c200f05bb85114cdf73d1c388b1eeda07cfcf5ebdb",
+      "bytes": 27047,
+      "transform": "Native Git diff with zero context; patch contents otherwise unchanged; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "history-issue219-artifact-red-r1-tests.log",
+      "source_name": "issue219-artifact-red-r1-tests.log",
+      "original_sha256": "ac18b31091e849f7436af7e4a3037d658524014a16174223bd261acf42d3f348",
+      "published_sha256": "2eedb51f49e2058a23c1d48bbcbb40dcd29d78989f109a82ad59ae2192a5ddeb",
+      "bytes": 3828,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "history-issue219-artifact-green-r1-tests.log",
+      "source_name": "issue219-artifact-green-r1-tests.log",
+      "original_sha256": "a6ef2bf9f2f03d9bbdb675642fd2197f495c778315097e568bca40921d5b3d2f",
+      "published_sha256": "3fa46b9b881b99b6430674a0689b773db74d738783ad5f7e84a239dda08fdad9",
+      "bytes": 2991,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "history-issue219-artifact-store-r1-canonical-source-download.log",
+      "source_name": "issue219-artifact-store-r1-canonical-source-download.log",
+      "original_sha256": "03bfb2f783071650f4ff97bc577d46fc0fc755936e104e48dbb6ee9e8771a49e",
+      "published_sha256": "f7a1a740c198b1971472012e9d9c3f12a67ea5a280088794431e31873616fc2e",
+      "bytes": 274,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "regression-history.json",
+      "source_name": "compact records derived from the original retained receipts",
+      "original_sha256": "a9eae54c09d90b67e57e2e978cdb2a1f1e7fd3f0c765983ba89472065ccbf27a",
+      "published_sha256": "a9eae54c09d90b67e57e2e978cdb2a1f1e7fd3f0c765983ba89472065ccbf27a",
+      "bytes": 8574,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-source-binding-r1.py.txt",
+      "source_name": "issue219-source-binding-r1.py",
+      "original_sha256": "4146ba231569a11136ed4b6332f362db46e8a58aaf02f7258e0423fc19823c39",
+      "published_sha256": "4146ba231569a11136ed4b6332f362db46e8a58aaf02f7258e0423fc19823c39",
+      "bytes": 5960,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-canonical-r9.ps1.txt",
+      "source_name": "run-issue219-canonical-r9.ps1",
+      "original_sha256": "f811012a11e9f12a47133726d4589b43cacff2869c96dfdf217d3faf777a1b82",
+      "published_sha256": "df187f1f283fae9179d9758e895c238372d9151faf0efae463d9f898a6eb3015",
+      "bytes": 6767,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "run-canonical-r4.ps1.txt",
+      "source_name": "run-canonical-r4.ps1",
+      "original_sha256": "24710f508cbc4e23575f457b21fb3a929e4a3928f28b72b8ee10c2b129329b1b",
+      "published_sha256": "f91f754934aefab74d44db1dbe19559a371d8581aa6f352a810828902cfd9f13",
+      "bytes": 4645,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "build-issue219-acceptance-r9.ps1.txt",
+      "source_name": "build-issue219-acceptance-r9.ps1",
+      "original_sha256": "4bc9aa84f6bc131412fa0657213d6c49663528280ddc08d0b8cf36f4a185fde5",
+      "published_sha256": "bd5ae8cd2ab7bf634d35619a7471d09795d0eeff58e497090d20a0b385e540de",
+      "bytes": 4418,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-browser-r17.py.txt",
+      "source_name": "run-issue219-browser-r17.py",
+      "original_sha256": "ea2801eab225f20a8f959b5d15539ae5b9aa4225ee130211cd8273cf6b090b71",
+      "published_sha256": "0d5ee46c91f134e83dbf0caf1c76487ef7341187512a9827191cca82204dab1d",
+      "bytes": 4694,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-browser-driver-r17.ps1.txt",
+      "source_name": "issue219-browser-driver-r17.ps1",
+      "original_sha256": "c9afb9c08cf4b3f8e1248160d17e9b9cc81a4189dd57c468ba9e4e8413b52fe0",
+      "published_sha256": "727f7b98f05414c652c3d740fe8599bd859a1d6f968a1641d3891d26e67c0cf1",
+      "bytes": 26733,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "issue219-browser-native-r17.mjs.txt",
+      "source_name": "issue219-browser-native-r17.mjs",
+      "original_sha256": "172f0219deae1b5530c1a8c5af23e0831f6ae15b9a693cc580d6915f5eb89b01",
+      "published_sha256": "622191567d06751da5860f19ab2937e6a4e75612efe723df704f9c26b4be1982",
+      "bytes": 49262,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    },
+    {
+      "file": "run-issue219-artifact-http-r1.ps1.txt",
+      "source_name": "run-issue219-artifact-http-r1.ps1",
+      "original_sha256": "ce7a01ef798b67c480ce0acee9a5a11c7679feee8ec18bb4f16f1cf32d7ab555",
+      "published_sha256": "7af4c18d74f2f4e87df548d5cf396b93a2fc7a3336565b6fbe6230fdf60534bf",
+      "bytes": 9972,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "run-issue219-artifact-store-r1.ps1.txt",
+      "source_name": "run-issue219-artifact-store-r1.ps1",
+      "original_sha256": "d7cdba0a670deb58112d57cd480bb7e1495693cbf2c2339f08308bc163d67e8d",
+      "published_sha256": "99b3540e18cc89f029e73fbf7a1e68eb1936e59836f65854ba36a340bd5504b9",
+      "bytes": 10209,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "run-issue219-artifact-store-r2.ps1.txt",
+      "source_name": "run-issue219-artifact-store-r2.ps1",
+      "original_sha256": "409362fdda01b1c20757ecb0dfea741cd72758aad489ca3de4a98cf1daa3720e",
+      "published_sha256": "23b7edd4a3928f4a5889dbbbb09ce03b3058daaf5e870901ef0d1859de208069",
+      "bytes": 11816,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+    },
+    {
+      "file": "helper-inventory.json",
+      "source_name": "actual helper inspection",
+      "original_sha256": "26aa45d050db04dd5c0edb901af3db208d583326ad8ee2215606805d1d9efd75",
+      "published_sha256": "26aa45d050db04dd5c0edb901af3db208d583326ad8ee2215606805d1d9efd75",
+      "bytes": 1564,
+      "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>"
+    }
+  ],
+  "publication_preparation": {
+    "initial_validation_status": "failed",
+    "initial_validation_receipt_sha256": "3947e7b66e98619b222b5150257abe93f27693844d06192afe396a41b6f13fed",
+    "explanation": "The first publication-only whitespace check rejected copied log/helper trailing whitespace, extra EOF blank lines and blank native Git context lines. Original executions and their logs remain unchanged. Publication text copies were normalized and patches regenerated with native zero context against the same tested tree. Fresh publication validation is required.",
+    "changes": [
+      {
+        "file": "canonical-driver.json",
+        "before_sha256": "669d218ebc528da7fd1ab50b98e736474c7ac1ee31f72a991a87a9e05549795e",
+        "after_sha256": "abb1aa2d67054ae31676cc35ebd2f58fcd9b763221aafb2c5ce69a4536ff1c89",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-install-root.log",
+        "before_sha256": "eb0f2352f7d1409b2cc41621aac08ac6d3f185ed7bb2b6d4ac87e4ac6ce4e8be",
+        "after_sha256": "71a7b4d4f322c818a97b258588e0cfb7c44779f31831fe054cd45de607e50e93",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-install-web.log",
+        "before_sha256": "09091c4bbed08d261015bb9831071587474ef709bb562c360c3415e2fadbcc1a",
+        "after_sha256": "478081abee765486cac9bd8442cd063b927d505fe5404e6f8f53484769daf7eb",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-install-steward.log",
+        "before_sha256": "a4ea6a5b4ef4ee7c94c343a445a8c4ce77ae5baa79292f89c9c51d64949d559a",
+        "after_sha256": "52995698c9c366ce4723898c79ca26b45e8d26d73587d12fc1135e85227c8915",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-pnpm-check.log",
+        "before_sha256": "04860643be6b10aacfdd002f3008f5b9a869df002d4ee037fa432bbe2b2c932a",
+        "after_sha256": "3a9c0426ecc8d2b8de6623d3f1cb3928721910652b65206d8614eb99e1a93bfe",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "canonical-invocation.json",
+        "before_sha256": "625d316e61b1ccd6ddee6f898f0178b83bba6b82bb01036ee4c76466047f5ca8",
+        "after_sha256": "7b4876bc1ec97c78032939ddbe843b52fb9da19e578c400532632dd996af06bb",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build.json",
+        "before_sha256": "c6ccad1ec65ac74e4ffe13084427b2261bea518030e051618c2e4931c95dad1f",
+        "after_sha256": "7ebbe46df791dec4c065a4b882a172acf8ac0a822fc3b450eba01d148cc6f478",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build-install-root.log",
+        "before_sha256": "7f0bc0d76245cb658615b58c9ef63316b8c15db9a42ebac7d23163d70c2f2606",
+        "after_sha256": "62ac20a837d95d9511818796b68a1d6ba8b28df8585fe053b3af720e63951f1b",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build-install-web.log",
+        "before_sha256": "257bed22fd5b5979fcc9f82823bba9e094b8d760e62426071fa77d6b622a39ce",
+        "after_sha256": "f6101910109458ae8abceaad5f8ebc7c2b023f355be9b94f145cbbed18271a9a",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build-native.log",
+        "before_sha256": "62e363acb78d0ad77b02ed8415ef9a36518b1b3ed2d910b5b2327b47dbe6e9f1",
+        "after_sha256": "5dcd9ed4db8c329e0e0b4ba6bcbb8259b5a50c1433cbebac9e2b6a7a94cecbf6",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "acceptance-build-web.log",
+        "before_sha256": "3fc03916c78006c15a663a3138f92de70d3abc9cf4aa9045eb7d22e11d2f3140",
+        "after_sha256": "9087e5bd153da72865299f86e257edc93d814e5fa207e2687e82738d84677cfd",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "controlled-browser-driver.json",
+        "before_sha256": "c7d8528a8211384e8e32acf8d21b3e6726dc737c650ca8b764e6f6f6298f8ab9",
+        "after_sha256": "2f70c4d429afc43cd5f8b22648ed8004f304c35c1e486a34d302317daa6c2894",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "controlled-browser-driver.log",
+        "before_sha256": "d0a2e40ca58876d1cbadea2b0e8e7f6809df7ae8e3ffe1bd1bd8425b32a5a2c6",
+        "after_sha256": "9daf69d2a18e62669384765e9c45cec76a6856ff3c9e4872263a924e640e99c9",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "controlled-native-report.json",
+        "before_sha256": "11bc59978b392dfbcaad8ad19f1f469c524518fbda46889ae11abdb2e0ed4c33",
+        "after_sha256": "9daf69d2a18e62669384765e9c45cec76a6856ff3c9e4872263a924e640e99c9",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "issue219-artifact-green-r2.json",
+        "before_sha256": "d0be0550b6eb78d533882d1c8593f270c1c2fdaa9c1645c191ebafb0c35c6c71",
+        "after_sha256": "7f7d9b84bc10b0d89cd6f28f3a5c41224922188b4076d59723179f901e0f0ad8",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "issue219-artifact-green-r2-tests.log",
+        "before_sha256": "c54645b0dca4ac7c95d8263d21b96dea7ef98392e028e00d009bf804cb3a4722",
+        "after_sha256": "2f81bdb41c40a819bbeb3f1963e4cd9c3d8f336633c3f64436e7d76c91a77cc1",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "issue219-artifact-store-r2.json",
+        "before_sha256": "10fb8cdcc01a807d0f12ed14ca627056d40efbe56320e5d1a256fa9a36afc592",
+        "after_sha256": "3581554b05126cbc6e14c580dc57fcdbbde905ce3e8ace62c2b611a0d95c661d",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "issue219-artifact-store-r1-publication-family.log",
+        "before_sha256": "b2f2ab0b9d77741e18bf29defbb4fb9e3ed2bc56254a298477c25ee548fcebfc",
+        "after_sha256": "2786ec208d005c412451dda5485ab892bbb4fc8c6684ff0db621111af6f4fbb1",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "issue219-artifact-store-r1-correction-publication.log",
+        "before_sha256": "d9500fbeea87b5c05b4873e4e182dac1c906d5c9549611f7a3265fe247a1e4bc",
+        "after_sha256": "3b337be01af60464279dcbc4dff261ea4832b1e46abf0dc99bf5083ab01a78dc",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "issue219-artifact-store-r2-canonical-source-download.log",
+        "before_sha256": "05fe52d6607bc93f29ac188fb0d5f0916e0e41f6fd8553849d270f7ec8c9e7be",
+        "after_sha256": "99cf929b87b3c23b9646b48f2ad2e9167d8d32b48dd3e7d61ffa0606596e745a",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "tested-code.patch",
+        "before_sha256": "ff4a1b3bc13babecee0e841c9612ab4f6188246080122d739d5ba4b839d261f0",
+        "after_sha256": "f937876f0c518865b2d5731ecc6dd85699946a95f22fdb6521d4f33fa06efc2b",
+        "transform": "Native Git diff with zero context; patch contents otherwise unchanged; local profile roots replaced with <USERPROFILE>"
+      },
+      {
+        "file": "review-corrections.patch",
+        "before_sha256": "8dc035a1fb98aeb01746c3ad059cca3e888ebe4f4b86f27ebb2a13b2823bc641",
+        "after_sha256": "e45da28c36380b6db07886c200f05bb85114cdf73d1c388b1eeda07cfcf5ebdb",
+        "transform": "Native Git diff with zero context; patch contents otherwise unchanged; local profile roots replaced with <USERPROFILE>"
+      },
+      {
+        "file": "history-issue219-artifact-red-r1-tests.log",
+        "before_sha256": "fa702b0fc9079e3c1298c4a8b2bd85dc890938358c42776ac8a8ebb7da60d72c",
+        "after_sha256": "2eedb51f49e2058a23c1d48bbcbb40dcd29d78989f109a82ad59ae2192a5ddeb",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "history-issue219-artifact-green-r1-tests.log",
+        "before_sha256": "ea471d699b6906e8db928f3dd64e495db1e71589d5a24f3731949e13aa105498",
+        "after_sha256": "3fa46b9b881b99b6430674a0689b773db74d738783ad5f7e84a239dda08fdad9",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "history-issue219-artifact-store-r1-canonical-source-download.log",
+        "before_sha256": "03bfb2f783071650f4ff97bc577d46fc0fc755936e104e48dbb6ee9e8771a49e",
+        "after_sha256": "f7a1a740c198b1971472012e9d9c3f12a67ea5a280088794431e31873616fc2e",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "run-issue219-canonical-r9.ps1.txt",
+        "before_sha256": "099aeadeeaac4d15d9b2a40d655d1b0b8a81f031de6e2374cf48d081812d6867",
+        "after_sha256": "df187f1f283fae9179d9758e895c238372d9151faf0efae463d9f898a6eb3015",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "run-issue219-artifact-http-r1.ps1.txt",
+        "before_sha256": "d0b02eb692d9a3486c67ce15340345acbfec2ef6ed4ee716d1b17d4c0cd9a558",
+        "after_sha256": "7af4c18d74f2f4e87df548d5cf396b93a2fc7a3336565b6fbe6230fdf60534bf",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "run-issue219-artifact-store-r1.ps1.txt",
+        "before_sha256": "4a2ced731c99b73d6eaccd8cb0397dddb715f5cf60b8a0538b2e0e4a1f17851d",
+        "after_sha256": "99b3540e18cc89f029e73fbf7a1e68eb1936e59836f65854ba36a340bd5504b9",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      },
+      {
+        "file": "run-issue219-artifact-store-r2.ps1.txt",
+        "before_sha256": "bf97aea762474640c763d60fd0f6073064075f089689d63b35e8fdb92829d642",
+        "after_sha256": "23b7edd4a3928f4a5889dbbbb09ce03b3058daaf5e870901ef0d1859de208069",
+        "transform": "UTF-8 without BOM; local profile roots replaced with <USERPROFILE>; publication copy normalized to LF, trailing spaces/tabs removed and one final newline; original execution log retained"
+      }
+    ]
+  }
+}

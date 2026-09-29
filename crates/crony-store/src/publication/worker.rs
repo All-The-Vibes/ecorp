@@ -41,33 +41,56 @@ impl PgStore {
         &self,
         scope: &PublicationPublisherScope,
         publication_id: Uuid,
-        artifact_control: Option<PublicationLeaseControl>,
     ) -> Result<HumanRequestedPublication> {
         let mut tx = self.pool.begin().await?;
-        let (publication, token, intent) =
+        let (publication, _, intent) =
             human_requested_publication_tx(&mut tx, scope, publication_id).await?;
-        if let Some(control) = artifact_control {
-            ensure_active_publication_control_tx(
-                &mut tx,
-                &publication,
-                token,
-                ActivePublicationControl {
-                    actor_id: intent.actor_id,
-                    publisher_id: &scope.publisher_id,
-                    presented_token: control.publisher_token,
-                    expected_version: control.expected_version,
-                    now: Utc::now(),
-                },
-            )
-            .await?;
-            revalidate_publication_authority_tx(&mut tx, &publication, intent.actor_id).await?;
-        }
+        // This readback supports native effect/checkpoint inputs. It does not
+        // authorize artifact retrieval or replace the native effect transaction.
         tx.commit().await?;
         Ok(HumanRequestedPublication {
             publication,
             actor_role: intent.actor_role,
             authorization_reason: intent.authorization_reason,
         })
+    }
+
+    pub async fn human_requested_publication_artifact_for_publisher(
+        &self,
+        scope: &PublicationPublisherScope,
+        publication_id: Uuid,
+        control: PublicationLeaseControl,
+    ) -> Result<StoredArtifact> {
+        let mut tx = self.pool.begin().await?;
+        let (publication, token, intent) =
+            human_requested_publication_tx(&mut tx, scope, publication_id).await?;
+        let active_control = || ActivePublicationControl {
+            actor_id: intent.actor_id,
+            publisher_id: &scope.publisher_id,
+            presented_token: control.publisher_token,
+            expected_version: control.expected_version,
+            now: Utc::now(),
+        };
+        ensure_active_publication_control_tx(&mut tx, &publication, token, active_control())
+            .await?;
+        revalidate_publication_authority_tx(&mut tx, &publication, intent.actor_id).await?;
+        // Keep the native credential, publication, human membership and source
+        // locks until the canonical artifact lookup has completed.
+        let artifact = artifact_for_download_using(
+            &mut *tx,
+            scope.corp_id,
+            publication.artifact_id,
+            intent.actor_id,
+        )
+        .await?
+        .context("not found: requested publication artifact was not found")?;
+        // Row locks prevent concurrent revocation, not the passage of time.
+        // A blocked lookup must not retain an expired credential or lease.
+        revalidate_publisher_repository_tx(&mut tx, scope).await?;
+        ensure_active_publication_control_tx(&mut tx, &publication, token, active_control())
+            .await?;
+        tx.commit().await?;
+        Ok(artifact)
     }
 
     pub async fn human_requested_publication_context_for_publisher(

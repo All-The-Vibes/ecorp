@@ -49,7 +49,7 @@ async fn assert_workload_denied(
                 .await
                 .map(|_| ()),
             1 => store
-                .human_requested_publication_for_publisher(scope, id, None)
+                .human_requested_publication_for_publisher(scope, id)
                 .await
                 .map(|_| ()),
             2 => store
@@ -61,7 +61,7 @@ async fn assert_workload_denied(
                 .await
                 .map(|_| ()),
             4 => store
-                .human_requested_publication_for_publisher(scope, id, Some(control))
+                .human_requested_publication_artifact_for_publisher(scope, id, control)
                 .await
                 .map(|_| ()),
             _ => unreachable!(),
@@ -212,10 +212,10 @@ async fn issue219_native_publication_worker_binds_repository_to_exact_credential
     };
     assert!(
         store
-            .human_requested_publication_for_publisher(
+            .human_requested_publication_artifact_for_publisher(
                 &normalized,
                 queued.publication.id,
-                Some(control)
+                control
             )
             .await
             .is_ok()

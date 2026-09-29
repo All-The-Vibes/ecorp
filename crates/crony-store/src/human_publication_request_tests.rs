@@ -390,7 +390,7 @@ async fn issue219_native_publication_worker_keeps_database_failures_retryable(po
         .unwrap();
     assert!(failed.is_err());
     let saved = store
-        .human_requested_publication_for_publisher(&scope, id, None)
+        .human_requested_publication_for_publisher(&scope, id)
         .await
         .unwrap()
         .publication;
@@ -511,7 +511,7 @@ async fn issue219_native_publication_worker_scopes_queue_and_readback(pool: PgPo
         assert!(publication_state(&store).await == before);
         assert!(
             store
-                .human_requested_publication_for_publisher(&other, id, None)
+                .human_requested_publication_for_publisher(&other, id)
                 .await
                 .is_err()
         );
@@ -525,7 +525,7 @@ async fn issue219_native_publication_worker_scopes_queue_and_readback(pool: PgPo
     }
     let before = publication_state(&store).await;
     let read = store
-        .human_requested_publication_for_publisher(&scope, id, None)
+        .human_requested_publication_for_publisher(&scope, id)
         .await
         .unwrap();
     assert_eq!(read.publication.id, id);
@@ -544,13 +544,13 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
     let id = queued.publication.id;
     assert!(
         store
-            .human_requested_publication_for_publisher(
+            .human_requested_publication_artifact_for_publisher(
                 &scope,
                 id,
-                Some(PublicationLeaseControl {
+                PublicationLeaseControl {
                     publisher_token: Uuid::new_v4(),
                     expected_version: queued.publication.version,
-                })
+                }
             )
             .await
             .is_err()
@@ -571,7 +571,7 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
     };
     assert!(
         store
-            .human_requested_publication_for_publisher(&scope, id, Some(control))
+            .human_requested_publication_artifact_for_publisher(&scope, id, control)
             .await
             .is_ok()
     );
@@ -584,13 +584,13 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
     );
     assert!(
         store
-            .human_requested_publication_for_publisher(
+            .human_requested_publication_artifact_for_publisher(
                 &scope,
                 id,
-                Some(PublicationLeaseControl {
+                PublicationLeaseControl {
                     expected_version: control.expected_version - 1,
                     ..control
-                })
+                }
             )
             .await
             .is_err()
@@ -602,7 +602,7 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
         .unwrap();
     assert!(
         store
-            .human_requested_publication_for_publisher(&scope, id, Some(control))
+            .human_requested_publication_artifact_for_publisher(&scope, id, control)
             .await
             .is_err()
     );
@@ -615,7 +615,7 @@ async fn issue219_native_publication_worker_reuses_claim_and_fences_artifact(poo
     // Non-authorizing readback still supports the native failure-only path.
     assert!(
         store
-            .human_requested_publication_for_publisher(&scope, id, None)
+            .human_requested_publication_for_publisher(&scope, id)
             .await
             .is_ok()
     );
@@ -666,7 +666,7 @@ async fn issue219_native_publication_worker_cannot_adopt_direct_cli_intent(pool:
     let before = publication_state(&store).await;
     assert!(
         store
-            .human_requested_publication_for_publisher(&scope, direct.publication.id, None)
+            .human_requested_publication_for_publisher(&scope, direct.publication.id)
             .await
             .is_err()
     );

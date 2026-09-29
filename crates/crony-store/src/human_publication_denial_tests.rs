@@ -122,7 +122,7 @@ async fn assert_pending(
     queued: &PullRequestPublicationOutcome,
 ) {
     let saved = store
-        .human_requested_publication_for_publisher(scope, queued.publication.id, None)
+        .human_requested_publication_for_publisher(scope, queued.publication.id)
         .await
         .unwrap()
         .publication;

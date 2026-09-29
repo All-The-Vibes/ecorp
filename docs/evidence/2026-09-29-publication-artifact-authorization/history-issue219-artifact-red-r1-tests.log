@@ -1,0 +1,54 @@
+   Compiling crony-server v0.1.0 (<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp\crates\crony-server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 28s
+     Running unittests src\base_worker.rs (target\debug\deps\crony_base_worker-d8fb29a0c2093fc6.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\crony_server-09b678318e84e874.exe)
+
+running 6 tests
+
+thread 'publication_request_tests::artifact_authority::issue219_publication_artifact_rejects_credential_expiry_during_lookup' (4584) panicked at crates\crony-server\src\publication_artifact_tests.rs:157:5:
+assertion `left == right` failed
+  left: 500
+ right: 403
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test publication_request_tests::artifact_authority::issue219_publication_artifact_rejects_credential_expiry_during_lookup ... FAILED
+
+thread 'publication_request_tests::artifact_authority::issue219_publication_artifact_rejects_lease_expiry_during_lookup' (2632) panicked at crates\crony-server\src\publication_artifact_tests.rs:157:5:
+assertion `left == right` failed
+  left: 500
+ right: 409
+test publication_request_tests::artifact_authority::issue219_publication_artifact_rejects_lease_expiry_during_lookup ... FAILED
+
+thread 'publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_credential_revocation' (31596) panicked at crates\crony-server\src\publication_artifact_tests.rs:102:5:
+credential changed authority before the artifact lookup completed
+test publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_credential_revocation ... FAILED
+
+thread 'publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_human_role_revocation' (2672) panicked at crates\crony-server\src\publication_artifact_tests.rs:102:5:
+role changed authority before the artifact lookup completed
+test publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_human_role_revocation ... FAILED
+
+thread 'publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_publication_version' (29836) panicked at crates\crony-server\src\publication_artifact_tests.rs:102:5:
+version changed authority before the artifact lookup completed
+test publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_publication_version ... FAILED
+
+thread 'publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_room_membership_revocation' (7792) panicked at crates\crony-server\src\publication_artifact_tests.rs:102:5:
+membership changed authority before the artifact lookup completed
+test publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_room_membership_revocation ... FAILED
+
+failures:
+
+failures:
+    publication_request_tests::artifact_authority::issue219_publication_artifact_rejects_credential_expiry_during_lookup
+    publication_request_tests::artifact_authority::issue219_publication_artifact_rejects_lease_expiry_during_lookup
+    publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_credential_revocation
+    publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_human_role_revocation
+    publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_publication_version
+    publication_request_tests::artifact_authority::issue219_publication_artifact_serializes_room_membership_revocation
+
+test result: FAILED. 0 passed; 6 failed; 0 ignored; 0 measured; 271 filtered out; finished in 19.65s
+
+error: test failed, to rerun pass `-p crony-server --bin crony-server`

@@ -1,0 +1,225 @@
+{
+  "chronology": "Observed retrospective regression evidence. Original private receipts and failed logs remain preserved; no original-development chronology or human decision is invented.",
+  "history": [
+    {
+      "receipt": "issue219-artifact-red-r1.json",
+      "original_receipt_sha256": "d2af60d85ed124d470b722ce7b08aee484baec836d089218e31e8273e5294e06",
+      "explanation": "Six real HTTP/PostgreSQL race and expiry assertions failed against the published implementation; zero passed.",
+      "status": "failed",
+      "source_head": "f822f0929f53b160e568f2569bc9e24e6a2efca4",
+      "started_at_utc": "2026-09-28T23:41:02.1470733Z",
+      "finished_at_utc": "2026-09-28T23:43:14.9521223Z",
+      "source_unchanged": true,
+      "source_manifest_sha256": "036ca41215d94094a1e3047109c4bea66807300a1a37e709343c69d22f5d2008",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "3bd90cd1c0d09e811d776452d8c460fe3eb18ef9a55e74a155e79c2a3f31c6ef",
+          "counts": {
+            "summaries": 0,
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "sha256": "ac18b31091e849f7436af7e4a3037d658524014a16174223bd261acf42d3f348",
+          "counts": {
+            "summaries": 2,
+            "passed": 0,
+            "failed": 6,
+            "ignored": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-artifact-green-r1.json",
+      "original_receipt_sha256": "67f7cda9cf98773dc0148ea337d5ade975ca935f9ea2e9166292955e4c2e48a3",
+      "explanation": "First transaction correction passed 14 HTTP cases but failed the post-role-revocation status assertion: authority was denied with 500 instead of 403.",
+      "status": "failed",
+      "source_head": "f822f0929f53b160e568f2569bc9e24e6a2efca4",
+      "started_at_utc": "2026-09-28T23:44:54.2514068Z",
+      "finished_at_utc": "2026-09-28T23:48:22.0951467Z",
+      "source_unchanged": true,
+      "source_manifest_sha256": "0210c7d56f1263015e811495c9ba14b2d263535e023e56c33f451900390053a9",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "c7f09cd6852497d202d7164ca70764504ee6b38882751c49907a5a8c77dc83c3",
+          "counts": {
+            "passed": 0,
+            "ignored": 0,
+            "summaries": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 101,
+          "sha256": "a6ef2bf9f2f03d9bbdb675642fd2197f495c778315097e568bca40921d5b3d2f",
+          "counts": {
+            "passed": 14,
+            "ignored": 0,
+            "summaries": 2,
+            "failed": 1
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-artifact-green-r2.json",
+      "original_receipt_sha256": "976bfd8d80c46da93d14a430e566ae851af21c7f0bc73f7cb6ff4a8f06710bbe",
+      "explanation": "After the existing role-change denial gained the forbidden prefix, all 15 HTTP authorization cases passed on the final tested source.",
+      "status": "passed",
+      "source_head": "f822f0929f53b160e568f2569bc9e24e6a2efca4",
+      "started_at_utc": "2026-09-28T23:49:32.3028686Z",
+      "finished_at_utc": "2026-09-28T23:52:02.8494460Z",
+      "source_unchanged": true,
+      "source_manifest_sha256": "60079157d0bd978cd4b2b5df7109c6c734c8083829ce840ab2502f0126372963",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "f60a1082494e0068317a7e2c4a040b48f1f6dfb408657fd585f7e37d9239a8a3",
+          "counts": {
+            "summaries": 0,
+            "ignored": 0,
+            "passed": 0,
+            "failed": 0
+          }
+        },
+        {
+          "name": "human-publication-http-authorization",
+          "exit_code": 0,
+          "sha256": "1164eff41a4ebce42291d972c6added063a4dfd6d288ed1747b3511d075d61a2",
+          "counts": {
+            "summaries": 2,
+            "ignored": 0,
+            "passed": 15,
+            "failed": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-artifact-store-r1.json",
+      "original_receipt_sha256": "5b6695daf7949cbd87f109e0895ac97e171b41e475f6162f45978eceab02b57a",
+      "explanation": "Publication family 53 and correction publication 15 passed. The backing-file-name filter selected zero canonical source tests, so the wrapper correctly failed instead of accepting an empty lane.",
+      "status": "failed",
+      "source_head": "f822f0929f53b160e568f2569bc9e24e6a2efca4",
+      "started_at_utc": "2026-09-28T23:52:56.6225833Z",
+      "finished_at_utc": "2026-09-28T23:59:43.0257958Z",
+      "source_unchanged": true,
+      "source_manifest_sha256": "60079157d0bd978cd4b2b5df7109c6c734c8083829ce840ab2502f0126372963",
+      "checks": [
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "12b440f27948df6557a260a82ff68749eac270a9bfb1b000c71cfb9d7fa01817",
+          "counts": {
+            "summaries": 0,
+            "failed": 0,
+            "ignored": 0,
+            "passed": 0
+          }
+        },
+        {
+          "name": "publication-family",
+          "exit_code": 0,
+          "sha256": "2a6eac2140e0aa6b97b3d0cb2385a8d5b24f6728ac445973c1ba0b1e0a6cc2e9",
+          "counts": {
+            "summaries": 1,
+            "failed": 0,
+            "ignored": 0,
+            "passed": 53
+          }
+        },
+        {
+          "name": "correction-publication",
+          "exit_code": 0,
+          "sha256": "d9500fbeea87b5c05b4873e4e182dac1c906d5c9549611f7a3265fe247a1e4bc",
+          "counts": {
+            "summaries": 1,
+            "failed": 0,
+            "ignored": 0,
+            "passed": 15
+          }
+        },
+        {
+          "name": "canonical-source-download",
+          "exit_code": 0,
+          "sha256": "03bfb2f783071650f4ff97bc577d46fc0fc755936e104e48dbb6ee9e8771a49e",
+          "counts": {
+            "summaries": 1,
+            "failed": 0,
+            "ignored": 0,
+            "passed": 0
+          }
+        }
+      ]
+    },
+    {
+      "receipt": "issue219-artifact-store-r2.json",
+      "original_receipt_sha256": "93d75adee4148fa9c2624c756c0a808647dd9aeb267df054a85b83ea834e5231",
+      "explanation": "The corrected native module filter freshly ran seven canonical source tests. The earlier 53 and 15 passing results were reused only after complete physical-source and original-log hash verification; they were not rerun.",
+      "status": "passed",
+      "source_head": "f822f0929f53b160e568f2569bc9e24e6a2efca4",
+      "started_at_utc": "2026-09-29T00:01:03.5804535Z",
+      "finished_at_utc": "2026-09-29T00:02:54.6221774Z",
+      "source_unchanged": true,
+      "source_manifest_sha256": "60079157d0bd978cd4b2b5df7109c6c734c8083829ce840ab2502f0126372963",
+      "checks": [
+        {
+          "name": "publication-family",
+          "exit_code": 0,
+          "sha256": "2a6eac2140e0aa6b97b3d0cb2385a8d5b24f6728ac445973c1ba0b1e0a6cc2e9",
+          "counts": {
+            "summaries": 1,
+            "failed": 0,
+            "ignored": 0,
+            "passed": 53
+          }
+        },
+        {
+          "name": "correction-publication",
+          "exit_code": 0,
+          "sha256": "d9500fbeea87b5c05b4873e4e182dac1c906d5c9549611f7a3265fe247a1e4bc",
+          "counts": {
+            "summaries": 1,
+            "failed": 0,
+            "ignored": 0,
+            "passed": 15
+          }
+        },
+        {
+          "name": "owned-postgresql-initialization",
+          "exit_code": 0,
+          "sha256": "2fe6e72a1fc70579fc280ee1569ea1fcf3f4353dc1c55c0e4515d50273d52629",
+          "counts": {
+            "ignored": 0,
+            "summaries": 0,
+            "failed": 0,
+            "passed": 0
+          }
+        },
+        {
+          "name": "canonical-source-download",
+          "exit_code": 0,
+          "sha256": "05fe52d6607bc93f29ac188fb0d5f0916e0e41f6fd8553849d270f7ec8c9e7be",
+          "counts": {
+            "ignored": 0,
+            "summaries": 1,
+            "failed": 0,
+            "passed": 7
+          }
+        }
+      ]
+    }
+  ],
+  "evidence_preparation": "The screenshot-review helper was first invoked before the canonical invocation receipt existed and failed without creating a receipt. It succeeded after preflight wrote that receipt; this was evidence preparation timing, not product acceptance failure."
+}

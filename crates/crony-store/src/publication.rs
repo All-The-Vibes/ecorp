@@ -1592,7 +1592,7 @@ async fn ensure_actor_role_tx(
     .await?;
     if role != expected_role {
         return Err(anyhow!(
-            "publication authorization role changed from {expected_role} to {role}"
+            "forbidden: publication authorization role changed from {expected_role} to {role}"
         ));
     }
     if !matches!(role.as_str(), "owner" | "admin" | "manager") {
@@ -2863,7 +2863,7 @@ const PUBLICATION_PUBLISHER_CREDENTIAL_LOCK_SQL: &str = r#"
       AND publisher_id = $2
       AND credential_hash = $3
       AND revoked_at IS NULL
-      AND expires_at > now()
+      AND expires_at > clock_timestamp()
     FOR UPDATE
 "#;
 
@@ -3182,7 +3182,7 @@ mod tests {
             "publisher_id = $2",
             "credential_hash = $3",
             "revoked_at IS NULL",
-            "expires_at > now()",
+            "expires_at > clock_timestamp()",
         ] {
             assert!(
                 query.contains(predicate),

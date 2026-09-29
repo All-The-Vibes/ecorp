@@ -7999,68 +7999,7 @@ impl PgStore {
         artifact_id: Uuid,
         actor_id: Uuid,
     ) -> Result<Option<StoredArtifact>> {
-        let row = sqlx::query(
-            r#"
-            SELECT artifact.id, artifact.corp_id, artifact.task_id, artifact.run_id,
-                   artifact.producer_agent_id, artifact.producer_runner_id,
-                   artifact.verifier, artifact.object_key, artifact.uri,
-                    artifact.sha256, artifact.media_type, artifact.bytes,
-                    artifact.artifact_role, artifact.file_name, artifact.metadata,
-                    artifact.provenance_signature, artifact.retention_until
-            FROM artifacts artifact
-            JOIN tasks task ON task.id = artifact.task_id AND task.corp_id = artifact.corp_id
-            JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
-            JOIN room_memberships membership
-              ON membership.room_id = mission.room_id AND membership.actor_id = $3
-            WHERE artifact.id = $1 AND artifact.corp_id = $2
-              AND artifact.status = 'ready'
-              AND (
-                artifact.artifact_role <> 'source_deliverable'
-                -- Only absence of both fields identifies immutable historical exports.
-                OR NOT (artifact.metadata ? 'verified_tree' OR artifact.metadata ? 'source_verification')
-                OR EXISTS (
-                    SELECT 1 FROM source_deliverables deliverable
-                    JOIN runs run ON run.id = deliverable.run_id
-                      AND run.corp_id = deliverable.corp_id AND run.task_id = deliverable.task_id
-                    WHERE deliverable.artifact_id = artifact.id
-                      AND deliverable.corp_id = artifact.corp_id
-                      AND deliverable.task_id = artifact.task_id
-                      AND run.id = artifact.run_id
-                      AND run.agent_id = artifact.producer_agent_id
-                      AND run.runner_id = artifact.producer_runner_id
-                      AND deliverable.form = artifact.metadata->>'form'
-                      AND deliverable.verification_sha256 = run.verification_sha256
-                      AND deliverable.verification_sha256 = artifact.metadata->>'verification_sha256'
-                      AND artifact.sha256 = run.deliverable_sha256
-                      AND deliverable.base_commit = run.workspace_base_commit
-                      AND deliverable.base_commit = artifact.metadata->>'base_commit'
-                      AND (run.source_base_commit IS NULL OR run.source_base_commit = deliverable.base_commit)
-                      AND (task.contract->>'source_base_commit' IS NULL
-                           OR task.contract->>'source_base_commit' = deliverable.base_commit)
-                      AND (
-                        run.verification_status = 'passed'
-                        -- Reviewers must inspect the accepted automated result before deciding.
-                        OR (run.verification_status = 'waiting_for_approval' AND EXISTS (
-                            SELECT 1 FROM verification_requests request
-                            WHERE request.run_id = run.id AND request.corp_id = run.corp_id
-                              AND request.task_id = run.task_id AND request.status = 'pending'
-                        ))
-                      )
-                )
-              )
-            "#,
-        )
-        .bind(artifact_id)
-        .bind(corp_id)
-        .bind(actor_id)
-        .fetch_optional(&self.pool)
-        .await?;
-        Ok(row.map(map_stored_artifact).filter(|artifact| {
-            artifact.artifact_role != "source_deliverable"
-                || (artifact.metadata.get("verified_tree").is_none()
-                    && artifact.metadata.get("source_verification").is_none())
-                || crony_domain::SourceVerification::from_payload(&artifact.metadata).is_ok()
-        }))
+        artifact_for_download_using(&self.pool, corp_id, artifact_id, actor_id).await
     }
 
     pub async fn verification_artifact_for_recovery(
@@ -15265,6 +15204,76 @@ fn map_factory_verification_recovery(
         created_at: row.get("created_at"),
         updated_at: row.get("updated_at"),
     })
+}
+
+async fn artifact_for_download_using<'e>(
+    executor: impl sqlx::Executor<'e, Database = Postgres>,
+    corp_id: Uuid,
+    artifact_id: Uuid,
+    actor_id: Uuid,
+) -> Result<Option<StoredArtifact>> {
+    let row = sqlx::query(
+        r#"
+        SELECT artifact.id, artifact.corp_id, artifact.task_id, artifact.run_id,
+               artifact.producer_agent_id, artifact.producer_runner_id,
+               artifact.verifier, artifact.object_key, artifact.uri,
+                artifact.sha256, artifact.media_type, artifact.bytes,
+                artifact.artifact_role, artifact.file_name, artifact.metadata,
+                artifact.provenance_signature, artifact.retention_until
+        FROM artifacts artifact
+        JOIN tasks task ON task.id = artifact.task_id AND task.corp_id = artifact.corp_id
+        JOIN missions mission ON mission.id = task.mission_id AND mission.corp_id = task.corp_id
+        JOIN room_memberships membership
+          ON membership.room_id = mission.room_id AND membership.actor_id = $3
+        WHERE artifact.id = $1 AND artifact.corp_id = $2
+          AND artifact.status = 'ready'
+          AND (
+            artifact.artifact_role <> 'source_deliverable'
+            -- Only absence of both fields identifies immutable historical exports.
+            OR NOT (artifact.metadata ? 'verified_tree' OR artifact.metadata ? 'source_verification')
+            OR EXISTS (
+                SELECT 1 FROM source_deliverables deliverable
+                JOIN runs run ON run.id = deliverable.run_id
+                  AND run.corp_id = deliverable.corp_id AND run.task_id = deliverable.task_id
+                WHERE deliverable.artifact_id = artifact.id
+                  AND deliverable.corp_id = artifact.corp_id
+                  AND deliverable.task_id = artifact.task_id
+                  AND run.id = artifact.run_id
+                  AND run.agent_id = artifact.producer_agent_id
+                  AND run.runner_id = artifact.producer_runner_id
+                  AND deliverable.form = artifact.metadata->>'form'
+                  AND deliverable.verification_sha256 = run.verification_sha256
+                  AND deliverable.verification_sha256 = artifact.metadata->>'verification_sha256'
+                  AND artifact.sha256 = run.deliverable_sha256
+                  AND deliverable.base_commit = run.workspace_base_commit
+                  AND deliverable.base_commit = artifact.metadata->>'base_commit'
+                  AND (run.source_base_commit IS NULL OR run.source_base_commit = deliverable.base_commit)
+                  AND (task.contract->>'source_base_commit' IS NULL
+                       OR task.contract->>'source_base_commit' = deliverable.base_commit)
+                  AND (
+                    run.verification_status = 'passed'
+                    -- Reviewers must inspect the accepted automated result before deciding.
+                    OR (run.verification_status = 'waiting_for_approval' AND EXISTS (
+                        SELECT 1 FROM verification_requests request
+                        WHERE request.run_id = run.id AND request.corp_id = run.corp_id
+                          AND request.task_id = run.task_id AND request.status = 'pending'
+                    ))
+                  )
+            )
+          )
+        "#,
+    )
+    .bind(artifact_id)
+    .bind(corp_id)
+    .bind(actor_id)
+    .fetch_optional(executor)
+    .await?;
+    Ok(row.map(map_stored_artifact).filter(|artifact| {
+        artifact.artifact_role != "source_deliverable"
+            || (artifact.metadata.get("verified_tree").is_none()
+                && artifact.metadata.get("source_verification").is_none())
+            || crony_domain::SourceVerification::from_payload(&artifact.metadata).is_ok()
+    }))
 }
 
 fn map_stored_artifact(row: sqlx::postgres::PgRow) -> StoredArtifact {

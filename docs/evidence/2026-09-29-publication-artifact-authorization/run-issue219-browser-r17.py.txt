@@ -1,0 +1,106 @@
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+
+EV = Path(__file__).resolve().parent
+WT = Path(r'<USERPROFILE>\.codex\worktrees\issue219-publication\ecorp')
+QA = Path(r'<USERPROFILE>\code\qa\ecorp-issue219-browser-r17')
+DRIVER = EV / 'issue219-browser-driver-r17.ps1'
+RECEIPT = EV / 'issue219-browser-r17.json'
+LOG = EV / 'issue219-browser-r17.log'
+NODE = Path(r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\node-v24.21.0-win-x64\node.exe')
+build_path = EV / 'issue219-acceptance-build-r9.json'
+build = json.loads(build_path.read_text(encoding='utf-8-sig'))
+assert build['status'] == 'passed' and build['source_unchanged']
+source = build['source']
+
+
+def sha(path):
+    with Path(path).open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def git(*args):
+    return subprocess.check_output(['git', '-C', str(WT), *args], text=True).strip()
+
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def verify():
+    assert git('rev-parse', 'HEAD') == source['head']
+    assert git('rev-parse', 'HEAD^{tree}') == source['parent_tree']
+    # Preserve leading spaces in porcelain entries; trim only the final newline.
+    observed = subprocess.check_output(['git', '-C', str(WT), 'status', '--porcelain=v1'], text=True).splitlines()
+    assert observed == source['status'], 'Source status changed since the acceptance build'
+    inventory = set(git('ls-files', '--cached', '--others', '--exclude-standard').splitlines())
+    assert inventory == {entry['path'] for entry in source['files']}, 'Source inventory changed'
+    for entry in source['files']:
+        assert sha(WT / entry['path']) == entry['sha256'], 'Source changed: ' + entry['path']
+    for entry in build['binaries']:
+        assert sha(entry['path']) == entry['sha256'], 'Acceptance binary changed: ' + entry['path']
+
+
+for path in (QA, RECEIPT, LOG):
+    assert not path.exists(), f'Preserve existing resource: {path}'
+verify()
+receipt = {
+    'issue': 219, 'status': 'running', 'started_at_utc': now(), 'head': source['head'],
+    'head_tree': source['parent_tree'], 'candidate_is_uncommitted': True,
+    'source_binding': str(build_path), 'source_binding_sha256': sha(build_path),
+    'source_files_count': len(source['files']), 'candidate_status': source['status'],
+    'fixture': str(QA), 'real_provider_calls': 0, 'real_github_mutations': 0,
+    'driver': str(DRIVER), 'driver_sha256': sha(DRIVER),
+    'browser_driver_sha256': sha(EV / 'issue219-browser-native-r17.mjs'),
+    'binaries': build['binaries'],
+}
+
+
+def save():
+    RECEIPT.write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
+
+
+save()
+child_env = dict(os.environ)
+for key in list(child_env):
+    if key.startswith(('CRONY_', 'ECORP_', 'PG', 'GH_', 'GITHUB_', 'AZURE_', 'GIT_')) or key in {
+        'DATABASE_URL', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'COPILOT_GITHUB_TOKEN',
+        'NODE_OPTIONS', 'CARGO_TARGET_DIR', 'RUSTUP_TOOLCHAIN',
+    }:
+        child_env.pop(key, None)
+child_env['PATH'] = str(NODE.parent) + ';' + child_env['PATH']
+args = ['pwsh', '-NoProfile', '-File', str(DRIVER), '-FixtureRoot', str(QA),
+        '-PgBin', r'<USERPROFILE>\AppData\Local\Programs\ecorp-tools\postgresql-17.10\pgsql\bin',
+        '-ServerPort', '18925', '-PostgresPort', '59125', '-WebPort', '18565', '-Execute']
+try:
+    with LOG.open('wb') as output:
+        result = subprocess.run(args, cwd=WT, env=child_env, stdout=output, stderr=subprocess.STDOUT,
+                                creationflags=subprocess.CREATE_NO_WINDOW)
+    receipt['exit_code'] = result.returncode
+    report_path = QA / 'evidence/fixture-report.json'
+    if report_path.exists():
+        report = json.loads(report_path.read_text(encoding='utf-8-sig'))
+        receipt['fixture_report'] = report
+        receipt['fixture_report_sha256'] = sha(report_path)
+        receipt['status'] = 'passed' if result.returncode == 0 and report['status'] == 'passed' else 'failed'
+    else:
+        receipt['status'] = 'failed'
+        receipt['missing_fixture_report'] = True
+finally:
+    try:
+        verify()
+        receipt['source_and_binaries_unchanged'] = True
+    except Exception as error:
+        receipt['status'] = 'failed'
+        receipt['source_and_binaries_unchanged'] = False
+        receipt['identity_failure'] = str(error)
+    receipt['log_sha256'] = sha(LOG) if LOG.exists() else None
+    receipt['finished_at_utc'] = now()
+    save()
+    child_env.clear()
+print(json.dumps({key: receipt.get(key) for key in ['status', 'head', 'exit_code', 'source_and_binaries_unchanged', 'fixture']}, indent=2))
+raise SystemExit(0 if receipt['status'] == 'passed' else 1)

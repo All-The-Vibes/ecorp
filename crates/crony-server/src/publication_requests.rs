@@ -303,7 +303,7 @@ async fn renew(
     let scope = publisher_scope(&state, &headers, corp_id, request.repository).await?;
     let requested = state
         .store
-        .human_requested_publication_for_publisher(&scope, publication_id, None)
+        .human_requested_publication_for_publisher(&scope, publication_id)
         .await
         .map_err(workload_error)?;
     let outcome = state
@@ -334,7 +334,7 @@ async fn checkpoint(
     let scope = publisher_scope(&state, &headers, corp_id, request.repository).await?;
     let requested = state
         .store
-        .human_requested_publication_for_publisher(&scope, publication_id, None)
+        .human_requested_publication_for_publisher(&scope, publication_id)
         .await
         .map_err(workload_error)?;
     // The native transaction distinguishes failure-only cleanup from renewal
@@ -365,24 +365,17 @@ async fn artifact(
     Json(request): Json<RequestedPublicationArtifactRequest>,
 ) -> Result<Response, ApiError> {
     let scope = publisher_scope(&state, &headers, corp_id, request.repository).await?;
-    let requested = state
+    let artifact = state
         .store
-        .human_requested_publication_for_publisher(
+        .human_requested_publication_artifact_for_publisher(
             &scope,
             publication_id,
-            Some(PublicationLeaseControl {
+            PublicationLeaseControl {
                 publisher_token: request.publisher_token,
                 expected_version: request.expected_version,
-            }),
+            },
         )
         .await
         .map_err(workload_error)?;
-    let publication = requested.publication;
-    let artifact = state
-        .store
-        .artifact_for_download(corp_id, publication.artifact_id, publication.actor_id)
-        .await
-        .map_err(workload_error)?
-        .ok_or_else(|| ApiError::not_found("requested publication artifact was not found"))?;
     verified_artifact_response(&state, &artifact).await
 }
