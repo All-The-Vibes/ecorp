@@ -1,0 +1,527 @@
+TAP version 13
+# Subtest: Factory exact-run navigation replaces a remembered newer outcome before mission remount
+ok 1 - Factory exact-run navigation replaces a remembered newer outcome before mission remount
+  ---
+  duration_ms: 3.7065
+  type: 'test'
+  ...
+# Subtest: run navigation ignores the duplicate activity marker in a hidden Factory tab
+ok 2 - run navigation ignores the duplicate activity marker in a hidden Factory tab
+  ---
+  duration_ms: 11.6962
+  type: 'test'
+  ...
+# Subtest: artifact navigation chooses its exact producer while mission-only navigation preserves the current choice
+ok 3 - artifact navigation chooses its exact producer while mission-only navigation preserves the current choice
+  ---
+  duration_ms: 1.0885
+  type: 'test'
+  ...
+# Subtest: unavailable run/task/mission cannot overwrite remembered evidence or open another run
+ok 4 - unavailable run/task/mission cannot overwrite remembered evidence or open another run
+  ---
+  duration_ms: 2.3079
+  type: 'test'
+  ...
+# Subtest: storage failure or obsolete viewer fails closed before navigation
+ok 5 - storage failure or obsolete viewer fails closed before navigation
+  ---
+  duration_ms: 1.8857
+  type: 'test'
+  ...
+# Subtest: explicit navigation writes only the selected viewer scope and only the run identity
+ok 6 - explicit navigation writes only the selected viewer scope and only the run identity
+  ---
+  duration_ms: 1.0349
+  type: 'test'
+  ...
+# Subtest: Factory activity prioritizes the exact outcome review, then tool approval, before newer work
+ok 7 - Factory activity prioritizes the exact outcome review, then tool approval, before newer work
+  ---
+  duration_ms: 3.2985
+  type: 'test'
+  ...
+# Subtest: selection ignores terminal, denied and foreign tool approvals without inventing a run
+ok 8 - selection ignores terminal, denied and foreign tool approvals without inventing a run
+  ---
+  duration_ms: 0.2335
+  type: 'test'
+  ...
+# Subtest: terminal runs cannot become reviewable or active from dangling pending decision records
+ok 9 - terminal runs cannot become reviewable or active from dangling pending decision records
+  ---
+  duration_ms: 21.0973
+  type: 'test'
+  ...
+# Subtest: live task, agent, control, timestamps and safe activity come from one scope without mutation
+ok 10 - live task, agent, control, timestamps and safe activity come from one scope without mutation
+  ---
+  duration_ms: 1.0781
+  type: 'test'
+  ...
+# Subtest: a stale Running intake never claims that a cancelled provider is active
+ok 11 - a stale Running intake never claims that a cancelled provider is active
+  ---
+  duration_ms: 0.9128
+  type: 'test'
+  ...
+# Subtest: pending exact-run outcome review is distinct from an active provider and completion
+ok 12 - pending exact-run outcome review is distinct from an active provider and completion
+  ---
+  duration_ms: 0.602
+  type: 'test'
+  ...
+# Subtest: tool authority and unavailable decision context do not become outcome approval
+ok 13 - tool authority and unavailable decision context do not become outcome approval
+  ---
+  duration_ms: 1.5926
+  type: 'test'
+  ...
+# Subtest: a completed run is not automatically a completed mission or published application
+ok 14 - a completed run is not automatically a completed mission or published application
+  ---
+  duration_ms: 0.8888
+  type: 'test'
+  ...
+# Subtest: retained data cannot claim current execution: {"connection":"offline"}
+ok 15 - retained data cannot claim current execution: {"connection":"offline"}
+  ---
+  duration_ms: 0.8001
+  type: 'test'
+  ...
+# Subtest: retained data cannot claim current execution: {"connection":"connecting"}
+ok 16 - retained data cannot claim current execution: {"connection":"connecting"}
+  ---
+  duration_ms: 0.5998
+  type: 'test'
+  ...
+# Subtest: retained data cannot claim current execution: {"snapshotFailed":true}
+ok 17 - retained data cannot claim current execution: {"snapshotFailed":true}
+  ---
+  duration_ms: 0.5291
+  type: 'test'
+  ...
+# Subtest: retained data cannot claim current execution: {"snapshotReceivedAt":null}
+ok 18 - retained data cannot claim current execution: {"snapshotReceivedAt":null}
+  ---
+  duration_ms: 0.371
+  type: 'test'
+  ...
+# Subtest: grace, offline and wrong-Corp runner records cannot establish provider liveness
+ok 19 - grace, offline and wrong-Corp runner records cannot establish provider liveness
+  ---
+  duration_ms: 1.2338
+  type: 'test'
+  ...
+# Subtest: runner loss and uncertain teardown remain unknown until a positive termination receipt
+ok 20 - runner loss and uncertain teardown remain unknown until a positive termination receipt
+  ---
+  duration_ms: 1.471
+  type: 'test'
+  ...
+# Subtest: verifier-only runs never appear as a running model
+ok 21 - verifier-only runs never appear as a running model
+  ---
+  duration_ms: 0.5987
+  type: 'test'
+  ...
+# Subtest: quarantine and protected stops stay prominent even with stale transport
+ok 22 - quarantine and protected stops stay prominent even with stale transport
+  ---
+  duration_ms: 1.1813
+  type: 'test'
+  ...
+# Subtest: failed verification, cancelled work and unknown execution modes remain explicit
+ok 23 - failed verification, cancelled work and unknown execution modes remain explicit
+  ---
+  duration_ms: 1.1674
+  type: 'test'
+  ...
+# Subtest: missing, duplicate or foreign task context cannot fall back to another run
+ok 24 - missing, duplicate or foreign task context cannot fall back to another run
+  ---
+  duration_ms: 1.0841
+  type: 'test'
+  ...
+# Subtest: activity is scoped, deduplicated, ordered, bounded and never reveals raw payloads
+ok 25 - activity is scoped, deduplicated, ordered, bounded and never reveals raw payloads
+  ---
+  duration_ms: 3.9231
+  type: 'test'
+  ...
+# Subtest: missing start, invalid clocks and backwards timestamps do not invent a duration
+ok 26 - missing start, invalid clocks and backwards timestamps do not invent a duration
+  ---
+  duration_ms: 1.6282
+  type: 'test'
+  ...
+# Subtest: expired leases and foreign attribution do not display an active controller
+ok 27 - expired leases and foreign attribution do not display an active controller
+  ---
+  duration_ms: 1.759
+  type: 'test'
+  ...
+# Subtest: provider control requires fresh exact ownership and no recorded execution boundary
+ok 28 - provider control requires fresh exact ownership and no recorded execution boundary
+  ---
+  duration_ms: 5.6863
+  type: 'test'
+  ...
+# Subtest: activity supports non-Factory work and an unavailable exact selection without inventing intake or a mission
+ok 29 - activity supports non-Factory work and an unavailable exact selection without inventing intake or a mission
+  ---
+  duration_ms: 0.9003
+  type: 'test'
+  ...
+# Subtest: agent activity honors the exact pointer and does not substitute a recorded run after context loss
+ok 30 - agent activity honors the exact pointer and does not substitute a recorded run after context loss
+  ---
+  duration_ms: 1.9565
+  type: 'test'
+  ...
+# Subtest: an agent without a current pointer may show exact recorded review but cannot claim current execution
+ok 31 - an agent without a current pointer may show exact recorded review but cannot claim current execution
+  ---
+  duration_ms: 0.9396
+  type: 'test'
+  ...
+# Subtest: a concrete breaker reason uses only a matching native stage and allowlisted metric
+ok 32 - a concrete breaker reason uses only a matching native stage and allowlisted metric
+  ---
+  duration_ms: 2.6063
+  type: 'test'
+  ...
+# Subtest: a recorded constrain stage cannot mask a current decision, verification or terminal outcome
+ok 33 - a recorded constrain stage cannot mask a current decision, verification or terminal outcome
+  ---
+  duration_ms: 3.0399
+  type: 'test'
+  ...
+# Subtest: actual React detail component reuses current classes, native disclosure and escaped text
+ok 34 - actual React detail component reuses current classes, native disclosure and escaped text
+  ---
+  duration_ms: 17.9196
+  type: 'test'
+  ...
+# Subtest: the shared panel keeps current state prominent and recorded details collapsed
+ok 35 - the shared panel keeps current state prominent and recorded details collapsed
+  ---
+  duration_ms: 2.4721
+  type: 'test'
+  ...
+# Subtest: actual App inspector resolves exact hidden and retired identities without replacing a missing selection
+ok 36 - actual App inspector resolves exact hidden and retired identities without replacing a missing selection
+  ---
+  duration_ms: 36.1598
+  type: 'test'
+  ...
+# Subtest: actual Mission agent callback opens authorized historical identities without changing the workspace
+ok 37 - actual Mission agent callback opens authorized historical identities without changing the workspace
+  ---
+  duration_ms: 0.3219
+  type: 'test'
+  ...
+# Subtest: actual AgentDesk navigates to its exact run and passes a live lease only through the existing message action
+ok 38 - actual AgentDesk navigates to its exact run and passes a live lease only through the existing message action
+  ---
+  duration_ms: 17.0877
+  type: 'test'
+  ...
+# Subtest: actual AgentDesk hides live commands for review, historical, stale, terminated or mismatched run context
+ok 39 - actual AgentDesk hides live commands for review, historical, stale, terminated or mismatched run context
+  ---
+  duration_ms: 63.4779
+  type: 'test'
+  ...
+# Subtest: retired agent inspection is read-only even with an inconsistent current-run pointer
+ok 40 - retired agent inspection is read-only even with an inconsistent current-run pointer
+  ---
+  duration_ms: 8.7811
+  type: 'test'
+  ...
+# Subtest: actual AgentDesk does not use expired, foreign or role-ineligible leases for steering
+ok 41 - actual AgentDesk does not use expired, foreign or role-ineligible leases for steering
+  ---
+  duration_ms: 34.1094
+  type: 'test'
+  ...
+# Subtest: the Factory integration uses the existing exact-run selector, scoped snapshot and old callbacks
+ok 42 - the Factory integration uses the existing exact-run selector, scoped snapshot and old callbacks
+  ---
+  duration_ms: 4.5305
+  type: 'test'
+  ...
+# Subtest: a burst of 1000 streamed events schedules one snapshot instead of 1000 requests
+ok 43 - a burst of 1000 streamed events schedules one snapshot instead of 1000 requests
+  ---
+  duration_ms: 1.8433
+  type: 'test'
+  ...
+# Subtest: events arriving during a request produce exactly one trailing snapshot
+ok 44 - events arriving during a request produce exactly one trailing snapshot
+  ---
+  duration_ms: 4.0441
+  type: 'test'
+  ...
+# Subtest: the final event during the trailing request is not dropped
+ok 45 - the final event during the trailing request is not dropped
+  ---
+  duration_ms: 0.8561
+  type: 'test'
+  ...
+# Subtest: disposing before a scheduled refresh prevents any fetch
+ok 46 - disposing before a scheduled refresh prevents any fetch
+  ---
+  duration_ms: 0.4465
+  type: 'test'
+  ...
+# Subtest: disposing an actor/Corp scope aborts its request and drops trailing work
+ok 47 - disposing an actor/Corp scope aborts its request and drops trailing work
+  ---
+  duration_ms: 1.8314
+  type: 'test'
+  ...
+# Subtest: refresh failures are handled and a later event can still refresh
+ok 48 - refresh failures are handled and a later event can still refresh
+  ---
+  duration_ms: 0.7416
+  type: 'test'
+  ...
+# Subtest: a disposed scope does not report an obsolete aborted read as a new UI error
+ok 49 - a disposed scope does not report an obsolete aborted read as a new UI error
+  ---
+  duration_ms: 0.6174
+  type: 'test'
+  ...
+# Subtest: websocket events use the coalescer and cleanup cancels its read scope
+ok 50 - websocket events use the coalescer and cleanup cancels its read scope
+  ---
+  duration_ms: 4.4205
+  type: 'test'
+  ...
+# Subtest: initial connection is bounded, cancellable and offers retry rather than mission restart
+ok 51 - initial connection is bounded, cancellable and offers retry rather than mission restart
+  ---
+  duration_ms: 4.7059
+  type: 'test'
+  ...
+# Subtest: actual App refreshes visible activity and connection views without reconnecting the event socket
+ok 52 - actual App refreshes visible activity and connection views without reconnecting the event socket
+  ---
+  duration_ms: 180.6422
+  type: 'test'
+  ...
+# Subtest: WorkResultCard exposes its status and supplied content with metadata collapsed by default
+ok 53 - WorkResultCard exposes its status and supplied content with metadata collapsed by default
+  ---
+  duration_ms: 11.1065
+  type: 'test'
+  ...
+# Subtest: ready PR retains its exact URL and only an explicit download invokes the matching callback
+ok 54 - ready PR retains its exact URL and only an explicit download invokes the matching callback
+  ---
+  duration_ms: 10.5318
+  type: 'test'
+  ...
+# Subtest: loading, unavailable and no-publication states do not fabricate a PR or perform actions
+ok 55 - loading, unavailable and no-publication states do not fabricate a PR or perform actions
+  ---
+  duration_ms: 3.7444
+  type: 'test'
+  ...
+# Subtest: a historical review mismatch changes selection only through explicit Go to delivered result
+ok 56 - a historical review mismatch changes selection only through explicit Go to delivered result
+  ---
+  duration_ms: 2.9996
+  type: 'test'
+  ...
+# Subtest: an unavailable delivered-run target preserves the historical selection and only offers refresh
+ok 57 - an unavailable delivered-run target preserves the historical selection and only offers refresh
+  ---
+  duration_ms: 163.9389
+  type: 'test'
+  ...
+# Subtest: a failed publication with a recorded PR remains inspectable without being labeled Published
+ok 58 - a failed publication with a recorded PR remains inspectable without being labeled Published
+  ---
+  duration_ms: 5.8897
+  type: 'test'
+  ...
+# Subtest: Published is not merged or deployed and its collapsed details never invent a running preview
+ok 59 - Published is not merged or deployed and its collapsed details never invent a running preview
+  ---
+  duration_ms: 5.4222
+  type: 'test'
+  ...
+# Subtest: expired artifact retention does not hide an existing PR or replace server download validation
+ok 60 - expired artifact retention does not hide an existing PR or replace server download validation
+  ---
+  duration_ms: 102.3767
+  type: 'test'
+  ...
+# Subtest: actual hook hides prior result before cleanup and aborts on each exact scope change
+ok 61 - actual hook hides prior result before cleanup and aborts on each exact scope change
+  ---
+  duration_ms: 41.078
+  type: 'test'
+  ...
+# Subtest: actual hook fences late success and failure before cleanup and after replacement
+ok 62 - actual hook fences late success and failure before cleanup and after replacement
+  ---
+  duration_ms: 14.7151
+  type: 'test'
+  ...
+# Subtest: actual hook close and reopen with identical IDs cannot revive old ready or pending data
+ok 63 - actual hook close and reopen with identical IDs cannot revive old ready or pending data
+  ---
+  duration_ms: 15.403
+  type: 'test'
+  ...
+# Subtest: actual hook treats positive revision as one refresh hint and never retries failure on render
+ok 64 - actual hook treats positive revision as one refresh hint and never retries failure on render
+  ---
+  duration_ms: 33.9908
+  type: 'test'
+  ...
+# Subtest: actual MissionCard activity stays on the pinned review and follows only explicit evidence selection
+ok 65 - actual MissionCard activity stays on the pinned review and follows only explicit evidence selection
+  ---
+  duration_ms: 47.2882
+  type: 'test'
+  ...
+# Subtest: actual MissionCard preserves an unavailable explicit choice until the reader chooses a visible run
+ok 66 - actual MissionCard preserves an unavailable explicit choice until the reader chooses a visible run
+  ---
+  duration_ms: 16.0391
+  type: 'test'
+  ...
+# Subtest: actual MissionCard requires its wired snapshot freshness and does not invent Factory context
+ok 67 - actual MissionCard requires its wired snapshot freshness and does not invent Factory context
+  ---
+  duration_ms: 32.1539
+  type: 'test'
+  ...
+# Subtest: actual App origin-unavailable branch offers manual Refresh work context with no PR CTA
+ok 68 - actual App origin-unavailable branch offers manual Refresh work context with no PR CTA
+  ---
+  duration_ms: 8.7933
+  type: 'test'
+  ...
+# Subtest: actual App first-hop retry exposes the authorized result without moving pinned evidence
+ok 69 - actual App first-hop retry exposes the authorized result without moving pinned evidence
+  ---
+  duration_ms: 25.6395
+  type: 'test'
+  ...
+# Subtest: actual App fallback reports unavailable review details for an unresolved run or request
+ok 70 - actual App fallback reports unavailable review details for an unresolved run or request
+  ---
+  duration_ms: 11.1865
+  type: 'test'
+  ...
+# Subtest: actual work pickers retain a deep-linked historical mission outside the recent eight
+ok 71 - actual work pickers retain a deep-linked historical mission outside the recent eight
+  ---
+  duration_ms: 48.6904
+  type: 'test'
+  ...
+# Subtest: actual work pickers do not duplicate a recent selection or invent an absent mission
+ok 72 - actual work pickers do not duplicate a recent selection or invent an absent mission
+  ---
+  duration_ms: 51.2135
+  type: 'test'
+  ...
+# {"status":"passed","platform":"win32","checks":["trusted image executes with inherited request/output pipes","digest mismatch rejects executable before its first instruction","multiply linked executable rejected","writer after final digest denied by retained read/execute handle","replacement after final digest denied","pre-existing data writer rejects launch","pre-existing writable mapping rejects launch","wrong mapped image killed while suspended without running poison","real ancestor reparse retarget before CreateProcess rejects wrong image","retarget after mapped-image verification executes the already verified image"]}
+# Subtest: native evidence launch admits only the verified executable across filesystem races
+ok 73 - native evidence launch admits only the verified executable across filesystem races
+  ---
+  duration_ms: 3591.4302
+  type: 'test'
+  ...
+# Subtest: native wrapper rebuilds a poisoned Cargo artifact and rejects later private-executable tampering
+ok 74 - native wrapper rebuilds a poisoned Cargo artifact and rejects later private-executable tampering
+  ---
+  duration_ms: 3135.6024
+  type: 'test'
+  ...
+# Subtest: personal paths include drive-relative, prefixed, escaped and alternate separators
+ok 75 - personal paths include drive-relative, prefixed, escaped and alternate separators
+  ---
+  duration_ms: 2.2744
+  type: 'test'
+  ...
+# Subtest: normalized placeholders and ordinary prose remain valid
+ok 76 - normalized placeholders and ordinary prose remain valid
+  ---
+  duration_ms: 0.4369
+  type: 'test'
+  ...
+# Subtest: recursive packet scan and CLI reject a leak without printing its value
+ok 77 - recursive packet scan and CLI reject a leak without printing its value
+  ---
+  duration_ms: 25758.8259
+  type: 'test'
+  ...
+# Subtest: every retained PR226 packet including the latest correction is scanned
+ok 78 - every retained PR226 packet including the latest correction is scanned
+  ---
+  duration_ms: 1608.7849
+  type: 'test'
+  ...
+# Subtest: root and ancestor directory links cannot redirect an evidence scan
+ok 79 - root and ancestor directory links cannot redirect an evidence scan
+  ---
+  duration_ms: 692.0474
+  type: 'test'
+  ...
+# Subtest: nested and dangling directory links fail closed
+ok 80 - nested and dangling directory links fail closed
+  ---
+  duration_ms: 413.6301
+  type: 'test'
+  ...
+# Subtest: canonical containment rejects absolute cross-drive and UNC relative results
+ok 81 - canonical containment rejects absolute cross-drive and UNC relative results
+  ---
+  duration_ms: 0.4962
+  type: 'test'
+  ...
+# Subtest: actual Windows short alias succeeds while a linked ancestor still fails
+ok 82 - actual Windows short alias succeeds while a linked ancestor still fails
+  ---
+  duration_ms: 1074.4232
+  type: 'test'
+  ...
+# Subtest: native scanner rejects oversize sparse evidence
+ok 83 - native scanner rejects oversize sparse evidence
+  ---
+  duration_ms: 219.8396
+  type: 'test'
+  ...
+# Subtest: empty evidence and a file at the byte limit are accepted
+ok 84 - empty evidence and a file at the byte limit are accepted
+  ---
+  duration_ms: 925.4828
+  type: 'test'
+  ...
+# Subtest: native scanner rejects hard-linked evidence and preserves the shared file
+ok 85 - native scanner rejects hard-linked evidence and preserves the shared file
+  ---
+  duration_ms: 232.8544
+  type: 'test'
+  ...
+# Subtest: startup harness cleanup guards run in the required unit lane
+ok 86 - startup harness cleanup guards run in the required unit lane
+  ---
+  duration_ms: 1347.3153
+  type: 'test'
+  ...
+1..86
+# tests 86
+# suites 0
+# pass 86
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 43335.5464

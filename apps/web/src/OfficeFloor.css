@@ -526,13 +526,13 @@
 .pixel-office-empty { position: absolute; inset: 38% 36% auto 10%; display: grid; gap: 8px; padding: 15px; border: 1px solid #60755b; border-radius: 3px; background: #fffff5ee; font-size: 13px; }
 .pixel-office-empty button { min-height: 40px; border: 1px solid #923249; background: #a22543; color: #fff; }
 
-.view-floor .world-inspector-layer {
+.app-shell .world-inspector-layer {
   position: fixed;
   z-index: 150;
   inset: 0;
 }
 
-.view-floor .world-inspector {
+.app-shell .world-inspector {
   top: 16px;
   bottom: auto;
   right: 16px;
@@ -540,6 +540,10 @@
   max-height: calc(100dvh - 32px);
   overscroll-behavior: contain;
   border-radius: 8px;
+}
+
+.app-shell .world-inspector .agent-inspector {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (min-width: 1440px) {

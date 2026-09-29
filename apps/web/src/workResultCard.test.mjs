@@ -10,6 +10,7 @@ import * as originReader from './missionOriginContext.ts'
 import * as evidenceSelection from './evidenceSelection.ts'
 import * as workflow from './workflowContext.ts'
 import * as checkpointRecovery from './factoryCheckpointRecovery.ts'
+import * as activity from './runActivity.ts'
 
 // Actual components, hook and reader; only hook scheduling, transport and timers
 // are controlled. SSR/callback tests are not browser, download or runtime proof.
@@ -39,6 +40,9 @@ const { WorkResultCard } = evaluate(await compile('WorkResultCard.tsx'), {
 })
 const { PublishedResultCard } = evaluate(await compile('PublishedResultCard.tsx'), {
   'react/jsx-runtime': jsxRuntime, './WorkResultCard': { WorkResultCard },
+})
+const activityComponents = evaluate(await compile('RunActivityDetails.tsx'), {
+  'react/jsx-runtime': jsxRuntime, './runActivity': activity,
 })
 const hookSource = await compile('useMissionResultContext.ts')
 const ids = {
@@ -606,7 +610,7 @@ test('actual hook treats positive revision as one refresh hint and never retries
 // Keep App's actual MissionCard selection, hooks, dependent declarations and
 // result JSX. Omit unrelated dossier sections, not result predicates or actions.
 // This seam avoids mounting the office, networking globals or browser services.
-async function compileAppResultSlice() {
+async function compileAppResultSlice(includeActivity = false) {
   const source = await readFile(new URL('./App.tsx', import.meta.url), 'utf8')
   const file = ts.createSourceFile('App.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   assert.deepEqual(file.parseDiagnostics, [])
@@ -632,6 +636,13 @@ async function compileAppResultSlice() {
   }
   findSurface(root)
   assert.equal(surfaces.length, 1, 'select the actual result navigation target, not copied JSX')
+  if (includeActivity) {
+    const panels = root.children.filter((node) => ts.isJsxSelfClosingElement(node) && node.tagName.getText(file) === 'RunActivityPanel')
+    const evidence = root.children.filter((node) => ts.isJsxExpression(node) && node.getText(file).includes('id={`mission-evidence-panel-'))
+    assert.equal(panels.length, 1, 'retain the actual activity panel and its navigation callbacks')
+    assert.equal(evidence.length, 1, 'retain the actual conditional evidence selector')
+    surfaces.push(...panels, ...evidence)
+  }
   const identifiers = (node) => {
     const names = new Set()
     const visit = (child) => {
@@ -652,7 +663,7 @@ async function compileAppResultSlice() {
   }
   const selectedStatements = new Set()
   const selectedFunctions = new Set()
-  const required = new Set([...identifiers(surfaces[0]), ...identifiers(root.openingElement)])
+  const required = new Set([...surfaces.flatMap((node) => [...identifiers(node)]), ...identifiers(root.openingElement)])
   // Retain App's real guarded initial pin effect as well as the explicit selector.
   for (const statement of mission.body.statements) {
     if (ts.isExpressionStatement(statement) && ts.isCallExpression(statement.expression) &&
@@ -676,6 +687,7 @@ async function compileAppResultSlice() {
   for (const name of ['originRead', 'resultRead', 'evidenceRun', 'selectedEvidenceRunId']) {
     assert.ok(selectedStatements.has(declarations.get(name)), `actual ${name} wiring must remain in the seam`)
   }
+  if (includeActivity) assert.ok(selectedStatements.has(declarations.get('runActivity')), 'retain actual presenter inputs')
   const narrowedRoot = ts.factory.updateJsxElement(root, root.openingElement, surfaces, root.closingElement)
   const narrowedMission = ts.factory.updateFunctionDeclaration(
     mission, mission.modifiers, mission.asteriskToken, mission.name, mission.typeParameters,
@@ -688,7 +700,7 @@ async function compileAppResultSlice() {
   const importedModules = new Set([
     'react', './workflowContext', './evidenceSelection', './useMissionOriginContext',
     './useMissionResultContext', './missionResultContext', './WorkResultCard', './PublishedResultCard',
-    './factoryCheckpointRecovery',
+    './factoryCheckpointRecovery', './runActivity', './RunActivityDetails',
   ])
   const imports = file.statements.filter((node) =>
     ts.isImportDeclaration(node) && importedModules.has(node.moduleSpecifier.text))
@@ -710,6 +722,7 @@ async function compileAppResultSlice() {
 }
 
 const appResultSource = await compileAppResultSlice()
+const appActivitySource = await compileAppResultSlice(true)
 const originHookSource = await compile('useMissionOriginContext.ts')
 const appApiUrl = 'http://ecorp-fixture.invalid'
 const deliveredRunId = '00000000-0000-4000-8000-000000000145'
@@ -734,7 +747,7 @@ function appOrigin(kind = 'factory') {
   }
 }
 
-function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
+function appResultFixture({ pinnedRunId = deliveredRunId, includeActivity = false, ...overrides } = {}) {
   const slots = [], effects = [], calls = [], storageWrites = [], actions = [], clock = fakeClock()
   const animationFrames = [], focusCalls = []
   let cursor = 0, dirty = false, tree
@@ -796,13 +809,14 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
     server: appApiUrl, corpId: ids.corpId, actorId: ids.actorId, missionId: ids.missionId,
   })
   const storage = new Map([[storageKey, pinnedRunId]])
-  const { AppMissionResult } = evaluate(appResultSource, {
+  const { AppMissionResult } = evaluate(includeActivity ? appActivitySource : appResultSource, {
     react, 'react/jsx-runtime': jsxRuntime,
     './workflowContext': workflow, './evidenceSelection': evidenceSelection,
     './factoryCheckpointRecovery': checkpointRecovery,
     './useMissionOriginContext': origin, './useMissionResultContext': result,
     './missionResultContext': reader, './WorkResultCard': { WorkResultCard },
     './PublishedResultCard': { PublishedResultCard },
+    './runActivity': activity, './RunActivityDetails': activityComponents,
     'app-test-environment': {
       API_URL: appApiUrl, api,
       window: {
@@ -814,7 +828,7 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
       },
       document: {
         getElementById(id) {
-          const target = elements(tree, 'div').find((node) => node.props.id === id)
+          const target = hosts(tree).find((node) => node.props.id === id)
           assert.ok(target, 'focus must target a currently rendered App result surface')
           assert.equal(target.props.tabIndex, -1)
           return {
@@ -847,6 +861,7 @@ function appResultFixture({ pinnedRunId = deliveredRunId, ...overrides } = {}) {
     onDownloadDeliverable: () => { actions.push('download') },
     onVerificationDecision: () => { actions.push('decide') },
     onViewAgents: () => { actions.push('agents') },
+    onViewAgent: (id) => { actions.push(['agent', id]) },
     onDiscuss: () => { actions.push('discuss') },
     ...overrides,
   }
@@ -892,6 +907,97 @@ function assertPendingOriginCard(tree) {
   assert.equal(elements(tree, 'a').length, 0)
   assert.equal(elements(tree, 'button').length, 0)
 }
+
+function missionActivityFixture(overrides = {}) {
+  const at = '2026-09-29T12:00:00Z'
+  return appResultFixture({
+    includeActivity: true,
+    mission: { id: ids.missionId, room_id: ids.roomId, status: 'running' },
+    tasks: [{ id: 'task-item-a', mission_id: ids.missionId, title: 'Exact selected task', assigned_agent_id: 'agent-a' }],
+    runs: [
+      { id: newerRunId, task_id: 'task-item-a', agent_id: 'agent-a', runner_id: 'runner-a', status: 'completed' },
+      { id: deliveredRunId, task_id: 'task-item-a', agent_id: 'agent-a', runner_id: 'runner-a', status: 'waiting_for_approval' },
+    ],
+    agents: [{ id: 'agent-a', name: 'Recorded owner', adapter: 'fake-process', current_run_id: null }],
+    verificationRequests: [{ run_id: deliveredRunId, task_id: 'task-item-a', status: 'pending',
+      gate_type: 'human_approval', gate: { type: 'human_approval', roles: ['member'], exclude_requester: false } }],
+    collaborationInput: {
+      now: Date.parse(at), connection: 'live', snapshotFailed: false, leases: [],
+      runners: [{ id: 'runner-a', corp_id: ids.corpId, connected: true, status: 'connected', last_seen_at: at }],
+    },
+    ...overrides,
+  })
+}
+
+function activityPanel(tree) {
+  const panels = elements(tree, 'section').filter((node) => node.props['data-testid'] === 'run-activity-panel')
+  assert.equal(panels.length, 1)
+  return panels[0]
+}
+
+test('actual MissionCard activity stays on the pinned review and follows only explicit evidence selection', () => {
+  const view = missionActivityFixture()
+  try {
+    view.update()
+    const panel = activityPanel(view.tree)
+    assert.equal(panel.props['data-run-id'], deliveredRunId)
+    assert.match(text(panel), /Awaiting review/)
+    assert.match(text(panel), /Exact selected task/)
+    assert.match(text(panel), /Recorded owner/)
+    assert.doesNotMatch(text(panel), /reported active/)
+    assert.deepEqual(view.actions, [], 'rendering must not issue a command')
+    button(panel, /^Inspect selected run evidence$/).props.onClick()
+    assert.deepEqual(view.focusCalls.map((call) => call.id), [
+      `mission-evidence-panel-${ids.missionId}`, `mission-evidence-panel-${ids.missionId}`,
+    ])
+    button(panel, /^View run agent$/).props.onClick()
+    assert.deepEqual(view.actions, [['agent', 'agent-a']])
+    const select = elements(view.tree, 'select').find((node) => node.props.id === `mission-evidence-${ids.missionId}`)
+    select.props.onChange({ target: { value: newerRunId } })
+    view.update()
+    assert.equal(activityPanel(view.tree).props['data-run-id'], newerRunId)
+    assert.match(text(activityPanel(view.tree)), /Completed/)
+    assert.equal(view.pinned, newerRunId)
+    view.update({ ...view.props, runs: [{ ...view.props.runs[0], id: olderRunId }, ...view.props.runs] })
+    assert.equal(activityPanel(view.tree).props['data-run-id'], newerRunId, 'a snapshot update cannot replace the viewed run')
+  } finally { view.unmount() }
+})
+
+test('actual MissionCard preserves an unavailable explicit choice until the reader chooses a visible run', () => {
+  const unavailable = '00000000-0000-4000-8000-000000000199'
+  const view = missionActivityFixture({ pinnedRunId: unavailable })
+  try {
+    view.update()
+    const panel = activityPanel(view.tree)
+    assert.equal(panel.props['data-run-id'], undefined)
+    assert.match(text(panel), /Context unconfirmed/)
+    assert.doesNotMatch(text(panel), /Recorded owner|Exact selected task|Awaiting review/)
+    assert.equal(view.pinned, unavailable)
+    button(panel, /^Choose a run to inspect$/).props.onClick()
+    assert.equal(view.focusCalls[0].id, `mission-evidence-panel-${ids.missionId}`)
+    assert.deepEqual(view.actions, [])
+    const select = elements(view.tree, 'select').find((node) => node.props.id === `mission-evidence-${ids.missionId}`)
+    select.props.onChange({ target: { value: deliveredRunId } })
+    view.update()
+    assert.equal(activityPanel(view.tree).props['data-run-id'], deliveredRunId)
+    assert.match(text(activityPanel(view.tree)), /Awaiting review/)
+  } finally { view.unmount() }
+})
+
+test('actual MissionCard requires its wired snapshot freshness and does not invent Factory context', () => {
+  const view = missionActivityFixture({ factoryItem: undefined })
+  try {
+    view.update()
+    assert.doesNotMatch(text(activityPanel(view.tree)), /Intake record/)
+    for (const collaborationInput of [undefined, { ...view.props.collaborationInput, snapshotFailed: true },
+      { ...view.props.collaborationInput, connection: 'offline' }]) {
+      view.update({ ...view.props, collaborationInput })
+      assert.equal(activityPanel(view.tree).props['data-run-id'], deliveredRunId)
+      assert.match(text(activityPanel(view.tree)), /Updates unavailable/)
+      assert.doesNotMatch(text(activityPanel(view.tree)), /reported active/)
+    }
+  } finally { view.unmount() }
+})
 
 function assertResultRefocus(view) {
   assert.equal(view.animationFrames.length, 1, 'manual refresh queues exactly one post-render focus')

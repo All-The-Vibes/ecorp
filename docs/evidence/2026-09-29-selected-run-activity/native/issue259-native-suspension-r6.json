@@ -1,0 +1,142 @@
+{
+  "issue": 259,
+  "case": "suspension",
+  "source": {
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "diff_sha256": "40203ae124c8143fe21f154699535927ce8e87edf9f9e1e5d604099851446885"
+  },
+  "status": "accepted",
+  "started_at": "2026-09-29T17:19:50.847Z",
+  "scope": "Owned browser/server/PostgreSQL/native deterministic runner; no AI inference or remote GitHub effects",
+  "operations": [
+    {
+      "name": "budget-policy",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/budget-policy",
+      "expected_status": 204,
+      "at": "2026-09-29T17:19:54.080Z",
+      "completed": true,
+      "http_status": 204,
+      "ids": {}
+    },
+    {
+      "name": "preflight",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/preflight",
+      "expected_status": 200,
+      "at": "2026-09-29T17:19:54.118Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {}
+    },
+    {
+      "name": "claim",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/claim",
+      "expected_status": 200,
+      "at": "2026-09-29T17:19:54.155Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {},
+      "work_item_id": "50db0a61-ffde-4c56-8f57-0759cf1e8f3c"
+    },
+    {
+      "name": "materialize",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/50db0a61-ffde-4c56-8f57-0759cf1e8f3c/materialize",
+      "expected_status": 200,
+      "at": "2026-09-29T17:19:54.172Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {
+        "mission_id": "bccc8645-4f49-4ccd-b251-a4332e0c1e3f",
+        "task_id": "9f4bbd93-9bc9-408b-ab85-5024e3202c7c"
+      },
+      "work_item_id": "50db0a61-ffde-4c56-8f57-0759cf1e8f3c"
+    },
+    {
+      "name": "browser-launch",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions/bccc8645-4f49-4ccd-b251-a4332e0c1e3f/launch",
+      "at": "2026-09-29T17:19:54.765Z",
+      "completed": true
+    },
+    {
+      "name": "factory-native-running",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/50db0a61-ffde-4c56-8f57-0759cf1e8f3c/transition",
+      "expected_status": 200,
+      "at": "2026-09-29T17:19:54.891Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {},
+      "work_item_id": "50db0a61-ffde-4c56-8f57-0759cf1e8f3c"
+    }
+  ],
+  "checks": {
+    "native_factory_launch_transition": {
+      "item": "50db0a61-ffde-4c56-8f57-0759cf1e8f3c",
+      "mission": "bccc8645-4f49-4ccd-b251-a4332e0c1e3f",
+      "before_version": 2,
+      "after_version": 3
+    },
+    "native_suspension": {
+      "mission_id": "bccc8645-4f49-4ccd-b251-a4332e0c1e3f",
+      "run_id": "67bda64c-3d1e-41e9-a40f-bd089d41083c",
+      "factory_item_id": "50db0a61-ffde-4c56-8f57-0759cf1e8f3c",
+      "factory_state": "running",
+      "mission_status": "cancelled",
+      "stages": [
+        "suspend",
+        "constrain",
+        "steer"
+      ],
+      "workspace_disposition": "preserved",
+      "terminal_event_ids": [
+        {
+          "id": "59c07acc-6763-42ba-921f-6d708242861b",
+          "seq": 92,
+          "type": "run.breaker_transition"
+        },
+        {
+          "id": "b9cf0fb5-aabc-4179-bbf0-fed57593e6c9",
+          "seq": 97,
+          "type": "run.breaker_transition"
+        },
+        {
+          "id": "640aae5f-f032-4567-824d-f5536428b682",
+          "seq": 102,
+          "type": "run.breaker_transition"
+        },
+        {
+          "id": "05027b3c-8be3-4f82-a2da-ca52d4dab0c2",
+          "seq": 105,
+          "type": "run.session_terminated"
+        },
+        {
+          "id": "1c0bc5a8-4e13-4c76-949a-5e85de2a4a7a",
+          "seq": 107,
+          "type": "run.cancelled"
+        }
+      ],
+      "mission_agent_factory": true
+    },
+    "configured_fixture_source_unchanged": true
+  },
+  "screenshots": {
+    "mission-suspended": "native-suspension-mission-suspended-2a34e520.png",
+    "agent-suspended": "native-suspension-agent-suspended-0f435cbe.png",
+    "factory-running-cancelled": "native-suspension-factory-running-cancelled-e3634ef9.png"
+  },
+  "failures": [],
+  "updated_at": "2026-09-29T17:20:04.687Z",
+  "fixture": {
+    "mid": "bccc8645-4f49-4ccd-b251-a4332e0c1e3f",
+    "item": "50db0a61-ffde-4c56-8f57-0759cf1e8f3c",
+    "issue": {
+      "number": 2591,
+      "id": "I_ISSUE259_d9dd726c-8b8b-49bc-a6cd-f527fab7fa16",
+      "item": "PVTI_ISSUE259_d9dd726c-8b8b-49bc-a6cd-f527fab7fa16",
+      "title": "[budget-loop] issue259 native suspension",
+      "body": "Owned issue259 native acceptance only. Preserve all source and evidence; no external publication.",
+      "revision": "2026-09-29T17:19:54.096Z",
+      "url": "https://github.com/ecorp-fixture/pr265-run-activity/issues/2591"
+    }
+  },
+  "page_errors": [],
+  "finished_at": "2026-09-29T17:20:04.687Z"
+}

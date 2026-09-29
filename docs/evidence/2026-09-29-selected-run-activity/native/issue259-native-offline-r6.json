@@ -1,0 +1,40 @@
+{
+  "issue": 259,
+  "case": "offline",
+  "source": {
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "diff_sha256": "40203ae124c8143fe21f154699535927ce8e87edf9f9e1e5d604099851446885"
+  },
+  "status": "accepted",
+  "started_at": "2026-09-29T17:18:54.732Z",
+  "scope": "Owned browser/server/PostgreSQL/native deterministic runner; no AI inference or remote GitHub effects",
+  "operations": [
+    {
+      "name": "native-offline",
+      "route": "/api/demo/runners/pr265-activity-qa/disconnect",
+      "expected_status": 200,
+      "at": "2026-09-29T17:18:58.784Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {}
+    }
+  ],
+  "checks": {
+    "native_grace_offline_reconnect": {
+      "grace_seconds": 30,
+      "requested_disconnect_ms": 47000,
+      "exact_run": "579ac58d-c823-4527-8346-5459d2573d4c",
+      "both_surfaces": true,
+      "history_unchanged": true
+    },
+    "configured_fixture_source_unchanged": true
+  },
+  "screenshots": {
+    "mission-offline": "native-offline-mission-offline-701b208b.png",
+    "agent-offline": "native-offline-agent-offline-71accf32.png"
+  },
+  "failures": [],
+  "updated_at": "2026-09-29T17:19:46.750Z",
+  "page_errors": [],
+  "finished_at": "2026-09-29T17:19:46.750Z"
+}

@@ -45,8 +45,9 @@ import { useMissionResultContext } from './useMissionResultContext'
 import { missionResultPresentation } from './missionResultContext'
 import { WorkResultCard } from './WorkResultCard'
 import { PublishedResultCard } from './PublishedResultCard'
-import { RunActivityDetails } from './RunActivityDetails'
-import { presentRunActivity, selectActivityRun } from './runActivity'
+import { RunActivityDetails, RunActivityPanel } from './RunActivityDetails'
+import { presentRunActivity, selectActivityRun, selectAgentActivity } from './runActivity'
+import type { RunActivityInput } from './runActivity'
 import {
   connectionLabel, connectionRunnerRevision, connectionScope, connectionStatusLabel,
   connectionTarget, connectionsNeedPresenceRefresh,
@@ -1908,6 +1909,7 @@ function AgentAvatar({ agent }: { agent: Agent }) {
 
 function AgentDesk({
   agent,
+  activityInput,
   capability,
   lease,
   leaseToken,
@@ -1921,8 +1923,10 @@ function AgentDesk({
   onEmergencyStop,
   onMessage,
   onPin,
+  onInspectRun,
 }: {
   agent: Agent
+  activityInput: RunActivityInput
   capability: RunnerCapability | undefined
   lease: Lease | undefined
   leaseToken: string | undefined
@@ -1941,34 +1945,39 @@ function AgentDesk({
     idempotencyKey: string,
   ) => Promise<boolean>
   onPin: (agent: OfficeAgent, pinned: boolean) => Promise<void>
+  onInspectRun: (runId: string) => void
 }) {
   const [text, setText] = useState('')
   const [transferActorId, setTransferActorId] = useState('')
   const [operationError, setOperationError] = useState<string | null>(null)
-  const ownsLease = lease?.actor_id === actor.id
-  const live = Boolean(agent.current_run_id) && agent.status !== 'idle' && agent.status !== 'offline'
+  const runActivity = presentRunActivity(activityInput)
+  const retired = agent.retired_at != null
+  const live = !retired && runActivity.providerCurrent
+  const currentLease = live && lease?.agent_id === agent.id &&
+    Date.parse(lease.expires_at) > Date.parse(activityInput.snapshotReceivedAt ?? '') ? lease : undefined
+  const ownsLease = currentLease?.actor_id === actor.id
   const operator = canOperate(actor.role)
   const supportsSteer = capabilitySupports(capability, 'steer')
   const supportsInterrupt = capabilitySupports(capability, 'interrupt')
   const supportsStop = capabilitySupports(capability, 'stop')
   const canClaim = live && operator && (supportsSteer || supportsInterrupt)
-  const holder = humans.find((human) => human.id === lease?.actor_id)
+  const holder = humans.find((human) => human.id === currentLease?.actor_id)
   const transferCandidates = humans.filter((human) => human.id !== actor.id && canOperate(human.role))
   const transferTarget =
     transferCandidates.find((human) => human.id === transferActorId) ??
     transferCandidates[0]
-  const holderLabel = lease
+  const holderLabel = currentLease
     ? ownsLease
-      ? `You hold control until ${time(lease.expires_at)}`
-      : `${holder?.name ?? 'Another operator'} holds control until ${time(lease.expires_at)}`
+      ? `You hold control until ${time(currentLease.expires_at)}`
+      : `${holder?.name ?? 'Another operator'} holds control until ${time(currentLease.expires_at)}`
     : live
       ? 'Live session is unclaimed'
-      : 'No live session'
-  const messageToken = live && supportsSteer && ownsLease ? leaseToken : undefined
+      : 'Live control unavailable'
+  const messageToken = live && operator && supportsSteer && ownsLease ? leaseToken : undefined
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!text.trim()) return
+    if (retired || !text.trim()) return
     const normalized = text.trim()
     const payload = JSON.stringify({
       agentId: agent.id,
@@ -2013,18 +2022,23 @@ function AgentDesk({
         </div>
       </div>
       <p className="agent-inspector-help">
-        {live
+        {retired
+          ? `${agent.name} is retired. This is a read-only view of its recorded work.`
+          : live
           ? `${agent.name} is ${agent.status === 'working' ? agent.station ?? agent.status : agent.status}. Claim control to steer the live session.`
           : agent.status === 'reviewing'
-            ? `${agent.name}'s provider process has ended. The recorded output is awaiting evidence review.`
+            ? `${agent.name} reports a review wait. Inspect the selected run’s recorded evidence and termination state below.`
           : agent.status === 'offline'
             ? `${agent.name}'s runner is unavailable. Inspect the mission's recorded state and recovery controls.`
           : agent.mission_id && !agent.pinned
             ? `${agent.name} reports ${agent.status}. This identity belongs to mission ${shortId(agent.mission_id)}; any next task is assigned by the server.`
           : agent.status === 'idle'
-            ? `${agent.name} is off shift. No provider process is running; the identity remains available for future ${adapterLabel(agent.adapter)} missions.`
-          : `${agent.name} reports ${agent.status}. No current provider run is reported.`}
+            ? `${agent.name} reports idle. Inspect the selected run’s recorded activity and execution state below.`
+          : `${agent.name} reports ${agent.status}. Current provider execution is unconfirmed; inspect the recorded activity below.`}
       </p>
+      <RunActivityPanel view={runActivity} actions={runActivity.runId ? (
+        <button type="button" className="button button-secondary" onClick={() => onInspectRun(runActivity.runId!)}>Inspect this run’s work item</button>
+      ) : undefined} />
       <AgentPinControl agent={agent} canOperate={operator && actor.kind === 'human'} onPin={onPin} />
       <div className="desk-actions">
         {canClaim ? (
@@ -2032,7 +2046,7 @@ function AgentDesk({
             {ownsLease && leaseToken ? 'Renew control' : 'Claim live control'}
           </button>
         ) : null}
-        {live && ownsLease && leaseToken ? (
+        {live && operator && ownsLease && leaseToken ? (
           <button
             type="button"
             className="button button-quiet"
@@ -2043,7 +2057,7 @@ function AgentDesk({
         ) : null}
         <span className="queue-count">{queuedCount} queued</span>
       </div>
-      {live && ownsLease && leaseToken && transferTarget ? (
+      {live && operator && ownsLease && leaseToken && transferTarget ? (
         <div className="transfer-row">
           <label htmlFor={`transfer-${agent.id}`}>Transfer control</label>
           <select
@@ -2075,7 +2089,7 @@ function AgentDesk({
           Emergency stop
         </button>
       ) : null}
-      {live && supportsInterrupt && ownsLease && leaseToken ? (
+      {live && operator && supportsInterrupt && ownsLease && leaseToken ? (
         <button
           type="button"
           className="interrupt-run"
@@ -2084,7 +2098,7 @@ function AgentDesk({
           Interrupt turn
         </button>
       ) : null}
-      <form className="agent-message" onSubmit={submit}>
+      {!retired ? <form className="agent-message" onSubmit={submit}>
         {operationError ? <p className="error-banner" role="alert">{operationError}</p> : null}
         <input
           aria-label={`Message ${agent.name}`}
@@ -2095,7 +2109,7 @@ function AgentDesk({
         <button className="button button-ink" type="submit">
           {messageToken ? 'Steer' : 'Queue note'}
         </button>
-      </form>
+      </form> : null}
       {live && !supportsSteer ? (
         <small className="control-note">
           {adapterLabel(agent.adapter)} does not support live steering. Notes are queued instead.
@@ -3090,6 +3104,16 @@ function MissionCard({
   )
   const taskById = new Map(tasks.map((task) => [task.id, task]))
   const evidenceRun = selectMissionEvidenceRun(runs, verificationRequests, selectedEvidenceRunId)
+  const runActivity = presentRunActivity({
+    corpId, mission, run: evidenceRun, tasks, agents, actors, events,
+    selectionUnavailable: selectedEvidenceRunId !== null && !evidenceRun,
+    runners: collaborationInput?.runners ?? [], leases: collaborationInput?.leases ?? [],
+    reviews: verificationRequests, approvals: actionApprovals, factoryState: factoryItem?.state,
+    connection: collaborationInput?.connection ?? 'offline',
+    snapshotFailed: collaborationInput?.snapshotFailed ?? true,
+    snapshotReceivedAt: collaborationInput && Number.isFinite(collaborationInput.now) && collaborationInput.now > 0
+      ? new Date(collaborationInput.now).toISOString() : null,
+  })
   const displayedEvidenceRunId = evidenceRun?.id
   useEffect(() => {
     if (selectedEvidenceRunId !== null || !displayedEvidenceRunId) return
@@ -3406,6 +3430,14 @@ function MissionCard({
         </WorkResultCard>
       )}
       </div>
+      <RunActivityPanel view={runActivity} actions={runs.length ? <>
+        <button type="button" className="button button-secondary" onClick={() => focusWorkSection(`mission-evidence-panel-${mission.id}`)}>
+          {runActivity.runId ? 'Inspect selected run evidence' : 'Choose a run to inspect'}
+        </button>
+        {runActivity.runId && evidenceRun && onViewAgent && agents.some((agent) => agent.id === evidenceRun.agent_id) ? (
+          <button type="button" className="button button-secondary" onClick={() => onViewAgent(evidenceRun.agent_id)}>View run agent</button>
+        ) : null}
+      </> : undefined} />
       <div className="mission-work-context">
         <MissionOriginText current={originRead.current} pending={originRead.pending} fallback={origin}
           onRefresh={mission.status === 'completed' ? undefined : refreshWorkContext} />
@@ -4539,7 +4571,7 @@ function App() {
     const syncFromHash = () => {
       const view = workspaceViewFromHash(window.location.hash)
       setActiveWorkspaceView(view)
-      if (view !== 'floor') setFloorInspectorOpen(false)
+      setFloorInspectorOpen(false)
     }
     window.addEventListener('hashchange', syncFromHash)
     window.addEventListener('popstate', syncFromHash)
@@ -4561,6 +4593,7 @@ function App() {
   const navigateToWorkspaceEntity = useCallback(
     (kind: EntityLink['kind'] | 'room', targetId: string) => {
       if (kind === 'room') {
+        setFloorInspectorOpen(false)
         setRoomMissionId(null)
         setSelectedRoomId(targetId)
         setActiveWorkspaceView('room')
@@ -4607,6 +4640,7 @@ function App() {
         setRoomMissionId(missionId)
         setSelectedRoomId(null)
       }
+      setFloorInspectorOpen(false)
       setActiveWorkspaceView('missions')
       window.history.replaceState(null, '', '#missions')
       setAnnouncement(`${statusLabel(kind)} opened in Missions.`)
@@ -4840,13 +4874,13 @@ function App() {
   }, [bootstrap, refresh, selectedActorId])
 
   useEffect(() => {
-    if (!bootstrap || !selectedActorId || !(connectionsOpen || journeyOpen ||
-      (activeWorkspaceView === 'missions' && !missionComposerCollapsed))) return
+    if (!bootstrap || !selectedActorId || !(connectionsOpen || journeyOpen || floorInspectorOpen ||
+      activeWorkspaceView === 'missions' || activeWorkspaceView === 'factory')) return
     const snapshotRefresh = snapshotRefreshRef.current
     if (!snapshotRefresh) return
-    // Heartbeat-only readiness matters while choosing/configuring a connection,
-    // not in every idle client. Share the event coalescer; never restart its socket
-    // or overlap another full-Corp read when a connection-dependent view opens.
+    // Runner presence can change without a run event after work ends. Refresh
+    // visible connection and activity views through the shared event coalescer;
+    // never restart its socket or overlap another full-Corp read.
     const refreshVisiblePresence = () => {
       if (document.visibilityState === 'visible') snapshotRefresh.request()
     }
@@ -4856,7 +4890,7 @@ function App() {
       window.clearInterval(presenceTimer)
       document.removeEventListener('visibilitychange', refreshVisiblePresence)
     }
-  }, [bootstrap, refresh, selectedActorId, connectionsOpen, journeyOpen, activeWorkspaceView, missionComposerCollapsed])
+  }, [bootstrap, refresh, selectedActorId, connectionsOpen, journeyOpen, activeWorkspaceView, floorInspectorOpen])
 
   const humans = useMemo(
     () => data?.snapshot.actors.filter((actor) => actor.kind === 'human') ?? [],
@@ -5836,9 +5870,18 @@ function App() {
     new Set(allAvailableAdapters.map((adapter) => adapter.name)),
     showRegisteredCrew,
   )
-  const selectedAgent = selectOfficeAgent(floorAgents, selectedAgentId)
-  const selectedAgentCapability = connectedRunners
-    .flatMap((runner) => runner.capabilities)
+  const selectedFloorAgent = selectOfficeAgent(floorAgents, selectedAgentId)
+  // A mission may reference a hidden test worker or a retired identity. Resolve
+  // its explicit selection only from the authorized snapshot, never the roster's fallback.
+  const selectedAgent = selectedAgentId === null ? selectedFloorAgent
+    : data.snapshot.agents.find((agent) => agent.id === selectedAgentId)
+  const selectedAgentActivity = selectedAgent ? selectAgentActivity({
+    agent: selectedAgent, tasks: data.snapshot.tasks, missions: data.snapshot.missions,
+    runs: data.snapshot.runs, reviews: data.snapshot.verification_requests, approvals: data.snapshot.action_approvals,
+  }) : undefined
+  const selectedAgentCapability = data.runners
+    .find((runner) => runner.id === selectedAgentActivity?.run?.runner_id &&
+      runner.corp_id === bootstrap.corp_id && runner.connected && runner.status === 'connected')?.capabilities
     .find(
       (capability) =>
         capability.available && capability.name === selectedAgent?.adapter,
@@ -5895,7 +5938,7 @@ function App() {
   const activateWorkspaceView = (view: WorkspaceView) => {
     const destination = WORKSPACE_VIEWS.find((candidate) => candidate.id === view)
     setActiveWorkspaceView(view)
-    if (view !== 'floor') setFloorInspectorOpen(false)
+    setFloorInspectorOpen(false)
     if (window.location.hash !== `#${view}`) {
       window.history.pushState(null, '', `#${view}`)
     }
@@ -6003,9 +6046,8 @@ function App() {
               setSelectedAgentId(activeRuns[0].agent_id)
               setFloorInspectorOpen(true)
             } else {
-              setFloorInspectorOpen(false)
+              activateWorkspaceView('floor')
             }
-            activateWorkspaceView('floor')
           }}>
             <span>Live runs</span>
             <strong>{activeRuns.length}</strong>
@@ -6265,7 +6307,7 @@ function App() {
           <div className="floor-plan">
             {activeWorkspaceView === 'floor' ? <OfficeFloor
               agents={floorAgents}
-              selectedAgentId={selectedAgent?.id ?? null}
+              selectedAgentId={selectedFloorAgent?.id ?? null}
               pendingApprovalRunIds={new Set(pendingApprovals.map((approval) => approval.run_id))}
               pendingReviewRunIds={new Set(pendingVerificationRequests.map((request) => request.run_id))}
               connection={connection}
@@ -6285,27 +6327,6 @@ function App() {
               }}
               onFactory={() => activateWorkspaceView('factory')}
             /> : null}
-            {floorInspectorOpen && selectedAgent && activeWorkspaceView === 'floor' ? (
-              <OfficeInspector agentName={selectedAgent.name} onClose={() => setFloorInspectorOpen(false)}>
-                  <AgentDesk
-                    key={selectedAgent.id}
-                    agent={selectedAgent}
-                    capability={selectedAgentCapability}
-                    actor={selectedActor}
-                    humans={humans}
-                    lease={data.snapshot.leases.find((lease) => lease.agent_id === selectedAgent.id)}
-                    leaseToken={leaseTokens[leaseTokenKey(selectedActor.id, selectedAgent.id)]}
-                    queuedCount={data.snapshot.queued_messages.filter((message) => message.agent_id === selectedAgent.id).length}
-                    onClaim={claimLease}
-                    onRelease={releaseLease}
-                    onTransfer={transferLease}
-                    onInterrupt={interruptRun}
-                    onEmergencyStop={emergencyStop}
-                    onMessage={sendMessage}
-                    onPin={setAgentPin}
-                  />
-              </OfficeInspector>
-            ) : null}
           </div>
         </div>
 
@@ -7116,10 +7137,9 @@ function App() {
                     snapshotFailed: snapshotLoad?.refreshFailed ?? true,
                   }}
                   onViewAgent={(agentId) => {
-                    if (!currentAgents.some((agent) => agent.id === agentId)) return
+                    if (!data.snapshot.agents.some((agent) => agent.id === agentId)) return
                     setSelectedAgentId(agentId)
                     setFloorInspectorOpen(true)
-                    activateWorkspaceView('floor')
                   }}
                   discussion={activeWorkspaceView === 'missions' ? <RoomPanel
                     key={discussionScopeKey(missionScope)}
@@ -7139,11 +7159,10 @@ function App() {
                     focusWorkSection(`mission-discussion-${mission.id}`)
                   }}
                   onViewAgents={() => {
-                    const run = selectedMissionRuns.find((candidate) => !terminalRun(candidate.status))
-                    if (run && currentAgents.some((agent) => agent.id === run.agent_id)) {
+                    const run = selectActivityRun(selectedMissionRuns, data.snapshot.verification_requests, data.snapshot.action_approvals)
+                    if (run && data.snapshot.agents.some((agent) => agent.id === run.agent_id)) {
                       setSelectedAgentId(run.agent_id)
                       setFloorInspectorOpen(true)
-                      activateWorkspaceView('floor')
                     } else if (selectedMissionTasks[0]) {
                       navigateToWorkspaceEntity('task', selectedMissionTasks[0].id)
                     }
@@ -7169,6 +7188,38 @@ function App() {
           )}
         </aside>
       </section>
+
+      {floorInspectorOpen ? (
+        <OfficeInspector agentName={selectedAgent?.name ?? 'Selected agent'} onClose={() => setFloorInspectorOpen(false)}>
+          {selectedAgent ? <AgentDesk
+            key={selectedAgent.id}
+            agent={selectedAgent}
+            activityInput={{
+              corpId: bootstrap.corp_id, ...selectedAgentActivity,
+              tasks: data.snapshot.tasks, agents: data.snapshot.agents, runners: data.runners,
+              actors: data.snapshot.actors, leases: data.snapshot.leases, events: data.snapshot.events,
+              reviews: data.snapshot.verification_requests, approvals: data.snapshot.action_approvals,
+              factoryState: data.snapshot.factory_work_items.find((item) => item.mission_id === selectedAgentActivity?.mission?.id)?.state,
+              connection, snapshotReceivedAt: snapshotLoad?.receivedAt ?? null,
+              snapshotFailed: snapshotLoad?.refreshFailed ?? true,
+            }}
+            capability={selectedAgentCapability}
+            actor={selectedActor}
+            humans={humans}
+            lease={data.snapshot.leases.find((lease) => lease.agent_id === selectedAgent.id)}
+            leaseToken={leaseTokens[leaseTokenKey(selectedActor.id, selectedAgent.id)]}
+            queuedCount={data.snapshot.queued_messages.filter((message) => message.agent_id === selectedAgent.id).length}
+            onClaim={claimLease}
+            onRelease={releaseLease}
+            onTransfer={transferLease}
+            onInterrupt={interruptRun}
+            onEmergencyStop={emergencyStop}
+            onMessage={sendMessage}
+            onPin={setAgentPin}
+            onInspectRun={(runId) => navigateToWorkspaceEntity('run', runId)}
+          /> : <p role="status">The selected agent is unavailable in your current view. No other identity has been selected.</p>}
+        </OfficeInspector>
+      ) : null}
 
       <div className="workspace-surface" hidden={activeWorkspaceView !== 'room'}>
         {activeWorkspaceView === 'room' ? (

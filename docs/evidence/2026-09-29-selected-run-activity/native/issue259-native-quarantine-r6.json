@@ -1,0 +1,188 @@
+{
+  "issue": 259,
+  "case": "quarantine",
+  "source": {
+    "head": "878a1774774b0630c904cbaf4b05e1b346777817",
+    "diff_sha256": "40203ae124c8143fe21f154699535927ce8e87edf9f9e1e5d604099851446885"
+  },
+  "status": "accepted",
+  "started_at": "2026-09-29T17:20:09.051Z",
+  "scope": "Owned browser/server/PostgreSQL/native deterministic runner; no AI inference or remote GitHub effects",
+  "operations": [
+    {
+      "name": "preflight",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/preflight",
+      "expected_status": 200,
+      "at": "2026-09-29T17:20:12.213Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {}
+    },
+    {
+      "name": "claim",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/claim",
+      "expected_status": 200,
+      "at": "2026-09-29T17:20:12.255Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {},
+      "work_item_id": "76ce32d2-0872-49ad-927f-eb938eeffc18"
+    },
+    {
+      "name": "materialize",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/76ce32d2-0872-49ad-927f-eb938eeffc18/materialize",
+      "expected_status": 200,
+      "at": "2026-09-29T17:20:12.269Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {
+        "mission_id": "b36d6688-1b4c-4aff-ad24-9e274db2917d",
+        "task_id": "ccbb3069-de28-4216-855c-0004080d8436"
+      },
+      "work_item_id": "76ce32d2-0872-49ad-927f-eb938eeffc18"
+    },
+    {
+      "name": "independent-review-contract",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions/b36d6688-1b4c-4aff-ad24-9e274db2917d/contract-revisions",
+      "expected_status": 200,
+      "at": "2026-09-29T17:20:12.327Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {}
+    },
+    {
+      "name": "browser-launch",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/missions/b36d6688-1b4c-4aff-ad24-9e274db2917d/launch",
+      "at": "2026-09-29T17:20:13.038Z",
+      "completed": true
+    },
+    {
+      "name": "factory-native-running",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/76ce32d2-0872-49ad-927f-eb938eeffc18/transition",
+      "expected_status": 200,
+      "at": "2026-09-29T17:20:13.163Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {},
+      "work_item_id": "76ce32d2-0872-49ad-927f-eb938eeffc18"
+    },
+    {
+      "name": "reject-source-review",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/runs/922807c5-253e-4fbf-88e7-679499646e6c/verification-decision",
+      "expected_status": 200,
+      "at": "2026-09-29T17:20:24.097Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {
+        "run_id": "922807c5-253e-4fbf-88e7-679499646e6c"
+      }
+    },
+    {
+      "name": "renew-claim",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/76ce32d2-0872-49ad-927f-eb938eeffc18/renew",
+      "expected_status": 200,
+      "at": "2026-09-29T17:20:24.163Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {},
+      "work_item_id": "76ce32d2-0872-49ad-927f-eb938eeffc18"
+    },
+    {
+      "name": "owned-source-mismatch",
+      "workspace": "runner\\worktrees\\ccbb3069de284216855c0004080d8436\\922807c5253e4fbf88e7679499646e6c",
+      "file": "issue259-quarantine-sentinel.txt",
+      "sha256": "fba1d8cd3af7fa264303f4e79186eb3a737e56b8b4f7848b1c2eb87e8e6e1475",
+      "completed": true
+    },
+    {
+      "name": "verifier-only-recovery",
+      "route": "/api/corps/00000000-0000-4000-8000-000000000001/factory/work-items/76ce32d2-0872-49ad-927f-eb938eeffc18/verification-recoveries",
+      "expected_status": 200,
+      "at": "2026-09-29T17:20:24.269Z",
+      "completed": true,
+      "http_status": 200,
+      "ids": {
+        "run_id": "cb754744-3150-41e1-9604-5bbd41c37c92"
+      },
+      "work_item_id": "76ce32d2-0872-49ad-927f-eb938eeffc18"
+    }
+  ],
+  "checks": {
+    "native_factory_launch_transition": {
+      "item": "76ce32d2-0872-49ad-927f-eb938eeffc18",
+      "mission": "b36d6688-1b4c-4aff-ad24-9e274db2917d",
+      "before_version": 2,
+      "after_version": 3
+    },
+    "native_archive_checkpoint_contract": {
+      "deliverable_form": "archive",
+      "commit_after_verification": false,
+      "api_expected_head_commit": null,
+      "observed_head_before": "9e2e15c9097308fe72f8f5d10a676d83ad077286"
+    },
+    "native_quarantine": {
+      "mission_id": "b36d6688-1b4c-4aff-ad24-9e274db2917d",
+      "source_run_id": "922807c5-253e-4fbf-88e7-679499646e6c",
+      "verifier_run_id": "cb754744-3150-41e1-9604-5bbd41c37c92",
+      "factory_item_id": "76ce32d2-0872-49ad-927f-eb938eeffc18",
+      "recovery_id": "86faaa88-e9d8-4aa8-8d1d-a84067ba1710",
+      "expected_checkpoint": "e6df75c32f596e4715deaceab5b9bbe99d2520824d3a8783da6bd7e7ec4f650d",
+      "api_expected_head_commit": null,
+      "observed_head_before": "9e2e15c9097308fe72f8f5d10a676d83ad077286",
+      "observed_head_after": "9e2e15c9097308fe72f8f5d10a676d83ad077286",
+      "quarantined_workspace": "runner\\worktrees\\ccbb3069de284216855c0004080d8436\\922807c5253e4fbf88e7679499646e6c",
+      "no_new_fingerprint": true,
+      "sentinel_preserved_sha256": "fba1d8cd3af7fa264303f4e79186eb3a737e56b8b4f7848b1c2eb87e8e6e1475",
+      "no_replacement_provider_run": true,
+      "event_ids": [
+        {
+          "id": "9e9ca230-ddc5-4e88-9cd1-b3c8fba907d8",
+          "seq": 135,
+          "type": "run.verification_requested"
+        },
+        {
+          "id": "43c454f0-091c-401a-b4bd-dc548805139d",
+          "seq": 137,
+          "type": "runner.command_acknowledged"
+        },
+        {
+          "id": "11c5e81c-6b8e-4c99-b4a5-fab8d63b2232",
+          "seq": 138,
+          "type": "run.started"
+        },
+        {
+          "id": "0bc823c2-9541-40ba-847d-96764cb077db",
+          "seq": 139,
+          "type": "run.failed"
+        },
+        {
+          "id": "8f521f61-12e0-4525-88e3-77859f71913f",
+          "seq": 141,
+          "type": "run.workspace_preserved"
+        }
+      ]
+    },
+    "configured_fixture_source_unchanged": true
+  },
+  "screenshots": {
+    "mission-quarantined": "native-quarantine-mission-quarantined-b96a06fa.png",
+    "agent-quarantined": "native-quarantine-agent-quarantined-a4f2c5fe.png"
+  },
+  "failures": [],
+  "updated_at": "2026-09-29T17:20:26.886Z",
+  "fixture": {
+    "mid": "b36d6688-1b4c-4aff-ad24-9e274db2917d",
+    "item": "76ce32d2-0872-49ad-927f-eb938eeffc18",
+    "issue": {
+      "number": 2592,
+      "id": "I_ISSUE259_5a796fae-0713-458e-99af-23f881b71c99",
+      "item": "PVTI_ISSUE259_5a796fae-0713-458e-99af-23f881b71c99",
+      "title": "[portable-deliverable] issue259 native quarantine",
+      "body": "Owned issue259 native acceptance only. Preserve all source and evidence; no external publication.",
+      "revision": "2026-09-29T17:20:12.185Z",
+      "url": "https://github.com/ecorp-fixture/pr265-run-activity/issues/2592"
+    }
+  },
+  "page_errors": [],
+  "finished_at": "2026-09-29T17:20:26.886Z"
+}
